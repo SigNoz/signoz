@@ -39,8 +39,11 @@ import {
 	traceQuickFiltersResponse,
 	traceRootSpanRows,
 	traceSpanRows,
+	TRACE_SUMMARY_STATES,
+	traceSummaryResponse,
 	TRACES_EXPLORER_VIEWS,
 	TRACES_TABS,
+	type TraceSummaryState,
 	type TracesTab,
 } from './__story_mockdata__/traces';
 
@@ -79,6 +82,9 @@ const rawSpecOf = (body: QueryRangeRequestV5): RawQuerySpec => {
 	return spec as RawQuerySpec;
 };
 
+// The summary has no window of its own; its bounds wrap the span the list showed.
+const listWindow = { start: 0, end: 0 };
+
 export const tracesMocks = defineStoryMocks({
 	controls: {
 		tab: choiceControl<TracesTab>('Tab', {
@@ -113,6 +119,13 @@ export const tracesMocks = defineStoryMocks({
 			description:
 				'The `TRACES_SPAN_DRAWER_ENABLED` localStorage flag the span drawer ships behind. Off, a row click opens the trace page.',
 			value: false,
+		}),
+		traceSummary: choiceControl<TraceSummaryState>('Trace summary', {
+			group: LIST,
+			description:
+				'What the span drawer gets for the trace start and end. Not found falls back to span-only logs; loading holds the logs tab.',
+			options: TRACE_SUMMARY_STATES,
+			value: 'found',
 		}),
 		warning: toggleControl('Query warning', {
 			group: LIST,
@@ -186,6 +199,29 @@ export const tracesMocks = defineStoryMocks({
 			response.json(spanPercentilesResponse),
 		),
 
+		// Answers on its own control rather than the Data one, so the drawer's
+		// fallback and waiting states are reachable with the list loaded.
+		rest.get(
+			'http://localhost/api/v1/traces/:traceId/summary',
+			(req, res, ctx) => {
+				if (values.traceSummary === 'loading') {
+					return res(ctx.delay('infinite'));
+				}
+				const summary =
+					values.traceSummary === 'found'
+						? traceSummaryResponse({
+								traceId: String(req.params.traceId),
+								count: values.spans,
+								...listWindow,
+							})
+						: null;
+
+				return summary
+					? res(ctx.status(200), ctx.json(summary))
+					: res(ctx.status(404), ctx.json({ status: 'error' }));
+			},
+		),
+
 		// The drawer's percentile panel dereferences this preference without a guard.
 		rest.get(
 			'http://localhost/api/v1/user/preferences/:name',
@@ -238,6 +274,9 @@ export const tracesMocks = defineStoryMocks({
 					: undefined;
 
 				if (requestType === 'raw' || requestType === 'trace') {
+					listWindow.start = start;
+					listWindow.end = end;
+
 					return queryRangeV5RawResponse(
 						requestType === 'trace' ? traceRootSpanRows(rows) : traceSpanRows(rows),
 						{

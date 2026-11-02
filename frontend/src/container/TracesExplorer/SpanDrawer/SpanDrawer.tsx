@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { ButtonGroup } from '@signozhq/ui/button-group';
 import { ChevronDown, ChevronUp, CornerUpRight } from '@signozhq/icons';
+import { useGetTraceSummary } from 'api/generated/services/tracedetail';
 import { HeaderAction } from 'components/DetailsPanel';
 import type { UseRowNavigationResult } from 'components/TanStackTableView/useRowNavigation';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
@@ -88,12 +89,22 @@ function SpanDrawer({
 
 	const span = useMemo(() => (row ? toSpanV3(row) : undefined), [row]);
 
+	const traceId = span?.trace_id ?? '';
+	const { data: traceSummary, isLoading: isTraceBoundsLoading } =
+		useGetTraceSummary(
+			{ traceID: traceId },
+			{ query: { enabled: !!traceId, retry: false } },
+		);
+
 	return (
 		<SpanDetailsPanel
 			panelState={panelState}
 			selectedSpan={span}
 			variant={SpanDetailVariant.DRAWER}
 			headerActions={headerActions}
+			traceStartTime={traceSummary?.data.startTimestampMillis}
+			traceEndTime={traceSummary?.data.endTimestampMillis}
+			isTraceBoundsLoading={isTraceBoundsLoading}
 		/>
 	);
 }

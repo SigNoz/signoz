@@ -64,6 +64,8 @@ interface SpanDetailsPanelProps {
 	headerActions?: HeaderAction[];
 	traceStartTime?: number;
 	traceEndTime?: number;
+	/** The trace bounds are still being fetched; logs wait for them. */
+	isTraceBoundsLoading?: boolean;
 }
 
 // At/above this panel width the summary moves inside the Overview tab (bottom
@@ -77,10 +79,12 @@ function SpanDetailsContent({
 	selectedSpan,
 	traceStartTime,
 	traceEndTime,
+	isTraceBoundsLoading = false,
 }: {
 	selectedSpan: SpanV3;
 	traceStartTime?: number;
 	traceEndTime?: number;
+	isTraceBoundsLoading?: boolean;
 }): JSX.Element {
 	const [bodyRef, { width: bodyWidth }] = useMeasure<HTMLDivElement>();
 	const spanAttributeActions = useSpanAttributeActions();
@@ -172,8 +176,8 @@ function SpanDetailsContent({
 	// 	[spanAttributeActions, setCopy],
 	// );
 
-	// Without trace bounds (a traces explorer row) the panel speaks only for the
-	// span: its own logs window, and no trace-wide logs check.
+	// Without trace bounds the panel speaks only for the span: its own logs
+	// window, and no trace-wide logs check.
 	const hasTraceBounds = !!traceStartTime && !!traceEndTime;
 	const logsTimeRange = useMemo(
 		() =>
@@ -209,6 +213,7 @@ function SpanDetailsContent({
 		spanId: selectedSpan.span_id,
 		timeRange: logsTimeRange,
 		checkTraceLogs: hasTraceBounds,
+		enabled: !isTraceBoundsLoading,
 	});
 
 	const infraMetadata = useMemo(() => {
@@ -413,7 +418,10 @@ function SpanDetailsContent({
 			    with the panel's bottom edge — always visible, never scrolls. */}
 			{activeTab === 'logs' && (
 				<div className={styles.logsFooter}>
-					<OpenInLogsExplorer onClick={handleExplorerPageRedirect} />
+					<OpenInLogsExplorer
+						onClick={handleExplorerPageRedirect}
+						disabled={isTraceBoundsLoading}
+					/>
 				</div>
 			)}
 		</>
@@ -428,6 +436,7 @@ function SpanDetailsPanel({
 	headerActions: pageHeaderActions,
 	traceStartTime,
 	traceEndTime,
+	isTraceBoundsLoading,
 }: SpanDetailsPanelProps): JSX.Element {
 	const headerActions = useMemo((): HeaderAction[] => {
 		const actions: HeaderAction[] = [
@@ -491,6 +500,7 @@ function SpanDetailsPanel({
 					selectedSpan={selectedSpan}
 					traceStartTime={traceStartTime}
 					traceEndTime={traceEndTime}
+					isTraceBoundsLoading={isTraceBoundsLoading}
 				/>
 			) : (
 				<div className={styles.panelBody}>

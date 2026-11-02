@@ -21,6 +21,7 @@ interface UseSpanContextLogsProps {
 		endTime: number;
 	};
 	checkTraceLogs?: boolean;
+	enabled?: boolean;
 }
 
 interface UseSpanContextLogsReturn {
@@ -113,6 +114,7 @@ export const useSpanContextLogs = ({
 	spanId,
 	timeRange,
 	checkTraceLogs = true,
+	enabled = true,
 }: UseSpanContextLogsProps): UseSpanContextLogsReturn => {
 	const [allLogs, setAllLogs] = useState<ILog[]>([]);
 	const [spanLogIds, setSpanLogIds] = useState<Set<string>>(new Set());
@@ -142,7 +144,7 @@ export const useSpanContextLogs = ({
 			timeRange.endTime,
 		],
 		queryFn: () => GetMetricQueryRange(spanQueryPayload, ENTITY_VERSION_V5),
-		enabled: !!traceId && !!spanId,
+		enabled: enabled && !!traceId && !!spanId,
 		staleTime: FIVE_MINUTES_IN_MS,
 	});
 
@@ -311,7 +313,11 @@ export const useSpanContextLogs = ({
 		],
 		queryFn: () =>
 			GetMetricQueryRange(traceOnlyQueryPayload as any, ENTITY_VERSION_V5),
-		enabled: checkTraceLogs && !!traceOnlyQueryPayload && spanLogs.length === 0,
+		enabled:
+			enabled &&
+			checkTraceLogs &&
+			!!traceOnlyQueryPayload &&
+			spanLogs.length === 0,
 		staleTime: FIVE_MINUTES_IN_MS,
 	});
 
@@ -332,7 +338,7 @@ export const useSpanContextLogs = ({
 
 	return {
 		logs: allLogs,
-		isLoading: isSpanLoading && spanLogs.length === 0,
+		isLoading: (!enabled || isSpanLoading) && spanLogs.length === 0,
 		isError: isSpanError,
 		isFetching: isSpanFetching || isBeforeFetching || isAfterFetching,
 		spanLogIds,

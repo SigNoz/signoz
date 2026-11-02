@@ -17,6 +17,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import type {
 	GetQuickFilters200,
+	GetTraceSummary200,
 	ListSavedViews200,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -215,6 +216,45 @@ export const traceRootSpanRows = (options: SpanRowsOptions): RawRow[] =>
 			span_count: 6 + ((index * 7) % 34),
 		},
 	}));
+
+export const TRACE_SUMMARY_STATES = ['found', 'not found', 'loading'] as const;
+
+export type TraceSummaryState = (typeof TRACE_SUMMARY_STATES)[number];
+
+const TRACE_PADDING_MS = 250;
+
+/** Null for a trace the list never showed. */
+export const traceSummaryResponse = ({
+	traceId,
+	count,
+	start,
+	end,
+}: Pick<SpanRowsOptions, 'count' | 'start' | 'end'> & {
+	traceId: string;
+}): GetTraceSummary200 | null => {
+	const index = rowWindow({ count, offset: 0, limit: count }).find(
+		(i) => traceIdAt(i) === traceId,
+	);
+	if (index === undefined) {
+		return null;
+	}
+	const spanStart = new Date(timestampAt(index, start, end)).getTime();
+	const span = SPANS[index % SPANS.length];
+
+	return {
+		status: 'success',
+		data: {
+			startTimestampMillis: spanStart - TRACE_PADDING_MS,
+			endTimestampMillis: spanStart + span.durationMs + TRACE_PADDING_MS,
+			rootServiceName: SPANS[0].service,
+			rootServiceEntryPoint: SPANS[0].operation,
+			rootSpanStatusCode: '200',
+			totalSpansCount: SPANS.length,
+			totalErrorSpansCount: SPANS.filter(({ failing }) => failing).length,
+			hasMissingSpans: false,
+		},
+	};
+};
 
 const { resource, attribute } = TelemetrytypesFieldContextDTO;
 const { string: stringType, bool } = TelemetrytypesFieldDataTypeDTO;
