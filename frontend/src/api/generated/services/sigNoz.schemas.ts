@@ -7237,6 +7237,7 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
@@ -8518,6 +8519,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TextPanel' = 'signoz/TextPanel',
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 	'signoz/ScatterPlotPanel' = 'signoz/ScatterPlotPanel',
+	'signoz/TopListPanel' = 'signoz/TopListPanel',
 	'signoz/GeoMapPanel' = 'signoz/GeoMapPanel',
 }
 /**

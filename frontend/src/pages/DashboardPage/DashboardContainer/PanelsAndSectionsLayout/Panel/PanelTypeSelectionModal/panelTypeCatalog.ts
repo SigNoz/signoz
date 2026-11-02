@@ -45,6 +45,11 @@ const PANEL_TYPE_META: Record<PanelKind, PanelTypeMeta> = {
 		description: 'Two values per group, plotted against each other',
 		isNew: true,
 	},
+	'signoz/TopListPanel': {
+		group: 'compare',
+		description: 'Groups ranked by a single value',
+		isNew: true,
+	},
 	'signoz/GeoMapPanel': {
 		group: 'compare',
 		description: 'Values by country, state or coordinates',
