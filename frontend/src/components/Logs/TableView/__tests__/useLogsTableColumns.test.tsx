@@ -1,6 +1,7 @@
-import { renderHook } from '@testing-library/react';
+import { render, renderHook, screen } from '@testing-library/react';
 import { FontSize } from 'container/OptionsMenu/types';
 import { IField } from 'types/api/logs/fields';
+import { ILog } from 'types/api/logs/log';
 
 import { useLogsTableColumns } from '../useLogsTableColumns';
 
@@ -163,5 +164,38 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 		);
 
 		expect(result.current.map((c) => c.id)).toStrictEqual(['state-indicator']);
+	});
+});
+
+describe('useLogsTableColumns — cell values', () => {
+	const asLog = (partial: Partial<ILog>): ILog => partial as unknown as ILog;
+
+	it('shows an empty body cell for a row without a body', () => {
+		const { result } = renderHook(() =>
+			useLogsTableColumns({
+				fields: [field('body', 'log')],
+				fontSize: FontSize.SMALL,
+			}),
+		);
+		const bodyCol = result.current.find((c) => c.id === 'log:body');
+
+		expect(bodyCol?.accessorFn?.(asLog({}))).toBe('');
+	});
+
+	it('renders an object-valued field as JSON, not [object Object]', () => {
+		const { result } = renderHook(() =>
+			useLogsTableColumns({
+				fields: [field('order')],
+				fontSize: FontSize.SMALL,
+			}),
+		);
+		const orderCol = result.current.find((c) => c.id === 'order');
+		const Cell = orderCol?.cell as (props: { value: unknown }) => JSX.Element;
+
+		render(<Cell value={{ id: 8412, coupons: ['WELCOME10'] }} />);
+
+		expect(
+			screen.getByText('{"id":8412,"coupons":["WELCOME10"]}'),
+		).toBeInTheDocument();
 	});
 });
