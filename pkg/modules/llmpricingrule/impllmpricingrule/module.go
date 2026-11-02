@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -22,12 +23,13 @@ import (
 const unmappedModelsLookback = time.Hour
 
 type module struct {
-	store   llmpricingruletypes.Store
-	querier querier.Querier
+	store                  llmpricingruletypes.Store
+	querier                querier.Querier
+	telemetryMetadataStore telemetrytypes.MetadataStore
 }
 
-func NewModule(store llmpricingruletypes.Store, querier querier.Querier) llmpricingrule.Module {
-	return &module{store: store, querier: querier}
+func NewModule(store llmpricingruletypes.Store, querier querier.Querier, telemetryMetadataStore telemetrytypes.MetadataStore) llmpricingrule.Module {
+	return &module{store: store, querier: querier, telemetryMetadataStore: telemetryMetadataStore}
 }
 
 func (module *module) List(ctx context.Context, orgID valuer.UUID, offset, limit int, search string, isOverride *bool) ([]*llmpricingruletypes.LLMPricingRule, int, error) {
@@ -51,13 +53,33 @@ func (module *module) ListUnmappedModels(ctx context.Context, orgID valuer.UUID)
 		return nil, err
 	}
 
-	unmapped := make([]*llmpricingruletypes.UnmappedModel, 0, len(models))
-	for _, m := range models {
-		if !llmpricingruletypes.ModelMatchesAnyRule(m.ModelName, rules) {
-			unmapped = append(unmapped, m)
-		}
+	return llmpricingruletypes.UnmappedModels(models, rules), nil
+}
+
+func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	rules, err := module.listAllRules(ctx, orgID)
+	if err != nil {
+		return nil, err
 	}
-	return unmapped, nil
+
+	models, err := module.discoverModels(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	stats := llmpricingruletypes.NewStatsFromRules(rules, llmpricingruletypes.UnmappedModels(models, rules))
+
+	values := make(map[string]*telemetrytypes.TelemetryFieldValues)
+	for _, selector := range aiobservabilitytypes.StatsFieldValueSelectors(time.Now()) {
+		fieldValues, _, err := module.telemetryMetadataStore.GetAllValues(ctx, orgID, selector)
+		if err != nil {
+			return nil, err
+		}
+		values[selector.Name] = fieldValues
+	}
+	maps.Copy(stats, aiobservabilitytypes.NewStatsFromFieldValues(values))
+
+	return stats, nil
 }
 
 // CreateOrUpdate saves a batch of pricing rules. isOverride decides how a rule
