@@ -5,6 +5,7 @@ import {
 	AlertmanagertypesChannelIncidentIOConfigDTO,
 	AlertmanagertypesChannelJiraConfigDTO,
 	AlertmanagertypesChannelJSMOpsConfigDTO,
+	AlertmanagertypesChannelMattermostConfigDTO,
 	AlertmanagertypesChannelMSTeamsConfigDTO,
 	AlertmanagertypesChannelOpsgenieConfigDTO,
 	AlertmanagertypesChannelPagerdutyConfigDTO,
@@ -139,6 +140,15 @@ const SPEC_FIELDS = {
 		'disableNotifications',
 		'sendResolved',
 	] as const satisfies readonly (keyof AlertmanagertypesChannelTelegramConfigDTO)[],
+	[ChannelKind.mattermost]: [
+		'webhookUrl',
+		'channel',
+		'username',
+		'iconUrl',
+		'iconEmoji',
+		'text',
+		'sendResolved',
+	] as const satisfies readonly (keyof AlertmanagertypesChannelMattermostConfigDTO)[],
 } satisfies Record<ChannelKind, readonly (keyof ChannelSpecFormValues)[]>;
 
 /**
@@ -195,6 +205,10 @@ type SpecFieldsComplete = {
 	telegram: MissingFrom<
 		AlertmanagertypesChannelTelegramConfigDTO,
 		(typeof SPEC_FIELDS)['telegram']
+	>;
+	mattermost: MissingFrom<
+		AlertmanagertypesChannelMattermostConfigDTO,
+		(typeof SPEC_FIELDS)['mattermost']
 	>;
 };
 

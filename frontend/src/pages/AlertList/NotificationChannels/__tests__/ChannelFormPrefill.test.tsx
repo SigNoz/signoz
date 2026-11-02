@@ -222,6 +222,25 @@ const CASES: PrefillCase[] = [
 			['telegram-api-url-textbox', 'https://api.telegram.org'],
 		],
 	},
+	{
+		kind: 'mattermost',
+		spec: {
+			webhookUrl: 'https://mattermost.example.com/hooks/abc',
+			channel: 'alerts',
+			username: 'signoz',
+			iconUrl: 'https://signoz.io/icon.png',
+			iconEmoji: ':bell:',
+			text: 'mattermost text',
+		},
+		fields: [
+			['webhook-url-textbox', 'https://mattermost.example.com/hooks/abc'],
+			['mattermost-channel-textbox', 'alerts'],
+			['mattermost-username-textbox', 'signoz'],
+			['mattermost-icon-url-textbox', 'https://signoz.io/icon.png'],
+			['mattermost-icon-emoji-textbox', ':bell:'],
+			['mattermost-text-textarea', 'mattermost text'],
+		],
+	},
 ];
 
 describe('ChannelForm prefill', () => {

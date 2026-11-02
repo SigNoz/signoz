@@ -119,6 +119,66 @@ describe('ChannelForm save', () => {
 	);
 
 	it(
+		'sends the mattermost webhook with the mattermost template, not the slack one',
+		async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				rest.post(
+					'http://localhost/api/v2/notification_channels',
+					async (req, res, ctx) => {
+						body = await req.json();
+						return res(ctx.status(201), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
+			await user.click(
+				await screen.findByRole('option', { name: /^Mattermost$/ }),
+			);
+
+			await user.type(
+				screen.getByTestId('channel-name-textbox'),
+				'mattermost alerts',
+			);
+			await user.type(
+				screen.getByTestId('webhook-url-textbox'),
+				'https://mattermost.example.com/hooks/abc',
+			);
+			await user.type(screen.getByTestId('mattermost-channel-textbox'), 'alerts');
+
+			// the form opens on slack; its text must not carry over
+			expect(screen.getByTestId('mattermost-text-textarea')).toHaveValue(
+				'{{ template "mattermost.default.text" . }}',
+			);
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await waitFor(() => expect(body).toBeDefined(), FIND);
+			expect(body).toMatchObject({
+				config: {
+					kind: 'mattermost',
+					spec: {
+						webhookUrl: 'https://mattermost.example.com/hooks/abc',
+						channel: 'alerts',
+						text: '{{ template "mattermost.default.text" . }}',
+						sendResolved: true,
+					},
+				},
+			});
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
 		'sends only the credentials of the picked webhook auth',
 		async () => {
 			let body: Record<string, unknown> | undefined;

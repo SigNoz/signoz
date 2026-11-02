@@ -7,6 +7,7 @@ import {
 	AlertmanagertypesChannelOpsgenieConfigDTO,
 	AlertmanagertypesChannelPagerdutyConfigDTO,
 	AlertmanagertypesChannelSlackConfigDTO,
+	AlertmanagertypesChannelMattermostConfigDTO,
 	AlertmanagertypesChannelTelegramConfigDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
@@ -581,6 +582,15 @@ export const TelegramInitialConfig: Partial<AlertmanagertypesChannelTelegramConf
 		sendResolved: true,
 	};
 
+// mirrors config.DefaultMattermostConfig in Alertmanager, which the backend
+// applies when text is left empty; set explicitly so switching from another
+// kind replaces that kind's text instead of carrying it over
+export const MattermostInitialConfig: Partial<AlertmanagertypesChannelMattermostConfigDTO> =
+	{
+		text: '{{ template "mattermost.default.text" . }}',
+		sendResolved: true,
+	};
+
 export const DEFAULT_CHANNEL_KIND = ChannelKind.slack;
 
 export const ChannelInitialConfig: Record<ChannelKind, ChannelSpecFormValues> =
@@ -596,4 +606,5 @@ export const ChannelInitialConfig: Record<ChannelKind, ChannelSpecFormValues> =
 		[ChannelKind.email]: EmailInitialConfig,
 		[ChannelKind.webhook]: {},
 		[ChannelKind.telegram]: TelegramInitialConfig,
+		[ChannelKind.mattermost]: MattermostInitialConfig,
 	};
