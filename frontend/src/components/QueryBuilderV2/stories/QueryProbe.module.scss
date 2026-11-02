@@ -1,0 +1,11 @@
+.probe {
+	margin-top: 16px;
+	padding: 12px;
+	max-height: 320px;
+	overflow: auto;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	font-size: 12px;
+	color: var(--l2-foreground);
+	background: var(--l1-background);
+}

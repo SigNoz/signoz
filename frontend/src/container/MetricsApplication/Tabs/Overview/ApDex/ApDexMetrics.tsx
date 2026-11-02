@@ -1,5 +1,5 @@
 import { ReactNode, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import { Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import TextToolTip from 'components/TextToolTip';
@@ -21,8 +21,6 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
-
-import { IServiceName } from '../../types';
 import { ApDexMetricsProps } from './types';
 
 function ApDexMetrics({
@@ -34,8 +32,8 @@ function ApDexMetrics({
 	topLevelOperationsRoute,
 	handleGraphClick,
 }: ApDexMetricsProps): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
+	const servicename = decodeURIComponent(encodedServiceName || '');
 	const apDexMetricsWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({

@@ -4,6 +4,7 @@ import { Button } from '@signozhq/ui/button';
 import { Drawer, Tooltip } from 'antd';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import LogStateIndicator from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
@@ -147,7 +148,7 @@ function LogDetailInner({
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: DataSource.LOGS,
+		sourcePage: SavedviewtypesSourceDTO.logs,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
 

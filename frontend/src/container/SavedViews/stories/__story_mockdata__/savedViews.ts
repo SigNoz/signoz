@@ -209,6 +209,18 @@ export const createdSavedView = (
 	spec,
 });
 
+const LONG_NAME_SUFFIX = ', every environment and region, last 30 days';
+
+export const withLongName = (
+	view: SavedviewtypesSavedViewDTO,
+): SavedviewtypesSavedViewDTO => ({
+	...view,
+	spec: {
+		...view.spec,
+		displayName: `${view.spec.displayName}${LONG_NAME_SUFFIX}`,
+	},
+});
+
 export const savedViewResponse = (
 	view: SavedviewtypesSavedViewDTO,
 ): GetSavedView200 => ({ status: 'success', data: view });
