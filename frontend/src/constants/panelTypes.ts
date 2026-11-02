@@ -34,6 +34,7 @@ export const getComponentForPanelType = (
 		[PANEL_TYPES.HISTOGRAM]: Uplot,
 		// V2-only kind; it renders through the V2 panel registry.
 		[PANEL_TYPES.HEATMAP]: null,
+		[PANEL_TYPES.TOP_LIST]: null,
 		[PANEL_TYPES.GEO_MAP]: null,
 		// Dashboards v2 renders this kind; nothing reaches the V1 chart map for it.
 		[PANEL_TYPES.TEXT]: null,
