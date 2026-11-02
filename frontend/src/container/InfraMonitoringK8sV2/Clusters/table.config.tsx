@@ -4,8 +4,7 @@ import {
 	InframonitoringtypesClusterRecordDTO,
 	InframonitoringtypesNodeConditionDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { TableColumnDef } from 'components/TanStackTableView';
-import TanStackTable from 'components/TanStackTableView';
+import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';
