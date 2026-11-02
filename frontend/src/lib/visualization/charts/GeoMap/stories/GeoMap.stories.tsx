@@ -134,16 +134,25 @@ export const ZoomControls: Story = {
 		const map = within(canvasElement);
 		// The controls only show on CSS :hover, which synthetic events don't trigger.
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		await expect(map.getByTestId('geo-map-zoom-out')).toBeDisabled();
+		await expect(map.getByTestId('geo-map-zoom-out')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		await user.click(map.getByTestId('geo-map-zoom-in'));
 		await waitFor(() =>
-			expect(map.getByTestId('geo-map-zoom-out')).toBeEnabled(),
+			expect(map.getByTestId('geo-map-zoom-out')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
 		);
 
 		await user.click(map.getByTestId('geo-map-zoom-reset'));
 		await waitFor(() =>
-			expect(map.getByTestId('geo-map-zoom-out')).toBeDisabled(),
+			expect(map.getByTestId('geo-map-zoom-out')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
 		);
 	},
 };
