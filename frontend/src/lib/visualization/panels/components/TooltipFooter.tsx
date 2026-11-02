@@ -9,6 +9,7 @@ import { Events } from 'constants/events';
 
 interface TooltipFooterProps {
 	id: string;
+	canPin?: boolean;
 	pinKey?: string;
 	isPinned: boolean;
 	canDrilldown?: boolean;
@@ -17,6 +18,7 @@ interface TooltipFooterProps {
 
 export default function TooltipFooter({
 	id,
+	canPin = true,
 	pinKey = DEFAULT_PIN_TOOLTIP_KEY,
 	isPinned,
 	canDrilldown = true,
@@ -53,11 +55,13 @@ export default function TooltipFooter({
 								<span>Click to drilldown</span>
 							</div>
 						)}
-						<div className={Styles.hint} data-active="false">
-							<span>Press</span>
-							<Kbd>{pinKey.toUpperCase()}</Kbd>
-							<span>to pin the tooltip</span>
-						</div>
+						{canPin && (
+							<div className={Styles.hint} data-active="false">
+								<span>Press</span>
+								<Kbd>{pinKey.toUpperCase()}</Kbd>
+								<span>to pin the tooltip</span>
+							</div>
+						)}
 					</div>
 				)}
 			</div>
