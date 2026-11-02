@@ -268,6 +268,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddGCPConnectionMethodFactory(),
 		sqlmigration.NewDeleteOrphanSARolesFactory(),
 		sqlmigration.NewAddRoutePolicyTuplesFactory(sqlstore),
+		sqlmigration.NewRenameSavedViewDeprecatedTraceFieldsFactory(),
 		sqlmigration.NewAddDowntimeTuplesFactory(sqlstore),
 	)
 }
