@@ -8,7 +8,6 @@ import LogStateIndicator from 'components/Logs/LogStateIndicator/LogStateIndicat
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
-import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ContextView from 'container/LogDetailedView/ContextView/ContextView';
 import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
@@ -22,6 +21,7 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { getBodyMessage } from 'lib/logs/logBody';
 import { cloneDeep } from 'lodash-es';
 import {
 	ArrowDown,
@@ -32,8 +32,6 @@ import {
 	TextSelect,
 	X,
 } from '@signozhq/icons';
-import { useAppContext } from 'providers/App/App';
-import { ILogBody } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
@@ -66,10 +64,6 @@ function LogDetailInner({
 	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
 
 	const [isFilterVisible, setIsFilterVisible] = useState<boolean>(false);
-	const { featureFlags } = useAppContext();
-	const isBodyJsonQueryEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_JSON_BODY)
-			?.active || false;
 
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -172,20 +166,7 @@ function LogDetailInner({
 		}
 	};
 
-	const logBody = useMemo(() => {
-		if (!isBodyJsonQueryEnabled) {
-			return (log?.body as string) ?? '';
-		}
-		// Feature enabled: body is always a map; message is always a string
-		const bodyObj = log?.body as ILogBody;
-		if (!bodyObj) {
-			return '';
-		}
-		if (bodyObj.message) {
-			return bodyObj.message;
-		}
-		return JSON.stringify(bodyObj);
-	}, [isBodyJsonQueryEnabled, log?.body]);
+	const logBody = useMemo(() => getBodyMessage(log?.body), [log?.body]);
 
 	const htmlBody = useMemo(
 		() => ({
