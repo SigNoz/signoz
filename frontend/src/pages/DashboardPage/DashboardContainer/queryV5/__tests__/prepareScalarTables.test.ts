@@ -103,13 +103,20 @@ describe('prepareScalarTables', () => {
 		expect(table.columns).toStrictEqual([
 			{
 				name: 'service.name',
+				isNamed: false,
 				queryName: 'A',
 				isValueColumn: false,
 				id: 'service.name',
 			},
 			// Single aggregation, no alias/legend → expression as display name,
 			// queryName as id.
-			{ name: 'count()', queryName: 'A', isValueColumn: true, id: 'A' },
+			{
+				name: 'count()',
+				isNamed: false,
+				queryName: 'A',
+				isValueColumn: true,
+				id: 'A',
+			},
 		]);
 		expect(table.rows).toStrictEqual([
 			{ data: { 'service.name': 'frontend', A: 42 } },
@@ -140,6 +147,7 @@ describe('prepareScalarTables', () => {
 			]),
 		});
 		expect(withAlias[0].columns[0].name).toBe('hits');
+		expect(withAlias[0].columns[0].isNamed).toBe(true);
 
 		const withLegend = prepareScalarTables({
 			results: [scalarResult(columns, [])],
@@ -147,6 +155,7 @@ describe('prepareScalarTables', () => {
 			requestPayload: SINGLE_AGG_REQUEST,
 		});
 		expect(withLegend[0].columns[0].name).toBe('My legend');
+		expect(withLegend[0].columns[0].isNamed).toBe(true);
 	});
 
 	it('multiple aggregations skip the legend and key columns by queryName.expression', () => {

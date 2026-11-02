@@ -46,7 +46,11 @@ export const definition: PanelDefinition<'signoz/GeoMapPanel'> = {
 		[QueryBuilderField.OrderBy]: { state: 'hidden' },
 		[QueryBuilderField.Limit]: { state: 'hidden' },
 		[QueryBuilderField.Functions]: { state: 'hidden' },
-		[QueryBuilderField.Legend]: { state: 'hidden' },
+		// Pinned so it opens empty: the group-by template a click would seed names nothing here.
+		[QueryBuilderField.Legend]: {
+			state: 'pinned',
+			placeholder: 'Name for this value, e.g. Error rate',
+		},
 		// A trace operator returns spans, not one row per location.
 		[QueryBuilderField.TraceOperator]: { state: 'hidden' },
 	},

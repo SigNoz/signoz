@@ -116,6 +116,11 @@ export const TABLE_VALUE_COLUMN = QUERY_NAME;
 /** The table's second value column, which no threshold targets. */
 export const TABLE_SECOND_COLUMN = 'B';
 
+export const VALUE_NAMES = {
+	[QUERY_NAME]: 'p99 latency',
+	[TABLE_SECOND_COLUMN]: 'errors',
+};
+
 /** Linear, so `auto` lays the rows out linearly and `log` visibly changes it. */
 export const HEATMAP_BUCKETS = [
 	100, 200, 300, 400, 500, 600, 700, 800, 900, 1000,

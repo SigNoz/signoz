@@ -31,6 +31,20 @@ describe('getValueColumnLabels', () => {
 		).toStrictEqual({ F1: 'F1', A: 'A' });
 	});
 
+	it('leaves a name the user wrote bare', () => {
+		expect(
+			getValueColumnLabels([
+				{ ...column('A.count()', 'requests', 'A'), isNamed: true },
+				{ ...column('F1', 'Error rate', 'F1'), isNamed: true },
+				column('A.p95(duration_nano)', 'p95(duration_nano)', 'A'),
+			]),
+		).toStrictEqual({
+			'A.count()': 'requests',
+			F1: 'Error rate',
+			'A.p95(duration_nano)': 'A.p95(duration_nano)',
+		});
+	});
+
 	it('leaves a column with no query name bare', () => {
 		expect(getValueColumnLabels([column('x', 'x', '')])).toStrictEqual({
 			x: 'x',
