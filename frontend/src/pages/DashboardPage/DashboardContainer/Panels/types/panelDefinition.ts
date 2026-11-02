@@ -134,7 +134,7 @@ export interface QueryPanelDefinition<
 		data: PanelQueryData,
 	) => PanelStatusDetail | null;
 	/** Reconciles the kind's options with the queries a save carries. */
-	prepareSaveSpec?: (
+	reconcileWithQueries?: (
 		spec: DashboardtypesPanelSpecDTO,
 	) => DashboardtypesPanelSpecDTO;
 }

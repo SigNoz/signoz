@@ -119,13 +119,15 @@ export function usePanelEditSession({
 		savedQueries: savedPanel?.spec.queries,
 	});
 
-	const { prepareSaveSpec } = panelDefinition;
+	const { reconcileWithQueries } = panelDefinition;
 	const buildSaveSpec = useCallback(
 		(next: DashboardtypesPanelSpecDTO): DashboardtypesPanelSpecDTO => {
 			const withQueries = buildQuerySaveSpec(next);
-			return prepareSaveSpec ? prepareSaveSpec(withQueries) : withQueries;
+			return reconcileWithQueries
+				? reconcileWithQueries(withQueries)
+				: withQueries;
 		},
-		[buildQuerySaveSpec, prepareSaveSpec],
+		[buildQuerySaveSpec, reconcileWithQueries],
 	);
 
 	return {

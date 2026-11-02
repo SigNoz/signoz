@@ -58,7 +58,7 @@ export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 	// One group by everywhere, so the queries' results join row for row.
 	syncedQueryBuilderFields: [QueryBuilderField.GroupBy],
 	getDataWarning: getScatterPlotDataWarning,
-	prepareSaveSpec: pruneStaleDimensions,
+	reconcileWithQueries: pruneStaleDimensions,
 	actions: {
 		view: true,
 		edit: true,
