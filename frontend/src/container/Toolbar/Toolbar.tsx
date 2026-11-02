@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import ROUTES from 'constants/routes';
 import LiveLogsPauseResume from 'container/LiveLogs/LiveLogsPauseResume/LiveLogsPauseResume';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -26,7 +26,7 @@ export default function Toolbar({
 	onGoLive,
 	onExitLiveLogs,
 }: ToolbarProps): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	const isLogsExplorerPage = useMemo(
 		() => pathname === ROUTES.LOGS_EXPLORER,

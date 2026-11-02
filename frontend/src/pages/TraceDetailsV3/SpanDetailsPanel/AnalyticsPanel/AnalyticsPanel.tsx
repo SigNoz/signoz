@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import { Tabs } from '@signozhq/ui/tabs';
 import { DetailsHeader } from 'components/DetailsPanel';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -10,7 +10,6 @@ import {
 	SpantypesSpanAggregationDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
 
 import { useTraceStore } from '../../stores/traceStore';
 import {
@@ -37,7 +36,7 @@ function AnalyticsPanel({
 	onClose,
 	onTabChange,
 }: AnalyticsPanelProps): JSX.Element | null {
-	const { id: traceId } = useParams<TraceDetailV3URLProps>();
+	const { id: traceId } = useAppParams<'id'>();
 	const colorByField = useTraceStore((s) => s.colorByField);
 	const colorByFieldName = colorByField.name;
 	const isDarkMode = useIsDarkMode();

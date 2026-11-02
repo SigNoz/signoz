@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -41,7 +41,7 @@ function ChartPreview({
 
 	const yAxisUnit = alertState.yAxisUnit || '';
 
-	const location = useLocation();
+	const location = useAppLocation();
 	const yAxisUnitFromURL = new URLSearchParams(location.search).get(
 		QueryParams.yAxisUnit,
 	);

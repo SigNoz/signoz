@@ -4,7 +4,7 @@ import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetHosts } from 'api/generated/services/zeus';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { Link2 } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
@@ -51,7 +51,7 @@ function DataSourceInfo({
 		logEvent('Homepage: Connect dataSource clicked', {});
 
 		if (activeLicense && activeLicense.platform === LicensePlatform.CLOUD) {
-			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+			navigate(ROUTES.GET_STARTED_WITH_CLOUD);
 		} else {
 			openInNewTab(DOCS_LINKS.ADD_DATA_SOURCE);
 		}

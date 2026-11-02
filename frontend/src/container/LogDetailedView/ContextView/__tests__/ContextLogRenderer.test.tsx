@@ -1,6 +1,5 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import {
 	act,
@@ -19,6 +18,7 @@ import { QueryBuilderContext } from 'providers/QueryBuilder';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -70,7 +70,7 @@ const renderContextLogRenderer = (): RenderResult => {
 	};
 
 	return render(
-		<MemoryRouter>
+		<TestRouter>
 			<TimezoneProvider>
 				<Provider store={store}>
 					<ErrorModalProvider>
@@ -98,7 +98,7 @@ const renderContextLogRenderer = (): RenderResult => {
 					</ErrorModalProvider>
 				</Provider>
 			</TimezoneProvider>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 };
 

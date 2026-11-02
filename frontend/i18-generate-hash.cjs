@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const fs = require('fs');
-const glob = require('glob');
+const path = require('path');
 
 function generateChecksum(str, algorithm, encoding) {
 	return crypto
@@ -9,12 +9,17 @@ function generateChecksum(str, algorithm, encoding) {
 		.digest(encoding || 'hex');
 }
 
+const localesDir = 'public/locales';
 const result = {};
 
-glob.sync(`public/locales/**/*.json`).forEach((path) => {
-	const [_, lang] = path.split('public/locales');
-	const content = fs.readFileSync(path, { encoding: 'utf-8' });
-	result[lang.replace('.json', '')] = generateChecksum(content);
-});
+fs
+	.readdirSync(localesDir, { recursive: true, withFileTypes: true })
+	.filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
+	.forEach((entry) => {
+		const file = path.join(entry.parentPath, entry.name);
+		const content = fs.readFileSync(file, { encoding: 'utf-8' });
+		const key = path.relative(localesDir, file).replace(/\.json$/, '');
+		result[`/${key}`] = generateChecksum(content);
+	});
 
 fs.writeFileSync('./i18n-translations-hash.json', JSON.stringify(result));
