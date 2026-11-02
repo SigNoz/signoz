@@ -427,7 +427,7 @@ def test_create_rejects_invalid_bodies(
     [
         pytest.param({"sort": "data"}, id="sort_outside_the_enum"),
         pytest.param({"order": "sideways"}, id="order_outside_the_enum"),
-        pytest.param({"kind": "telegram"}, id="kind_outside_the_enum"),
+        pytest.param({"kind": "pushover"}, id="kind_outside_the_enum"),
         pytest.param({"limit": -1}, id="negative_limit"),
         pytest.param({"offset": -1}, id="negative_offset"),
     ],

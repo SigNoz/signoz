@@ -72,10 +72,11 @@ function SectionTitleModal({
 						Cancel
 					</Button>
 					<Button
+						disabledTooltip="Enter a section name first"
 						variant="solid"
 						color="primary"
 						size="md"
-						disabled={!canSave}
+						disabled={value.trim().length === 0}
 						loading={isSaving}
 						onClick={submit}
 						testId="section-title-submit"

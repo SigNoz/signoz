@@ -56,7 +56,7 @@ test.describe('Alert rules list — row actions', () => {
 		const [createResponse] = await Promise.all([
 			page.waitForResponse(
 				(res) =>
-					/\/api\/v\d\/rules$/.test(new URL(res.url()).pathname) &&
+					/\/api\/v\d\/rules\/[^/]+\/clone$/.test(new URL(res.url()).pathname) &&
 					res.request().method() === 'POST',
 			),
 			page.getByRole('menuitem', { name: 'Clone' }).click(),

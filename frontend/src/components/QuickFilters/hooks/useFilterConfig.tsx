@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 import { useGetQuickFilters } from 'api/generated/services/quick-filter';
+import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
-import { IQuickFiltersConfig, SignalType } from '../types';
+import { IQuickFiltersConfig } from '../types';
 import { getFilterConfig } from '../utils';
 
 interface UseFilterConfigProps {
-	signal?: SignalType;
+	savedFiltersSource?: QuickfiltertypesSourceDTO;
 	config: IQuickFiltersConfig[];
 }
 interface UseFilterConfigReturn {
@@ -18,7 +19,7 @@ interface UseFilterConfigReturn {
 }
 
 const useFilterConfig = ({
-	signal,
+	savedFiltersSource,
 	config,
 }: UseFilterConfigProps): UseFilterConfigReturn => {
 	const {
@@ -26,8 +27,8 @@ const useFilterConfig = ({
 		data,
 		refetch,
 	} = useGetQuickFilters(
-		{ source: signal ?? '' },
-		{ query: { enabled: !!signal } },
+		{ source: savedFiltersSource ?? '' },
+		{ query: { enabled: !!savedFiltersSource } },
 	);
 
 	const customFilters = useMemo<TelemetryFieldKey[]>(
@@ -35,11 +36,11 @@ const useFilterConfig = ({
 		[data],
 	);
 
-	const isDynamicFilters = !!signal;
+	const isDynamicFilters = !!savedFiltersSource;
 
 	const filterConfig = useMemo(
-		() => getFilterConfig(signal, customFilters, config),
-		[config, customFilters, signal],
+		() => getFilterConfig(customFilters, config),
+		[config, customFilters],
 	);
 
 	return {

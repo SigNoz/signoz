@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { IntegrationsProps } from 'types/api/integrations/types';
@@ -12,7 +12,6 @@ import OneClickIntegrations from './OneClickIntegrations/OneClickIntegrations';
 import './Integrations.styles.scss';
 
 function Integrations(): JSX.Element {
-	const history = useHistory();
 	const [searchQuery, setSearchQuery] = useState('');
 
 	const setSelectedIntegration = useCallback(
@@ -21,12 +20,12 @@ function Integrations(): JSX.Element {
 				logEvent(INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_ITEM_LIST_CLICKED, {
 					integration,
 				});
-				history.push(`${ROUTES.INTEGRATIONS}/${integration.id}`);
+				navigate(`${ROUTES.INTEGRATIONS}/${integration.id}`);
 			} else {
-				history.push(ROUTES.INTEGRATIONS);
+				navigate(ROUTES.INTEGRATIONS);
 			}
 		},
-		[history],
+		[],
 	);
 
 	useEffect(() => {

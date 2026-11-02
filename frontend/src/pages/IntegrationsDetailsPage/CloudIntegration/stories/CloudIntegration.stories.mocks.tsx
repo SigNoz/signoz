@@ -4,7 +4,11 @@
  */
 
 import { rest } from 'msw';
-import type { CloudintegrationtypesUpdatableServiceDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	CloudintegrationtypesGCPConnectionMethodDTO,
+	type CloudintegrationtypesPostableAccountDTO,
+	type CloudintegrationtypesUpdatableServiceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
@@ -18,9 +22,14 @@ import {
 	CLOUD_PROVIDERS,
 	CLOUD_SERVICE_CAP,
 	type CloudProvider,
+	GCP_CONNECTION_METHODS,
 	MUTATION_STATES,
 	type MutationState,
+	NEW_ACCOUNT_CHECK_INS,
+	type NewAccountCheckIn,
 	createdAccountResponse,
+	newAccountId,
+	newAccountResponse,
 	BUILT_IN_INTEGRATION_NOT_FOUND,
 	credentialsResponse,
 	seedServiceSignals,
@@ -36,6 +45,11 @@ import {
 const builtInIntegrationNotFound: MockResolver = (_req, res, ctx) =>
 	res(ctx.status(404), ctx.json(BUILT_IN_INTEGRATION_NOT_FOUND));
 
+const FAILED_REQUEST = {
+	status: 'error',
+	error: { code: 'internal', message: 'Request failed' },
+};
+
 /**
  * Answers a mutation by the control's state: never, with a failure, or with the
  * success body the caller builds.
@@ -48,14 +62,31 @@ const mutationResolver =
 		}
 
 		return state === 'error'
-			? res(
-					ctx.status(500),
-					ctx.json({
-						status: 'error',
-						error: { code: 'internal', message: 'Request failed' },
-					}),
-				)
+			? res(ctx.status(500), ctx.json(FAILED_REQUEST))
 			: ok(req, res, ctx, ...rest);
+	};
+
+/**
+ * The account the connect flow just created answers by the check-in control;
+ * every other account is the page's data.
+ */
+const accountResolver =
+	(
+		provider: CloudProvider,
+		checkIn: NewAccountCheckIn,
+		existing: MockResolver,
+	): MockResolver =>
+	(req, res, ctx, ...rest) => {
+		if (String(req.params.id) !== newAccountId(provider)) {
+			return existing(req, res, ctx, ...rest);
+		}
+
+		return checkIn === 'error'
+			? res(ctx.status(500), ctx.json(FAILED_REQUEST))
+			: res(
+					ctx.status(200),
+					ctx.json(newAccountResponse(provider, checkIn === 'checked-in')),
+				);
 	};
 
 const PROVIDER = 'Cloud integration · provider';
@@ -71,6 +102,17 @@ export const cloudIntegrationMocks = defineStoryMocks({
 			options: CLOUD_PROVIDERS,
 			value: 'aws',
 		}),
+		gcpConnectionMethod:
+			choiceControl<CloudintegrationtypesGCPConnectionMethodDTO>(
+				'GCP connection method',
+				{
+					group: PROVIDER,
+					description:
+						'How the connected GCP accounts were set up. `agent` makes the account settings drawer read-only and switches the Disconnect copy to the agent cleanup.',
+					options: GCP_CONNECTION_METHODS,
+					value: CloudintegrationtypesGCPConnectionMethodDTO.manual,
+				},
+			),
 		accounts: countControl('Connected accounts', {
 			group: PROVIDER,
 			description:
@@ -98,6 +140,13 @@ export const cloudIntegrationMocks = defineStoryMocks({
 				'How the POST behind the connect flow answers. AWS and Azure raise "Failed to create account connection" on `error` and the "account connected" toast on `success`, GCP raises its toast after the agent check-in and shows `error` inline. `loading` never answers.',
 			options: MUTATION_STATES,
 			value: 'success',
+		}),
+		newAccountCheckIn: choiceControl<NewAccountCheckIn>('New account check-in', {
+			group: MUTATIONS,
+			description:
+				'How the poll for the account the connect flow just created answers. `checked-in` connects it on the first poll and the drawer closes with the success toast, `pending` keeps the drawer waiting on the agent (the GCP agent setup command stays up), `error` fails the poll so the drawer reports it could not connect.',
+			options: NEW_ACCOUNT_CHECK_INS,
+			value: 'checked-in',
 		}),
 		accountUpdate: choiceControl<MutationState>('Account settings update', {
 			group: MUTATIONS,
@@ -172,9 +221,19 @@ export const cloudIntegrationMocks = defineStoryMocks({
 
 		rest.post(
 			'http://localhost/api/v1/cloud_integrations/:cloudProvider/accounts',
-			mutationResolver(values.accountCreate, (_req, res, ctx) =>
-				res(ctx.status(201), ctx.json(createdAccountResponse(values.provider))),
-			),
+			mutationResolver(values.accountCreate, async (req, res, ctx) => {
+				const body = (await req.json()) as CloudintegrationtypesPostableAccountDTO;
+
+				return res(
+					ctx.status(201),
+					ctx.json(
+						createdAccountResponse(
+							values.provider,
+							body.config?.gcp?.connectionMethod,
+						),
+					),
+				);
+			}),
 		),
 
 		rest.put(
@@ -182,21 +241,41 @@ export const cloudIntegrationMocks = defineStoryMocks({
 			mutationResolver(values.accountUpdate, (req, res, ctx) =>
 				res(
 					ctx.status(200),
-					ctx.json(accountResponse(values.provider, String(req.params.id))),
+					ctx.json(
+						accountResponse(
+							values.provider,
+							String(req.params.id),
+							values.gcpConnectionMethod,
+						),
+					),
 				),
 			),
 		),
 
 		rest.get(
 			'http://localhost/api/v1/cloud_integrations/:cloudProvider/accounts/:id',
-			response.json((req) =>
-				accountResponse(values.provider, String(req.params.id)),
+			accountResolver(
+				values.provider,
+				values.newAccountCheckIn,
+				response.json((req) =>
+					accountResponse(
+						values.provider,
+						String(req.params.id),
+						values.gcpConnectionMethod,
+					),
+				),
 			),
 		),
 
 		rest.get(
 			'http://localhost/api/v1/cloud_integrations/:cloudProvider/accounts',
-			response.json(() => accountsResponse(values.provider, values.accounts)),
+			response.json(() =>
+				accountsResponse(
+					values.provider,
+					values.accounts,
+					values.gcpConnectionMethod,
+				),
+			),
 		),
 	],
 	config: (values) => ({
@@ -264,6 +343,17 @@ export const connectAzureAccount = async (
 	);
 };
 
+const addGcpProjectId = async (
+	testId: string,
+	projectId: string,
+): Promise<void> => {
+	await userEvent.click(screen.getByTestId(testId));
+	await userEvent.type(
+		await screen.findByPlaceholderText('Type a project ID and press Enter'),
+		`${projectId}{Enter}`,
+	);
+};
+
 export const connectGcpAccount = async (
 	canvasElement: HTMLElement,
 ): Promise<void> => {
@@ -278,14 +368,40 @@ export const connectGcpAccount = async (
 	);
 	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
 	await userEvent.click(await screen.findByText('Mumbai (asia-south1)'));
-	await userEvent.type(
-		document.querySelector<HTMLElement>('#gcp-project-ids-select') as HTMLElement,
-		'project-a,',
-	);
+	await addGcpProjectId('gcp-project-ids-select', 'project-a');
 	await userEvent.click(screen.getByTestId('gcp-connect-account-btn'));
 };
 
-const openEditAccount = async (canvasElement: HTMLElement): Promise<void> => {
+export const openGcpAgentSetup = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openConnectFlow(canvasElement);
+	await userEvent.click(
+		await screen.findByTestId(
+			'gcp-connection-method-agent',
+			undefined,
+			untilLoaded,
+		),
+	);
+	await screen.findByTestId('gcp-generate-command-btn', undefined, untilLoaded);
+};
+
+export const generateGcpAgentCommand = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openGcpAgentSetup(canvasElement);
+	await userEvent.type(
+		screen.getByTestId('gcp-deployment-project-id-input'),
+		'signoz-prod-4471',
+	);
+	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
+	await userEvent.click(await screen.findByText('Council Bluffs (us-central1)'));
+	await userEvent.click(screen.getByTestId('gcp-generate-command-btn'));
+};
+
+export const openEditAccount = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
 	await userEvent.click(
 		await within(canvasElement).findByText(
 			/edit account/i,
@@ -303,6 +419,17 @@ export const updateAwsAccount = async (
 	await userEvent.click(
 		await screen.findByRole('checkbox', { name: /us-east-2/i }),
 	);
+	await userEvent.click(
+		await screen.findByRole('button', { name: /update changes/i }),
+	);
+};
+
+export const updateGcpProjects = async (
+	canvasElement: HTMLElement,
+	projectId: string,
+): Promise<void> => {
+	await openEditAccount(canvasElement);
+	await addGcpProjectId('gcp-edit-project-ids-select', projectId);
 	await userEvent.click(
 		await screen.findByRole('button', { name: /update changes/i }),
 	);

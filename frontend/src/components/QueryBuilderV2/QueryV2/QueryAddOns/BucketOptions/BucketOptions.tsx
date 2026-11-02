@@ -3,7 +3,7 @@ import { Tooltip } from 'antd';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { InputNumber } from '@signozhq/ui/input-number';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { ChevronUp, Info } from '@signozhq/icons';
 import {
 	Querybuildertypesv5BucketOptionsDTO,
@@ -177,7 +177,10 @@ function BucketOptions({
 			<div className={styles.controls}>
 				<div className={styles.field}>
 					<span className={styles.label}>Bucket by</span>
-					<ToggleGroupSimple
+					<ToggleGroup
+						variant="outlined"
+						color="secondary"
+						size="sm"
 						type="single"
 						value={kind}
 						items={kindItems}
@@ -189,7 +192,10 @@ function BucketOptions({
 				{kind === Querybuildertypesv5BucketsKindDTO.log && (
 					<div className={styles.field}>
 						<span className={styles.label}>Scale</span>
-						<ToggleGroupSimple
+						<ToggleGroup
+							variant="outlined"
+							color="secondary"
+							size="sm"
 							type="single"
 							value={String(logScale)}
 							items={scaleItems}
@@ -233,13 +239,14 @@ function BucketOptions({
 					<Button
 						color="secondary"
 						variant="ghost"
-						size="icon"
+						size="sm"
+						icon
 						aria-label="Close bucket options"
-						className={styles.closeButton}
-						prefix={<ChevronUp size={16} />}
 						onClick={onClose}
-						data-testid="bucket-options-close"
-					/>
+						testId="bucket-options-close"
+					>
+						<ChevronUp size={16} />
+					</Button>
 				)}
 			</div>
 

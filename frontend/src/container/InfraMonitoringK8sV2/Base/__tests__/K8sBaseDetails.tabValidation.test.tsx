@@ -102,7 +102,7 @@ function renderK8sBaseDetails({
 }
 
 function getSelectedTabText(): string | null {
-	const selectedTab = document.querySelector('[aria-checked="true"]');
+	const selectedTab = document.querySelector('[aria-pressed="true"]');
 	return selectedTab?.textContent ?? null;
 }
 
@@ -244,7 +244,7 @@ describe('K8sBaseDetails - Tab Validation', () => {
 			expect(getSelectedTabText()).toContain('Logs');
 		});
 
-		const selectedTab = document.querySelector('[aria-checked="true"]');
+		const selectedTab = document.querySelector('[aria-pressed="true"]');
 		expect(selectedTab).not.toBeNull();
 
 		await user.click(selectedTab as Element);

@@ -96,7 +96,7 @@ export const LabelRemoved: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await findLabelInput(canvasElement);
 		await within(canvasElement).findByText('team: platform');
-		await removeLabel(canvasElement, 'team: platform');
+		await removeLabel(canvasElement, 'team');
 		await waitFor(() =>
 			expect(within(canvasElement).queryByText('team: platform')).toBeNull(),
 		);
@@ -109,8 +109,8 @@ export const NoLabels: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		const input = await findLabelInput(canvasElement);
 		await within(canvasElement).findByText('team: platform');
-		await removeLabel(canvasElement, 'team: platform');
-		await removeLabel(canvasElement, 'env: prod');
+		await removeLabel(canvasElement, 'team');
+		await removeLabel(canvasElement, 'env');
 		await within(canvasElement).findByPlaceholderText(
 			'Click here to enter a label (key value pairs)',
 		);

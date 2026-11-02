@@ -32,7 +32,7 @@ function DeleteRoleModal({
 			title="Delete Role"
 			titleIcon={<Trash2 size={14} />}
 			confirmText="Delete Role"
-			confirmColor="destructive"
+			confirmColor="danger"
 			cancelText="Cancel"
 			onConfirm={onConfirm}
 			onCancel={onCancel}

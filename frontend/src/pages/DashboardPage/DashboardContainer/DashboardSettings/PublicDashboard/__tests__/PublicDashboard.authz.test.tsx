@@ -43,7 +43,10 @@ describe('PublicDashboard - AuthZ', () => {
 		});
 
 		await waitFor(() => {
-			expect(screen.getByTestId('public-dashboard-publish')).toBeEnabled();
+			expect(screen.getByTestId('public-dashboard-publish')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 
@@ -55,7 +58,10 @@ describe('PublicDashboard - AuthZ', () => {
 		});
 
 		await waitFor(() => {
-			expect(screen.getByTestId('public-dashboard-publish')).toBeDisabled();
+			expect(screen.getByTestId('public-dashboard-publish')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 });

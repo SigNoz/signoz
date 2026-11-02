@@ -10,6 +10,7 @@ function ListEditorPane({
 	panelDefinition,
 	signal,
 	isLoadingQueries,
+	onChangeQueryMode,
 	onStageRunQuery,
 	onCancelQuery,
 	stickyHeader,
@@ -20,6 +21,7 @@ function ListEditorPane({
 		<PanelEditorQueryBuilder
 			panelDefinition={panelDefinition}
 			isLoadingQueries={isLoadingQueries}
+			onChangeQueryMode={onChangeQueryMode}
 			onStageRunQuery={onStageRunQuery}
 			onCancelQuery={onCancelQuery}
 			stickyHeader={stickyHeader}

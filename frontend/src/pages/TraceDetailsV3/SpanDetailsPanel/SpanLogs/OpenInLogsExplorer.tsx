@@ -15,7 +15,7 @@ function OpenInLogsExplorer({ onClick }: OpenInLogsExplorerProps): JSX.Element {
 			size="md"
 			onClick={onClick}
 			prefix={<Compass size={16} />}
-			data-testid="open-in-explorer-button"
+			testId="open-in-explorer-button"
 		>
 			Open in Logs Explorer
 		</Button>

@@ -1,14 +1,12 @@
 import { EllipsisVertical } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import ConfirmDeleteDialog from '../../../components/ConfirmDeleteDialog/ConfirmDeleteDialog';
 import type { PanelActionsConfig } from '../Panel';
 import { usePanelActionItems } from './usePanelActionItems';
-import menuStyles from '../../../components/MenuActionItem/MenuActionItem.module.scss';
-import styles from './PanelActionsMenu.module.scss';
 
 interface PanelActionsMenuProps {
 	panelId: string;
@@ -44,28 +42,24 @@ function PanelActionsMenu({
 
 	return (
 		<>
-			<DropdownMenuSimple
-				menu={{ items }}
+			<AuthZDropdown
+				items={items}
+				nativeButton
 				align="end"
-				className={menuStyles.menuContent}
+				side="bottom"
+				testId={`panel-actions-${panelId}`}
 			>
 				<Button
 					type="button"
 					variant="ghost"
 					color="secondary"
-					size="icon"
-					className={styles.trigger}
+					size="sm"
+					icon
 					aria-label="Panel actions"
-					data-testid={`panel-actions-${panelId}`}
-					// Stop pointer/mouse down from reaching the RGL drag handle this
-					// button lives inside, so opening the menu never starts a panel drag.
-					onPointerDown={(e): void => e.stopPropagation()}
-					onMouseDown={(e): void => e.stopPropagation()}
-					onClick={(e): void => e.stopPropagation()}
 				>
 					<EllipsisVertical size={14} />
 				</Button>
-			</DropdownMenuSimple>
+			</AuthZDropdown>
 			<ConfirmDeleteDialog
 				open={deleteConfirm.open}
 				title="Delete panel?"

@@ -1,19 +1,17 @@
-import { useMemo, useState } from 'react';
-import { useQuery, useQueryClient } from 'react-query';
-import { useHistory } from 'react-router-dom';
+import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
+import { navigate } from 'lib/router/navigation';
 import { toast } from '@signozhq/ui/sonner';
-import getAllChannels from 'api/channels/getAll';
 import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useCreateRoutingPolicy } from 'hooks/routingPolicies/useCreateRoutingPolicy';
 import { useDeleteRoutingPolicy } from 'hooks/routingPolicies/useDeleteRoutingPolicy';
+import { useChannelOptions } from 'hooks/notificationChannels/useChannelOptions';
 import { useGetRoutingPolicies } from 'hooks/routingPolicies/useGetRoutingPolicies';
 import { useUpdateRoutingPolicy } from 'hooks/routingPolicies/useUpdateRoutingPolicy';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { SuccessResponseV2 } from 'types/api';
-import { Channels } from 'types/api/channels/getAll';
-import APIError from 'types/api/error';
 
 import {
 	PolicyDetailsModalMode,
@@ -32,7 +30,6 @@ import './styles.scss';
 function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	const queryClient = useQueryClient();
 	const urlQuery = useUrlQuery();
-	const history = useHistory();
 
 	// Local state
 	const [searchTerm, setSearchTerm] = useState(urlQuery.get('search') || '');
@@ -53,7 +50,7 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 			urlQuery.delete('search');
 		}
 		const url = `/alerts?${urlQuery.toString()}`;
-		history.replace(url);
+		navigate(url, { replace: true });
 	}, 300);
 
 	const handleSearch = (value: string): void => {
@@ -83,32 +80,29 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 
 	// Channels list
 	const {
-		data,
+		data: channels,
 		isLoading: isLoadingChannels,
 		isError: isErrorChannels,
 		refetch: refetchChannels,
-	} = useQuery<SuccessResponseV2<Channels[]>, APIError>(['getChannels'], {
-		queryFn: () => getAllChannels(),
-	});
-	const channels = data?.data || [];
+	} = useChannelOptions();
 
 	const refreshChannels = (): void => {
-		refetchChannels();
+		void refetchChannels();
 	};
 
 	// Handlers
-	const handlePolicyDetailsModalOpen = (
-		mode: PolicyDetailsModalMode,
-		routingPolicy: RoutingPolicy | null,
-	): void => {
-		if (routingPolicy) {
-			setSelectedRoutingPolicy(routingPolicy);
-		}
-		setPolicyDetailsModalState({
-			isOpen: true,
-			mode,
-		});
-	};
+	const handlePolicyDetailsModalOpen = useCallback(
+		(mode: PolicyDetailsModalMode, routingPolicy: RoutingPolicy | null): void => {
+			if (routingPolicy) {
+				setSelectedRoutingPolicy(routingPolicy);
+			}
+			setPolicyDetailsModalState({
+				isOpen: true,
+				mode,
+			});
+		},
+		[],
+	);
 
 	const handlePolicyDetailsModalClose = (): void => {
 		setSelectedRoutingPolicy(null);
@@ -118,10 +112,13 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		});
 	};
 
-	const handleDeleteModalOpen = (routingPolicy: RoutingPolicy): void => {
-		setSelectedRoutingPolicy(routingPolicy);
-		setIsDeleteModalOpen(true);
-	};
+	const handleDeleteModalOpen = useCallback(
+		(routingPolicy: RoutingPolicy): void => {
+			setSelectedRoutingPolicy(routingPolicy);
+			setIsDeleteModalOpen(true);
+		},
+		[],
+	);
 
 	const handleDeleteModalClose = (): void => {
 		setSelectedRoutingPolicy(null);
@@ -159,7 +156,7 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 				{
 					onSuccess: () => {
 						toast.success('Routing policy created successfully');
-						queryClient.invalidateQueries(REACT_QUERY_KEY.GET_ROUTING_POLICIES);
+						void queryClient.invalidateQueries(REACT_QUERY_KEY.GET_ROUTING_POLICIES);
 						handlePolicyDetailsModalClose();
 					},
 					onError: (error) => {
@@ -181,7 +178,7 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 				{
 					onSuccess: () => {
 						toast.success('Routing policy updated successfully');
-						queryClient.invalidateQueries(REACT_QUERY_KEY.GET_ROUTING_POLICIES);
+						void queryClient.invalidateQueries(REACT_QUERY_KEY.GET_ROUTING_POLICIES);
 						handlePolicyDetailsModalClose();
 					},
 					onError: () => {
@@ -214,7 +211,7 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		deleteRoutingPolicy(selectedRoutingPolicy.id, {
 			onSuccess: () => {
 				toast.success('Routing policy deleted successfully');
-				queryClient.invalidateQueries(REACT_QUERY_KEY.GET_ROUTING_POLICIES);
+				void queryClient.invalidateQueries(REACT_QUERY_KEY.GET_ROUTING_POLICIES);
 				handleDeleteModalClose();
 			},
 			onError: () => {

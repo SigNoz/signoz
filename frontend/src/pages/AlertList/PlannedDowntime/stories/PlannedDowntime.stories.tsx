@@ -21,7 +21,7 @@ const pageStory = storyMocks(plannedDowntimeMocks, { layout: 'app' });
  * Windows that silence rules on a schedule, one off or recurring, with the rules
  * each window covers.
  *
- * Route: `/alerts?tab=Configuration&subTab=PlannedDowntime`.
+ * Route: `/alerts?tab=Configuration&subTab=planned-downtime`.
  */
 const meta = {
 	title: 'Pages/Alerts/Planned Downtime',
@@ -47,22 +47,22 @@ export const NoDowntimes: Story = {
 };
 
 /**
- * A viewer: the edit and delete actions on a row and the New downtime button
- * are gone.
+ * A viewer: the edit and delete actions on a row are gone and New downtime is
+ * disabled.
  */
 export const Viewer: Story = {
 	args: { access: 'viewer' },
 };
 
-/** A downtime opened up: who scheduled it, the window, and what it silences. */
-export const Expanded: Story = {
+/** A downtime opened from its row: the form prefilled with its window and rules. */
+export const OpenFromRow: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		const canvas = within(canvasElement);
 
 		await userEvent.click(
 			await canvas.findByText(FIRST_DOWNTIME_NAME, undefined, untilLoaded),
 		);
-		await canvas.findByText(/alerts silenced/i);
+		await screen.findByText(/edit planned downtime/i);
 	},
 };
 
@@ -97,7 +97,9 @@ export const EditDowntime: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await clickFirstRowAction(canvasElement, 'edit');
 		await screen.findByText(/edit planned downtime/i);
-		await screen.findByText(/^Postgres connections/);
+		await within(await screen.findByRole('dialog')).findByText(
+			/^Postgres connections/,
+		);
 	},
 };
 
@@ -118,13 +120,13 @@ export const SearchNoResults: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		const canvas = within(canvasElement);
 		const search = await canvas.findByPlaceholderText(
-			'Search for a planned downtime...',
+			'Search by name',
 			undefined,
 			untilLoaded,
 		);
 
 		await userEvent.type(search, 'no matching downtime');
-		await canvas.findByRole('table');
+		await canvas.findByText('No matching planned downtime');
 	},
 };
 

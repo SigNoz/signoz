@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { PanelMode } from 'lib/visualization/panels/types';
 import type { PanelOfKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/rendererProps';
 
@@ -40,7 +39,6 @@ describe('Text panel task lists', () => {
 				panelMode={PanelMode.DASHBOARD_VIEW}
 				onChangeText={onChangeText}
 			/>,
-			{ wrapper: TooltipProvider },
 		);
 
 		fireEvent.click(screen.getAllByRole('checkbox')[0]);
@@ -59,7 +57,6 @@ describe('Text panel task lists', () => {
 				panelMode={PanelMode.DASHBOARD_VIEW}
 				onChangeText={onChangeText}
 			/>,
-			{ wrapper: TooltipProvider },
 		);
 
 		fireEvent.click(screen.getByRole('checkbox'));

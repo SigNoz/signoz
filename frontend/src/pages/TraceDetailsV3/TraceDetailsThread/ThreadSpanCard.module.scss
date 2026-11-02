@@ -1,0 +1,29 @@
+.card {
+	position: relative;
+	padding: var(--spacing-8);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	background: var(--l1-background);
+	min-width: 0;
+	cursor: pointer;
+
+	&:hover {
+		border-color: var(--l3-border);
+	}
+
+	&:focus-visible {
+		outline: 1px solid var(--primary);
+		outline-offset: var(--spacing-1);
+	}
+
+	&.isSelected::before {
+		content: '';
+		position: absolute;
+		top: -1px;
+		bottom: -1px;
+		left: -1px;
+		width: 2px;
+		border-radius: var(--radius-2) 0 0 var(--radius-2);
+		background: var(--primary-background);
+	}
+}

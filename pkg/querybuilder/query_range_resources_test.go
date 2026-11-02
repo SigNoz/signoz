@@ -195,3 +195,46 @@ func TestTelemetrySelector(t *testing.T) {
 	// a value containing "/" stays one logical segment (SplitN 3).
 	assert.Equal(t, []string{"builder_query/signoz.workspace.key.id/a/b", "builder_query/signoz.workspace.key.id/*", "builder_query/*", "*"}, selectorValues("builder_query/signoz.workspace.key.id/a/b"))
 }
+
+func TestBuilderQueryWithFilterExpressionResources(t *testing.T) {
+	testCases := []struct {
+		name     string
+		body     string
+		expected []coretypes.ResourceWithID
+	}{
+		{
+			name:     "FilterPresent_ScopedID",
+			body:     `{"start":1,"end":2,"filter":{"expression":"signoz.workspace.key.id = 'key-a'"}}`,
+			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/signoz.workspace.key.id/key-a"}},
+		},
+		{
+			name:     "FilterAbsent_Wildcard",
+			body:     `{"start":1,"end":2}`,
+			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"}},
+		},
+		{
+			name:     "EmptyBody_Wildcard",
+			body:     ``,
+			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"}},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			refs, err := BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceTraces, "filter.expression")(coretypes.ExtractorContext{RequestBody: []byte(testCase.body)})
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, refs)
+		})
+	}
+
+	t.Run("InvalidExpression_Error", func(t *testing.T) {
+		_, err := BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceTraces, "filter.expression")(coretypes.ExtractorContext{RequestBody: []byte(`{"filter":{"expression":"signoz.workspace.key.id = "}}`)})
+		require.Error(t, err)
+	})
+}
+
+func TestBuilderQueryWildcardResources(t *testing.T) {
+	refs, err := BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceTraces)(coretypes.ExtractorContext{})
+	require.NoError(t, err)
+	assert.Equal(t, []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"}}, refs)
+}

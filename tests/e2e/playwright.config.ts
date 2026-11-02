@@ -36,11 +36,6 @@ for (const file of ['.env', '.env.local']) {
 export default defineConfig({
 	testDir: './tests',
 
-	// Temporarily excluded: the V1 -> V2 dashboard migration changes the
-	// behaviour the dashboards specs assert against, so they fail as written.
-	// Remove this once they are updated for the V2 dashboard.
-	testIgnore: ['**/tests/dashboards/**'],
-
 	// All Playwright output lands under artifacts/. One subdir per reporter
 	// plus results/ for per-test artifacts (traces/screenshots/videos).
 	// CI can archive the whole dir with `tar czf artifacts.tgz tests/e2e/artifacts`.
@@ -108,7 +103,15 @@ export default defineConfig({
 		},
 		{
 			name: 'chromium',
-			use: devices['Desktop Chrome'],
+			use: {
+				...devices['Desktop Chrome'],
+				launchOptions: {
+					// Google Fonts CSS blocks the app script and `load` until it settles,
+					// so a stalled request blanks the page. Failing DNS settles it at once;
+					// a `route` would too, but routing turns off the HTTP cache.
+					args: ['--host-resolver-rules=MAP fonts.googleapis.com ~NOTFOUND'],
+				},
+			},
 			dependencies: ['setup'],
 		},
 		{

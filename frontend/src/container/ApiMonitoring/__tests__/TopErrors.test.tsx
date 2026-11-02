@@ -13,20 +13,19 @@ jest.mock(
 	'../Explorer/Domains/DomainDetails/components/EndPointsDropDown',
 	() => ({
 		__esModule: true,
-		default: jest.fn().mockImplementation(
-			({ setSelectedEndPointName }): JSX.Element => (
+		default: jest
+			.fn()
+			.mockImplementation(({ setSelectedEndPointName }): JSX.Element => (
 				<div data-testid="endpoints-dropdown-mock">
 					<select
 						data-testid="endpoints-select"
 						onChange={(e): void => setSelectedEndPointName(e.target.value)}
-						role="combobox"
 					>
 						<option value="/api/test">/api/test</option>
 						<option value="/api/new-endpoint">/api/new-endpoint</option>
 					</select>
 				</div>
-			),
-		),
+			)),
 	}),
 );
 

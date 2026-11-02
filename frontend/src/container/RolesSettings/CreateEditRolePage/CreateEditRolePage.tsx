@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
-import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { ArrowLeft, SolidAlertTriangle } from '@signozhq/icons';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppNavigate } from 'lib/router/useAppNavigate';
+import { matchRoute } from 'lib/router/matchRoute';
 import { Button } from '@signozhq/ui/button';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
@@ -43,12 +45,10 @@ function authzCheckFn(
 }
 
 function CreateEditRolePageContent(): JSX.Element {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const navigate = useAppNavigate();
+	const { pathname } = useAppLocation();
 	const urlQuery = useUrlQuery();
-	const match = matchPath<{ roleId: string }>(pathname, {
-		path: ROUTES.ROLE_DETAILS,
-	});
+	const match = matchRoute<'roleId'>(pathname, ROUTES.ROLE_DETAILS);
 	const roleId = match?.params?.roleId ?? 'new';
 	const roleName = urlQuery.get('name') ?? '';
 	const [hasJsonError, setHasJsonError] = useState(false);
@@ -85,16 +85,16 @@ function CreateEditRolePageContent(): JSX.Element {
 		if (success) {
 			allowNextNavigation();
 			if (isCreateMode) {
-				history.push(ROUTES.ROLES_SETTINGS);
+				navigate(ROUTES.ROLES_SETTINGS);
 			} else {
 				const viewUrl = `${ROUTES.ROLE_DETAILS.replace(':roleId', roleId)}?name=${encodeURIComponent(roleName)}`;
-				history.push(viewUrl);
+				navigate(viewUrl);
 			}
 		}
 	}, [
 		handleSave,
 		allowNextNavigation,
-		history,
+		navigate,
 		hasJsonError,
 		isCreateMode,
 		roleId,
@@ -110,11 +110,13 @@ function CreateEditRolePageContent(): JSX.Element {
 				<div className={styles.createEditRolePageHeader}>
 					<div className={styles.createEditRolePageHeaderLeft}>
 						<Button
+							size="md"
 							variant="ghost"
 							color="secondary"
 							onClick={handleCancel}
-							data-testid="cancel-button"
-							className={styles.backButton}
+							testId="cancel-button"
+							icon
+							aria-label="Back"
 						>
 							<ArrowLeft size={16} />
 						</Button>
@@ -172,12 +174,15 @@ function CreateEditRolePageContent(): JSX.Element {
 			<div className={styles.createEditRolePageHeader}>
 				<div className={styles.createEditRolePageHeaderLeft}>
 					<Button
+						size="md"
 						variant="ghost"
 						color="secondary"
 						onClick={handleCancel}
 						disabled={isSaving}
-						data-testid="cancel-button"
-						className={styles.backButton}
+						disabledTooltip="Wait for the save to finish"
+						testId="cancel-button"
+						icon
+						aria-label="Back"
 					>
 						<ArrowLeft size={16} />
 					</Button>
@@ -194,6 +199,7 @@ function CreateEditRolePageContent(): JSX.Element {
 						</div>
 					)}
 					<AuthZButton
+						size="md"
 						checks={saveChecks}
 						authZEnabled={isSaveCheckEnabled}
 						variant="solid"
@@ -304,11 +310,11 @@ function CreateEditRolePageContent(): JSX.Element {
 				title="Discard unsaved changes?"
 				titleIcon={<SolidAlertTriangle size={14} color="#fdd600" />}
 				confirmText="Discard"
-				confirmColor="destructive"
+				confirmColor="danger"
 				cancelText="Keep editing"
 				onConfirm={confirmNavigation}
 				onCancel={cancelNavigation}
-				data-testid="discard-changes-dialog"
+				testId="discard-changes-dialog"
 			>
 				<Typography>
 					{isCreateMode

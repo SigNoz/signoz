@@ -5,6 +5,7 @@ import {
 } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import type { ExtendedSeries } from 'lib/uPlotV2/config/types';
 import { PanelMode } from 'lib/visualization/panels/types';
 import { prepareUPlotConfig } from 'container/WidgetCard/Panels/TimeSeriesPanel/utils';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
@@ -183,6 +184,28 @@ describe('TimeSeriesPanel utils', () => {
 				label: 'baseLabel',
 				scale: 'y',
 			});
+		});
+
+		it('passes partial timestamps to the series', () => {
+			const apiResponse = createApiResponse([
+				{
+					metric: {},
+					queryName: 'Q1',
+					values: [
+						[1000, '1'],
+						[1060, '0.2'],
+					],
+					partialTimestamps: [1060],
+				} as MetricRangePayloadProps['data']['result'][0],
+			]);
+
+			const series = prepareUPlotConfig({
+				...baseParams,
+				apiResponse,
+				currentQuery: null as unknown as Query,
+			}).getConfig().series?.[1] as ExtendedSeries;
+
+			expect(series.partialTimestamps).toStrictEqual(new Set([1060]));
 		});
 
 		it('uses getLegend for label when currentQuery is provided', () => {

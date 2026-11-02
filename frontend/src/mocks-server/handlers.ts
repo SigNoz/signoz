@@ -2,7 +2,10 @@ import { rest } from 'msw';
 
 import commonEnTranslation from '../../public/locales/en/common.json';
 import enTranslation from '../../public/locales/en/translation.json';
-import { allAlertChannels } from './__mockdata__/alerts';
+import {
+	notificationChannelsV2,
+	notificationChannelV2,
+} from './__mockdata__/alerts';
 import { alertRulesFixture } from './__mockdata__/alert_rules';
 import { triggeredAlertsFixture } from './__mockdata__/triggered_alerts';
 import { billingSuccessResponse } from './__mockdata__/billing';
@@ -10,7 +13,6 @@ import {
 	dashboardSuccessResponse,
 	getDashboardById,
 } from './__mockdata__/dashboards';
-import { explorerView } from './__mockdata__/explorer_views';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
 import { serviceSuccessResponse } from './__mockdata__/services';
@@ -172,20 +174,6 @@ export const handlers = [
 			),
 	),
 
-	rest.get('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
-		res(ctx.status(200), ctx.json(explorerView)),
-	),
-
-	rest.post('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
-		res(
-			ctx.status(200),
-			ctx.json({
-				status: 'success',
-				data: '7731ece1-3fa3-4ed4-8b1c-58b4c28723b2',
-			}),
-		),
-	),
-
 	rest.post('http://localhost/api/v1/event', (req, res, ctx) =>
 		res(
 			ctx.status(200),
@@ -202,8 +190,31 @@ export const handlers = [
 		(req, res, ctx) => res(ctx.status(200), ctx.json(traceDetailResponse)),
 	),
 
-	rest.get('http://localhost/api/v1/channels', (_, res, ctx) =>
-		res(ctx.status(200), ctx.json({ data: allAlertChannels, status: 'success' })),
+	rest.get('http://localhost/api/v2/notification_channels', (req, res, ctx) => {
+		const query = req.url.searchParams.get('query')?.toLowerCase() ?? '';
+		const kind = req.url.searchParams.get('kind');
+		const channels = notificationChannelsV2.filter(
+			(channel) =>
+				(!query || channel.displayName.toLowerCase().includes(query)) &&
+				(!kind || channel.kind === kind),
+		);
+		return res(
+			ctx.status(200),
+			ctx.json({
+				data: { channels, total: channels.length },
+				status: 'success',
+			}),
+		);
+	}),
+	rest.get('http://localhost/api/v2/notification_channels/:id', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({ data: notificationChannelV2, status: 'success' }),
+		),
+	),
+	rest.delete(
+		'http://localhost/api/v2/notification_channels/:id',
+		(_, res, ctx) => res(ctx.status(204)),
 	),
 	rest.get('http://localhost/api/v1/alerts', (_, res, ctx) =>
 		res(
@@ -236,15 +247,6 @@ export const handlers = [
 	),
 	rest.delete('http://localhost/api/v2/rules/:id', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json({ status: 'success' })),
-	),
-	rest.delete('http://localhost/api/v1/channels/:id', (_, res, ctx) =>
-		res(
-			ctx.status(200),
-			ctx.json({
-				status: 'success',
-				data: 'notification channel successfully deleted',
-			}),
-		),
 	),
 	rest.get('http://localhost/locales/en/translation.json', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(enTranslation)),

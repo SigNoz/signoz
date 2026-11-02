@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -20,7 +20,7 @@ const pageStory = storyMocks(channelsEditMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Alerts/Channels/Edit',
-	tags: ['play'],
+	tags: ['authz', 'play'],
 	component: AlertList,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -64,13 +64,21 @@ export const TestChannelFailure: Story = {
 	// the point of the story, not a regression.
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'test-channel-button',
-				undefined,
-				untilLoaded,
-			),
+		const test = await within(canvasElement).findByTestId(
+			'test-channel-button',
+			undefined,
+			untilLoaded,
 		);
+
+		// the button is disabled while its permission check is in flight, so a
+		// click any earlier lands on nothing. It signals that through
+		// aria-disabled, which toBeEnabled does not read.
+		await waitFor(
+			() => expect(test).toHaveAttribute('aria-disabled', 'false'),
+			untilLoaded,
+		);
+		await userEvent.click(test);
+
 		await screen.findByText('Storybook forced channel failure');
 	},
 };
@@ -82,13 +90,16 @@ export const SaveFailure: Story = {
 	// the point of the story, not a regression.
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'save-channel-button',
-				undefined,
-				untilLoaded,
-			),
+		const canvas = within(canvasElement);
+
+		// Save is off until the form is edited, so the failure is reached through
+		// a real change rather than an empty submit.
+		await userEvent.type(
+			await canvas.findByTestId('slack-channel-textbox', undefined, untilLoaded),
+			'-edited',
 		);
+		await userEvent.click(canvas.getByTestId('save-channel-button'));
+
 		await screen.findByText('Storybook forced channel failure');
 	},
 };
@@ -104,6 +115,16 @@ export const PagerDuty: Story = {
 /** The webhook channel, saved with basic auth on the outgoing request. */
 export const Webhook: Story = {
 	args: { channelType: 'webhook' },
+};
+
+/** The webhook channel saved with a bearer token: only the token field shows. */
+export const WebhookBearerToken: Story = {
+	args: { channelType: 'webhook', webhookAuth: 'bearer' },
+};
+
+/** The webhook channel saved without credentials: the auth option is None. */
+export const WebhookWithoutAuth: Story = {
+	args: { channelType: 'webhook', webhookAuth: 'none' },
 };
 
 /**
@@ -142,6 +163,17 @@ export const GoogleChat: Story = {
  */
 export const Jira: Story = {
 	args: { channelType: 'jira' },
+	play: async ({ canvasElement }): Promise<void> => {
+		// the advanced fields have their own card now, so nothing has to be
+		// expanded before they can be read
+		await expect(
+			await within(canvasElement).findByTestId(
+				'jira-reopen-duration-textbox',
+				undefined,
+				{ timeout: 15_000 },
+			),
+		).toBeVisible();
+	},
 };
 
 /**
@@ -158,4 +190,9 @@ export const JiraServiceManagementOps: Story = {
  */
 export const IncidentIO: Story = {
 	args: { channelType: 'incidentio' },
+};
+
+/** A Telegram channel, with its bot token masked behind the password field. */
+export const Telegram: Story = {
+	args: { channelType: 'telegram' },
 };

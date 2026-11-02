@@ -7,11 +7,11 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
-	useState,
 } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
@@ -34,6 +34,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 import { ArrowUp10, Minus } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
@@ -66,12 +67,16 @@ function ListView({
 	queryKeyRef,
 	headerActions,
 }: ListViewProps): JSX.Element {
-	const { stagedQuery, panelType: panelTypeFromQueryBuilder } =
-		useQueryBuilder();
+	const {
+		stagedQuery,
+		currentQuery,
+		redirectWithQueryBuilderData,
+		panelType: panelTypeFromQueryBuilder,
+	} = useQueryBuilder();
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
 
-	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
+	const orderBy = useMemo(() => getListOrderBy(stagedQuery), [stagedQuery]);
 
 	const {
 		selectedTime: globalSelectedTime,
@@ -82,7 +87,7 @@ function ListView({
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		dataSource: DataSource.TRACES,
+		sourcePage: SavedviewtypesSourceDTO.traces,
 		aggregateOperator: 'count',
 		initialOptions: {
 			selectColumns: defaultSelectedColumns,
@@ -123,7 +128,6 @@ function ListView({
 			panelType,
 			paginationConfig,
 			selectColumnsSignature,
-			orderBy,
 		],
 		[
 			stagedQuery,
@@ -133,7 +137,6 @@ function ListView({
 			selectColumnsSignature,
 			maxTime,
 			minTime,
-			orderBy,
 		],
 	);
 
@@ -215,9 +218,12 @@ function ListView({
 		[config],
 	);
 
-	const handleOrderChange = useCallback((value: string) => {
-		setOrderBy(value);
-	}, []);
+	const handleOrderChange = useCallback(
+		(value: string) => {
+			redirectWithQueryBuilderData(setListOrderBy(currentQuery, value));
+		},
+		[currentQuery, redirectWithQueryBuilderData],
+	);
 
 	useEffect(() => {
 		if (!isLoading && !isFetching && !isError && rows.length !== 0) {

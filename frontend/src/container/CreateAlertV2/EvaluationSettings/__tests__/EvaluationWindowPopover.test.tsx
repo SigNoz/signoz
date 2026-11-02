@@ -39,6 +39,18 @@ describe('EvaluationWindowPopover', () => {
 		expect(screen.getByText(EVALUATION_WINDOW_TEXT)).toBeInTheDocument();
 	});
 
+	it('offers only rolling windows when rollingOnly is set', () => {
+		render(
+			<EvaluationWindowPopover
+				evaluationWindow={mockEvaluationWindow}
+				setEvaluationWindow={mockSetEvaluationWindow}
+				rollingOnly
+			/>,
+		);
+		expect(screen.getByText('Rolling')).toBeInTheDocument();
+		expect(screen.queryByText('Cumulative')).not.toBeInTheDocument();
+	});
+
 	it('should render all window type options with rolling selected', () => {
 		render(
 			<EvaluationWindowPopover

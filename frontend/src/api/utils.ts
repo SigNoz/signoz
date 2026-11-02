@@ -1,7 +1,7 @@
 import deleteLocalStorageKey from 'api/browser/localstorage/remove';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 
 import deleteSession from './v2/sessions/delete';
 
@@ -21,5 +21,5 @@ export const Logout = async (): Promise<void> => {
 	deleteLocalStorageKey(LOCALSTORAGE.CHAT_SUPPORT);
 	deleteLocalStorageKey(LOCALSTORAGE.USER_ID);
 	window.dispatchEvent(new CustomEvent('LOGOUT'));
-	history.push(ROUTES.LOGIN);
+	navigate(ROUTES.LOGIN);
 };

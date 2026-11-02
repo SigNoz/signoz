@@ -6,7 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -91,6 +91,26 @@ export const QueryV2 = forwardRef(function QueryV2(
 		cloneQuery('query', query);
 	};
 
+	const queryActionItems: DropdownItemType[] = [
+		{
+			type: 'item',
+			label: 'Clone',
+			value: 'clone-query',
+			prefix: <Copy size={14} />,
+			onClick: handleCloneEntity,
+		},
+	];
+
+	if (queriesCount && queriesCount > 1) {
+		queryActionItems.push({
+			type: 'item',
+			label: 'Delete',
+			value: 'delete-query',
+			prefix: <Trash size={14} />,
+			onClick: handleDeleteQuery,
+		});
+	}
+
 	const showReduceTo = useMemo(
 		() =>
 			dataSource === DataSource.METRICS &&
@@ -163,6 +183,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 		<div
 			className={cx('query-v2', { 'where-clause-view': showOnlyWhereClause })}
 			ref={ref}
+			data-testid={`query-${query.queryName}`}
 		>
 			<div className="qb-content-section">
 				{(!showOnlyWhereClause || showTraceOperator) && (
@@ -224,32 +245,15 @@ export const QueryV2 = forwardRef(function QueryV2(
 							)}
 
 							{isMultiQueryAllowed && (
-								<DropdownMenuSimple
-									className="query-actions-dropdown"
-									menu={{
-										items: [
-											{
-												label: 'Clone',
-												key: 'clone-query',
-												icon: <Copy size={14} />,
-												onClick: handleCloneEntity,
-											},
-											...(queriesCount && queriesCount > 1
-												? [
-														{
-															label: 'Delete',
-															key: 'delete-query',
-															icon: <Trash size={14} />,
-															onClick: handleDeleteQuery,
-														},
-													]
-												: []),
-										],
-									}}
+								<Dropdown
+									items={queryActionItems}
+									testId="query-actions"
+									nativeButton={false}
 									align="end"
+									side="bottom"
 								>
 									<Ellipsis size={16} />
-								</DropdownMenuSimple>
+								</Dropdown>
 							)}
 						</div>
 					</div>
@@ -316,7 +320,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 								index={index}
 								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}-${signalSource}`}
 								version="v4"
-								signalSource={signalSource as 'meter' | ''}
+								fieldsConfig={fieldsConfig}
 							/>
 						)}
 

@@ -320,7 +320,7 @@ function AnomalyAlertEvaluationView({
 							<div className="anomaly-alert-evaluation-view-series-list-items">
 								{filteredSeriesKeys.length > 0 && (
 									<Checkbox
-										className="anomaly-alert-evaluation-view-series-list-item"
+										color="primary"
 										name="series"
 										value={selectedSeries === null}
 										onChange={(): void => handleSeriesChange(null)}
@@ -332,8 +332,9 @@ function AnomalyAlertEvaluationView({
 								{filteredSeriesKeys.map((seriesKey) => (
 									<div key={seriesKey}>
 										<Checkbox
-											className="anomaly-alert-evaluation-view-series-list-item"
+											color="primary"
 											key={seriesKey}
+											testId="anomaly-series-option"
 											name="series"
 											value={selectedSeries === seriesKey}
 											onChange={(): void => handleSeriesChange(seriesKey)}

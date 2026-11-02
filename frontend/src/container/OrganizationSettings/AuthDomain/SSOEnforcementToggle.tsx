@@ -61,7 +61,10 @@ function SSOEnforcementToggle({
 
 	return (
 		<Switch
+			color="primary"
+			textPlacement="right"
 			disabled={isLoading}
+			disabledTooltip="Saving the SSO enforcement setting"
 			value={isChecked}
 			onChange={onChangeHandler}
 			testId="auth-domain-enforce-sso"

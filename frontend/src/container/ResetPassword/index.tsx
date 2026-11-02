@@ -11,7 +11,7 @@ import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRight, CircleAlert, KeyRound } from '@signozhq/icons';
 import { Label } from 'pages/SignUp/styles';
 
@@ -73,7 +73,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							ns: 'common',
 						}),
 					});
-					history.push(ROUTES.LOGIN);
+					navigate(ROUTES.LOGIN);
 				},
 			},
 		);
@@ -159,12 +159,15 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 
 					<div className="reset-password-form-actions">
 						<Button
+							size="md"
 							variant="solid"
 							color="primary"
 							type="submit"
 							data-attr="reset-password"
-							disabled={!isValidPassword || isLoading}
-							className="reset-password-submit-button"
+							loading={isLoading}
+							disabled={!isValidPassword}
+							disabledTooltip="Enter matching passwords in both fields"
+							width="100%"
 							suffix={<ArrowRight size={16} />}
 						>
 							Reset Password

@@ -30,7 +30,7 @@ import { useHomeStripInfo } from 'container/Home/useHomeStripInfo';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { AnimatePresence, motion } from 'motion/react';
 import Card from 'periscope/components/Card/Card';
@@ -38,8 +38,7 @@ import { useAppContext } from 'providers/App/App';
 import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
-import { isIngestionActive } from 'utils/app';
-import { isModifierKeyPressed } from 'utils/app';
+import { isIngestionActive, isModifierKeyPressed } from 'utils/app';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import crackerUrl from '@/assets/Icons/cracker.svg';
@@ -313,6 +312,7 @@ export default function Home(): JSX.Element {
 									rootClassName="welcome-checklist-popover"
 								>
 									<Button
+										size="md"
 										variant="solid"
 										color="secondary"
 										prefix={<ClipboardList size={14} />}
@@ -370,7 +370,7 @@ export default function Home(): JSX.Element {
 													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Logs',
 													});
-													history.push(ROUTES.LOGS_EXPLORER);
+													navigate(ROUTES.LOGS_EXPLORER);
 												}
 											}}
 										>
@@ -413,7 +413,7 @@ export default function Home(): JSX.Element {
 													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Traces',
 													});
-													history.push(ROUTES.TRACES_EXPLORER);
+													navigate(ROUTES.TRACES_EXPLORER);
 												}
 											}}
 										>
@@ -456,7 +456,7 @@ export default function Home(): JSX.Element {
 													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Metrics',
 													});
-													history.push(ROUTES.METRICS_EXPLORER);
+													navigate(ROUTES.METRICS_EXPLORER);
 												}
 											}}
 										>
@@ -496,9 +496,9 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													void logEvent('Homepage: Explore clicked', {
@@ -513,9 +513,9 @@ export default function Home(): JSX.Element {
 											</Button>
 
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													void logEvent('Homepage: Explore clicked', {
@@ -530,9 +530,9 @@ export default function Home(): JSX.Element {
 											</Button>
 
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													void logEvent('Homepage: Explore clicked', {
@@ -569,9 +569,9 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													void logEvent('Homepage: Explore clicked', {
@@ -614,9 +614,9 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
+												size="md"
 												variant="solid"
 												color="secondary"
-												className="periscope-btn secondary"
 												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													void logEvent('Homepage: Explore clicked', {
@@ -696,6 +696,7 @@ export default function Home(): JSX.Element {
 								<Card.Footer>
 									<div className="checklist-footer-container">
 										<Button
+											size="md"
 											variant="link"
 											color="secondary"
 											onClick={handleWillDoThisLater}

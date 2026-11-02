@@ -117,7 +117,6 @@ export function GroupedStatusCounts({
 					key={item.label}
 					rowId={rowId}
 					title={buildTooltipContent(item, onSelectStatuses)}
-					arrow
 					align="start"
 				>
 					{item.value ? (

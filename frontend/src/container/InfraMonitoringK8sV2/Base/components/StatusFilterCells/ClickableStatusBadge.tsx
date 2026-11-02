@@ -1,4 +1,4 @@
-import { Badge, BadgeColor } from '@signozhq/ui/badge';
+import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
 import TanStackTable from 'components/TanStackTableView';
 
 import { StatusFilterKind, useStatusFilter } from './useStatusFilter';
@@ -6,7 +6,7 @@ import { StatusFilterKind, useStatusFilter } from './useStatusFilter';
 import styles from './ClickableStatusBadge.module.scss';
 
 interface ClickableStatusBadgeProps {
-	color: BadgeColor;
+	color: BadgeColorType;
 	label: string;
 	/** The status this badge stands for, applied as the filter when clicked. */
 	status: string;
@@ -32,9 +32,7 @@ function ClickableStatusBadge({
 		<TanStackTable.HoverTooltip
 			rowId={rowId}
 			title={isWholeFilter ? `Clear ${label} filter` : `Filter by ${label}`}
-			arrow
 			align="start"
-			delayDuration={300}
 		>
 			<button
 				type="button"
@@ -46,7 +44,7 @@ function ClickableStatusBadge({
 					setStatusFilter(isWholeFilter ? [] : [status]);
 				}}
 			>
-				<Badge color={color} variant="outline">
+				<Badge color={color} variant="outlined" textTransform="none">
 					{label}
 				</Badge>
 			</button>

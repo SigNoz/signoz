@@ -400,6 +400,13 @@ function ServiceDetails({
 											name="logsEnabled"
 											render={({ field }): JSX.Element => (
 												<Switch
+													color="primary"
+													textPlacement="right"
+													disabledTooltip={
+														isReadOnly
+															? 'Connect an AWS account first'
+															: 'Wait for the changes to save'
+													}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
 													onChange={(checked): void => {
@@ -441,6 +448,13 @@ function ServiceDetails({
 											name="metricsEnabled"
 											render={({ field }): JSX.Element => (
 												<Switch
+													color="primary"
+													textPlacement="right"
+													disabledTooltip={
+														isReadOnly
+															? 'Connect an AWS account first'
+															: 'Wait for the changes to save'
+													}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
 													onChange={field.onChange}
@@ -455,26 +469,28 @@ function ServiceDetails({
 						{hasUnsavedChanges && !isReadOnly && (
 							<div className="aws-service-details-overview-configuration-actions">
 								<Button
+									disabledTooltip="Wait for the changes to save"
 									variant="solid"
 									color="secondary"
 									onClick={handleDiscard}
 									disabled={isUpdatingServiceConfig}
 									size="sm"
 									prefix={<X size={14} />}
-									className="discard-btn"
+									width={100}
 									type="button"
 								>
 									Discard
 								</Button>
 								<Button
+									disabledTooltip="Select at least one S3 bucket"
 									variant="solid"
 									color="primary"
 									size="sm"
-									className="save-btn"
+									width={100}
 									prefix={<Save size={14} />}
 									type="submit"
 									loading={isUpdatingServiceConfig}
-									disabled={isS3SyncBucketsMissing || isUpdatingServiceConfig}
+									disabled={isS3SyncBucketsMissing}
 								>
 									Save
 								</Button>
@@ -515,6 +531,8 @@ function ServiceDetails({
 	return (
 		<div className="aws-service-details-container">
 			<Tabs
+				orientation="horizontal"
+				alignment="start"
 				defaultValue="overview"
 				className="aws-service-details-tabs"
 				items={[

@@ -1,6 +1,6 @@
 import { ReactNode, useCallback } from 'react';
 import { toast } from '@signozhq/ui/sonner';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 
@@ -35,7 +35,7 @@ export function EntityMetadataItem({
 
 			{renderedValue ?? (
 				<div className={styles.valueRow}>
-					<TooltipSimple title={value} arrow side="bottom" align="start">
+					<Tooltip title={value} side="bottom" align="start">
 						<span className={styles.value}>
 							<Typography.Text
 								size="small"
@@ -45,13 +45,12 @@ export function EntityMetadataItem({
 								{value}
 							</Typography.Text>
 						</span>
-					</TooltipSimple>
+					</Tooltip>
 					{!!value && (
 						<CopyButton
 							value={value}
 							size={10}
 							ariaLabel={`Copy ${label}`}
-							className={styles.copyButton}
 							testId={`copy-metadata-${label.toLowerCase().replace(/\s+/g, '-')}`}
 							onCopy={handleCopy}
 						/>

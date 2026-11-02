@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -126,6 +127,30 @@ func (provider *provider) GetRule(ctx context.Context, id valuer.UUID) (*ruletyp
 
 func (provider *provider) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.GettableRule, error) {
 	return provider.manager.CreateRule(ctx, ruleStr)
+}
+
+func (provider *provider) CloneRule(ctx context.Context, id valuer.UUID) (*ruletypes.GettableRule, error) {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	storedRule, err := provider.ruleStore.GetStoredRule(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	postableRule, err := storedRule.ToPostableRuleForCloning()
+	if err != nil {
+		return nil, err
+	}
+
+	return provider.manager.CreatePostableRule(ctx, postableRule)
 }
 
 func (provider *provider) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) error {

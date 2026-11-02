@@ -113,6 +113,7 @@ function PublicDashboardView({
 							enabled={autoRefreshEnabled}
 							interval={autoRefreshInterval}
 							disabled={isAutoRefreshPaused}
+							disabledTooltip="Auto refresh is off for a custom time range"
 							onToggle={setAutoRefreshEnabled}
 							onIntervalChange={setAutoRefreshInterval}
 							onRefresh={handleRefresh}

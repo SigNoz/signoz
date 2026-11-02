@@ -497,10 +497,8 @@ func FunctionReduceTo(result *TimeSeries, reduceTo ReduceTo) *TimeSeries {
 }
 
 type TraceAggregation struct {
-	// aggregation expression - example: count(), sum(item_price), countIf(day > 10)
-	Expression string `json:"expression"`
-	// if any, it will be used as the alias of the aggregation in the result
-	Alias string `json:"alias,omitempty"`
+	Expression string `json:"expression" description:"The aggregation over spans, such as count(), sum(item_price), p99(duration_nano) or countIf(day > 10)."`
+	Alias      string `json:"alias,omitempty" description:"The name the aggregation is reported under; when omitted, the result carries the alias __result_N, with N the zero-based index of the aggregation."`
 }
 
 // Copy creates a deep copy of TraceAggregation.
@@ -509,10 +507,8 @@ func (t TraceAggregation) Copy() TraceAggregation {
 }
 
 type LogAggregation struct {
-	// aggregation expression - example: count(), sum(item_price), countIf(day > 10)
-	Expression string `json:"expression"`
-	// if any, it will be used as the alias of the aggregation in the result
-	Alias string `json:"alias,omitempty"`
+	Expression string `json:"expression" description:"The aggregation over log records, such as count(), sum(item_price), count_distinct(user_id) or countIf(day > 10)."`
+	Alias      string `json:"alias,omitempty" description:"The name the aggregation is reported under; when omitted, the result carries the alias __result_N, with N the zero-based index of the aggregation."`
 }
 
 // Copy creates a deep copy of LogAggregation.
@@ -521,24 +517,18 @@ func (l LogAggregation) Copy() LogAggregation {
 }
 
 type MetricAggregation struct {
-	// metric to query
-	MetricName string `json:"metricName"`
+	MetricName string `json:"metricName" description:"The name of the metric to query, for example k8s.pod.cpu_request_utilization."`
 	// type of the metric
-	Type metrictypes.Type `json:"-"`
-	// temporality to apply to the query
-	Temporality metrictypes.Temporality `json:"temporality"`
-	// time aggregation to apply to the query
-	TimeAggregation metrictypes.TimeAggregation `json:"timeAggregation"`
-	// space aggregation to apply to the query
-	SpaceAggregation metrictypes.SpaceAggregation `json:"spaceAggregation"`
-	// param for space aggregation if needed
-	ComparisonSpaceAggregationParam *metrictypes.ComparisonSpaceAggregationParam `json:"comparisonSpaceAggregationParam,omitempty"`
+	Type                            metrictypes.Type                             `json:"-"`
+	Temporality                     metrictypes.Temporality                      `json:"temporality" description:"The temporality of the metric: delta, cumulative or unspecified. Resolved from the metric metadata when omitted."`
+	TimeAggregation                 metrictypes.TimeAggregation                  `json:"timeAggregation" description:"How samples of one series are combined within each step, such as avg, sum, min, max, count, count_distinct, latest, rate or increase."`
+	SpaceAggregation                metrictypes.SpaceAggregation                 `json:"spaceAggregation" description:"How series are combined across each group, such as sum, avg, min, max or count; histograms take percentiles such as p50, p90, p95 or p99."`
+	ComparisonSpaceAggregationParam *metrictypes.ComparisonSpaceAggregationParam `json:"comparisonSpaceAggregationParam,omitempty" description:"Histogram metrics with spaceAggregation count only: the comparison operator and bucket bound used to estimate how many observations fall at or below, or above, the threshold. Ignored for other metric types and aggregations."`
 	// table hints to use for the query
 	TableHints *metrictypes.MetricTableHints `json:"-"`
 	// value filter to apply to the query
 	ValueFilter *metrictypes.MetricValueFilter `json:"-"`
-	// reduce to operator for metric scalar requests
-	ReduceTo ReduceTo `json:"reduceTo,omitzero"`
+	ReduceTo    ReduceTo                       `json:"reduceTo,omitzero" description:"How a series collapses to one number in scalar requests: sum, count, avg, min, max, last or median. Ignored by time_series requests."`
 
 	HeatmapBucketing *HeatmapBucketing `json:"-"`
 
@@ -564,8 +554,7 @@ func (m MetricAggregation) Copy() MetricAggregation {
 }
 
 type Filter struct {
-	// expression to filter by following the filter syntax
-	Expression string `json:"expression"`
+	Expression string `json:"expression" description:"A filter in the query filter syntax: comparisons such as =, !=, <, >, IN, LIKE, CONTAINS and EXISTS on field names, combined with AND, OR and NOT, with string values in single quotes, for example key = 'value' AND other_key > 10. Which fields exist depends on the signal or endpoint the filter is used with."`
 }
 
 // Copy creates a deep copy of Filter.
@@ -588,8 +577,7 @@ func (g GroupByKey) Copy() GroupByKey {
 }
 
 type Having struct {
-	// expression to filter by following the filter syntax
-	Expression string `json:"expression"`
+	Expression string `json:"expression" description:"A condition on aggregation results in the filter syntax, referencing an alias or expression, for example count() > 100."`
 }
 
 // Copy creates a deep copy of Having.
@@ -613,10 +601,8 @@ func (o OrderByKey) Copy() OrderByKey {
 
 // key to order by.
 type OrderBy struct {
-	// key to order by
-	Key OrderByKey `json:"key"`
-	// direction to order by
-	Direction OrderDirection `json:"direction"`
+	Key       OrderByKey     `json:"key" description:"The sort key. For aggregation requests name is a group-by field such as service.name, an aggregation alias, or the aggregation expression: count() or p99(duration_nano) for traces and logs; for metrics the spaceAggregation(timeAggregation(metricName)) form such as sum(rate(signoz_calls_total)), p99(metricName) for histogram metrics, or __result. Raw requests sort by any field, such as timestamp."`
+	Direction OrderDirection `json:"direction" description:"The sort direction: asc or desc."`
 }
 
 // Copy creates a deep copy of OrderBy.
@@ -629,21 +615,13 @@ func (o OrderBy) Copy() OrderBy {
 
 // secondary aggregation to apply to the query.
 type SecondaryAggregation struct {
-	// stepInterval of the query
-	// if not set, it will use the step interval of the primary aggregation
-	StepInterval Step `json:"stepInterval,omitzero"`
-	// expression to aggregate. example: count(), sum(item_price), countIf(day > 10)
-	Expression string `json:"expression"`
-	// if any, it will be used as the alias of the aggregation in the result
-	Alias string `json:"alias,omitempty"`
-	// groupBy fields to group by
-	GroupBy []GroupByKey `json:"groupBy,omitzero"`
-	// order by keys and directions
-	Order []OrderBy `json:"order,omitzero"`
-	// limit the maximum number of rows to return
-	Limit int `json:"limit,omitempty"`
-	// limitBy fields to limit by
-	LimitBy *LimitBy `json:"limitBy,omitempty"`
+	StepInterval Step         `json:"stepInterval,omitzero" description:"The time bucket for this aggregation: seconds as a number or a Go duration string. Uses the primary aggregation step when omitted."`
+	Expression   string       `json:"expression" description:"The aggregation over the primary results, such as count(), sum(item_price) or countIf(day > 10)."`
+	Alias        string       `json:"alias,omitempty" description:"The name the aggregation is reported under; when omitted, the result carries the alias __result_N, with N the zero-based index of the aggregation."`
+	GroupBy      []GroupByKey `json:"groupBy,omitzero" description:"The fields to group this aggregation by."`
+	Order        []OrderBy    `json:"order,omitzero" description:"The sort order of this aggregation result."`
+	Limit        int          `json:"limit,omitempty" description:"The maximum number of groups to return. Unlimited when 0."`
+	LimitBy      *LimitBy     `json:"limitBy,omitempty" description:"Applies limit within each distinct combination of the given keys."`
 }
 
 // Copy creates a deep copy of SecondaryAggregation.
@@ -672,10 +650,8 @@ func (s SecondaryAggregation) Copy() SecondaryAggregation {
 }
 
 type FunctionArg struct {
-	// name of the argument
-	Name string `json:"name,omitempty"`
-	// value of the argument
-	Value any `json:"value"`
+	Name  string `json:"name,omitempty" description:"The argument name for functions that take named arguments, such as z_score_threshold or seasonality for anomaly."`
+	Value any    `json:"value" description:"The argument value as a number, string or boolean, for example the threshold for cutOffMin or the duration for timeShift."`
 }
 
 // Copy creates a deep copy of FunctionArg.
@@ -695,6 +671,7 @@ func (FunctionArg) PrepareJSONSchema(s *jsonschema.Schema) error {
 	}
 
 	value := jsonschema.Schema{}
+	value.Description = propertyDescription(s, "value")
 	value.OneOf = []jsonschema.SchemaOrBool{
 		jsonschema.Number.ToSchemaOrBool(),
 		jsonschema.String.ToSchemaOrBool(),
@@ -705,11 +682,9 @@ func (FunctionArg) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 type Function struct {
-	// name of the function
-	Name FunctionName `json:"name"`
+	Name FunctionName `json:"name" description:"The function to apply, such as cutOffMin, cutOffMax, clampMin, clampMax, absolute, runningDiff, log2, log10, cumulativeSum, ewma3, ewma5, ewma7, median3, median5, median7, timeShift, anomaly or fillZero."`
 
-	// args is the arguments to the function
-	Args []FunctionArg `json:"args,omitzero"`
+	Args []FunctionArg `json:"args,omitzero" description:"The function arguments; which ones are required depends on the function, for example a threshold for the cutOff and clamp functions."`
 }
 
 // Copy creates a deep copy of Function.
@@ -739,10 +714,8 @@ func (f Function) Validate() error {
 }
 
 type LimitBy struct {
-	// keys to limit by
-	Keys []string `json:"keys"`
-	// value to limit by
-	Value string `json:"value"`
+	Keys  []string `json:"keys" description:"The group-by field names that partition the result before the limit is applied."`
+	Value string   `json:"value" description:"The aggregation alias or expression whose value ranks entries within each partition."`
 }
 
 // Copy creates a deep copy of LimitBy.
@@ -758,4 +731,14 @@ func (l *LimitBy) Copy() *LimitBy {
 		copy(c.Keys, l.Keys)
 	}
 	return c
+}
+
+// propertyDescription returns the description the struct tag put on a reflected
+// property, so a PrepareJSONSchema hook that replaces the property schema keeps it.
+func propertyDescription(s *jsonschema.Schema, name string) *string {
+	prop, ok := s.Properties[name]
+	if !ok || prop.TypeObject == nil {
+		return nil
+	}
+	return prop.TypeObject.Description
 }

@@ -311,14 +311,15 @@ def create_json_index(
 ) -> Generator[Callable[[str, list[dict[str, Any]]], None]]:
     """
     Create ClickHouse data-skipping indexes on body_v2 JSON sub-columns via
-    POST /api/v1/logs/promote_paths.
+    POST /api/v1/promoted_paths.
 
     **Must be called BEFORE insert_logs** so that newly inserted data parts are
     covered by the index and the QB uses the indexed condition path.
 
-    Each entry in `paths` follows the PromotePath API shape:
+    Each entry in `paths` follows the PromotePath API shape (signal/context are
+    filled in as logs/body):
         {
-            "path": "body.user.name",          # must start with "body."
+            "path": "user.name",               # bare path, no "body." prefix
             "indexes": [
                 {
                     "fieldDataType": "string",   # string | int64 | float64
@@ -337,9 +338,9 @@ def create_json_index(
             token = get_token(...)
             export_json_types(logs_list)
             create_json_body_index(token, [
-                {"path": "body.user.name",
+                {"path": "user.name",
                  "indexes": [{"fieldDataType": "string", "type": "ngrambf_v1(3, 256, 2, 0)", "granularity": 1}]},
-                {"path": "body.user.age",
+                {"path": "user.age",
                  "indexes": [{"fieldDataType": "int64", "type": "minmax", "granularity": 1}]},
             ])
             insert_logs(logs_list)   # data inserted after index exists — index is built automatically
@@ -348,18 +349,15 @@ def create_json_index(
 
     def _create_json_body_index(token: str, paths: list[dict[str, Any]]) -> None:
         response = requests.post(
-            signoz.self.host_configs["8080"].get("/api/v1/logs/promote_paths"),
+            signoz.self.host_configs["8080"].get("/api/v1/promoted_paths"),
             headers={"authorization": f"Bearer {token}"},
-            json=paths,
+            json=[{"signal": "logs", "context": "body", **path} for path in paths],
             timeout=30,
         )
         assert response.status_code == HTTPStatus.CREATED, f"Failed to create JSON body indexes: {response.status_code} {response.text}"
         for path in paths:
-            # The API strips the "body." prefix before storing — mirror that here
-            # so our cleanup query uses the bare path (e.g. "user.name").
-            raw = path["path"].removeprefix("body.")
-            if raw not in created_paths:
-                created_paths.append(raw)
+            if path["path"] not in created_paths:
+                created_paths.append(path["path"])
 
     yield _create_json_body_index
 

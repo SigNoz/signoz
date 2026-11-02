@@ -1,16 +1,12 @@
 import { ReactNode } from 'react';
+import type { DropdownActionItemType } from '@signozhq/ui/dropdown';
 
 import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
 
-export interface MenuItem {
-	key: MenuItemKeys;
-	icon: ReactNode;
-	label: ReactNode;
-	rightIcon?: ReactNode;
+export type MenuItem = DropdownActionItemType & {
+	value: MenuItemKeys;
 	isVisible: boolean;
-	disabled: boolean;
-	danger?: boolean;
-}
+};
 
 export interface DisplayThresholdProps {
 	threshold: ReactNode;

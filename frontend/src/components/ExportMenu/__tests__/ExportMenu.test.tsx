@@ -80,6 +80,6 @@ describe('ExportMenu', () => {
 		mockIsExporting = true;
 		renderMenu();
 
-		expect(screen.getByTestId(TEST_ID)).toBeDisabled();
+		expect(screen.getByTestId(TEST_ID)).toHaveAttribute('aria-disabled', 'true');
 	});
 });

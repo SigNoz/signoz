@@ -49,7 +49,7 @@ const openQuickFiltersSettings = async (): Promise<void> => {
 	const control = await waitFor(() => {
 		const settings = screen.getByTestId('settings-icon-container');
 
-		expect(settings).toBeEnabled();
+		expect(settings).not.toHaveAttribute('aria-disabled', 'true');
 
 		return settings;
 	}, untilLoaded);
@@ -129,14 +129,6 @@ export const QuickFiltersSettingsDirty: Story = {
 export const QuickFiltersSettingsWithBanner: Story = {
 	args: { banner: 'trial-expiry' },
 	play: dirtyQuickFiltersSettings,
-};
-
-/**
- * The exception count in the bottom strip, in place of the build version: the
- * rows on the page against the total the count query returns.
- */
-export const BottomStrip: Story = {
-	args: { bottomStrip: true },
 };
 
 /** The resource filter opened: every key the exceptions can be narrowed by. */

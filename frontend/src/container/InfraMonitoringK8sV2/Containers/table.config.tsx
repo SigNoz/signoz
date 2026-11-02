@@ -237,7 +237,7 @@ export const k8sContainerColumnsConfig: ContainerTableColumnConfig[] = [
 			}
 
 			return (
-				<Badge color={CONTAINER_READY_COLORS[row.ready]} variant="outline">
+				<Badge color={CONTAINER_READY_COLORS[row.ready]} variant="outlined">
 					{CONTAINER_READY_LABELS[row.ready]}
 				</Badge>
 			);

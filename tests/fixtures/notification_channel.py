@@ -306,6 +306,82 @@ def incidentio_event_subset(alertname: str, links: list[tuple[str, str]]) -> dic
     }
 
 
+TELEGRAM_CHAT_ID = -1001234567890
+
+
+def telegram_bot_token(bot: str) -> str:
+    return f"123456:{bot}"
+
+
+def telegram_path(bot: str) -> str:
+    return f"/bot{telegram_bot_token(bot)}/sendMessage"
+
+
+def telegram_channel(name: str, bot: str, notification_channel: types.TestContainerDocker) -> dict:
+    """The bot token keys the WireMock path. v2 only: v1 keeps upstream's
+    default message template instead of SigNoz's."""
+    return {
+        "name": name,
+        "config": {
+            "kind": "telegram",
+            "spec": {
+                "botToken": telegram_bot_token(bot),
+                "chatId": TELEGRAM_CHAT_ID,
+                "apiUrl": notification_channel.container_configs["8080"].base(),
+            },
+        },
+    }
+
+
+# telebot parses result.chat.id as int64, so it must be a number here; a string
+# fails the unmarshal and the send is retried forever.
+TELEGRAM_OK_BODY = {"ok": True, "result": {"message_id": 1, "date": 0, "chat": {"id": TELEGRAM_CHAT_ID, "type": "supergroup"}}}
+
+
+def telegram_ok_mappings(path: str) -> list[Mapping]:
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=200, json_body=TELEGRAM_OK_BODY),
+        )
+    ]
+
+
+def telegram_retry_mappings(path: str) -> list[Mapping]:
+    """429 on the first call then 200, via a wiremock scenario transition."""
+    scenario = f"telegram-retry-{path}"
+    return [
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=429, json_body={"ok": False, "error_code": 429, "description": "Too Many Requests: retry after 1", "parameters": {"retry_after": 1}}),
+            scenario_name=scenario,
+            required_scenario_state="Started",
+            new_scenario_state="ok",
+        ),
+        Mapping(
+            request=MappingRequest(method=HttpMethods.POST, url_path=path),
+            response=MappingResponse(status=200, json_body=TELEGRAM_OK_BODY),
+            scenario_name=scenario,
+            required_scenario_state="ok",
+        ),
+    ]
+
+
+def telegram_message_subset(alertname: str, links: list[tuple[str, str]]) -> dict:
+    """links: (text, href_regex) pairs in default-template order (View in
+    SigNoz -> related logs -> related traces). telebot sends every param as a
+    string."""
+    text = "(?s)" + re.escape(f"<b>[FIRING:1] {alertname}</b>") + ".*" + re.escape(f"<b>Alert:</b> {alertname}")
+    for label, href in links:
+        text += rf".*<a href=\"[^\"]*{href}[^\"]*\">{re.escape(label)}</a>"
+    return {
+        "chat_id": str(TELEGRAM_CHAT_ID),
+        "parse_mode": "HTML",
+        "disable_web_page_preview": "true",
+        "text": re.compile(text),
+    }
+
+
 JIRA_TEST_EMAIL = "user@acme.io"
 JIRA_SA_EMAIL = "svc@serviceaccount.atlassian.com"
 JIRA_TEST_TOKEN = "jira-test-token"  # noqa: S105

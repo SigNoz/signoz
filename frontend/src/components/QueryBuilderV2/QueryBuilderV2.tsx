@@ -1,6 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Formula } from 'container/QueryBuilder/components/Formula';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -62,10 +61,6 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 
 	useEffect(() => {
 		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
-			if (newPanelType === PANEL_TYPES.BAR) {
-				handleSetConfig(PANEL_TYPES.BAR, DataSource.METRICS);
-				return;
-			}
 			handleSetConfig(newPanelType, currentDataSource);
 		}
 	}, [
@@ -78,11 +73,15 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 
 	useEffect(() => {
 		// always clear on mount and unmount to avoid stale data
+		// hosts opting into savePreviousQuery own the clear, as they may remount this builder mid-edit
+		if (savePreviousQuery) {
+			return undefined;
+		}
 		clearPreviousQuery();
 		return (): void => {
 			clearPreviousQuery();
 		};
-	}, []);
+	}, [savePreviousQuery]);
 
 	const resolvedConfig = useMemo(
 		() =>

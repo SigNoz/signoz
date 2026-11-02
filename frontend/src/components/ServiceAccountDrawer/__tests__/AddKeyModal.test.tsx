@@ -7,6 +7,7 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
+import { submitImplicitly } from 'tests/submitImplicitly';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import AddKeyModal from '../AddKeyModal';
@@ -76,13 +77,17 @@ describe('AddKeyModal', () => {
 		const nameInput = await screen.findByTestId('add-key-name-input');
 		const createBtn = await screen.findByTestId('add-key-submit-btn');
 
-		expect(createBtn).toBeDisabled();
+		expect(createBtn).toHaveAttribute('aria-disabled', 'true');
 
 		await user.type(nameInput, 'My Key');
-		await waitFor(() => expect(createBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(createBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 
 		await user.clear(nameInput);
-		await waitFor(() => expect(createBtn).toBeDisabled());
+		await waitFor(() =>
+			expect(createBtn).toHaveAttribute('aria-disabled', 'true'),
+		);
 	});
 
 	it('successful creation transitions to phase 2 with key displayed and security callout', async () => {
@@ -92,12 +97,41 @@ describe('AddKeyModal', () => {
 		const nameInput = await screen.findByTestId('add-key-name-input');
 		const submitBtn = await screen.findByTestId('add-key-submit-btn');
 		await user.type(nameInput, 'Deploy Key');
-		await waitFor(() => expect(submitBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(submitBtn);
 
 		await screen.findByText('snz_abc123xyz456secret');
 		expect(screen.getByText(/Store the key securely/i)).toBeInTheDocument();
 		expect(screen.getByTestId('add-key-modal')).toBeInTheDocument();
+	});
+
+	it('pressing Enter again while creating sends one request', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		let requests = 0;
+		server.use(
+			rest.post(SA_KEYS_ENDPOINT, (_, res, ctx) => {
+				requests += 1;
+				return res(ctx.delay(100), ctx.status(201), ctx.json(createdKeyResponse));
+			}),
+		);
+		renderModal();
+
+		const nameInput =
+			await screen.findByTestId<HTMLInputElement>('add-key-name-input');
+		const submitBtn = await screen.findByTestId('add-key-submit-btn');
+		await user.type(nameInput, 'Deploy Key');
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
+
+		submitImplicitly(nameInput);
+		await waitFor(() => expect(submitBtn).toHaveAttribute('aria-busy', 'true'));
+		submitImplicitly(nameInput);
+
+		await screen.findByText('snz_abc123xyz456secret');
+		expect(requests).toBe(1);
 	});
 
 	it('copy button writes key to clipboard and shows toast.success', async () => {
@@ -108,7 +142,9 @@ describe('AddKeyModal', () => {
 		const nameInput = await screen.findByTestId('add-key-name-input');
 		const submitBtn = await screen.findByTestId('add-key-submit-btn');
 		await user.type(nameInput, 'Deploy Key');
-		await waitFor(() => expect(submitBtn).not.toBeDisabled());
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 		await user.click(submitBtn);
 
 		await screen.findByText('snz_abc123xyz456secret');
@@ -151,7 +187,10 @@ describe('AddKeyModal', () => {
 		).resolves.toBeInTheDocument();
 
 		// The footer lives outside the guard: submit is gated, Cancel still works.
-		expect(screen.getByTestId('add-key-submit-btn')).toBeDisabled();
+		expect(screen.getByTestId('add-key-submit-btn')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		await user.click(screen.getByTestId('add-key-cancel-btn'));
 

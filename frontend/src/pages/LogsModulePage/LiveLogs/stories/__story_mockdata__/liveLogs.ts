@@ -41,12 +41,10 @@ export const liveLogsQuery = (): Query => {
 		...seed,
 		builder: {
 			...seed.builder,
-			queryData: seed.builder.queryData.map(
-				(data): IBuilderQuery => ({
-					...data,
-					filter: { expression: LIVE_TAIL_FILTER },
-				}),
-			),
+			queryData: seed.builder.queryData.map((data): IBuilderQuery => ({
+				...data,
+				filter: { expression: LIVE_TAIL_FILTER },
+			})),
 		},
 	};
 };

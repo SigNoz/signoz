@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import SyntaxHighlighter, {
 	a11yDark,
 } from 'components/MarkdownRenderer/syntaxHighlighter';
@@ -52,16 +53,20 @@ function CodeBlock({
 			data-testid="code-block-container"
 		>
 			{showCopyButton ? (
-				<Button
-					variant="ghost"
-					color="secondary"
-					size="sm"
-					onClick={handleCopy}
-					prefix={isCopied ? <Check size={14} /> : <Copy size={14} />}
-					aria-label="Copy code"
-					title={isCopied ? 'Copied' : 'Copy'}
-					style={{ position: 'absolute', right: 8, top: 8, zIndex: 1 }}
-				/>
+				<div className={styles.copyButton}>
+					<Tooltip title={isCopied ? 'Copied' : 'Copy'}>
+						<Button
+							variant="ghost"
+							color="secondary"
+							size="sm"
+							icon
+							onClick={handleCopy}
+							aria-label="Copy code"
+						>
+							{isCopied ? <Check size={14} /> : <Copy size={14} />}
+						</Button>
+					</Tooltip>
+				</div>
 			) : null}
 			<SyntaxHighlighter
 				style={a11yDark}

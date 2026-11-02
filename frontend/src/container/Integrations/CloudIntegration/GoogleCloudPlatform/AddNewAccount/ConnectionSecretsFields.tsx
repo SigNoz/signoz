@@ -9,6 +9,7 @@ import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { Control, Controller } from 'react-hook-form';
 
 import FieldLabel from './FieldLabel';
+import FormField from './FormField';
 import { GcpSetupFormValues } from './types';
 import { SecretFieldType, validateSecretValue } from './validators';
 import styles from './ConnectionSecretsFields.module.scss';
@@ -141,43 +142,32 @@ function ConnectionSecretsFields({
 						}
 
 						return (
-							<div key={field.name} className={styles.drawerSection}>
-								<FieldLabel
-									htmlFor={field.testId}
-									label={field.label}
-									tooltip={field.tooltip}
-								/>
-								<Controller
-									name={field.name}
-									control={control}
-									rules={{
-										validate: (value): true | string =>
-											validateSecretValue(field.label, field.type, value),
-									}}
-									render={({ field: rhfField, fieldState }): JSX.Element => (
-										<>
-											<Input
-												id={field.testId}
-												className={cx(styles.fullWidth, styles.mono)}
-												placeholder={field.placeholder}
-												value={rhfField.value}
-												onChange={(e): void => rhfField.onChange(e.target.value)}
-												testId={field.testId}
-											/>
-											{fieldState.error && (
-												<Typography.Text
-													as="span"
-													size="small"
-													role="alert"
-													className={styles.fieldError}
-												>
-													{fieldState.error.message}
-												</Typography.Text>
-											)}
-										</>
-									)}
-								/>
-							</div>
+							<Controller
+								key={field.name}
+								name={field.name}
+								control={control}
+								rules={{
+									validate: (value): true | string =>
+										validateSecretValue(field.label, field.type, value),
+								}}
+								render={({ field: rhfField, fieldState }): JSX.Element => (
+									<FormField
+										htmlFor={field.testId}
+										label={field.label}
+										tooltip={field.tooltip}
+										error={fieldState.error}
+									>
+										<Input
+											id={field.testId}
+											className={cx(styles.fullWidth, styles.mono)}
+											placeholder={field.placeholder}
+											value={rhfField.value}
+											onChange={(e): void => rhfField.onChange(e.target.value)}
+											testId={field.testId}
+										/>
+									</FormField>
+								)}
+							/>
 						);
 					})}
 				</div>

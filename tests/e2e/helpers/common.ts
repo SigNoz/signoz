@@ -1,5 +1,7 @@
 import type { Page, Request } from '@playwright/test';
 
+import { storageKey } from './base-path';
+
 // Shared helpers used across feature-specific helper modules (dashboards,
 // trace-details, …). Keep this to genuinely cross-feature utilities.
 
@@ -45,6 +47,8 @@ const HARNESS_CONSOLE_NOISE = [
 	'Request failed with status code 404',
 	'client never received a response, or request never left',
 	'ErrorResponseHandler: unclassified error',
+	// Google Fonts, which the chromium project fails at DNS (playwright.config.ts).
+	'Failed to load resource: net::ERR_NAME_NOT_RESOLVED',
 ];
 
 export interface ConsoleWatch {
@@ -130,7 +134,9 @@ export function requestUrl(request: Request): URL {
 export async function authToken(page: Page): Promise<string> {
 	const state = await page.context().storageState();
 	for (const origin of state.origins) {
-		const entry = origin.localStorage.find((e) => e.name === 'AUTH_TOKEN');
+		const entry = origin.localStorage.find(
+			(e) => e.name === storageKey('AUTH_TOKEN'),
+		);
 		if (entry) {
 			return entry.value;
 		}

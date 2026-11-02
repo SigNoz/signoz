@@ -1,5 +1,5 @@
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { ErrorV2 } from 'types/api';
@@ -16,19 +16,12 @@ const CALLBACK_AUTHN_URL = 'https://sso.example.com/auth';
 const PASSWORD_AUTHN_ORG = 'password_authn_org';
 const PASSWORD_AUTHN_EMAIL = 'jest.test@signoz.io';
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: {
-			search: '',
-		},
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 // Mock data
 const mockVersionSetupCompleted: Info = {
@@ -161,7 +154,10 @@ describe('Login Component', () => {
 
 			const { getByTestId } = render(<Login />);
 
-			expect(getByTestId('initiate_login')).toBeDisabled();
+			expect(getByTestId('initiate_login')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 
@@ -179,7 +175,7 @@ describe('Login Component', () => {
 			render(<Login />);
 
 			await waitFor(() => {
-				expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.SIGN_UP);
+				expect(mockNavigate).toHaveBeenCalledWith(ROUTES.SIGN_UP);
 			});
 		});
 
@@ -187,7 +183,7 @@ describe('Login Component', () => {
 			render(<Login />);
 
 			await waitFor(() => {
-				expect(mockHistoryPush).not.toHaveBeenCalled();
+				expect(mockNavigate).not.toHaveBeenCalled();
 			});
 		});
 
@@ -201,7 +197,7 @@ describe('Login Component', () => {
 			render(<Login />);
 
 			await waitFor(() => {
-				expect(mockHistoryPush).not.toHaveBeenCalled();
+				expect(mockNavigate).not.toHaveBeenCalled();
 			});
 		});
 	});
@@ -229,7 +225,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -271,7 +267,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -304,7 +300,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -341,7 +337,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -383,7 +379,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -422,7 +418,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -459,7 +455,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -473,6 +469,19 @@ describe('Login Component', () => {
 	});
 
 	describe('Callback Authentication', () => {
+		const originalLocation = window.location;
+
+		// The redirect case swaps `window.location` for a stub. history@5 reads
+		// that object on every `history.location` access, so leaving the stub in
+		// place would freeze the URL for every later test in this file.
+		afterEach(() => {
+			Object.defineProperty(window, 'location', {
+				value: originalLocation,
+				writable: true,
+				configurable: true,
+			});
+		});
+
 		it('shows callback login button when callback auth is supported', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
@@ -495,7 +504,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -510,13 +519,20 @@ describe('Login Component', () => {
 		it('redirects to callback URL on button click', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-			// Mock window.location.href
+			// Mock window.location.href. The rest of the shape matters: history@5
+			// re-reads `window.location` on every access, so a stub without a
+			// pathname breaks every later render in this file.
 			const mockLocation = {
 				href: 'http://localhost/',
+				origin: 'http://localhost',
+				pathname: '/',
+				search: '',
+				hash: '',
 			};
 			Object.defineProperty(window, 'location', {
 				value: mockLocation,
 				writable: true,
+				configurable: true,
 			});
 
 			server.use(
@@ -538,7 +554,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -588,7 +604,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -645,7 +661,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -726,7 +742,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -778,7 +794,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -825,14 +841,14 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
 			await user.click(nextButton);
 
 			// Button should be disabled during API call
-			expect(nextButton).toBeDisabled();
+			expect(nextButton).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('shows correct button text for each auth method', async () => {
@@ -860,7 +876,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -902,7 +918,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -955,7 +971,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 

@@ -19,8 +19,8 @@ import (
 // ══════════════════════════════════════════════
 
 type PanelPlugin struct {
-	Kind PanelPluginKind `json:"kind" required:"true"`
-	Spec any             `json:"spec" required:"true"`
+	Kind PanelPluginKind `json:"kind" required:"true" description:"The panel kind. It decides the shape of spec and which query kinds the panel accepts."`
+	Spec any             `json:"spec" required:"true" description:"The options for this panel kind. {} accepts every default."`
 }
 
 // PrepareJSONSchema marks the envelope with x-signoz-discriminator;
@@ -75,8 +75,8 @@ func (PanelPlugin) JSONSchemaOneOf() []any {
 }
 
 type PanelPluginVariant[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
+	Kind string `json:"kind" required:"true" description:"The panel kind."`
+	Spec S      `json:"spec" required:"true" description:"The options for this panel kind. {} accepts every default."`
 }
 
 func (v PanelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -88,13 +88,14 @@ func (v PanelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // ══════════════════════════════════════════════
 
 type QueryPlugin struct {
-	Kind QueryPluginKind `json:"kind" required:"true"`
-	Spec any             `json:"spec" required:"true"`
+	Kind QueryPluginKind `json:"kind" required:"true" description:"The query kind. It decides the shape of spec."`
+	Spec any             `json:"spec" required:"true" description:"The kind-specific query spec. A builder query's shape depends on its signal."`
 }
 
 func (QueryPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return markDiscriminator(s, "kind", map[string]string{
 		string(QueryKindBuilder):       schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpec"),
+		string(QueryKindAIBuilder):     schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpec"),
 		string(QueryKindComposite):     schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQuery"),
 		string(QueryKindFormula):       schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5QueryBuilderFormula"),
 		string(QueryKindPromQL):        schemaRef("DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5PromQuery"),
@@ -124,6 +125,7 @@ func (p *QueryPlugin) UnmarshalJSON(data []byte) error {
 func (QueryPlugin) JSONSchemaOneOf() []any {
 	return []any{
 		QueryPluginVariant[BuilderQuerySpec]{Kind: string(QueryKindBuilder)},
+		QueryPluginVariant[AIBuilderQuerySpec]{Kind: string(QueryKindAIBuilder)},
 		QueryPluginVariant[CompositeQuerySpec]{Kind: string(QueryKindComposite)},
 		QueryPluginVariant[FormulaSpec]{Kind: string(QueryKindFormula)},
 		QueryPluginVariant[PromQLQuerySpec]{Kind: string(QueryKindPromQL)},
@@ -144,6 +146,11 @@ func (plugin QueryPlugin) buildV5CompositeQueryFromPlugin() (qb.CompositeQuery, 
 			return qb.CompositeQuery{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "builder query is empty")
 		}
 		return wrapEnvelope(qb.QueryTypeBuilder, spec.Spec), nil
+	case *AIBuilderQuerySpec:
+		if spec == nil {
+			return qb.CompositeQuery{}, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidWidgetQuery, "AI builder query is empty")
+		}
+		return wrapEnvelope(qb.QueryTypeBuilderAI, qb.QueryBuilderQuery[qb.TraceAggregation](*spec)), nil
 	case *qb.PromQuery:
 		return wrapEnvelope(qb.QueryTypePromQL, *spec), nil
 	case *qb.ClickHouseQuery:
@@ -161,8 +168,8 @@ func wrapEnvelope(queryType qb.QueryType, spec any) qb.CompositeQuery {
 }
 
 type QueryPluginVariant[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
+	Kind string `json:"kind" required:"true" description:"The query kind."`
+	Spec S      `json:"spec" required:"true" description:"The kind-specific query spec."`
 }
 
 func (v QueryPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -174,8 +181,8 @@ func (v QueryPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // ══════════════════════════════════════════════
 
 type VariablePlugin struct {
-	Kind VariablePluginKind `json:"kind" required:"true"`
-	Spec any                `json:"spec" required:"true"`
+	Kind VariablePluginKind `json:"kind" required:"true" description:"The value source kind. It decides the shape of spec."`
+	Spec any                `json:"spec" required:"true" description:"The kind-specific value source spec."`
 }
 
 func (VariablePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -213,8 +220,8 @@ func (VariablePlugin) JSONSchemaOneOf() []any {
 }
 
 type VariablePluginVariant[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
+	Kind string `json:"kind" required:"true" description:"The value source kind."`
+	Spec S      `json:"spec" required:"true" description:"The kind-specific value source spec."`
 }
 
 func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -240,6 +247,7 @@ var (
 	}
 	queryPluginSpecs = map[QueryPluginKind]func() any{
 		QueryKindBuilder:       func() any { return new(BuilderQuerySpec) },
+		QueryKindAIBuilder:     func() any { return new(AIBuilderQuerySpec) },
 		QueryKindComposite:     func() any { return new(CompositeQuerySpec) },
 		QueryKindFormula:       func() any { return new(FormulaSpec) },
 		QueryKindPromQL:        func() any { return new(PromQLQuerySpec) },
@@ -252,14 +260,14 @@ var (
 		VariableKindCustom:  func() any { return new(CustomVariableSpec) },
 	}
 	allowedQueryKinds = map[PanelPluginKind][]QueryPluginKind{
-		PanelKindTimeSeries: {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindBarChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindAreaChart:  {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindNumber:     {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindHistogram:  {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindPieChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
-		PanelKindTable:      {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
-		PanelKindList:       {QueryKindBuilder},
+		PanelKindTimeSeries: {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindBarChart:   {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindAreaChart:  {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindNumber:     {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindHistogram:  {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindPieChart:   {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
+		PanelKindTable:      {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
+		PanelKindList:       {QueryKindBuilder, QueryKindAIBuilder},
 		PanelKindText:       {},
 		PanelKindHeatmap:    {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL},
 	}

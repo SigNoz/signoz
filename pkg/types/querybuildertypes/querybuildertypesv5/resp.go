@@ -32,17 +32,17 @@ type QBEvent struct {
 }
 
 type QueryWarnData struct {
-	Message  string                    `json:"message"`
-	Url      string                    `json:"url,omitempty"`
-	Warnings []QueryWarnDataAdditional `json:"warnings,omitempty"`
+	Message  string                    `json:"message" description:"A summary of the warnings raised while executing the request."`
+	Url      string                    `json:"url,omitempty" description:"A documentation link explaining the warnings."`
+	Warnings []QueryWarnDataAdditional `json:"warnings,omitempty" description:"The individual warnings."`
 }
 
 type QueryWarnDataAdditional struct {
-	Message string `json:"message"`
+	Message string `json:"message" description:"The warning text."`
 }
 
 type QueryData struct {
-	Results []any `json:"results"`
+	Results []any `json:"results" description:"One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests."`
 }
 
 var _ jsonschema.OneOfExposer = QueryData{}
@@ -57,11 +57,11 @@ func (QueryData) JSONSchemaOneOf() []any {
 }
 
 type QueryRangeResponse struct {
-	Type RequestType `json:"type"`
-	Data QueryData   `json:"data"`
-	Meta ExecStats   `json:"meta"`
+	Type RequestType `json:"type" description:"The request type the results are shaped for, echoed from the request."`
+	Data QueryData   `json:"data" description:"The query results."`
+	Meta ExecStats   `json:"meta" description:"Execution statistics for the whole request: a rough measure of how expensive the query was. Use the results, not these numbers, to decide whether data exists; an empty result can still scan many rows."`
 
-	Warning *QueryWarnData `json:"warning,omitempty"`
+	Warning *QueryWarnData `json:"warning,omitempty" description:"Warnings raised while executing the request, if any."`
 
 	QBEvent *QBEvent `json:"-"`
 }
@@ -69,7 +69,7 @@ type QueryRangeResponse struct {
 // QueryRangePreviewResponse is the dry-run output: one QueryPreview per query,
 // keyed by the request's query names.
 type QueryRangePreviewResponse struct {
-	CompositeQuery map[string]QueryPreview `json:"compositeQuery" required:"true" nullable:"true"`
+	CompositeQuery map[string]QueryPreview `json:"compositeQuery" required:"true" nullable:"true" description:"The rendered statements for each query, keyed by query name."`
 }
 
 // QueryRangePreviewOptions carries per-call options for the dry-run endpoint.
@@ -90,20 +90,20 @@ func (q *QueryRangePreviewResponse) PrepareJSONSchema(schema *jsonschema.Schema)
 
 // QueryPreview is the dry-run result for a single query.
 type QueryPreview struct {
-	Valid      bool               `json:"valid" required:"true" nullable:"false"`
-	Error      error              `json:"error" required:"true"`
-	Warnings   []string           `json:"warnings" required:"true" nullable:"false"`
-	Statements []PreviewStatement `json:"statements" required:"true" nullable:"false"`
+	Valid      bool               `json:"valid" required:"true" nullable:"false" description:"Whether the query rendered without error."`
+	Error      error              `json:"error" required:"true" description:"The rendering error when valid is false, otherwise null."`
+	Warnings   []string           `json:"warnings" required:"true" nullable:"false" description:"Warnings raised while rendering the query."`
+	Statements []PreviewStatement `json:"statements" required:"true" nullable:"false" description:"The rendered statements, returned only when verbose is true: one per PromQL metric selector, one for builder, ClickHouse SQL and trace operator queries, none for formulas. Empty otherwise."`
 }
 
 // PreviewStatement is one rendered ClickHouse statement with its args and, when
 // requested, its EXPLAIN ESTIMATE and granule breakdown. The query/args JSON
 // keys follow the OpenTelemetry db.statement.* convention.
 type PreviewStatement struct {
-	Query    string                              `json:"db.statement.query" required:"true" nullable:"false"`
-	Args     []any                               `json:"db.statement.args" required:"true" nullable:"false"`
-	Estimate []telemetrystoretypes.EstimateEntry `json:"estimate" required:"true" nullable:"false"`
-	Granules *telemetrystoretypes.Granules       `json:"granules" required:"true" nullable:"true"`
+	Query    string                              `json:"db.statement.query" required:"true" nullable:"false" description:"The ClickHouse SQL statement with positional parameter placeholders."`
+	Args     []any                               `json:"db.statement.args" required:"true" nullable:"false" description:"The values bound to the statement placeholders, in order."`
+	Estimate []telemetrystoretypes.EstimateEntry `json:"estimate" required:"true" nullable:"false" description:"The EXPLAIN ESTIMATE rows for the statement; empty unless verbose was requested."`
+	Granules *telemetrystoretypes.Granules       `json:"granules" required:"true" nullable:"true" description:"The granule analysis for the statement; null unless verbose was requested."`
 }
 
 // MarshalJSON renders Error in its structured form (code/message/suggestions)
@@ -133,20 +133,20 @@ func (q *QueryRangeResponse) PrepareJSONSchema(schema *jsonschema.Schema) error 
 }
 
 type TimeSeriesData struct {
-	QueryName    string               `json:"queryName"`
-	Aggregations []*AggregationBucket `json:"aggregations"`
+	QueryName    string               `json:"queryName" description:"The name of the query that produced this result."`
+	Aggregations []*AggregationBucket `json:"aggregations" description:"One bucket per aggregation of the query. The order is not guaranteed; match buckets to aggregations by index."`
 }
 
 type AggregationBucket struct {
-	Index  int             `json:"index"` // or string Alias
-	Alias  string          `json:"alias"`
-	Meta   AggregationMeta `json:"meta,omitempty"`
-	Series []*TimeSeries   `json:"series"` // no extra nesting
+	Index  int             `json:"index" description:"The zero-based position of the aggregation in the query."`
+	Alias  string          `json:"alias" description:"The alias of the aggregation, or the internal name __result_N, with N its index, when no alias was given."`
+	Meta   AggregationMeta `json:"meta,omitempty" description:"Display metadata for the aggregation."`
+	Series []*TimeSeries   `json:"series" description:"One series per group-by combination."`
 
-	PredictedSeries  []*TimeSeries `json:"predictedSeries,omitempty"`
-	UpperBoundSeries []*TimeSeries `json:"upperBoundSeries,omitempty"`
-	LowerBoundSeries []*TimeSeries `json:"lowerBoundSeries,omitempty"`
-	AnomalyScores    []*TimeSeries `json:"anomalyScores,omitempty"`
+	PredictedSeries  []*TimeSeries `json:"predictedSeries,omitempty" description:"The predicted values per series; present only when the anomaly function is applied."`
+	UpperBoundSeries []*TimeSeries `json:"upperBoundSeries,omitempty" description:"The upper bound of the expected range per series; present only when the anomaly function is applied."`
+	LowerBoundSeries []*TimeSeries `json:"lowerBoundSeries,omitempty" description:"The lower bound of the expected range per series; present only when the anomaly function is applied."`
+	AnomalyScores    []*TimeSeries `json:"anomalyScores,omitempty" description:"The anomaly score per series; present only when the anomaly function is applied."`
 }
 
 // ReindexValuesToNewUpperBounds moves each count to the index its upper bound
@@ -189,17 +189,59 @@ func (a *AggregationBucket) ReindexValuesToNewUpperBounds(onto []float64) {
 	a.Meta.Buckets = onto
 }
 
+// TrimAxisToCountedBuckets drops the buckets at either end of Meta.Buckets that hold
+// no counts, since an axis runs from the lowest value in the window to the highest.
+// Call it only when the buckets were chosen from the values. A histogram's `le`
+// buckets are fixed, so an empty one of those still has to stay on the axis.
+func (a *AggregationBucket) TrimAxisToCountedBuckets() {
+	if a == nil || len(a.Meta.Buckets) == 0 {
+		return
+	}
+
+	lowestCounted, highestCounted := len(a.Meta.Buckets), -1
+	for _, series := range a.Series {
+		for _, point := range series.Values {
+			for slot := 0; slot < len(a.Meta.Buckets) && slot < len(point.Values); slot++ {
+				if point.Values[slot] != 0 {
+					lowestCounted = min(lowestCounted, slot)
+					highestCounted = max(highestCounted, slot)
+				}
+			}
+		}
+	}
+	if highestCounted < 0 {
+		return
+	}
+
+	if lowestCounted == 0 && highestCounted == len(a.Meta.Buckets)-1 {
+		return
+	}
+
+	trimmed := a.Meta.Buckets[lowestCounted : highestCounted+1]
+	for _, series := range a.Series {
+		for _, point := range series.Values {
+			if len(point.Values) == 0 {
+				continue
+			}
+			counts := make([]float64, len(trimmed)+1)
+			for slot, count := range point.Values {
+				counts[min(max(slot-lowestCounted, 0), len(trimmed))] += count
+			}
+			point.Values = counts
+		}
+	}
+
+	a.Meta.Buckets = trimmed
+}
+
 type AggregationMeta struct {
-	Unit string `json:"unit,omitempty"`
-	// Buckets holds ascending upper bounds shared by every series in the
-	// AggregationBucket, set only for heatmap results. Each point's Values holds
-	// len(Buckets)+1 counts: one per bound, then the open-above overflow.
-	Buckets []float64 `json:"buckets,omitempty"`
+	Unit    string    `json:"unit,omitempty" description:"The unit of the aggregated values, taken from metric metadata when known."`
+	Buckets []float64 `json:"buckets,omitempty" description:"The ascending upper bounds of the value bands, set only for heatmap results; each point then carries one count per bound plus a trailing overflow count in values."`
 }
 
 type TimeSeries struct {
-	Labels []*Label           `json:"labels,omitempty"`
-	Values []*TimeSeriesValue `json:"values"`
+	Labels []*Label           `json:"labels,omitempty" description:"The group-by field values that identify this series."`
+	Values []*TimeSeriesValue `json:"values" description:"The data points of the series in ascending timestamp order."`
 }
 
 // EvaluableValues returns only the values where Partial is false and value is not NaN or +/- Inf.
@@ -218,8 +260,8 @@ func (ts *TimeSeries) EvaluableValues() []*TimeSeriesValue {
 }
 
 type Label struct {
-	Key   telemetrytypes.TelemetryFieldKey `json:"key"`
-	Value any                              `json:"value"`
+	Key   telemetrytypes.TelemetryFieldKey `json:"key" description:"The group-by field this label value belongs to."`
+	Value any                              `json:"value" description:"The label value as a string, number or boolean."`
 }
 
 var _ jsonschema.Preparer = Label{}
@@ -232,6 +274,7 @@ func (Label) PrepareJSONSchema(s *jsonschema.Schema) error {
 	}
 
 	value := jsonschema.Schema{}
+	value.Description = propertyDescription(s, "value")
 	value.OneOf = []jsonschema.SchemaOrBool{
 		jsonschema.String.ToSchemaOrBool(),
 		jsonschema.Number.ToSchemaOrBool(),
@@ -290,19 +333,12 @@ func GetUniqueSeriesKey(labels []*Label) string {
 }
 
 type TimeSeriesValue struct {
-	Timestamp int64   `json:"timestamp"`
-	Value     float64 `json:"value"`
+	Timestamp int64   `json:"timestamp" description:"The start of the step as a Unix timestamp in milliseconds."`
+	Value     float64 `json:"value" description:"The aggregated value for the step; omitted for heatmap results, which use values."`
 
-	// true if the value is "partial", i.e doesn't cover the complete interval.
-	// for instance, if the query start time is 3:14:15 PM, and the step is 1 minute,
-	// the ts is rounded to 3:14 but the value only covers 3:14:15 PM to 3:15:00 PM
-	// this partial result cannot be cached and should be ignored.
-	// on the client side, these partial values are rendered differently.
-	Partial bool `json:"partial,omitempty"`
+	Partial bool `json:"partial,omitempty" description:"True when the step is only partly covered by the requested time range, so the value is incomplete."`
 
-	// Values holds one count per histogram bucket for heatmap results, in the
-	// order of the aggregation's Meta.Buckets. Value is omitted in that case.
-	Values []float64 `json:"values,omitempty"`
+	Values []float64 `json:"values,omitempty" description:"The per-band counts for heatmap results, in the order of meta.buckets plus a trailing overflow count."`
 }
 
 type ColumnType struct {
@@ -326,29 +362,29 @@ func (ColumnType) Enum() []any {
 
 type ColumnDescriptor struct {
 	telemetrytypes.TelemetryFieldKey
-	QueryName        string `json:"queryName"`
-	AggregationIndex int64  `json:"aggregationIndex"`
+	QueryName        string `json:"queryName" description:"The name of the query that produced the column."`
+	AggregationIndex int64  `json:"aggregationIndex" description:"The zero-based position of the aggregation in the query for aggregation columns."`
 	Meta             struct {
-		Unit string `json:"unit,omitempty"`
-	} `json:"meta,omitempty"`
-	Type ColumnType `json:"columnType"`
+		Unit string `json:"unit,omitempty" description:"The unit of the column values when known."`
+	} `json:"meta,omitempty" description:"Display metadata for the column."`
+	Type ColumnType `json:"columnType" description:"Whether the column is a group-by field (group) or an aggregated value (aggregation)."`
 }
 
 type ScalarData struct {
-	QueryName string              `json:"queryName"`
-	Columns   []*ColumnDescriptor `json:"columns"`
-	Data      [][]any             `json:"data"`
+	QueryName string              `json:"queryName" description:"The name of the query that produced this table."`
+	Columns   []*ColumnDescriptor `json:"columns" description:"The column definitions, in the same order as the values in each data row."`
+	Data      [][]any             `json:"data" description:"The rows, each a list of values aligned with columns."`
 }
 
 type RawData struct {
-	QueryName  string    `json:"queryName"`
-	NextCursor string    `json:"nextCursor"`
-	Rows       []*RawRow `json:"rows"`
+	QueryName  string    `json:"queryName" description:"The name of the query that produced these rows."`
+	NextCursor string    `json:"nextCursor" description:"The cursor to pass in the next request to continue from the last row; empty when there are no more rows."`
+	Rows       []*RawRow `json:"rows" description:"The matching records in the requested order."`
 }
 
 type RawRow struct {
-	Timestamp time.Time      `json:"timestamp"`
-	Data      map[string]any `json:"data"`
+	Timestamp time.Time      `json:"timestamp" description:"The record timestamp in RFC 3339 format."`
+	Data      map[string]any `json:"data" description:"The selected field values keyed by field name."`
 }
 
 type RawStream struct {

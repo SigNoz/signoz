@@ -130,7 +130,10 @@ describe('AddToDashboardButton', () => {
 		setPanelType(PANEL_TYPES.LIST);
 		render(<AddToDashboardButton query={null} sourcepage={DataSource.LOGS} />);
 
-		expect(screen.getByTestId('explorer-add-to-dashboard')).toBeDisabled();
+		expect(screen.getByTestId('explorer-add-to-dashboard')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 		expect(screen.queryByTestId('export-stub')).not.toBeInTheDocument();
 	});
 

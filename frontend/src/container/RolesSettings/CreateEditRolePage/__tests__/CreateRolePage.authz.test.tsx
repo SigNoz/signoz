@@ -1,5 +1,3 @@
-import { Route, Switch } from 'react-router-dom';
-import ROUTES from 'constants/routes';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen } from 'tests/test-utils';
@@ -15,18 +13,9 @@ afterEach(() => {
 });
 
 function renderCreatePage(): ReturnType<typeof render> {
-	return render(
-		<Switch>
-			<Route path={ROUTES.ROLES_SETTINGS} exact>
-				<div data-testid="roles-list-redirect" />
-			</Route>
-			<Route path={ROUTES.ROLE_CREATE}>
-				<CreateEditRolePage />
-			</Route>
-		</Switch>,
-		undefined,
-		{ initialRoute: '/settings/roles/new' },
-	);
+	return render(<CreateEditRolePage />, undefined, {
+		initialRoute: '/settings/roles/new',
+	});
 }
 
 describe('CreateRolePage - AuthZ', () => {

@@ -2,8 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { Drawer, Tooltip } from 'antd';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import LogStateIndicator from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
@@ -87,7 +88,8 @@ function LogDetailInner({
 				target.closest('.cm-tooltip-autocomplete') ||
 				target.closest('.drawer-popover') ||
 				target.closest('.query-status-popover') ||
-				target.closest('[data-radix-popper-content-wrapper]')
+				target.closest('[data-radix-popper-content-wrapper]') ||
+				target.closest('[data-base-ui-portal]')
 			) {
 				return;
 			}
@@ -146,7 +148,7 @@ function LogDetailInner({
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: DataSource.LOGS,
+		sourcePage: SavedviewtypesSourceDTO.logs,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
 
@@ -317,9 +319,12 @@ function LogDetailInner({
 					<div className="log-detail-drawer__section-divider" />
 
 					<div className="tabs-and-search">
-						<ToggleGroupSimple
+						<ToggleGroup
+							variant="outlined"
+							color="secondary"
+							size="sm"
 							type="single"
-							className="views-tabs"
+							testId="log-detail-views-tabs"
 							onChange={handleModeChange}
 							value={selectedView}
 							items={[
@@ -365,9 +370,12 @@ function LogDetailInner({
 										variant="link"
 										color="secondary"
 										size="sm"
-										prefix={<Filter size="lg" />}
+										icon
+										aria-label="Show Filters"
 										onClick={handleFilterVisible}
-									/>
+									>
+										<Filter size="lg" />
+									</Button>
 								</Tooltip>
 							)}
 						</div>

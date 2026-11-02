@@ -199,7 +199,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 		await waitFor(() =>
 			expect(
 				screen.getByRole('button', { name: /New Service Account/i }),
-			).not.toBeDisabled(),
+			).not.toHaveAttribute('aria-disabled', 'true'),
 		);
 
 		fireEvent.click(screen.getByRole('button', { name: /New Service Account/i }));

@@ -15,11 +15,12 @@ def _env_file(pytestconfig: pytest.Config) -> Path:
     return pytestconfig.rootpath / "e2e" / ".env.local"
 
 
-def test_setup(
+def test_setup(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     apply_license: types.Operation,  # pylint: disable=unused-argument
     seeder: types.TestContainerDocker,
+    base_path: str,
     pytestconfig: pytest.Config,
 ) -> None:
     """Bring the backend up and write e2e coordinates to .env.local."""
@@ -33,6 +34,8 @@ def test_setup(
         f.write(f"SIGNOZ_E2E_USERNAME={USER_ADMIN_EMAIL}\n")
         f.write(f"SIGNOZ_E2E_PASSWORD={USER_ADMIN_PASSWORD}\n")
         f.write(f"SIGNOZ_E2E_SEEDER_URL={seeder_cfg.base()}\n")
+        if base_path:
+            f.write(f"SIGNOZ_E2E_BASE_PATH={base_path}\n")
 
 
 def test_teardown(

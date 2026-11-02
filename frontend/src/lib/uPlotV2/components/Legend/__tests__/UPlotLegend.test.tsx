@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, RenderResult, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 
@@ -93,14 +92,12 @@ describe('UPlotLegend', () => {
 		showSearch = true,
 	): RenderResult =>
 		render(
-			<TooltipProvider>
-				<UPlotLegend
-					position={position}
-					showSearch={showSearch}
-					// config is consumed by the mocked useLegendsSync hook, not directly
-					config={{} as any}
-				/>
-			</TooltipProvider>,
+			<UPlotLegend
+				position={position}
+				showSearch={showSearch}
+				// config is consumed by the mocked useLegendsSync hook, not directly
+				config={{} as any}
+			/>,
 		);
 
 	describe('layout and position', () => {

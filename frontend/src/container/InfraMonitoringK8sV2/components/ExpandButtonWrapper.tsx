@@ -23,6 +23,7 @@ export function ExpandButtonWrapper({
 	return (
 		<div className={styles.expandButtonContainer}>
 			<Button
+				aria-label={localIsExpanded ? 'Collapse' : 'Expand'}
 				variant="ghost"
 				color="secondary"
 				onClick={(e): void => {
@@ -30,9 +31,11 @@ export function ExpandButtonWrapper({
 					setLocalIsExpanded((v) => !v);
 					toggleExpanded();
 				}}
-				size="icon"
-				prefix={localIsExpanded ? <ChevronDown /> : <ChevronRight />}
-			/>
+				size="sm"
+				icon
+			>
+				{localIsExpanded ? <ChevronDown /> : <ChevronRight />}
+			</Button>
 			{children}
 		</div>
 	);

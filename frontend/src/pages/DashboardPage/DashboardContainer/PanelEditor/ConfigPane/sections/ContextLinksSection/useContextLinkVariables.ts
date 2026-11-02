@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { dtoToFormModel } from 'pages/DashboardPage/DashboardContainer/DashboardSettings/Variables/variableAdapters';
-import { useDashboardFetchRequired } from 'pages/DashboardPage/DashboardContainer/hooks/useDashboardFetchRequired';
+import { useDashboardVariableNames } from 'pages/DashboardPage/DashboardContainer/hooks/useDashboardVariableNames';
 
 import type { VariableItem } from './types';
 
@@ -22,15 +21,7 @@ const GLOBAL_TIMESTAMP_VARIABLES: VariableItem[] = [
 export function useContextLinkVariables(): VariableItem[] {
 	const { currentQuery } = useQueryBuilder();
 
-	const { variables: variableDtos } = useDashboardFetchRequired();
-
-	const dashboardVariableNames = useMemo(
-		() =>
-			variableDtos
-				.map((dto) => dtoToFormModel(dto).name)
-				.filter((name): name is string => !!name),
-		[variableDtos],
-	);
+	const dashboardVariableNames = useDashboardVariableNames();
 
 	// `_`-prefixed to match V1 and avoid colliding with dashboard-variable names.
 	const fieldVariableNames = useMemo(() => {
@@ -48,12 +39,14 @@ export function useContextLinkVariables(): VariableItem[] {
 	return useMemo(
 		() => [
 			...GLOBAL_TIMESTAMP_VARIABLES,
-			...fieldVariableNames.map(
-				(name): VariableItem => ({ name, source: 'Query variable' }),
-			),
-			...dashboardVariableNames.map(
-				(name): VariableItem => ({ name, source: 'Dashboard variable' }),
-			),
+			...fieldVariableNames.map((name): VariableItem => ({
+				name,
+				source: 'Query variable',
+			})),
+			...dashboardVariableNames.map((name): VariableItem => ({
+				name,
+				source: 'Dashboard variable',
+			})),
 		],
 		[fieldVariableNames, dashboardVariableNames],
 	);

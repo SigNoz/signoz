@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page, type Route } from '@playwright/test';
 
 // ─── Antd select helpers ───────────────────────────────────────────────────
 
@@ -126,7 +126,7 @@ export async function pickChannelByName(
 // ─── SEED-CH1: a stack with no notification channels ───────────────────────
 
 /**
- * Route-stub `GET /api/v1/channels` to an empty list for this page only.
+ * Route-stub the channel list to an empty one for this page only.
  *
  * This is the **one** place the alerts suite mocks the network, and it is a
  * deliberate exception to the standing no-stubbing rule. The justification: zero
@@ -136,11 +136,14 @@ export async function pickChannelByName(
  * `alertChannel` is worker-scoped and parallel workers share one stack, so
  * deleting the channel would break every other scenario running at that moment.
  *
- * Both forms read the same endpoint through `api/channels/getAll`, so one stub
- * covers v1 and v2.
+ * Both list endpoints are stubbed: the pickers read v2, while screens still on
+ * the v1 client read v1, and a scenario may cross both.
  */
 export async function stubNoChannels(page: Page): Promise<void> {
-	await page.route('**/api/v1/channels', async (route) => {
+	const emptyList = async (
+		route: Route,
+		body: Record<string, unknown>,
+	): Promise<void> => {
 		if (route.request().method() !== 'GET') {
 			await route.fallback();
 			return;
@@ -148,7 +151,15 @@ export async function stubNoChannels(page: Page): Promise<void> {
 		await route.fulfill({
 			status: 200,
 			contentType: 'application/json',
-			body: JSON.stringify({ status: 'success', data: [] }),
+			body: JSON.stringify(body),
 		});
-	});
+	};
+
+	await page.route('**/api/v1/channels', (route) =>
+		emptyList(route, { status: 'success', data: [] }),
+	);
+	// the v2 list is paginated, so the empty page has to carry its total
+	await page.route('**/api/v2/notification_channels*', (route) =>
+		emptyList(route, { status: 'success', data: { channels: [], total: 0 } }),
+	);
 }

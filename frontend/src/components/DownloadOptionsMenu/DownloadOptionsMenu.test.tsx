@@ -308,13 +308,16 @@ describe.each([
 
 		fireEvent.click(screen.getByText('Export'));
 
-		expect(screen.getByTestId(testId)).toBeDisabled();
+		expect(screen.getByTestId(testId)).toHaveAttribute('aria-disabled', 'true');
 		expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
 		resolveDownload!();
 
 		await waitFor(() => {
-			expect(screen.getByTestId(testId)).not.toBeDisabled();
+			expect(screen.getByTestId(testId)).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 });
