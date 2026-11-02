@@ -45,7 +45,7 @@ export enum TraceDetailEventKeys {
 	PercentileValue = 'percentileValue',
 	ResourceAttributeKey = 'resourceAttributeKey',
 	Selected = 'selected',
-	// Span details opened (reuses SpanId)
+	// Data loaded / span details opened: which tab the user is on
 	DetailsTab = 'detailsTab',
 }
 

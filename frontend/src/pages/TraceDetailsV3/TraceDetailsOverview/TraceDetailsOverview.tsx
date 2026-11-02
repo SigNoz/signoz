@@ -207,6 +207,7 @@ function TraceDetailsOverview({
 		dataLoadedFiredForRef.current = traceId;
 		const numServices = new Set(payload.spans.map((s) => s['service.name'])).size;
 		logTraceEvent(TraceDetailEvents.DataLoaded, {
+			[TraceDetailEventKeys.DetailsTab]: TraceDetailsTab.Overview,
 			[TraceDetailEventKeys.TotalSpansCount]: totalSpansCount,
 			[TraceDetailEventKeys.NumServices]: numServices,
 			[TraceDetailEventKeys.TraceDurationMs]:
