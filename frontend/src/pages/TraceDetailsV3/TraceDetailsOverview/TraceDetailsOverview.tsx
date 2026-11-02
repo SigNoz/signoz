@@ -27,7 +27,9 @@ import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchPa
 import { ResizableBox } from 'periscope/components/ResizableBox';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
+import { TraceDetailsTab } from '../constants';
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
+import { useSpanDetailsOpenedEvent } from '../hooks/useSpanDetailsOpenedEvent';
 import { useSpanDetailVariant } from '../hooks/useSpanDetailVariant';
 import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
 import NoData from '../NoData/NoData';
@@ -105,6 +107,12 @@ function TraceDetailsOverview({
 	const panelState = useDetailsPanel({
 		entityId: selectedSpanId,
 		onClose: handleSpanDetailsClose,
+	});
+	useSpanDetailsOpenedEvent({
+		isOpen: panelState.isOpen,
+		spanId: selectedSpan?.span_id,
+		detailsTab: TraceDetailsTab.Overview,
+		logTraceEvent,
 	});
 
 	const allSpansRef = useRef<SpanV3[]>([]);

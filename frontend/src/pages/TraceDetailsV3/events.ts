@@ -12,6 +12,7 @@ export enum TraceDetailEvents {
 	SpanPercentileTimeRangeChanged = 'Trace Detail: Span percentile time range changed',
 	SpanPercentileAttributesSelectorToggled = 'Trace Detail: Span percentile attributes selector toggled',
 	SpanPercentileAttributeChanged = 'Trace Detail: Span percentile attribute changed',
+	SpanDetailsOpened = 'Trace Detail: Span details opened',
 }
 
 export enum TraceDetailEventKeys {
@@ -44,6 +45,8 @@ export enum TraceDetailEventKeys {
 	PercentileValue = 'percentileValue',
 	ResourceAttributeKey = 'resourceAttributeKey',
 	Selected = 'selected',
+	// Span details opened (reuses SpanId)
+	DetailsTab = 'detailsTab',
 }
 
 export type TraceDetailView = 'v2' | 'v3';

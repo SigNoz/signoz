@@ -3,7 +3,9 @@ import { back, hasInAppHistory } from 'lib/router/navigation';
 import { useAppParams } from 'lib/router/useAppParams';
 
 import { TraceDetailsTab } from '../constants';
+import { useSpanDetailsOpenedEvent } from '../hooks/useSpanDetailsOpenedEvent';
 import { useSpanDetailVariant } from '../hooks/useSpanDetailVariant';
+import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
 import { useTraceDetailsTab } from '../hooks/useTraceDetailsTab';
 import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
 import { useThreadSpanSelection } from './hooks/useThreadSpanSelection';
@@ -61,6 +63,14 @@ function TraceDetailsThread(): JSX.Element {
 	const selectedSpan = spans.find((span) => span.span_id === selectedSpanId);
 	const [spanDetailVariant, setSpanDetailVariant] = useSpanDetailVariant();
 	const isBottomDocked = spanDetailVariant === SpanDetailVariant.DOCKED;
+
+	const logTraceEvent = useTraceDetailLogEvent('v3', traceId || '');
+	useSpanDetailsOpenedEvent({
+		isOpen: panelState.isOpen,
+		spanId: selectedSpan?.span_id,
+		detailsTab: TraceDetailsTab.Thread,
+		logTraceEvent,
+	});
 
 	const spanDetails = panelState.isOpen && selectedSpan && (
 		<ThreadSpanDetails
