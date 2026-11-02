@@ -72,8 +72,8 @@ describe('prepareScatterPlotData', () => {
 		if (result.status !== ScatterPlotDataStatus.Ready) {
 			return;
 		}
-		expect(result.channels.x.label).toBe('A.count()');
-		expect(result.channels.y.label).toBe('A.p99(duration_nano)');
+		expect(result.channels.x.label).toBe('count()');
+		expect(result.channels.y.label).toBe('p99(duration_nano)');
 		expect(result.channels.size).toBeUndefined();
 		expect(result.series).toStrictEqual([
 			{ label: 'cart', xs: [12000], ys: [340] },
@@ -100,9 +100,9 @@ describe('prepareScatterPlotData', () => {
 			throw new Error('expected ready data');
 		}
 		expect(result.channels).toStrictEqual({
-			x: { label: 'A.p99(duration_nano)', unit: 'ns' },
-			y: { label: 'A.count()', unit: undefined },
-			size: { label: 'A.errors', unit: undefined },
+			x: { label: 'p99(duration_nano)', unit: 'ns' },
+			y: { label: 'count()', unit: undefined },
+			size: { label: 'errors', unit: undefined },
 		});
 		expect(result.series[1]).toStrictEqual({
 			label: 'payment',
@@ -122,12 +122,12 @@ describe('prepareScatterPlotData', () => {
 		if (result.status !== ScatterPlotDataStatus.Ready) {
 			throw new Error('expected ready data');
 		}
-		expect(result.channels.x.label).toBe('A.count()');
-		expect(result.channels.y.label).toBe('A.p99(duration_nano)');
+		expect(result.channels.x.label).toBe('count()');
+		expect(result.channels.y.label).toBe('p99(duration_nano)');
 		expect(result.channels.size).toBeUndefined();
 	});
 
-	it('labels each value column with its query, so shared names read apart', () => {
+	it('prefixes value columns whose names collide with their query', () => {
 		const result = prepareScatterPlotData({
 			table: makeTable(
 				[
@@ -153,7 +153,7 @@ describe('prepareScatterPlotData', () => {
 			throw new Error('expected ready data');
 		}
 		expect(result.channels.x.label).toBe('A.count()');
-		expect(result.channels.y.label).toBe('A.p99(duration_nano)');
+		expect(result.channels.y.label).toBe('p99(duration_nano)');
 		expect(result.channels.size?.label).toBe('B.count()');
 		expect(result.axisQueries).toStrictEqual({ x: 'A', y: 'A' });
 	});
@@ -170,7 +170,7 @@ describe('prepareScatterPlotData', () => {
 			throw new Error('expected ready data');
 		}
 		expect(result.channels.x.label).toBe('Throughput');
-		expect(result.channels.y.label).toBe('A.p99(duration_nano)');
+		expect(result.channels.y.label).toBe('p99(duration_nano)');
 	});
 
 	it('picks a y column other than the bound x', () => {
@@ -183,7 +183,7 @@ describe('prepareScatterPlotData', () => {
 		if (result.status !== ScatterPlotDataStatus.Ready) {
 			throw new Error('expected ready data');
 		}
-		expect(result.channels.y.label).toBe('A.p99(duration_nano)');
+		expect(result.channels.y.label).toBe('p99(duration_nano)');
 	});
 
 	it('colours by the configured group label and keeps every label for the tooltip', () => {

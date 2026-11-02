@@ -35,8 +35,10 @@ export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 		[QueryMode.CLICKHOUSE]: { kind: QueryModeKind.SIGNAL_LESS },
 	},
 	queryBuilderFields: {
+		// Pinned so it opens empty: the group-by template a click would seed names nothing here.
 		legend_format: {
-			state: 'hidden',
+			state: 'pinned',
+			placeholder: 'Name for this value, e.g. p95 latency',
 		},
 		trace_operator: {
 			state: 'hidden',
