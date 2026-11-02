@@ -30,6 +30,9 @@ export const NEW_PANEL_KINDS = [
 	'heatmap',
 	'list',
 	'text',
+	'scatter-plot',
+	'top-list',
+	'geo-map',
 ] as const;
 
 export type NewPanelKind = (typeof NEW_PANEL_KINDS)[number];
@@ -45,6 +48,9 @@ const KIND_BY_OPTION: Record<NewPanelKind, PanelKind> = {
 	heatmap: 'signoz/HeatmapPanel',
 	list: 'signoz/ListPanel',
 	text: 'signoz/TextPanel',
+	'scatter-plot': 'signoz/ScatterPlotPanel',
+	'top-list': 'signoz/TopListPanel',
+	'geo-map': 'signoz/GeoMapPanel',
 };
 
 export const newPanelKindOf = (option: NewPanelKind): PanelKind =>

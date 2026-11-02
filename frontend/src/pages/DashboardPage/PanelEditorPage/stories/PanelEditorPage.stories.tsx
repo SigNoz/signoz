@@ -212,6 +212,27 @@ export const ConfigText: Story = {
 	play: expandConfigSections,
 };
 
+/** A new scatter plot panel's config pane, every section expanded. */
+export const ConfigScatterPlot: Story = {
+	args: { panel: 'new', newPanelKind: 'scatter-plot' },
+	play: expandConfigSections,
+};
+
+/** A new top list panel's config pane, every section expanded. */
+export const ConfigTopList: Story = {
+	args: { panel: 'new', newPanelKind: 'top-list' },
+	play: expandConfigSections,
+};
+
+/**
+ * A new geo map panel's config pane, every section expanded. The query has no
+ * location yet, so Location offers the GeoIP keys to add to Group By.
+ */
+export const ConfigGeoMap: Story = {
+	args: { panel: 'new', newPanelKind: 'geo-map' },
+	play: expandConfigSections,
+};
+
 /**
  * A saved panel with settings changed: each changed setting and its section
  * carry the unsaved-changes dot.
