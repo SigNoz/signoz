@@ -46,6 +46,7 @@ const (
 	SpanAttributesColumn         = "attributes"
 	SpanAttributesPromotedColumn = "attributes_promoted"
 	SpanResourcesStringColumn    = "resources_string"
+	SpanScopeColumn              = "scope"
 )
 
 var (
@@ -455,6 +456,7 @@ var (
 		SpanAttributesBoolColumn,
 		SpanResourcesStringColumn,
 		SpanAttributesColumn,
+		SpanScopeColumn,
 	}
 
 	DefaultFields = map[string]telemetrytypes.TelemetryFieldKey{

@@ -154,7 +154,7 @@ func TestGetSpanCountByField(t *testing.T) {
 }
 
 func TestGetTraceSpans(t *testing.T) {
-	expectedSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, has_error, kind, resource_string_service$$name, name, attributes, resources_string, if(notEmpty(attributes), map(), attributes_string) AS attributes_string, if(notEmpty(attributes), map(), attributes_number) AS attributes_number, if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool, events, status_message, status_code_string, kind_string, parent_span_id, flags, is_remote, trace_state, status_code, db_name, db_operation, http_method, http_url, http_host, external_http_method, external_http_url, response_status_code, links as references FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC"
+	expectedSQL := "SELECT DISTINCT ON (span_id) timestamp, duration_nano, span_id, has_error, kind, resource_string_service$$name, name, attributes, resources_string, scope, if(notEmpty(attributes), map(), attributes_string) AS attributes_string, if(notEmpty(attributes), map(), attributes_number) AS attributes_number, if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool, events, status_message, status_code_string, kind_string, parent_span_id, flags, is_remote, trace_state, status_code, db_name, db_operation, http_method, http_url, http_host, external_http_method, external_http_url, response_status_code, links as references FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC"
 
 	s := newTestStore(sqlmock.QueryMatcherEqual)
 	s.Mock().ExpectSelect(expectedSQL).
@@ -171,12 +171,12 @@ func TestGetFlamegraphSpans(t *testing.T) {
 	}{
 		{
 			name: "NoSpanIDs_GeneratesBaseSQL",
-			sql:  "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(attributes) AS attributes, if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string, if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number, if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool, any(resources_string) AS resources_string FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY span_id ORDER BY timestamp ASC, name ASC",
+			sql:  "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(attributes) AS attributes, if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string, if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number, if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool, any(resources_string) AS resources_string, any(scope) AS scope FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY span_id ORDER BY timestamp ASC, name ASC",
 		},
 		{
 			name:    "WithSpanIDs_GeneratesInClauseSQL",
 			spanIDs: []string{"span-1", "span-2"},
-			sql:     "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(attributes) AS attributes, if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string, if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number, if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool, any(resources_string) AS resources_string FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND span_id IN (?, ?) GROUP BY span_id ORDER BY timestamp ASC, name ASC",
+			sql:     "SELECT span_id, any(parent_span_id) AS parent_span_id, any(timestamp) AS timestamp, any(duration_nano) AS duration_nano, any(has_error) AS has_error, any(name) AS name, any(events) AS events, any(attributes) AS attributes, if(notEmpty(attributes), map(), any(attributes_string)) AS attributes_string, if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number, if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool, any(resources_string) AS resources_string, any(scope) AS scope FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND span_id IN (?, ?) GROUP BY span_id ORDER BY timestamp ASC, name ASC",
 		},
 	}
 

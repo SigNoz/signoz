@@ -28,6 +28,7 @@ import { TestRouter } from 'tests/router';
 import { getAppContextMock } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { __setSearchParamsGetterForTest } from 'utils/getUnstableCurrentSearchParams';
 
 import { getSavedViewQuery } from '../utils/getSavedViewQuery';
@@ -159,6 +160,23 @@ export function viewUrl(
 }
 
 const mockStore = configureStore([thunk]);
+
+export function withGlobalTime(
+	ui: ReactElement,
+	globalTime: Partial<GlobalReducer>,
+): ReactElement {
+	const state = store.getState();
+	return (
+		<Provider
+			store={mockStore({
+				...state,
+				globalTime: { ...state.globalTime, ...globalTime },
+			})}
+		>
+			{ui}
+		</Provider>
+	);
+}
 
 // What the explorer page does around the header: writes its default query to a
 // bare url, and sets the provider's tab from the url (the provider alone seeds
