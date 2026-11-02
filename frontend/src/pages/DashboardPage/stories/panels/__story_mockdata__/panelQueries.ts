@@ -15,6 +15,7 @@ import {
 	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricSignal,
 	Querybuildertypesv5RequestTypeDTO as RequestType,
 	type DashboardtypesComparisonThresholdDTO,
+	type DashboardtypesGeoMapThresholdDTO,
 	type DashboardtypesQueryDTO,
 	type DashboardtypesTableThresholdDTO,
 	type DashboardtypesThresholdWithLabelDTO,
@@ -49,6 +50,20 @@ export const comparisonThresholds = (
 					operator: ComparisonOperator.above,
 					color: THRESHOLD_COLOR,
 					format: ThresholdFormat.background,
+				},
+			]
+		: [];
+
+/** Unitless, so it compares in the color column's unit. */
+export const geoMapThresholds = (
+	on: boolean,
+): DashboardtypesGeoMapThresholdDTO[] =>
+	on
+		? [
+				{
+					value: TABLE_THRESHOLD_VALUE,
+					operator: ComparisonOperator.above,
+					color: THRESHOLD_COLOR,
 				},
 			]
 		: [];

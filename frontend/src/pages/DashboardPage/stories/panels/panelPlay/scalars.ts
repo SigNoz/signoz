@@ -1,4 +1,5 @@
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import { formatPanelValue } from 'pages/DashboardPage/DashboardContainer/Panels/utils/formatPanelValue';
 import { expect, waitFor, within } from 'storybook/test';
 
 import {
@@ -138,10 +139,26 @@ export const expectTopList = async (
 };
 
 /** Zoom controls render only once the outlines have loaded and drawn. */
-export const expectGeoMap = async (root: HTMLElement): Promise<void> => {
+export const expectGeoMap = async (
+	root: HTMLElement,
+	args: PanelPlayArgs,
+): Promise<void> => {
 	await within(root).findByTestId('geo-map-zoom-controls', {}, PANEL_LOAD);
 	await expect(within(root).getByTestId('geo-map-legend')).toBeInTheDocument();
 	await expect(
 		within(root).queryByTestId('geo-map-empty-message'),
 	).not.toBeInTheDocument();
+
+	// A unitless threshold reads in the color column's unit, like the color bar.
+	const keys = within(root).queryAllByTestId('geo-map-color-key');
+	await expect(keys.map((key) => key.textContent)).toEqual(
+		args.thresholds
+			? [
+					`> ${formatPanelValue(
+						TABLE_THRESHOLD_VALUE,
+						args.unit === 'none' ? undefined : args.unit,
+					)}`,
+				]
+			: [],
+	);
 };
