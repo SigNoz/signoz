@@ -71,7 +71,7 @@ def test_deployments_accuracy(
 
     # Ordered by firstSeen then service. checkout 1.1.0: logs 30s before traces, logs wins.
     # worker 3.0.0: same timestamp on both signals, traces wins. tieA/tieB: same timestamp.
-    # checkout 1.0.0 (oldest bucket), legacy 0.5.0 (before start), noversion (empty version) are not markers.
+    # checkout 1.0.0 (oldest bucket), legacy 0.5.0 (before start), noversion (empty version), noservice (empty service) are not markers.
     expected = [
         ("checkout", "1.1.0", "logs"),
         ("cart", "2.0.0", "traces"),

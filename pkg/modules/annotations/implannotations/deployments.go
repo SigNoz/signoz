@@ -201,7 +201,7 @@ func buildResourcePasses(tables signalTables, filterClause *sqlbuilder.WhereClau
 		"seen_at_ts_bucket_start AS bucket",
 	)
 	firstBucketInner.From(resourceTable)
-	firstBucketInner.Where("version != ''", "seen_at_ts_bucket_start <= t2")
+	firstBucketInner.Where("version != ''", "service != ''", "seen_at_ts_bucket_start <= t2")
 	firstBucketInner.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
 	firstBucketInnerSQL, firstBucketArgs := firstBucketInner.BuildWithFlavor(sqlbuilder.ClickHouse)
 	firstBucketSQL := fmt.Sprintf(
@@ -221,6 +221,7 @@ func buildResourcePasses(tables signalTables, filterClause *sqlbuilder.WhereClau
 	cand.From(resourceTable)
 	cand.Where(
 		"version != ''",
+		"service != ''",
 		"(service, env, version, seen_at_ts_bucket_start) GLOBAL IN (SELECT service, env, version, min_bucket FROM first_bucket)",
 	)
 	cand.AddWhereClause(sqlbuilder.CopyWhereClause(filterClause))
