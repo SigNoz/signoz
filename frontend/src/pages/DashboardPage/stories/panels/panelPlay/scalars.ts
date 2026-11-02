@@ -4,7 +4,9 @@ import { expect, waitFor, within } from 'storybook/test';
 
 import {
 	NUMBER_VALUE,
+	QUERY_NAME,
 	TABLE_THRESHOLD_VALUE,
+	VALUE_NAMES,
 } from '../__story_mockdata__/constants';
 import {
 	serviceAt,
@@ -144,7 +146,13 @@ export const expectGeoMap = async (
 	args: PanelPlayArgs,
 ): Promise<void> => {
 	await within(root).findByTestId('geo-map-zoom-controls', {}, PANEL_LOAD);
-	await expect(within(root).getByTestId('geo-map-legend')).toBeInTheDocument();
+	const legend = within(root).getByTestId('geo-map-legend');
+	if (args.valueNames) {
+		// A name the user wrote reads bare, without the query-name prefix.
+		const name = VALUE_NAMES[QUERY_NAME];
+		await expect(legend).toHaveTextContent(name);
+		await expect(legend).not.toHaveTextContent(`${QUERY_NAME}.${name}`);
+	}
 	await expect(
 		within(root).queryByTestId('geo-map-empty-message'),
 	).not.toBeInTheDocument();

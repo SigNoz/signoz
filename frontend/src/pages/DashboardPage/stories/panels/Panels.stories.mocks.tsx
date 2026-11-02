@@ -185,6 +185,12 @@ export const panelsMocks = defineStoryMocks({
 			description: 'Formats the Table value column in the Unit above.',
 			value: false,
 		}),
+		valueNames: toggleControl('Value names', {
+			group: PANEL,
+			description:
+				'A legend on each query, so Table, Scatter Plot and Geo Map name their values `p99 latency` and `errors` instead of `A.p99(signoz_latency)`.',
+			value: false,
+		}),
 		result: choiceControl<PanelResult>('Query result', {
 			group: DATA,
 			description:

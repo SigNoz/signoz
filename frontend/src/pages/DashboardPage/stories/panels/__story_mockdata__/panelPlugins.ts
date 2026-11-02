@@ -29,6 +29,7 @@ import {
 	HEATMAP_FIXED_COUNTS,
 	TABLE_SECOND_COLUMN,
 	TABLE_VALUE_COLUMN,
+	VALUE_NAMES,
 } from './constants';
 import {
 	comparisonThresholds,
@@ -54,12 +55,16 @@ const timeSeriesQueries = (): DashboardtypesQueryDTO[] => [
 ];
 
 /** Latency (`A`) and errors (`B`) per service, joined into one row each. */
-const callsAndErrorsQueries = (): DashboardtypesQueryDTO[] => [
-	metricQuery(RequestType.scalar, { grouped: true }),
+const callsAndErrorsQueries = (named: boolean): DashboardtypesQueryDTO[] => [
+	metricQuery(RequestType.scalar, {
+		grouped: true,
+		legend: named ? VALUE_NAMES[TABLE_VALUE_COLUMN] : undefined,
+	}),
 	metricQuery(RequestType.scalar, {
 		grouped: true,
 		name: TABLE_SECOND_COLUMN,
 		metricName: 'signoz_errors',
+		legend: named ? VALUE_NAMES[TABLE_SECOND_COLUMN] : undefined,
 	}),
 ];
 
@@ -179,7 +184,7 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 						thresholds: tableThresholds(args.thresholds),
 					},
 				},
-				queries: callsAndErrorsQueries(),
+				queries: callsAndErrorsQueries(args.valueNames),
 			};
 		case 'ScatterPlot':
 			return {
@@ -187,7 +192,7 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 					kind: ScatterPlotKind['signoz/ScatterPlotPanel'],
 					spec: { legend },
 				},
-				queries: callsAndErrorsQueries(),
+				queries: callsAndErrorsQueries(args.valueNames),
 			};
 		case 'TopList':
 			return {
@@ -215,6 +220,7 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 					metricQuery(RequestType.scalar, {
 						grouped: true,
 						groupBy: GEO_COUNTRY_KEY,
+						legend: args.valueNames ? VALUE_NAMES[TABLE_VALUE_COLUMN] : undefined,
 					}),
 				],
 			};
