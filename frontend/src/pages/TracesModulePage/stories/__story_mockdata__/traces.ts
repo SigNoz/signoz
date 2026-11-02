@@ -256,6 +256,83 @@ export const traceSummaryResponse = ({
 	};
 };
 
+export const SPAN_LOGS_STATES = [
+	'span',
+	'trace only',
+	'none',
+	'loading',
+	'error',
+] as const;
+
+export type SpanLogsState = (typeof SPAN_LOGS_STATES)[number];
+
+/**
+ * Which of the drawer's log queries is asking: the span's own logs, the context
+ * either side of them, or the whole trace when the span has none.
+ */
+export type SpanLogScope = 'span' | 'before' | 'after' | 'trace';
+
+export const spanLogScopeOf = (expression: string): SpanLogScope => {
+	if (expression.includes('span_id')) {
+		return 'span';
+	}
+	if (expression.includes('id <')) {
+		return 'before';
+	}
+	return expression.includes('id >') ? 'after' : 'trace';
+};
+
+const SPAN_LOG_BODIES = [
+	'request received',
+	'cache miss, querying orders',
+	'payment provider timed out',
+	'response sent',
+];
+
+const CONTEXT_OFFSET_MS: Record<SpanLogScope, number> = {
+	before: -60_000,
+	span: 0,
+	after: 60_000,
+	trace: 0,
+};
+
+/**
+ * Log rows for one of the drawer's queries, placed in the middle of the window
+ * it asked for. The span-log queries send that window in microseconds.
+ */
+export const spanLogRows = ({
+	scope,
+	expression,
+	startMicros,
+	endMicros,
+}: {
+	scope: SpanLogScope;
+	expression: string;
+	startMicros: number;
+	endMicros: number;
+}): RawRow[] => {
+	const traceId = expression.match(/trace_id = '([^']+)'/)?.[1] ?? '';
+	const spanId = expression.match(/span_id = '([^']+)'/)?.[1] ?? '';
+	const middle = (startMicros + endMicros) / 2 / 1e3;
+
+	return SPAN_LOG_BODIES.map((body, index) => ({
+		timestamp: new Date(
+			middle + CONTEXT_OFFSET_MS[scope] + index * 100,
+		).toISOString(),
+		data: {
+			body,
+			id: `storybook-${scope}-log-${index + 1}`,
+			trace_id: traceId,
+			span_id: scope === 'span' ? spanId : '',
+			severity_text: index === 2 ? 'ERROR' : 'INFO',
+			severity_number: index === 2 ? 17 : 9,
+			attributes_string: {},
+			resources_string: { 'service.name': SPANS[0].service },
+			scope_name: '',
+		},
+	}));
+};
+
 const { resource, attribute } = TelemetrytypesFieldContextDTO;
 const { string: stringType, bool } = TelemetrytypesFieldDataTypeDTO;
 

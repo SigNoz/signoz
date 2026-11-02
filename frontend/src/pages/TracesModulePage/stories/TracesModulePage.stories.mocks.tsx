@@ -32,6 +32,10 @@ import {
 import {
 	exportDashboardsResponse,
 	savedTraceViewsResponse,
+	SPAN_LOGS_STATES,
+	spanLogRows,
+	spanLogScopeOf,
+	type SpanLogsState,
 	traceAttributeValuesResponse,
 	traceFieldKeysResponse,
 	traceFieldValues,
@@ -74,6 +78,7 @@ interface RawQuerySpec {
 	limit?: number;
 	offset?: number;
 	signal?: string;
+	filter?: { expression?: string };
 }
 
 const rawSpecOf = (body: QueryRangeRequestV5): RawQuerySpec => {
@@ -126,6 +131,13 @@ export const tracesMocks = defineStoryMocks({
 				'What the span drawer gets for the trace start and end. Not found falls back to span-only logs; loading holds the logs tab.',
 			options: TRACE_SUMMARY_STATES,
 			value: 'found',
+		}),
+		spanLogs: choiceControl<SpanLogsState>('Span logs', {
+			group: LIST,
+			description:
+				"What the span drawer's Logs tab gets. `span`: the span's logs with context either side; `trace only`: none for the span but some for the trace; `none`; `loading` and `error` hold or fail only the log queries.",
+			options: SPAN_LOGS_STATES,
+			value: 'span',
 		}),
 		warning: toggleControl('Query warning', {
 			group: LIST,
@@ -243,17 +255,53 @@ export const tracesMocks = defineStoryMocks({
 			})),
 		),
 
+		// The drawer's log queries answer on their own control, so they can hang or
+		// fail with the list loaded. Anything else falls through to the next handler.
+		rest.post('http://localhost/api/v5/query_range', async (req, res, ctx) => {
+			const body = (await req.json()) as QueryRangeRequestV5;
+			const { signal, filter } = rawSpecOf(body);
+			if (signal !== 'logs') {
+				return undefined;
+			}
+			if (values.spanLogs === 'loading') {
+				return res(ctx.delay('infinite'));
+			}
+			if (values.spanLogs === 'error') {
+				return res(
+					ctx.status(500),
+					ctx.json({ status: 'error', error: 'storybook logs failure' }),
+				);
+			}
+
+			const expression = filter?.expression ?? '';
+			const scope = spanLogScopeOf(expression);
+			const answers =
+				values.spanLogs === 'span' ||
+				(values.spanLogs === 'trace only' && scope === 'trace');
+
+			return res(
+				ctx.status(200),
+				ctx.json(
+					queryRangeV5RawResponse(
+						answers
+							? spanLogRows({
+									scope,
+									expression,
+									startMicros: body.start,
+									endMicros: body.end,
+								})
+							: [],
+					),
+				),
+			);
+		}),
+
 		rest.post(
 			'http://localhost/api/v5/query_range',
 			response.json(async (req) => {
 				const body = (await req.json()) as QueryRangeRequestV5;
 				const { start, end, requestType } = body;
-				const { limit = 10, offset = 0, signal } = rawSpecOf(body);
-
-				// The drawer's logs tab asks for the span's logs; the story has none.
-				if (signal === 'logs') {
-					return queryRangeV5RawResponse([]);
-				}
+				const { limit = 10, offset = 0 } = rawSpecOf(body);
 
 				const rows = {
 					count: values.spans,
