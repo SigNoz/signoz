@@ -99,6 +99,8 @@ def test_allowed(
     ("email", "expression", "denied_resource"),
     [
         (service_email, "service.name = 'checkout'", "builder_query/*"),  # bare customer key never selects
+        # NOT(NOT a AND NOT b) == a OR b: nested negations must not mark either value as a required atom
+        (service_email, "NOT (NOT resource.service.name = 'checkout' AND NOT resource.service.name = 'frontend')", "builder_query/*"),
         (service_email, "resource.deployment.environment.name = 'prod'", "builder_query/resource.deployment.environment.name = 'prod'"),
         (service_email, "resource.service.name = 'frontend'", "builder_query/resource.service.name = 'frontend'"),
         (env_email, "resource.service.name = 'checkout'", "builder_query/resource.service.name = 'checkout'"),

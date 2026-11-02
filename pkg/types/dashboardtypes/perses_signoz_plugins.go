@@ -29,10 +29,9 @@ func (VariablePluginKind) Enum() []any {
 }
 
 type DynamicVariableSpec struct {
-	// Name is the name of the attribute being fetched dynamically from the
-	// signal. This could be extended to a richer selector in the future.
-	Name   string                `json:"name" validate:"required" required:"true"`
-	Signal DynamicVariableSignal `json:"signal" required:"true" nullable:"false"`
+	// This could be extended to a richer selector in the future.
+	Name   string                `json:"name" validate:"required" required:"true" description:"The attribute key whose observed values populate the variable, such as service.name."`
+	Signal DynamicVariableSignal `json:"signal" required:"true" nullable:"false" description:"The signal the values are read from: traces, logs, metrics or all (default)."`
 }
 
 // DynamicVariableSignal is the telemetry signal a dynamic variable draws its
@@ -78,11 +77,11 @@ func (s *DynamicVariableSignal) UnmarshalJSON(data []byte) error {
 }
 
 type QueryVariableSpec struct {
-	QueryValue string `json:"queryValue" validate:"required" required:"true"`
+	QueryValue string `json:"queryValue" validate:"required" required:"true" description:"A ClickHouse SQL query returning one column of selectable values; every returned column is offered."`
 }
 
 type CustomVariableSpec struct {
-	CustomValue string `json:"customValue" validate:"required" required:"true"`
+	CustomValue string `json:"customValue" validate:"required" required:"true" description:"The fixed values as a comma-separated list, such as 1,10,100."`
 }
 
 // ══════════════════════════════════════════════
@@ -208,37 +207,37 @@ func (k PanelPluginKind) rendersWithoutQuery() bool {
 }
 
 type TimeSeriesPanelSpec struct {
-	Visualization   TimeSeriesVisualization   `json:"visualization"`
-	Formatting      PanelFormatting           `json:"formatting"`
-	ChartAppearance TimeSeriesChartAppearance `json:"chartAppearance"`
-	Axes            Axes                      `json:"axes"`
-	Legend          Legend                    `json:"legend"`
-	Thresholds      []ThresholdWithLabel      `json:"thresholds" validate:"dive"`
+	Visualization   TimeSeriesVisualization   `json:"visualization" description:"Time range and gap handling."`
+	Formatting      PanelFormatting           `json:"formatting" description:"Unit and decimal precision of the values."`
+	ChartAppearance TimeSeriesChartAppearance `json:"chartAppearance" description:"Line drawing options."`
+	Axes            Axes                      `json:"axes" description:"Y axis bounds and scale."`
+	Legend          Legend                    `json:"legend" description:"Legend placement and series colors."`
+	Thresholds      []ThresholdWithLabel      `json:"thresholds" validate:"dive" description:"Horizontal reference lines drawn at fixed values."`
 }
 
 type TimeSeriesChartAppearance struct {
-	LineInterpolation LineInterpolation `json:"lineInterpolation"`
-	ShowPoints        bool              `json:"showPoints"`
-	LineStyle         LineStyle         `json:"lineStyle"`
-	FillMode          FillMode          `json:"fillMode"`
-	SpanGaps          SpanGaps          `json:"spanGaps"`
+	LineInterpolation LineInterpolation `json:"lineInterpolation" description:"How points are joined: linear, spline (default), step_after or step_before."`
+	ShowPoints        bool              `json:"showPoints" description:"Whether each data point is marked on the line."`
+	LineStyle         LineStyle         `json:"lineStyle" description:"The line stroke: solid (default) or dashed."`
+	FillMode          FillMode          `json:"fillMode" description:"The fill under each line: none (default), solid or gradient."`
+	SpanGaps          SpanGaps          `json:"spanGaps" description:"Whether lines connect across missing points."`
 }
 
 type BarChartPanelSpec struct {
-	Visualization BarChartVisualization `json:"visualization"`
-	Formatting    PanelFormatting       `json:"formatting"`
-	Axes          Axes                  `json:"axes"`
-	Legend        Legend                `json:"legend"`
-	Thresholds    []ThresholdWithLabel  `json:"thresholds" validate:"dive"`
+	Visualization BarChartVisualization `json:"visualization" description:"Time range, gap handling and stacking."`
+	Formatting    PanelFormatting       `json:"formatting" description:"Unit and decimal precision of the values."`
+	Axes          Axes                  `json:"axes" description:"Y axis bounds and scale."`
+	Legend        Legend                `json:"legend" description:"Legend placement and series colors."`
+	Thresholds    []ThresholdWithLabel  `json:"thresholds" validate:"dive" description:"Horizontal reference lines drawn at fixed values."`
 }
 
 type AreaChartPanelSpec struct {
-	Visualization   AreaChartVisualization `json:"visualization"`
-	Formatting      PanelFormatting        `json:"formatting"`
-	ChartAppearance AreaChartAppearance    `json:"chartAppearance"`
-	Axes            Axes                   `json:"axes"`
-	Legend          Legend                 `json:"legend"`
-	Thresholds      []ThresholdWithLabel   `json:"thresholds" validate:"dive"`
+	Visualization   AreaChartVisualization `json:"visualization" description:"Time range, gap handling and stacking."`
+	Formatting      PanelFormatting        `json:"formatting" description:"Unit and decimal precision of the values."`
+	ChartAppearance AreaChartAppearance    `json:"chartAppearance" description:"Line and fill drawing options."`
+	Axes            Axes                   `json:"axes" description:"Y axis bounds and scale."`
+	Legend          Legend                 `json:"legend" description:"Legend placement and series colors."`
+	Thresholds      []ThresholdWithLabel   `json:"thresholds" validate:"dive" description:"Horizontal reference lines drawn at fixed values."`
 }
 
 // AreaChartAppearance repeats the line-drawing fields rather than embedding
@@ -246,83 +245,83 @@ type AreaChartPanelSpec struct {
 // a duplicated json tag across an embed boundary is resolved by depth, which the
 // schema reflector does not model.
 type AreaChartAppearance struct {
-	LineInterpolation LineInterpolation `json:"lineInterpolation"`
-	ShowPoints        bool              `json:"showPoints"`
-	LineStyle         LineStyle         `json:"lineStyle"`
-	FillMode          AreaFillMode      `json:"fillMode"`
+	LineInterpolation LineInterpolation `json:"lineInterpolation" description:"How points are joined: linear, spline (default), step_after or step_before."`
+	ShowPoints        bool              `json:"showPoints" description:"Whether each data point is marked on the line."`
+	LineStyle         LineStyle         `json:"lineStyle" description:"The line stroke: solid (default) or dashed."`
+	FillMode          AreaFillMode      `json:"fillMode" description:"The fill under each line: solid (default) or gradient."`
 	// FillOpacity is a pointer so an omitted field resolves to the kind default at
 	// render time; a plain value would make the Go zero value a transparent fill.
-	FillOpacity *FillOpacity `json:"fillOpacity"`
-	SpanGaps    SpanGaps     `json:"spanGaps"`
+	FillOpacity *FillOpacity `json:"fillOpacity" description:"The fill opacity from 0 (transparent) to 1 (opaque). Null uses the chart default."`
+	SpanGaps    SpanGaps     `json:"spanGaps" description:"Whether lines connect across missing points."`
 }
 
 type NumberPanelSpec struct {
-	Visualization BasicVisualization    `json:"visualization"`
-	Formatting    PanelFormatting       `json:"formatting"`
-	Thresholds    []ComparisonThreshold `json:"thresholds" validate:"dive"`
+	Visualization BasicVisualization    `json:"visualization" description:"The time range the value is computed over."`
+	Formatting    PanelFormatting       `json:"formatting" description:"Unit and decimal precision of the value."`
+	Thresholds    []ComparisonThreshold `json:"thresholds" validate:"dive" description:"Rules that recolor the value when it compares to a threshold as specified."`
 }
 
 type PieChartPanelSpec struct {
-	Visualization BasicVisualization `json:"visualization"`
-	Formatting    PanelFormatting    `json:"formatting"`
-	Legend        Legend             `json:"legend"`
+	Visualization BasicVisualization `json:"visualization" description:"The time range the slices are computed over."`
+	Formatting    PanelFormatting    `json:"formatting" description:"Unit and decimal precision of the slice values."`
+	Legend        Legend             `json:"legend" description:"Legend placement and slice colors."`
 }
 
 type TablePanelSpec struct {
-	Visualization BasicVisualization `json:"visualization"`
-	Formatting    TableFormatting    `json:"formatting"`
-	Thresholds    []TableThreshold   `json:"thresholds" validate:"dive"`
+	Visualization BasicVisualization `json:"visualization" description:"The time range the rows are computed over."`
+	Formatting    TableFormatting    `json:"formatting" description:"Per-column units and decimal precision."`
+	Thresholds    []TableThreshold   `json:"thresholds" validate:"dive" description:"Rules that recolor a cell when its column value compares to a threshold as specified."`
 }
 
 type HistogramPanelSpec struct {
-	HistogramBuckets HistogramBuckets `json:"histogramBuckets"`
-	Legend           Legend           `json:"legend"`
+	HistogramBuckets HistogramBuckets `json:"histogramBuckets" description:"How values are grouped into buckets."`
+	Legend           Legend           `json:"legend" description:"Legend placement and series colors."`
 }
 
 type HistogramBuckets struct {
-	BucketCount           *float64 `json:"bucketCount"`
-	BucketWidth           *float64 `json:"bucketWidth"`
-	MergeAllActiveQueries bool     `json:"mergeAllActiveQueries"`
+	BucketCount           *float64 `json:"bucketCount" description:"The approximate target number of buckets. Ignored when bucketWidth is positive. Null uses the chart default."`
+	BucketWidth           *float64 `json:"bucketWidth" description:"The width of each bucket in the value unit. A positive value takes precedence over bucketCount; null or 0 lets the chart choose."`
+	MergeAllActiveQueries bool     `json:"mergeAllActiveQueries" description:"Whether every series is combined into a single histogram instead of one per series."`
 }
 
 type ListPanelSpec struct {
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" validate:"dive"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" validate:"dive" description:"The columns shown for each row, as field keys with name and optional fieldContext, fieldDataType and signal. Empty shows the default columns."`
 }
 
 type HeatmapPanelSpec struct {
-	Visualization   BasicVisualization     `json:"visualization"`
-	Formatting      PanelFormatting        `json:"formatting"`
-	Axes            HeatmapAxes            `json:"axes"`
-	Legend          Legend                 `json:"legend"`
-	ChartAppearance HeatmapChartAppearance `json:"chartAppearance"`
+	Visualization   BasicVisualization     `json:"visualization" description:"The time range the heatmap covers."`
+	Formatting      PanelFormatting        `json:"formatting" description:"Unit and decimal precision of the bucket bounds."`
+	Axes            HeatmapAxes            `json:"axes" description:"The Y axis scale."`
+	Legend          Legend                 `json:"legend" description:"Legend placement and series colors."`
+	ChartAppearance HeatmapChartAppearance `json:"chartAppearance" description:"How bucket counts map to colors."`
 }
 
 // HeatmapAxes carries only the Y scale. The shared Axes type models a value
 // axis with soft bounds, where a heatmap's Y axis is the bucket boundaries the
 // response already fixed.
 type HeatmapAxes struct {
-	Y HeatmapAxis `json:"y"`
+	Y HeatmapAxis `json:"y" description:"The bucket axis."`
 }
 
 type HeatmapAxis struct {
-	Scale HeatmapYScale `json:"scale"`
+	Scale HeatmapYScale `json:"scale" description:"How bucket bounds are spaced on the axis: auto (default), linear, log or symlog."`
 }
 
 type HeatmapChartAppearance struct {
-	Colors HeatmapColors `json:"colors"`
+	Colors HeatmapColors `json:"colors" description:"The color scale applied to bucket counts."`
 }
 
 type HeatmapColors struct {
-	Mode    HeatmapColorMode  `json:"mode"`
-	Palette HeatmapPalette    `json:"palette"`
-	Scale   HeatmapColorScale `json:"scale"`
-	Steps   int               `json:"steps" validate:"omitempty,min=2,max=128"`
+	Mode    HeatmapColorMode  `json:"mode" description:"How counts are colored: palette (default) picks a hue from palette, opacity varies the opacity of fill."`
+	Palette HeatmapPalette    `json:"palette" description:"The named color ramp used in palette mode, such as lava (default), ice or ember."`
+	Scale   HeatmapColorScale `json:"scale" description:"How counts map onto the color range: log (default), sqrt or linear."`
+	Steps   int               `json:"steps" validate:"omitempty,min=2,max=128" description:"The number of distinct color steps, 2 to 128. 0 uses the chart default."`
 	// MinCount and MaxCount clamp the colour scale; nil derives them from the
 	// grid, 0 and the highest count in it.
-	MinCount *float64 `json:"minCount"`
-	MaxCount *float64 `json:"maxCount"`
+	MinCount *float64 `json:"minCount" description:"The count mapped to the lowest color. Null uses 0. Must not exceed maxCount."`
+	MaxCount *float64 `json:"maxCount" description:"The count mapped to the highest color. Null uses the highest count in the grid."`
 	// Fill applies in opacity mode; empty means the selected group's legend colour.
-	Fill string `json:"fill"`
+	Fill string `json:"fill" description:"The hex color varied in opacity mode. Empty uses the series legend color."`
 }
 
 func (c *HeatmapColors) UnmarshalJSON(data []byte) error {
@@ -344,16 +343,16 @@ func (c HeatmapColors) validate() error {
 }
 
 type TextPanelSpec struct {
-	Mode          TextMode         `json:"mode"`
-	Text          string           `json:"text"`
-	Presentation  TextPresentation `json:"presentation"`
-	HeaderOptions HeaderOptions    `json:"headerOptions"`
+	Mode          TextMode         `json:"mode" description:"How text is interpreted. Only markdown is supported."`
+	Text          string           `json:"text" description:"The content to render."`
+	Presentation  TextPresentation `json:"presentation" description:"Alignment and background of the content."`
+	HeaderOptions HeaderOptions    `json:"headerOptions" description:"Whether the panel header is shown."`
 }
 
 type TextPresentation struct {
-	TextAlign     TextAlign     `json:"textAlign"`
-	VerticalAlign VerticalAlign `json:"verticalAlign"`
-	Background    *string       `json:"background,omitempty" validate:"omitempty,hexcolor"`
+	TextAlign     TextAlign     `json:"textAlign" description:"Horizontal alignment: left (default), center or right."`
+	VerticalAlign VerticalAlign `json:"verticalAlign" description:"Vertical alignment: top (default), center or bottom."`
+	Background    *string       `json:"background,omitempty" validate:"omitempty,hexcolor" description:"A hex background color such as #1f2937. Omit for the panel default."`
 }
 
 // ══════════════════════════════════════════════
@@ -361,79 +360,79 @@ type TextPresentation struct {
 // ══════════════════════════════════════════════
 
 type Axes struct {
-	SoftMin    *float64 `json:"softMin"`
-	SoftMax    *float64 `json:"softMax"`
-	IsLogScale bool     `json:"isLogScale"`
+	SoftMin    *float64 `json:"softMin" description:"The lowest value the Y axis always shows; data below it still extends the axis. Null fits the data."`
+	SoftMax    *float64 `json:"softMax" description:"The highest value the Y axis always shows; data above it still extends the axis. Null fits the data."`
+	IsLogScale bool     `json:"isLogScale" description:"Whether the Y axis uses a logarithmic scale."`
 }
 
 // HeaderOptions controls the panel card's header strip — the title/description
 // row above the panel content. Phrased as hide so the zero value shows the
 // header, matching every other panel kind.
 type HeaderOptions struct {
-	Hide bool `json:"hide"`
+	Hide bool `json:"hide" description:"Whether the title and description row above the content is hidden."`
 }
 
 type BasicVisualization struct {
-	TimePreference TimePreference `json:"timePreference"`
+	TimePreference TimePreference `json:"timePreference" description:"The time range the panel queries: global_time (default) follows the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr, last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a fixed window."`
 }
 
 type TimeSeriesVisualization struct {
 	BasicVisualization
-	FillSpans bool `json:"fillSpans"`
+	FillSpans bool `json:"fillSpans" description:"Whether intervals with no data are drawn as zero instead of a gap."`
 }
 
 type BarChartVisualization struct {
 	BasicVisualization
-	FillSpans       bool `json:"fillSpans"`
-	StackedBarChart bool `json:"stackedBarChart"`
+	FillSpans       bool `json:"fillSpans" description:"Whether intervals with no data are drawn as zero instead of a gap."`
+	StackedBarChart bool `json:"stackedBarChart" description:"Whether the series are stacked on top of each other."`
 }
 
 type AreaChartVisualization struct {
 	BasicVisualization
-	FillSpans bool      `json:"fillSpans"`
-	Stack     StackMode `json:"stack"`
+	FillSpans bool      `json:"fillSpans" description:"Whether intervals with no data are drawn as zero instead of a gap."`
+	Stack     StackMode `json:"stack" description:"How the areas combine: none (default) overlays them, normal stacks the values, percent stacks them as shares of the total."`
 }
 
 type PanelFormatting struct {
-	Unit             string          `json:"unit"`
-	DecimalPrecision PrecisionOption `json:"decimalPrecision"`
+	Unit             string          `json:"unit" description:"The display unit of the values, such as By, ms, s, percent or percentunit. Use percent for values already expressed as percentages (95 displays as 95%) and percentunit for fractions (0.95 displays as 95%). Empty shows plain numbers."`
+	DecimalPrecision PrecisionOption `json:"decimalPrecision" description:"Decimal places shown: 0, 1, 2 (default), 3, 4 or full."`
 }
 
 type TableFormatting struct {
-	ColumnUnits      map[string]string `json:"columnUnits"`
-	DecimalPrecision PrecisionOption   `json:"decimalPrecision"`
+	ColumnUnits      map[string]string `json:"columnUnits" description:"Unit id per value column, keyed by the column key: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), or the SQL alias for a ClickHouse SQL column. Aggregation aliases are display labels, not keys."`
+	DecimalPrecision PrecisionOption   `json:"decimalPrecision" description:"Decimal places shown: 0, 1, 2 (default), 3, 4 or full."`
 }
 
 type Legend struct {
-	Position     LegendPosition    `json:"position"`
-	Mode         LegendMode        `json:"mode"`
-	CustomColors map[string]string `json:"customColors"`
+	Position     LegendPosition    `json:"position" description:"Where the legend sits: bottom (default) or right."`
+	Mode         LegendMode        `json:"mode" description:"The legend layout. Only list is supported."`
+	CustomColors map[string]string `json:"customColors" description:"Hex colors keyed by series label, overriding the automatic palette."`
 }
 
 type ThresholdWithLabel struct {
 	// Value is always present in the schema (required:"true"), but 0 is a legitimate
 	// threshold, so it drops validate:"required" — go-playground's required treats a
 	// zero float as unset and would wrongly reject value: 0.
-	Value float64 `json:"value" required:"true"`
-	Unit  string  `json:"unit"`
-	Color string  `json:"color" validate:"required" required:"true"`
-	Label string  `json:"label"`
+	Value float64 `json:"value" required:"true" description:"The value the line is drawn at, in unit."`
+	Unit  string  `json:"unit" description:"The unit id of value, such as ms or percent. Empty means the panel's unit, or the column's unit for a table threshold. Prefer the panel's unit; a different unit works only when it converts to it, such as s against a panel in ms."`
+	Color string  `json:"color" validate:"required" required:"true" description:"The CSS color of the line, for example #F1575F, which matches the SigNoz red preset; CSS named colors such as red also work."`
+	Label string  `json:"label" description:"The caption shown on the line."`
 }
 
 type ComparisonThreshold struct {
 	// Value is always present in the schema (required:"true"), but 0 is a legitimate
 	// threshold, so it drops validate:"required" — go-playground's required treats a
 	// zero float as unset and would wrongly reject value: 0.
-	Value    float64            `json:"value" required:"true"`
-	Operator ComparisonOperator `json:"operator"`
-	Unit     string             `json:"unit"`
-	Color    string             `json:"color" validate:"required" required:"true"`
-	Format   ThresholdFormat    `json:"format"`
+	Value    float64            `json:"value" required:"true" description:"The value compared against, in unit."`
+	Operator ComparisonOperator `json:"operator" description:"The comparison that activates the threshold: above (default), below, above_or_equal, below_or_equal, equal or not_equal."`
+	Unit     string             `json:"unit" description:"The unit id of value, such as ms or percent. Empty means the panel's unit, or the column's unit for a table threshold. Prefer the panel's unit; a different unit works only when it converts to it, such as s against a panel in ms."`
+	Color    string             `json:"color" validate:"required" required:"true" description:"The CSS color applied to the text or background, per format, while the threshold is active. For example #F1575F matches the SigNoz red preset; CSS named colors such as red also work."`
+	Format   ThresholdFormat    `json:"format" description:"What the color is applied to: text (default) or background."`
 }
 
 type TableThreshold struct {
 	ComparisonThreshold
-	ColumnName string `json:"columnName" validate:"required" required:"true"`
+	ColumnName string `json:"columnName" validate:"required" required:"true" description:"The key of the value column the rule applies to: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), or the SQL alias for a ClickHouse SQL column. Group-by columns are never colored, and aggregation aliases are display labels, not keys."`
 }
 
 // ══════════════════════════════════════════════
@@ -856,7 +855,7 @@ func (o *FillOpacity) UnmarshalJSON(data []byte) error {
 
 type SpanGaps struct {
 	FillOnlyBelow bool   `json:"fillOnlyBelow" description:"Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected."`
-	FillLessThan  string `json:"fillLessThan" description:"The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected."`
+	FillLessThan  string `json:"fillLessThan" description:"The largest gap still connected when fillOnlyBelow is true; longer gaps are left disconnected. Required in that case, as a positive Prometheus duration such as 30s, 5m or 1d."`
 }
 
 func (sg *SpanGaps) UnmarshalJSON(data []byte) error {

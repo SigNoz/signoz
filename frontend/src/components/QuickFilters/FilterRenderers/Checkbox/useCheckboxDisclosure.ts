@@ -2,9 +2,8 @@ import { useMemo, useState } from 'react';
 import { IQuickFiltersConfig } from 'components/QuickFilters/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
+import { DEFAULT_VISIBLE_ITEMS_COUNT } from './constants';
 import { isKeyMatch } from './utils';
-
-const DEFAULT_VISIBLE_ITEMS_COUNT = 10;
 
 interface UseCheckboxDisclosureProps {
 	filter: IQuickFiltersConfig;

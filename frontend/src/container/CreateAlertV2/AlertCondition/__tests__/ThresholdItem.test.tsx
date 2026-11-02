@@ -149,6 +149,14 @@ describe('ThresholdItem', () => {
 		expect(valueInput).toHaveValue(100);
 	});
 
+	it('asks for deviations instead of a unit for anomaly alerts', () => {
+		renderThresholdItem({ isAnomaly: true });
+
+		expect(screen.getByText('deviations')).toBeInTheDocument();
+		expect(screen.queryByText('on value')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('threshold-unit-select')).not.toBeInTheDocument();
+	});
+
 	it('renders unit selector with correct value', () => {
 		renderThresholdItem();
 

@@ -284,14 +284,24 @@ func TestNormalizeWhereClauseTopLevel(t *testing.T) {
 			expected:   map[string]bool{"service.name": false, "status": true},
 		},
 		{
-			name:       "double negation restores top level",
+			name:       "any negation disqualifies even when it cancels",
 			expression: "NOT (NOT (service.name = 'a'))",
-			expected:   map[string]bool{"service.name": true},
+			expected:   map[string]bool{"service.name": false},
 		},
 		{
 			name:       "in condition under and is top level",
 			expression: "service.name IN ('a', 'b') AND x = 1",
 			expected:   map[string]bool{"service.name": true, "x": true},
+		},
+		{
+			name:       "nested negation over an and is a disjunction",
+			expression: "NOT (NOT service.name = 'a' AND NOT status = 500)",
+			expected:   map[string]bool{"service.name": false, "status": false},
+		},
+		{
+			name:       "negation over an or is a conjunction of negations",
+			expression: "NOT (service.name = 'a' OR status = 500)",
+			expected:   map[string]bool{"service.name": false, "status": false},
 		},
 	}
 

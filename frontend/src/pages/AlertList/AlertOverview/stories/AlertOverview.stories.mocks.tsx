@@ -14,9 +14,11 @@ import {
 	ALERT_SCHEMAS,
 	notificationChannelsResponse,
 	CHANNEL_MAX,
+	RULE_KINDS,
 	RULE_STATE_CHOICES,
 	SEVERITY_CHOICES,
 	type AlertSchema,
+	type RuleKind,
 	type RuleStateChoice,
 	type SeverityChoice,
 } from '../../stories/__story_mockdata__/alerts';
@@ -45,6 +47,13 @@ export const alertOverviewMocks = defineStoryMocks({
 				'`v2` opens the stepper the new alert form uses; `classic` is the single-form page rules written before it still open in.',
 			options: ALERT_SCHEMAS,
 			value: 'v2',
+		}),
+		ruleKind: choiceControl<RuleKind>('Rule kind', {
+			group: RULE,
+			description:
+				'`anomaly` fires on how far each point strays from the seasonal forecast, in deviations, rather than on a fixed value.',
+			options: RULE_KINDS,
+			value: 'threshold',
 		}),
 		ruleState: choiceControl<RuleStateChoice>('State', {
 			group: RULE,
@@ -86,6 +95,7 @@ export const alertOverviewMocks = defineStoryMocks({
 					severity: values.ruleSeverity,
 					state: values.ruleState,
 					schema: values.alertSchema,
+					kind: values.ruleKind,
 				}),
 			),
 		),

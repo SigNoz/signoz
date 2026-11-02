@@ -7,11 +7,11 @@ import { releasePanelPickerTarget } from '../../../store/usePanelPickerTargetSto
 import type { NewPanelTarget } from '../../../patchOps';
 import type { PanelKind } from '../../../Panels/types/panelKind';
 import { JS_DRIVEN_SLIDE } from '../../../utils/drawerSlide';
-import AddPanelSplitButton from './AddPanelSplitButton';
-import NewSectionNameInput from './NewSectionNameInput';
-import PanelTypeBrowser from './PanelTypeBrowser';
-import { usePanelPickerDraftSection } from './usePanelPickerDraftSection';
-import { usePanelPickerTarget } from './usePanelPickerTarget';
+import AddPanelSplitButton from './components/AddPanelSplitButton/AddPanelSplitButton';
+import NewSectionNameInput from './components/NewSectionNameInput/NewSectionNameInput';
+import PanelTypeBrowser from './components/PanelTypeBrowser/PanelTypeBrowser';
+import { usePanelPickerDraftSection } from './hooks/usePanelPickerDraftSection';
+import { usePanelPickerTarget } from './hooks/usePanelPickerTarget';
 import { buildSectionOptions, resolveDefaultSectionValue } from './utils';
 
 import styles from './PanelTypeSelectionModal.module.scss';

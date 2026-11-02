@@ -15,19 +15,11 @@ import {
 	buildObjectString,
 	buildPermission,
 } from 'lib/authz/hooks/useAuthZ/utils';
+import { mockAppLocation, mockAppParams } from 'tests/router-mocks';
 
 import { withAuthZ, RouterContext } from './withAuthZ';
 import { withAuthZContent } from './withAuthZContent';
 import { withAuthZPage } from './withAuthZPage';
-
-const mockUseParams = jest.fn();
-const mockUseLocation = jest.fn();
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useParams: (): Record<string, string> => mockUseParams(),
-	useLocation: (): { pathname: string; search: string } => mockUseLocation(),
-}));
 
 const readPerm = buildPermission('read', 'role:*' as AuthZObject<'read'>);
 
@@ -36,8 +28,8 @@ function Base(): JSX.Element {
 }
 
 beforeEach(() => {
-	mockUseParams.mockReturnValue({});
-	mockUseLocation.mockReturnValue({ pathname: '/', search: '' });
+	mockAppParams({});
+	mockAppLocation({ pathname: '/', search: '' });
 });
 
 describe('withAuthZ', () => {
@@ -138,7 +130,7 @@ describe('withAuthZContent', () => {
 
 describe('withAuthZ router context', () => {
 	it('extracts checks from route params via router.params', async () => {
-		mockUseParams.mockReturnValue({ roleId: 'r-123' });
+		mockAppParams({ roleId: 'r-123' });
 
 		const rolePerm = buildPermission(
 			'read',
@@ -164,7 +156,7 @@ describe('withAuthZ router context', () => {
 	});
 
 	it('extracts checks from query params via router.searchParams', async () => {
-		mockUseLocation.mockReturnValue({
+		mockAppLocation({
 			pathname: '/roles',
 			search: '?roleId=r-456',
 		});
@@ -193,7 +185,7 @@ describe('withAuthZ router context', () => {
 	});
 
 	it('extracts checks from pathname via router.matchPath', async () => {
-		mockUseLocation.mockReturnValue({
+		mockAppLocation({
 			pathname: '/settings/roles/r-789/edit',
 			search: '',
 		});
@@ -229,7 +221,7 @@ describe('withAuthZ router context', () => {
 	});
 
 	it('denies when router-derived permission is not allowed', async () => {
-		mockUseParams.mockReturnValue({ roleId: 'r-denied' });
+		mockAppParams({ roleId: 'r-denied' });
 
 		const deniedPerm = buildPermission(
 			'read',
@@ -271,8 +263,8 @@ describe('withAuthZ router context stability', () => {
 	});
 
 	it('does not re-render when useParams returns new object with same values', async () => {
-		mockUseParams.mockReturnValue({ roleId: 'r-1' });
-		mockUseLocation.mockReturnValue({ pathname: '/', search: '' });
+		mockAppParams({ roleId: 'r-1' });
+		mockAppLocation({ pathname: '/', search: '' });
 
 		const Guarded = withAuthZ(RenderCounter, {
 			checks: (_props, router: RouterContext) => [
@@ -292,7 +284,7 @@ describe('withAuthZ router context stability', () => {
 		const initialCount = renderCount;
 
 		// Return NEW object with SAME values — should not cause re-render
-		mockUseParams.mockReturnValue({ roleId: 'r-1' });
+		mockAppParams({ roleId: 'r-1' });
 		rerender(<Guarded />);
 
 		// Allow any pending effects to flush
@@ -302,8 +294,8 @@ describe('withAuthZ router context stability', () => {
 	});
 
 	it('does not re-render when useLocation returns new object with same pathname', async () => {
-		mockUseParams.mockReturnValue({});
-		mockUseLocation.mockReturnValue({ pathname: '/roles', search: '' });
+		mockAppParams({});
+		mockAppLocation({ pathname: '/roles', search: '' });
 
 		const Guarded = withAuthZ(RenderCounter, {
 			checks: (_props, router: RouterContext) => {
@@ -323,7 +315,7 @@ describe('withAuthZ router context stability', () => {
 		const initialCount = renderCount;
 
 		// Return NEW object with SAME pathname — should not cause re-render
-		mockUseLocation.mockReturnValue({ pathname: '/roles', search: '' });
+		mockAppLocation({ pathname: '/roles', search: '' });
 		rerender(<Guarded />);
 
 		await waitFor(() => {
@@ -332,8 +324,8 @@ describe('withAuthZ router context stability', () => {
 	});
 
 	it('does not re-render when useLocation returns new object with same search params', async () => {
-		mockUseParams.mockReturnValue({});
-		mockUseLocation.mockReturnValue({ pathname: '/', search: '?tab=keys' });
+		mockAppParams({});
+		mockAppLocation({ pathname: '/', search: '?tab=keys' });
 
 		const Guarded = withAuthZ(RenderCounter, {
 			checks: (_props, router: RouterContext) => {
@@ -352,7 +344,7 @@ describe('withAuthZ router context stability', () => {
 		const initialCount = renderCount;
 
 		// Return NEW object with SAME search — should not cause re-render
-		mockUseLocation.mockReturnValue({ pathname: '/', search: '?tab=keys' });
+		mockAppLocation({ pathname: '/', search: '?tab=keys' });
 		rerender(<Guarded />);
 
 		await waitFor(() => {
@@ -361,8 +353,8 @@ describe('withAuthZ router context stability', () => {
 	});
 
 	it('re-renders when params values actually change', async () => {
-		mockUseParams.mockReturnValue({ roleId: 'r-1' });
-		mockUseLocation.mockReturnValue({ pathname: '/', search: '' });
+		mockAppParams({ roleId: 'r-1' });
+		mockAppLocation({ pathname: '/', search: '' });
 
 		const Guarded = withAuthZ(RenderCounter, {
 			checks: (_props, router: RouterContext) => [
@@ -383,7 +375,7 @@ describe('withAuthZ router context stability', () => {
 		unmount();
 
 		// Return DIFFERENT values — re-mount with new mock values
-		mockUseParams.mockReturnValue({ roleId: 'r-2' });
+		mockAppParams({ roleId: 'r-2' });
 		render(<Guarded />);
 
 		await waitFor(() => {
@@ -392,8 +384,8 @@ describe('withAuthZ router context stability', () => {
 	});
 
 	it('re-renders when pathname actually changes', async () => {
-		mockUseParams.mockReturnValue({});
-		mockUseLocation.mockReturnValue({ pathname: '/roles', search: '' });
+		mockAppParams({});
+		mockAppLocation({ pathname: '/roles', search: '' });
 
 		const Guarded = withAuthZ(RenderCounter, {
 			checks: [readPerm],
@@ -409,7 +401,7 @@ describe('withAuthZ router context stability', () => {
 		unmount();
 
 		// DIFFERENT pathname — re-mount with new mock values
-		mockUseLocation.mockReturnValue({ pathname: '/users', search: '' });
+		mockAppLocation({ pathname: '/users', search: '' });
 		render(<Guarded />);
 
 		await waitFor(() => {
@@ -418,8 +410,8 @@ describe('withAuthZ router context stability', () => {
 	});
 
 	it('re-renders when search params actually change', async () => {
-		mockUseParams.mockReturnValue({});
-		mockUseLocation.mockReturnValue({ pathname: '/', search: '?tab=keys' });
+		mockAppParams({});
+		mockAppLocation({ pathname: '/', search: '?tab=keys' });
 
 		const Guarded = withAuthZ(RenderCounter, {
 			checks: [readPerm],
@@ -435,7 +427,7 @@ describe('withAuthZ router context stability', () => {
 		unmount();
 
 		// DIFFERENT search — re-mount with new mock values
-		mockUseLocation.mockReturnValue({ pathname: '/', search: '?tab=details' });
+		mockAppLocation({ pathname: '/', search: '?tab=details' });
 		render(<Guarded />);
 
 		await waitFor(() => {

@@ -256,7 +256,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -267,7 +269,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -492,7 +496,9 @@
       "kind": "notification-channel",
       "verbs": [
         "read",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {

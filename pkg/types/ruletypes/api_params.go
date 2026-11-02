@@ -9,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/swaggest/jsonschema-go"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -60,44 +61,42 @@ const (
 
 // PostableRule is used to create alerting rule from HTTP api.
 type PostableRule struct {
-	AlertName   valuer.DisplayName  `json:"alert" required:"true"`
-	AlertType   AlertType           `json:"alertType" required:"true"`
-	Description string              `json:"description,omitempty"`
-	RuleType    RuleType            `json:"ruleType" required:"true"`
-	EvalWindow  valuer.TextDuration `json:"evalWindow,omitzero"`
-	Frequency   valuer.TextDuration `json:"frequency,omitzero"`
+	AlertName   valuer.DisplayName  `json:"alert" required:"true" description:"The display name of the alert rule."`
+	AlertType   AlertType           `json:"alertType" required:"true" description:"The signal the rule evaluates: METRIC_BASED_ALERT, TRACES_BASED_ALERT, LOGS_BASED_ALERT, EXCEPTIONS_BASED_ALERT or AI_TRACES_BASED_ALERT."`
+	Description string              `json:"description,omitempty" description:"A human readable description of what the rule monitors."`
+	RuleType    RuleType            `json:"ruleType" required:"true" description:"The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries."`
+	EvalWindow  valuer.TextDuration `json:"evalWindow,omitzero" description:"The lookback window as a Go duration such as 5m. Only read when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec instead."`
+	Frequency   valuer.TextDuration `json:"frequency,omitzero" description:"How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead."`
 
-	RuleCondition *RuleCondition    `json:"condition" required:"true"`
-	Labels        map[string]string `json:"labels,omitempty"`
-	Annotations   map[string]string `json:"annotations,omitempty"`
+	RuleCondition *RuleCondition    `json:"condition" required:"true" description:"The query to evaluate and the thresholds applied to its result."`
+	Labels        map[string]string `json:"labels,omitempty" description:"Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label."`
+	Annotations   map[string]string `json:"annotations,omitempty" description:"Free text attached to every alert, conventionally summary and description. Values may use Go templates with $value, $threshold and $labels."`
 
-	Disabled bool `json:"disabled"`
+	Disabled bool `json:"disabled" description:"Whether the rule is paused. A disabled rule is neither evaluated nor notifies. Defaults to false."`
 
-	// Source captures the source url where rule has been created
-	Source string `json:"source,omitempty"`
+	Source string `json:"source,omitempty" description:"The URL of the page the rule was created from. Informational; it is not used for evaluation."`
 
-	PreferredChannels []string `json:"preferredChannels,omitempty"`
+	PreferredChannels []string `json:"preferredChannels,omitempty" description:"The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels."`
 
-	Version string `json:"version"`
+	Version string `json:"version" description:"The query payload version. Nothing reads it."`
 
-	Evaluation    *EvaluationEnvelope `json:"evaluation,omitempty"`
-	SchemaVersion string              `json:"schemaVersion,omitempty"`
+	Evaluation    *EvaluationEnvelope `json:"evaluation,omitempty" required:"true" description:"The evaluation window, as a kind and spec."`
+	SchemaVersion string              `json:"schemaVersion,omitempty" required:"true" enum:"v2alpha1" description:"The rule payload schema."`
 
-	NotificationSettings *NotificationSettings `json:"notificationSettings,omitempty"`
+	NotificationSettings *NotificationSettings `json:"notificationSettings,omitempty" required:"true" description:"Grouping, re-notification and routing behaviour."`
 }
 
 type NotificationSettings struct {
-	GroupBy   []string  `json:"groupBy,omitzero"`
-	Renotify  *Renotify `json:"renotify,omitempty"`
-	UsePolicy bool      `json:"usePolicy"`
-	// NewGroupEvalDelay is the grace period for new series to be excluded from alerts evaluation
-	NewGroupEvalDelay valuer.TextDuration `json:"newGroupEvalDelay,omitzero"`
+	GroupBy           []string            `json:"groupBy,omitzero" description:"Label names whose values group alerts into one notification, such as service.name."`
+	Renotify          *Renotify           `json:"renotify,omitempty" description:"Whether and how often to re-send a notification for an alert that stays active."`
+	UsePolicy         bool                `json:"usePolicy" description:"When true, alerts are routed by the organisation level notification policies instead of the channels named on the thresholds. Defaults to false."`
+	NewGroupEvalDelay valuer.TextDuration `json:"newGroupEvalDelay,omitzero" description:"A grace period, as a Go duration such as 2m, during which a newly seen label group is excluded from evaluation. Applies to metric rules only; log and trace rules are never delayed. A group whose values are not yet known is evaluated immediately."`
 }
 
 type Renotify struct {
-	Enabled          bool                `json:"enabled"`
-	ReNotifyInterval valuer.TextDuration `json:"interval,omitzero"`
-	AlertStates      []AlertState        `json:"alertStates,omitzero"`
+	Enabled          bool                `json:"enabled" description:"Whether an active alert is re-sent after interval elapses. When false an alert notifies once per firing."`
+	ReNotifyInterval valuer.TextDuration `json:"interval,omitzero" description:"The time between repeat notifications, as a Go duration such as 4h. Must be positive when enabled is true."`
+	AlertStates      []AlertState        `json:"alertStates,omitzero" description:"The alert states that are re-notified: firing, nodata or both."`
 }
 
 func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {
@@ -335,6 +334,19 @@ func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	}
 	r.processRuleDefaults()
 	return r.validate()
+}
+
+var _ jsonschema.Preparer = PostableRule{}
+
+// PrepareJSONSchema marks version and source deprecated: nothing reads them,
+// they stay only so existing clients keep a stable schema.
+func (PostableRule) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	for _, name := range []string{"version", "source"} {
+		if property, ok := schema.Properties[name]; ok && property.TypeObject != nil {
+			property.TypeObject.WithDeprecated(true)
+		}
+	}
+	return nil
 }
 
 func isValidLabelName(ln string) bool {
@@ -625,23 +637,23 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 
 // GettableRules has info for all stored rules.
 type GettableTestRule struct {
-	AlertCount int    `json:"alertCount"`
-	Message    string `json:"message"`
+	AlertCount int    `json:"alertCount" description:"The number of alerts the test notification produced. Counts every evaluated series, including those that did not cross the threshold."`
+	Message    string `json:"message" description:"A human readable summary of the test evaluation."`
 }
 
 type GettableRules struct {
-	Rules []*GettableRule `json:"rules"`
+	Rules []*GettableRule `json:"rules" description:"The rules."`
 }
 
 // GettableRule has info for an alerting rules.
 type GettableRule struct {
-	Id    string     `json:"id" required:"true"`
-	State AlertState `json:"state" required:"true"`
+	Id    string     `json:"id" required:"true" description:"The unique identifier of the rule."`
+	State AlertState `json:"state" required:"true" description:"The current evaluation state: inactive, pending, recovering, firing, nodata or disabled."`
 	PostableRule
-	CreatedAt time.Time `json:"createAt" required:"true"`
-	CreatedBy *string   `json:"createBy" nullable:"true"`
-	UpdatedAt time.Time `json:"updateAt" required:"true"`
-	UpdatedBy *string   `json:"updateBy" nullable:"true"`
+	CreatedAt time.Time `json:"createAt" required:"true" description:"When the rule was created, in RFC 3339 format."`
+	CreatedBy *string   `json:"createBy" nullable:"true" description:"The identifier of the user who created the rule."`
+	UpdatedAt time.Time `json:"updateAt" required:"true" description:"When the rule was last updated, in RFC 3339 format."`
+	UpdatedBy *string   `json:"updateBy" nullable:"true" description:"The identifier of the user who last updated the rule."`
 }
 
 func (g *GettableRule) MarshalJSON() ([]byte, error) {
@@ -674,8 +686,8 @@ func (g *GettableRule) MarshalJSON() ([]byte, error) {
 // PlannedMaintenance and other entities. v1 handlers keep serializing
 // GettableRule directly for back-compat with existing SDK / Terraform clients.
 type Rule struct {
-	Id    string     `json:"id" required:"true"`
-	State AlertState `json:"state" required:"true"`
+	Id    string     `json:"id" required:"true" description:"The unique identifier of the rule."`
+	State AlertState `json:"state" required:"true" description:"The current evaluation state: inactive, pending, recovering, firing, nodata or disabled."`
 	PostableRule
 	types.TimeAuditable
 	types.UserAuditable

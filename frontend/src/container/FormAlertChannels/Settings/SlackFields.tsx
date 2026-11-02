@@ -14,7 +14,11 @@ import styles from './RowEditor.module.scss';
 // Slack renders these as the attachment's table of short or full-width entries.
 function SlackFields(): JSX.Element {
 	const { t } = useTranslation('channels');
-	const { control, register } = useFormContext<ChannelSpecFormValues>();
+	const {
+		control,
+		register,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
 	const { fields, append, remove } = useFieldArray({ control, name: 'fields' });
 
 	return (
@@ -46,6 +50,7 @@ function SlackFields(): JSX.Element {
 						<FormField
 							label={t('label_slack_field_value')}
 							tooltip={t('tooltip_slack_field_value')}
+							error={errors.fields?.[index]?.value?.message}
 						>
 							<Input
 								{...register(`fields.${index}.value`)}

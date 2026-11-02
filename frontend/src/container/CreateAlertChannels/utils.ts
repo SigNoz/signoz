@@ -1,29 +1,4 @@
-const GOOGLE_CHAT_WEBHOOK_HOST = 'chat.googleapis.com';
-
-export const isValidGoogleChatWebhookURL = (url: string): boolean => {
-	try {
-		const { protocol, hostname } = new URL(url);
-		return (
-			protocol === 'https:' && hostname.toLowerCase() === GOOGLE_CHAT_WEBHOOK_HOST
-		);
-	} catch {
-		return false;
-	}
-};
-
-const JIRA_CLOUD_HOST_SUFFIX = '.atlassian.net';
-
-export const isValidJiraSiteURL = (url: string): boolean => {
-	try {
-		const { protocol, hostname } = new URL(url);
-		return (
-			protocol === 'https:' &&
-			hostname.toLowerCase().endsWith(JIRA_CLOUD_HOST_SUFFIX)
-		);
-	} catch {
-		return false;
-	}
-};
+import { ChannelFormValues, WebhookAuth } from './types';
 
 // mirrors go's prometheus model.Duration units
 const JIRA_DURATION_UNIT_MS: Record<string, number> = {
@@ -94,21 +69,21 @@ export const canonicalJiraReopenDuration = (value: string): string => {
 	}, '');
 };
 
-const INCIDENTIO_EVENTS_PATH_PREFIX = '/v2/alert_events/http/';
-
-// the backend enforces the same rule, this is only for a nicer error experience
-export const isValidIncidentIOURL = (url: string): boolean => {
-	try {
-		const { protocol, pathname } = new URL(url);
-		const idx = pathname.indexOf(INCIDENTIO_EVENTS_PATH_PREFIX);
-		return (
-			protocol === 'https:' &&
-			idx !== -1 &&
-			pathname.length > idx + INCIDENTIO_EVENTS_PATH_PREFIX.length
-		);
-	} catch {
-		return false;
+export const webhookAuthOf = (
+	values: Pick<
+		ChannelFormValues,
+		'webhookAuth' | 'username' | 'password' | 'bearerToken'
+	>,
+): WebhookAuth => {
+	if (values.webhookAuth) {
+		return values.webhookAuth;
 	}
+	if (values.bearerToken) {
+		return WebhookAuth.bearer;
+	}
+	return values.username || values.password
+		? WebhookAuth.basic
+		: WebhookAuth.none;
 };
 
 export const filledRows = <T>(

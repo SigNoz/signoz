@@ -4,12 +4,11 @@ import type { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider as ReduxProvider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import configureStore from 'redux-mock-store';
 import appStore from 'store';
+import { TestRouter } from 'tests/router';
 
 import ViewPanelModal from '../ViewPanelModal/ViewPanelModal';
 import { useViewPanel } from '../hooks/useViewPanel';
@@ -45,11 +44,16 @@ beforeAll(() => {
 });
 
 // jest.config maps the real hook to a no-op mock; this suite needs real navigation.
-jest.mock('hooks/useSafeNavigate', () =>
-	jest
-		.requireActual('tests/browser-history-safe-navigate')
-		.createBrowserHistorySafeNavigateMock(),
-);
+jest.mock('hooks/useSafeNavigate', () => {
+	const { navigate } = jest.requireActual('lib/router/navigation');
+	return {
+		useSafeNavigate: (): unknown => ({
+			safeNavigate: (to: string, opts?: { replace?: boolean }): void => {
+				navigate(to, { replace: opts?.replace });
+			},
+		}),
+	};
+});
 
 jest.mock('api/querySuggestions/getFieldKeySuggestions', () => ({
 	getFieldKeySuggestions: jest.fn().mockResolvedValue({
@@ -203,17 +207,15 @@ const INITIAL_ROUTE = '/dashboard/dash-1';
 const renderHarness = (): void => {
 	window.history.replaceState(null, '', INITIAL_ROUTE);
 	render(
-		<MemoryRouter initialEntries={[INITIAL_ROUTE]}>
-			<CompatRouter>
-				<QueryClientProvider client={new QueryClient()}>
-					<ReduxProvider store={configureStore([])(appStore.getState())}>
-						<QueryBuilderProvider>
-							<Harness />
-						</QueryBuilderProvider>
-					</ReduxProvider>
-				</QueryClientProvider>
-			</CompatRouter>
-		</MemoryRouter>,
+		<TestRouter initialRoute="/dashboard/dash-1">
+			<QueryClientProvider client={new QueryClient()}>
+				<ReduxProvider store={configureStore([])(appStore.getState())}>
+					<QueryBuilderProvider>
+						<Harness />
+					</QueryBuilderProvider>
+				</ReduxProvider>
+			</QueryClientProvider>
+		</TestRouter>,
 	);
 };
 

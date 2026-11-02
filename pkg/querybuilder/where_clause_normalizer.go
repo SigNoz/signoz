@@ -50,11 +50,12 @@ type normalizedValue struct {
 }
 
 type whereClauseNormalizer struct {
-	variables  map[string]qbtypes.VariableItem
-	conditions []WhereClauseCondition
-	negated    bool
-	orDepth    int
-	errors     []string
+	variables     map[string]qbtypes.VariableItem
+	conditions    []WhereClauseCondition
+	negated       bool
+	orDepth       int
+	negationDepth int
+	errors        []string
 }
 
 func NormalizeWhereClause(expression string, variables map[string]qbtypes.VariableItem) (*NormalizedWhereClause, error) {
@@ -202,12 +203,14 @@ func (visitor *whereClauseNormalizer) visitUnaryExpression(ctx grammar.IUnaryExp
 	negated := ctx.NOT() != nil
 	if negated {
 		visitor.negated = !visitor.negated
+		visitor.negationDepth++
 	}
 
 	part := visitor.visitPrimary(ctx.Primary())
 
 	if negated {
 		visitor.negated = !visitor.negated
+		visitor.negationDepth--
 
 		if part.skipped {
 			return part
@@ -444,7 +447,7 @@ func (visitor *whereClauseNormalizer) appendCondition(key, operator string, valu
 		Operator: operator,
 		Values:   values,
 		Negated:  visitor.negated,
-		TopLevel: visitor.orDepth == 0 && !visitor.negated,
+		TopLevel: visitor.orDepth == 0 && visitor.negationDepth == 0,
 	})
 }
 

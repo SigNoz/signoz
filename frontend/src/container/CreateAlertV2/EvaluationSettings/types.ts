@@ -31,9 +31,14 @@ export enum CumulativeWindowTimeframes {
 	CURRENT_MONTH = 'currentMonth',
 }
 
+export interface IEvaluationSettingsProps {
+	rollingOnly?: boolean;
+}
+
 export interface IEvaluationWindowPopoverProps {
 	evaluationWindow: EvaluationWindowState;
 	setEvaluationWindow: Dispatch<EvaluationWindowAction>;
+	rollingOnly?: boolean;
 }
 
 export interface IEvaluationWindowDetailsProps {

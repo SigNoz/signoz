@@ -13,14 +13,14 @@ const MaxListLabelPairs = 1000
 
 // ListableRule is the slim per-row shape of the list endpoint; the full rule stays behind get-by-id.
 type ListableRule struct {
-	Id          string            `json:"id" required:"true"`
-	State       AlertState        `json:"state" required:"true"`
-	AlertName   string            `json:"alert" required:"true"`
-	Description string            `json:"description,omitempty"`
-	AlertType   AlertType         `json:"alertType" required:"true"`
-	RuleType    RuleType          `json:"ruleType" required:"true"`
-	Disabled    bool              `json:"disabled"`
-	Labels      map[string]string `json:"labels,omitempty"`
+	Id          string            `json:"id" required:"true" description:"The unique identifier of the rule."`
+	State       AlertState        `json:"state" required:"true" description:"The current evaluation state: inactive, pending, recovering, firing, nodata or disabled."`
+	AlertName   string            `json:"alert" required:"true" description:"The display name of the alert rule."`
+	Description string            `json:"description,omitempty" description:"A human readable description of what the rule monitors."`
+	AlertType   AlertType         `json:"alertType" required:"true" description:"The signal the rule evaluates: METRIC_BASED_ALERT, TRACES_BASED_ALERT, LOGS_BASED_ALERT, EXCEPTIONS_BASED_ALERT or AI_TRACES_BASED_ALERT."`
+	RuleType    RuleType          `json:"ruleType" required:"true" description:"The evaluation strategy: threshold_rule, promql_rule or anomaly_rule."`
+	Disabled    bool              `json:"disabled" description:"Whether the rule is paused."`
+	Labels      map[string]string `json:"labels,omitempty" description:"The labels attached to alerts the rule fires."`
 	types.TimeAuditable
 	types.UserAuditable
 }
@@ -89,15 +89,15 @@ func NewListableRulesFromStorableRules(storedRules []*StorableRule, stateByRuleI
 
 // LabelPair is one distinct label key/value observed on the org's rules.
 type LabelPair struct {
-	Key   string `json:"key" required:"true"`
-	Value string `json:"value" required:"true"`
+	Key   string `json:"key" required:"true" description:"The label name."`
+	Value string `json:"value" required:"true" description:"The label value."`
 }
 
 type ListableRules struct {
-	Rules            []*ListableRule `json:"rules" required:"true" nullable:"false"`
-	Total            int64           `json:"total" required:"true"`
-	Labels           []LabelPair     `json:"labels" required:"true" nullable:"false"`
-	ReservedKeywords []DSLKey        `json:"reservedKeywords" required:"true" nullable:"false"`
+	Rules            []*ListableRule `json:"rules" required:"true" nullable:"false" description:"The page of rules matching the filter."`
+	Total            int64           `json:"total" required:"true" description:"The number of rules matching the filter across all pages."`
+	Labels           []LabelPair     `json:"labels" required:"true" nullable:"false" description:"Organization-wide label key and value pair suggestions for building filters, independent of the current filter and page, capped at 1000 distinct pairs."`
+	ReservedKeywords []DSLKey        `json:"reservedKeywords" required:"true" nullable:"false" description:"The keys the query filter language reserves, which cannot be used as label names in a query."`
 }
 
 func NewListableRules(rules []*ListableRule, total int64, labels []LabelPair) *ListableRules {

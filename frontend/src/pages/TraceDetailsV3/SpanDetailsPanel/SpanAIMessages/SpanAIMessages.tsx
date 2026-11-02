@@ -3,7 +3,10 @@ import { ArrowDownRight, ArrowUpRight } from '@signozhq/icons';
 
 import { MessageType } from '../../AIThreadMessage/types';
 import { useToolCallLinks } from '../../AIThreadMessage/useToolCallLinks';
-import { getSpanMessages, hasAnyMessages } from '../../utils/spanMessages';
+import {
+	getSpanMessages,
+	hasFormattedMessages,
+} from '../../utils/spanMessages';
 import { ThreadSpan } from '../../TraceDetailsThread/types';
 import { buildToolCallIndex } from '../../TraceDetailsThread/utils';
 import MessagesAccordion from './MessagesAccordion';
@@ -25,7 +28,7 @@ function SpanAIMessages({ span }: SpanAIMessagesProps): JSX.Element | null {
 		toolCallKeys,
 	);
 
-	if (!hasAnyMessages(data)) {
+	if (!hasFormattedMessages(data)) {
 		return null;
 	}
 
@@ -35,7 +38,6 @@ function SpanAIMessages({ span }: SpanAIMessagesProps): JSX.Element | null {
 				icon={<ArrowUpRight size={14} />}
 				title="Input"
 				messages={data.formattedInput}
-				raw={data.rawInput}
 				messageType={MessageType.Input}
 				testId="span-ai-messages-input"
 				canLinkToToolCall={canLinkToToolCall}
@@ -45,7 +47,6 @@ function SpanAIMessages({ span }: SpanAIMessagesProps): JSX.Element | null {
 				icon={<ArrowDownRight size={14} />}
 				title="Output"
 				messages={data.formattedOutput}
-				raw={data.rawOutput}
 				messageType={MessageType.Output}
 				testId="span-ai-messages-output"
 				canLinkToToolCall={canLinkToToolCall}
