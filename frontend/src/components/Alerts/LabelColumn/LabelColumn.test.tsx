@@ -1,13 +1,14 @@
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { act, render, screen } from '@testing-library/react';
 
 import LabelColumn from './LabelColumn';
 
-let resizeCallback: ResizeObserverCallback | null = null;
+const BADGE_WIDTH = 60;
+
+let resizeCallbacks: ResizeObserverCallback[] = [];
 
 class MockResizeObserver {
 	constructor(callback: ResizeObserverCallback) {
-		resizeCallback = callback;
+		resizeCallbacks.push(callback);
 	}
 
 	observe = jest.fn();
@@ -15,15 +16,23 @@ class MockResizeObserver {
 	disconnect = jest.fn();
 }
 
-function triggerResize(width: number): void {
-	if (resizeCallback) {
-		act(() => {
-			resizeCallback?.(
-				[{ contentRect: { width } } as ResizeObserverEntry],
-				{} as ResizeObserver,
-			);
+// jsdom has no layout: every badge measures BADGE_WIDTH, the column `containerWidth`.
+function mockLayout(containerWidth: number): void {
+	jest
+		.spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+		.mockImplementation(function getClientWidth(this: HTMLElement) {
+			return this.dataset.testid === 'label-column' ? containerWidth : 0;
 		});
-	}
+	jest
+		.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+		.mockReturnValue({ width: BADGE_WIDTH } as DOMRect);
+}
+
+function triggerResize(containerWidth: number): void {
+	mockLayout(containerWidth);
+	act(() => {
+		resizeCallbacks.forEach((callback) => callback([], {} as ResizeObserver));
+	});
 }
 
 beforeAll(() => {
@@ -31,13 +40,14 @@ beforeAll(() => {
 });
 
 afterEach(() => {
-	resizeCallback = null;
+	resizeCallbacks = [];
+	jest.restoreAllMocks();
 });
 
 function renderWithProviders(
 	ui: React.ReactElement,
 ): ReturnType<typeof render> {
-	return render(<TooltipProvider>{ui}</TooltipProvider>);
+	return render(ui);
 }
 
 describe('LabelColumn', () => {
@@ -54,12 +64,9 @@ describe('LabelColumn', () => {
 	it('should truncate labels and show +N badge when container is narrow', () => {
 		const labels = ['env', 'service', 'region', 'team', 'owner', 'version'];
 
+		// 3 badges (180px) + overflow reserve (40px)
+		mockLayout(220);
 		renderWithProviders(<LabelColumn labels={labels} />);
-
-		// Simulate narrow container that fits ~3 badges
-		// Badge widths: env=37, service=65, region=58, team=44, owner=51, version=65
-		// 220px available = 3 badges (160px) + gaps (8px) + overflow (44px)
-		triggerResize(220);
 
 		// First 3 visible
 		expect(screen.getByTestId('label-tag-env')).toBeInTheDocument();
@@ -93,19 +100,37 @@ describe('LabelColumn', () => {
 		expect(screen.getByTestId('label-tag-service')).toHaveTextContent('service');
 	});
 
-	it('should show overflow badge with remaining count when container is narrow', () => {
+	it('should update the overflow count when the container resizes', () => {
 		const labels = ['env', 'service', 'region', 'team', 'owner', 'version'];
 
+		mockLayout(220);
+		renderWithProviders(<LabelColumn labels={labels} />);
+		expect(screen.getByTestId('label-overflow-badge')).toHaveTextContent('+3');
+
+		// 2 badges (120px) + overflow reserve (40px)
+		triggerResize(160);
+		expect(screen.getByTestId('label-overflow-badge')).toHaveTextContent('+4');
+
+		triggerResize(1000);
+		expect(screen.queryByTestId('label-overflow-badge')).not.toBeInTheDocument();
+	});
+
+	it('should skip the overflow reserve when every label fits', () => {
+		const labels = ['env', 'service', 'region', 'team', 'owner', 'version'];
+
+		mockLayout(labels.length * BADGE_WIDTH);
 		renderWithProviders(<LabelColumn labels={labels} />);
 
-		// Simulate narrow container to trigger overflow (shows 3 labels)
-		// 220px fits first 3 badges before overflow
-		triggerResize(220);
+		expect(screen.queryByTestId('label-overflow-badge')).not.toBeInTheDocument();
+	});
 
-		// Overflow badge shows +3 (remaining labels)
-		const overflowBadge = screen.getByTestId('label-overflow-badge');
-		expect(overflowBadge).toBeInTheDocument();
-		expect(overflowBadge).toHaveTextContent('+3');
+	it('should keep one label visible when even that one does not fit', () => {
+		const labels = ['env', 'service'];
+
+		mockLayout(50);
+		renderWithProviders(<LabelColumn labels={labels} />);
+
+		expect(screen.getByTestId('label-overflow-badge')).toHaveTextContent('+1');
 	});
 
 	it('should render empty when no labels provided', () => {
@@ -126,10 +151,8 @@ describe('LabelColumn', () => {
 	it('should show all labels when container is wide enough', () => {
 		const labels = ['env', 'service', 'region', 'team', 'owner', 'version'];
 
+		mockLayout(1000);
 		renderWithProviders(<LabelColumn labels={labels} />);
-
-		// Simulate wide container
-		triggerResize(1000);
 
 		// All labels visible
 		labels.forEach((label) => {

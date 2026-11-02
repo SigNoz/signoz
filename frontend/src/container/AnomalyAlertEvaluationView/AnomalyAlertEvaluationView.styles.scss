@@ -58,22 +58,14 @@
 				height: 100%;
 				overflow-y: auto;
 
-				.anomaly-alert-evaluation-view-series-list-item {
-					display: flex;
-					flex-direction: row;
-					gap: 8px;
+				.anomaly-alert-evaluation-view-series-list-item-color {
+					width: 6px;
+					height: 6px;
+					border-radius: 50%;
 
-					.anomaly-alert-evaluation-view-series-list-item-color {
-						width: 6px;
-						height: 6px;
-						border-radius: 50%;
-
-						display: inline-flex;
-						margin-right: 8px;
-						vertical-align: middle;
-					}
-
-					cursor: pointer;
+					display: inline-flex;
+					margin-right: 8px;
+					vertical-align: middle;
 				}
 
 				&::-webkit-scrollbar {

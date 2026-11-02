@@ -384,13 +384,12 @@ Hovering cannot do this. Radix dispatches a `tooltip.open` event on `document`
 when a tooltip opens, and every mounted tooltip closes itself on it, so exactly
 one is open at a time no matter how many providers the tree has. A tooltip whose
 `open` is controlled ignores the event, which is what the alias passes:
-`mocks/tooltip.mock.tsx` wraps `TooltipSimple` and `TooltipRoot` and hands them
-`open` while the control is on.
+`mocks/tooltip.mock.tsx` wraps `Tooltip` and hands it `open` while the control is on.
 
-Two cases keep their own state. A tooltip the page already drives, such as
-`SpanHoverCard`, is left alone: only the page knows what its popup is anchored
-to. A tooltip whose title is empty is left alone too, because there is nothing to
-show but the padding of a popup.
+A tooltip the page already drives, such as `SpanHoverCard`, keeps its own state:
+only the page knows what its popup is anchored to. A tooltip whose title is empty
+is held open like any other. It renders no popup unless a nested tooltip, such as
+a `Button`'s `disabledTooltip`, stacks its title into it.
 
 What the control cannot reach is a tooltip that is not mounted: one inside a
 closed drawer or modal, one in a row that renders its actions on hover, and

@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import {
 	defaultOptionsQuery,
@@ -6,48 +7,41 @@ import {
 } from 'container/OptionsMenu/constants';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { DataSource } from 'types/common/queryBuilder';
 
 import getLogsUpdaterConfig from '../configs/logsUpdaterConfig';
 import getTracesUpdaterConfig from '../configs/tracesUpdaterConfig';
-import { FormattingOptions, Preferences } from '../types';
-
-const metricsUpdater = {
-	updateColumns: (): void => {}, // no-op for metrics
-	updateFormatting: (): void => {}, // no-op for metrics
-};
+import { FormattingOptions, Preferences, PreferenceSourcePage } from '../types';
 
 const getUpdaterConfig = (
 	preferences: Preferences | null,
 	redirectWithOptionsData: (options: OptionsQuery) => void,
 	setSavedViewPreferences: Dispatch<SetStateAction<Preferences | null>>,
 ): Record<
-	DataSource,
+	PreferenceSourcePage,
 	{
 		updateColumns: (newColumns: TelemetryFieldKey[], mode: string) => void;
 		updateFormatting: (newFormatting: FormattingOptions, mode: string) => void;
 	}
 > => ({
-	[DataSource.LOGS]: getLogsUpdaterConfig(
+	[SavedviewtypesSourceDTO.logs]: getLogsUpdaterConfig(
 		preferences,
 		redirectWithOptionsData,
 		setSavedViewPreferences,
 	),
-	[DataSource.TRACES]: getTracesUpdaterConfig(
+	[SavedviewtypesSourceDTO.traces]: getTracesUpdaterConfig(
 		redirectWithOptionsData,
 		setSavedViewPreferences,
 	),
-	[DataSource.METRICS]: metricsUpdater,
 });
 
 export function usePreferenceUpdater({
-	dataSource,
+	sourcePage,
 	mode,
 	preferences,
 	setReSync,
 	setSavedViewPreferences,
 }: {
-	dataSource: DataSource;
+	sourcePage: PreferenceSourcePage;
 	mode: string;
 	preferences: Preferences | null;
 	setReSync: Dispatch<SetStateAction<boolean>>;
@@ -62,7 +56,7 @@ export function usePreferenceUpdater({
 		preferences,
 		redirectWithOptionsData,
 		setSavedViewPreferences,
-	)[dataSource];
+	)[sourcePage];
 
 	return {
 		updateColumns: (newColumns: TelemetryFieldKey[]): void => {

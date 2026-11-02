@@ -159,9 +159,9 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 							<div className="integrations-list-item-column">
 								<div className="integrations-list-item-installation-status">
 									<Badge
-										color={integration.is_installed ? 'forest' : 'amber'}
-										variant="outline"
-										capitalize
+										color={integration.is_installed ? 'success' : 'warning'}
+										variant="outlined"
+										textTransform="capitalize"
 									>
 										{integration.is_installed ? 'Installed' : 'Not Installed'}
 									</Badge>

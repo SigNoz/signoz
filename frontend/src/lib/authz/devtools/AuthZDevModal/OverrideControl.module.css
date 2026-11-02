@@ -6,37 +6,35 @@
 	background: var(--l2-background);
 	border: 1px solid var(--l3-border);
 	border-radius: var(--radius-2);
-}
 
-.segment {
 	--button-height: 22px;
 	--button-padding: 0 var(--spacing-3);
-	--button-secondary-ghost-hover-foreground: var(--l2-foreground);
+	--button-secondary-ghost-label: var(--l2-foreground);
+	--button-secondary-ghost-label-hover: var(--l2-foreground);
 	--button-variant-ghost-background-color: transparent;
-	border: none;
 	--button-border-radius: calc(var(--radius-2) - 1px);
-	transition:
-		background 120ms ease,
-		color 120ms ease;
 }
 
-.segment:not(.segmentActive):hover {
-	--button-secondary-ghost-hover-foreground: var(--l2-foreground-hover);
+.segmented [data-slot='button']:not([aria-pressed='true']):hover {
+	--button-secondary-ghost-label: var(--l2-foreground-hover);
+	--button-secondary-ghost-label-hover: var(--l2-foreground-hover);
 	--button-variant-ghost-background-color: var(--l2-background);
 }
 
-.segmentIcon {
-	display: inline-flex;
-	align-items: center;
+/* An empty label would still take a flex gap after the icon. */
+.segmented [aria-pressed='false'] {
+	--button-label-display: none;
 }
 
-.segment.optAuto {
-	--button-secondary-ghost-hover-foreground: var(--l1-foreground);
+.segmented [aria-pressed='true'][data-option='reset'] {
+	--button-secondary-ghost-label: var(--l1-foreground);
+	--button-secondary-ghost-label-hover: var(--l1-foreground);
 	--button-variant-ghost-background-color: var(--l3-background);
 }
 
-.segment.optGranted {
-	--button-secondary-ghost-hover-foreground: var(--success-foreground);
+.segmented [aria-pressed='true'][data-option='granted'] {
+	--button-secondary-ghost-label: var(--success-foreground);
+	--button-secondary-ghost-label-hover: var(--success-foreground);
 	--button-variant-ghost-background-color: color-mix(
 		in srgb,
 		var(--accent-forest) 22%,
@@ -44,8 +42,9 @@
 	);
 }
 
-.segment.optDenied {
-	--button-secondary-ghost-hover-foreground: var(--danger-foreground);
+.segmented [aria-pressed='true'][data-option='denied'] {
+	--button-secondary-ghost-label: var(--danger-foreground);
+	--button-secondary-ghost-label-hover: var(--danger-foreground);
 	--button-variant-ghost-background-color: color-mix(
 		in srgb,
 		var(--accent-cherry) 22%,
@@ -53,8 +52,9 @@
 	);
 }
 
-.segment.optDelay {
-	--button-secondary-ghost-hover-foreground: var(--warning-foreground);
+.segmented [aria-pressed='true'][data-option='delay'] {
+	--button-secondary-ghost-label: var(--warning-foreground);
+	--button-secondary-ghost-label-hover: var(--warning-foreground);
 	--button-variant-ghost-background-color: color-mix(
 		in srgb,
 		var(--accent-amber) 22%,
@@ -62,8 +62,9 @@
 	);
 }
 
-.segment.optError {
-	--button-secondary-ghost-hover-foreground: var(--danger-foreground);
+.segmented [aria-pressed='true'][data-option='error'] {
+	--button-secondary-ghost-label: var(--danger-foreground);
+	--button-secondary-ghost-label-hover: var(--danger-foreground);
 	--button-variant-ghost-background-color: color-mix(
 		in srgb,
 		var(--accent-cherry) 22%,

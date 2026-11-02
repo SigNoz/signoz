@@ -4,24 +4,30 @@ import { Typography } from '@signozhq/ui/typography';
 
 import styles from './SetupGuideCallout.module.scss';
 
-const GCP_INTEGRATION_DOCS_URL =
-	'https://signoz.io/docs/integrations/gcp/gcp-integration/';
+interface SetupGuideCalloutProps {
+	description: string;
+	docsUrl: string;
+	linkLabel: string;
+}
 
-function SetupGuideCallout(): JSX.Element {
+function SetupGuideCallout({
+	description,
+	docsUrl,
+	linkLabel,
+}: SetupGuideCalloutProps): JSX.Element {
 	return (
 		<Callout icon={<KeyRound />} testId="gcp-setup-guide-callout">
 			<Typography.Text as="span" size="base">
-				Please go through our GCP integration guide, which covers all prerequisites
-				— service account, IAM roles, and resource setup.
+				{description}
 			</Typography.Text>
 			<a
 				className={styles.guideLink}
-				href={GCP_INTEGRATION_DOCS_URL}
+				href={docsUrl}
 				target="_blank"
 				rel="noopener noreferrer"
 				data-testid="gcp-setup-guide-link"
 			>
-				GCP integration guide
+				{linkLabel}
 				<ArrowUpRight size={12} />
 			</a>
 		</Callout>

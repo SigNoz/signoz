@@ -85,11 +85,6 @@
 	white-space: nowrap;
 }
 
-// Above the JSON drawer (antd Drawer sits at ~1100) so the id list is visible.
-.warningTooltip {
-	z-index: 1101;
-}
-
 .validationValid {
 	color: var(--bg-forest-400);
 }

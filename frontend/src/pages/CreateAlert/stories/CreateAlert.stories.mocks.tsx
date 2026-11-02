@@ -21,14 +21,14 @@ import {
 	alertPreviewSeries,
 } from '../../AlertList/stories/__story_mockdata__/alertQuery';
 import {
-	channelsResponse,
+	notificationChannelsResponse,
 	CHANNEL_MAX,
 } from '../../AlertList/stories/__story_mockdata__/alerts';
 
 /**
  * Which alert the page is building. The page reads this off the URL, so the
  * control is a route rather than a response: with no type at all it stays on
- * the picker, anomaly detection routes to the classic form, and everything else
+ * the picker, `classic-form` opts back into the classic form, and everything else
  * opens the current one.
  */
 const ALERT_MODES = [
@@ -127,8 +127,8 @@ export const createAlertMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v1/channels',
-			response.json(() => channelsResponse(values.channels)),
+			'http://localhost/api/v2/notification_channels',
+			response.json(() => notificationChannelsResponse(values.channels)),
 		),
 
 		rest.post(
@@ -198,6 +198,9 @@ export const clickFooterButton = async (
 ): Promise<void> => {
 	const button = await within(canvasElement).findByTestId(testId);
 
-	await waitFor(() => expect(button).toBeEnabled());
+	await waitFor(() => {
+		expect(button).toBeEnabled();
+		expect(button).not.toHaveAttribute('aria-disabled', 'true');
+	});
 	await userEvent.click(button);
 };

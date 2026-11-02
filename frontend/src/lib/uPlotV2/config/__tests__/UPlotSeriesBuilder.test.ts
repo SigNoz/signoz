@@ -1,6 +1,7 @@
 import { themeColors } from 'constants/theme';
 import uPlot from 'uplot';
 
+import { reportBarRect } from '../../utils/barRect';
 import { isolatedPointFilter } from '../../utils/seriesPointsFilter';
 import type { SeriesProps } from '../types';
 import { DrawStyle, FillMode, LineInterpolation, LineStyle } from '../types';
@@ -397,5 +398,30 @@ describe('UPlotSeriesBuilder', () => {
 		);
 
 		expect(builder.getConfig().fill).toBeUndefined();
+	});
+
+	it('exposes partial timestamps only when there are some', () => {
+		const partialTimestamps = new Set([40]);
+
+		expect(
+			new UPlotSeriesBuilder(createBaseProps({ partialTimestamps })).getConfig(),
+		).toHaveProperty('partialTimestamps', partialTimestamps);
+		expect(
+			new UPlotSeriesBuilder(
+				createBaseProps({ partialTimestamps: new Set() }),
+			).getConfig(),
+		).not.toHaveProperty('partialTimestamps');
+	});
+
+	it('reports bar rects from bar path builders', () => {
+		const config = new UPlotSeriesBuilder(
+			createBaseProps({ drawStyle: DrawStyle.Bar, barMaxWidth: 321 }),
+		).getConfig();
+
+		config.paths?.({} as uPlot, 1, 0, 1);
+
+		expect(uPlot.paths.bars).toHaveBeenCalledWith(
+			expect.objectContaining({ each: reportBarRect }),
+		);
 	});
 });

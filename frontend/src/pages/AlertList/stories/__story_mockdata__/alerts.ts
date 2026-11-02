@@ -7,28 +7,34 @@ import {
 	MetrictypesSpaceAggregationDTO,
 	MetrictypesTemporalityDTO,
 	MetrictypesTimeAggregationDTO,
+	Querybuildertypesv5FunctionNameDTO,
 	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5ReduceToDTO,
 	RuletypesAlertStateDTO,
 	RuletypesAlertTypeDTO,
 	RuletypesCompareOperatorDTO,
+	RuletypesEvaluationRollingDTOKind,
 	RuletypesMatchTypeDTO,
 	RuletypesPanelTypeDTO,
 	RuletypesQueryTypeDTO,
+	RuletypesRuleDTOSchemaVersion,
 	RuletypesRuleTypeDTO,
+	RuletypesSeasonalityDTO,
 	RuletypesThresholdBasicDTOKind,
 	type AlertmanagertypesDeprecatedGettableAlertDTO,
 	type GetAlerts200,
 	type GetRuleByID200,
 	type ListRules200,
 	type RenderErrorResponseDTO,
+	type Querybuildertypesv5FunctionDTO,
 	type RuletypesAlertCompositeQueryDTO,
 	type RuletypesRuleConditionDTO,
 	type RuletypesRuleDTO,
+	type AlertmanagertypesChannelConfigDTO,
+	type AlertmanagertypesGettableNotificationChannelDTO,
+	type AlertmanagertypesListedNotificationChannelDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
-import type { Channels } from 'types/api/channels/getAll';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -68,6 +74,10 @@ export const ALERT_SCHEMAS = ['v2', 'classic'] as const;
 
 export type AlertSchema = (typeof ALERT_SCHEMAS)[number];
 
+export const RULE_KINDS = ['threshold', 'anomaly'] as const;
+
+export type RuleKind = (typeof RULE_KINDS)[number];
+
 export const CHANNEL_TYPES = [
 	'slack',
 	'webhook',
@@ -79,6 +89,7 @@ export const CHANNEL_TYPES = [
 	'jira',
 	'jsmops',
 	'incidentio',
+	'telegram',
 ] as const;
 
 export type ChannelType = (typeof CHANNEL_TYPES)[number];
@@ -87,7 +98,10 @@ export type ChannelType = (typeof CHANNEL_TYPES)[number];
  * One query envelope is enough for the alert form to mount its query builder
  * over the rule, and it is the query the preview chart is drawn for.
  */
-const compositeQuery = (seed: RuleSeed): RuletypesAlertCompositeQueryDTO => ({
+const compositeQuery = (
+	seed: RuleSeed,
+	functions?: Querybuildertypesv5FunctionDTO[],
+): RuletypesAlertCompositeQueryDTO => ({
 	queryType: RuletypesQueryTypeDTO.builder,
 	panelType: RuletypesPanelTypeDTO.graph,
 	unit: seed.unit,
@@ -111,10 +125,59 @@ const compositeQuery = (seed: RuleSeed): RuletypesAlertCompositeQueryDTO => ({
 				groupBy: [],
 				order: [],
 				stepInterval: 60,
+				functions,
 			},
 		},
 	],
 });
+
+/**
+ * An anomaly rule fires on the z-score of each point against the seasonal
+ * forecast, so its targets are deviations: the classic form stores `below 3`, the
+ * current schema the signed `-3`. The `anomaly` function on the query is what
+ * makes the preview draw the forecast band.
+ */
+const anomalyCondition = (seed: RuleSeed): RuletypesRuleConditionDTO => {
+	return {
+		...condition(seed),
+		compositeQuery: compositeQuery(seed, [
+			{
+				name: Querybuildertypesv5FunctionNameDTO.anomaly,
+				args: [
+					{ name: 'z_score_threshold', value: 2 },
+					{ name: 'seasonality', value: 'daily' },
+				],
+			},
+		]),
+		op: RuletypesCompareOperatorDTO.below,
+		matchType: RuletypesMatchTypeDTO.all_the_times,
+		target: 3,
+		targetUnit: '',
+		algorithm: 'standard',
+		seasonality: RuletypesSeasonalityDTO.daily,
+		thresholds: {
+			kind: RuletypesThresholdBasicDTOKind.basic,
+			spec: [
+				{
+					name: 'critical',
+					matchType: RuletypesMatchTypeDTO.all_the_times,
+					op: RuletypesCompareOperatorDTO.below,
+					target: -3,
+					targetUnit: '',
+					channels: ['ops-slack'],
+				},
+				{
+					name: 'warning',
+					matchType: RuletypesMatchTypeDTO.all_the_times,
+					op: RuletypesCompareOperatorDTO.below,
+					target: -2,
+					targetUnit: '',
+					channels: ['ops-slack'],
+				},
+			],
+		},
+	};
+};
 
 const condition = (seed: RuleSeed): RuletypesRuleConditionDTO => ({
 	compositeQuery: compositeQuery(seed),
@@ -293,6 +356,7 @@ export interface RuleShape {
 	severity: SeverityChoice;
 	state: RuleStateChoice;
 	schema?: AlertSchema;
+	kind?: RuleKind;
 }
 
 const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
@@ -302,29 +366,40 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 		shape.state === 'mixed'
 			? seed.state
 			: (shape.state as RuletypesAlertStateDTO);
+	const isAnomaly = shape.kind === 'anomaly';
 
 	return {
 		id: `rule-${index + 1}`,
 		alert: ruleName(index),
-		alertType: seed.alertType,
-		ruleType: RuletypesRuleTypeDTO.threshold_rule,
+		alertType: isAnomaly
+			? RuletypesAlertTypeDTO.METRIC_BASED_ALERT
+			: seed.alertType,
+		ruleType: isAnomaly
+			? RuletypesRuleTypeDTO.anomaly_rule
+			: RuletypesRuleTypeDTO.threshold_rule,
 		state,
 		disabled: state === RuletypesAlertStateDTO.disabled,
-		condition: condition(seed),
+		condition: isAnomaly ? anomalyCondition(seed) : condition(seed),
 		labels: { severity, ...seed.labels },
 		annotations: {
 			summary: `${seed.alert} crossed its threshold of ${seed.target}`,
 			description:
 				'The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}',
 		},
-		evalWindow: '5m0s',
+		evalWindow: isAnomaly ? '1h0m0s' : '5m0s',
 		frequency: '1m0s',
+		evaluation: {
+			kind: RuletypesEvaluationRollingDTOKind.rolling,
+			spec: { evalWindow: isAnomaly ? '1h0m0s' : '5m0s', frequency: '1m0s' },
+		},
 		createdAt: ago((index + 3) * DAY),
 		updatedAt: ago((index + 1) * HOUR),
 		createdBy: 'ada@signoz.io',
 		updatedBy: 'grace@signoz.io',
-		schemaVersion:
-			shape.schema === 'classic' ? undefined : NEW_ALERT_SCHEMA_VERSION,
+		// classic rows predate schemaVersion, which the spec now requires
+		schemaVersion: (shape.schema === 'classic'
+			? undefined
+			: RuletypesRuleDTOSchemaVersion.v2alpha1) as RuletypesRuleDTOSchemaVersion,
 		version: 'v5',
 		source: 'http://localhost/alerts',
 		preferredChannels: ['ops-slack'],
@@ -691,39 +766,225 @@ const CHANNEL_SEEDS: ChannelSeed[] = [
 
 export const CHANNEL_MAX = CHANNEL_SEEDS.length;
 
-const buildChannel = (index: number): Channels => {
+const buildListedChannel = (
+	index: number,
+): AlertmanagertypesListedNotificationChannelDTO => {
 	const seed = CHANNEL_SEEDS[index % CHANNEL_SEEDS.length];
 
 	return {
 		id: String(index + 1),
 		name: seed.name,
-		type: seed.type,
-		created_at: ago((index + 10) * DAY),
-		updated_at: ago((index + 1) * DAY),
-		data: JSON.stringify({ name: seed.name, ...seed.receiver }),
+		displayName: seed.name,
+		kind: seed.type as AlertmanagertypesListedNotificationChannelDTO['kind'],
+		createdAt: ago((index + 10) * DAY),
+		updatedAt: ago((index + 1) * DAY),
 	};
 };
 
-export const channelsResponse = (
+/** The v2 list, which is what the redesigned channels list reads. */
+export const notificationChannelsResponse = (
 	count: number,
-): { status: string; data: Channels[] } => ({
-	status: 'success',
-	data: Array.from({ length: count }, (_unused, index) => buildChannel(index)),
-});
+): {
+	status: string;
+	data: {
+		channels: AlertmanagertypesListedNotificationChannelDTO[];
+		total: number;
+	};
+} => {
+	const channels = Array.from({ length: count }, (_unused, index) =>
+		buildListedChannel(index),
+	);
 
-/** Channel names the alert form and the routing policies pick from. */
-export const channelNames = (count: number): string[] =>
-	channelsResponse(count).data.map((channel) => channel.name);
+	return { status: 'success', data: { channels, total: channels.length } };
+};
 
-export const channelResponse = (
-	id: string,
-	type: ChannelType,
-): { status: string; data: Channels } => {
-	const index = CHANNEL_SEEDS.findIndex((seed) => seed.type === type);
+/**
+ * The v2 list as the API answers it: search, kind and paging are applied on the
+ * server, so the story has to narrow the rows rather than hand back all of them.
+ */
+export const notificationChannelsPage = (
+	count: number,
+	params: URLSearchParams,
+): {
+	status: string;
+	data: {
+		channels: AlertmanagertypesListedNotificationChannelDTO[];
+		total: number;
+	};
+} => {
+	const query = params.get('query')?.trim().toLowerCase() ?? '';
+	const kind = params.get('kind') ?? '';
+	const limit = Number(params.get('limit')) || CHANNEL_MAX;
+	const offset = Number(params.get('offset')) || 0;
+
+	const matched = Array.from({ length: count }, (_unused, index) =>
+		buildListedChannel(index),
+	).filter(
+		(channel) =>
+			(!query || channel.displayName.toLowerCase().includes(query)) &&
+			(!kind || channel.kind === kind),
+	);
 
 	return {
 		status: 'success',
-		data: { ...buildChannel(Math.max(index, 0)), id },
+		data: {
+			channels: matched.slice(offset, offset + limit),
+			total: matched.length,
+		},
+	};
+};
+
+/**
+ * One listed row fetched on its own, as the JSON dialog does. Indexed the same
+ * way the list builds its rows, so a row's id resolves to the kind it displays.
+ */
+export const notificationChannelByRowId = (
+	id: string,
+): ReturnType<typeof notificationChannelResponse> => {
+	const index = (Number(id) - 1 + CHANNEL_SEEDS.length) % CHANNEL_SEEDS.length;
+
+	return notificationChannelResponse(id, CHANNEL_SEEDS[index].type);
+};
+
+/** Channel names the alert form and the routing policies pick from. */
+export const channelNames = (count: number): string[] =>
+	Array.from(
+		{ length: count },
+		(_unused, index) => CHANNEL_SEEDS[index % CHANNEL_SEEDS.length].name,
+	);
+
+export const WEBHOOK_AUTHS = ['basic', 'bearer', 'none'] as const;
+
+export type WebhookAuthChoice = (typeof WEBHOOK_AUTHS)[number];
+
+const WEBHOOK_CREDENTIALS: Record<WebhookAuthChoice, Record<string, string>> = {
+	basic: { username: 'story-user' },
+	bearer: { bearerToken: 'story-bearer-token' },
+	none: {},
+};
+
+const webhookSpec = (auth: WebhookAuthChoice): Record<string, unknown> => ({
+	url: 'https://example.com/story-hook',
+	...WEBHOOK_CREDENTIALS[auth],
+	sendResolved: true,
+});
+
+/**
+ * The v2 spec each kind is fetched with, so the edit form renders populated
+ * fields. Keys mirror the generated channel spec schemas.
+ */
+const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
+	slack: {
+		apiUrl: 'https://hooks.slack.com/services/T000/B000/story-token',
+		channel: '#ops-alerts',
+		title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}',
+		text: '{{ range .Alerts -}}*Alert:* {{ .Labels.alertname }}\n{{ end }}',
+		// one of each so the repeating row editors render with content
+		fields: [
+			{ title: 'Severity', value: '{{ .CommonLabels.severity }}', short: true },
+			{
+				title: 'Service',
+				value: '{{ .CommonLabels.service_name }}',
+				short: false,
+			},
+		],
+		actions: [
+			{
+				type: 'button',
+				text: 'Runbook',
+				url: 'https://runbook.example.com/{{ .CommonLabels.alertname }}',
+			},
+		],
+		sendResolved: true,
+	},
+	webhook: webhookSpec('basic'),
+	pagerduty: {
+		routingKey: 'story-routing-key',
+		description: '{{ .CommonLabels.alertname }}',
+		severity: 'critical',
+		sendResolved: true,
+	},
+	opsgenie: {
+		apiKey: 'story-opsgenie-key',
+		message: '{{ .CommonLabels.alertname }}',
+		description: 'Story channel',
+		sendResolved: true,
+	},
+	email: {
+		to: 'oncall@story.signoz.io',
+		html: '<p>{{ .CommonLabels.alertname }}</p>',
+		sendResolved: true,
+	},
+	msteams: {
+		webhookUrl: 'https://story.webhook.office.com/webhookb2/story',
+		title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}',
+		text: 'Story channel',
+		sendResolved: true,
+	},
+	googlechat: {
+		webhookUrl: 'https://chat.googleapis.com/v1/spaces/STORY/messages',
+		title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}',
+		text: 'Story channel',
+		sendResolved: true,
+	},
+	jira: {
+		site: 'https://story.atlassian.net',
+		project: 'OPS',
+		issueType: 'Task',
+		email: 'story@signoz.io',
+		apiToken: 'story-jira-token',
+		summary: '{{ .CommonLabels.alertname }}',
+		sendResolved: true,
+	},
+	jsmops: {
+		apiKey: 'story-jsm-key',
+		message: '{{ .CommonLabels.alertname }}',
+		description: 'Story channel',
+		sendResolved: true,
+	},
+	incidentio: {
+		url: 'https://api.incident.io/v2/alert_events/http/story',
+		token: 'story-incidentio-token',
+		title: '{{ .CommonLabels.alertname }}',
+		sendResolved: true,
+	},
+	telegram: {
+		botToken: '123456789:AA-story-telegram-token',
+		chatId: -1001234567890,
+		title: '{{ .CommonLabels.alertname }}',
+		message: '{{ range .Alerts -}}{{ .Annotations.description }}\n{{ end }}',
+		sendResolved: true,
+	},
+};
+
+/** The v2 fetch by id, which is what the redesigned screens read. */
+export const notificationChannelResponse = (
+	id: string,
+	type: ChannelType,
+	webhookAuth: WebhookAuthChoice = 'basic',
+): {
+	status: string;
+	data: AlertmanagertypesGettableNotificationChannelDTO;
+} => {
+	const index = Math.max(
+		CHANNEL_SEEDS.findIndex((seed) => seed.type === type),
+		0,
+	);
+	const seed = CHANNEL_SEEDS[index];
+
+	return {
+		status: 'success',
+		data: {
+			id,
+			name: seed.name,
+			displayName: seed.name,
+			createdAt: ago((index + 10) * DAY),
+			updatedAt: ago((index + 1) * DAY),
+			config: {
+				kind: type,
+				spec: type === 'webhook' ? webhookSpec(webhookAuth) : CHANNEL_SPECS[type],
+			} as unknown as AlertmanagertypesChannelConfigDTO,
+		},
 	};
 };
 

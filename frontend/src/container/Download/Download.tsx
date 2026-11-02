@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CloudDownload } from '@signozhq/icons';
-import { DropdownMenuSimple, type MenuProps } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Button, Flex } from 'antd';
 import { unparse } from 'papaparse';
 
@@ -52,23 +52,23 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 		downloadLink.remove();
 	};
 
-	const menu: MenuProps = {
-		items: [
-			{
-				key: 'download-as-excel',
-				label: 'Excel',
-				onClick: downloadExcelFile,
-			},
-			{
-				key: 'download-as-csv',
-				label: 'CSV',
-				onClick: downloadCsvFile,
-			},
-		],
-	};
+	const items: DropdownItemType[] = [
+		{
+			type: 'item',
+			value: 'download-as-excel',
+			label: 'Excel',
+			onClick: downloadExcelFile,
+		},
+		{
+			type: 'item',
+			value: 'download-as-csv',
+			label: 'CSV',
+			onClick: downloadCsvFile,
+		},
+	];
 
 	return (
-		<DropdownMenuSimple menu={menu}>
+		<Dropdown items={items} nativeButton align="end" side="bottom">
 			<Button
 				className="download-button"
 				data-testid="download-menu-trigger"
@@ -81,7 +81,7 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 					Download
 				</Flex>
 			</Button>
-		</DropdownMenuSimple>
+		</Dropdown>
 	);
 }
 

@@ -15,9 +15,10 @@ function MarkdownHelp(): JSX.Element {
 					type="button"
 					variant="ghost"
 					color="secondary"
-					size="icon"
+					size="sm"
+					icon
 					aria-label="Markdown syntax help"
-					data-testid="markdown-help-trigger"
+					testId="markdown-help-trigger"
 				>
 					<CircleHelp size={14} />
 				</Button>

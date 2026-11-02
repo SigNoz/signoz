@@ -13,9 +13,11 @@ import {
 	CHANNEL_ACTION_OUTCOMES,
 	channelActionError,
 	CHANNEL_TYPES,
-	channelResponse,
+	notificationChannelResponse,
 	type ChannelActionOutcome,
 	type ChannelType,
+	WEBHOOK_AUTHS,
+	type WebhookAuthChoice,
 } from '../../stories/__story_mockdata__/alerts';
 
 const STORY_CHANNEL_ID = '1';
@@ -38,6 +40,13 @@ export const channelsEditMocks = defineStoryMocks({
 			options: CHANNEL_TYPES,
 			value: 'slack',
 		}),
+		webhookAuth: choiceControl<WebhookAuthChoice>('Webhook credentials', {
+			group: CHANNEL,
+			description:
+				'What the saved webhook authenticates with, which picks the auth option the form opens on. Only read when the channel type is webhook.',
+			options: WEBHOOK_AUTHS,
+			value: 'basic',
+		}),
 		saveOutcome: choiceControl<ChannelActionOutcome>('Saving the channel', {
 			group: ACTIONS,
 			options: CHANNEL_ACTION_OUTCOMES,
@@ -51,21 +60,25 @@ export const channelsEditMocks = defineStoryMocks({
 	},
 	handlers: (values, response) => [
 		rest.get(
-			'http://localhost/api/v1/channels/:id',
+			'http://localhost/api/v2/notification_channels/:id',
 			response.json((req) =>
-				channelResponse(String(req.params.id), values.channelType),
+				notificationChannelResponse(
+					String(req.params.id),
+					values.channelType,
+					values.webhookAuth,
+				),
 			),
 		),
 
 		rest.put(
-			'http://localhost/api/v1/channels/:id',
+			'http://localhost/api/v2/notification_channels/:id',
 			values.saveOutcome === 'fails'
 				? rejectChannelAction
 				: resolveChannelActionSuccess,
 		),
 
 		rest.post(
-			'http://localhost/api/v1/testChannel',
+			'http://localhost/api/v2/notification_channels/test',
 			values.testOutcome === 'fails'
 				? rejectChannelAction
 				: resolveChannelActionSuccess,

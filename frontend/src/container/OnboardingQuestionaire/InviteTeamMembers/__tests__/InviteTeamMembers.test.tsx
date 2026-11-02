@@ -114,10 +114,12 @@ describe('InviteTeamMembers', () => {
 		it('disables buttons when isLoading=true', () => {
 			renderComponent({ isLoading: true });
 
-			expect(screen.getByRole('button', { name: /send invites/i })).toBeDisabled();
+			expect(
+				screen.getByRole('button', { name: /send invites/i }),
+			).toHaveAttribute('aria-disabled', 'true');
 			expect(
 				screen.getByRole('button', { name: /i'll do this later/i }),
-			).toBeDisabled();
+			).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('disables Send Invites when canSubmit=false from InviteMembers', () => {
@@ -134,8 +136,14 @@ describe('InviteTeamMembers', () => {
 				}) as JSX.Element,
 			);
 
-			expect(getByTestId('send-invites-button')).toBeDisabled();
-			expect(getByTestId('do-later-button')).not.toBeDisabled();
+			expect(getByTestId('send-invites-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+			expect(getByTestId('do-later-button')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
 		it('disables buttons when isSubmitting=true from InviteMembers', () => {
@@ -152,8 +160,14 @@ describe('InviteTeamMembers', () => {
 				}) as JSX.Element,
 			);
 
-			expect(getByTestId('send-invites-button')).toBeDisabled();
-			expect(getByTestId('do-later-button')).toBeDisabled();
+			expect(getByTestId('send-invites-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+			expect(getByTestId('do-later-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 

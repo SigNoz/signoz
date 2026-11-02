@@ -8,8 +8,8 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { Select, Spin, Tooltip } from 'antd';
-import { Badge } from '@signozhq/ui/badge';
+import { type RefSelectProps, Select, Spin } from 'antd';
+import { Pill } from '@signozhq/ui/pill';
 import cx from 'classnames';
 import {
 	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
@@ -28,6 +28,7 @@ import { useGetAttributeSuggestions } from 'hooks/queryBuilder/useGetAttributeSu
 import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useRunQueryWithFilterItems } from 'hooks/queryBuilder/useRunQueryWithFilterItems';
 import useDebounceValue from 'hooks/useDebounce';
 import {
 	cloneDeep,
@@ -39,7 +40,6 @@ import {
 	unset,
 } from 'lodash-es';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
-import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -54,7 +54,6 @@ import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
 import { PLACEHOLDER } from './constant';
-import { TypographyText } from './style';
 import {
 	checkCommaInValue,
 	getOperatorFromValue,
@@ -158,9 +157,10 @@ function QueryBuilderSearchV2(
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const { handleRunQuery, currentQuery } = useQueryBuilder();
+	const { currentQuery } = useQueryBuilder();
+	const runQuery = useRunQueryWithFilterItems();
 
-	const selectRef = useRef<BaseSelectRef>(null);
+	const selectRef = useRef<RefSelectProps>(null);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -463,11 +463,11 @@ function QueryBuilderSearchV2(
 			if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
 				event.preventDefault();
 				event.stopPropagation();
-				handleRunQuery();
+				runQuery();
 				setIsOpen(false);
 			}
 		},
-		[handleRunQuery, searchValue],
+		[runQuery, searchValue],
 	);
 
 	const handleOnBlur = useCallback((): void => {
@@ -924,35 +924,15 @@ function QueryBuilderSearchV2(
 			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
 		};
 
-		const isDisabled = !!searchValue;
-
 		return (
-			<span className="qb-search-bar-tokenised-tags">
-				<Badge
-					color="vanilla"
-					className={tagDetails?.key?.type || ''}
-					closable={!searchValue && closable}
-					onClose={(e): void => {
-						e.preventDefault();
-						onCloseHandler();
-					}}
-				>
-					<Tooltip title={chipValue}>
-						<TypographyText
-							className="qb-tag-text"
-							$isInNin={isInNin}
-							$isEnabled={!!searchValue}
-							onClick={(): void => {
-								if (!isDisabled) {
-									tagEditHandler(value);
-								}
-							}}
-						>
-							{chipValue}
-						</TypographyText>
-					</Tooltip>
-				</Badge>
-			</span>
+			<Pill.Closeable
+				disabled={!!searchValue || !closable}
+				maxWidth={isInNin ? '10rem' : '100%'}
+				onClick={(): void => tagEditHandler(value)}
+				onClose={onCloseHandler}
+			>
+				{chipValue}
+			</Pill.Closeable>
 		);
 	};
 

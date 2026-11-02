@@ -51,7 +51,8 @@ export function mapAccountDtoToAzureCloudAccount(
 export function mapAccountDtoToGcpCloudAccount(
 	account: CloudintegrationtypesAccountDTO,
 ): IntegrationCloudAccount | null {
-	if (!account.providerAccountId) {
+	const gcpConfig = account.config.gcp;
+	if (!account.providerAccountId || !gcpConfig) {
 		return null;
 	}
 
@@ -59,9 +60,10 @@ export function mapAccountDtoToGcpCloudAccount(
 		id: account.id,
 		cloud_account_id: account.id,
 		config: {
-			deployment_region: account.config?.gcp?.deploymentRegion ?? '',
-			deployment_project_id: account.config?.gcp?.deploymentProjectId ?? '',
-			project_ids: account.config?.gcp?.projectIds ?? [],
+			connection_method: gcpConfig.connectionMethod,
+			deployment_region: gcpConfig.deploymentRegion,
+			deployment_project_id: gcpConfig.deploymentProjectId,
+			project_ids: gcpConfig.projectIds,
 		},
 		status: {
 			integration: {

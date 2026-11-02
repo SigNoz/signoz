@@ -1,5 +1,4 @@
-import { renderHook } from '@testing-library/react';
-import { useListSavedViews } from 'api/generated/services/saved-view';
+import { useGetSavedView } from 'api/generated/services/saved-view';
 import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
@@ -9,32 +8,21 @@ import {
 	defaultTraceSelectedColumns,
 	ensureLogsRequiredColumns,
 } from 'container/OptionsMenu/constants';
-import { DataSource } from 'types/common/queryBuilder';
+import { renderHook } from 'tests/test-utils';
 
+import { usePreferenceLoader } from '../loader/usePreferenceLoader';
 import { usePreferenceSync } from '../sync/usePreferenceSync';
-import { PreferenceMode } from '../types';
+import { PreferenceMode, Preferences } from '../types';
+import { usePreferenceUpdater } from '../updater/usePreferenceUpdater';
 
 jest.mock('api/generated/services/saved-view');
 
-const loaderPreferences = { columns: [{ name: 'from-loader' }] };
-jest.mock('../loader/usePreferenceLoader', () => ({
-	usePreferenceLoader: jest.fn(() => ({
-		preferences: loaderPreferences,
-		loading: false,
-		error: null,
-	})),
-}));
+jest.mock('../loader/usePreferenceLoader');
+jest.mock('../updater/usePreferenceUpdater');
 
-jest.mock('../updater/usePreferenceUpdater', () => ({
-	usePreferenceUpdater: jest.fn(() => ({
-		updateColumns: jest.fn(),
-		updateFormatting: jest.fn(),
-	})),
-}));
+const loaderPreferences: Preferences = { columns: [{ name: 'from-loader' }] };
 
-const mockedUseListSavedViews = useListSavedViews as jest.MockedFunction<
-	typeof useListSavedViews
->;
+const mockedUseGetSavedView = jest.mocked(useGetSavedView);
 
 function makeView(
 	id: string,
@@ -55,30 +43,55 @@ function makeView(
 	} as unknown as SavedviewtypesSavedViewDTO;
 }
 
+// Stable objects, like react-query's cache; a fresh one per render loops the
+// sync effect.
 function mockViews(views: SavedviewtypesSavedViewDTO[]): void {
-	mockedUseListSavedViews.mockReturnValue({
-		data: { status: 'success', data: views },
-	} as unknown as ReturnType<typeof useListSavedViews>);
+	const responses = new Map(
+		views.map((view) => [
+			view.id,
+			{ data: { status: 'success', data: view }, dataUpdatedAt: 0 },
+		]),
+	);
+	const notLoaded = { data: undefined, dataUpdatedAt: 0 };
+	mockedUseGetSavedView.mockImplementation(
+		({ id }) =>
+			(responses.get(id) ?? notLoaded) as unknown as ReturnType<
+				typeof useGetSavedView
+			>,
+	);
 }
 
 describe('usePreferenceSync in saved view mode', () => {
 	beforeEach(() => {
-		mockedUseListSavedViews.mockReset();
+		mockedUseGetSavedView.mockReset();
+		jest.mocked(usePreferenceLoader).mockReturnValue({
+			preferences: loaderPreferences,
+			loading: false,
+			error: null,
+		});
+		jest.mocked(usePreferenceUpdater).mockReturnValue({
+			updateColumns: jest.fn() as jest.MockedFunction<
+				ReturnType<typeof usePreferenceUpdater>['updateColumns']
+			>,
+			updateFormatting: jest.fn() as jest.MockedFunction<
+				ReturnType<typeof usePreferenceUpdater>['updateFormatting']
+			>,
+		});
 	});
 
-	it('fetches the list for the data source only in saved view mode', () => {
+	it('fetches the view only in saved view mode with a view id', () => {
 		mockViews([]);
 
 		renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.DIRECT,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: undefined,
 			}),
 		);
 
-		expect(mockedUseListSavedViews).toHaveBeenCalledWith(
-			{ source: 'logs' },
+		expect(mockedUseGetSavedView).toHaveBeenCalledWith(
+			{ id: '' },
 			{ query: { enabled: false } },
 		);
 	});
@@ -89,7 +102,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		const { result } = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.DIRECT,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: undefined,
 			}),
 		);
@@ -108,7 +121,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		const { result } = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: 'view-1',
 			}),
 		);
@@ -135,7 +148,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		const { result } = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: 'view-1',
 			}),
 		);
@@ -162,14 +175,14 @@ describe('usePreferenceSync in saved view mode', () => {
 		const withFields = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.TRACES,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				savedViewId: 'with-fields',
 			}),
 		);
 		const withoutFields = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.TRACES,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				savedViewId: 'without-fields',
 			}),
 		);
@@ -184,13 +197,13 @@ describe('usePreferenceSync in saved view mode', () => {
 		);
 	});
 
-	it('uses defaults when the saved view id is not in the list', () => {
+	it('uses defaults while the saved view is not loaded', () => {
 		mockViews([makeView('other', SavedviewtypesSourceDTO.logs, {})]);
 
 		const { result } = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: 'missing',
 			}),
 		);

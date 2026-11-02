@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import FieldsSelector from 'components/FieldsSelector';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { MAX_LOGS_LIST_SIZE } from 'constants/liveTail';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
+import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import GoToTop from 'container/GoToTop';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { LOGS_REQUIRED_COLUMNS } from 'container/OptionsMenu/constants';
@@ -32,7 +33,7 @@ interface LiveLogsContainerProps {
 function LiveLogsContainer({
 	handleChangeSelectedView,
 }: LiveLogsContainerProps): JSX.Element {
-	const location = useLocation();
+	const location = useAppLocation();
 	const [logs, setLogs] = useState<ILiveLogsLog[]>([]);
 	const { currentQuery, stagedQuery } = useQueryBuilder();
 	const [showLiveLogsFrequencyChart, setShowLiveLogsFrequencyChart] =
@@ -54,7 +55,7 @@ function LiveLogsContainer({
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: DataSource.LOGS,
+		sourcePage: SavedviewtypesSourceDTO.logs,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
 
@@ -232,8 +233,9 @@ function LiveLogsContainer({
 					<div className="live-logs-frequency-chart-view-controller">
 						<Typography>Frequency chart</Typography>
 						<Switch
+							color="primary"
+							textPlacement="right"
 							value={showLiveLogsFrequencyChart}
-							defaultValue
 							onChange={handleToggleFrequencyChart}
 						/>
 					</div>

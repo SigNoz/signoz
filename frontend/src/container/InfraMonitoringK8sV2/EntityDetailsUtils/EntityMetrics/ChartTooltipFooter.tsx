@@ -71,9 +71,9 @@ export default function ChartTooltipFooter({
 					size="sm"
 					onClick={handleUnpinClick}
 					aria-label="Unpin tooltip"
-					data-testid="entity-chart-tooltip-unpin"
+					testId="entity-chart-tooltip-unpin"
+					prefix={<X size={10} />}
 				>
-					<X size={10} />
 					<span>Unpin</span>
 				</Button>
 			)}

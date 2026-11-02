@@ -25,25 +25,6 @@
 	flex-direction: column;
 }
 
-/* A navigation-link row: leading icon, label, trailing external-link affordance. */
-.row {
-	display: flex;
-	align-items: center;
-	gap: 11px;
-	width: 100%;
-	height: 44px;
-	padding: 0 4px;
-	border: none;
-	background: transparent;
-	cursor: pointer;
-	color: var(--text-vanilla-100);
-	border-radius: 4px;
-
-	&:hover {
-		background: color-mix(in srgb, var(--bg-vanilla-100) 6%, transparent);
-	}
-}
-
 .icon {
 	display: grid;
 	place-items: center;

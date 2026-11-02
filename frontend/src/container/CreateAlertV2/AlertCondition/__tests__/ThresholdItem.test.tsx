@@ -3,7 +3,7 @@ import type { DefaultOptionType } from 'antd/es/select';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
 import * as appHooks from 'providers/App/App';
-import { Channels } from 'types/api/channels/getAll';
+import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import * as context from '../../context';
 import ThresholdItem from '../ThresholdItem';
@@ -57,7 +57,7 @@ const mockThreshold = {
 	color: '#ff0000',
 };
 
-const mockChannels: Channels[] = [
+const mockChannels: ChannelOption[] = [
 	{
 		id: TEST_CONSTANTS.CHANNEL_1,
 		name: TEST_CONSTANTS.EMAIL_CHANNEL_NAME,
@@ -147,6 +147,14 @@ describe('ThresholdItem', () => {
 			TEST_CONSTANTS.ENTER_THRESHOLD_VALUE,
 		);
 		expect(valueInput).toHaveValue(100);
+	});
+
+	it('asks for deviations instead of a unit for anomaly alerts', () => {
+		renderThresholdItem({ isAnomaly: true });
+
+		expect(screen.getByText('deviations')).toBeInTheDocument();
+		expect(screen.queryByText('on value')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('threshold-unit-select')).not.toBeInTheDocument();
 	});
 
 	it('renders unit selector with correct value', () => {

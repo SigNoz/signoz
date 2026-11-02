@@ -10,6 +10,13 @@
 	align-items: center;
 	gap: var(--spacing-1);
 	min-width: 0;
+
+	// Sized to the icon rather than the default 2rem tap target, so the copy
+	// button sits flush against the value instead of floating in its own block
+	// of padding.
+	--button-padding: 2px;
+	--button-height: auto;
+	--button-width: auto;
 }
 
 .label {
@@ -33,12 +40,4 @@
 
 .valueText {
 	font-family: var(--periscope-font-family-mono);
-}
-
-// Sized to the icon rather than the default 2rem tap target, so it sits flush
-// against the value instead of floating in its own block of padding.
-.copyButton {
-	--button-padding: 2px;
-	--button-height: auto;
-	--button-width: auto;
 }

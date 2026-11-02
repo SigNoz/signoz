@@ -107,7 +107,7 @@ export const alertRulesMocks = defineStoryMocks({
 			})),
 		),
 
-		rest.post('http://localhost/api/v2/rules', (_req, res, ctx) =>
+		rest.post('http://localhost/api/v2/rules/:id/clone', (_req, res, ctx) =>
 			actionResponse(values.cloneState, res, ctx, () => ({
 				status: 'success',
 				data: alertRulesResponse(1, {

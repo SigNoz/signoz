@@ -16,10 +16,8 @@ import (
 )
 
 type QueryEnvelope struct {
-	// Type is the type of the query.
-	Type QueryType `json:"type"` // "builder_query" | "builder_formula" | "builder_sub_query" | "builder_join" | "promql" | "clickhouse_sql"
-	// Spec is the deferred decoding of the query if any.
-	Spec any `json:"spec"`
+	Type QueryType `json:"type" description:"The kind of query the spec holds: builder_query, builder_ai_query, builder_formula, builder_trace_operator, promql or clickhouse_sql."`
+	Spec any       `json:"spec" description:"The query specification; its shape is selected by type, and by signal for builder_query."`
 }
 
 // builderQuerySpec is a signal-discriminated oneOf of the three
@@ -262,8 +260,7 @@ func UnmarshalBuilderQueryBySignal(data []byte) (any, error) {
 }
 
 type CompositeQuery struct {
-	// Queries is the queries to use for the request.
-	Queries []QueryEnvelope `json:"queries"`
+	Queries []QueryEnvelope `json:"queries" description:"The queries to run, each wrapped in a type-discriminated envelope. Names must be unique; formulas and trace operators reference other queries by name."`
 }
 
 // PrepareJSONSchema adds description to the CompositeQuery schema.
@@ -333,8 +330,8 @@ func (VariableType) Enum() []any {
 }
 
 type VariableItem struct {
-	Type  VariableType `json:"type"`
-	Value any          `json:"value"`
+	Type  VariableType `json:"type" description:"The kind of dashboard variable: query, dynamic, custom or text."`
+	Value any          `json:"value" description:"The selected value: a string, number or boolean, or a list of them for multi-select variables. The string __all__ is special only for dynamic variables in builder filters and PromQL, where it removes the condition that references the variable; query, custom and text variables, and ClickHouse SQL for every type, substitute it literally."`
 }
 
 var _ jsonschema.Preparer = VariableItem{}
@@ -360,6 +357,7 @@ func (VariableItem) PrepareJSONSchema(s *jsonschema.Schema) error {
 	list.WithItems(items)
 
 	value := jsonschema.Schema{}
+	value.Description = propertyDescription(s, "value")
 	value.OneOf = []jsonschema.SchemaOrBool{
 		jsonschema.String.ToSchemaOrBool(),
 		jsonschema.Number.ToSchemaOrBool(),
@@ -372,28 +370,21 @@ func (VariableItem) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 type QueryRangeRequest struct {
-	// SchemaVersion is the version of the schema to use for the request payload.
-	SchemaVersion string `json:"schemaVersion"`
-	// Start is the start time of the query in epoch milliseconds.
-	Start uint64 `json:"start"`
-	// End is the end time of the query in epoch milliseconds.
-	End uint64 `json:"end"`
-	// RequestType is the type of the request.
-	RequestType RequestType `json:"requestType"`
-	// CompositeQuery is the composite query to use for the request.
-	CompositeQuery CompositeQuery `json:"compositeQuery"`
-	// Variables is the variables to use for the request.
-	Variables map[string]VariableItem `json:"variables,omitempty"`
+	SchemaVersion  string                  `json:"schemaVersion" description:"The version of the request payload schema, currently v1."`
+	Start          uint64                  `json:"start" description:"The inclusive start of the time range as a Unix timestamp in milliseconds."`
+	End            uint64                  `json:"end" description:"The end of the time range as a Unix timestamp in milliseconds; must be greater than start except for raw_stream requests."`
+	RequestType    RequestType             `json:"requestType" description:"The shape of the result: scalar, time_series, raw, raw_stream, trace, distribution or heatmap. It decides which result type data.results carries."`
+	CompositeQuery CompositeQuery          `json:"compositeQuery" description:"The queries to execute together; at least one is required and formulas may reference the others by name."`
+	Variables      map[string]VariableItem `json:"variables,omitempty" description:"Dashboard variable values keyed by variable name. Builder filters substitute only the $name form and leave a quoted {{name}} unchanged; PromQL and ClickHouse SQL substitute $name, {{name}}, [[name]] and the Go template form {{.name}}."`
 
-	// NoCache is a flag to disable caching for the request.
-	NoCache bool `json:"noCache,omitempty"`
+	NoCache bool `json:"noCache,omitempty" description:"When true, results are computed fresh instead of being served from the query result cache. Defaults to false."`
 
-	FormatOptions *FormatOptions `json:"formatOptions,omitempty"`
+	FormatOptions *FormatOptions `json:"formatOptions,omitempty" description:"Post-processing applied to the result before it is returned."`
 }
 
 // PrepareJSONSchema adds description to the QueryRangeRequest schema.
 func (q *QueryRangeRequest) PrepareJSONSchema(schema *jsonschema.Schema) error {
-	schema.WithDescription("Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.")
+	schema.WithDescription("Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, trace operators, PromQL, and ClickHouse SQL queries.")
 	return nil
 }
 
@@ -677,8 +668,8 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 }
 
 type FormatOptions struct {
-	FillGaps               bool `json:"fillGaps,omitempty"`
-	FormatTableResultForUI bool `json:"formatTableResultForUI,omitempty"`
+	FillGaps               bool `json:"fillGaps,omitempty" description:"When true, every builder query and formula in a time_series result gets a zero value for each missing step, whatever its aggregation, so averages and percentiles read as zero where no data exists. PromQL and ClickHouse SQL queries keep their gaps. Defaults to false."`
+	FormatTableResultForUI bool `json:"formatTableResultForUI,omitempty" description:"When true, scalar results from several queries are merged into one table keyed by their group-by columns. Defaults to false."`
 }
 
 func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
@@ -753,8 +744,8 @@ func (BucketsKind) Enum() []any {
 type LinearBucketsSpec struct {
 	// Everything above MaxValue is counted in the trailing overflow band. Evenly
 	// spaced upper bounds have no top to divide without it, so it is required.
-	MaxValue   float64 `json:"maxValue" required:"true"`
-	NumBuckets int     `json:"numBuckets,omitempty"`
+	MaxValue   float64 `json:"maxValue" required:"true" description:"The upper bound of the last regular band; values above it are counted in a trailing overflow band."`
+	NumBuckets int     `json:"numBuckets,omitempty" description:"The number of evenly spaced bands between 0 and maxValue. A default applies when omitted or 0."`
 }
 
 // LogBucketsSpec spaces upper bounds at 2^Scale bands per doubling, the mapping
@@ -763,7 +754,7 @@ type LogBucketsSpec struct {
 	// ClickHouse always buckets at MaxLogScale and the surplus is folded away
 	// afterwards, so every Scale reads the same cache entry. MaxLogScale applies
 	// when unset.
-	Scale *int `json:"scale,omitempty"`
+	Scale *int `json:"scale,omitempty" description:"The exponential histogram scale: 2^scale bands per doubling of the value. The maximum supported scale applies when omitted."`
 }
 
 func (b *BucketOptions) UnmarshalJSON(data []byte) error {

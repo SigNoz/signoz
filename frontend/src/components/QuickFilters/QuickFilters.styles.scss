@@ -110,8 +110,8 @@
 				background: var(--l1-background);
 			}
 
-			.active {
-				background: var(--l2-background);
+			> [aria-expanded='true'] {
+				--button-variant-ghost-background-color: var(--l2-background);
 			}
 		}
 	}

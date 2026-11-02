@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "definition": {
     "name": "gen_ai.tool",
     "condition": {
@@ -15,6 +15,9 @@
         },
         {
           "value": "tool_response"
+        },
+        {
+          "value": "tool_use_id"
         }
       ],
       "resource": []
@@ -26,6 +29,18 @@
         "fieldContext": "attribute",
         "config": {
           "sources": [
+            {
+              "key": "gen_ai.client.tool_name",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 40
+            },
+            {
+              "key": "tool_name",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
             {
               "key": "tool.name",
               "context": "attribute",
@@ -46,6 +61,12 @@
         "fieldContext": "attribute",
         "config": {
           "sources": [
+            {
+              "key": "gen_ai.client.tool_use_id",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
             {
               "key": "tool.id",
               "context": "attribute",
@@ -132,6 +153,32 @@
             },
             {
               "key": "output.value",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 10
+            }
+          ]
+        }
+      },
+      {
+        "name": "gen_ai.operation.name",
+        "fieldContext": "attribute",
+        "config": {
+          "sources": [
+            {
+              "key": "openinference.span.kind",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 30
+            },
+            {
+              "key": "llm.request.type",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 20
+            },
+            {
+              "key": "traceloop.span.kind",
               "context": "attribute",
               "operation": "copy",
               "priority": 10

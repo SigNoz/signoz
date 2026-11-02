@@ -173,6 +173,7 @@ function FieldsSelectorContent({
 				{hasUnsavedChanges && (
 					<div className={styles.footer}>
 						<Button
+							size="md"
 							variant="outlined"
 							color="secondary"
 							onClick={handleDiscard}
@@ -181,6 +182,7 @@ function FieldsSelectorContent({
 							Discard
 						</Button>
 						<Button
+							size="md"
 							variant="solid"
 							color="primary"
 							onClick={handleSave}

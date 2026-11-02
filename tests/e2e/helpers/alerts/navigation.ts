@@ -72,6 +72,7 @@ export async function gotoAlertList(
 	await page.goto(`${ALERTS_LIST_PATH}?${query.toString()}`);
 	await expect(page.getByTestId('list-alerts-search-input')).toBeVisible();
 	if (expectRows) {
-		await expect(alertRuleRows(page).first()).toBeVisible();
+		// Skeleton rows are empty and ignore clicks; wait for a loaded one.
+		await expect(alertRuleRows(page).first()).toHaveText(/\S/);
 	}
 }

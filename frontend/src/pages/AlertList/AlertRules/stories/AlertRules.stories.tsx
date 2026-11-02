@@ -136,16 +136,11 @@ export const Tooltips: Story = {
 };
 
 /**
- * The rule count in the bottom strip, in place of the build version: the rows on
- * the page against the total, the same pair the table's own footer prints.
+ * The rule count in the bottom strip on a second page, where the rows on the
+ * page and the total come apart.
  */
-export const BottomStrip: Story = {
-	args: { bottomStrip: true },
-};
-
-/** The same count on a second page, where the two numbers come apart. */
 export const BottomStripPaginated: Story = {
-	args: { bottomStrip: true, rules: RULE_MAX },
+	args: { rules: RULE_MAX },
 	parameters: {
 		signoz: { route: '/alerts?tab=AlertRules&page=2&limit=10' },
 	},

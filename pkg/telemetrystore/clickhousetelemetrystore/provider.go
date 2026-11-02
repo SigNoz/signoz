@@ -97,8 +97,10 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	options.MaxIdleConns = config.Connection.MaxIdleConns
 	options.MaxOpenConns = config.Connection.MaxOpenConns
 	options.DialTimeout = config.Connection.DialTimeout
-	// This is to avoid the driver decoding issues with JSON columns
-	options.Settings["output_format_native_write_json_as_string"] = 1
+	// Read JSON columns natively: the driver mis-decodes JSON(max_dynamic_paths=0) columns without
+	// the flattened serialization, and reading them as a string collapses a key stored at both a
+	// scalar and an object path.
+	options.Settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
 
 	chConn, err := clickhouse.Open(options)
 	if err != nil {

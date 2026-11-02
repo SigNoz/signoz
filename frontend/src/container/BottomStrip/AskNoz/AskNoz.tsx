@@ -1,14 +1,21 @@
-import { useLocation } from 'react-router-dom';
+import { useCallback } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
+import logEvent from 'api/common/logEvent';
 import Noz from 'components/Noz/Noz';
 import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
+import {
+	AIAssistantEvents,
+	AIAssistantOpenSource,
+} from 'container/AIAssistant/events';
+import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
 import { selectPendingUserInputStreamCount } from 'container/AIAssistant/store/pendingInputSelectors';
 import {
 	openAIAssistant,
 	useAIAssistantStore,
 } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import ROUTES from 'constants/routes';
 import { Dot } from '@signozhq/icons';
 
@@ -23,7 +30,7 @@ import styles from './AskNoz.module.scss';
  * hiding the header button would remove a notification rather than move it.
  */
 function AskNoz(): JSX.Element | null {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const isDrawerOpen = useAIAssistantStore((state) => state.isDrawerOpen);
 	const isModalOpen = useAIAssistantStore((state) => state.isModalOpen);
@@ -36,6 +43,14 @@ function AskNoz(): JSX.Element | null {
 
 	// The drawer does not render on the Noz full page, so the button would be inert.
 	const isAIAssistantPage = pathname.startsWith(ROUTES.AI_ASSISTANT_BASE);
+
+	const handleOpen = useCallback((): void => {
+		void logEvent(AIAssistantEvents.Opened, {
+			source: AIAssistantOpenSource.BottomStrip,
+			currentPage: normalizePage(pathname),
+		});
+		openAIAssistant();
+	}, [pathname]);
 
 	if (!isAIAssistantEnabled || isDrawerOpen || isAIAssistantPage) {
 		return null;
@@ -50,25 +65,26 @@ function AskNoz(): JSX.Element | null {
 					</span>
 				</span>
 			)}
-			<TooltipSimple title={NOZ_TOOLTIP_TITLE}>
-				<Button
-					variant="ghost"
-					color="secondary"
-					size="sm"
-					className="noz-wave"
-					prefix={<Noz size={16} />}
-					onClick={(): void => openAIAssistant()}
-					aria-label={
-						showPendingBadge
-							? `Ask Noz, ${pendingUserInputCount} ${
-									pendingUserInputCount === 1 ? 'action needs' : 'actions need'
-								} your response`
-							: 'Ask Noz'
-					}
-				>
-					Ask Noz
-				</Button>
-			</TooltipSimple>
+			<span className="noz-wave">
+				<Tooltip title={NOZ_TOOLTIP_TITLE}>
+					<Button
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						prefix={<Noz size={16} />}
+						onClick={handleOpen}
+						aria-label={
+							showPendingBadge
+								? `Ask Noz, ${pendingUserInputCount} ${
+										pendingUserInputCount === 1 ? 'action needs' : 'actions need'
+									} your response`
+								: 'Ask Noz'
+						}
+					>
+						Ask Noz
+					</Button>
+				</Tooltip>
+			</span>
 		</div>
 	);
 }

@@ -37,7 +37,7 @@ export default function RightToolbarActions({
 	if (showLiveLogs) {
 		return (
 			<div className="right-toolbar-actions-container">
-				<RunQueryBtn disabled />
+				<RunQueryBtn disabled disabledTooltip="Not available in live mode" />
 			</div>
 		);
 	}

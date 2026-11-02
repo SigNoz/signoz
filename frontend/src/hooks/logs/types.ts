@@ -25,5 +25,4 @@ export type UseActiveLog = {
 		operator: string,
 		dataType?: DataTypes,
 	) => void;
-	onGroupByAttribute: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
 };

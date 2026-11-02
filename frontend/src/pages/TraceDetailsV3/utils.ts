@@ -1,3 +1,5 @@
+import type { SpantypesWaterfallSpanDTO } from 'api/generated/services/sigNoz.schemas';
+import { pick } from 'lodash-es';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { COLOR_BY_OPTIONS } from './constants';
@@ -7,9 +9,14 @@ import {
 	RESERVED_ERROR,
 } from './utils/generateColorPair';
 
+/** Like `||`, but keeps `0`. */
+const valueOrUndefined = <T>(value: T): T | undefined =>
+	value || value === 0 ? value : undefined;
+
 /**
  * Look up an attribute from both `resource` and `attributes` on a span.
  * Resources are checked first (service.name, k8s.* etc. live there).
+ * Falsy values count as missing, except `0`.
  *
  * Accepts both `SpanV3` (waterfall) and `FlamegraphSpan` (flamegraph) by typing
  * structurally — the only fields touched are `resource` and `attributes`.
@@ -20,11 +27,14 @@ export function getSpanAttribute(
 	span: {
 		resource?: Record<string, string>;
 		attributes?: Record<string, any>;
+		tagMap?: Record<string, any>;
 	},
 	key: string,
 ): string | undefined {
 	return (
-		span.resource?.[key] || span.attributes?.[key] || (span as any).tagMap?.[key]
+		valueOrUndefined(span.resource?.[key]) ??
+		valueOrUndefined(span.attributes?.[key]) ??
+		valueOrUndefined(span.tagMap?.[key])
 	);
 }
 
@@ -46,28 +56,43 @@ export function hasInfraMetadata(span: SpanV3 | undefined): boolean {
 	return INFRA_METADATA_KEYS.some((key) => getSpanAttribute(span, key));
 }
 
-// Top-level fields that exist on the API response only to support waterfall
-// rendering. They have no value in the Span Details DataViewer. Drop the whole
-// constant + helper once the backend stops emitting them.
-const HIDDEN_SPAN_FIELDS_IN_DETAILS_VIEW: ReadonlySet<string> = new Set([
-	'sub_tree_node_count',
-	'has_children',
-	'level',
-	'service.name',
-]);
+// Top-level fields shown in the Span Details DataViewer. Everything else on the
+// API response (e.g. waterfall rendering data) is hidden.
+const VISIBLE_SPAN_FIELDS_IN_DETAILS_VIEW = [
+	'span_id',
+	'trace_id',
+	'parent_span_id',
+	'name',
+	'kind_string',
+	'duration_nano',
+	'has_error',
+	'status_code',
+	'status_code_string',
+	'status_message',
+	'flags',
+	'is_remote',
+	'trace_state',
+	'attributes',
+	'resource',
+	'events',
+	'references',
+	'http_method',
+	'http_url',
+	'http_host',
+	'db_name',
+	'db_operation',
+	'external_http_method',
+	'external_http_url',
+	'response_status_code',
+	// Keys must exist on the waterfall DTO.
+] as const satisfies readonly (keyof SpantypesWaterfallSpanDTO)[];
 
 /**
- * Shallow-copies the span with waterfall-only fields stripped, for display in
- * the Span Details DataViewer.
+ * Shallow-copies the allow-listed span fields, for display in the Span Details
+ * DataViewer.
  */
 export function getSpanDisplayData(span: SpanV3): Record<string, unknown> {
-	const result: Record<string, unknown> = {};
-	for (const [key, value] of Object.entries(span)) {
-		if (!HIDDEN_SPAN_FIELDS_IN_DETAILS_VIEW.has(key)) {
-			result[key] = value;
-		}
-	}
-	return result;
+	return pick(span, VISIBLE_SPAN_FIELDS_IN_DETAILS_VIEW);
 }
 
 /**

@@ -20,7 +20,7 @@ const pageStory = storyMocks(tracesMocks, { layout: 'app' });
 
 /**
  * The traces explorer: the query builder, the span list and its detail drawer,
- * with saved views and funnels as tabs.
+ * with saved views beside it and funnels as a tab.
  *
  * Route: `/traces-explorer`.
  */
@@ -47,7 +47,7 @@ const openQuickFiltersSettings = async (): Promise<void> => {
 	const control = await waitFor(() => {
 		const settings = screen.getByTestId('settings-icon-container');
 
-		expect(settings).toBeEnabled();
+		expect(settings).not.toHaveAttribute('aria-disabled', 'true');
 
 		return settings;
 	}, untilLoaded);
@@ -84,11 +84,6 @@ export const AggregationTable: Story = {
 /** The Funnels tab, listing the funnels the workspace has saved. */
 export const Funnels: Story = {
 	args: { tab: 'funnels' },
-};
-
-/** The Views tab, where the saved views the explorer offers are managed. */
-export const SavedViews: Story = {
-	args: { tab: 'views' },
 };
 
 /**

@@ -10,6 +10,13 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
+import {
+	QueryBuilderField,
+	type QueryBuilderFieldsConfig,
+} from '../../queryBuilderFields.types';
+import { resolveQueryBuilderField } from '../../queryBuilderFields.utils';
+
+import { BUILT_IN_PLACEHOLDERS } from './constants';
 
 import './MetricsAggregateSection.styles.scss';
 
@@ -18,15 +25,18 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	index,
 	version,
 	panelType,
-	signalSource = '',
+	fieldsConfig,
 }: {
 	query: IBuilderQuery;
 	index: number;
 	version: string;
 	panelType: PANEL_TYPES | null;
-	signalSource: string;
+	fieldsConfig?: QueryBuilderFieldsConfig;
 }): JSX.Element {
 	const { setAggregationOptions } = useQueryBuilderV2Context();
+	const placeholderOf = (key: keyof typeof BUILT_IN_PLACEHOLDERS): string =>
+		resolveQueryBuilderField(key, fieldsConfig).placeholder ??
+		BUILT_IN_PLACEHOLDERS[key];
 	const {
 		operators,
 		spaceAggregationOptions,
@@ -119,6 +129,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										onChange={handleChangeOperator}
 										operators={operators}
 										className="metrics-operators-select"
+										data-testid="metrics-time-aggregation"
 									/>
 								</div>
 							</div>
@@ -154,7 +165,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										<InputWithLabel
 											onChange={handleChangeAggregateEvery}
 											label="Seconds"
-											placeholder="Auto"
+											placeholder={placeholderOf(QueryBuilderField.StepInterval)}
 											labelAfter
 											initialValue={query?.stepInterval ?? null}
 										/>
@@ -182,7 +193,10 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										AGGREGATE ACROSS TIME SERIES
 									</div>
 								</Tooltip>
-								<div className="metrics-aggregation-section-content-item-value">
+								<div
+									className="metrics-aggregation-section-content-item-value"
+									data-testid="metrics-space-aggregation"
+								>
 									<SpaceAggregationOptions
 										panelType={panelType}
 										key={`${panelType}${queryAggregation.spaceAggregation}${queryAggregation.timeAggregation}`}
@@ -206,7 +220,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										disabled={!queryAggregation.metricName}
 										query={query}
 										onChange={handleChangeGroupByKeys}
-										signalSource={signalSource}
+										placeholder={placeholderOf(QueryBuilderField.GroupBy)}
 									/>
 								</div>
 							</div>
@@ -219,7 +233,10 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 				<div className="metrics-space-aggregation-section">
 					<div className="metrics-aggregation-section-content">
 						<div className="metrics-aggregation-section-content-item">
-							<div className="metrics-aggregation-section-content-item-value">
+							<div
+								className="metrics-aggregation-section-content-item-value"
+								data-testid="metrics-space-aggregation"
+							>
 								<SpaceAggregationOptions
 									panelType={panelType}
 									key={`${panelType}${queryAggregation.spaceAggregation}${queryAggregation.timeAggregation}`}
@@ -243,7 +260,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 									disabled={!queryAggregation.metricName}
 									query={query}
 									onChange={handleChangeGroupByKeys}
-									signalSource={signalSource}
+									placeholder={placeholderOf(QueryBuilderField.GroupBy)}
 								/>
 							</div>
 						</div>
@@ -277,7 +294,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 								<InputWithLabel
 									onChange={handleChangeAggregateEvery}
 									label="Seconds"
-									placeholder="Auto"
+									placeholder={placeholderOf(QueryBuilderField.StepInterval)}
 									labelAfter
 									initialValue={query?.stepInterval ?? null}
 									className="histogram-every-input"

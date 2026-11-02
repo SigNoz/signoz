@@ -46,6 +46,8 @@ import {
 	traceDetailFieldValues,
 	traceFlamegraphResponse,
 	traceSummaryResponse,
+	TRACE_SCENARIOS,
+	type TraceScenario,
 	traceWaterfallResponse,
 } from './__story_mockdata__/traceDetails';
 
@@ -103,6 +105,13 @@ const spanLogScopeOf = (body: QueryRangeRequestV5): SpanLogScope => {
 
 export const traceDetailsMocks = defineStoryMocks({
 	controls: {
+		scenario: choiceControl<TraceScenario>('Scenario', {
+			group: TRACE,
+			description:
+				'The spans the trace is built from: a checkout, one span per HTTP status badge, or an agent run with LLM, tool and agent spans and the AI totals in the header.',
+			options: TRACE_SCENARIOS,
+			value: 'checkout',
+		}),
 		spans: countControl('Spans', {
 			group: TRACE,
 			description:
@@ -151,6 +160,7 @@ export const traceDetailsMocks = defineStoryMocks({
 	},
 	handlers: (values, response) => {
 		const trace = {
+			scenario: values.scenario,
 			spans: values.spans,
 			errors: values.errors,
 			traceStart: traceStartOf(),
@@ -288,7 +298,7 @@ export const traceDetailsMocks = defineStoryMocks({
 	},
 	config: (values) => ({
 		route: values.spanPanel
-			? `/trace/${STORY_TRACE_ID}?spanId=${spanIdAt(focusSpanIndex(values.spans))}`
+			? `/trace/${STORY_TRACE_ID}?spanId=${spanIdAt(focusSpanIndex(values.scenario, values.spans))}`
 			: `/trace/${STORY_TRACE_ID}`,
 	}),
 	effect: (values) => {

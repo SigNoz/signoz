@@ -1,27 +1,42 @@
 import { test as base, expect, type Page } from '@playwright/test';
 
 import { ADMIN, storageStateFor, type User } from '../helpers/auth';
+import { installBasePathMode } from '../helpers/base-path';
 
 // The login flow and the per-worker session cache live in `helpers/auth.ts` so
 // worker-scoped fixtures and suite hooks share one login with this fixture.
 export { ADMIN };
 export type { User };
 
-export const test = base.extend<{
-	/**
-	 * User identity for this test. Override with `test.use({ user: ... })` at
-	 * the describe or test level to run the suite as a different user.
-	 * Defaults to ADMIN (the pytest-bootstrap-seeded admin).
-	 */
-	user: User;
+export const test = base.extend<
+	{
+		/**
+		 * User identity for this test. Override with `test.use({ user: ... })` at
+		 * the describe or test level to run the suite as a different user.
+		 * Defaults to ADMIN (the pytest-bootstrap-seeded admin).
+		 */
+		user: User;
 
-	/**
-	 * A Page whose context is already authenticated as `user`. First request
-	 * for a given user triggers one login per worker; the resulting
-	 * storageState is held in memory and reused for all later requests.
-	 */
-	authedPage: Page;
-}>({
+		/**
+		 * A Page whose context is already authenticated as `user`. First request
+		 * for a given user triggers one login per worker; the resulting
+		 * storageState is held in memory and reused for all later requests.
+		 */
+		authedPage: Page;
+	},
+	{
+		/** Applies SIGNOZ_E2E_BASE_PATH before any page or login in the worker. */
+		basePathMode: void;
+	}
+>({
+	basePathMode: [
+		async ({ browser }, use) => {
+			await installBasePathMode(browser);
+			await use();
+		},
+		{ scope: 'worker', auto: true },
+	],
+
 	user: [ADMIN, { option: true }],
 
 	authedPage: async ({ browser, user }, use) => {

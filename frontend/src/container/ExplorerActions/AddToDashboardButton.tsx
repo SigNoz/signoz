@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Grid2X2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
@@ -80,22 +80,23 @@ function AddToDashboardButton({
 		}
 	};
 
-	const button = (
-		<Button
-			variant="ghost"
-			color="secondary"
-			size="icon"
-			disabled={!query}
-			onClick={open}
-			prefix={<Grid2X2 size={16} />}
-			aria-label="Add to dashboard"
-			data-testid="explorer-add-to-dashboard"
-		/>
-	);
-
 	return (
 		<>
-			<TooltipSimple title="Add to dashboard">{button}</TooltipSimple>
+			<Tooltip title="Add to dashboard">
+				<Button
+					variant="ghost"
+					color="secondary"
+					size="sm"
+					icon
+					disabled={!query}
+					disabledTooltip="Run a query first"
+					onClick={open}
+					aria-label="Add to dashboard"
+					testId="explorer-add-to-dashboard"
+				>
+					<Grid2X2 size={16} />
+				</Button>
+			</Tooltip>
 			<ExportPanelContainer
 				open={queryToExport !== null}
 				onClose={(): void => setQueryToExport(null)}

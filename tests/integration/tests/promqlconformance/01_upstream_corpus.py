@@ -51,7 +51,9 @@ def test_upstream_promqltest_corpus(
             req_start_ms = start_ms - step_s * 1000
         query = {
             "type": "promql",
-            "spec": {"name": "A", "query": case["expr"], "step": step_s},
+            # the corpus expects points at exactly start plus whole steps, as
+            # Prometheus itself evaluates them
+            "spec": {"name": "A", "query": case["expr"], "step": step_s, "skipStepAlignment": True},
         }
         case_id = f"{case['source']}[{case['variant']}]"
 

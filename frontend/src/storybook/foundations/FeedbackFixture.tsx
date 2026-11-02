@@ -49,7 +49,13 @@ function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 	return (
 		<>
 			{isToastStory && (
-				<Button data-testid="show-feedback-toast" onClick={showToast}>
+				<Button
+					size="md"
+					variant="solid"
+					color="primary"
+					testId="show-feedback-toast"
+					onClick={showToast}
+				>
 					Show feedback
 				</Button>
 			)}
@@ -67,14 +73,17 @@ function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 			{(state === 'confirmation' || state === 'toast-over-confirmation') && (
 				<>
 					<Button
-						data-testid="open-feedback-confirmation"
+						size="md"
+						variant="solid"
+						color="primary"
+						testId="open-feedback-confirmation"
 						onClick={(): void => setIsConfirmationOpen(true)}
 					>
 						Delete environment
 					</Button>
 					<ConfirmDialog
 						cancelText="Cancel"
-						confirmColor="destructive"
+						confirmColor="danger"
 						confirmIcon={<Trash2 size={14} />}
 						confirmText="Delete environment"
 						disableOutsideClick

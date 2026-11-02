@@ -13,31 +13,27 @@ function LabelColumn({ labels, value }: LabelColumnProps): JSX.Element {
 
 	return (
 		<div className="label-column">
-			{newLabels.map(
-				(label: string): JSX.Element => (
-					<BadgeWithTooltip key={label} label={label} value={value} />
-				),
-			)}
+			{newLabels.map((label: string): JSX.Element => (
+				<BadgeWithTooltip key={label} label={label} value={value} />
+			))}
 			{remainingLabels.length > 0 && (
 				<Popover
 					placement="bottomRight"
 					showArrow={false}
 					content={
 						<div>
-							{labels.map(
-								(label: string): JSX.Element => (
-									<div key={label}>
-										<Badge className="label-column--tag" color="vanilla">
-											{getLabelAndValueContent(label, value && value[label])}
-										</Badge>
-									</div>
-								),
-							)}
+							{labels.map((label: string): JSX.Element => (
+								<div key={label}>
+									<Badge textTransform="none" variant="solid" color="secondary">
+										{getLabelAndValueContent(label, value && value[label])}
+									</Badge>
+								</div>
+							))}
 						</div>
 					}
 					trigger="hover"
 				>
-					<Badge className="label-column--tag" color="vanilla">
+					<Badge variant="solid" color="secondary">
 						+{remainingLabels.length}
 					</Badge>
 				</Popover>

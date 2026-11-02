@@ -6,7 +6,7 @@ import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { toast } from '@signozhq/ui/sonner';
 import { AxiosError } from 'axios';
-import { generatePath } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import logEvent from 'api/common/logEvent';
 import { createDashboardV2 } from 'api/generated/services/dashboard';
 import ROUTES from 'constants/routes';
@@ -72,7 +72,7 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 			});
 			onClose();
 			safeNavigate(
-				generatePath(ROUTES.DASHBOARD, { dashboardId: created.data.id }),
+				buildRoutePath(ROUTES.DASHBOARD, { dashboardId: created.data.id }),
 			);
 		} catch (e) {
 			showErrorModal(e as APIError);
@@ -150,10 +150,12 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 					Cancel
 				</Button>
 				<Button
+					disabledTooltip="Enter a dashboard name first"
 					variant="solid"
 					color="primary"
 					size="md"
-					disabled={!canSubmit}
+					disabled={name.trim().length === 0}
+					loading={submitting}
 					testId="create-dashboard-submit"
 					onClick={(): void => {
 						void handleCreate();

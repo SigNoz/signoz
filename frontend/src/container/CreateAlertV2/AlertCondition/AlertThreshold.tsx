@@ -1,18 +1,14 @@
 import { useEffect } from 'react';
-import { Button, Select, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Select, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import getRandomColor from 'lib/getRandomColor';
 import { Plus } from '@signozhq/icons';
-import { v4 } from 'uuid';
 
 import { useCreateAlertState } from '../context';
 import {
 	INITIAL_EVALUATION_WINDOW_STATE,
-	INITIAL_INFO_THRESHOLD,
-	INITIAL_RANDOM_THRESHOLD,
-	INITIAL_WARNING_THRESHOLD,
 	THRESHOLD_MATCH_TYPE_OPTIONS,
 	THRESHOLD_OPERATOR_OPTIONS,
 } from '../context/constants';
@@ -23,7 +19,8 @@ import {
 import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
 import { normalizeMatchType, normalizeOperator } from '../utils';
 import ThresholdItem from './ThresholdItem';
-import { AnomalyAndThresholdProps, UpdateThreshold } from './types';
+import { AnomalyAndThresholdProps } from './types';
+import { useThresholdList } from './useThresholdList';
 import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
@@ -71,42 +68,7 @@ function AlertThreshold({
 		selectedCategory || '',
 	);
 
-	const addThreshold = (): void => {
-		let newThreshold;
-		if (thresholdState.thresholds.length === 1) {
-			newThreshold = { ...INITIAL_WARNING_THRESHOLD, id: v4() };
-		} else if (thresholdState.thresholds.length === 2) {
-			newThreshold = { ...INITIAL_INFO_THRESHOLD, id: v4() };
-		} else {
-			newThreshold = {
-				...INITIAL_RANDOM_THRESHOLD,
-				id: v4(),
-				color: getRandomColor(),
-			};
-		}
-		setThresholdState({
-			type: 'SET_THRESHOLDS',
-			payload: [...thresholdState.thresholds, newThreshold],
-		});
-	};
-
-	const removeThreshold = (id: string): void => {
-		if (thresholdState.thresholds.length > 1) {
-			setThresholdState({
-				type: 'SET_THRESHOLDS',
-				payload: thresholdState.thresholds.filter((t) => t.id !== id),
-			});
-		}
-	};
-
-	const updateThreshold: UpdateThreshold = (id, field, value) => {
-		setThresholdState({
-			type: 'SET_THRESHOLDS',
-			payload: thresholdState.thresholds.map((t) =>
-				t.id === id ? { ...t, [field]: value } : t,
-			),
-		});
-	};
+	const { addThreshold, removeThreshold, updateThreshold } = useThresholdList();
 
 	const onTooltipOpenChange = (open: boolean): void => {
 		// Stop propagation of click events on tooltip text to dropdown
@@ -294,11 +256,12 @@ function AlertThreshold({
 					/>
 				))}
 				<Button
-					type="dashed"
-					icon={<Plus size={16} />}
-					onClick={addThreshold}
-					className="add-threshold-btn"
-					data-testid="add-threshold-button"
+					variant="dashed"
+					color="secondary"
+					size="md"
+					prefix={<Plus size={14} />}
+					onClick={(): void => addThreshold()}
+					testId="add-threshold-button"
 				>
 					Add Threshold
 				</Button>

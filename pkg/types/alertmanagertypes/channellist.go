@@ -61,12 +61,12 @@ func (o ChannelListOrder) IsValid() bool {
 // ListChannelsParams filters and orders the channel list. Query matches the
 // display name case-insensitively.
 type ListChannelsParams struct {
-	Query  string           `query:"query" json:"query"`
-	Kind   ChannelKind      `query:"kind" json:"kind"`
-	Sort   ChannelListSort  `query:"sort" json:"sort"`
-	Order  ChannelListOrder `query:"order" json:"order"`
-	Limit  int              `query:"limit" json:"limit"`
-	Offset int              `query:"offset" json:"offset"`
+	Query  string           `query:"query" json:"query" description:"Case-insensitive match on the display name; at most 1024 characters."`
+	Kind   ChannelKind      `query:"kind" json:"kind" description:"Only channels of this provider kind."`
+	Sort   ChannelListSort  `query:"sort" json:"sort" description:"The sort column: updated_at (default), created_at or name."`
+	Order  ChannelListOrder `query:"order" json:"order" description:"The sort order: asc or desc (default)."`
+	Limit  int              `query:"limit" json:"limit" description:"The page size; defaults to 20 and is capped at 200."`
+	Offset int              `query:"offset" json:"offset" description:"The number of channels to skip; defaults to 0."`
 }
 
 func (p *ListChannelsParams) Validate() error {

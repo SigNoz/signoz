@@ -92,7 +92,7 @@ export async function openLogDetailsFromRow(row: Locator): Promise<void> {
 
 export async function openContextView(page: Page): Promise<void> {
 	await page
-		.locator('.views-tabs')
+		.getByTestId('log-detail-views-tabs')
 		.getByText('Context', { exact: true })
 		.click();
 	await expect(contextLogItems(page).first()).toBeVisible();

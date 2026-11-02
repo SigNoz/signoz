@@ -47,16 +47,24 @@ function InviteMembersModal({
 				onPartialSuccess={handlePartialSuccess}
 				renderFooter={({ submit, canSubmit, isSubmitting }): JSX.Element => (
 					<div className="invite-members-modal__footer">
-						<Button type="button" variant="solid" color="secondary" onClick={onClose}>
-							<X size={12} />
+						<Button
+							size="md"
+							type="button"
+							variant="solid"
+							color="secondary"
+							onClick={onClose}
+							prefix={<X size={12} />}
+						>
 							Cancel
 						</Button>
 
 						<Button
+							size="md"
 							variant="solid"
 							color="primary"
 							onClick={submit}
 							disabled={!canSubmit}
+							disabledTooltip="Add at least one team member to invite"
 							loading={isSubmitting}
 						>
 							{isSubmitting ? 'Inviting...' : 'Invite Team Members'}

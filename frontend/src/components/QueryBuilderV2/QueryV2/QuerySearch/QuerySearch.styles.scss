@@ -12,13 +12,8 @@ $max-recents-shown: 5;
 	flex-direction: column;
 	gap: 8px;
 	font-family:
-		Inter,
-		-apple-system,
-		BlinkMacSystemFont,
-		'Segoe UI',
-		Roboto,
-		'Helvetica Neue',
-		sans-serif;
+		Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+		'Helvetica Neue', sans-serif;
 
 	.query-where-clause-editor-container {
 		position: relative;
@@ -138,8 +133,7 @@ $max-recents-shown: 5;
 				// least N recents visible.
 				@for $i from 1 through $max-recents-shown {
 					&:has(> li:nth-of-type(#{$i}) .cm-completionIcon-recent) {
-						max-height: $dropdown-base-height +
-							$recents-header-height +
+						max-height: $dropdown-base-height + $recents-header-height +
 							($i * $recent-row-height) !important;
 					}
 				}

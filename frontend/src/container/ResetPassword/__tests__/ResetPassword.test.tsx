@@ -1,19 +1,14 @@
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import ResetPassword from '../index';
 
 // Mock dependencies
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: {
-			search: '?token=reset-token-123',
-		},
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
 const mockSuccessNotification = jest.fn();
@@ -35,9 +30,7 @@ jest.mock('hooks/useNotifications', () => ({
 
 const RESET_PASSWORD_ENDPOINT = '*/api/v2/factor_password/reset';
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 describe('ResetPassword Component', () => {
 	beforeEach(() => {
@@ -83,7 +76,7 @@ describe('ResetPassword Component', () => {
 				name: /reset password/i,
 			});
 
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 
 			await user.type(passwordInput, 'password123');
 			await user.type(confirmPasswordInput, 'password456');
@@ -91,7 +84,7 @@ describe('ResetPassword Component', () => {
 
 			await waitFor(() => {
 				expect(screen.getByText(/passwords don't match/i)).toBeInTheDocument();
-				expect(submitButton).toBeDisabled();
+				expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 			});
 		});
 
@@ -116,7 +109,7 @@ describe('ResetPassword Component', () => {
 			// Wait for debounced validation
 			await waitFor(
 				() => {
-					expect(submitButton).not.toBeDisabled();
+					expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 				},
 				{ timeout: 200 },
 			);
@@ -185,7 +178,7 @@ describe('ResetPassword Component', () => {
 				expect(
 					screen.queryByText(/passwords don't match/i),
 				).not.toBeInTheDocument();
-				expect(submitButton).toBeDisabled();
+				expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 			});
 		});
 	});
@@ -223,7 +216,7 @@ describe('ResetPassword Component', () => {
 
 			await waitFor(
 				() => {
-					expect(submitButton).not.toBeDisabled();
+					expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 				},
 				{ timeout: 200 },
 			);
@@ -232,7 +225,7 @@ describe('ResetPassword Component', () => {
 
 			await waitFor(() => {
 				expect(mockSuccessNotification).toHaveBeenCalled();
-				expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+				expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LOGIN);
 			});
 		});
 	});
@@ -272,7 +265,7 @@ describe('ResetPassword Component', () => {
 
 			await waitFor(
 				() => {
-					expect(submitButton).not.toBeDisabled();
+					expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 				},
 				{ timeout: 200 },
 			);
@@ -355,7 +348,7 @@ describe('ResetPassword Component', () => {
 			await user.type(confirmPasswordInput, 'weak');
 
 			await waitFor(() => {
-				expect(submitButton).not.toBeDisabled();
+				expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 			});
 
 			await user.click(submitButton);
@@ -377,7 +370,7 @@ describe('ResetPassword Component', () => {
 			await user.type(confirmPasswordInput, 'Er1!');
 
 			await waitFor(() => {
-				expect(submitButton).not.toBeDisabled();
+				expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 			});
 		});
 	});
@@ -416,7 +409,7 @@ describe('ResetPassword Component', () => {
 
 			await waitFor(
 				() => {
-					expect(submitButton).not.toBeDisabled();
+					expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 				},
 				{ timeout: 200 },
 			);
@@ -425,7 +418,7 @@ describe('ResetPassword Component', () => {
 
 			// Button should be disabled during API call
 			await waitFor(() => {
-				expect(submitButton).toBeDisabled();
+				expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 			});
 		});
 	});

@@ -91,7 +91,6 @@ export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 			dataType: DataTypes.String,
 			type: 'resource',
 		},
-		dataSource: DataSource.TRACES,
 		defaultOpen: true,
 	},
 	{
@@ -102,7 +101,6 @@ export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 			dataType: DataTypes.String,
 			type: 'resource',
 		},
-		dataSource: DataSource.TRACES,
 		defaultOpen: true,
 	},
 	{
@@ -113,7 +111,6 @@ export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 			dataType: DataTypes.String,
 			type: 'tag',
 		},
-		dataSource: DataSource.TRACES,
 		defaultOpen: true,
 	},
 ];
@@ -973,7 +970,12 @@ export const getEndPointsColumnsConfig = (
 					})()}
 					{isGroupedByAttribute
 						? text.split(',').map((value) => (
-								<Badge key={value} color="vanilla" className="endpoint-group-tag-item">
+								<Badge
+									textTransform="none"
+									variant="solid"
+									key={value}
+									color="secondary"
+								>
 									{value === '' ? '<no-value>' : value}
 								</Badge>
 							))

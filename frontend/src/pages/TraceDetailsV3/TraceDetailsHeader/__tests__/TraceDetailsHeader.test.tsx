@@ -1,8 +1,8 @@
-import { fireEvent, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import ROUTES from 'constants/routes';
-import { render } from 'tests/test-utils';
+import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 
 import TraceDetailsHeader from '../TraceDetailsHeader';
 import { useTraceSummary } from '../useTraceSummary';
@@ -11,26 +11,19 @@ jest.mock('../useTraceSummary', () => ({
 	useTraceSummary: jest.fn(() => ({ data: undefined, isLoading: false })),
 }));
 
-const mockGoBack = jest.fn();
-const mockPush = jest.fn();
-const mockReplace = jest.fn();
+const mockBack = jest.fn();
+const mockNavigate = jest.fn();
 const mockHasInAppHistory = jest.fn();
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		goBack: (): void => mockGoBack(),
-		push: (path: string): void => mockPush(path),
-		replace: (path: string): void => mockReplace(path),
-		location: { pathname: '/', search: '' },
-		listen: (): (() => void) => (): void => undefined,
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	back: (): void => mockBack(),
+	navigate: (path: string): void => mockNavigate(path),
 	hasInAppHistory: (): boolean => mockHasInAppHistory(),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useParams: (): { id: string } => ({ id: 'trace-123' }),
+jest.mock('lib/router/useAppParams', () => ({
+	useAppParams: (): { id: string } => ({ id: 'trace-123' }),
 }));
 
 jest.mock(
@@ -73,19 +66,19 @@ const SUMMARY = {
 
 describe('TraceDetailsHeader – back button', () => {
 	beforeEach(() => {
-		mockGoBack.mockClear();
-		mockPush.mockClear();
+		mockBack.mockClear();
+		mockNavigate.mockClear();
 		mockHasInAppHistory.mockReset();
 	});
 
-	it('calls history.goBack() when there is in-app SPA history', () => {
+	it('goes back when there is in-app SPA history', () => {
 		mockHasInAppHistory.mockReturnValue(true);
 		render(<TraceDetailsHeader {...baseProps} />);
 
 		fireEvent.click(screen.getByRole('button', { name: /back/i }));
 
-		expect(mockGoBack).toHaveBeenCalledTimes(1);
-		expect(mockPush).not.toHaveBeenCalled();
+		expect(mockBack).toHaveBeenCalledTimes(1);
+		expect(mockNavigate).not.toHaveBeenCalled();
 	});
 
 	it('pushes to the traces explorer route when there is no in-app SPA history', () => {
@@ -94,15 +87,30 @@ describe('TraceDetailsHeader – back button', () => {
 
 		fireEvent.click(screen.getByRole('button', { name: /back/i }));
 
-		expect(mockPush).toHaveBeenCalledTimes(1);
-		expect(mockPush).toHaveBeenCalledWith(ROUTES.TRACES_EXPLORER);
-		expect(mockGoBack).not.toHaveBeenCalled();
+		expect(mockNavigate).toHaveBeenCalledTimes(1);
+		expect(mockNavigate).toHaveBeenCalledWith(ROUTES.TRACES_EXPLORER);
+		expect(mockBack).not.toHaveBeenCalled();
+	});
+
+	it('pushes to the AI observability explorer when opened directly on another tab', async () => {
+		mockHasInAppHistory.mockReturnValue(false);
+		const user = userEvent.setup({ delay: null });
+		render(
+			<NuqsTestingAdapter searchParams="?tab=thread">
+				<TraceDetailsHeader {...baseProps} />
+			</NuqsTestingAdapter>,
+		);
+
+		await user.click(screen.getByRole('button', { name: /back/i }));
+
+		expect(mockNavigate).toHaveBeenCalledTimes(1);
+		expect(mockNavigate).toHaveBeenCalledWith(ROUTES.AI_OBSERVABILITY_EXPLORER);
+		expect(mockBack).not.toHaveBeenCalled();
 	});
 });
 
 describe('TraceDetailsHeader – action cluster', () => {
 	beforeEach(() => {
-		mockReplace.mockClear();
 		jest
 			.mocked(useTraceSummary)
 			.mockReturnValue({ data: SUMMARY, isLoading: false });
@@ -176,9 +184,19 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		hasMissingSpans: false,
 		totalSpansCount: 42,
 		totalErrorSpansCount: 0,
+		ai: {
+			tokens: {
+				input: 12040,
+				output: 3110,
+				cacheRead: 0,
+				cacheWrite: 0,
+				reasoning: 0,
+			},
+			totalCost: 0.0421,
+		},
 	};
 
-	const mockSummary = (data?: typeof traceMetadata): void => {
+	const mockSummary = (data?: SpantypesGettableTraceSummaryDTO): void => {
 		jest.mocked(useTraceSummary).mockReturnValue({ data, isLoading: false });
 	};
 
@@ -199,6 +217,77 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 			'ms',
 		);
 		expect(screen.getByText(duration)).toBeInTheDocument();
+	});
+
+	it('renders AI tokens and cost when the summary has them', () => {
+		mockSummary(traceMetadata);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
+		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
+	});
+
+	it('omits AI tokens and cost when the summary has no ai field', () => {
+		mockSummary({ ...traceMetadata, ai: undefined });
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.queryByText(/^Tokens:/)).not.toBeInTheDocument();
+		expect(screen.queryByText(/^Cost —/)).not.toBeInTheDocument();
+	});
+
+	it('shows AI tokens when input and output are both zero', () => {
+		mockSummary({
+			...traceMetadata,
+			ai: {
+				...traceMetadata.ai,
+				tokens: { ...traceMetadata.ai.tokens, input: 0, output: 0 },
+			},
+		} as SpantypesGettableTraceSummaryDTO);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 0 → 0')).toBeInTheDocument();
+		expect(screen.getByText('Cost — $ 0.0421')).toBeInTheDocument();
+	});
+
+	it('shows zero for a missing input', () => {
+		mockSummary({
+			...traceMetadata,
+			ai: {
+				...traceMetadata.ai,
+				tokens: { ...traceMetadata.ai.tokens, input: undefined },
+			},
+		} as unknown as SpantypesGettableTraceSummaryDTO);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 0 → 3,110')).toBeInTheDocument();
+	});
+
+	it('shows zero AI tokens when input and output are both missing', () => {
+		mockSummary({
+			...traceMetadata,
+			ai: {
+				...traceMetadata.ai,
+				tokens: {
+					...traceMetadata.ai.tokens,
+					input: undefined,
+					output: undefined,
+				},
+			},
+		} as unknown as SpantypesGettableTraceSummaryDTO);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 0 → 0')).toBeInTheDocument();
+	});
+
+	it('omits the cost when the summary sends null', () => {
+		mockSummary({
+			...traceMetadata,
+			ai: { ...traceMetadata.ai, totalCost: null },
+		} as unknown as SpantypesGettableTraceSummaryDTO);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
+
+		expect(screen.getByText('Tokens: 12,040 → 3,110')).toBeInTheDocument();
+		expect(screen.queryByText(/^Cost —/)).not.toBeInTheDocument();
 	});
 
 	it('is shown by default and can be hidden / shown again via the Trace options menu', async () => {
@@ -231,5 +320,100 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 
 		expect(screen.queryByText(/inventory-frontend/)).not.toBeInTheDocument();
 		expect(container.querySelectorAll('.ant-skeleton-input')).toHaveLength(3);
+	});
+});
+
+const metadataText = /Missing Span/;
+
+describe('TraceDetailsHeader – tabs', () => {
+	beforeEach(() => {
+		jest.mocked(useTraceSummary).mockReturnValue({
+			data: {
+				...SUMMARY,
+				rootServiceEntryPoint: 'Missing Span',
+				hasMissingSpans: true,
+			},
+			isLoading: false,
+		});
+	});
+
+	afterEach(() => {
+		jest
+			.mocked(useTraceSummary)
+			.mockReturnValue({ data: undefined, isLoading: false });
+	});
+
+	// In-memory URL state, so a tab switch can't leak into the next test.
+	const renderHeader = (): void => {
+		render(
+			<NuqsTestingAdapter hasMemory>
+				<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />
+			</NuqsTestingAdapter>,
+		);
+	};
+
+	it('shows the Overview-only sections on the Overview tab', () => {
+		renderHeader();
+
+		expect(screen.getByTestId('filters-stub')).toBeInTheDocument();
+		expect(screen.getByTestId('trace-analytics-button')).toBeInTheDocument();
+		expect(screen.getByTestId('trace-options-button')).toBeInTheDocument();
+		expect(screen.getByTestId('missing-spans-banner')).toBeInTheDocument();
+	});
+
+	it('keeps only the metadata row on the Thread tab', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(screen.queryByTestId('filters-stub')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('trace-analytics-button'),
+		).not.toBeInTheDocument();
+		expect(screen.queryByTestId('trace-options-button')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('missing-spans-banner')).not.toBeInTheDocument();
+		expect(screen.getByText(metadataText)).toBeInTheDocument();
+	});
+
+	it('shows the metadata row on the Thread tab even when hidden on Overview', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+
+		await user.click(screen.getByTestId('trace-options-button'));
+		await user.click(await screen.findByTestId('toggle-trace-details'));
+		expect(screen.queryByText(metadataText)).not.toBeInTheDocument();
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(screen.getByText(metadataText)).toBeInTheDocument();
+	});
+
+	it('clears the filter result when switching to the Thread tab', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+		baseProps.onFilteredSpansChange.mockClear();
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(baseProps.onFilteredSpansChange).toHaveBeenCalledWith([], false);
+	});
+
+	it('closes the Analytics panel when switching to the Thread tab', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+
+		await user.click(screen.getByTestId('trace-analytics-button'));
+		expect(screen.getByTestId('analytics-panel')).toHaveAttribute(
+			'data-open',
+			'true',
+		);
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(screen.getByTestId('analytics-panel')).toHaveAttribute(
+			'data-open',
+			'false',
+		);
 	});
 });

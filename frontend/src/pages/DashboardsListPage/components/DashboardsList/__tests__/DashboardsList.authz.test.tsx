@@ -64,7 +64,10 @@ describe('DashboardsList - AuthZ', () => {
 					DashboardCreatePermission,
 				);
 			});
-			expect(screen.getByTestId('new-dashboard-cta')).toBeDisabled();
+			expect(screen.getByTestId('new-dashboard-cta')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
 		it('enables the create CTA when create is granted', async () => {
@@ -84,7 +87,9 @@ describe('DashboardsList - AuthZ', () => {
 			renderList();
 
 			const cta = await screen.findByTestId('new-dashboard-cta');
-			await waitFor(() => expect(cta).not.toBeDisabled());
+			await waitFor(() =>
+				expect(cta).not.toHaveAttribute('aria-disabled', 'true'),
+			);
 		});
 	});
 
@@ -117,7 +122,7 @@ describe('DashboardsList - AuthZ', () => {
 			expect(onList).not.toHaveBeenCalled();
 
 			const cta = screen.getByTestId('new-dashboard-cta');
-			expect(cta).not.toBeDisabled();
+			expect(cta).not.toHaveAttribute('aria-disabled', 'true');
 
 			// The box and filters edit a query only the list API can run, so they are
 			// inert and say why; the rail carries its own denial.
@@ -126,7 +131,10 @@ describe('DashboardsList - AuthZ', () => {
 					'combobox',
 				),
 			).toBeDisabled();
-			expect(screen.getByLabelText('Run search')).toBeDisabled();
+			expect(screen.getByLabelText('Run search')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 			expect(
 				screen.getByTestId('dashboards-list-search').querySelector('.cm-content'),
 			).toHaveAttribute('contenteditable', 'false');
@@ -257,7 +265,7 @@ describe('DashboardsList - AuthZ', () => {
 			renderList();
 
 			const cta = await screen.findByTestId('new-dashboard-cta');
-			expect(cta).toBeDisabled();
+			expect(cta).toHaveAttribute('aria-disabled', 'true');
 			expect(cta).not.toHaveAttribute('data-denied-permissions');
 		});
 	});

@@ -43,11 +43,11 @@ test.describe('Alert details — actions', () => {
 		await expect(page.getByText('Alert has been enabled.')).toBeVisible();
 	});
 
-	test('TC-02 Duplicate creates a copy and navigates to overview', async ({
+	test('TC-02 Clone creates a copy and navigates to overview', async ({
 		authedPage: page,
 		ownedRules,
 	}) => {
-		const name = `e2e-ad-duplicate-${Date.now()}`;
+		const name = `e2e-ad-clone-${Date.now()}`;
 		const ruleId = await ownedRules.logs({ name, schema: 'v2' });
 
 		await gotoAlertDetails(page, ruleId);
@@ -56,10 +56,10 @@ test.describe('Alert details — actions', () => {
 		const [createResponse] = await Promise.all([
 			page.waitForResponse(
 				(res) =>
-					/\/api\/v\d\/rules$/.test(new URL(res.url()).pathname) &&
+					/\/api\/v\d\/rules\/[^/]+\/clone$/.test(new URL(res.url()).pathname) &&
 					res.request().method() === 'POST',
 			),
-			page.getByRole('menuitem', { name: 'Duplicate' }).click(),
+			page.getByRole('menuitem', { name: 'Clone' }).click(),
 		]);
 		await ownedRules.register(createResponse);
 

@@ -16,6 +16,7 @@ import type {
 	InspectMetrics200,
 	ListMetricReductionRules200,
 	ListMetrics200,
+	ListSavedViews200,
 	MetricreductionruletypesGettableReductionRuleDTO,
 	MetricsexplorertypesStatDTO,
 	MetricsexplorertypesTreemapEntryDTO,
@@ -24,11 +25,13 @@ import {
 	MetricreductionruletypesMatchTypeDTO,
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
+	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5RequestTypeDTO,
+	SavedviewtypesPanelTypeDTO,
+	SavedviewtypesSchemaVersionDTO,
+	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
-import type { AllViewsProps, ViewProps } from 'types/api/saveViews/types';
-import { DataSource } from 'types/common/queryBuilder';
 
 interface MetricSeed {
 	metricName: string;
@@ -769,19 +772,30 @@ const VIEW_NAMES = [
 
 export const SAVED_VIEW_MAX = VIEW_NAMES.length;
 
-/** The jest fixture is the shape of a view; only what the list shows changes. */
-const [baseView] = explorerView.data as unknown as ViewProps[];
-
-export const metricsSavedViewsResponse = (count: number): AllViewsProps => ({
+export const metricsSavedViewsV2Response = (
+	count: number,
+): ListSavedViews200 => ({
 	status: 'success',
-	data: VIEW_NAMES.slice(0, count).map((name, index) => ({
-		...baseView,
+	data: VIEW_NAMES.slice(0, count).map((displayName, index) => ({
 		id: `storybook-metrics-view-${index + 1}`,
-		name,
-		sourcePage: DataSource.METRICS,
-		tags: ['metrics'],
+		name: `storybook-metrics-view-${index + 1}`,
+		source: SavedviewtypesSourceDTO.metrics,
+		schemaVersion: SavedviewtypesSchemaVersionDTO.v2,
+		createdAt: '2026-08-20T09:00:00Z',
 		createdBy: 'ada@signoz.io',
-		extraData: '{"color":"#7cd4fd"}',
+		updatedAt: '2026-08-20T09:00:00Z',
+		updatedBy: 'ada@signoz.io',
+		spec: {
+			displayName,
+			panelType: SavedviewtypesPanelTypeDTO.graph,
+			requestType: Querybuildertypesv5RequestTypeDTO.time_series,
+			queries: [
+				{
+					type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+					spec: { name: 'A', signal: MetricsSignal.metrics },
+				},
+			],
+		},
 	})),
 });
 

@@ -1,19 +1,24 @@
 import { ComponentProps, ReactNode, useState } from 'react';
 import cx from 'classnames';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import SavedViewsHeader from 'container/SavedViews/SavedViewsHeader';
 import SavedViewsPanel from 'container/SavedViews/SavedViewsPanel';
 import SavedViewsRestore from 'container/SavedViews/SavedViewsRestore';
-import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 
 import QuickFilters from '../QuickFilters';
+import { SIDEBAR_TOOLTIP_DELAY_MS } from './constants';
+import { useCloseOnOutsidePress } from './useCloseOnOutsidePress';
 
 import styles from './QuickFiltersLayout.module.scss';
 
 // Same optionality as `<QuickFilters />` in JSX (honours its defaultProps).
-type QuickFiltersElementProps = JSX.LibraryManagedAttributes<
-	typeof QuickFilters,
-	ComponentProps<typeof QuickFilters>
+type QuickFiltersElementProps = Omit<
+	JSX.LibraryManagedAttributes<
+		typeof QuickFilters,
+		ComponentProps<typeof QuickFilters>
+	>,
+	'handleFilterVisibilityChange'
 >;
 
 // What the page configures; the layout adds the open / close wiring.
@@ -26,6 +31,7 @@ export interface QuickFiltersLayoutProps {
 	quickFilterProps?: QuickFiltersElementProps;
 	savedViewProps?: SavedViewsElementProps;
 	showFilters: boolean;
+	onToggleFilters?: () => void;
 	className?: string;
 	contentClassName?: string;
 	testId?: string;
@@ -36,16 +42,16 @@ function QuickFiltersLayout({
 	quickFilterProps,
 	savedViewProps,
 	showFilters,
+	onToggleFilters,
 	className,
 	contentClassName,
 	testId,
 	children,
 }: QuickFiltersLayoutProps): JSX.Element {
 	const [isViewsListOpen, setIsViewsListOpen] = useState(false);
-	const isSavedViewEnabled = useSavedViewEnabled();
 
 	const hasQuickFilters = !!quickFilterProps;
-	const hasSavedViews = !!savedViewProps && isSavedViewEnabled;
+	const hasSavedViews = !!savedViewProps;
 
 	const showSidebar = showFilters && (hasQuickFilters || hasSavedViews);
 
@@ -54,12 +60,21 @@ function QuickFiltersLayout({
 
 	const isSliding = hasQuickFilters && isViewsListOpen;
 
+	const openViews = (): void => setIsViewsListOpen(true);
+	const toggleViews = (): void => setIsViewsListOpen((isOpen) => !isOpen);
+	const closeViews = (): void => setIsViewsListOpen(false);
+	const markSidebarPress = useCloseOnOutsidePress(
+		showSidebar && isSliding,
+		closeViews,
+	);
+
 	const savedViewsHeader = hasSavedViews ? (
 		<SavedViewsHeader
 			{...savedViewProps}
-			onOpenViews={
-				isViewsListVisible ? undefined : (): void => setIsViewsListOpen(true)
-			}
+			onOpenViews={isViewsListVisible ? undefined : openViews}
+			isViewsOpen={isViewsListOpen}
+			onToggleViews={isViewsListPinned ? undefined : toggleViews}
+			onCollapse={hasQuickFilters ? undefined : onToggleFilters}
 		/>
 	) : undefined;
 
@@ -69,31 +84,33 @@ function QuickFiltersLayout({
 			{showSidebar && (
 				<aside
 					className={cx(styles.sidebar, { [styles.isStatic]: !hasQuickFilters })}
+					onPointerDownCapture={markSidebarPress}
 					data-testid="quick-filters-layout-filters"
 				>
-					<div
-						className={cx(styles.quickFilters, { [styles.isOpen]: isSliding })}
-						data-testid="quick-filters-layout-drawer"
-					>
-						{hasQuickFilters ? (
-							<QuickFilters
-								{...quickFilterProps}
-								savedViewsHeader={savedViewsHeader}
-							/>
-						) : (
-							savedViewsHeader
-						)}
-					</div>
-					<div className={styles.savedViews}>
-						{hasSavedViews && isViewsListVisible && (
-							<SavedViewsPanel
-								{...savedViewProps}
-								onClose={
-									isViewsListPinned ? undefined : (): void => setIsViewsListOpen(false)
-								}
-							/>
-						)}
-					</div>
+					<TooltipProvider delay={SIDEBAR_TOOLTIP_DELAY_MS}>
+						<div
+							className={cx(styles.quickFilters, { [styles.isOpen]: isSliding })}
+							data-testid="quick-filters-layout-drawer"
+						>
+							{hasQuickFilters ? (
+								<QuickFilters
+									{...quickFilterProps}
+									handleFilterVisibilityChange={onToggleFilters}
+									savedViewsHeader={savedViewsHeader}
+								/>
+							) : (
+								savedViewsHeader
+							)}
+						</div>
+						<div className={styles.savedViews}>
+							{hasSavedViews && isViewsListVisible && (
+								<SavedViewsPanel
+									{...savedViewProps}
+									onClose={isViewsListPinned ? undefined : closeViews}
+								/>
+							)}
+						</div>
+					</TooltipProvider>
 				</aside>
 			)}
 			<section

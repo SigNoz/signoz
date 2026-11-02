@@ -1,8 +1,18 @@
 import { forwardRef } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Button, type VariantColorType } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 
 import { SavedViewsIconButtonProps } from './types';
+
+// Ghost buttons only come in secondary, so the warning tone is a link button.
+const VARIANT_COLORS: Record<
+	NonNullable<SavedViewsIconButtonProps['color']>,
+	VariantColorType
+> = {
+	secondary: { variant: 'ghost', color: 'secondary' },
+	warning: { variant: 'link', color: 'warning' },
+};
 
 // forwardRef and rest props so a menu can use it as its trigger.
 const SavedViewsIconButton = forwardRef<
@@ -15,26 +25,51 @@ const SavedViewsIconButton = forwardRef<
 		testId,
 		color = 'secondary',
 		disabled,
+		disabledTooltip,
+		checks,
 		onClick,
 		...triggerProps
 	},
 	ref,
 ): JSX.Element {
+	if (checks?.length) {
+		return (
+			<Tooltip title={title}>
+				<AuthZButton
+					checks={checks}
+					{...VARIANT_COLORS[color]}
+					size="sm"
+					icon
+					aria-label={title}
+					disabled={disabled}
+					// AuthZButton skips its checks while a block reason is set.
+					disabledTooltip={disabled ? disabledTooltip : undefined}
+					onClick={onClick}
+					testId={testId}
+				>
+					{icon}
+				</AuthZButton>
+			</Tooltip>
+		);
+	}
+
 	return (
-		<TooltipSimple title={title}>
+		<Tooltip title={title}>
 			<Button
 				ref={ref}
-				variant="ghost"
-				color={color}
-				size="icon"
+				{...VARIANT_COLORS[color]}
+				size="sm"
+				icon
 				aria-label={title}
-				prefix={icon}
 				disabled={disabled}
+				disabledTooltip={disabledTooltip}
 				onClick={onClick}
 				{...triggerProps}
-				data-testid={testId}
-			/>
-		</TooltipSimple>
+				testId={testId}
+			>
+				{icon}
+			</Button>
+		</Tooltip>
 	);
 });
 

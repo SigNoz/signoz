@@ -1,0 +1,31 @@
+.commands {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+}
+
+.commandsHead {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+}
+
+.mono {
+	composes: mono from '../shared.module.scss';
+}
+
+// CodeBlock renders the copy button's wrapper first and the highlighted code last;
+// the code theme sets the block's margin and padding inline, hence !important.
+.command {
+	> div:first-child {
+		top: var(--spacing-6);
+		right: var(--spacing-6);
+	}
+
+	> div:last-child {
+		// The theme's top margin pushes the bordered block under the copy button.
+		margin: 0 !important;
+		// Keeps long lines from running underneath the copy button.
+		padding-right: var(--spacing-24) !important;
+	}
+}

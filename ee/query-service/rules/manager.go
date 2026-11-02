@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) {
@@ -118,7 +119,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, error) {
 	}
 
 	parsedRule := opts.Rule
-	var alertname = parsedRule.AlertName
+	var alertname = parsedRule.AlertName.StringValue()
 	if alertname == "" {
 		// alertname is not mandatory for testing, so picking
 		// a random string here
@@ -126,7 +127,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, error) {
 	}
 
 	// append name to indicate this is test alert
-	parsedRule.AlertName = fmt.Sprintf("%s%s", alertname, ruletypes.TestAlertPostFix)
+	parsedRule.AlertName = valuer.NewDisplayName(fmt.Sprintf("%s%s", alertname, ruletypes.TestAlertPostFix))
 
 	var rule baserules.Rule
 	var err error
