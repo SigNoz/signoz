@@ -4,6 +4,8 @@ import type {
 	DashboardtypesComparisonThresholdDTO,
 	DashboardtypesFillModeDTO,
 	DashboardtypesFillOpacityDTO,
+	DashboardtypesGeoMapLocationDTO,
+	DashboardtypesGeoMapSettingsDTO,
 	DashboardtypesHeatmapAxesDTO,
 	DashboardtypesHeatmapColorsDTO,
 	DashboardtypesHeaderOptionsDTO,
@@ -34,6 +36,7 @@ import {
 	Crosshair,
 	Hash,
 	Link2,
+	MapPin,
 	Palette,
 	PanelTop,
 	PencilRuler,
@@ -72,6 +75,8 @@ export enum SectionKind {
 	Dimensions = 'dimensions',
 	/** Scatter Plot's per-axis `axes` shape; `Axes` is the single y-axis shape. */
 	ScatterAxes = 'scatterAxes',
+	/** Geo Map's placement: what a row is, its columns, the area, the layer and the value columns. */
+	Location = 'location',
 }
 
 /**
@@ -118,6 +123,12 @@ export interface PanelChartAppearanceSlice {
 	points?: DashboardtypesScatterPlotPointsDTO;
 }
 
+/** Geo Map edits `location` and `map` together: what a row is decides the area and layer. */
+export interface GeoMapPlacementSlice {
+	location?: DashboardtypesGeoMapLocationDTO;
+	map?: DashboardtypesGeoMapSettingsDTO;
+}
+
 /** Superset spanning every kind's visualization DTO. */
 export interface PanelVisualizationSlice {
 	timePreference?: DashboardtypesTimePreferenceDTO;
@@ -148,6 +159,7 @@ export interface SectionSpecMap {
 	[SectionKind.PanelHeader]: DashboardtypesHeaderOptionsDTO; // spec.plugin.spec.headerOptions (Text)
 	[SectionKind.Dimensions]: DashboardtypesScatterPlotDimensionsDTO; // spec.plugin.spec.dimensions (Scatter Plot)
 	[SectionKind.ScatterAxes]: DashboardtypesScatterPlotAxesDTO; // spec.plugin.spec.axes (Scatter Plot)
+	[SectionKind.Location]: GeoMapPlacementSlice; // spec.plugin.spec.location + .map (Geo Map)
 }
 
 /**
@@ -218,7 +230,8 @@ export type AtomicSectionKind =
 	| SectionKind.TextLayout
 	| SectionKind.PanelHeader
 	| SectionKind.Dimensions
-	| SectionKind.ScatterAxes;
+	| SectionKind.ScatterAxes
+	| SectionKind.Location;
 
 /** Predicate to hide a section from the current spec; returning true removes it. */
 export type SectionVisibilityPredicate = (
@@ -255,6 +268,7 @@ export const SECTION_METADATA = {
 	[SectionKind.PanelHeader]: { title: 'Panel header', icon: PanelTop },
 	[SectionKind.Dimensions]: { title: 'Dimensions', icon: Crosshair },
 	[SectionKind.ScatterAxes]: { title: 'Axes', icon: Scale3D },
+	[SectionKind.Location]: { title: 'Location', icon: MapPin },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
 /**
