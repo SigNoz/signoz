@@ -3,10 +3,9 @@ package llmpricingruletypes
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"regexp"
-	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz-otel-collector/pkg/llmpricing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -25,10 +24,6 @@ var (
 	ErrCodeInvalidCollectorConfig    = errors.MustNewCode("invalid_collector_config")
 	ErrCodeBuildPricingProcessorConf = errors.MustNewCode("build_pricing_processor_config")
 )
-
-// modelSnapshotSuffix mirrors the collector's signozllmpricing matcher: dated
-// snapshots, "-latest", Bedrock "-vN:M" and Vertex "@" versions, in any combination.
-var modelSnapshotSuffix = regexp.MustCompile(`^(?:-\d{4}-\d{2}-\d{2}|-\d{2}-\d{4}|-\d{2}-\d{2}|-\d{3,8}|-latest|-v\d+(?::\d+)?|@\d{8}|@default)+$`)
 
 type LLMPricingRuleUnit struct {
 	valuer.String
@@ -225,18 +220,14 @@ func (u *UpdatableLLMPricingRule) UnmarshalJSON(data []byte) error {
 	return u.Validate()
 }
 
-// Validate mirrors the collector's pattern check: at least one pattern, none
-// empty, "*" only as a trailing wildcard.
+// Validate requires at least one pattern and holds each to the collector's rules.
 func (u *UpdatableLLMPricingRule) Validate() error {
 	if len(u.ModelPattern) == 0 {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "model %q: modelPattern must contain at least one pattern", u.Model)
 	}
 	for _, p := range u.ModelPattern {
-		if p == "" {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "model %q: modelPattern must not contain an empty pattern", u.Model)
-		}
-		if strings.Contains(strings.TrimSuffix(p, "*"), "*") {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "model %q: modelPattern %q may only use \"*\" at the end", u.Model, p)
+		if err := llmpricing.ValidatePattern(p); err != nil {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "model %q: %v", u.Model, err)
 		}
 	}
 	return nil
@@ -275,21 +266,10 @@ func NewLLMPricingRuleFromUpdatable(u *UpdatableLLMPricingRule, orgID valuer.UUI
 func ModelMatchesAnyRule(model string, rules []*LLMPricingRule) bool {
 	for _, r := range rules {
 		for _, pattern := range r.ModelPattern {
-			if patternMatchesModel(pattern, model) {
+			if llmpricing.ParsePattern(pattern).Matches(model) {
 				return true
 			}
 		}
 	}
 	return false
-}
-
-// patternMatchesModel accepts the pattern itself or the pattern followed by snapshot
-// suffixes only; a trailing "*" accepts any suffix.
-func patternMatchesModel(pattern, model string) bool {
-	prefix := strings.TrimRight(pattern, "*")
-	rest, ok := strings.CutPrefix(model, prefix)
-	if !ok {
-		return false
-	}
-	return rest == "" || prefix != pattern || modelSnapshotSuffix.MatchString(rest)
 }
