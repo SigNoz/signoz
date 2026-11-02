@@ -1,0 +1,103 @@
+.page {
+	padding: 24px;
+	min-height: 100vh;
+	background: var(--l1-background);
+	color: var(--l1-foreground);
+	box-sizing: border-box;
+}
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	max-width: 100%;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	background: var(--l1-background);
+	resize: both;
+	overflow: hidden;
+	min-width: 240px;
+	min-height: 200px;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--l2-border);
+	font-size: 13px;
+}
+
+.title {
+	font-weight: 500;
+}
+
+.body {
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.warnings {
+	position: relative;
+	margin-left: auto;
+	font-size: 12px;
+	color: var(--l2-foreground);
+
+	summary {
+		cursor: pointer;
+		list-style: none;
+		color: var(--callout-warning-title);
+	}
+
+	ul {
+		position: absolute;
+		right: 0;
+		z-index: 10;
+		width: 360px;
+		margin: 6px 0 0;
+		padding: 8px 12px 8px 24px;
+		background: var(--l2-background);
+		border: 1px solid var(--l2-border);
+		border-radius: 4px;
+	}
+
+	li + li {
+		margin-top: 4px;
+	}
+}
+
+.menuTitle {
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+
+	th,
+	td {
+		padding: 4px 8px;
+		border-bottom: 1px solid var(--l2-border);
+		text-align: left;
+		white-space: nowrap;
+	}
+
+	th {
+		position: sticky;
+		top: 0;
+		background: var(--l2-background);
+	}
+}
+
+.filter {
+	margin-bottom: 12px;
+	padding: 6px 8px;
+	width: 280px;
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	color: var(--l1-foreground);
+}
