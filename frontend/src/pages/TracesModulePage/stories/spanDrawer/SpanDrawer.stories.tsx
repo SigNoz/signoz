@@ -139,6 +139,8 @@ export const NoLogs: Story = {
  */
 export const WithoutTraceSummary: Story = {
 	args: { traceSummary: 'not found', spanLogs: 'none' },
+	// The deliberate 404 is the state under test.
+	parameters: { allowConsoleErrors: true },
 	play: async ({ mount }): Promise<void> => {
 		await mount();
 		const drawer = await openLogsTab();
@@ -172,6 +174,8 @@ export const TraceSummaryLoading: Story = {
 /** The log queries fail while the rest of the drawer renders. */
 export const LogsError: Story = {
 	args: { spanLogs: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
 	play: async ({ mount }): Promise<void> => {
 		await mount();
 		const drawer = await openLogsTab();
