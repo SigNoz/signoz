@@ -32,6 +32,7 @@ import {
 	TABLE_THRESHOLD_VALUE,
 	TABLE_VALUE_COLUMN,
 	TOP_LIST_BAR_COLOR,
+	VALUE_NAMES,
 } from './constants';
 import {
 	comparisonThresholds,
@@ -57,14 +58,41 @@ const timeSeriesQueries = (): DashboardtypesQueryDTO[] => [
 ];
 
 /** Latency (`A`) and errors (`B`) per service, joined into one row each. */
-const callsAndErrorsQueries = (): DashboardtypesQueryDTO[] => [
-	metricQuery(RequestType.scalar, { grouped: true }),
+const callsAndErrorsQueries = (named: boolean): DashboardtypesQueryDTO[] => [
+	metricQuery(RequestType.scalar, {
+		grouped: true,
+		legend: named ? VALUE_NAMES[TABLE_VALUE_COLUMN] : undefined,
+	}),
 	metricQuery(RequestType.scalar, {
 		grouped: true,
 		name: TABLE_SECOND_COLUMN,
 		metricName: 'signoz_errors',
+		legend: named ? VALUE_NAMES[TABLE_SECOND_COLUMN] : undefined,
 	}),
 ];
+
+const geoMapShape = (args: PanelArgs): PanelShape => {
+	const unit = unitOf(args.unit);
+	return {
+		plugin: {
+			kind: GeoMapKind['signoz/GeoMapPanel'],
+			spec: {
+				legend: { position: args.legend },
+				formatting: {
+					columnUnits: unit ? { [TABLE_VALUE_COLUMN]: unit } : {},
+				},
+				thresholds: geoMapThresholds(args.thresholds),
+			},
+		},
+		queries: [
+			metricQuery(RequestType.scalar, {
+				grouped: true,
+				groupBy: GEO_COUNTRY_KEY,
+				legend: args.valueNames ? VALUE_NAMES[TABLE_VALUE_COLUMN] : undefined,
+			}),
+		],
+	};
+};
 
 export const panelShape = (args: PanelArgs): PanelShape => {
 	const formatting = { unit: unitOf(args.unit) };
@@ -182,7 +210,7 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 						thresholds: tableThresholds(args.thresholds),
 					},
 				},
-				queries: callsAndErrorsQueries(),
+				queries: callsAndErrorsQueries(args.valueNames),
 			};
 		case 'ScatterPlot':
 			return {
@@ -190,29 +218,10 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 					kind: ScatterPlotKind['signoz/ScatterPlotPanel'],
 					spec: { legend },
 				},
-				queries: callsAndErrorsQueries(),
+				queries: callsAndErrorsQueries(args.valueNames),
 			};
 		case 'GeoMap':
-			return {
-				plugin: {
-					kind: GeoMapKind['signoz/GeoMapPanel'],
-					spec: {
-						legend,
-						formatting: {
-							columnUnits: formatting.unit
-								? { [TABLE_VALUE_COLUMN]: formatting.unit }
-								: {},
-						},
-						thresholds: geoMapThresholds(args.thresholds),
-					},
-				},
-				queries: [
-					metricQuery(RequestType.scalar, {
-						grouped: true,
-						groupBy: GEO_COUNTRY_KEY,
-					}),
-				],
-			};
+			return geoMapShape(args);
 		case 'List':
 			return {
 				plugin: {

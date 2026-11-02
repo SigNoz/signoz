@@ -211,6 +211,12 @@ export const GeoMapThresholds: Story = {
 	play: playPanel,
 };
 
+/** The colour bar titled by the query's legend, `p99 latency`, not `A.p99 latency`. */
+export const GeoMapValueNames: Story = {
+	args: { kind: 'GeoMap', valueNames: true },
+	play: playPanel,
+};
+
 /** A Markdown runbook: heading, list, link and code block. */
 export const Text: Story = {
 	args: { kind: 'Text' },
