@@ -9,6 +9,7 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { getCurrentLocation } from 'lib/router/navigation';
+import { UpdateTimeInterval } from 'store/actions';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { QueryBuilderContextType } from 'types/common/queryBuilder';
 
@@ -24,7 +25,14 @@ jest.mock('api/common/logEvent', () => ({
 	default: jest.fn(),
 }));
 
+jest.mock('store/actions', () => {
+	const actual =
+		jest.requireActual<typeof import('store/actions')>('store/actions');
+	return { ...actual, UpdateTimeInterval: jest.fn(actual.UpdateTimeInterval) };
+});
+
 const mockUndo = undoExecution as jest.MockedFunction<typeof undoExecution>;
+const mockUpdateTimeInterval = jest.mocked(UpdateTimeInterval);
 
 const START_MS = Date.UTC(2026, 6, 26, 10, 34);
 const END_MS = Date.UTC(2026, 6, 26, 10, 49);
@@ -78,6 +86,28 @@ function countByServiceAction(
 
 function currentParam(param: string): string | null {
 	return new URLSearchParams(getCurrentLocation().search).get(param);
+}
+
+function renderOnLogsExplorer(action: MessageActionDTO): {
+	redirectWithQueryBuilderData: jest.MockedFunction<
+		QueryBuilderContextType['redirectWithQueryBuilderData']
+	>;
+} {
+	const redirectWithQueryBuilderData = jest.fn() as jest.MockedFunction<
+		QueryBuilderContextType['redirectWithQueryBuilderData']
+	>;
+	const handleSetQueryData = jest.fn() as jest.MockedFunction<
+		QueryBuilderContextType['handleSetQueryData']
+	>;
+	render(
+		<ActionsSection actions={[action]} messageId="message-on-page" />,
+		undefined,
+		{
+			initialRoute: `${ROUTES.LOGS_EXPLORER}?${QueryParams.relativeTime}=6h`,
+			queryBuilderOverrides: { redirectWithQueryBuilderData, handleSetQueryData },
+		},
+	);
+	return { redirectWithQueryBuilderData };
 }
 
 describe('ActionsSection rollback chip', () => {
@@ -208,23 +238,39 @@ describe('ActionsSection apply_filter', () => {
 		expect(currentParam(QueryParams.endTime)).toBeNull();
 	});
 
-	it('switches the open explorer to the Table view when applied on it', async () => {
-		const redirectWithQueryBuilderData = jest.fn() as jest.MockedFunction<
-			QueryBuilderContextType['redirectWithQueryBuilderData']
-		>;
-		const handleSetQueryData = jest.fn() as jest.MockedFunction<
-			QueryBuilderContextType['handleSetQueryData']
-		>;
-		render(
-			<ActionsSection
-				actions={[countByServiceAction('Apply on Logs Explorer')]}
-				messageId="message-2"
-			/>,
-			undefined,
+	it('switches the open explorer to the Table view and the answer time range', async () => {
+		mockUpdateTimeInterval.mockClear();
+		const { redirectWithQueryBuilderData } = renderOnLogsExplorer(
+			countByServiceAction('Apply with time', { start: START_MS, end: END_MS }),
+		);
+
+		await waitFor(() =>
+			expect(redirectWithQueryBuilderData).toHaveBeenCalledTimes(1),
+		);
+		expect(redirectWithQueryBuilderData).toHaveBeenCalledWith(
+			expect.objectContaining({ builder: expect.anything() }),
 			{
-				initialRoute: ROUTES.LOGS_EXPLORER,
-				queryBuilderOverrides: { redirectWithQueryBuilderData, handleSetQueryData },
+				[QueryParams.panelTypes]: PANEL_TYPES.TABLE,
+				[QueryParams.startTime]: START_MS,
+				[QueryParams.endTime]: END_MS,
+				[QueryParams.relativeTime]: null,
 			},
+		);
+		expect(mockUpdateTimeInterval).toHaveBeenCalledWith('custom', [
+			START_MS,
+			END_MS,
+		]);
+		expect(mockUpdateTimeInterval.mock.invocationCallOrder[0]).toBeLessThan(
+			redirectWithQueryBuilderData.mock.invocationCallOrder[0],
+		);
+		// The redirect is the only navigation, so Back still restores the old entry.
+		expect(currentParam(QueryParams.relativeTime)).toBe('6h');
+	});
+
+	it('keeps the open explorer time when the action has no time range', async () => {
+		mockUpdateTimeInterval.mockClear();
+		const { redirectWithQueryBuilderData } = renderOnLogsExplorer(
+			countByServiceAction('Apply without time'),
 		);
 
 		await waitFor(() =>
@@ -234,5 +280,6 @@ describe('ActionsSection apply_filter', () => {
 			expect.objectContaining({ builder: expect.anything() }),
 			{ [QueryParams.panelTypes]: PANEL_TYPES.TABLE },
 		);
+		expect(mockUpdateTimeInterval).not.toHaveBeenCalled();
 	});
 });

@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch } from 'react-redux';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { matchRoute } from 'lib/router/matchRoute';
 import { navigate } from 'lib/router/navigation';
@@ -26,6 +28,7 @@ import {
 } from 'api/ai-assistant/chat';
 import ROUTES from 'constants/routes';
 import { QueryParams } from 'constants/query';
+import { UpdateTimeInterval } from 'store/actions';
 import { buildExplorerNavigationUrl } from 'utils/buildExplorerNavigationUrl';
 import { openInNewTab } from 'utils/navigation';
 import {
@@ -279,6 +282,7 @@ interface ApplyFilterDeps {
 		typeof useQueryBuilder
 	>['redirectWithQueryBuilderData'];
 	handleSetQueryData: ReturnType<typeof useQueryBuilder>['handleSetQueryData'];
+	setCustomTimeRange: (start: number, end: number) => void;
 }
 
 /**
@@ -344,17 +348,27 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 		requestTypeFromActionQuery(action.query),
 		action.signal,
 	);
+	const timeRange = getTimeRangeFromActionQuery(action.query);
 	const normalized = withDerivedFilterExpressions(urlQuery as unknown as Query);
 	// eslint-disable-next-line no-console
 	console.log('[apply_filter] normalized', normalized);
 	if (signalMatchesPathname(action.signal, deps.pathname)) {
 		// eslint-disable-next-line no-console
 		console.log('[apply_filter] on-page → handleSetQueryData + redirect');
+		if (timeRange) {
+			deps.setCustomTimeRange(timeRange.start, timeRange.end);
+		}
 		normalized.builder.queryData.forEach((q, i) => {
 			deps.handleSetQueryData(i, q);
 		});
 		deps.redirectWithQueryBuilderData(normalized, {
 			[QueryParams.panelTypes]: panelType,
+			...(timeRange && {
+				[QueryParams.startTime]: timeRange.start,
+				[QueryParams.endTime]: timeRange.end,
+				// relativeTime outranks startTime/endTime in the time picker, so drop it.
+				[QueryParams.relativeTime]: null,
+			}),
 		});
 		return;
 	}
@@ -366,7 +380,6 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 	}
 	// eslint-disable-next-line no-console
 	console.log('[apply_filter] off-page → navigate', base);
-	const timeRange = getTimeRangeFromActionQuery(action.query);
 	const url = buildExplorerNavigationUrl(base, normalized, {
 		[QueryParams.panelTypes]: panelType,
 		...(timeRange && {
@@ -407,6 +420,13 @@ export default function ActionsSection({
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 	const { threadId, page, mode } = useAIAssistantAnalyticsContext();
 	const { redirectWithQueryBuilderData, handleSetQueryData } = useQueryBuilder();
+	const dispatch = useDispatch();
+	const setCustomTimeRange = useCallback(
+		(start: number, end: number): void => {
+			dispatch(UpdateTimeInterval('custom', [start, end]));
+		},
+		[dispatch],
+	);
 
 	// Per-chip click state, keyed by chip key (see `key` below). Persists
 	// loading/success/error so the chip reflects the rollback outcome until
@@ -438,9 +458,16 @@ export default function ActionsSection({
 				pathname,
 				redirectWithQueryBuilderData,
 				handleSetQueryData,
+				setCustomTimeRange,
 			});
 		});
-	}, [actions, pathname, redirectWithQueryBuilderData, handleSetQueryData]);
+	}, [
+		actions,
+		pathname,
+		redirectWithQueryBuilderData,
+		handleSetQueryData,
+		setCustomTimeRange,
+	]);
 
 	if (actions.length === 0) {
 		return null;
@@ -579,6 +606,7 @@ export default function ActionsSection({
 					pathname,
 					redirectWithQueryBuilderData,
 					handleSetQueryData,
+					setCustomTimeRange,
 				});
 				break;
 			}
