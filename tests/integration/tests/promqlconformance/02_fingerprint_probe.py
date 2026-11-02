@@ -8,6 +8,7 @@ from fixtures.metrics import Metrics
 from fixtures.querier import get_all_series, make_query_request
 
 METRIC = "probe_requests"
+MATCH_METRIC = "probe_requests_peer"
 EVOLVED_METRIC = "probe_schema_evolution"
 
 
@@ -44,6 +45,14 @@ def test_identical_labelsets_merge_and_grouping(
                     labels=dict(lbls),
                     timestamp=base + timedelta(minutes=k),
                     value=float((i + 1) * 100 + k),
+                )
+            )
+            metrics.append(
+                Metrics(
+                    metric_name=MATCH_METRIC,
+                    labels=dict(lbls),
+                    timestamp=base + timedelta(minutes=k),
+                    value=float((i + 1) * 200 + 2 * k),
                 )
             )
 
@@ -90,6 +99,16 @@ def test_identical_labelsets_merge_and_grouping(
     assert len(raw) == 4, f"raw selector must show the 4 ingested series: {raw}"
     assert len({tuple(sorted(l.items())) for l, _ in raw}) == 4
     assert not any("fingerprint" in l for l, _ in raw), "no synthetic fingerprint label may appear in results"
+
+    # These metrics have different storage fingerprints, but identical
+    # Prometheus labels apart from __name__. Default set matching must ignore
+    # the metric name and match the two sides.
+    for operator, expected in (("and", raw), ("or", raw), ("unless", [])):
+        result = run(f"{METRIC} {operator} {MATCH_METRIC}", start_ms, end_ms)
+        assert result == expected, (
+            f"default {operator} matching must use Prometheus labels, not the "
+            f"storage fingerprint: {result}"
+        )
 
     count = run(f"count({METRIC})", start_ms, end_ms)
     assert count and next(float(v) for ts, v in count[0][1] if ts == end_ms) == 4
