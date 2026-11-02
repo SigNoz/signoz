@@ -102,8 +102,8 @@ function SpanDrawer({
 			selectedSpan={span}
 			variant={SpanDetailVariant.DRAWER}
 			headerActions={headerActions}
-			traceStartTime={traceSummary?.data.startTimestampMillis}
-			traceEndTime={traceSummary?.data.endTimestampMillis}
+			traceStartTime={traceSummary?.data?.startTimestampMillis}
+			traceEndTime={traceSummary?.data?.endTimestampMillis}
 			isTraceBoundsLoading={isTraceBoundsLoading}
 		/>
 	);
