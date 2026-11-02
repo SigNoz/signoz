@@ -16,7 +16,6 @@
     "types": ["node", "@playwright/test"],
     "paths": {
       "@tests/*": ["./tests/*"],
-      "@helpers/*": ["./helpers/*"],
       "@specs/*": ["./specs/*"]
     }
   },
