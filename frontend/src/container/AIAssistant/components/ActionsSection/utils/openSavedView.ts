@@ -2,37 +2,34 @@ import {
 	getSavedView,
 	listSavedViews,
 } from 'api/generated/services/saved-view';
-import { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	SavedviewtypesSavedViewDTO,
+	SavedviewtypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { SavedViewSourcePage } from 'container/SavedViews/types';
 import { findSavedView } from 'container/SavedViews/utils/findSavedView';
 import { getSavedViewQuery } from 'container/SavedViews/utils/getSavedViewQuery';
-import { toSavedViewSource } from 'container/SavedViews/utils/toSavedViewSource';
 import { SOURCEPAGE_VS_ROUTES } from 'container/SavedViews/constants';
 import { navigate } from 'lib/router/navigation';
 import { DataSource } from 'types/common/queryBuilder';
 import { buildExplorerNavigationUrl } from 'utils/buildExplorerNavigationUrl';
 
-type SavedViewSourceHint = SavedViewSourcePage;
-
-const DEFAULT_PROBE_SOURCES: SavedViewSourceHint[] = [
-	DataSource.LOGS,
-	DataSource.TRACES,
-	DataSource.METRICS,
+const DEFAULT_PROBE_SOURCES: SavedviewtypesSourceDTO[] = [
+	SavedviewtypesSourceDTO.logs,
+	SavedviewtypesSourceDTO.traces,
+	SavedviewtypesSourceDTO.metrics,
 ];
 
 export async function findSavedViewInLists(
 	viewKey: string,
-	sourceHint?: SavedViewSourceHint | null,
+	sourceHint?: SavedviewtypesSourceDTO | null,
 ): Promise<SavedviewtypesSavedViewDTO | null> {
 	const sources = sourceHint ? [sourceHint] : DEFAULT_PROBE_SOURCES;
 
 	for (const source of sources) {
 		try {
-			const response = await listSavedViews({
-				source: toSavedViewSource(source),
-			});
+			const response = await listSavedViews({ source });
 			const match = findSavedView(response.data, viewKey);
 			if (match) {
 				return match;
@@ -47,7 +44,7 @@ export async function findSavedViewInLists(
 
 async function loadSavedView(
 	viewKey: string,
-	sourceHint?: SavedViewSourceHint | null,
+	sourceHint?: SavedviewtypesSourceDTO | null,
 ): Promise<SavedviewtypesSavedViewDTO> {
 	try {
 		const response = await getSavedView({ id: viewKey });
@@ -92,7 +89,7 @@ export function openSavedView(view: SavedviewtypesSavedViewDTO): void {
 
 export async function openSavedViewByKey(
 	viewKey: string,
-	sourceHint: SavedViewSourceHint | null | undefined,
+	sourceHint: SavedviewtypesSourceDTO | null | undefined,
 ): Promise<void> {
 	const view = await loadSavedView(viewKey, sourceHint);
 	openSavedView(view);

@@ -1,13 +1,11 @@
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import isEqual from 'lodash-es/isEqual';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { HasUnsavedViewChangesArgs } from '../types';
 import { getSavedViewQuery } from './getSavedViewQuery';
 import { toSavedViewPanelType } from './toSavedViewSpec';
 import { getViewColumnsAndFormatting } from './getViewColumnsAndFormatting';
-import { toSavedViewSource } from './toSavedViewSource';
 
 // Legacy context names the server stores under their v5 name.
 const FIELD_CONTEXT_ALIASES: Record<string, TelemetrytypesFieldContextDTO> = {
@@ -48,6 +46,7 @@ function withoutEmptyValues(value: unknown): unknown {
 // a graph in older views) drop out; the builder's shape gets different defaults.
 export function hasUnsavedViewChanges({
 	view,
+	source,
 	stagedQuery,
 	panelType,
 	options,
@@ -77,18 +76,14 @@ export function hasUnsavedViewChanges({
 		return false;
 	}
 
-	const dataSource = stagedQuery.builder.queryData[0]?.dataSource;
-	const { columns, formatting } = getViewColumnsAndFormatting(
-		view.spec,
-		toSavedViewSource(dataSource),
-	);
+	const { columns, formatting } = getViewColumnsAndFormatting(view.spec, source);
 	const toNames = (fields: { name?: string; key?: string }[]): unknown[] =>
 		fields.map((field) => field.name ?? field.key);
 	if (!isEqual(toNames(columns), toNames(options.selectColumns ?? []))) {
 		return true;
 	}
 
-	if (dataSource !== DataSource.LOGS || !formatting) {
+	if (!formatting) {
 		return false;
 	}
 	return (

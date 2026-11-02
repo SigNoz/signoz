@@ -18,7 +18,6 @@ import {
 import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';
 import { QueryParams } from 'constants/query';
-import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	findSavedViewInLists,
@@ -26,7 +25,7 @@ import {
 	openSavedViewByKey,
 } from '../openSavedView';
 import {
-	entityToDataSource,
+	entityToSavedViewSource,
 	isSavedViewOpenAction,
 	resolveActionEntity,
 	resolveOpenResourceType,
@@ -130,10 +129,14 @@ describe('resolveOpenResource', () => {
 		).toBe('abc-123');
 	});
 
-	it('maps entity values to explorer data sources', () => {
-		expect(entityToDataSource('logs')).toBe(DataSource.LOGS);
-		expect(entityToDataSource('logs_explorer')).toBe(DataSource.LOGS);
-		expect(entityToDataSource('traces')).toBe(DataSource.TRACES);
+	it('maps entity values to saved view sources', () => {
+		expect(entityToSavedViewSource('logs')).toBe(SavedviewtypesSourceDTO.logs);
+		expect(entityToSavedViewSource('logs_explorer')).toBe(
+			SavedviewtypesSourceDTO.logs,
+		);
+		expect(entityToSavedViewSource('traces')).toBe(
+			SavedviewtypesSourceDTO.traces,
+		);
 	});
 
 	it('prefers entity over signal for saved-view source hints', () => {
@@ -144,7 +147,7 @@ describe('resolveOpenResource', () => {
 				entity: SavedViewEntityDTO.traces,
 				signal: ApplyFilterSignalDTO.logs,
 			}),
-		).toBe(DataSource.TRACES);
+		).toBe(SavedviewtypesSourceDTO.traces);
 	});
 
 	it('falls back to signal when entity is absent', () => {
@@ -154,7 +157,7 @@ describe('resolveOpenResource', () => {
 				label: 'Open view',
 				signal: ApplyFilterSignalDTO.metrics,
 			}),
-		).toBe(DataSource.METRICS);
+		).toBe(SavedviewtypesSourceDTO.metrics);
 	});
 
 	it('normalises saved-view resource types', () => {
@@ -207,7 +210,10 @@ describe('findSavedViewInLists', () => {
 		const tracesView = makeView('view-traces', SavedviewtypesSourceDTO.traces);
 		mockedListSavedViews.mockResolvedValueOnce(mockViewsResponse([tracesView]));
 
-		const result = await findSavedViewInLists('view-traces', DataSource.TRACES);
+		const result = await findSavedViewInLists(
+			'view-traces',
+			SavedviewtypesSourceDTO.traces,
+		);
 
 		expect(result).toStrictEqual(tracesView);
 		expect(mockedListSavedViews).toHaveBeenCalledTimes(1);
@@ -275,7 +281,7 @@ describe('openSavedViewByKey', () => {
 		const view = makeView('view-logs', SavedviewtypesSourceDTO.logs);
 		mockedGetSavedView.mockResolvedValueOnce(mockViewByIdResponse(view));
 
-		await openSavedViewByKey('view-logs', DataSource.LOGS);
+		await openSavedViewByKey('view-logs', SavedviewtypesSourceDTO.logs);
 
 		expect(mockedGetSavedView).toHaveBeenCalledWith({ id: 'view-logs' });
 		expect(mockedListSavedViews).not.toHaveBeenCalled();
@@ -287,7 +293,7 @@ describe('openSavedViewByKey', () => {
 		mockedGetSavedView.mockRejectedValueOnce(new Error('not found'));
 		mockedListSavedViews.mockResolvedValueOnce(mockViewsResponse([view]));
 
-		await openSavedViewByKey('view-traces', DataSource.TRACES);
+		await openSavedViewByKey('view-traces', SavedviewtypesSourceDTO.traces);
 
 		expect(mockedListSavedViews).toHaveBeenCalledWith({
 			source: SavedviewtypesSourceDTO.traces,
@@ -299,8 +305,8 @@ describe('openSavedViewByKey', () => {
 		mockedGetSavedView.mockRejectedValueOnce(new Error('not found'));
 		mockedListSavedViews.mockResolvedValue(mockViewsResponse([]));
 
-		await expect(openSavedViewByKey('missing', DataSource.LOGS)).rejects.toThrow(
-			'Saved view not found',
-		);
+		await expect(
+			openSavedViewByKey('missing', SavedviewtypesSourceDTO.logs),
+		).rejects.toThrow('Saved view not found');
 	});
 });

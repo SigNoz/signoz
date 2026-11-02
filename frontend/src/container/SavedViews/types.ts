@@ -8,11 +8,8 @@ import {
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { SavedViewCreatedFrom } from './events';
-
-export type SavedViewSourcePage = DataSource | 'meter';
 
 export type SavedViewOptions = Pick<
 	OptionsQuery,
@@ -29,6 +26,7 @@ export interface ToSavedViewSpecArgs {
 
 export interface HasUnsavedViewChangesArgs {
 	view: SavedviewtypesSavedViewDTO;
+	source: SavedviewtypesSourceDTO;
 	stagedQuery: Query | null;
 	panelType: PANEL_TYPES;
 	options?: SavedViewOptions;

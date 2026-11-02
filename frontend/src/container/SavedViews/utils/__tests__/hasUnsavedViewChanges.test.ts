@@ -1,6 +1,7 @@
 import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSavedViewSpecDTO,
+	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	initialQueriesMap,
@@ -118,6 +119,7 @@ describe('hasUnsavedViewChanges', () => {
 		expect(
 			hasUnsavedViewChanges({
 				view,
+				source: SavedviewtypesSourceDTO.traces,
 				stagedQuery: staged,
 				panelType: PANEL_TYPES.LIST,
 				options: { ...options, selectColumns: [columns[0]] },
@@ -137,6 +139,7 @@ describe('hasUnsavedViewChanges', () => {
 		expect(
 			hasUnsavedViewChanges({
 				view: bare,
+				source: SavedviewtypesSourceDTO.traces,
 				stagedQuery: stagedFrom(bare, DataSource.TRACES),
 				panelType: PANEL_TYPES.LIST,
 				options: { ...options, selectColumns: defaultTraceSelectedColumns },
@@ -161,6 +164,7 @@ describe('hasUnsavedViewChanges', () => {
 			expect(
 				hasUnsavedViewChanges({
 					view: logsView,
+					source: SavedviewtypesSourceDTO.logs,
 					stagedQuery: logsStaged,
 					panelType: PANEL_TYPES.LIST,
 					options: { selectColumns: shownColumns, ...formatting },
@@ -172,6 +176,7 @@ describe('hasUnsavedViewChanges', () => {
 			expect(
 				hasUnsavedViewChanges({
 					view: logsView,
+					source: SavedviewtypesSourceDTO.logs,
 					stagedQuery: logsStaged,
 					panelType: PANEL_TYPES.LIST,
 					options: { selectColumns: shownColumns, ...formatting, maxLines: 5 },
@@ -191,6 +196,7 @@ describe('hasUnsavedViewChanges', () => {
 			expect(
 				hasUnsavedViewChanges({
 					view: bare,
+					source: SavedviewtypesSourceDTO.logs,
 					stagedQuery: stagedFrom(bare, DataSource.LOGS),
 					panelType: PANEL_TYPES.LIST,
 					options: {
@@ -234,6 +240,7 @@ describe('hasUnsavedViewChanges', () => {
 		expect(
 			hasUnsavedViewChanges({
 				view: olderView,
+				source: SavedviewtypesSourceDTO.metrics,
 				stagedQuery: stagedFrom(olderView, DataSource.METRICS),
 				panelType: PANEL_TYPES.TIME_SERIES,
 			}),
@@ -281,6 +288,7 @@ describe('hasUnsavedViewChanges', () => {
 		expect(
 			hasUnsavedViewChanges({
 				view: storedView,
+				source: SavedviewtypesSourceDTO.metrics,
 				stagedQuery: stagedWithTag,
 				panelType: PANEL_TYPES.TIME_SERIES,
 			}),
@@ -320,6 +328,7 @@ describe('hasUnsavedViewChanges', () => {
 			expect(
 				hasUnsavedViewChanges({
 					view: noOrder,
+					source: SavedviewtypesSourceDTO.logs,
 					stagedQuery: stagedFrom(noOrder, DataSource.LOGS),
 					panelType: PANEL_TYPES.LIST,
 				}),
@@ -335,6 +344,7 @@ describe('hasUnsavedViewChanges', () => {
 			expect(
 				hasUnsavedViewChanges({
 					view: noOrder,
+					source: SavedviewtypesSourceDTO.logs,
 					stagedQuery: sorted,
 					panelType: PANEL_TYPES.LIST,
 				}),
@@ -344,6 +354,7 @@ describe('hasUnsavedViewChanges', () => {
 			expect(
 				hasUnsavedViewChanges({
 					view: saved,
+					source: SavedviewtypesSourceDTO.logs,
 					stagedQuery: stagedFrom(saved, DataSource.LOGS),
 					panelType: PANEL_TYPES.LIST,
 				}),
@@ -360,6 +371,7 @@ describe('hasUnsavedViewChanges', () => {
 			expect(
 				hasUnsavedViewChanges({
 					view: legacy,
+					source: SavedviewtypesSourceDTO.logs,
 					stagedQuery: stagedFrom(legacy, DataSource.LOGS),
 					panelType: PANEL_TYPES.LIST,
 				}),
@@ -371,6 +383,7 @@ describe('hasUnsavedViewChanges', () => {
 		expect(
 			hasUnsavedViewChanges({
 				view,
+				source: SavedviewtypesSourceDTO.traces,
 				stagedQuery: staged,
 				panelType: PANEL_TYPES.LIST,
 				options: { ...options, ...formatting, maxLines: 5 },
