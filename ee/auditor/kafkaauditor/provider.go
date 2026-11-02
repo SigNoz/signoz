@@ -4,15 +4,16 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/twmb/franz-go/pkg/kgo"
+	"github.com/twmb/franz-go/plugin/kslog"
+	"go.opentelemetry.io/collector/pdata/plog"
+
 	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/auditor/auditorserver"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/version"
-	"github.com/twmb/franz-go/pkg/kgo"
-	"github.com/twmb/franz-go/plugin/kslog"
-	"go.opentelemetry.io/collector/pdata/plog"
 )
 
 var _ auditor.Auditor = (*provider)(nil)

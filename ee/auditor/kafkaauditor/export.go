@@ -4,10 +4,11 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/twmb/franz-go/pkg/kgo"
+
 	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
-	"github.com/twmb/franz-go/pkg/kgo"
 )
 
 // Produces the whole batch as a single record so the collector's otlp_proto unmarshaler reads it as one ExportLogsServiceRequest.
