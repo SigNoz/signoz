@@ -2,6 +2,7 @@ package clickhouseprometheusv2
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
@@ -124,21 +125,74 @@ func applySeriesConditions(sb *sqlbuilder.SelectBuilder, start, end int64, match
 		if m.Name == metricNameLabel {
 			continue
 		}
+		labelName := unescapePromLabelName(m.Name)
 		switch m.Type {
 		case labels.MatchEqual:
-			sb.Where(fmt.Sprintf("JSONExtractString(labels, %s) = %s", sb.Var(m.Name), sb.Var(m.Value)))
+			sb.Where(fmt.Sprintf("JSONExtractString(labels, %s) = %s", sb.Var(labelName), sb.Var(m.Value)))
 		case labels.MatchNotEqual:
-			sb.Where(fmt.Sprintf("JSONExtractString(labels, %s) != %s", sb.Var(m.Name), sb.Var(m.Value)))
+			sb.Where(fmt.Sprintf("JSONExtractString(labels, %s) != %s", sb.Var(labelName), sb.Var(m.Value)))
 		case labels.MatchRegexp:
-			sb.Where(fmt.Sprintf("match(JSONExtractString(labels, %s), %s)", sb.Var(m.Name), sb.Var(anchorRegex(m.Value))))
+			sb.Where(fmt.Sprintf("match(JSONExtractString(labels, %s), %s)", sb.Var(labelName), sb.Var(anchorRegex(m.Value))))
 		case labels.MatchNotRegexp:
-			sb.Where(fmt.Sprintf("NOT match(JSONExtractString(labels, %s), %s)", sb.Var(m.Name), sb.Var(anchorRegex(m.Value))))
+			sb.Where(fmt.Sprintf("NOT match(JSONExtractString(labels, %s), %s)", sb.Var(labelName), sb.Var(anchorRegex(m.Value))))
 		default:
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported matcher type %q", m.Type)
 		}
 	}
 
 	return nil
+}
+
+// unescapePromLabelName converts a Prometheus value-encoded label name (used
+// by clients escaping UTF-8 label names for exposition formats that only
+// allow legacy characters) back to its original form, so matchers against
+// value-encoded names resolve against the raw label names stored in
+// ClickHouse. Value-encoded names start with "U__" and use lowercase-hex
+// _XX_ sequences for non-legacy characters, and "__" for a literal
+// underscore. See https://prometheus.io/docs/instrumenting/escaping_schemes/
+func unescapePromLabelName(name string) string {
+	if len(name) < 3 || name[:3] != "U__" {
+		return name
+	}
+	enc := name[3:]
+	var b strings.Builder
+	b.Grow(len(enc))
+	for i := 0; i < len(enc); {
+		if enc[i] != '_' {
+			b.WriteByte(enc[i])
+			i++
+			continue
+		}
+		if i+1 < len(enc) && enc[i+1] == '_' {
+			b.WriteByte('_')
+			i += 2
+			continue
+		}
+		if i+3 < len(enc) && enc[i+3] == '_' {
+			hi, hiOk := promHexVal(enc[i+1])
+			lo, loOk := promHexVal(enc[i+2])
+			if hiOk && loOk {
+				b.WriteByte(hi<<4 | lo)
+				i += 4
+				continue
+			}
+		}
+		b.WriteByte('_')
+		i++
+	}
+	return b.String()
+}
+
+func promHexVal(c byte) (byte, bool) {
+	switch {
+	case c >= '0' && c <= '9':
+		return c - '0', true
+	case c >= 'a' && c <= 'f':
+		return c - 'a' + 10, true
+	case c >= 'A' && c <= 'F':
+		return c - 'A' + 10, true
+	}
+	return 0, false
 }
 
 // anchorRegex turns a PromQL regex into its fully-anchored form (see
