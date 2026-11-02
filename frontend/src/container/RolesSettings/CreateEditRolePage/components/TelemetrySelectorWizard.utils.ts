@@ -134,7 +134,8 @@ export function validateSelector(selector: string): SelectorValidation {
 		};
 	}
 
-	const [, key, value] = parts;
+	const [, rawKey, value] = parts;
+	const key = foldGrantKey(rawKey);
 
 	if (value === ANY_RESOURCE_VALUE) {
 		return {

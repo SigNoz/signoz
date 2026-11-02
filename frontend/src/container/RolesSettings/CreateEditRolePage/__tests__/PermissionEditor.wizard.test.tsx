@@ -203,6 +203,24 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		);
 	});
 
+	it('accepts the resource-prefixed workspace key in the hint', async () => {
+		const user = userEvent.setup();
+		await openLogsWizard(user);
+
+		const selectorInput = screen.getByTestId('wizard-selector-input-logs-read');
+		await user.clear(selectorInput);
+		await user.type(
+			selectorInput,
+			'builder_query/resource.signoz.workspace.key.id/key-a',
+		);
+
+		expect(
+			screen.getByTestId('wizard-selector-hint-logs-read'),
+		).toHaveTextContent(
+			'Allow signoz.workspace.key.id=key-a for Builder Query queries.',
+		);
+	});
+
 	it('selects the key from a typed selector', async () => {
 		const user = userEvent.setup();
 		await openLogsWizard(user);
