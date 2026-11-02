@@ -12,12 +12,15 @@ import { driver } from './kit';
 import { actionsAt, PanelAction, type PanelActions } from './panels/actions';
 import { type Chart, chartAt } from './panels/chart';
 import { openSelectOption } from './panels/dom';
+import { type GeoMapPanel, geoMapAt } from './panels/geo-map';
 import { gridAt, type PanelGrid } from './panels/grid';
 import { type HeatmapTooltip, heatmapTooltipAt } from './panels/heatmap';
 import { type Legend, legendAt } from './panels/legend';
 import { type Markdown, markdownAt } from './panels/markdown';
 import { type PiePanel, pieAt } from './panels/pie';
+import { type ScatterPlotPanel, scatterPlotAt } from './panels/scatter-plot';
 import { type TableRows, tableAt } from './panels/table';
+import { type TopListPanel, topListAt } from './panels/top-list';
 
 // Rendered panels, on the dashboard grid and in the View modal. Each surface
 // lives in its own part under ./panels, and so does a kind with UI of its own.
@@ -42,6 +45,9 @@ export const RENDERER_TESTID: Record<PanelKind, string> = {
 	[PanelKind.List]: 'list-panel-renderer',
 	[PanelKind.Heatmap]: 'heatmap-panel-renderer',
 	[PanelKind.Text]: 'text-panel',
+	[PanelKind.ScatterPlot]: 'scatter-plot-panel-renderer',
+	[PanelKind.TopList]: 'top-list-panel-renderer',
+	[PanelKind.GeoMap]: 'geo-map-panel-renderer',
 };
 
 export interface PanelHandle {
@@ -68,6 +74,9 @@ export interface PanelHandle {
 	numberValue(): Locator;
 	markdown: Markdown;
 	pie: PiePanel;
+	topList: TopListPanel;
+	scatterPlot: ScatterPlotPanel;
+	geoMap: GeoMapPanel;
 	chart: Chart;
 	legend: Legend;
 	actions: PanelActions;
@@ -152,6 +161,11 @@ function panelHandle(page: Page, id: string): PanelHandle {
 		numberValue: () => byTestId('number-panel-value'),
 		markdown: markdownAt(() => byTestId(RENDERER_TESTID[PanelKind.Text])),
 		pie: pieAt(page, () => byTestId(RENDERER_TESTID[PanelKind.PieChart])),
+		topList: topListAt(() => byTestId(RENDERER_TESTID[PanelKind.TopList])),
+		scatterPlot: scatterPlotAt(page, () =>
+			byTestId(RENDERER_TESTID[PanelKind.ScatterPlot]),
+		),
+		geoMap: geoMapAt(page, () => byTestId(RENDERER_TESTID[PanelKind.GeoMap])),
 		chart: chartAt(page, () => byTestId('uplot-main-div')),
 		legend: legendAt(root),
 		actions: actionsAt(page, id, root),
@@ -230,9 +244,12 @@ export * from './dashboards';
 export * from './panels/actions';
 export * from './panels/chart';
 export * from './panels/dom';
+export * from './panels/geo-map';
 export * from './panels/grid';
 export * from './panels/heatmap';
 export * from './panels/legend';
 export * from './panels/markdown';
 export * from './panels/pie';
+export * from './panels/scatter-plot';
 export * from './panels/table';
+export * from './panels/top-list';
