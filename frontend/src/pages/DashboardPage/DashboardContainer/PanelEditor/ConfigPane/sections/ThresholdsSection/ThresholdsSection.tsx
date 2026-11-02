@@ -17,6 +17,7 @@ import { ThresholdColor } from 'pages/DashboardPage/DashboardContainer/Panels/ty
 
 import type { TableColumnOption } from '../../../hooks/useTableColumns';
 import type { SectionEditorContext } from '../../sectionContext';
+import { resolveColorColumn } from './colorColumn';
 import ComparisonThresholdRow from './rows/ComparisonThresholdRow';
 import LabelThresholdRow from './rows/LabelThresholdRow';
 import TableThresholdRow from './rows/TableThresholdRow';
@@ -32,6 +33,8 @@ const HELP: Record<ThresholdVariant, string> = {
 	comparison:
 		'Changes the number’s color when it crosses a value. Useful for green / amber / red status.',
 	table: 'Colors cells in a column when they cross a value.',
+	color:
+		'Colors a location when its Color by value crosses a value, in place of the palette.',
 };
 
 // Add-button testId per variant — kept stable so existing E2E/unit selectors hold.
@@ -39,6 +42,7 @@ const ADD_TESTID: Record<ThresholdVariant, string> = {
 	label: 'panel-editor-v2-add-threshold',
 	comparison: 'panel-editor-v2-add-comparison-threshold',
 	table: 'panel-editor-v2-add-table-threshold',
+	color: 'panel-editor-v2-add-color-threshold',
 };
 
 // Seed for a freshly-added row, in the shape the variant's editor + spec expect.
@@ -54,6 +58,12 @@ function defaultThreshold(
 				color: DEFAULT_THRESHOLD_COLOR,
 				operator: DashboardtypesComparisonOperatorDTO.above,
 				format: DashboardtypesThresholdFormatDTO.text,
+			};
+		case 'color':
+			return {
+				value: 0,
+				color: DEFAULT_THRESHOLD_COLOR,
+				operator: DashboardtypesComparisonOperatorDTO.above,
 			};
 		case 'table':
 			return {
@@ -80,7 +90,11 @@ type ThresholdsSectionProps = {
 	onChange: (next: AnyThreshold[]) => void;
 } & Pick<
 	SectionEditorContext,
-	'yAxisUnit' | 'tableColumns' | 'axisColumnUnits' | 'registerHeaderAction'
+	| 'yAxisUnit'
+	| 'tableColumns'
+	| 'axisColumnUnits'
+	| 'registerHeaderAction'
+	| 'geoMapPlacement'
 >;
 
 /**
@@ -97,8 +111,13 @@ function ThresholdsSection({
 	tableColumns = [],
 	axisColumnUnits,
 	registerHeaderAction,
+	geoMapPlacement,
 }: ThresholdsSectionProps): JSX.Element {
 	const variant = controls?.variant ?? ThresholdVariant.LABEL;
+	const colorColumn =
+		variant === ThresholdVariant.COLOR
+			? resolveColorColumn(geoMapPlacement, tableColumns)
+			: undefined;
 	const withAxis = !!controls?.axis;
 	const thresholds = value ?? [];
 	// Which row is being edited, and whether it was just added (so Discard removes it).
@@ -183,6 +202,21 @@ function ThresholdsSection({
 				/>
 			);
 		}
+		if (variant === 'color') {
+			return (
+				<ComparisonThresholdRow
+					// eslint-disable-next-line react/no-array-index-key
+					key={index}
+					threshold={threshold as DashboardtypesComparisonThresholdDTO}
+					withFormat={false}
+					{...common}
+					yAxisUnit={colorColumn?.unit}
+					scopeLabel="color column unit"
+					target={colorColumn?.label}
+					unscopedHint="The color column has no unit, so values compare as entered. Set its unit under Formatting & Units to convert."
+				/>
+			);
+		}
 		if (variant === 'table') {
 			return (
 				<TableThresholdRow
@@ -208,7 +242,11 @@ function ThresholdsSection({
 
 	return (
 		<div className={styles.list}>
-			<span className={styles.help}>{HELP[variant]}</span>
+			<span className={styles.help}>
+				{colorColumn
+					? `Colors a location when ${colorColumn.label} crosses a value, in place of the palette.`
+					: HELP[variant]}
+			</span>
 			{thresholds.map(renderRow)}
 
 			<Button
