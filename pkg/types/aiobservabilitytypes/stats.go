@@ -6,21 +6,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const (
-	// statsValuesLimit caps each count, since the metadata store lists values
-	// rather than counting them.
-	statsValuesLimit = 1000
-	// statsLookback reaches into the previous day; the metadata store rounds
-	// the start down to a day boundary.
-	statsLookback = 24 * time.Hour
-)
+// statsLookback reaches into the previous day; the metadata store rounds the
+// start down to a day boundary.
+const statsLookback = 24 * time.Hour
 
-// statsAttributeKeys are the gen_ai span attributes whose recent distinct
-// values the stats reporter counts under telemetry.traces.<key>.count.
+// statsAttributeKeys are the gen_ai span attributes whose recent presence the
+// stats reporter tracks under telemetry.traces.<key>.exists.
 var statsAttributeKeys = []string{GenAIRequestModel, GenAIToolName, GenAIAgentName}
 
-// StatsFieldValueSelectors look up each tracked attribute's string values
-// since the start of the previous day.
+// StatsFieldValueSelectors look up whether each tracked attribute had a string
+// value since the start of the previous day. One value is enough.
 func StatsFieldValueSelectors(now time.Time) []*telemetrytypes.FieldValueSelector {
 	selectors := make([]*telemetrytypes.FieldValueSelector, 0, len(statsAttributeKeys))
 	for _, key := range statsAttributeKeys {
@@ -32,19 +27,19 @@ func StatsFieldValueSelectors(now time.Time) []*telemetrytypes.FieldValueSelecto
 				FieldDataType:  telemetrytypes.FieldDataTypeString,
 				Name:           key,
 			},
-			Limit: statsValuesLimit,
+			Limit: 1,
 		})
 	}
 	return selectors
 }
 
-// NewStatsFromFieldValues counts the distinct values of each looked-up key.
-// Keys absent from values are left out, so a failed lookup never reports zero.
+// NewStatsFromFieldValues reports whether each looked-up key had a value. Keys
+// absent from values are left out, so a failed lookup never reports false.
 func NewStatsFromFieldValues(values map[string]*telemetrytypes.TelemetryFieldValues) map[string]any {
 	stats := make(map[string]any, len(values))
 	for _, key := range statsAttributeKeys {
 		if fieldValues := values[key]; fieldValues != nil {
-			stats["telemetry.traces."+key+".count"] = int64(len(fieldValues.StringValues))
+			stats["telemetry.traces."+key+".exists"] = len(fieldValues.StringValues) > 0
 		}
 	}
 	return stats

@@ -19,15 +19,28 @@ func TestNewStatsFromFieldValues(t *testing.T) {
 			want: map[string]any{},
 		},
 		{
+			name: "EveryKeySeen_AllTrue",
+			values: map[string]*telemetrytypes.TelemetryFieldValues{
+				GenAIRequestModel: {StringValues: []string{"gpt-5-nano"}},
+				GenAIToolName:     {StringValues: []string{"search"}},
+				GenAIAgentName:    {StringValues: []string{"planner"}},
+			},
+			want: map[string]any{
+				"telemetry.traces.gen_ai.request.model.exists": true,
+				"telemetry.traces.gen_ai.tool.name.exists":     true,
+				"telemetry.traces.gen_ai.agent.name.exists":    true,
+			},
+		},
+		{
 			name: "EmptyAndMissingLookups_OnlyLookedUpKeysReported",
 			values: map[string]*telemetrytypes.TelemetryFieldValues{
-				GenAIRequestModel:  {StringValues: []string{"gpt-5-nano", "claude-haiku-5-5"}},
+				GenAIRequestModel:  {StringValues: []string{"gpt-5-nano"}},
 				GenAIToolName:      {},
 				GenAIOperationName: {StringValues: []string{"chat"}},
 			},
 			want: map[string]any{
-				"telemetry.traces.gen_ai.request.model.count": int64(2),
-				"telemetry.traces.gen_ai.tool.name.count":     int64(0),
+				"telemetry.traces.gen_ai.request.model.exists": true,
+				"telemetry.traces.gen_ai.tool.name.exists":     false,
 			},
 		},
 	}
