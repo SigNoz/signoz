@@ -100,17 +100,3 @@ func (s *SavedViewSpec) Validate() error {
 
 	return (&qbtypes.CompositeQuery{Queries: s.Queries}).Validate(qbtypes.GetValidationOptions(s.RequestType)...)
 }
-
-// LegacyRequestTypeForPanelType exists only for the v1 legacy API.
-func LegacyRequestTypeForPanelType(p PanelType) qbtypes.RequestType {
-	switch p {
-	case PanelTypeList:
-		return qbtypes.RequestTypeRaw
-	case PanelTypeTrace:
-		return qbtypes.RequestTypeTrace
-	case PanelTypeGraph:
-		return qbtypes.RequestTypeTimeSeries
-	default:
-		return qbtypes.RequestTypeScalar
-	}
-}
