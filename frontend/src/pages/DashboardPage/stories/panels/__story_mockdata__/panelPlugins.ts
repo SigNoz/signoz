@@ -32,6 +32,7 @@ import {
 } from './constants';
 import {
 	comparisonThresholds,
+	geoMapThresholds,
 	labelThresholds,
 	logQuery,
 	metricQuery,
@@ -200,7 +201,15 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 			return {
 				plugin: {
 					kind: GeoMapKind['signoz/GeoMapPanel'],
-					spec: { legend },
+					spec: {
+						legend,
+						formatting: {
+							columnUnits: formatting.unit
+								? { [TABLE_VALUE_COLUMN]: formatting.unit }
+								: {},
+						},
+						thresholds: geoMapThresholds(args.thresholds),
+					},
 				},
 				queries: [
 					metricQuery(RequestType.scalar, {

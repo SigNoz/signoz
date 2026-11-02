@@ -96,13 +96,13 @@ export const panelsMocks = defineStoryMocks({
 		thresholds: toggleControl('Thresholds', {
 			group: PANEL,
 			description:
-				'A dashed labelled line on Time Series, Bar and Area; a background colour on Number when the value is above it; a filled `A` cell on Table rows above it, never a `B` cell. Other kinds have none.',
+				'A dashed labelled line on Time Series, Bar and Area; a background colour on Number when the value is above it; a filled `A` cell on Table rows above it, never a `B` cell; Geo Map countries above it in its colour. Other kinds have none.',
 			value: false,
 		}),
 		unit: choiceControl<PanelUnit>('Unit', {
 			group: PANEL,
 			description:
-				'Formatting unit: the y axis and tooltip of the charts, the Number value, the pie total, the Table value column.',
+				'Formatting unit: the y axis and tooltip of the charts, the Number value, the pie total, the Table value column, the Geo Map color column.',
 			options: UNITS,
 			value: 'ms',
 		}),

@@ -198,6 +198,15 @@ export const GeoMap: Story = {
 	play,
 };
 
+/**
+ * Countries above the threshold painted in its colour instead of the palette,
+ * with a legend key that reads in the latency column's unit.
+ */
+export const GeoMapThresholds: Story = {
+	args: { kind: 'GeoMap', thresholds: true },
+	play,
+};
+
 /** A Markdown runbook: heading, list, link and code block. */
 export const Text: Story = {
 	args: { kind: 'Text' },
