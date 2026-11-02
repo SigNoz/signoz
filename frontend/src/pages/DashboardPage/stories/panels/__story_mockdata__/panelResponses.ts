@@ -109,21 +109,17 @@ const heatmapCounts = (column: number, group: number): number[] =>
 			1 + ((column * 7 + row * 3 + group * 5) % 17) * (row < 6 ? 3 : 1),
 	);
 
-/** The busiest cell once every group is summed into it, as the grid does. */
-export const heatmapMaxCount = (groups: number): number => {
-	let max = 0;
-	for (let column = 0; column < HEATMAP_COLUMNS; column++) {
-		for (let row = 0; row <= HEATMAP_BUCKETS.length; row++) {
+/** Every cell's count once every group is summed into it, as the grid does. */
+export const heatmapCellCounts = (groups: number): number[][] =>
+	Array.from({ length: HEATMAP_COLUMNS }, (_unused, column) =>
+		Array.from({ length: HEATMAP_BUCKETS.length + 1 }, (_cell, row) => {
 			let sum = 0;
 			for (let group = 0; group < groups; group++) {
 				sum += heatmapCounts(column, group)[row];
 			}
-			max = Math.max(max, sum);
-		}
-	}
-
-	return max;
-};
+			return sum;
+		}),
+	);
 
 const heatmapResponse = (
 	{ start, end }: PanelWindow,
