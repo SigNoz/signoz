@@ -66,16 +66,16 @@ export function extractClickhouseQueryNames(
 /**
  * Column display name (port of V1 `getColName`). Group columns keep their field name; aggregation
  * columns resolve alias > legend > expression > queryName, skipping legend on multi-aggregation
- * queries (one legend can't label several value columns). `isNamed` marks a name the user wrote.
+ * queries (one legend can't label several value columns).
  */
 function getColName(
 	col: Querybuildertypesv5ColumnDescriptorDTO,
 	legendMap: Record<string, string>,
 	aggregationsPerQuery: AggregationsPerQuery,
 	clickhouseQueryNames: Set<string>,
-): Pick<PanelTableColumn, 'name' | 'isNamed'> {
+): string {
 	if (col.columnType === 'group') {
-		return { name: col.name, isNamed: false };
+		return col.name;
 	}
 
 	const queryName = col.queryName ?? '';
@@ -87,10 +87,10 @@ function getColName(
 	const aggregationsCount = aggregations?.length || 0;
 
 	if (aggregationsCount > 0) {
-		const userName = aggregationsCount === 1 ? alias || legend : alias;
-		return userName
-			? { name: userName, isNamed: true }
-			: { name: expression || queryName, isNamed: false };
+		if (aggregationsCount === 1) {
+			return alias || legend || expression || queryName;
+		}
+		return alias || expression || queryName;
 	}
 
 	// clickhouse_sql value columns carry their real SQL alias in col.name — use
@@ -98,11 +98,9 @@ function getColName(
 	// the query name. Formulas/promql use placeholder names, so they fall back
 	// to legend || queryName.
 	if (clickhouseQueryNames.has(queryName)) {
-		return { name: col.name, isNamed: true };
+		return col.name;
 	}
-	return legend
-		? { name: legend, isNamed: true }
-		: { name: queryName, isNamed: false };
+	return legend || queryName;
 }
 
 /**
@@ -182,7 +180,7 @@ export function prepareScalarTables({
 		const queryName = scalarData.columns?.[0]?.queryName ?? '';
 
 		const columns: PanelTableColumn[] = (scalarData.columns ?? []).map((col) => ({
-			...getColName(col, legendMap, aggregationsPerQuery, clickhouseQueryNames),
+			name: getColName(col, legendMap, aggregationsPerQuery, clickhouseQueryNames),
 			queryName: col.queryName ?? '',
 			isValueColumn: col.columnType === 'aggregation',
 			id: getColId(col, aggregationsPerQuery, clickhouseQueryNames),

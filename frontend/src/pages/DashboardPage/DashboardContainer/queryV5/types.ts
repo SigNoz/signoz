@@ -55,8 +55,6 @@ export interface PanelSeries {
 export interface PanelTableColumn {
 	/** Display name (alias/legend/expression resolution applied). */
 	name: string;
-	/** The name came from an alias, legend or SQL alias rather than the expression or query name. */
-	isNamed?: boolean;
 	queryName: string;
 	/** True for aggregation columns, false for group-by columns. */
 	isValueColumn: boolean;
