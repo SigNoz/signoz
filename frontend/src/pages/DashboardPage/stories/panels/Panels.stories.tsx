@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, within } from 'storybook/test';
 import {
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
 	DashboardtypesLegendPositionDTO as LegendPosition,
@@ -164,6 +165,24 @@ export const TableSearch: Story = {
 export const List: Story = {
 	args: { kind: 'List' },
 	play,
+};
+
+/**
+ * The List panel on a `use_json_body` tenant: a body holding only `message`
+ * reads as its text, one with keys beside it as JSON.
+ */
+export const ListJsonBody: Story = {
+	args: { kind: 'List', listJsonBody: true },
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await expectPanel(canvasElement, args);
+		const [first, , third] = within(canvasElement)
+			.getByTestId('list-panel-renderer')
+			.querySelectorAll<HTMLElement>('tbody tr.ant-table-row');
+		await expect(within(first).getByText(/^log line 1:/)).toBeInTheDocument();
+		await expect(
+			within(third).getByText(/^\{"message":"log line 3:/),
+		).toBeInTheDocument();
+	},
 };
 
 /**
