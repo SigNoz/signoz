@@ -26,6 +26,9 @@ jest.mock('api/common/logEvent', () => ({
 
 const mockUndo = undoExecution as jest.MockedFunction<typeof undoExecution>;
 
+const START_MS = Date.UTC(2026, 6, 26, 10, 34);
+const END_MS = Date.UTC(2026, 6, 26, 10, 49);
+
 const UNDO_ACTION = {
 	kind: MessageActionKindDTO.undo,
 	label: 'Undo change',
@@ -38,13 +41,18 @@ function renderUndoChip(): HTMLElement {
 }
 
 // Labels differ per test: auto-applied filters are deduped module-wide by label.
-function countByServiceAction(label: string): MessageActionDTO {
+function countByServiceAction(
+	label: string,
+	{ start, end }: { start?: number; end?: number } = {},
+): MessageActionDTO {
 	return {
 		kind: MessageActionKindDTO.apply_filter,
 		label,
 		signal: ApplyFilterSignalDTO.logs,
 		query: {
 			requestType: Querybuildertypesv5RequestTypeDTO.scalar,
+			start,
+			end,
 			compositeQuery: {
 				queries: [
 					{
@@ -62,10 +70,8 @@ function countByServiceAction(label: string): MessageActionDTO {
 	};
 }
 
-function currentPanelTypesParam(): string | null {
-	return new URLSearchParams(getCurrentLocation().search).get(
-		QueryParams.panelTypes,
-	);
+function currentParam(param: string): string | null {
+	return new URLSearchParams(getCurrentLocation().search).get(param);
 }
 
 describe('ActionsSection rollback chip', () => {
@@ -139,7 +145,34 @@ describe('ActionsSection apply_filter', () => {
 		await waitFor(() =>
 			expect(getCurrentLocation().pathname).toBe(ROUTES.LOGS_EXPLORER),
 		);
-		expect(currentPanelTypesParam()).toBe(JSON.stringify(PANEL_TYPES.TABLE));
+		expect(currentParam(QueryParams.panelTypes)).toBe(
+			JSON.stringify(PANEL_TYPES.TABLE),
+		);
+	});
+
+	it('opens the explorer on the time range that produced the answer', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(
+			<ActionsSection
+				actions={[
+					countByServiceAction('Open with time', {
+						start: START_MS,
+						end: END_MS,
+					}),
+				]}
+				messageId="message-with-time"
+			/>,
+			undefined,
+			{ initialRoute: ROUTES.HOME },
+		);
+
+		await user.click(screen.getByTestId('ai-action-chip-apply_filter'));
+
+		await waitFor(() =>
+			expect(getCurrentLocation().pathname).toBe(ROUTES.LOGS_EXPLORER),
+		);
+		expect(currentParam(QueryParams.startTime)).toBe(String(START_MS));
+		expect(currentParam(QueryParams.endTime)).toBe(String(END_MS));
 	});
 
 	it('switches the open explorer to the Table view when applied on it', async () => {

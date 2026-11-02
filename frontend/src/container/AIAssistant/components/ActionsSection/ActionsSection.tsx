@@ -53,6 +53,7 @@ import {
 	getPanelTypeForRequestType,
 	requestTypeFromActionQuery,
 } from './utils/getPanelTypeForRequestType';
+import { getTimeRangeFromActionQuery } from './utils/getTimeRangeFromActionQuery';
 import { isOnResourcePage } from './utils/isOnResourcePage';
 import { openSavedViewByKey } from './utils/openSavedView';
 import {
@@ -366,8 +367,13 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 	}
 	// eslint-disable-next-line no-console
 	console.log('[apply_filter] off-page → navigate', base);
+	const timeRange = getTimeRangeFromActionQuery(action.query);
 	const url = buildExplorerNavigationUrl(base, normalized, {
 		[QueryParams.panelTypes]: panelType,
+		...(timeRange && {
+			[QueryParams.startTime]: timeRange.start,
+			[QueryParams.endTime]: timeRange.end,
+		}),
 	});
 	navigate(url);
 }
