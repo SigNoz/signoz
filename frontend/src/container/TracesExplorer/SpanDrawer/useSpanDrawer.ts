@@ -35,8 +35,8 @@ export function useSpanDrawer(rows: TracesTableRow[]): UseSpanDrawerResult {
 	}, [rows, activeSpan]);
 
 	const isRowActive = useCallback(
-		(row: TracesTableRow): boolean => row.id === activeSpan?.id,
-		[activeSpan],
+		(row: TracesTableRow): boolean => row === rows[activeRowIndex],
+		[rows, activeRowIndex],
 	);
 
 	const handleNavigate = useCallback(
