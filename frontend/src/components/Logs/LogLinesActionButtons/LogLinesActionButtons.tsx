@@ -23,6 +23,7 @@ function LogLinesActionButtons({
 					icon={<TextSelect size={14} />}
 					className="show-context-btn"
 					onClick={handleShowContext}
+					data-testid="log-line-show-context"
 				/>
 			</Tooltip>
 			<Tooltip title="Copy Link">
@@ -31,6 +32,7 @@ function LogLinesActionButtons({
 					icon={<Link size={14} />}
 					onClick={onLogCopy}
 					className="copy-log-btn"
+					data-testid="log-line-copy-link"
 				/>
 			</Tooltip>
 		</div>

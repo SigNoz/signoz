@@ -218,7 +218,7 @@ function AllAttributes({
 									}
 								}}
 							>
-								<Button type="text">
+								<Button type="text" data-testid={`attribute-key-${field.label}`}>
 									<Typography.Text>{field.label}</Typography.Text>
 								</Button>
 							</Popover>
@@ -273,6 +273,7 @@ function AllAttributes({
 							</Tooltip>
 						</div>
 						<Input
+							data-testid="all-attributes-search"
 							className="all-attributes-search-input"
 							placeholder="Search"
 							value={searchString}
@@ -291,6 +292,7 @@ function AllAttributes({
 				key: 'all-attributes',
 				children: (
 					<ResizeTable
+						data-testid="all-attributes-table"
 						columns={columns}
 						loading={isLoadingAttributes}
 						tableLayout="fixed"
