@@ -1,98 +1,106 @@
 import { useMemo } from 'react';
-import { Button, Table, TableProps } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
-import { RotateCw } from '@signozhq/icons';
+import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
+import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
+import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 
-import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
-import emptyStateUrl from '@/assets/Icons/emptyState.svg';
-
-import RoutingPolicyListItem from './RoutingPolicyListItem';
+import RoutingPoliciesEmptyState from './RoutingPoliciesEmptyState';
+import RoutingPolicyActionsMenu from './RoutingPolicyActionsMenu';
+import styles from './RoutingPolicies.module.scss';
 import { RoutingPolicy, RoutingPolicyListProps } from './types';
+import { ROUTING_POLICIES_QUERY_PARAMS } from './useRoutingPoliciesTable';
 
 function RoutingPolicyList({
+	columns,
 	routingPolicies,
-	refetchRoutingPolicies,
-	isRoutingPoliciesFetching,
-	isRoutingPoliciesLoading,
-	isRoutingPoliciesError,
-	handlePolicyDetailsModalOpen,
-	handleDeleteModalOpen,
+	pagedPolicies,
+	calculatedPageSize,
+	onLimitChange,
+	isFetching,
+	isError,
+	refetch,
+	canEdit,
+	onEdit,
+	onDelete,
+	onCreate,
 	hasSearchTerm,
+	onClearSearch,
 }: RoutingPolicyListProps): JSX.Element {
-	const columns: TableProps<RoutingPolicy>['columns'] = [
-		{
-			title: 'Routing Policy',
-			key: 'routingPolicy',
-			render: (data: RoutingPolicy): JSX.Element => (
-				<RoutingPolicyListItem
-					routingPolicy={data}
-					handlePolicyDetailsModalOpen={handlePolicyDetailsModalOpen}
-					handleDeleteModalOpen={handleDeleteModalOpen}
-				/>
-			),
-		},
-	];
+	const columnsWithActions = useMemo((): TableColumnDef<RoutingPolicy>[] => {
+		if (!canEdit) {
+			return columns;
+		}
 
-	const showLoading = isRoutingPoliciesLoading || isRoutingPoliciesFetching;
-	const showError = !showLoading && isRoutingPoliciesError;
-
-	const localeEmptyState = useMemo(
-		() => (
-			<div className="no-routing-policies-message-container">
-				{showError ? (
-					<img src={awwSnapUrl} alt="aww-snap" className="error-state-svg" />
-				) : (
-					<img
-						src={emptyStateUrl}
-						alt="thinking-emoji"
-						className="empty-state-svg"
+		return [
+			...columns,
+			{
+				id: 'actions',
+				header: (): JSX.Element => (
+					<span className={styles.actionsHeader}>Actions</span>
+				),
+				accessorKey: 'id',
+				width: { fixed: '96px', ignoreLastColumnFill: true },
+				enableSort: false,
+				enableResize: false,
+				enableRemove: false,
+				enableMove: false,
+				pin: 'right',
+				cell: ({ row }): JSX.Element => (
+					<RoutingPolicyActionsMenu
+						routingPolicy={row}
+						onEdit={onEdit}
+						onDelete={onDelete}
 					/>
-				)}
-				{showError ? (
-					<div className="error-state">
-						<Typography.Text>
-							Something went wrong while fetching routing policies.
-						</Typography.Text>
-						<Button icon={<RotateCw size={14} />} onClick={refetchRoutingPolicies}>
-							Retry
-						</Button>
-					</div>
-				) : hasSearchTerm ? (
-					<Typography.Text>No matching routing policies found.</Typography.Text>
-				) : (
-					<Typography.Text>
-						No routing policies yet,{' '}
-						<a
-							href="https://signoz.io/docs/alerts-management/routing-policy"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							Learn more here
-						</a>
-					</Typography.Text>
-				)}
-			</div>
-		),
-		[showError, hasSearchTerm, refetchRoutingPolicies],
-	);
+				),
+			},
+		];
+	}, [canEdit, columns, onEdit, onDelete]);
+
+	const isEmpty = !isFetching && routingPolicies.length === 0;
+
+	if (isError) {
+		return (
+			<ErrorEmptyState
+				title="Failed to load routing policies"
+				onRefresh={refetch}
+			/>
+		);
+	}
+
+	if (isEmpty && hasSearchTerm) {
+		return (
+			<NoResultsEmptyState
+				title="No matching routing policies"
+				subtitle="No routing policies match your search. Try adjusting your search criteria."
+				onClear={onClearSearch}
+				clearButtonText="Clear Search"
+			/>
+		);
+	}
+
+	if (isEmpty) {
+		return <RoutingPoliciesEmptyState canCreate={canEdit} onCreate={onCreate} />;
+	}
 
 	return (
-		<Table<RoutingPolicy>
-			columns={columns}
-			className="routing-policies-table"
-			bordered={false}
-			dataSource={routingPolicies}
-			loading={showLoading}
-			showHeader={false}
-			rowKey="id"
+		<TanStackTable<RoutingPolicy>
+			data={pagedPolicies}
+			columns={columnsWithActions}
+			isLoading={isFetching}
+			getRowKey={(row): string => row.id}
+			getItemKey={(row): string => row.id}
+			getRowTestId={(row): string => `routing-policy-row-${row.id}`}
+			columnStorageKey="routing-policies-columns"
+			enableQueryParams={ROUTING_POLICIES_QUERY_PARAMS}
+			onRowClick={canEdit ? onEdit : undefined}
 			pagination={{
-				pageSize: 5,
-				showSizeChanger: false,
-				hideOnSinglePage: true,
+				total: routingPolicies.length,
+				calculatedPageSize,
+				onLimitChange,
+				showTotalCount: true,
 			}}
-			locale={{
-				emptyText: showLoading ? null : localeEmptyState,
-			}}
+			paginationClassname={styles.paginationContainer}
+			enableAlternatingRowColors
+			plainTextCellLineClamp={1}
 		/>
 	);
 }

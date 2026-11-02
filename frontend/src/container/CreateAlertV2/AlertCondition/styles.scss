@@ -90,8 +90,6 @@
 			}
 
 			.ant-select {
-				width: 240px;
-
 				.ant-select-selector {
 					background-color: var(--l2-background);
 					border: 1px solid var(--l1-border);
@@ -255,28 +253,6 @@
 				}
 			}
 		}
-
-		.add-threshold-btn {
-			margin-top: 8px;
-			border: 1px dashed var(--l1-border);
-			color: var(--l2-foreground);
-			background-color: transparent;
-			border-radius: 4px;
-			height: 32px;
-			padding: 0 16px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-
-			&:hover {
-				border-color: var(--l1-border);
-				color: var(--l1-foreground);
-			}
-
-			.anticon {
-				margin-right: 8px;
-			}
-		}
 	}
 
 	.routing-policies-info-banner {
@@ -310,14 +286,6 @@
 
 		.ant-typography {
 			color: var(--accent-primary);
-		}
-	}
-}
-
-.anomaly-threshold-container {
-	.ant-select {
-		.ant-select-selector {
-			min-width: 150px;
 		}
 	}
 }

@@ -89,3 +89,31 @@ def test_create_rejects_invalid_threshold(
             "suggestions": [],
         },
     }
+
+
+def test_create_rejects_omitted_selected_query_name(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    rule = {**VALID_RULE, "condition": {key: value for key, value in VALID_RULE["condition"].items() if key != "selectedQueryName"}}
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=rule,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json() == {
+        "status": "error",
+        "error": {
+            "type": "invalid-input",
+            "code": "invalid_input",
+            "message": "alert rule is not valid",
+            "errors": [{"message": "condition.selectedQueryName: field is required", "suggestions": []}],
+            "suggestions": [],
+        },
+    }

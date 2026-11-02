@@ -25,6 +25,7 @@ import azureVmUrl from '@/assets/Logos/azure-vm.svg';
 import azureUrl from '@/assets/Logos/azure.svg';
 import basetenUrl from '@/assets/Logos/baseten.svg';
 import bunUrl from '@/assets/Logos/bun.svg';
+import caddyUrl from '@/assets/Logos/caddy.svg';
 import cassandraUrl from '@/assets/Logos/cassandra.svg';
 import celeryUrl from '@/assets/Logos/celery.svg';
 import certManagerUrl from '@/assets/Logos/cert-manager.svg';
@@ -96,6 +97,7 @@ import haystackUrl from '@/assets/Logos/haystack.svg';
 import hcpVaultUrl from '@/assets/Logos/hcp-vault.svg';
 import herokuUrl from '@/assets/Logos/heroku.svg';
 import honeycombUrl from '@/assets/Logos/honeycomb.svg';
+import honoUrl from '@/assets/Logos/hono.svg';
 import hostmetricsUrl from '@/assets/Logos/hostmetrics.svg';
 import httpUrl from '@/assets/Logos/http.svg';
 import httpMonitoringUrl from '@/assets/Logos/http-monitoring.svg';
@@ -152,6 +154,7 @@ import phpUrl from '@/assets/Logos/php.svg';
 import pinoUrl from '@/assets/Logos/pino.svg';
 import pipecatUrl from '@/assets/Logos/pipecat.svg';
 import planetscaleUrl from '@/assets/Logos/planetscale.svg';
+import pm2Url from '@/assets/Logos/pm2.svg';
 import podmanUrl from '@/assets/Logos/podman.svg';
 import postgresqlUrl from '@/assets/Logos/postgresql.svg';
 import prometheusUrl from '@/assets/Logos/prometheus.svg';
@@ -7239,13 +7242,15 @@ const onboardingConfigWithLinks = [
 		dataSource: 'gcp-integration',
 		label: 'GCP Integration',
 		imgUrl: gcpUrl,
-		tags: ['GCP'],
-		module: 'metrics',
+		tags: ['GCP', 'logs'],
+		module: 'integrations',
 		relatedSearchKeywords: [
+			'cloud logging',
 			'cloud monitoring metrics',
 			'connect gcp account',
 			'gcp',
 			'gcp integration',
+			'gcp logs',
 			'gcp manual setup',
 			'gcp metrics',
 			'gcp monitoring',
@@ -7253,10 +7258,13 @@ const onboardingConfigWithLinks = [
 			'gcp service account',
 			'google cloud',
 			'google cloud integration',
+			'log sink',
+			'logs',
 			'metrics',
 			'monitoring',
 			'observability',
 			'opentelemetry collector gcp',
+			'pub/sub',
 		],
 		id: 'gcp-integration',
 		link: '/docs/integrations/gcp/gcp-integration/',
@@ -8065,6 +8073,111 @@ const onboardingConfigWithLinks = [
 		],
 		id: 'microsoft-agent-framework',
 		link: '/docs/microsoft-agent-framework-observability/',
+	},
+	{
+		dataSource: 'hono',
+		label: 'Hono',
+		imgUrl: honoUrl,
+		tags: ['apm/traces', 'metrics'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'apm',
+			'bun hono',
+			'hono',
+			'hono metrics',
+			'hono monitoring',
+			'hono observability',
+			'hono traces',
+			'honojs',
+			'javascript',
+			'metrics',
+			'nodejs',
+			'nodejs hono',
+			'observability',
+			'opentelemetry hono',
+			'traces',
+			'tracing',
+			'typescript',
+		],
+		id: 'hono',
+		link: '/docs/instrumentation/javascript/opentelemetry-hono/',
+	},
+	{
+		dataSource: 'caddy',
+		label: 'Caddy',
+		imgUrl: caddyUrl,
+		tags: ['apm/traces', 'metrics', 'logs'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'access logs',
+			'apm',
+			'caddy',
+			'caddy logs',
+			'caddy metrics',
+			'caddy monitoring',
+			'caddy server',
+			'caddy traces',
+			'logs',
+			'metrics',
+			'observability',
+			'opentelemetry caddy',
+			'reverse proxy',
+			'traces',
+			'tracing',
+			'web server',
+		],
+		id: 'caddy',
+		link: '/docs/integrations/opentelemetry-caddy/',
+	},
+	{
+		dataSource: 'pm2',
+		label: 'PM2',
+		imgUrl: pm2Url,
+		tags: ['apm/traces'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'apm',
+			'cluster mode',
+			'javascript',
+			'nodejs',
+			'nodejs pm2',
+			'observability',
+			'opentelemetry pm2',
+			'pm2',
+			'pm2 cluster',
+			'pm2 monitoring',
+			'pm2 traces',
+			'process manager',
+			'traces',
+			'tracing',
+		],
+		id: 'pm2',
+		link: '/docs/instrumentation/javascript/opentelemetry-pm2/',
+	},
+	{
+		dataSource: 'gcp-one-click-integration',
+		label: 'GCP One-Click Integration',
+		imgUrl: gcpUrl,
+		tags: ['GCP', 'metrics', 'logs'],
+		module: 'integrations',
+		relatedSearchKeywords: [
+			'gcp',
+			'gcp agent',
+			'gcp integration',
+			'gcp logs',
+			'gcp metrics',
+			'gcp one click',
+			'google cloud',
+			'google cloud integration',
+			'logs',
+			'metrics',
+			'monitoring',
+			'observability',
+			'one click',
+			'one click gcp integration',
+		],
+		id: 'gcp-one-click-integration',
+		link: '/docs/integrations/gcp/one-click-gcp-integrations/',
 	},
 ];
 export default onboardingConfigWithLinks;

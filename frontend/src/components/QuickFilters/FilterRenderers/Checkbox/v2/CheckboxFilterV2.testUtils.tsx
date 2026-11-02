@@ -1,7 +1,6 @@
 import { render, RenderResult } from 'tests/test-utils';
 import { server, rest } from 'mocks-server/server';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
@@ -21,7 +20,6 @@ export const DEFAULT_FILTER: IQuickFiltersConfig = {
 		dataType: DataTypes.String,
 		type: 'tag',
 	},
-	dataSource: DataSource.TRACES,
 	defaultOpen: true,
 };
 
@@ -158,7 +156,7 @@ export function renderWithFilter(
 	return render(
 		<CheckboxFilterV2
 			filter={DEFAULT_FILTER}
-			source={QuickFiltersSource.TRACES_EXPLORER}
+			quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 			useFieldApis={{
 				...DEFAULT_USE_FIELD_APIS,
 				existingQuery: 'service.name = "api"',

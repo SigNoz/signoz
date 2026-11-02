@@ -48,7 +48,6 @@ const mockAlertContextState = createMockAlertContextState({
 		selectedQuery: 'A',
 		operator: AlertThresholdOperator.ABOVE_BELOW,
 		matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
-		evaluationWindow: '5m0s',
 		algorithm: 'standard',
 		seasonality: 'hourly',
 		thresholds: [

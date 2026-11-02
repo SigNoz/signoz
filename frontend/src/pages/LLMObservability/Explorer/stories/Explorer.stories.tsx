@@ -126,7 +126,7 @@ export const TimeSeries: Story = {
  * their empty states.
  */
 export const NoSpans: Story = {
-	args: { spans: 0, quickFilters: 0, savedViews: 0 },
+	args: { spans: 0, quickFilters: 0 },
 };
 
 /** The list mid-query, with the cancel action the toolbar offers while it runs. */

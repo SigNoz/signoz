@@ -61,7 +61,10 @@ export default function TraceOperator({
 	);
 
 	return (
-		<div className={cx('qb-trace-operator', !isRawQuery && 'non-list-view')}>
+		<div
+			className={cx('qb-trace-operator', !isRawQuery && 'non-list-view')}
+			data-testid="trace-operator"
+		>
 			<div className="qb-trace-operator-container">
 				<div
 					className={cx(

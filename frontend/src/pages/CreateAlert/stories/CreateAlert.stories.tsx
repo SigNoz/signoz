@@ -52,11 +52,33 @@ export const LogsAlert: Story = {
 };
 
 /**
- * Anomaly detection, which is still written in the classic form: the seasonality
- * and the deviation take the place of a fixed threshold.
+ * Anomaly detection: the condition is a number of deviations from the seasonal
+ * forecast instead of a fixed threshold, and only builder metric queries apply.
  */
 export const AnomalyAlert: Story = {
 	args: { alertMode: 'anomaly' },
+};
+
+/**
+ * An anomaly alert handed to routing policies: the channel picker leaves the
+ * condition, and the banner points at the policies that route it instead.
+ */
+export const AnomalyAlertRoutingPolicies: Story = {
+	args: { alertMode: 'anomaly' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await userEvent.click(
+			await canvas.findByTestId('routing-policies-switch', undefined, {
+				timeout: 15_000,
+			}),
+		);
+		await waitFor(() =>
+			expect(
+				canvas.queryByTestId('threshold-notification-channel-select'),
+			).not.toBeInTheDocument(),
+		);
+	},
 };
 
 /** The classic form, which `showClassicCreateAlertsPage` opts back into. */

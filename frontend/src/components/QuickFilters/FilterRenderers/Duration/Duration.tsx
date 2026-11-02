@@ -31,11 +31,11 @@ export type { FilterType };
 function Duration({
 	filter,
 	onFilterChange,
-	source,
+	quickFilterSource,
 }: {
 	filter: IQuickFiltersConfig;
 	onFilterChange?: (query: Query) => void;
-	source: QuickFiltersSource;
+	quickFilterSource: QuickFiltersSource;
 }): JSX.Element {
 	const [selectedFilters, setSelectedFilters] =
 		useState<
@@ -52,7 +52,7 @@ function Duration({
 
 	const compositeQuery = useGetCompositeQueryParam();
 
-	const activeQueryIndex = useActiveQueryIndex(source);
+	const activeQueryIndex = useActiveQueryIndex(quickFilterSource);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const syncSelectedFilters = useMemo((): FilterType => {

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
 import { Button } from '@signozhq/ui/button';
 import Breadcrumb from 'antd/es/breadcrumb';
 import ROUTES from 'constants/routes';
@@ -16,12 +16,12 @@ function Header({ type }: { type: IntegrationType }): JSX.Element {
 					items={[
 						{
 							title: (
-								<Link to={ROUTES.INTEGRATIONS}>
+								<AppLink to={ROUTES.INTEGRATIONS}>
 									<span className="cloud-header__breadcrumb-link">
 										<Blocks size={16} color="var(--l2-foreground)" />
 										<span className="cloud-header__breadcrumb-title">Integrations</span>
 									</span>
-								</Link>
+								</AppLink>
 							),
 						},
 						{

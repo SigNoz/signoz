@@ -6,15 +6,24 @@ import {
 } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { isPlainObject } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-export const useGetCompositeQueryParam = (): Query | null => {
+import {
+	NormalizedQuery,
+	normalizeCompositeQuery,
+} from './normalizeCompositeQuery';
+
+export const useNormalizedCompositeQueryParam = (): NormalizedQuery | null => {
 	const urlQuery = useUrlQuery();
+	const { pathname } = useAppLocation();
 
 	return useMemo(() => {
 		const compositeQuery = urlQuery.get(QueryParams.compositeQuery);
 		let parsedCompositeQuery: Query | null = null;
+		let changed = false;
 
 		try {
 			if (!compositeQuery) {
@@ -23,17 +32,17 @@ export const useGetCompositeQueryParam = (): Query | null => {
 
 			// MDN reference - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent#decoding_query_parameters_from_a_url
 			// MDN reference to support + characters using encoding - https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams#preserving_plus_signs add later
-			parsedCompositeQuery = JSON.parse(
+			const rawQuery: unknown = JSON.parse(
 				decodeURIComponent(compositeQuery.replace(/\+/g, ' ')),
 			);
-
-			// Add default values for optional fields if empty
-			if (parsedCompositeQuery?.builder) {
-				parsedCompositeQuery.builder.queryFormulas =
-					parsedCompositeQuery.builder.queryFormulas ?? [];
-				parsedCompositeQuery.builder.queryTraceOperator =
-					parsedCompositeQuery.builder.queryTraceOperator ?? [];
+			if (!isPlainObject(rawQuery)) {
+				return null;
 			}
+
+			({ query: parsedCompositeQuery, changed } = normalizeCompositeQuery(
+				rawQuery as object,
+				pathname,
+			));
 
 			// Convert old format to new format for each query in builder.queryData
 			if (parsedCompositeQuery?.builder?.queryData) {
@@ -51,7 +60,9 @@ export const useGetCompositeQueryParam = (): Query | null => {
 
 						// Convert having if needed
 						if (Array.isArray(query.having)) {
-							const convertedHaving = convertHavingToExpression(query.having);
+							const convertedHaving = convertHavingToExpression(
+								query.having.filter(isPlainObject),
+							);
 							convertedQuery.having = convertedHaving;
 						}
 
@@ -75,6 +86,9 @@ export const useGetCompositeQueryParam = (): Query | null => {
 			parsedCompositeQuery = null;
 		}
 
-		return parsedCompositeQuery;
-	}, [urlQuery]);
+		return parsedCompositeQuery ? { query: parsedCompositeQuery, changed } : null;
+	}, [urlQuery, pathname]);
 };
+
+export const useGetCompositeQueryParam = (): Query | null =>
+	useNormalizedCompositeQueryParam()?.query ?? null;

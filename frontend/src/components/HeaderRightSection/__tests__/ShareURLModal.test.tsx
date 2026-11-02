@@ -1,7 +1,8 @@
 // Mock dependencies before imports
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { matchPath, useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { matchRoute } from 'lib/router/matchRoute';
 import { useCopyToClipboard } from 'react-use';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -12,10 +13,12 @@ import GetMinMax from 'lib/getMinMax';
 
 import ShareURLModal from '../ShareURLModal';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: jest.fn(),
-	matchPath: jest.fn(),
+jest.mock('lib/router/useAppLocation', () => ({
+	useAppLocation: jest.fn(),
+}));
+
+jest.mock('lib/router/matchRoute', () => ({
+	matchRoute: jest.fn(),
 }));
 
 jest.mock('hooks/useUrlQuery', () => ({
@@ -48,12 +51,12 @@ Object.defineProperty(window, 'location', {
 	writable: true,
 });
 
-const mockUseLocation = useLocation as jest.Mock;
+const mockUseAppLocation = useAppLocation as jest.Mock;
 const mockUseUrlQuery = useUrlQuery as jest.Mock;
 const mockUseSelector = useSelector as jest.Mock;
 const mockGetMinMax = GetMinMax as jest.Mock;
 const mockUseCopyToClipboard = useCopyToClipboard as jest.Mock;
-const mockMatchPath = matchPath as jest.Mock;
+const mockMatchRoute = matchRoute as jest.Mock;
 
 const mockUrlQuery = {
 	get: jest.fn(),
@@ -71,7 +74,7 @@ describe('ShareURLModal', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 
-		mockUseLocation.mockReturnValue({
+		mockUseAppLocation.mockReturnValue({
 			pathname: TEST_PATH,
 		});
 
@@ -88,7 +91,7 @@ describe('ShareURLModal', () => {
 
 		mockUseCopyToClipboard.mockReturnValue([null, mockHandleCopyToClipboard]);
 
-		mockMatchPath.mockReturnValue(false);
+		mockMatchRoute.mockReturnValue(null);
 
 		// Reset URL query mocks - all return null by default
 		mockUrlQuery.get.mockReturnValue(null);
@@ -126,7 +129,7 @@ describe('ShareURLModal', () => {
 	});
 
 	it('should show absolute time toggle when on time-enabled route', () => {
-		mockMatchPath.mockReturnValue(true); // Simulate being on a route that supports time
+		mockMatchRoute.mockReturnValue({}); // Simulate being on a route that supports time
 
 		render(<ShareURLModal />);
 
@@ -146,7 +149,7 @@ describe('ShareURLModal', () => {
 
 	it('should toggle absolute time switch', async () => {
 		const user = userEvent.setup();
-		mockMatchPath.mockReturnValue(true);
+		mockMatchRoute.mockReturnValue({});
 		mockUseSelector.mockReturnValue({
 			selectedTime: '5min', // Non-custom time should enable absolute time by default
 		});
@@ -169,7 +172,7 @@ describe('ShareURLModal', () => {
 		// Invalid - missing start and end time for custom
 		mockUrlQuery.get.mockReturnValue(null);
 
-		mockMatchPath.mockReturnValue(true);
+		mockMatchRoute.mockReturnValue({});
 
 		render(<ShareURLModal />);
 
@@ -181,7 +184,7 @@ describe('ShareURLModal', () => {
 
 	it('should process URL with absolute time for non-custom time', async () => {
 		const user = userEvent.setup();
-		mockMatchPath.mockReturnValue(true);
+		mockMatchRoute.mockReturnValue({});
 		mockUseSelector.mockReturnValue({
 			selectedTime: '5min',
 		});
@@ -200,7 +203,7 @@ describe('ShareURLModal', () => {
 
 	it('should process URL with custom time parameters', async () => {
 		const user = userEvent.setup();
-		mockMatchPath.mockReturnValue(true);
+		mockMatchRoute.mockReturnValue({});
 		mockUseSelector.mockReturnValue({
 			selectedTime: 'custom',
 		});
@@ -228,7 +231,7 @@ describe('ShareURLModal', () => {
 
 	it('should process URL with relative time when absolute time is disabled', async () => {
 		const user = userEvent.setup();
-		mockMatchPath.mockReturnValue(true);
+		mockMatchRoute.mockReturnValue({});
 		mockUseSelector.mockReturnValue({
 			selectedTime: '5min',
 		});
@@ -249,12 +252,12 @@ describe('ShareURLModal', () => {
 
 	it('should handle routes that should be shared with time', async () => {
 		const user = userEvent.setup();
-		mockUseLocation.mockReturnValue({
+		mockUseAppLocation.mockReturnValue({
 			pathname: ROUTES.LOGS_EXPLORER,
 		});
 
-		mockMatchPath.mockImplementation(
-			(pathname: string, options: any) => options.path === ROUTES.LOGS_EXPLORER,
+		mockMatchRoute.mockImplementation((pathname: string, route: string) =>
+			route === ROUTES.LOGS_EXPLORER ? {} : null,
 		);
 
 		render(<ShareURLModal />);

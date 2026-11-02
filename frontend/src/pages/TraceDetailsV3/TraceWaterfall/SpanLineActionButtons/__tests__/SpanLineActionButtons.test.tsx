@@ -88,8 +88,14 @@ describe('SpanLineActionButtons', () => {
 			toString: jest.fn().mockReturnValue('spanId=test-span-id'),
 		};
 		const mockPathname = '/test-path';
+		// history@5 re-reads `window.location` on every access, so the stub has
+		// to carry the fields the router reads, not just the one under test.
 		const mockLocation = {
 			origin: 'http://localhost:3000',
+			href: 'http://localhost:3000/',
+			pathname: '/',
+			search: '',
+			hash: '',
 		};
 
 		// Mock window.location

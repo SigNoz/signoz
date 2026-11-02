@@ -27,10 +27,15 @@ export type WorkerLayer<Adds> = <T extends object, W extends object>(
 	base: TestType<T, W>,
 ) => TestType<T, W & Adds>;
 
-/** A `withX` layer binding `build` to the authenticated page. */
+/**
+ * A `withX` layer binding `build` to the authenticated page. `dispose` runs
+ * after the test while the page is still open, so it can clean up over the
+ * same session.
+ */
 export function driver<Name extends string, T>(
 	name: Name,
 	build: (ctx: DriverContext) => T,
+	dispose?: (value: T, ctx: DriverContext) => Promise<void>,
 ): Layer<{ [K in Name]: T }> {
 	const fixture = {
 		// Playwright reads fixture dependencies from the source text, so
@@ -39,7 +44,11 @@ export function driver<Name extends string, T>(
 			{ authedPage }: { authedPage: Page },
 			use: (value: T) => Promise<void>,
 		) => {
-			await use(build({ page: authedPage }));
+			const value = build({ page: authedPage });
+			await use(value);
+			if (dispose) {
+				await dispose(value, { page: authedPage });
+			}
 		},
 	};
 	return ((test: TestType<Fixtures, Fixtures>) =>

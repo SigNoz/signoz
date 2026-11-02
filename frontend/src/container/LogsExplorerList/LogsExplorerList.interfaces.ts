@@ -1,4 +1,4 @@
-import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
+import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import APIError from 'types/api/error';
 import { ILog } from 'types/api/logs/log';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';

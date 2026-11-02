@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useSearchParams } from 'react-router-dom-v5-compat';
+import { useAppSearchParams } from 'lib/router/useAppSearchParams';
 import * as Sentry from '@sentry/react';
 import { Filter } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
@@ -14,20 +14,11 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
-import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
-import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
-import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import {
-	ICurrentQueryData,
-	useHandleExplorerTabChange,
-} from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import {
@@ -35,13 +26,9 @@ import {
 	metricsRunQueryAction,
 	metricsSaveViewAction,
 } from 'pages/MetricsExplorer/aiActions';
-import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { Warning } from 'types/api';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
-import { explorerViewToPanelType } from 'utils/explorerUtils';
-import { v4 as uuid } from 'uuid';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import MetricDetails from '../MetricDetails/MetricDetails';
@@ -62,14 +49,9 @@ function Explorer(): JSX.Element {
 		stagedQuery,
 		updateAllQueriesOperators,
 		currentQuery,
-		handleSetConfig,
 		handleSetQueryData,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
-	const { safeNavigate } = useSafeNavigate();
-	const isSavedViewEnabled = useSavedViewEnabled();
-	const getExportToDashboardLink = useGetExportToDashboardLink();
-	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
 	const [showSidebar, setShowSidebar] = useState(true);
@@ -119,7 +101,7 @@ function Explorer(): JSX.Element {
 		[units, isMetricUnitsLoading, isMetricUnitsError],
 	);
 
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useAppSearchParams();
 	const isOneChartPerQueryEnabled =
 		searchParams.get(ONE_CHART_PER_QUERY_ENABLED_KEY) === 'true';
 
@@ -220,16 +202,6 @@ function Explorer(): JSX.Element {
 
 	useShareBuilderUrl({ defaultValue: defaultQuery });
 
-	const handleChangeSelectedView = useCallback(
-		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
-			const nextPanelType =
-				explorerViewToPanelType[view] || PANEL_TYPES.TIME_SERIES;
-			handleSetConfig(nextPanelType, DataSource.METRICS);
-			handleExplorerTabChange(nextPanelType, querySearchParameters);
-		},
-		[handleSetConfig, handleExplorerTabChange],
-	);
-
 	// ─── AI Assistant page actions (only when license feature is on) ───────────
 	const aiActions = useMemo(
 		() =>
@@ -264,40 +236,6 @@ function Explorer(): JSX.Element {
 	);
 	usePageActions('metrics-explorer', aiActions);
 	// ───────────────────────────────────────────────────────────────────────────
-
-	const handleExport = useCallback(
-		(
-			dashboard: ExportDashboard | null,
-			_isNewDashboard?: boolean,
-			queryToExport?: Query,
-		): void => {
-			if (!dashboard) {
-				return;
-			}
-
-			const widgetId = uuid();
-
-			let query = queryToExport || exportDefaultQuery;
-			if (yAxisUnit && !query.unit) {
-				query = {
-					...query,
-					unit: yAxisUnit,
-				};
-			}
-
-			const dashboardEditView = getExportToDashboardLink({
-				query,
-				panelType: PANEL_TYPES.TIME_SERIES,
-				dashboardId: dashboard.id,
-				widgetId,
-			});
-
-			if (dashboardEditView) {
-				safeNavigate(dashboardEditView);
-			}
-		},
-		[exportDefaultQuery, safeNavigate, yAxisUnit, getExportToDashboardLink],
-	);
 
 	const splitedQueries = useMemo(
 		() =>
@@ -424,17 +362,6 @@ function Explorer(): JSX.Element {
 					</div>
 				</div>
 			</QuickFiltersLayout>
-			{!isSavedViewEnabled && (
-				<ExplorerOptionWrapper
-					disabled={!stagedQuery}
-					query={exportDefaultQuery}
-					sourcepage={DataSource.METRICS}
-					onExport={handleExport}
-					isOneChartPerQuery={showOneChartPerQuery}
-					splitedQueries={splitedQueries}
-					handleChangeSelectedView={handleChangeSelectedView}
-				/>
-			)}
 			{isMetricDetailsOpen && selectedMetricName && (
 				<MetricDetails
 					metricName={selectedMetricName}
