@@ -1,4 +1,4 @@
-import type { PanelKind } from '../../../Panels/types/panelKind';
+import type { PanelKind } from '../../../../../Panels/types/panelKind';
 import { PANEL_TYPE_PREVIEWS } from './panelTypePreviews';
 
 import styles from './PanelTypePreview.module.scss';
