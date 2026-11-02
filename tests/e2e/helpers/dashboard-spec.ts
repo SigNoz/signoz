@@ -33,6 +33,9 @@ export const PanelKind = {
 	List: 'signoz/ListPanel',
 	Heatmap: 'signoz/HeatmapPanel',
 	Text: 'signoz/TextPanel',
+	ScatterPlot: 'signoz/ScatterPlotPanel',
+	TopList: 'signoz/TopListPanel',
+	GeoMap: 'signoz/GeoMapPanel',
 } as const;
 
 export type PanelKind = (typeof PanelKind)[keyof typeof PanelKind];
@@ -199,6 +202,9 @@ const SCALAR_KINDS: PanelKind[] = [
 	PanelKind.Number,
 	PanelKind.PieChart,
 	PanelKind.Table,
+	PanelKind.ScatterPlot,
+	PanelKind.TopList,
+	PanelKind.GeoMap,
 ];
 
 function defaultQueryFor(kind: PanelKind): Query {
