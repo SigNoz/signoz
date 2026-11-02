@@ -1,5 +1,3 @@
-import { MemoryRouter } from 'react-router-dom-v5-compat';
-import * as panelTypesQueryParamHooks from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 // https://virtuoso.dev/mocking-in-tests/
 import { VirtuosoMockContext } from 'react-virtuoso';
 import {
@@ -7,7 +5,6 @@ import {
 	initialQueryBuilderFormValues,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
 import { noop } from 'lodash-es';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
@@ -20,13 +17,6 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import LogsExplorer from '../index';
 
 const queryRangeURL = 'http://localhost/api/v3/query_range';
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${ROUTES.LOGS_EXPLORER}`,
-	}),
-}));
 
 // mocking the graph components in this test as this should be handled separately
 jest.mock(
@@ -92,15 +82,13 @@ describe('Logs Explorer Tests', () => {
 	it('Logs Explorer default view test without data', async () => {
 		const { getByRole, queryByText, getByTestId, queryByTestId, container } =
 			render(
-				<MemoryRouter
-					initialEntries={[
-						'/logs-explorer/?panelType=list&selectedExplorerView=list',
-					]}
-				>
-					<PreferenceContextProvider>
-						<LogsExplorer />
-					</PreferenceContextProvider>
-				</MemoryRouter>,
+				<PreferenceContextProvider>
+					<LogsExplorer />
+				</PreferenceContextProvider>,
+				undefined,
+				{
+					initialRoute: '/logs-explorer/?panelType=list&selectedExplorerView=list',
+				},
 			);
 
 		// by default is hidden, toggle the chart and check it's visibility
@@ -132,18 +120,12 @@ describe('Logs Explorer Tests', () => {
 	});
 
 	it('renders the tab the url panelTypes param names', () => {
-		// useLocation is mocked without a search string in this file, so drive
-		// the param through the hook that reads it.
-		const panelTypeSpy = jest
-			.spyOn(panelTypesQueryParamHooks, 'useGetPanelTypesQueryParam')
-			.mockReturnValue(PANEL_TYPES.TIME_SERIES);
-
 		const { container } = render(
-			<MemoryRouter initialEntries={['/logs-explorer/?panelTypes=%22graph%22']}>
-				<PreferenceContextProvider>
-					<LogsExplorer />
-				</PreferenceContextProvider>
-			</MemoryRouter>,
+			<PreferenceContextProvider>
+				<LogsExplorer />
+			</PreferenceContextProvider>,
+			undefined,
+			{ initialRoute: '/logs-explorer/?panelTypes=%22graph%22' },
 		);
 
 		expect(container.querySelector('.timeseries-view-tab')).toHaveClass(
@@ -152,7 +134,6 @@ describe('Logs Explorer Tests', () => {
 		expect(container.querySelector('.list-view-tab')).not.toHaveClass(
 			'active-tab',
 		);
-		panelTypeSpy.mockRestore();
 	});
 
 	// update this test properly
@@ -160,19 +141,17 @@ describe('Logs Explorer Tests', () => {
 		// mocking the query range API to return the logs
 		logsQueryServerRequest();
 		const { queryByText, queryByTestId } = render(
-			<MemoryRouter
-				initialEntries={[
-					'/logs-explorer/?panelType=list&selectedExplorerView=list',
-				]}
-			>
-				<PreferenceContextProvider>
-					<VirtuosoMockContext.Provider
-						value={{ viewportHeight: 300, itemHeight: 100 }}
-					>
-						<LogsExplorer />
-					</VirtuosoMockContext.Provider>
-				</PreferenceContextProvider>
-			</MemoryRouter>,
+			<PreferenceContextProvider>
+				<VirtuosoMockContext.Provider
+					value={{ viewportHeight: 300, itemHeight: 100 }}
+				>
+					<LogsExplorer />
+				</VirtuosoMockContext.Provider>
+			</PreferenceContextProvider>,
+			undefined,
+			{
+				initialRoute: '/logs-explorer/?panelType=list&selectedExplorerView=list',
+			},
 		);
 
 		// check for loading state to be not present
@@ -195,66 +174,63 @@ describe('Logs Explorer Tests', () => {
 		// mocking the query range API to return the logs
 		logsQueryServerRequest();
 		const { queryAllByText } = render(
-			<MemoryRouter
-				initialEntries={[
-					'/logs-explorer/?panelType=list&selectedExplorerView=list',
-				]}
-			>
-				<QueryBuilderContext.Provider
-					value={{
-						isDefaultQuery: (): boolean => false,
-						currentQuery: {
-							...initialQueriesMap.metrics,
-							builder: {
-								...initialQueriesMap.metrics.builder,
-								queryData: [
-									initialQueryBuilderFormValues,
-									initialQueryBuilderFormValues,
-								],
-								queryTraceOperator: [],
-							},
+			<QueryBuilderContext.Provider
+				value={{
+					isDefaultQuery: (): boolean => false,
+					currentQuery: {
+						...initialQueriesMap.metrics,
+						builder: {
+							...initialQueriesMap.metrics.builder,
+							queryData: [
+								initialQueryBuilderFormValues,
+								initialQueryBuilderFormValues,
+							],
+							queryTraceOperator: [],
 						},
-						setSupersetQuery: jest.fn(),
-						supersetQuery: initialQueriesMap.metrics,
-						stagedQuery: initialQueriesMap.metrics,
-						initialDataSource: null,
-						panelType: PANEL_TYPES.TIME_SERIES,
-						isEnabledQuery: false,
-						lastUsedQuery: 0,
-						handleSetTraceOperatorData: noop,
-						removeAllQueryBuilderEntities: noop,
-						removeTraceOperator: noop,
-						addTraceOperator: noop,
-						setLastUsedQuery: noop,
-						handleSetQueryData: noop,
-						handleSetFormulaData: noop,
-						handleSetQueryItemData: noop,
-						handleSetConfig: noop,
-						removeQueryBuilderEntityByIndex: noop,
-						removeQueryTypeItemByIndex: noop,
-						addNewBuilderQuery: noop,
-						cloneQuery: noop,
-						addNewFormula: noop,
-						addNewQueryItem: noop,
-						redirectWithQueryBuilderData: noop,
-						handleRunQuery: noop,
-						resetQuery: noop,
-						updateAllQueriesOperators: (): Query => initialQueriesMap.metrics,
-						updateQueriesData: (): Query => initialQueriesMap.metrics,
-						initQueryBuilderData: noop,
-						handleOnUnitsChange: noop,
-						isStagedQueryUpdated: (): boolean => false,
-					}}
-				>
-					<PreferenceContextProvider>
-						<VirtuosoMockContext.Provider
-							value={{ viewportHeight: 300, itemHeight: 100 }}
-						>
-							<LogsExplorer />
-						</VirtuosoMockContext.Provider>
-					</PreferenceContextProvider>
-				</QueryBuilderContext.Provider>
-			</MemoryRouter>,
+					},
+					setSupersetQuery: jest.fn(),
+					supersetQuery: initialQueriesMap.metrics,
+					stagedQuery: initialQueriesMap.metrics,
+					initialDataSource: null,
+					panelType: PANEL_TYPES.TIME_SERIES,
+					isEnabledQuery: false,
+					lastUsedQuery: 0,
+					handleSetTraceOperatorData: noop,
+					removeAllQueryBuilderEntities: noop,
+					removeTraceOperator: noop,
+					addTraceOperator: noop,
+					setLastUsedQuery: noop,
+					handleSetQueryData: noop,
+					handleSetFormulaData: noop,
+					handleSetQueryItemData: noop,
+					handleSetConfig: noop,
+					removeQueryBuilderEntityByIndex: noop,
+					removeQueryTypeItemByIndex: noop,
+					addNewBuilderQuery: noop,
+					cloneQuery: noop,
+					addNewFormula: noop,
+					addNewQueryItem: noop,
+					redirectWithQueryBuilderData: noop,
+					handleRunQuery: noop,
+					resetQuery: noop,
+					updateAllQueriesOperators: (): Query => initialQueriesMap.metrics,
+					updateQueriesData: (): Query => initialQueriesMap.metrics,
+					initQueryBuilderData: noop,
+					handleOnUnitsChange: noop,
+				}}
+			>
+				<PreferenceContextProvider>
+					<VirtuosoMockContext.Provider
+						value={{ viewportHeight: 300, itemHeight: 100 }}
+					>
+						<LogsExplorer />
+					</VirtuosoMockContext.Provider>
+				</PreferenceContextProvider>
+			</QueryBuilderContext.Provider>,
+			undefined,
+			{
+				initialRoute: '/logs-explorer/?panelType=list&selectedExplorerView=list',
+			},
 		);
 
 		const queries = queryAllByText(
@@ -265,15 +241,13 @@ describe('Logs Explorer Tests', () => {
 
 	it('frequency chart visibility and switch toggle', async () => {
 		const { getByRole, queryByText } = render(
-			<MemoryRouter
-				initialEntries={[
-					'/logs-explorer/?panelType=list&selectedExplorerView=list',
-				]}
-			>
-				<PreferenceContextProvider>
-					<LogsExplorer />
-				</PreferenceContextProvider>
-			</MemoryRouter>,
+			<PreferenceContextProvider>
+				<LogsExplorer />
+			</PreferenceContextProvider>,
+			undefined,
+			{
+				initialRoute: '/logs-explorer/?panelType=list&selectedExplorerView=list',
+			},
 		);
 
 		// check the presence of Frequency Chart

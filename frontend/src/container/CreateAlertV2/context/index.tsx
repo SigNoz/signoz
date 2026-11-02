@@ -10,7 +10,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import {
 	useCreateRule,
 	useTestRule,
@@ -22,9 +22,14 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
-import { INITIAL_CREATE_ALERT_STATE } from './constants';
+import {
+	INITIAL_ANOMALY_THRESHOLD,
+	INITIAL_CREATE_ALERT_STATE,
+	INITIAL_EVALUATION_WINDOW_STATE,
+} from './constants';
 import {
 	EvaluationWindowPreset,
+	pickAlertPrefillParams,
 	resolveUrlAlertPrefill,
 } from './resolveUrlAlertPrefill';
 import {
@@ -124,14 +129,15 @@ export function CreateAlertProvider(
 		[setCreateAlertState],
 	);
 
-	const location = useLocation();
+	const location = useAppLocation();
 	const queryParams = new URLSearchParams(location.search);
 	const ruleNameFromURL = queryParams.get(QueryParams.ruleName);
 	const yAxisUnitFromURL = queryParams.get(QueryParams.yAxisUnit);
 	// Prefill declared in the URL; applied verbatim, agnostic of the producer.
+	const prefillParams = pickAlertPrefillParams(location.search);
 	const urlPrefill = useMemo(
-		() => resolveUrlAlertPrefill(new URLSearchParams(location.search)),
-		[location.search],
+		() => resolveUrlAlertPrefill(new URLSearchParams(prefillParams)),
+		[prefillParams],
 	);
 
 	const [alertType, setAlertType] = useState<AlertTypes>(() => {
@@ -141,14 +147,41 @@ export function CreateAlertProvider(
 		return getInitialAlertTypeFromURL(queryParams, currentQuery);
 	});
 
+	const resetThresholdState = useCallback((type: AlertTypes): void => {
+		setCreateAlertState({
+			slice: CreateAlertSlice.THRESHOLD,
+			action: {
+				type: 'RESET',
+			},
+		});
+
+		if (type === AlertTypes.ANOMALY_BASED_ALERT) {
+			setCreateAlertState({
+				slice: CreateAlertSlice.THRESHOLD,
+				action: {
+					type: 'SET_THRESHOLDS',
+					payload: [INITIAL_ANOMALY_THRESHOLD],
+				},
+			});
+		}
+	}, []);
+
 	const handleAlertTypeChange = useCallback(
 		(value: AlertTypes): void => {
-			const queryToRedirect = buildInitialAlertDef(value);
-			const currentQueryToRedirect = mapQueryDataFromApi(
-				queryToRedirect.condition.compositeQuery,
-			);
+			// Threshold and anomaly alerts share the metric query, so switching keeps it.
+			const metricAlertTypes = [
+				AlertTypes.METRICS_BASED_ALERT,
+				AlertTypes.ANOMALY_BASED_ALERT,
+			];
+			const keepsQuery =
+				value !== alertType &&
+				metricAlertTypes.includes(value) &&
+				metricAlertTypes.includes(alertType);
+			const queryToRedirect = keepsQuery
+				? currentQuery
+				: mapQueryDataFromApi(buildInitialAlertDef(value).condition.compositeQuery);
 			redirectWithQueryBuilderData(
-				currentQueryToRedirect,
+				queryToRedirect,
 				{
 					[QueryParams.alertType]: value,
 					[QueryParams.ruleType]:
@@ -160,8 +193,28 @@ export function CreateAlertProvider(
 				true,
 			);
 			setAlertType(value);
+			if (isEditMode && keepsQuery) {
+				resetThresholdState(value);
+			}
+			if (
+				value === AlertTypes.ANOMALY_BASED_ALERT &&
+				createAlertState.evaluationWindow.windowType !== 'rolling'
+			) {
+				setEvaluationWindow({
+					type: 'SET_INITIAL_STATE',
+					payload: INITIAL_EVALUATION_WINDOW_STATE,
+				});
+			}
 		},
-		[redirectWithQueryBuilderData],
+		[
+			alertType,
+			createAlertState.evaluationWindow.windowType,
+			currentQuery,
+			isEditMode,
+			redirectWithQueryBuilderData,
+			resetThresholdState,
+			setEvaluationWindow,
+		],
 	);
 
 	const ruleNameAppliedRef = useRef(false);
@@ -176,12 +229,7 @@ export function CreateAlertProvider(
 			return;
 		}
 
-		setCreateAlertState({
-			slice: CreateAlertSlice.THRESHOLD,
-			action: {
-				type: 'RESET',
-			},
-		});
+		resetThresholdState(alertType);
 
 		if (urlPrefill.thresholds) {
 			setCreateAlertState({
@@ -213,7 +261,10 @@ export function CreateAlertProvider(
 			});
 		}
 
-		if (urlPrefill.evaluationWindowPreset === EvaluationWindowPreset.METER) {
+		if (
+			urlPrefill.evaluationWindowPreset === EvaluationWindowPreset.METER &&
+			alertType !== AlertTypes.ANOMALY_BASED_ALERT
+		) {
 			setCreateAlertState({
 				slice: CreateAlertSlice.EVALUATION_WINDOW,
 				action: {
@@ -243,7 +294,14 @@ export function CreateAlertProvider(
 				},
 			});
 		}
-	}, [alertType, urlPrefill, ruleNameFromURL, yAxisUnitFromURL, isEditMode]);
+	}, [
+		alertType,
+		urlPrefill,
+		ruleNameFromURL,
+		yAxisUnitFromURL,
+		isEditMode,
+		resetThresholdState,
+	]);
 
 	useEffect(() => {
 		if (isEditMode && initialAlertState) {

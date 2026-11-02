@@ -54,10 +54,6 @@ const tracesRoute = ({ tab, view }: RouteValues): string => {
 		return ROUTES.TRACES_FUNNELS;
 	}
 
-	if (tab === 'views') {
-		return ROUTES.TRACES_SAVE_VIEWS;
-	}
-
 	const params = new URLSearchParams({
 		[QueryParams.panelTypes]: JSON.stringify(explorerViewToPanelType[view]),
 		[QueryParams.selectedExplorerView]: view,
@@ -82,7 +78,7 @@ export const tracesMocks = defineStoryMocks({
 		tab: choiceControl<TracesTab>('Tab', {
 			group: VIEW,
 			description:
-				'The three pathnames the module tabs between. Clicking another tab leaves the story, so switch it here.',
+				'The two pathnames the module tabs between. Clicking another tab leaves the story, so switch it here.',
 			options: TRACES_TABS,
 			value: 'explorer',
 		}),
@@ -120,7 +116,7 @@ export const tracesMocks = defineStoryMocks({
 		}),
 		savedViews: countControl('Saved views', {
 			group: SAVED,
-			description: 'Fills the views dropdown and the Views tab.',
+			description: 'Fills the saved views list beside the explorer.',
 			value: 4,
 			max: 8,
 		}),
@@ -159,7 +155,7 @@ export const tracesMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v1/explorer/views',
+			'http://localhost/api/v2/saved_views',
 			response.json(() => savedTraceViewsResponse(values.savedViews)),
 		),
 

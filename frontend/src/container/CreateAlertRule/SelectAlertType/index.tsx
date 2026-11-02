@@ -5,8 +5,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { FeatureKeys } from 'constants/features';
-import { useAppContext } from 'providers/App/App';
+import { useIsAnomalyDetectionAvailable } from 'container/CreateAlertV2/useIsAnomalyDetectionAvailable';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
@@ -17,11 +16,8 @@ import { OptionType } from './types';
 
 function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 	const { t } = useTranslation(['alerts']);
-	const { featureFlags } = useAppContext();
 
-	const isAnomalyDetectionEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
-			?.active || false;
+	const isAnomalyDetectionEnabled = useIsAnomalyDetectionAvailable();
 
 	const optionList = getOptionList(t, isAnomalyDetectionEnabled);
 

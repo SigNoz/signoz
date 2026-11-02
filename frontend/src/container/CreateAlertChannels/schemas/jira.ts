@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
-import { isValidJiraReopenDuration, isValidJiraSiteURL } from '../utils';
+import { isValidJiraReopenDuration } from '../utils';
 import { requiredString } from './shared';
 
 const required = requiredString('jira_required_fields');
 
 export const jiraSchema = z.object({
-	site: required.refine(isValidJiraSiteURL, { message: 'jira_site_invalid' }),
+	site: required,
 	email: required,
 	apiToken: required,
 	project: required,

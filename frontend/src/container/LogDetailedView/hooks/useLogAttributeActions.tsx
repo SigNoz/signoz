@@ -2,9 +2,11 @@ import { useCallback, useMemo } from 'react';
 import { CircleMinus, CirclePlus, Layers, RefreshCw } from '@signozhq/icons';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { FeatureKeys } from 'constants/features';
-import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
+import {
+	ChangeViewFunctionType,
+	ICurrentQueryData,
+} from 'hooks/useHandleExplorerTabChange';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import {
 	FieldContext,

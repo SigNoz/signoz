@@ -89,6 +89,15 @@ export const handlers = [
 	fieldValuesHandler(['checkout', 'frontend', 'payments']),
 ];
 
+export const noSavedFiltersHandler = rest.get(
+	'http://localhost/api/v2/quick_filters/logs',
+	(_req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json(quickFiltersResponse(QuickfiltertypesSourceDTO.logs, [])),
+		),
+);
+
 export const loadingFiltersHandlers = [
 	rest.get('http://localhost/api/v2/quick_filters/logs', (_req, res, ctx) =>
 		res(ctx.delay('infinite')),

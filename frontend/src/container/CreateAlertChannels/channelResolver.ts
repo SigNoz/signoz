@@ -1,4 +1,5 @@
 import { TFunction } from 'i18next';
+import { get, set } from 'lodash-es';
 import type { FieldErrors, Resolver } from 'react-hook-form';
 import type { $ZodIssue } from 'zod/v4/core';
 
@@ -10,12 +11,12 @@ const toFieldErrors = (
 	issues: $ZodIssue[],
 	t: TFunction,
 ): FieldErrors<ChannelFormValues> => {
-	const errors: Record<string, { type: string; message: string }> = {};
+	const errors = {};
 
 	issues.forEach((issue) => {
-		const field = issue.path.join('.') || 'name';
-		if (!errors[field]) {
-			errors[field] = { type: 'validation', message: t(issue.message) };
+		const path = issue.path.length ? issue.path : ['name'];
+		if (!get(errors, path)) {
+			set(errors, path, { type: 'validation', message: t(issue.message) });
 		}
 	});
 

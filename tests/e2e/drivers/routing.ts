@@ -8,10 +8,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 import { ADMIN } from '../helpers/auth';
 import { authToken } from '../helpers/common';
-import {
-	createDashboardViaApi,
-	deleteDashboardViaApi,
-} from '../helpers/dashboards';
+import { buildDashboard } from '../helpers/dashboard-spec';
 import { seedPodMetricsViaSeeder } from '../helpers/infra-monitoring';
 import { gotoLogsExplorer } from '../helpers/logs-explorer';
 import {
@@ -21,6 +18,7 @@ import {
 	seedTracesViaSeeder,
 } from '../helpers/trace-details';
 
+import { createViaApi, deleteViaApi } from './dashboards';
 import { driver, kit, seeded } from './kit';
 
 // The react-router v5 -> v7 regression net. Router-sensitive mechanics (history
@@ -346,11 +344,10 @@ const withDashboard = seeded(
 	'dashboard',
 	async ({ page }) => {
 		const title = `routing-${uniqueSuffix()}`;
-		const id = await createDashboardViaApi(page, title);
+		const id = await createViaApi(page, buildDashboard({ title, sections: [] }));
 		return { id, title, path: `${PATH.dashboards}/${id}` };
 	},
-	async ({ page, value }) =>
-		deleteDashboardViaApi(page.request, value.id, await authToken(page)),
+	async ({ page, value }) => deleteViaApi(page, value.id),
 );
 
 const withTrace = seeded(

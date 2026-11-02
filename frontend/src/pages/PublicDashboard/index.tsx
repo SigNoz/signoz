@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import {
 	PublicDashboardSchema,
 	useGetResolvedPublicDashboard,
@@ -12,20 +12,20 @@ import './PublicDashboard.styles.scss';
 
 function PublicDashboardPage(): JSX.Element {
 	// read the dashboard id from the url
-	const { dashboardId } = useParams<{ dashboardId: string }>();
+	const { dashboardId } = useAppParams<'dashboardId'>();
 
 	const {
 		data: resolved,
 		isLoading,
 		isFetching,
 		isError,
-	} = useGetResolvedPublicDashboard(dashboardId || '');
+	} = useGetResolvedPublicDashboard(dashboardId ?? '');
 
 	const isBusy = isLoading || isFetching;
 
 	return (
 		<div className="public-dashboard-page">
-			{resolved?.schema === PublicDashboardSchema.V2 && (
+			{resolved?.schema === PublicDashboardSchema.V2 && dashboardId && (
 				<PublicDashboardView publicDashboardId={dashboardId} data={resolved.data} />
 			)}
 

@@ -4,6 +4,7 @@ import {
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import {
 	buildSavedViewDeletePermission,
 	buildSavedViewUpdatePermission,
@@ -29,6 +30,15 @@ export const SAVED_VIEW_URL_PARAMS = [
 	QueryParams.compositeQuery,
 	QueryParams.panelTypes,
 ];
+
+export const SOURCEPAGE_VS_ROUTES: {
+	[key: string]: Partial<(typeof ROUTES)[keyof typeof ROUTES]>;
+} = {
+	logs: ROUTES.LOGS_EXPLORER,
+	traces: ROUTES.TRACES_EXPLORER,
+	metrics: ROUTES.METRICS_EXPLORER_EXPLORER,
+	meter: ROUTES.METER_EXPLORER,
+} as const;
 
 export const MY_VIEW_NAME = 'My view';
 

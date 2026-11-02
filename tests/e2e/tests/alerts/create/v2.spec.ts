@@ -381,6 +381,7 @@ test.describe('Alert create — v2 builder', () => {
 		const url = new URL(page.url());
 		expect(url.pathname).toBe('/alerts');
 		expect(url.searchParams.get('tab')).toBe('Configuration');
+		expect(url.searchParams.get('subTab')).toBe('routing-policies');
 	});
 
 	test('CV2-16 the group-by select is disabled until the query groups by something', async ({

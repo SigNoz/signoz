@@ -1,9 +1,14 @@
-import { screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { toast } from '@signozhq/ui/sonner';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import {
+	fireEvent,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 
 import SavedViewsPanel from '../SavedViewsPanel';
 import { mockSavedViewsApi } from './savedViewsApiMock';
@@ -14,6 +19,7 @@ import {
 	renderWithExplorerProviders,
 	urlParam,
 	viewUrl,
+	withGlobalTime,
 } from './savedViewsTestUtils';
 
 jest.mock('@signozhq/ui/sonner', () => ({
@@ -53,6 +59,9 @@ const row = (name: string): HTMLElement =>
 		.getAllByTestId('saved-views-row')
 		.find((element) => element.textContent?.includes(name)) as HTMLElement;
 
+const rowName = (name: string): HTMLElement =>
+	within(row(name)).getByTestId('saved-views-row-name');
+
 describe('SavedViewsPanel list', () => {
 	beforeEach(() => {
 		localStorage.clear();
@@ -85,15 +94,68 @@ describe('SavedViewsPanel list', () => {
 		const { history } = renderPanel();
 
 		await screen.findByTestId('saved-views-list');
-		const name = within(row('Slow spans')).getByTestId('saved-views-row-name');
-		await waitFor(() => expectUsable(name));
-		await userEvent.click(name);
+		await waitFor(() => expectUsable(rowName('Slow spans')));
+		await userEvent.click(rowName('Slow spans'));
 
 		await waitFor(() =>
 			expect(urlParam(history, QueryParams.viewKey)).toBe(
 				JSON.stringify(alsoMine.id),
 			),
 		);
+	});
+
+	it('links each row to its view in the current time range', async () => {
+		mockSavedViewsApi([mine, alsoMine]);
+		renderWithExplorerProviders(
+			withGlobalTime(
+				<SavedViewsPanel
+					source={SavedviewtypesSourceDTO.traces}
+					onClose={jest.fn()}
+				/>,
+				{ selectedTime: '1h' },
+			),
+			explorerUrl(PATH, {}),
+		);
+
+		await screen.findByTestId('saved-views-list');
+		const url = new URL(
+			rowName('Slow spans').getAttribute('href') as string,
+			window.location.origin,
+		);
+
+		expect(url.pathname).toBe(PATH);
+		expect(url.searchParams.get(QueryParams.viewKey)).toBe(
+			JSON.stringify(alsoMine.id),
+		);
+		expect(url.searchParams.get(QueryParams.panelTypes)).toBe(
+			JSON.stringify(alsoMine.spec.panelType),
+		);
+		expect(url.searchParams.has(QueryParams.compositeQuery)).toBe(true);
+		expect(url.searchParams.get(QueryParams.relativeTime)).toBe('1h');
+	});
+
+	it.each([
+		['Ctrl', { ctrlKey: true }],
+		['Cmd', { metaKey: true }],
+		['Shift', { shiftKey: true }],
+	])('leaves a %s click on a row to the browser', async (_key, modifiers) => {
+		mockSavedViewsApi([mine, alsoMine]);
+		const { history } = renderPanel();
+		await screen.findByTestId('saved-views-list');
+		const before = history.location.search;
+
+		let defaultPrevented: boolean | undefined;
+		const recordClick = (event: MouseEvent): void => {
+			defaultPrevented = event.defaultPrevented;
+			// jsdom cannot open a new tab.
+			event.preventDefault();
+		};
+		document.addEventListener('click', recordClick);
+		fireEvent.click(rowName('Slow spans'), modifiers);
+		document.removeEventListener('click', recordClick);
+
+		expect(defaultPrevented).toBe(false);
+		expect(history.location.search).toBe(before);
 	});
 
 	it('marks the open view and clears it from its row', async () => {
@@ -120,9 +182,8 @@ describe('SavedViewsPanel list', () => {
 		await screen.findByTestId('saved-views-list');
 		const before = history.location.search;
 
-		await userEvent.click(
-			within(row('Errors')).getByTestId('saved-views-row-name'),
-		);
+		expect(rowName('Errors')).toHaveAttribute('aria-current', 'page');
+		await userEvent.click(rowName('Errors'));
 
 		expect(history.location.search).toBe(before);
 	});
