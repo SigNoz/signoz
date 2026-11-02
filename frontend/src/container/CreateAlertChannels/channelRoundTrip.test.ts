@@ -23,7 +23,6 @@ const SPECS: Record<string, Record<string, unknown>> = {
 		url: 'https://example.com/hook',
 		username: 'u',
 		password: 'p',
-		bearerToken: 't',
 		sendResolved: true,
 	},
 	email: {

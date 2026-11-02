@@ -119,6 +119,104 @@ describe('ChannelForm save', () => {
 	);
 
 	it(
+		'sends only the credentials of the picked webhook auth',
+		async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				rest.post(
+					'http://localhost/api/v2/notification_channels',
+					async (req, res, ctx) => {
+						body = await req.json();
+						return res(ctx.status(201), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
+			await user.click(await screen.findByRole('option', { name: /^Webhook$/ }));
+
+			await user.type(screen.getByTestId('channel-name-textbox'), 'hook alerts');
+			await user.type(
+				screen.getByTestId('webhook-url-textbox'),
+				'https://example.com/hook',
+			);
+
+			await user.click(screen.getByTestId('webhook-auth-radio-item-basic'));
+			await user.type(screen.getByTestId('webhook-username-textbox'), 'hook-user');
+
+			await user.click(screen.getByTestId('webhook-auth-radio-item-bearer'));
+			expect(
+				screen.queryByTestId('webhook-username-textbox'),
+			).not.toBeInTheDocument();
+			await user.type(
+				screen.getByTestId('webhook-bearer-token-textbox'),
+				'hook-token',
+			);
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await waitFor(() => expect(body).toBeDefined(), FIND);
+			expect(
+				(body as { config: { spec: Record<string, unknown> } }).config.spec,
+			).toStrictEqual({
+				url: 'https://example.com/hook',
+				bearerToken: 'hook-token',
+				sendResolved: true,
+			});
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
+		'flags a slack field without a value instead of sending it',
+		async () => {
+			const onCreate = jest.fn();
+			server.use(
+				rest.post(
+					'http://localhost/api/v2/notification_channels',
+					(_, res, ctx) => {
+						onCreate();
+						return res(ctx.status(201), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.type(
+				await screen.findByTestId('channel-name-textbox', {}, FIND),
+				'slack alerts',
+			);
+			await user.type(
+				screen.getByTestId('webhook-url-textbox'),
+				'https://hooks.slack.com/services/T/B/X',
+			);
+			await user.click(screen.getByTestId('slack-field-add'));
+			await user.type(screen.getByTestId('slack-field-title-0'), 'env');
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await screen.findByText('slack_field_value_required', {}, FIND);
+			expect(onCreate).not.toHaveBeenCalled();
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
 		'updates with the config only, since both names are immutable',
 		async () => {
 			let body: Record<string, unknown> | undefined;
@@ -161,6 +259,74 @@ describe('ChannelForm save', () => {
 				},
 			});
 			expect(body).not.toHaveProperty('displayName');
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
+		'keeps bearer auth while a saved token is cleared and replaced',
+		async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				rest.get(
+					'http://localhost/api/v2/notification_channels/:id',
+					(_, res, ctx) =>
+						res(
+							ctx.status(200),
+							ctx.json({
+								status: 'success',
+								data: {
+									id: '3',
+									name: 'webhook-channel',
+									displayName: 'webhook channel',
+									createdAt: '2026-01-01T00:00:00Z',
+									updatedAt: '2026-01-01T00:00:00Z',
+									config: {
+										kind: 'webhook',
+										spec: { url: 'https://example.com/hook', bearerToken: 'old-token' },
+									},
+								},
+							}),
+						),
+				),
+				rest.put(
+					'http://localhost/api/v2/notification_channels/:id',
+					async (req, res, ctx) => {
+						body = await req.json();
+						return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			const onDone = jest.fn();
+			render(<ChannelForm channelId="3" onDone={onDone} />);
+
+			const token = await screen.findByTestId(
+				'webhook-bearer-token-textbox',
+				{},
+				FIND,
+			);
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.clear(token);
+			await user.type(
+				screen.getByTestId('webhook-bearer-token-textbox'),
+				'new-token',
+			);
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await waitFor(() => expect(onDone).toHaveBeenCalled(), FIND);
+			expect(body).toStrictEqual({
+				config: {
+					kind: 'webhook',
+					spec: { url: 'https://example.com/hook', bearerToken: 'new-token' },
+				},
+			});
 		},
 		TEST_TIMEOUT,
 	);

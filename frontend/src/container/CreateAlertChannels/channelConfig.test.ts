@@ -2,7 +2,7 @@ import { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/s
 
 import { toChannelConfig, toPostableChannel } from './channelConfig';
 import { toChannelFormState } from './channelFormValues';
-import { ChannelFormValues, ChannelKind } from './types';
+import { ChannelFormValues, ChannelKind, WebhookAuth } from './types';
 
 const slackValues: ChannelFormValues = {
 	name: 'prod alerts',
@@ -54,6 +54,22 @@ describe('toChannelConfig', () => {
 			kind: 'webhook',
 			spec: { url: 'https://example.com/hook', sendResolved: false },
 		});
+	});
+
+	it.each([
+		[WebhookAuth.none, {}],
+		[WebhookAuth.basic, { username: 'u', password: 'p' }],
+		[WebhookAuth.bearer, { bearerToken: 't' }],
+	])('sends only the %s webhook credentials', (webhookAuth, credentials) => {
+		expect(
+			toChannelConfig(ChannelKind.webhook, {
+				url: 'https://example.com/hook',
+				webhookAuth,
+				username: 'u',
+				password: 'p',
+				bearerToken: 't',
+			}).spec,
+		).toStrictEqual({ url: 'https://example.com/hook', ...credentials });
 	});
 
 	it('drops an attachment list the user emptied instead of sending []', () => {

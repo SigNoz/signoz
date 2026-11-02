@@ -4,11 +4,14 @@ import { ChevronDown, ChevronUp } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../context';
 import EvaluationWindowPopover from './EvaluationWindowPopover';
+import { IEvaluationSettingsProps } from './types';
 import { getEvaluationWindowTypeText, getTimeframeText } from './utils';
 
 import './styles.scss';
 
-function EvaluationSettings(): JSX.Element {
+function EvaluationSettings({
+	rollingOnly = false,
+}: IEvaluationSettingsProps): JSX.Element {
 	const { evaluationWindow, setEvaluationWindow } = useCreateAlertState();
 
 	const [isEvaluationWindowPopoverOpen, setIsEvaluationWindowPopoverOpen] =
@@ -24,6 +27,7 @@ function EvaluationSettings(): JSX.Element {
 				<EvaluationWindowPopover
 					evaluationWindow={evaluationWindow}
 					setEvaluationWindow={setEvaluationWindow}
+					rollingOnly={rollingOnly}
 				/>
 			}
 			trigger="click"

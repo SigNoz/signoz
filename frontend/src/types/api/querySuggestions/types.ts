@@ -37,22 +37,4 @@ export interface QueryKeyRequestProps {
 	signalSource?: 'meter' | '';
 }
 
-export interface QueryKeyValueSuggestionsProps {
-	id: string;
-	name: string;
-}
-
-export interface QueryKeyValueSuggestionsResponseProps {
-	status: string;
-	data: QueryKeyValueSuggestionsProps[];
-}
-
-export interface QueryKeyValueRequestProps {
-	signal: 'traces' | 'logs' | 'metrics';
-	key: string;
-	searchText: string;
-	signalSource?: 'meter' | '';
-	metricName?: string;
-}
-
 export type SignalType = 'traces' | 'logs' | 'metrics';

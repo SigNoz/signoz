@@ -7,43 +7,43 @@ import (
 )
 
 type ChannelSlackConfig struct {
-	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	APIURL       string                       `json:"apiUrl" required:"true" format:"password"`
-	Channel      string                       `json:"channel"`
-	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero"`
-	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero"`
-	Color        valuer.UnsetOrNonEmptyString `json:"color,omitzero"`
-	TitleLink    valuer.UnsetOrNonEmptyString `json:"titleLink,omitzero"`
-	Pretext      valuer.UnsetOrNonEmptyString `json:"pretext,omitzero"`
-	Fallback     valuer.UnsetOrNonEmptyString `json:"fallback,omitzero"`
-	Footer       valuer.UnsetOrNonEmptyString `json:"footer,omitzero"`
-	Fields       []ChannelSlackField          `json:"fields,omitzero"`
-	Actions      []ChannelSlackAction         `json:"actions,omitzero"`
+	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
+	APIURL       string                       `json:"apiUrl" required:"true" format:"password" description:"The Slack incoming webhook URL. A secret; returned by create, update and fetch by ID, never by list."`
+	Channel      string                       `json:"channel" description:"The channel or user to post to, such as #alerts; empty uses the webhook default."`
+	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero" description:"Alertmanager template for the message title; defaults to the Alertmanager Slack default."`
+	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero" description:"Alertmanager template for the message body; defaults to the Alertmanager Slack default."`
+	Color        valuer.UnsetOrNonEmptyString `json:"color,omitzero" description:"Alertmanager template for the attachment color; defaults to the Alertmanager Slack default."`
+	TitleLink    valuer.UnsetOrNonEmptyString `json:"titleLink,omitzero" description:"Alertmanager template for the link the title opens; defaults to the Alertmanager Slack default."`
+	Pretext      valuer.UnsetOrNonEmptyString `json:"pretext,omitzero" description:"Alertmanager template for the text shown above the attachment; defaults to the Alertmanager Slack default."`
+	Fallback     valuer.UnsetOrNonEmptyString `json:"fallback,omitzero" description:"Alertmanager template for the plain-text summary shown where attachments cannot render; defaults to the Alertmanager Slack default."`
+	Footer       valuer.UnsetOrNonEmptyString `json:"footer,omitzero" description:"Alertmanager template for the attachment footer; defaults to the Alertmanager Slack default."`
+	Fields       []ChannelSlackField          `json:"fields,omitzero" description:"Attachment fields appended to the message; each requires title and value."`
+	Actions      []ChannelSlackAction         `json:"actions,omitzero" description:"Attachment buttons; each requires type and text plus url or name."`
 }
 
 type ChannelSlackField struct {
-	Title string `json:"title" required:"true"`
-	Value string `json:"value" required:"true"`
-	Short *bool  `json:"short,omitempty"`
+	Title string `json:"title" required:"true" description:"The field title."`
+	Value string `json:"value" required:"true" description:"The field value; an Alertmanager template."`
+	Short *bool  `json:"short,omitempty" description:"Render the field side by side with other short fields."`
 }
 
 // ChannelSlackAction is a link button when URL is set, otherwise a message
 // button that needs Name. Upstream clears whichever side is not in use.
 type ChannelSlackAction struct {
-	Type    string                    `json:"type" required:"true"`
-	Text    string                    `json:"text" required:"true"`
-	URL     string                    `json:"url"`
-	Style   string                    `json:"style"`
-	Name    string                    `json:"name"`
-	Value   string                    `json:"value"`
-	Confirm *ChannelSlackConfirmation `json:"confirm,omitempty"`
+	Type    string                    `json:"type" required:"true" description:"The Slack action type, normally button."`
+	Text    string                    `json:"text" required:"true" description:"The button label."`
+	URL     string                    `json:"url" description:"The link the button opens; required unless name is set."`
+	Style   string                    `json:"style" description:"The button style: default, primary or danger."`
+	Name    string                    `json:"name" description:"The action name Slack posts back for a message button; required unless url is set."`
+	Value   string                    `json:"value" description:"The value Slack posts back with a message button."`
+	Confirm *ChannelSlackConfirmation `json:"confirm,omitempty" description:"A confirmation dialog shown before the action runs."`
 }
 
 type ChannelSlackConfirmation struct {
-	Text        string `json:"text" required:"true"`
-	Title       string `json:"title"`
-	OkText      string `json:"okText"`
-	DismissText string `json:"dismissText"`
+	Text        string `json:"text" required:"true" description:"The dialog body."`
+	Title       string `json:"title" description:"The dialog title."`
+	OkText      string `json:"okText" description:"The label of the confirm button."`
+	DismissText string `json:"dismissText" description:"The label of the cancel button."`
 }
 
 func (c *ChannelSlackConfig) UnmarshalJSON(data []byte) error {

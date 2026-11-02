@@ -36,11 +36,11 @@ type Channel struct {
 	// DisplayName is the receiver name inside Data and what policies and rules
 	// reference, so it keeps the v1 wire tag and Name stays off the v1 contract.
 	Name        string `json:"-" bun:"name"`
-	DisplayName string `json:"name" required:"true" bun:"display_name"`
+	DisplayName string `json:"name" required:"true" bun:"display_name" description:"The channel name. Alert rules and routing policies reference it."`
 	// TODO: type this as ChannelKind once v1 is gone.
-	Type  string `json:"type" required:"true" bun:"type"`
-	Data  string `json:"data" required:"true" bun:"data"`
-	OrgID string `json:"orgId" required:"true" bun:"org_id"`
+	Type  string `json:"type" required:"true" bun:"type" description:"The channel kind, such as slack."`
+	Data  string `json:"data" required:"true" bun:"data" description:"The channel configuration as a JSON document."`
+	OrgID string `json:"orgId" required:"true" bun:"org_id" description:"The organization the channel belongs to."`
 
 	// Spec is the v2 spec a read returns, of the kind Type names. A v2 write
 	// stores it as the caller wrote it and a v1 write derives it from the
@@ -148,6 +148,24 @@ func NewConfigFromChannels(globalConfig GlobalConfig, routeConfig RouteConfig, c
 	}
 
 	return cfg, nil
+}
+
+func MapChannelNamesToIDs(channels Channels, names []string) ([]string, error) {
+	idByName := make(map[string]string, len(channels))
+	for _, channel := range channels {
+		idByName[channel.DisplayName] = channel.ID.StringValue()
+	}
+
+	ids := make([]string, 0, len(names))
+	for _, name := range names {
+		id, ok := idByName[name]
+		if !ok {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "notification channel %q does not exist", name)
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
 }
 
 func NewStatsFromChannels(channels Channels) map[string]any {

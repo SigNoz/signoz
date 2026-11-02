@@ -32,9 +32,6 @@ import {
 	SavedviewtypesSchemaVersionDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
-import type { AllViewsProps, ViewProps } from 'types/api/saveViews/types';
-import { DataSource } from 'types/common/queryBuilder';
 
 interface MetricSeed {
 	metricName: string;
@@ -774,22 +771,6 @@ const VIEW_NAMES = [
 ];
 
 export const SAVED_VIEW_MAX = VIEW_NAMES.length;
-
-/** The jest fixture is the shape of a view; only what the list shows changes. */
-const [baseView] = explorerView.data as unknown as ViewProps[];
-
-export const metricsSavedViewsResponse = (count: number): AllViewsProps => ({
-	status: 'success',
-	data: VIEW_NAMES.slice(0, count).map((name, index) => ({
-		...baseView,
-		id: `storybook-metrics-view-${index + 1}`,
-		name,
-		sourcePage: DataSource.METRICS,
-		tags: ['metrics'],
-		createdBy: 'ada@signoz.io',
-		extraData: '{"color":"#7cd4fd"}',
-	})),
-});
 
 export const metricsSavedViewsV2Response = (
 	count: number,

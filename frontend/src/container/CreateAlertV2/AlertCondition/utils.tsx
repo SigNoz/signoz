@@ -15,11 +15,13 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight } from '@signozhq/icons';
 import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryFunction } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { USER_ROLES } from 'types/roles';
 import { openInNewTab } from 'utils/navigation';
 
 import { ROUTING_POLICIES_ROUTE } from './constants';
+import { Threshold } from '../context/types';
 import { RoutingPolicyBannerProps } from './types';
 
 export function getQueryNames(currentQuery: Query): BaseOptionType[] {
@@ -41,6 +43,24 @@ export function getQueryNames(currentQuery: Query): BaseOptionType[] {
 	};
 
 	return queryConfig[currentQuery.queryType]?.() || [];
+}
+
+export function getSmallestDeviation(thresholds: Threshold[]): number {
+	const deviations = thresholds
+		.map(({ thresholdValue }) => Number(thresholdValue))
+		.filter((deviation) => deviation > 0);
+	return deviations.length > 0 ? Math.min(...deviations) : 0;
+}
+
+export function syncAnomalyFunction(
+	functions: QueryFunction[],
+	namedArgs: QueryFunction['namedArgs'],
+): QueryFunction[] {
+	const otherFunctions = functions.filter(({ name }) => name !== 'anomaly');
+	if (!namedArgs) {
+		return otherFunctions;
+	}
+	return [...otherFunctions, { name: 'anomaly', args: [], namedArgs }];
 }
 
 export function getCategoryByOptionId(id: string): string | undefined {
@@ -223,17 +243,22 @@ function TooltipExample({
 	thresholdValue: number;
 	matchType: AlertThresholdMatchType;
 }): JSX.Element {
+	const pointsLabel =
+		matchType === AlertThresholdMatchType.IN_TOTAL
+			? 'error counts'
+			: 'data points';
 	return (
 		<div className="tooltip-example">
 			<strong>Example:</strong>
 			<br />
-			Say, For a 5-minute window (configured in Evaluation settings), 1 min
-			aggregation interval (set up in query) → 5{' '}
-			{matchType === AlertThresholdMatchType.IN_TOTAL
-				? 'error counts'
-				: 'data points'}
-			: [{dataPoints.join(', ')}]<br />
-			With threshold {operatorSymbol} {thresholdValue}: {children}
+			<span className="translate-safe">
+				{`Say, For a 5-minute window (configured in Evaluation settings), 1 min aggregation interval (set up in query) → 5 ${pointsLabel}: [${dataPoints.join(', ')}]`}
+			</span>
+			<br />
+			<span className="translate-safe">
+				{`With threshold ${operatorSymbol} ${thresholdValue}: `}
+			</span>
+			{children}
 		</div>
 	);
 }

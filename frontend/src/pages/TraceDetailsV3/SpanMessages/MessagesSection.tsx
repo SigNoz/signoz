@@ -3,8 +3,7 @@ import AIThreadMessage, {
 } from '../AIThreadMessage/AIThreadMessage';
 import { ThreadMessage } from '../AIThreadMessage/types';
 import { ThreadView } from '../TraceDetailsThread/types';
-import RawMessages from './RawMessages';
-import { RawMessagesValue } from '../utils/spanMessages';
+import JsonBlock from '../AIThreadMessage/JsonBlock';
 
 import styles from './SpanMessages.module.scss';
 
@@ -17,7 +16,6 @@ interface MessagesSectionProps extends MessageProps {
 	title?: string;
 	view: ThreadView;
 	messages: ThreadMessage[];
-	raw?: RawMessagesValue;
 	testId: string;
 }
 
@@ -25,21 +23,19 @@ function MessagesSection({
 	title,
 	view,
 	messages,
-	raw,
 	testId,
 	messageType,
 	canLinkToToolCall,
 	onToolLinkClick,
 }: MessagesSectionProps): JSX.Element | null {
-	const isFormatted = view === ThreadView.Formatted;
-	if (isFormatted ? messages.length === 0 : !raw) {
+	if (messages.length === 0) {
 		return null;
 	}
 
 	return (
 		<section className={styles.section} data-testid={testId}>
 			{title && <div className={styles.sectionTitle}>{title}</div>}
-			{isFormatted ? (
+			{view === ThreadView.Formatted ? (
 				<div className={styles.messages}>
 					{messages.map((message, index) => (
 						<AIThreadMessage
@@ -54,7 +50,7 @@ function MessagesSection({
 					))}
 				</div>
 			) : (
-				<RawMessages value={raw as RawMessagesValue} />
+				<JsonBlock data={messages} />
 			)}
 		</section>
 	);
@@ -62,7 +58,6 @@ function MessagesSection({
 
 MessagesSection.defaultProps = {
 	title: undefined,
-	raw: undefined,
 };
 
 export default MessagesSection;

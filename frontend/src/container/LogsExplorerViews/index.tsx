@@ -16,7 +16,6 @@ import setToLocalstorage from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
 import {
 	initialFilters,
@@ -24,8 +23,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
-import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
+import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
@@ -39,13 +37,9 @@ import {
 } from 'container/LogsExplorerViews/explorerUtils';
 import ExplorerActions from 'container/ExplorerActions/ExplorerActions';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
-import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
-import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { isEmpty, isUndefined } from 'lodash-es';
@@ -59,7 +53,6 @@ import { Filter } from 'types/api/v5/queryRange';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { v4 } from 'uuid';
 import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 
 import LogsActionsContainer from './LogsActionsContainer';
@@ -82,10 +75,6 @@ function LogsExplorerViewsContainer({
 	showLiveLogs: boolean;
 	handleChangeSelectedView: ChangeViewFunctionType;
 }): JSX.Element {
-	const { safeNavigate } = useSafeNavigate();
-	const isSavedViewEnabled = useSavedViewEnabled();
-	const getExportToDashboardLink = useGetExportToDashboardLink();
-
 	const [showFrequencyChart, setShowFrequencyChart] = useState(
 		() => getFromLocalstorage(LOCALSTORAGE.SHOW_FREQUENCY_CHART) === 'true',
 	);
@@ -275,49 +264,6 @@ function LogsExplorerViewsContainer({
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data?.payload]);
-
-	const handleExport = useCallback(
-		(dashboard: ExportDashboard | null, isNewDashboard?: boolean): void => {
-			if (!dashboard || !selectedPanelType) {
-				return;
-			}
-
-			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(
-				selectedPanelType,
-			)
-				? selectedPanelType
-				: PANEL_TYPES.TIME_SERIES;
-
-			const widgetId = v4();
-
-			if (!exportDefaultQuery) {
-				return;
-			}
-
-			logEvent('Logs Explorer: Add to dashboard successful', {
-				panelType: selectedPanelType,
-				isNewDashboard,
-				dashboardName: dashboard?.title,
-			});
-
-			const dashboardEditView = getExportToDashboardLink({
-				query: exportDefaultQuery,
-				panelType: panelTypeParam,
-				dashboardId: dashboard.id,
-				widgetId,
-			});
-
-			if (dashboardEditView) {
-				safeNavigate(dashboardEditView);
-			}
-		},
-		[
-			safeNavigate,
-			exportDefaultQuery,
-			selectedPanelType,
-			getExportToDashboardLink,
-		],
-	);
 
 	useEffect(() => {
 		const currentData = data?.payload?.data?.newResult?.data?.result || [];
@@ -517,16 +463,6 @@ function LogsExplorerViewsContainer({
 			</div>
 
 			<GoToTop />
-
-			{!isSavedViewEnabled && (
-				<ExplorerOptionWrapper
-					disabled={!stagedQuery}
-					query={exportDefaultQuery}
-					onExport={handleExport}
-					sourcepage={DataSource.LOGS}
-					handleChangeSelectedView={handleChangeSelectedView}
-				/>
-			)}
 		</div>
 	);
 }

@@ -290,6 +290,14 @@ go.mod @therealpandey
 /frontend/src/components/MessagingQueueHealthCheck/ @SigNoz/events-frontend
 /frontend/src/hooks/messagingQueue/ @SigNoz/events-frontend
 
+## Saved Views
+/frontend/src/container/SavedViews/ @aks07
+/frontend/src/container/Home/SavedViews/ @aks07
+/frontend/src/hooks/saveViews/ @aks07
+
+## Bottom Strip
+/frontend/src/container/BottomStrip/ @aks07
+
 ## Storybook
 /frontend/.storybook/ @H4ad
 /frontend/src/storybook/ @H4ad

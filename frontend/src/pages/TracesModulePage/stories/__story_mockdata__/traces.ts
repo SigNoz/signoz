@@ -4,16 +4,22 @@
  */
 
 import {
+	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal as TracesSignal,
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	Querybuildertypesv5RequestTypeDTO,
 	QuickfiltertypesSourceDTO,
+	SavedviewtypesPanelTypeDTO,
+	SavedviewtypesSchemaVersionDTO,
+	SavedviewtypesSourceDTO,
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type {
 	GetQuickFilters200,
+	ListSavedViews200,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import type { FunnelData } from 'types/api/traceFunnels';
@@ -22,7 +28,7 @@ import type { RawRow } from 'types/api/v5/queryRange';
 import { fieldKeysResponse } from '@/storybook/msw/__story_mockdata__/fields';
 import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
 
-export const TRACES_TABS = ['explorer', 'funnels', 'views'] as const;
+export const TRACES_TABS = ['explorer', 'funnels'] as const;
 
 export type TracesTab = (typeof TRACES_TABS)[number];
 
@@ -311,20 +317,29 @@ const VIEW_NAMES = [
 	'Notification retries',
 ];
 
-export const savedTraceViewsResponse = (
-	count: number,
-): { status: string; data: unknown[] } => ({
+export const savedTraceViewsResponse = (count: number): ListSavedViews200 => ({
 	status: 'success',
-	data: Array.from(
-		{ length: Math.min(count, VIEW_NAMES.length) },
-		(_, index) => ({
-			...explorerView.data[0],
-			id: `storybook-traces-view-${index + 1}`,
-			name: VIEW_NAMES[index],
-			sourcePage: 'traces',
-			tags: ['traces'],
-		}),
-	),
+	data: VIEW_NAMES.slice(0, count).map((displayName, index) => ({
+		id: `storybook-traces-view-${index + 1}`,
+		name: `storybook-traces-view-${index + 1}`,
+		source: SavedviewtypesSourceDTO.traces,
+		schemaVersion: SavedviewtypesSchemaVersionDTO.v2,
+		createdAt: '2026-08-20T09:00:00Z',
+		createdBy: 'ada@signoz.io',
+		updatedAt: '2026-08-20T09:00:00Z',
+		updatedBy: 'ada@signoz.io',
+		spec: {
+			displayName,
+			panelType: SavedviewtypesPanelTypeDTO.list,
+			requestType: Querybuildertypesv5RequestTypeDTO.raw,
+			queries: [
+				{
+					type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+					spec: { name: 'A', signal: TracesSignal.traces },
+				},
+			],
+		},
+	})),
 });
 
 const FUNNEL_NAMES = [

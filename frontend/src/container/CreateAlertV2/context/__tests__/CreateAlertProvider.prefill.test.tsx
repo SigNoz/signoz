@@ -1,6 +1,5 @@
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter, useHistory } from 'react-router-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { navigate } from 'lib/router/navigation';
+import { render, screen, userEvent } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { INITIAL_CREATE_ALERT_STATE } from '../constants';
@@ -41,19 +40,19 @@ function Probe(): JSX.Element {
 }
 
 function renderWithSearch(search: string): void {
-	const queryClient = new QueryClient({
-		defaultOptions: { queries: { retry: false } },
-	});
 	render(
-		<MemoryRouter initialEntries={[`/alerts/new${search}`]}>
-			<QueryClientProvider client={queryClient}>
-				<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
-					<Probe />
-				</CreateAlertProvider>
-			</QueryClientProvider>
-		</MemoryRouter>,
+		<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
+			<Probe />
+		</CreateAlertProvider>,
+		undefined,
+		{ initialRoute: `/alerts/new${search}` },
 	);
 }
+
+const clickTestId = async (testId: string): Promise<void> => {
+	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	await user.click(screen.getByTestId(testId));
+};
 
 function serializeThreshold(thresholdValue: number): string {
 	return encodeURIComponent(
@@ -97,6 +96,13 @@ describe('CreateAlertProvider — URL-declared prefill (issue #5291)', () => {
 		expect(screen.getByTestId('window-type')).toHaveTextContent('rolling');
 	});
 
+	it('starts new anomaly alerts at 3 deviations', () => {
+		renderWithSearch(`?ruleType=anomaly_rule`);
+
+		expect(screen.getByTestId('threshold-count')).toHaveTextContent('1');
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('3');
+	});
+
 	it('applies the meter evaluation window when the preset is declared', () => {
 		// Ingestion-style prefill: explicit in_total + meter preset.
 		renderWithSearch(
@@ -114,17 +120,16 @@ describe('CreateAlertProvider — URL-declared prefill (issue #5291)', () => {
 // Reproduces the #12137 regression: on the alert overview page the query builder
 // rewrites location.search after the alert loads, which used to re-run the prefill
 // effect and RESET the loaded threshold back to 0.
-function SearchMutator(): JSX.Element {
-	const routerHistory = useHistory();
+function SearchMutator({
+	to = '/alerts/overview?compositeQuery=normalized&ruleId=r1',
+}: {
+	to?: string;
+}): JSX.Element {
 	return (
 		<button
 			type="button"
 			data-testid="mutate-search"
-			onClick={(): void =>
-				routerHistory.replace(
-					'/alerts/overview?compositeQuery=normalized&ruleId=r1',
-				)
-			}
+			onClick={(): void => navigate(to, { replace: true })}
 		>
 			change search
 		</button>
@@ -132,7 +137,7 @@ function SearchMutator(): JSX.Element {
 }
 
 describe('CreateAlertProvider — edit mode ignores URL prefill', () => {
-	it('keeps loaded thresholds when the query builder rewrites location.search', () => {
+	it('keeps loaded thresholds when the query builder rewrites location.search', async () => {
 		const initialAlertState = {
 			...INITIAL_CREATE_ALERT_STATE,
 			threshold: {
@@ -147,30 +152,158 @@ describe('CreateAlertProvider — edit mode ignores URL prefill', () => {
 			},
 		};
 
-		const queryClient = new QueryClient({
-			defaultOptions: { queries: { retry: false } },
-		});
 		render(
-			<MemoryRouter initialEntries={['/alerts/overview?ruleId=r1']}>
-				<QueryClientProvider client={queryClient}>
-					<CreateAlertProvider
-						initialAlertType={AlertTypes.METRICS_BASED_ALERT}
-						isEditMode
-						ruleId="r1"
-						initialAlertState={initialAlertState}
-					>
-						<Probe />
-						<SearchMutator />
-					</CreateAlertProvider>
-				</QueryClientProvider>
-			</MemoryRouter>,
+			<CreateAlertProvider
+				initialAlertType={AlertTypes.METRICS_BASED_ALERT}
+				isEditMode
+				ruleId="r1"
+				initialAlertState={initialAlertState}
+			>
+				<Probe />
+				<SearchMutator />
+			</CreateAlertProvider>,
+			undefined,
+			{ initialRoute: '/alerts/overview?ruleId=r1' },
 		);
 
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
 
 		// Simulate the query builder normalizing the query into the URL post-load.
-		fireEvent.click(screen.getByTestId('mutate-search'));
+		await clickTestId('mutate-search');
 
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
+	});
+});
+
+function ThresholdSetter(): JSX.Element {
+	const { thresholdState, setThresholdState } = useCreateAlertState();
+	return (
+		<button
+			type="button"
+			data-testid="set-threshold"
+			onClick={(): void =>
+				setThresholdState({
+					type: 'SET_THRESHOLDS',
+					payload: [{ ...thresholdState.thresholds[0], thresholdValue: 245 }],
+				})
+			}
+		>
+			set threshold
+		</button>
+	);
+}
+
+describe('CreateAlertProvider — create mode', () => {
+	it('keeps edited thresholds when running the query rewrites location.search', async () => {
+		render(
+			<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
+				<Probe />
+				<ThresholdSetter />
+				<SearchMutator to="/alerts/new?alertType=METRIC_BASED_ALERT&compositeQuery=ran" />
+			</CreateAlertProvider>,
+			undefined,
+			{ initialRoute: '/alerts/new?alertType=METRIC_BASED_ALERT' },
+		);
+
+		await clickTestId('set-threshold');
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
+
+		await clickTestId('mutate-search');
+
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
+	});
+});
+
+function AnomalySwitcher(): JSX.Element {
+	const { setAlertType } = useCreateAlertState();
+	return (
+		<button
+			type="button"
+			data-testid="switch-to-anomaly"
+			onClick={(): void => setAlertType(AlertTypes.ANOMALY_BASED_ALERT)}
+		>
+			switch to anomaly
+		</button>
+	);
+}
+
+describe('CreateAlertProvider — edit mode type switch', () => {
+	it('starts the anomaly condition at 3 deviations instead of the loaded threshold', async () => {
+		const initialAlertState = {
+			...INITIAL_CREATE_ALERT_STATE,
+			threshold: {
+				...INITIAL_CREATE_ALERT_STATE.threshold,
+				thresholds: [
+					{
+						...INITIAL_CREATE_ALERT_STATE.threshold.thresholds[0],
+						thresholdValue: 500,
+					},
+				],
+			},
+		};
+		render(
+			<CreateAlertProvider
+				initialAlertType={AlertTypes.METRICS_BASED_ALERT}
+				isEditMode
+				ruleId="r1"
+				initialAlertState={initialAlertState}
+			>
+				<Probe />
+				<AnomalySwitcher />
+			</CreateAlertProvider>,
+			undefined,
+			{ initialRoute: '/alerts/overview?ruleId=r1' },
+		);
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('500');
+
+		await clickTestId('switch-to-anomaly');
+
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('3');
+	});
+
+	it('keeps the meter preset from bringing back a cumulative window for anomaly', async () => {
+		render(
+			<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
+				<Probe />
+				<AnomalySwitcher />
+			</CreateAlertProvider>,
+			undefined,
+			{
+				initialRoute: '/alerts/new?matchType=in_total&evaluationWindowPreset=meter',
+			},
+		);
+		expect(screen.getByTestId('window-type')).toHaveTextContent('cumulative');
+
+		await clickTestId('switch-to-anomaly');
+
+		expect(screen.getByTestId('window-type')).toHaveTextContent('rolling');
+	});
+
+	it('moves a cumulative window back to rolling when switching to anomaly', async () => {
+		render(
+			<CreateAlertProvider
+				initialAlertType={AlertTypes.METRICS_BASED_ALERT}
+				isEditMode
+				ruleId="r1"
+				initialAlertState={{
+					...INITIAL_CREATE_ALERT_STATE,
+					evaluationWindow: {
+						...INITIAL_CREATE_ALERT_STATE.evaluationWindow,
+						windowType: 'cumulative',
+						timeframe: 'currentHour',
+					},
+				}}
+			>
+				<Probe />
+				<AnomalySwitcher />
+			</CreateAlertProvider>,
+			undefined,
+			{ initialRoute: '/alerts/overview?ruleId=r1' },
+		);
+		expect(screen.getByTestId('window-type')).toHaveTextContent('cumulative');
+
+		await clickTestId('switch-to-anomaly');
+
+		expect(screen.getByTestId('window-type')).toHaveTextContent('rolling');
 	});
 });

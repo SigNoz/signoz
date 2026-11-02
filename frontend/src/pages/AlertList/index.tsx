@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Tabs, TabsProps } from 'antd';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ROUTES from 'constants/routes';
@@ -10,7 +10,8 @@ import RoutingPolicies from 'container/RoutingPolicies';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Cable, GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
+import { GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
+import cx from 'classnames';
 import AlertDetails from 'pages/AlertDetails';
 import ChannelsEdit from 'pages/ChannelsEdit';
 import ChannelsNew from 'pages/ChannelsNew';
@@ -21,9 +22,33 @@ import { AlertListSubTabs, AlertListTabs } from './types';
 
 import './AlertList.styles.scss';
 
+interface ConfigurationSidebarItem {
+	key: AlertListSubTabs;
+	label: string;
+	itemKey: string;
+}
+
+const CONFIGURATION_SIDEBAR_ITEMS: ConfigurationSidebarItem[] = [
+	{
+		key: AlertListSubTabs.CHANNELS,
+		label: 'Notification Channels',
+		itemKey: 'configuration-sidebar-channels',
+	},
+	{
+		key: AlertListSubTabs.ROUTING_POLICIES,
+		label: 'Routing Policies',
+		itemKey: 'configuration-sidebar-routing-policies',
+	},
+	{
+		key: AlertListSubTabs.PLANNED_DOWNTIME,
+		label: 'Planned Downtime',
+		itemKey: 'configuration-sidebar-planned-downtime',
+	},
+];
+
 function AllAlertList(): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
 	const { safeNavigate } = useSafeNavigate();
 
 	const tab = urlQuery.get('tab');
@@ -34,39 +59,126 @@ function AllAlertList(): JSX.Element {
 	const isChannelsEdit = location.pathname.startsWith('/alerts/channels/edit/');
 	const isChannelDetails = isChannelsNew || isChannelsEdit;
 
-	const handleConfigurationTabChange = useCallback(
-		(subTab: string): void => {
-			const queryParams = new URLSearchParams();
+	const getActiveTab = useCallback((): string => {
+		if (isAlertHistory || isAlertOverview) {
+			return AlertListTabs.ALERT_RULES;
+		}
+		if (isChannelDetails) {
+			return AlertListTabs.CONFIGURATION;
+		}
+		if (
+			tab === AlertListTabs.CHANNELS ||
+			tab === AlertListTabs.ROUTING_POLICIES ||
+			tab === AlertListTabs.PLANNED_DOWNTIME
+		) {
+			return AlertListTabs.CONFIGURATION;
+		}
+		return tab || AlertListTabs.ALERT_RULES;
+	}, [isAlertHistory, isAlertOverview, isChannelDetails, tab]);
 
+	const getActiveSubTab = useCallback((): AlertListSubTabs => {
+		if (isChannelDetails) {
+			return AlertListSubTabs.CHANNELS;
+		}
+		if (tab === AlertListTabs.CHANNELS) {
+			return AlertListSubTabs.CHANNELS;
+		}
+		if (tab === AlertListTabs.ROUTING_POLICIES) {
+			return AlertListSubTabs.ROUTING_POLICIES;
+		}
+		if (tab === AlertListTabs.PLANNED_DOWNTIME) {
+			return AlertListSubTabs.PLANNED_DOWNTIME;
+		}
+		if (
+			subTab === AlertListSubTabs.CHANNELS ||
+			subTab === AlertListSubTabs.ROUTING_POLICIES ||
+			subTab === AlertListSubTabs.PLANNED_DOWNTIME
+		) {
+			return subTab;
+		}
+		return AlertListSubTabs.CHANNELS;
+	}, [isChannelDetails, tab, subTab]);
+
+	const handleTopTabChange = useCallback(
+		(newTab: string): void => {
+			const queryParams = new URLSearchParams();
+			queryParams.set('tab', newTab);
+
+			if (newTab === AlertListTabs.CONFIGURATION) {
+				const currentSubTab = getActiveSubTab();
+				queryParams.set('subTab', currentSubTab);
+			}
+
+			safeNavigate(`/alerts?${queryParams.toString()}`);
+		},
+		[getActiveSubTab, safeNavigate],
+	);
+
+	const handleSubTabChange = useCallback(
+		(newSubTab: AlertListSubTabs): void => {
+			const queryParams = new URLSearchParams();
 			queryParams.set('tab', AlertListTabs.CONFIGURATION);
-			queryParams.set('subTab', subTab);
+			queryParams.set('subTab', newSubTab);
 			safeNavigate(`/alerts?${queryParams.toString()}`);
 		},
 		[safeNavigate],
 	);
 
-	const configurationTab = useMemo(() => {
-		const tabs = [
-			{
-				label: 'Planned Downtime',
-				key: AlertListSubTabs.PLANNED_DOWNTIME,
-				children: <PlannedDowntime />,
-			},
-			{
-				label: 'Routing Policies',
-				key: AlertListSubTabs.ROUTING_POLICIES,
-				children: <RoutingPolicies />,
-			},
-		];
-		return (
-			<Tabs
-				className="configuration-tabs"
-				activeKey={subTab || AlertListSubTabs.PLANNED_DOWNTIME}
-				items={tabs}
-				onChange={handleConfigurationTabChange}
-			/>
-		);
-	}, [subTab, handleConfigurationTabChange]);
+	const activeSubTab = getActiveSubTab();
+
+	const configurationTab = useMemo(
+		() => (
+			<div className="alert-configuration-container">
+				<div
+					className="alert-configuration-sidebar"
+					data-testid="alert-configuration-sidebar"
+				>
+					{CONFIGURATION_SIDEBAR_ITEMS.map((item) => (
+						<button
+							key={item.key}
+							type="button"
+							className={cx('sidebar-nav-item', {
+								active: activeSubTab === item.key,
+							})}
+							onClick={(): void => handleSubTabChange(item.key)}
+							data-testid={item.itemKey}
+						>
+							<span className="sidebar-nav-item-label">{item.label}</span>
+						</button>
+					))}
+				</div>
+				<div
+					className="alert-configuration-content"
+					data-testid="alert-configuration-content"
+				>
+					{activeSubTab === AlertListSubTabs.CHANNELS && (
+						<div className="alert-rules-container">
+							{isChannelsNew && <ChannelsNew />}
+							{isChannelsEdit && <ChannelsEdit />}
+							{!isChannelDetails && <NotificationChannels />}
+						</div>
+					)}
+					{activeSubTab === AlertListSubTabs.ROUTING_POLICIES && (
+						<div className="alert-rules-container">
+							<RoutingPolicies />
+						</div>
+					)}
+					{activeSubTab === AlertListSubTabs.PLANNED_DOWNTIME && (
+						<div className="alert-rules-container">
+							<PlannedDowntime />
+						</div>
+					)}
+				</div>
+			</div>
+		),
+		[
+			activeSubTab,
+			handleSubTabChange,
+			isChannelsNew,
+			isChannelsEdit,
+			isChannelDetails,
+		],
+	);
 
 	const items: TabsProps['items'] = [
 		{
@@ -96,22 +208,6 @@ function AllAlertList(): JSX.Element {
 		{
 			label: (
 				<div className="periscope-tab top-level-tab">
-					<Cable size={14} />
-					Notification Channels
-				</div>
-			),
-			key: AlertListTabs.CHANNELS,
-			children: (
-				<div className="alert-rules-container">
-					{isChannelsNew && <ChannelsNew />}
-					{isChannelsEdit && <ChannelsEdit />}
-					{!isChannelDetails && <NotificationChannels />}
-				</div>
-			),
-		},
-		{
-			label: (
-				<div className="periscope-tab top-level-tab">
 					<ConfigureIcon width={14} height={14} />
 					Configuration
 				</div>
@@ -121,37 +217,12 @@ function AllAlertList(): JSX.Element {
 		},
 	];
 
-	const getActiveKey = (): string => {
-		if (isAlertHistory || isAlertOverview) {
-			return AlertListTabs.ALERT_RULES;
-		}
-		if (isChannelDetails) {
-			return AlertListTabs.CHANNELS;
-		}
-		return tab || AlertListTabs.ALERT_RULES;
-	};
-
 	return (
 		<Tabs
 			destroyInactiveTabPane
 			items={items}
-			activeKey={getActiveKey()}
-			onChange={(tab): void => {
-				const queryParams = new URLSearchParams();
-
-				queryParams.set('tab', tab);
-
-				// If navigating to Configuration tab, set default subTab
-				if (tab === AlertListTabs.CONFIGURATION) {
-					const currentSubTab = subTab || AlertListSubTabs.PLANNED_DOWNTIME;
-					queryParams.set('subTab', currentSubTab);
-				} else {
-					// Clear subTab when navigating out of Configuration tab
-					queryParams.delete('subTab');
-				}
-
-				safeNavigate(`/alerts?${queryParams.toString()}`);
-			}}
+			activeKey={getActiveTab()}
+			onChange={handleTopTabChange}
 			className={`alerts-container ${
 				isAlertHistory || isAlertOverview || isChannelDetails
 					? 'alert-details-tabs'

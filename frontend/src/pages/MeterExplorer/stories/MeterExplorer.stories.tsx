@@ -15,7 +15,7 @@ const pageStory = storyMocks(meterMocks, { layout: 'app' });
  * What the workspace is metered for, per signal: the explorer over `query_range`,
  * its saved views and the billing notice above them.
  *
- * Routes: `/meter`, `/meter/explorer` and `/meter/explorer/views`.
+ * Routes: `/meter` and `/meter/explorer`.
  */
 const meta = {
 	title: 'Pages/Metering/Cost Meter',
@@ -76,15 +76,10 @@ export const Explorer: Story = {
 	args: { tab: 'explorer' },
 };
 
-/** The Views tab, where the meter queries the workspace has saved are managed. */
-export const SavedViews: Story = {
-	args: { tab: 'views' },
-};
-
 /**
  * A workspace that has not sent telemetry yet: the totals read zero and every
  * section reports no data. Its quick filters and saved views are unset too, so
- * the Explorer and Views tabs are empty from here as well.
+ * the Explorer tab is empty from here as well.
  */
 export const NoUsage: Story = {
 	args: { signals: [], quickFilters: 0, savedViews: 0 },
@@ -116,11 +111,6 @@ export const PartialIngestion: Story = {
 /** The Explorer tab with no quick filters configured. */
 export const ExplorerWithoutQuickFilters: Story = {
 	args: { tab: 'explorer', quickFilters: 0 },
-};
-
-/** The Views tab without any saved meter queries. */
-export const ViewsEmpty: Story = {
-	args: { tab: 'views', savedViews: 0 },
 };
 
 /** The editable quick-filter settings panel, which lives on the Explorer tab. */

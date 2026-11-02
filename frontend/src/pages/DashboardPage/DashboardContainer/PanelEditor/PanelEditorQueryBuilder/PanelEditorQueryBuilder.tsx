@@ -166,7 +166,10 @@ function PanelEditorQueryBuilder({
 		return modes.map((queryType) => ({
 			key: queryType,
 			label: (
-				<div className={styles.queryTypeTab}>
+				<div
+					className={styles.queryTypeTab}
+					data-testid={`query-type-tab-${queryType}`}
+				>
 					{queryTypeComponents[queryType].icon}
 					<Typography>{queryTypeComponents[queryType].label}</Typography>
 				</div>

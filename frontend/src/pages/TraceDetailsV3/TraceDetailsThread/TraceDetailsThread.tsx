@@ -1,7 +1,6 @@
-import { useParams } from 'react-router-dom';
 import { Callout } from '@signozhq/ui/callout';
-import history, { hasInAppHistory } from 'lib/history';
-import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
+import { back, hasInAppHistory } from 'lib/router/navigation';
+import { useAppParams } from 'lib/router/useAppParams';
 
 import { TraceDetailsTab } from '../constants';
 import { useSpanDetailVariant } from '../hooks/useSpanDetailVariant';
@@ -25,7 +24,7 @@ import styles from './TraceDetailsThread.module.scss';
 const INITIAL_LOADER_COUNT = 4;
 
 function TraceDetailsThread(): JSX.Element {
-	const { id: traceId } = useParams<TraceDetailV3URLProps>();
+	const { id: traceId } = useAppParams<'id'>();
 	const [, setTab] = useTraceDetailsTab();
 	const [view, setView] = useThreadView();
 	const {
@@ -40,6 +39,7 @@ function TraceDetailsThread(): JSX.Element {
 		spansAboveFirstPage,
 		isLoading,
 		isError,
+		isNotFound,
 		hasNextPage,
 		hasPreviousPage,
 		isFetchingNextPage,
@@ -52,6 +52,7 @@ function TraceDetailsThread(): JSX.Element {
 		interestedSpanId,
 		spans,
 		isLoading,
+		isNotFound,
 	);
 	const interestedSpanIndex = spans.findIndex(
 		(span) => span.span_id === interestedSpanId,
@@ -91,7 +92,7 @@ function TraceDetailsThread(): JSX.Element {
 					onGoBack={(): void => {
 						// go back to the previous page
 						if (hasInAppHistory()) {
-							history.goBack();
+							back();
 						} else {
 							void setTab(TraceDetailsTab.Overview);
 						}

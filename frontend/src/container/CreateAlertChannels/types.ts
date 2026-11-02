@@ -31,6 +31,15 @@ export type ChannelSpecFormValues = Partial<
 		AlertmanagertypesChannelTelegramConfigDTO
 >;
 
+export const WebhookAuth = {
+	none: 'none',
+	basic: 'basic',
+	bearer: 'bearer',
+} as const;
+export type WebhookAuth = (typeof WebhookAuth)[keyof typeof WebhookAuth];
+
 export type ChannelFormValues = ChannelSpecFormValues & {
 	name?: string;
+	/** Never sent: the API reads the mode from which credentials are set. */
+	webhookAuth?: WebhookAuth;
 };

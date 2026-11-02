@@ -70,6 +70,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Description:         "This endpoint returns a treemap visualization showing the proportional distribution of metrics by sample count or time series count",
 			Request:             new(metricsexplorertypes.TreemapRequest),
 			RequestContentType:  "application/json",
+			RequestExamples:     treemapRequestExamples(),
 			Response:            new(metricsexplorertypes.TreemapResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,

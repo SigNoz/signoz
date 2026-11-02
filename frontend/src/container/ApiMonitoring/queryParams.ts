@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { navigate } from 'lib/router/navigation';
 
 // --- Types for all API Monitoring query params ---
 export interface ApiMonitoringParams {
@@ -55,7 +56,6 @@ export function getApiMonitoringParams(search: string): ApiMonitoringParams {
 export function setApiMonitoringParams(
 	newParams: Partial<ApiMonitoringParams>,
 	search: string,
-	history: ReturnType<typeof useHistory>,
 	replace = false,
 ): void {
 	const urlParams = new URLSearchParams(search);
@@ -63,11 +63,7 @@ export function setApiMonitoringParams(
 	const merged = { ...current, ...newParams };
 	urlParams.set(PARAM_KEY, encodeParams(merged));
 	const newSearch = `?${urlParams.toString()}`;
-	if (replace) {
-		history.replace({ search: newSearch });
-	} else {
-		history.push({ search: newSearch });
-	}
+	navigate({ search: newSearch }, { replace });
 }
 
 // --- React hook to use query params in a component ---
@@ -75,15 +71,14 @@ export function useApiMonitoringParams(): [
 	ApiMonitoringParams,
 	(newParams: Partial<ApiMonitoringParams>, replace?: boolean) => void,
 ] {
-	const location = useLocation();
-	const history = useHistory();
+	const location = useAppLocation();
 	const params = getApiMonitoringParams(location.search);
 
 	const setParams = useCallback(
 		(newParams: Partial<ApiMonitoringParams>, replace = false) => {
-			setApiMonitoringParams(newParams, location.search, history, replace);
+			setApiMonitoringParams(newParams, location.search, replace);
 		},
-		[location.search, history],
+		[location.search],
 	);
 
 	return [params, setParams];
