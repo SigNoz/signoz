@@ -20,8 +20,10 @@ You will:
    - The frontend stores its JWT in `localStorage` under `AUTH_TOKEN` and the API requires `Authorization: Bearer <token>` for protected endpoints. Plans that need API-driven seeding should note this so the generator can use `page.request.*`.
 
 2. **Check what's already wired up.**
-   - [tests/e2e/helpers/dashboards.ts](../../tests/e2e/helpers/dashboards.ts) and [tests/e2e/helpers/auth.ts](../../tests/e2e/helpers/auth.ts) hold reusable helpers (`createDashboardViaApi`, `gotoDashboardsList`, `openDashboardActionMenu`, `newAdminContext`, `importApmMetricsDashboardViaUI`, etc.). When the plan touches dashboards, reference these by name in the steps so the generator can reuse them rather than reinvent.
-   - [tests/e2e/fixtures/apm-metrics.json](../../tests/e2e/fixtures/apm-metrics.json) is a real-world dashboard payload (rich tags, panels, description) suitable as a seed fixture — note in the plan if a scenario benefits from it.
+   - [tests/e2e/drivers/](../../tests/e2e/drivers/) holds one driver per feature (e.g. `dashboards.ts`, `dashboard-list.ts`, `panel-editor.ts`, `routing.ts`, `channels.ts`). A driver is a fixture exposing the feature's locators and actions, including API seeding that cleans itself up (`dashboards.seed(...)`). When one covers the feature, write steps in terms of its actions by name so the generator reuses them. When none does, say so: the generator adds one.
+   - [tests/e2e/helpers/](../../tests/e2e/helpers/) holds plain helpers: `common.ts` (`authToken`, `watchConsole`, `collectRequests`, `seederUrl`), `auth.ts` (`newAdminContext`), `query-range-mock.ts` (mock `query_range` for error, no-data, warning and loading states only).
+   - **Telemetry is pre-seeded.** `bootstrap/global.setup.ts` loads a golden OTel-demo dataset (logs, traces, metrics over the last 6h; constants in `GOLDEN` in `helpers/dashboard-spec.ts`). Plans that query data use a window ≤ 6h and assert structure, not exact counts. Data the golden set lacks is seeded per test through the seeder (`helpers/alerts/seeding.ts` shows how).
+   - [tests/e2e/testdata/](../../tests/e2e/testdata/) holds static payloads (`dashboards/panels.ts`, `traces/large-trace.json`) — note in the plan if a scenario benefits from one.
 
 3. **Navigate and explore**
    - Invoke `planner_setup_page` once before any other browser tool.
@@ -39,7 +41,7 @@ You will:
 
    Each scenario must include:
    - **TC-NN** title — `TC-NN <short description>` (matches the naming this repo uses for test titles).
-   - Preconditions (what state the test expects — note that the bootstrap creates a fresh stack with **zero dashboards / alerts / etc.**, so plans must seed their own data).
+   - Preconditions (what state the test expects — note that the bootstrap creates a fresh stack with **zero dashboards / alerts / etc.** (only the golden telemetry), so plans must seed their own resources).
    - Step-by-step user actions.
    - Expected outcomes per step.
    - Cleanup notes (what gets created and how to remove it — usually via API).
@@ -64,7 +66,7 @@ The dashboards list page (`/dashboard`) lists all dashboards in the workspace. F
 - Open per-row actions: View, Open in New Tab, Copy Link, Export JSON, Delete dashboard
 - Create a new dashboard via the "New dashboard" dropdown (Create dashboard / Import JSON / View templates)
 
-**Bootstrap state:** the pytest harness creates a fresh stack with no pre-seeded dashboards. Every test must seed its own data. The "Enter dashboard name…" inline input is a "request a new template" feedback form — **not** a create flow. The only UI create path is the dropdown.
+**Bootstrap state:** the pytest harness creates a fresh stack with no pre-seeded dashboards. Every test seeds its own through the `dashboards` driver (`dashboards.seed(...)`, deleted when the test ends).
 
 **Known limitations:**
 - Ascending sort is not yet implemented — repeated clicks on the sort button keep `order=descend`.
@@ -87,7 +89,7 @@ The dashboards list page (`/dashboard`) lists all dashboards in the workspace. F
 - All Dashboards section header rendered.
 - Search input, sort button, and at least one dashboard thumbnail visible.
 
-**Cleanup:** delete the seeded dashboard via `DELETE /api/v1/dashboards/<id>`.
+**Cleanup:** none in the spec — the `dashboards` driver deletes what it seeded.
 
 #### TC-02 ...
 </example-spec>
@@ -95,7 +97,7 @@ The dashboards list page (`/dashboard`) lists all dashboards in the workspace. F
 **Quality bar:**
 - Steps must be specific enough that any tester (or the generator agent) can follow without ambiguity.
 - Include negative scenarios — empty state, no-match search, validation errors.
-- Each scenario must own its preconditions and cleanup. **Do not invent cross-file global fixtures** — they break parallel-by-file execution. Suite-level `beforeAll` / `afterAll` *within* a single spec file is fine and is the preferred shape for files with > ~10 scenarios; per-test `try / finally` is fine for smaller specs.
+- Each scenario must own its preconditions and cleanup. **Do not invent cross-file global fixtures** — they break parallel-by-file execution. Prefer a driver's self-cleaning seed (`dispose`) or worker-scoped `seeded(...)` layer; without a driver, suite-level `beforeAll` / `afterAll` within one spec file or per-test `try / finally` both work.
 - Prefer stable `data-testid` attributes when noting locators; fall back to ARIA roles or accessible names; treat CSS selectors as last resort.
 - **Don't pad coverage.** Every TC must catch a regression that would actually ship if the test were missing — a real branch in the source, a real user-visible failure mode. A TC that asserts a hard-coded string is still rendered, or that a button is still a button, adds nothing but maintenance cost: it inflates the suite, slows CI, and trains readers to skim past the directory. Before writing a scenario, ask "what code change would break this?" — if the only answer is "deleting the literal under test," cut it or fold it into a richer scenario as one assertion among many.
 - **Collapse near-duplicates.** Two TCs that differ only in input value (search by title vs search by description, when the underlying code path is the same) should merge into one parameterised scenario unless each input genuinely exercises a distinct branch. Prefer one assertion-rich TC over three thin ones.

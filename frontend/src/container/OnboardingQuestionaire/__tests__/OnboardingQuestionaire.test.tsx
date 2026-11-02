@@ -4,17 +4,9 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import OnboardingQuestionaire from '../index';
 
 // Mock dependencies
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: {
-			pathname: '/onboarding',
-			search: '',
-			hash: '',
-			state: null,
-		},
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
 // API Endpoints

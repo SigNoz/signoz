@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import {
 	NuqsTestingAdapter,
@@ -11,6 +10,7 @@ import {
 import { AppContext } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import { getAppContextMock } from 'tests/test-utils';
 
 import StatusFilter from './StatusFilter';
@@ -30,7 +30,7 @@ function renderStatusFilter({
 	onUrlUpdate?: OnUrlUpdateFunction;
 }): ReturnType<typeof render> {
 	return render(
-		<MemoryRouter>
+		<TestRouter>
 			<TimezoneProvider>
 				<QueryClientProvider client={queryClient}>
 					<Provider store={store}>
@@ -45,7 +45,7 @@ function renderStatusFilter({
 					</Provider>
 				</QueryClientProvider>
 			</TimezoneProvider>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 }
 

@@ -117,10 +117,10 @@ type RuleCondition struct {
 	TargetUnit        string               `json:"targetUnit,omitempty" description:"schemaVersion v1 only: the unit of target, such as percent or ms. Converted to compositeQuery.unit before comparison when the two differ."`
 	Algorithm         string               `json:"algorithm,omitempty" description:"anomaly_rule only: the anomaly detection algorithm. The supported value is standard."`
 	Seasonality       Seasonality          `json:"seasonality,omitzero" description:"anomaly_rule only: the seasonal period the history is compared against, hourly, daily or weekly."`
-	SelectedQuery     string               `json:"selectedQueryName,omitempty" description:"The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery. When omitted, F1 is used if present, otherwise the enabled query with the highest name."`
+	SelectedQuery     string               `json:"selectedQueryName,omitempty" required:"true" description:"The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery."`
 	RequireMinPoints  bool                 `json:"requireMinPoints,omitempty" description:"Whether a series is skipped until it has at least requiredNumPoints points in the window. Defaults to false."`
 	RequiredNumPoints int                  `json:"requiredNumPoints,omitempty" description:"The minimum number of points a series needs before it is evaluated. Must be greater than 0 when requireMinPoints is true."`
-	Thresholds        *RuleThresholdData   `json:"thresholds,omitempty" description:"The thresholds to evaluate, as a kind and spec. Required when schemaVersion is v2alpha1; derived from op, target and matchType for v1."`
+	Thresholds        *RuleThresholdData   `json:"thresholds,omitempty" required:"true" description:"The thresholds to evaluate, as a kind and spec."`
 }
 
 func (rc *RuleCondition) SelectedQueryName() string {

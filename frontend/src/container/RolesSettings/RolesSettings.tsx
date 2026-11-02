@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useHistory } from 'react-router-dom';
 import { Plus } from '@signozhq/icons';
+import { useAppNavigate } from 'lib/router/useAppNavigate';
 import { Input } from '@signozhq/ui/input';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -17,7 +17,7 @@ import styles from './RolesSettings.module.scss';
 
 function RolesSettings(): JSX.Element {
 	const [searchQuery, setSearchQuery] = useState('');
-	const history = useHistory();
+	const navigate = useAppNavigate();
 	const { isRolesEnabled } = useRolesFeatureGate();
 
 	return (
@@ -60,7 +60,7 @@ function RolesSettings(): JSX.Element {
 							variant="solid"
 							color="primary"
 							width={156}
-							onClick={(): void => history.push(ROUTES.ROLE_CREATE)}
+							onClick={(): void => navigate(ROUTES.ROLE_CREATE)}
 							prefix={<Plus size={14} />}
 						>
 							Custom role

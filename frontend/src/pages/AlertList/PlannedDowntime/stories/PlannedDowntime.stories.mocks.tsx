@@ -4,7 +4,7 @@
  */
 
 import { rest } from 'msw';
-import { userEvent, within } from 'storybook/test';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -111,20 +111,14 @@ export const clickFirstRowAction = async (
 	canvasElement: HTMLElement,
 	action: 'edit' | 'delete',
 ): Promise<void> => {
-	const icon = (
-		await within(canvasElement).findByText(
-			FIRST_DOWNTIME_NAME,
-			undefined,
+	await userEvent.click(
+		await within(canvasElement).findByRole(
+			'button',
+			{ name: `Actions for ${FIRST_DOWNTIME_NAME}` },
 			untilLoaded,
-		)
-	)
-		.closest('.header-content')
-		// The row action holds edit then delete, neither of them labelled.
-		?.querySelectorAll('.action-btn svg')[action === 'edit' ? 0 : 1];
-
-	if (!icon) {
-		throw new Error(`Downtime ${action} action did not render`);
-	}
-
-	await userEvent.click(icon);
+		),
+	);
+	await userEvent.click(
+		await screen.findByText(action === 'edit' ? 'Edit' : 'Delete'),
+	);
 };

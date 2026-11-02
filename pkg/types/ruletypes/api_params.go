@@ -9,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/swaggest/jsonschema-go"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -63,7 +64,7 @@ type PostableRule struct {
 	AlertName   valuer.DisplayName  `json:"alert" required:"true" description:"The display name of the alert rule."`
 	AlertType   AlertType           `json:"alertType" required:"true" description:"The signal the rule evaluates: METRIC_BASED_ALERT, TRACES_BASED_ALERT, LOGS_BASED_ALERT, EXCEPTIONS_BASED_ALERT or AI_TRACES_BASED_ALERT."`
 	Description string              `json:"description,omitempty" description:"A human readable description of what the rule monitors."`
-	RuleType    RuleType            `json:"ruleType" required:"true" description:"The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder queries and is forced to promql_rule for promql queries."`
+	RuleType    RuleType            `json:"ruleType" required:"true" description:"The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries."`
 	EvalWindow  valuer.TextDuration `json:"evalWindow,omitzero" description:"The lookback window as a Go duration such as 5m. Only read when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec instead."`
 	Frequency   valuer.TextDuration `json:"frequency,omitzero" description:"How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead."`
 
@@ -77,12 +78,12 @@ type PostableRule struct {
 
 	PreferredChannels []string `json:"preferredChannels,omitempty" description:"The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels."`
 
-	Version string `json:"version" description:"The query payload version. Only v5 is accepted and it is filled in when omitted."`
+	Version string `json:"version" description:"The query payload version. Nothing reads it."`
 
-	Evaluation    *EvaluationEnvelope `json:"evaluation,omitempty" description:"The evaluation window, as a kind and spec. Required when schemaVersion is v2alpha1; derived from evalWindow and frequency for v1."`
-	SchemaVersion string              `json:"schemaVersion,omitempty" description:"The rule payload schema: v1 (the default when omitted) uses the flat condition fields, v2alpha1 uses condition.thresholds, evaluation and notificationSettings."`
+	Evaluation    *EvaluationEnvelope `json:"evaluation,omitempty" required:"true" description:"The evaluation window, as a kind and spec."`
+	SchemaVersion string              `json:"schemaVersion,omitempty" required:"true" enum:"v2alpha1" description:"The rule payload schema."`
 
-	NotificationSettings *NotificationSettings `json:"notificationSettings,omitempty" description:"Grouping, re-notification and routing behaviour. Required when schemaVersion is v2alpha1; derived from the v1 fields otherwise."`
+	NotificationSettings *NotificationSettings `json:"notificationSettings,omitempty" required:"true" description:"Grouping, re-notification and routing behaviour."`
 }
 
 type NotificationSettings struct {
@@ -333,6 +334,19 @@ func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	}
 	r.processRuleDefaults()
 	return r.validate()
+}
+
+var _ jsonschema.Preparer = PostableRule{}
+
+// PrepareJSONSchema marks version and source deprecated: nothing reads them,
+// they stay only so existing clients keep a stable schema.
+func (PostableRule) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	for _, name := range []string{"version", "source"} {
+		if property, ok := schema.Properties[name]; ok && property.TypeObject != nil {
+			property.TypeObject.WithDeprecated(true)
+		}
+	}
+	return nil
 }
 
 func isValidLabelName(ln string) bool {
