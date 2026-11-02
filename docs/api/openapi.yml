@@ -15274,9 +15274,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - planned-maintenance:list
       - tokenizer:
-        - VIEWER
+        - planned-maintenance:list
       summary: List downtime schedules
       tags:
       - downtimeschedules
@@ -15331,9 +15331,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - planned-maintenance:create
+        - planned-maintenance:attach
+        - rule:attach
       - tokenizer:
-        - EDITOR
+        - planned-maintenance:create
+        - planned-maintenance:attach
+        - rule:attach
       summary: Create downtime schedule
       tags:
       - downtimeschedules
@@ -15378,9 +15382,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - planned-maintenance:delete
       - tokenizer:
-        - EDITOR
+        - planned-maintenance:delete
       summary: Delete downtime schedule
       tags:
       - downtimeschedules
@@ -15436,9 +15440,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - planned-maintenance:read
       - tokenizer:
-        - VIEWER
+        - planned-maintenance:read
       summary: Get downtime schedule by ID
       tags:
       - downtimeschedules
@@ -15493,9 +15497,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - planned-maintenance:update
+        - planned-maintenance:attach
+        - planned-maintenance:detach
+        - rule:attach
+        - rule:detach
       - tokenizer:
-        - EDITOR
+        - planned-maintenance:update
+        - planned-maintenance:attach
+        - planned-maintenance:detach
+        - rule:attach
+        - rule:detach
       summary: Update downtime schedule
       tags:
       - downtimeschedules
