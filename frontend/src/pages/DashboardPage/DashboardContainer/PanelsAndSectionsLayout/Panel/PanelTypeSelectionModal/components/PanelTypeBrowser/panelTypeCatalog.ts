@@ -1,5 +1,8 @@
-import { PANEL_OPTIONS, type PanelOption } from '../../../Panels/registry';
-import type { PanelKind } from '../../../Panels/types/panelKind';
+import {
+	PANEL_OPTIONS,
+	type PanelOption,
+} from '../../../../../Panels/registry';
+import type { PanelKind } from '../../../../../Panels/types/panelKind';
 
 export type PanelTypeGroupId =
 	| 'trends'
