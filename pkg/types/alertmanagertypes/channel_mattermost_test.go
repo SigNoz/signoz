@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +15,7 @@ func TestChannelMattermostConfigDefaults(t *testing.T) {
 
 	require.NotNil(t, spec.SendResolved)
 	assert.True(t, *spec.SendResolved, "upstream defaults mattermost send_resolved on")
-	assert.Equal(t, config.DefaultMattermostConfig.Text, spec.Text.StringValue())
+	assert.Equal(t, DefaultMattermostTextTemplate, spec.Text.StringValue())
 }
 
 func TestChannelMattermostConfigValidation(t *testing.T) {

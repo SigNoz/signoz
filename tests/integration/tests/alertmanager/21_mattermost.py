@@ -209,5 +209,7 @@ def test_mattermost_test_channel(  # pylint: disable=too-many-arguments,too-many
     )
     message = json.loads(base64.b64decode(find.json()["requests"][0]["bodyAsBase64"]).decode("utf-8"))
     assert message["channel"] == "alerts"
-    assert "# Alerts Firing:" in message["text"], f"unexpected text: {message['text']}"
-    assert "alertname = Test Alert" in message["text"], f"unexpected text: {message['text']}"
+    assert len(message["attachments"]) == 1, f"expected one card: {message}"
+    card = message["attachments"][0]
+    assert ": FIRING: Test Alert" in card["title"], f"unexpected title: {card['title']}"
+    assert card["color"] in ("#e01e5a", "#f2c744"), f"unexpected color: {card['color']}"

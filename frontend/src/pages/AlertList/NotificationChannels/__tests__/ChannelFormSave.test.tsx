@@ -7,6 +7,8 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
+import { MattermostInitialConfig } from 'container/CreateAlertChannels/defaults';
+
 import ChannelForm from '../components/ChannelForm/ChannelForm';
 
 const FIND = { timeout: 5000 };
@@ -152,7 +154,7 @@ describe('ChannelForm save', () => {
 
 			// the form opens on slack; its text must not carry over
 			expect(screen.getByTestId('mattermost-text-textarea')).toHaveValue(
-				'{{ template "mattermost.default.text" . }}',
+				MattermostInitialConfig.text,
 			);
 
 			const save = screen.getByTestId('save-channel-button');
@@ -169,7 +171,7 @@ describe('ChannelForm save', () => {
 					spec: {
 						webhookUrl: 'https://mattermost.example.com/hooks/abc',
 						channel: 'alerts',
-						text: '{{ template "mattermost.default.text" . }}',
+						text: MattermostInitialConfig.text,
 						sendResolved: true,
 					},
 				},

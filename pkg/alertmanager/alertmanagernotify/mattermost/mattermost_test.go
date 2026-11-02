@@ -13,6 +13,7 @@ import (
 
 	test "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
@@ -72,7 +73,7 @@ func newNotifier(t *testing.T, webhookURL string) *Notifier {
 		Channel:    "alerts",
 		Username:   "signoz",
 		IconEmoji:  ":bell:",
-		Text:       config.DefaultMattermostConfig.Text,
+		Text:       alertmanagertypes.DefaultMattermostTextTemplate,
 	}, tmpl, logger, alertmanagertemplate.New(tmpl, logger))
 	require.NoError(t, err)
 
@@ -96,84 +97,85 @@ func newAlert(host string, annotations model.LabelSet) *types.Alert {
 	}
 }
 
-func TestNotifyBuildsTheText(t *testing.T) {
+func TestNotifyBuildsOneCardPerAlert(t *testing.T) {
+	resolved := newAlert("web-5", nil)
+	resolved.EndsAt = time.Now().Add(-time.Minute)
+	critical := newAlert("web-4", nil)
+	critical.Labels["severity"] = "critical"
+
+	mock := newMockWebhook(t, http.StatusOK)
+	retry, err := newNotifier(t, mock.srv.URL).Notify(notify.WithGroupKey(context.Background(), "1"), newAlert("web-3", nil), critical, resolved)
+	require.NoError(t, err)
+	assert.False(t, retry)
+
+	sent := mock.only(t)
+	assert.Equal(t, "alerts", sent["channel"])
+	assert.Equal(t, "signoz", sent["username"])
+	assert.Equal(t, ":bell:", sent["icon_emoji"])
+
+	cards := sent["attachments"].([]any)
+	require.Len(t, cards, 3)
+
 	testCases := []struct {
-		name            string
-		alerts          []*types.Alert
-		wantExact       string
-		wantContains    []string
-		wantNotContains []string
+		title string
+		color string
+		host  string
+	}{
+		{":large_yellow_circle: FIRING: checkout-latency-high", colorWarning, "web-3"},
+		{":red_circle: FIRING: checkout-latency-high", colorCritical, "web-4"},
+		{":large_green_circle: RESOLVED: checkout-latency-high", colorResolved, "web-5"},
+	}
+	for i, testCase := range testCases {
+		card := cards[i].(map[string]any)
+		assert.Equal(t, testCase.title, card["title"])
+		assert.Equal(t, testCase.color, card["color"])
+		assert.Equal(t, "http://am/alerts/overview?ruleId=r1", card["title_link"])
+		// each card renders the channel text for its own alert only
+		assert.Contains(t, card["text"], "p99 is 612ms")
+		assert.Contains(t, card["text"], "`host: "+testCase.host+"`")
+		assert.NotContains(t, card["text"], "alertname")
+	}
+}
+
+func TestNotifyAppliesRuleTemplates(t *testing.T) {
+	testCases := []struct {
+		name        string
+		annotations model.LabelSet
+		wantTitle   string
+		wantText    string
 	}{
 		{
-			// Without rule templates the post is upstream's, channel text and all.
-			name:         "NoRuleTemplates_UsesChannelText",
-			alerts:       []*types.Alert{newAlert("web-3", nil)},
-			wantContains: []string{"# Alerts Firing:", "alertname = checkout-latency-high"},
-		},
-		{
-			name: "TitleAndBody_ReplaceTheChannelText",
-			alerts: []*types.Alert{newAlert("web-3", model.LabelSet{
+			name: "TitleAndBody",
+			annotations: model.LabelSet{
 				ruletypes.AnnotationTitleTemplate: "Incident on $labels.host",
-				ruletypes.AnnotationBodyTemplate:  "$alert.status for $rule.name",
-			})},
-			wantExact: "#### Incident on web-3\n\nfiring for checkout-latency-high",
-		},
-		{
-			name: "BodyOnly_SendsTheBodyAlone",
-			alerts: []*types.Alert{newAlert("web-3", model.LabelSet{
-				ruletypes.AnnotationBodyTemplate: "$alert.status for $rule.name",
-			})},
-			wantExact: "firing for checkout-latency-high",
-		},
-		{
-			name: "TitleOnly_KeepsTheChannelText",
-			alerts: []*types.Alert{newAlert("web-3", model.LabelSet{
-				ruletypes.AnnotationTitleTemplate: "Incident on $labels.host",
-			})},
-			wantContains: []string{"#### Incident on web-3\n\n", "# Alerts Firing:"},
-		},
-		{
-			// Mattermost renders markdown itself, so rule templates go out as
-			// authored rather than through a renderer.
-			name: "RuleTemplateMarkdown_SentAsIs",
-			alerts: []*types.Alert{newAlert("web-3", model.LabelSet{
-				ruletypes.AnnotationBodyTemplate: "**{{ $rule.name }}** on `{{ $labels.host }}` — [open](https://signoz.io/d?a=1&b=2)",
-			})},
-			wantExact: "**checkout-latency-high** on `web-3` — [open](https://signoz.io/d?a=1&b=2)",
-		},
-		{
-			name: "GroupedAlerts_BodyRenderedPerAlert",
-			alerts: []*types.Alert{
-				newAlert("web-3", model.LabelSet{ruletypes.AnnotationBodyTemplate: "host $labels.host"}),
-				newAlert("web-4", model.LabelSet{ruletypes.AnnotationBodyTemplate: "host $labels.host"}),
+				ruletypes.AnnotationBodyTemplate:  "**$alert.status** for `$rule.name`",
 			},
-			wantExact: "host web-3\n\nhost web-4",
+			wantTitle: ":large_yellow_circle: FIRING: Incident on web-3",
+			wantText:  "**firing** for `checkout-latency-high`",
+		},
+		{
+			name:        "BodyOnly_KeepsTheAlertName",
+			annotations: model.LabelSet{ruletypes.AnnotationBodyTemplate: "host $labels.host"},
+			wantTitle:   ":large_yellow_circle: FIRING: checkout-latency-high",
+			wantText:    "host web-3",
+		},
+		{
+			name:        "TitleOnly_KeepsTheChannelText",
+			annotations: model.LabelSet{ruletypes.AnnotationTitleTemplate: "Incident on $labels.host"},
+			wantTitle:   ":large_yellow_circle: FIRING: Incident on web-3",
+			wantText:    "p99 is 612ms",
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			mock := newMockWebhook(t, http.StatusOK)
-
-			retry, err := newNotifier(t, mock.srv.URL).Notify(notify.WithGroupKey(context.Background(), "1"), testCase.alerts...)
+			_, err := newNotifier(t, mock.srv.URL).Notify(notify.WithGroupKey(context.Background(), "1"), newAlert("web-3", testCase.annotations))
 			require.NoError(t, err)
-			assert.False(t, retry)
 
-			sent := mock.only(t)
-			assert.Equal(t, "alerts", sent["channel"])
-			assert.Equal(t, "signoz", sent["username"])
-			assert.Equal(t, ":bell:", sent["icon_emoji"])
-
-			text, _ := sent["text"].(string)
-			if testCase.wantExact != "" {
-				assert.Equal(t, testCase.wantExact, text)
-			}
-			for _, want := range testCase.wantContains {
-				assert.Contains(t, text, want)
-			}
-			for _, notWant := range testCase.wantNotContains {
-				assert.NotContains(t, text, notWant)
-			}
+			card := mock.only(t)["attachments"].([]any)[0].(map[string]any)
+			assert.Equal(t, testCase.wantTitle, card["title"])
+			assert.Contains(t, card["text"], testCase.wantText)
 		})
 	}
 }
@@ -215,7 +217,7 @@ func TestNotifyRedactsTheWebhookURLFromErrors(t *testing.T) {
 	srv.Close()
 
 	for name, annotations := range map[string]model.LabelSet{
-		"Upstream":     nil,
+		"ChannelText":  nil,
 		"RuleTemplate": {ruletypes.AnnotationBodyTemplate: "host $labels.host"},
 	} {
 		t.Run(name, func(t *testing.T) {

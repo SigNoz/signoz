@@ -431,10 +431,16 @@ def mattermost_retry_mappings(path: str) -> list[Mapping]:
 
 
 def mattermost_message_subset(alertname: str) -> dict:
-    """Upstream's default text: a markdown heading, then the alert labels."""
+    """One card per alert: a status icon and the alert name linked to the rule."""
     return {
         "channel": "alerts",
-        "text": re.compile("(?s)" + re.escape("# Alerts Firing:") + ".*" + re.escape(f"alertname = {alertname}")),
+        "attachments": [
+            {
+                "title": re.compile(r"^:(red|large_yellow)_circle: FIRING: " + re.escape(alertname) + "$"),
+                "title_link": re.compile(r"/alerts/overview\?ruleId="),
+                "footer": "SigNoz",
+            }
+        ],
     }
 
 

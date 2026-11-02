@@ -737,8 +737,9 @@ components:
           nullable: true
           type: boolean
         text:
-          description: Alertmanager template for the Markdown message; defaults to
-            the Alertmanager Mattermost default.
+          description: Alertmanager template for the Markdown message; rendered once
+            per alert as the body of its card; defaults to the summary, description,
+            labels and related links.
           type: string
         username:
           description: Overrides the posting username; requires username overrides

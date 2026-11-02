@@ -259,5 +259,5 @@
   "field_mattermost_icon_emoji": "Icon emoji",
   "tooltip_mattermost_icon_emoji": "Uses this emoji, such as :bell:, as the post's profile picture. Needs icon overrides enabled on the Mattermost server.",
   "field_mattermost_text": "Message",
-  "tooltip_mattermost_text": "Template for the message. Mattermost renders Markdown. Leave empty to use the default."
+  "tooltip_mattermost_text": "Template for the body of each alert's card, rendered once per alert. Mattermost renders Markdown. The coloured bar, status icon, title and severity fields are added for you."
 }

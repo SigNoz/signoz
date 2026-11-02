@@ -1166,7 +1166,7 @@ export interface AlertmanagertypesChannelMattermostConfigDTO {
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
-	 * @description Alertmanager template for the Markdown message; defaults to the Alertmanager Mattermost default.
+	 * @description Alertmanager template for the Markdown message; rendered once per alert as the body of its card; defaults to the summary, description, labels and related links.
 	 */
 	text?: string;
 	/**

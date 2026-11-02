@@ -6,6 +6,16 @@ import (
 	"github.com/prometheus/alertmanager/config"
 )
 
+// DefaultMattermostTextTemplate is the body of each alert's card. The notifier
+// renders it once per alert and supplies the coloured bar, the status icon,
+// the linked title and the severity and start time fields itself.
+const DefaultMattermostTextTemplate = `{{ range .Alerts -}}
+{{ if .Annotations.summary }}{{ .Annotations.summary }}
+{{ end }}{{ if .Annotations.description }}{{ .Annotations.description }}
+{{ end }}{{ range .Labels.SortedPairs }}{{ if and (ne .Name "alertname") (ne .Name "severity") (ne .Name "ruleId") }}` + "`{{ .Name }}: {{ .Value }}` " + `{{ end }}{{ end }}
+{{ if .Annotations.related_logs }}[Related logs]({{ .Annotations.related_logs }}){{ end }}{{ if and .Annotations.related_logs .Annotations.related_traces }} · {{ end }}{{ if .Annotations.related_traces }}[Related traces]({{ .Annotations.related_traces }}){{ end }}
+{{ end }}`
+
 // ChannelMattermostConfig configures delivery to a Mattermost incoming webhook.
 // It maps onto upstream's MattermostConfig; attachments, props, priority and
 // the post type are not modelled.
@@ -16,7 +26,7 @@ type ChannelMattermostConfig struct {
 	Username     string                       `json:"username" description:"Overrides the posting username; requires username overrides to be enabled on the Mattermost server."`
 	IconURL      string                       `json:"iconUrl" description:"Overrides the profile picture of the post; requires icon overrides to be enabled on the Mattermost server."`
 	IconEmoji    string                       `json:"iconEmoji" description:"Overrides the profile picture with an emoji, such as :bell:; requires icon overrides to be enabled on the Mattermost server."`
-	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero" description:"Alertmanager template for the Markdown message; defaults to the Alertmanager Mattermost default."`
+	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero" description:"Alertmanager template for the Markdown message; rendered once per alert as the body of its card; defaults to the summary, description, labels and related links."`
 }
 
 func (c *ChannelMattermostConfig) UnmarshalJSON(data []byte) error {
@@ -26,7 +36,7 @@ func (c *ChannelMattermostConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	fillSendResolved(&c.SendResolved, config.DefaultMattermostConfig.VSendResolved)
-	c.Text.SetIfUnset(config.DefaultMattermostConfig.Text)
+	c.Text.SetIfUnset(DefaultMattermostTextTemplate)
 
 	return c.Validate()
 }
