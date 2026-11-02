@@ -442,3 +442,51 @@ def test_builder_refreshing_a_sliding_time_range(
     assert uncached.status_code == HTTPStatus.OK, uncached.text
 
     assert_results_equal(from_cache.json(), uncached.json(), "A", "the twentieth refresh")
+
+
+def test_builder_rows_scanned_when_refreshing(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[list[Metrics]], None],
+) -> None:
+    metric_name = f"cache_rows_scanned_{uuid4().hex[:8]}"
+
+    # 90 minutes back so even the last refresh closes clear of the flux
+    # interval, which holds recent data out of the cache
+    start_time = datetime.fromtimestamp(int((datetime.now(tz=UTC) - timedelta(minutes=90)).timestamp()) // 60 * 60, tz=UTC)
+    start_time_ms = int(start_time.timestamp() * 1000)
+
+    query = [build_builder_query("A", metric_name, "max", "max")]
+
+    insert_metrics(
+        [
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "api"},
+                timestamp=start_time + timedelta(minutes=minute),
+                value=minute,
+                type_="Gauge",
+                is_monotonic=False,
+            )
+            for minute in range(70)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # a dashboard left open on a one hour range, re-running a minute later each
+    # time. rowsScanned is what answering the request cost, so a refresh served
+    # mostly out of the cache cannot report more than reading its range afresh
+    for refresh in range(10):
+        refresh_start_ms = start_time_ms + refresh * MINUTE_MS
+        from_cache = make_query_request(signoz, token, refresh_start_ms, refresh_start_ms + 60 * MINUTE_MS, query, no_cache=False)
+        assert from_cache.status_code == HTTPStatus.OK, from_cache.text
+
+        uncached = make_query_request(signoz, token, refresh_start_ms, refresh_start_ms + 60 * MINUTE_MS, query, no_cache=True)
+        assert uncached.status_code == HTTPStatus.OK, uncached.text
+
+        rows_scanned_from_cache = from_cache.json()["data"]["meta"]["rowsScanned"]
+        rows_scanned_uncached = uncached.json()["data"]["meta"]["rowsScanned"]
+        assert rows_scanned_uncached > 0, f"refresh {refresh}"
+        assert rows_scanned_from_cache <= rows_scanned_uncached, f"refresh {refresh}: {rows_scanned_from_cache} rows scanned when served from the cache, {rows_scanned_uncached} when read afresh"
