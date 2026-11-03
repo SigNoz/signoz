@@ -7,6 +7,8 @@ import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
 import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { openInNewTab } from 'utils/navigation';
 
+import styles from './OpenTraceButton.module.scss';
+
 type OpenTraceButtonProps = {
 	row: TracesTableRow;
 	rowId: string;
@@ -29,19 +31,21 @@ function OpenTraceButton({
 	}
 
 	return (
-		<Tooltip title="Open trace details">
-			<Button
-				variant="ghost"
-				color="secondary"
-				size="sm"
-				icon
-				onClick={handleClick}
-				aria-label="Open trace details"
-				testId="span-row-open-trace"
-			>
-				<CornerUpRight size={14} />
-			</Button>
-		</Tooltip>
+		<span className={styles.slot}>
+			<Tooltip title="Open trace details">
+				<Button
+					variant="ghost"
+					color="secondary"
+					size="sm"
+					icon
+					onClick={handleClick}
+					aria-label="Open trace details"
+					testId="span-row-open-trace"
+				>
+					<CornerUpRight size={14} />
+				</Button>
+			</Tooltip>
+		</span>
 	);
 }
 
