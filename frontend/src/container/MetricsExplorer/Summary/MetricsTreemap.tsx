@@ -156,6 +156,7 @@ function MetricsTreemapInternal({
 												placement="top"
 											>
 												<foreignObject
+													data-testid={`metrics-treemap-tile-${node.data.id}`}
 													width={nodeWidth}
 													height={nodeHeight}
 													onClick={(): void => openMetricDetails(node.data.id, 'treemap')}
@@ -201,6 +202,7 @@ function MetricsTreemap({
 					</Tooltip>
 				</div>
 				<Select
+					data-testid="metrics-treemap-view-select"
 					options={TREEMAP_VIEW_OPTIONS}
 					value={viewType}
 					onChange={setHeatmapView}

@@ -19,7 +19,11 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 	return (
 		<div className="logs-preview-list-container">
 			{logs.map((log) => (
-				<div key={log.id} className="logs-preview-list-item">
+				<div
+					key={log.id}
+					className="logs-preview-list-item"
+					data-testid="pipeline-preview-log"
+				>
 					<div className="logs-preview-list-item-timestamp">
 						{formatTimezoneAdjustedTimestamp(
 							log.timestamp,

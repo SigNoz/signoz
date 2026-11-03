@@ -4,7 +4,7 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { authToken } from '../helpers/common';
+import { authToken } from './api';
 
 import { driver, kit, seeded } from './kit';
 

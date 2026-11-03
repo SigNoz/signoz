@@ -42,7 +42,12 @@ function ResetLinkDialog({
 				</p>
 				<div className="reset-link-dialog__link-row">
 					<div className="reset-link-dialog__link-text-wrap">
-						<span className="reset-link-dialog__link-text">{resetLink}</span>
+						<span
+							className="reset-link-dialog__link-text"
+							data-testid="reset-link-text"
+						>
+							{resetLink}
+						</span>
 					</div>
 					<Button
 						size="md"
