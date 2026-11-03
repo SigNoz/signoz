@@ -856,7 +856,7 @@ func (r *QueryRangeRequest) validateBucketCounting() error {
 				return errors.NewInvalidInputf(
 					errors.CodeInvalidInput,
 					"bucketOptions are only supported for heatmap and distribution requests, got %s",
-					r.RequestType,
+					r.RequestType.StringValue(),
 				)
 			}
 		}
@@ -865,7 +865,7 @@ func (r *QueryRangeRequest) validateBucketCounting() error {
 
 	if r.FormatOptions != nil && r.FormatOptions.FillGaps {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"fillGaps is not supported for %s requests: an absent column means collection stopped, which a zero-filled column would hide", r.RequestType)
+			"fillGaps is not supported for %s requests: an absent column means collection stopped, which a zero-filled column would hide", r.RequestType.StringValue())
 	}
 
 	enabled := 0
@@ -909,7 +909,7 @@ func (r *QueryRangeRequest) validateBucketCounting() error {
 				"heatmaps are not supported for the logs and traces signals yet")
 		default:
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"%s requests support one metrics builder query, one formula over them, one clickhouse query, or one promql query, got %q", r.RequestType, envelope.Type.StringValue())
+				"%s requests support one metrics builder query, one formula over them, one clickhouse query, or one promql query, got %q", r.RequestType.StringValue(), envelope.Type.StringValue())
 		}
 	}
 
@@ -921,11 +921,11 @@ func (r *QueryRangeRequest) validateBucketCounting() error {
 			"at least one query is required")
 	case enabled == 0:
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"a %s needs one enabled query, but every query is disabled", r.RequestType).
+			"a %s needs one enabled query, but every query is disabled", r.RequestType.StringValue()).
 			WithAdditional("Enable the query whose distribution you want to plot")
 	case enabled > 1:
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"%s requests take one enabled query, but %d are enabled", r.RequestType, enabled).
+			"%s requests take one enabled query, but %d are enabled", r.RequestType.StringValue(), enabled).
 			WithAdditional(
 				"Disable the queries you don't want to plot, keeping only the one whose distribution you want to show",
 				"A formula can stay enabled with the queries it reads disabled",
@@ -1002,12 +1002,12 @@ func (b *BucketOptions) validateBucketOptions() error {
 func validateBucketCountingQuery(requestType RequestType, functions []Function, having *Having) error {
 	if len(functions) > 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"functions are not supported for %s requests: a heatmap point is a count per bucket, not a single value", requestType)
+			"functions are not supported for %s requests: a heatmap point is a count per bucket, not a single value", requestType.StringValue())
 	}
 
 	if having != nil && having.Expression != "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"having is not supported for %s requests: it filters individual cells, which breaks the cumulative differencing", requestType)
+			"having is not supported for %s requests: it filters individual cells, which breaks the cumulative differencing", requestType.StringValue())
 	}
 
 	return nil
