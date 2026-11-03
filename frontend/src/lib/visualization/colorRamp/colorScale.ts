@@ -117,9 +117,10 @@ export function resolveColorDomain(
 	return max > min ? { min, max, logFloor } : { min, max: min, logFloor };
 }
 
-/** Where a log ramp starts; `null` when the floor leaves it no span. */
+/** Where a log ramp starts: a positive minimum (only ever set explicitly), else
+ *  the floor. `null` when that leaves no span. */
 function getLogBottom(domain: ColorRampDomain): number | null {
-	const bottom = Math.max(domain.min, domain.logFloor);
+	const bottom = domain.min > 0 ? domain.min : domain.logFloor;
 	return domain.max > bottom ? bottom : null;
 }
 

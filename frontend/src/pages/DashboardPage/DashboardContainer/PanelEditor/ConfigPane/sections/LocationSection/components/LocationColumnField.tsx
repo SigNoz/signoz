@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 
 import ConfigField from '../../../controls/ConfigField/ConfigField';
@@ -31,13 +32,19 @@ function LocationColumnField({
 	onChange,
 }: LocationColumnFieldProps): JSX.Element {
 	const isMissing = !!value && !groupColumns.includes(value);
-	const items: ConfigSelectItem[] = [
-		{ value: '', label: autoColumn ? `Auto · ${autoColumn}` : 'Auto · no match' },
-		...groupColumns.map((column) => ({ value: column, label: column })),
-		...(isMissing
-			? [{ value: value as string, label: `${value} (not in results)` }]
-			: []),
-	];
+	const items = useMemo<ConfigSelectItem[]>(
+		() => [
+			{
+				value: '',
+				label: autoColumn ? `Auto · ${autoColumn}` : 'Auto · no match',
+			},
+			...groupColumns.map((column) => ({ value: column, label: column })),
+			...(isMissing
+				? [{ value: value as string, label: `${value} (not in results)` }]
+				: []),
+		],
+		[autoColumn, groupColumns, isMissing, value],
+	);
 
 	let help: JSX.Element | undefined;
 	if (isMissing) {

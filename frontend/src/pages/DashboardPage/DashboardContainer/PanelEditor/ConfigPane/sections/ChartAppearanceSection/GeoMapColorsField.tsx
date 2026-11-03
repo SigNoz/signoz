@@ -10,17 +10,17 @@ import ConfigRangeInput from '../../controls/ConfigRangeInput/ConfigRangeInput';
 import { isRangeInverted } from '../../controls/ConfigRangeInput/utils';
 import ConfigTiles from '../../controls/ConfigTiles/ConfigTiles';
 import { createFieldResetter } from '../../utils/changes';
-import HeatmapColorStepsField from './HeatmapColorStepsField';
-import HeatmapFillField from './HeatmapFillField';
-import HeatmapPaletteGrid from './HeatmapPaletteGrid';
-import HeatmapRampPreview from './HeatmapRampPreview';
+import ColorRampStepsField from './ColorRampStepsField';
+import ColorRampFillField from './ColorRampFillField';
+import ColorRampPaletteGrid from './ColorRampPaletteGrid';
+import ColorRampPreview from './ColorRampPreview';
 import {
 	COLOR_MODE_OPTIONS,
 	COLOR_SCALE_OPTIONS,
 	DEFAULT_COLOR_MODE,
 	DEFAULT_COLOR_SCALE,
 	DEFAULT_PALETTE,
-} from './heatmapColorOptions';
+} from './colorRampOptions';
 
 const MODE_HELP: Record<DashboardtypesHeatmapColorModeDTO, string> = {
 	palette: 'Each value maps to a color on a multi-color ramp.',
@@ -51,7 +51,7 @@ function GeoMapColorsField({
 
 	return (
 		<>
-			<HeatmapRampPreview
+			<ColorRampPreview
 				colors={value && { ...value, minCount: value.min, maxCount: value.max }}
 			/>
 
@@ -66,7 +66,7 @@ function GeoMapColorsField({
 			</ConfigField>
 
 			{mode === DashboardtypesHeatmapColorModeDTO.opacity ? (
-				<HeatmapFillField
+				<ColorRampFillField
 					value={value?.fill}
 					withGroupColor={false}
 					{...reset('fill')}
@@ -74,7 +74,7 @@ function GeoMapColorsField({
 				/>
 			) : (
 				<ConfigField label="Palette" {...reset('palette')}>
-					<HeatmapPaletteGrid
+					<ColorRampPaletteGrid
 						value={value?.palette ?? DEFAULT_PALETTE}
 						onChange={(palette): void => onChange({ ...value, palette })}
 					/>
@@ -95,7 +95,7 @@ function GeoMapColorsField({
 				/>
 			</ConfigField>
 
-			<HeatmapColorStepsField
+			<ColorRampStepsField
 				value={value?.steps || undefined}
 				{...reset('steps')}
 				onChange={(steps): void => onChange({ ...value, steps })}

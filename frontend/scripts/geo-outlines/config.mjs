@@ -1,4 +1,9 @@
 // Inputs and tuning for the Geo Map outlines build. Tables only; no logic.
+// Read by every other module here; not run on its own.
+//
+// Edit this file to bump Natural Earth (the pinned version below), retune
+// simplification, or fix a region, alias or merge; then run
+// pnpm build:geo-outlines and commit the rebuilt assets.
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 

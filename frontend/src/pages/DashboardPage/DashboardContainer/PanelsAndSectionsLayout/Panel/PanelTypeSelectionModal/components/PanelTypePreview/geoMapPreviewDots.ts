@@ -1,3 +1,6 @@
+// The dotted world sketch on the Geo Map tile of the "New panel" picker.
+// Hand-drawn instead of the chart's outlines so the picker doesn't load them.
+//
 // One land dot per `#` on a 36 × 14 grid.
 const WORLD_ROWS = [
 	'      ####           #######        ',

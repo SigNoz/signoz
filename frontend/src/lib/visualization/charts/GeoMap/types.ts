@@ -24,6 +24,11 @@ export interface ShapeProperties {
 }
 
 export interface CountryProperties extends ShapeProperties {
+	/**
+	 * ISO 3166-1 alpha-3 (`DEU`). `null` for Somaliland, N. Cyprus and Siachen,
+	 * which have no ISO code at all, and for Kosovo, whose unofficial `XK` code
+	 * has no alpha-3.
+	 */
 	iso3: string | null;
 	/** Bounds of the largest polygon; Fit to data ignores overseas parts. */
 	mainland: LonLatBox;

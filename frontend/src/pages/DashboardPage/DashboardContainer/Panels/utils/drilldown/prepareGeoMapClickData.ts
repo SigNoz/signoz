@@ -6,7 +6,7 @@ import type { DrilldownClickPayload } from '../../types/drilldown';
 import { getGroupByFilters } from './getGroupByFilters';
 import { resolveDrilldownSignal } from './signal';
 
-interface EnrichGeoMapClickArgs {
+interface PrepareGeoMapClickDataArgs {
 	/** Group-by key → the clicked row's value, as the query returned it. */
 	labels: Record<string, string>;
 	/** The location's name: a country or state as returned, or a point's label. */
@@ -23,14 +23,14 @@ interface EnrichGeoMapClickArgs {
  * Drilldown filtered to the clicked location's row. A formula's inputs share its
  * group by, so with neither column from a builder query the first one stands in.
  */
-export function enrichGeoMapClick({
+export function prepareGeoMapClickData({
 	labels,
 	label,
 	queryNames,
 	builderQueries,
 	coordinates,
 	timeRange,
-}: EnrichGeoMapClickArgs): DrilldownClickPayload | null {
+}: PrepareGeoMapClickDataArgs): DrilldownClickPayload | null {
 	const builderQuery =
 		queryNames
 			.filter(isValidQueryName)

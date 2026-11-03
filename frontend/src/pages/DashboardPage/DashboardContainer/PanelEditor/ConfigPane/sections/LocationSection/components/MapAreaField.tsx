@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
 	type DashboardtypesGeoMapSettingsDTO,
 	DashboardtypesGeoMapViewDTO,
@@ -6,7 +7,7 @@ import type { GeoMapPlacementSlice } from 'pages/DashboardPage/DashboardContaine
 
 import ConfigField from '../../../controls/ConfigField/ConfigField';
 import ConfigSelect from '../../../controls/ConfigSelect/ConfigSelect';
-import type { RowKind } from '../types';
+import { RowKind } from '../types';
 import { buildAreaItems, fromAreaValue, toAreaValue } from '../utils/options';
 
 const VIEW = DashboardtypesGeoMapViewDTO;
@@ -25,6 +26,8 @@ function MapAreaField({
 	value,
 	onChange,
 }: MapAreaFieldProps): JSX.Element {
+	const items = useMemo(() => buildAreaItems(kind), [kind]);
+
 	return (
 		<ConfigField
 			label="Map area"
@@ -38,9 +41,9 @@ function MapAreaField({
 		>
 			<ConfigSelect
 				testId="panel-editor-v2-geo-map-view"
-				showSearch={kind === 'point'}
+				showSearch={kind === RowKind.Point}
 				value={toAreaValue(value)}
-				items={buildAreaItems(kind)}
+				items={items}
 				onChange={(next): void => onChange(fromAreaValue(next))}
 			/>
 		</ConfigField>

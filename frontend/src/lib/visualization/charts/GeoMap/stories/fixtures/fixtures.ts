@@ -1,7 +1,7 @@
 import { COUNTRIES } from '../../geo/countries';
 import { seededRandom } from './seededRandom';
-import { cityLatency, manyPoints } from './pointFixtures';
-import { indiaLatency, usRequests } from './stateFixtures';
+import { cityLatency } from './pointFixtures';
+import { usRequests } from './stateFixtures';
 import { Fixture, FixtureDataset, FixtureRow } from './types';
 
 const ISO2S = COUNTRIES.map((country) => country.properties.code).filter(
@@ -102,27 +102,6 @@ export const FIXTURES: Record<FixtureDataset, Fixture> = {
 		rows: [],
 		points: cityLatency(),
 	},
-	manyPoints: {
-		title: 'Requests by location (5,000 points)',
-		unit: 'count',
-		rows: [],
-		points: manyPoints(5_000),
-	},
-	maxPoints: {
-		title: 'Requests by location (100,000 points)',
-		unit: 'count',
-		rows: [],
-		points: manyPoints(),
-	},
-	cityLatencyAndRequests: {
-		title: 'p95 latency by city, sized by requests',
-		unit: 'ms',
-		rows: [],
-		points: cityLatency(),
-		valueLabel: 'p95 latency',
-		sizeMetric: { label: 'Requests', unit: 'count' },
-	},
-	requests: { title: 'Requests by country', unit: 'count', rows: requests() },
 	europeLatency: {
 		title: 'p95 latency by country (EU rollout)',
 		unit: 'ms',
@@ -133,11 +112,5 @@ export const FIXTURES: Record<FixtureDataset, Fixture> = {
 		unit: 'count',
 		rows: usRequests(),
 		country: 'US',
-	},
-	indiaStates: {
-		title: 'p95 latency by Indian state',
-		unit: 'ms',
-		rows: indiaLatency(),
-		country: 'IN',
 	},
 };

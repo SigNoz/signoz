@@ -1,4 +1,7 @@
-import { DashboardtypesGeoMapLayerDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesGeoMapLayerDTO,
+	DashboardtypesGeoMapLocationModeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 import { LocationKind } from '../../types';
 import {
@@ -106,6 +109,24 @@ describe('prepareGeoMapData', () => {
 			expect(detected.colorColumn?.id).toBe('x');
 			expect(bound.points).toHaveLength(1);
 			expect(bound.colorColumn?.id).toBe('latitude');
+		});
+
+		it('keeps coordinate-named values colorable when they place nothing', () => {
+			const sqlTable = makeTable(
+				[group('country'), value('lat'), value('longitude')],
+				[{ country: 'DE', lat: 120, longitude: 3 }],
+			);
+			const countryMode = prepare(sqlTable, {
+				location: locationOf({ mode: DashboardtypesGeoMapLocationModeDTO.country }),
+				map: mapOf({ colorBy: 'lat' }),
+			});
+			const latOnly = prepare(
+				makeTable([group('country'), value('lat')], [{ country: 'DE', lat: 120 }]),
+			);
+
+			expect(countryMode.location?.kind).toBe(LocationKind.Country);
+			expect(countryMode.colorColumn?.id).toBe('lat');
+			expect(latOnly.colorColumn?.id).toBe('lat');
 		});
 	});
 });
