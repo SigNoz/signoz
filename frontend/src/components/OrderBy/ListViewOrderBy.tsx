@@ -112,6 +112,7 @@ function ListViewOrderBy({
 			placeholder="Select a field"
 			style={{ width: 200 }}
 			options={selectOptions}
+			data-testid="list-view-order-by"
 			filterOption={(input, option): boolean =>
 				(option?.value ?? '').toLowerCase().includes(input.trim().toLowerCase())
 			}

@@ -17,7 +17,7 @@ Two rules shape how the core type behaves:
     func NewGettableAuthDomainFromAuthDomain(d *AuthDomain, info *AuthNProviderInfo) *GettableAuthDomain
 
     // Receiver form
-    func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() *PlannedMaintenance
+    func (maintenance *PlannedMaintenanceWithRules) ToPlannedMaintenance() *PlannedMaintenance
     ```
 - **`X` can double as the storage row** when the DB shape would be identical. `Channel` embeds `bun.BaseModel` directly, and there is no `StorableChannel`. This is the preferred shape when it works.
 
@@ -175,10 +175,10 @@ The rules that make the envelope work:
 
     ```go
     // Domain invariants: every write path re-runs these.
-    func (x *X) Validate() error { ... }
+    func (entity *X) Validate() error { ... }
 
     // Request-shape-only: checks that do not apply once the value is persisted.
-    func (p *PostableX) Validate() error { ... }
+    func (postable *PostableX) Validate() error { ... }
     ```
 - **Type aliases, not wrappers**, when two shapes are identical. `type GettableChannels = []*Channel` is correct because it adds no semantics beyond the underlying type.
 - **Serialization tags** follow [handler.md](handler.md): `required:"true"` means the JSON key must be present, `nullable:"true"` is required on any slice or map that may serialize as `null`, and types with a fixed value set must implement `Enum() []any`.
