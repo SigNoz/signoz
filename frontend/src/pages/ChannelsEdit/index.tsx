@@ -1,6 +1,8 @@
-import { matchPath, Redirect, useLocation } from 'react-router-dom';
 import { Skeleton } from 'antd';
 import ROUTES from 'constants/routes';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { matchRoute } from 'lib/router/matchRoute';
+import { Redirect } from 'lib/router/Redirect';
 import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
 import {
 	buildNotificationChannelReadPermission,
@@ -11,10 +13,9 @@ import ChannelsEditPage from './ChannelsEditPage';
 import styles from './ChannelsEdit.module.scss';
 
 function ChannelsEdit(): JSX.Element {
-	const { pathname } = useLocation();
-	const channelId = matchPath<{ channelId: string }>(pathname, {
-		path: ROUTES.CHANNELS_EDIT,
-	})?.params?.channelId;
+	const { pathname } = useAppLocation();
+	const channelId = matchRoute<'channelId'>(pathname, ROUTES.CHANNELS_EDIT)
+		?.params?.channelId;
 
 	if (!channelId) {
 		return <Redirect to={ROUTES.ALL_CHANNELS} />;

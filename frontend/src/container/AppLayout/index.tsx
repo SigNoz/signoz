@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import * as Sentry from '@sentry/react';
 import { Toaster } from '@signozhq/ui/sonner';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
@@ -51,7 +51,7 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useNotifications } from 'hooks/useNotifications';
 import useTabVisibility from 'hooks/useTabFocus';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useAppContext } from 'providers/App/App';
@@ -190,7 +190,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const { t } = useTranslation(['titles']);
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
@@ -464,7 +464,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [isLoggedIn]);
 
 	const handleUpgrade = useCallback((): void => {
-		history.push(ROUTES.BILLING);
+		navigate(ROUTES.BILLING);
 	}, []);
 
 	const handleFailedPayment = useCallback((): void => {

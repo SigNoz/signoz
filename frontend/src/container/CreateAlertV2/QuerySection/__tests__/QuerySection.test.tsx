@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryParams } from 'constants/query';
@@ -11,6 +10,7 @@ import {
 } from 'constants/queryBuilder';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -133,11 +133,11 @@ const renderQuerySection = (search = ''): ReturnType<typeof render> =>
 	render(
 		<Provider store={store}>
 			<QueryClientProvider client={queryClient}>
-				<MemoryRouter initialEntries={[`/alerts/new${search}`]}>
+				<TestRouter initialRoute={`/alerts/new${search}`}>
 					<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
 						<QuerySection />
 					</CreateAlertProvider>
-				</MemoryRouter>
+				</TestRouter>
 			</QueryClientProvider>
 		</Provider>,
 	);
@@ -427,11 +427,11 @@ describe('QuerySection', () => {
 		render(
 			<Provider store={store}>
 				<QueryClientProvider client={queryClient}>
-					<MemoryRouter>
+					<TestRouter>
 						<CreateAlertProvider initialAlertType={AlertTypes.LOGS_BASED_ALERT}>
 							<QuerySection />
 						</CreateAlertProvider>
-					</MemoryRouter>
+					</TestRouter>
 				</QueryClientProvider>
 			</Provider>,
 		);
@@ -481,11 +481,11 @@ describe('QuerySection', () => {
 		render(
 			<Provider store={store}>
 				<QueryClientProvider client={queryClient}>
-					<MemoryRouter>
+					<TestRouter>
 						<CreateAlertProvider initialAlertType={AlertTypes.TRACES_BASED_ALERT}>
 							<QuerySection />
 						</CreateAlertProvider>
-					</MemoryRouter>
+					</TestRouter>
 				</QueryClientProvider>
 			</Provider>,
 		);

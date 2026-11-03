@@ -1,5 +1,5 @@
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import {
 	createErrorResponse,
 	handleInternalServerError,
@@ -12,19 +12,12 @@ import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 import ForgotPassword, { ForgotPasswordRouteState } from '../index';
 
 // Mock dependencies
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: {
-			search: '',
-		},
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 const FORGOT_PASSWORD_ENDPOINT = '*/api/v2/factor_password/forgot';
 
@@ -236,7 +229,7 @@ describe('ForgotPassword Component', () => {
 			const backToLoginButton = screen.getByTestId('back-to-login');
 			await user.click(backToLoginButton);
 
-			expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+			expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LOGIN);
 		});
 	});
 
@@ -328,7 +321,7 @@ describe('ForgotPassword Component', () => {
 			const backButton = screen.getByTestId('forgot-password-back');
 			await user.click(backButton);
 
-			expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+			expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LOGIN);
 		});
 	});
 

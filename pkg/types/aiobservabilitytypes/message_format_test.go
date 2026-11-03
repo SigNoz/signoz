@@ -123,6 +123,31 @@ So, the ball costs 5 cents.`,
 			wantOutput: `[]`,
 		},
 		{
+			// Langfuse SDK generation: the app passes the request through superjson, the output is the parsed
+			// structured output
+			name:       "SuperJSONEnvelope_Unwrapped_StructuredOutputGeneric",
+			input:      `{"json": {"model": "gpt-4o-mini", "messages": [{"role": "system", "content": "Extract the main article of the page as JSON."}, {"role": "user", "content": "# Council approves new bike lanes"}], "temperature": 0}}`,
+			output:     `{"hasArticle": true, "article": {"title": "Council approves new bike lanes"}}`,
+			warnings:   []string{"message format not recognised, kept as generic"},
+			wantInput:  `[{"role": "system", "parts": [{"type": "text", "content": "Extract the main article of the page as JSON."}]}, {"role": "user", "parts": [{"type": "text", "content": "# Council approves new bike lanes"}]}]`,
+			wantOutput: `[{"role": "", "parts": [{"type": "generic", "content": "{\"article\":{\"title\":\"Council approves new bike lanes\"},\"hasArticle\":true}"}]}]`,
+		},
+		{
+			name:       "SuperJSONEnvelopeWithMeta_Unwrapped",
+			input:      `{"json": {"messages": [{"role": "user", "content": "What time is it in Oslo?"}]}, "meta": {"values": {"messages.0.at": ["Date"]}}}`,
+			output:     `{"json": {"choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": "It is 14:05 in Oslo."}}]}, "meta": {"values": {}}}`,
+			wantInput:  `[{"role": "user", "parts": [{"type": "text", "content": "What time is it in Oslo?"}]}]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "It is 14:05 in Oslo."}], "finish_reason": "stop"}]`,
+		},
+		{
+			// a json key beside others is a payload of its own, not the envelope
+			name:       "JSONKeyBesideOthers_NotUnwrapped_Generic",
+			input:      `{"json": {"messages": []}, "schema": "v1"}`,
+			warnings:   []string{"message format not recognised, kept as generic"},
+			wantInput:  `[{"role": "", "parts": [{"type": "generic", "content": "{\"json\":{\"messages\":[]},\"schema\":\"v1\"}"}]}]`,
+			wantOutput: `[]`,
+		},
+		{
 			name:       "NoMessageAttributes_EmptyLists",
 			attributes: map[string]any{GenAIRequestModel: "gpt-4o", GenAIToolName: "get_weather"},
 			wantInput:  `[]`,
