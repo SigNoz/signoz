@@ -16,6 +16,7 @@ import {
 	formatValueForExpression,
 	parseLimit,
 	removeKeysFromExpression,
+	sanitizeLimit,
 } from '../utils';
 
 describe('convertHavingToExpression', () => {
@@ -38,6 +39,18 @@ describe('convertHavingToExpression', () => {
 				{ columnName: 'COUNT()', op: 'NOT IN', value: [1, 2] },
 			]),
 		).toStrictEqual({ expression: 'count() > 5 AND count() NOT IN [1, 2]' });
+	});
+});
+
+describe('sanitizeLimit', () => {
+	it.each([
+		['10', '10'],
+		['-10', '10'],
+		['2.5', '25'],
+		['1e3', '13'],
+		['', ''],
+	])('sanitizes %j to %j', (value, expected) => {
+		expect(sanitizeLimit(value)).toBe(expected);
 	});
 });
 
