@@ -27,6 +27,9 @@ func (q *querier) QueryRangePreview(
 	if err != nil {
 		return nil, err
 	}
+	if err := req.ValidateEndTimeAhead(q.maxEndTimeAhead); err != nil {
+		return nil, err
+	}
 
 	dependencyQueries, err := q.constructTraceOperatorDependencyMap(req.CompositeQuery.Queries)
 	if err != nil {

@@ -12,9 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// maxEndTimeAhead tolerates client clock skew; anything further ahead is a malformed timestamp.
-const maxEndTimeAhead = 24 * time.Hour
-
 // getQueryIdentifier returns a friendly identifier for a query based on its type and name/content.
 func getQueryIdentifier(envelope QueryEnvelope, index int) string {
 	name := envelope.GetQueryName()
@@ -709,7 +706,12 @@ func (r *QueryRangeRequest) validateTimeRange() error {
 	if r.Start >= r.End {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start time must be before end time")
 	}
-	if r.End > uint64(time.Now().Add(maxEndTimeAhead).UnixMilli()) {
+	return nil
+}
+
+// ValidateEndTimeAhead rejects an end time more than maxAhead past now.
+func (r *QueryRangeRequest) ValidateEndTimeAhead(maxAhead time.Duration) error {
+	if r.End > uint64(time.Now().Add(maxAhead).UnixMilli()) {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "end time %s is too far in the future", time.UnixMilli(int64(r.End)).UTC().Format(time.RFC3339))
 	}
 	return nil

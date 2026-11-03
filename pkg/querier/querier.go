@@ -62,6 +62,7 @@ type querier struct {
 	liveDataRefresh          time.Duration
 	builderConfig            builderConfig
 	maxConcurrentQueries     int
+	maxEndTimeAhead          time.Duration
 }
 
 var _ Querier = (*querier)(nil)
@@ -82,10 +83,14 @@ func New(
 	flagger flagger.Flagger,
 	logTraceIDWindowPadding time.Duration,
 	maxConcurrentQueries int,
+	maxEndTimeAhead time.Duration,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
 	if maxConcurrentQueries <= 0 {
 		maxConcurrentQueries = DefaultMaxConcurrentQueries
+	}
+	if maxEndTimeAhead <= 0 {
+		maxEndTimeAhead = DefaultMaxEndTimeAhead
 	}
 	return &querier{
 		logger:                   querierSettings.Logger(),
@@ -106,6 +111,7 @@ func New(
 			logTraceIDWindowPaddingMS: uint64(logTraceIDWindowPadding.Milliseconds()),
 		},
 		maxConcurrentQueries: maxConcurrentQueries,
+		maxEndTimeAhead:      maxEndTimeAhead,
 	}
 }
 
@@ -115,6 +121,10 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	// UnmarshalJSON, so normalise here too.
 	req.Start = qbtypes.ToMilliSecs(req.Start)
 	req.End = qbtypes.ToMilliSecs(req.End)
+
+	if err := req.ValidateEndTimeAhead(q.maxEndTimeAhead); err != nil {
+		return nil, err
+	}
 
 	event := &qbtypes.QBEvent{
 		Version:         "v5",
