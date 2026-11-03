@@ -18,7 +18,7 @@ import {
 	RefreshCw,
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Select } from 'antd';
+import { Button, type RefSelectProps, Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
@@ -26,7 +26,6 @@ import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
-import type { BaseSelectRef } from 'rc-select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import TruncatedTooltip from './TruncatedTooltip';
@@ -84,7 +83,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	// ===== State & Refs =====
 	const [isOpen, setIsOpen] = useState(false);
 	const [searchText, setSearchText] = useState('');
-	const selectRef = useRef<BaseSelectRef>(null);
+	const selectRef = useRef<RefSelectProps>(null);
 	const [activeIndex, setActiveIndex] = useState<number>(-1);
 	const [activeChipIndex, setActiveChipIndex] = useState<number>(-1); // For tracking active chip/tag
 	const [selectionStart, setSelectionStart] = useState<number>(-1);

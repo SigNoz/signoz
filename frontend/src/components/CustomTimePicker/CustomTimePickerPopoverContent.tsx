@@ -6,7 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -114,7 +114,7 @@ function CustomTimePickerPopoverContent({
 	customDateTimeInputStatus = CustomTimePickerInputStatus.UNSET,
 	inputErrorDetails,
 }: CustomTimePickerPopoverContentProps): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	const isLogsExplorerPage = useMemo(
 		() => pathname === ROUTES.LOGS_EXPLORER,

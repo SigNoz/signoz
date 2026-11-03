@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { navigate } from 'lib/router/navigation';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetGraphCustomSeries } from 'components/CeleryTask/useGetGraphCustomSeries';
@@ -35,8 +36,7 @@ export default function OverviewRightPanelGraph({
 	groupByFilter?: BaseAutocompleteData;
 	filters?: TagFilterItem[];
 }): JSX.Element {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 
@@ -48,13 +48,13 @@ export default function OverviewRightPanelGraph({
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, history, pathname, urlQuery],
+		[dispatch, pathname, urlQuery],
 	);
 
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(

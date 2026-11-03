@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Divider } from '@signozhq/ui/divider';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
@@ -15,7 +14,7 @@ import {
 	getCreateAlertLocalStateFromAlertDef,
 } from 'container/CreateAlertV2/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAlertRule } from 'providers/Alert';
 import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 import { fromRuleDTOToPostableRuleV2 } from 'types/api/alerts/convert';
@@ -27,7 +26,7 @@ import { useGetAlertRuleDetails, useRouteTabUtils } from './hooks';
 import './AlertDetails.styles.scss';
 
 function AlertDetails(): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const { routes } = useRouteTabUtils();
 	const params = useUrlQuery();
 	const { alertRuleName } = useAlertRule();
@@ -113,7 +112,6 @@ function AlertDetails(): JSX.Element {
 					<RouteTab
 						routes={routes}
 						activeKey={pathname}
-						history={history}
 						onChangeHandler={handleTabChange}
 						tabBarExtraContent={<Filters />}
 					/>

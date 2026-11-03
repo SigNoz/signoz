@@ -12,12 +12,13 @@ import {
 	IOption,
 	IResourceAttribute,
 	IResourceAttributeProps,
+	OperatorValues,
+	Tags,
 } from 'hooks/useResourceAttribute/types';
 import { decode } from 'js-base64';
-import history from 'lib/history';
+import { getCurrentLocation } from 'lib/router/navigation';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { OperatorValues, Tags } from 'hooks/useResourceAttribute/types';
 import { v4 as uuid } from 'uuid';
 
 import { whilelistedKeys } from './config';
@@ -252,7 +253,7 @@ export const updateQuery = (
 
 export function getResourceAttributeQueriesFromURL(): IResourceAttribute[] {
 	const resourceAttributeQuery = new URLSearchParams(
-		history.location.search,
+		getCurrentLocation().search,
 	).get('resourceAttribute');
 
 	try {

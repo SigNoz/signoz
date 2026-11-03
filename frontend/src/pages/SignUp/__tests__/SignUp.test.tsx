@@ -14,16 +14,6 @@ jest.mock('AppRoutes/utils', () => ({
 
 const mockAfterLogin = jest.mocked(afterLogin);
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: {
-			search: '',
-		},
-	},
-}));
-
 const REGISTER_ENDPOINT = '*/api/v1/register';
 const EMAIL_PASSWORD_ENDPOINT = '*/api/v2/sessions/email_password';
 

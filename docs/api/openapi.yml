@@ -12574,6 +12574,8 @@ components:
           additionalProperties:
             type: string
           type: object
+        scope:
+          $ref: '#/components/schemas/SpantypesScope'
         spanId:
           type: string
         timestamp:
@@ -12590,6 +12592,7 @@ components:
       - event
       - attributes
       - resource
+      - scope
       type: object
     SpantypesGettableFlamegraphTrace:
       properties:
@@ -12829,6 +12832,16 @@ components:
             type: string
           nullable: true
           type: array
+      type: object
+    SpantypesScope:
+      properties:
+        attributes:
+          additionalProperties: {}
+          type: object
+        name:
+          type: string
+        version:
+          type: string
       type: object
     SpantypesSpanAggregation:
       properties:
@@ -13199,6 +13212,8 @@ components:
           type: object
         response_status_code:
           type: string
+        scope:
+          $ref: '#/components/schemas/SpantypesScope'
         span_id:
           type: string
         status_code:
@@ -15507,9 +15522,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - planned-maintenance:list
       - tokenizer:
-        - VIEWER
+        - planned-maintenance:list
       summary: List downtime schedules
       tags:
       - downtimeschedules
@@ -15564,9 +15579,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - planned-maintenance:create
+        - planned-maintenance:attach
+        - rule:attach
       - tokenizer:
-        - EDITOR
+        - planned-maintenance:create
+        - planned-maintenance:attach
+        - rule:attach
       summary: Create downtime schedule
       tags:
       - downtimeschedules
@@ -15611,9 +15630,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - planned-maintenance:delete
       - tokenizer:
-        - EDITOR
+        - planned-maintenance:delete
       summary: Delete downtime schedule
       tags:
       - downtimeschedules
@@ -15669,9 +15688,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - planned-maintenance:read
       - tokenizer:
-        - VIEWER
+        - planned-maintenance:read
       summary: Get downtime schedule by ID
       tags:
       - downtimeschedules
@@ -15726,9 +15745,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - planned-maintenance:update
+        - planned-maintenance:attach
+        - planned-maintenance:detach
+        - rule:attach
+        - rule:detach
       - tokenizer:
-        - EDITOR
+        - planned-maintenance:update
+        - planned-maintenance:attach
+        - planned-maintenance:detach
+        - rule:attach
+        - rule:detach
       summary: Update downtime schedule
       tags:
       - downtimeschedules
