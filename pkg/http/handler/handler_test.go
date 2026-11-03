@@ -83,9 +83,11 @@ func TestNewErrorStatusCodes(t *testing.T) {
 		opts     []Option
 		expected []int
 	}{
-		{name: "protected without security schemes", def: OpenAPIDef{}, expected: []int{http.StatusInternalServerError, http.StatusUnauthorized}},
-		{name: "protected with security schemes", def: OpenAPIDef{SecuritySchemes: []OpenAPISecurityScheme{{Name: "tokenizer"}}}, expected: []int{http.StatusInternalServerError, http.StatusUnauthorized, http.StatusForbidden}},
-		{name: "anonymous", def: OpenAPIDef{ErrorStatusCodes: []int{http.StatusBadRequest, http.StatusUnauthorized}}, opts: []Option{AllowAnonymous()}, expected: []int{http.StatusBadRequest, http.StatusInternalServerError}},
+		{name: "Protected_NoSecuritySchemes_AddsUnauthorized", def: OpenAPIDef{}, expected: []int{http.StatusInternalServerError, http.StatusUnauthorized}},
+		{name: "Protected_SecuritySchemes_AddsUnauthorizedAndForbidden", def: OpenAPIDef{SecuritySchemes: []OpenAPISecurityScheme{{Name: "tokenizer"}}}, expected: []int{http.StatusInternalServerError, http.StatusUnauthorized, http.StatusForbidden}},
+		{name: "Protected_DeclaredCodes_NoDuplicates", def: OpenAPIDef{ErrorStatusCodes: []int{http.StatusUnauthorized, http.StatusInternalServerError}}, expected: []int{http.StatusUnauthorized, http.StatusInternalServerError}},
+		{name: "Anonymous_NoUnauthorized", def: OpenAPIDef{ErrorStatusCodes: []int{http.StatusBadRequest}}, opts: []Option{AllowAnonymous()}, expected: []int{http.StatusBadRequest, http.StatusInternalServerError}},
+		{name: "Anonymous_DeclaredUnauthorized_Kept", def: OpenAPIDef{ErrorStatusCodes: []int{http.StatusBadRequest, http.StatusUnauthorized}}, opts: []Option{AllowAnonymous()}, expected: []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError}},
 	}
 
 	for _, testCase := range testCases {

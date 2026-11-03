@@ -53,7 +53,7 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		Response:            new(authtypes.GettableToken),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	}, handler.AllowAnonymous())).Methods(http.MethodPost).GetError(); err != nil {
@@ -70,7 +70,7 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		Response:            nil,
 		ResponseContentType: "",
 		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
 	}, handler.AllowAnonymous())).Methods(http.MethodDelete).GetError(); err != nil {

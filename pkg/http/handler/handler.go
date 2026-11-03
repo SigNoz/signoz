@@ -27,14 +27,6 @@ type handler struct {
 }
 
 func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Handler {
-	// Remove duplicate error status codes
-	openAPIDef.ErrorStatusCodes = slices.DeleteFunc(openAPIDef.ErrorStatusCodes, func(statusCode int) bool {
-		return statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden || statusCode == http.StatusInternalServerError
-	})
-
-	// Add internal server error
-	openAPIDef.ErrorStatusCodes = append(openAPIDef.ErrorStatusCodes, http.StatusInternalServerError)
-
 	handler := &handler{
 		handlerFunc: handlerFunc,
 		openAPIDef:  openAPIDef,
@@ -44,13 +36,20 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Ha
 		opt(handler)
 	}
 
-	// Add unauthorized and forbidden status codes
+	// Add internal server error, unauthorized and forbidden status codes
+	statusCodes := []int{http.StatusInternalServerError}
 	if !handler.anonymous {
-		handler.openAPIDef.ErrorStatusCodes = append(handler.openAPIDef.ErrorStatusCodes, http.StatusUnauthorized)
+		statusCodes = append(statusCodes, http.StatusUnauthorized)
 	}
 
 	if len(handler.openAPIDef.SecuritySchemes) > 0 {
-		handler.openAPIDef.ErrorStatusCodes = append(handler.openAPIDef.ErrorStatusCodes, http.StatusForbidden)
+		statusCodes = append(statusCodes, http.StatusForbidden)
+	}
+
+	for _, statusCode := range statusCodes {
+		if !slices.Contains(handler.openAPIDef.ErrorStatusCodes, statusCode) {
+			handler.openAPIDef.ErrorStatusCodes = append(handler.openAPIDef.ErrorStatusCodes, statusCode)
+		}
 	}
 
 	return handler

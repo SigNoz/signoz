@@ -4,10 +4,11 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/gorilla/mux"
+
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/gorilla/mux"
 )
 
 const (

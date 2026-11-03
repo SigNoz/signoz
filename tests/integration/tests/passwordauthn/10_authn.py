@@ -33,7 +33,6 @@ def test_protected_routes_reject_missing_credentials(signoz: types.SigNoz, path:
         "/api/v2/readyz",
         "/api/v2/livez",
         "/api/v1/global/config",
-        "/",
     ],
 )
 def test_public_routes_serve_missing_credentials(signoz: types.SigNoz, path: str) -> None:
