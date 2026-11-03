@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"strings"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -97,6 +98,10 @@ type unsupportedQuickFilterRow struct {
 	Filter string `bun:"filter"`
 }
 
+type unsupportedQuickFilterEntry struct {
+	Name string `json:"name"`
+}
+
 type removeUnsupportedQuickFilters struct {
 	settings factory.ProviderSettings
 }
@@ -151,32 +156,37 @@ func (migration *removeUnsupportedQuickFilters) Down(context.Context, *bun.DB) e
 }
 
 // removeUnsupportedQuickFilterEntries drops entries whose name is in
-// unsupportedQuickFilterNames; the remaining entries are kept byte-for-byte.
-// ok=false means unparseable.
+// unsupportedQuickFilterNames and re-encodes the rest unchanged. changed=false
+// means nothing was dropped and the row must not be written; ok=false means
+// unparseable.
 func removeUnsupportedQuickFilterEntries(filter string) (filtered string, changed bool, ok bool) {
 	var entries []json.RawMessage
 	if err := json.Unmarshal([]byte(filter), &entries); err != nil {
 		return "", false, false
 	}
 
-	kept := make([][]byte, 0, len(entries))
-	for _, entry := range entries {
-		var key struct {
-			Name string `json:"name"`
-		}
-		if err := json.Unmarshal(entry, &key); err != nil {
-			return "", false, false
-		}
-		if _, unsupported := unsupportedQuickFilterNames[key.Name]; unsupported {
-			changed = true
+	kept := make([]json.RawMessage, 0, len(entries))
+	for _, rawEntry := range entries {
+		var entry unsupportedQuickFilterEntry
+		if err := json.Unmarshal(rawEntry, &entry); err != nil {
+			kept = append(kept, rawEntry)
 			continue
 		}
-		kept = append(kept, entry)
+		if _, unsupported := unsupportedQuickFilterNames[entry.Name]; unsupported {
+			continue
+		}
+		kept = append(kept, rawEntry)
 	}
 
-	if !changed {
+	if len(kept) == len(entries) {
 		return "", false, true
 	}
 
-	return "[" + string(bytes.Join(kept, []byte(","))) + "]", true, true
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(kept); err != nil {
+		return "", false, false
+	}
+	return strings.TrimSuffix(buf.String(), "\n"), true, true
 }
