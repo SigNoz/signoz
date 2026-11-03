@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"maps"
+	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -70,14 +71,26 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	}
 	stats := llmpricingruletypes.NewStatsFromRules(rules)
 
-	values := make(map[string]*telemetrytypes.TelemetryFieldValues)
-	for _, selector := range aiobservabilitytypes.StatsFieldValueSelectors(time.Now()) {
-		fieldValues, _, err := module.telemetryMetadataStore.GetAllValues(ctx, orgID, selector)
-		if err != nil {
-			module.logger.DebugContext(ctx, "failed to collect gen_ai attribute stats", slog.String("key", selector.Name), errors.Attr(err))
-			continue
+	selectors := aiobservabilitytypes.StatsFieldValueSelectors(time.Now())
+	results := make([]*telemetrytypes.TelemetryFieldValues, len(selectors))
+	var lookups sync.WaitGroup
+	for i, selector := range selectors {
+		lookups.Go(func() {
+			fieldValues, _, err := module.telemetryMetadataStore.GetAllValues(ctx, orgID, selector)
+			if err != nil {
+				module.logger.DebugContext(ctx, "failed to collect gen_ai attribute stats", slog.String("key", selector.Name), errors.Attr(err))
+				return
+			}
+			results[i] = fieldValues
+		})
+	}
+	lookups.Wait()
+
+	values := make(map[string]*telemetrytypes.TelemetryFieldValues, len(selectors))
+	for i, selector := range selectors {
+		if results[i] != nil {
+			values[selector.Name] = results[i]
 		}
-		values[selector.Name] = fieldValues
 	}
 	maps.Copy(stats, aiobservabilitytypes.NewStatsFromFieldValues(values))
 	if models := values[aiobservabilitytypes.GenAIRequestModel]; models != nil {
