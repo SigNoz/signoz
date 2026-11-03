@@ -102,7 +102,7 @@ function RoutingPolicies(): JSX.Element {
 				<div className={styles.commandHeader}>
 					<div className={styles.headingBlock}>
 						<Typography.Title className={styles.title}>
-							Routing Policies
+							All routing policies
 						</Typography.Title>
 						<span className={styles.countPill}>{routingPoliciesData.length}</span>
 					</div>
@@ -124,7 +124,7 @@ function RoutingPolicies(): JSX.Element {
 						disabledTooltip="You need edit permissions to create a routing policy"
 						testId="routing-policies-create"
 					>
-						New routing policy
+						New Routing Policy
 					</Button>
 					<TextToolTip
 						text="More details on how to configure routing policies"
