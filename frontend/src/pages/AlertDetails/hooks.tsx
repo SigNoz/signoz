@@ -44,7 +44,7 @@ import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
-import GetMinMax from 'lib/getMinMax';
+import GetMinMax, { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { navigate } from 'lib/router/navigation';
 import { History, Table } from '@signozhq/icons';
@@ -63,6 +63,7 @@ export const useAlertHistoryQueryParams = (): {
 	startTime: number;
 	endTime: number;
 	hasStartAndEndParams: boolean;
+	relativeTime: string | null;
 	params: URLSearchParams;
 } => {
 	const params = useUrlQuery();
@@ -72,8 +73,9 @@ export const useAlertHistoryQueryParams = (): {
 	const relativeTimeParam = params.get(QueryParams.relativeTime);
 
 	const relativeTime =
-		(relativeTimeParam === 'null' ? null : relativeTimeParam) ||
-		DEFAULT_TIME_RANGE;
+		relativeTimeParam && isValidShortHandDateTimeFormat(relativeTimeParam)
+			? relativeTimeParam
+			: DEFAULT_TIME_RANGE;
 
 	const intStartTime = parseInt(startTime || '0', 10);
 	const intEndTime = parseInt(endTime || '0', 10);
@@ -93,6 +95,7 @@ export const useAlertHistoryQueryParams = (): {
 		startTime: Math.floor(nanoToMilli(minTime)),
 		endTime: Math.floor(nanoToMilli(maxTime)),
 		hasStartAndEndParams,
+		relativeTime: hasStartAndEndParams ? null : relativeTime,
 		params,
 	};
 };
