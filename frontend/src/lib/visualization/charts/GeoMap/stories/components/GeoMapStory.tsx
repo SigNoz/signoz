@@ -9,82 +9,42 @@ import {
 } from 'lib/visualization/colorRamp/types';
 
 import GeoMap from '../../GeoMap';
-import { getOutsideView } from '../../geo/classify';
 import { useGeoMapShapes } from '../../hooks/useGeoMapShapes';
-import {
-	GeoMapLayer,
-	GeoMapProjection,
-	GeoMapSelection,
-	GeoMapView,
-	SubdivisionCountry,
-} from '../../types';
+import { useSubdivisionSet } from '../../hooks/useSubdivisionSet';
+import { GeoMapLayer, GeoMapSelection, GeoMapView } from '../../types';
 import { FIXTURES } from '../fixtures/fixtures';
-import { FixtureDataset } from '../fixtures/types';
-import GeoMapPlaygroundMenu from './GeoMapPlaygroundMenu';
-import GeoMapPlaygroundWarnings from './GeoMapPlaygroundWarnings';
 import {
 	drilldownFieldOf,
 	formatterFor,
 	prepareFixture,
 } from '../fixtures/prepareFixture';
-import { statesFixture } from '../fixtures/stateFixtures';
-import { useSubdivisionSet } from '../../hooks/useSubdivisionSet';
+import { FixtureDataset } from '../fixtures/types';
+import GeoMapStoryMenu from './GeoMapStoryMenu';
 
-import styles from './GeoMapPlayground.module.scss';
+import styles from './GeoMapStory.module.scss';
 
-export interface GeoMapPlaygroundProps {
+const BUBBLE_RADIUS: [number, number] = [3, 28];
+
+export interface GeoMapStoryProps {
 	dataset: FixtureDataset;
-	/** Any country's states with generated values; overrides `dataset`. */
-	statesOf: SubdivisionCountry | 'none';
 	view: GeoMapView;
-	projection: GeoMapProjection;
 	layer: GeoMapLayer;
-	showLabels: boolean;
-	legendPosition: LegendPosition;
-	mode: ColorRampMode;
-	/** Opacity mode's colour; empty uses the default fill. */
-	fill: string;
 	palette: ColorRampPalette;
-	scale: ColorRampScale;
-	steps: number;
-	minRadius: number;
-	maxRadius: number;
-	width: number;
-	height: number;
 }
 
-export default function GeoMapPlayground({
+export default function GeoMapStory({
 	dataset,
-	statesOf,
 	view,
-	projection,
 	layer,
-	showLabels,
-	legendPosition,
-	mode,
-	fill,
 	palette,
-	scale,
-	steps,
-	minRadius,
-	maxRadius,
-	width,
-	height,
-}: GeoMapPlaygroundProps): JSX.Element {
+}: GeoMapStoryProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const country = statesOf === 'none' ? FIXTURES[dataset].country : statesOf;
-	const { set: subdivisions } = useSubdivisionSet(country);
-	const fixture = useMemo(
-		() =>
-			statesOf === 'none'
-				? FIXTURES[dataset]
-				: statesFixture(statesOf, subdivisions),
-		[dataset, statesOf, subdivisions],
-	);
+	const fixture = FIXTURES[dataset];
+	const { set: subdivisions } = useSubdivisionSet(fixture.country);
 	// State datasets are always drawn on their country's view.
 	const mapView: GeoMapView = fixture.country ? 'country' : view;
 	const { shapes } = useGeoMapShapes(mapView, fixture.country);
-	const prepared = useMemo(
+	const data = useMemo(
 		() => prepareFixture(fixture, subdivisions),
 		[fixture, subdivisions],
 	);
@@ -98,24 +58,23 @@ export default function GeoMapPlayground({
 		[fixture.sizeMetric],
 	);
 	const colors = useMemo(
-		() => ({ mode, fill, palette, scale, steps, min: null, max: null }),
-		[mode, fill, palette, scale, steps],
-	);
-	const bubbleRadius = useMemo<[number, number]>(
-		() => [minRadius, maxRadius],
-		[minRadius, maxRadius],
-	);
-	const outside = useMemo(
-		() =>
-			shapes ? getOutsideView(prepared.data, shapes.byCode, shapes.isMember) : [],
-		[prepared.data, shapes],
+		() => ({
+			mode: ColorRampMode.Palette,
+			fill: '',
+			palette,
+			scale: ColorRampScale.Log,
+			steps: 64,
+			min: null,
+			max: null,
+		}),
+		[palette],
 	);
 	const [selection, setSelection] = useState<GeoMapSelection | null>(null);
 	const closeMenu = useCallback((): void => setSelection(null), []);
 	const renderTooltipFooter = useCallback(
 		() => (
 			<TooltipFooter
-				id="geo-map-playground"
+				id="geo-map-story"
 				isPinned={false}
 				canPin={false}
 				dismiss={closeMenu}
@@ -126,31 +85,22 @@ export default function GeoMapPlayground({
 
 	return (
 		<div className={styles.page}>
-			<div
-				className={styles.panel}
-				style={{ width, height }}
-				data-testid="geo-map-playground-panel"
-			>
+			<div className={styles.panel} style={{ width: 960, height: 540 }}>
 				<div className={styles.header}>
 					<span className={styles.title}>{fixture.title}</span>
-					<GeoMapPlaygroundWarnings
-						unmapped={prepared.unmapped}
-						duplicates={prepared.duplicates}
-						outside={outside}
-					/>
 				</div>
 				<div className={styles.body}>
 					<GeoMap
-						data={prepared.data}
+						data={data}
 						view={mapView}
-						projection={projection}
+						projection="mercator"
 						country={fixture.country}
 						layer={fixture.points ? 'points' : layer}
 						points={fixture.points}
-						showLabels={showLabels}
-						legendPosition={legendPosition}
+						showLabels
+						legendPosition={LegendPosition.BOTTOM}
 						colors={colors}
-						bubbleRadius={bubbleRadius}
+						bubbleRadius={BUBBLE_RADIUS}
 						formatValue={formatValue}
 						valueLabel={fixture.valueLabel}
 						sizeMetric={sizeMetric}
@@ -161,7 +111,7 @@ export default function GeoMapPlayground({
 				</div>
 			</div>
 			{selection && (
-				<GeoMapPlaygroundMenu
+				<GeoMapStoryMenu
 					selection={selection}
 					name={
 						selection.point?.label ??
