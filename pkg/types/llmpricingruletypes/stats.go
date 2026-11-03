@@ -19,6 +19,14 @@ func NewStatsFromRules(rules []*LLMPricingRule) map[string]any {
 	}
 }
 
-func NewStatsFromUnmappedModels(unmapped []*UnmappedModel) map[string]any {
-	return map[string]any{"llmpricingrule.unmapped_model.count": int64(len(unmapped))}
+// NewStatsFromModels reports how many of the models seen no rule prices.
+func NewStatsFromModels(models []string, rules []*LLMPricingRule) map[string]any {
+	unmapped := int64(0)
+	for _, model := range models {
+		if !ModelMatchesAnyRule(model, rules) {
+			unmapped++
+		}
+	}
+
+	return map[string]any{"llmpricingrule.unmapped_model.count": unmapped}
 }

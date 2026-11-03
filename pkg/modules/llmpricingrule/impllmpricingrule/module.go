@@ -61,18 +61,14 @@ func (module *module) ListUnmappedModels(ctx context.Context, orgID valuer.UUID)
 
 // Collect keeps the rule counts even when ClickHouse is unreachable: the
 // counts that depend on it are skipped so the reporter retains their last value.
+// Models come from the traces tag table rather than a span scan, so the
+// unmapped count covers the metadata lookback instead of the last hour.
 func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
 	rules, err := module.listAllRules(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 	stats := llmpricingruletypes.NewStatsFromRules(rules)
-
-	if models, err := module.discoverModels(ctx, orgID); err != nil {
-		module.logger.DebugContext(ctx, "failed to collect unmapped model stats", errors.Attr(err))
-	} else {
-		maps.Copy(stats, llmpricingruletypes.NewStatsFromUnmappedModels(llmpricingruletypes.UnmappedModels(models, rules)))
-	}
 
 	values := make(map[string]*telemetrytypes.TelemetryFieldValues)
 	for _, selector := range aiobservabilitytypes.StatsFieldValueSelectors(time.Now()) {
@@ -84,6 +80,9 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 		values[selector.Name] = fieldValues
 	}
 	maps.Copy(stats, aiobservabilitytypes.NewStatsFromFieldValues(values))
+	if models := values[aiobservabilitytypes.GenAIRequestModel]; models != nil {
+		maps.Copy(stats, llmpricingruletypes.NewStatsFromModels(models.StringValues, rules))
+	}
 
 	return stats, nil
 }

@@ -6,19 +6,28 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// statsLookback reaches into the previous day; the metadata store rounds the
-// start down to a day boundary.
-const statsLookback = 24 * time.Hour
+const (
+	// statsLookback reaches into the previous day; the metadata store rounds
+	// the start down to a day boundary.
+	statsLookback = 24 * time.Hour
+	// statsModelValuesLimit caps the model list, which also feeds the
+	// unmapped model count. One value is enough for the other keys.
+	statsModelValuesLimit = 100
+)
 
 // statsAttributeKeys are the gen_ai span attributes whose recent presence the
 // stats reporter tracks under telemetry.traces.<key>.exists.
 var statsAttributeKeys = []string{GenAIRequestModel, GenAIToolName, GenAIAgentName}
 
-// StatsFieldValueSelectors look up whether each tracked attribute had a string
-// value since the start of the previous day. One value is enough.
+// StatsFieldValueSelectors look up each tracked attribute's string values
+// since the start of the previous day.
 func StatsFieldValueSelectors(now time.Time) []*telemetrytypes.FieldValueSelector {
 	selectors := make([]*telemetrytypes.FieldValueSelector, 0, len(statsAttributeKeys))
 	for _, key := range statsAttributeKeys {
+		limit := 1
+		if key == GenAIRequestModel {
+			limit = statsModelValuesLimit
+		}
 		selectors = append(selectors, &telemetrytypes.FieldValueSelector{
 			FieldKeySelector: &telemetrytypes.FieldKeySelector{
 				StartUnixMilli: now.Add(-statsLookback).UnixMilli(),
@@ -27,7 +36,7 @@ func StatsFieldValueSelectors(now time.Time) []*telemetrytypes.FieldValueSelecto
 				FieldDataType:  telemetrytypes.FieldDataTypeString,
 				Name:           key,
 			},
-			Limit: 1,
+			Limit: limit,
 		})
 	}
 	return selectors

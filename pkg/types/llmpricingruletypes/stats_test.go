@@ -45,9 +45,21 @@ func TestNewStatsFromRules(t *testing.T) {
 	}
 }
 
-func TestNewStatsFromUnmappedModels(t *testing.T) {
-	unmapped := []*UnmappedModel{{ModelName: "gpt-5-nano"}, {ModelName: "claude-haiku-5-5"}}
+func TestNewStatsFromModels(t *testing.T) {
+	rules := []*LLMPricingRule{{ModelPattern: StringSlice{"gpt-*"}}}
 
-	assert.Equal(t, map[string]any{"llmpricingrule.unmapped_model.count": int64(2)}, NewStatsFromUnmappedModels(unmapped))
-	assert.Equal(t, map[string]any{"llmpricingrule.unmapped_model.count": int64(0)}, NewStatsFromUnmappedModels(nil))
+	testCases := []struct {
+		name   string
+		models []string
+		want   int64
+	}{
+		{name: "NoModels", want: 0},
+		{name: "PricedAndUnpricedModels_UnpricedCounted", models: []string{"gpt-5-nano", "claude-haiku-5-5", "gemini-3"}, want: 2},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, map[string]any{"llmpricingrule.unmapped_model.count": testCase.want}, NewStatsFromModels(testCase.models, rules))
+		})
+	}
 }
