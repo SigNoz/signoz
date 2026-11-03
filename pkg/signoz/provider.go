@@ -270,6 +270,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddRoutePolicyTuplesFactory(sqlstore),
 		sqlmigration.NewRenameSavedViewDeprecatedTraceFieldsFactory(),
 		sqlmigration.NewAddDowntimeTuplesFactory(sqlstore),
+		sqlmigration.NewAddRuleTuplesFactory(sqlstore),
 	)
 }
 

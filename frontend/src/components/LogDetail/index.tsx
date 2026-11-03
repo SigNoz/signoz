@@ -308,7 +308,11 @@ function LogDetailInner({
 							placement="left"
 							mouseLeaveDelay={0}
 						>
-							<div className="log-body" dangerouslySetInnerHTML={htmlBody} />
+							<div
+								className="log-body"
+								data-testid="log-detail-body"
+								dangerouslySetInnerHTML={htmlBody}
+							/>
 						</Tooltip>
 
 						<div className="log-overflow-shadow">&nbsp;</div>
