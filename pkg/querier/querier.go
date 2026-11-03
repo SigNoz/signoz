@@ -111,11 +111,10 @@ func New(
 
 func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
 
-	// Coerce the window to epoch milliseconds up front so every downstream
-	// consumer (TimeRange, narrowWindowByTraceID, step interval, etc.) can
-	// safely assume ms regardless of the resolution the caller sent.
-	req.Start = querybuilder.ToMilliSecs(req.Start)
-	req.End = querybuilder.ToMilliSecs(req.End)
+	// Callers that build the request in-process never pass through
+	// UnmarshalJSON, so normalise here too.
+	req.Start = qbtypes.ToMilliSecs(req.Start)
+	req.End = qbtypes.ToMilliSecs(req.End)
 
 	event := &qbtypes.QBEvent{
 		Version:         "v5",
@@ -534,10 +533,8 @@ func familyTemporality(temporalities map[string]metrictypes.Temporality, names [
 
 func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream) {
 
-	// Coerce the window to epoch milliseconds up front (End may be 0 for the
-	// open-ended stream, which ToMilliSecs leaves untouched).
-	req.Start = querybuilder.ToMilliSecs(req.Start)
-	req.End = querybuilder.ToMilliSecs(req.End)
+	req.Start = qbtypes.ToMilliSecs(req.Start)
+	req.End = qbtypes.ToMilliSecs(req.End)
 
 	event := &qbtypes.QBEvent{
 		Version:         "v5",
