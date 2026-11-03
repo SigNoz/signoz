@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Input } from '@signozhq/ui/input';
 import {
@@ -56,11 +57,13 @@ export default function ClarificationForm({
 	);
 	const [answers, setAnswers] =
 		useState<Record<string, unknown>>(initialAnswers);
-	const [submitted, setSubmitted] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [submitError, setSubmitError] = useState<string | null>(null);
 	const [cancelled, setCancelled] = useState(false);
 
 	const setField = (id: string, value: unknown): void => {
 		setAnswers((prev) => ({ ...prev, [id]: value }));
+		setSubmitError(null);
 	};
 
 	const isFormValid = fields.every(
@@ -68,10 +71,11 @@ export default function ClarificationForm({
 	);
 
 	const handleSubmit = async (): Promise<void> => {
-		if (!isFormValid) {
+		if (!isFormValid || isSubmitting) {
 			return;
 		}
-		setSubmitted(true);
+		setSubmitError(null);
+		setIsSubmitting(true);
 		// Approximate queryLength as the JSON encoding of the form answers — the
 		// clarification API doesn't render a single user-visible string, but the
 		// JSON size is a reasonable stand-in for "how much did the user provide".
@@ -84,11 +88,15 @@ export default function ClarificationForm({
 			hasContext: false,
 			respondingToClarification: true,
 		});
-		await submitClarification(
+		const error = await submitClarification(
 			conversationId,
 			clarification.clarificationId,
 			answers,
 		);
+		if (error) {
+			setSubmitError(error);
+			setIsSubmitting(false);
+		}
 	};
 
 	const handleCancel = (): void => {
@@ -99,15 +107,6 @@ export default function ClarificationForm({
 		});
 		cancelStream(conversationId);
 	};
-
-	if (submitted) {
-		return (
-			<div className={cx(styles.clarification, styles.submitted)}>
-				<Send size={13} className={styles.icon} />
-				<span className={styles.statusText}>Answers submitted — resuming…</span>
-			</div>
-		);
-	}
 
 	if (cancelled) {
 		return (
@@ -138,6 +137,15 @@ export default function ClarificationForm({
 				))}
 			</div>
 
+			{submitError && (
+				<Callout
+					type="error"
+					size="small"
+					title={submitError}
+					testId="clarification-submit-error"
+				/>
+			)}
+
 			<div className={styles.actions}>
 				<Button
 					disabledTooltip={
@@ -150,6 +158,8 @@ export default function ClarificationForm({
 					color="primary"
 					onClick={handleSubmit}
 					disabled={isStreaming || !isFormValid}
+					loading={isSubmitting}
+					testId="clarification-submit"
 					prefix={<Send />}
 				>
 					Submit
@@ -160,7 +170,7 @@ export default function ClarificationForm({
 					variant="outlined"
 					color="secondary"
 					onClick={handleCancel}
-					disabled={isStreaming}
+					disabled={isStreaming || isSubmitting}
 					prefix={<X />}
 				>
 					Cancel request
