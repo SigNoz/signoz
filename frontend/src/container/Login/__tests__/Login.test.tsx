@@ -991,6 +991,15 @@ describe('Login Component', () => {
 
 	describe('Enter key submission', () => {
 		const EMAIL_PASSWORD_ENDPOINT = '*/api/v2/sessions/email_password';
+		const originalLocation = window.location;
+
+		afterEach(() => {
+			Object.defineProperty(window, 'location', {
+				value: originalLocation,
+				writable: true,
+				configurable: true,
+			});
+		});
 
 		async function typeEmail(
 			user: ReturnType<typeof userEvent.setup>,
@@ -1157,8 +1166,15 @@ describe('Login Component', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			Object.defineProperty(window, 'location', {
-				value: { href: 'http://localhost/' },
+				value: {
+					href: 'http://localhost/',
+					origin: 'http://localhost',
+					pathname: '/',
+					search: '',
+					hash: '',
+				},
 				writable: true,
+				configurable: true,
 			});
 
 			server.use(
