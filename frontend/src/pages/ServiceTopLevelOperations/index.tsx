@@ -119,7 +119,10 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 			)}
 
 			{!isLoading && (
-				<div className="top-level-operations-list">
+				<div
+					className="top-level-operations-list"
+					data-testid="top-level-operations-table"
+				>
 					<Table
 						columns={columns}
 						bordered

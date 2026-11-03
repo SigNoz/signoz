@@ -107,7 +107,7 @@ func newTestBuilderWithKeys(t *testing.T, keysMap map[string][]*telemetrytypes.T
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = keysMap
 
-	stmtBuilder, err := NewFactory(nil, mockMetadataStore, flaggertest.New(t)).
+	stmtBuilder, err := NewFactory(nil, mockMetadataStore, nil, flaggertest.New(t)).
 		New(context.Background(), settings, statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Threshold: 100000}})
 	require.NoError(t, err)
 	return stmtBuilder

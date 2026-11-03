@@ -37,7 +37,11 @@ export default function RightToolbarActions({
 	if (showLiveLogs) {
 		return (
 			<div className="right-toolbar-actions-container">
-				<RunQueryBtn disabled disabledTooltip="Not available in live mode" />
+				<RunQueryBtn
+					disabled
+					disabledTooltip="Not available in live mode"
+					testId="explorer-run-query-btn"
+				/>
 			</div>
 		);
 	}
@@ -48,6 +52,7 @@ export default function RightToolbarActions({
 				isLoadingQueries={isLoadingQueries}
 				handleCancelQuery={handleCancelQuery}
 				onStageRunQuery={onStageRunQuery}
+				testId="explorer-run-query-btn"
 			/>
 		</div>
 	);
