@@ -38,6 +38,14 @@ const SUMMARIES: Record<string, SpantypesGettableTraceSummaryDTO> = {
 			totalCost: 0.0123,
 		},
 	},
+	'trace-ai-next': {
+		...BASE_SUMMARY,
+		totalSpansCount: 4,
+		ai: {
+			tokens: { input: 80, output: 20, cacheRead: 0, cacheWrite: 0, reasoning: 0 },
+			totalCost: 0.0004,
+		},
+	},
 	'trace-no-ai': BASE_SUMMARY,
 };
 
@@ -47,22 +55,30 @@ interface HookProps {
 	interestedSpanId?: string;
 }
 
+interface RenderOptions {
+	firedForRef?: MutableRefObject<string>;
+	queryClient?: QueryClient;
+}
+
 function renderThreadEmptyEvent(
 	initialProps: HookProps,
-	firedForRef: MutableRefObject<string> = { current: '' },
+	{
+		firedForRef = { current: '' },
+		queryClient = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		}),
+	}: RenderOptions = {},
 ): {
 	logTraceEvent: jest.MockedFunction<TraceDetailLogEvent>;
 	rerender: (props: HookProps) => void;
+	unmount: () => void;
 	queryClient: QueryClient;
 } {
 	const logTraceEvent = jest.fn() as jest.MockedFunction<TraceDetailLogEvent>;
-	const queryClient = new QueryClient({
-		defaultOptions: { queries: { retry: false } },
-	});
 	const wrapper = ({ children }: { children: ReactNode }): JSX.Element => (
 		<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 	);
-	const { rerender } = renderHook(
+	const { rerender, unmount } = renderHook(
 		({ traceId, hasNoThread, interestedSpanId }: HookProps) =>
 			useThreadEmptyWithAiEvent({
 				traceId,
@@ -73,13 +89,17 @@ function renderThreadEmptyEvent(
 			}),
 		{ initialProps, wrapper },
 	);
-	return { logTraceEvent, rerender, queryClient };
+	return { logTraceEvent, rerender, unmount, queryClient };
 }
 
 describe('useThreadEmptyWithAiEvent', () => {
+	let summaryRequests: string[];
+
 	beforeEach(() => {
+		summaryRequests = [];
 		server.use(
 			rest.get('*/api/v1/traces/:traceId/summary', (req, res, ctx) => {
+				summaryRequests.push(req.params.traceId as string);
 				const body: GetTraceSummary200 = {
 					status: 'success',
 					data: SUMMARIES[req.params.traceId as string],
@@ -153,25 +173,42 @@ describe('useThreadEmptyWithAiEvent', () => {
 		await waitFor(() => expect(logTraceEvent).toHaveBeenCalledTimes(1));
 	});
 
-	it('reports once per trace across Thread tab visits', async () => {
+	it('reports once per trace and reuses the loaded summary when the tab is visited again', async () => {
 		const firedForRef = { current: '' };
 		const first = renderThreadEmptyEvent(
 			{ traceId: 'trace-ai', hasNoThread: true },
-			firedForRef,
+			{ firedForRef },
 		);
 		await waitFor(() => expect(first.logTraceEvent).toHaveBeenCalledTimes(1));
+		first.unmount();
 
 		const second = renderThreadEmptyEvent(
 			{ traceId: 'trace-ai', hasNoThread: true },
-			firedForRef,
+			{ firedForRef, queryClient: first.queryClient },
 		);
-		await waitFor(() =>
-			expect(
-				second.queryClient.getQueryData(
-					getGetTraceSummaryQueryKey({ traceID: 'trace-ai' }),
-				),
-			).toBeDefined(),
-		);
+
+		expect(second.queryClient.isFetching()).toBe(0);
+		expect(summaryRequests).toStrictEqual(['trace-ai']);
 		expect(second.logTraceEvent).not.toHaveBeenCalled();
+	});
+
+	it('reports the next trace with its own summary', async () => {
+		const { logTraceEvent, rerender } = renderThreadEmptyEvent({
+			traceId: 'trace-ai',
+			hasNoThread: true,
+		});
+		await waitFor(() => expect(logTraceEvent).toHaveBeenCalledTimes(1));
+
+		rerender({ traceId: 'trace-ai-next', hasNoThread: true });
+
+		await waitFor(() => expect(logTraceEvent).toHaveBeenCalledTimes(2));
+		expect(logTraceEvent).toHaveBeenLastCalledWith(
+			TraceDetailEvents.ThreadEmptyWithAiSummary,
+			expect.objectContaining({
+				totalSpansCount: 4,
+				inputTokens: 80,
+				totalCost: 0.0004,
+			}),
+		);
 	});
 });
