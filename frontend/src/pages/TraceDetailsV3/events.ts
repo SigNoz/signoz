@@ -13,6 +13,7 @@ export enum TraceDetailEvents {
 	SpanPercentileAttributesSelectorToggled = 'Trace Detail: Span percentile attributes selector toggled',
 	SpanPercentileAttributeChanged = 'Trace Detail: Span percentile attribute changed',
 	SpanDetailsOpened = 'Trace Detail: Span details opened',
+	DetailsTabChanged = 'Trace Detail: Details tab changed',
 }
 
 export enum TraceDetailEventKeys {
@@ -29,7 +30,7 @@ export enum TraceDetailEventKeys {
 	SpanPanelVariant = 'spanPanelVariant',
 	ColorByField = 'colorByField',
 	PreviewFieldsCount = 'previewFieldsCount',
-	// View switched
+	// View switched / details tab changed
 	From = 'from',
 	To = 'to',
 	DwellMs = 'dwellMs',
