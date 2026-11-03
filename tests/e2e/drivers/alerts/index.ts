@@ -41,4 +41,3 @@ export { alertsDriver, HISTORY_ENDPOINTS, withAlerts } from './driver';
 export type { Alerts, HistoryEndpoint } from './driver';
 export * from './constants';
 export type { TimelineItem, TimelineResponse } from './types';
-export { V1_RULE_TEAM_LABEL } from './seeds';

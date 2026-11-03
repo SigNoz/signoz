@@ -129,8 +129,7 @@ export interface AlertForm {
 	hasAnomalyCard(): Promise<boolean>;
 	expectTypeCardSet(): Promise<void>;
 	url(options?: CreateAlertUrlOptions): string;
-	gotoV2(options?: Omit<CreateAlertUrlOptions, 'classic'>): Promise<void>;
-	gotoV1(options?: Omit<CreateAlertUrlOptions, 'classic'>): Promise<void>;
+	gotoV2(options?: CreateAlertUrlOptions): Promise<void>;
 
 	name(): Locator;
 	saveButton(): Locator;
@@ -148,7 +147,6 @@ export interface AlertForm {
 	selectThresholdChannel(index: number, channelName: string): Promise<void>;
 	addLabel(key: string, value: string): Promise<void>;
 	labelPill(key: string, value: string): Locator;
-	v1SaveButton(): Locator;
 
 	advancedOptionToggle(containerTestId: string): Locator;
 	expandAdvancedOptions(): Promise<void>;
@@ -170,7 +168,6 @@ export interface AlertForm {
 	elementAtPointClassName(x: number, y: number): Promise<string>;
 
 	typeSelectionTitle(): Locator;
-	switchToClassicButton(): Locator;
 	/** The "New Alert Rule" chip, which the create header shows and edit hides. */
 	newRuleChip(): Locator;
 	addThresholdButton(): Locator;
@@ -189,7 +186,7 @@ export interface AlertForm {
 	missingDataToleranceInput(): Locator;
 	minimumDatapointsInput(): Locator;
 	customScheduleEditor(): Locator;
-	/** The shared modal every save error lands in, for both forms. */
+	/** The shared modal every save error lands in. */
 	errorModal(): Locator;
 	errorModalCloseButton(): Locator;
 }
@@ -205,8 +202,6 @@ export interface ChannelDropdown {
 export interface CreateAlertUrlOptions {
 	alertType?: AlertTypeValue;
 	ruleType?: string;
-	/** Sets `showClassicCreateAlertsPage=true` ⇒ the v1 classic form. */
-	classic?: boolean;
 	/** Merged in last, so it can override anything above. */
 	params?: Record<string, string>;
 }
@@ -233,10 +228,6 @@ export interface AlertDetails {
 	historyBetaBadge(): Locator;
 	enableToggle(): Locator;
 	copyLinkButton(): Locator;
-	/** The static v1 header; v2 renders `nameInput()` instead. */
-	headerField(field: 'title' | 'state' | 'severity' | 'labels'): Locator;
-	renameInput(): Locator;
-	renameConfirmButton(): Locator;
 	/** Found by label, so it also proves the History tab renders none. */
 	footerSaveButton(): Locator;
 	notFound(): Locator;
@@ -460,13 +451,9 @@ export function alertsDriver(page: Page): Alerts {
 		url: ({
 			alertType = AlertType.LOGS,
 			ruleType = RuleType.THRESHOLD,
-			classic = false,
 			params = {},
 		}: CreateAlertUrlOptions = {}) => {
 			const search = new URLSearchParams({ alertType, ruleType });
-			if (classic) {
-				search.set('showClassicCreateAlertsPage', 'true');
-			}
 			for (const [key, value] of Object.entries(params)) {
 				search.set(key, value);
 			}
@@ -474,23 +461,17 @@ export function alertsDriver(page: Page): Alerts {
 		},
 
 		gotoV2: async (options = {}) => {
-			await page.goto(form.url({ ...options, classic: false }));
+			await page.goto(form.url(options));
 			await expect(form.name()).toBeVisible();
 			// `useShareBuilderUrl` serialises the default query shortly after mount;
 			// asserting on the URL before that races its rewrite.
 			await page.waitForURL(/compositeQuery=/, { timeout: 15_000 });
 		},
 
-		gotoV1: async (options = {}) => {
-			await page.goto(form.url({ ...options, classic: true }));
-			await expect(form.v1SaveButton()).toBeVisible();
-		},
-
 		name: () => page.getByTestId('alert-name-input'),
 		saveButton: () => page.getByTestId('save-alert-rule-button'),
 		testButton: () => page.getByTestId('test-notification-button'),
 		discardButton: () => page.getByTestId('discard-alert-rule-button'),
-		v1SaveButton: () => page.getByTestId('alert-save-button'),
 
 		saveTooltip: async () => {
 			await form.saveButton().hover();
@@ -642,8 +623,6 @@ export function alertsDriver(page: Page): Alerts {
 		},
 
 		typeSelectionTitle: () => page.getByText('Choose a type for the alert'),
-		switchToClassicButton: () =>
-			page.getByRole('button', { name: 'Switch to Classic Experience' }),
 		newRuleChip: () => page.getByText('New Alert Rule'),
 		addThresholdButton: () => page.getByTestId('add-threshold-button'),
 		thresholdName: (index = 0) =>
@@ -737,9 +716,6 @@ export function alertsDriver(page: Page): Alerts {
 		historyBetaBadge: () => details.sectionTab('history').getByText('Beta'),
 		enableToggle: () => page.getByTestId('alert-actions-toggle'),
 		copyLinkButton: () => page.getByRole('button', { name: 'Copy link' }),
-		headerField: (field) => page.getByTestId(`alert-header-${field}`),
-		renameInput: () => page.getByTestId('alert-name'),
-		renameConfirmButton: () => page.getByRole('button', { name: 'Rename Alert' }),
 		footerSaveButton: () => page.getByRole('button', { name: 'Save Alert Rule' }),
 		notFound: () => page.locator('.alert-not-found'),
 		notFoundMessage: () =>
