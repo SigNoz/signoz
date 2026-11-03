@@ -150,7 +150,7 @@ func (b *traceQueryStatementBuilder) Build(
 	end = querybuilder.ToNanoSecs(end)
 
 	isSelectFieldsEmpty := false
-	if requestType == qbtypes.RequestTypeRaw {
+	if requestType == qbtypes.RequestTypeRaw || requestType == qbtypes.RequestTypeTrace {
 		isSelectFieldsEmpty = len(query.SelectFields) == 0
 		// we are expanding here to ensure that all the conflicts are taken care in adjustKeys
 		// i.e if there is a conflict we strip away context of the key in adjustKeys
@@ -180,7 +180,7 @@ func (b *traceQueryStatementBuilder) Build(
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, variables, false, false)
 	case qbtypes.RequestTypeTrace:
-		return b.buildTraceQuery(ctx, orgID, q, query, start, end, keys, variables)
+		return b.buildTraceQuery(ctx, orgID, q, query, start, end, keys, variables, isSelectFieldsEmpty)
 	}
 
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
@@ -446,6 +446,7 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
+	isSelectFieldsEmpty bool,
 ) (*qbtypes.Statement, error) {
 
 	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
@@ -483,6 +484,25 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	// Build the inner subquery for root spans
 	innerSB := sqlbuilder.NewSelectBuilder()
 	innerSB.Select("trace_id", "duration_nano", sqlbuilder.Escape("resource_string_service$$name as `service.name`"), "name")
+
+	var rootFieldAliases []string
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
+	for i, field := range query.SelectFields {
+		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
+		if err != nil {
+			return nil, err
+		}
+		alias := selectColumnAlias(i, field.Name)
+		innerSB.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", expr, alias)))
+		rootFieldAliases = append(rootFieldAliases, alias)
+	}
+	if isSelectFieldsEmpty {
+		for _, col := range tracestelemetryschema.ContextualSpanColumns {
+			innerSB.SelectMore(col)
+			rootFieldAliases = append(rootFieldAliases, col)
+		}
+	}
+
 	innerSB.From(fmt.Sprintf("%s.%s", tracestelemetryschema.DBName, tracestelemetryschema.SpanIndexV3TableName))
 	innerSB.Where("parent_span_id = ''")
 
@@ -512,24 +532,22 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	mainSB.Select(
 		"__toe_duration_sorted.`service.name` AS `service.name`",
 		"__toe_duration_sorted.name AS `name`",
-		"count() AS span_count",
+		"__toe_span_count.span_count AS span_count",
 		"__toe_duration_sorted.duration_nano AS `duration_nano`",
 		"__toe_duration_sorted.trace_id AS `trace_id`",
 	)
+	for _, alias := range rootFieldAliases {
+		mainSB.SelectMore(sqlbuilder.Escape(fmt.Sprintf("__toe_duration_sorted.%s AS %s", alias, alias)))
+	}
 
 	// Join the distributed table with the inner subquery
-	mainSB.SQL("FROM __toe")
-	mainSB.SQL("INNER JOIN __toe_duration_sorted")
-	mainSB.SQL("ON __toe.trace_id = __toe_duration_sorted.trace_id")
-
-	// Group by trace-level fields
-	mainSB.GroupBy("trace_id", "duration_nano", "name", "`service.name`")
+	// spans are counted before the join so the root span fields are not copied onto every span
+	mainSB.SQL("FROM __toe_duration_sorted")
+	mainSB.SQL("INNER JOIN (SELECT trace_id, count() AS span_count FROM __toe GROUP BY trace_id) AS __toe_span_count")
+	mainSB.SQL("ON __toe_span_count.trace_id = __toe_duration_sorted.trace_id")
 
 	// order by duration only supported for now
 	mainSB.OrderBy("duration_nano DESC")
-
-	// Limit by trace_id to ensure one row per trace
-	mainSB.SQL("LIMIT 1 BY trace_id")
 
 	if query.Limit > 0 {
 		mainSB.Limit(query.Limit)
