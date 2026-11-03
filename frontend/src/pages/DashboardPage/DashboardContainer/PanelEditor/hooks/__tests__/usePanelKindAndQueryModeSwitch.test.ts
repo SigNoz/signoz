@@ -189,7 +189,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 		});
 	});
 
-	it('clears a limit the new kind hides (Table → Geo Map)', () => {
+	it('clears query and formula limits the new kind hides (Table → Geo Map)', () => {
 		const setSpec = jest.fn() as jest.MockedFunction<SetSpec>;
 		mockUseQueryBuilder.mockReturnValue(
 			builderState(fakeQuery('table-current', 'builder')),
@@ -197,7 +197,10 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 		mockHandleQueryChange.mockReturnValue({
 			id: 'transformed',
 			queryType: 'builder',
-			builder: { queryData: [{ queryName: 'A', limit: 10 }] },
+			builder: {
+				queryData: [{ queryName: 'A', limit: 10 }],
+				queryFormulas: [{ queryName: 'F1', limit: 5 }],
+			},
 		} as unknown as Query);
 
 		const { result } = renderHook(() =>
@@ -211,6 +214,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 
 		const [persisted] = mockToPerses.mock.calls[0] as [Query];
 		expect(persisted.builder.queryData[0].limit).toBeNull();
+		expect(persisted.builder.queryFormulas[0].limit).toBeNull();
 	});
 
 	it('keeps the limit when the new kind shows it (Geo Map → Table)', () => {
@@ -221,7 +225,10 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 		mockHandleQueryChange.mockReturnValue({
 			id: 'transformed',
 			queryType: 'builder',
-			builder: { queryData: [{ queryName: 'A', limit: 10 }] },
+			builder: {
+				queryData: [{ queryName: 'A', limit: 10 }],
+				queryFormulas: [{ queryName: 'F1', limit: 5 }],
+			},
 		} as unknown as Query);
 
 		const { result } = renderHook(() =>
@@ -235,6 +242,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 
 		const [persisted] = mockToPerses.mock.calls[0] as [Query];
 		expect(persisted.builder.queryData[0].limit).toBe(10);
+		expect(persisted.builder.queryFormulas[0].limit).toBe(5);
 	});
 
 	it('clears a trace operator the new kind hides (Table → Geo Map)', () => {
@@ -247,6 +255,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 			queryType: 'builder',
 			builder: {
 				queryData: [{ queryName: 'A' }],
+				queryFormulas: [],
 				queryTraceOperator: [{ queryName: 'T1', expression: 'A => B' }],
 			},
 		} as unknown as Query);

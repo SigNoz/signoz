@@ -90,6 +90,12 @@ function withoutHiddenFields(query: Query, kind: PanelKind): Query {
 			queryData: limitHidden
 				? query.builder.queryData.map((qd) => ({ ...qd, limit: null }))
 				: query.builder.queryData,
+			queryFormulas: limitHidden
+				? query.builder.queryFormulas.map((formula) => ({
+						...formula,
+						limit: null,
+					}))
+				: query.builder.queryFormulas,
 			queryTraceOperator: traceOperatorHidden
 				? []
 				: query.builder.queryTraceOperator,
