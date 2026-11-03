@@ -90,6 +90,61 @@ describe('convertValue', () => {
 		it('should convert kibibytes/sec to bytes/sec', () => {
 			expect(convertValue(1, 'KiBs', 'binBps')).toBe(1024);
 		});
+
+		it('should convert gigabytes/sec to megabytes/sec', () => {
+			expect(
+				convertValue(
+					1,
+					UniversalYAxisUnit.GIGABYTES_SECOND,
+					UniversalYAxisUnit.MEGABYTES_SECOND,
+				),
+			).toBe(1000);
+		});
+
+		it('should convert gigabits/sec to megabytes/sec', () => {
+			expect(
+				convertValue(
+					1,
+					UniversalYAxisUnit.GIGABITS_SECOND,
+					UniversalYAxisUnit.MEGABYTES_SECOND,
+				),
+			).toBe(125);
+		});
+
+		it('should convert gibibytes/sec to mebibytes/sec', () => {
+			expect(
+				convertValue(
+					1,
+					UniversalYAxisUnit.GIBIBYTES_SECOND,
+					UniversalYAxisUnit.MEBIBYTES_SECOND,
+				),
+			).toBe(1024);
+		});
+
+		it('should convert petabytes/sec to terabytes/sec', () => {
+			expect(
+				convertValue(
+					1,
+					UniversalYAxisUnit.PETABYTES_SECOND,
+					UniversalYAxisUnit.TERABYTES_SECOND,
+				),
+			).toBe(1000);
+		});
+
+		it('should convert every byte and bit rate between kilo and peta', () => {
+			const decimal = ['KBs', 'MBs', 'GBs', 'TBs', 'PBs'];
+			const binary = ['KiBs', 'MiBs', 'GiBs', 'TiBs', 'PiBs'];
+			[decimal, binary].forEach((units) => {
+				units.forEach((unit, index) => {
+					const bits = unit.replace('Bs', 'bits');
+					expect(convertValue(1, unit, bits)).toBe(8);
+					if (index > 0) {
+						const step = units === decimal ? 1000 : 1024;
+						expect(convertValue(1, unit, units[index - 1])).toBe(step);
+					}
+				});
+			});
+		});
 	});
 
 	describe('throughput', () => {
