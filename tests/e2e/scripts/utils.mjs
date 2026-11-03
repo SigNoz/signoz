@@ -10,6 +10,9 @@ export const REPO_DIR = path.resolve(E2E_DIR, '../..');
 
 export const testKey = ({ file, titles }) => [file, ...titles].join(' › ');
 
+export const median = (values) =>
+	values.length ? [...values].sort((a, b) => a - b)[values.length >> 1] : 0;
+
 export function listTests() {
 	const output = execFileSync(
 		path.join(E2E_DIR, 'node_modules/.bin/playwright'),

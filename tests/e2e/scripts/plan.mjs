@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 
-import { affected } from './affected.mjs';
-import { E2E_DIR, listTests, REPO_DIR, testKey } from './utils.mjs';
+import { affected, FEATURE_NAMES } from './affected.mjs';
+import { E2E_DIR, listTests, median, REPO_DIR, testKey } from './utils.mjs';
 
 // Matches `workers` in playwright.config.ts on CI.
 const WORKERS = 2;
@@ -34,13 +34,27 @@ function changedFiles() {
 	];
 }
 
-const median = (values) =>
-	values.length ? [...values].sort((a, b) => a - b)[values.length >> 1] : 0;
-
-const selection = options.all
+const traced = options.all
 	? { all: true, reasons: ['--all'], features: [], specs: [] }
 	: affected(changedFiles());
 const tests = listTests();
+// A spec folder the map does not name would never run for a page change.
+const unmapped = [
+	...new Set(
+		tests
+			.filter((test) => !test.tags.includes('@smoke'))
+			.map((test) => test.file.split('/')[0]),
+	),
+].filter((folder) => !FEATURE_NAMES.includes(folder));
+const reasons = [
+	...traced.reasons,
+	...(traced.features.length || traced.specs.length
+		? unmapped.map(
+				(folder) => `tests/e2e/tests/${folder}/ has no entry in affected.json`,
+			)
+		: []),
+];
+const selection = { ...traced, all: reasons.length > 0, reasons };
 const chosen = new Set(
 	tests.filter(
 		(test) =>
@@ -82,7 +96,6 @@ const shardCount = files.size
 	? Math.min(Number(options['max-shards']), Math.ceil(totalMs / shardMs))
 	: 0;
 
-// Longest file first onto the least loaded shard.
 const shards = Array.from({ length: shardCount }, () => ({ ms: 0, tests: [] }));
 for (const file of [...files.values()].sort((a, b) => b.ms - a.ms)) {
 	const shard = shards.reduce((least, next) =>

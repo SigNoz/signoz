@@ -319,6 +319,24 @@ cp .env.example .env      # fill SIGNOZ_E2E_USERNAME / PASSWORD
 yarn test:staging
 ```
 
+### Which specs run on a PR
+
+`e2eci` runs the specs a change can reach plus the `@smoke` set, on as many shards as their recorded durations need.
+
+- A frontend change is traced up the import graph to the routes it reaches. `affected.json` maps each route's page to the spec folders that visit it. Pages under the `@smoke` key are covered by the smoke set alone.
+- A changed spec runs itself. A changed driver, helper or fixture runs every spec that imports it.
+- The full suite runs when a change reaches the app shell, sits outside the module graph (a lockfile, `package.json`, a public asset), touches the server or CI, or reaches a page `affected.json` doesn't name. It also runs while any spec folder outside `routing/` has no entry in `affected.json`.
+- `scripts/plan.mjs` packs the selected spec files into shards using the per-test durations in `durations.json`.
+
+When you add a spec folder, add it to `affected.json` with the pages its specs visit. Tag a describe with `{ tag: '@smoke' }` only for a core path every PR should check.
+
+```bash
+pnpm plan                 # what your branch would run, against origin/main
+pnpm test:smoke           # the smoke set
+pnpm durations            # refresh durations.json from the last 10 green e2eci runs
+pnpm test:scripts         # check the spec selection
+```
+
 ## How to configure different options for E2E tests?
 
 ### Environment variables
@@ -357,6 +375,7 @@ The same pytest flags integration tests expose work here, since E2E reuses the s
 - `--teardown` — tear everything down.
 - `--clean` — prune the docker build caches, forcing the next image build to start cold.
 - `--with-web` — build the frontend into the SigNoz container. **Required for E2E**; integration tests don't need it.
+- `--prebuilt-signoz` — run the `signoz:integration` image already in the local image store instead of building it. The image must be built with `ZEUSURL=http://zeus:8080`. CI uses it when main's server binary matches the change.
 - `--sqlstore-provider`, `--postgres-version`, `--clickhouse-version`, etc. — see `docs/contributing/tests/integration.md`.
 
 ## What should I remember?

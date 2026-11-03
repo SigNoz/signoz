@@ -8,13 +8,16 @@ assert.deepEqual(
 	'a page change selects the features mapped to its route',
 );
 
-assert.deepEqual(
-	affected([
-		'frontend/src/container/ListAlertRules/__tests__/ListAlert.test.tsx',
-	]),
-	{ all: false, reasons: [], features: [], specs: [] },
-	'a frontend unit test selects nothing',
-);
+for (const file of [
+	'frontend/.storybook/preview.tsx',
+	'docs/api/openapi.yml',
+]) {
+	assert.deepEqual(
+		affected([file]),
+		{ all: false, reasons: [], features: [], specs: [] },
+		`${file} selects nothing`,
+	);
+}
 
 assert.deepEqual(
 	affected(['tests/e2e/helpers/sso.ts']).specs,

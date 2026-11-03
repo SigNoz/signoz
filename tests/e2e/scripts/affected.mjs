@@ -7,6 +7,7 @@ import { E2E_DIR, REPO_DIR } from './utils.mjs';
 const FEATURES = Object.entries(
 	JSON.parse(fs.readFileSync(path.join(E2E_DIR, 'affected.json'), 'utf8')),
 );
+export const FEATURE_NAMES = FEATURES.map(([feature]) => feature);
 const ROUTER = path.join(REPO_DIR, 'frontend/src/AppRoutes/pageComponents.ts');
 const ENTRY = path.join(REPO_DIR, 'frontend/src/index.tsx');
 const SPECS_DIR = path.join(E2E_DIR, 'tests');

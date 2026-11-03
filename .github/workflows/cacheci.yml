@@ -49,11 +49,11 @@ jobs:
           docker build -f cmd/enterprise/Dockerfile.integration --tag signoz:integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://zeus:8080 .
           docker build -f cmd/enterprise/Dockerfile.with-web.integration --build-arg TARGETARCH=amd64 --build-arg ZEUSURL=http://zeus:8080 .
       # e2eci runs this server binary for changes that leave the server as it
-      # is here, and builds only the web. The key covers the binary's inputs.
+      # is here, and builds only the web.
       - name: e2e-signoz-key
         id: e2e-signoz-key
         run: |
-          echo "key=e2e-signoz-$(git rev-parse HEAD:cmd HEAD:ee HEAD:pkg HEAD:go.mod HEAD:go.sum HEAD:.dockerignore HEAD:.github/workflows/cacheci.yml | sha256sum | cut -c1-32)" >> "$GITHUB_OUTPUT"
+          echo "key=$(tests/e2e/scripts/signoz-key.sh)" >> "$GITHUB_OUTPUT"
       - name: e2e-signoz
         run: |
           mkdir -p "$RUNNER_TEMP/e2e-signoz"

@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 
-import { E2E_DIR, listTests, REPO_DIR, testKey } from './utils.mjs';
+import { E2E_DIR, listTests, median, REPO_DIR, testKey } from './utils.mjs';
 
 // Reads reports already downloaded into `dir` when given; otherwise downloads
 // the Playwright artifacts of the last green e2eci runs.
@@ -92,10 +92,9 @@ for (const key of listTests()
 	.sort((a, b) => a.localeCompare(b))) {
 	const sample = samples.get(key);
 	if (sample) {
-		const sorted = [...sample.first].sort((a, b) => a - b);
 		durations[key] = {
-			ms: Math.round(sorted[sorted.length >> 1]),
-			runs: sorted.length,
+			ms: Math.round(median(sample.first)),
+			runs: sample.first.length,
 			flaky: sample.flaky,
 		};
 	}

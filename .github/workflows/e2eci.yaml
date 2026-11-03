@@ -49,8 +49,6 @@ jobs:
         if: steps.changes.outputs.e2e == 'true'
         run: |
           cd tests/e2e && pnpm install --frozen-lockfile
-      # Picks the specs the change can reach and packs them into shards by
-      # recorded duration (tests/e2e/scripts/plan.mjs).
       - name: plan
         id: plan
         if: steps.changes.outputs.e2e == 'true'
@@ -80,7 +78,7 @@ jobs:
       - name: node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 22
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -147,11 +145,10 @@ jobs:
       - name: pnpm-install
         run: |
           cd tests/e2e && pnpm install --frozen-lockfile
-      # Must match the key cacheci saves the server binary under.
       - name: signoz-key
         id: signoz-key
         run: |
-          echo "key=e2e-signoz-$(git rev-parse HEAD:cmd HEAD:ee HEAD:pkg HEAD:go.mod HEAD:go.sum HEAD:.dockerignore HEAD:.github/workflows/cacheci.yml | sha256sum | cut -c1-32)" >> "$GITHUB_OUTPUT"
+          echo "key=$(tests/e2e/scripts/signoz-key.sh)" >> "$GITHUB_OUTPUT"
       # A hit means the change leaves the server as it is on main, so only the
       # web build is new.
       - name: signoz-binary
