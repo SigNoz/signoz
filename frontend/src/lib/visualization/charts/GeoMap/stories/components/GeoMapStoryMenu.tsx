@@ -3,9 +3,9 @@ import ContextMenu from 'periscope/components/ContextMenu';
 
 import { GeoMapSelection } from '../../types';
 
-import styles from './GeoMapPlayground.module.scss';
+import styles from './GeoMapStory.module.scss';
 
-interface GeoMapPlaygroundMenuProps {
+interface GeoMapStoryMenuProps {
 	selection: GeoMapSelection;
 	name: string;
 	/** Group-by key the drilldown filter would use. */
@@ -18,13 +18,13 @@ interface GeoMapPlaygroundMenuProps {
  * The dashboard's own ContextMenu with stand-in actions. Its backdrop is what
  * keeps the map inert until a click outside closes the menu.
  */
-export default function GeoMapPlaygroundMenu({
+export default function GeoMapStoryMenu({
 	selection,
 	name,
 	field,
 	formatValue,
 	onClose,
-}: GeoMapPlaygroundMenuProps): JSX.Element {
+}: GeoMapStoryMenuProps): JSX.Element {
 	const { datum, clientX, clientY } = selection;
 	return (
 		<ContextMenu
