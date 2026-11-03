@@ -47,7 +47,7 @@ jobs:
       - name: node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: "22"
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -105,7 +105,7 @@ jobs:
       - name: node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: "22"
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
