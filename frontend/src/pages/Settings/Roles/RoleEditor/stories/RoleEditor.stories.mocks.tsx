@@ -5,7 +5,7 @@
 
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { RoleType } from 'types/roles';
 
 import { choiceControl } from '@/storybook/controls/controls';
@@ -114,6 +114,21 @@ export const openLogsCard = async (
 	await userEvent.click(header);
 
 	return header.parentElement as HTMLElement;
+};
+
+/** Opens the telemetry selector wizard from the Logs read verb and returns its dialog. */
+export const openSelectorWizard = async (
+	canvasElement: HTMLElement,
+): Promise<HTMLElement> => {
+	const card = await openLogsCard(canvasElement);
+	const [onlySelected] = await within(card).findAllByText('Only selected');
+
+	await userEvent.click(onlySelected);
+	await userEvent.click(
+		await within(card).findByRole('button', { name: 'Wizard' }),
+	);
+
+	return screen.findByRole('dialog', { name: 'Selector Wizard' });
 };
 
 /** Clicks save once the permission check behind the button has answered. */
