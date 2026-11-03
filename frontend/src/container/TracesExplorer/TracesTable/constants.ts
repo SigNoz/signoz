@@ -16,3 +16,12 @@ export const STATUS_FIELD_NAMES = new Set([
 export const DURATION_FIELD_NAMES = new Set(['durationNano', 'duration_nano']);
 
 export const TRACE_ID_FIELD_NAMES = new Set(['traceID', 'trace_id']);
+
+export const TRACES_TABLE_QUERY_PARAMS = {
+	page: 'page',
+	limit: 'limit',
+} as const;
+
+export const TRACES_TABLE_DEFAULT_LIMIT = 10;
+
+export const TRACES_TABLE_PAGE_SIZE_KEY = 'traces-explorer';

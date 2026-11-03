@@ -3,7 +3,8 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import TracesView from './index';
 
@@ -52,6 +53,30 @@ const mockError = (): void => {
 			res(ctx.status(500), ctx.json({ status: 'error', error: 'boom' })),
 		),
 	);
+};
+
+// Answers each offset with `rowsPerOffset[offset]` rows and records the offsets asked for.
+// An offset in `held` answers once its promise resolves.
+const mockPages = (
+	rowsPerOffset: Record<number, number>,
+	held?: Record<number, Promise<void>>,
+): number[] => {
+	const offsets: number[] = [];
+	server.use(
+		rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+			const body = (await req.json()) as QueryRangeRequestV5;
+			const spec = body.compositeQuery.queries[0].spec as { offset?: number };
+			const offset = spec.offset ?? 0;
+			offsets.push(offset);
+			await held?.[offset];
+			const rows = Array.from({ length: rowsPerOffset[offset] ?? 0 }, (_, i) => ({
+				...groupedRows[0],
+				data: { ...groupedRows[0].data, trace_id: `trace-${offset + i}` },
+			}));
+			return res(ctx.status(200), ctx.json(groupedResponse(rows)));
+		}),
+	);
+	return offsets;
 };
 
 const renderTracesView = (
@@ -115,8 +140,6 @@ describe('TracesView (grouped root-span table)', () => {
 		expect(
 			screen.getByText(/This tab only shows Root Spans/i),
 		).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
 
 		await waitFor(() => {
 			expect(screen.getByText(/No traces yet/i)).toBeInTheDocument();
@@ -130,7 +153,50 @@ describe('TracesView (grouped root-span table)', () => {
 		expect(
 			screen.getByText(/This tab only shows Root Spans/i),
 		).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+	});
+
+	describe('pagination', () => {
+		it('offers the next page after a full page and requests its offset', async () => {
+			const offsets = mockPages({ 0: 10, 10: 3 });
+			const user = userEvent.setup();
+			renderTracesView();
+
+			const next = await screen.findByRole('button', { name: 'Go to next page' });
+			await waitFor(() => expect(next).toBeEnabled());
+			await user.click(next);
+
+			await expect(screen.findByText('trace-12')).resolves.toBeInTheDocument();
+			expect(offsets).toStrictEqual([0, 10]);
+		});
+
+		it('offers no page past the next one until that page arrives', async () => {
+			let release = (): void => {};
+			const pageTwo = new Promise<void>((resolve) => {
+				release = resolve;
+			});
+			mockPages({ 0: 10, 10: 10 }, { 10: pageTwo });
+			const user = userEvent.setup();
+			renderTracesView();
+
+			const next = await screen.findByRole('button', { name: 'Go to next page' });
+			await waitFor(() => expect(next).toBeEnabled());
+			await user.click(next);
+
+			const pager = screen.getByLabelText('pagination');
+			expect(within(pager).queryByText('3')).not.toBeInTheDocument();
+
+			release();
+			await expect(within(pager).findByText('3')).resolves.toBeInTheDocument();
+		});
+
+		it('offers no next page after a short page', async () => {
+			mockPages({ 0: 3 });
+			renderTracesView();
+
+			await screen.findAllByText('frontend');
+			expect(
+				screen.queryByRole('button', { name: 'Go to next page' }),
+			).not.toBeInTheDocument();
+		});
 	});
 });
