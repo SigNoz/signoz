@@ -977,10 +977,7 @@ func buildValueHeatmapFinalSelect(
 	args []any,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 ) (*qbtypes.Statement, error) {
-	bucketMin, bucketMax, err := querybuilder.RenderHeatmapBucketExprs(*query.Aggregations[0].HeatmapBucketing, heatmapValueColumn)
-	if err != nil {
-		return nil, err
-	}
+	bucketMin, bucketMax := querybuilder.RenderHeatmapBucketExprs(*query.Aggregations[0].HeatmapBucketing, heatmapValueColumn)
 
 	groupAliases := GroupByAliases(query.GroupBy)
 

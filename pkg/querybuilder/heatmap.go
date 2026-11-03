@@ -6,7 +6,6 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -23,19 +22,14 @@ const heatmapBucketValueAlias = "__bucket_value"
 //
 // valueExpr is repeated several times in each expression, so it has to be free
 // of placeholders — HeatmapBucketColumns passes an alias for that reason.
-func RenderHeatmapBucketExprs(bucketing qbtypes.HeatmapBucketing, valueExpr string) (minExpr, maxExpr string, err error) {
-	switch bucketing.Kind {
-	case qbtypes.BucketsKindLinear:
+func RenderHeatmapBucketExprs(bucketing qbtypes.HeatmapBucketing, valueExpr string) (minExpr, maxExpr string) {
+	if bucketing.Kind == qbtypes.BucketsKindLinear {
 		return renderLinearBucketExprs(bucketing, valueExpr)
-	case qbtypes.BucketsKindLog:
-		return renderLogBucketExprs(valueExpr)
-	default:
-		return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"invalid bucketOptions kind: %s", bucketing.Kind.StringValue())
 	}
+	return renderLogBucketExprs(valueExpr)
 }
 
-func renderLinearBucketExprs(bucketing qbtypes.HeatmapBucketing, valueExpr string) (string, string, error) {
+func renderLinearBucketExprs(bucketing qbtypes.HeatmapBucketing, valueExpr string) (string, string) {
 	maxValue := FormatHeatmapFloat(bucketing.MaxValue)
 	numBuckets := strconv.Itoa(bucketing.NumBuckets)
 	index := fmt.Sprintf("least(greatest(ceil(%s * %s / %s), 1), %s)", valueExpr, numBuckets, maxValue, numBuckets)
@@ -48,12 +42,12 @@ func renderLinearBucketExprs(bucketing qbtypes.HeatmapBucketing, valueExpr strin
 		"multiIf(%s, NULL, %s <= 0, toFloat64(0), %s > %s, toFloat64('+Inf'), %s * %s / %s)",
 		absentValue(valueExpr), valueExpr, valueExpr, maxValue, index, maxValue, numBuckets,
 	)
-	return minExpr, maxExpr, nil
+	return minExpr, maxExpr
 }
 
 // ClickHouse buckets at MaxLogScale whatever HeatmapBucketing.LogScale asks for;
 // postprocessing folds the axis down afterwards.
-func renderLogBucketExprs(valueExpr string) (string, string, error) {
+func renderLogBucketExprs(valueExpr string) (string, string) {
 	bucketsPerDoubling := FormatHeatmapFloat(math.Exp2(qbtypes.MaxLogScale))
 	lowest := FormatHeatmapFloat(qbtypes.MinLogUpperBound)
 	highest := FormatHeatmapFloat(qbtypes.MaxLogUpperBound)
@@ -66,7 +60,7 @@ func renderLogBucketExprs(valueExpr string) (string, string, error) {
 		"multiIf(%s, NULL, %s <= 0, toFloat64(0), %s <= %s, %s, %s > %s, toFloat64('+Inf'), pow(2, ceil(log2(%s) * %s) / %s))",
 		absentValue(valueExpr), valueExpr, valueExpr, lowest, lowest, valueExpr, highest, valueExpr, bucketsPerDoubling, bucketsPerDoubling,
 	)
-	return minExpr, maxExpr, nil
+	return minExpr, maxExpr
 }
 
 // absentValue tests for a row the axis has no place for. A log or a span need
@@ -113,10 +107,7 @@ func HeatmapBucketColumns(
 		return "", nil, nil, err
 	}
 
-	bucketMin, bucketMax, err := RenderHeatmapBucketExprs(bucketOptions.ToHeatmapBucketing(), heatmapBucketValueAlias)
-	if err != nil {
-		return "", nil, nil, err
-	}
+	bucketMin, bucketMax := RenderHeatmapBucketExprs(bucketOptions.ToHeatmapBucketing(), heatmapBucketValueAlias)
 
 	sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", bucketMin, qbtypes.HeatmapBucketMinColumn)))
 	sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", bucketMax, qbtypes.HeatmapBucketMaxColumn)))
