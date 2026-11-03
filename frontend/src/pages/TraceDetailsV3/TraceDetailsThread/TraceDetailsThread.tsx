@@ -10,6 +10,7 @@ import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
 import { useTraceDetailsTab } from '../hooks/useTraceDetailsTab';
 import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
 import { useThreadDataLoadedEvent } from './hooks/useThreadDataLoadedEvent';
+import { useThreadEmptyWithAiEvent } from './hooks/useThreadEmptyWithAiEvent';
 import { useThreadSpanSelection } from './hooks/useThreadSpanSelection';
 import { useThreadView } from './hooks/useThreadView';
 import { useTraceThread } from './hooks/useTraceThread';
@@ -30,10 +31,12 @@ const INITIAL_LOADER_COUNT = 4;
 interface TraceDetailsThreadProps {
 	// Owned by the page so the load event fires once per trace, not per tab visit.
 	dataLoadedFiredForRef: MutableRefObject<string>;
+	threadEmptyFiredForRef: MutableRefObject<string>;
 }
 
 function TraceDetailsThread({
 	dataLoadedFiredForRef,
+	threadEmptyFiredForRef,
 }: TraceDetailsThreadProps): JSX.Element {
 	const { id: traceId } = useAppParams<'id'>();
 	const [, setTab] = useTraceDetailsTab();
@@ -100,6 +103,14 @@ function TraceDetailsThread({
 		!isLoading &&
 		interestedSpanStatus !== InterestedSpanStatus.NotFound &&
 		(isError || spans.length === 0);
+
+	useThreadEmptyWithAiEvent({
+		traceId: traceId || '',
+		interestedSpanId,
+		hasNoThread,
+		firedForRef: threadEmptyFiredForRef,
+		logTraceEvent,
+	});
 
 	const renderBody = (): JSX.Element => {
 		if (isLoading) {
