@@ -19,7 +19,6 @@ func NewStatsFromRules(rules []*LLMPricingRule) map[string]any {
 	}
 }
 
-// NewStatsFromModels reports how many of the models seen no rule prices.
 func NewStatsFromModels(models []string, rules []*LLMPricingRule) map[string]any {
 	unmapped := int64(0)
 	for _, model := range models {
