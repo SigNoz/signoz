@@ -3,7 +3,7 @@ import { dashboardListParams, expect, PATH, test } from '../../drivers/routing';
 // Imperative navigation: the `history.listen` counter behind `hasInAppHistory()`,
 // `useSafeNavigate`'s same-url suppression, and its `newTab` branch.
 
-test.describe('Routing — imperative navigation', () => {
+test.describe('Routing — imperative navigation', { tag: '@smoke' }, () => {
 	test('TC-05 Back from a detail page restores the list with its params', async ({
 		routing,
 		dashboard,

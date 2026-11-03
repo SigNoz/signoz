@@ -4,7 +4,7 @@ import { expect, PATH, test } from '../../drivers/routing';
 // `RouteTab`, `TopNav`'s per-route checks, and `SETTINGS`, a prefix route that
 // needs an explicit `/*` under v7.
 
-test.describe('Routing — route matching', () => {
+test.describe('Routing — route matching', { tag: '@smoke' }, () => {
 	test('TC-09 RouteTab switches the url and survives a reload', async ({
 		routing,
 	}) => {

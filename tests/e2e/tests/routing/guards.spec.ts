@@ -4,7 +4,7 @@ import { expect, PATH, test } from '../../drivers/routing';
 // told otherwise, which only shows when someone presses Back. Runs as `guest`:
 // an authenticated page would skip the chain under test.
 
-test.describe('Routing — auth guards', () => {
+test.describe('Routing — auth guards', { tag: '@smoke' }, () => {
 	test('TC-14 a deep-linked private route survives the login round trip', async ({
 		guest,
 	}) => {

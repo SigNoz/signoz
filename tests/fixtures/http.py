@@ -28,6 +28,8 @@ def zeus(
     def create() -> types.TestContainerDocker:
         container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
         container.with_network(network)
+        # The zeus address in images built for --prebuilt-signoz.
+        container.with_network_aliases("zeus")
         container.start()
 
         return types.TestContainerDocker(

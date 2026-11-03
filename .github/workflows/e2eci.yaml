@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       e2e: ${{ steps.changes.outputs.e2e }}
+      shards: ${{ steps.plan.outputs.shards }}
     steps:
       - name: changes
         id: changes
@@ -21,6 +22,7 @@ jobs:
           FORCE: ${{ contains(github.event.pull_request.labels.*.name, 'safe-to-e2e') }}
         run: |
           CHANGED_FILES=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename | select(startswith("tests/integration/") | not)')
+          printf '%s\n' "$CHANGED_FILES" > "$RUNNER_TEMP/changed.txt"
           PATTERN='^(frontend/|tests/|\.github/workflows/e2eci\.yaml$|cmd/enterprise/Dockerfile\.with-web\.integration$)'
 
           if [ "$FORCE" = "true" ]; then
@@ -30,6 +32,42 @@ jobs:
           else
             echo "e2e=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: checkout
+        if: steps.changes.outputs.e2e == 'true'
+        uses: actions/checkout@v4
+      - name: install-pnpm
+        if: steps.changes.outputs.e2e == 'true'
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: node
+        if: steps.changes.outputs.e2e == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: pnpm-install
+        if: steps.changes.outputs.e2e == 'true'
+        run: |
+          cd tests/e2e && pnpm install --frozen-lockfile
+      - name: plan
+        id: plan
+        if: steps.changes.outputs.e2e == 'true'
+        env:
+          FORCE: ${{ contains(github.event.pull_request.labels.*.name, 'safe-to-e2e') }}
+        run: |
+          cd tests/e2e
+          if [ "$FORCE" = "true" ]; then
+            node scripts/plan.mjs --all < /dev/null
+          else
+            node scripts/plan.mjs < "$RUNNER_TEMP/changed.txt"
+          fi
+      - name: upload-plan
+        if: steps.changes.outputs.e2e == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-plan
+          path: tests/e2e/artifacts/plan/
+          retention-days: 5
   fmtlint:
     needs: changes
     if: needs.changes.outputs.e2e == 'true'
@@ -40,7 +78,7 @@ jobs:
       - name: node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 22
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -60,9 +98,9 @@ jobs:
       matrix:
         project:
           - chromium
-        shard: [1, 2, 3, 4]
+        shard: ${{ fromJSON(needs.changes.outputs.shards) }}
     needs: changes
-    if: needs.changes.outputs.e2e == 'true'
+    if: needs.changes.outputs.e2e == 'true' && needs.changes.outputs.shards != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -95,10 +133,11 @@ jobs:
         background: true
         run: |
           cd tests && uv sync
+      # The frontend builds on Node 22, as in jsci and the with-web image.
       - name: node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 22
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -106,10 +145,44 @@ jobs:
       - name: pnpm-install
         run: |
           cd tests/e2e && pnpm install --frozen-lockfile
+      - name: signoz-key
+        id: signoz-key
+        run: |
+          echo "key=$(tests/e2e/scripts/signoz-key.sh)" >> "$GITHUB_OUTPUT"
+      # A hit means the change leaves the server as it is on main, so only the
+      # web build is new.
+      - name: signoz-binary
+        id: signoz-binary
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/e2e-signoz
+          key: ${{ steps.signoz-key.outputs.key }}
+      - name: signoz-image
+        id: signoz-image
+        if: steps.signoz-binary.outputs.cache-hit == 'true'
+        background: true
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+        run: |
+          cd frontend && pnpm install --frozen-lockfile && pnpm build
+          cp -r build "$RUNNER_TEMP/e2e-signoz/web"
+          cp -r ../templates "$RUNNER_TEMP/e2e-signoz/templates"
+          cat > "$RUNNER_TEMP/e2e-signoz/Dockerfile" <<'EOF'
+          FROM golang:1.25-bookworm
+          ENV HOME=/root
+          WORKDIR /root
+          COPY signoz /root/signoz
+          COPY templates /root/templates
+          COPY web /root/web
+          RUN chmod 755 /root /root/signoz
+          ENTRYPOINT ["/root/signoz", "server"]
+          EOF
+          docker build --tag signoz:integration "$RUNNER_TEMP/e2e-signoz"
       # Restore-only: the cacheci workflow owns cache saves. Seeds the
       # BuildKit cache mounts so the in-test image build is incremental.
       - name: restore
         id: restore
+        if: steps.signoz-binary.outputs.cache-hit != 'true'
         uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/cacheci
@@ -117,7 +190,7 @@ jobs:
           restore-keys: |
             tests-secondary
       - name: inject
-        if: steps.restore.outputs.cache-matched-key != ''
+        if: steps.signoz-binary.outputs.cache-hit != 'true' && steps.restore.outputs.cache-matched-key != ''
         run: |
           cat > "$RUNNER_TEMP/inject.Dockerfile" <<'EOF'
           FROM busybox:1.37
@@ -143,19 +216,30 @@ jobs:
           docker rm pw
           echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/ms-playwright" >> "$GITHUB_ENV"
           cd tests/e2e && pnpm playwright install-deps ${{ matrix.project }}
+      # ponytail: bring-up waits for the whole image. Starting the databases
+      # first would overlap them with the web build, about 1 min more.
+      - name: wait-signoz-image
+        if: steps.signoz-binary.outputs.cache-hit == 'true'
+        wait: signoz-image
       - name: bring-up-stack
         run: |
           cd tests && \
             uv run pytest \
             --basetemp=./tmp/ \
             -vv --reuse --with-web \
+            ${{ steps.signoz-binary.outputs.cache-hit == 'true' && '--prebuilt-signoz' || '' }} \
             e2e/bootstrap/setup.py::test_setup
       - name: wait-playwright-browsers
         wait: playwright-browsers
+      - name: download-plan
+        uses: actions/download-artifact@v4
+        with:
+          name: e2e-plan
+          path: tests/e2e/artifacts/plan
       - name: playwright-test
         run: |
           cd tests/e2e && \
-            pnpm playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/4
+            pnpm playwright test --project=${{ matrix.project }} --test-list artifacts/plan/shard-${{ matrix.shard }}.txt
       - name: teardown-stack
         if: always()
         run: |

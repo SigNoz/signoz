@@ -1,0 +1,2127 @@
+{
+	"alerts/channels/create-each-type.spec.ts › Notification channels — create one of each type › TC-01 a Slack channel saves and shows up in the list": {
+		"ms": 22388,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/create-each-type.spec.ts › Notification channels — create one of each type › TC-02 a Webhook channel saves and shows up in the list": {
+		"ms": 23523,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/create-each-type.spec.ts › Notification channels — create one of each type › TC-03 a Pagerduty channel saves and shows up in the list": {
+		"ms": 11465,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/create-each-type.spec.ts › Notification channels — create one of each type › TC-04 a Opsgenie channel saves and shows up in the list": {
+		"ms": 11924,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/create-each-type.spec.ts › Notification channels — create one of each type › TC-05 a Email channel saves and shows up in the list": {
+		"ms": 11885,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/create-each-type.spec.ts › Notification channels — create one of each type › TC-06 a Microsoft Teams channel saves and shows up in the list": {
+		"ms": 12141,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/create-each-type.spec.ts › Notification channels — create one of each type › TC-07 a Google Chat channel saves and shows up in the list": {
+		"ms": 11672,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/create-each-type.spec.ts › Notification channels — create one of each type › TC-08 a Jira channel saves and shows up in the list": {
+		"ms": 12008,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/create-each-type.spec.ts › Notification channels — create one of each type › TC-09 a Jira Service Management Ops channel saves and shows up in the list": {
+		"ms": 12061,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/create-each-type.spec.ts › Notification channels — create one of each type › TC-10 a incident.io channel saves and shows up in the list": {
+		"ms": 11906,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/create-each-type.spec.ts › Notification channels — create one of each type › TC-11 a Telegram channel saves and shows up in the list": {
+		"ms": 12226,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/create.spec.ts › Notification channels — create › TC-01 a webhook channel saves and shows up in the list": {
+		"ms": 11922,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/create.spec.ts › Notification channels — create › TC-02 saving without a name reports the missing field": {
+		"ms": 9195,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/delete.spec.ts › Notification channels — delete › TC-01 deleting from the row menu takes the channel out of the list": {
+		"ms": 10337,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/edit-each-type.spec.ts › Notification channels — edit one of each type › TC-01 an edited Slack channel keeps its change": {
+		"ms": 13088,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/edit-each-type.spec.ts › Notification channels — edit one of each type › TC-02 an edited Webhook channel keeps its change": {
+		"ms": 13315,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/edit-each-type.spec.ts › Notification channels — edit one of each type › TC-03 an edited Pagerduty channel keeps its change": {
+		"ms": 12407,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/edit-each-type.spec.ts › Notification channels — edit one of each type › TC-04 an edited Opsgenie channel keeps its change": {
+		"ms": 12856,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/edit-each-type.spec.ts › Notification channels — edit one of each type › TC-05 an edited Email channel keeps its change": {
+		"ms": 12533,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/edit-each-type.spec.ts › Notification channels — edit one of each type › TC-06 an edited Microsoft Teams channel keeps its change": {
+		"ms": 12699,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/edit-each-type.spec.ts › Notification channels — edit one of each type › TC-07 an edited Google Chat channel keeps its change": {
+		"ms": 12670,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/edit-each-type.spec.ts › Notification channels — edit one of each type › TC-08 an edited Jira channel keeps its change": {
+		"ms": 12852,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/edit-each-type.spec.ts › Notification channels — edit one of each type › TC-09 an edited Jira Service Management Ops channel keeps its change": {
+		"ms": 12617,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/edit-each-type.spec.ts › Notification channels — edit one of each type › TC-10 an edited incident.io channel keeps its change": {
+		"ms": 12624,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/edit-each-type.spec.ts › Notification channels — edit one of each type › TC-11 an edited Telegram channel keeps its change": {
+		"ms": 12398,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/edit.spec.ts › Notification channels — edit › TC-01 an edited recipient persists after reload": {
+		"ms": 22455,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/channels/list.spec.ts › Notification channels — list › TC-01 search narrows the list to the matching channel": {
+		"ms": 10734,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/list.spec.ts › Notification channels — list › TC-02 the kind filter keeps only channels of that kind": {
+		"ms": 9228,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/list.spec.ts › Notification channels — list › TC-03 a search matching nothing offers to clear itself": {
+		"ms": 9087,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/list.spec.ts › Notification channels — list › TC-04 clicking a row opens that channel for editing": {
+		"ms": 10079,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/channels/list.spec.ts › Notification channels — list › TC-05 View JSON shows the channel with its secrets masked": {
+		"ms": 10083,
+		"runs": 5,
+		"flaky": 0
+	},
+	"alerts/create/edge.spec.ts › Alert create — errors and edges › TC-01 a server-side rejection opens the error modal and keeps the draft": {
+		"ms": 21697,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/edge.spec.ts › Alert create — errors and edges › TC-02 none of the four builder mounts logs a console error": {
+		"ms": 29197,
+		"runs": 3,
+		"flaky": 0
+	},
+	"alerts/create/edge.spec.ts › Alert create — errors and edges › TC-03 the v2 Discard button is clickable": {
+		"ms": 0,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/prefill.spec.ts › Alert create — deep-link prefill › TC-01 a compositeQuery alone selects the alert type": {
+		"ms": 12348,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/prefill.spec.ts › Alert create — deep-link prefill › TC-02 thresholds prefill from JSON, and a malformed value falls back": {
+		"ms": 12100,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/prefill.spec.ts › Alert create — deep-link prefill › TC-03 matchType and compareOp aliases normalise to the enum": {
+		"ms": 9874,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/prefill.spec.ts › Alert create — deep-link prefill › TC-04 ruleName and yAxisUnit apply once and never stomp an edit": {
+		"ms": 10548,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/prefill.spec.ts › Alert create — deep-link prefill › TC-05 evaluationWindowPreset=meter switches to the cumulative daily window": {
+		"ms": 10589,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/prefill.spec.ts › Alert create — deep-link prefill › TC-06 URL prefill is ignored in edit mode": {
+		"ms": 13343,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/shell.spec.ts › Alert create — shell & type selection › TC-01 bare /alerts/new lists exactly the expected alert-type cards": {
+		"ms": 9058,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/shell.spec.ts › Alert create — shell & type selection › TC-02 picking a card writes both params and mounts the v2 builder": {
+		"ms": 8986,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/shell.spec.ts › Alert create — shell & type selection › TC-03 the anomaly card rewrites the rule type, not the alert type": {
+		"ms": 8974,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/shell.spec.ts › Alert create — shell & type selection › TC-04 modifier-clicking a card opens the builder in a new tab": {
+		"ms": 9082,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/shell.spec.ts › Alert create — shell & type selection › TC-05 breadcrumb gains a third crumb after a type is picked": {
+		"ms": 8940,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/shell.spec.ts › Alert create — shell & type selection › TC-06 create renders inside the Alert Rules tab and leaving drops subTab/search": {
+		"ms": 8908,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/shell.spec.ts › Alert create — shell & type selection › TC-07 showClassicCreateAlertsPage=true renders the v1 form instead": {
+		"ms": 8856,
+		"runs": 3,
+		"flaky": 0
+	},
+	"alerts/create/shell.spec.ts › Alert create — shell & type selection › TC-08 Switch to Classic Experience replaces history, so Back does not return to v2": {
+		"ms": 9604,
+		"runs": 3,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-01 initial state: one critical threshold, both actions gated": {
+		"ms": 8932,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-02 the save tooltip walks from the name gate to the channel gate": {
+		"ms": 9332,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-03 clearing a threshold label re-gates the save": {
+		"ms": 10406,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-04 a label added in the header survives the save round-trip": {
+		"ms": 10831,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-05 a rejected label key surfaces as a notification, not an inline message": {
+		"ms": 9811,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-06 CV2-07 the operator and match-type selects offer the documented options": {
+		"ms": 9468,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-08 the operator is rule-wide: one change reaches every threshold": {
+		"ms": 11334,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-09 CV2-10 added thresholds take preset tiers, and the first cannot be removed": {
+		"ms": 12118,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-11 a channel on one threshold is not enough — the validator loops all of them": {
+		"ms": 10334,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-12 the unit select is disabled while the query has no y-axis unit": {
+		"ms": 8693,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-13 the recovery threshold control is never rendered": {
+		"ms": 9128,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-14 CV2-15 the evaluation window and cadence reach the payload": {
+		"ms": 11341,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-16 the group-by select is disabled until the query groups by something": {
+		"ms": 8968,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-17 repeat notifications enable their inputs and reach the payload": {
+		"ms": 11391,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-18 with no channels the dropdown offers only a way to create one": {
+		"ms": 9895,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-19 routing policies unlock the save with zero channels": {
+		"ms": 9964,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-20 happy-path save posts the v2 shape and lands on the list": {
+		"ms": 11221,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-21 test notification reports that a non-firing rule matched nothing": {
+		"ms": 10245,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-22 discard leaves without posting and resets the form": {
+		"ms": 11551,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/create/v2.spec.ts › Alert create — v2 builder › CV2-23 every footer button is disabled while the save is in flight": {
+		"ms": 13041,
+		"runs": 4,
+		"flaky": 1
+	},
+	"alerts/details/actions.spec.ts › Alert details — actions › TC-01 enable/disable toggle changes the rule state": {
+		"ms": 22518,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/details/actions.spec.ts › Alert details — actions › TC-02 Clone creates a copy and navigates to overview": {
+		"ms": 24298,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/details/actions.spec.ts › Alert details — actions › TC-03 Delete removes the rule and returns to the list": {
+		"ms": 10168,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/details/chrome.spec.ts › Alert details — page chrome › TC-01 copy-link button copies the current URL to clipboard": {
+		"ms": 8700,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/details/chrome.spec.ts › Alert details — page chrome › TC-02 breadcrumb navigates back to the alert list": {
+		"ms": 9555,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/details/chrome.spec.ts › Alert details — page chrome › TC-03 document title updates to show the rule name": {
+		"ms": 8459,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/details/header.spec.ts › Alert details — header › TC-01 v2 header shows editable name input without Rename menu item": {
+		"ms": 9684,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/details/header.spec.ts › Alert details — header › TC-02 v1 header shows static title with state, severity and labels": {
+		"ms": 8600,
+		"runs": 3,
+		"flaky": 0
+	},
+	"alerts/details/not-found.spec.ts › Alert details — not found › TC-01 invalid ruleId shows AlertNotFound page": {
+		"ms": 10190,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/details/not-found.spec.ts › Alert details — not found › TC-02 missing ruleId on overview shows AlertNotFound page": {
+		"ms": 8411,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/details/rename.spec.ts › Alert details — rename › TC-01 v1 rename via modal updates the rule name": {
+		"ms": 10846,
+		"runs": 3,
+		"flaky": 0
+	},
+	"alerts/details/rename.spec.ts › Alert details — rename › TC-02 v2 inline rename saves via Overview footer button": {
+		"ms": 14512,
+		"runs": 3,
+		"flaky": 0
+	},
+	"alerts/details/tabs.spec.ts › Alert details — tabs › TC-01 Overview/History tabs preserve ruleId and relativeTime": {
+		"ms": 12380,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/details/tabs.spec.ts › Alert details — tabs › TC-02 switching to History tab discards other history params": {
+		"ms": 11386,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/details/threshold-persistence.spec.ts › Alert overview — threshold persistence › TC-01 edit page displays the saved threshold value": {
+		"ms": 9871,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/edge.spec.ts › Alert edit — routing edges › TC-01 an unknown ruleId shows AlertNotFound on both entry URLs": {
+		"ms": 11571,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/edge.spec.ts › Alert edit — routing edges › TC-02 /alerts/edit with no ruleId also lands on AlertNotFound": {
+		"ms": 8888,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/v2.spec.ts › Alert edit — v2 rule › TC-01 the v2 editor renders inside the details shell": {
+		"ms": 10176,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/v2.spec.ts › Alert edit — v2 rule › TC-02 name and labels prefill from the rule": {
+		"ms": 10246,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/v2.spec.ts › Alert edit — v2 rule › TC-03 both thresholds prefill, and the sentence reads spec[0]": {
+		"ms": 10232,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/v2.spec.ts › Alert edit — v2 rule › TC-04 the recovery threshold control never renders": {
+		"ms": 10025,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/v2.spec.ts › Alert edit — v2 rule › TC-05 the evaluation window prefills, and a non-preset value collapses to custom": {
+		"ms": 13794,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/v2.spec.ts › Alert edit — v2 rule › TC-06 repeat notifications prefill from the seeded renotify block": {
+		"ms": 10515,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/v2.spec.ts › Alert edit — v2 rule › TC-07 alertOnAbsent prefills the advanced options": {
+		"ms": 10770,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/v2.spec.ts › Alert edit — v2 rule › TC-08 the evaluation cadence always reads back in default mode": {
+		"ms": 10656,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/v2.spec.ts › Alert edit — v2 rule › TC-09 changing a threshold PUTs the rule and the change survives a reload": {
+		"ms": 13780,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/v2.spec.ts › Alert edit — v2 rule › TC-10 the footer save is what persists a rename made on the Overview tab": {
+		"ms": 14512,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/v2.spec.ts › Alert edit — v2 rule › TC-11 Discard leaves without a PUT and without touching the rule": {
+		"ms": 13929,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/edit/v2.spec.ts › Alert edit — v2 rule › TC-12 /alerts/edit is a legacy alias that redirects into the details shell": {
+		"ms": 10522,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/cross-cutting.spec.ts › Alert history — cross-cutting › TC-01 full deep-link with all params is honoured in one load": {
+		"ms": 10665,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/cross-cutting.spec.ts › Alert history — cross-cutting › TC-02 page reload preserves all history params": {
+		"ms": 12069,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/cross-cutting.spec.ts › Alert history — cross-cutting › TC-03 browser back/forward restores correct table state": {
+		"ms": 12334,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/cross-cutting.spec.ts › Alert history — cross-cutting › TC-04 no unhandled console errors across full history session": {
+		"ms": 12686,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/cross-cutting.spec.ts › Alert history — cross-cutting › TC-05 no request storm on mount (exactly one call per endpoint)": {
+		"ms": 10142,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/cross-cutting.spec.ts › Alert history — cross-cutting › TC-06 v1 and v2 schema rules both render history correctly": {
+		"ms": 10477,
+		"runs": 3,
+		"flaky": 0
+	},
+	"alerts/history/cross-cutting.spec.ts › Alert history — cross-cutting › TC-07 no legacy v1 history API calls during full session": {
+		"ms": 12154,
+		"runs": 3,
+		"flaky": 0
+	},
+	"alerts/history/cross-cutting.spec.ts › Alert history — cross-cutting › TC-08 history API endpoints carry expected params": {
+		"ms": 8137,
+		"runs": 3,
+		"flaky": 0
+	},
+	"alerts/history/empty-and-errors.spec.ts › Alert history — error and empty states › TC-01 invalid filter expression shows syntax error and recovers on fix": {
+		"ms": 13387,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/empty-and-errors.spec.ts › Alert history — error and empty states › TC-02 empty filter_keys response still mounts editor (no suggestions)": {
+		"ms": 10752,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/empty-and-errors.spec.ts › Alert history — error and empty states › TC-03 bogus ruleId never reaches history APIs (shows AlertNotFound)": {
+		"ms": 8725,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/empty-and-errors.spec.ts › Alert history — error and empty states › TC-04 rule with no history renders empty state (not error)": {
+		"ms": 8824,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/empty-and-errors.spec.ts › Alert history — error and empty states › TC-05 time range with no data renders empty state": {
+		"ms": 8963,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/empty-and-errors.spec.ts › Alert history — error and empty states › TC-06 time-range change resets pagination to first page": {
+		"ms": 9424,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/empty-and-errors.spec.ts › Alert history — error and empty states › TC-07 absurd time range (90d) still renders": {
+		"ms": 9597,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/empty-and-errors.spec.ts › Alert history — error and empty states › TC-08 disabled rule history is still readable": {
+		"ms": 9299,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/empty-and-errors.spec.ts › Alert history — error and empty states › TC-09 deleted rule shows AlertNotFound on revisit": {
+		"ms": 11173,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/expression-filter.spec.ts › Alert history — expression filter › TC-01 key suggestions load on page load": {
+		"ms": 9731,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/expression-filter.spec.ts › Alert history — expression filter › TC-02 value suggestions fetch from filter_values endpoint": {
+		"ms": 11601,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/expression-filter.spec.ts › Alert history — expression filter › TC-03 value suggestions filter client-side as user types": {
+		"ms": 11327,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/expression-filter.spec.ts › Alert history — expression filter › TC-04 running equality expression filters the table": {
+		"ms": 12481,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/expression-filter.spec.ts › Alert history — expression filter › TC-05 running expression resets pagination to first page": {
+		"ms": 11585,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/expression-filter.spec.ts › Alert history — expression filter › TC-06 Run button re-fetches unchanged expression": {
+		"ms": 12754,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/expression-filter.spec.ts › Alert history — expression filter › TC-07 in-flight query can be cancelled": {
+		"ms": 12679,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/expression-filter.spec.ts › Alert history — expression filter › TC-08 threshold.name and severity keys filter correctly": {
+		"ms": 20105,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/expression-filter.spec.ts › Alert history — expression filter › TC-09 unknown key returns 200 with zero rows (not 500)": {
+		"ms": 11893,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/expression-filter.spec.ts › Alert history — expression filter › TC-10 expression is lost on Overview→History round-trip (known bug)": {
+		"ms": 13994,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/expression-filter.spec.ts › Alert history — expression filter › TC-11 expression and state filter compose in request": {
+		"ms": 12633,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/expression-filter.spec.ts › Alert history — expression filter › TC-12 clearing expression restores full unfiltered list": {
+		"ms": 13563,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/state-filter.spec.ts › Alert history — state filter › TC-01 All filter sends no state param in request": {
+		"ms": 8991,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/state-filter.spec.ts › Alert history — state filter › TC-02 Fired filter sends state=firing in request": {
+		"ms": 10171,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/state-filter.spec.ts › Alert history — state filter › TC-03 Resolved filter shows empty for rule with no resolutions": {
+		"ms": 9626,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/state-filter.spec.ts › Alert history — state filter › TC-04 Resolved filter shows rows for rule with resolutions": {
+		"ms": 9570,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/state-filter.spec.ts › Alert history — state filter › TC-05 deep-link ?timelineFilter=FIRED starts on Fired tab": {
+		"ms": 7630,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/state-filter.spec.ts › Alert history — state filter › TC-06 changing state filter resets pagination to first page": {
+		"ms": 8175,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/statistics.spec.ts › Alert history — statistics › TC-01 Total Triggered card shows the firing count": {
+		"ms": 7567,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/statistics.spec.ts › Alert history — statistics › TC-02 Avg. Resolution Time card shows \"No Resolutions.\" when none exist": {
+		"ms": 7655,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/statistics.spec.ts › Alert history — statistics › TC-03 empty stats card never renders a sparkline": {
+		"ms": 7605,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/statistics.spec.ts › Alert history — statistics › TC-04 sparkline present with a multi-point series": {
+		"ms": 0,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/statistics.spec.ts › Alert history — statistics › TC-05 change-vs-past indicator shows \"no previous data\" when unavailable": {
+		"ms": 8098,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/statistics.spec.ts › Alert history — statistics › TC-06 stats update when time range changes": {
+		"ms": 11684,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/statistics.spec.ts › Alert history — statistics › TC-07 Avg. Resolution Time shows formatted duration when resolutions exist": {
+		"ms": 9654,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/statistics.spec.ts › Alert history — statistics › TC-08 Total Triggered counts only firing rows (not resolved)": {
+		"ms": 8483,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-graph.spec.ts › Alert history — timeline graph › TC-01 renders canvas with two segments (inactive→firing)": {
+		"ms": 7960,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-graph.spec.ts › Alert history — timeline graph › TC-02 renders canvas with three segments (inactive→firing→inactive)": {
+		"ms": 7815,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-graph.spec.ts › Alert history — timeline graph › TC-03 handles nodata state without console errors": {
+		"ms": 7758,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-pagination.spec.ts › Alert history — timeline pagination › TC-01 next page sends cursor and shows different rows": {
+		"ms": 7974,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-pagination.spec.ts › Alert history — timeline pagination › TC-02 prev page drops the cursor from request": {
+		"ms": 8308,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-pagination.spec.ts › Alert history — timeline pagination › TC-03 pagination buttons disable at first and last page": {
+		"ms": 8666,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-pagination.spec.ts › Alert history — timeline pagination › TC-04 browser back after paging returns to previous page": {
+		"ms": 8732,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-pagination.spec.ts › Alert history — timeline pagination › TC-05 deep-link ?page=2 loads second page directly": {
+		"ms": 7883,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-pagination.spec.ts › Alert history — timeline pagination › TC-06 default sort order is ascending": {
+		"ms": 7968,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-pagination.spec.ts › Alert history — timeline pagination › TC-07 sorting toggles order and resets to first page": {
+		"ms": 8333,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-pagination.spec.ts › Alert history — timeline pagination › TC-08 single page disables both pagination buttons": {
+		"ms": 9953,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-pagination.spec.ts › Alert history — timeline pagination › TC-09 all pages together cover the complete row set": {
+		"ms": 8948,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-table.spec.ts › Alert history — timeline table › TC-01 timeline section renders all chrome elements": {
+		"ms": 8765,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-table.spec.ts › Alert history — timeline table › TC-02 Top 5 Contributors tab is disabled with Coming Soon indicator": {
+		"ms": 9495,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-table.spec.ts › Alert history — timeline table › TC-03 table rows display state, labels and formatted timestamp": {
+		"ms": 9683,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-table.spec.ts › Alert history — timeline table › TC-04 footer shows correct row range": {
+		"ms": 9379,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-table.spec.ts › Alert history — timeline table › TC-05 row click does not navigate away": {
+		"ms": 9644,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-table.spec.ts › Alert history — timeline table › TC-06 row actions link navigates to logs explorer": {
+		"ms": 10037,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-table.spec.ts › Alert history — timeline table › TC-07 row actions link navigates to traces explorer": {
+		"ms": 9902,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-table.spec.ts › Alert history — timeline table › TC-08 metrics rule rows show disabled action (no related links)": {
+		"ms": 9266,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-table.spec.ts › Alert history — timeline table › TC-09 CREATED AT column respects app timezone setting": {
+		"ms": 12311,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-table.spec.ts › Alert history — timeline table › TC-10 state cell renders Firing, Resolved, and No Data correctly": {
+		"ms": 11858,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-table.spec.ts › Alert history — timeline table › TC-11 pending/recovering states render blank (coverage gap)": {
+		"ms": 1,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-table.spec.ts › Alert history — timeline table › TC-12 disabled state renders as \"Muted\" (coverage gap)": {
+		"ms": 1,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/timeline-table.spec.ts › Alert history — timeline table › TC-13 time-range boundaries inclusive/exclusive (coverage gap)": {
+		"ms": 0,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/top-contributors.spec.ts › Alert history — top contributors › TC-01 card displays max 3 rows with count ratios": {
+		"ms": 10479,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/top-contributors.spec.ts › Alert history — top contributors › TC-02 contributor bar width is the count as a percentage of the total": {
+		"ms": 9562,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/top-contributors.spec.ts › Alert history — top contributors › TC-03 \"View all\" button only appears when more than 3 contributors": {
+		"ms": 11991,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/top-contributors.spec.ts › Alert history — top contributors › TC-04 View-all drawer shows paginated list of all contributors": {
+		"ms": 10304,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/top-contributors.spec.ts › Alert history — top contributors › TC-05 drawer opens from deep link with ?viewAllTopContributors=true": {
+		"ms": 10360,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/top-contributors.spec.ts › Alert history — top contributors › TC-06 View-all click adds ?viewAllTopContributors=true to URL": {
+		"ms": 9828,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/history/top-contributors.spec.ts › Alert history — top contributors › TC-07 contributor rows show related-logs link for logs-based rules": {
+		"ms": 9631,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/columns.spec.ts › Alert rules list — columns › TC-01 renders all default columns (Status, Alert Name, Severity, Labels, Actions)": {
+		"ms": 9536,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/columns.spec.ts › Alert rules list — columns › TC-02 column selector hides and shows a column": {
+		"ms": 11582,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/columns.spec.ts › Alert rules list — columns › TC-03 sorts by column header click": {
+		"ms": 9440,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/navigation.spec.ts › Alert rules list — navigation › TC-01 row click opens the overview page": {
+		"ms": 9514,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/navigation.spec.ts › Alert rules list — navigation › TC-02 actions menu Edit and Edit in New Tab navigate correctly": {
+		"ms": 10843,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/navigation.spec.ts › Alert rules list — navigation › TC-03 New Alert button navigates to alert creation": {
+		"ms": 9717,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/pagination-sort.spec.ts › Alert rules list — pagination and sorting › TC-01 navigates between pages": {
+		"ms": 9422,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/pagination-sort.spec.ts › Alert rules list — pagination and sorting › TC-02 changes page size": {
+		"ms": 9572,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/row-actions.spec.ts › Alert rules list — row actions › TC-01 Disable then Enable toggles the rule state": {
+		"ms": 11834,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/row-actions.spec.ts › Alert rules list — row actions › TC-02 Clone creates a copy and shows success toast": {
+		"ms": 12591,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/row-actions.spec.ts › Alert rules list — row actions › TC-03 Delete removes the rule and shows success toast": {
+		"ms": 11100,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/search.spec.ts › Alert rules list — search › TC-01 filters by name": {
+		"ms": 9735,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/search.spec.ts › Alert rules list — search › TC-02 filters by severity and by label": {
+		"ms": 9528,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/search.spec.ts › Alert rules list — search › TC-03 shows no-results state with clear button": {
+		"ms": 9970,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/search.spec.ts › Alert rules list — search › TC-04 resets pagination when searching": {
+		"ms": 9128,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/list/search.spec.ts › Alert rules list — search › TC-05 state and severity filters intersect, they do not union": {
+		"ms": 12761,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/page.spec.ts › Alerts page shell › TC-01 all top-level tabs render": {
+		"ms": 9968,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/page.spec.ts › Alerts page shell › TC-02 default tab is Alert Rules": {
+		"ms": 8901,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/page.spec.ts › Alerts page shell › TC-03 tab switch writes ?tab=": {
+		"ms": 9416,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/page.spec.ts › Alerts page shell › TC-04 Configuration sub-tab deep-links and sidebar navigation": {
+		"ms": 13632,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/page.spec.ts › Alerts page shell › TC-05 Triggered Alerts tab smoke": {
+		"ms": 10068,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/page.spec.ts › Alerts page shell › TC-06 Notification Channels smoke under Configuration": {
+		"ms": 9763,
+		"runs": 4,
+		"flaky": 0
+	},
+	"alerts/page.spec.ts › Alerts page shell › TC-07 tab state survives reload": {
+		"ms": 10927,
+		"runs": 4,
+		"flaky": 0
+	},
+	"dashboards/editor/capabilities.spec.ts › Dashboards — editor capabilities › TC-01 a disabled option explains itself in a tooltip": {
+		"ms": 20978,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/context-links.spec.ts › Dashboards — editor context links › TC-01 a saved link persists and shows in the drilldown menu": {
+		"ms": 12320,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/context-links.spec.ts › Dashboards — editor context links › TC-02 the header quick-add opens the dialog from a collapsed section": {
+		"ms": 9680,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/picker.spec.ts › Dashboards — panel picker › TC-01 with one section a tile click selects and Add panel creates": {
+		"ms": 10445,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/picker.spec.ts › Dashboards — panel picker › TC-02 with several sections the confirm names its target section": {
+		"ms": 11064,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/picker.spec.ts › Dashboards — panel picker › TC-03 the chosen section becomes the new panel layoutIndex": {
+		"ms": 12048,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/picker.spec.ts › Dashboards — panel picker › TC-04 creating from an empty section targets that section": {
+		"ms": 11788,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/picker.spec.ts › Dashboards — panel picker › TC-05 saving a new panel emits add-panel and add-layout-item ops": {
+		"ms": 12580,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/picker.spec.ts › Dashboards — panel picker › TC-06 the created panel lands on the dashboard and persists": {
+		"ms": 13240,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/picker.spec.ts › Dashboards — panel picker › TC-07 saving a metrics panel with no metric chosen is rejected": {
+		"ms": 12505,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/picker.spec.ts › Dashboards — panel picker › TC-08 the editor route redirects when panelKind is missing": {
+		"ms": 10278,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/picker.spec.ts › Dashboards — panel picker › TC-09 a new section from the picker is created on save": {
+		"ms": 12796,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/query.spec.ts › Dashboards — panel editor query pane › TC-01 Run Query issues a fresh query_range": {
+		"ms": 10953,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/query.spec.ts › Dashboards — panel editor query pane › TC-02 the run keyboard shortcut works from inside the builder": {
+		"ms": 11227,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/query.spec.ts › Dashboards — panel editor query pane › TC-03 switching query type re-renders the pane and marks the panel dirty": {
+		"ms": 9945,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/query.spec.ts › Dashboards — panel editor query pane › TC-04 choosing a metric makes a new panel savable": {
+		"ms": 13197,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/query.spec.ts › Dashboards — panel editor query pane › TC-05 an unrun query edit is still persisted by Save": {
+		"ms": 11899,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/query.spec.ts › Dashboards — panel editor query pane › TC-06 the in-editor query survives a reload": {
+		"ms": 14032,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/query.spec.ts › Dashboards — panel editor query pane › TC-07 a logs panel runs without needing a metric": {
+		"ms": 11766,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/shell.spec.ts › Dashboards — panel editor shell › TC-01 the editor opens on the panel with its saved title": {
+		"ms": 9799,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/shell.spec.ts › Dashboards — panel editor shell › TC-02 editing the title marks the editor dirty": {
+		"ms": 9838,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/shell.spec.ts › Dashboards — panel editor shell › TC-03 saving persists the title and returns to the dashboard": {
+		"ms": 11522,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/shell.spec.ts › Dashboards — panel editor shell › TC-04 closing a pristine editor leaves immediately": {
+		"ms": 10647,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/shell.spec.ts › Dashboards — panel editor shell › TC-05 closing a dirty editor asks before discarding": {
+		"ms": 11934,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/shell.spec.ts › Dashboards — panel editor shell › TC-06 unsaved edits hold a refresh, but an in-app route change drops them": {
+		"ms": 11627,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/shell.spec.ts › Dashboards — panel editor shell › TC-07 a locked dashboard disables Save and says why": {
+		"ms": 10319,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/shell.spec.ts › Dashboards — panel editor shell › TC-08 an unknown panel id redirects back to the dashboard": {
+		"ms": 9267,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/shell.spec.ts › Dashboards — panel editor shell › TC-09 Switch to View Mode hands off to the View modal": {
+		"ms": 11289,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/type-switch.spec.ts › Dashboards — panel type switching › TC-01 switching kind re-renders the preview": {
+		"ms": 11501,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/type-switch.spec.ts › Dashboards — panel type switching › TC-02 switching marks the editor dirty but does not persist": {
+		"ms": 10448,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/type-switch.spec.ts › Dashboards — panel type switching › TC-03 switching back restores the original kind and its settings from the session cache": {
+		"ms": 11990,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/type-switch.spec.ts › Dashboards — panel type switching › TC-04 the session cache does not survive a reload": {
+		"ms": 13544,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/type-switch.spec.ts › Dashboards — panel type switching › TC-05 a saved switch persists the new kind": {
+		"ms": 12282,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/type-switch.spec.ts › Dashboards — panel type switching › TC-06 a panel-wide unit fans out into per-column units on Table": {
+		"ms": 12483,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/type-switch.spec.ts › Dashboards — panel type switching › TC-07 custom legend colours are dropped on a first-visit switch": {
+		"ms": 12105,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/editor/type-switch.spec.ts › Dashboards — panel type switching › TC-08 axis bounds survive a switch between kinds that both declare them": {
+		"ms": 12600,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/area.spec.ts › Dashboards — Area panel › TC-01 its menu offers PNG and SVG downloads and Create Alerts": {
+		"ms": 11163,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/area.spec.ts › Dashboards — Area panel › TC-02 clicking a point opens the drilldown menu": {
+		"ms": 10154,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/bar.spec.ts › Dashboards — Bar panel › TC-01 its menu offers PNG and SVG downloads and Create Alerts": {
+		"ms": 10637,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/bar.spec.ts › Dashboards — Bar panel › TC-02 clicking a bar opens the drilldown menu": {
+		"ms": 10308,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/heatmap.spec.ts › Dashboards — Heatmap panel › TC-01 its menu offers PNG and SVG downloads but no Create Alerts": {
+		"ms": 10453,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/heatmap.spec.ts › Dashboards — Heatmap panel › TC-02 clicking a cell opens no drilldown menu": {
+		"ms": 10039,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/histogram.spec.ts › Dashboards — Histogram panel › TC-01 its menu offers PNG and SVG downloads and Create Alerts": {
+		"ms": 10330,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/histogram.spec.ts › Dashboards — Histogram panel › TC-02 clicking the chart opens no drilldown menu": {
+		"ms": 10217,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/list.spec.ts › Dashboards — List panel › TC-01 its menu offers PNG and SVG downloads but no Create Alerts": {
+		"ms": 10380,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/list.spec.ts › Dashboards — List panel › TC-02 clicking a row opens the log detail drawer, not a drilldown menu": {
+		"ms": 10259,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/number.spec.ts › Dashboards — Number panel › TC-01 its menu offers PNG and SVG downloads and Create Alerts": {
+		"ms": 10455,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/number.spec.ts › Dashboards — Number panel › TC-02 clicking the value opens the drilldown menu": {
+		"ms": 10174,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/pie.spec.ts › Dashboards — Pie panel › TC-01 its menu offers PNG and SVG downloads but no Create Alerts": {
+		"ms": 10293,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/pie.spec.ts › Dashboards — Pie panel › TC-02 clicking a slice opens the drilldown menu": {
+		"ms": 10098,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/table.spec.ts › Dashboards — Table panel › TC-01 its menu offers CSV, PNG and SVG downloads but no Create Alerts": {
+		"ms": 10548,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/table.spec.ts › Dashboards — Table panel › TC-02 clicking a value cell opens the drilldown menu": {
+		"ms": 10207,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/text.spec.ts › Dashboards — Text panel › TC-01 a Text panel from the picker opens the Markdown editor, not the query builder": {
+		"ms": 10531,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/text.spec.ts › Dashboards — Text panel › TC-02 written Markdown previews live, saves without a query and renders on the grid": {
+		"ms": 11775,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/timeseries.spec.ts › Dashboards — TimeSeries panel › TC-01 a panel built from the picker saves, renders and survives a reload": {
+		"ms": 23710,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/kinds/timeseries.spec.ts › Dashboards — TimeSeries panel › TC-02 the panel time preference persists and labels the header pill": {
+		"ms": 11690,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/create-import.spec.ts › Dashboards — list create and import › TC-01 New dashboard offers Blank, template and Import JSON tabs": {
+		"ms": 9611,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/create-import.spec.ts › Dashboards — list create and import › TC-02 an uploaded JSON file imports and opens the dashboard": {
+		"ms": 11893,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/create-import.spec.ts › Dashboards — list create and import › TC-03 Escape dismisses the dialog and stays on the list": {
+		"ms": 11061,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/create-import.spec.ts › Dashboards — list create and import › TC-04 the close button dismisses the dialog and stays on the list": {
+		"ms": 10725,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/navigation.spec.ts › Dashboards — list navigation › TC-01 the page renders its chrome and core controls": {
+		"ms": 10080,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/navigation.spec.ts › Dashboards — list navigation › TC-02 clicking a row opens its dashboard": {
+		"ms": 10499,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/navigation.spec.ts › Dashboards — list navigation › TC-03 View opens the dashboard detail page": {
+		"ms": 11139,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/navigation.spec.ts › Dashboards — list navigation › TC-04 the sidebar Dashboards entry opens the list": {
+		"ms": 8419,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/navigation.spec.ts › Dashboards — list navigation › TC-05 the sidebar Dashboards entry leaves a dashboard for the list": {
+		"ms": 10876,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/navigation.spec.ts › Dashboards — list navigation › TC-06 Back from a dashboard restores the search": {
+		"ms": 10796,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/row-actions.spec.ts › Dashboards — list row actions › TC-01 an admin sees every row action": {
+		"ms": 10705,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/row-actions.spec.ts › Dashboards — list row actions › TC-02 Open in New Tab opens the dashboard in a new tab": {
+		"ms": 10859,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/row-actions.spec.ts › Dashboards — list row actions › TC-03 Copy Link copies the dashboard URL": {
+		"ms": 10199,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/row-actions.spec.ts › Dashboards — list row actions › TC-04 the menu closes on a click outside it": {
+		"ms": 9775,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/row-actions.spec.ts › Dashboards — list row actions › TC-05 Delete asks for confirmation naming the dashboard": {
+		"ms": 10058,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/row-actions.spec.ts › Dashboards — list row actions › TC-06 cancelling Delete keeps the dashboard and stays on the list": {
+		"ms": 10889,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/search.spec.ts › Dashboards — list search › TC-01 searching by name writes the query to the URL and lists the match": {
+		"ms": 10383,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/search.spec.ts › Dashboards — list search › TC-02 searching by a tag lists the tagged dashboard": {
+		"ms": 10135,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/search.spec.ts › Dashboards — list search › TC-03 a query param on load pre-fills the search and filters the list": {
+		"ms": 9496,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/search.spec.ts › Dashboards — list search › TC-04 clearing the search drops the query and lists every dashboard": {
+		"ms": 10082,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/search.spec.ts › Dashboards — list search › TC-05 a search with no match shows the no-results state": {
+		"ms": 14092,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/search.spec.ts › Dashboards — list search › TC-06 ILIKE matches a name regardless of case": {
+		"ms": 14450,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/sort.spec.ts › Dashboards — list sort › TC-01 sort options write sort and order to the URL and reorder rows": {
+		"ms": 12942,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/list/sort.spec.ts › Dashboards — list sort › TC-02 sort params on load are honoured": {
+		"ms": 9615,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/actions.spec.ts › Dashboards — panel actions › TC-01 Create Alerts opens the alert builder in a new tab": {
+		"ms": 10612,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/actions.spec.ts › Dashboards — panel actions › TC-02 Download as PNG produces a file": {
+		"ms": 11032,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/actions.spec.ts › Dashboards — panel actions › TC-03 Clone adds a second panel and persists it": {
+		"ms": 11391,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/actions.spec.ts › Dashboards — panel actions › TC-04 Delete panel removes the panel and its layout item": {
+		"ms": 11627,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/actions.spec.ts › Dashboards — panel actions › TC-05 Move to section relocates the panel between sections": {
+		"ms": 10992,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/actions.spec.ts › Dashboards — panel actions › TC-06 Download as CSV on a Table panel produces a file": {
+		"ms": 10659,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/drilldown.spec.ts › Dashboards — panel drilldown › TC-01 clicking the backdrop closes the menu": {
+		"ms": 9459,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/drilldown.spec.ts › Dashboards — panel drilldown › TC-02 View in Logs navigates to the logs explorer": {
+		"ms": 10754,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/drilldown.spec.ts › Dashboards — panel drilldown › TC-03 Breakout opens a submenu and the back arrow returns": {
+		"ms": 10295,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/drilldown.spec.ts › Dashboards — panel drilldown › TC-04 the Dashboard Variables submenu offers set and create": {
+		"ms": 10354,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/drilldown.spec.ts › Dashboards — panel drilldown › TC-05 setting a variable from the menu updates the variables bar": {
+		"ms": 10415,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/drilldown.spec.ts › Dashboards — panel drilldown › TC-06 creating a variable from the menu patches the dashboard spec": {
+		"ms": 10637,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/drilldown.spec.ts › Dashboards — panel drilldown › TC-07 a non-builder query opens no menu": {
+		"ms": 10290,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edge-cases.spec.ts › Dashboards — edge cases › TC-01 panels show their empty state for a far-past range": {
+		"ms": 9632,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edge-cases.spec.ts › Dashboards — edge cases › TC-02 a nonexistent dashboard id shows a load error": {
+		"ms": 15978,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edge-cases.spec.ts › Dashboards — edge cases › TC-03 the side nav still works after a nonexistent dashboard": {
+		"ms": 15984,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edge-cases.spec.ts › Dashboards — edge cases › TC-04 an inverted time range does not crash the dashboard": {
+		"ms": 8570,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edge-cases.spec.ts › Dashboards — edge cases › TC-05 a name at the 128-character limit keeps the toolbar on screen": {
+		"ms": 9671,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edge-cases.spec.ts › Dashboards — edge cases › TC-06 special characters in the name round-trip unescaped": {
+		"ms": 9876,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edit-mode.spec.ts › Dashboards — edit mode › TC-01 the Actions menu lists every dashboard action": {
+		"ms": 10393,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edit-mode.spec.ts › Dashboards — edit mode › TC-02 locking disables the edit affordances and persists": {
+		"ms": 10902,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edit-mode.spec.ts › Dashboards — edit mode › TC-03 renaming updates the title and breadcrumb and survives a reload": {
+		"ms": 13718,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edit-mode.spec.ts › Dashboards — edit mode › TC-04 cancelling a rename leaves the name unchanged": {
+		"ms": 11394,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edit-mode.spec.ts › Dashboards — edit mode › TC-05 the JSON drawer downloads the dashboard as .json": {
+		"ms": 10770,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edit-mode.spec.ts › Dashboards — edit mode › TC-06 the JSON drawer copies the dashboard JSON": {
+		"ms": 11189,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edit-mode.spec.ts › Dashboards — edit mode › TC-07 Full screen shows only the grid and exits cleanly": {
+		"ms": 11107,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edit-mode.spec.ts › Dashboards — edit mode › TC-08 lock then unlock restores the edit affordances": {
+		"ms": 11835,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edit-mode.spec.ts › Dashboards — edit mode › TC-09 Edit panel opens that panel in the editor": {
+		"ms": 9755,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/edit-mode.spec.ts › Dashboards — edit mode › TC-10 cancelling a panel delete keeps the panel": {
+		"ms": 11266,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/from-scratch.spec.ts › Dashboards — dashboard from scratch › TC-01 a blank dashboard is created from the list page": {
+		"ms": 11214,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/from-scratch.spec.ts › Dashboards — dashboard from scratch › TC-02 Create is disabled until the dashboard has a name": {
+		"ms": 9756,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/from-scratch.spec.ts › Dashboards — dashboard from scratch › TC-03 a panel added to the new dashboard persists": {
+		"ms": 16581,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/from-scratch.spec.ts › Dashboards — dashboard from scratch › TC-04 a dashboard is deleted from the list and disappears": {
+		"ms": 15662,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/layout.spec.ts › Dashboards — grid layout › TC-01 resizing a panel persists its new size": {
+		"ms": 11782,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/layout.spec.ts › Dashboards — grid layout › TC-02 a resized layout survives a reload": {
+		"ms": 14204,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/layout.spec.ts › Dashboards — grid layout › TC-03 dragging from the actions button does not move the panel": {
+		"ms": 11377,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/layout.spec.ts › Dashboards — grid layout › TC-04 dragging by the header moves the panel within its section": {
+		"ms": 11450,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/sections.spec.ts › Dashboards — sections › TC-01 a collapsed section unmounts its panels and stays collapsed after a reload": {
+		"ms": 12637,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/sections.spec.ts › Dashboards — sections › TC-02 the section menu offers add, rename, clone and delete": {
+		"ms": 10677,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/sections.spec.ts › Dashboards — sections › TC-03 renaming a section updates its header and persists": {
+		"ms": 11755,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/sections.spec.ts › Dashboards — sections › TC-04 cancelling a section rename leaves the title unchanged": {
+		"ms": 10844,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/sections.spec.ts › Dashboards — sections › TC-05 a section added from the Actions menu can be deleted": {
+		"ms": 13249,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-01 Configure opens on Overview with every tab": {
+		"ms": 11135,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-02 name, description and tag save and survive a reload": {
+		"ms": 13314,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-03 Discard reverts unsaved Overview changes": {
+		"ms": 10278,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-04 the Variables tab lists every variable": {
+		"ms": 10471,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-05 an added textbox variable joins the bar and takes a value": {
+		"ms": 12185,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-06 an added custom variable joins the list and the bar": {
+		"ms": 12309,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-07 the Query type renders the query editor": {
+		"ms": 11122,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-08 Save Variable stays disabled without a name": {
+		"ms": 10318,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-09 the Publish tab offers to publish a private dashboard": {
+		"ms": 10224,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-10 renaming a variable renames it in the bar": {
+		"ms": 11878,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-11 switching a custom variable to Query swaps the form": {
+		"ms": 10995,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-12 a textbox default saved in Configure survives a reload": {
+		"ms": 15068,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-13 a deleted variable leaves the bar, its siblings stay": {
+		"ms": 11794,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-14 a duplicate name keeps Save Variable disabled": {
+		"ms": 10977,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-15 discarding an edit persists nothing": {
+		"ms": 11986,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-16 dragging a variable reorders the list, the bar and the spec": {
+		"ms": 11920,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-17 a dynamic variable created in Configure lists the field values": {
+		"ms": 12416,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/settings.spec.ts › Dashboards — settings drawer › TC-18 the bar picks up a changed textbox default": {
+		"ms": 0,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/states.spec.ts › Dashboards — panel states › TC-01 an empty result offers Extend time range, which widens the window": {
+		"ms": 9400,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/states.spec.ts › Dashboards — panel states › TC-02 a failing query shows the error state and Retry refetches": {
+		"ms": 17378,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/states.spec.ts › Dashboards — panel states › TC-03 an in-flight first query shows the loading state": {
+		"ms": 8949,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/time-range.spec.ts › Dashboards — time range › TC-01 a preset updates the label, the URL and refetches": {
+		"ms": 9220,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/time-range.spec.ts › Dashboards — time range › TC-02 a custom date range switches the URL to absolute timestamps": {
+		"ms": 10680,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/time-range.spec.ts › Dashboards — time range › TC-03 changing the timezone updates the offset badge": {
+		"ms": 10179,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/time-range.spec.ts › Dashboards — time range › TC-04 auto-refresh refetches the panels on its interval, until turned off": {
+		"ms": 21451,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/time-range.spec.ts › Dashboards — time range › TC-05 manual refresh refetches the panels": {
+		"ms": 9170,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-01 the bar renders a control for every variable type": {
+		"ms": 8486,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-02 picking a single value selects it and survives a reload": {
+		"ms": 13931,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-03 a multi-select renders chips and shares its values as an array": {
+		"ms": 14215,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-04 removing a chip drops that value once the dropdown closes": {
+		"ms": 13638,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-05 the ALL option selects every value": {
+		"ms": 14248,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-06 a textbox commits its value on Enter": {
+		"ms": 10284,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-07 a child query variable refetches after its parent changes": {
+		"ms": 11379,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-08 a shared link seeds the selection, which outlives the reload": {
+		"ms": 15240,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-09 ALL to one value and back to ALL": {
+		"ms": 14139,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-10 changes to two variables are both kept": {
+		"ms": 12145,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-11 leaving the dashboard and coming back keeps the selection": {
+		"ms": 13221,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-12 a query variable with no rows offers no options": {
+		"ms": 10459,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-13 a dynamic variable resolves values from seeded telemetry": {
+		"ms": 10104,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-14 the bar follows the spec order": {
+		"ms": 9949,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-15 picking a value refetches the panel that uses it": {
+		"ms": 11223,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-16 a variable description shows in its info tooltip": {
+		"ms": 9989,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/variables.spec.ts › Dashboards — variables bar › TC-17 a first visit through a shared link applies its values": {
+		"ms": 0,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/view-modal.spec.ts › Dashboards — View modal › TC-01 View opens the modal and reflects it in the URL": {
+		"ms": 10622,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/view-modal.spec.ts › Dashboards — View modal › TC-02 the modal opens directly from a deep link": {
+		"ms": 12209,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/view-modal.spec.ts › Dashboards — View modal › TC-03 Refresh re-issues the query": {
+		"ms": 11477,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/view-modal.spec.ts › Dashboards — View modal › TC-04 switching the panel type in the modal does not persist": {
+		"ms": 12060,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/view-modal.spec.ts › Dashboards — View modal › TC-05 Switch to Edit Mode hands off to the panel editor": {
+		"ms": 12431,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/view-modal.spec.ts › Dashboards — View modal › TC-06 a locked panel opens in View but offers no Switch to Edit": {
+		"ms": 11448,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/view-modal.spec.ts › Dashboards — View modal › TC-07 View → Edit → View round-trips with no changes": {
+		"ms": 12868,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/view-modal.spec.ts › Dashboards — View modal › TC-08 an unsaved change in the modal carries into the editor": {
+		"ms": 13520,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/view-modal.spec.ts › Dashboards — View modal › TC-09 an unsaved change in the editor carries back into the modal": {
+		"ms": 12148,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/viewing.spec.ts › Dashboards — viewing › TC-01 page chrome renders the breadcrumb, title and toolbar": {
+		"ms": 10949,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/viewing.spec.ts › Dashboards — viewing › TC-02 the breadcrumb returns to the dashboards list": {
+		"ms": 10709,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/viewing.spec.ts › Dashboards — viewing › TC-03 the tags bar shows two tags and folds the rest": {
+		"ms": 10413,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/viewing.spec.ts › Dashboards — viewing › TC-04 section headers render": {
+		"ms": 10002,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/viewing.spec.ts › Dashboards — viewing › TC-05 panels render inside their sections": {
+		"ms": 9391,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/viewing.spec.ts › Dashboards — viewing › TC-06 the initial load raises no page error": {
+		"ms": 10883,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/zoom.spec.ts › Dashboards — panel zoom › TC-01 brush-select writes an absolute window into the URL": {
+		"ms": 10689,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/zoom.spec.ts › Dashboards — panel zoom › TC-02 zooming one panel refetches every panel with the zoomed window": {
+		"ms": 10034,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/zoom.spec.ts › Dashboards — panel zoom › TC-03 a zero-width drag does not zoom": {
+		"ms": 15308,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/zoom.spec.ts › Dashboards — panel zoom › TC-04 the global Zoom out button widens the visible range again": {
+		"ms": 15442,
+		"runs": 5,
+		"flaky": 0
+	},
+	"dashboards/page/zoom.spec.ts › Dashboards — panel zoom › TC-05 zooming inside the View modal leaves the dashboard window alone": {
+		"ms": 12195,
+		"runs": 5,
+		"flaky": 0
+	},
+	"llm-o11y/attribute-mapping.spec.ts › LLM Observability — Attribute Mapping › basic flow: add a mapping, test it, then save it to the backend": {
+		"ms": 11832,
+		"runs": 5,
+		"flaky": 0
+	},
+	"llm-o11y/llm-pricing.spec.ts › LLM Observability — Model Pricing › basic flow: add a user-override model cost and save it to the backend": {
+		"ms": 10050,
+		"runs": 5,
+		"flaky": 0
+	},
+	"logs-explorer/linked-row-click.spec.ts › Logs Explorer — linked row in Column format › TC-01 the linked row in a newly opened tab is highlighted and toggles the details drawer on click": {
+		"ms": 16334,
+		"runs": 5,
+		"flaky": 0
+	},
+	"query-builder/token-highlight.spec.ts › QueryBuilder token highlighting — dark (copilot) › ['value', 'value2'] — string tokens have native theme color": {
+		"ms": 10763,
+		"runs": 4,
+		"flaky": 0
+	},
+	"query-builder/token-highlight.spec.ts › QueryBuilder token highlighting — dark (copilot) › k8s.namespace.name — each segment gets its own color": {
+		"ms": 12453,
+		"runs": 4,
+		"flaky": 0
+	},
+	"query-builder/token-highlight.spec.ts › QueryBuilder token highlighting — light (githubLight) › ['value', 'value2'] — string tokens have native theme color": {
+		"ms": 10814,
+		"runs": 4,
+		"flaky": 0
+	},
+	"query-builder/token-highlight.spec.ts › QueryBuilder token highlighting — light (githubLight) › k8s.namespace.name — each segment gets its own color": {
+		"ms": 10700,
+		"runs": 4,
+		"flaky": 0
+	},
+	"quick-filters/settings.spec.ts › Quick Filters — settings drawer › TC-01 logs explorer — settings gear opens a visible, populated drawer": {
+		"ms": 10533,
+		"runs": 4,
+		"flaky": 0
+	},
+	"routing/guards.spec.ts › Routing — auth guards › TC-14 a deep-linked private route survives the login round trip": {
+		"ms": 9071,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/guards.spec.ts › Routing — auth guards › TC-15 the login redirects replace, so Back does not re-run the chain": {
+		"ms": 9311,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/mount.spec.ts › Routing: router mount › TC-18 an in-app navigation to an uncached route commits the Suspense fallback": {
+		"ms": 19388,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/mount.spec.ts › Routing: router mount › TC-19 a page with nuqs params mounts with no router-context error": {
+		"ms": 18693,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/nav-blocker.spec.ts › Routing — unsaved-changes navigation blocker › TC-16 a blocked navigation can be cancelled and then confirmed": {
+		"ms": 9501,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/nav-blocker.spec.ts › Routing — unsaved-changes navigation blocker › TC-17 saving bypasses the blocker for the next navigation": {
+		"ms": 8736,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/navigation.spec.ts › Routing — imperative navigation › TC-05 Back from a detail page restores the list with its params": {
+		"ms": 9186,
+		"runs": 4,
+		"flaky": 0
+	},
+	"routing/navigation.spec.ts › Routing — imperative navigation › TC-06 the trace-details previous button pushes when deep-linked and pops once in-app": {
+		"ms": 11231,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/navigation.spec.ts › Routing — imperative navigation › TC-07 re-selecting the current relative time adds no history entry": {
+		"ms": 10353,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/navigation.spec.ts › Routing — imperative navigation › TC-08 modifier-clicking an in-app link opens the same url in a new tab": {
+		"ms": 12608,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/route-matching.spec.ts › Routing — route matching › TC-09 RouteTab switches the url and survives a reload": {
+		"ms": 10826,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/route-matching.spec.ts › Routing — route matching › TC-10 a prefix-route deep link loads with the right tab selected": {
+		"ms": 7627,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/route-matching.spec.ts › Routing — route matching › TC-11 a seeded dashboard id round-trips byte-identical": {
+		"ms": 12552,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/route-matching.spec.ts › Routing — route matching › TC-12 the global time picker renders only where matchPath allows it": {
+		"ms": 11240,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/route-matching.spec.ts › Routing — route matching › TC-13 an unknown path redirects home and replaces its history entry": {
+		"ms": 10937,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/url-state.spec.ts › Routing — nuqs and router param coexistence › TC-01 a router write keeps the nuqs params it did not author": {
+		"ms": 11866,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/url-state.spec.ts › Routing — nuqs and router param coexistence › TC-02 a nuqs write keeps the relativeTime the router authored": {
+		"ms": 11707,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/url-state.spec.ts › Routing — nuqs and router param coexistence › TC-03 POP across a nuqs push reverts both url and list": {
+		"ms": 11594,
+		"runs": 5,
+		"flaky": 0
+	},
+	"routing/url-state.spec.ts › Routing — nuqs and router param coexistence › TC-04 a deep link carrying both families applies both on first paint": {
+		"ms": 9436,
+		"runs": 5,
+		"flaky": 0
+	},
+	"sso/auth-domains.spec.ts › SSO auth domains › TC-01 org settings shows the authenticated domains section": {
+		"ms": 8663,
+		"runs": 5,
+		"flaky": 0
+	},
+	"sso/auth-domains.spec.ts › SSO auth domains › TC-02 create a google auth domain via the UI": {
+		"ms": 9606,
+		"runs": 5,
+		"flaky": 0
+	},
+	"sso/auth-domains.spec.ts › SSO auth domains › TC-03 editing the client id persists across reopen": {
+		"ms": 11007,
+		"runs": 5,
+		"flaky": 0
+	},
+	"sso/auth-domains.spec.ts › SSO auth domains › TC-04 removing a group mapping persists after save": {
+		"ms": 11415,
+		"runs": 5,
+		"flaky": 0
+	},
+	"sso/auth-domains.spec.ts › SSO auth domains › TC-05 disabling fetch groups clears the allowed groups": {
+		"ms": 11306,
+		"runs": 5,
+		"flaky": 0
+	},
+	"sso/auth-domains.spec.ts › SSO auth domains › TC-06 enforce sso toggle persists across reload": {
+		"ms": 11651,
+		"runs": 5,
+		"flaky": 0
+	},
+	"sso/auth-domains.spec.ts › SSO auth domains › TC-07 delete a domain via the UI": {
+		"ms": 10571,
+		"runs": 5,
+		"flaky": 0
+	},
+	"sso/auth-domains.spec.ts › SSO auth domains › TC-08 enforce sso toggle preserves the role mapping": {
+		"ms": 12510,
+		"runs": 5,
+		"flaky": 0
+	},
+	"trace-details/drawer.spec.ts › Trace details — span details drawer › TC-01 the floating drawer can be dragged": {
+		"ms": 10775,
+		"runs": 5,
+		"flaky": 0
+	},
+	"trace-details/drawer.spec.ts › Trace details — span details drawer › TC-02 a dock-mode change persists and is restored on reload": {
+		"ms": 12964,
+		"runs": 5,
+		"flaky": 0
+	},
+	"trace-details/flamegraph.spec.ts › Trace details — flamegraph › TC-01 hovering an error bar opens its hover card with status/start/duration": {
+		"ms": 9591,
+		"runs": 5,
+		"flaky": 0
+	},
+	"trace-details/flamegraph.spec.ts › Trace details — flamegraph › TC-02 clicking a bar selects the span, opens the drawer, and syncs the waterfall row": {
+		"ms": 10255,
+		"runs": 5,
+		"flaky": 0
+	},
+	"trace-details/flamegraph.spec.ts › Trace details — flamegraph › TC-03 deep-linking a deeply-nested span scrolls it into view on the flamegraph": {
+		"ms": 12223,
+		"runs": 5,
+		"flaky": 0
+	},
+	"trace-details/flamegraph.spec.ts › Trace details — flamegraph › TC-04 changing colour-by recolors the flamegraph bars": {
+		"ms": 11778,
+		"runs": 5,
+		"flaky": 0
+	},
+	"trace-details/header.spec.ts › Trace details — header analytics panel › TC-01 the analytics panel can be dragged by its header": {
+		"ms": 9836,
+		"runs": 5,
+		"flaky": 0
+	},
+	"trace-details/preview-fields.spec.ts › Trace details — preview fields in the hover card › TC-01 flamegraph hover card shows the configured preview field": {
+		"ms": 0,
+		"runs": 5,
+		"flaky": 0
+	},
+	"trace-details/waterfall.spec.ts › Trace details — waterfall › TC-01 deep-link ?spanId auto-selects the span and opens the drawer": {
+		"ms": 8904,
+		"runs": 5,
+		"flaky": 0
+	},
+	"trace-details/waterfall.spec.ts › Trace details — waterfall › TC-02 deep-linking a deeply-nested span auto-expands ancestors and scrolls it into view": {
+		"ms": 9412,
+		"runs": 5,
+		"flaky": 0
+	}
+}

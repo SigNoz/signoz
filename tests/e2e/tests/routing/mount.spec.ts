@@ -2,7 +2,7 @@ import { expect, PATH, test } from '../../drivers/routing';
 
 // The shape of the router mount, which no other spec observes.
 
-test.describe('Routing: router mount', () => {
+test.describe('Routing: router mount', { tag: '@smoke' }, () => {
 	// Under a React transition the previous screen stays up instead of the
 	// Suspense fallback, so an uncached route renders no loader at all.
 	test('TC-18 an in-app navigation to an uncached route commits the Suspense fallback', async ({
