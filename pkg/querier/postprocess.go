@@ -98,6 +98,15 @@ func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, res
 	// Filter out disabled queries
 	typedResults = q.filterDisabledQueries(typedResults, req)
 
+	// Summed only once the bucket axis is final.
+	if req.RequestType == qbtypes.RequestTypeDistribution {
+		for _, result := range typedResults {
+			if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
+				result.Value = tsData.ToDistributionData()
+			}
+		}
+	}
+
 	// Apply table formatting for UI if requested
 	if req.FormatOptions != nil && req.FormatOptions.FormatTableResultForUI && req.RequestType == qbtypes.RequestTypeScalar {
 
@@ -225,7 +234,7 @@ func postProcessMetricQuery(
 		}
 	}
 
-	if req.RequestType == qbtypes.RequestTypeHeatmap && config.HeatmapBucketing != nil {
+	if req.RequestType.CountsIntoBuckets() && config.HeatmapBucketing != nil {
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			resolveHeatmapBucketAxis(tsData, *config.HeatmapBucketing)
 		}
@@ -360,7 +369,7 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
 				results[name] = result
 			}
-		case qbtypes.RequestTypeHeatmap:
+		case qbtypes.RequestTypeHeatmap, qbtypes.RequestTypeDistribution:
 			// The queries a formula reads were run as time series, so what
 			// arrives here is one value per group per timestamp.
 			result := q.processTimeSeriesFormula(ctx, results, formula, req)

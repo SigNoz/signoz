@@ -81,7 +81,7 @@ func (b *BucketOptions) ToHeatmapBucketing() HeatmapBucketing {
 	return resolved
 }
 
-// This cannot be called in validateHeatmap cuz metric type is resolved in querier.go.
+// This cannot be called in validateBucketCounting cuz metric type is resolved in querier.go.
 func (a *MetricAggregation) VerifyAndApplyBucketOptions(bucketOptions *BucketOptions) error {
 	switch a.Type {
 	case metrictypes.HistogramType:
@@ -296,6 +296,31 @@ func addHeatmapBucketsWithNoCountsForAggregation(aggBucket *AggregationBucket, b
 		}
 	}
 	aggBucket.Meta.Buckets = denseUpperBounds
+}
+
+// ToDistributionData sums every series over all its steps, keeping the bucket
+// axis. A partial step counts too, since what it holds was observed.
+func (t *TimeSeriesData) ToDistributionData() *DistributionData {
+	data := &DistributionData{QueryName: t.QueryName, Aggregations: make([]*DistributionAggregation, 0, len(t.Aggregations))}
+	for _, aggBucket := range t.Aggregations {
+		if aggBucket == nil {
+			continue
+		}
+		aggregation := &DistributionAggregation{Index: aggBucket.Index, Alias: aggBucket.Alias, Meta: aggBucket.Meta, Distributions: make([]*Distribution, 0, len(aggBucket.Series))}
+		for _, series := range aggBucket.Series {
+			counts := make([]float64, len(aggBucket.Meta.Buckets)+1)
+			for _, point := range series.Values {
+				for i, count := range point.Values {
+					if i < len(counts) {
+						counts[i] += count
+					}
+				}
+			}
+			aggregation.Distributions = append(aggregation.Distributions, &Distribution{Labels: series.Labels, Counts: counts})
+		}
+		data.Aggregations = append(data.Aggregations, aggregation)
+	}
+	return data
 }
 
 // calculateIndexOfUpperBound and calculateUpperBoundAtIndex are inverses over

@@ -152,12 +152,12 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 
 	preseededResults := make(map[string]any)
 	for _, name := range missingMetricQueries {
-		switch req.RequestType {
-		case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
+		switch {
+		case req.RequestType.IsBuiltFromTimeSeries():
 			preseededResults[name] = &qbtypes.TimeSeriesData{QueryName: name}
-		case qbtypes.RequestTypeScalar:
+		case req.RequestType == qbtypes.RequestTypeScalar:
 			preseededResults[name] = &qbtypes.ScalarData{QueryName: name}
-		case qbtypes.RequestTypeRaw:
+		case req.RequestType == qbtypes.RequestTypeRaw:
 			preseededResults[name] = &qbtypes.RawData{QueryName: name}
 		}
 	}
@@ -282,7 +282,7 @@ func (q *querier) buildQueries(
 					continue
 				}
 				requestType := req.RequestType
-				if requestType == qbtypes.RequestTypeHeatmap && spec.Disabled {
+				if requestType.CountsIntoBuckets() && spec.Disabled {
 					// A disabled query in a heatmap request feeds a formula, and the
 					// formula converts time series into heatmap data, so its inputs
 					// run as time series queries.
@@ -433,7 +433,7 @@ func (q *querier) resolveMetricMetadata(ctx context.Context, orgID valuer.UUID, 
 			}
 			// Only the enabled query is used to render the heatmap, so bucket
 			// options are only applied to the enabled query.
-			if requestType == qbtypes.RequestTypeHeatmap && !spec.Disabled {
+			if requestType.CountsIntoBuckets() && !spec.Disabled {
 				if err := spec.Aggregations[i].VerifyAndApplyBucketOptions(spec.BucketOptions); err != nil {
 					return nil, nil, err
 				}
@@ -658,16 +658,16 @@ func (q *querier) run(
 		if result == nil || result.Value == nil {
 			return false
 		}
-		switch result.Type {
-		case qbtypes.RequestTypeScalar:
+		switch {
+		case result.Type == qbtypes.RequestTypeScalar:
 			if val, ok := result.Value.(*qbtypes.ScalarData); ok && val != nil {
 				return len(val.Data) != 0
 			}
-		case qbtypes.RequestTypeRaw:
+		case result.Type == qbtypes.RequestTypeRaw:
 			if val, ok := result.Value.(*qbtypes.RawData); ok && val != nil {
 				return len(val.Rows) != 0
 			}
-		case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
+		case result.Type.IsBuiltFromTimeSeries():
 			if val, ok := result.Value.(*qbtypes.TimeSeriesData); ok && val != nil {
 				if len(val.Aggregations) != 0 {
 					anyNonEmpty := false
@@ -987,8 +987,7 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 		}
 
 		// Merge all fresh results including the first one
-		switch merged.Type {
-		case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
+		if merged.Type.IsBuiltFromTimeSeries() {
 			// Pass nil as cached value to ensure proper merging of all fresh results
 			merged.Value = q.mergeTimeSeriesResults(nil, fresh)
 		}
@@ -1010,8 +1009,7 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 		return merged
 	}
 
-	switch merged.Type {
-	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
+	if merged.Type.IsBuiltFromTimeSeries() {
 		merged.Value = q.mergeTimeSeriesResults(cached.Value.(*qbtypes.TimeSeriesData), fresh)
 	}
 

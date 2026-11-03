@@ -42,7 +42,7 @@ type QueryWarnDataAdditional struct {
 }
 
 type QueryData struct {
-	Results []any `json:"results" description:"One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests."`
+	Results []any `json:"results" description:"One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests."`
 }
 
 var _ jsonschema.OneOfExposer = QueryData{}
@@ -53,6 +53,7 @@ func (QueryData) JSONSchemaOneOf() []any {
 		TimeSeriesData{},
 		ScalarData{},
 		RawData{},
+		DistributionData{},
 	}
 }
 
@@ -128,7 +129,7 @@ var _ jsonschema.Preparer = &QueryRangeResponse{}
 
 // PrepareJSONSchema adds description to the QueryRangeResponse schema.
 func (q *QueryRangeResponse) PrepareJSONSchema(schema *jsonschema.Schema) error {
-	schema.WithDescription("Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series, ScalarData for scalar, or RawData for raw requests.")
+	schema.WithDescription("Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, or DistributionData for distribution requests.")
 	return nil
 }
 
@@ -258,7 +259,7 @@ func (a *AggregationBucket) TrimAxisToCountedBuckets() {
 
 type AggregationMeta struct {
 	Unit    string    `json:"unit,omitempty" description:"The unit of the aggregated values, taken from metric metadata when known."`
-	Buckets []float64 `json:"buckets,omitempty" description:"The ascending upper bounds of the value bands, set only for heatmap results; each point then carries one count per bound plus a trailing overflow count in values."`
+	Buckets []float64 `json:"buckets,omitempty" description:"The ascending upper bounds of the value buckets, set for heatmap and distribution results; each point then carries one count per bound plus a trailing overflow count in values."`
 }
 
 type TimeSeries struct {
@@ -375,7 +376,26 @@ type TimeSeriesValue struct {
 
 	Partial bool `json:"partial,omitempty" description:"True when the step is only partly covered by the requested time range, so the value is incomplete."`
 
-	Values []float64 `json:"values,omitempty" description:"The per-band counts for heatmap results, in the order of meta.buckets plus a trailing overflow count."`
+	Values []float64 `json:"values,omitempty" description:"The per-bucket counts for heatmap results, in the order of meta.buckets plus a trailing overflow count."`
+}
+
+// DistributionData is a heatmap summed over its steps: one set of counts per
+// group, positional against the aggregation's bucket upper bounds.
+type DistributionData struct {
+	QueryName    string                     `json:"queryName" description:"The name of the query that produced this result."`
+	Aggregations []*DistributionAggregation `json:"aggregations" description:"One entry per aggregation of the query. The order is not guaranteed; match entries to aggregations by index."`
+}
+
+type DistributionAggregation struct {
+	Index         int             `json:"index" description:"The zero-based position of the aggregation in the query."`
+	Alias         string          `json:"alias" description:"The alias of the aggregation, or the internal name __result_N, with N its index, when no alias was given."`
+	Meta          AggregationMeta `json:"meta,omitempty" description:"Display metadata for the aggregation, including the bucket upper bounds the counts are positional against."`
+	Distributions []*Distribution `json:"distributions" description:"One distribution per group-by combination."`
+}
+
+type Distribution struct {
+	Labels []*Label  `json:"labels,omitempty" description:"The group-by field values that identify this distribution."`
+	Counts []float64 `json:"counts" description:"One count per bound in meta.buckets plus a trailing overflow count, summed over every step of the requested time range."`
 }
 
 type ColumnType struct {

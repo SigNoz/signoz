@@ -584,7 +584,7 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 
 	// Validate request type
 	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap:
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap, RequestTypeDistribution:
 		opts = append(opts, GetValidationOptions(r.RequestType)...)
 	default:
 		return errors.NewInvalidInputf(
@@ -592,11 +592,11 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 			"invalid request type: %s",
 			r.RequestType,
 		).WithAdditional(
-			"Valid request types are: raw, timeseries, scalar, heatmap",
+			"Valid request types are: raw, timeseries, scalar, heatmap, distribution",
 		)
 	}
 
-	if err := r.validateHeatmap(); err != nil {
+	if err := r.validateBucketCounting(); err != nil {
 		return err
 	}
 
@@ -637,14 +637,14 @@ func (r *QueryRangeRequest) ValidateRequestScope() ([]ValidationOption, error) {
 
 	var opts []ValidationOption
 	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap:
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap, RequestTypeDistribution:
 		opts = GetValidationOptions(r.RequestType)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request type: %s", r.RequestType).
-			WithAdditional("Valid request types are: raw, timeseries, scalar, heatmap")
+			WithAdditional("Valid request types are: raw, timeseries, scalar, heatmap, distribution")
 	}
 
-	if err := r.validateHeatmap(); err != nil {
+	if err := r.validateBucketCounting(); err != nil {
 		return nil, err
 	}
 
@@ -849,13 +849,13 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 	}
 }
 
-func (r *QueryRangeRequest) validateHeatmap() error {
-	if r.RequestType != RequestTypeHeatmap {
+func (r *QueryRangeRequest) validateBucketCounting() error {
+	if !r.RequestType.CountsIntoBuckets() {
 		for _, envelope := range r.CompositeQuery.Queries {
 			if extractEnabledBucketOptions(envelope) != nil {
 				return errors.NewInvalidInputf(
 					errors.CodeInvalidInput,
-					"bucketOptions are only supported for heatmap requests, got %s",
+					"bucketOptions are only supported for heatmap and distribution requests, got %s",
 					r.RequestType,
 				)
 			}
@@ -865,7 +865,7 @@ func (r *QueryRangeRequest) validateHeatmap() error {
 
 	if r.FormatOptions != nil && r.FormatOptions.FillGaps {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"fillGaps is not supported for heatmap requests: an absent column means collection stopped, which a zero-filled column would hide")
+			"fillGaps is not supported for %s requests: an absent column means collection stopped, which a zero-filled column would hide", r.RequestType)
 	}
 
 	enabled := 0
@@ -876,7 +876,7 @@ func (r *QueryRangeRequest) validateHeatmap() error {
 
 		switch spec := envelope.Spec.(type) {
 		case QueryBuilderQuery[MetricAggregation]:
-			if err := validateHeatmapQuery(spec.Functions, spec.Having); err != nil {
+			if err := validateBucketCountingQuery(r.RequestType, spec.Functions, spec.Having); err != nil {
 				return err
 			}
 			if spec.Disabled {
@@ -884,7 +884,7 @@ func (r *QueryRangeRequest) validateHeatmap() error {
 			}
 			enabled++
 		case QueryBuilderFormula:
-			if err := validateHeatmapQuery(spec.Functions, spec.Having); err != nil {
+			if err := validateBucketCountingQuery(r.RequestType, spec.Functions, spec.Having); err != nil {
 				return err
 			}
 			if spec.Disabled {
@@ -909,7 +909,7 @@ func (r *QueryRangeRequest) validateHeatmap() error {
 				"heatmaps are not supported for the logs and traces signals yet")
 		default:
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"heatmap requests support one metrics builder query, one formula over them, one clickhouse query, or one promql query, got %q", envelope.Type.StringValue())
+				"%s requests support one metrics builder query, one formula over them, one clickhouse query, or one promql query, got %q", r.RequestType, envelope.Type.StringValue())
 		}
 	}
 
@@ -921,11 +921,11 @@ func (r *QueryRangeRequest) validateHeatmap() error {
 			"at least one query is required")
 	case enabled == 0:
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"a heatmap needs one enabled query, but every query is disabled").
+			"a %s needs one enabled query, but every query is disabled", r.RequestType).
 			WithAdditional("Enable the query whose distribution you want to plot")
 	case enabled > 1:
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"a heatmap renders one distribution, but %d queries are enabled", enabled).
+			"%s requests take one enabled query, but %d are enabled", r.RequestType, enabled).
 			WithAdditional(
 				"Disable the queries you don't want to plot, keeping only the one whose distribution you want to show",
 				"A formula can stay enabled with the queries it reads disabled",
@@ -995,18 +995,19 @@ func (b *BucketOptions) validateBucketOptions() error {
 	return nil
 }
 
-// validateHeatmapQuery refuses the per-query settings that cannot mean anything
-// on a heatmap. It runs on disabled queries too: a disabled query is a formula
-// input, so whatever it does still reaches the cells.
-func validateHeatmapQuery(functions []Function, having *Having) error {
+// validateBucketCountingQuery refuses the per-query settings that cannot mean
+// anything once values are counted into buckets. It runs on disabled queries
+// too: a disabled query is a formula input, so whatever it does still reaches
+// the counts.
+func validateBucketCountingQuery(requestType RequestType, functions []Function, having *Having) error {
 	if len(functions) > 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"functions are not supported for heatmap requests: a heatmap point is a count per bucket, not a single value")
+			"functions are not supported for %s requests: a heatmap point is a count per bucket, not a single value", requestType)
 	}
 
 	if having != nil && having.Expression != "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"having is not supported for heatmap requests: it filters individual cells, which breaks the cumulative differencing")
+			"having is not supported for %s requests: it filters individual cells, which breaks the cumulative differencing", requestType)
 	}
 
 	return nil
@@ -1014,7 +1015,7 @@ func validateHeatmapQuery(functions []Function, having *Having) error {
 
 func GetValidationOptions(requestType RequestType) []ValidationOption {
 	switch requestType {
-	case RequestTypeTimeSeries, RequestTypeHeatmap:
+	case RequestTypeTimeSeries, RequestTypeHeatmap, RequestTypeDistribution:
 		return []ValidationOption{WithSkipSelectFieldValidation(), WithTimestampGroupByValidation()}
 	case RequestTypeScalar:
 		return []ValidationOption{WithSkipSelectFieldValidation(), WithReduceToValidation()}
