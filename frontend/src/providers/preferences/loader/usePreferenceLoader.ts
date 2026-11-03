@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { ensureLogsRequiredColumns } from 'container/OptionsMenu/constants';
 import { has } from 'lodash-es';
-import { DataSource } from 'types/common/queryBuilder';
 
 import logsLoaderConfig from '../configs/logsLoaderConfig';
 import tracesLoaderConfig from '../configs/tracesLoaderConfig';
-import { FormattingOptions, Preferences } from '../types';
+import { FormattingOptions, Preferences, PreferenceSourcePage } from '../types';
 
 const migrateColumns = (columns: any): any =>
 	columns.map((column: any) => {
@@ -62,15 +62,21 @@ function logsPreferencesLoader(): {
 function tracesPreferencesLoader(): {
 	columns: TelemetryFieldKey[];
 } {
-	return preferencesLoader(tracesLoaderConfig);
+	const { columns } = preferencesLoader<Preferences>(tracesLoaderConfig);
+	return { columns };
 }
 
+const PREFERENCE_LOADERS: Record<PreferenceSourcePage, () => Preferences> = {
+	[SavedviewtypesSourceDTO.logs]: logsPreferencesLoader,
+	[SavedviewtypesSourceDTO.traces]: tracesPreferencesLoader,
+};
+
 export function usePreferenceLoader({
-	dataSource,
+	sourcePage,
 	reSync,
 	setReSync,
 }: {
-	dataSource: DataSource;
+	sourcePage: PreferenceSourcePage;
 	reSync: boolean;
 	setReSync: (value: boolean) => void;
 }): {
@@ -78,17 +84,10 @@ export function usePreferenceLoader({
 	loading: boolean;
 	error: Error | null;
 } {
-	const [preferences, setPreferences] = useState<Preferences | null>(() => {
-		if (dataSource === DataSource.LOGS) {
-			const { columns, formatting } = logsPreferencesLoader();
-			return { columns, formatting };
-		}
-		if (dataSource === DataSource.TRACES) {
-			const { columns } = tracesPreferencesLoader();
-			return { columns };
-		}
-		return null;
-	});
+	const loadSlicePreferences = PREFERENCE_LOADERS[sourcePage];
+	const [preferences, setPreferences] = useState<Preferences | null>(
+		loadSlicePreferences,
+	);
 	const [error, setError] = useState<Error | null>(null);
 
 	useEffect((): void => {
@@ -96,15 +95,7 @@ export function usePreferenceLoader({
 			setError(null);
 
 			try {
-				if (dataSource === DataSource.LOGS) {
-					const { columns, formatting } = logsPreferencesLoader();
-					setPreferences({ columns, formatting });
-				}
-
-				if (dataSource === DataSource.TRACES) {
-					const { columns } = tracesPreferencesLoader();
-					setPreferences({ columns });
-				}
+				setPreferences(loadSlicePreferences());
 			} catch (e) {
 				setError(e as Error);
 			} finally {
@@ -119,7 +110,7 @@ export function usePreferenceLoader({
 		if (reSync) {
 			loadPreferences();
 		}
-	}, [dataSource, reSync, setReSync]);
+	}, [loadSlicePreferences, reSync, setReSync]);
 
 	return { preferences, loading: false, error };
 }

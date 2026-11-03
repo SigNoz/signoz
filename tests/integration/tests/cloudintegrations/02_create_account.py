@@ -83,11 +83,12 @@ def test_create_account(
 
     if spec.provider == "aws":
         assert "aws" in artifact, "connectionArtifact should contain 'aws' field"
-        assert "connectionUrl" in artifact["aws"], "connectionArtifact.aws should contain 'connectionUrl'"
+        assert "cliCommand" in artifact["aws"], "connectionArtifact.aws should contain 'cliCommand'"
 
-        connection_url = artifact["aws"]["connectionUrl"]
-        assert "console.aws.amazon.com/cloudformation" in connection_url, "connectionUrl should be an AWS CloudFormation URL"
-        assert f"region={spec.initial_params['deployment_region']}" in connection_url, "connectionUrl should contain the deployment region"
+        cli_command = artifact["aws"]["cliCommand"]
+        assert "cloudintegration aws cloudformation" in cli_command, "cliCommand should run the foundry aws cloudformation flow"
+        assert f"--region '{spec.initial_params['deployment_region']}'" in cli_command, "cliCommand should contain the deployment region"
+        assert f"--integration-account-id '{data['id']}'" in cli_command, "cliCommand should contain the integration account id"
     else:
         # GCP is a manual flow: no one-click install artifact.
         assert artifact.get("gcp") is None, f"GCP should not return a connection artifact, got: {artifact}"

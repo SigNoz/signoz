@@ -4,15 +4,15 @@ import type { ConfigTileItem } from '../../controls/ConfigTiles/ConfigTiles';
 import { TILE_DRAWINGS } from '../../controls/drawings/tileDrawings';
 
 export enum BarLayout {
-	SIDE_BY_SIDE = 'side',
+	OVERLAP = 'overlap',
 	STACKED = 'stacked',
 }
 
 export const BAR_LAYOUT_OPTIONS: ConfigTileItem<BarLayout>[] = [
 	{
-		value: BarLayout.SIDE_BY_SIDE,
-		label: 'Side by side',
-		drawing: TILE_DRAWINGS.barsSideBySide,
+		value: BarLayout.OVERLAP,
+		label: 'Overlap',
+		drawing: TILE_DRAWINGS.barsOverlap,
 	},
 	{
 		value: BarLayout.STACKED,
@@ -22,8 +22,7 @@ export const BAR_LAYOUT_OPTIONS: ConfigTileItem<BarLayout>[] = [
 ];
 
 export const BAR_LAYOUT_HELP: Record<BarLayout, string> = {
-	[BarLayout.SIDE_BY_SIDE]:
-		'Each series gets its own bar, side by side, for easy comparison.',
+	[BarLayout.OVERLAP]: 'Each series is drawn from zero and may hide others.',
 	[BarLayout.STACKED]:
 		'Bars sit on top of each other, so the height shows the total.',
 };

@@ -32,7 +32,11 @@ function Overview(props: OverviewProps): JSX.Element {
 					<Typography.Text className="heading">Category</Typography.Text>
 					<div className="category-tabs">
 						{categories.map((category) => (
-							<div key={category} className="category-tab">
+							<div
+								key={category}
+								className="category-tab"
+								data-testid="integration-category"
+							>
 								{category}
 							</div>
 						))}
@@ -40,7 +44,7 @@ function Overview(props: OverviewProps): JSX.Element {
 				</div>
 				<div className="integration-detail-overview-assets">
 					<Typography.Text className="heading">Assets</Typography.Text>
-					<ul className="assets-list">
+					<ul className="assets-list" data-testid="integration-assets">
 						{assetsCount.map((count, index) => {
 							if (count === 0) {
 								return undefined;
