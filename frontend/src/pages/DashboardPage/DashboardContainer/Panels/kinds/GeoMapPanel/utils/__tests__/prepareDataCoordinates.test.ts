@@ -4,6 +4,7 @@ import { LocationKind } from '../../types';
 import {
 	countryTable,
 	group,
+	locationOf,
 	makeTable,
 	mapOf,
 	prepare,
@@ -82,6 +83,29 @@ describe('prepareGeoMapData', () => {
 
 			expect(data.layer).toBe('bubbles');
 			expect(data.pointsWithoutCoordinates).toBe(true);
+		});
+
+		it('reads numeric SQL coordinates, detected or bound, as the location', () => {
+			const sqlTable = makeTable(
+				[
+					value('latitude'),
+					value('longitude'),
+					value('x'),
+					value('y'),
+					value('hits'),
+				],
+				[{ latitude: 48.86, longitude: 2.35, x: 2.35, y: 48.86, hits: 9 }],
+			);
+			const detected = prepare(sqlTable);
+			const bound = prepare(sqlTable, {
+				location: locationOf({ lat: 'y', lon: 'x' }),
+			});
+
+			expect(detected.location?.kind).toBe(LocationKind.Coordinates);
+			expect(detected.points).toHaveLength(1);
+			expect(detected.colorColumn?.id).toBe('x');
+			expect(bound.points).toHaveLength(1);
+			expect(bound.colorColumn?.id).toBe('latitude');
 		});
 	});
 });

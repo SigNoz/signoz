@@ -4,6 +4,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { SUBDIVISION_COUNTRY_CODES } from 'lib/visualization/charts/GeoMap/geo/subdivisionCountries';
 import { ColorRampScale } from 'lib/visualization/colorRamp/types';
+import type { PanelTableColumn } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import { getColumnUnit } from '../../../utils/getColumnUnit';
 import { resolveActiveThreshold } from '../../../utils/evaluateThresholds';
@@ -12,6 +13,7 @@ import { MAX_ROWS } from '../constants';
 import {
 	findById,
 	findStaleBindings,
+	isCoordinateColumn,
 	resolveLocation,
 } from './locationColumns';
 import { placeRow } from './placeRow';
@@ -40,8 +42,10 @@ export function prepareGeoMapData({
 	const allRows = table?.rows ?? [];
 	// Joined queries skip the request's row limit, so the cap holds here too.
 	const rows = allRows.slice(0, MAX_ROWS);
-	const valueColumns = columns.filter((column) => column.isValueColumn);
-	const groupColumns = columns.filter((column) => !column.isValueColumn);
+	const isLocation = (column: PanelTableColumn): boolean =>
+		!column.isValueColumn || isCoordinateColumn(column.id, location);
+	const valueColumns = columns.filter((column) => !isLocation(column));
+	const groupColumns = columns.filter(isLocation);
 
 	const resolved = resolveLocation(groupColumns, location, map);
 	const colorColumn = findById(valueColumns, map?.colorBy) ?? valueColumns[0];
