@@ -278,7 +278,7 @@ export default function Home(): JSX.Element {
 	}, []);
 
 	return (
-		<div className="home-container">
+		<div className="home-container" data-testid="home-page">
 			{getIsNoAuthMode() && <NoAuthBanner />}
 			<div className="sticky-header">
 				<Header
@@ -316,6 +316,7 @@ export default function Home(): JSX.Element {
 										variant="solid"
 										color="secondary"
 										prefix={<ClipboardList size={14} />}
+										testId="welcome-checklist-btn"
 									>
 										Welcome checklist
 									</Button>
@@ -662,7 +663,10 @@ export default function Home(): JSX.Element {
 										exit={{ opacity: 0, scale: 0 }}
 										key="box"
 									>
-										<div className="checklist-container">
+										<div
+											className="checklist-container"
+											data-testid="home-checklist-card"
+										>
 											<div className="checklist-items-container">
 												<StepsProgress checklistItems={checklistItems} />
 
@@ -701,6 +705,7 @@ export default function Home(): JSX.Element {
 											color="secondary"
 											onClick={handleWillDoThisLater}
 											loading={updatingUserPreferences}
+											testId="checklist-do-later-btn"
 										>
 											I&apos;ll do this later
 										</Button>

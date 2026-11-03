@@ -68,6 +68,7 @@ function HomeChecklist({
 						{whatsNextChecklistItems.map((item, index) => (
 							<div
 								key={item.id}
+								data-testid={`checklist-item-${item.id}`}
 								className={`whats-next-checklist-item ${
 									item.isSkipped && !item.completed ? 'skipped' : ''
 								} ${
@@ -129,6 +130,7 @@ function HomeChecklist({
 													<Button
 														type="link"
 														className="periscope-btn link skip-btn"
+														data-testid={`checklist-skip-${item.id}`}
 														onClick={(): void => {
 															logEvent('Welcome Checklist: Skip clicked', {
 																step: item.id,

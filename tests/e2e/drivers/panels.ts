@@ -4,8 +4,8 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { PanelKind } from '../helpers/dashboard-spec';
-import { logDetailsDrawer } from '../helpers/logs-explorer';
+import { PanelKind } from './dashboard-spec';
+import { logDetailDriver } from './logs/detail';
 
 import { test as dashboardsTest } from './dashboards';
 import { driver } from './kit';
@@ -85,6 +85,8 @@ export interface Panels {
 		statusContent(): Locator;
 		/** Free text inside any open tooltip. */
 		text(text: string): Locator;
+		/** Hovers `target` and returns the newest tooltip, since an earlier one may still be fading out. */
+		reasonFor(target: Locator): Promise<Locator>;
 		heatmap: HeatmapTooltip;
 	};
 	/** The log detail drawer a List row of logs opens. */
@@ -173,9 +175,13 @@ function panelsDriver(page: Page): Panels {
 			statusContent: () =>
 				page.getByRole('tooltip').getByTestId('panel-status-content'),
 			text: (text) => page.getByText(text),
+			async reasonFor(target) {
+				await target.hover();
+				return page.getByRole('tooltip').last();
+			},
 			heatmap: heatmapTooltipAt(page),
 		},
-		logDetail: () => logDetailsDrawer(page),
+		logDetail: () => logDetailDriver(page).drawer(),
 		drilldown: {
 			menu,
 			item: (testId) =>

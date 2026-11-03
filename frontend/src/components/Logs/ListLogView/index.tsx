@@ -182,6 +182,7 @@ function ListLogView({
 	return (
 		<>
 			<Container
+				data-testid={`logs-list-row-${logData.id}`}
 				$isActiveLog={isHighlighted || activeLog?.id === logData.id}
 				$isDarkMode={isDarkMode}
 				$logType={logType}

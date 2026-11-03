@@ -93,6 +93,7 @@ function CloudAccountSetupModal({
 				color="primary"
 				prefix={<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />}
 				onClick={handleSubmit}
+				testId="aws-launch-cfn-btn"
 				disabled={
 					selectedRegions.length === 0 || modalState === ModalStateEnum.WAITING
 				}
