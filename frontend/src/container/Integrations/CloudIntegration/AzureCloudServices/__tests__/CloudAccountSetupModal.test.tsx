@@ -2,6 +2,7 @@ import { ComponentProps } from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 import { RestRequest } from 'msw';
+import type logEvent from '../../../../../api/common/logEvent';
 
 import CloudAccountSetupModal from '../AddNewAccount/CloudAccountSetupModal';
 
@@ -10,7 +11,7 @@ import CloudAccountSetupModal from '../AddNewAccount/CloudAccountSetupModal';
 // not intercept, so mock the resolved module directly.
 jest.mock('../../../../../api/common/logEvent', () => ({
 	__esModule: true,
-	default: jest.fn(),
+	default: jest.fn() as jest.MockedFunction<typeof logEvent>,
 }));
 
 // The form flow drives antd selects and typing, which outruns the 5s default on CI.
