@@ -6,11 +6,17 @@ import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldCol
 
 import { useSpanDrawer } from '../useSpanDrawer';
 
+let mockQueryId = 'query-1';
+jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: (): unknown => ({ stagedQuery: { id: mockQueryId } }),
+}));
+
 const rows: TracesTableRow[] = [{ id: 'span-a' }, { id: 'span-b' }];
 
 describe('useSpanDrawer', () => {
 	beforeEach(() => {
 		set(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED, 'true');
+		mockQueryId = 'query-1';
 	});
 
 	afterEach(() => {
@@ -30,6 +36,17 @@ describe('useSpanDrawer', () => {
 		expect(result.current.drawerProps?.row).toBeNull();
 
 		rerender({ current: rows });
+		expect(result.current.drawerProps?.row).toBeNull();
+	});
+
+	it('closes on a new query while the old rows are still shown', () => {
+		const { result, rerender } = renderHook(() => useSpanDrawer(rows));
+
+		act(() => result.current.tableProps.onRowClick?.(rows[1]));
+		expect(result.current.drawerProps?.row).toBe(rows[1]);
+
+		mockQueryId = 'query-2';
+		rerender();
 		expect(result.current.drawerProps?.row).toBeNull();
 	});
 });
