@@ -3,7 +3,10 @@ import {
 	type DashboardtypesGeoMapLocationDTO,
 	type DashboardtypesGeoMapSettingsDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { detectLocationColumns } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/utils/locationColumns';
+import {
+	detectLocationColumns,
+	isCoordinateColumn,
+} from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/utils/locationColumns';
 import type {
 	SectionEditorProps,
 	SectionKind,
@@ -51,7 +54,7 @@ type LocationSectionProps = SectionEditorProps<SectionKind.Location> &
 function LocationSection({
 	value,
 	onChange,
-	groupColumns = [],
+	groupColumns: groupByColumns = [],
 	tableColumns = [],
 	geoMapPlacement,
 }: LocationSectionProps): JSX.Element {
@@ -60,6 +63,10 @@ function LocationSection({
 	const kind = resolveRowKind(value, data);
 	const isAuto = isAutoMode(value);
 	const layer = resolveLayer(value, kind);
+	const coordinateColumns = tableColumns
+		.map((column) => column.key)
+		.filter((key) => isCoordinateColumn(key, value?.location));
+	const groupColumns = [...groupByColumns, ...coordinateColumns];
 	const hasGroupBy = groupColumns.length > 0;
 	const viewCountry = value?.map?.viewCountry;
 	const detected = detectLocationColumns(groupColumns);
@@ -154,10 +161,12 @@ function LocationSection({
 
 			<ValueColumnsFields
 				layer={layer}
-				valueItems={tableColumns.map((column) => ({
-					value: column.key,
-					label: formatColumnOption(column),
-				}))}
+				valueItems={tableColumns
+					.filter((column) => !coordinateColumns.includes(column.key))
+					.map((column) => ({
+						value: column.key,
+						label: formatColumnOption(column),
+					}))}
 				colorBy={value?.map?.colorBy}
 				sizeBy={value?.map?.sizeBy}
 				onChange={setMap}

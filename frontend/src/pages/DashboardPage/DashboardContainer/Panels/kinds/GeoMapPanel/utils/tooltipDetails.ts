@@ -5,7 +5,7 @@ import type {
 } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import { toFiniteNumber } from './cellValues';
-import type { GeoMapPanelData } from '../types';
+import { type GeoMapPanelData, LocationKind } from '../types';
 
 interface TooltipDetailsArgs {
 	table: PanelTable | undefined;
@@ -24,8 +24,15 @@ export function withTooltipDetails({
 	labels,
 	formatterFor,
 }: TooltipDetailsArgs): Pick<GeoMapPanelData, 'regions' | 'points'> {
+	const coordinates =
+		data.location?.kind === LocationKind.Coordinates
+			? [data.location.lat.id, data.location.lon.id]
+			: [];
 	const columns = (table?.columns ?? []).filter(
-		(column) => column.isValueColumn && column.id !== data.colorColumn?.id,
+		(column) =>
+			column.isValueColumn &&
+			column.id !== data.colorColumn?.id &&
+			!coordinates.includes(column.id),
 	);
 	if (!table || columns.length === 0) {
 		return data;
