@@ -20,7 +20,7 @@ import (
 
 func TestFamilyEqualWidensIndexHintsToAnyMember(t *testing.T) {
 	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true})
-	storage := newStorage()
+	storage := NewStorage()
 	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"deployment.environment.name": {{
 			Name:          "deployment.environment.name",
@@ -48,7 +48,7 @@ func TestFamilyEqualWidensIndexHintsToAnyMember(t *testing.T) {
 
 func TestFamilyNotEqualDropsNegatedValueHint(t *testing.T) {
 	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true})
-	storage := newStorage()
+	storage := NewStorage()
 	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"deployment.environment.name": {{
 			Name:          "deployment.environment.name",
@@ -76,7 +76,7 @@ func TestFamilyNotEqualDropsNegatedValueHint(t *testing.T) {
 
 func TestFamilyExistsIsAnyMemberPresence(t *testing.T) {
 	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true})
-	storage := newStorage()
+	storage := NewStorage()
 	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"deployment.environment.name": {{
 			Name:          "deployment.environment.name",
@@ -115,7 +115,7 @@ func TestFamilyExistsIsAnyMemberPresence(t *testing.T) {
 // including the negated value hint on !=.
 func TestSingleMemberShapesUnchanged(t *testing.T) {
 	fl := flaggertest.WithBooleanFlags(t, map[string]bool{flagger.FeatureResolveSemconvFamilies.String(): true})
-	storage := newStorage()
+	storage := NewStorage()
 	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"deployment.environment.name": {{
 			Name:          "deployment.environment.name",

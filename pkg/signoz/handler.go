@@ -14,6 +14,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability"
 	"github.com/SigNoz/signoz/pkg/modules/aiobservability/implaiobservability"
+	"github.com/SigNoz/signoz/pkg/modules/annotations"
+	"github.com/SigNoz/signoz/pkg/modules/annotations/implannotations"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -72,6 +74,7 @@ type Handlers struct {
 	MetricsExplorer         metricsexplorer.Handler
 	MetricReductionRule     metricreductionrule.Handler
 	InfraMonitoring         inframonitoring.Handler
+	Annotations             annotations.Handler
 	Global                  global.Handler
 	FlaggerHandler          flagger.Handler
 	GatewayHandler          gateway.Handler
@@ -125,6 +128,7 @@ func NewHandlers(
 		MetricsExplorer:         implmetricsexplorer.NewHandler(modules.MetricsExplorer),
 		MetricReductionRule:     implmetricreductionrule.NewHandler(modules.MetricReductionRule),
 		InfraMonitoring:         implinframonitoring.NewHandler(modules.InfraMonitoring),
+		Annotations:             implannotations.NewHandler(modules.Annotations),
 		SpanPercentile:          implspanpercentile.NewHandler(modules.SpanPercentile),
 		Global:                  signozglobal.NewHandler(global),
 		FlaggerHandler:          flagger.NewHandler(flaggerService),

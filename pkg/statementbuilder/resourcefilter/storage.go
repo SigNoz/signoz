@@ -22,7 +22,7 @@ type storage struct{}
 
 var _ qbtypes.Storage = (*storage)(nil)
 
-func newStorage() *storage {
+func NewStorage() qbtypes.Storage {
 	return &storage{}
 }
 

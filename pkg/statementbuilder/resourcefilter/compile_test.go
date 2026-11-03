@@ -200,7 +200,7 @@ func TestConditionBuilder(t *testing.T) {
 		},
 	}
 
-	storage := newStorage()
+	storage := NewStorage()
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()

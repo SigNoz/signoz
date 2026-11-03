@@ -49,7 +49,7 @@ func New[T any](
 		logger:         set.Logger(),
 		dbName:         dbName,
 		tableName:      tableName,
-		storage:        newStorage(),
+		storage:        NewStorage(),
 		metadataStore:  metadataStore,
 		signal:         signal,
 		source:         source,
