@@ -176,7 +176,8 @@ describe('QueryAddOns', () => {
 
 		await user.clear(input);
 		await user.type(input, '-5');
-		expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith('limit', null);
+		expect(input.value).toBe('5');
+		expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith('limit', 5);
 	});
 
 	it.each([
