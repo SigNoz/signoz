@@ -204,16 +204,26 @@ describe('useRoutingPolicies', () => {
 
 	it('should preserve existing query parameters such as sort and pagination when updating search (Bug 54)', async () => {
 		const { result } = renderHookWithWrapper(
+			'/alerts?tab=Configuration&subTab=routing-policies',
+		);
+		// nuqs writes sort and pagination to the URL before the router location catches up
+		window.history.replaceState(
+			null,
+			'',
 			'/alerts?tab=Configuration&subTab=routing-policies&orderBy=name&order=asc&page=2&limit=20',
 		);
 
-		act(() => {
-			result.current.setSearchTerm('policy');
-		});
+		try {
+			act(() => {
+				result.current.setSearchTerm('policy');
+			});
 
-		await waitFor(() => {
-			expect(mockNavigate).toHaveBeenCalled();
-		});
+			await waitFor(() => {
+				expect(mockNavigate).toHaveBeenCalled();
+			});
+		} finally {
+			window.history.replaceState(null, '', '/');
+		}
 
 		const callArg = mockNavigate.mock.calls[0][0];
 		expect(callArg).toContain('tab=Configuration');
