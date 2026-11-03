@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import logEvent from 'api/common/logEvent';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
@@ -38,7 +38,7 @@ export interface UseViewPanelApi {
  */
 export function useViewPanel(): UseViewPanelApi {
 	const { safeNavigate } = useSafeNavigate();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const urlQuery = useUrlQuery();
 	const { resetQuery } = useQueryBuilder();
 

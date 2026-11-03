@@ -1,4 +1,4 @@
-import { useHistory } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
@@ -125,12 +125,11 @@ function SearchMutator({
 }: {
 	to?: string;
 }): JSX.Element {
-	const routerHistory = useHistory();
 	return (
 		<button
 			type="button"
 			data-testid="mutate-search"
-			onClick={(): void => routerHistory.replace(to)}
+			onClick={(): void => navigate(to, { replace: true })}
 		>
 			change search
 		</button>

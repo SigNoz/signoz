@@ -29,11 +29,6 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): unknown => ({ safeNavigate: jest.fn() }),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({ pathname: '/services/socky-api' }),
-}));
-
 const QUERY = {
 	builder: {
 		queryData: [{ queryName: 'A', dataSource: 'traces', aggregations: [] }],

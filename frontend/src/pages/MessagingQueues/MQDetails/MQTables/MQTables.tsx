@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
-import { useHistory, useLocation } from 'react-router-dom';
 import { Skeleton, Table } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -13,7 +12,8 @@ import cx from 'classnames';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
-import { History } from 'history';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
@@ -42,7 +42,6 @@ const INITIAL_PAGE_SIZE = 10;
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function getColumns(
 	data: MessagingQueuesPayloadProps['payload'],
-	history: History<unknown>,
 	isProducerOverview?: boolean,
 ): RowData[] {
 	if (data?.result?.length === 0) {
@@ -85,7 +84,7 @@ export function getColumns(
 									if (isModifierKeyPressed(e as React.MouseEvent)) {
 										openInNewTab(path);
 									} else {
-										history.push(path);
+										navigate(path);
 									}
 								}}
 							>
@@ -151,7 +150,6 @@ function MessagingQueuesTable({
 	const [tableData, setTableData] = useState<any[]>([]);
 	const { notifications } = useNotifications();
 	const urlQuery = useUrlQuery();
-	const history = useHistory();
 	const timelineQuery = decodeURIComponent(
 		urlQuery.get(QueryParams.selectedTimelineQuery) || '',
 	);
@@ -205,7 +203,7 @@ function MessagingQueuesTable({
 	} = useMutation(tableApi, {
 		onSuccess: (data) => {
 			if (data.payload) {
-				setColumns(getColumns(data?.payload, history, isProducerOverview));
+				setColumns(getColumns(data?.payload, isProducerOverview));
 				setTableData(
 					isProducerOverview
 						? getTableDataForProducerLatencyOverview(data?.payload)
@@ -228,7 +226,7 @@ function MessagingQueuesTable({
 
 	const [selectedRowKey, setSelectedRowKey] = useState<React.Key>();
 	const [, setSelectedRows] = useState<any>();
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const selectedRowKeyGenerator = (record: {
 		[key: string]: string;
@@ -250,13 +248,13 @@ function MessagingQueuesTable({
 		if (selectedRowKeyGenerator(record) === selectedRowKey) {
 			setSelectedRowKey(undefined);
 			setSelectedRows({});
-			setConfigDetail(urlQuery, location, history, {});
+			setConfigDetail(urlQuery, location, {});
 		} else {
 			setSelectedRowKey(selectedRowKeyGenerator(record));
 			setSelectedRows(record);
 
 			if (!isEmpty(record)) {
-				setConfigDetail(urlQuery, location, history, record);
+				setConfigDetail(urlQuery, location, record);
 			}
 		}
 	};

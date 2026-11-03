@@ -3,7 +3,7 @@ import { toast } from '@signozhq/ui/sonner';
 import { useGetNotificationChannel } from 'api/generated/services/channels';
 import BackHeader from 'components/BackHeader/BackHeader';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import ChannelForm from 'pages/AlertList/NotificationChannels/components/ChannelForm/ChannelForm';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 
@@ -49,7 +49,7 @@ function ChannelsEditPage({ channelId }: ChannelsEditPageProps): JSX.Element {
 			<ChannelForm
 				channelId={channelId}
 				onDone={(): void => {
-					history.replace(ROUTES.ALL_CHANNELS);
+					navigate(ROUTES.ALL_CHANNELS, { replace: true });
 				}}
 			/>
 		</div>
