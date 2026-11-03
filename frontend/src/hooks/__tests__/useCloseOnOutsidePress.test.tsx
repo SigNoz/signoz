@@ -1,6 +1,5 @@
 import { createPortal } from 'react-dom';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import { useCloseOnOutsidePress } from '../useCloseOnOutsidePress';
 

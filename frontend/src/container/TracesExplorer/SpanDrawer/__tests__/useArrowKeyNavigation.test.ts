@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook } from 'tests/test-utils';
 
 import { useArrowKeyNavigation } from '../useArrowKeyNavigation';
 

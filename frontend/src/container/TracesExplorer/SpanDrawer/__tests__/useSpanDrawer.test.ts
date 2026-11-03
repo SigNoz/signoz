@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook } from 'tests/test-utils';
 import remove from 'api/browser/localstorage/remove';
 import set from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
