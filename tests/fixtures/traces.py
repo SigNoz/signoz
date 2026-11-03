@@ -50,6 +50,7 @@ ALL_SELECT_FIELDS = [
     # all contextual columns (merged in response layer)
     "attributes",
     "resource",
+    "scope",
 ]
 
 

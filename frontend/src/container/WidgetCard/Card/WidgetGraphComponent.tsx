@@ -1,5 +1,5 @@
 import { RefObject, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Skeleton, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
@@ -59,7 +59,7 @@ function WidgetGraphComponent({
 }: WidgetGraphComponentProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { notifications } = useNotifications();
-	const { pathname, search } = useLocation();
+	const { pathname, search } = useAppLocation();
 
 	const params = useUrlQuery();
 

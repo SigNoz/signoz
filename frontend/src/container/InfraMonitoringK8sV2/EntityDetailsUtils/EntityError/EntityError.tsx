@@ -1,6 +1,6 @@
 import { Typography } from '@signozhq/ui/typography';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRight } from '@signozhq/icons';
 import { openInNewTab } from 'utils/navigation';
 
@@ -13,7 +13,7 @@ export default function EntityError(): JSX.Element {
 
 	const handleContactSupport = (): void => {
 		if (isCloudUserVal) {
-			history.push('/support');
+			navigate('/support');
 		} else {
 			openInNewTab('https://signoz.io/slack');
 		}

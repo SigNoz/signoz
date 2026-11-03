@@ -1,11 +1,11 @@
-import { Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
 import { Info, Search } from '@signozhq/icons';
 import { Popconfirm, PopconfirmProps } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { ServicesList } from 'types/api/metrics/getService';
 
 import { filterDropdown } from '../Filter/FilterDropdown';
@@ -49,7 +49,7 @@ export const getColumnSearchProps = (
 		const topLevelOperations = record?.dataWarning?.topLevelOps || [];
 
 		const handleShowTopLevelOperations: PopconfirmProps['onConfirm'] = () => {
-			history.push(
+			navigate(
 				`${ROUTES.APPLICATION}/${encodeURIComponent(metrics)}/top-level-operations`,
 			);
 		};
@@ -76,13 +76,13 @@ export const getColumnSearchProps = (
 					</Popconfirm>
 				)}
 
-				<Link
+				<AppLink
 					to={`${ROUTES.APPLICATION}/${encodeURIComponent(
 						metrics,
 					)}?${queryString.join('')}`}
 				>
 					{metrics}
-				</Link>
+				</AppLink>
 			</div>
 		);
 	},

@@ -1,5 +1,3 @@
-import { Route, Switch } from 'react-router-dom';
-import ROUTES from 'constants/routes';
 import { server } from 'mocks-server/server';
 import { render, screen } from 'tests/test-utils';
 import {
@@ -20,18 +18,10 @@ afterEach(() => {
 function renderCreatePage(
 	appContextOverrides?: Record<string, unknown>,
 ): ReturnType<typeof render> {
-	return render(
-		<Switch>
-			<Route path={ROUTES.ROLES_SETTINGS} exact>
-				<div data-testid="roles-list-redirect" />
-			</Route>
-			<Route path={ROUTES.ROLE_CREATE}>
-				<CreateEditRolePage />
-			</Route>
-		</Switch>,
-		undefined,
-		{ initialRoute: '/settings/roles/new', appContextOverrides },
-	);
+	return render(<CreateEditRolePage />, undefined, {
+		initialRoute: '/settings/roles/new',
+		appContextOverrides,
+	});
 }
 
 function renderEditPage(
@@ -39,21 +29,10 @@ function renderEditPage(
 	roleName: string,
 	appContextOverrides?: Record<string, unknown>,
 ): ReturnType<typeof render> {
-	return render(
-		<Switch>
-			<Route path={ROUTES.ROLES_SETTINGS} exact>
-				<div data-testid="roles-list-redirect" />
-			</Route>
-			<Route path={ROUTES.ROLE_EDIT}>
-				<CreateEditRolePage />
-			</Route>
-		</Switch>,
-		undefined,
-		{
-			initialRoute: `/settings/roles/${roleId}/edit?name=${encodeURIComponent(roleName)}`,
-			appContextOverrides,
-		},
-	);
+	return render(<CreateEditRolePage />, undefined, {
+		initialRoute: `/settings/roles/${roleId}/edit?name=${encodeURIComponent(roleName)}`,
+		appContextOverrides,
+	});
 }
 
 describe('CreateEditRolePage - Feature Gate', () => {
