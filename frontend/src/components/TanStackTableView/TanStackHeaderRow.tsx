@@ -4,6 +4,7 @@ import type {
 	TouchEvent as ReactTouchEvent,
 } from 'react';
 import { useCallback, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 import {
 	ArrowDown,
 	ArrowUp,
@@ -89,6 +90,19 @@ function TanStackHeaderRow<TData>({
 	): void => {
 		event.preventDefault();
 		event.stopPropagation();
+		// TanStack starts the drag from the configured size, which an auto or
+		// redistributed column does not render at.
+		const renderedWidth = Math.round(
+			event.currentTarget.closest('th')?.getBoundingClientRect().width ?? 0,
+		);
+		if (header && renderedWidth > 0 && renderedWidth !== header.getSize()) {
+			flushSync(() => {
+				header.getContext().table.setColumnSizing((sizing) => ({
+					...sizing,
+					[header.column.id]: renderedWidth,
+				}));
+			});
+		}
 		resizeHandler?.(event);
 	};
 	const {
