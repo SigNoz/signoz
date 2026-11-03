@@ -50,8 +50,7 @@ func NewFactory(
 				traceOperatorStmtBuilder,
 				bucketCache,
 				flagger,
-				cfg.LogTraceIDWindowPadding,
-				cfg.MaxConcurrentQueries,
+				cfg,
 			), nil
 		},
 	)

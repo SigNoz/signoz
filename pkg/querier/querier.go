@@ -43,6 +43,8 @@ type Querier interface {
 	statsreporter.StatsCollector
 	// QueryRangePreview validates and renders the queries without executing them.
 	QueryRangePreview(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, opts qbtypes.QueryRangePreviewOptions) (*qbtypes.QueryRangePreviewResponse, error)
+	// ValidateRequest checks req against the querier's preconditions; opts add to the querier's own.
+	ValidateRequest(req *qbtypes.QueryRangeRequest, opts ...qbtypes.ValidationOption) error
 }
 
 type querier struct {
@@ -62,6 +64,7 @@ type querier struct {
 	liveDataRefresh          time.Duration
 	builderConfig            builderConfig
 	maxConcurrentQueries     int
+	config                   Config
 }
 
 var _ Querier = (*querier)(nil)
@@ -80,12 +83,14 @@ func New(
 	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder,
 	bucketCache BucketCache,
 	flagger flagger.Flagger,
-	logTraceIDWindowPadding time.Duration,
-	maxConcurrentQueries int,
+	config Config,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
-	if maxConcurrentQueries <= 0 {
-		maxConcurrentQueries = DefaultMaxConcurrentQueries
+	if config.MaxConcurrentQueries <= 0 {
+		config.MaxConcurrentQueries = DefaultMaxConcurrentQueries
+	}
+	if config.MaxEndTimeAhead <= 0 {
+		config.MaxEndTimeAhead = qbtypes.DefaultMaxEndTimeAhead
 	}
 	return &querier{
 		logger:                   querierSettings.Logger(),
@@ -103,10 +108,19 @@ func New(
 		bucketCache:              bucketCache,
 		liveDataRefresh:          5 * time.Second,
 		builderConfig: builderConfig{
-			logTraceIDWindowPaddingMS: uint64(logTraceIDWindowPadding.Milliseconds()),
+			logTraceIDWindowPaddingMS: uint64(config.LogTraceIDWindowPadding.Milliseconds()),
 		},
-		maxConcurrentQueries: maxConcurrentQueries,
+		maxConcurrentQueries: config.MaxConcurrentQueries,
+		config:               config,
 	}
+}
+
+func (q *querier) ValidateRequest(req *qbtypes.QueryRangeRequest, opts ...qbtypes.ValidationOption) error {
+	return req.Validate(append(opts, q.validationOptions()...)...)
+}
+
+func (q *querier) validationOptions() []qbtypes.ValidationOption {
+	return []qbtypes.ValidationOption{qbtypes.WithMaxEndTimeAhead(q.config.MaxEndTimeAhead)}
 }
 
 func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
@@ -115,6 +129,11 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	// UnmarshalJSON, so normalise here too.
 	req.Start = qbtypes.ToMilliSecs(req.Start)
 	req.End = qbtypes.ToMilliSecs(req.End)
+
+	// In-process callers skip ValidateRequest; the time window still guards the querier.
+	if err := req.ValidateTimeRange(q.validationOptions()...); err != nil {
+		return nil, err
+	}
 
 	event := &qbtypes.QBEvent{
 		Version:         "v5",

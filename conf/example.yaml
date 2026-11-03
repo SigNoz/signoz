@@ -178,6 +178,9 @@ querier:
   # range with padding to include slightly delayed log exports. Logs only; set
   # to 0 to disable.
   log_trace_id_window_padding: 5m
+  # How far past now a query's end time may be, tolerating client clock skew.
+  # Requests ending later are rejected as malformed.
+  max_end_time_ahead: 24h
   schemametadatastore:
     # How long found schema metadata stays cached; 0 caches it for the life of the process.
     cache_ttl: 0s

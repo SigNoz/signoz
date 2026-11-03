@@ -153,6 +153,9 @@ func (module *module) GetPublicWidgetQueryRangeV2(ctx context.Context, id valuer
 		return nil, err
 	}
 
+	if err := module.querier.ValidateRequest(query); err != nil {
+		module.settings.Logger().WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 	return module.querier.QueryRange(ctx, dashboard.OrgID, query)
 }
 

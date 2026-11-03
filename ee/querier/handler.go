@@ -53,7 +53,7 @@ func (h *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if err := queryRangeRequest.Validate(); err != nil {
+	if err := h.querier.ValidateRequest(&queryRangeRequest); err != nil {
 		render.Error(rw, err)
 		return
 	}

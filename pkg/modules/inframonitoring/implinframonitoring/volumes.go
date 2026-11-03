@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -133,6 +134,9 @@ func (m *module) getTopVolumeGroupsAndMetadata(
 	}
 
 	g.Go(func() error {
+		if err := m.querier.ValidateRequest(topReq); err != nil {
+			m.logger.WarnContext(gCtx, "invalid query range request", errors.Attr(err))
+		}
 		resp, err := m.querier.QueryRange(gCtx, orgID, topReq)
 		if err != nil {
 			return err

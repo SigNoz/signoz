@@ -3,12 +3,14 @@ package implservices
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"strconv"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
@@ -24,13 +26,15 @@ import (
 type module struct {
 	Querier        querier.Querier
 	TelemetryStore telemetrystore.TelemetryStore
+	logger         *slog.Logger
 }
 
 // NewModule constructs the services module with the provided querier dependency.
-func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore) services.Module {
+func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore, settings factory.ProviderSettings) services.Module {
 	return &module{
 		Querier:        q,
 		TelemetryStore: ts,
+		logger:         factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/services/implservices").Logger(),
 	}
 }
 
@@ -220,6 +224,9 @@ func (m *module) buildQueryRangeRequest(req *servicetypesv1.Request) (*qbtypes.Q
 
 // executeQuery calls the underlying Querier with the provided request.
 func (m *module) executeQuery(ctx context.Context, orgUUID valuer.UUID, qr *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
+	if err := m.Querier.ValidateRequest(qr); err != nil {
+		m.logger.WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 	return m.Querier.QueryRange(ctx, orgUUID, qr)
 }
 

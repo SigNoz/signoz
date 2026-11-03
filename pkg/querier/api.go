@@ -59,7 +59,7 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// Validate the query request
-	if err := queryRangeRequest.Validate(); err != nil {
+	if err := handler.querier.ValidateRequest(&queryRangeRequest); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -188,7 +188,7 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 	}
 
 	// Validate the query request
-	if err := queryRangeRequest.Validate(); err != nil {
+	if err := handler.querier.ValidateRequest(&queryRangeRequest); err != nil {
 		render.Error(rw, err)
 		return
 	}

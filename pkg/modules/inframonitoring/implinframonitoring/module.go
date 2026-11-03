@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
@@ -222,6 +223,9 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 
 	g.Go(func() error {
 		var err error
+		if err := m.querier.ValidateRequest(fullQueryReq); err != nil {
+			m.logger.WarnContext(gCtx, "invalid query range request", errors.Attr(err))
+		}
 		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
 		return err
 	})
@@ -325,6 +329,9 @@ func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframoni
 
 	g.Go(func() error {
 		var err error
+		if err := m.querier.ValidateRequest(fullQueryReq); err != nil {
+			m.logger.WarnContext(gCtx, "invalid query range request", errors.Attr(err))
+		}
 		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
 		return err
 	})
@@ -436,6 +443,9 @@ func (m *module) ListContainers(ctx context.Context, orgID valuer.UUID, req *inf
 
 	g.Go(func() error {
 		var err error
+		if err := m.querier.ValidateRequest(fullQueryReq); err != nil {
+			m.logger.WarnContext(gCtx, "invalid query range request", errors.Attr(err))
+		}
 		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
 		return err
 	})
@@ -552,6 +562,9 @@ func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframon
 
 	g.Go(func() error {
 		var err error
+		if err := m.querier.ValidateRequest(fullQueryReq); err != nil {
+			m.logger.WarnContext(gCtx, "invalid query range request", errors.Attr(err))
+		}
 		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
 		return err
 	})
@@ -666,6 +679,9 @@ func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inf
 
 	g.Go(func() error {
 		var err error
+		if err := m.querier.ValidateRequest(fullQueryReq); err != nil {
+			m.logger.WarnContext(gCtx, "invalid query range request", errors.Attr(err))
+		}
 		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
 		return err
 	})
@@ -778,6 +794,9 @@ func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *infra
 
 	g.Go(func() error {
 		var err error
+		if err := m.querier.ValidateRequest(fullQueryReq); err != nil {
+			m.logger.WarnContext(gCtx, "invalid query range request", errors.Attr(err))
+		}
 		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
 		return err
 	})
@@ -877,6 +896,9 @@ func (m *module) ListVolumes(ctx context.Context, orgID valuer.UUID, req *infram
 	}
 
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newVolumesTableListQuery())
+	if err := m.querier.ValidateRequest(fullQueryReq); err != nil {
+		m.logger.WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
 	if err != nil {
 		return nil, err
@@ -974,6 +996,9 @@ func (m *module) ListDeployments(ctx context.Context, orgID valuer.UUID, req *in
 
 	g.Go(func() error {
 		var err error
+		if err := m.querier.ValidateRequest(fullQueryReq); err != nil {
+			m.logger.WarnContext(gCtx, "invalid query range request", errors.Attr(err))
+		}
 		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
 		return err
 	})
@@ -1083,6 +1108,9 @@ func (m *module) ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *i
 
 	g.Go(func() error {
 		var err error
+		if err := m.querier.ValidateRequest(fullQueryReq); err != nil {
+			m.logger.WarnContext(gCtx, "invalid query range request", errors.Attr(err))
+		}
 		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
 		return err
 	})
@@ -1192,6 +1220,9 @@ func (m *module) ListJobs(ctx context.Context, orgID valuer.UUID, req *inframoni
 
 	g.Go(func() error {
 		var err error
+		if err := m.querier.ValidateRequest(fullQueryReq); err != nil {
+			m.logger.WarnContext(gCtx, "invalid query range request", errors.Attr(err))
+		}
 		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
 		return err
 	})
@@ -1301,6 +1332,9 @@ func (m *module) ListDaemonSets(ctx context.Context, orgID valuer.UUID, req *inf
 
 	g.Go(func() error {
 		var err error
+		if err := m.querier.ValidateRequest(fullQueryReq); err != nil {
+			m.logger.WarnContext(gCtx, "invalid query range request", errors.Attr(err))
+		}
 		queryResp, err = m.querier.QueryRange(gCtx, orgID, fullQueryReq)
 		return err
 	})

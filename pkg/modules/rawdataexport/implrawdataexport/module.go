@@ -2,8 +2,10 @@ package implrawdataexport
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -14,11 +16,13 @@ import (
 
 type Module struct {
 	querier querier.Querier
+	logger  *slog.Logger
 }
 
-func NewModule(querier querier.Querier) rawdataexport.Module {
+func NewModule(querier querier.Querier, settings factory.ProviderSettings) rawdataexport.Module {
 	return &Module{
 		querier: querier,
+		logger:  factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport").Logger(),
 	}
 }
 
@@ -27,6 +31,10 @@ func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequ
 		instrumentationtypes.CodeNamespace:    "rawdataexport",
 		instrumentationtypes.CodeFunctionName: "ExportRawData",
 	})
+
+	if err := m.querier.ValidateRequest(rangeRequest, qbtypes.WithSkipLimitOffsetValidation()); err != nil {
+		m.logger.WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 
 	traceOperatorQueryIndex := rangeRequest.TraceOperatorQueryIndex()
 
