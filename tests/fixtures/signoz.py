@@ -58,23 +58,24 @@ def create_signoz(
 
         # The docker CLI is required: the Dockerfiles use BuildKit cache
         # mounts, which docker-py does not support.
-        subprocess.run(
-            [
-                "docker",
-                "build",
-                "--file",
-                str(context / dockerfile_path),
-                "--tag",
-                "signoz:integration",
-                "--build-arg",
-                f"TARGETARCH={arch}",
-                "--build-arg",
-                f"ZEUSURL={zeus.container_configs['8080'].base()}",
-                str(context),
-            ],
-            check=True,
-            env=os.environ | {"DOCKER_BUILDKIT": "1"},
-        )
+        if not pytestconfig.getoption("--prebuilt-signoz"):
+            subprocess.run(
+                [
+                    "docker",
+                    "build",
+                    "--file",
+                    str(context / dockerfile_path),
+                    "--tag",
+                    "signoz:integration",
+                    "--build-arg",
+                    f"TARGETARCH={arch}",
+                    "--build-arg",
+                    f"ZEUSURL={zeus.container_configs['8080'].base()}",
+                    str(context),
+                ],
+                check=True,
+                env=os.environ | {"DOCKER_BUILDKIT": "1"},
+            )
 
         env = (
             {
