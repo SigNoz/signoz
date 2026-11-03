@@ -4,7 +4,7 @@
  */
 import type { Request } from '@playwright/test';
 
-import { isQueryRange } from '../../helpers/query-range-mock';
+import { isQueryRange } from '../query-range-mock';
 
 interface QueryEnvelope {
 	type: string;

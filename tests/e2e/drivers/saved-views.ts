@@ -10,9 +10,9 @@ import {
 	type Response,
 } from '@playwright/test';
 
-import { BASE_PATH } from '../helpers/base-path';
-import { collectRequests } from '../helpers/common';
-import { dismissQuickFiltersAnnouncement } from '../helpers/quick-filters';
+import { BASE_PATH } from './base-path';
+import { collectRequests } from './console';
+import { dismissQuickFiltersAnnouncement } from './logs/explorer';
 import {
 	filterExpressions,
 	isQueryRangeRequest,

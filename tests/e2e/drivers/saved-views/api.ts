@@ -4,7 +4,7 @@
  */
 import type { Page } from '@playwright/test';
 
-import { authToken } from '../../helpers/common';
+import { authToken } from '../api';
 import { SAVED_VIEWS_API } from './spec';
 import type { GettableSavedView, PostableSavedView } from './spec.types';
 
