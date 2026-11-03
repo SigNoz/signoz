@@ -5,7 +5,7 @@ import React, {
 	useMemo,
 	useState,
 } from 'react';
-import { useHistory } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
 import { Plus, Search } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
@@ -60,7 +60,6 @@ export function PlannedDowntime(): JSX.Element {
 	const [form] = Form.useForm();
 	const { user } = useAppContext();
 	const { showErrorModal } = useErrorModal();
-	const history = useHistory();
 	const urlQuery = useUrlQuery();
 
 	const [initialValues, setInitialValues] =
@@ -98,7 +97,7 @@ export function PlannedDowntime(): JSX.Element {
 			urlQuery.delete('search');
 		}
 		const url = `/alerts?${urlQuery.toString()}`;
-		history.replace(url);
+		navigate(url, { replace: true });
 	}, 300);
 
 	const {

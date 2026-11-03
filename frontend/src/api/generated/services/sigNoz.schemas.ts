@@ -13720,6 +13720,23 @@ export type SpantypesFlamegraphSpanDTOAttributes = { [key: string]: unknown };
 
 export type SpantypesFlamegraphSpanDTOResource = { [key: string]: string };
 
+export type SpantypesScopeDTOAttributes = { [key: string]: unknown };
+
+export interface SpantypesScopeDTO {
+	/**
+	 * @type object
+	 */
+	attributes?: SpantypesScopeDTOAttributes;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	version?: string;
+}
+
 export interface SpantypesFlamegraphSpanDTO {
 	/**
 	 * @type object
@@ -13755,6 +13772,7 @@ export interface SpantypesFlamegraphSpanDTO {
 	 * @type object
 	 */
 	resource: SpantypesFlamegraphSpanDTOResource;
+	scope: SpantypesScopeDTO;
 	/**
 	 * @type string
 	 */
@@ -14300,6 +14318,7 @@ export interface SpantypesWaterfallSpanDTO {
 	 * @type string
 	 */
 	response_status_code?: string;
+	scope?: SpantypesScopeDTO;
 	/**
 	 * @type string
 	 */

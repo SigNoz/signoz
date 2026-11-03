@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useSearchParams } from 'react-router-dom-v5-compat';
+import { useAppSearchParams } from 'lib/router/useAppSearchParams';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
@@ -73,14 +73,14 @@ function TracesExplorer(): JSX.Element {
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		dataSource: DataSource.TRACES,
+		sourcePage: SavedviewtypesSourceDTO.traces,
 		aggregateOperator: 'noop',
 		initialOptions: {
 			selectColumns: defaultSelectedColumns,
 		},
 	});
 
-	const [searchParams] = useSearchParams();
+	const [searchParams] = useAppSearchParams();
 	const queryClient = useQueryClient();
 	const listQueryKeyRef = useRef<any>();
 

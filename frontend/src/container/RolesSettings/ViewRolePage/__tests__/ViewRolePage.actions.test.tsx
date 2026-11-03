@@ -1,7 +1,8 @@
-import { Route, Switch } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import * as roleApi from 'api/generated/services/role';
+import ROUTES from 'constants/routes';
 import { render, screen, waitFor, within } from 'tests/test-utils';
+import { getCurrentLocation } from 'lib/router/navigation';
 
 import ViewRolePage from '../ViewRolePage';
 
@@ -24,42 +25,24 @@ describe('ViewRolePage - Actions', () => {
 	it('navigates to roles list when Cancel clicked', async () => {
 		const user = userEvent.setup();
 
-		render(
-			<Switch>
-				<Route path="/settings/roles/:roleId">
-					<ViewRolePage />
-				</Route>
-				<Route path="/settings/roles">
-					<div data-testid="roles-list-target" />
-				</Route>
-			</Switch>,
-			undefined,
-			{ initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME) },
-		);
+		render(<ViewRolePage />, undefined, {
+			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+		});
 
 		const cancelBtn = await screen.findByTestId('cancel-button');
 		await user.click(cancelBtn);
 
-		await expect(
-			screen.findByTestId('roles-list-target'),
-		).resolves.toBeInTheDocument();
+		await waitFor(() => {
+			expect(getCurrentLocation().pathname).toBe(ROUTES.ROLES_SETTINGS);
+		});
 	});
 
 	it('navigates to edit page when Update clicked', async () => {
 		const user = userEvent.setup();
 
-		render(
-			<Switch>
-				<Route path="/settings/roles/:roleId/edit">
-					<div data-testid="edit-page-target" />
-				</Route>
-				<Route path="/settings/roles/:roleId">
-					<ViewRolePage />
-				</Route>
-			</Switch>,
-			undefined,
-			{ initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME) },
-		);
+		render(<ViewRolePage />, undefined, {
+			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+		});
 
 		const updateBtn = await screen.findByTestId('save-button');
 		await waitFor(() => {
@@ -67,9 +50,12 @@ describe('ViewRolePage - Actions', () => {
 		});
 		await user.click(updateBtn);
 
-		await expect(
-			screen.findByTestId('edit-page-target'),
-		).resolves.toBeInTheDocument();
+		await waitFor(() => {
+			const { pathname, search } = getCurrentLocation();
+			expect(`${pathname}${search}`).toBe(
+				`${ROUTES.ROLE_EDIT.replace(':roleId', CUSTOM_ROLE_ID)}?name=${CUSTOM_ROLE_NAME}`,
+			);
+		});
 	});
 
 	it('opens delete modal when Delete clicked', async () => {
@@ -98,18 +84,9 @@ describe('ViewRolePage - Actions', () => {
 			mutateAsync: mockDeleteRole,
 		} as unknown as ReturnType<typeof roleApi.useDeleteRole>);
 
-		render(
-			<Switch>
-				<Route path="/settings/roles/:roleId">
-					<ViewRolePage />
-				</Route>
-				<Route path="/settings/roles">
-					<div data-testid="roles-list-target" />
-				</Route>
-			</Switch>,
-			undefined,
-			{ initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME) },
-		);
+		render(<ViewRolePage />, undefined, {
+			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+		});
 
 		const deleteBtn = await screen.findByTestId('delete-button');
 		await waitFor(() => {
@@ -133,8 +110,8 @@ describe('ViewRolePage - Actions', () => {
 			});
 		});
 
-		await expect(
-			screen.findByTestId('roles-list-target'),
-		).resolves.toBeInTheDocument();
+		await waitFor(() => {
+			expect(getCurrentLocation().pathname).toBe(ROUTES.ROLES_SETTINGS);
+		});
 	});
 });

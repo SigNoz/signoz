@@ -1,6 +1,5 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider, useSelector } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
@@ -8,6 +7,7 @@ import { rest } from 'msw';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 
 import '@testing-library/jest-dom';
 
@@ -55,9 +55,9 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	},
 } as any);
 
-function Exceptions({ initUrl }: { initUrl?: string[] }): JSX.Element {
+function Exceptions({ initUrl }: { initUrl?: string }): JSX.Element {
 	return (
-		<MemoryRouter initialEntries={initUrl ?? ['/exceptions']}>
+		<TestRouter initialRoute={initUrl ?? '/exceptions'}>
 			<TimezoneProvider>
 				<Provider store={store}>
 					<MockQueryClientProvider>
@@ -65,12 +65,12 @@ function Exceptions({ initUrl }: { initUrl?: string[] }): JSX.Element {
 					</MockQueryClientProvider>
 				</Provider>
 			</TimezoneProvider>
-		</MemoryRouter>
+		</TestRouter>
 	);
 }
 
 Exceptions.defaultProps = {
-	initUrl: ['/exceptions'],
+	initUrl: '/exceptions',
 };
 
 const BASE_URL = ENVIRONMENT.baseURL;
@@ -130,7 +130,7 @@ describe('Exceptions - All Errors', () => {
 	});
 
 	it('should call useQueries with exact composite query object', async () => {
-		render(<Exceptions initUrl={[INIT_URL_WITH_COMMON_QUERY]} />);
+		render(<Exceptions initUrl={INIT_URL_WITH_COMMON_QUERY} />);
 		await screen.findByText(/redis timeout/i);
 		expect(postListErrorsSpy).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -143,11 +143,7 @@ describe('Exceptions - All Errors', () => {
 		it('should navigate to page 2 when pageSize=100 and clicking next', async () => {
 			// Arrange: start with pageSize=100 and offset=0
 			render(
-				<Exceptions
-					initUrl={[
-						`/exceptions?pageSize=100&offset=0&order=ascending&orderParam=serviceName`,
-					]}
-				/>,
+				<Exceptions initUrl="/exceptions?pageSize=100&offset=0&order=ascending&orderParam=serviceName" />,
 			);
 
 			// Wait for initial load
@@ -171,11 +167,7 @@ describe('Exceptions - All Errors', () => {
 		it('initializes current page from URL (offset/pageSize)', async () => {
 			// offset=100, pageSize=100 => current page should be 2
 			render(
-				<Exceptions
-					initUrl={[
-						`/exceptions?pageSize=100&offset=100&order=ascending&orderParam=serviceName`,
-					]}
-				/>,
+				<Exceptions initUrl="/exceptions?pageSize=100&offset=100&order=ascending&orderParam=serviceName" />,
 			);
 			await screen.findByText(/redis timeout/i);
 			const activeItem = document.querySelector('.ant-pagination-item-active');
@@ -188,11 +180,7 @@ describe('Exceptions - All Errors', () => {
 		it('clicking a numbered page updates offset correctly', async () => {
 			// pageSize=100, click page 3 => offset = 200
 			render(
-				<Exceptions
-					initUrl={[
-						`/exceptions?pageSize=100&offset=0&order=ascending&orderParam=serviceName`,
-					]}
-				/>,
+				<Exceptions initUrl="/exceptions?pageSize=100&offset=0&order=ascending&orderParam=serviceName" />,
 			);
 			await screen.findByText(/redis timeout/i);
 			const page3Item = screen.getByTitle('3');
