@@ -17,7 +17,7 @@ import { useTimezone } from 'providers/Timezone';
 // interfaces
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
-import { coerceToString } from 'utils/stringUtils';
+import { coerceToString, isScalarFieldValue } from 'utils/stringUtils';
 
 // components
 import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
@@ -36,7 +36,8 @@ interface LogFieldProps {
 	fontSize: FontSize;
 }
 
-type LogSelectedFieldProps = Omit<LogFieldProps, 'linesPerRow'> &
+type LogSelectedFieldProps = Omit<LogFieldProps, 'linesPerRow' | 'fieldValue'> &
+	Pick<AddToQueryHOCProps, 'fieldValue'> &
 	Partial<Pick<AddToQueryHOCProps, 'onAddToQuery'>>;
 
 function LogGeneralField({
@@ -102,7 +103,7 @@ function LogSelectedField({
 			<Typography.Text truncate={1} className={cx('selected-log-kv', fontSize)}>
 				<span className={cx('selected-log-field-key', fontSize)}>{': '}</span>
 				<span className={cx('selected-log-value', fontSize)}>
-					{fieldValue || "''"}
+					{coerceToString(fieldValue) || "''"}
 				</span>
 			</Typography.Text>
 		</div>
@@ -234,13 +235,13 @@ function ListLogView({
 									if (value == null) {
 										return null;
 									}
-									const isObjectValue = typeof value === 'object' && value !== null;
+									const queryValue = isScalarFieldValue(value) ? value : undefined;
 									return (
 										<LogSelectedField
 											key={field.name}
 											fieldKey={field.name}
-											fieldValue={coerceToString(value)}
-											onAddToQuery={isObjectValue ? undefined : onAddToQuery}
+											fieldValue={queryValue ?? coerceToString(value)}
+											onAddToQuery={queryValue === undefined ? undefined : onAddToQuery}
 											fontSize={fontSize}
 										/>
 									);
