@@ -103,7 +103,7 @@
   "placeholder_slack_description": "Description",
   "placeholder_pager_description": "Description",
   "help_pager_client": "Shows up as event source in Pagerduty",
-  "help_pager_client_url": "Shows up as event source link in Pagerduty",
+  "help_pager_client_url": "Shows up as event source link in Pagerduty. Leave empty to link to this SigNoz instance",
   "help_pager_class": "The class/type of the event",
   "help_pager_details": "Specify a key-value format (must be a valid json)",
   "help_pager_group": "A cluster or grouping of sources",

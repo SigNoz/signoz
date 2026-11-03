@@ -33,16 +33,13 @@ test.describe('Routing — unsaved-changes navigation blocker', () => {
 		await expect(roles.discardDialog()).toBeVisible();
 
 		// Cancel drops the blocked transition rather than retrying it.
-		await roles
-			.discardDialog()
-			.getByRole('button', { name: 'Keep editing' })
-			.click();
+		await roles.discardDialogButton('Keep editing').click();
 		await expect(roles.discardDialog()).toBeHidden();
 		expect(routing.url().pathname).toBe(PATH.roleCreate);
 		await expect(roles.nameInput()).toHaveValue(BLOCKED_ROLE_NAME);
 
 		await roles.cancel();
-		await roles.discardDialog().getByRole('button', { name: 'Discard' }).click();
+		await roles.discardDialogButton('Discard').click();
 		await routing.waitForPath(PATH.roles);
 	});
 

@@ -486,4 +486,66 @@ describe('ChannelForm save', () => {
 		},
 		TEST_TIMEOUT,
 	);
+
+	it(
+		"drops the previous type's templates when switching type",
+		async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				rest.post(
+					'http://localhost/api/v2/notification_channels',
+					async (req, res, ctx) => {
+						body = await req.json();
+						return res(ctx.status(201), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
+			await user.click(await screen.findByRole('option', { name: /^Telegram$/ }));
+
+			expect(screen.getByTestId('telegram-title-textarea')).toHaveValue('');
+
+			await user.type(
+				screen.getByTestId('channel-name-textbox'),
+				'telegram alerts',
+			);
+			await user.type(screen.getByTestId('telegram-bot-token-textbox'), '123:abc');
+			await user.type(screen.getByTestId('telegram-chat-id-textbox'), '-100123');
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await waitFor(() => expect(body).toBeDefined(), FIND);
+			expect(
+				(body as { config: { spec: Record<string, unknown> } }).config.spec,
+			).toStrictEqual({
+				botToken: '123:abc',
+				chatId: -100123,
+				sendResolved: true,
+			});
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
+		'leaves the pagerduty client url empty so the backend links to this instance',
+		async () => {
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
+			await user.click(await screen.findByRole('option', { name: /^Pagerduty$/ }));
+
+			expect(screen.getByTestId('pager-client-url-textarea')).toHaveValue('');
+		},
+		TEST_TIMEOUT,
+	);
 });

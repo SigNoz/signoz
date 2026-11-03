@@ -1,9 +1,10 @@
-import { test, expect } from '../../fixtures/auth';
 import {
-	gotoTraceUntilLoaded,
+	expect,
 	loadLargeTrace,
 	seedTracesViaSeeder,
-} from '../../helpers/trace-details';
+	test,
+	TRACE_PREFERENCE,
+} from '../../drivers/traces';
 
 // One shared trace for the whole file, seeded once. Unique ids per run keep this
 // isolated from other parallel specs; the global teardown clears the traces signal.
@@ -18,10 +19,9 @@ test.describe('Trace details — span details drawer', () => {
 		await request.dispose();
 	});
 
-	test.beforeEach(async ({ authedPage: page }) => {
+	test.beforeEach(async ({ traces }) => {
 		// open the trace, reloading until the waterfall renders (seed→query lag)
-		await gotoTraceUntilLoaded(
-			page,
+		await traces.goto(
 			`/trace/${trace.traceId}`,
 			`cell-0-${trace.landmarks.root}`,
 		);
@@ -29,11 +29,12 @@ test.describe('Trace details — span details drawer', () => {
 
 	test('TC-01 the floating drawer can be dragged', async ({
 		authedPage: page,
+		traces,
 	}) => {
-		await page.getByTestId(`cell-0-${trace.landmarks.root}`).click();
-		await page.getByTestId('dock-mode-dialog').click();
+		await traces.span.open(trace.landmarks.root);
+		await traces.span.dock('dialog');
 
-		const handle = page.locator('.floating-panel__drag-handle');
+		const handle = traces.span.dragHandle();
 		await expect(handle).toBeVisible();
 
 		const zero = { x: 0, y: 0, width: 0, height: 0 };
@@ -53,17 +54,49 @@ test.describe('Trace details — span details drawer', () => {
 
 	test('TC-02 a dock-mode change persists and is restored on reload', async ({
 		authedPage: page,
+		traces,
 	}) => {
 		// §0 prefs-boot, UI-first: switch to floating via the dock-mode UI (which
 		// persists the variant), then reload and confirm it's restored — the drawer
 		// boots floating, not the docked-right default.
-		await page.getByTestId(`cell-0-${trace.landmarks.root}`).click();
-		await page.getByTestId('dock-mode-dialog').click();
-		await expect(page.locator('.floating-panel__drag-handle')).toBeVisible();
+		await traces.span.open(trace.landmarks.root);
+		await traces.span.dock('dialog');
+		await expect(traces.span.dragHandle()).toBeVisible();
 
 		await page.reload();
-		await page.getByTestId(`cell-0-${trace.landmarks.root}`).click();
+		await traces.span.open(trace.landmarks.root);
 
-		await expect(page.locator('.floating-panel__drag-handle')).toBeVisible();
+		await expect(traces.span.dragHandle()).toBeVisible();
+	});
+
+	// Pins a leaf value: pinning an object node is a known, separately tracked
+	// regression in the PrettyView nested-node menu.
+	test('TC-03 a leaf attribute pinned from the docked panel moves into a pinned section', async ({
+		traces,
+	}) => {
+		test.setTimeout(60_000);
+		try {
+			await traces.span.open(trace.landmarks.db);
+			await traces.span.dock('docked');
+			await expect(traces.span.dockOption('docked')).toHaveAttribute(
+				'aria-pressed',
+				'true',
+			);
+
+			await traces.span.openFieldMenu('db.system');
+			await traces.span.menuItem('Pin field').click();
+
+			await expect(traces.span.panelTitle()).toBeVisible();
+			await expect(traces.span.pinnedSection()).toBeVisible();
+			await expect(traces.span.pinnedField('attributes.db.system')).toBeVisible();
+
+			await traces.span.openPinnedFieldMenu('attributes.db.system');
+			await traces.span.menuItem('Unpin field').click();
+
+			await expect(traces.span.pinnedSection()).toHaveCount(0);
+			await expect(traces.span.panelTitle()).toBeVisible();
+		} finally {
+			await traces.prefs.set(TRACE_PREFERENCE.PINNED_ATTRIBUTES, []);
+		}
 	});
 });
