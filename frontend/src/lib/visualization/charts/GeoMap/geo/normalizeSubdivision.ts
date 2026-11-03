@@ -36,5 +36,6 @@ export function normalizeSubdivision(
 			return code;
 		}
 	}
-	return set.names[value.toLowerCase()] ?? null;
+	const name = value.toLowerCase();
+	return Object.hasOwn(set.names, name) ? set.names[name] : null;
 }
