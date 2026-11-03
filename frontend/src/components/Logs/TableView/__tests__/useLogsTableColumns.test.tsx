@@ -1,17 +1,20 @@
-import { render, renderHook, screen } from '@testing-library/react';
 import { FontSize } from 'container/OptionsMenu/types';
+import { render, renderHook, screen } from 'tests/test-utils';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
 import { useLogsTableColumns } from '../useLogsTableColumns';
 
 jest.mock('providers/Timezone', () => ({
+	__esModule: true,
+	...jest.requireActual('providers/Timezone'),
 	useTimezone: (): { formatTimezoneAdjustedTimestamp: jest.Mock } => ({
 		formatTimezoneAdjustedTimestamp: jest.fn(() => 'TS'),
 	}),
 }));
 
 jest.mock('providers/App/App', () => ({
+	...jest.requireActual('providers/App/App'),
 	useAppContext: (): { featureFlags: [] } => ({ featureFlags: [] }),
 }));
 
