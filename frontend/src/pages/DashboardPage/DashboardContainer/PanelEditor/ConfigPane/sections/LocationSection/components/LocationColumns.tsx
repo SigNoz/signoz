@@ -11,12 +11,15 @@ interface LocationColumnsProps {
 	onChange: (patch: Partial<Record<LocationField, string>>) => void;
 }
 
-const SINGLE: Record<
-	'country' | 'state',
-	{ field: LocationField; label: string; noun: string }
-> = {
-	country: { field: 'country', label: 'Country column', noun: 'country' },
-	state: { field: 'region', label: 'State column', noun: 'state' },
+type ColumnField = { field: LocationField; label: string; noun: string };
+
+const FIELDS: Record<RowKind, ColumnField[]> = {
+	country: [{ field: 'country', label: 'Country column', noun: 'country' }],
+	state: [{ field: 'region', label: 'State column', noun: 'state' }],
+	point: [
+		{ field: 'lat', label: 'Latitude', noun: 'latitude' },
+		{ field: 'lon', label: 'Longitude', noun: 'longitude' },
+	],
 };
 
 /** The column (or lat/lon pair) each row is read from. */
@@ -27,31 +30,20 @@ function LocationColumns({
 	autoColumn,
 	onChange,
 }: LocationColumnsProps): JSX.Element {
-	const field = (
-		name: LocationField,
-		label: string,
-		noun: string,
-	): JSX.Element => (
-		<LocationColumnField
-			key={name}
-			testId={`panel-editor-v2-geo-location-${name}`}
-			label={label}
-			noun={noun}
-			value={location?.[name]}
-			autoColumn={autoColumn(name)}
-			groupColumns={groupColumns}
-			onChange={(column): void => onChange({ [name]: column })}
-		/>
-	);
-
-	if (kind !== 'point') {
-		const { field: name, label, noun } = SINGLE[kind];
-		return field(name, label, noun);
-	}
 	return (
 		<>
-			{field('lat', 'Latitude', 'latitude')}
-			{field('lon', 'Longitude', 'longitude')}
+			{FIELDS[kind].map(({ field, label, noun }) => (
+				<LocationColumnField
+					key={field}
+					testId={`panel-editor-v2-geo-location-${field}`}
+					label={label}
+					noun={noun}
+					value={location?.[field]}
+					autoColumn={autoColumn(field)}
+					groupColumns={groupColumns}
+					onChange={(column): void => onChange({ [field]: column })}
+				/>
+			))}
 		</>
 	);
 }
