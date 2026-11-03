@@ -98,15 +98,12 @@ test.describe('Cloud integrations', () => {
 			await aws.aws.toggleRegion('us-east-1');
 			await aws.aws.fillMissingCredentials();
 
-			const launched = await aws.aws.launch();
-			accountId = launched.accountId;
-			expect(launched.body.config?.aws?.regions).toEqual(['us-east-1']);
-			expect(launched.connectionUrl).toContain(
-				'console.aws.amazon.com/cloudformation',
-			);
-			expect(launched.connectionUrl).toContain(
-				`param_SigNozAccountId=${accountId}`,
-			);
+			const generated = await aws.aws.generateCommand();
+			accountId = generated.accountId;
+			expect(generated.body.config?.aws?.regions).toEqual(['us-east-1']);
+			expect(generated.command).toContain('cloudintegration aws cloudformation');
+			expect(generated.command).toContain(accountId);
+			await expect(aws.aws.agentCommand()).toContainText(accountId);
 			await expect(aws.waitingCallout()).toBeVisible();
 
 			await aws.checkIn(accountId, providerAccountId);
