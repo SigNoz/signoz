@@ -107,7 +107,9 @@ test.describe('Query builder — add-ons', () => {
 		expect(qb.spec(await qb.run(), 'A')).not.toHaveProperty('limit');
 	});
 
-	test('TC-24 a negative limit means no limit', async ({ qb }) => {
+	test('TC-24 a limit input drops the sign of a negative number', async ({
+		qb,
+	}) => {
 		await qb.openExplorer(EXPLORER.logs, { view: 'graph' });
 		const addOns = qb.query('A').addOns;
 		await addOns.open('group_by');
@@ -117,9 +119,8 @@ test.describe('Query builder — add-ons', () => {
 		expect(qb.spec(await qb.run(), 'A').limit).toBe(10);
 
 		await addOns.limit().fill('-5');
-		const fired = await qb.run();
-
-		expect(qb.spec(fired, 'A')).not.toHaveProperty('limit');
+		await expect(addOns.limit()).toHaveValue('5');
+		expect(qb.spec(await qb.run(), 'A').limit).toBe(5);
 		expect(qb.console.failedResponses).toEqual([]);
 	});
 
