@@ -90,6 +90,13 @@ var unsupportedQuickFilterNames = map[string]struct{}{
 	"signoz.gen_ai.usage.tokens.cost":                   {},
 }
 
+type unsupportedQuickFilterRow struct {
+	bun.BaseModel `bun:"table:quick_filter"`
+
+	ID     string `bun:"id,pk"`
+	Filter string `bun:"filter"`
+}
+
 type removeUnsupportedQuickFilters struct {
 	settings factory.ProviderSettings
 }
@@ -111,7 +118,7 @@ func (migration *removeUnsupportedQuickFilters) Up(ctx context.Context, db *bun.
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	var rows []*quickFilterSourceRow
+	var rows []*unsupportedQuickFilterRow
 	if err := tx.NewSelect().Model(&rows).Scan(ctx); err != nil {
 		return err
 	}
@@ -129,7 +136,7 @@ func (migration *removeUnsupportedQuickFilters) Up(ctx context.Context, db *bun.
 		}
 
 		migrated++
-		if _, err := tx.NewUpdate().Model((*quickFilterSourceRow)(nil)).Set("filter = ?", filtered).Where("id = ?", row.ID).Exec(ctx); err != nil {
+		if _, err := tx.NewUpdate().Model((*unsupportedQuickFilterRow)(nil)).Set("filter = ?", filtered).Where("id = ?", row.ID).Exec(ctx); err != nil {
 			return err
 		}
 	}
