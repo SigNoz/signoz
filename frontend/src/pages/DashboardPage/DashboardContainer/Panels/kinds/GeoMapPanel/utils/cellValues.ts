@@ -13,9 +13,14 @@ export function toFiniteNumber(value: unknown): number | null {
 	return null;
 }
 
-/** A group value as text; anything but a string or number is empty. */
-export function toText(value: unknown): string {
+/** A group value exactly as sent, for filters; anything but a string or number is empty. */
+export function toRawText(value: unknown): string {
 	return typeof value === 'string' || typeof value === 'number'
-		? String(value).trim()
+		? String(value)
 		: '';
+}
+
+/** A group value as text, trimmed for placing and labelling. */
+export function toText(value: unknown): string {
+	return toRawText(value).trim();
 }

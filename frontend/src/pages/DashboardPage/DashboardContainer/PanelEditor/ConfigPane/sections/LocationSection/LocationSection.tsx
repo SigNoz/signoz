@@ -78,7 +78,7 @@ function LocationSection({
 	const setLocation = (patch: Partial<DashboardtypesGeoMapLocationDTO>): void =>
 		onChange({ ...value, location: patchLocation(value?.location, patch) });
 	const setMap = (patch: Partial<DashboardtypesGeoMapSettingsDTO>): void =>
-		onChange({ ...value, map: patchMap(value?.map, patch) });
+		onChange({ ...value, map: patchMap(value?.map, { layer, ...patch }) });
 	const missingCoordinates = (['lat', 'lon'] as const).filter(
 		(field) => !(value?.location?.[field] || autoColumn(field)),
 	);
