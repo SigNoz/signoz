@@ -71,6 +71,9 @@ const (
 	MaxNumBuckets = 512
 )
 
+// DefaultMaxEndTimeAhead tolerates client clock skew; an end time further ahead is a malformed timestamp.
+const DefaultMaxEndTimeAhead = 24 * time.Hour
+
 // ValidationOption is a functional option for configuring validation behaviour.
 type ValidationOption func(*validationConfig)
 
@@ -83,6 +86,7 @@ type validationConfig struct {
 	skipGroupByValidation          bool
 	withTimestampGroupByValidation bool
 	withReduceToValidation         bool
+	maxEndTimeAhead                time.Duration
 }
 
 func applyValidationOptions(opts []ValidationOption) validationConfig {
@@ -154,6 +158,13 @@ func WithTimestampGroupByValidation() ValidationOption {
 func WithReduceToValidation() ValidationOption {
 	return func(cfg *validationConfig) {
 		cfg.withReduceToValidation = true
+	}
+}
+
+// WithMaxEndTimeAhead sets how far past now a request's end time may be.
+func WithMaxEndTimeAhead(d time.Duration) ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.maxEndTimeAhead = d
 	}
 }
 
@@ -575,7 +586,7 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 
 // Validate validates the entire query range request.
 func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
-	if err := r.validateTimeRange(); err != nil {
+	if err := r.ValidateTimeRange(opts...); err != nil {
 		return err
 	}
 
@@ -627,15 +638,14 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 // specs) and returns the request type's ValidationOptions. The dry-run path uses
 // this so per-query errors can be attributed individually via QueryEnvelope.Validate
 // instead of failing fast like Validate does.
-func (r *QueryRangeRequest) ValidateRequestScope() ([]ValidationOption, error) {
-	if err := r.validateTimeRange(); err != nil {
+func (r *QueryRangeRequest) ValidateRequestScope(opts ...ValidationOption) ([]ValidationOption, error) {
+	if err := r.ValidateTimeRange(opts...); err != nil {
 		return nil, err
 	}
 
-	var opts []ValidationOption
 	switch r.RequestType {
 	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap:
-		opts = GetValidationOptions(r.RequestType)
+		opts = append(opts, GetValidationOptions(r.RequestType)...)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request type: %s", r.RequestType).
 			WithAdditional("Valid request types are: raw, timeseries, scalar, heatmap")
@@ -696,7 +706,9 @@ func (e QueryEnvelope) Validate(opts ...ValidationOption) error {
 	return validateQueryEnvelope(e, opts...)
 }
 
-func (r *QueryRangeRequest) validateTimeRange() error {
+// ValidateTimeRange checks only the request's time window.
+func (r *QueryRangeRequest) ValidateTimeRange(opts ...ValidationOption) error {
+	cfg := applyValidationOptions(opts)
 	if r.RequestType == RequestTypeRawStream {
 		return nil
 	}
@@ -706,11 +718,10 @@ func (r *QueryRangeRequest) validateTimeRange() error {
 	if r.Start >= r.End {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start time must be before end time")
 	}
-	return nil
-}
-
-// ValidateEndTimeAhead rejects an end time more than maxAhead past now.
-func (r *QueryRangeRequest) ValidateEndTimeAhead(maxAhead time.Duration) error {
+	maxAhead := cfg.maxEndTimeAhead
+	if maxAhead <= 0 {
+		maxAhead = DefaultMaxEndTimeAhead
+	}
 	if r.End > uint64(time.Now().Add(maxAhead).UnixMilli()) {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "end time %s is too far in the future", time.UnixMilli(int64(r.End)).UTC().Format(time.RFC3339))
 	}

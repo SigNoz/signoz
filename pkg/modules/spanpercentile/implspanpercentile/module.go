@@ -38,7 +38,7 @@ func (m *module) GetSpanPercentile(ctx context.Context, orgID valuer.UUID, req *
 		return nil, err
 	}
 
-	if err := queryRangeRequest.Validate(); err != nil {
+	if err := m.querier.ValidateRequest(queryRangeRequest); err != nil {
 		return nil, err
 	}
 

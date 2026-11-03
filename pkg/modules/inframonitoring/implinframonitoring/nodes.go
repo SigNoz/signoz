@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/clickhousesql"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
@@ -199,6 +200,9 @@ func (m *module) getTopNodeGroupsAndMetadata(
 	}
 
 	g.Go(func() error {
+		if err := m.querier.ValidateRequest(topReq); err != nil {
+			m.logger.WarnContext(gCtx, "invalid query range request", errors.Attr(err))
+		}
 		resp, err := m.querier.QueryRange(gCtx, orgID, topReq)
 		if err != nil {
 			return err

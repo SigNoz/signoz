@@ -138,6 +138,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		instrumentationtypes.CodeFunctionName: "buildAndRunQuery",
 	})
 
+	if err := r.querier.ValidateRequest(params); err != nil {
+		r.logger.WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 	v5Result, err := r.querier.QueryRange(ctx, orgID, params)
 	if err != nil {
 		return nil, err

@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
@@ -24,10 +26,12 @@ const unmappedModelsLookback = time.Hour
 type module struct {
 	store   llmpricingruletypes.Store
 	querier querier.Querier
+	logger  *slog.Logger
 }
 
-func NewModule(store llmpricingruletypes.Store, querier querier.Querier) llmpricingrule.Module {
-	return &module{store: store, querier: querier}
+func NewModule(store llmpricingruletypes.Store, querier querier.Querier, settings factory.ProviderSettings) llmpricingrule.Module {
+	logger := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule").Logger()
+	return &module{store: store, querier: querier, logger: logger}
 }
 
 func (module *module) List(ctx context.Context, orgID valuer.UUID, offset, limit int, search string, isOverride *bool) ([]*llmpricingruletypes.LLMPricingRule, int, error) {
@@ -201,6 +205,9 @@ func (module *module) discoverModels(ctx context.Context, orgID valuer.UUID) ([]
 		},
 	}
 
+	if err := module.querier.ValidateRequest(req); err != nil {
+		module.logger.WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 	resp, err := module.querier.QueryRange(ctx, orgID, req)
 	if err != nil {
 		return nil, err

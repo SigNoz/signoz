@@ -3718,6 +3718,9 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 		instrumentationtypes.CodeFunctionName: "getDomainList",
 	})
 	// Execute the query using the v5 querier
+	if err := aH.Signoz.Querier.ValidateRequest(queryRangeRequest); err != nil {
+		aH.logger.WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 	result, err := aH.Signoz.Querier.QueryRange(ctx, orgID, queryRangeRequest)
 	if err != nil {
 		aH.logger.ErrorContext(r.Context(), "query execution failed", errors.Attr(err))
@@ -3778,6 +3781,9 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		instrumentationtypes.CodeFunctionName: "getDomainInfo",
 	})
 	// Execute the query using the v5 querier
+	if err := aH.Signoz.Querier.ValidateRequest(queryRangeRequest); err != nil {
+		aH.logger.WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 	result, err := aH.Signoz.Querier.QueryRange(ctx, orgID, queryRangeRequest)
 	if err != nil {
 		aH.logger.ErrorContext(r.Context(), "query execution failed", errors.Attr(err))

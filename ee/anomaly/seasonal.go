@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"math"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
@@ -75,36 +76,54 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID
 	})
 	// TODO(srikanthccv): parallelize this?
 	p.logger.InfoContext(ctx, "fetching results for current period", slog.Any("anomaly_current_period_query", params.CurrentPeriodQuery))
+	if err := p.querier.ValidateRequest(&params.CurrentPeriodQuery); err != nil {
+		p.logger.WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 	currentPeriodResults, err := p.querier.QueryRange(ctx, orgID, &params.CurrentPeriodQuery)
 	if err != nil {
 		return nil, err
 	}
 
 	p.logger.InfoContext(ctx, "fetching results for past period", slog.Any("anomaly_past_period_query", params.PastPeriodQuery))
+	if err := p.querier.ValidateRequest(&params.PastPeriodQuery); err != nil {
+		p.logger.WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 	pastPeriodResults, err := p.querier.QueryRange(ctx, orgID, &params.PastPeriodQuery)
 	if err != nil {
 		return nil, err
 	}
 
 	p.logger.InfoContext(ctx, "fetching results for current season", slog.Any("anomaly_current_season_query", params.CurrentSeasonQuery))
+	if err := p.querier.ValidateRequest(&params.CurrentSeasonQuery); err != nil {
+		p.logger.WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 	currentSeasonResults, err := p.querier.QueryRange(ctx, orgID, &params.CurrentSeasonQuery)
 	if err != nil {
 		return nil, err
 	}
 
 	p.logger.InfoContext(ctx, "fetching results for past season", slog.Any("anomaly_past_season_query", params.PastSeasonQuery))
+	if err := p.querier.ValidateRequest(&params.PastSeasonQuery); err != nil {
+		p.logger.WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 	pastSeasonResults, err := p.querier.QueryRange(ctx, orgID, &params.PastSeasonQuery)
 	if err != nil {
 		return nil, err
 	}
 
 	p.logger.InfoContext(ctx, "fetching results for past 2 season", slog.Any("anomaly_past_2season_query", params.Past2SeasonQuery))
+	if err := p.querier.ValidateRequest(&params.Past2SeasonQuery); err != nil {
+		p.logger.WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 	past2SeasonResults, err := p.querier.QueryRange(ctx, orgID, &params.Past2SeasonQuery)
 	if err != nil {
 		return nil, err
 	}
 
 	p.logger.InfoContext(ctx, "fetching results for past 3 season", slog.Any("anomaly_past_3season_query", params.Past3SeasonQuery))
+	if err := p.querier.ValidateRequest(&params.Past3SeasonQuery); err != nil {
+		p.logger.WarnContext(ctx, "invalid query range request", errors.Attr(err))
+	}
 	past3SeasonResults, err := p.querier.QueryRange(ctx, orgID, &params.Past3SeasonQuery)
 	if err != nil {
 		return nil, err

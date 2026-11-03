@@ -50,9 +50,7 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
 		fl,
-		0,
-		0, // maxConcurrentQueries (0 means default)
-		0, // maxEndTimeAhead (0 means default)
+		querier.Config{},
 	), metadataStore
 }
 
@@ -86,9 +84,7 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
 		fl,
-		5*time.Minute, // logTraceIDWindowPadding
-		0,             // maxConcurrentQueries (0 means default)
-		0,             // maxEndTimeAhead (0 means default)
+		querier.Config{LogTraceIDWindowPadding: 5 * time.Minute},
 	)
 }
 
@@ -123,9 +119,7 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
 		fl,
-		0,
-		0, // maxConcurrentQueries (0 means default)
-		0, // maxEndTimeAhead (0 means default)
+		querier.Config{},
 	)
 }
 
@@ -160,8 +154,6 @@ func prepareQuerierForAITraces(t *testing.T, telemetryStore telemetrystore.Telem
 		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
 		fl,
-		0,
-		0, // maxConcurrentQueries (0 means default)
-		0, // maxEndTimeAhead (0 means default)
+		querier.Config{},
 	)
 }

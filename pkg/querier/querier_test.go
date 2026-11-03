@@ -57,9 +57,7 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		nil,                // traceOperatorStmtBuilder
 		nil,                // bucketCache
 		flaggertest.New(t), // flagger
-		0,                  // logTraceIDWindowPadding
-		0,                  // maxConcurrentQueries
-		0,                  // maxEndTimeAhead
+		Config{},
 	)
 
 	req := &qbtypes.QueryRangeRequest{
@@ -131,9 +129,7 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		nil,                // traceOperatorStmtBuilder
 		nil,                // bucketCache
 		flaggertest.New(t), // flagger
-		0,                  // logTraceIDWindowPadding
-		0,                  // maxConcurrentQueries
-		0,                  // maxEndTimeAhead
+		Config{},
 	)
 
 	req := &qbtypes.QueryRangeRequest{

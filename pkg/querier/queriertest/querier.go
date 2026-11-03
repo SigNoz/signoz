@@ -37,6 +37,10 @@ func (m *MockQuerier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req
 	}
 }
 
+func (m *MockQuerier) ValidateRequest(req *qbtypes.QueryRangeRequest, opts ...qbtypes.ValidationOption) error {
+	return req.Validate(opts...)
+}
+
 func (m *MockQuerier) QueryRangePreview(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, opts qbtypes.QueryRangePreviewOptions) (*qbtypes.QueryRangePreviewResponse, error) {
 	if m.QueryRangePreviewFunc != nil {
 		return m.QueryRangePreviewFunc(ctx, orgID, req, opts)

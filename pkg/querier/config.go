@@ -6,12 +6,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/statementbuilder"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-const (
-	DefaultMaxConcurrentQueries = 8
-	DefaultMaxEndTimeAhead      = 24 * time.Hour
-)
+const DefaultMaxConcurrentQueries = 8
 
 // Config represents the configuration for the querier.
 type Config struct {
@@ -42,7 +40,7 @@ func newConfig() factory.Config {
 		FluxInterval:            5 * time.Minute,
 		MaxConcurrentQueries:    DefaultMaxConcurrentQueries,
 		LogTraceIDWindowPadding: 5 * time.Minute,
-		MaxEndTimeAhead:         DefaultMaxEndTimeAhead,
+		MaxEndTimeAhead:         qbtypes.DefaultMaxEndTimeAhead,
 		Config:                  statementbuilder.NewConfig(),
 	}
 }
