@@ -1,6 +1,9 @@
+import { ColorRampScale } from 'lib/visualization/colorRamp/types';
+import { prepareGeoMapData } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/utils/prepareData';
 import type { GeoMapPlacementSlice } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
-import { screen, userEvent, within } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 
+import LocationSection from '../LocationSection';
 import { COUNTRY_ROWS, renderSection } from './renderLocationSection';
 
 describe('LocationSection points', () => {
@@ -78,5 +81,49 @@ describe('LocationSection points', () => {
 		expect(
 			screen.queryByTestId('geo-location-points-requirement'),
 		).not.toBeInTheDocument();
+	});
+
+	it('reads a numeric latitude paired with a grouped longitude as the location', () => {
+		const data = prepareGeoMapData({
+			table: {
+				queryName: 'A',
+				legend: '',
+				columns: [
+					{
+						id: 'longitude',
+						name: 'longitude',
+						queryName: '',
+						isValueColumn: false,
+					},
+					{ id: 'latitude', name: 'latitude', queryName: 'A', isValueColumn: true },
+					{ id: 'hits', name: 'hits', queryName: 'A', isValueColumn: true },
+				],
+				rows: [{ data: { longitude: '2.35', latitude: 48.86, hits: 9 } }],
+			},
+			location: undefined,
+			map: undefined,
+			scale: ColorRampScale.Log,
+			subdivisions: null,
+		});
+
+		render(
+			<LocationSection
+				value={{}}
+				groupColumns={['longitude']}
+				tableColumns={[
+					{ key: 'latitude', label: 'latitude', name: 'latitude' },
+					{ key: 'hits', label: 'hits', name: 'hits' },
+				]}
+				geoMapPlacement={{ data }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByTestId('panel-editor-v2-geo-location-lat'),
+		).toHaveTextContent('Auto · latitude');
+		expect(
+			screen.getByTestId('panel-editor-v2-geo-map-color-by'),
+		).toHaveTextContent('Auto · hits');
 	});
 });

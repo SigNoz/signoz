@@ -70,9 +70,12 @@ function LocationSection({
 	const layer = resolveLayer(value, kind);
 	const coordinateColumns = useMemo(() => {
 		const keys = tableColumns.map((column) => column.key);
-		const coordinates = findCoordinateColumns(keys, value?.location);
+		const coordinates = findCoordinateColumns(
+			[...groupByColumns, ...keys],
+			value?.location,
+		);
 		return keys.filter((key) => coordinates.has(key));
-	}, [tableColumns, value?.location]);
+	}, [groupByColumns, tableColumns, value?.location]);
 	const groupColumns = useMemo(
 		() => [...groupByColumns, ...coordinateColumns],
 		[groupByColumns, coordinateColumns],
