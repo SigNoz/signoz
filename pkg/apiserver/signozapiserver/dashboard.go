@@ -657,7 +657,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	}, handler.AllowAnonymous())).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
@@ -686,7 +686,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	}, handler.AllowAnonymous())).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 

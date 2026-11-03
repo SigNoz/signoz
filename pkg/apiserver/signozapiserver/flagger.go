@@ -9,7 +9,7 @@ import (
 )
 
 func (provider *provider) addFlaggerRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/features", handler.New(provider.authzMiddleware.OpenAccess(provider.flaggerHandler.GetFeatures), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/features", handler.New(provider.flaggerHandler.GetFeatures, handler.OpenAPIDef{
 		ID:                  "GetFeatures",
 		Tags:                []string{"features"},
 		Summary:             "Get features",

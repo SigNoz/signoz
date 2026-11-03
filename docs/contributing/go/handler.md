@@ -21,6 +21,8 @@ Each route wraps a module handler method with the following:
 - A generic HTTP `handler.Handler` (from `pkg/http/handler`)
 - An `OpenAPIDef` that describes the operation for OpenAPI generation
 
+Authentication is enforced for every route registered through `handler.New` by the router-level `AuthN` middleware; a route only needs to say something about it when it must be reachable without credentials, by passing `handler.AllowAnonymous()` to `handler.New`.
+
 For example, in `pkg/apiserver/signozapiserver`:
 
 ```go
@@ -183,7 +185,7 @@ The `handler.New` function ties the HTTP handler to OpenAPI metadata via `OpenAP
 
 The generic handler:
 
-- Automatically appends `401`, `403`, and `500` to `ErrorStatusCodes` when appropriate.
+- Automatically appends `500` to `ErrorStatusCodes`, `401` unless the route is public, and `403` when `SecuritySchemes` is set.
 - Registers request and response schemas with the OpenAPI reflector so they appear in `docs/api/openapi.yml`.
 
 See existing examples in:

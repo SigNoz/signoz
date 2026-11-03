@@ -150,12 +150,6 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		next(rw, req)
-	})
-}
-
 // CheckResources authorizes every resolved resource for the route. roles are the
 // allowed role names (the OSS role-gate); the resource selectors drive the EE check.
 func (middleware *AuthZ) CheckResources(next http.HandlerFunc, roles ...string) http.HandlerFunc {

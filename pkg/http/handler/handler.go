@@ -16,12 +16,14 @@ type Handler interface {
 	http.Handler
 	ServeOpenAPI(openapi.OperationContext)
 	ResourceDefs() []ResourceDef
+	AllowsAnonymous() bool
 }
 
 type handler struct {
 	handlerFunc  http.HandlerFunc
 	openAPIDef   OpenAPIDef
 	resourceDefs []ResourceDef
+	anonymous    bool
 }
 
 func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Handler {
@@ -33,11 +35,6 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Ha
 	// Add internal server error
 	openAPIDef.ErrorStatusCodes = append(openAPIDef.ErrorStatusCodes, http.StatusInternalServerError)
 
-	// Add unauthorized and forbidden status codes
-	if len(openAPIDef.SecuritySchemes) > 0 {
-		openAPIDef.ErrorStatusCodes = append(openAPIDef.ErrorStatusCodes, http.StatusUnauthorized, http.StatusForbidden)
-	}
-
 	handler := &handler{
 		handlerFunc: handlerFunc,
 		openAPIDef:  openAPIDef,
@@ -45,6 +42,15 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Ha
 
 	for _, opt := range opts {
 		opt(handler)
+	}
+
+	// Add unauthorized and forbidden status codes
+	if !handler.anonymous {
+		handler.openAPIDef.ErrorStatusCodes = append(handler.openAPIDef.ErrorStatusCodes, http.StatusUnauthorized)
+	}
+
+	if len(handler.openAPIDef.SecuritySchemes) > 0 {
+		handler.openAPIDef.ErrorStatusCodes = append(handler.openAPIDef.ErrorStatusCodes, http.StatusForbidden)
 	}
 
 	return handler
@@ -134,4 +140,8 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 
 func (handler *handler) ResourceDefs() []ResourceDef {
 	return handler.resourceDefs
+}
+
+func (handler *handler) AllowsAnonymous() bool {
+	return handler.anonymous
 }

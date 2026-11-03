@@ -67,7 +67,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/me", handler.New(provider.authzMiddleware.OpenAccess(provider.serviceAccountHandler.GetMe), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/service_accounts/me", handler.New(provider.serviceAccountHandler.GetMe, handler.OpenAPIDef{
 		ID:                  "GetMyServiceAccount",
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Gets my service account",
@@ -79,7 +79,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     nil,
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderAPIKey.StringValue()}},
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/me", handler.New(provider.authzMiddleware.OpenAccess(provider.serviceAccountHandler.UpdateMe), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/service_accounts/me", handler.New(provider.serviceAccountHandler.UpdateMe, handler.OpenAPIDef{
 		ID:                  "UpdateMyServiceAccount",
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Updates my service account",
@@ -150,7 +150,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     nil,
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderAPIKey.StringValue()}},
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
