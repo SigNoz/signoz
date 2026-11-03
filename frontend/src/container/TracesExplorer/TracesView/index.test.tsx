@@ -157,7 +157,7 @@ describe('TracesView (grouped root-span table)', () => {
 
 	describe('pagination', () => {
 		it('offers the next page after a full page and requests its offset', async () => {
-			const offsets = mockPages({ 0: 10, 10: 3 });
+			const offsets = mockPages({ 0: 20, 20: 3 });
 			const user = userEvent.setup();
 			renderTracesView();
 
@@ -165,8 +165,8 @@ describe('TracesView (grouped root-span table)', () => {
 			await waitFor(() => expect(next).toBeEnabled());
 			await user.click(next);
 
-			await expect(screen.findByText('trace-12')).resolves.toBeInTheDocument();
-			expect(offsets).toStrictEqual([0, 10]);
+			await expect(screen.findByText('trace-22')).resolves.toBeInTheDocument();
+			expect(offsets).toStrictEqual([0, 20]);
 		});
 
 		it('offers no page past the next one until that page arrives', async () => {
@@ -174,7 +174,7 @@ describe('TracesView (grouped root-span table)', () => {
 			const pageTwo = new Promise<void>((resolve) => {
 				release = resolve;
 			});
-			mockPages({ 0: 10, 10: 10 }, { 10: pageTwo });
+			mockPages({ 0: 20, 20: 20 }, { 20: pageTwo });
 			const user = userEvent.setup();
 			renderTracesView();
 

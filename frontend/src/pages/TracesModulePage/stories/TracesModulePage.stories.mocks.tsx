@@ -109,7 +109,7 @@ export const tracesMocks = defineStoryMocks({
 		spans: countControl('Spans', {
 			group: LIST,
 			description:
-				'Spans the endpoint has, one root span per trace in the Trace view. The list loads 100 more as it scrolls to the end; the Trace view pages 10 at a time.',
+				'Spans the endpoint has, one root span per trace in the Trace view. The list loads 100 more as it scrolls to the end; the Trace view pages 20 at a time.',
 			value: 24,
 			max: 250,
 		}),

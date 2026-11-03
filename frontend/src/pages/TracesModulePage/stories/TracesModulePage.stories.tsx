@@ -65,7 +65,7 @@ export const Default: Story = {};
 
 /**
  * The Trace view, which shows one row per trace: its root span, the root
- * duration and how many spans the trace has, ten traces to a page.
+ * duration and how many spans the trace has, twenty traces to a page.
  */
 export const RootSpans: Story = {
 	args: { view: ExplorerViews.TRACE },
@@ -76,7 +76,7 @@ export const RootSpans: Story = {
  * offers one more page after each full one.
  */
 export const RootSpansNextPage: Story = {
-	args: { view: ExplorerViews.TRACE },
+	args: { view: ExplorerViews.TRACE, spans: 50 },
 	play: async (): Promise<void> => {
 		await userEvent.click(
 			await screen.findByRole('button', { name: 'Go to next page' }, untilLoaded),

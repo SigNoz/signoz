@@ -22,6 +22,6 @@ export const TRACES_TABLE_QUERY_PARAMS = {
 	limit: 'limit',
 } as const;
 
-export const TRACES_TABLE_DEFAULT_LIMIT = 10;
+export const TRACES_TABLE_DEFAULT_LIMIT = 20;
 
 export const TRACES_TABLE_PAGE_SIZE_KEY = 'traces-explorer';
