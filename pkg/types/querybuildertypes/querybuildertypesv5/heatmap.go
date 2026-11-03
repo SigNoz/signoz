@@ -3,9 +3,11 @@ package querybuildertypesv5
 import (
 	"math"
 	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 const (
@@ -15,6 +17,11 @@ const (
 	// ones are what says whether two rows bucketed the same way.
 	HeatmapBucketMinColumn = "__bucket_min"
 	HeatmapBucketMaxColumn = "__bucket_max"
+
+	// HeatmapAggregationFunction is the aggregation a logs or traces heatmap
+	// names its bucketed field with. It counts events, so it renders as count().
+	HeatmapAggregationFunction = "heatmap"
+	heatmapCountExpression     = "count()"
 
 	DefaultNumBuckets = 60
 
@@ -79,6 +86,54 @@ func (b *BucketOptions) ToHeatmapBucketing() HeatmapBucketing {
 	}
 
 	return resolved
+}
+
+// HeatmapAggregationField returns the field a heatmap(field) aggregation
+// buckets, taking the argument as a field key as written. ok is false for any
+// other aggregation.
+func HeatmapAggregationField(expression string) (telemetrytypes.TelemetryFieldKey, bool) {
+	expression = strings.TrimSpace(expression)
+	prefix := HeatmapAggregationFunction + "("
+	if len(expression) <= len(prefix) || !strings.EqualFold(expression[:len(prefix)], prefix) || !strings.HasSuffix(expression, ")") {
+		return telemetrytypes.TelemetryFieldKey{}, false
+	}
+	return telemetrytypes.GetFieldKeyFromKeyText(strings.TrimSpace(expression[len(prefix) : len(expression)-1])), true
+}
+
+// HeatmapCountQuery splits a logs or traces heatmap query into the field its
+// heatmap(field) aggregation buckets and a copy of query that counts events in
+// its place, which is what every cell holds.
+func HeatmapCountQuery[T LogAggregation | TraceAggregation](query QueryBuilderQuery[T]) (*telemetrytypes.TelemetryFieldKey, QueryBuilderQuery[T], error) {
+	if len(query.Aggregations) != 1 {
+		return nil, query, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a heatmap renders one bucket axis, but the query has %d aggregations", len(query.Aggregations))
+	}
+
+	query.Aggregations = slices.Clone(query.Aggregations)
+	var expression *string
+	switch aggregation := any(&query.Aggregations[0]).(type) {
+	case *LogAggregation:
+		expression = &aggregation.Expression
+	case *TraceAggregation:
+		expression = &aggregation.Expression
+	}
+
+	field, ok := HeatmapAggregationField(*expression)
+	if !ok {
+		return nil, query, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a logs or traces heatmap counts events by the field named in %s(<field>), got %q", HeatmapAggregationFunction, *expression)
+	}
+
+	// An order on the aggregation names it by its expression.
+	query.Order = slices.Clone(query.Order)
+	for i := range query.Order {
+		if query.Order[i].Key.Name == *expression {
+			query.Order[i].Key.Name = heatmapCountExpression
+		}
+	}
+	*expression = heatmapCountExpression
+
+	return &field, query, nil
 }
 
 // This cannot be called in validateBucketCounting cuz metric type is resolved in querier.go.

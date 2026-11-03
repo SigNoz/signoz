@@ -879,6 +879,16 @@ func (r *QueryRangeRequest) validateBucketCounting() error {
 					r.RequestType.StringValue(),
 				)
 			}
+			var expressions []string
+			switch spec := envelope.Spec.(type) {
+			case QueryBuilderQuery[LogAggregation]:
+				expressions = aggregationExpressions(spec.Aggregations)
+			case QueryBuilderQuery[TraceAggregation]:
+				expressions = aggregationExpressions(spec.Aggregations)
+			}
+			if err := refuseHeatmapAggregation(expressions, r.RequestType.StringValue()+" requests"); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
@@ -899,18 +909,12 @@ func (r *QueryRangeRequest) validateBucketCounting() error {
 			if err := validateBucketCountingQuery(r.RequestType, spec.Functions, spec.Having); err != nil {
 				return err
 			}
-			if err := refuseBucketField(spec.BucketOptions, "a metrics query"); err != nil {
-				return err
-			}
 			if spec.Disabled {
 				continue
 			}
 			enabled++
 		case QueryBuilderFormula:
 			if err := validateBucketCountingQuery(r.RequestType, spec.Functions, spec.Having); err != nil {
-				return err
-			}
-			if err := refuseBucketField(spec.BucketOptions, "a formula"); err != nil {
 				return err
 			}
 			if spec.Disabled {
@@ -929,7 +933,7 @@ func (r *QueryRangeRequest) validateBucketCounting() error {
 			enabled++
 		// An AI query decodes to the traces spec, so it lands here too.
 		case QueryBuilderQuery[LogAggregation]:
-			if err := validateEventHeatmapQuery(r.RequestType, spec.Functions, spec.Having, spec.BucketOptions, len(spec.Aggregations), spec.Disabled); err != nil {
+			if err := validateEventHeatmapQuery(r.RequestType, spec.Functions, spec.Having, aggregationExpressions(spec.Aggregations), spec.Disabled); err != nil {
 				return err
 			}
 			if spec.Disabled {
@@ -937,7 +941,7 @@ func (r *QueryRangeRequest) validateBucketCounting() error {
 			}
 			enabled++
 		case QueryBuilderQuery[TraceAggregation]:
-			if err := validateEventHeatmapQuery(r.RequestType, spec.Functions, spec.Having, spec.BucketOptions, len(spec.Aggregations), spec.Disabled); err != nil {
+			if err := validateEventHeatmapQuery(r.RequestType, spec.Functions, spec.Having, aggregationExpressions(spec.Aggregations), spec.Disabled); err != nil {
 				return err
 			}
 			if spec.Disabled {
@@ -1052,43 +1056,55 @@ func validateBucketCountingQuery(requestType RequestType, functions []Function, 
 
 // validateEventHeatmapQuery holds a logs or traces query to what a per-event
 // heatmap can draw. A disabled query feeds a formula rather than the chart, so
-// it states no axis of its own and only the settings that still reach the cells
-// are checked.
-func validateEventHeatmapQuery(requestType RequestType, functions []Function, having *Having, bucketOptions *BucketOptions, numAggregations int, disabled bool) error {
+// it aggregates as a time series and must not name a bucketed field.
+func validateEventHeatmapQuery(requestType RequestType, functions []Function, having *Having, expressions []string, disabled bool) error {
 	if err := validateBucketCountingQuery(requestType, functions, having); err != nil {
 		return err
 	}
 
 	if disabled {
-		return nil
+		return refuseHeatmapAggregation(expressions, "a disabled query, which feeds a formula as a time series")
 	}
 
 	// Every aggregation carries its own Meta.Buckets, and a heatmap renders
 	// against a single bucket axis.
-	if numAggregations > 1 {
+	if len(expressions) != 1 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"a heatmap renders one bucket axis, but the query has %d aggregations", numAggregations).
+			"a heatmap renders one bucket axis, but the query has %d aggregations", len(expressions)).
 			WithAdditional("Keep the one aggregation whose distribution you want to plot")
 	}
 
-	if bucketOptions == nil || bucketOptions.Field == nil || bucketOptions.Field.Name == "" {
+	if _, ok := HeatmapAggregationField(expressions[0]); !ok {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"a logs or traces heatmap needs bucketOptions.field, the numeric field its axis is cut from").
-			WithAdditional("Set bucketOptions.field to a field such as duration_nano")
+			"a logs or traces heatmap counts events by the field named in %s(<field>), got %q", HeatmapAggregationFunction, expressions[0]).
+			WithAdditional("Use an aggregation such as heatmap(duration_nano)")
 	}
 
 	return nil
 }
 
-// refuseBucketField rejects an axis field on a query that has exactly one value
-// per point, where naming a second one says the caller expected a different
-// chart than the one they would get.
-func refuseBucketField(bucketOptions *BucketOptions, subject string) error {
-	if bucketOptions == nil || bucketOptions.Field == nil {
-		return nil
+// refuseHeatmapAggregation rejects heatmap() where nothing draws a bucket axis.
+func refuseHeatmapAggregation(expressions []string, subject string) error {
+	for _, expression := range expressions {
+		if _, ok := HeatmapAggregationField(expression); ok {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput,
+				"%s() is not supported for %s", HeatmapAggregationFunction, subject)
+		}
 	}
-	return errors.NewInvalidInputf(errors.CodeInvalidInput,
-		"bucketOptions.field is not supported for %s: its axis is cut from the value it already computes", subject)
+	return nil
+}
+
+func aggregationExpressions[T LogAggregation | TraceAggregation](aggregations []T) []string {
+	expressions := make([]string, len(aggregations))
+	for i, aggregation := range aggregations {
+		switch a := any(aggregation).(type) {
+		case LogAggregation:
+			expressions[i] = a.Expression
+		case TraceAggregation:
+			expressions[i] = a.Expression
+		}
+	}
+	return expressions
 }
 
 func GetValidationOptions(requestType RequestType) []ValidationOption {

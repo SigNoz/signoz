@@ -143,7 +143,12 @@ func (b *logQueryStatementBuilder) Build(
 	case qbtypes.RequestTypeTimeSeries:
 		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables, nil)
 	case qbtypes.RequestTypeHeatmap:
-		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables, query.BucketOptions)
+		var heatmapField *telemetrytypes.TelemetryFieldKey
+		heatmapField, query, err = qbtypes.HeatmapCountQuery(query)
+		if err != nil {
+			return nil, err
+		}
+		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables, heatmapField)
 	case qbtypes.RequestTypeScalar:
 		stmt, err = b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, false, variables)
 	default:
@@ -173,15 +178,6 @@ func (b *logQueryStatementBuilder) costGuardFor(ctx context.Context, orgID value
 		maxScanRows = b.searchMaxScanRowsJSONBody
 	}
 	return &qbtypes.CostGuard{Warning: querybuilder.SearchWarning, MaxScanRows: maxScanRows}
-}
-
-// heatmapBucketField is the field a heatmap cuts its axis from, nil for every
-// other request type. Validation has already refused a heatmap without one.
-func heatmapBucketField(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) *telemetrytypes.TelemetryFieldKey {
-	if query.BucketOptions == nil {
-		return nil
-	}
-	return query.BucketOptions.Field
 }
 
 func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], bodyJSONEnabled bool) ([]*telemetrytypes.FieldKeySelector, []string) {
@@ -225,15 +221,6 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], bo
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:  query.Order[idx].Key.FieldContext,
 			FieldDataType: query.Order[idx].Key.FieldDataType,
-		})
-	}
-
-	if field := heatmapBucketField(query); field != nil {
-		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          field.Name,
-			Signal:        telemetrytypes.SignalLogs,
-			FieldContext:  field.FieldContext,
-			FieldDataType: field.FieldDataType,
 		})
 	}
 
@@ -310,9 +297,6 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 	}
 	for idx := range query.Order {
 		actions = append(actions, b.adjustKey(&query.Order[idx].Key.TelemetryFieldKey, keys)...)
-	}
-	if field := heatmapBucketField(query); field != nil {
-		actions = append(actions, b.adjustKey(field, keys)...)
 	}
 
 	for _, action := range actions {
@@ -454,8 +438,8 @@ func (b *logQueryStatementBuilder) buildListQuery(
 }
 
 // buildTimeSeriesQuery builds one row per (time bucket, group). A non-nil
-// bucketOptions makes it a heatmap instead: the bucket a row's value falls in
-// joins the group keys, so a row is one cell.
+// heatmapField makes it a heatmap instead: the bucket a row's heatmapField
+// falls in joins the group keys, so a row is one cell.
 func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -464,7 +448,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
-	bucketOptions *qbtypes.BucketOptions,
+	heatmapField *telemetrytypes.TelemetryFieldKey,
 ) (*qbtypes.Statement, error) {
 
 	var (
@@ -504,9 +488,9 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	var bucketAliases, bucketWarnings []string
-	if bucketOptions != nil {
+	if heatmapField != nil {
 		valueFragment, aliases, warnings, err := querybuilder.HeatmapBucketColumns(
-			ctx, info, b.storage, sb, columnKey(bucketOptions.Field), bucketOptions, keys,
+			ctx, info, b.storage, sb, columnKey(heatmapField), query.BucketOptions, keys,
 		)
 		if err != nil {
 			return nil, err

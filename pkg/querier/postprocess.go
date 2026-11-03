@@ -193,7 +193,7 @@ func postProcessBuilderQuery[T any](
 
 	// A disabled query feeds a formula as a time series, so only an enabled one
 	// came back bucketed.
-	if req.RequestType.CountsIntoBuckets() && !query.Disabled && query.BucketOptions != nil {
+	if req.RequestType.CountsIntoBuckets() && !query.Disabled {
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			resolveHeatmapBucketAxis(tsData, query.BucketOptions.ToHeatmapBucketing())
 		}
