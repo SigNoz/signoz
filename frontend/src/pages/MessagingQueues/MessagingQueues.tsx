@@ -159,6 +159,7 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
+								data-testid="mq-view-details-consumerLag"
 								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(MessagingQueuesViewType.consumerLag.value, e)
@@ -177,6 +178,7 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
+								data-testid="mq-view-details-producerLatency"
 								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(MessagingQueuesViewType.producerLatency.value, e)
@@ -195,6 +197,7 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
+								data-testid="mq-view-details-partitionLatency"
 								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(
@@ -216,6 +219,7 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
+								data-testid="mq-view-details-dropRate"
 								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(MessagingQueuesViewType.dropRate.value, e)
@@ -234,6 +238,7 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
+								data-testid="mq-view-details-metricPage"
 								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(MessagingQueuesViewType.metricPage.value, e)

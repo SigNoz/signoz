@@ -110,4 +110,63 @@ test.describe('Dashboards — list row actions', () => {
 		await expect(dashboardList.rowTitle(name)).toBeVisible();
 		expect((await dashboards.get(id)).id).toBe(id);
 	});
+
+	test('TC-07 Rename from the row menu persists and stays on the list', async ({
+		authedPage: page,
+		dashboards,
+		dashboardList,
+	}) => {
+		const name = uniqueName('row-rename');
+		const renamed = uniqueName('row-renamed');
+		const id = await dashboards.seed(listDashboard(name));
+		await dashboardList.open(name);
+
+		await dashboardList.renameRow(name, renamed);
+
+		await expect(page).toHaveURL(LIST_URL);
+		await expect
+			.poll(async () => (await dashboards.get(id)).spec.display.name)
+			.toBe(renamed);
+		await dashboardList.open(renamed);
+		await expect(dashboardList.rowTitle(renamed)).toBeVisible();
+	});
+
+	test('TC-08 Edit tags from the row menu persists and stays on the list', async ({
+		authedPage: page,
+		dashboards,
+		dashboardList,
+	}) => {
+		const name = uniqueName('row-tags');
+		const id = await dashboards.seed(listDashboard(name));
+		await dashboardList.open(name);
+
+		await dashboardList.editRowTags(name, ['team:e2e', 'env:test']);
+
+		await expect(page).toHaveURL(LIST_URL);
+		await expect
+			.poll(async () => (await dashboards.get(id)).tags)
+			.toEqual(
+				expect.arrayContaining([
+					{ key: 'team', value: 'e2e' },
+					{ key: 'env', value: 'test' },
+				]),
+			);
+	});
+
+	test('TC-09 Duplicate clones the dashboard and opens the copy', async ({
+		authedPage: page,
+		dashboards,
+		dashboardList,
+	}) => {
+		const name = uniqueName('row-duplicate');
+		await dashboards.seed(listDashboard(name));
+		await dashboardList.open(name);
+
+		const copyId = await dashboardList.duplicateRow(name);
+
+		await expect(page).toHaveURL(PATH.onDashboard(copyId));
+		expect((await dashboards.get(copyId)).spec.display.name).toContain(name);
+		await dashboardList.open(name);
+		await expect(dashboardList.rows()).toHaveCount(2);
+	});
 });

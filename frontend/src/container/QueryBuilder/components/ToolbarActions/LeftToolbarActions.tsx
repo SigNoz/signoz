@@ -52,6 +52,8 @@ export default function LeftToolbarActions({
 								selectedView === list.key ? activeTab : '',
 							)}
 							onClick={(): void => onChangeSelectedView(list.key)}
+							data-testid="explorer-view-list"
+							aria-pressed={selectedView === list.key}
 						>
 							<SquareMousePointer size={14} data-testid="search-view" />
 							List View
@@ -69,6 +71,8 @@ export default function LeftToolbarActions({
 								selectedView === trace.key ? activeTab : '',
 							)}
 							onClick={(): void => onChangeSelectedView(trace.key)}
+							data-testid="explorer-view-trace"
+							aria-pressed={selectedView === trace.key}
 						>
 							<SquareMousePointer size={14} data-testid="trace-view" />
 							Trace View
@@ -86,6 +90,8 @@ export default function LeftToolbarActions({
 								selectedView === timeseries.key ? activeTab : '',
 							)}
 							onClick={(): void => onChangeSelectedView(timeseries.key)}
+							data-testid="explorer-view-timeseries"
+							aria-pressed={selectedView === timeseries.key}
 						>
 							<Atom size={14} data-testid="query-builder-view" />
 							Time Series
@@ -120,6 +126,8 @@ export default function LeftToolbarActions({
 								selectedView === table.key ? activeTab : '',
 							)}
 							onClick={(): void => onChangeSelectedView(table.key)}
+							data-testid="explorer-view-table"
+							aria-pressed={selectedView === table.key}
 						>
 							<Binoculars size={14} data-testid="query-builder-view-v2" />
 							Table

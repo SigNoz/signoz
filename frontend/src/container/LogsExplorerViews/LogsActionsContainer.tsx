@@ -67,6 +67,7 @@ function LogsActionsContainer({
 							textPlacement="right"
 							value={showFrequencyChart}
 							onChange={handleToggleFrequencyChart}
+							testId="logs-frequency-chart-toggle"
 						/>
 					</div>
 				</div>
