@@ -4,7 +4,7 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { authToken } from '../helpers/common';
+import { authToken } from './api';
 
 import { driver, kit, seeded } from './kit';
 
@@ -209,6 +209,10 @@ interface ChannelForm {
 	/** Saves an existing channel and waits for the write to land. */
 	saveEdit(): Promise<void>;
 	save(): Promise<void>;
+	/** The sticky bar holding discard, test and save. */
+	actions(): Locator;
+	/** Scrolls with the mouse wheel, which unlike scrollIntoView cannot move an overflow: hidden box. */
+	wheelToEnd(): Promise<void>;
 }
 
 /**
@@ -333,6 +337,11 @@ function channelsDriver(page: Page): Channels {
 		},
 		async save() {
 			await page.getByTestId('save-channel-button').click();
+		},
+		actions: () => page.getByTestId('discard-channel-button').locator('..'),
+		async wheelToEnd() {
+			await form.name().hover();
+			await page.mouse.wheel(0, 10_000);
 		},
 	};
 

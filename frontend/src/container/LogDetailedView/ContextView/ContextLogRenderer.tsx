@@ -129,6 +129,7 @@ function ContextLogRenderer({
 				type="text"
 				size="small"
 				className="context-log-renderer__item"
+				data-testid={`context-log-item-${logTorender.id}`}
 				onClick={(): void => {
 					handleLogClick(logTorender.id);
 				}}

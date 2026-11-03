@@ -105,7 +105,10 @@ export default function CeleryTaskGraphGrid({
 	};
 
 	return (
-		<div className="celery-task-graph-grid-container">
+		<div
+			className="celery-task-graph-grid-container"
+			data-testid="celery-graph-grid"
+		>
 			<div className="metric-based-graphs">
 				<CardContainer className="row-card" isDarkMode={isDarkMode}>
 					<div className="row-panel">

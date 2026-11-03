@@ -840,6 +840,16 @@ export const appendAndClause = (
 	return hasTopLevelOr ? `(${base}) AND ${clause}` : `${base} AND ${clause}`;
 };
 
+/** Strips everything but digits, so a limit input can't hold a sign or decimal. */
+export const sanitizeLimit = (value: string): string =>
+	value.replace(/\D/g, '');
+
+/** A query or formula limit: a positive integer, otherwise none. */
+export const parseLimit = (value: string): number | null => {
+	const limit = Number(value);
+	return Number.isInteger(limit) && limit > 0 ? limit : null;
+};
+
 /**
  * Convert old having format to new having format
  * @param having - Array of old having objects with columnName, op, and value
@@ -871,7 +881,14 @@ export const convertHavingToExpression = (
 				formattedValue = String(value);
 			}
 
-			return `${columnName} ${op} ${formattedValue}`;
+			// The old having filter upper-cased the function (`COUNT()`); v5 only
+			// resolves the aggregation's own lower-case expression.
+			const reference = columnName.replace(
+				/^\s*([A-Za-z_]\w*)\(/,
+				(_, fn: string) => `${fn.toLowerCase()}(`,
+			);
+
+			return `${reference} ${op} ${formattedValue}`;
 		})
 		.filter((expression) => expression !== ''); // Remove empty expressions
 
