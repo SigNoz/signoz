@@ -30175,6 +30175,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
         "403":
           content:
             application/json:
@@ -30307,6 +30313,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
         "500":
           content:
             application/json:
