@@ -143,6 +143,8 @@ export function logsCountQuery(options?: {
 	signal?: Extract<Signal, 'logs' | 'traces'>;
 	filter?: string;
 	groupBy?: string[];
+	/** Aggregation expressions; defaults to `count()`. */
+	aggregations?: string[];
 }): Query {
 	return {
 		kind: 'time_series',
@@ -152,7 +154,9 @@ export function logsCountQuery(options?: {
 				spec: {
 					name: options?.name ?? 'A',
 					signal: options?.signal ?? 'logs',
-					aggregations: [{ expression: 'count()' }],
+					aggregations: (options?.aggregations ?? ['count()']).map((expression) => ({
+						expression,
+					})),
 					filter: { expression: options?.filter ?? '' },
 					groupBy: (options?.groupBy ?? ['service.name']).map((name) => ({
 						name,

@@ -1,5 +1,6 @@
 import {
 	expect,
+	logsCountQuery,
 	PanelAction,
 	PanelKind,
 	QueryRange,
@@ -18,6 +19,12 @@ const POINTS = QueryRange.scalar({
 	],
 });
 
+// Matches POINTS' two value columns, so x and y come from different aggregations.
+const TWO_AGGREGATIONS = logsCountQuery({
+	signal: 'traces',
+	aggregations: ['count()', 'avg(duration_nano)'],
+});
+
 const ONE_VALUE = QueryRange.scalar({
 	groupColumns: ['service.name'],
 	aggregationColumns: ['count()'],
@@ -32,7 +39,10 @@ test.describe('Dashboards — Scatter Plot panel', () => {
 		test.beforeEach(async ({ dashboards, queryRange, panels }) => {
 			await queryRange.respond(POINTS);
 			await dashboards.seedAndOpen(
-				singlePanelDashboard({ kind: PanelKind.ScatterPlot }),
+				singlePanelDashboard({
+					kind: PanelKind.ScatterPlot,
+					query: TWO_AGGREGATIONS,
+				}),
 			);
 			await panels.panel(SINGLE_PANEL_ID).waitRendered(PanelKind.ScatterPlot);
 		});
