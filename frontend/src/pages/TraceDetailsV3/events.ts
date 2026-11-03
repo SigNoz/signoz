@@ -12,6 +12,8 @@ export enum TraceDetailEvents {
 	SpanPercentileTimeRangeChanged = 'Trace Detail: Span percentile time range changed',
 	SpanPercentileAttributesSelectorToggled = 'Trace Detail: Span percentile attributes selector toggled',
 	SpanPercentileAttributeChanged = 'Trace Detail: Span percentile attribute changed',
+	SpanDetailsOpened = 'Trace Detail: Span details opened',
+	DetailsTabChanged = 'Trace Detail: Details tab changed',
 }
 
 export enum TraceDetailEventKeys {
@@ -28,7 +30,7 @@ export enum TraceDetailEventKeys {
 	SpanPanelVariant = 'spanPanelVariant',
 	ColorByField = 'colorByField',
 	PreviewFieldsCount = 'previewFieldsCount',
-	// View switched
+	// View switched / details tab changed
 	From = 'from',
 	To = 'to',
 	DwellMs = 'dwellMs',
@@ -44,6 +46,8 @@ export enum TraceDetailEventKeys {
 	PercentileValue = 'percentileValue',
 	ResourceAttributeKey = 'resourceAttributeKey',
 	Selected = 'selected',
+	// Data loaded / span details opened: which tab the user is on
+	DetailsTab = 'detailsTab',
 }
 
 export type TraceDetailView = 'v2' | 'v3';
