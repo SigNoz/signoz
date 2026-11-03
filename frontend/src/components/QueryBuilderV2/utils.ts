@@ -840,17 +840,21 @@ export const appendAndClause = (
 	return hasTopLevelOr ? `(${base}) AND ${clause}` : `${base} AND ${clause}`;
 };
 
-/**
- * Convert old having format to new having format
- * @param having - Array of old having objects with columnName, op, and value
- * @returns New having format with expression string
- */
+/** Strips everything but digits, so a limit input can't hold a sign or decimal. */
+export const sanitizeLimit = (value: string): string =>
+	value.replace(/\D/g, '');
+
 /** A query or formula limit: a positive integer, otherwise none. */
 export const parseLimit = (value: string): number | null => {
 	const limit = Number(value);
 	return Number.isInteger(limit) && limit > 0 ? limit : null;
 };
 
+/**
+ * Convert old having format to new having format
+ * @param having - Array of old having objects with columnName, op, and value
+ * @returns New having format with expression string
+ */
 export const convertHavingToExpression = (
 	having: Having[],
 ): { expression: string } => {
