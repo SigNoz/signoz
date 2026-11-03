@@ -168,7 +168,7 @@ export function prepareTopListRows(
 	const values = rows
 		.map((row) => row.value)
 		.filter((value): value is number => value !== null);
-	const max = Math.max(0, ...values);
+	const max = values.reduce((largest, value) => Math.max(largest, value), 0);
 	const total = values.some((value) => value < 0)
 		? 0
 		: values.reduce((sum, value) => sum + value, 0);
