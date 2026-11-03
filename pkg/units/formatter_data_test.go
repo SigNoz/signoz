@@ -1,6 +1,7 @@
 package units
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -182,6 +183,36 @@ func TestDataFormatterComprehensive(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := dataFormatter.Format(tt.value, tt.unit)
 			assert.Equal(t, tt.expected, got)
+			if tt.value > 0 {
+				t.Run("negative", func(t *testing.T) {
+					got := dataFormatter.Format(-tt.value, tt.unit)
+					assert.Equal(t, "-"+tt.expected, got)
+				})
+			}
+		})
+	}
+}
+
+func TestDataFormatterNegativeEdges(t *testing.T) {
+	formatter := NewDataFormatter()
+	tests := []struct {
+		name     string
+		value    float64
+		unit     string
+		expected string
+	}{
+		{name: "fractional byte", value: -0.5, unit: "bytes", expected: "-0 B"},
+		{name: "fractional bit", value: -0.5, unit: "bits", expected: "-0.5 b"},
+		{name: "whole byte in bits", value: -8, unit: "bits", expected: "-1 B"},
+		{name: "negative zero bytes", value: math.Copysign(0, -1), unit: "bytes", expected: "0 B"},
+		{name: "negative zero bits", value: math.Copysign(0, -1), unit: "bits", expected: "-0 b"},
+		{name: "unknown unit", value: -1.25, unit: "unknown", expected: "-1.25"},
+		{name: "negative infinity bits", value: math.Inf(-1), unit: "bits", expected: "-Inf b"},
+		{name: "negative infinity unknown unit", value: math.Inf(-1), unit: "unknown", expected: "-Inf"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, formatter.Format(test.value, test.unit))
 		})
 	}
 }
