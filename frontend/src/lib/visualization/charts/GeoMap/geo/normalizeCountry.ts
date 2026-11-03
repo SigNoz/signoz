@@ -27,5 +27,6 @@ export function normalizeCountry(
 	if (/^[A-Z]{3}$/.test(upper) && ALPHA3[upper]) {
 		return ALPHA3[upper];
 	}
-	return NAMES[value.toLowerCase()] ?? null;
+	const name = value.toLowerCase();
+	return Object.hasOwn(NAMES, name) ? NAMES[name] : null;
 }
