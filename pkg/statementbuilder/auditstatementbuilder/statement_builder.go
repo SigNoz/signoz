@@ -128,7 +128,7 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 
 	for idx := range query.Aggregations {
 		aggExpr := query.Aggregations[idx]
-		selectors := querybuilder.QueryStringToKeysSelectors(aggExpr.Expression)
+		selectors := querybuilder.AggregationKeySelectors(aggExpr.Expression)
 		keySelectors = append(keySelectors, selectors...)
 	}
 

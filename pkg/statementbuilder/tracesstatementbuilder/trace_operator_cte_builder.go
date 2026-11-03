@@ -582,7 +582,7 @@ func (b *traceOperatorCTEBuilder) getKeySelectors() []*telemetrytypes.FieldKeySe
 	var keySelectors []*telemetrytypes.FieldKeySelector
 
 	for _, agg := range b.operator.Aggregations {
-		selectors := querybuilder.QueryStringToKeysSelectors(agg.Expression)
+		selectors := querybuilder.AggregationKeySelectors(agg.Expression)
 		keySelectors = append(keySelectors, selectors...)
 	}
 

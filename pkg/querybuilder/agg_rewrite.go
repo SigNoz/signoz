@@ -57,6 +57,10 @@ func (r *aggExprRewriter) Rewrite(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
 
+	if _, err := parseAggregationExpression(expr); err != nil {
+		r.logger.WarnContext(ctx, "aggregation expression failed grammar validation", slog.String("expression", expr), errors.Attr(err))
+	}
+
 	wrapped := fmt.Sprintf("SELECT %s", expr)
 	p := chparser.NewParser(wrapped)
 	stmts, err := p.ParseStmts()
