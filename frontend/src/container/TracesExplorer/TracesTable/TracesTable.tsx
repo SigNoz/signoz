@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useAppNavigate } from 'lib/router/useAppNavigate';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import TanStackTable from 'components/TanStackTableView';
 import type {
@@ -50,16 +50,16 @@ function TracesTable({
 	onColumnRemove,
 	cellTypographySize = 'medium',
 }: TracesTableProps): JSX.Element {
-	const history = useHistory();
+	const navigate = useAppNavigate();
 
 	const isDataAbsent =
 		!isLoading && !isFetching && !isError && data.length === 0;
 
 	const handleRowClick = useCallback(
 		(row: TracesTableRow): void => {
-			history.push(getRowHref(row));
+			navigate(getRowHref(row));
 		},
-		[history, getRowHref],
+		[navigate, getRowHref],
 	);
 
 	const handleRowClickNewTab = useCallback(
@@ -98,6 +98,7 @@ function TracesTable({
 						onRowClick={handleRowClick}
 						onRowClickNewTab={handleRowClickNewTab}
 						getRowTestId={(row): string => `traces-table-row-${row.id}`}
+						testId={`traces-table-${panelType.toLowerCase()}`}
 					/>
 				</div>
 			)}

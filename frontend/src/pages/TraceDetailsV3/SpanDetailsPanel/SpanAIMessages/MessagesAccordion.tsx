@@ -5,7 +5,6 @@ import { Collapse } from 'antd';
 import { AIThreadMessageProps } from '../../AIThreadMessage/AIThreadMessage';
 import { ThreadMessage } from '../../AIThreadMessage/types';
 import MessagesSection from '../../SpanMessages/MessagesSection';
-import { RawMessagesValue } from '../../utils/spanMessages';
 import { ThreadView } from '../../TraceDetailsThread/types';
 import ThreadViewToggle from '../../TraceDetailsThread/ThreadViewToggle';
 
@@ -20,7 +19,6 @@ interface MessagesAccordionProps extends Pick<
 	icon: ReactNode;
 	title: string;
 	messages: ThreadMessage[];
-	raw?: RawMessagesValue;
 	testId: string;
 }
 
@@ -28,7 +26,6 @@ function MessagesAccordion({
 	icon,
 	title,
 	messages,
-	raw,
 	testId,
 	messageType,
 	canLinkToToolCall,
@@ -36,10 +33,8 @@ function MessagesAccordion({
 }: MessagesAccordionProps): JSX.Element | null {
 	const [isOpen, setIsOpen] = useState(false);
 	const [view, setView] = useState(ThreadView.Formatted);
-	const canFormat = messages.length > 0;
-	const effectiveView = canFormat ? view : ThreadView.Json;
 
-	if (!canFormat && !raw) {
+	if (messages.length === 0) {
 		return null;
 	}
 
@@ -66,12 +61,12 @@ function MessagesAccordion({
 								{title}
 							</span>
 						),
-						extra: isOpen && canFormat && (
+						extra: isOpen && (
 							// The view toggle lives in the header; its clicks must not fold the panel.
 							// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 							<span onClick={stopToggle}>
 								<ThreadViewToggle
-									value={effectiveView}
+									value={view}
 									onChange={setView}
 									testId={`${testId}-view-toggle`}
 								/>
@@ -79,9 +74,8 @@ function MessagesAccordion({
 						),
 						children: (
 							<MessagesSection
-								view={effectiveView}
+								view={view}
 								messages={messages}
-								raw={raw}
 								testId={`${testId}-body`}
 								messageType={messageType}
 								canLinkToToolCall={canLinkToToolCall}
@@ -94,9 +88,5 @@ function MessagesAccordion({
 		</section>
 	);
 }
-
-MessagesAccordion.defaultProps = {
-	raw: undefined,
-};
 
 export default MessagesAccordion;

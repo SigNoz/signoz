@@ -8,8 +8,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
-import { isQueryUpdatedInView } from 'components/ExplorerCard/utils';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
 import {
 	alphabet,
@@ -33,15 +32,13 @@ import {
 	panelTypeDataSourceFormValuesMap,
 	PartialPanelTypes,
 } from 'lib/query/panelTypeDataSourceFormValuesMap';
-import { OptionsQuery } from 'container/OptionsMenu/types';
-import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { useNormalizedCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { saveRecentQuery } from 'lib/recentQueries/saveRecentQuery';
-import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
 import { cloneDeep, get, isEqual, set } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 // ** Types
@@ -54,7 +51,6 @@ import {
 	Query,
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { ViewProps } from 'types/api/saveViews/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
@@ -99,14 +95,13 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	updateQueriesData: () => initialQueriesMap.metrics,
 	initQueryBuilderData: () => {},
 	handleOnUnitsChange: () => {},
-	isStagedQueryUpdated: () => false,
 	isDefaultQuery: () => false,
 });
 
 export function QueryBuilderProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const currentPathnameRef = useRef<string | null>(location.pathname);
 
@@ -114,7 +109,8 @@ export function QueryBuilderProvider({
 	const [calledFromHandleRunQuery, setCalledFromHandleRunQuery] =
 		useState<boolean>(false);
 
-	const compositeQueryParam = useGetCompositeQueryParam();
+	const normalizedCompositeQuery = useNormalizedCompositeQueryParam();
+	const compositeQueryParam = normalizedCompositeQuery?.query ?? null;
 	const { queryType: queryTypeParam, ...queryState } =
 		compositeQueryParam || initialQueriesMap.metrics;
 
@@ -938,22 +934,6 @@ export function QueryBuilderProvider({
 		[updateQueryBuilderData],
 	);
 
-	const isStagedQueryUpdated = useCallback(
-		(
-			viewData: ViewProps[] | undefined,
-			viewKey: string,
-			options: OptionsQuery,
-		): boolean =>
-			isQueryUpdatedInView({
-				currentPanelType: panelType,
-				data: viewData,
-				stagedQuery,
-				viewKey,
-				options,
-			}),
-		[panelType, stagedQuery],
-	);
-
 	const { safeNavigate } = useSafeNavigate({
 		preventSameUrlNavigation: false,
 	});
@@ -1115,20 +1095,22 @@ export function QueryBuilderProvider({
 				return;
 			}
 
-			const { isValid, validData } = replaceIncorrectObjectFields(
-				compositeQueryParam,
-				initialQueriesMap.metrics,
-			);
-
-			if (!isValid) {
-				redirectWithQueryBuilderData(validData);
-			} else {
-				initQueryBuilderData(compositeQueryParam);
+			if (normalizedCompositeQuery?.changed) {
+				const urlQuery = getUnstableCurrentSearchParams();
+				urlQuery.set(
+					QueryParams.compositeQuery,
+					encodeURIComponent(JSON.stringify(compositeQueryParam)),
+				);
+				safeNavigate(`${location.pathname}?${urlQuery}`, { replace: true });
+				return;
 			}
+
+			initQueryBuilderData(compositeQueryParam);
 		}
 	}, [
 		initQueryBuilderData,
-		redirectWithQueryBuilderData,
+		safeNavigate,
+		normalizedCompositeQuery,
 		compositeQueryParam,
 		stagedQuery,
 		location.pathname,
@@ -1211,7 +1193,6 @@ export function QueryBuilderProvider({
 			updateQueriesData,
 			initQueryBuilderData,
 			handleOnUnitsChange,
-			isStagedQueryUpdated,
 		}),
 		[
 			query,
@@ -1242,7 +1223,6 @@ export function QueryBuilderProvider({
 			updateQueriesData,
 			initQueryBuilderData,
 			handleOnUnitsChange,
-			isStagedQueryUpdated,
 		],
 	);
 

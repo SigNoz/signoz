@@ -76,8 +76,8 @@ const openFirstLog = async (canvasElement: HTMLElement): Promise<void> => {
 
 /**
  * The explorer on its list view: quick filters down the left, the frequency
- * chart over a page of log lines across every severity, and the org's saved
- * views in the view picker.
+ * chart over a page of log lines across every severity, and the saved views
+ * header above the filters.
  */
 export const Default: Story = {};
 

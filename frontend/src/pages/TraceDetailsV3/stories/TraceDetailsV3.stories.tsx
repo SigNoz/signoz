@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '@/storybook/renderAtRoute';
 import {
 	expect,
 	fireEvent,
@@ -44,9 +44,7 @@ const meta = {
 	component: TraceDetailsV3,
 	// The page reads the trace id out of the pathname, so it renders under its
 	// own route rather than being mounted on its own.
-	render: (): JSX.Element => (
-		<Route path={ROUTES.TRACE_DETAIL} component={TraceDetailsV3} />
-	),
+	render: renderAtRoute(ROUTES.TRACE_DETAIL, TraceDetailsV3),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<TraceDetailsArgs>;
@@ -83,22 +81,9 @@ export const Loading: Story = {
 	args: { dataState: 'loading' },
 };
 
-/**
- * The trace's span and error counts in the bottom strip, in place of the build
- * version, the error icon red while any span failed.
- */
-export const BottomStrip: Story = {
-	args: { bottomStrip: true },
-};
-
 /** The strip over a trace with no failing span: the error icon stays neutral. */
 export const BottomStripNoErrors: Story = {
-	args: { bottomStrip: true, errors: false },
-};
-
-/** The strip mid-fetch, whose counts read zero until the trace resolves. */
-export const BottomStripLoading: Story = {
-	args: { bottomStrip: true, dataState: 'loading' },
+	args: { errors: false },
 };
 
 /**

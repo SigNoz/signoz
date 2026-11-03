@@ -13,24 +13,22 @@ import (
 )
 
 type ChannelJiraConfig struct {
-	SendResolved *bool `json:"sendResolved,omitempty"`
-	// Site is the Jira Cloud base URL, https://<site>.atlassian.net. Only Jira
-	// Cloud is supported; the REST base is derived from it.
-	Site              string                       `json:"site" required:"true"`
-	Project           string                       `json:"project" required:"true"`
-	IssueType         string                       `json:"issueType" required:"true"`
-	Summary           valuer.UnsetOrNonEmptyString `json:"summary,omitzero"`
-	Description       valuer.UnsetOrNonEmptyString `json:"description,omitzero"`
-	Priority          string                       `json:"priority"`
-	Labels            []string                     `json:"labels,omitzero"`
-	ResolveTransition string                       `json:"resolveTransition"`
-	ReopenTransition  string                       `json:"reopenTransition"`
-	ReopenDuration    valuer.UnsetOrNonEmptyString `json:"reopenDuration,omitzero"`
-	WontFixResolution string                       `json:"wontFixResolution"`
-	CustomFields      map[string]any               `json:"customFields,omitzero"`
+	SendResolved      *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
+	Site              string                       `json:"site" required:"true" description:"The base URL of the Jira Cloud site, for example https://example.atlassian.net. Only Jira Cloud is supported."`
+	Project           string                       `json:"project" required:"true" description:"The key of the project issues are created in."`
+	IssueType         string                       `json:"issueType" required:"true" description:"The issue type name, such as Bug."`
+	Summary           valuer.UnsetOrNonEmptyString `json:"summary,omitzero" description:"Alertmanager template for the issue summary; defaults to the SigNoz Jira default."`
+	Description       valuer.UnsetOrNonEmptyString `json:"description,omitzero" description:"Alertmanager template for the issue description, rendered as markdown; defaults to the SigNoz Jira default."`
+	Priority          string                       `json:"priority" description:"The priority name assigned to new issues."`
+	Labels            []string                     `json:"labels,omitzero" description:"Labels added to every issue."`
+	ResolveTransition string                       `json:"resolveTransition" description:"The transition applied to the issue when the alert resolves."`
+	ReopenTransition  string                       `json:"reopenTransition" description:"The transition applied when an alert fires again on a resolved issue."`
+	ReopenDuration    valuer.UnsetOrNonEmptyString `json:"reopenDuration,omitzero" description:"How long after resolution a firing alert reopens the issue instead of creating a new one, as a Prometheus duration in canonical form such as 3d; defaults to 3d."`
+	WontFixResolution string                       `json:"wontFixResolution" description:"The resolution name that stops an issue from being reopened."`
+	CustomFields      map[string]any               `json:"customFields,omitzero" description:"Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives."`
 
-	Email    string `json:"email" required:"true"`
-	APIToken string `json:"apiToken" required:"true" format:"password"`
+	Email    string `json:"email" required:"true" description:"The Atlassian account email used for basic auth."`
+	APIToken string `json:"apiToken" required:"true" format:"password" description:"The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list."`
 }
 
 // UnmarshalJSON seeds send_resolved off, as JiraReceiverConfig does.
@@ -193,19 +191,19 @@ const (
 type JiraReceiverConfig struct {
 	config.NotifierConfig `yaml:",inline"`
 
-	Site              string                      `json:"site,omitempty" yaml:"site,omitempty"`
-	Project           string                      `json:"project,omitempty" yaml:"project,omitempty"`
-	IssueType         string                      `json:"issue_type,omitempty" yaml:"issue_type,omitempty"`
-	Summary           string                      `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description       string                      `json:"description,omitempty" yaml:"description,omitempty"`
-	Priority          string                      `json:"priority,omitempty" yaml:"priority,omitempty"`
-	Labels            []string                    `json:"labels,omitempty" yaml:"labels,omitempty"`
-	ResolveTransition string                      `json:"resolve_transition,omitempty" yaml:"resolve_transition,omitempty"`
-	ReopenTransition  string                      `json:"reopen_transition,omitempty" yaml:"reopen_transition,omitempty"`
-	ReopenDuration    model.Duration              `json:"reopen_duration" yaml:"reopen_duration"`
-	WontFixResolution string                      `json:"wont_fix_resolution,omitempty" yaml:"wont_fix_resolution,omitempty"`
-	CustomFields      map[string]any              `json:"custom_fields,omitempty" yaml:"custom_fields,omitempty"`
-	HTTPConfig        *commoncfg.HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty"`
+	Site              string                      `json:"site,omitempty" yaml:"site,omitempty" description:"The Jira Cloud base URL."`
+	Project           string                      `json:"project,omitempty" yaml:"project,omitempty" description:"The key of the project issues are created in."`
+	IssueType         string                      `json:"issue_type,omitempty" yaml:"issue_type,omitempty" description:"The issue type name."`
+	Summary           string                      `json:"summary,omitempty" yaml:"summary,omitempty" description:"Alertmanager template for the issue summary."`
+	Description       string                      `json:"description,omitempty" yaml:"description,omitempty" description:"Alertmanager template for the issue description."`
+	Priority          string                      `json:"priority,omitempty" yaml:"priority,omitempty" description:"The priority name assigned to new issues."`
+	Labels            []string                    `json:"labels,omitempty" yaml:"labels,omitempty" description:"Labels added to every issue."`
+	ResolveTransition string                      `json:"resolve_transition,omitempty" yaml:"resolve_transition,omitempty" description:"The transition applied when the alert resolves."`
+	ReopenTransition  string                      `json:"reopen_transition,omitempty" yaml:"reopen_transition,omitempty" description:"The transition applied when an alert fires again on a resolved issue."`
+	ReopenDuration    model.Duration              `json:"reopen_duration" yaml:"reopen_duration" description:"How long after resolution a firing alert reopens the issue; a Prometheus duration, at least 1m."`
+	WontFixResolution string                      `json:"wont_fix_resolution,omitempty" yaml:"wont_fix_resolution,omitempty" description:"The resolution name that stops an issue from being reopened."`
+	CustomFields      map[string]any              `json:"custom_fields,omitempty" yaml:"custom_fields,omitempty" description:"Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives."`
+	HTTPConfig        *commoncfg.HTTPClientConfig `json:"http_config,omitempty" yaml:"http_config,omitempty" description:"HTTP client settings; basic auth carries the account email and API token."`
 }
 
 func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {

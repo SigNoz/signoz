@@ -1,5 +1,5 @@
 import { MouseEventHandler, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/sonner';
 import { getAbsoluteUrl } from 'utils/basePath';
@@ -15,7 +15,7 @@ interface SpanLike {
 export const useCopySpanLink = (
 	span?: SpanLike,
 ): { onSpanCopy: MouseEventHandler<HTMLElement> } => {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const [, setCopy] = useCopyToClipboard();
 
 	const onSpanCopy: MouseEventHandler<HTMLElement> = useCallback(

@@ -39,7 +39,7 @@ func (v JSONValue) Flatten() map[string]any {
 		if isNull(value) {
 			continue
 		}
-		flat[path] = value
+		flat[path] = flatObject(value)
 	}
 	return unwrap(flat)
 }
@@ -55,6 +55,15 @@ func (v JSONValue) Nest() map[string]any {
 // Flatten or Nest serializes the column instead of the empty struct.
 func (v JSONValue) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.Flatten())
+}
+
+// flatObject renders a declared JSON sub-path, which the driver scans as a nested chcol.JSON (such as
+// scope.attributes), as a flat attribute bag.
+func flatObject(value any) any {
+	if object, ok := value.(*chcol.JSON); ok && object != nil {
+		return JSONValue{column: *object}
+	}
+	return value
 }
 
 func isNull(value any) bool {

@@ -25,7 +25,7 @@ describe('CheckboxFilterV2 - AI observability routing', () => {
 		render(
 			<CheckboxFilterV2
 				filter={DEFAULT_FILTER}
-				source={QuickFiltersSource.AI_OBSERVABILITY}
+				quickFilterSource={QuickFiltersSource.AI_OBSERVABILITY}
 				useFieldApis={DEFAULT_USE_FIELD_APIS}
 			/>,
 		);
@@ -44,7 +44,7 @@ describe('CheckboxFilterV2 - AI observability routing', () => {
 		render(
 			<CheckboxFilterV2
 				filter={DEFAULT_FILTER}
-				source={QuickFiltersSource.AI_OBSERVABILITY}
+				quickFilterSource={QuickFiltersSource.AI_OBSERVABILITY}
 				useFieldApis={DEFAULT_USE_FIELD_APIS}
 			/>,
 		);
@@ -59,6 +59,8 @@ describe('CheckboxFilterV2 - AI observability routing', () => {
 		expect(params.get('endUnixMilli')).toBe(
 			String(DEFAULT_USE_FIELD_APIS.endUnixMilli),
 		);
+		expect(params.get('signal')).toBeNull();
+		expect(params.get('source')).toBeNull();
 	});
 
 	it('keeps non-AI sources on the signal-wide endpoint', async () => {
@@ -70,7 +72,7 @@ describe('CheckboxFilterV2 - AI observability routing', () => {
 		render(
 			<CheckboxFilterV2
 				filter={DEFAULT_FILTER}
-				source={QuickFiltersSource.TRACES_EXPLORER}
+				quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 				useFieldApis={DEFAULT_USE_FIELD_APIS}
 			/>,
 		);

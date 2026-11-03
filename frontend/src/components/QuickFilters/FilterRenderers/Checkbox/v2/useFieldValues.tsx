@@ -1,20 +1,20 @@
 import { useMemo } from 'react';
 import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { FieldValuesConfig } from 'api/querySuggestions/types';
+import { QUICK_FILTER_SOURCE_TO_SIGNAL } from 'components/QuickFilters/constants';
 import {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
 import { useFieldValuesSuggestion } from 'hooks/querySuggestions/useFieldValuesSuggestion';
 import { BuilderQueryType } from 'types/api/v5/queryRange';
-import { DATA_SOURCE_TO_SIGNAL } from 'types/common/queryBuilder';
 
 interface UseFieldValuesProps {
 	filter: IQuickFiltersConfig;
 	searchText: string;
 	existingQuery?: string;
 	metricNamespace?: string;
-	source?: QuickFiltersSource;
+	quickFilterSource: QuickFiltersSource;
 	startUnixMilli?: number;
 	endUnixMilli?: number;
 	enabled: boolean;
@@ -38,12 +38,13 @@ export function useFieldValues({
 	searchText,
 	existingQuery,
 	metricNamespace,
-	source,
+	quickFilterSource,
 	startUnixMilli,
 	endUnixMilli,
 	enabled,
 }: UseFieldValuesProps): UseFieldValuesReturn {
-	const isAIObservability = source === QuickFiltersSource.AI_OBSERVABILITY;
+	const isAIObservability =
+		quickFilterSource === QuickFiltersSource.AI_OBSERVABILITY;
 
 	const builderQueryType: BuilderQueryType | undefined = isAIObservability
 		? 'builder_ai_query'
@@ -59,14 +60,12 @@ export function useFieldValues({
 				endUnixMilli,
 			}
 		: {
-				signal: filter.dataSource
-					? DATA_SOURCE_TO_SIGNAL[filter.dataSource]
-					: undefined,
+				signal: QUICK_FILTER_SOURCE_TO_SIGNAL[quickFilterSource],
 				name: filter.attributeKey.key,
 				searchText,
 				existingQuery,
 				metricNamespace,
-				source: source ? QUICK_FILTERS_SOURCE_TO_SOURCE[source] : undefined,
+				source: QUICK_FILTERS_SOURCE_TO_SOURCE[quickFilterSource],
 				startUnixMilli,
 				// This field does not affect the backend but I wanted to keep it here
 				// in case we add the support in the future

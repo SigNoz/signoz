@@ -17,13 +17,13 @@ interface TestGatewayIngestionKeysResponse {
 	data: GatewaytypesGettableIngestionKeysDTO;
 }
 
-// Mock useHistory.push to capture navigation URL used by MultiIngestionSettings
-const mockPush = jest.fn() as jest.MockedFunction<(path: string) => void>;
-jest.mock('react-router-dom', () => {
-	const actual = jest.requireActual('react-router-dom');
+// Mock navigate to capture navigation URL used by MultiIngestionSettings
+const mockNavigate = jest.fn() as jest.MockedFunction<(path: string) => void>;
+jest.mock('lib/router/navigation', () => {
+	const actual = jest.requireActual('lib/router/navigation');
 	return {
 		...actual,
-		useHistory: (): { push: typeof mockPush } => ({ push: mockPush }),
+		navigate: (path: string): void => mockNavigate(path),
 	};
 });
 
@@ -44,7 +44,7 @@ const GLOBAL_CONFIG_RESPONSE = {
 
 describe('MultiIngestionSettings Page', () => {
 	beforeEach(() => {
-		mockPush.mockClear();
+		mockNavigate.mockClear();
 	});
 
 	afterEach(() => {
@@ -120,10 +120,10 @@ describe('MultiIngestionSettings Page', () => {
 		);
 
 		await waitFor(() => {
-			expect(mockPush).toHaveBeenCalledTimes(1);
+			expect(mockNavigate).toHaveBeenCalledTimes(1);
 		});
 
-		const navigationCall = mockPush.mock.calls[0][0] as string;
+		const navigationCall = mockNavigate.mock.calls[0][0] as string;
 		expect(navigationCall).toContain('/alerts/new');
 
 		const urlParams = new URLSearchParams(navigationCall.split('?')[1]);
@@ -201,10 +201,10 @@ describe('MultiIngestionSettings Page', () => {
 		);
 
 		await waitFor(() => {
-			expect(mockPush).toHaveBeenCalledTimes(1);
+			expect(mockNavigate).toHaveBeenCalledTimes(1);
 		});
 
-		const navigationCall = mockPush.mock.calls[0][0] as string;
+		const navigationCall = mockNavigate.mock.calls[0][0] as string;
 		expect(navigationCall).toContain('/alerts/new');
 
 		const urlParams = new URLSearchParams(navigationCall.split('?')[1]);

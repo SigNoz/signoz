@@ -3,4 +3,4 @@
 overrides:
  # via: eslint-plugin-playwright > eslint@10 > minimatch@10.2.5 (brace-expansion ^5.0.5)
  # remove: blocked — minimatch@10.2.6 (latest) only widens to ^5.0.8, still vulnerable
- 'brace-expansion@>=5.0.0 <5.0.9': '>=5.0.9 <6'
+ 'brace-expansion@>=5.0.0 <5.0.12': '>=5.0.12 <6'

@@ -2,9 +2,9 @@ import { Button as SignozButton } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Button } from 'antd';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
+import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
-import { SignalType } from '../types';
 import AddedFilters from './AddedFilters';
 import useQuickFilterSettings from './hooks/useQuickFilterSettings';
 import OtherFilters from './OtherFilters';
@@ -12,12 +12,12 @@ import OtherFilters from './OtherFilters';
 import './QuickFiltersSettings.styles.scss';
 
 function QuickFiltersSettings({
-	signal,
+	savedFiltersSource,
 	setIsSettingsOpen,
 	customFilters,
 	refetchCustomFilters,
 }: {
-	signal: SignalType | undefined;
+	savedFiltersSource: QuickfiltertypesSourceDTO;
 	setIsSettingsOpen: (isSettingsOpen: boolean) => void;
 	customFilters: TelemetryFieldKey[];
 	refetchCustomFilters: () => void;
@@ -37,7 +37,7 @@ function QuickFiltersSettings({
 		setIsSettingsOpen,
 		customFilters,
 		refetchCustomFilters,
-		signal,
+		savedFiltersSource,
 	});
 
 	return (
@@ -73,7 +73,7 @@ function QuickFiltersSettings({
 				setAddedFilters={setAddedFilters}
 			/>
 			<OtherFilters
-				signal={signal}
+				savedFiltersSource={savedFiltersSource}
 				inputValue={debouncedInputValue}
 				addedFilters={addedFilters}
 				setAddedFilters={setAddedFilters}

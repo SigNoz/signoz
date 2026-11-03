@@ -1,6 +1,6 @@
-import { matchPath, useLocation } from 'react-router-dom';
-
 import ROUTES from 'constants/routes';
+import { matchRoute } from 'lib/router/matchRoute';
+import { useAppLocation } from 'lib/router/useAppLocation';
 
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { useVariant } from '../VariantContext';
@@ -28,7 +28,7 @@ const ROUTE_TEMPLATES = Object.values(ROUTES).sort(
 
 export function normalizePage(pathname: string): string {
 	for (const template of ROUTE_TEMPLATES) {
-		if (matchPath(pathname, { path: template, exact: true })) {
+		if (matchRoute(pathname, template, { exact: true })) {
 			return template;
 		}
 	}
@@ -46,7 +46,7 @@ export function normalizePage(pathname: string): string {
 export function useAIAssistantAnalyticsContext(
 	conversationId?: string,
 ): AIAssistantAnalyticsContext {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const variant = useVariant();
 	const threadId = useAIAssistantStore((s) => {
 		const id = conversationId ?? s.activeConversationId;

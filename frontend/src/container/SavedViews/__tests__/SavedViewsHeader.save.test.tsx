@@ -30,11 +30,14 @@ const PATH = ROUTES.TRACES_EXPLORER;
 
 function renderHeader(
 	url: string,
+	isViewsOpen = false,
 ): ReturnType<typeof renderWithExplorerProviders> {
 	return renderWithExplorerProviders(
 		<SavedViewsHeader
 			source={SavedviewtypesSourceDTO.traces}
 			onOpenViews={jest.fn()}
+			isViewsOpen={isViewsOpen}
+			onToggleViews={jest.fn()}
 		/>,
 		url,
 	);
@@ -45,8 +48,9 @@ const isModalOpen = (): boolean => !!screen.queryByTestId('save-view-modal');
 
 async function openDirtyView(
 	view: ReturnType<typeof makeView>,
+	isViewsOpen = false,
 ): Promise<ReturnType<typeof renderWithExplorerProviders>> {
-	const rendered = renderHeader(viewUrl(PATH, view));
+	const rendered = renderHeader(viewUrl(PATH, view), isViewsOpen);
 	await waitFor(() =>
 		expect(screen.getByTestId('saved-views-name')).toHaveTextContent(
 			view.spec.displayName,
@@ -225,5 +229,37 @@ describe('SavedViewsHeader saving', () => {
 			),
 		);
 		expect(requests.created).toHaveLength(0);
+	});
+
+	describe('view name toggle with unsaved changes', () => {
+		const errors = makeView({ id: 'view-1', displayName: 'Errors' });
+
+		it('stops opening the views from the name once the view changes', async () => {
+			mockSavedViewsApi([errors]);
+			const { history } = renderHeader(viewUrl(PATH, errors));
+			await screen.findByTestId('saved-views-name-toggle');
+
+			act(() => {
+				history.push(
+					explorerUrl(PATH, {
+						query: queryWith(DataSource.TRACES, 'has_error = false'),
+						panelType: PANEL_TYPES.LIST,
+						viewKey: errors.id,
+					}),
+				);
+			});
+			await screen.findByTestId('saved-views-discard');
+
+			expect(
+				screen.queryByTestId('saved-views-name-toggle'),
+			).not.toBeInTheDocument();
+		});
+
+		it('still closes open views from the name', async () => {
+			mockSavedViewsApi([errors]);
+			await openDirtyView(errors, true);
+
+			expect(screen.getByTestId('saved-views-name-toggle')).toBeInTheDocument();
+		});
 	});
 });

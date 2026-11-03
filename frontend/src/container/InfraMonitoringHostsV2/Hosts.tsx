@@ -213,6 +213,7 @@ function Hosts(): JSX.Element {
 				className="periscope-btn ghost"
 				type="text"
 				size="small"
+				data-testid="quick-filters-toggle"
 				onClick={handleFilterVisibilityChange}
 			>
 				<Filter size={14} />
@@ -239,11 +240,12 @@ function Hosts(): JSX.Element {
 												style={{ rotate: '270deg', cursor: 'pointer' }}
 												onClick={handleFilterVisibilityChange}
 												size="md"
+												data-testid="quick-filters-toggle"
 											/>
 										</Tooltip>
 									</div>
 									<QuickFilters
-										source={QuickFiltersSource.INFRA_MONITORING}
+										quickFilterSource={QuickFiltersSource.INFRA_MONITORING}
 										config={getHostsQuickFiltersConfig()}
 										handleFilterVisibilityChange={handleFilterVisibilityChange}
 										useFieldApis={{

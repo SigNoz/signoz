@@ -1,11 +1,11 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter } from 'react-router-dom';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NuqsTestingAdapter, OnUrlUpdateFunction } from 'nuqs/adapters/testing';
 
 import { TableColumnDef } from 'components/TanStackTableView';
+import { TestRouter } from 'tests/router';
 
 import { InfraMonitoringEntity } from '../../../constants';
 import EntityOverview from '../EntityOverview';
@@ -80,7 +80,7 @@ function overviewTree(
 	onUrlUpdate?: OnUrlUpdateFunction,
 ): JSX.Element {
 	return (
-		<MemoryRouter>
+		<TestRouter>
 			<QueryClientProvider client={queryClient}>
 				<NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>
 					<VirtuosoMockContext.Provider
@@ -97,7 +97,7 @@ function overviewTree(
 					</VirtuosoMockContext.Provider>
 				</NuqsTestingAdapter>
 			</QueryClientProvider>
-		</MemoryRouter>
+		</TestRouter>
 	);
 }
 

@@ -22,6 +22,7 @@ function AlertMessage({
 					}
 					type="info"
 					showIcon={false}
+					testId="cloud-connect-waiting"
 				/>
 			);
 		case ModalStateEnum.ERROR:
@@ -33,6 +34,7 @@ function AlertMessage({
 						</div>
 					}
 					type="error"
+					testId="cloud-connect-error"
 				/>
 			);
 		default:

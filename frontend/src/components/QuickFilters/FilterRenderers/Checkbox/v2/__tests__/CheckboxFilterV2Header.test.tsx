@@ -7,8 +7,8 @@ describe('CheckboxFilterV2Header', () => {
 	const defaultProps = {
 		title: 'Environment',
 		isOpen: false,
+		canReset: true,
 		onToggleOpen: jest.fn(),
-		onToggleSearch: jest.fn(),
 		onClear: jest.fn(),
 	};
 
@@ -30,12 +30,9 @@ describe('CheckboxFilterV2Header', () => {
 			expect(header).toHaveAttribute('data-state', 'closed');
 		});
 
-		it('does not render the section actions when collapsed', () => {
+		it('does not render reset when collapsed', () => {
 			render(<CheckboxFilterV2Header {...defaultProps} isOpen={false} />);
 
-			expect(
-				screen.queryByTestId('checkbox-filter-search-toggle'),
-			).not.toBeInTheDocument();
 			expect(
 				screen.queryByTestId('checkbox-filter-clear-all'),
 			).not.toBeInTheDocument();
@@ -50,13 +47,18 @@ describe('CheckboxFilterV2Header', () => {
 			expect(header).toHaveAttribute('data-state', 'open');
 		});
 
-		it('renders both search and reset actions when expanded', () => {
+		it('renders reset when the section has a filter applied', () => {
 			render(<CheckboxFilterV2Header {...defaultProps} isOpen />);
 
-			expect(
-				screen.getByTestId('checkbox-filter-search-toggle'),
-			).toBeInTheDocument();
 			expect(screen.getByTestId('checkbox-filter-clear-all')).toBeInTheDocument();
+		});
+
+		it('hides reset when there is nothing to reset', () => {
+			render(<CheckboxFilterV2Header {...defaultProps} isOpen canReset={false} />);
+
+			expect(
+				screen.queryByTestId('checkbox-filter-clear-all'),
+			).not.toBeInTheDocument();
 		});
 	});
 
@@ -97,25 +99,6 @@ describe('CheckboxFilterV2Header', () => {
 			await user.keyboard(' ');
 
 			expect(onToggleOpen).toHaveBeenCalledTimes(1);
-		});
-
-		it('calls onToggleSearch on search click without toggling open', async () => {
-			const user = userEvent.setup();
-			const onToggleSearch = jest.fn();
-			const onToggleOpen = jest.fn();
-			render(
-				<CheckboxFilterV2Header
-					{...defaultProps}
-					isOpen
-					onToggleSearch={onToggleSearch}
-					onToggleOpen={onToggleOpen}
-				/>,
-			);
-
-			await user.click(screen.getByTestId('checkbox-filter-search-toggle'));
-
-			expect(onToggleSearch).toHaveBeenCalledTimes(1);
-			expect(onToggleOpen).not.toHaveBeenCalled();
 		});
 
 		it('calls onClear on reset click without toggling open', async () => {

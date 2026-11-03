@@ -1,16 +1,8 @@
-import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
+import type { AlertmanagertypesGettableRoutePolicyDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TableColumnDef } from 'components/TanStackTableView';
+import type { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
-export interface RoutingPolicy {
-	id: string;
-	name: string;
-	expression: string;
-	channels: string[];
-	description: string | undefined;
-	createdAt: string | undefined;
-	updatedAt: string | undefined;
-	createdBy: string | undefined;
-	updatedBy: string | undefined;
-}
+export type RoutingPolicy = AlertmanagertypesGettableRoutePolicyDTO;
 
 type HandlePolicyDetailsModalOpen = (
 	mode: PolicyDetailsModalMode,
@@ -32,30 +24,20 @@ type HandleDeleteModalOpen = (routingPolicy: RoutingPolicy) => void;
 export type PolicyDetailsModalMode = 'create' | 'edit' | null;
 
 export interface RoutingPolicyListProps {
+	columns: TableColumnDef<RoutingPolicy>[];
 	routingPolicies: RoutingPolicy[];
-	refetchRoutingPolicies: () => void;
-	isRoutingPoliciesLoading: boolean;
-	isRoutingPoliciesFetching: boolean;
-	isRoutingPoliciesError: boolean;
-	handlePolicyDetailsModalOpen: HandlePolicyDetailsModalOpen;
-	handleDeleteModalOpen: HandleDeleteModalOpen;
+	pagedPolicies: RoutingPolicy[];
+	calculatedPageSize: number | null;
+	onLimitChange: (limit: number) => void;
+	isFetching: boolean;
+	isError: boolean;
+	refetch: () => void;
+	canEdit: boolean;
+	onEdit: (routingPolicy: RoutingPolicy) => void;
+	onDelete: HandleDeleteModalOpen;
+	onCreate: () => void;
 	hasSearchTerm: boolean;
-}
-
-export interface RoutingPolicyListItemProps {
-	routingPolicy: RoutingPolicy;
-	handlePolicyDetailsModalOpen: HandlePolicyDetailsModalOpen;
-	handleDeleteModalOpen: HandleDeleteModalOpen;
-}
-
-export interface PolicyListItemHeaderProps {
-	name: string;
-	handleEdit: () => void;
-	handleDelete: () => void;
-}
-
-export interface PolicyListItemContentProps {
-	routingPolicy: RoutingPolicy;
+	onClearSearch: () => void;
 }
 
 export interface RoutingPolicyDetailsProps {
