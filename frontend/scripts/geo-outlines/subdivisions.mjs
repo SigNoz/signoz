@@ -1,4 +1,9 @@
 // Natural Earth admin-1 → one states/provinces topology per country.
+// Called by build.mjs; not run on its own.
+//
+// Skips countries with fewer than MIN_SUBDIVISIONS coded states, merges shapes
+// split along retired lines, and records aliases for renamed codes. Returns one
+// file per country and a report of what was skipped, merged or dropped.
 import { geoArea } from 'd3-geo';
 import { topology } from 'topojson-server';
 import { merge } from 'topojson-client';

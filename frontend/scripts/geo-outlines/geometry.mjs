@@ -1,4 +1,8 @@
 // Geometry helpers and the simplification shared by countries and states.
+// Used by countries.mjs and subdivisions.mjs; not run on its own.
+//
+// Simplification protects small shapes so islands keep an outline, and drops
+// polygons that collapse to slivers or flip inside out after quantizing.
 import { geoArea } from 'd3-geo';
 import { topology } from 'topojson-server';
 import { presimplify, simplify } from 'topojson-simplify';
