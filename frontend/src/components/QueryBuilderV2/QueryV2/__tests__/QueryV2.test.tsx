@@ -25,6 +25,8 @@ import {
 import '@testing-library/jest-dom';
 
 import { QueryBuilderV2 } from '../../QueryBuilderV2';
+import { QueryBuilderV2Provider } from '../../QueryBuilderV2Context';
+import { QueryV2 } from '../QueryV2';
 
 // Local mocks for domain-specific heavy child components
 jest.mock(
@@ -249,11 +251,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 
 	describe('query actions menu', () => {
 		const openQueryActions = async (): Promise<void> => {
-			const trigger = document.querySelector(
-				'.query-actions-container [aria-haspopup="menu"]',
-			) as HTMLElement;
-			expect(trigger).toBeInTheDocument();
-			await userEvent.click(trigger);
+			await userEvent.click(screen.getAllByTestId('query-actions')[0]);
 		};
 
 		it('Clone calls cloneQuery with the query', async () => {
@@ -261,7 +259,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 
 			await openQueryActions();
 			await userEvent.click(
-				await screen.findByRole('menuitem', { name: 'Clone' }),
+				await screen.findByTestId('query-actions-item-clone-query'),
 			);
 
 			expect(baseQBContext.cloneQuery).toHaveBeenCalledTimes(1);
@@ -275,36 +273,41 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
 
 			await openQueryActions();
-			await screen.findByRole('menuitem', { name: 'Clone' });
+			await screen.findByTestId('query-actions-item-clone-query');
 
 			expect(
-				screen.queryByRole('menuitem', { name: 'Delete' }),
+				screen.queryByTestId('query-actions-item-delete-query'),
 			).not.toBeInTheDocument();
 		});
 
 		it('shows Delete with more than one query and deletes on click', async () => {
-			const currentQueryBase = baseQBContext.currentQuery as Query;
-			const [queryA] = currentQueryBase.builder.queryData;
-			mockedUseQueryBuilder.mockReturnValue({
-				...baseQBContext,
-				currentQuery: {
-					...currentQueryBase,
-					builder: {
-						...currentQueryBase.builder,
-						queryData: [queryA, { ...queryA, queryName: 'B', legend: 'B' }],
-					},
-				},
-			});
+			const [queryA] = (baseQBContext.currentQuery as Query).builder.queryData;
 			const handleDeleteQuery = jest.fn();
 			mockedUseQueryOperations.mockReturnValue({
 				...mockedUseQueryOperations({} as Parameters<UseQueryOperations>[0]),
 				handleDeleteQuery,
 			});
 
-			render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
+			render(
+				<QueryBuilderV2Provider>
+					<QueryV2
+						index={0}
+						query={queryA}
+						version="v4"
+						isAvailableToDisable={false}
+						isMultiQueryAllowed
+						queriesCount={2}
+						onSignalSourceChange={jest.fn()}
+						signalSourceChangeEnabled={false}
+						savePreviousQuery={false}
+					/>
+				</QueryBuilderV2Provider>,
+			);
 
 			await openQueryActions();
-			fireEvent.click(await screen.findByText('Delete'));
+			await userEvent.click(
+				await screen.findByTestId('query-actions-item-delete-query'),
+			);
 
 			expect(handleDeleteQuery).toHaveBeenCalledTimes(1);
 		}, 15000);
