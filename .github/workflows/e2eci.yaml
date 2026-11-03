@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       e2e: ${{ steps.changes.outputs.e2e }}
+      shards: ${{ steps.plan.outputs.shards }}
     steps:
       - name: changes
         id: changes
@@ -21,6 +22,7 @@ jobs:
           FORCE: ${{ contains(github.event.pull_request.labels.*.name, 'safe-to-e2e') }}
         run: |
           CHANGED_FILES=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename | select(startswith("tests/integration/") | not)')
+          printf '%s\n' "$CHANGED_FILES" > "$RUNNER_TEMP/changed.txt"
           PATTERN='^(frontend/|tests/|\.github/workflows/e2eci\.yaml$|cmd/enterprise/Dockerfile\.with-web\.integration$)'
 
           if [ "$FORCE" = "true" ]; then
@@ -30,6 +32,44 @@ jobs:
           else
             echo "e2e=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: checkout
+        if: steps.changes.outputs.e2e == 'true'
+        uses: actions/checkout@v4
+      - name: install-pnpm
+        if: steps.changes.outputs.e2e == 'true'
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: node
+        if: steps.changes.outputs.e2e == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: pnpm-install
+        if: steps.changes.outputs.e2e == 'true'
+        run: |
+          cd tests/e2e && pnpm install --frozen-lockfile
+      # Picks the specs the change can reach and packs them into shards by
+      # recorded duration (tests/e2e/scripts/plan.mjs).
+      - name: plan
+        id: plan
+        if: steps.changes.outputs.e2e == 'true'
+        env:
+          FORCE: ${{ contains(github.event.pull_request.labels.*.name, 'safe-to-e2e') }}
+        run: |
+          cd tests/e2e
+          if [ "$FORCE" = "true" ]; then
+            node scripts/plan.mjs --all < /dev/null
+          else
+            node scripts/plan.mjs < "$RUNNER_TEMP/changed.txt"
+          fi
+      - name: upload-plan
+        if: steps.changes.outputs.e2e == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-plan
+          path: tests/e2e/artifacts/plan/
+          retention-days: 5
   fmtlint:
     needs: changes
     if: needs.changes.outputs.e2e == 'true'
@@ -60,9 +100,9 @@ jobs:
       matrix:
         project:
           - chromium
-        shard: [1, 2, 3, 4]
+        shard: ${{ fromJSON(needs.changes.outputs.shards) }}
     needs: changes
-    if: needs.changes.outputs.e2e == 'true'
+    if: needs.changes.outputs.e2e == 'true' && needs.changes.outputs.shards != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -152,10 +192,15 @@ jobs:
             e2e/bootstrap/setup.py::test_setup
       - name: wait-playwright-browsers
         wait: playwright-browsers
+      - name: download-plan
+        uses: actions/download-artifact@v4
+        with:
+          name: e2e-plan
+          path: tests/e2e/artifacts/plan
       - name: playwright-test
         run: |
           cd tests/e2e && \
-            pnpm playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/4
+            pnpm playwright test --project=${{ matrix.project }} --test-list artifacts/plan/shard-${{ matrix.shard }}.txt
       - name: teardown-stack
         if: always()
         run: |
