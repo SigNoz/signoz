@@ -1,6 +1,5 @@
 // Builds the Geo Map outlines assets: Natural Earth 50m admin-0 countries, and
 // 10m admin-1 states/provinces for every country with at least two of them.
-// Run by hand when bumping Natural Earth or editing regions/aliases; the output is committed.
 // Usage: pnpm build:geo-outlines
 //
 // Nothing is written until every invariant in validate.mjs holds. The assets
