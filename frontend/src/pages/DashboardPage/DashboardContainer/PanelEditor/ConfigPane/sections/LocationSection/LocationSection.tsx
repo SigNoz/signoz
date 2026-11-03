@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react';
 import {
 	DashboardtypesGeoMapProjectionDTO,
 	type DashboardtypesGeoMapLocationDTO,
@@ -5,13 +6,14 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	detectLocationColumns,
-	isCoordinateColumn,
+	findCoordinateColumns,
 } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/utils/locationColumns';
 import type {
 	SectionEditorProps,
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
+import type { TableColumnOption } from '../../../hooks/useTableColumns';
 import type { SectionEditorContext } from '../../sectionContext';
 import { formatColumnOption } from '../DimensionsSection/utils';
 import CountryFormatField from './components/CountryFormatField';
@@ -27,7 +29,7 @@ import StatesOfField from './components/StatesOfField';
 import ValueColumnsFields from './components/ValueColumnsFields';
 import { useAddGroupBy } from './hooks/useAddGroupBy';
 import { useRowKindSwitch } from './hooks/useRowKindSwitch';
-import type { LocationField } from './types';
+import { LocationField, RowKind } from './types';
 import { autoColumnFor, describeKind } from './utils/descriptions';
 import { describePlacement, describeUnplaced } from './utils/placement';
 import {
@@ -39,6 +41,9 @@ import {
 } from './utils/rowKind';
 
 import styles from './LocationSection.module.scss';
+
+const NO_GROUP_COLUMNS: string[] = [];
+const NO_TABLE_COLUMNS: TableColumnOption[] = [];
 
 type LocationSectionProps = SectionEditorProps<SectionKind.Location> &
 	Pick<
@@ -54,8 +59,8 @@ type LocationSectionProps = SectionEditorProps<SectionKind.Location> &
 function LocationSection({
 	value,
 	onChange,
-	groupColumns: groupByColumns = [],
-	tableColumns = [],
+	groupColumns: groupByColumns = NO_GROUP_COLUMNS,
+	tableColumns = NO_TABLE_COLUMNS,
 	geoMapPlacement,
 }: LocationSectionProps): JSX.Element {
 	const addGroupBy = useAddGroupBy();
@@ -63,15 +68,36 @@ function LocationSection({
 	const kind = resolveRowKind(value, data);
 	const isAuto = isAutoMode(value);
 	const layer = resolveLayer(value, kind);
-	const coordinateColumns = tableColumns
-		.map((column) => column.key)
-		.filter((key) => isCoordinateColumn(key, value?.location));
-	const groupColumns = [...groupByColumns, ...coordinateColumns];
+	const coordinateColumns = useMemo(() => {
+		const keys = tableColumns.map((column) => column.key);
+		const coordinates = findCoordinateColumns(keys, value?.location);
+		return keys.filter((key) => coordinates.has(key));
+	}, [tableColumns, value?.location]);
+	const groupColumns = useMemo(
+		() => [...groupByColumns, ...coordinateColumns],
+		[groupByColumns, coordinateColumns],
+	);
+	const valueItems = useMemo(
+		() =>
+			tableColumns
+				.filter((column) => !coordinateColumns.includes(column.key))
+				.map((column) => ({
+					value: column.key,
+					label: formatColumnOption(column),
+				})),
+		[tableColumns, coordinateColumns],
+	);
 	const hasGroupBy = groupColumns.length > 0;
 	const viewCountry = value?.map?.viewCountry;
-	const detected = detectLocationColumns(groupColumns);
-	const autoColumn = (field: LocationField): string | undefined =>
-		autoColumnFor(field, data?.location, detected);
+	const detected = useMemo(
+		() => detectLocationColumns(groupColumns),
+		[groupColumns],
+	);
+	const autoColumn = useCallback(
+		(field: LocationField): string | undefined =>
+			autoColumnFor(field, data?.location, detected),
+		[data?.location, detected],
+	);
 	const { pickKind, areaColumn, restoreAreas } = useRowKindSwitch({
 		value,
 		onChange,
@@ -82,27 +108,48 @@ function LocationSection({
 		suggestedCountry: geoMapPlacement?.suggestedCountry,
 	});
 
-	const setLocation = (patch: Partial<DashboardtypesGeoMapLocationDTO>): void =>
-		onChange({ ...value, location: patchLocation(value?.location, patch) });
-	const setMap = (patch: Partial<DashboardtypesGeoMapSettingsDTO>): void =>
-		onChange({ ...value, map: patchMap(value?.map, { layer, ...patch }) });
-	const missingCoordinates = (['lat', 'lon'] as const).filter(
-		(field) => !(value?.location?.[field] || autoColumn(field)),
+	const setLocation = useCallback(
+		(patch: Partial<DashboardtypesGeoMapLocationDTO>): void =>
+			onChange({ ...value, location: patchLocation(value?.location, patch) }),
+		[onChange, value],
 	);
-	const status = data && describePlacement(data, kind, viewCountry);
+	const setMap = useCallback(
+		(patch: Partial<DashboardtypesGeoMapSettingsDTO>): void =>
+			onChange({ ...value, map: patchMap(value?.map, { layer, ...patch }) }),
+		[onChange, value, layer],
+	);
+	const missingCoordinates = useMemo(
+		() =>
+			[LocationField.Lat, LocationField.Lon].filter(
+				(field) => !(value?.location?.[field] || autoColumn(field)),
+			),
+		[value?.location, autoColumn],
+	);
+	const kindHelp = useMemo(
+		() => describeKind({ hasGroupBy, kind, isAuto, autoColumn }),
+		[hasGroupBy, kind, isAuto, autoColumn],
+	);
+	const status = useMemo(
+		() => data && describePlacement(data, kind, viewCountry),
+		[data, kind, viewCountry],
+	);
+	const unplaced = useMemo(
+		() => (data ? describeUnplaced(data, kind, viewCountry) : []),
+		[data, kind, viewCountry],
+	);
 
 	return (
 		<div className={styles.section}>
 			<RowKindField
 				kind={kind}
 				isAuto={isAuto}
-				help={describeKind({ hasGroupBy, kind, isAuto, autoColumn })}
+				help={kindHelp}
 				onPick={pickKind}
 			/>
 
 			{!hasGroupBy && <GroupByEmptyState onAddGroupBy={addGroupBy} />}
 
-			{kind === 'state' && (
+			{kind === RowKind.State && (
 				<StatesOfField
 					value={viewCountry}
 					onChange={(next): void => setMap({ viewCountry: next })}
@@ -119,7 +166,7 @@ function LocationSection({
 				/>
 			)}
 
-			{hasGroupBy && kind === 'point' && missingCoordinates.length > 0 && (
+			{hasGroupBy && kind === RowKind.Point && missingCoordinates.length > 0 && (
 				<PointsRequirement
 					missing={missingCoordinates.map((field) => `geo.location.${field}`)}
 					areaColumn={areaColumn}
@@ -128,21 +175,16 @@ function LocationSection({
 				/>
 			)}
 
-			{status && data && (
-				<PlacementStatus
-					status={status}
-					unplaced={describeUnplaced(data, kind, viewCountry)}
-				/>
-			)}
+			{status && data && <PlacementStatus status={status} unplaced={unplaced} />}
 
-			{hasGroupBy && kind === 'country' && (
+			{hasGroupBy && kind === RowKind.Country && (
 				<CountryFormatField
 					value={value?.location?.countryFormat}
 					onChange={(countryFormat): void => setLocation({ countryFormat })}
 				/>
 			)}
 
-			{kind !== 'state' && (
+			{kind !== RowKind.State && (
 				<MapAreaField kind={kind} value={value} onChange={setMap} />
 			)}
 
@@ -151,7 +193,7 @@ function LocationSection({
 				onChange={(projection): void => setMap({ projection })}
 			/>
 
-			{kind !== 'point' && (
+			{kind !== RowKind.Point && (
 				<DrawAsField
 					kind={kind}
 					value={layer}
@@ -161,12 +203,7 @@ function LocationSection({
 
 			<ValueColumnsFields
 				layer={layer}
-				valueItems={tableColumns
-					.filter((column) => !coordinateColumns.includes(column.key))
-					.map((column) => ({
-						value: column.key,
-						label: formatColumnOption(column),
-					}))}
+				valueItems={valueItems}
 				colorBy={value?.map?.colorBy}
 				sizeBy={value?.map?.sizeBy}
 				onChange={setMap}

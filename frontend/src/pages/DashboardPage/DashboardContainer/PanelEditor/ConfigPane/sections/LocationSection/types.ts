@@ -4,9 +4,18 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import type { GeoMapPlacementSlice } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
-export type RowKind = 'country' | 'state' | 'point';
+export enum RowKind {
+	Country = 'country',
+	State = 'state',
+	Point = 'point',
+}
 
-export type LocationField = 'country' | 'region' | 'lat' | 'lon';
+export enum LocationField {
+	Country = 'country',
+	Region = 'region',
+	Lat = 'lat',
+	Lon = 'lon',
+}
 
 export type AreaLayer = Exclude<DashboardtypesGeoMapLayerDTO, 'points'>;
 
@@ -27,7 +36,11 @@ export interface UnplacedRow {
 	why: string;
 }
 
-export type PlacementTone = 'ok' | 'warn' | 'error';
+export enum PlacementTone {
+	Ok = 'ok',
+	Warn = 'warn',
+	Error = 'error',
+}
 
 export interface PlacementStatus {
 	tone: PlacementTone;

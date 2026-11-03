@@ -11,6 +11,8 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	AnyThreshold,
+	SECTION_METADATA,
+	SectionKind,
 	ThresholdVariant,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { ThresholdColor } from 'pages/DashboardPage/DashboardContainer/Panels/types/threshold';
@@ -213,7 +215,7 @@ function ThresholdsSection({
 					yAxisUnit={colorColumn?.unit}
 					scopeLabel="color column unit"
 					target={colorColumn?.label}
-					unscopedHint="The color column has no unit, so values compare as entered. Set its unit under Formatting & Units to convert."
+					unscopedHint={`The color column has no unit, so values compare as entered. Set its unit under ${SECTION_METADATA[SectionKind.Formatting].title} to convert.`}
 				/>
 			);
 		}

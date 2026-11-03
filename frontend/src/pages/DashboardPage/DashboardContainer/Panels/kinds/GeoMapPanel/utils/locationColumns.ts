@@ -51,6 +51,7 @@ const LON_KEYS = [
 	'geo.lon',
 	'location.lon',
 	'longitude',
+	'long',
 	'lon',
 	'lng',
 ];
@@ -73,20 +74,33 @@ function detect(
 }
 
 /**
- * Raw SQL marks every numeric column as a value, coordinates included. A value
- * column bound as lat/lon, or named like one when unbound, is a location instead.
+ * Raw SQL marks every numeric column as a value, coordinates included. A column
+ * bound as lat/lon, or named like one when unbound, is a location instead, but
+ * only while it can place points: never in country or state mode, and in auto
+ * mode only when both a latitude and a longitude are present.
  */
-export function isCoordinateColumn(
-	id: string,
+export function findCoordinateColumns(
+	ids: string[],
 	location: DashboardtypesGeoMapLocationDTO | undefined,
-): boolean {
-	const key = id.toLowerCase();
-	return (
-		id === location?.lat ||
-		id === location?.lon ||
-		(!location?.lat && LAT_KEYS.includes(key)) ||
-		(!location?.lon && LON_KEYS.includes(key))
-	);
+): Set<string> {
+	const mode = location?.mode ?? DashboardtypesGeoMapLocationModeDTO.auto;
+	if (
+		mode === DashboardtypesGeoMapLocationModeDTO.country ||
+		mode === DashboardtypesGeoMapLocationModeDTO.subdivision
+	) {
+		return new Set();
+	}
+	const matching = (bound: string | undefined, keys: string[]): string[] =>
+		ids.filter((id) => (bound ? id === bound : keys.includes(id.toLowerCase())));
+	const lat = matching(location?.lat, LAT_KEYS);
+	const lon = matching(location?.lon, LON_KEYS);
+	if (
+		mode === DashboardtypesGeoMapLocationModeDTO.auto &&
+		(lat.length === 0 || lon.length === 0)
+	) {
+		return new Set();
+	}
+	return new Set([...lat, ...lon]);
 }
 
 export interface DetectedLocationColumns {

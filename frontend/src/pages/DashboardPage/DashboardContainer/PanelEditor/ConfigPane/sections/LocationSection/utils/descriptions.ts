@@ -4,7 +4,7 @@ import {
 	LocationKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/types';
 
-import type { LocationField, RowKind } from '../types';
+import { LocationField, RowKind } from '../types';
 
 const LAYER = DashboardtypesGeoMapLayerDTO;
 
@@ -14,15 +14,21 @@ export function autoColumnFor(
 	resolved: GeoMapPanelData['location'] | undefined,
 	detected: Partial<Record<LocationField, string>>,
 ): string | undefined {
-	if (resolved?.kind === LocationKind.Country && field === 'country') {
+	if (
+		resolved?.kind === LocationKind.Country &&
+		field === LocationField.Country
+	) {
 		return resolved.country.id;
 	}
-	if (resolved?.kind === LocationKind.Subdivision && field === 'region') {
+	if (
+		resolved?.kind === LocationKind.Subdivision &&
+		field === LocationField.Region
+	) {
 		return resolved.region.id;
 	}
 	if (
 		resolved?.kind === LocationKind.Coordinates &&
-		(field === 'lat' || field === 'lon')
+		(field === LocationField.Lat || field === LocationField.Lon)
 	) {
 		return resolved[field].id;
 	}
@@ -56,9 +62,11 @@ export function describeKind({
 		return KIND_HELP[kind];
 	}
 	const from =
-		kind === 'point'
-			? `${autoColumn('lat')} and ${autoColumn('lon')}`
-			: autoColumn(kind === 'state' ? 'region' : 'country');
+		kind === RowKind.Point
+			? `${autoColumn(LocationField.Lat)} and ${autoColumn(LocationField.Lon)}`
+			: autoColumn(
+					kind === RowKind.State ? LocationField.Region : LocationField.Country,
+				);
 	return `Auto-detected from ${from}.`;
 }
 
@@ -66,7 +74,7 @@ export function describeLayer(
 	kind: RowKind | undefined,
 	layer: DashboardtypesGeoMapLayerDTO,
 ): string {
-	const shape = kind === 'state' ? 'state' : 'country';
+	const shape = kind === RowKind.State ? 'state' : 'country';
 	return layer === LAYER.regions
 		? `Fills each ${shape} with its color.`
 		: `Draws a circle at the center of each ${shape}.`;
