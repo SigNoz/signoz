@@ -40,6 +40,8 @@ interface ConfigPaneProps {
 	legendSeries: LegendSeries[];
 	/** Table panel's resolved value columns, for the table-only editors. */
 	tableColumns: TableColumnOption[];
+	/** Group-by columns of the joined scalar result. */
+	groupColumns?: string[];
 	/** Query step interval (seconds), for the chart-appearance span-gaps floor. */
 	stepInterval?: number;
 	/**
@@ -67,6 +69,7 @@ function ConfigPane({
 	queryType,
 	legendSeries,
 	tableColumns,
+	groupColumns,
 	stepInterval,
 	panel,
 	panelId,
@@ -133,6 +136,7 @@ function ConfigPane({
 						defaults={defaults}
 						legendSeries={legendSeries}
 						tableColumns={tableColumns}
+						groupColumns={groupColumns}
 						signal={signal}
 						panelKind={panelKind}
 						onChangePanelKind={onChangePanelKind}
@@ -160,6 +164,7 @@ function ConfigPane({
 									defaults={defaults}
 									legendSeries={legendSeries}
 									tableColumns={tableColumns}
+									groupColumns={groupColumns}
 									signal={signal}
 									panelKind={panelKind}
 									onChangePanelKind={onChangePanelKind}
