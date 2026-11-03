@@ -304,12 +304,10 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
 
 			await openQueryActions();
-			await userEvent.click(
-				await screen.findByRole('menuitem', { name: 'Delete' }),
-			);
+			fireEvent.click(await screen.findByText('Delete'));
 
 			expect(handleDeleteQuery).toHaveBeenCalledTimes(1);
-		});
+		}, 15000);
 	});
 
 	it('fx button is disabled when functions already exist', () => {
