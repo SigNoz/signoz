@@ -31,6 +31,7 @@ function RegionDeploymentSection({
 				className="cloud-account-setup-form__form-item"
 			>
 				<Select
+					data-testid="aws-deployment-region-select"
 					placeholder="e.g. US East (N. Virginia)"
 					suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
 					className="cloud-account-setup-form__select integrations-select"

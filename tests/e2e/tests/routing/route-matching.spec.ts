@@ -21,14 +21,13 @@ test.describe('Routing — route matching', () => {
 	});
 
 	test('TC-10 a prefix-route deep link loads with the right tab selected', async ({
-		authedPage: page,
 		routing,
 	}) => {
 		await routing.goto(PATH.roles);
 
 		expect(routing.url().pathname).toBe(PATH.roles);
-		await expect(page.getByTestId('settings-page-sidenav')).toBeVisible();
-		await expect(page.getByTestId('roles')).toHaveClass(/active/);
+		await expect(routing.settings.sidenav()).toBeVisible();
+		await expect(routing.settings.navItem('roles')).toHaveClass(/active/);
 		await expect(routing.roles.settings()).toBeVisible();
 	});
 
@@ -67,7 +66,6 @@ test.describe('Routing — route matching', () => {
 	// `PrivateRoute` redirects a logged-in user on an unknown path to HOME before
 	// the catch-all runs, so `NotFound` is unreachable while authenticated.
 	test('TC-13 an unknown path redirects home and replaces its history entry', async ({
-		authedPage: page,
 		routing,
 	}) => {
 		await routing.dashboards.gotoList();
@@ -75,7 +73,7 @@ test.describe('Routing — route matching', () => {
 
 		await routing.goto(PATH.unknown);
 		await routing.waitForPath(PATH.home);
-		await expect(page.getByTestId('not-found')).toHaveCount(0);
+		await expect(routing.notFound()).toHaveCount(0);
 
 		// The redirect replaced the entry, so one Back reaches the list.
 		expect(await routing.historyDepth()).toBe(depthBefore + 1);

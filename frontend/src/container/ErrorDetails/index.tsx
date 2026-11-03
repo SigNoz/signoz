@@ -148,13 +148,19 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 	return (
 		<div className="error-details-container">
-			<Typography.Title level={4}>{errorDetail.exceptionType}</Typography.Title>
-			<Typography.Text>{errorDetail.exceptionMessage}</Typography.Text>
+			<Typography.Title level={4} testId="error-details-type">
+				{errorDetail.exceptionType}
+			</Typography.Title>
+			<Typography.Text testId="error-details-message">
+				{errorDetail.exceptionMessage}
+			</Typography.Text>
 			<Divider />
 
 			<EventContainer>
 				<div>
-					<Typography>Event {errorDetail.errorId}</Typography>
+					<Typography testId="error-details-event-id">
+						Event {errorDetail.errorId}
+					</Typography>
 					<Typography>
 						{formatTimezoneAdjustedTimestamp(
 							errorDetail.timestamp,
@@ -165,6 +171,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				<div>
 					<Space align="end" direction="horizontal">
 						<Button
+							data-testid="error-details-older"
 							loading={nextPrevStatus === 'loading'}
 							disabled={nextPrevData?.payload?.prevErrorID.length === 0}
 							onClick={(): Promise<void> =>
@@ -177,6 +184,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 							{t('older')}
 						</Button>
 						<Button
+							data-testid="error-details-newer"
 							loading={nextPrevStatus === 'loading'}
 							disabled={nextPrevData?.payload?.nextErrorID.length === 0}
 							onClick={(): Promise<void> =>
@@ -194,17 +202,21 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 			<DashedContainer>
 				<Typography>{t('see_trace_graph')}</Typography>
-				<Button onClick={onClickTraceHandler} type="primary">
+				<Button
+					data-testid="error-details-view-trace"
+					onClick={onClickTraceHandler}
+					type="primary"
+				>
 					{t('see_error_in_trace_graph')}
 				</Button>
 			</DashedContainer>
 
 			<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
-			<div className="error-container">
+			<div className="error-container" data-testid="error-details-stacktrace">
 				<Editor value={stackTraceValue} readOnly />
 			</div>
 
-			<EditorContainer>
+			<EditorContainer data-testid="error-details-attributes-table">
 				<Space direction="vertical">
 					<ResizeTable columns={columns} tableLayout="fixed" dataSource={data} />
 				</Space>
