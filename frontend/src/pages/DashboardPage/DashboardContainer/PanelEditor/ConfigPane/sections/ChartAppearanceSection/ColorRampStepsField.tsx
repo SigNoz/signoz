@@ -10,7 +10,7 @@ import ConfigField from '../../controls/ConfigField/ConfigField';
 import ConfigSlider from '../../controls/ConfigSlider/ConfigSlider';
 import type { FieldResetProps } from '../../utils/changes';
 
-interface HeatmapColorStepsFieldProps extends Partial<FieldResetProps> {
+interface ColorRampStepsFieldProps extends Partial<FieldResetProps> {
 	/** Unset until the slider moves; the chart's default stands in. */
 	value: number | undefined;
 	onChange: (steps: number) => void;
@@ -20,12 +20,12 @@ interface HeatmapColorStepsFieldProps extends Partial<FieldResetProps> {
  * How many colours the ramp is quantised into. Committed on release, so a drag
  * doesn't write every value it passes through to the spec.
  */
-function HeatmapColorStepsField({
+function ColorRampStepsField({
 	value,
 	onChange,
 	changed,
 	onReset,
-}: HeatmapColorStepsFieldProps): JSX.Element {
+}: ColorRampStepsFieldProps): JSX.Element {
 	const [dragging, setDragging] = useState<number | null>(null);
 
 	return (
@@ -51,4 +51,4 @@ function HeatmapColorStepsField({
 	);
 }
 
-export default HeatmapColorStepsField;
+export default ColorRampStepsField;

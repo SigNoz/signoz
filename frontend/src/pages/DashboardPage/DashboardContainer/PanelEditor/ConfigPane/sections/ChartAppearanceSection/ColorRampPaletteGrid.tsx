@@ -2,20 +2,20 @@ import cx from 'classnames';
 import type { DashboardtypesHeatmapPaletteDTO } from 'api/generated/services/sigNoz.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
-import { paletteGradient, PALETTE_OPTIONS } from './heatmapColorOptions';
+import { paletteGradient, PALETTE_OPTIONS } from './colorRampOptions';
 
-import styles from './HeatmapColorsField.module.scss';
+import styles from './ColorRamp.module.scss';
 
-interface HeatmapPaletteGridProps {
+interface ColorRampPaletteGridProps {
 	value: DashboardtypesHeatmapPaletteDTO;
 	onChange: (palette: DashboardtypesHeatmapPaletteDTO) => void;
 }
 
 /** The palettes as the ramps they are: "lava" and "ember" name nothing visible. */
-function HeatmapPaletteGrid({
+function ColorRampPaletteGrid({
 	value,
 	onChange,
-}: HeatmapPaletteGridProps): JSX.Element {
+}: ColorRampPaletteGridProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	return (
@@ -44,4 +44,4 @@ function HeatmapPaletteGrid({
 	);
 }
 
-export default HeatmapPaletteGrid;
+export default ColorRampPaletteGrid;
