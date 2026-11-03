@@ -88,5 +88,17 @@ describe('Presentation / Styling Utils', () => {
 			);
 			expect(value).toBe('host-1');
 		});
+
+		it('groups 0 and false under their own value, not "unknown"', () => {
+			expect(
+				getFlamegraphSpanGroupValue({ attributes: { 'host.name': 0 } }, HOST_FIELD),
+			).toBe('0');
+			expect(
+				getFlamegraphSpanGroupValue(
+					{ attributes: { 'host.name': false } },
+					HOST_FIELD,
+				),
+			).toBe('false');
+		});
 	});
 });

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { generatePath, Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { Button } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
@@ -25,7 +26,7 @@ export function FunnelListItem({
 	isSpanDetailsPage,
 }: FunnelListItemProps): JSX.Element {
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
-	const funnelDetailsLink = generatePath(ROUTES.TRACES_FUNNELS_DETAIL, {
+	const funnelDetailsLink = buildRoutePath(ROUTES.TRACES_FUNNELS_DETAIL, {
 		funnelId: funnel.funnel_id,
 	});
 
@@ -85,9 +86,9 @@ export function FunnelListItem({
 			{content}
 		</button>
 	) : (
-		<Link to={funnelDetailsLink} className="funnel-item">
+		<AppLink to={funnelDetailsLink} className="funnel-item">
 			{content}
-		</Link>
+		</AppLink>
 	);
 }
 

@@ -1,9 +1,8 @@
-import { MemoryRouter } from 'react-router-dom';
-// eslint-disable-next-line no-restricted-imports
 import { fireEvent, render } from '@testing-library/react';
 import { MessageContext } from 'api/ai-assistant/chat';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { VariantContext } from 'container/AIAssistant/VariantContext';
+import { TestRouter } from 'tests/router';
 
 const CHIP_ID = 'recent-errors';
 const CHIP_TEXT = 'Show me recent errors';
@@ -87,11 +86,11 @@ function renderView(variant: 'panel' | 'page' | 'modal'): {
 	getByTestId: (id: string) => HTMLElement;
 } {
 	return render(
-		<MemoryRouter initialEntries={['/dashboard/dashboard-123']}>
+		<TestRouter initialRoute="/dashboard/dashboard-123">
 			<VariantContext.Provider value={variant}>
 				<ConversationView conversationId={CONVERSATION_ID} />
 			</VariantContext.Provider>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 }
 

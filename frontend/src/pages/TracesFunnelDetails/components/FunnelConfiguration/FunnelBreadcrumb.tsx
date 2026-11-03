@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
 import { Breadcrumb } from 'antd';
 import ROUTES from 'constants/routes';
 
@@ -12,11 +12,11 @@ function FunnelBreadcrumb({ funnelName }: FunnelBreadcrumbProps): JSX.Element {
 	const breadcrumbItems = [
 		{
 			title: (
-				<Link to={ROUTES.TRACES_FUNNELS}>
+				<AppLink to={ROUTES.TRACES_FUNNELS}>
 					<span className="funnel-breadcrumb__link">
 						<span className="funnel-breadcrumb__title">All funnels</span>
 					</span>
-				</Link>
+				</AppLink>
 			),
 		},
 		{
