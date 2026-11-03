@@ -83,13 +83,18 @@ jobs:
           - wal
         clickhouse-version:
           - 25.12.5
+          - 26.8.31
         schema-migrator-version:
           - v0.144.6
         postgres-version:
           - 15
+        exclude:
+          - sqlstore-provider: postgres
+            clickhouse-version: 26.8.31
     if: |
       ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
+    continue-on-error: ${{ matrix.clickhouse-version == '26.8.31' }}
     runs-on: ubuntu-latest
     steps:
       - name: checkout
