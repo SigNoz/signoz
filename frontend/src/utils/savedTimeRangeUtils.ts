@@ -8,7 +8,7 @@ export interface SavedTimeRange {
 	to: string;
 }
 
-export const MAX_SAVED_TIME_RANGES = 10;
+export const MAX_SAVED_TIME_RANGES = 5;
 export const MAX_SAVED_TIME_RANGE_NAME_LENGTH = 50;
 
 const isSameRange = (
@@ -62,12 +62,11 @@ export const saveTimeRange = (range: SavedTimeRange): SavedTimeRange[] => {
 	}
 
 	const others = existing.filter((saved) => !isSameRange(saved, range));
-	return persist(
-		[{ name, from: range.from, to: range.to }, ...others].slice(
-			0,
-			MAX_SAVED_TIME_RANGES,
-		),
-	);
+	if (others.length >= MAX_SAVED_TIME_RANGES) {
+		return existing;
+	}
+
+	return persist([{ name, from: range.from, to: range.to }, ...others]);
 };
 
 export const renameSavedTimeRange = (

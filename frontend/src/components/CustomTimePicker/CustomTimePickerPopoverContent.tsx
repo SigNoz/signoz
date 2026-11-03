@@ -23,7 +23,11 @@ import dayjs from 'dayjs';
 import { Clock, PenLine, TriangleAlert } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
-import { isTimeRangeSaved, SavedTimeRange } from 'utils/savedTimeRangeUtils';
+import {
+	isTimeRangeSaved,
+	MAX_SAVED_TIME_RANGES,
+	SavedTimeRange,
+} from 'utils/savedTimeRangeUtils';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
 
 import CalendarContainer from './CalendarContainer';
@@ -361,6 +365,7 @@ function CustomTimePickerPopoverContent({
 												key={range.value}
 												label={range.label}
 												isSaved={isTimeRangeSaved(savedTimeRanges, range)}
+												isLimitReached={savedTimeRanges.length >= MAX_SAVED_TIME_RANGES}
 												onApply={(): void => applyAbsoluteTimeRange(range.from, range.to)}
 												onSave={(name): void =>
 													saveTimeRange({ name, from: range.from, to: range.to })

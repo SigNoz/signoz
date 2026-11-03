@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { Pencil, Trash2 } from '@signozhq/icons';
+import { Pencil, X } from '@signozhq/icons';
 import { SavedTimeRange } from 'utils/savedTimeRangeUtils';
 
 import TimeRangeNameInput from './TimeRangeNameInput';
@@ -72,7 +72,7 @@ function SavedTimeRangeItem({
 					aria-label={`Remove ${range.name}`}
 					onClick={(): void => onRemove(range)}
 				>
-					<Trash2 size={12} />
+					<X size={12} />
 				</Button>
 			</div>
 		</div>

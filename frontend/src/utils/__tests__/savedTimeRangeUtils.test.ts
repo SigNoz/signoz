@@ -66,7 +66,7 @@ describe('savedTimeRangeUtils', () => {
 		expect(saved.name).toBe('a'.repeat(MAX_SAVED_TIME_RANGE_NAME_LENGTH));
 	});
 
-	it(`keeps at most ${MAX_SAVED_TIME_RANGES} ranges`, () => {
+	it(`does not save more than ${MAX_SAVED_TIME_RANGES} ranges`, () => {
 		for (let i = 0; i <= MAX_SAVED_TIME_RANGES; i += 1) {
 			saveTimeRange({
 				name: `Range ${i}`,
@@ -77,7 +77,10 @@ describe('savedTimeRangeUtils', () => {
 
 		const saved = getSavedTimeRanges();
 		expect(saved).toHaveLength(MAX_SAVED_TIME_RANGES);
-		expect(saved[0].name).toBe(`Range ${MAX_SAVED_TIME_RANGES}`);
+		expect(saved[0].name).toBe(`Range ${MAX_SAVED_TIME_RANGES - 1}`);
+
+		saveTimeRange({ ...saved[2], name: 'Renamed at limit' });
+		expect(getSavedTimeRanges()[0].name).toBe('Renamed at limit');
 	});
 
 	it('renames and removes a saved range', () => {

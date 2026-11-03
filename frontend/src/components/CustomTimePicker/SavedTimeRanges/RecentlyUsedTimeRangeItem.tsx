@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Pin } from '@signozhq/icons';
+import { MAX_SAVED_TIME_RANGES } from 'utils/savedTimeRangeUtils';
 
 import TimeRangeNameInput from './TimeRangeNameInput';
 
@@ -9,6 +10,7 @@ import styles from './SavedTimeRanges.module.scss';
 interface RecentlyUsedTimeRangeItemProps {
 	label: string;
 	isSaved: boolean;
+	isLimitReached: boolean;
 	onApply: () => void;
 	onSave: (name: string) => void;
 }
@@ -16,6 +18,7 @@ interface RecentlyUsedTimeRangeItemProps {
 function RecentlyUsedTimeRangeItem({
 	label,
 	isSaved,
+	isLimitReached,
 	onApply,
 	onSave,
 }: RecentlyUsedTimeRangeItemProps): JSX.Element {
@@ -52,6 +55,8 @@ function RecentlyUsedTimeRangeItem({
 						icon
 						testId="recently-used-time-range-pin"
 						aria-label={`Save ${label}`}
+						disabled={isLimitReached}
+						disabledTooltip={`You can save up to ${MAX_SAVED_TIME_RANGES} time ranges. Remove one to save another.`}
 						onClick={(): void => setIsNaming(true)}
 					>
 						<Pin size={12} />

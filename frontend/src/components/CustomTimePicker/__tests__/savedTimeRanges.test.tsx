@@ -1,6 +1,9 @@
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { render, screen, userEvent, within } from 'tests/test-utils';
-import { getSavedTimeRanges } from 'utils/savedTimeRangeUtils';
+import {
+	getSavedTimeRanges,
+	MAX_SAVED_TIME_RANGES,
+} from 'utils/savedTimeRangeUtils';
 
 import { CustomTimePickerInputStatus } from '../CustomTimePicker';
 import CustomTimePickerPopoverContent from '../CustomTimePickerPopoverContent';
@@ -145,6 +148,25 @@ describe('CustomTimePickerPopoverContent - saved time ranges', () => {
 		expect(
 			screen.getByTestId('recently-used-time-range-pin'),
 		).toBeInTheDocument();
+	});
+
+	it('disables saving when the limit is reached', () => {
+		localStorage.setItem(
+			LOCALSTORAGE.SAVED_CUSTOM_TIME_RANGES,
+			JSON.stringify(
+				Array.from({ length: MAX_SAVED_TIME_RANGES }, (_, i) => ({
+					name: `Range ${i}`,
+					from: new Date(i * 1000).toISOString(),
+					to: new Date(i * 1000 + 500).toISOString(),
+				})),
+			),
+		);
+		renderPopover();
+
+		expect(screen.getByTestId('recently-used-time-range-pin')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('hides saved ranges when recently used ranges are hidden', () => {
