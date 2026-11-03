@@ -1,15 +1,16 @@
+import { useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 
 import ConfigField from '../../../controls/ConfigField/ConfigField';
 import ConfigTiles from '../../../controls/ConfigTiles/ConfigTiles';
 import LabelWithInfo from '../../DimensionsSection/LabelWithInfo';
 import { LOCATION_DRAWINGS } from '../utils/drawings';
-import type { RowKind } from '../types';
+import { RowKind } from '../types';
 
 const KINDS: { value: RowKind; label: string }[] = [
-	{ value: 'country', label: 'Country' },
-	{ value: 'state', label: 'State' },
-	{ value: 'point', label: 'Lat / lon point' },
+	{ value: RowKind.Country, label: 'Country' },
+	{ value: RowKind.State, label: 'State' },
+	{ value: RowKind.Point, label: 'Lat / long point' },
 ];
 
 interface RowKindFieldProps {
@@ -26,6 +27,16 @@ function RowKindField({
 	help,
 	onPick,
 }: RowKindFieldProps): JSX.Element {
+	const items = useMemo(
+		() =>
+			KINDS.map((item) => ({
+				...item,
+				drawing: LOCATION_DRAWINGS[item.value],
+				badge: isAuto && kind === item.value ? 'AUTO' : undefined,
+			})),
+		[isAuto, kind],
+	);
+
 	return (
 		<ConfigField
 			label={
@@ -54,11 +65,7 @@ function RowKindField({
 				testId="panel-editor-v2-geo-location-kind"
 				aria-label="Each row is a"
 				value={kind}
-				items={KINDS.map((item) => ({
-					...item,
-					drawing: LOCATION_DRAWINGS[item.value],
-					badge: isAuto && kind === item.value ? 'AUTO' : undefined,
-				}))}
+				items={items}
 				onChange={onPick}
 			/>
 		</ConfigField>

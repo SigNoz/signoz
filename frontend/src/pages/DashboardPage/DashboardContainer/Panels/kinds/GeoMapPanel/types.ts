@@ -1,7 +1,4 @@
-import type {
-	DashboardtypesGeoMapLocationDTO,
-	DashboardtypesGeoMapSettingsDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGeoMapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import type { ColorRampScale } from 'lib/visualization/colorRamp/types';
 import type { PanelThreshold } from 'pages/DashboardPage/DashboardContainer/Panels/types/threshold';
 import type { SubdivisionSet } from 'lib/visualization/charts/GeoMap/geo/subdivisions';
@@ -40,10 +37,11 @@ export interface StaleBinding {
 	key: string;
 }
 
-export interface PrepareGeoMapDataArgs {
+export interface PrepareGeoMapDataArgs extends Pick<
+	DashboardtypesGeoMapPanelSpecDTO,
+	'location' | 'map'
+> {
 	table: PanelTable | undefined;
-	location: DashboardtypesGeoMapLocationDTO | undefined;
-	map: DashboardtypesGeoMapSettingsDTO | undefined;
 	scale: ColorRampScale;
 	/** The view country's states; needed to place subdivision rows. */
 	subdivisions: SubdivisionSet | null;

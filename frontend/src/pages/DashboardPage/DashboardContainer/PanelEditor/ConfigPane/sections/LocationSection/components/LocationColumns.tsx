@@ -1,7 +1,7 @@
 import type { GeoMapPlacementSlice } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
 import LocationColumnField from './LocationColumnField';
-import type { LocationField, RowKind } from '../types';
+import { LocationField, RowKind } from '../types';
 
 interface LocationColumnsProps {
 	kind: RowKind;
@@ -14,11 +14,15 @@ interface LocationColumnsProps {
 type ColumnField = { field: LocationField; label: string; noun: string };
 
 const FIELDS: Record<RowKind, ColumnField[]> = {
-	country: [{ field: 'country', label: 'Country column', noun: 'country' }],
-	state: [{ field: 'region', label: 'State column', noun: 'state' }],
-	point: [
-		{ field: 'lat', label: 'Latitude', noun: 'latitude' },
-		{ field: 'lon', label: 'Longitude', noun: 'longitude' },
+	[RowKind.Country]: [
+		{ field: LocationField.Country, label: 'Country column', noun: 'country' },
+	],
+	[RowKind.State]: [
+		{ field: LocationField.Region, label: 'State column', noun: 'state' },
+	],
+	[RowKind.Point]: [
+		{ field: LocationField.Lat, label: 'Latitude', noun: 'latitude' },
+		{ field: LocationField.Lon, label: 'Longitude', noun: 'longitude' },
 	],
 };
 

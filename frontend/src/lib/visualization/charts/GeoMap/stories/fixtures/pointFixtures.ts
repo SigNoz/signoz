@@ -92,31 +92,3 @@ export function cityLatency(): GeoMapPoint[] {
 			: Math.round(2_000 + Math.pow(random(), 3) * 150_000),
 	}));
 }
-
-/** The panel's point cap: rows beyond it are dropped with a warning. */
-export const MAX_POINTS = 100_000;
-
-/**
- * Requests from `count` points scattered around the cities, denser near
- * hubs: the heaviest map the panel draws.
- */
-export function manyPoints(count = MAX_POINTS): GeoMapPoint[] {
-	const random = seededRandom(97);
-	// Box–Muller: scatter falls off around each city instead of filling a square.
-	const gaussian = (): number =>
-		Math.sqrt(-2 * Math.log(random() || Number.EPSILON)) *
-		Math.cos(2 * Math.PI * random());
-	return Array.from({ length: count }, (_, index) => {
-		const [name, lat, lon] = CITIES[Math.floor(random() * CITIES.length)];
-		const spread = HUBS.has(name) ? 1.5 : 3;
-		const pointLat = Math.max(-58, Math.min(75, lat + gaussian() * spread));
-		const pointLon = Math.max(-180, Math.min(180, lon + gaussian() * spread));
-		return {
-			id: `pt-${index}`,
-			lat: Math.round(pointLat * 100) / 100,
-			lon: Math.round(pointLon * 100) / 100,
-			label: `Near ${name}`,
-			value: Math.round(Math.pow(random(), 3) * 5_000),
-		};
-	});
-}

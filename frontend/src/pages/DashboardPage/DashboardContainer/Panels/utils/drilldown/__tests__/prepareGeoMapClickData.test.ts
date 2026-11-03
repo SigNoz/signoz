@@ -1,6 +1,6 @@
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
-import { enrichGeoMapClick } from '../enrichGeoMapClick';
+import { prepareGeoMapClickData } from '../prepareGeoMapClickData';
 
 const builderQuery = (spec: Record<string, unknown>): BuilderQuery =>
 	spec as unknown as BuilderQuery;
@@ -21,8 +21,8 @@ const QUERIES = [
 const click = (
 	queryNames: string[],
 	builderQueries = QUERIES,
-): ReturnType<typeof enrichGeoMapClick> =>
-	enrichGeoMapClick({
+): ReturnType<typeof prepareGeoMapClickData> =>
+	prepareGeoMapClickData({
 		labels: { 'geo.country.iso_code': 'DE', 'service.name': 'cart' },
 		label: 'DE',
 		queryNames,
@@ -31,7 +31,7 @@ const click = (
 		timeRange: { startTime: 1, endTime: 2 },
 	});
 
-describe('enrichGeoMapClick', () => {
+describe('prepareGeoMapClickData', () => {
 	it("follows the color column's query and filters to the location's row", () => {
 		expect(click(['B'])).toStrictEqual({
 			coordinates: { x: 7, y: 8 },

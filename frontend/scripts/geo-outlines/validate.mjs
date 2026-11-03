@@ -1,5 +1,9 @@
 // Invariants the chart relies on, checked before anything is written. A
 // failure names every problem; the committed assets are left untouched.
+// Called by build.mjs; not run on its own.
+//
+// Checks shape counts, that no shape is emptied or drawn twice, and that every
+// code, alias and name resolves to a drawn shape.
 import { feature } from 'topojson-client';
 
 import { MIN_SUBDIVISIONS } from './config.mjs';

@@ -131,6 +131,12 @@ describe('getRampBottom', () => {
 		expect(getRampBottom({ ...domain, min: 10 }, ColorRampScale.Log)).toBe(10);
 	});
 
+	it('keeps an explicit minimum below the floor on a log ramp', () => {
+		expect(
+			getRampBottom({ min: 5, max: 250, logFloor: 25 }, ColorRampScale.Log),
+		).toBe(5);
+	});
+
 	it.each([
 		[{ min: 0, max: 0, logFloor: 1 }, 0],
 		[{ min: 0, max: 10, logFloor: 10 }, 0],

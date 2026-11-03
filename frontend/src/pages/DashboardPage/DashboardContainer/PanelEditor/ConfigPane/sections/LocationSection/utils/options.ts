@@ -7,7 +7,7 @@ import { SUBDIVISION_COUNTRY_CODES } from 'lib/visualization/charts/GeoMap/geo/s
 import type { GeoMapPlacementSlice } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
 import type { ConfigSelectItem } from '../../../controls/ConfigSelect/ConfigSelect';
-import type { RowKind } from '../types';
+import { RowKind } from '../types';
 
 const VIEW = DashboardtypesGeoMapViewDTO;
 
@@ -45,7 +45,7 @@ export function buildAreaItems(kind: RowKind | undefined): ConfigSelectItem[] {
 		{ value: VIEW.fit, label: 'Fit to data', group: 'Area' },
 		...CONTINENTS.map(([value, label]) => ({ value, label, group: 'Continent' })),
 	];
-	if (kind === 'point') {
+	if (kind === RowKind.Point) {
 		items.push(
 			...STATE_COUNTRY_OPTIONS.map((option) => ({
 				value: `${COUNTRY_VIEW_PREFIX}${option.value}`,
@@ -96,3 +96,8 @@ export const SUGGESTED_GROUP_BYS: { label: string; keys: string[] }[] = [
 		keys: ['geo.location.lat', 'geo.location.lon'],
 	},
 ];
+
+/** An item's label, or the key itself when no item has it. */
+export function labelOfItem(items: ConfigSelectItem[], key: string): string {
+	return items.find((item) => item.value === key)?.label ?? key;
+}

@@ -13,24 +13,24 @@ import {
 } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/types';
 import type { GeoMapPlacementSlice } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
-import type { KindChange, LocationField, RowKind } from '../types';
+import { type KindChange, type LocationField, RowKind } from '../types';
 
 const MODE = DashboardtypesGeoMapLocationModeDTO;
 const LAYER = DashboardtypesGeoMapLayerDTO;
 const VIEW = DashboardtypesGeoMapViewDTO;
 
 const KIND_OF_LOCATION: Record<LocationKind, RowKind> = {
-	[LocationKind.Country]: 'country',
-	[LocationKind.Subdivision]: 'state',
-	[LocationKind.Coordinates]: 'point',
+	[LocationKind.Country]: RowKind.Country,
+	[LocationKind.Subdivision]: RowKind.State,
+	[LocationKind.Coordinates]: RowKind.Point,
 };
 
 const KIND_OF_MODE: Partial<
 	Record<DashboardtypesGeoMapLocationModeDTO, RowKind>
 > = {
-	[MODE.country]: 'country',
-	[MODE.subdivision]: 'state',
-	[MODE.coordinates]: 'point',
+	[MODE.country]: RowKind.Country,
+	[MODE.subdivision]: RowKind.State,
+	[MODE.coordinates]: RowKind.Point,
 };
 
 const MODE_OF_KIND: Record<RowKind, DashboardtypesGeoMapLocationModeDTO> = {
@@ -87,7 +87,7 @@ export function resolveLayer(
 	slice: GeoMapPlacementSlice | undefined,
 	kind: RowKind | undefined,
 ): DashboardtypesGeoMapLayerDTO {
-	if (kind === 'point') {
+	if (kind === RowKind.Point) {
 		return LAYER.points;
 	}
 	const layer = slice?.map?.layer ?? LAYER.regions;
@@ -124,7 +124,7 @@ export function changeRowKind(
 	} else {
 		location.mode = MODE_OF_KIND[to];
 	}
-	if (to === 'state') {
+	if (to === RowKind.State) {
 		const view = map.view ?? VIEW.world;
 		map.view = VIEW.country;
 		map.viewCountry =
@@ -137,17 +137,17 @@ export function changeRowKind(
 			previousView: view === VIEW.country ? previousView : view,
 		};
 	}
-	if (from === 'state') {
+	if (from === RowKind.State) {
 		map.view = previousView ?? VIEW.world;
 	}
 	// Only state and point rows frame one country.
-	if (to !== 'point') {
+	if (to !== RowKind.Point) {
 		if (map.view === VIEW.country) {
 			map.view = VIEW.world;
 		}
 		delete map.viewCountry;
 	}
-	if (to === 'point') {
+	if (to === RowKind.Point) {
 		map.layer = LAYER.points;
 	} else if (map.layer === LAYER.points) {
 		map.layer = LAYER.regions;
@@ -161,9 +161,9 @@ export function drawableKind(
 	except: RowKind,
 ): RowKind | undefined {
 	const drawable: [RowKind, boolean][] = [
-		['country', !!detected.country],
-		['state', !!detected.region],
-		['point', !!(detected.lat && detected.lon)],
+		[RowKind.Country, !!detected.country],
+		[RowKind.State, !!detected.region],
+		[RowKind.Point, !!(detected.lat && detected.lon)],
 	];
 	return drawable.find(([kind, can]) => can && kind !== except)?.[0];
 }

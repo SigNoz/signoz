@@ -1,4 +1,9 @@
+import { useMemo } from 'react';
 import { DashboardtypesGeoMapLayerDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	SECTION_METADATA,
+	SectionKind,
+} from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
 import ConfigField from '../../../controls/ConfigField/ConfigField';
 import ConfigSelect, {
@@ -6,7 +11,7 @@ import ConfigSelect, {
 } from '../../../controls/ConfigSelect/ConfigSelect';
 import LabelWithInfo from '../../DimensionsSection/LabelWithInfo';
 import { describeSize } from '../utils/descriptions';
-import { SIZE_LABEL } from '../utils/options';
+import { labelOfItem, SIZE_LABEL } from '../utils/options';
 
 const NO_VALUES: ConfigSelectItem[] = [
 	{ value: '', label: 'Run the query to see value columns' },
@@ -28,11 +33,33 @@ function ValueColumnsFields({
 	sizeBy,
 	onChange,
 }: ValueColumnsFieldsProps): JSX.Element {
-	const labelOf = (key: string): string =>
-		valueItems.find((item) => item.value === key)?.label ?? key;
 	const colorKey = colorBy || valueItems[0]?.value || '';
-	const sizeKey = sizeBy || colorKey;
+	const colorLabel = labelOfItem(valueItems, colorKey);
+	const sizeLabel = labelOfItem(valueItems, sizeBy || colorKey);
 	const hasValues = valueItems.length > 0;
+	const colorItems = useMemo(
+		() =>
+			hasValues
+				? [{ value: '', label: `Auto · ${colorLabel}` }, ...valueItems]
+				: NO_VALUES,
+		[hasValues, colorLabel, valueItems],
+	);
+	const sizeItems = useMemo(
+		() =>
+			hasValues
+				? [
+						{
+							value: '',
+							label:
+								layer === DashboardtypesGeoMapLayerDTO.regions
+									? 'None'
+									: `Same as color · ${colorLabel}`,
+						},
+						...valueItems,
+					]
+				: NO_VALUES,
+		[hasValues, colorLabel, valueItems, layer],
+	);
 
 	return (
 		<>
@@ -40,7 +67,7 @@ function ValueColumnsFields({
 				label={
 					<LabelWithInfo
 						label="Color by"
-						info="The value column that sets each place's color on the ramp in Chart appearance. Auto uses the first value column."
+						info={`The value column that sets each place's color on the ramp in ${SECTION_METADATA[SectionKind.ChartAppearance].title}. Auto uses the first value column.`}
 						testId="panel-editor-v2-geo-map-color-by-info"
 					/>
 				}
@@ -50,11 +77,7 @@ function ValueColumnsFields({
 				<ConfigSelect
 					testId="panel-editor-v2-geo-map-color-by"
 					value={colorBy ?? ''}
-					items={
-						hasValues
-							? [{ value: '', label: `Auto · ${labelOf(colorKey)}` }, ...valueItems]
-							: NO_VALUES
-					}
+					items={colorItems}
 					onChange={(next): void => onChange({ colorBy: next })}
 				/>
 			</ConfigField>
@@ -67,8 +90,8 @@ function ValueColumnsFields({
 						? describeSize({
 								layer,
 								sizeBy,
-								colorLabel: labelOf(colorKey),
-								sizeLabel: labelOf(sizeKey),
+								colorLabel,
+								sizeLabel,
 							})
 						: 'Value columns appear after the query runs.'
 				}
@@ -76,20 +99,7 @@ function ValueColumnsFields({
 				<ConfigSelect
 					testId="panel-editor-v2-geo-map-size-by"
 					value={sizeBy ?? ''}
-					items={
-						hasValues
-							? [
-									{
-										value: '',
-										label:
-											layer === DashboardtypesGeoMapLayerDTO.regions
-												? 'None'
-												: `Same as color · ${labelOf(colorKey)}`,
-									},
-									...valueItems,
-								]
-							: NO_VALUES
-					}
+					items={sizeItems}
 					onChange={(next): void => onChange({ sizeBy: next })}
 				/>
 			</ConfigField>

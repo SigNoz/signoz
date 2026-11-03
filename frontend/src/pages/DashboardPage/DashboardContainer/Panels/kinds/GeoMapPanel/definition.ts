@@ -40,7 +40,7 @@ export const definition: PanelDefinition<'signoz/GeoMapPanel'> = {
 		// The location comes from the group by.
 		[QueryBuilderField.GroupBy]: {
 			state: 'pinned',
-			placeholder: 'Country, state, or lat + lon (e.g. geo.country.iso_code)',
+			placeholder: 'Country, state, or lat + long (e.g. geo.country.iso_code)',
 		},
 		// Order means nothing on a map, and a limit would drop locations.
 		[QueryBuilderField.OrderBy]: { state: 'hidden' },
