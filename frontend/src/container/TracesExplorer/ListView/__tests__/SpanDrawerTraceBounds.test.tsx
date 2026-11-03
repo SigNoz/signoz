@@ -72,6 +72,8 @@ describe('Traces ListView - span drawer trace bounds', () => {
 				const spec = body.compositeQuery.queries[0]?.spec;
 				if (spec && 'signal' in spec && spec.signal === 'logs') {
 					logsRequests.push(body);
+					// No logs, so no context queries follow to outlive the test.
+					return res(ctx.status(200), ctx.json(listResponse([])));
 				}
 				return res(ctx.status(200), ctx.json(listResponse(listRows)));
 			}),
@@ -101,7 +103,12 @@ describe('Traces ListView - span drawer trace bounds', () => {
 			},
 		};
 		mockTraceSummary(bounds);
-		const logsRequests: { traceId: string; start: number; end: number }[] = [];
+		const logsRequests: {
+			traceId: string;
+			isTraceWide: boolean;
+			start: number;
+			end: number;
+		}[] = [];
 		server.use(
 			rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
 				const body = await req.json<QueryRangeRequestV5>();
@@ -113,6 +120,7 @@ describe('Traces ListView - span drawer trace bounds', () => {
 					// The payload carries the window in µs.
 					logsRequests.push({
 						traceId,
+						isTraceWide: !spec.filter?.expression?.includes('span_id'),
 						start: body.start / 1e3,
 						end: body.end / 1e3,
 					});
@@ -131,11 +139,14 @@ describe('Traces ListView - span drawer trace bounds', () => {
 		).resolves.toBeInTheDocument();
 
 		// The next span is in another trace, so it needs that trace's bounds.
+		// Both its span logs and its trace-wide check must land before the test ends.
 		await user.keyboard('{ArrowDown}');
 		await waitFor(() =>
-			expect(logsRequests.map(({ traceId }) => traceId)).toContain(
-				'a364a8e15af3e9a8c866e0528db8b637',
-			),
+			expect(
+				logsRequests
+					.filter(({ traceId }) => traceId === 'a364a8e15af3e9a8c866e0528db8b637')
+					.map(({ isTraceWide }) => isTraceWide),
+			).toStrictEqual(expect.arrayContaining([false, true])),
 		);
 
 		// Logs wait for the bounds: no request ever goes out with another window.
