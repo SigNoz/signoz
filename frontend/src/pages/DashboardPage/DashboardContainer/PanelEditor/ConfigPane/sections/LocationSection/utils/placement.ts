@@ -1,7 +1,12 @@
 import type { GeoMapPanelData } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/types';
 
 import { countryName } from './options';
-import type { PlacementStatus, RowKind, UnplacedRow } from '../types';
+import {
+	type PlacementStatus,
+	PlacementTone,
+	RowKind,
+	type UnplacedRow,
+} from '../types';
 
 /** Most rows "Show which" lists before counting the rest. */
 const LISTED_UNPLACED = 20;
@@ -17,9 +22,9 @@ export function describeUnplaced(
 	viewCountry: string | undefined,
 ): UnplacedRow[] {
 	const why =
-		kind === 'point'
+		kind === RowKind.Point
 			? 'Not a usable latitude and longitude'
-			: kind === 'state'
+			: kind === RowKind.State
 				? `Not a state of ${viewCountry ? countryName(viewCountry) : 'the country'}`
 				: 'Not a country code or name';
 	const rows: UnplacedRow[] = data.unmapped.map(({ raw, rows: count }) => ({
@@ -73,18 +78,18 @@ export function describePlacement(
 	if (total === 0 || !kind) {
 		return undefined;
 	}
-	if (kind === 'state' && !viewCountry) {
+	if (kind === RowKind.State && !viewCountry) {
 		return {
-			tone: 'error',
+			tone: PlacementTone.Error,
 			text: `0 of ${rowsLabel(total)} placed · pick a country first`,
 		};
 	}
 	const placed = data.regions.length + data.points.length;
 	if (placed === total) {
-		return { tone: 'ok', text: `All ${rowsLabel(total)} placed` };
+		return { tone: PlacementTone.Ok, text: `All ${rowsLabel(total)} placed` };
 	}
 	return {
-		tone: placed === 0 ? 'error' : 'warn',
+		tone: placed === 0 ? PlacementTone.Error : PlacementTone.Warn,
 		text: `${placed.toLocaleString('en-US')} of ${rowsLabel(total)} placed`,
 	};
 }

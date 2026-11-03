@@ -13,7 +13,7 @@ import { MAX_ROWS } from '../constants';
 import {
 	findById,
 	findStaleBindings,
-	isCoordinateColumn,
+	findCoordinateColumns,
 	resolveLocation,
 } from './locationColumns';
 import { placeRow } from './placeRow';
@@ -42,8 +42,12 @@ export function prepareGeoMapData({
 	const allRows = table?.rows ?? [];
 	// Joined queries skip the request's row limit, so the cap holds here too.
 	const rows = allRows.slice(0, MAX_ROWS);
+	const coordinateIds = findCoordinateColumns(
+		columns.map((column) => column.id),
+		location,
+	);
 	const isLocation = (column: PanelTableColumn): boolean =>
-		!column.isValueColumn || isCoordinateColumn(column.id, location);
+		!column.isValueColumn || coordinateIds.has(column.id);
 	const valueColumns = columns.filter((column) => !isLocation(column));
 	const groupColumns = columns.filter(isLocation);
 

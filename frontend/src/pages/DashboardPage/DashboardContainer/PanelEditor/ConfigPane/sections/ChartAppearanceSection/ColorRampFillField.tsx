@@ -3,9 +3,9 @@ import { DEFAULT_OPACITY_FILL } from 'lib/visualization/colorRamp/colorScale';
 import ColorSwatches from '../../controls/ColorSwatches/ColorSwatches';
 import ConfigField from '../../controls/ConfigField/ConfigField';
 import type { FieldResetProps } from '../../utils/changes';
-import { FILL_OPTIONS, GROUP_FILL, isSameColor } from './heatmapColorOptions';
+import { FILL_OPTIONS, GROUP_FILL, isSameColor } from './colorRampOptions';
 
-interface HeatmapFillFieldProps extends Partial<FieldResetProps> {
+interface ColorRampFillFieldProps extends Partial<FieldResetProps> {
 	/** Empty follows the selected group's legend colour. */
 	value: string | undefined;
 	onChange: (fill: string) => void;
@@ -17,13 +17,13 @@ interface HeatmapFillFieldProps extends Partial<FieldResetProps> {
  * The colour opacity mode ramps the alpha of. Any hex goes, since the point of
  * the fill is matching whatever else the dashboard already uses.
  */
-function HeatmapFillField({
+function ColorRampFillField({
 	value,
 	onChange,
 	changed,
 	onReset,
 	withGroupColor = true,
-}: HeatmapFillFieldProps): JSX.Element {
+}: ColorRampFillFieldProps): JSX.Element {
 	const options = withGroupColor
 		? FILL_OPTIONS
 		: FILL_OPTIONS.filter((option) => option.value !== GROUP_FILL);
@@ -59,4 +59,4 @@ function HeatmapFillField({
 	);
 }
 
-export default HeatmapFillField;
+export default ColorRampFillField;

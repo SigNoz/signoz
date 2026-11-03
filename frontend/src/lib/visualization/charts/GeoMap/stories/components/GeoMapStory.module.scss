@@ -1,0 +1,40 @@
+.page {
+	padding: 24px;
+	min-height: 100vh;
+	background: var(--l1-background);
+	color: var(--l1-foreground);
+	box-sizing: border-box;
+}
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	max-width: 100%;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	background: var(--l1-background);
+	overflow: hidden;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--l2-border);
+	font-size: 13px;
+}
+
+.title {
+	font-weight: 500;
+}
+
+.body {
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.menuTitle {
+	font-size: 12px;
+	font-weight: 600;
+}

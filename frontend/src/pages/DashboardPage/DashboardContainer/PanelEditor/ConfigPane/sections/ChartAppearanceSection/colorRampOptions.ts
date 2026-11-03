@@ -118,12 +118,12 @@ export function isSameColor(
 	return Boolean(left) && left?.toLowerCase() === right?.toLowerCase();
 }
 
-export interface HeatmapPaletteOption {
+export interface ColorRampPaletteOption {
 	value: DashboardtypesHeatmapPaletteDTO;
 	label: string;
 }
 
-export const PALETTE_OPTIONS: HeatmapPaletteOption[] = [
+export const PALETTE_OPTIONS: ColorRampPaletteOption[] = [
 	{ value: DashboardtypesHeatmapPaletteDTO.ice, label: 'ice' },
 	{ value: DashboardtypesHeatmapPaletteDTO.moss, label: 'moss' },
 	{ value: DashboardtypesHeatmapPaletteDTO.rust, label: 'rust' },

@@ -1,4 +1,9 @@
 // Natural Earth admin-0 → the countries topology and the lookup tables.
+// Called by build.mjs; not run on its own.
+//
+// Merges each country's parts into one shape by ISO alpha-2, drops Antarctica,
+// assigns view regions and builds the alpha-3/name/alias lookups
+// normalizeCountry reads. Returns the topology, the lookups and a report.
 import { geoArea, geoBounds } from 'd3-geo';
 import { feature } from 'topojson-client';
 

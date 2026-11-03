@@ -5,7 +5,12 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import type { GeoMapPlacementSlice } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
-import type { AreaLayer, BeforePoints, LocationField, RowKind } from '../types';
+import {
+	type AreaLayer,
+	type BeforePoints,
+	type LocationField,
+	RowKind,
+} from '../types';
 import { changeRowKind, drawableKind, patchMap } from '../utils/rowKind';
 
 interface UseRowKindSwitchArgs {
@@ -43,7 +48,7 @@ export function useRowKindSwitch({
 	const beforePoints = useRef<BeforePoints>();
 
 	const switchKind = (to: RowKind | 'auto', areaLayer?: AreaLayer): void => {
-		if (to === 'point' && kind && kind !== 'point') {
+		if (to === RowKind.Point && kind && kind !== RowKind.Point) {
 			beforePoints.current = {
 				kind: isAuto ? 'auto' : kind,
 				layer: layer as AreaLayer,
@@ -63,17 +68,18 @@ export function useRowKindSwitch({
 		);
 	};
 
-	const areaKind = beforePoints.current?.kind ?? drawableKind(detected, 'point');
+	const areaKind =
+		beforePoints.current?.kind ?? drawableKind(detected, RowKind.Point);
 
 	return {
 		pickKind: (to): void => switchKind(to),
 		areaColumn:
-			areaKind === 'state'
+			areaKind === RowKind.State
 				? detected.region
 				: areaKind && (detected.country ?? detected.region),
 		restoreAreas: (): void =>
 			switchKind(
-				areaKind ?? 'country',
+				areaKind ?? RowKind.Country,
 				beforePoints.current?.layer ?? DashboardtypesGeoMapLayerDTO.regions,
 			),
 	};

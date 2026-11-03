@@ -9,20 +9,19 @@ import { Events } from 'constants/events';
 
 interface TooltipFooterProps {
 	id: string;
+	canPin?: boolean;
 	pinKey?: string;
 	isPinned: boolean;
 	canDrilldown?: boolean;
-	/** False for a tooltip that can't be pinned, which drops the pin hint. */
-	canPin?: boolean;
 	dismiss: () => void;
 }
 
 export default function TooltipFooter({
 	id,
+	canPin = true,
 	pinKey = DEFAULT_PIN_TOOLTIP_KEY,
 	isPinned,
 	canDrilldown = true,
-	canPin = true,
 	dismiss,
 }: TooltipFooterProps): JSX.Element {
 	const handleUnpinClick = (): void => {

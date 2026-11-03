@@ -4,13 +4,8 @@ export type FixtureDataset =
 	| 'errorRate'
 	| 'errorRateAndRequests'
 	| 'cityLatency'
-	| 'cityLatencyAndRequests'
-	| 'manyPoints'
-	| 'maxPoints'
-	| 'requests'
 	| 'europeLatency'
-	| 'usStates'
-	| 'indiaStates';
+	| 'usStates';
 
 export interface FixtureRow {
 	/** Group-by value exactly as a query would return it (country, or state for state datasets). */

@@ -6,8 +6,7 @@ import type {
 	DashboardtypesFillOpacityDTO,
 	DashboardtypesGeoMapBubblesDTO,
 	DashboardtypesGeoMapColorsDTO,
-	DashboardtypesGeoMapLocationDTO,
-	DashboardtypesGeoMapSettingsDTO,
+	DashboardtypesGeoMapPanelSpecDTO,
 	DashboardtypesGeoMapThresholdDTO,
 	DashboardtypesHeatmapAxesDTO,
 	DashboardtypesHeatmapColorsDTO,
@@ -134,10 +133,10 @@ export interface PanelChartAppearanceSlice {
 }
 
 /** Geo Map edits `location` and `map` together: what a row is decides the area and layer. */
-export interface GeoMapPlacementSlice {
-	location?: DashboardtypesGeoMapLocationDTO;
-	map?: DashboardtypesGeoMapSettingsDTO;
-}
+export type GeoMapPlacementSlice = Pick<
+	DashboardtypesGeoMapPanelSpecDTO,
+	'location' | 'map'
+>;
 
 /** Superset spanning every kind's visualization DTO. */
 export interface PanelVisualizationSlice {

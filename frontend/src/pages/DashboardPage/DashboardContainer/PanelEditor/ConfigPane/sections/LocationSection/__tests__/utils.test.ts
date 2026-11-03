@@ -6,6 +6,7 @@ import {
 
 import { buildAreaItems, fromAreaValue, toAreaValue } from '../utils/options';
 import { describePlacement, describeUnplaced } from '../utils/placement';
+import { RowKind } from '../types';
 import { changeRowKind, resolveLayer, resolveRowKind } from '../utils/rowKind';
 
 const column = (id: string): GeoMapPanelData['colorColumn'] & object => ({
@@ -51,8 +52,8 @@ describe('resolveRowKind', () => {
 				{ location: { mode: 'subdivision' } } as GeoMapPlacementSlice,
 				undefined,
 			),
-		).toBe('state');
-		expect(resolveRowKind(undefined, makeData())).toBe('country');
+		).toBe(RowKind.State);
+		expect(resolveRowKind(undefined, makeData())).toBe(RowKind.Country);
 		expect(
 			resolveRowKind(undefined, makeData({ location: null })),
 		).toBeUndefined();
@@ -62,12 +63,15 @@ describe('resolveRowKind', () => {
 describe('resolveLayer', () => {
 	it('draws point rows as points and nothing else as points', () => {
 		expect(
-			resolveLayer({ map: { layer: 'bubbles' } } as GeoMapPlacementSlice, 'point'),
+			resolveLayer(
+				{ map: { layer: 'bubbles' } } as GeoMapPlacementSlice,
+				RowKind.Point,
+			),
 		).toBe('points');
 		expect(
 			resolveLayer(
 				{ map: { layer: 'points' } } as GeoMapPlacementSlice,
-				'country',
+				RowKind.Country,
 			),
 		).toBe('regions');
 	});
@@ -79,8 +83,8 @@ describe('changeRowKind', () => {
 			{
 				map: { view: 'europe', layer: 'points', projection: 'equal_earth' },
 			} as GeoMapPlacementSlice,
-			'country',
-			'state',
+			RowKind.Country,
+			RowKind.State,
 			{ suggestedCountry: 'US' },
 		);
 
@@ -98,7 +102,8 @@ describe('changeRowKind', () => {
 
 	it('opens states on the US when the rows suggest no country', () => {
 		expect(
-			changeRowKind(undefined, 'country', 'state', {}).next.map?.viewCountry,
+			changeRowKind(undefined, RowKind.Country, RowKind.State, {}).next.map
+				?.viewCountry,
 		).toBe('US');
 	});
 
@@ -108,8 +113,8 @@ describe('changeRowKind', () => {
 				location: { mode: 'subdivision' },
 				map: { view: 'country', viewCountry: 'US' },
 			} as GeoMapPlacementSlice,
-			'state',
-			'country',
+			RowKind.State,
+			RowKind.Country,
 			{ previousView: 'europe' as never },
 		);
 
@@ -118,14 +123,16 @@ describe('changeRowKind', () => {
 	});
 
 	it('draws points for point rows and clears columns going back to auto', () => {
-		expect(changeRowKind(undefined, 'country', 'point', {}).next).toStrictEqual({
+		expect(
+			changeRowKind(undefined, RowKind.Country, RowKind.Point, {}).next,
+		).toStrictEqual({
 			location: { mode: 'coordinates', countryFormat: 'auto' },
 			map: { layer: 'points', view: 'world', projection: 'mercator' },
 		});
 		expect(
 			changeRowKind(
 				{ location: { mode: 'country', country: 'c' } } as GeoMapPlacementSlice,
-				'country',
+				RowKind.Country,
 				'auto',
 				{},
 			).next.location,
@@ -139,7 +146,7 @@ describe('changeRowKind', () => {
 		});
 	});
 
-	it.each(['country', 'auto'] as const)(
+	it.each([RowKind.Country, 'auto'] as const)(
 		'drops a points country view when picking %s',
 		(to) => {
 			const { map } = changeRowKind(
@@ -147,7 +154,7 @@ describe('changeRowKind', () => {
 					location: { mode: 'coordinates' },
 					map: { view: 'country', viewCountry: 'IN', layer: 'points' },
 				} as GeoMapPlacementSlice,
-				'point',
+				RowKind.Point,
 				to,
 				{},
 			).next;
@@ -163,8 +170,8 @@ describe('changeRowKind', () => {
 				location: { mode: 'auto' },
 				map: { view: 'country', viewCountry: 'IN', layer: 'points' },
 			} as GeoMapPlacementSlice,
-			'point',
-			'point',
+			RowKind.Point,
+			RowKind.Point,
 			{},
 		).next;
 
@@ -175,10 +182,11 @@ describe('changeRowKind', () => {
 describe('area', () => {
 	it('offers single countries to points only', () => {
 		expect(
-			buildAreaItems('country').some((item) => item.group === 'Country'),
+			buildAreaItems(RowKind.Country).some((item) => item.group === 'Country'),
 		).toBe(false);
 		expect(
-			buildAreaItems('point').find((item) => item.value === 'country:FR')?.label,
+			buildAreaItems(RowKind.Point).find((item) => item.value === 'country:FR')
+				?.label,
 		).toBe('France');
 	});
 
@@ -211,11 +219,11 @@ describe('placement status', () => {
 			duplicateRows: 1,
 		});
 
-		expect(describePlacement(data, 'country', undefined)).toStrictEqual({
+		expect(describePlacement(data, RowKind.Country, undefined)).toStrictEqual({
 			tone: 'warn',
 			text: '41 of 45 rows placed',
 		});
-		expect(describeUnplaced(data, 'country', undefined)).toStrictEqual([
+		expect(describeUnplaced(data, RowKind.Country, undefined)).toStrictEqual([
 			{ value: 'XK1', why: 'Not a country code or name' },
 			{ value: '(empty)', why: 'No value · 2 rows' },
 			{ value: 'Repeats', why: '1 row repeats a location; the first is shown' },
@@ -231,17 +239,17 @@ describe('placement status', () => {
 			missingSizeRows: 1,
 		});
 
-		expect(describePlacement(data, 'country', undefined)?.text).toBe(
+		expect(describePlacement(data, RowKind.Country, undefined)?.text).toBe(
 			'1 of 2 rows placed',
 		);
-		expect(describeUnplaced(data, 'country', undefined)).toStrictEqual([
+		expect(describeUnplaced(data, RowKind.Country, undefined)).toStrictEqual([
 			{ value: 'No size', why: '1 row without a positive error_rate value' },
 		]);
 	});
 
 	it('asks for a country before placing states', () => {
 		expect(
-			describePlacement(makeData({ totalRows: 3 }), 'state', ''),
+			describePlacement(makeData({ totalRows: 3 }), RowKind.State, ''),
 		).toStrictEqual({
 			tone: 'error',
 			text: '0 of 3 rows placed · pick a country first',

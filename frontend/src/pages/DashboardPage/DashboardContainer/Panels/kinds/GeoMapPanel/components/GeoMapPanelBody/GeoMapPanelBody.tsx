@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Earth } from '@signozhq/icons';
 import type { DashboardtypesGeoMapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { noop } from 'lodash-es';
 import GeoMap from 'lib/visualization/charts/GeoMap/GeoMap';
 import { isSubdivisionCountry } from 'lib/visualization/charts/GeoMap/geo/subdivisions';
 import type { GeoMapSelection } from 'lib/visualization/charts/GeoMap/types';
@@ -14,7 +15,7 @@ import {
 	resolveDecimalPrecision,
 	resolveLegendPosition,
 } from '../../../../utils/chartAppearance/resolvers';
-import { enrichGeoMapClick } from '../../../../utils/drilldown/enrichGeoMapClick';
+import { prepareGeoMapClickData } from '../../../../utils/drilldown/prepareGeoMapClickData';
 import { formatPanelValue } from '../../../../utils/formatPanelValue';
 import { getBuilderQueries } from '../../../../utils/getBuilderQueries';
 import { getColumnUnit } from '../../../../utils/getColumnUnit';
@@ -34,9 +35,6 @@ import { withTooltipDetails } from '../../utils/tooltipDetails';
 import { LocationKind } from '../../types';
 import { useLoadedSubdivisions } from '../../hooks/useLoadedSubdivisions';
 import { getGeoMapEmptyMessage } from '../../utils/warnings';
-
-// A map tooltip can't be pinned, so there is nothing to dismiss.
-const keepUnpinned = (): void => undefined;
 
 /** The map and everything that loads with it; split from the renderer so dashboards without a map never fetch it. */
 export default function GeoMapPanelBody({
@@ -153,7 +151,7 @@ export default function GeoMapPanelBody({
 			const groupColumns = (table?.columns ?? []).filter(
 				(column) => !column.isValueColumn,
 			);
-			const payload = enrichGeoMapClick({
+			const payload = prepareGeoMapClickData({
 				labels: Object.fromEntries(
 					groupColumns.map((column) => [
 						column.name,
@@ -191,7 +189,8 @@ export default function GeoMapPanelBody({
 				isPinned={false}
 				canPin={false}
 				canDrilldown
-				dismiss={keepUnpinned}
+				// A map tooltip can't be pinned, so there is nothing to dismiss.
+				dismiss={noop}
 			/>
 		),
 		[panelId],
