@@ -56,7 +56,7 @@ function VisualizationSection({
 		value?.timePreference ?? DashboardtypesTimePreferenceDTO.global_time;
 	const barLayout = value?.stackedBarChart
 		? BarLayout.STACKED
-		: BarLayout.SIDE_BY_SIDE;
+		: BarLayout.OVERLAP;
 	const stack = value?.stack ?? defaultValue?.stack;
 
 	return (

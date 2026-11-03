@@ -85,7 +85,6 @@ export const PagerInitialConfig: Partial<AlertmanagertypesChannelPagerdutyConfig
 	{{- end }}`,
 		severity: '{{ (index .Alerts 0).Labels.severity }}',
 		client: 'SigNoz Alert Manager',
-		clientUrl: 'https://enter-signoz-host-n-port-here/alerts',
 		details: {
 			firing: `{{ .Alerts.Firing | toJson }}`,
 			resolved: `{{ .Alerts.Resolved | toJson }}`,
