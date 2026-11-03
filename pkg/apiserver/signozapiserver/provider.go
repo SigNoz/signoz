@@ -95,6 +95,7 @@ type provider struct {
 	prometheusHandler          prometheus.Handler
 	traceDetailHandler         tracedetail.Handler
 	rulerHandler               ruler.Handler
+	rulerService               ruler.Ruler
 	llmPricingRuleHandler      llmpricingrule.Handler
 	statsHandler               statsreporter.Handler
 	savedViewHandler           savedview.Handler
@@ -142,6 +143,7 @@ func NewFactory(
 	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
+	rulerService ruler.Ruler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
 	globalConfig global.Config,
@@ -196,6 +198,7 @@ func NewFactory(
 			llmPricingRuleHandler,
 			traceDetailHandler,
 			rulerHandler,
+			rulerService,
 			statsHandler,
 			savedViewHandler,
 			globalConfig,
@@ -252,6 +255,7 @@ func newProvider(
 	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
+	rulerService ruler.Ruler,
 	statsHandler statsreporter.Handler,
 	savedViewHandler savedview.Handler,
 	globalConfig global.Config,
@@ -307,6 +311,7 @@ func newProvider(
 		prometheusHandler:          prometheusHandler,
 		traceDetailHandler:         traceDetailHandler,
 		rulerHandler:               rulerHandler,
+		rulerService:               rulerService,
 		llmPricingRuleHandler:      llmPricingRuleHandler,
 		statsHandler:               statsHandler,
 		savedViewHandler:           savedViewHandler,

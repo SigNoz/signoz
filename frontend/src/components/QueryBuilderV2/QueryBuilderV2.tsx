@@ -106,9 +106,17 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		[resolvedConfig],
 	);
 
+	const traceOperatorField = useMemo(
+		() =>
+			resolveQueryBuilderField(QueryBuilderField.TraceOperator, resolvedConfig),
+		[resolvedConfig],
+	);
+
+	const canShowTraceOperator = showTraceOperator && !traceOperatorField.hidden;
+
 	const isMultiQueryAllowed = useMemo(
-		() => !additionalQueries.hidden && (!isRawQuery || showTraceOperator),
-		[additionalQueries.hidden, showTraceOperator, isRawQuery],
+		() => !additionalQueries.hidden && (!isRawQuery || canShowTraceOperator),
+		[additionalQueries.hidden, canShowTraceOperator, isRawQuery],
 	);
 
 	const queryDataSources = useMemo(
@@ -146,13 +154,14 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	);
 
 	const hasTraceOperator = useMemo(
-		() => showTraceOperator && hasAtLeastOneTraceQuery && Boolean(traceOperator),
-		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
+		() =>
+			canShowTraceOperator && hasAtLeastOneTraceQuery && Boolean(traceOperator),
+		[canShowTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
 	);
 
 	const showQueryList = useMemo(
-		() => (!showOnlyWhereClause && !isRawQuery) || showTraceOperator,
-		[isRawQuery, showOnlyWhereClause, showTraceOperator],
+		() => (!showOnlyWhereClause && !isRawQuery) || canShowTraceOperator,
+		[isRawQuery, showOnlyWhereClause, canShowTraceOperator],
 	);
 
 	const showFormula = useMemo(() => {
@@ -168,8 +177,8 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	}, [formula.hidden, isRawQuery, currentDataSource]);
 
 	const showAddTraceOperator = useMemo(
-		() => showTraceOperator && !traceOperator && hasAtLeastOneTraceQuery,
-		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
+		() => canShowTraceOperator && !traceOperator && hasAtLeastOneTraceQuery,
+		[canShowTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
 	);
 
 	// Nothing left to add means no footer at all, rather than an empty bar under the
@@ -178,13 +187,13 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		() =>
 			(!additionalQueries.hidden || showFormula || showAddTraceOperator) &&
 			((!showOnlyWhereClause && !isRawQuery) ||
-				(currentDataSource === DataSource.TRACES && showTraceOperator)),
+				(currentDataSource === DataSource.TRACES && canShowTraceOperator)),
 		[
 			additionalQueries.hidden,
 			showFormula,
 			showAddTraceOperator,
 			isRawQuery,
-			showTraceOperator,
+			canShowTraceOperator,
 			showOnlyWhereClause,
 			currentDataSource,
 		],
@@ -222,7 +231,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							fieldsConfig={fieldsConfig}
 							allowedDataSources={queryDataSources}
 							isMultiQueryAllowed={isMultiQueryAllowed}
-							showTraceOperator={showTraceOperator}
+							showTraceOperator={canShowTraceOperator}
 							hasTraceOperator={hasTraceOperator}
 							version={version}
 							isAvailableToDisable={false}
@@ -247,7 +256,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								version={version}
 								isMultiQueryAllowed={isMultiQueryAllowed}
 								isAvailableToDisable={false}
-								showTraceOperator={showTraceOperator}
+								showTraceOperator={canShowTraceOperator}
 								hasTraceOperator={hasTraceOperator}
 								queryVariant={config?.queryVariant || 'dropdown'}
 								showOnlyWhereClause={showOnlyWhereClause}
