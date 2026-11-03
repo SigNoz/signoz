@@ -72,6 +72,23 @@ function detect(
 	return keys.map((key) => byId.get(key)).find(Boolean);
 }
 
+/**
+ * Raw SQL marks every numeric column as a value, coordinates included. A value
+ * column bound as lat/lon, or named like one when unbound, is a location instead.
+ */
+export function isCoordinateColumn(
+	id: string,
+	location: DashboardtypesGeoMapLocationDTO | undefined,
+): boolean {
+	const key = id.toLowerCase();
+	return (
+		id === location?.lat ||
+		id === location?.lon ||
+		(!location?.lat && LAT_KEYS.includes(key)) ||
+		(!location?.lon && LON_KEYS.includes(key))
+	);
+}
+
 export interface DetectedLocationColumns {
 	country?: string;
 	region?: string;
