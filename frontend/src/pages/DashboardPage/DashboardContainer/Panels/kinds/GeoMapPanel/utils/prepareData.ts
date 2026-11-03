@@ -37,7 +37,9 @@ export function prepareGeoMapData({
 	columnUnits = {},
 }: PrepareGeoMapDataArgs): GeoMapPanelData {
 	const columns = table?.columns ?? [];
-	const rows = table?.rows ?? [];
+	const allRows = table?.rows ?? [];
+	// Joined queries skip the request's row limit, so the cap holds here too.
+	const rows = allRows.slice(0, MAX_ROWS);
 	const valueColumns = columns.filter((column) => column.isValueColumn);
 	const groupColumns = columns.filter((column) => !column.isValueColumn);
 
@@ -74,7 +76,7 @@ export function prepareGeoMapData({
 		missingSizeRows: 0,
 		thresholdConflictRows: 0,
 		nonPositiveOnLogRows: 0,
-		atRowLimit: rows.length >= MAX_ROWS,
+		atRowLimit: allRows.length >= MAX_ROWS,
 		staleBindings: findStaleBindings(columns, location, map),
 		needsCountryView: needsCountryView && !hasStatesView,
 		pointsWithoutCoordinates: wantsPoints && !!resolved && !isCoordinates,

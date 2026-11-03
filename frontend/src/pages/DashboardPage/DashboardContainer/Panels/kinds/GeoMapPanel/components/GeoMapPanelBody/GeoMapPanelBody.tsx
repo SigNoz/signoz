@@ -28,7 +28,7 @@ import {
 	resolveColorScale,
 	toColorKeys,
 } from '../../utils/chartOptions';
-import { toText } from '../../utils/cellValues';
+import { toRawText } from '../../utils/cellValues';
 import { prepareGeoMapData } from '../../utils/prepareData';
 import { withTooltipDetails } from '../../utils/tooltipDetails';
 import { LocationKind } from '../../types';
@@ -155,7 +155,10 @@ export default function GeoMapPanelBody({
 			);
 			const payload = enrichGeoMapClick({
 				labels: Object.fromEntries(
-					groupColumns.map((column) => [column.name, toText(row.data[column.id])]),
+					groupColumns.map((column) => [
+						column.name,
+						toRawText(row.data[column.id]),
+					]),
 				),
 				label: point
 					? point.label || `${point.lat.toFixed(2)}, ${point.lon.toFixed(2)}`
