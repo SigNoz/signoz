@@ -9,20 +9,9 @@ on:
       - frontend/src/lib/visualization/charts/GeoMap/assets/**
       - frontend/src/lib/visualization/charts/GeoMap/geo/subdivisionCountries.ts
       - frontend/pnpm-lock.yaml
-  pull_request_target:
-    types:
-      - labeled
-    paths:
-      - frontend/scripts/geo-outlines/**
-      - frontend/src/lib/visualization/charts/GeoMap/assets/**
-      - frontend/src/lib/visualization/charts/GeoMap/geo/subdivisionCountries.ts
-      - frontend/pnpm-lock.yaml
 
 jobs:
   geo-outlines:
-    if: |
-      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     runs-on: ubuntu-latest
     steps:
       - name: self-checkout
