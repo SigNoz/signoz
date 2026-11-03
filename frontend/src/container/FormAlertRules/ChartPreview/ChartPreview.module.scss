@@ -1,0 +1,25 @@
+.chartCard {
+	position: relative;
+	border: 1px solid var(--l1-border);
+	border-radius: var(--radius-2);
+	background-color: var(--card);
+}
+
+.chartCardBody {
+	height: 57vh;
+	padding: var(--spacing-12) 0;
+	border-radius: 0 0 var(--radius-1) var(--radius-1);
+	background-color: var(--l1-background);
+
+	:global(.plot-tag) {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--spacing-3);
+		width: fit-content;
+		margin-left: var(--spacing-3);
+		padding: 0 var(--spacing-2) 0 var(--spacing-3);
+		border-radius: var(--radius-2);
+		background: var(--l3-background);
+		backdrop-filter: blur(6px);
+	}
+}

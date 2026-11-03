@@ -47,9 +47,9 @@ import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import ChartContent from './ChartContent';
-import { ChartContainer } from './styles';
 import { getThresholds } from './utils';
 
+import styles from './ChartPreview.module.scss';
 import './ChartPreview.styles.scss';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 
@@ -300,57 +300,59 @@ function ChartPreview({
 
 	return (
 		<div className="alert-chart-container" ref={graphRef}>
-			<ChartContainer>
-				<div className="chart-preview-header">
-					{headline}
-					{isWarning && (
-						<WarningPopover warningData={queryResponse.data?.warning as Warning} />
-					)}
-				</div>
+			<div className={styles.chartCard}>
+				<div className={styles.chartCardBody}>
+					<div className="chart-preview-header">
+						{headline}
+						{isWarning && (
+							<WarningPopover warningData={queryResponse.data?.warning as Warning} />
+						)}
+					</div>
 
-				<div className="threshold-alert-uplot-chart-container">
-					{queryResponse.isLoading && (
-						<Spinner size="large" tip="Loading..." height="100%" />
-					)}
-					{(queryResponse?.isError || queryResponse?.error) && !isCancelled && (
-						<ErrorInPlace error={queryResponse.error as APIError} />
-					)}
+					<div className="threshold-alert-uplot-chart-container">
+						{queryResponse.isLoading && (
+							<Spinner size="large" tip="Loading..." height="100%" />
+						)}
+						{(queryResponse?.isError || queryResponse?.error) && !isCancelled && (
+							<ErrorInPlace error={queryResponse.error as APIError} />
+						)}
 
-					{isCancelled && !queryResponse.isLoading && !hasResultData && (
-						<QueryCancelledPlaceholder subText='Click "Run Query" to load the chart preview.' />
-					)}
+						{isCancelled && !queryResponse.isLoading && !hasResultData && (
+							<QueryCancelledPlaceholder subText='Click "Run Query" to load the chart preview.' />
+						)}
 
-					{chartDataAvailable && !isAnomalyDetectionAlert && (
-						<ChartContent
-							panelType={graphType}
-							alertId={alertDef?.id}
-							query={query || currentQuery}
-							apiResponse={queryResponse.data?.payload}
-							data={chartData}
-							thresholds={resolvedThresholds}
-							yAxisUnit={yAxisUnit}
-							legendPosition={legendPosition}
-							isDarkMode={isDarkMode}
-							timezone={timezone}
-							width={chartWidth}
-							height={chartHeight}
-							minTimeScale={minTimeScale}
-							maxTimeScale={maxTimeScale}
-							onDragSelect={onDragSelect}
-						/>
-					)}
-
-					{chartDataAvailable &&
-						isAnomalyDetectionAlert &&
-						isAnomalyDetectionEnabled &&
-						queryResponse?.data?.payload?.data?.resultType === 'time_series' && (
-							<AnomalyAlertEvaluationView
-								data={queryResponse?.data?.payload}
+						{chartDataAvailable && !isAnomalyDetectionAlert && (
+							<ChartContent
+								panelType={graphType}
+								alertId={alertDef?.id}
+								query={query || currentQuery}
+								apiResponse={queryResponse.data?.payload}
+								data={chartData}
+								thresholds={resolvedThresholds}
 								yAxisUnit={yAxisUnit}
+								legendPosition={legendPosition}
+								isDarkMode={isDarkMode}
+								timezone={timezone}
+								width={chartWidth}
+								height={chartHeight}
+								minTimeScale={minTimeScale}
+								maxTimeScale={maxTimeScale}
+								onDragSelect={onDragSelect}
 							/>
 						)}
+
+						{chartDataAvailable &&
+							isAnomalyDetectionAlert &&
+							isAnomalyDetectionEnabled &&
+							queryResponse?.data?.payload?.data?.resultType === 'time_series' && (
+								<AnomalyAlertEvaluationView
+									data={queryResponse?.data?.payload}
+									yAxisUnit={yAxisUnit}
+								/>
+							)}
+					</div>
 				</div>
-			</ChartContainer>
+			</div>
 		</div>
 	);
 }
