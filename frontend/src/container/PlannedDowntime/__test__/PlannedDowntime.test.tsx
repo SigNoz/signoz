@@ -220,7 +220,7 @@ describe('PlannedDowntime Component', () => {
 		expect(screen.getAllByText('Active')).toHaveLength(3);
 	});
 
-	it('lets every data column but the last, which fills, be resized', async () => {
+	it('lets every data column be resized', async () => {
 		renderPage();
 
 		await screen.findByText(MOCK_DOWNTIME_1_NAME);
@@ -234,6 +234,7 @@ describe('PlannedDowntime Component', () => {
 			'Timezone',
 			'Repeats',
 			'Duration',
+			'Alerts Silenced',
 		]);
 	});
 

@@ -7,6 +7,8 @@ import { toRelativeTime } from 'pages/AlertList/NotificationChannels/utils/relat
 import styles from './RoutingPolicies.module.scss';
 import { RoutingPolicy } from './types';
 
+const COLUMN_WIDTH = { default: 'auto', min: '120px' };
+
 export function getRoutingPolicyColumns(
 	formatTimezoneAdjustedTimestamp: (date: string, format: string) => string,
 ): TableColumnDef<RoutingPolicy>[] {
@@ -42,7 +44,7 @@ export function getRoutingPolicyColumns(
 			id: 'name',
 			header: 'Routing Policy',
 			accessorKey: 'name',
-			width: { default: '320px', min: '220px' },
+			width: COLUMN_WIDTH,
 			enableSort: true,
 			enableResize: true,
 			enableRemove: false,
@@ -60,7 +62,7 @@ export function getRoutingPolicyColumns(
 			id: 'channels',
 			header: 'Channels',
 			accessorKey: 'channels',
-			width: { default: '220px', min: '140px' },
+			width: COLUMN_WIDTH,
 			enableSort: false,
 			enableResize: true,
 			enableMove: false,
@@ -80,7 +82,7 @@ export function getRoutingPolicyColumns(
 			id: 'expression',
 			header: 'Expression',
 			accessorKey: 'expression',
-			width: { default: '260px', min: '160px' },
+			width: COLUMN_WIDTH,
 			enableSort: false,
 			enableResize: true,
 			enableMove: false,
@@ -94,7 +96,7 @@ export function getRoutingPolicyColumns(
 			id: 'createdBy',
 			header: 'Created By',
 			accessorKey: 'createdBy',
-			width: { default: '180px', min: '120px' },
+			width: COLUMN_WIDTH,
 			defaultVisibility: false,
 			enableSort: false,
 			enableResize: true,
@@ -105,7 +107,7 @@ export function getRoutingPolicyColumns(
 			id: 'createdAt',
 			header: 'Created At',
 			accessorKey: 'createdAt',
-			width: { default: '150px', min: '120px' },
+			width: COLUMN_WIDTH,
 			defaultVisibility: false,
 			enableSort: true,
 			enableResize: true,
@@ -116,7 +118,7 @@ export function getRoutingPolicyColumns(
 			id: 'updatedBy',
 			header: 'Updated By',
 			accessorKey: 'updatedBy',
-			width: { default: '180px', min: '120px' },
+			width: COLUMN_WIDTH,
 			defaultVisibility: false,
 			enableSort: false,
 			enableResize: true,
@@ -127,7 +129,7 @@ export function getRoutingPolicyColumns(
 			id: 'updatedAt',
 			header: 'Updated At',
 			accessorKey: 'updatedAt',
-			width: { default: '150px', min: '120px' },
+			width: COLUMN_WIDTH,
 			defaultVisibility: false,
 			enableSort: true,
 			enableResize: true,

@@ -39,7 +39,7 @@ function PlannedDowntimeList({
 						<span className={styles.actionsHeader}>Actions</span>
 					),
 					accessorKey: 'id',
-					width: { fixed: '96px', passLastColumnFill: true },
+					width: { fixed: '96px', ignoreLastColumnFill: true },
 					enableSort: false,
 					enableResize: false,
 					enableRemove: false,
