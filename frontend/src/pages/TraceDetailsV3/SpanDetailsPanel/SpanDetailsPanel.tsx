@@ -190,10 +190,12 @@ function SpanDetailsContent({
 			return null;
 		}
 		return {
-			clusterName: getSpanAttribute(selectedSpan, 'k8s.cluster.name') || '',
-			podName: getSpanAttribute(selectedSpan, 'k8s.pod.name') || '',
-			nodeName: getSpanAttribute(selectedSpan, 'k8s.node.name') || '',
-			hostName: getSpanAttribute(selectedSpan, 'host.name') || '',
+			clusterName: String(
+				getSpanAttribute(selectedSpan, 'k8s.cluster.name') ?? '',
+			),
+			podName: String(getSpanAttribute(selectedSpan, 'k8s.pod.name') ?? ''),
+			nodeName: String(getSpanAttribute(selectedSpan, 'k8s.node.name') ?? ''),
+			hostName: String(getSpanAttribute(selectedSpan, 'host.name') ?? ''),
 			spanTimestamp: dayjs(selectedSpan.timestamp).format(),
 		};
 	}, [selectedSpan]);

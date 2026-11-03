@@ -4,6 +4,8 @@ import type {
 	DashboardtypesHistogramBucketsDTO,
 	DashboardtypesLegendDTO,
 	DashboardtypesPanelSpecDTO,
+	DashboardtypesScatterPlotAxesDTO,
+	DashboardtypesScatterPlotDimensionsDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	SectionKind,
@@ -22,9 +24,11 @@ import AxesSection from './sections/AxesSection/AxesSection';
 import BucketsSection from './sections/BucketsSection/BucketsSection';
 import ChartAppearanceSection from './sections/ChartAppearanceSection/ChartAppearanceSection';
 import ContextLinksSection from './sections/ContextLinksSection/ContextLinksSection';
+import DimensionsSection from './sections/DimensionsSection/DimensionsSection';
 import FormattingSection from './sections/FormattingSection/FormattingSection';
 import LegendSection from './sections/LegendSection/LegendSection';
 import PanelHeaderSection from './sections/PanelHeaderSection/PanelHeaderSection';
+import ScatterAxesSection from './sections/ScatterAxesSection/ScatterAxesSection';
 import TextLayoutSection from './sections/TextLayoutSection/TextLayoutSection';
 import ThresholdsSection from './sections/ThresholdsSection/ThresholdsSection';
 import VisualizationSection from './sections/VisualizationSection/VisualizationSection';
@@ -85,6 +89,20 @@ export const SECTION_REGISTRY: {
 		get: (spec): PanelAxesSlice | undefined =>
 			getPluginSlice<PanelAxesSlice>(spec, 'axes'),
 		update: (spec, axes): PanelSpec => updatePluginSlice(spec, 'axes', axes),
+	},
+	// Same `axes` key as above, in Scatter Plot's per-axis shape.
+	[SectionKind.ScatterAxes]: {
+		Component: ScatterAxesSection,
+		get: (spec): DashboardtypesScatterPlotAxesDTO | undefined =>
+			getPluginSlice<DashboardtypesScatterPlotAxesDTO>(spec, 'axes'),
+		update: (spec, axes): PanelSpec => updatePluginSlice(spec, 'axes', axes),
+	},
+	[SectionKind.Dimensions]: {
+		Component: DimensionsSection,
+		get: (spec): DashboardtypesScatterPlotDimensionsDTO | undefined =>
+			getPluginSlice<DashboardtypesScatterPlotDimensionsDTO>(spec, 'dimensions'),
+		update: (spec, dimensions): PanelSpec =>
+			updatePluginSlice(spec, 'dimensions', dimensions),
 	},
 	[SectionKind.Legend]: {
 		Component: LegendSection,

@@ -39,8 +39,8 @@ function columnUnits(spec: DashboardtypesPanelSpecDTO): unknown {
 }
 
 const COLUMNS: TableColumnOption[] = [
-	{ key: 'A', label: 'A' },
-	{ key: 'B', label: 'B' },
+	{ key: 'A', label: 'A', name: 'A' },
+	{ key: 'B', label: 'B', name: 'B' },
 ];
 
 const NO_COLUMNS: TableColumnOption[] = [];

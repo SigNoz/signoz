@@ -11,6 +11,7 @@ import {
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
@@ -86,7 +87,7 @@ function ListView({
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		dataSource: DataSource.TRACES,
+		sourcePage: SavedviewtypesSourceDTO.traces,
 		aggregateOperator: 'count',
 		initialOptions: {
 			selectColumns: defaultSelectedColumns,
@@ -99,23 +100,20 @@ function ListView({
 	const paginationConfig =
 		paginationQueryData ?? getDefaultPaginationConfig(PER_PAGE_OPTIONS);
 
-	const requestQuery = useMemo(
-		() => getListViewQuery(stagedQuery || initialQueriesMap.traces, orderBy),
-		[stagedQuery, orderBy],
-	);
-
-	// Stable sorted-name signature for the queryKey.
-	// - Drag updates selectColumns; raw queryKey would churn on reorder.
-	// - Trace API fetches only listed columns → add/remove must refetch.
-	// - Sorted-name signature: stable on reorder, changes on add/remove.
-	const selectColumnsSignature = useMemo(
-		() =>
-			(options?.selectColumns ?? [])
-				.map((c) => c.name)
-				.sort()
-				.join(','),
-		[options?.selectColumns],
-	);
+	// Empty selectFields makes the API return every span field.
+	const requestQuery = useMemo(() => {
+		const query = getListViewQuery(
+			stagedQuery || initialQueriesMap.traces,
+			orderBy,
+		);
+		query.builder.queryData.forEach((queryData) => {
+			queryData.selectColumns = [];
+		});
+		query.builder.queryTraceOperator?.forEach((queryTraceOperator) => {
+			queryTraceOperator.selectColumns = [];
+		});
+		return query;
+	}, [stagedQuery, orderBy]);
 
 	const queryKey = useMemo(
 		() => [
@@ -126,14 +124,12 @@ function ListView({
 			stagedQuery,
 			panelType,
 			paginationConfig,
-			selectColumnsSignature,
 		],
 		[
 			stagedQuery,
 			panelType,
 			globalSelectedTime,
 			paginationConfig,
-			selectColumnsSignature,
 			maxTime,
 			minTime,
 		],
@@ -154,7 +150,6 @@ function ListView({
 			},
 			tableParams: {
 				pagination: paginationConfig,
-				selectColumns: options?.selectColumns,
 			},
 		},
 		// ENTITY_VERSION_V4,
@@ -163,10 +158,7 @@ function ListView({
 			queryKey,
 			enabled:
 				// don't make api call while the time range state in redux is loading
-				!timeRangeUpdateLoading &&
-				!!stagedQuery &&
-				panelType === PANEL_TYPES.LIST &&
-				!!options?.selectColumns?.length,
+				!timeRangeUpdateLoading && !!stagedQuery && panelType === PANEL_TYPES.LIST,
 		},
 	);
 
