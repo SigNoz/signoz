@@ -288,7 +288,7 @@ func TestConditionFor(t *testing.T) {
 		},
 	}
 
-	storage := NewStorage()
+	storage := NewStorage(nil)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -374,7 +374,7 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 		},
 	}
 
-	storage := NewStorage()
+	storage := NewStorage(nil)
 
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
@@ -396,7 +396,7 @@ func TestConditionForResourceWithEvolution(t *testing.T) {
 // undeclared (Dynamic) paths and genuinely NULL when absent.
 func TestConditionForScopeIntrinsicFields(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 
 	testCases := []struct {
 		name        string
@@ -482,7 +482,7 @@ func TestConditionForScopeIntrinsicFields(t *testing.T) {
 // user input and queries anyway, emitting a warning instead of failing.
 func TestConditionForSynthesizedKeys(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 
 	// no metadata matches -> the builder must synthesize from user input
 	var noMatches map[string][]*telemetrytypes.TelemetryFieldKey
@@ -692,7 +692,7 @@ func TestConditionForSynthesizedKeys(t *testing.T) {
 // attribute, with or without a metadata entry for the column.
 func TestIntrinsicColumnFirst(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	q := qbtypes.QueryInfo{StartNs: 1761437108000000000, EndNs: 1761458708000000000}
 	attr := func(name string, dataType telemetrytypes.FieldDataType) *telemetrytypes.TelemetryFieldKey {
 		return &telemetrytypes.TelemetryFieldKey{Name: name, Signal: telemetrytypes.SignalTraces, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: dataType}
