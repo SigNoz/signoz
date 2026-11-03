@@ -11,7 +11,7 @@ const ANNOTATIONS = {
 
 // A minimal but valid v2 (schemaVersion v2alpha1) threshold rule
 // on the always-present `signoz_calls_total` metric. Mirrors the shape the
-// CreateAlertV2 UI posts to POST /api/v2/rules.
+// CreateAlert UI posts to POST /api/v2/rules.
 export function buildThresholdRulePayload({
 	name,
 	target,

@@ -7,7 +7,7 @@ import AlertBreadcrumb from 'components/AlertBreadcrumb';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import CreateAlertV2 from 'container/CreateAlertV2';
+import CreateAlert from 'container/CreateAlert';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -82,7 +82,7 @@ function CreateRules(): JSX.Element {
 		if (isTypeSelectionMode) {
 			return <SelectAlertType onSelect={handleSelectType} />;
 		}
-		return <CreateAlertV2 alertType={alertType} />;
+		return <CreateAlert alertType={alertType} />;
 	}, [isTypeSelectionMode, handleSelectType, alertType]);
 
 	const items: TabsProps['items'] = [

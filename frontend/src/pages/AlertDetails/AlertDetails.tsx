@@ -7,11 +7,11 @@ import RouteTab from 'components/RouteTab';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { CreateAlertProvider } from 'container/CreateAlertV2/context';
+import { CreateAlertProvider } from 'container/CreateAlert/context';
 import {
 	getAlertTypeFromAlertDef,
 	getCreateAlertLocalStateFromAlertDef,
-} from 'container/CreateAlertV2/utils';
+} from 'container/CreateAlert/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAlertRule } from 'providers/Alert';
