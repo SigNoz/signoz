@@ -129,7 +129,7 @@ func newQueryStack(
 	metadataStore := telemetrymetadata.NewTelemetryMetaStore(settings, telemetryStore, fl)
 
 	cfg := config.Querier.Config
-	schemaMetadataStore := telemetrymetadata.NewSchemaMetadataStore(telemetryStore, cfg.SchemaMetadataStoreCacheTTL)
+	schemaMetadataStore := telemetrymetadata.NewSchemaMetadataStore(telemetryStore, cfg.SchemaMetadataStore.CacheTTL)
 	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, schemaMetadataStore, fl).New(ctx, settings, cfg)
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err

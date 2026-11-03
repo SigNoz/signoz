@@ -13,6 +13,12 @@ type SkipResourceFingerprint struct {
 	Threshold uint64 `yaml:"threshold" mapstructure:"threshold"`
 }
 
+// SchemaMetadataStore configures the schema metadata store.
+type SchemaMetadataStore struct {
+	// CacheTTL is how long found entries stay cached; 0 caches them for the life of the process.
+	CacheTTL time.Duration `yaml:"cache_ttl" mapstructure:"cache_ttl"`
+}
+
 // Config represents the configuration for the statement builders.
 type Config struct {
 	// SkipResourceFingerprint configures when the resource fingerprint subquery is skipped in favor of main-table filtering.
@@ -23,9 +29,8 @@ type Config struct {
 	// SearchMaxScanRowsJSONBody is the same budget for body_v2, where each row costs far
 	// more: toString() rebuilds every document and no skip index prunes (0 disables).
 	SearchMaxScanRowsJSONBody int64 `yaml:"search_max_scan_rows_json_body" mapstructure:"search_max_scan_rows_json_body"`
-	// SchemaMetadataStoreCacheTTL is how long the schema metadata store caches what it
-	// found; 0 caches it for the life of the process.
-	SchemaMetadataStoreCacheTTL time.Duration `yaml:"schema_metadata_store_cache_ttl" mapstructure:"schema_metadata_store_cache_ttl"`
+	// SchemaMetadataStore configures the schema metadata store.
+	SchemaMetadataStore SchemaMetadataStore `yaml:"schemametadatastore" mapstructure:"schemametadatastore"`
 }
 
 func NewConfig() Config {
@@ -50,8 +55,8 @@ func (c Config) Validate() error {
 	if c.SearchMaxScanRowsJSONBody < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "search_max_scan_rows_json_body must not be negative, got %v", c.SearchMaxScanRowsJSONBody)
 	}
-	if c.SchemaMetadataStoreCacheTTL < 0 {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "schema_metadata_store_cache_ttl must not be negative, got %v", c.SchemaMetadataStoreCacheTTL)
+	if c.SchemaMetadataStore.CacheTTL < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "schemametadatastore.cache_ttl must not be negative, got %v", c.SchemaMetadataStore.CacheTTL)
 	}
 	return nil
 }

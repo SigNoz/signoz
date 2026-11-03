@@ -25,7 +25,7 @@ func TestSchemaMetadataStoreCacheTTLFromEnv(t *testing.T) {
 		},
 		{
 			name: "Nanosecond_ExpiresImmediately",
-			env:  map[string]string{"SIGNOZ_QUERIER_SCHEMA__METADATA__STORE__CACHE__TTL": "1ns"},
+			env:  map[string]string{"SIGNOZ_QUERIER_SCHEMAMETADATASTORE_CACHE__TTL": "1ns"},
 			want: time.Nanosecond,
 		},
 	}
@@ -40,7 +40,7 @@ func TestSchemaMetadataStoreCacheTTLFromEnv(t *testing.T) {
 
 			actual := Config{}
 			require.NoError(t, conf.Unmarshal("querier", &actual))
-			assert.Equal(t, testCase.want, actual.SchemaMetadataStoreCacheTTL)
+			assert.Equal(t, testCase.want, actual.SchemaMetadataStore.CacheTTL)
 		})
 	}
 }
