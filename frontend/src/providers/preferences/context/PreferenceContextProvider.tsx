@@ -5,12 +5,12 @@ import React, {
 	useContext,
 	useMemo,
 } from 'react';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import useUrlQuery from 'hooks/useUrlQuery';
 import {
 	PreferenceContextValue,
 	PreferenceMode,
 } from 'providers/preferences/types';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceSync } from '../sync/usePreferenceSync';
 
@@ -38,19 +38,19 @@ export function PreferenceContextProvider({
 	const logsSlice = usePreferenceSync({
 		mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
 		savedViewId: savedViewId || undefined,
-		dataSource: DataSource.LOGS,
+		sourcePage: SavedviewtypesSourceDTO.logs,
 	});
 
 	const tracesSlice = usePreferenceSync({
 		mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
 		savedViewId: savedViewId || undefined,
-		dataSource: DataSource.TRACES,
+		sourcePage: SavedviewtypesSourceDTO.traces,
 	});
 
 	const value = useMemo<PreferenceContextValue>(
 		() => ({
-			logs: logsSlice,
-			traces: tracesSlice,
+			[SavedviewtypesSourceDTO.logs]: logsSlice,
+			[SavedviewtypesSourceDTO.traces]: tracesSlice,
 		}),
 		[logsSlice, tracesSlice],
 	);

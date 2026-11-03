@@ -15,7 +15,7 @@ const TEST_MAPPINGS = {
 	},
 };
 
-jest.mock('react-router-dom-v5-compat', () => {
+jest.mock('lib/router/useAppLocation', () => {
 	const mockThreshold1 = {
 		index: '0d11f426-a02e-48da-867c-b79c6ef1ff06',
 		isEditEnabled: false,
@@ -43,8 +43,7 @@ jest.mock('react-router-dom-v5-compat', () => {
 		thresholdValue: 900,
 	};
 	return {
-		...jest.requireActual('react-router-dom-v5-compat'),
-		useLocation: jest.fn().mockReturnValue({
+		useAppLocation: jest.fn().mockReturnValue({
 			state: {
 				thresholds: [mockThreshold1, mockThreshold2],
 			},

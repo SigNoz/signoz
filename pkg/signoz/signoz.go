@@ -622,7 +622,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.APIServer,
-		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers, config.Global, gateway, identNResolver, sharder, auditor, web, alertmanager),
+		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers, config.Global, gateway, identNResolver, sharder, auditor, web, alertmanager, rulerInstance),
 		"signoz",
 	)
 	if err != nil {

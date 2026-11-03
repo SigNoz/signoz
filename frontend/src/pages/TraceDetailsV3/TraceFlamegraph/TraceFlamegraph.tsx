@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
+import { useAppParams } from 'lib/router/useAppParams';
 import { Skeleton } from 'antd';
 import useGetTraceFlamegraphV3 from 'hooks/trace/useGetTraceFlamegraphV3';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
-import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { COLOR_BY_FIELDS } from '../constants';
@@ -28,9 +28,8 @@ function TraceFlamegraph({
 	selectedSpan,
 	totalSpansCount,
 }: TraceFlamegraphProps): JSX.Element {
-	const { id: traceId } = useParams<TraceDetailFlamegraphURLProps>();
+	const { id: traceId } = useAppParams<'id'>();
 	const urlQuery = useUrlQuery();
-	const history = useHistory();
 	const [firstSpanAtFetchLevel, setFirstSpanAtFetchLevel] = useState<string>(
 		urlQuery.get('spanId') || '',
 	);
@@ -39,18 +38,15 @@ function TraceFlamegraph({
 		setFirstSpanAtFetchLevel(urlQuery.get('spanId') || '');
 	}, [urlQuery]);
 
-	const handleSpanClick = useCallback(
-		(spanId: string): void => {
-			setFirstSpanAtFetchLevel(spanId);
-			const searchParams = getUnstableCurrentSearchParams();
-			//tood: use from query params constants
-			if (searchParams.get('spanId') !== spanId) {
-				searchParams.set('spanId', spanId);
-				history.replace({ search: searchParams.toString() });
-			}
-		},
-		[history],
-	);
+	const handleSpanClick = useCallback((spanId: string): void => {
+		setFirstSpanAtFetchLevel(spanId);
+		const searchParams = getUnstableCurrentSearchParams();
+		//tood: use from query params constants
+		if (searchParams.get('spanId') !== spanId) {
+			searchParams.set('spanId', spanId);
+			navigate({ search: searchParams.toString() }, { replace: true });
+		}
+	}, []);
 
 	const previewFields = useTraceStore((s) => s.previewFields);
 	// Gate the fetch until prefs load, else selectFields (in the query key)
@@ -74,7 +70,7 @@ function TraceFlamegraph({
 		isFetching,
 		error: fetchError,
 	} = useGetTraceFlamegraphV3({
-		traceId,
+		traceId: traceId || '',
 		selectedSpanId: selectedSpanIdForFetch,
 		selectFields: flamegraphSelectFields,
 		enabled: !!traceId && userPrefsReady,

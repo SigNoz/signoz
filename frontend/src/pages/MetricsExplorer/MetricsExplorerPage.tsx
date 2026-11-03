@@ -8,7 +8,6 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeControlFeatureGate';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import history from 'lib/history';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { Explorer, Summary, VolumeControl } from './constants';
@@ -45,7 +44,6 @@ function MetricsExplorerPage(): JSX.Element {
 			})}
 			routes={routes}
 			activeKey={pathname}
-			history={history}
 		/>
 	);
 }
