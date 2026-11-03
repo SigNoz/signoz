@@ -1,6 +1,7 @@
 import remove from 'api/browser/localstorage/remove';
 import set from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { getCurrentLocation } from 'lib/router/navigation';
 import { server } from 'mocks-server/server';
 import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { mockSuccess, mockTraceSummary, renderListView } from './testUtils';
@@ -51,6 +52,7 @@ describe('Traces ListView - span drawer navigation', () => {
 	afterEach(() => {
 		remove(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED);
 		server.resetHandlers();
+		jest.restoreAllMocks();
 	});
 
 	it('opens the clicked span and steps through rows with the arrow keys', async () => {
@@ -109,5 +111,28 @@ describe('Traces ListView - span drawer navigation', () => {
 		await waitFor(() =>
 			expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument(),
 		);
+	});
+
+	it('opens the trace page in a new tab from the row icon without opening the drawer', async () => {
+		const open = jest.spyOn(window, 'open').mockImplementation(() => null);
+		// user-event leaves the row on its way to the button, which clears the hover.
+		const user = userEvent.setup({ skipHover: true });
+		renderListView();
+
+		const row = (await screen.findByText('HTTP GET')).closest(
+			'tr',
+		) as HTMLElement;
+		expect(screen.queryByTestId('span-row-open-trace')).not.toBeInTheDocument();
+		await user.hover(row);
+		await user.click(await screen.findByTestId('span-row-open-trace'));
+
+		expect(open).toHaveBeenCalledWith(
+			expect.stringMatching(
+				/\/trace\/0000000000000000344ded1387b08a7e\?.*772c4d29dd9076ac/,
+			),
+			'_blank',
+		);
+		expect(getCurrentLocation().pathname).toBe('/traces-explorer');
+		expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument();
 	});
 });
