@@ -52,7 +52,7 @@ const flush = (): Promise<void> =>
 
 describe('useCloseOnOutsidePress', () => {
 	it('closes on a press outside', async () => {
-		const onClose = jest.fn();
+		const onClose = jest.fn() as jest.MockedFunction<() => void>;
 		render(<Harness onClose={onClose} />);
 
 		await userEvent.click(screen.getByTestId('outside'));
@@ -62,7 +62,7 @@ describe('useCloseOnOutsidePress', () => {
 	});
 
 	it('stays open on a press inside, portals included', async () => {
-		const onClose = jest.fn();
+		const onClose = jest.fn() as jest.MockedFunction<() => void>;
 		render(<Harness onClose={onClose} />);
 
 		await userEvent.click(screen.getByTestId('inside'));
@@ -73,7 +73,7 @@ describe('useCloseOnOutsidePress', () => {
 	});
 
 	it('closes when the outside element stops propagation', async () => {
-		const onClose = jest.fn();
+		const onClose = jest.fn() as jest.MockedFunction<() => void>;
 		render(<Harness onClose={onClose} />);
 
 		await userEvent.click(screen.getByTestId('outside-stops'));
@@ -83,7 +83,7 @@ describe('useCloseOnOutsidePress', () => {
 	});
 
 	it('closes on the first outside press after an inside press stops propagation', async () => {
-		const onClose = jest.fn();
+		const onClose = jest.fn() as jest.MockedFunction<() => void>;
 		render(<Harness onClose={onClose} />);
 
 		await userEvent.click(screen.getByTestId('inside-stops'));
@@ -96,7 +96,7 @@ describe('useCloseOnOutsidePress', () => {
 	});
 
 	it('does nothing while disabled', async () => {
-		const onClose = jest.fn();
+		const onClose = jest.fn() as jest.MockedFunction<() => void>;
 		render(<Harness enabled={false} onClose={onClose} />);
 
 		await userEvent.click(screen.getByTestId('outside'));

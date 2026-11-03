@@ -16,7 +16,7 @@ const pressArrowDown = ({ handled }: { handled: boolean }): void => {
 
 describe('useArrowKeyNavigation', () => {
 	it('steps to the next span on ArrowDown', () => {
-		const onNext = jest.fn();
+		const onNext = jest.fn() as jest.MockedFunction<() => void>;
 		renderHook(() =>
 			useArrowKeyNavigation({ enabled: true, onPrev: jest.fn(), onNext }),
 		);
@@ -27,7 +27,7 @@ describe('useArrowKeyNavigation', () => {
 	});
 
 	it('ignores a key that a focused menu already handled', () => {
-		const onNext = jest.fn();
+		const onNext = jest.fn() as jest.MockedFunction<() => void>;
 		renderHook(() =>
 			useArrowKeyNavigation({ enabled: true, onPrev: jest.fn(), onNext }),
 		);
