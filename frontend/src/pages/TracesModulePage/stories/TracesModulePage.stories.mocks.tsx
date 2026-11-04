@@ -4,9 +4,14 @@
  */
 
 import { rest } from 'msw';
+import remove from 'api/browser/localstorage/remove';
+import set from 'api/browser/localstorage/set';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { USER_PREFERENCES } from 'constants/userPreferences';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
+import { spanPercentilesResponse } from 'pages/TraceDetailsV3/stories/__story_mockdata__/traceDetails';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 import { explorerViewToPanelType } from 'utils/explorerUtils';
 
@@ -27,6 +32,10 @@ import {
 import {
 	exportDashboardsResponse,
 	savedTraceViewsResponse,
+	SPAN_LOGS_STATES,
+	spanLogRows,
+	spanLogScopeOf,
+	type SpanLogsState,
 	traceAttributeValuesResponse,
 	traceFieldKeysResponse,
 	traceFieldValues,
@@ -34,8 +43,11 @@ import {
 	traceQuickFiltersResponse,
 	traceRootSpanRows,
 	traceSpanRows,
+	TRACE_SUMMARY_STATES,
+	traceSummaryResponse,
 	TRACES_EXPLORER_VIEWS,
 	TRACES_TABS,
+	type TraceSummaryState,
 	type TracesTab,
 } from './__story_mockdata__/traces';
 
@@ -65,6 +77,8 @@ const tracesRoute = ({ tab, view }: RouteValues): string => {
 interface RawQuerySpec {
 	limit?: number;
 	offset?: number;
+	signal?: string;
+	filter?: { expression?: string };
 }
 
 const rawSpecOf = (body: QueryRangeRequestV5): RawQuerySpec => {
@@ -72,6 +86,9 @@ const rawSpecOf = (body: QueryRangeRequestV5): RawQuerySpec => {
 
 	return spec as RawQuerySpec;
 };
+
+// The summary has no window of its own; its bounds wrap the span the list showed.
+const listWindow = { start: 0, end: 0 };
 
 export const tracesMocks = defineStoryMocks({
 	controls: {
@@ -101,6 +118,26 @@ export const tracesMocks = defineStoryMocks({
 			description:
 				'Answers 503 on the spans of the services that fail, which is what the status column and the error colouring read.',
 			value: true,
+		}),
+		spanDrawer: toggleControl('Span drawer', {
+			group: LIST,
+			description:
+				'The `TRACES_SPAN_DRAWER_ENABLED` localStorage flag the span drawer ships behind. Off, a row click opens the trace page.',
+			value: false,
+		}),
+		traceSummary: choiceControl<TraceSummaryState>('Trace summary', {
+			group: LIST,
+			description:
+				'What the span drawer gets for the trace start and end. Not found falls back to span-only logs; loading holds the logs tab.',
+			options: TRACE_SUMMARY_STATES,
+			value: 'found',
+		}),
+		spanLogs: choiceControl<SpanLogsState>('Span logs', {
+			group: LIST,
+			description:
+				"What the span drawer's Logs tab gets. `span`: the span's logs with context either side; `trace only`: none for the span but some for the trace; `none`; `loading` and `error` hold or fail only the log queries.",
+			options: SPAN_LOGS_STATES,
+			value: 'span',
 		}),
 		warning: toggleControl('Query warning', {
 			group: LIST,
@@ -170,6 +207,96 @@ export const tracesMocks = defineStoryMocks({
 		),
 
 		rest.post(
+			'http://localhost/api/v1/span_percentile',
+			response.json(spanPercentilesResponse),
+		),
+
+		// Answers on its own control rather than the Data one, so the drawer's
+		// fallback and waiting states are reachable with the list loaded.
+		rest.get(
+			'http://localhost/api/v1/traces/:traceId/summary',
+			(req, res, ctx) => {
+				if (values.traceSummary === 'loading') {
+					return res(ctx.delay('infinite'));
+				}
+				const summary =
+					values.traceSummary === 'found'
+						? traceSummaryResponse({
+								traceId: String(req.params.traceId),
+								count: values.spans,
+								...listWindow,
+							})
+						: null;
+
+				return summary
+					? res(ctx.status(200), ctx.json(summary))
+					: res(ctx.status(404), ctx.json({ status: 'error' }));
+			},
+		),
+
+		// The drawer's percentile panel dereferences this preference without a guard.
+		rest.get(
+			'http://localhost/api/v1/user/preferences/:name',
+			response.json((req) => ({
+				status: 'success',
+				data: {
+					name: String(req.params.name),
+					description: 'storybook',
+					valueType: 'array',
+					defaultValue: [],
+					allowedValues: [],
+					allowedScopes: ['user'],
+					value:
+						String(req.params.name) ===
+						USER_PREFERENCES.SPAN_PERCENTILE_RESOURCE_ATTRIBUTES
+							? ['service.name']
+							: [],
+				},
+			})),
+		),
+
+		// The drawer's log queries answer on their own control, so they can hang or
+		// fail with the list loaded. Anything else falls through to the next handler.
+		rest.post('http://localhost/api/v5/query_range', async (req, res, ctx) => {
+			const body = (await req.json()) as QueryRangeRequestV5;
+			const { signal, filter } = rawSpecOf(body);
+			if (signal !== 'logs') {
+				return undefined;
+			}
+			if (values.spanLogs === 'loading') {
+				return res(ctx.delay('infinite'));
+			}
+			if (values.spanLogs === 'error') {
+				return res(
+					ctx.status(500),
+					ctx.json({ status: 'error', error: 'storybook logs failure' }),
+				);
+			}
+
+			const expression = filter?.expression ?? '';
+			const scope = spanLogScopeOf(expression);
+			const answers =
+				values.spanLogs === 'span' ||
+				(values.spanLogs === 'trace only' && scope === 'trace');
+
+			return res(
+				ctx.status(200),
+				ctx.json(
+					queryRangeV5RawResponse(
+						answers
+							? spanLogRows({
+									scope,
+									expression,
+									startMicros: body.start,
+									endMicros: body.end,
+								})
+							: [],
+					),
+				),
+			);
+		}),
+
+		rest.post(
 			'http://localhost/api/v5/query_range',
 			response.json(async (req) => {
 				const body = (await req.json()) as QueryRangeRequestV5;
@@ -195,6 +322,9 @@ export const tracesMocks = defineStoryMocks({
 					: undefined;
 
 				if (requestType === 'raw' || requestType === 'trace') {
+					listWindow.start = start;
+					listWindow.end = end;
+
 					return queryRangeV5RawResponse(
 						requestType === 'trace' ? traceRootSpanRows(rows) : traceSpanRows(rows),
 						{
@@ -232,4 +362,11 @@ export const tracesMocks = defineStoryMocks({
 		),
 	],
 	config: (values) => ({ route: tracesRoute(values) }),
+	effect: (values) => {
+		if (values.spanDrawer) {
+			set(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED, 'true');
+		} else {
+			remove(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED);
+		}
+	},
 });

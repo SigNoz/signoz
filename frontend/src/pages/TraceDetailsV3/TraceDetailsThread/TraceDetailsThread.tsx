@@ -9,7 +9,7 @@ import { useSpanDetailVariant } from '../hooks/useSpanDetailVariant';
 import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
 import { useTraceDetailsTab } from '../hooks/useTraceDetailsTab';
 import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
-import { useThreadDataLoadedEvent } from './hooks/useThreadDataLoadedEvent';
+import { useThreadLoadedEvents } from './hooks/useThreadLoadedEvents';
 import { useThreadSpanSelection } from './hooks/useThreadSpanSelection';
 import { useThreadView } from './hooks/useThreadView';
 import { useTraceThread } from './hooks/useTraceThread';
@@ -30,10 +30,12 @@ const INITIAL_LOADER_COUNT = 4;
 interface TraceDetailsThreadProps {
 	// Owned by the page so the load event fires once per trace, not per tab visit.
 	dataLoadedFiredForRef: MutableRefObject<string>;
+	threadEmptyFiredForRef: MutableRefObject<string>;
 }
 
 function TraceDetailsThread({
 	dataLoadedFiredForRef,
+	threadEmptyFiredForRef,
 }: TraceDetailsThreadProps): JSX.Element {
 	const { id: traceId } = useAppParams<'id'>();
 	const [, setTab] = useTraceDetailsTab();
@@ -68,17 +70,24 @@ function TraceDetailsThread({
 	const interestedSpanIndex = spans.findIndex(
 		(span) => span.span_id === interestedSpanId,
 	);
+	const hasNoThread =
+		!isLoading &&
+		interestedSpanStatus !== InterestedSpanStatus.NotFound &&
+		(isError || spans.length === 0);
 
 	const selectedSpan = spans.find((span) => span.span_id === selectedSpanId);
 	const [spanDetailVariant, setSpanDetailVariant] = useSpanDetailVariant();
 	const isBottomDocked = spanDetailVariant === SpanDetailVariant.DOCKED;
 
 	const logTraceEvent = useTraceDetailLogEvent('v3', traceId || '');
-	useThreadDataLoadedEvent({
+	useThreadLoadedEvents({
 		traceId: traceId || '',
+		interestedSpanId,
 		hasSpans: spans.length > 0,
+		hasNoThread,
 		spanPanelVariant: spanDetailVariant,
-		firedForRef: dataLoadedFiredForRef,
+		dataLoadedFiredForRef,
+		threadEmptyFiredForRef,
 		logTraceEvent,
 	});
 	useSpanDetailsOpenedEvent({
@@ -96,10 +105,6 @@ function TraceDetailsThread({
 			onVariantChange={setSpanDetailVariant}
 		/>
 	);
-	const hasNoThread =
-		!isLoading &&
-		interestedSpanStatus !== InterestedSpanStatus.NotFound &&
-		(isError || spans.length === 0);
 
 	const renderBody = (): JSX.Element => {
 		if (isLoading) {
