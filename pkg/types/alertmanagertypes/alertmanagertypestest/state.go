@@ -21,10 +21,27 @@ func NewStateStore() *StateStore {
 	}
 }
 
-func (s *StateStore) Set(ctx context.Context, storeableState *alertmanagertypes.StoreableState) error {
+func (s *StateStore) Set(ctx context.Context, storeableState *alertmanagertypes.StoreableState, stateName alertmanagertypes.StateName) error {
 	s.mtx.Lock()
-	s.states[storeableState.OrgID] = storeableState
-	s.mtx.Unlock()
+	defer s.mtx.Unlock()
+
+	stored, ok := s.states[storeableState.OrgID]
+	if !ok {
+		copy := *storeableState
+		copy.Silences = ""
+		copy.NFLog = ""
+		stored = &copy
+	}
+	switch stateName {
+	case alertmanagertypes.SilenceStateName:
+		stored.Silences = storeableState.Silences
+	case alertmanagertypes.NFLogStateName:
+		stored.NFLog = storeableState.NFLog
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown alertmanager state %q", stateName.String())
+	}
+	stored.UpdatedAt = storeableState.UpdatedAt
+	s.states[storeableState.OrgID] = stored
 	return nil
 }
 
@@ -35,5 +52,6 @@ func (s *StateStore) Get(ctx context.Context, orgID string) (*alertmanagertypes.
 		return nil, errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerStateNotFound, "state for orgID %q not found", orgID)
 	}
 
-	return s.states[orgID], nil
+	copy := *s.states[orgID]
+	return &copy, nil
 }
