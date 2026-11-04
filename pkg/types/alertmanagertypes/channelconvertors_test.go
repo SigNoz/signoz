@@ -200,8 +200,11 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Email:             "oncall@acme.com",
 				APIToken:          "api-token",
 			},
+			// A spec posted without deployment reads back as cloud, the default the
+			// receiver fills.
 			expectedRoundTrip: &ChannelJiraConfig{
 				SendResolved:      &sendResolved,
+				Deployment:        JiraDeploymentCloud,
 				Site:              "https://acme.atlassian.net",
 				Project:           "OPS",
 				IssueType:         "Bug",
@@ -216,6 +219,32 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				CustomFields:      map[string]any{"customfield_10010": "Ops"},
 				Email:             "oncall@acme.com",
 				APIToken:          "api-token",
+			},
+		},
+		{
+			description: "jira self-hosted",
+			kind:        ChannelKindJira,
+			spec: &ChannelJiraConfig{
+				SendResolved:   &sendResolved,
+				Deployment:     JiraDeploymentSelfHosted,
+				Site:           "https://jira.acme.com",
+				Project:        "OPS",
+				IssueType:      "Task",
+				Summary:        valuer.MustNewUnsetOrNonEmptyString("jira summary"),
+				Description:    valuer.MustNewUnsetOrNonEmptyString("jira description"),
+				ReopenDuration: valuer.MustNewUnsetOrNonEmptyString("3d"),
+				PAT:            "personal-access-token",
+			},
+			expectedRoundTrip: &ChannelJiraConfig{
+				SendResolved:   &sendResolved,
+				Deployment:     JiraDeploymentSelfHosted,
+				Site:           "https://jira.acme.com",
+				Project:        "OPS",
+				IssueType:      "Task",
+				Summary:        valuer.MustNewUnsetOrNonEmptyString("jira summary"),
+				Description:    valuer.MustNewUnsetOrNonEmptyString("jira description"),
+				ReopenDuration: valuer.MustNewUnsetOrNonEmptyString("3d"),
+				PAT:            "personal-access-token",
 			},
 		},
 		{
@@ -527,6 +556,22 @@ func TestDeriveChannelConfigRejectsUnrepresentableChannels(t *testing.T) {
 			channel: Channel{
 				DisplayName: "jira-bearer",
 				Data:        `{"name":"jira-bearer","jira_configs":[{"site":"https://acme.atlassian.net","project":"OPS","issue_type":"Bug","http_config":{"authorization":{"type":"Bearer","credentials":"tok"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			// A self-hosted receiver lifts only the Bearer authorization; basic auth
+			// stored next to it would be dropped on the next write.
+			description: "jira self-hosted basic auth",
+			channel: Channel{
+				DisplayName: "jira-sh-basic",
+				Data:        `{"name":"jira-sh-basic","jira_configs":[{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issue_type":"Bug","http_config":{"basic_auth":{"username":"u","password":"p"},"authorization":{"type":"Bearer","credentials":"tok"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "jira self-hosted credentials file",
+			channel: Channel{
+				DisplayName: "jira-sh-file",
+				Data:        `{"name":"jira-sh-file","jira_configs":[{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issue_type":"Bug","http_config":{"authorization":{"type":"Bearer","credentials_file":"/run/secrets/pat"},"follow_redirects":true,"enable_http2":true}}]}`,
 			},
 		},
 		{
