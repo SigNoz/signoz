@@ -555,8 +555,9 @@ components:
     AlertmanagertypesChannelJiraConfig:
       properties:
         apiToken:
-          description: The Atlassian API token paired with email. A secret; returned
-            by create, update and fetch by ID, never by list.
+          description: The Atlassian API token paired with email. Required when deployment
+            is cloud. A secret; returned by create, update and fetch by ID, never
+            by list.
           format: password
           type: string
         customFields:
@@ -565,12 +566,18 @@ components:
             currently included in the issue Jira receives.
           nullable: true
           type: object
+        deployment:
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesJiraDeployment'
+          description: 'The Jira edition: cloud for an Atlassian-hosted site, selfhosted
+            for Jira Server or Data Center. Defaults to cloud.'
         description:
           description: Alertmanager template for the issue description, rendered as
             markdown; defaults to the SigNoz Jira default.
           type: string
         email:
-          description: The Atlassian account email used for basic auth.
+          description: The Atlassian account email used for basic auth. Required when
+            deployment is cloud.
           type: string
         issueType:
           description: The issue type name, such as Bug.
@@ -581,6 +588,12 @@ components:
             type: string
           nullable: true
           type: array
+        pat:
+          description: The Jira personal access token, sent as a Bearer header. Required
+            when deployment is selfhosted. A secret; returned by create, update and
+            fetch by ID, never by list.
+          format: password
+          type: string
         priority:
           description: The priority name assigned to new issues.
           type: string
@@ -604,8 +617,8 @@ components:
           nullable: true
           type: boolean
         site:
-          description: The base URL of the Jira Cloud site, for example https://example.atlassian.net.
-            Only Jira Cloud is supported.
+          description: The base URL of the Jira site, for example https://example.atlassian.net
+            or https://jira.example.com.
           type: string
         summary:
           description: Alertmanager template for the issue summary; defaults to the
@@ -618,8 +631,6 @@ components:
       - site
       - project
       - issueType
-      - email
-      - apiToken
       type: object
     AlertmanagertypesChannelKind:
       enum:
@@ -1155,6 +1166,11 @@ components:
           description: Comma-separated tags attached to the alert.
           type: string
       type: object
+    AlertmanagertypesJiraDeployment:
+      enum:
+      - cloud
+      - selfhosted
+      type: string
     AlertmanagertypesJiraReceiverConfig:
       properties:
         custom_fields:
@@ -1162,6 +1178,10 @@ components:
           description: Extra issue fields keyed by Jira field ID. Stored, but not
             currently included in the issue Jira receives.
           type: object
+        deployment:
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesJiraDeployment'
+          description: The Jira edition, cloud or selfhosted; defaults to cloud.
         description:
           description: Alertmanager template for the issue description.
           type: string
@@ -1169,7 +1189,8 @@ components:
           allOf:
           - $ref: '#/components/schemas/ConfigHTTPClientConfig'
           description: HTTP client settings; basic auth carries the account email
-            and API token.
+            and API token on cloud, authorization carries the Bearer personal access
+            token on self-hosted.
         issue_type:
           description: The issue type name.
           type: string
@@ -1199,7 +1220,7 @@ components:
         send_resolved:
           type: boolean
         site:
-          description: The Jira Cloud base URL.
+          description: The Jira base URL.
           type: string
         summary:
           description: Alertmanager template for the issue summary.
