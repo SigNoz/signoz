@@ -10,9 +10,9 @@ export function logInfraDrawerTimeRangeCustomizedEvent(
 	entityType: InfraMonitoringEntity,
 	rangeLabel: string,
 ): void {
-	void logEvent('infra_drawer_time_range_customized', {
-		entity_type: entityType,
-		range_label: isCustomTimeRange(rangeLabel) ? 'custom' : rangeLabel,
+	void logEvent('Infra Monitoring: Drawer time range customized', {
+		entityType,
+		rangeLabel: isCustomTimeRange(rangeLabel) ? 'custom' : rangeLabel,
 	});
 }
 
@@ -30,11 +30,11 @@ export function logInfraDrawerFilterCustomizedEvent(
 		return;
 	}
 
-	void logEvent('infra_drawer_filter_customized', {
-		entity_type: entityType,
+	void logEvent('Infra Monitoring: Drawer filter customized', {
+		entityType,
 		tab,
-		expression_keys: [...new Set(expressionKeys)],
-		filter_source: filterSource,
+		expressionKeys: [...new Set(expressionKeys)],
+		filterSource,
 	});
 }
 
@@ -43,10 +43,10 @@ export function logInfraDrawerTabViewedEvent(
 	tab: string,
 	isDefaultTab: boolean,
 ): void {
-	void logEvent('infra_drawer_tab_viewed', {
-		entity_type: entityType,
+	void logEvent('Infra Monitoring: Drawer tab viewed', {
+		entityType,
 		tab,
-		is_default_tab: isDefaultTab,
+		isDefaultTab,
 	});
 }
 

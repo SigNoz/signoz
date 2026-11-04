@@ -22,10 +22,10 @@ export function logInfraFilterCustomizedEvent(
 		return;
 	}
 
-	void logEvent('infra_filter_customized', {
-		entity_type: entityType,
+	void logEvent('Infra Monitoring: Filter customized', {
+		entityType,
 		source,
-		expression_keys: [...new Set(expressionKeys)],
+		expressionKeys: [...new Set(expressionKeys)],
 	});
 }
 
@@ -34,7 +34,7 @@ export function logInfraMonitoringListViewedEvent(
 ): void {
 	const referrer = getNavigationReferrer();
 
-	void logEvent('infra_list_viewed', {
+	void logEvent('Infra Monitoring: List viewed', {
 		entity,
 		referrer,
 	});
@@ -44,9 +44,9 @@ export function logInfraTimeRangeCustomizedEvent(
 	entityType: InfraMonitoringEntity,
 	rangeLabel: string,
 ): void {
-	void logEvent('infra_time_range_customized', {
-		entity_type: entityType,
-		range_label: isCustomTimeRange(rangeLabel) ? 'custom' : rangeLabel,
+	void logEvent('Infra Monitoring: Time range customized', {
+		entityType,
+		rangeLabel: isCustomTimeRange(rangeLabel) ? 'custom' : rangeLabel,
 	});
 }
 
@@ -57,11 +57,11 @@ export function logInfraColumnCustomizedEvent(
 	maxLinesPerRow: number,
 	source: 'list' | 'expanded',
 ): void {
-	void logEvent('infra_column_customized', {
-		entity_type: entityType,
-		columns_list: columnsList,
-		font_size: fontSize,
-		max_lines_per_row: maxLinesPerRow,
+	void logEvent('Infra Monitoring: Column customized', {
+		entityType,
+		columnsList,
+		fontSize,
+		maxLinesPerRow,
 		source,
 	});
 }
@@ -72,9 +72,9 @@ export function logInfraColumnSortedEvent(
 	direction: 'asc' | 'desc',
 	source: 'list' | 'expanded',
 ): void {
-	void logEvent('infra_column_sorted', {
-		entity_type: entityType,
-		column_key: columnKey,
+	void logEvent('Infra Monitoring: Column sorted', {
+		entityType,
+		columnKey,
 		direction,
 		source,
 	});
@@ -84,9 +84,9 @@ export function logInfraGroupByCustomizedEvent(
 	entityType: InfraMonitoringEntity,
 	groupByKeysList: string[],
 ): void {
-	void logEvent('infra_group_by_customized', {
-		entity_type: entityType,
-		group_by_keys_list: groupByKeysList,
+	void logEvent('Infra Monitoring: Group by customized', {
+		entityType,
+		groupByKeysList,
 	});
 }
 
@@ -106,13 +106,13 @@ export function logInfraExplorerNavigatedEvent(params: {
 	sourceKey: string | null;
 	drawerDurationMsAtNavigation: number | null;
 }): void {
-	void logEvent('infra_explorer_navigated', {
-		entity_type: params.entityType,
+	void logEvent('Infra Monitoring: Explorer navigated', {
+		entityType: params.entityType,
 		destination: params.destination,
 		source: params.source,
 		tab: params.tab,
-		source_key: params.sourceKey,
-		drawer_duration_ms_at_navigation: params.drawerDurationMsAtNavigation,
+		sourceKey: params.sourceKey,
+		drawerDurationMsAtNavigation: params.drawerDurationMsAtNavigation,
 	});
 }
 
