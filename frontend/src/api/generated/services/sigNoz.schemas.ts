@@ -12096,7 +12096,7 @@ export interface Querybuildertypesv5QueryRangeRequestDTO {
 	 */
 	noCache?: boolean;
 	/**
-	 * @description The shape of the result: scalar, time_series, raw, raw_stream, trace, distribution or heatmap. It decides which result type data.results carries.
+	 * @description The shape of the result: scalar, time_series, raw, raw_stream, trace or heatmap. It decides which result type data.results carries.
 	 */
 	requestType?: Querybuildertypesv5RequestTypeDTO;
 	/**
