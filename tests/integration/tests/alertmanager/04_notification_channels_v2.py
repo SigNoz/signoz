@@ -194,6 +194,17 @@ DNS1123_LABEL = re.compile(r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
             id="jira_with_empty_values",
         ),
         pytest.param(
+            "jira",
+            {
+                "deployment": "selfhosted",
+                "site": "https://jira.integration.test",
+                "project": "OPS",
+                "issueType": "Bug",
+                "pat": "jira-personal-access-token",
+            },
+            id="jira_selfhosted",
+        ),
+        pytest.param(
             "jsmops",
             {
                 "apiKey": "jsm-api-key",
@@ -386,6 +397,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
             },
             {
                 "sendResolved": False,
+                "deployment": "cloud",
                 "summary": '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}',
                 "description": (
                     "{{ range .Alerts -}}\n"

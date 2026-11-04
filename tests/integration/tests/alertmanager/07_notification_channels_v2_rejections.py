@@ -184,6 +184,56 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
                 "config": {
                     "kind": "jira",
                     "spec": {
+                        "deployment": "selfhosted",
+                        "site": "https://jira.integration.test",
+                        "project": "OPS",
+                        "issueType": "Bug",
+                        "email": "oncall@integration.test",
+                        "apiToken": "jira-api-token",
+                    },
+                },
+            },
+            id="jira_selfhosted_without_pat",
+        ),
+        pytest.param(
+            {
+                "name": "rejected",
+                "config": {
+                    "kind": "jira",
+                    "spec": {
+                        "site": "https://acme.atlassian.net",
+                        "project": "OPS",
+                        "issueType": "Bug",
+                        "email": "oncall@integration.test",
+                        "apiToken": "jira-api-token",
+                        "pat": "jira-personal-access-token",
+                    },
+                },
+            },
+            id="jira_cloud_with_pat",
+        ),
+        pytest.param(
+            {
+                "name": "rejected",
+                "config": {
+                    "kind": "jira",
+                    "spec": {
+                        "deployment": "datacenter",
+                        "site": "https://jira.integration.test",
+                        "project": "OPS",
+                        "issueType": "Bug",
+                        "pat": "jira-personal-access-token",
+                    },
+                },
+            },
+            id="jira_unknown_deployment",
+        ),
+        pytest.param(
+            {
+                "name": "rejected",
+                "config": {
+                    "kind": "jira",
+                    "spec": {
                         "site": "https://acme.atlassian.net",
                         "issueType": "Bug",
                         "email": "oncall@integration.test",
