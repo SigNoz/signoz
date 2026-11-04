@@ -12,6 +12,8 @@ type RequestType struct {
 }
 
 // UnmarshalJSON rejects values that are not a known request type.
+// distribution decodes but is not in Enum, because saved views and dashboards
+// can store it.
 func (r *RequestType) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
@@ -23,7 +25,8 @@ func (r *RequestType) UnmarshalJSON(data []byte) error {
 		*r = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown request type %q; allowed values: %s", s, "`scalar`, `time_series`, `raw`, `raw_stream`, `trace`, `distribution`, `heatmap`")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown request type %q", s).
+			WithSuggestions(errors.NewValidReferences(errors.NounRequestTypes, RequestType{}.Enum()...))
 	}
 }
 

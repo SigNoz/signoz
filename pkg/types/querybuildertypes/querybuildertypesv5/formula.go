@@ -104,6 +104,10 @@ func (f QueryBuilderFormula) Validate() error {
 		)
 	}
 
+	if f.Limit < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be non-negative, got %d", f.Limit)
+	}
+
 	// Validate functions if present
 	for i, fn := range f.Functions {
 		if err := fn.Validate(); err != nil {

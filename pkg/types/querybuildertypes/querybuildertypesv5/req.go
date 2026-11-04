@@ -415,7 +415,7 @@ type QueryRangeRequest struct {
 	SchemaVersion  string                  `json:"schemaVersion" description:"The version of the request payload schema, currently v1."`
 	Start          uint64                  `json:"start" description:"The inclusive start of the time range as a Unix timestamp in milliseconds."`
 	End            uint64                  `json:"end" description:"The end of the time range as a Unix timestamp in milliseconds; must be greater than start except for raw_stream requests."`
-	RequestType    RequestType             `json:"requestType" description:"The shape of the result: scalar, time_series, raw, raw_stream, trace, distribution or heatmap. It decides which result type data.results carries."`
+	RequestType    RequestType             `json:"requestType" description:"The shape of the result: scalar, time_series, raw, raw_stream, trace or heatmap. It decides which result type data.results carries."`
 	CompositeQuery CompositeQuery          `json:"compositeQuery" description:"The queries to execute together; at least one is required and formulas may reference the others by name."`
 	Variables      map[string]VariableItem `json:"variables,omitempty" description:"Dashboard variable values keyed by variable name. Builder filters substitute only the $name form and leave a quoted {{name}} unchanged; PromQL and ClickHouse SQL substitute $name, {{name}}, [[name]] and the Go template form {{.name}}."`
 
