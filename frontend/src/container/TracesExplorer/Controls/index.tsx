@@ -1,11 +1,11 @@
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings } from '@signozhq/icons';
+import { SlidersVertical } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import FieldsSelector from 'components/FieldsSelector';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import { DataSource } from 'types/common/queryBuilder';
-
-import styles from './Controls.module.scss';
 
 function TraceExplorerControls({
 	config,
@@ -17,15 +17,23 @@ function TraceExplorerControls({
 		return null;
 	}
 
+	const label = t('options_menu.options');
+
 	return (
-		<div className={styles.container}>
-			<div
-				className={styles.optionsTrigger}
-				onClick={(): void => setIsFieldsSelectorOpen(true)}
-			>
-				{t('options_menu.options')}
-				<Settings size="md" />
-			</div>
+		<>
+			<Tooltip title={label}>
+				<Button
+					variant="ghost"
+					color="secondary"
+					size="sm"
+					icon
+					aria-label={label}
+					testId="periscope-btn-options-traces"
+					onClick={(): void => setIsFieldsSelectorOpen(true)}
+				>
+					<SlidersVertical size={14} />
+				</Button>
+			</Tooltip>
 			<FieldsSelector
 				isOpen={isFieldsSelectorOpen}
 				title="Edit columns"
@@ -34,7 +42,7 @@ function TraceExplorerControls({
 				onClose={(): void => setIsFieldsSelectorOpen(false)}
 				signal={DataSource.TRACES}
 			/>
-		</div>
+		</>
 	);
 }
 
