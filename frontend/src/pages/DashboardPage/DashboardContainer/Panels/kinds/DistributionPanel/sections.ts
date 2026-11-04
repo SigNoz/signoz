@@ -1,4 +1,5 @@
 import { SectionKind, type SectionConfig } from '../../types/sections';
+import { resolveDistributionLegendSeries } from '../../utils/legendSeries';
 
 export const sections: SectionConfig[] = [
 	{
@@ -12,5 +13,8 @@ export const sections: SectionConfig[] = [
 	// Formats the bucket bounds; counts are plain integers and take no unit.
 	{ kind: SectionKind.Formatting, controls: { unit: true, decimals: true } },
 	{ kind: SectionKind.DistributionAxes },
-	{ kind: SectionKind.Legend, controls: { position: true } },
+	{
+		kind: SectionKind.Legend,
+		controls: { position: true, colors: resolveDistributionLegendSeries },
+	},
 ];

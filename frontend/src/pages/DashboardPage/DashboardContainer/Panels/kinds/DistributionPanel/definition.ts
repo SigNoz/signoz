@@ -7,6 +7,7 @@ import { QueryModeKind } from '../../types/panelCapabilities';
 import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
+import { getDistributionDataWarning } from './warning';
 import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
@@ -44,6 +45,7 @@ export const definition: PanelDefinition<'signoz/DistributionPanel'> = {
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},
+	getDataWarning: getDistributionDataWarning,
 	actions: {
 		view: true,
 		edit: true,
