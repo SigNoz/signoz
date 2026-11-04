@@ -3,6 +3,7 @@ import type {
 	DashboardtypesAxesDTO,
 	DashboardtypesComparisonThresholdDTO,
 	DashboardtypesDistributionAxesDTO,
+	DashboardtypesDistributionPercentilesDTO,
 	DashboardtypesFillModeDTO,
 	DashboardtypesFillOpacityDTO,
 	DashboardtypesHeatmapAxesDTO,
@@ -121,6 +122,8 @@ export interface PanelChartAppearanceSlice {
 	points?: DashboardtypesScatterPlotPointsDTO;
 	/** Distribution stacking, which lives here rather than under `visualization`. */
 	stack?: DashboardtypesStackModeDTO;
+	/** Distribution's percentile markers. */
+	percentiles?: DashboardtypesDistributionPercentilesDTO;
 }
 
 /** Superset spanning every kind's visualization DTO. */
@@ -196,6 +199,8 @@ export interface SectionControls {
 		points?: boolean;
 		/** Distribution's group layout in a bucket: stacked, side by side or 100%. */
 		stack?: boolean;
+		/** Distribution's percentile markers: on/off and which ones. */
+		percentiles?: boolean;
 	};
 	[SectionKind.Buckets]: {
 		count?: boolean;

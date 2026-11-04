@@ -24,6 +24,7 @@ import {
 
 import {
 	resolveAreaFillMode,
+	resolveDistributionPercentiles,
 	resolveDistributionStackMode,
 	resolveDistributionXScale,
 	resolveDistributionYScale,
@@ -255,5 +256,23 @@ describe('resolveDistributionYScale', () => {
 		expect(
 			resolveDistributionYScale(DashboardtypesDistributionYScaleDTO.log),
 		).toBe(DistributionYScale.Log);
+	});
+});
+
+describe('resolveDistributionPercentiles', () => {
+	it('marks p50/p90/p99 unless the spec says otherwise', () => {
+		expect(resolveDistributionPercentiles(undefined)).toStrictEqual([50, 90, 99]);
+		expect(
+			resolveDistributionPercentiles({ enabled: true, values: null }),
+		).toStrictEqual([50, 90, 99]);
+	});
+
+	it('marks the configured percentiles, or none when turned off', () => {
+		expect(
+			resolveDistributionPercentiles({ enabled: true, values: [75, 99.9] }),
+		).toStrictEqual([75, 99.9]);
+		expect(
+			resolveDistributionPercentiles({ enabled: false, values: [75] }),
+		).toStrictEqual([]);
 	});
 });

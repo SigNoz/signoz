@@ -1,6 +1,7 @@
 import { rangeUtil } from '@grafana/data';
 import {
 	type DashboardtypesAreaFillModeDTO,
+	type DashboardtypesDistributionPercentilesDTO,
 	type DashboardtypesDistributionXScaleDTO,
 	type DashboardtypesDistributionYScaleDTO,
 	DashboardtypesHeatmapYScaleDTO,
@@ -119,6 +120,18 @@ export function resolveDistributionStackMode(
 	stack: DashboardtypesStackModeDTO | undefined,
 ): StackMode {
 	return stack ? resolveStackMode(stack) : StackMode.Normal;
+}
+
+export const DEFAULT_DISTRIBUTION_PERCENTILES = [50, 90, 99];
+
+/** The percentiles to mark; on with p50/p90/p99 unless the spec turns them off. */
+export function resolveDistributionPercentiles(
+	percentiles: DashboardtypesDistributionPercentilesDTO | undefined,
+): number[] {
+	if (percentiles?.enabled === false) {
+		return [];
+	}
+	return percentiles?.values ?? DEFAULT_DISTRIBUTION_PERCENTILES;
 }
 
 /**
