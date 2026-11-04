@@ -29,4 +29,5 @@ jobs:
       - name: generate-geo-outlines
         run: |
           cd frontend && pnpm build:geo-outlines
-          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in geo map outlines. Run pnpm build:geo-outlines in frontend/ locally and commit."; exit 1)
+          git status --short
+          test -z "$(git status --porcelain)" || (echo; echo "Unexpected difference in geo map outlines. Run pnpm build:geo-outlines in frontend/ locally and commit."; exit 1)

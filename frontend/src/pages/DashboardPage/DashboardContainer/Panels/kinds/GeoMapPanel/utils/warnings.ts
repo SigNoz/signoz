@@ -58,6 +58,20 @@ function unmappedNote(data: GeoMapPanelData): string {
 	return `${rows(data.unmappedRows)} with a location the map doesn't know${values}.`;
 }
 
+function missingSizeNote(data: GeoMapPanelData): string {
+	return `${rows(data.missingSizeRows)} without a positive ${data.sizeColumn?.name ?? 'size'} value, so no ${data.layer === 'points' ? 'point' : 'bubble'}.`;
+}
+
+function emptyNote(data: GeoMapPanelData): string {
+	if (data.unmappedRows > 0) {
+		return unmappedNote(data);
+	}
+	if (data.missingSizeRows > 0) {
+		return `${missingSizeNote(data)} Pick another Size by column.`;
+	}
+	return 'No row has both a location and a value.';
+}
+
 const MISSING_LOCATION: Partial<
 	Record<DashboardtypesGeoMapLocationModeDTO, GeoMapMessage>
 > = {
@@ -110,10 +124,7 @@ export function getGeoMapEmptyMessage(
 	}
 	return {
 		title: `0 of ${rows(data.totalRows)} placed`,
-		description:
-			data.unmappedRows > 0
-				? unmappedNote(data)
-				: 'No row has both a location and a value.',
+		description: emptyNote(data),
 	};
 }
 
@@ -138,8 +149,7 @@ export function getGeoMapWarning(
 			`${rows(data.duplicateRows)} repeat a location; the first row of each is shown.`,
 		data.missingValueRows > 0 &&
 			`${rows(data.missingValueRows)} without a ${data.colorColumn?.name ?? 'color'} value.`,
-		data.missingSizeRows > 0 &&
-			`${rows(data.missingSizeRows)} without a positive ${data.sizeColumn?.name ?? 'size'} value, so no ${data.layer === 'points' ? 'point' : 'bubble'}.`,
+		data.missingSizeRows > 0 && missingSizeNote(data),
 		data.thresholdConflictRows > 0 &&
 			`${rows(data.thresholdConflictRows)} match more than one threshold; the first listed sets the color.`,
 		data.nonPositiveOnLogRows > 0 &&

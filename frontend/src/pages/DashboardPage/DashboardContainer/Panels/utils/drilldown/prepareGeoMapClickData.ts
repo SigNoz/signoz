@@ -20,8 +20,8 @@ interface PrepareGeoMapClickDataArgs {
 }
 
 /**
- * Drilldown filtered to the clicked location's row. A formula's inputs share its
- * group by, so with neither column from a builder query the first one stands in.
+ * Drilldown filtered to the clicked location's row; null when neither column
+ * comes from a builder query, as a formula's inputs can filter differently.
  */
 export function prepareGeoMapClickData({
 	labels,
@@ -31,11 +31,10 @@ export function prepareGeoMapClickData({
 	coordinates,
 	timeRange,
 }: PrepareGeoMapClickDataArgs): DrilldownClickPayload | null {
-	const builderQuery =
-		queryNames
-			.filter(isValidQueryName)
-			.map((name) => builderQueries.find((query) => query.name === name))
-			.find(Boolean) ?? builderQueries[0];
+	const builderQuery = queryNames
+		.filter(isValidQueryName)
+		.map((name) => builderQueries.find((query) => query.name === name))
+		.find(Boolean);
 	if (!builderQuery?.name) {
 		return null;
 	}
