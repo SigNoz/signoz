@@ -285,12 +285,6 @@ def test_logs_aggregate_invalid_expression_is_bad_request(
     get_token: Callable[[str, str], str],
     expression: str,
 ) -> None:
-    """
-    An aggregation expression the parser rejects, one with the wrong number of
-    arguments, one whose argument is not a field name, or one whose predicate
-    uses search(), which the search scan budget covers only in the filter,
-    returns 400.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 

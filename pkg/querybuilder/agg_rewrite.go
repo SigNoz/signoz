@@ -208,7 +208,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		}
 		// The search scan budget applies only to the filter.
 		if whereClause.RequiresCostGuard {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "%q does not support search(); use search() in the filter", name)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "function `search` is not supported inside an aggregation").WithSuggestions("use `search` in the filter")
 		}
 		// not possible for whereClause to be empty here but still adding a check.
 		if whereClause.IsEmpty() {
@@ -400,7 +400,7 @@ func scanArguments(expr string, open int) ([]int, int) {
 }
 
 // fieldKeyFromArgument reads a value argument as a single key of the filter
-// grammar, the lexer that also collects the keys of the expression.
+// grammar.
 func fieldKeyFromArgument(name string, text string) (telemetrytypes.TelemetryFieldKey, error) {
 	lexer := grammar.NewFilterQueryLexer(antlr.NewInputStream(text))
 	lexer.RemoveErrorListeners()
