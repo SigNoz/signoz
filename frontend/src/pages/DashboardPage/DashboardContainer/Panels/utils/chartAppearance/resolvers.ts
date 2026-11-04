@@ -1,6 +1,8 @@
 import { rangeUtil } from '@grafana/data';
 import {
 	type DashboardtypesAreaFillModeDTO,
+	type DashboardtypesDistributionXScaleDTO,
+	type DashboardtypesDistributionYScaleDTO,
 	DashboardtypesHeatmapYScaleDTO,
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesPrecisionOptionDTO,
@@ -18,9 +20,15 @@ import {
 	HeatmapAxisScale,
 	type HeatmapColorOptions,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import {
+	DistributionXScale,
+	DistributionYScale,
+} from 'lib/visualization/charts/Distribution/types';
 
 import {
 	AREA_FILL_MODE_MAP,
+	DISTRIBUTION_X_SCALE_MAP,
+	DISTRIBUTION_Y_SCALE_MAP,
 	HEATMAP_COLOR_MODE_MAP,
 	HEATMAP_COLOR_SCALE_MAP,
 	HEATMAP_PALETTE_MAP,
@@ -104,6 +112,42 @@ export function resolveStackMode(
 		return STACK_MODE_MAP[stack];
 	}
 	return StackMode.None;
+}
+
+/** Missing/unknown falls back to `Normal`, where Distribution's stacking starts. */
+export function resolveDistributionStackMode(
+	stack: DashboardtypesStackModeDTO | undefined,
+): StackMode {
+	return stack ? resolveStackMode(stack) : StackMode.Normal;
+}
+
+/**
+ * Bucket-axis spacing of a distribution; missing/unknown is `auto`. As on the
+ * heatmap, `auto` over linear bucketing keeps evenly spaced bounds evenly spaced.
+ */
+export function resolveDistributionXScale(
+	scale: DashboardtypesDistributionXScaleDTO | undefined,
+	bucketKind?: Querybuildertypesv5BucketOptionsDTO['kind'],
+): DistributionXScale {
+	const configured =
+		scale && scale in DISTRIBUTION_X_SCALE_MAP
+			? DISTRIBUTION_X_SCALE_MAP[scale]
+			: DistributionXScale.Auto;
+
+	if (configured !== DistributionXScale.Auto) {
+		return configured;
+	}
+	return bucketKind === Querybuildertypesv5BucketOptionsLinearDTOKind.linear
+		? DistributionXScale.Linear
+		: DistributionXScale.Auto;
+}
+
+export function resolveDistributionYScale(
+	scale: DashboardtypesDistributionYScaleDTO | undefined,
+): DistributionYScale {
+	return scale && scale in DISTRIBUTION_Y_SCALE_MAP
+		? DISTRIBUTION_Y_SCALE_MAP[scale]
+		: DistributionYScale.Linear;
 }
 
 /**

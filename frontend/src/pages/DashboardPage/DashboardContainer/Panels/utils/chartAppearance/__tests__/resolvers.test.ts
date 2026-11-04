@@ -1,5 +1,7 @@
 import {
 	DashboardtypesAreaFillModeDTO,
+	DashboardtypesDistributionXScaleDTO,
+	DashboardtypesDistributionYScaleDTO,
 	DashboardtypesHeatmapColorModeDTO,
 	DashboardtypesHeatmapColorScaleDTO,
 	DashboardtypesHeatmapPaletteDTO,
@@ -15,9 +17,16 @@ import {
 	HeatmapColorPalette,
 	HeatmapColorScale,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import {
+	DistributionXScale,
+	DistributionYScale,
+} from 'lib/visualization/charts/Distribution/types';
 
 import {
 	resolveAreaFillMode,
+	resolveDistributionStackMode,
+	resolveDistributionXScale,
+	resolveDistributionYScale,
 	resolveHeatmapAxisScale,
 	resolveHeatmapColors,
 	resolveSpanGaps,
@@ -188,5 +197,63 @@ describe('resolveHeatmapColors', () => {
 
 	it('reads a zero step count as unset, which is how the wire sends none', () => {
 		expect(resolveHeatmapColors({ steps: 0 })).toStrictEqual({});
+	});
+});
+
+describe('resolveDistributionStackMode', () => {
+	it('defaults to normal, unlike the shared stack default', () => {
+		expect(resolveDistributionStackMode(undefined)).toBe(StackMode.Normal);
+		expect(resolveStackMode(undefined)).toBe(StackMode.None);
+	});
+
+	it('keeps an explicit mode', () => {
+		expect(resolveDistributionStackMode(DashboardtypesStackModeDTO.none)).toBe(
+			StackMode.None,
+		);
+		expect(resolveDistributionStackMode(DashboardtypesStackModeDTO.percent)).toBe(
+			StackMode.Percent,
+		);
+	});
+});
+
+describe('resolveDistributionXScale', () => {
+	it('maps each scale, ordinal included', () => {
+		expect(
+			resolveDistributionXScale(DashboardtypesDistributionXScaleDTO.ordinal),
+		).toBe(DistributionXScale.Ordinal);
+		expect(
+			resolveDistributionXScale(DashboardtypesDistributionXScaleDTO.symlog),
+		).toBe(DistributionXScale.Symlog);
+		expect(resolveDistributionXScale(undefined)).toBe(DistributionXScale.Auto);
+	});
+
+	it('keeps auto linear over linear bucketing, and only under auto', () => {
+		expect(
+			resolveDistributionXScale(
+				DashboardtypesDistributionXScaleDTO.auto,
+				Querybuildertypesv5BucketOptionsLinearDTOKind.linear,
+			),
+		).toBe(DistributionXScale.Linear);
+		expect(
+			resolveDistributionXScale(
+				DashboardtypesDistributionXScaleDTO.log,
+				Querybuildertypesv5BucketOptionsLinearDTOKind.linear,
+			),
+		).toBe(DistributionXScale.Log);
+		expect(
+			resolveDistributionXScale(
+				undefined,
+				Querybuildertypesv5BucketOptionsLogDTOKind.log,
+			),
+		).toBe(DistributionXScale.Auto);
+	});
+});
+
+describe('resolveDistributionYScale', () => {
+	it('defaults to linear', () => {
+		expect(resolveDistributionYScale(undefined)).toBe(DistributionYScale.Linear);
+		expect(
+			resolveDistributionYScale(DashboardtypesDistributionYScaleDTO.log),
+		).toBe(DistributionYScale.Log);
 	});
 });
