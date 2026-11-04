@@ -122,7 +122,7 @@ describe('normalizeCompositeQuery', () => {
 		});
 		expect(withoutLists.query.builder.queryFormulas).toStrictEqual([]);
 		expect(withoutLists.query.builder.queryTraceOperator).toStrictEqual([]);
-		expect(withoutLists.changed).toBe(true);
+		expect(withoutLists.changed).toBe(false);
 		[[], [5, logsQuery]].forEach((queryData) =>
 			expect(
 				normalizeCompositeQuery(
