@@ -107,7 +107,7 @@ func (q *querier) runBuilderQuery(
 			return
 		}
 
-		misses := q.queryCache.FindMissingTimeRanges(orgID, start, end, builderQuery.StepInterval, cacheKeys[queryName])
+		misses := q.queryCache.FindMissingTimeRanges(ctx, orgID, start, end, builderQuery.StepInterval, cacheKeys[queryName])
 		q.logger.InfoContext(ctx, "cache misses for logs query", "misses", misses)
 		missedSeries := make([]querycache.CachedSeriesData, 0)
 		filteredMissedSeries := make([]querycache.CachedSeriesData, 0)
@@ -147,10 +147,10 @@ func (q *querier) runBuilderQuery(
 			})
 		}
 
-		filteredMergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(orgID, cacheKeys[queryName], filteredMissedSeries)
-		q.queryCache.StoreSeriesInCache(orgID, cacheKeys[queryName], filteredMergedSeries)
+		filteredMergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(ctx, orgID, cacheKeys[queryName], filteredMissedSeries)
+		q.queryCache.StoreSeriesInCache(ctx, orgID, cacheKeys[queryName], filteredMergedSeries)
 
-		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(orgID, cacheKeys[queryName], missedSeries)
+		mergedSeries := q.queryCache.MergeWithCachedSeriesDataV2(ctx, orgID, cacheKeys[queryName], missedSeries)
 
 		resultSeries := common.GetSeriesFromCachedDataV2(mergedSeries, start, end, builderQuery.StepInterval)
 
@@ -228,7 +228,7 @@ func (q *querier) runBuilderQuery(
 	}
 
 	cacheKey := cacheKeys[queryName]
-	misses := q.queryCache.FindMissingTimeRanges(orgID, start, end, builderQuery.StepInterval, cacheKey)
+	misses := q.queryCache.FindMissingTimeRanges(ctx, orgID, start, end, builderQuery.StepInterval, cacheKey)
 	q.logger.InfoContext(ctx, "cache misses for metrics query", "misses", misses)
 	missedSeries := make([]querycache.CachedSeriesData, 0)
 	for _, miss := range misses {
@@ -265,7 +265,7 @@ func (q *querier) runBuilderQuery(
 			Data:  series,
 		})
 	}
-	mergedSeries := q.queryCache.MergeWithCachedSeriesData(orgID, cacheKey, missedSeries)
+	mergedSeries := q.queryCache.MergeWithCachedSeriesData(ctx, orgID, cacheKey, missedSeries)
 
 	resultSeries := common.GetSeriesFromCachedData(mergedSeries, start, end)
 
@@ -305,7 +305,7 @@ func (q *querier) runBuilderExpression(
 
 	cacheKey := cacheKeys[queryName]
 	step := postprocess.StepIntervalForFunction(params, queryName)
-	misses := q.queryCache.FindMissingTimeRanges(orgID, params.Start, params.End, step, cacheKey)
+	misses := q.queryCache.FindMissingTimeRanges(ctx, orgID, params.Start, params.End, step, cacheKey)
 	q.logger.InfoContext(ctx, "cache misses for expression query", "misses", misses)
 	missedSeries := make([]querycache.CachedSeriesData, 0)
 	for _, miss := range misses {
@@ -329,7 +329,7 @@ func (q *querier) runBuilderExpression(
 			Data:  series,
 		})
 	}
-	mergedSeries := q.queryCache.MergeWithCachedSeriesData(orgID, cacheKey, missedSeries)
+	mergedSeries := q.queryCache.MergeWithCachedSeriesData(ctx, orgID, cacheKey, missedSeries)
 
 	resultSeries := common.GetSeriesFromCachedData(mergedSeries, params.Start, params.End)
 
