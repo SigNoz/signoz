@@ -137,7 +137,7 @@ function TraceDetailsHeader({
 							badgeValue={traceID}
 							maxCharacters={100}
 						/>
-						<TraceDetailsTabs />
+						<TraceDetailsTabs hasAiSummary={!!traceSummary?.ai} />
 					</div>
 				)}
 				{isOverview && showTraceDetailsHeaderOptions && traceSummary && (

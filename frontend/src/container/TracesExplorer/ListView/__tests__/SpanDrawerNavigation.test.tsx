@@ -1,0 +1,113 @@
+import remove from 'api/browser/localstorage/remove';
+import set from 'api/browser/localstorage/set';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import { server } from 'mocks-server/server';
+import { screen, userEvent, waitFor, within } from 'tests/test-utils';
+import { mockSuccess, mockTraceSummary, renderListView } from './testUtils';
+
+// globalTime starts with loading:true, which gates the list query. Force just that
+// slice's loading to false so the query fires; every other selector is untouched.
+jest.mock('react-redux', () => {
+	const actual = jest.requireActual('react-redux');
+	return {
+		...actual,
+		useSelector: (selector: (state: unknown) => unknown): unknown => {
+			const result = actual.useSelector(selector);
+			if (result && typeof result === 'object' && 'loading' in result) {
+				return { ...result, loading: false };
+			}
+			return result;
+		},
+	};
+});
+
+// List columns come from the options menu (server-synced preferences). Pin them
+// so the expected columns render, independent of that API.
+jest.mock('container/OptionsMenu/useOptionsMenu', () => ({
+	__esModule: true,
+	default: (): unknown => ({
+		options: {
+			selectColumns: [
+				{ name: 'service.name', fieldContext: 'resource' },
+				{ name: 'name', fieldContext: 'span' },
+				{ name: 'duration_nano', fieldContext: 'span' },
+				{ name: 'http_method', fieldContext: 'span' },
+				{ name: 'response_status_code', fieldContext: 'span' },
+				{ name: 'http.route', fieldContext: 'attribute' },
+				{ name: 'cache.hit', fieldContext: 'attribute' },
+			],
+		},
+		config: { addColumn: { onRemove: jest.fn() } },
+	}),
+}));
+
+describe('Traces ListView - span drawer navigation', () => {
+	beforeEach(() => {
+		set(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED, 'true');
+		mockSuccess();
+		mockTraceSummary({});
+	});
+
+	afterEach(() => {
+		remove(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED);
+		server.resetHandlers();
+	});
+
+	it('opens the clicked span and steps through rows with the arrow keys', async () => {
+		const user = userEvent.setup();
+		renderListView();
+
+		await user.click(await screen.findByText('HTTP GET'));
+
+		const drawer = await screen.findByTestId('span-details-drawer');
+		expect(within(drawer).getByText('HTTP GET')).toBeInTheDocument();
+		expect(within(drawer).getByTestId('span-details-trace-id')).toHaveTextContent(
+			'0000000000000000344ded1387b08a7e',
+		);
+
+		await user.keyboard('{ArrowDown}');
+		await expect(
+			within(drawer).findByText('authenticate_check_db'),
+		).resolves.toBeInTheDocument();
+
+		await user.keyboard('{ArrowUp}');
+		await expect(
+			within(drawer).findByText('HTTP GET'),
+		).resolves.toBeInTheDocument();
+	});
+
+	it('closes the drawer', async () => {
+		const user = userEvent.setup();
+		renderListView();
+
+		await user.click(await screen.findByText('HTTP GET'));
+		await screen.findByTestId('span-details-drawer');
+
+		await user.click(screen.getByTestId('span-drawer-close'));
+
+		await waitFor(() =>
+			expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument(),
+		);
+	});
+
+	it('stays open on a press in the drawer or the list, and closes on one outside', async () => {
+		const user = userEvent.setup();
+		renderListView();
+
+		await user.click(await screen.findByText('HTTP GET'));
+		const drawer = await screen.findByTestId('span-details-drawer');
+
+		await user.click(drawer);
+		// Hovering re-renders the row, so the press needs a fresh query.
+		await user.hover(screen.getByText('authenticate_check_db'));
+		await user.click(screen.getByText('authenticate_check_db'));
+		await expect(
+			within(drawer).findByText('authenticate_check_db'),
+		).resolves.toBeInTheDocument();
+
+		await user.click(document.body);
+		await waitFor(() =>
+			expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument(),
+		);
+	});
+});
