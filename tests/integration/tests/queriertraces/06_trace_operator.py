@@ -784,3 +784,84 @@ def test_trace_operator_select_fields(
         # (events/links/attributes/resource) and the rest of the intrinsics never
         # appear because the consume-layer merge isn't triggered.
         assert set(parent_row.keys()) == set(TRACE_OPERATOR_CORE_FIELDS + ["service.name"])
+
+
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
+def test_trace_operator_scalar_limit(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    use_attribute_backend: Callable[[str], None],
+    attribute_backend: str,
+) -> None:
+    """
+    Setup:
+    Insert 4, 3, 2 and 1 spans for services limit-a..limit-d.
+
+    Tests:
+    1. A scalar trace operator grouped by service.name with limit=2 returns
+       only the top two groups by count.
+    """
+    use_attribute_backend(attribute_backend)
+
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    span_counts = {"limit-a": 4, "limit-b": 3, "limit-c": 2, "limit-d": 1}
+
+    insert_traces(
+        [
+            Traces(
+                timestamp=now - timedelta(seconds=10),
+                duration=timedelta(seconds=1),
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                parent_span_id="",
+                name="scalar-limit",
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources={"service.name": service},
+                attributes={"operation.type": "scalar-limit"},
+            )
+            for service, count in span_counts.items()
+            for _ in range(count)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type=RequestType.SCALAR,
+        queries=[
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "traces",
+                    "disabled": True,
+                    "filter": {"expression": "operation.type = 'scalar-limit'"},
+                    "aggregations": [{"expression": "count()"}],
+                },
+            },
+            {
+                "type": "builder_trace_operator",
+                "spec": {
+                    "name": "C",
+                    "expression": "A",
+                    "aggregations": [{"expression": "count()"}],
+                    "groupBy": [{"name": "service.name", "fieldContext": "resource"}],
+                    "limit": 2,
+                },
+            },
+        ],
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    result = find_named_result(response.json()["data"]["data"]["results"], "C")
+    assert result is not None, "trace_operator result C not found"
+    assert result["data"] == [["limit-a", 4], ["limit-b", 3]]

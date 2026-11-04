@@ -65,7 +65,8 @@ function ConditionKeyList({
 							<Button
 								variant="ghost"
 								color="secondary"
-								size="icon"
+								size="sm"
+								icon
 								aria-label="Remove key"
 								onClick={(): void => removeKey(index)}
 								testId={`${testIdPrefix}-remove-${index}`}
@@ -78,6 +79,7 @@ function ConditionKeyList({
 			)}
 
 			<Button
+				size="md"
 				variant="dashed"
 				color="secondary"
 				prefix={<Plus size={14} />}

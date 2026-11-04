@@ -25,11 +25,16 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import {
+	RESPONSE_STATES,
+	type ResponseState,
+	respondWith,
+} from '@/storybook/runtime/responseState';
 
 import {
 	logsSavedViewsResponse,
 	SAVED_VIEW_MAX,
-} from '../SavedViews/stories/__story_mockdata__/savedViews';
+} from './__story_mockdata__/savedViews';
 import {
 	attributeValuesResponse,
 	dashboardsResponse,
@@ -44,6 +49,8 @@ import {
 	logRowsResponse,
 	QUICK_FILTER_MAX,
 	logsQuickFiltersResponse,
+	RECENT_FILTER_MAX,
+	recentFiltersStorage,
 	RELATIVE_TIME,
 	timeRangeState,
 } from './__story_mockdata__/logs';
@@ -146,6 +153,12 @@ export const logsMocks = defineStoryMocks({
 				'`use_json_body`: the service logs JSON and the backend hands the body over parsed, so the body is a tree and its keys are queryable as `body.x`.',
 			value: false,
 		}),
+		bodyColumns: toggleControl('Body field columns', {
+			group: LIST,
+			description:
+				'Keys of the JSON body (`order`, `order.coupons`, `http.status_code`) selected as columns beside body and timestamp. Only shows something with the JSON body on.',
+			value: false,
+		}),
 		filtersPanel: toggleControl('Filters panel', {
 			group: FILTERS,
 			description: 'The quick filters panel down the left of the explorer.',
@@ -158,9 +171,23 @@ export const logsMocks = defineStoryMocks({
 			value: QUICK_FILTER_MAX,
 			max: QUICK_FILTER_MAX,
 		}),
+		filterValues: choiceControl<ResponseState>('Filter values', {
+			group: FILTERS,
+			description:
+				'How `/fields/values` answers once a key and an operator are typed in the filter, apart from the page-wide Data control.',
+			options: RESPONSE_STATES,
+			value: 'loaded',
+		}),
+		recentFilters: countControl('Recent filters', {
+			group: FILTERS,
+			description:
+				'Filters run before in this browser, which the filter offers above its key suggestions.',
+			value: 0,
+			max: RECENT_FILTER_MAX,
+		}),
 		savedViews: countControl('Saved views', {
 			group: FILTERS,
-			description: 'The views the view picker above the query builder lists.',
+			description: 'The views the saved views panel beside the explorer lists.',
 			value: 4,
 			max: SAVED_VIEW_MAX,
 		}),
@@ -217,7 +244,7 @@ export const logsMocks = defineStoryMocks({
 
 			rest.get(
 				'http://localhost/api/v1/fields/values',
-				response.json((req) =>
+				respondWith(values.filterValues, (req) =>
 					logFieldValuesResponse(
 						req.url.searchParams.get('name') ?? '',
 						req.url.searchParams.get('searchText') ?? '',
@@ -236,7 +263,7 @@ export const logsMocks = defineStoryMocks({
 			),
 
 			rest.get(
-				'http://localhost/api/v1/explorer/views',
+				'http://localhost/api/v2/saved_views',
 				response.json(() => logsSavedViewsResponse(values.savedViews)),
 			),
 
@@ -264,15 +291,24 @@ export const logsMocks = defineStoryMocks({
 				}
 			: {},
 	}),
-	effect: ({ frequencyChart, filtersPanel, format, maxLines, fontSize }) => {
+	effect: ({
+		frequencyChart,
+		filtersPanel,
+		format,
+		maxLines,
+		fontSize,
+		bodyColumns,
+		recentFilters,
+	}) => {
 		setLocalStorage(LOCALSTORAGE.SHOW_FREQUENCY_CHART, String(frequencyChart));
+		setLocalStorage(...recentFiltersStorage(recentFilters));
 		setLocalStorage(LOCALSTORAGE.SHOW_LOGS_QUICK_FILTERS, String(filtersPanel));
 
 		// The preferences loader reads localStorage ahead of the URL, so this is
 		// what the options menu opens on.
 		setLocalStorage(
 			LOCALSTORAGE.LOGS_LIST_OPTIONS,
-			JSON.stringify(logsListOptions({ format, maxLines, fontSize })),
+			JSON.stringify(logsListOptions({ format, maxLines, fontSize, bodyColumns })),
 		);
 	},
 });

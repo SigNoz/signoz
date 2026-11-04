@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Typography } from '@signozhq/ui/typography';
-import logEvent from 'api/common/logEvent';
 import TanStackTable, {
 	SortState,
 	TableColumnDef,
@@ -10,7 +9,6 @@ import TanStackTable, {
 	useRecoverFromEmptyPage,
 	useTableParams,
 } from 'components/TanStackTableView';
-import { InfraMonitoringEvents } from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
@@ -28,6 +26,9 @@ import {
 	useInfraMonitoringOrderBy,
 	useInfraMonitoringSelectedItemParams,
 	useInfraMonitoringStatusFilter,
+	useInfraMonitoringPodStatusFilter,
+	useInfraMonitoringNodeReadinessFilter,
+	useInfraMonitoringContainerStatusFilter,
 } from '../hooks';
 import {
 	useInfraMonitoringFontSize,
@@ -48,6 +49,7 @@ import styles from './K8sBaseList.module.scss';
 import cx from 'classnames';
 import {
 	logInfraColumnSortedEvent,
+	logInfraListRowClickedEvent,
 	logInfraTimeRangeCustomizedEvent,
 } from 'container/InfraMonitoringK8sV2/Base/events';
 
@@ -89,13 +91,16 @@ export type K8sBaseListProps<
 	getRowKey: (record: T) => string;
 	/** Function to get the item key used for selection. Can return string or SelectedItemParams. */
 	getItemKey: (record: T) => TItemKey;
-	eventCategory: InfraMonitoringEvents;
 	renderEmptyState?: (
 		context: K8sBaseListEmptyStateContext,
 	) => React.ReactNode | null;
 	extraQueryKeyParts?: string[];
 	detailsQueryKeyPrefix: string;
 };
+
+function emptyToUndefined<T>(values: T[]): T[] | undefined {
+	return values.length > 0 ? values : undefined;
+}
 
 export function K8sBaseList<
 	T extends K8sEntityData,
@@ -108,7 +113,6 @@ export function K8sBaseList<
 	fetchListData,
 	getRowKey,
 	getItemKey,
-	eventCategory,
 	renderEmptyState,
 	extraQueryKeyParts = [],
 	detailsQueryKeyPrefix,
@@ -120,6 +124,9 @@ export function K8sBaseList<
 	const [groupBy] = useInfraMonitoringGroupBy();
 	const [orderBy] = useInfraMonitoringOrderBy();
 	const [statusFilter] = useInfraMonitoringStatusFilter();
+	const [podStatusFilter] = useInfraMonitoringPodStatusFilter();
+	const [nodeReadinessFilter] = useInfraMonitoringNodeReadinessFilter();
+	const [containerStatusFilter] = useInfraMonitoringContainerStatusFilter();
 	const [selectedItemParams, setSelectedItemParams] =
 		useInfraMonitoringSelectedItemParams();
 	const selectedItem = selectedItemParams.selectedItem;
@@ -171,6 +178,9 @@ export function K8sBaseList<
 			JSON.stringify(orderBy),
 			JSON.stringify(groupBy),
 			statusFilter,
+			podStatusFilter.join(),
+			nodeReadinessFilter.join(),
+			containerStatusFilter.join(),
 			...extraQueryKeyParts,
 		);
 	}, [
@@ -183,6 +193,9 @@ export function K8sBaseList<
 		orderBy,
 		groupBy,
 		statusFilter,
+		podStatusFilter,
+		nodeReadinessFilter,
+		containerStatusFilter,
 		extraQueryKeyParts,
 	]);
 
@@ -203,6 +216,9 @@ export function K8sBaseList<
 							statusFilter === 'active' || statusFilter === 'inactive'
 								? statusFilter
 								: undefined,
+						filterByPodStatus: emptyToUndefined(podStatusFilter),
+						filterByNodeReadiness: emptyToUndefined(nodeReadinessFilter),
+						filterByContainerStatus: emptyToUndefined(containerStatusFilter),
 					},
 					groupBy:
 						groupBy && groupBy.length > 0
@@ -261,15 +277,6 @@ export function K8sBaseList<
 		[groupBy],
 	);
 
-	useEffect(() => {
-		void logEvent(InfraMonitoringEvents.PageVisited, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.ListPage,
-			category: eventCategory,
-			total: totalCount,
-		});
-	}, [eventCategory, totalCount]);
-
 	const prevSelectedTimeRef = useRef(selectedTime);
 	useEffect(() => {
 		if (prevSelectedTimeRef.current !== selectedTime) {
@@ -307,14 +314,10 @@ export function K8sBaseList<
 				setSelectedItemParams(params);
 			}
 
-			void logEvent(InfraMonitoringEvents.ItemClicked, {
-				entity: InfraMonitoringEvents.K8sEntity,
-				page: InfraMonitoringEvents.ListPage,
-				category: eventCategory,
-			});
+			logInfraListRowClickedEvent(entity, false, groupBy.length > 0);
 		},
 		[
-			eventCategory,
+			entity,
 			groupBy.length,
 			setSelectedItemParams,
 			detailsQueryKeyPrefix,
@@ -366,16 +369,17 @@ export function K8sBaseList<
 			}
 			openInNewTab(url.pathname + url.search);
 
-			void logEvent(InfraMonitoringEvents.ItemClicked, {
-				entity: InfraMonitoringEvents.K8sEntity,
-				page: InfraMonitoringEvents.ListPage,
-				category: eventCategory,
-			});
+			logInfraListRowClickedEvent(entity, true, false);
 		},
-		[eventCategory, groupBy.length],
+		[entity, groupBy.length],
 	);
 
 	const isGroupedByAttribute = groupBy.length > 0;
+
+	const getRowTestId = useCallback(
+		(record: T): string => `row-${getRowKey(record)}`,
+		[getRowKey],
+	);
 
 	// Filter columns for expanded row based on parent's hidden columns
 	const expandedRowColumns = useMemo(
@@ -398,6 +402,7 @@ export function K8sBaseList<
 				extraQueryKeyParts={extraQueryKeyParts}
 				getRowKey={getRowKey}
 				getItemKey={getItemKey}
+				getRowTestId={getRowTestId}
 				detailsQueryKeyPrefix={detailsQueryKeyPrefix}
 			/>
 		),
@@ -406,6 +411,7 @@ export function K8sBaseList<
 			fetchListData,
 			getRowKey,
 			getItemKey,
+			getRowTestId,
 			expandedRowColumns,
 			extraQueryKeyParts,
 			detailsQueryKeyPrefix,
@@ -465,7 +471,6 @@ export function K8sBaseList<
 
 			<K8sTableToolbar
 				entity={entity}
-				eventCategory={eventCategory}
 				leftFilters={leftFilters}
 				onOpenOptionsDrawer={handleOpenOptionsDrawer}
 			/>
@@ -487,6 +492,7 @@ export function K8sBaseList<
 						isLoading={showTableLoadingState}
 						getRowKey={getRowKey}
 						getItemKey={getItemKey}
+						getRowTestId={getRowTestId}
 						groupBy={groupBy.map((g) => ({ key: g }))}
 						getGroupKey={getGroupKeyFn}
 						onRowClick={handleRowClick}

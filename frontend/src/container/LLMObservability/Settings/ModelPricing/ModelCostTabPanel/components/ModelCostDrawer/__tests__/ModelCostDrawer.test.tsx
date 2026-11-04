@@ -47,12 +47,18 @@ describe('ModelCostDrawer (integration)', () => {
 			/>,
 		);
 
-		expect(screen.getByTestId('drawer-save-btn')).toBeDisabled();
+		expect(screen.getByTestId('drawer-save-btn')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
 		await user.type(screen.getByTestId('drawer-model-id-input'), 'openai:gpt-4o');
 
 		await waitFor(() =>
-			expect(screen.getByTestId('drawer-save-btn')).toBeEnabled(),
+			expect(screen.getByTestId('drawer-save-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
 		);
 	});
 
@@ -78,7 +84,10 @@ describe('ModelCostDrawer (integration)', () => {
 		await user.click(screen.getByTestId('drawer-pattern-add-btn'));
 
 		await waitFor(() =>
-			expect(screen.getByTestId('drawer-save-btn')).toBeEnabled(),
+			expect(screen.getByTestId('drawer-save-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
 		);
 		await user.click(screen.getByTestId('drawer-save-btn'));
 

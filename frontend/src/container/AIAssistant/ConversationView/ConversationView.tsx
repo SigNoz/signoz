@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import cx from 'classnames';
+import { useAppLocation } from 'lib/router/useAppLocation';
 
 import logEvent from 'api/common/logEvent';
 
@@ -26,7 +26,7 @@ export default function ConversationView({
 }: ConversationViewProps): JSX.Element {
 	const variant = useVariant();
 	const isCompact = variant === 'panel';
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const conversation = useAIAssistantStore(
 		(s) => s.conversations[conversationId],
@@ -139,6 +139,16 @@ export default function ConversationView({
 		isLoadingThread ||
 		Boolean(pendingApprovalHere) ||
 		Boolean(pendingClarificationHere);
+	let inputDisabledTooltip: string | undefined;
+	if (isStreamingHere) {
+		inputDisabledTooltip = 'Wait for the response to finish';
+	} else if (isLoadingThread) {
+		inputDisabledTooltip = 'Wait for the conversation to load';
+	} else if (pendingApprovalHere) {
+		inputDisabledTooltip = 'Approve or reject the pending action first';
+	} else if (pendingClarificationHere) {
+		inputDisabledTooltip = 'Answer the pending question first';
+	}
 
 	const inputWrapperClass = cx(styles.inputWrapper, {
 		[styles.compact]: isCompact,
@@ -162,6 +172,7 @@ export default function ConversationView({
 						key={conversationId}
 						onSend={handleSend}
 						disabled
+						disabledTooltip="Wait for the conversation to load"
 						autoContexts={autoContexts}
 						onDismissAutoContext={handleDismissAutoContext}
 					/>
@@ -196,6 +207,7 @@ export default function ConversationView({
 					onSend={handleSend}
 					onCancel={handleCancel}
 					disabled={inputDisabled}
+					disabledTooltip={inputDisabledTooltip}
 					isStreaming={isStreamingHere}
 					autoContexts={autoContexts}
 					onDismissAutoContext={handleDismissAutoContext}

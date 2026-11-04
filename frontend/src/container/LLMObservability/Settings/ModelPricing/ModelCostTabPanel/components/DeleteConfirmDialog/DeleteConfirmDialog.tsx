@@ -34,6 +34,7 @@ function DeleteConfirmDialog({
 			footer={
 				<>
 					<Button
+						size="md"
 						variant="solid"
 						color="secondary"
 						onClick={onCancel}
@@ -43,8 +44,9 @@ function DeleteConfirmDialog({
 						Cancel
 					</Button>
 					<Button
+						size="md"
 						variant="solid"
-						color="destructive"
+						color="danger"
 						loading={isDeleting}
 						onClick={onConfirm}
 						prefix={<Trash2 size={12} />}

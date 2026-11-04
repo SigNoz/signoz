@@ -2,15 +2,13 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import { MemoryRouter as MemoryRouterV5 } from 'react-router-dom-v5-compat';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { NuqsTestingAdapter, UrlUpdateEvent } from 'nuqs/adapters/testing';
 import { AppProvider } from 'providers/App/App';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 
 import { K8sCategories } from '../constants';
 import InfraMonitoringK8s from '../InfraMonitoringK8s';
@@ -43,32 +41,61 @@ function renderPage(
 	});
 
 	render(
-		<MemoryRouter>
-			<MemoryRouterV5>
-				<TimezoneProvider>
-					<QueryClientProvider client={queryClient}>
-						<AppProvider>
-							<Provider store={store}>
-								<NuqsTestingAdapter
-									searchParams={queryParams}
-									onUrlUpdate={onUrlUpdate}
-								>
-									<TooltipProvider>
-										<QueryBuilderProvider>
-											<InfraMonitoringK8s />
-										</QueryBuilderProvider>
-									</TooltipProvider>
-								</NuqsTestingAdapter>
-							</Provider>
-						</AppProvider>
-					</QueryClientProvider>
-				</TimezoneProvider>
-			</MemoryRouterV5>
-		</MemoryRouter>,
+		<TestRouter initialRoute="/">
+			<TimezoneProvider>
+				<QueryClientProvider client={queryClient}>
+					<AppProvider>
+						<Provider store={store}>
+							<NuqsTestingAdapter searchParams={queryParams} onUrlUpdate={onUrlUpdate}>
+								<QueryBuilderProvider>
+									<InfraMonitoringK8s />
+								</QueryBuilderProvider>
+							</NuqsTestingAdapter>
+						</Provider>
+					</AppProvider>
+				</QueryClientProvider>
+			</TimezoneProvider>
+		</TestRouter>,
 	);
 }
 
 describe('InfraMonitoringK8s', () => {
+	describe('when the category changes with a status filter applied', () => {
+		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
+
+		beforeEach(async () => {
+			onUrlUpdateMock.mockClear();
+
+			renderPage(
+				{
+					category: K8sCategories.CLUSTERS,
+					podStatus: 'crashloopbackoff',
+					nodeReadiness: 'not_ready',
+				},
+				onUrlUpdateMock,
+			);
+
+			await screen.findByTestId(`category-${K8sCategories.CONTAINERS}`);
+		});
+
+		it('should drop the status filters the new category cannot apply', async () => {
+			fireEvent.click(screen.getByTestId(`category-${K8sCategories.CONTAINERS}`));
+
+			// Containers filter on their own statuses, so a pod status carried over from
+			// clusters would sit in the toolbar looking applied while matching nothing.
+			await waitFor(() => {
+				const categorySwitch = onUrlUpdateMock.mock.calls.find(
+					(call) =>
+						call[0].searchParams.get('category') === K8sCategories.CONTAINERS,
+				);
+
+				expect(categorySwitch).toBeDefined();
+				expect(categorySwitch?.[0].searchParams.get('podStatus')).toBeNull();
+				expect(categorySwitch?.[0].searchParams.get('nodeReadiness')).toBeNull();
+			});
+		});
+	});
+
 	describe('when the category changes from a page other than the first', () => {
 		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
 

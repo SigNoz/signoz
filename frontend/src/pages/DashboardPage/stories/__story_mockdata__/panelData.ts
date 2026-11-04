@@ -3,6 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import type { Warning } from 'types/api';
 import type { MetricRangePayloadV5, RawRow } from 'types/api/v5/queryRange';
 
 import {
@@ -35,6 +36,19 @@ const LOG_LEVELS = ['INFO', 'WARN', 'ERROR'] as const;
 
 const pick = <T>(values: readonly T[], index: number): T =>
 	values[index % values.length];
+
+/** A query answered with data, but some series dropped along the way. */
+export const partialDataWarning = (metric?: string): Warning => ({
+	code: 'partial_data',
+	message: `Some series${metric ? ' for '.concat(metric) : ''} were dropped: the metric changed temporality partway through the selected window.`,
+	url: 'https://signoz.io/docs/metrics-management/types-and-aggregation/',
+	warnings: [
+		{
+			message:
+				'Narrow the window to a period with one temporality, or re-record the metric as a delta.',
+		},
+	],
+});
 
 export interface PanelWindow {
 	start: number;
@@ -173,3 +187,20 @@ export const NAMESPACE_VALUES = [
 	'payments-prod',
 	'platform-prod',
 ] as const;
+
+/**
+ * The attributes the dynamic variable editor offers a variable to read, with
+ * the values each one resolves to.
+ */
+const ATTRIBUTE_VALUES: Record<string, readonly string[]> = {
+	'k8s.namespace.name': NAMESPACE_VALUES,
+	'k8s.cluster.name': ['prod-us-east-1', 'prod-eu-west-1'],
+	'service.name': SERVICES,
+	'deployment.environment': ['production', 'staging', 'development'],
+	'host.name': ['ip-10-0-1-12', 'ip-10-0-1-37', 'ip-10-0-2-4'],
+};
+
+export const VARIABLE_ATTRIBUTES = Object.keys(ATTRIBUTE_VALUES);
+
+export const attributeValues = (name: string | null): readonly string[] =>
+	ATTRIBUTE_VALUES[name ?? ''] ?? NAMESPACE_VALUES;

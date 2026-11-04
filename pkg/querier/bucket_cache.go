@@ -1,6 +1,7 @@
 package querier
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,9 +12,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/types/cachetypes"
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
+
+// bucketCacheCellSteps is the grid cell width in steps; no cached bucket
+// crosses a cell boundary.
+const bucketCacheCellSteps = 60
 
 // BucketCache is the interface for bucket-based caching.
 type BucketCache interface {
@@ -57,46 +64,62 @@ func (bc *bucketCache) GetMissRanges(
 
 	bc.logger.DebugContext(ctx, "getting miss ranges", slog.String("fingerprint", q.Fingerprint()), slog.Uint64("start", startMs), slog.Uint64("end", endMs))
 
-	// Generate cache key
-	cacheKey := bc.generateCacheKey(q)
-
-	bc.logger.DebugContext(ctx, "cache key", slog.String("cache_key", cacheKey))
-
-	// Try to get cached data
-	var data qbtypes.CachedData
-	err := bc.cache.Get(ctx, orgID, cacheKey, &data)
-	if err != nil {
-		if !errors.Ast(err, errors.TypeNotFound) {
-			bc.logger.ErrorContext(ctx, "error getting cached data", errors.Attr(err))
-		}
-		// No cached data, need to fetch entire range
-		missing = []*qbtypes.TimeRange{{From: startMs, To: endMs}}
-		return nil, missing
-	}
-
 	// Extract step interval if this is a builder query
 	stepMs := uint64(step.Milliseconds())
 
-	// Find missing ranges with step alignment
-	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs)
-	bc.logger.DebugContext(ctx, "missing ranges", slog.Any("missing", missing), slog.Uint64("step", stepMs))
+	// No cached data, need to fetch entire range
+	missing = []*qbtypes.TimeRange{{From: startMs, To: endMs}}
 
-	// If no cached data overlaps with requested range, return empty result
-	if len(data.Buckets) == 0 {
+	if endMs <= startMs {
+		return nil, missing
+	}
+	cellWidthMs := bucketCacheCellSteps * stepMs
+	firstCellIdx, lastCellIdx := deriveCellIdx(startMs, cellWidthMs), deriveCellIdx(endMs-1, cellWidthMs)
+
+	// Gather the buckets of every cell the window touches
+	cellKeys := make([]string, 0, lastCellIdx-firstCellIdx+1)
+	cellEntries := make([]cachetypes.Cacheable, 0, lastCellIdx-firstCellIdx+1)
+	for cellIdx := firstCellIdx; cellIdx <= lastCellIdx; cellIdx++ {
+		cellKeys = append(cellKeys, bc.generateCacheKey(q, cellIdx))
+		cellEntries = append(cellEntries, &qbtypes.CachedData{})
+	}
+
+	// A cell that could not be read comes back nil like a miss, so the rest
+	// are still worth serving
+	if err := bc.cache.GetMany(ctx, orgID, cellKeys, cellEntries); err != nil {
+		bc.logger.ErrorContext(ctx, "error getting cached data", errors.Attr(err))
+	}
+
+	cachedBuckets := []*qbtypes.CachedBucket{}
+	cachedWarnings := []string{}
+	for _, cellEntry := range cellEntries {
+		if cellEntry == nil {
+			continue
+		}
+		cellData := cellEntry.(*qbtypes.CachedData)
+		cachedBuckets = append(cachedBuckets, cellData.Buckets...)
+		cachedWarnings = append(cachedWarnings, cellData.Warnings...)
+	}
+	if len(cachedBuckets) == 0 {
 		return nil, missing
 	}
 
+	// Find missing ranges with step alignment
+	missing = bc.findMissingRangesWithStep(cachedBuckets, startMs, endMs, stepMs)
+	bc.logger.DebugContext(ctx, "missing ranges", slog.Any("missing", missing), slog.Uint64("step", stepMs))
+
 	// Extract relevant buckets and merge them
-	relevantBuckets := bc.filterRelevantBuckets(data.Buckets, startMs, endMs)
+	relevantBuckets := bc.filterRelevantBuckets(cachedBuckets, startMs, endMs)
 	if len(relevantBuckets) == 0 {
-		return nil, missing
+		// nothing cached overlaps the window, so all of it has to be fetched.
+		return nil, []*qbtypes.TimeRange{{From: startMs, To: endMs}}
 	}
 
 	// Merge buckets into a single result
-	mergedResult := bc.mergeBuckets(ctx, relevantBuckets, data.Warnings)
+	mergedResult := bc.mergeBuckets(ctx, relevantBuckets, cachedWarnings)
 
 	// Filter the merged result to only include values within the requested time range
-	mergedResult = bc.filterResultToTimeRange(mergedResult, startMs, endMs)
+	mergedResult = bc.filterResultToTimeRange(mergedResult, q, startMs, endMs, stepMs)
 
 	return mergedResult, missing
 }
@@ -126,15 +149,6 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 		bc.logger.DebugContext(ctx, "adjusting end time to exclude flux interval",
 			slog.Uint64("original_end", endMs),
 			slog.Uint64("cachable_end", cachableEndMs))
-	}
-
-	// Generate cache key
-	cacheKey := bc.generateCacheKey(q)
-
-	// Get existing cached data
-	var existingData qbtypes.CachedData
-	if err := bc.cache.Get(ctx, orgID, cacheKey, &existingData); err != nil {
-		existingData = qbtypes.CachedData{}
 	}
 
 	// Trim the result to exclude data within flux interval
@@ -172,44 +186,60 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 		}
 	}
 
-	// Convert trimmed result to buckets with adjusted boundaries
-	freshBuckets := bc.resultToBuckets(ctx, trimmedResult, cachableStartMs, cachableEndMs)
+	// Convert trimmed result to buckets, one per grid cell it spans
+	cellWidthMs := bucketCacheCellSteps * stepMs
+	freshBuckets := bc.resultToBuckets(ctx, trimmedResult, cachableStartMs, cachableEndMs, cellWidthMs)
 
-	// If no fresh buckets and no existing data, don't cache
-	if len(freshBuckets) == 0 && len(existingData.Buckets) == 0 {
-		return
+	cellKeys := make([]string, len(freshBuckets))
+	cellEntries := make([]cachetypes.Cacheable, len(freshBuckets))
+	for i, freshBucket := range freshBuckets {
+		cellKeys[i] = bc.generateCacheKey(q, deriveCellIdx(freshBucket.StartMs, cellWidthMs))
+		cellEntries[i] = &qbtypes.CachedData{}
+	}
+	// A cell that could not be read comes back nil like a miss, so its entry is
+	// rebuilt from the fresh bucket alone
+	if err := bc.cache.GetMany(ctx, orgID, cellKeys, cellEntries); err != nil {
+		bc.logger.ErrorContext(ctx, "error getting cached data", errors.Attr(err))
 	}
 
-	// Merge with existing buckets
-	mergedBuckets := bc.mergeAndDeduplicateBuckets(existingData.Buckets, freshBuckets)
+	// Each cell is its own cache entry, rewritten only when the fresh bucket
+	// changes what it holds, so an entry's TTL runs from its last new data
+	for i, freshBucket := range freshBuckets {
+		cellEntry := &qbtypes.CachedData{}
+		if cellEntries[i] != nil {
+			cellEntry = cellEntries[i].(*qbtypes.CachedData)
+		}
 
-	// Update warnings
-	allWarnings := append(existingData.Warnings, trimmedResult.Warnings...)
-	uniqueWarnings := bc.deduplicateWarnings(allWarnings)
-
-	// Create updated cached data
-	updatedData := qbtypes.CachedData{
-		Buckets:  mergedBuckets,
-		Warnings: uniqueWarnings,
-	}
-
-	// Marshal and store in cache
-	if err := bc.cache.Set(ctx, orgID, cacheKey, &updatedData, bc.cacheTTL); err != nil {
-		bc.logger.ErrorContext(ctx, "error setting cached data", errors.Attr(err))
+		cellBuckets, changed := bc.mergeFreshBucketIntoCell(ctx, cellEntry.Buckets, freshBucket)
+		if !changed {
+			continue
+		}
+		cellEntry.Buckets = cellBuckets
+		cellEntry.Warnings = bc.deduplicateWarnings(append(cellEntry.Warnings, trimmedResult.Warnings...))
+		if err := bc.cache.Set(ctx, orgID, cellKeys[i], cellEntry, bc.cacheTTL); err != nil {
+			bc.logger.ErrorContext(ctx, "error setting cached data", errors.Attr(err))
+		}
 	}
 }
 
-// generateCacheKey creates a unique cache key based on query fingerprint.
-func (bc *bucketCache) generateCacheKey(q qbtypes.Query) string {
-	fingerprint := q.Fingerprint()
+// generateCacheKey names the cache entry holding one grid cell of a query.
+func (bc *bucketCache) generateCacheKey(q qbtypes.Query, cellIdx uint64) string {
+	return fmt.Sprintf("v6:query:%s:cellidx:%d", q.Fingerprint(), cellIdx)
+}
 
-	return fmt.Sprintf("v5:query:%s", fingerprint)
+// deriveCellIdx returns the index of the grid cell holding startMs; with no grid
+// every bucket shares cell 0.
+func deriveCellIdx(startMs, cellWidthMs uint64) uint64 {
+	if cellWidthMs == 0 {
+		return 0
+	}
+	return startMs / cellWidthMs
 }
 
 // findMissingRangesWithStep identifies time ranges not covered by cached buckets with step alignment.
 func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket, startMs, endMs uint64, stepMs uint64) []*qbtypes.TimeRange {
-	// When step is 0 or window is too small to be cached, use simple algorithm
-	if stepMs == 0 || (startMs+stepMs) > endMs {
+	// When step is 0, use simple algorithm
+	if stepMs == 0 {
 		return bc.findMissingRangesBasic(buckets, startMs, endMs)
 	}
 
@@ -304,7 +334,8 @@ func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket
 		// Update current position to the end of this bucket
 		// But ensure it's aligned to step boundary
 		bucketEnd := min(bucket.EndMs, endMs)
-		if bucketEnd%stepMs != 0 && bucketEnd < endMs {
+		// The step the window ends inside is missing however far the bucket runs.
+		if bucketEnd%stepMs != 0 {
 			// Round down to step boundary
 			bucketEnd = bucketEnd - (bucketEnd % stepMs)
 		}
@@ -643,7 +674,7 @@ func (bc *bucketCache) isEmptyResult(result *qbtypes.Result) (isEmpty bool, isFi
 }
 
 // resultToBuckets converts a query result into time-based buckets.
-func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Result, startMs, endMs uint64) []*qbtypes.CachedBucket {
+func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Result, startMs, endMs, cellWidthMs uint64) []*qbtypes.CachedBucket {
 	// Check if result is empty
 	isEmpty, isFiltered := bc.isEmptyResult(result)
 
@@ -654,62 +685,74 @@ func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Resu
 		return nil
 	}
 
-	// For now, create a single bucket for the entire range
-	// In the future, we could split large ranges into smaller buckets
-	valueBytes, err := json.Marshal(result.Value)
+	// Empty filtered results still become buckets, so the range is not re-queried
+	perCellBuckets, err := result.SplitIntoCacheCellBuckets(startMs, endMs, cellWidthMs)
 	if err != nil {
-		bc.logger.ErrorContext(ctx, "failed to marshal result value", errors.Attr(err))
+		bc.logger.ErrorContext(ctx, "failed to convert result to buckets", errors.Attr(err))
 		return nil
 	}
-
-	// Always create a bucket, even for empty filtered results
-	// This ensures we don't re-query for data that doesn't exist
-	return []*qbtypes.CachedBucket{
-		{
-			StartMs: startMs,
-			EndMs:   endMs,
-			Type:    result.Type,
-			Value:   valueBytes,
-			Stats:   result.Stats,
-		},
-	}
+	return perCellBuckets
 }
 
-// mergeAndDeduplicateBuckets combines and deduplicates bucket lists.
-func (bc *bucketCache) mergeAndDeduplicateBuckets(existing, fresh []*qbtypes.CachedBucket) []*qbtypes.CachedBucket {
-	// Create a map to deduplicate by time range
-	bucketMap := make(map[string]*qbtypes.CachedBucket)
-
-	// Add existing buckets
-	for _, bucket := range existing {
-		key := fmt.Sprintf("%d-%d", bucket.StartMs, bucket.EndMs)
-		bucketMap[key] = bucket
-	}
-
-	// Add/update with fresh buckets
-	for _, bucket := range fresh {
-		key := fmt.Sprintf("%d-%d", bucket.StartMs, bucket.EndMs)
-		bucketMap[key] = bucket
-	}
-
-	// Convert back to slice with pre-allocated capacity
-	result := make([]*qbtypes.CachedBucket, 0, len(bucketMap))
-	for _, bucket := range bucketMap {
-		result = append(result, bucket)
-	}
-
-	// Sort by start time
-	slices.SortFunc(result, func(a, b *qbtypes.CachedBucket) int {
-		if a.StartMs < b.StartMs {
-			return -1
+// mergeFreshBucketIntoCell folds a fresh bucket into the buckets of its cell
+// and reports whether the cell changed: a bucket already covering the fresh
+// one leaves it as is, buckets inside the fresh one are replaced, buckets
+// overlapping or edge to edge with it are unioned, and the rest are kept apart.
+func (bc *bucketCache) mergeFreshBucketIntoCell(ctx context.Context, cellBuckets []*qbtypes.CachedBucket, freshBucket *qbtypes.CachedBucket) ([]*qbtypes.CachedBucket, bool) {
+	keptBuckets := make([]*qbtypes.CachedBucket, 0, len(cellBuckets)+1)
+	touchingBuckets := []*qbtypes.CachedBucket{}
+	for _, cellBucket := range cellBuckets {
+		switch {
+		case cellBucket.Contains(freshBucket):
+			return cellBuckets, false
+		case cellBucket.Touches(freshBucket):
+			touchingBuckets = append(touchingBuckets, cellBucket)
+		default:
+			keptBuckets = append(keptBuckets, cellBucket)
 		}
-		if a.StartMs > b.StartMs {
-			return 1
-		}
-		return 0
+	}
+	keptBuckets = append(keptBuckets, bc.unionBuckets(ctx, freshBucket, touchingBuckets))
+
+	slices.SortFunc(keptBuckets, func(a, b *qbtypes.CachedBucket) int {
+		return cmp.Compare(a.StartMs, b.StartMs)
 	})
+	return keptBuckets, true
+}
 
-	return result
+// unionBuckets widens the fresh bucket by the buckets it touches. Buckets
+// inside it are replaced outright, so only a genuine partial overlap decodes
+// anything.
+func (bc *bucketCache) unionBuckets(ctx context.Context, freshBucket *qbtypes.CachedBucket, touchingBuckets []*qbtypes.CachedBucket) *qbtypes.CachedBucket {
+	bucketsToMerge := []*qbtypes.CachedBucket{freshBucket}
+	for _, touchingBucket := range touchingBuckets {
+		if !freshBucket.Contains(touchingBucket) {
+			bucketsToMerge = append(bucketsToMerge, touchingBucket)
+		}
+	}
+	if len(bucketsToMerge) == 1 {
+		return freshBucket
+	}
+
+	value, err := json.Marshal(bc.mergeTimeSeriesValues(ctx, bucketsToMerge))
+	if err != nil {
+		bc.logger.ErrorContext(ctx, "failed to marshal unioned bucket", errors.Attr(err))
+		return freshBucket
+	}
+	unionBucket := &qbtypes.CachedBucket{
+		StartMs: freshBucket.StartMs,
+		EndMs:   freshBucket.EndMs,
+		Type:    freshBucket.Type,
+		Value:   value,
+		Stats:   qbtypes.ExecStats{StepIntervals: freshBucket.Stats.StepIntervals},
+	}
+	for _, mergedBucket := range bucketsToMerge {
+		unionBucket.StartMs = min(unionBucket.StartMs, mergedBucket.StartMs)
+		unionBucket.EndMs = max(unionBucket.EndMs, mergedBucket.EndMs)
+		unionBucket.Stats.RowsScanned += mergedBucket.Stats.RowsScanned
+		unionBucket.Stats.BytesScanned += mergedBucket.Stats.BytesScanned
+		unionBucket.Stats.DurationMS += mergedBucket.Stats.DurationMS
+	}
+	return unionBucket
 }
 
 // deduplicateWarnings removes duplicate warnings.
@@ -791,10 +834,24 @@ func max(a, b uint64) uint64 {
 	return b
 }
 
-// filterResultToTimeRange filters the result to only include values within the requested time range.
-func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, endMs uint64) *qbtypes.Result {
+// filterResultToTimeRange narrows the cached result to the requested window, both
+// the values in it and the heatmap axis under them.
+func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, q qbtypes.Query, startMs, endMs, stepMs uint64) *qbtypes.Result {
 	if result == nil || result.Value == nil {
 		return result
+	}
+
+	_, isPromQL := q.(*promqlQuery)
+	maxTimestampMs := endMs
+	// A promql value at T is the query evaluated at T, so T == endMs is inside the
+	// requested range. For every other query type the value at T aggregates
+	// [T, T+stepMs), which the requested range contains only when T <= endMs-stepMs.
+	if !isPromQL {
+		if stepMs > 0 {
+			maxTimestampMs = endMs - stepMs
+		} else {
+			maxTimestampMs = endMs - 1
+		}
 	}
 
 	switch result.Type {
@@ -821,7 +878,7 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 					// Filter values to only include those within the requested time range
 					for _, value := range series.Values {
 						timestampMs := uint64(value.Timestamp)
-						if timestampMs >= startMs && timestampMs < endMs {
+						if timestampMs >= startMs && timestampMs <= maxTimestampMs {
 							filteredSeries.Values = append(filteredSeries.Values, value)
 						}
 					}
@@ -836,6 +893,8 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 				}
 			}
 
+			bc.trimHeatmapAxisToTheWindow(q, filteredData)
+
 			// Create a new result with the filtered data
 			return &qbtypes.Result{
 				Type:     result.Type,
@@ -848,4 +907,26 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 
 	// For non-time series data, return as is
 	return result
+}
+
+// A cache entry can hold a longer time range than the one now requested, and its
+// bucket axis spans every sample value seen across that longer range. Once the
+// points outside the requested range are dropped, the axis may still list
+// buckets that only those dropped points counted into. Left there, they render
+// as empty rows that the same request never has when it bypasses the cache.
+//
+// PromQL and ClickHouse queries name their own buckets, and a histogram's are
+// its `le` labels, so only a gauge, sum or summary axis is cut.
+func (bc *bucketCache) trimHeatmapAxisToTheWindow(q qbtypes.Query, tsData *qbtypes.TimeSeriesData) {
+	metricQuery, isMetricQuery := q.(*builderQuery[qbtypes.MetricAggregation])
+	if !isMetricQuery {
+		return
+	}
+	if metricQuery.spec.Aggregations[0].Type == metrictypes.HistogramType {
+		return
+	}
+
+	for _, aggBucket := range tsData.Aggregations {
+		aggBucket.TrimAxisToCountedBuckets()
+	}
 }

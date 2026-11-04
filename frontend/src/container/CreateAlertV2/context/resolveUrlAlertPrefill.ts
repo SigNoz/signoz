@@ -7,6 +7,13 @@ import {
 	Threshold,
 } from './types';
 
+const PREFILL_PARAMS = [
+	QueryParams.thresholds,
+	QueryParams.matchType,
+	QueryParams.compareOp,
+	QueryParams.evaluationWindowPreset,
+];
+
 export enum EvaluationWindowPreset {
 	METER = 'meter',
 }
@@ -37,6 +44,18 @@ function parseEvaluationWindowPreset(
 	return raw === EvaluationWindowPreset.METER
 		? EvaluationWindowPreset.METER
 		: undefined;
+}
+
+export function pickAlertPrefillParams(search: string): string {
+	const params = new URLSearchParams(search);
+	const prefillParams = new URLSearchParams();
+	PREFILL_PARAMS.forEach((key) => {
+		const value = params.get(key);
+		if (value !== null) {
+			prefillParams.set(key, value);
+		}
+	});
+	return prefillParams.toString();
 }
 
 /** URL → declarative prefill plan; the consumer applies it without knowing the producer. */

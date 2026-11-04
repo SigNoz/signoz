@@ -1,10 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { createAlertMocks } from './CreateAlert.stories.mocks';
+import {
+	clickFooterButton,
+	createAlertMocks,
+	fillValidAlert,
+} from './CreateAlert.stories.mocks';
 
 import CreateAlertPage from '../index';
 
@@ -48,11 +52,33 @@ export const LogsAlert: Story = {
 };
 
 /**
- * Anomaly detection, which is still written in the classic form: the seasonality
- * and the deviation take the place of a fixed threshold.
+ * Anomaly detection: the condition is a number of deviations from the seasonal
+ * forecast instead of a fixed threshold, and only builder metric queries apply.
  */
 export const AnomalyAlert: Story = {
 	args: { alertMode: 'anomaly' },
+};
+
+/**
+ * An anomaly alert handed to routing policies: the channel picker leaves the
+ * condition, and the banner points at the policies that route it instead.
+ */
+export const AnomalyAlertRoutingPolicies: Story = {
+	args: { alertMode: 'anomaly' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await userEvent.click(
+			await canvas.findByTestId('routing-policies-switch', undefined, {
+				timeout: 15_000,
+			}),
+		);
+		await waitFor(() =>
+			expect(
+				canvas.queryByTestId('threshold-notification-channel-select'),
+			).not.toBeInTheDocument(),
+		);
+	},
 };
 
 /** The classic form, which `showClassicCreateAlertsPage` opts back into. */
@@ -86,4 +112,36 @@ export const Tooltips: Story = {
 		);
 		await screen.findByText('Example:', undefined, { timeout: 15_000 });
 	},
+};
+
+/** A valid rule saved from the footer: the toast raised once the POST answers. */
+export const AlertRuleCreatedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await fillValidAlert(canvasElement);
+		await clickFooterButton(canvasElement, 'save-alert-rule-button');
+		await waitFor(() =>
+			expect(screen.getByText(/alert rule created successfully/i)).toBeVisible(),
+		);
+	},
+};
+
+/** Test Notification on a rule whose condition fires: the success toast. */
+export const TestNotificationSentToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await fillValidAlert(canvasElement);
+		await clickFooterButton(canvasElement, 'test-notification-button');
+		if (args.testNotification === 'sent') {
+			await waitFor(() =>
+				expect(
+					screen.getByText(/test notification sent successfully/i),
+				).toBeVisible(),
+			);
+		}
+	},
+};
+
+/** Test Notification on a rule that finds nothing to alert on: the error toast. */
+export const TestNotificationNoAlertsToast: Story = {
+	args: { testNotification: 'no-alerts' },
+	play: TestNotificationSentToast.play,
 };

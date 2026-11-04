@@ -10,13 +10,12 @@ import (
 // ChannelJSMOpsConfig carries no API URL: JSM Ops is a single global gateway
 // keyed by the integration API key, which the notifier pins itself.
 type ChannelJSMOpsConfig struct {
-	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	APIKey       string                       `json:"apiKey" required:"true" format:"password"`
-	Message      valuer.UnsetOrNonEmptyString `json:"message,omitzero"`
-	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero"`
-	Priority     string                       `json:"priority"`
-	// Tags is the comma-separated list JSM Ops attaches to the alert.
-	Tags valuer.UnsetOrNonEmptyString `json:"tags,omitzero"`
+	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
+	APIKey       string                       `json:"apiKey" required:"true" format:"password" description:"The JSM Ops integration API key. A secret; returned by create, update and fetch by ID, never by list."`
+	Message      valuer.UnsetOrNonEmptyString `json:"message,omitzero" description:"Alertmanager template for the alert message; defaults to the SigNoz JSM Ops default."`
+	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero" description:"Alertmanager template for the alert description; defaults to the SigNoz JSM Ops default."`
+	Priority     string                       `json:"priority" description:"The alert priority, P1 to P5."`
+	Tags         valuer.UnsetOrNonEmptyString `json:"tags,omitzero" description:"Comma-separated tags attached to the alert; defaults to signoz."`
 }
 
 func (c *ChannelJSMOpsConfig) UnmarshalJSON(data []byte) error {
@@ -108,13 +107,13 @@ const (
 type JSMOpsReceiverConfig struct {
 	config.NotifierConfig `yaml:",inline" json:",inline"`
 
-	HTTPConfig *commoncfg.HTTPClientConfig `yaml:"http_config,omitempty" json:"http_config,omitempty"`
+	HTTPConfig *commoncfg.HTTPClientConfig `yaml:"http_config,omitempty" json:"http_config,omitempty" description:"HTTP client settings for the API call."`
 
-	APIKey      config.Secret `yaml:"api_key,omitempty" json:"api_key,omitempty"`
-	Message     string        `yaml:"message,omitempty" json:"message,omitempty"`
-	Description string        `yaml:"description,omitempty" json:"description,omitempty"`
-	Priority    string        `yaml:"priority,omitempty" json:"priority,omitempty"`
-	Tags        string        `yaml:"tags,omitempty" json:"tags,omitempty"`
+	APIKey      config.Secret `yaml:"api_key,omitempty" json:"api_key,omitempty" description:"The JSM Ops integration API key."`
+	Message     string        `yaml:"message,omitempty" json:"message,omitempty" description:"Alertmanager template for the alert message."`
+	Description string        `yaml:"description,omitempty" json:"description,omitempty" description:"Alertmanager template for the alert description."`
+	Priority    string        `yaml:"priority,omitempty" json:"priority,omitempty" description:"The alert priority, P1 to P5."`
+	Tags        string        `yaml:"tags,omitempty" json:"tags,omitempty" description:"Comma-separated tags attached to the alert."`
 }
 
 // send_resolved has no omitempty upstream, so a var default here is overwritten

@@ -3,8 +3,12 @@ import type {
 	DashboardtypesPanelSpecDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { useCallback } from 'react';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
-import { requireQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+import {
+	getSupportedSignals,
+	requireQueryPanelDefinition,
+} from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { isPanelKindSupported } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
@@ -91,7 +95,7 @@ export function usePanelEditSession({
 	// View modal shells) — asserted rather than assumed.
 	const panelDefinition = requireQueryPanelDefinition(panelKind);
 	const panelType = toPanelType(panelKind);
-	const defaultSignal = panelDefinition.supportedSignals[0];
+	const defaultSignal = getSupportedSignals(panelKind)[0];
 
 	const query = usePanelQuery({
 		panel: draft,
@@ -101,7 +105,11 @@ export function usePanelEditSession({
 		enabled: isPanelKindSupported(panelKind),
 	});
 
-	const { runQuery, isQueryDirty, buildSaveSpec } = usePanelEditorQuerySync({
+	const {
+		runQuery,
+		isQueryDirty,
+		buildSaveSpec: buildQuerySaveSpec,
+	} = usePanelEditorQuerySync({
 		draft,
 		panelType,
 		setSpec,
@@ -110,6 +118,17 @@ export function usePanelEditSession({
 		signal: seedQuerySignal ? defaultSignal : undefined,
 		savedQueries: savedPanel?.spec.queries,
 	});
+
+	const { reconcileWithQueries } = panelDefinition;
+	const buildSaveSpec = useCallback(
+		(next: DashboardtypesPanelSpecDTO): DashboardtypesPanelSpecDTO => {
+			const withQueries = buildQuerySaveSpec(next);
+			return reconcileWithQueries
+				? reconcileWithQueries(withQueries)
+				: withQueries;
+		},
+		[buildQuerySaveSpec, reconcileWithQueries],
+	);
 
 	return {
 		draft,

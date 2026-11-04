@@ -146,13 +146,114 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		await expect(screen.findByText('promql/*')).resolves.toBeInTheDocument();
 	});
 
-	it('hardcodes the key and does not let it be edited', async () => {
+	it('defaults the key to signoz.workspace.key.id', async () => {
 		const user = userEvent.setup();
 		await openLogsWizard(user);
 
-		const keyInput = screen.getByTestId('wizard-key-input-logs-read');
-		expect(keyInput).toHaveValue('signoz.workspace.key.id');
-		expect(keyInput).toBeDisabled();
+		expect(screen.getByTestId('wizard-key-select-logs-read')).toHaveTextContent(
+			'signoz.workspace.key.id',
+		);
+	});
+
+	it('rewrites the selector when another key is picked', async () => {
+		const user = userEvent.setup();
+		await openLogsWizard(user);
+
+		await user.type(
+			screen.getByTestId('wizard-value-input-logs-read'),
+			'checkout',
+		);
+		await user.click(screen.getByTestId('wizard-key-select-logs-read'));
+		await user.click(
+			await screen.findByTestId(
+				'wizard-key-option-resource.service.name-logs-read',
+			),
+		);
+
+		expect(screen.getByTestId('wizard-selector-input-logs-read')).toHaveValue(
+			'builder_query/resource.service.name/checkout',
+		);
+
+		await user.click(screen.getByTestId('wizard-add-btn-logs-read'));
+
+		await expect(
+			screen.findByText('builder_query/resource.service.name/checkout'),
+		).resolves.toBeInTheDocument();
+	});
+
+	it('folds the resource prefix of the workspace key from a typed selector', async () => {
+		const user = userEvent.setup();
+		await openLogsWizard(user);
+
+		const selectorInput = screen.getByTestId('wizard-selector-input-logs-read');
+		await user.clear(selectorInput);
+		await user.type(
+			selectorInput,
+			'builder_query/resource.signoz.workspace.key.id/key-a',
+		);
+
+		expect(screen.getByTestId('wizard-key-select-logs-read')).toHaveTextContent(
+			'signoz.workspace.key.id',
+		);
+
+		await user.type(screen.getByTestId('wizard-value-input-logs-read'), '2');
+
+		expect(selectorInput).toHaveValue(
+			'builder_query/signoz.workspace.key.id/key-a2',
+		);
+	});
+
+	it('accepts the resource-prefixed workspace key in the hint', async () => {
+		const user = userEvent.setup();
+		await openLogsWizard(user);
+
+		const selectorInput = screen.getByTestId('wizard-selector-input-logs-read');
+		await user.clear(selectorInput);
+		await user.type(
+			selectorInput,
+			'builder_query/resource.signoz.workspace.key.id/key-a',
+		);
+
+		expect(
+			screen.getByTestId('wizard-selector-hint-logs-read'),
+		).toHaveTextContent(
+			'Allow signoz.workspace.key.id=key-a for Builder Query queries.',
+		);
+	});
+
+	it('selects the key from a typed selector', async () => {
+		const user = userEvent.setup();
+		await openLogsWizard(user);
+
+		const selectorInput = screen.getByTestId('wizard-selector-input-logs-read');
+		await user.clear(selectorInput);
+		await user.type(
+			selectorInput,
+			'builder_query/resource.deployment.environment.name/prod',
+		);
+
+		expect(screen.getByTestId('wizard-key-select-logs-read')).toHaveTextContent(
+			'resource.deployment.environment.name',
+		);
+		expect(screen.getByTestId('wizard-value-input-logs-read')).toHaveValue(
+			'prod',
+		);
+	});
+
+	it('hints when a typed selector uses an unsupported key', async () => {
+		const user = userEvent.setup();
+		await openLogsWizard(user);
+
+		const selectorInput = screen.getByTestId('wizard-selector-input-logs-read');
+		await user.clear(selectorInput);
+		await user.type(selectorInput, 'builder_query/host.name/web-1');
+
+		expect(screen.getByTestId('wizard-key-select-logs-read')).toHaveTextContent(
+			'signoz.workspace.key.id',
+		);
+		expect(
+			screen.getByTestId('wizard-selector-hint-logs-read'),
+		).toHaveTextContent('"host.name" is not a supported key.');
 	});
 
 	it('hides Key field for query types that do not support key scoping', async () => {
@@ -163,7 +264,7 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		await user.click(await screen.findByText('ClickHouse SQL'));
 
 		expect(
-			screen.queryByTestId('wizard-key-input-logs-read'),
+			screen.queryByTestId('wizard-key-select-logs-read'),
 		).not.toBeInTheDocument();
 	});
 
@@ -188,7 +289,7 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		const user = userEvent.setup();
 		await openLogsWizard(user);
 
-		await user.click(screen.getByLabelText('Any value'));
+		await user.click(screen.getByRole('checkbox', { name: 'Any value' }));
 
 		expect(screen.getByTestId('wizard-value-input-logs-read')).toHaveValue('*');
 
@@ -203,7 +304,7 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		const user = userEvent.setup();
 		await openLogsWizard(user);
 
-		const anyResource = screen.getByLabelText('Any value');
+		const anyResource = screen.getByRole('checkbox', { name: 'Any value' });
 		await user.click(anyResource);
 		expect(anyResource).toBeChecked();
 
@@ -219,7 +320,7 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 
 		await user.type(screen.getByTestId('wizard-value-input-logs-read'), '*');
 
-		expect(screen.getByLabelText('Any value')).toBeChecked();
+		expect(screen.getByRole('checkbox', { name: 'Any value' })).toBeChecked();
 	});
 
 	it('disables value scoping for query types that do not support it', async () => {
@@ -230,7 +331,10 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		await user.click(await screen.findByText('ClickHouse SQL'));
 
 		expect(screen.getByTestId('wizard-value-input-logs-read')).toBeDisabled();
-		expect(screen.getByLabelText('Any value')).toBeDisabled();
+		expect(screen.getByRole('checkbox', { name: 'Any value' })).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('clears the value when switching to a query type without key scoping', async () => {
@@ -282,40 +386,26 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		await user.clear(selectorInput);
 		await user.type(selectorInput, 'builder_query/signoz.workspace.key.id/*');
 
-		expect(screen.getByLabelText('Any value')).toBeChecked();
+		expect(screen.getByRole('checkbox', { name: 'Any value' })).toBeChecked();
 	});
 
-	it('keeps the key input hardcoded when the selector uses another key', async () => {
+	it('restores the selected key in the selector once the value changes', async () => {
 		const user = userEvent.setup();
 		await openLogsWizard(user);
 
 		const selectorInput = screen.getByTestId('wizard-selector-input-logs-read');
 		await user.clear(selectorInput);
-		await user.type(selectorInput, 'builder_query/service.name/frontend');
-
-		expect(screen.getByTestId('wizard-key-input-logs-read')).toHaveValue(
-			'signoz.workspace.key.id',
-		);
-		expect(
-			screen.getByTestId('wizard-selector-hint-logs-read'),
-		).toHaveTextContent('Allow service.name=frontend for Builder Query queries.');
-		expect(screen.getByTestId('wizard-add-btn-logs-read')).not.toBeDisabled();
-	});
-
-	it('restores the hardcoded key in the selector once the value changes', async () => {
-		const user = userEvent.setup();
-		await openLogsWizard(user);
-
-		const selectorInput = screen.getByTestId('wizard-selector-input-logs-read');
-		await user.clear(selectorInput);
-		await user.type(selectorInput, 'builder_query/service.name/frontend');
+		await user.type(selectorInput, 'builder_query/host.name/web-1');
 
 		await user.type(screen.getByTestId('wizard-value-input-logs-read'), '2');
 
 		expect(selectorInput).toHaveValue(
-			'builder_query/signoz.workspace.key.id/frontend2',
+			'builder_query/signoz.workspace.key.id/web-12',
 		);
-		expect(screen.getByTestId('wizard-add-btn-logs-read')).not.toBeDisabled();
+		expect(screen.getByTestId('wizard-add-btn-logs-read')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('blocks adding when the selector has an unknown query type', async () => {
@@ -329,7 +419,10 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		expect(
 			screen.getByTestId('wizard-selector-hint-logs-read'),
 		).toHaveTextContent('"sql_query" is not a supported query type.');
-		expect(screen.getByTestId('wizard-add-btn-logs-read')).toBeDisabled();
+		expect(screen.getByTestId('wizard-add-btn-logs-read')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('blocks adding when the selector is emptied', async () => {
@@ -341,7 +434,10 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		expect(
 			screen.getByTestId('wizard-selector-hint-logs-read'),
 		).toHaveTextContent('Enter a selector.');
-		expect(screen.getByTestId('wizard-add-btn-logs-read')).toBeDisabled();
+		expect(screen.getByTestId('wizard-add-btn-logs-read')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('adds the hand-edited selector verbatim', async () => {
@@ -442,7 +538,7 @@ describe('PermissionEditor - TelemetrySelectorWizard', () => {
 		const user = userEvent.setup();
 		await openLogsWizard(user);
 
-		await user.click(screen.getByLabelText('Any value'));
+		await user.click(screen.getByRole('checkbox', { name: 'Any value' }));
 
 		expect(
 			screen.getByTestId('wizard-selector-hint-logs-read'),

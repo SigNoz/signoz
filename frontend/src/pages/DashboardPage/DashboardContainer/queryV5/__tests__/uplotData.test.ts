@@ -1,5 +1,6 @@
 import type { PanelSeries } from '../types';
 import {
+	getPartialTimestamps,
 	hasSingleVisiblePoint,
 	prepareAlignedData,
 	toClickPluginPayload,
@@ -82,6 +83,22 @@ describe('hasSingleVisiblePoint', () => {
 				{ timestamp: 2, value: 2 },
 			]),
 		).toBe(false);
+	});
+});
+
+describe('getPartialTimestamps', () => {
+	it('returns partial timestamps in epoch seconds', () => {
+		expect(
+			getPartialTimestamps([
+				{ timestamp: 1_000_500, value: 1, partial: true },
+				{ timestamp: 2_000_000, value: 2 },
+				{ timestamp: 3_000_000, value: 3, partial: true },
+			]),
+		).toStrictEqual(new Set([1000, 3000]));
+	});
+
+	it('returns undefined when nothing is partial', () => {
+		expect(getPartialTimestamps([{ timestamp: 1000, value: 1 }])).toBeUndefined();
 	});
 });
 

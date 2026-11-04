@@ -8,10 +8,10 @@ import (
 )
 
 type ChannelGoogleChatConfig struct {
-	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password"`
-	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero"`
-	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero"`
+	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
+	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password" description:"The Google Chat space webhook URL. A secret; returned by create, update and fetch by ID, never by list."`
+	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero" description:"Alertmanager template for the message title; defaults to the SigNoz Google Chat default."`
+	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero" description:"Alertmanager template for the message body; defaults to the SigNoz Google Chat default."`
 }
 
 func (c *ChannelGoogleChatConfig) UnmarshalJSON(data []byte) error {
@@ -71,11 +71,11 @@ func newChannelGoogleChatConfigFromReceiver(name string, receiver *Receiver) (Ch
 type GoogleChatReceiverConfig struct {
 	config.NotifierConfig `yaml:",inline" json:",inline"`
 
-	HTTPConfig *commoncfg.HTTPClientConfig `yaml:"http_config,omitempty" json:"http_config,omitempty"`
+	HTTPConfig *commoncfg.HTTPClientConfig `yaml:"http_config,omitempty" json:"http_config,omitempty" description:"HTTP client settings for the webhook call."`
 
-	WebhookURL *config.SecretURL `yaml:"webhook_url,omitempty" json:"webhook_url,omitempty"`
-	Title      string            `yaml:"title,omitempty" json:"title,omitempty"`
-	Text       string            `yaml:"text,omitempty" json:"text,omitempty"`
+	WebhookURL *config.SecretURL `yaml:"webhook_url,omitempty" json:"webhook_url,omitempty" description:"The Google Chat space webhook URL."`
+	Title      string            `yaml:"title,omitempty" json:"title,omitempty" description:"Alertmanager template for the message title."`
+	Text       string            `yaml:"text,omitempty" json:"text,omitempty" description:"Alertmanager template for the message body."`
 }
 
 var DefaultGoogleChatReceiverConfig = GoogleChatReceiverConfig{

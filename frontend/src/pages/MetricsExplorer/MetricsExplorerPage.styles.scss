@@ -12,6 +12,10 @@
 		padding: 16px;
 	}
 
+	&.is-explorer-tab .ant-tabs-content-holder {
+		padding: 0;
+	}
+
 	.tab-item {
 		display: flex;
 		justify-content: center;

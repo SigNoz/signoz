@@ -7,11 +7,11 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
-	useState,
 } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
@@ -29,11 +29,14 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
+import SpanDrawer from 'container/TracesExplorer/SpanDrawer/SpanDrawer';
+import { useSpanDrawer } from 'container/TracesExplorer/SpanDrawer/useSpanDrawer';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
 import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 import { ArrowUp10, Minus } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
@@ -66,12 +69,16 @@ function ListView({
 	queryKeyRef,
 	headerActions,
 }: ListViewProps): JSX.Element {
-	const { stagedQuery, panelType: panelTypeFromQueryBuilder } =
-		useQueryBuilder();
+	const {
+		stagedQuery,
+		currentQuery,
+		redirectWithQueryBuilderData,
+		panelType: panelTypeFromQueryBuilder,
+	} = useQueryBuilder();
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
 
-	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
+	const orderBy = useMemo(() => getListOrderBy(stagedQuery), [stagedQuery]);
 
 	const {
 		selectedTime: globalSelectedTime,
@@ -82,7 +89,7 @@ function ListView({
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		dataSource: DataSource.TRACES,
+		sourcePage: SavedviewtypesSourceDTO.traces,
 		aggregateOperator: 'count',
 		initialOptions: {
 			selectColumns: defaultSelectedColumns,
@@ -95,23 +102,20 @@ function ListView({
 	const paginationConfig =
 		paginationQueryData ?? getDefaultPaginationConfig(PER_PAGE_OPTIONS);
 
-	const requestQuery = useMemo(
-		() => getListViewQuery(stagedQuery || initialQueriesMap.traces, orderBy),
-		[stagedQuery, orderBy],
-	);
-
-	// Stable sorted-name signature for the queryKey.
-	// - Drag updates selectColumns; raw queryKey would churn on reorder.
-	// - Trace API fetches only listed columns → add/remove must refetch.
-	// - Sorted-name signature: stable on reorder, changes on add/remove.
-	const selectColumnsSignature = useMemo(
-		() =>
-			(options?.selectColumns ?? [])
-				.map((c) => c.name)
-				.sort()
-				.join(','),
-		[options?.selectColumns],
-	);
+	// Empty selectFields makes the API return every span field.
+	const requestQuery = useMemo(() => {
+		const query = getListViewQuery(
+			stagedQuery || initialQueriesMap.traces,
+			orderBy,
+		);
+		query.builder.queryData.forEach((queryData) => {
+			queryData.selectColumns = [];
+		});
+		query.builder.queryTraceOperator?.forEach((queryTraceOperator) => {
+			queryTraceOperator.selectColumns = [];
+		});
+		return query;
+	}, [stagedQuery, orderBy]);
 
 	const queryKey = useMemo(
 		() => [
@@ -122,18 +126,14 @@ function ListView({
 			stagedQuery,
 			panelType,
 			paginationConfig,
-			selectColumnsSignature,
-			orderBy,
 		],
 		[
 			stagedQuery,
 			panelType,
 			globalSelectedTime,
 			paginationConfig,
-			selectColumnsSignature,
 			maxTime,
 			minTime,
-			orderBy,
 		],
 	);
 
@@ -152,7 +152,6 @@ function ListView({
 			},
 			tableParams: {
 				pagination: paginationConfig,
-				selectColumns: options?.selectColumns,
 			},
 		},
 		// ENTITY_VERSION_V4,
@@ -161,10 +160,7 @@ function ListView({
 			queryKey,
 			enabled:
 				// don't make api call while the time range state in redux is loading
-				!timeRangeUpdateLoading &&
-				!!stagedQuery &&
-				panelType === PANEL_TYPES.LIST &&
-				!!options?.selectColumns?.length,
+				!timeRangeUpdateLoading && !!stagedQuery && panelType === PANEL_TYPES.LIST,
 		},
 	);
 
@@ -208,6 +204,8 @@ function ListView({
 		[queryTableData],
 	);
 
+	const { tableProps, drawerProps, onPressInside } = useSpanDrawer(rows);
+
 	const handleColumnOrderChange = useCallback(
 		(cols: TableColumnDef<TracesTableRow>[]): void => {
 			config?.addColumn?.onReorder(cols.map((c) => c.id));
@@ -215,9 +213,12 @@ function ListView({
 		[config],
 	);
 
-	const handleOrderChange = useCallback((value: string) => {
-		setOrderBy(value);
-	}, []);
+	const handleOrderChange = useCallback(
+		(value: string) => {
+			redirectWithQueryBuilderData(setListOrderBy(currentQuery, value));
+		},
+		[currentQuery, redirectWithQueryBuilderData],
+	);
 
 	useEffect(() => {
 		if (!isLoading && !isFetching && !isError && rows.length !== 0) {
@@ -256,20 +257,26 @@ function ListView({
 				/>
 			</div>
 
-			<TracesTable
-				data={rows}
-				columns={columns}
-				columnStorageKey={LOCALSTORAGE.TRACES_LIST_COLUMNS}
-				panelType="LIST"
-				getRowHref={getTraceLink}
-				isLoading={isLoading}
-				isFetching={isFetching}
-				isError={isError}
-				error={error}
-				isFilterApplied={isFilterApplied}
-				onColumnOrderChange={handleColumnOrderChange}
-				onColumnRemove={config?.addColumn?.onRemove}
-			/>
+			{/* A press in the table or the drawer (a portal) keeps the drawer open. */}
+			<div className={styles.drawerScope} onPointerDownCapture={onPressInside}>
+				<TracesTable
+					data={rows}
+					columns={columns}
+					columnStorageKey={LOCALSTORAGE.TRACES_LIST_COLUMNS}
+					panelType="LIST"
+					getRowHref={getTraceLink}
+					{...tableProps}
+					isLoading={isLoading}
+					isFetching={isFetching}
+					isError={isError}
+					error={error}
+					isFilterApplied={isFilterApplied}
+					onColumnOrderChange={handleColumnOrderChange}
+					onColumnRemove={config?.addColumn?.onRemove}
+				/>
+
+				{drawerProps && <SpanDrawer {...drawerProps} />}
+			</div>
 		</div>
 	);
 }

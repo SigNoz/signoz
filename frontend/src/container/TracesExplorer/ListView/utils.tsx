@@ -1,4 +1,5 @@
-import { generatePath, Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import type { TableColumnsType as ColumnsType } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
@@ -26,13 +27,13 @@ export function BlockLink({
 }): any {
 	// Display block to make the whole cell clickable
 	return (
-		<Link
+		<AppLink
 			to={to}
 			style={{ display: 'block' }}
 			target={openInNewTab ? '_blank' : '_self'}
 		>
 			{children}
-		</Link>
+		</AppLink>
 	);
 }
 
@@ -57,11 +58,13 @@ export const getTraceLink = (record: Record<string, unknown>): string => {
 		return '';
 	}
 
-	return `${generatePath(ROUTES.TRACE_DETAIL, { id: traceId })}${formUrlParams({
-		spanId,
-		levelUp: 0,
-		levelDown: 0,
-	})}`;
+	return `${buildRoutePath(ROUTES.TRACE_DETAIL, { id: traceId })}${formUrlParams(
+		{
+			spanId,
+			levelUp: 0,
+			levelDown: 0,
+		},
+	)}`;
 };
 
 export const getListColumns = (
@@ -123,7 +126,12 @@ export const getListColumns = (
 					) {
 						return (
 							<BlockLink to={getTraceLink(item)} openInNewTab={false}>
-								<Badge data-testid={name} color="sakura" variant="outline">
+								<Badge
+									textTransform="none"
+									testId={name}
+									color="highlight-danger"
+									variant="outlined"
+								>
 									{value}
 								</Badge>
 							</BlockLink>

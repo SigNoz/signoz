@@ -46,16 +46,11 @@ jest.mock('../../../hooks/useAIAssistantAnalyticsContext', () => ({
 }));
 
 // eslint-disable-next-line import/first
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 // eslint-disable-next-line import/first
 import ChatInput from '../ChatInput';
 
 function renderChatInput(): void {
-	render(
-		<TooltipProvider>
-			<ChatInput onSend={jest.fn()} />
-		</TooltipProvider>,
-	);
+	render(<ChatInput onSend={jest.fn()} />);
 }
 
 function getComposer(): HTMLTextAreaElement {

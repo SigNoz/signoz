@@ -31,18 +31,25 @@ function ConfirmDeleteDialog({
 }: ConfirmDeleteDialogProps): JSX.Element {
 	const footer = (
 		<div className={styles.footer}>
-			<Button variant="solid" color="secondary" onClick={onClose}>
-				<X size={12} />
+			<Button
+				size="md"
+				variant="solid"
+				color="secondary"
+				onClick={onClose}
+				prefix={<X size={12} />}
+				testId="confirm-delete-cancel"
+			>
 				Cancel
 			</Button>
 			<Button
+				size="md"
 				variant="solid"
-				color="destructive"
+				color="danger"
 				loading={isLoading}
 				onClick={onConfirm}
 				testId="confirm-delete"
+				prefix={<Trash2 size={12} />}
 			>
-				<Trash2 size={12} />
 				{confirmLabel}
 			</Button>
 		</div>

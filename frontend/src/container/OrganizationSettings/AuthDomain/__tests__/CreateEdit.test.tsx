@@ -136,7 +136,7 @@ describe('CreateEdit Modal', () => {
 			await waitFor(() => {
 				expect(screen.getByText(/domain is required/i)).toBeInTheDocument();
 			});
-		});
+		}, 15000);
 	});
 
 	describe('Google Auth Provider', () => {

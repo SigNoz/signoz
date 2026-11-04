@@ -12,65 +12,43 @@ import (
 )
 
 type QueryBuilderQuery[T any] struct {
-	// name of the query, mainly used when query is used in formula
-	Name string `json:"name"`
+	Name string `json:"name" description:"The unique name of the query, such as A or B; formulas, trace operators and selectedQueryName refer to it."`
 
-	// stepInterval of the query
-	StepInterval Step `json:"stepInterval,omitzero"`
+	StepInterval Step `json:"stepInterval,omitzero" description:"The time bucket for time_series aggregation: seconds as a number or a Go duration string such as 60s or 1m. Derived from the time range when omitted."`
 
-	// signal to query
-	Signal telemetrytypes.Signal `json:"signal,omitempty"`
+	Signal telemetrytypes.Signal `json:"signal,omitempty" description:"The telemetry signal to query: traces, logs or metrics. It selects the aggregation shape and is required for builder_query."`
 
-	// source for query
-	Source telemetrytypes.Source `json:"source"`
+	Source telemetrytypes.Source `json:"source" description:"The data source within the signal. Set to meter for Cost Meter metrics; leave empty for regular telemetry."`
 
-	// we want to support multiple aggregations
-	// currently supported: []Aggregation, []MetricAggregation
-	Aggregations []T `json:"aggregations,omitzero"`
+	Aggregations []T `json:"aggregations,omitzero" description:"The aggregations to compute, one result per entry. Traces and logs take expressions such as count() or p99(duration_nano); metrics take a metricName with time and space aggregations. Omit for raw requests."`
 
-	// BucketOptions is the bucket axis to count this query's values into. Only a
-	// heatmap request reads it, and only from the query it draws.
-	BucketOptions *BucketOptions `json:"bucketOptions,omitempty"`
+	BucketOptions *BucketOptions `json:"bucketOptions,omitempty" description:"The value axis to count this query into, as a kind-discriminated linear or log bucket spec. Read only by heatmap requests, and only from the query they draw."`
 
-	// disabled if true, the query will not be executed
-	Disabled bool `json:"disabled"`
+	Disabled bool `json:"disabled" description:"When true, the result is excluded from the response; the query may still run and can still feed a formula or trace operator. Defaults to false."`
 
-	// search query is simple string
-	Filter *Filter `json:"filter,omitempty"`
+	Filter *Filter `json:"filter,omitempty" description:"The filter expression that selects the rows or series of this signal."`
 
-	// group by keys to group by
-	GroupBy []GroupByKey `json:"groupBy,omitzero"`
+	GroupBy []GroupByKey `json:"groupBy,omitzero" description:"The fields to group aggregations by; each group becomes a series or a row with the field as a label or column."`
 
-	// order by keys and directions
-	Order []OrderBy `json:"order,omitzero"`
+	Order []OrderBy `json:"order,omitzero" description:"The sort order of the result. Order by a group-by field, an aggregation alias, or for raw requests a selected field such as timestamp."`
 
-	// select columns to select
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" description:"The fields to return for each row in raw requests, in addition to the columns always present: timestamp and id for logs, timestamp, trace_id and span_id for traces. Ignored by aggregating requests."`
 
-	// limit the maximum number of rows to return
-	Limit int `json:"limit,omitempty"`
+	Limit int `json:"limit,omitempty" description:"The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest."`
 
-	// limitBy fields to limit by
-	LimitBy *LimitBy `json:"limitBy,omitempty"`
+	LimitBy *LimitBy `json:"limitBy,omitempty" description:"Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored."`
 
-	// offset the number of rows to skip
-	// TODO: remove this once we have cursor-based pagination everywhere?
-	Offset int `json:"offset,omitempty"`
+	Offset int `json:"offset,omitempty" description:"The number of rows to skip before returning results. Prefer cursor for raw requests."`
 
-	// cursor to paginate the query
-	Cursor string `json:"cursor,omitempty"`
+	Cursor string `json:"cursor,omitempty" description:"The opaque nextCursor value from a previous raw result, used to fetch the next page."`
 
-	// having clause to apply to the query
-	Having *Having `json:"having,omitempty"`
+	Having *Having `json:"having,omitempty" description:"A filter applied to aggregation results, referencing aliases or expressions, for example count() > 100."`
 
-	// secondary aggregation to apply to the query
-	// on top of the primary aggregation
-	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitzero"`
+	SecondaryAggregations []SecondaryAggregation `json:"secondaryAggregations,omitzero" description:"Accepted but currently ignored, including their nested order, limit and limitBy."`
 
-	// functions to apply to the query
-	Functions []Function `json:"functions,omitzero"`
+	Functions []Function `json:"functions,omitzero" description:"Post-processing functions applied in order to each result series, such as absolute, cumulativeSum, timeShift or anomaly."`
 
-	Legend string `json:"legend"`
+	Legend string `json:"legend" description:"The display name template for each series; {{field}} placeholders are replaced by group-by label values."`
 
 	// ShiftBy is extracted from timeShift function for internal use
 	// This field is not serialized to JSON
@@ -96,7 +74,9 @@ func (QueryBuilderQuery[T]) PrepareJSONSchema(s *jsonschema.Schema) error {
 		return nil
 	}
 	prop := (&jsonschema.Schema{}).WithType(jsonschema.String.Type()).WithEnum(signal.StringValue())
+	prop.Description = propertyDescription(s, "signal")
 	s.Properties["signal"] = prop.ToSchemaOrBool()
+	describePropertyForSignal(s, "filter", filterDescriptionsBySignal[signal])
 	if !slices.Contains(s.Required, "signal") {
 		s.Required = append(s.Required, "signal")
 	}
@@ -291,4 +271,24 @@ func CanShortCircuitReduced(metricAgg MetricAggregation) bool {
 	}
 
 	return false
+}
+
+// filterDescriptionsBySignal gives each QueryBuilderQuery instantiation a filter
+// example drawn from its own signal, so the traces example never shows up on a
+// logs or metrics query. The shared Filter schema stays signal-neutral.
+var filterDescriptionsBySignal = map[telemetrytypes.Signal]string{
+	telemetrytypes.SignalTraces:  "The filter that selects spans, in the query filter syntax, for example service.name = 'frontend' AND http.response.status_code >= 500.",
+	telemetrytypes.SignalLogs:    "The filter that selects log records, in the query filter syntax, for example severity_text = 'ERROR' AND body CONTAINS 'timeout'.",
+	telemetrytypes.SignalMetrics: "The filter that selects series by their attributes, in the query filter syntax, for example k8s.namespace.name = 'prod' AND k8s.pod.name LIKE 'api%'.",
+}
+
+// describePropertyForSignal replaces a property's description with a
+// signal-specific one, keeping whatever schema shape the property already has.
+func describePropertyForSignal(s *jsonschema.Schema, name, description string) {
+	prop, ok := s.Properties[name]
+	if !ok || prop.TypeObject == nil || description == "" {
+		return
+	}
+	prop.TypeObject.Description = &description
+	s.Properties[name] = prop
 }

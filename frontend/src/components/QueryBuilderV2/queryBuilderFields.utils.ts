@@ -10,6 +10,7 @@ export interface ResolvedQueryBuilderField {
 	reason?: string;
 	/** Rendered open, not dismissable, and kept out of the add-on toggle bar. */
 	pinned: boolean;
+	placeholder?: string;
 }
 
 const AVAILABLE: ResolvedQueryBuilderField = {
@@ -17,6 +18,8 @@ const AVAILABLE: ResolvedQueryBuilderField = {
 	disabled: false,
 	pinned: false,
 };
+
+export const STEP_INTERVAL_PLACEHOLDER = 'Auto';
 
 function fromRule(rule: QueryBuilderFieldRule): ResolvedQueryBuilderField {
 	switch (rule.state) {
@@ -41,8 +44,10 @@ export function resolveQueryBuilderField(
 	config?: QueryBuilderFieldsConfig,
 ): ResolvedQueryBuilderField {
 	const rule = config?.[field];
+	const resolved = rule ? fromRule(rule) : AVAILABLE;
+	const placeholder = rule?.state === 'pinned' ? rule.placeholder : undefined;
 
-	return rule ? fromRule(rule) : AVAILABLE;
+	return placeholder ? { ...resolved, placeholder } : resolved;
 }
 
 /**
@@ -60,13 +65,13 @@ export function resolveQueryBuilderFields(
 
 /**
  * The surface a raw-row builder starts from, layered under a caller's own config.
- * `AdditionalQueries` is deliberately absent — a raw trace builder still takes several
- * queries when trace matching is on. Omit rather than Partial, so a field added to the
- * enum has to be placed on one side.
+ * `AdditionalQueries` and `TraceOperator` are deliberately absent — a raw trace builder
+ * still takes several queries, and their trace operator, when trace matching is on.
+ * Omit rather than Partial, so a field added to the enum has to be placed on one side.
  */
 export const RAW_QUERY_FIELDS: Omit<
 	Record<QueryBuilderField, QueryBuilderFieldRule>,
-	QueryBuilderField.AdditionalQueries
+	QueryBuilderField.AdditionalQueries | QueryBuilderField.TraceOperator
 > = {
 	[QueryBuilderField.Aggregation]: { state: 'hidden' },
 	[QueryBuilderField.StepInterval]: { state: 'hidden' },

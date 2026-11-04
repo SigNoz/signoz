@@ -1,5 +1,3 @@
-import { Route, Switch } from 'react-router-dom';
-import ROUTES from 'constants/routes';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen } from 'tests/test-utils';
@@ -42,18 +40,9 @@ afterEach(() => {
 });
 
 function renderEditPage(): ReturnType<typeof render> {
-	return render(
-		<Switch>
-			<Route path={ROUTES.ROLES_SETTINGS} exact>
-				<div data-testid="roles-list-redirect" />
-			</Route>
-			<Route path={ROUTES.ROLE_DETAILS}>
-				<CreateEditRolePage />
-			</Route>
-		</Switch>,
-		undefined,
-		{ initialRoute: `/settings/roles/${EDIT_ROLE_ID}?name=${EDIT_ROLE_NAME}` },
-	);
+	return render(<CreateEditRolePage />, undefined, {
+		initialRoute: `/settings/roles/${EDIT_ROLE_ID}?name=${EDIT_ROLE_NAME}`,
+	});
 }
 
 describe('EditRolePage - AuthZ', () => {
@@ -83,7 +72,10 @@ describe('EditRolePage - AuthZ', () => {
 				screen.findByText(`Role - ${EDIT_ROLE_NAME}`),
 			).resolves.toBeInTheDocument();
 			expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
-			expect(screen.getByTestId('save-button')).toBeDisabled();
+			expect(screen.getByTestId('save-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 
 			expect(
 				screen.queryByTestId('role-description-input'),
@@ -101,7 +93,7 @@ describe('EditRolePage - AuthZ', () => {
 			).resolves.toBeInTheDocument();
 
 			const saveButton = await screen.findByTestId('save-button');
-			expect(saveButton).toBeDisabled();
+			expect(saveButton).toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 
@@ -112,18 +104,9 @@ describe('EditRolePage - AuthZ', () => {
 		it('renders the form instead of denying it', async () => {
 			server.use(setupAuthzAdmin());
 
-			render(
-				<Switch>
-					<Route path={ROUTES.ROLES_SETTINGS} exact>
-						<div data-testid="roles-list-redirect" />
-					</Route>
-					<Route path={ROUTES.ROLE_DETAILS}>
-						<CreateEditRolePage />
-					</Route>
-				</Switch>,
-				undefined,
-				{ initialRoute: `/settings/roles/${EDIT_ROLE_ID}` },
-			);
+			render(<CreateEditRolePage />, undefined, {
+				initialRoute: `/settings/roles/${EDIT_ROLE_ID}`,
+			});
 
 			await expect(
 				screen.findByTestId('role-description-input'),

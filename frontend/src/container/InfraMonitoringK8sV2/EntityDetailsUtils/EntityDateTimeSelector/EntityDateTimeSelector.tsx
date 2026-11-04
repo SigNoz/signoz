@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
 import { Undo } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
-import logEvent from 'api/common/logEvent';
-import { InfraMonitoringEvents } from 'constants/events';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
@@ -17,15 +15,11 @@ import styles from './EntityDateTimeSelector.module.scss';
 import { logInfraDrawerTimeRangeCustomizedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 
 interface EntityDateTimeSelectorProps {
-	eventEntity: string;
 	category: InfraMonitoringEntity;
-	view: string;
 }
 
 function EntityDateTimeSelector({
-	eventEntity,
 	category,
-	view,
 }: EntityDateTimeSelectorProps): JSX.Element {
 	const {
 		timeRange,
@@ -37,33 +31,27 @@ function EntityDateTimeSelector({
 
 	const onTimeChange = useCallback(
 		(interval: Time | CustomTimeType, dateTimeRange?: [number, number]): void => {
-			void logEvent(InfraMonitoringEvents.TimeUpdated, {
-				entity: eventEntity,
-				page: InfraMonitoringEvents.DetailedPage,
-				category,
-				view,
-				interval,
-			});
 			logInfraDrawerTimeRangeCustomizedEvent(category, interval);
 			handleTimeChange(interval, dateTimeRange);
 		},
-		[category, view, eventEntity, handleTimeChange],
+		[category, handleTimeChange],
 	);
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container} data-testid="drawer-time-selection">
 			{hasTimeChanged && (
-				<TooltipSimple title="Reset to list time" side="bottom">
+				<Tooltip title="Reset to list time" side="bottom">
 					<Button
+						size="md"
 						variant="outlined"
 						color="secondary"
 						onClick={handleResetToParentTime}
-						data-testid="reset-to-list-time-button"
+						testId="reset-to-list-time-button"
 						prefix={<Undo size={14} />}
 					>
 						Reset
 					</Button>
-				</TooltipSimple>
+				</Tooltip>
 			)}
 			<DateTimeSelectionV2
 				showAutoRefresh

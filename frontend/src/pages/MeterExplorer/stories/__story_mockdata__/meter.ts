@@ -6,14 +6,22 @@
 import type {
 	GetQuickFilters200,
 	ListMetrics200,
+	ListSavedViews200,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
+	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	Querybuildertypesv5RequestTypeDTO,
 	QuickfiltertypesSourceDTO,
+	SavedviewtypesPanelTypeDTO,
+	SavedviewtypesSchemaVersionDTO,
+	SavedviewtypesSourceDTO,
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
+	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import {
@@ -23,7 +31,6 @@ import {
 	getSpanCountWidgetData,
 	getSpanSizeWidgetData,
 } from 'container/MeterExplorer/Breakdown/graphs';
-import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
 import type { Widgets } from 'types/api/widgets/widget';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import type { TimeSeries } from 'types/api/v5/queryRange';
@@ -31,7 +38,7 @@ import type { TimeSeries } from 'types/api/v5/queryRange';
 import { timeSeriesPoints } from '@/storybook/msw/__story_mockdata__/queryRange';
 import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
 
-export const METER_TABS = ['meter', 'explorer', 'views'] as const;
+export const METER_TABS = ['meter', 'explorer'] as const;
 
 export type MeterTab = (typeof METER_TABS)[number];
 
@@ -351,20 +358,33 @@ const VIEW_NAMES = [
 	'Collector breakdown',
 ];
 
-export const savedMeterViewsResponse = (
-	count: number,
-): { status: string; data: unknown[] } => ({
+export const savedMeterViewsResponse = (count: number): ListSavedViews200 => ({
 	status: 'success',
-	data: Array.from(
-		{ length: Math.min(count, VIEW_NAMES.length) },
-		(_unused, index) => ({
-			...explorerView.data[0],
-			id: `storybook-meter-view-${index + 1}`,
-			name: VIEW_NAMES[index],
-			sourcePage: 'meter',
-			tags: ['meter'],
-		}),
-	),
+	data: VIEW_NAMES.slice(0, count).map((displayName, index) => ({
+		id: `storybook-meter-view-${index + 1}`,
+		name: `storybook-meter-view-${index + 1}`,
+		source: SavedviewtypesSourceDTO.meter,
+		schemaVersion: SavedviewtypesSchemaVersionDTO.v2,
+		createdAt: '2026-08-20T09:00:00Z',
+		createdBy: 'ada@signoz.io',
+		updatedAt: '2026-08-20T09:00:00Z',
+		updatedBy: 'ada@signoz.io',
+		spec: {
+			displayName,
+			panelType: SavedviewtypesPanelTypeDTO.graph,
+			requestType: Querybuildertypesv5RequestTypeDTO.time_series,
+			queries: [
+				{
+					type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+					spec: {
+						name: 'A',
+						signal: MetricsSignal.metrics,
+						source: TelemetrytypesSourceDTO.meter,
+					},
+				},
+			],
+		},
+	})),
 });
 
 const DASHBOARD_NAMES = [

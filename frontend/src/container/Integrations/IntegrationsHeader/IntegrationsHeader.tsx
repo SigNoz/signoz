@@ -1,5 +1,5 @@
 import { ChangeEvent, KeyboardEvent, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
@@ -20,7 +20,6 @@ interface IntegrationsHeaderProps {
 }
 
 function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
-	const history = useHistory();
 	const { user } = useAppContext();
 
 	const { searchQuery, onSearchChange } = props;
@@ -92,9 +91,10 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 					}
 				/>
 				<Button
+					size="md"
 					variant="solid"
 					color="secondary"
-					className="request-integration-btn"
+					width="170px"
 					prefix={<Cable size={14} />}
 					onClick={(): void => setIsRequestIntegrationDialogOpen(true)}
 				>
@@ -128,13 +128,14 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 
 					<div className="request-integration-form-footer">
 						<Button
+							disabledTooltip="Enter an integration name first"
+							size="md"
 							variant="solid"
 							color="primary"
 							prefix={<Check size={14} />}
 							onClick={handleRequestIntegrationSubmit}
 							loading={isSubmittingRequestForIntegration}
 							disabled={
-								isSubmittingRequestForIntegration ||
 								!requestedIntegrationName ||
 								requestedIntegrationName?.trim().length === 0
 							}
@@ -146,12 +147,14 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 
 				{isGetStartedWithCloudAllowed && (
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
-						onClick={(): void => history.push(ROUTES.GET_STARTED_WITH_CLOUD)}
+						onClick={(): void => navigate(ROUTES.GET_STARTED_WITH_CLOUD)}
+						suffix={<ArrowRight size={14} />}
+						width="200px"
 					>
-						<span>View 150+ Data Sources</span>
-						<ArrowRight size={14} />
+						View 150+ Data Sources
 					</Button>
 				)}
 			</div>

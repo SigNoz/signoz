@@ -6,9 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewConfigFromChannels(t *testing.T) {
@@ -295,4 +298,37 @@ func TestNewChannelFromReceiverGoogleChat(t *testing.T) {
 		`{"name":"googlechat-receiver","googlechat_configs":[{"send_resolved":false,"webhook_url":"https://chat.googleapis.com/v1/spaces/test/messages","title":"Alert","text":"Body"}]}`,
 		channel.Data,
 	)
+}
+
+func TestMapChannelNamesToIDs(t *testing.T) {
+	slackID := valuer.GenerateUUID()
+	pagerID := valuer.GenerateUUID()
+	channels := Channels{
+		{Identifiable: types.Identifiable{ID: slackID}, DisplayName: "slack"},
+		{Identifiable: types.Identifiable{ID: pagerID}, DisplayName: "pager"},
+	}
+
+	testCases := []struct {
+		name    string
+		names   []string
+		want    []string
+		wantErr bool
+	}{
+		{name: "AllKnown_IDsInRequestOrder", names: []string{"pager", "slack"}, want: []string{pagerID.StringValue(), slackID.StringValue()}},
+		{name: "UnknownName_Errors", names: []string{"slack", "missing"}, wantErr: true},
+		{name: "NoNames_Empty", names: nil, want: []string{}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			got, err := MapChannelNamesToIDs(channels, testCase.names)
+			if testCase.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, testCase.want, got)
+		})
+	}
 }

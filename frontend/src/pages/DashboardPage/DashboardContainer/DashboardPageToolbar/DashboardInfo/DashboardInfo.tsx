@@ -10,17 +10,18 @@ import {
 import TagBadge from 'components/TagBadge/TagBadge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { toast } from '@signozhq/ui/sonner';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { isEmpty } from 'lodash-es';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
+import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { linkifyText } from 'utils/linkifyText';
 import { openInNewTab } from 'utils/navigation';
 
 import styles from './DashboardInfo.module.scss';
-import { TOOLTIP_SCROLL_CONTENT_CLASS } from 'components/TooltipScrollArea/TooltipScrollArea';
 
 import TagsOverflowTooltip from './TagsOverflowTooltip';
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
@@ -121,6 +122,10 @@ function DashboardInfo({
 		openInNewTab(publicUrl);
 	};
 
+	const handleCopyId = (): void => {
+		toast.success('Dashboard ID copied to clipboard');
+	};
+
 	return (
 		<div className={styles.dashboardInfo}>
 			<img src={image} alt={title} className={styles.dashboardImage} />
@@ -138,10 +143,10 @@ function DashboardInfo({
 					/>
 					<Button
 						type="button"
-						variant="outlined"
+						variant="solid"
 						color="primary"
-						size="icon"
-						className={styles.dashboardTitleActionButton}
+						size="sm"
+						icon
 						aria-label="Save title"
 						testId="dashboard-title-save"
 						onClick={onCommit}
@@ -152,8 +157,8 @@ function DashboardInfo({
 						type="button"
 						variant="outlined"
 						color="secondary"
-						size="icon"
-						className={styles.dashboardTitleActionButton}
+						size="sm"
+						icon
 						aria-label="Cancel title edit"
 						testId="dashboard-title-cancel"
 						onClick={onCancel}
@@ -162,21 +167,29 @@ function DashboardInfo({
 					</Button>
 				</div>
 			) : (
-				<TooltipSimple title={title} disableHoverableContent>
-					<Typography.Text
-						className={cx(styles.dashboardTitle, {
-							[styles.dashboardTitleHover]: canEdit,
-						})}
-						data-testid="dashboard-title"
-						onClick={canEdit ? onStartEdit : undefined}
-					>
-						{title}
-					</Typography.Text>
-				</TooltipSimple>
+				<>
+					<Tooltip title={title}>
+						<Typography.Text
+							className={cx(styles.dashboardTitle, {
+								[styles.dashboardTitleHover]: canEdit,
+							})}
+							data-testid="dashboard-title"
+							onClick={canEdit ? onStartEdit : undefined}
+						>
+							{title}
+						</Typography.Text>
+					</Tooltip>
+					<CopyButton
+						value={dashboardId}
+						ariaLabel="Copy dashboard ID"
+						testId="dashboard-copy-id"
+						onCopy={handleCopyId}
+					/>
+				</>
 			)}
 
 			{hasDescription && (
-				<TooltipSimple
+				<Tooltip
 					side="bottom"
 					title={
 						<span className={styles.descriptionTooltip}>
@@ -189,37 +202,35 @@ function DashboardInfo({
 						size={14}
 						data-testid="dashboard-description-info"
 					/>
-				</TooltipSimple>
+				</Tooltip>
 			)}
 
 			{isPublicDashboard && (
-				<TooltipSimple
-					title="This dashboard is publicly accessible. Click to open the public page."
-					disableHoverableContent
-				>
+				<Tooltip title="This dashboard is publicly accessible. Click to open the public page.">
 					<Button
 						type="button"
 						variant="ghost"
 						color="secondary"
-						size="icon"
-						className={styles.publicLink}
+						size="sm"
+						icon
 						aria-label="Open public dashboard"
 						testId="dashboard-public-link"
 						onClick={handleOpenPublicUrl}
 					>
 						<Globe size={14} />
 					</Button>
-				</TooltipSimple>
+				</Tooltip>
 			)}
 
 			{showLockToggle && (
-				<TooltipSimple title={lockTooltip} disableHoverableContent>
+				<Tooltip title={onToggleLock ? lockTooltip : undefined}>
 					<Button
+						disabledTooltip={lockTooltip}
 						type="button"
 						variant="ghost"
 						color="secondary"
-						size="icon"
-						className={styles.lockButton}
+						size="sm"
+						icon
 						aria-label={isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard'}
 						testId="dashboard-lock"
 						disabled={!onToggleLock}
@@ -231,7 +242,7 @@ function DashboardInfo({
 							<LockKeyholeOpen size={14} />
 						)}
 					</Button>
-				</TooltipSimple>
+				</Tooltip>
 			)}
 
 			{hasTags && (
@@ -242,14 +253,11 @@ function DashboardInfo({
 							<TagBadge key={tag}>{tag}</TagBadge>
 						))}
 						{remainingTags.length > 0 && (
-							<TooltipSimple
-								title={<TagsOverflowTooltip tags={remainingTags} />}
-								tooltipContentProps={{ className: TOOLTIP_SCROLL_CONTENT_CLASS }}
-							>
+							<Tooltip title={<TagsOverflowTooltip tags={remainingTags} />}>
 								<span data-testid="dashboard-tags-overflow">
 									<TagBadge>+{remainingTags.length}</TagBadge>
 								</span>
-							</TooltipSimple>
+							</Tooltip>
 						)}
 					</div>
 				</>

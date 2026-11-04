@@ -11,6 +11,7 @@ interface Props {
 function NewDashboardButton({ onClick }: Props): JSX.Element {
 	return (
 		<AuthZButton
+			size="md"
 			checks={CHECKS}
 			variant="solid"
 			color="primary"

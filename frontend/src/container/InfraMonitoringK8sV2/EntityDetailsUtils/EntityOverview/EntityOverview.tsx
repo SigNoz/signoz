@@ -8,7 +8,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@signozhq/ui/select';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	QuerySearchV2Provider,
@@ -63,7 +63,6 @@ import styles from './EntityOverview.module.scss';
 
 export interface EntityOverviewProps {
 	category: InfraMonitoringEntity;
-	eventEntity: string;
 	/** The drawer entity's own attributes, which scope every related query */
 	attributes: EntityAttributes;
 	/** The drawer's own record and query prefix, so a row click can leave a
@@ -82,7 +81,6 @@ interface ContentProps extends EntityOverviewProps {
 
 function EntityOverviewContent({
 	category,
-	eventEntity,
 	attributes,
 	entity,
 	entityName,
@@ -190,11 +188,7 @@ function EntityOverviewContent({
 	return (
 		<div className={styles.container}>
 			<div className={styles.controls}>
-				<EntityDateTimeSelector
-					eventEntity={eventEntity}
-					category={category}
-					view={VIEW_TYPES.OVERVIEW}
-				/>
+				<EntityDateTimeSelector category={category} />
 
 				<RunQueryBtn
 					isLoadingQueries={isFetching}
@@ -251,20 +245,19 @@ function EntityOverviewContent({
 							</SelectContent>
 						</Select>
 
-						<TooltipSimple
-							title={`View on ${targetLabel.toLowerCase()} page`}
-							side="top"
-							arrow
-						>
+						<Tooltip title={`View on ${targetLabel.toLowerCase()} page`} side="top">
 							<Button
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
+								aria-label={`View on ${targetLabel.toLowerCase()} page`}
 								onClick={handleNavigate}
-								data-testid="overview-view-on-list-page"
-								prefix={<Compass size={16} />}
-							/>
-						</TooltipSimple>
+								testId="overview-view-on-list-page"
+							>
+								<Compass size={16} />
+							</Button>
+						</Tooltip>
 					</div>
 				}
 				listConfig={targetConfig.list}

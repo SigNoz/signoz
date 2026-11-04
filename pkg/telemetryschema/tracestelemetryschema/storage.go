@@ -162,12 +162,14 @@ var (
 	}
 )
 
-type storage struct{}
+type storage struct {
+	schemaMetadataStore telemetrytypes.SchemaMetadataStore
+}
 
 var _ qbtypes.Storage = (*storage)(nil)
 
-func NewStorage() qbtypes.Storage {
-	return &storage{}
+func NewStorage(schemaMetadataStore telemetrytypes.SchemaMetadataStore) qbtypes.Storage {
+	return &storage{schemaMetadataStore: schemaMetadataStore}
 }
 
 func (m *storage) getColumn(
@@ -273,7 +275,7 @@ func (m *storage) resolveColumnExprs(
 				}
 			case telemetrytypes.FieldContextAttribute:
 				path := fmt.Sprintf("%s.%s", columnName, clickhousesql.Identifier(key.Name))
-				expr, existExpr := attributeJSONValueExpr(path, key.FieldDataType)
+				expr, existExpr := AttributeJSONValueExpr(path, key.FieldDataType)
 				exprs = append(exprs, expr)
 				existExprs = append(existExprs, existExpr)
 			default:
@@ -330,20 +332,22 @@ func attributeColumnEvolutionRegistered(key *telemetrytypes.TelemetryFieldKey, c
 	return false
 }
 
-// attributeJSONValueExpr renders the value expression for a span attribute read from the JSON
+// AttributeJSONValueExpr renders the value expression for a span attribute read from the JSON
 // column along with its per-type existence guard.
-// Numeric and bool gate a crash-safe accurateCastOrNull by dynamicType: the cast alone coerces
-// across domains (bool true reads 1, '200' reads 200, 200.5 reads true), so the read is
-// restricted to values stored as that type — the per-type separation the typed maps gave
-// structurally. Being NULL-capable, the gated read itself is the existence guard (present AS
-// THIS TYPE). Other reads are total (::String folds absent to ” on the raw path), so the
-// guard is presence on the raw path.
-func attributeJSONValueExpr(path string, dataType telemetrytypes.FieldDataType) (string, string) {
+// Numeric reads through the string form so that a value stored as a number or as a numeric
+// string reads alike, like the attributes_number map did. Bool gates a crash-safe
+// accurateCastOrNull by dynamicType: the cast alone coerces across domains (200.5 reads
+// true), so the read is restricted to values stored as that type — the per-type separation the
+// typed maps gave structurally. Being NULL-capable, the numeric and bool reads are their own
+// existence guard (present AS THIS TYPE). Other reads are total (::String folds absent to ” on
+// the raw path), so the guard is presence on the raw path. Skip indexes are built over the value
+// expression.
+func AttributeJSONValueExpr(path string, dataType telemetrytypes.FieldDataType) (string, string) {
 	switch dataType {
 	case telemetrytypes.FieldDataTypeInt64,
 		telemetrytypes.FieldDataTypeFloat64,
 		telemetrytypes.FieldDataTypeNumber:
-		expr := fmt.Sprintf("if(dynamicType(%s) IN ('Int64', 'UInt64', 'Float64'), accurateCastOrNull(%s, 'Float64'), NULL)", path, path) // all numeric types to float64 like attributes_number map.
+		expr := fmt.Sprintf("toFloat64OrNull(%s::String)", path)
 		return expr, expr + " IS NOT NULL"
 	case telemetrytypes.FieldDataTypeBool:
 		expr := fmt.Sprintf("if(dynamicType(%s) = 'Bool', accurateCastOrNull(%s, 'Bool'), NULL)", path, path)
@@ -560,7 +564,33 @@ func (m *storage) Fallback(ctx context.Context, q qbtypes.QueryInfo, key *teleme
 		literal := telemetrytypes.NewTelemetryFieldKey(key.FieldContext.StringValue()+"."+key.Name, key.FieldContext, key.FieldDataType)
 		keys = append(querybuilder.SynthesizeKeys(key, value), querybuilder.SynthesizeKeys(literal, value)...)
 	}
+	if err := m.addBaseColumnEvolutions(ctx, q, keys); err != nil {
+		return nil, err
+	}
 	return querybuilder.WrapAsLogicalFields(key.Name, keys), nil
+}
+
+func (m *storage) addBaseColumnEvolutions(ctx context.Context, q qbtypes.QueryInfo, keys []*telemetrytypes.TelemetryFieldKey) error {
+	if !q.TraceAttrsJSONOn || m.schemaMetadataStore == nil {
+		return nil
+	}
+	var attributeKeys []*telemetrytypes.TelemetryFieldKey
+	for _, key := range keys {
+		if key.FieldContext == telemetrytypes.FieldContextAttribute && len(key.Evolutions) == 0 {
+			attributeKeys = append(attributeKeys, key)
+		}
+	}
+	if len(attributeKeys) == 0 {
+		return nil
+	}
+	evolutions, err := m.schemaMetadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
+	if err != nil {
+		return err
+	}
+	for _, key := range attributeKeys {
+		key.Evolutions = evolutions
+	}
+	return nil
 }
 
 // stampColumnType gives an untyped column key the data type its column reads

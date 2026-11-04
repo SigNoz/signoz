@@ -3,6 +3,7 @@ import {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
+import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 import { UNSUPPORTED_PANEL } from '../kinds/UnsupportedPanel/definition';
 import { getPanelDefinition, isPanelKindSupported } from '../registry';
@@ -11,12 +12,13 @@ import { NO_PANEL_ACTIONS } from '../types/panelDefinition';
 import {
 	getQueryPanelDefinition,
 	requireQueryPanelDefinition,
+	getSupportedQueryModes,
 	getSupportedQueryTypes,
 	getSupportedSignals,
 	isPanelCombinationValid,
 	isQueryTypeSupportedByPanelKind,
 	isSignalSupported,
-	resolveQueryType,
+	resolveQueryMode,
 } from '../capabilities';
 import type { PanelKind } from '../types/panelKind';
 
@@ -34,7 +36,51 @@ const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/ListPanel': [QUERY_BUILDER],
+	'signoz/ScatterPlotPanel': [QUERY_BUILDER, CLICKHOUSE],
 	// Static kind: no query surface at all.
+	'signoz/TextPanel': [],
+};
+
+const EXPECTED_QUERY_MODES: Record<PanelKind, QueryMode[]> = {
+	'signoz/TimeSeriesPanel': [
+		QUERY_BUILDER,
+		CLICKHOUSE,
+		PROM,
+		QueryMode.AI_QUERY_BUILDER,
+	],
+	'signoz/BarChartPanel': [
+		QUERY_BUILDER,
+		CLICKHOUSE,
+		PROM,
+		QueryMode.AI_QUERY_BUILDER,
+	],
+	'signoz/AreaChartPanel': [
+		QUERY_BUILDER,
+		CLICKHOUSE,
+		PROM,
+		QueryMode.AI_QUERY_BUILDER,
+	],
+	'signoz/NumberPanel': [
+		QUERY_BUILDER,
+		CLICKHOUSE,
+		PROM,
+		QueryMode.AI_QUERY_BUILDER,
+	],
+	'signoz/HistogramPanel': [
+		QUERY_BUILDER,
+		CLICKHOUSE,
+		PROM,
+		QueryMode.AI_QUERY_BUILDER,
+	],
+	'signoz/HeatmapPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
+	'signoz/PieChartPanel': [
+		QUERY_BUILDER,
+		CLICKHOUSE,
+		QueryMode.AI_QUERY_BUILDER,
+	],
+	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE, QueryMode.AI_QUERY_BUILDER],
+	'signoz/ListPanel': [QUERY_BUILDER, QueryMode.AI_QUERY_BUILDER],
+	'signoz/ScatterPlotPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TextPanel': [],
 };
 
@@ -51,6 +97,7 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	// List renders raw rows; metrics produce no row data.
 	'signoz/ListPanel': [logs, traces],
 	'signoz/TextPanel': [],
+	'signoz/ScatterPlotPanel': [metrics, logs, traces],
 };
 
 // Exhaustive over PanelKind, so a new kind can't ship without stating how its request is
@@ -112,13 +159,21 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},
-	// Only Table asks the server to transpose its scalar result into UI rows.
+	// Only Table and Scatter Plot ask the server to join their scalar results into UI rows.
 	'signoz/TablePanel': {
 		requestType: scalar,
 		formatTableResultForUI: true,
 		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
+	},
+	'signoz/ScatterPlotPanel': {
+		requestType: scalar,
+		formatTableResultForUI: true,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+		defaultRowLimit: 10_000,
 	},
 	// Only List reads raw rows, pages them server-side, and needs an order tiebreaker.
 	'signoz/ListPanel': {
@@ -223,6 +278,15 @@ describe('panel capabilities guard', () => {
 			expect(isSignalSupported('signoz/ListPanel', logs)).toBe(true);
 			expect(isSignalSupported('signoz/ListPanel', traces)).toBe(true);
 		});
+
+		it('reads a specific mode when one is given', () => {
+			expect(
+				getSupportedSignals('signoz/TablePanel', QueryMode.AI_QUERY_BUILDER),
+			).toStrictEqual([traces]);
+			expect(
+				getSupportedSignals('signoz/TablePanel', QueryMode.CLICKHOUSE),
+			).toStrictEqual([]);
+		});
 	});
 
 	describe('isPanelCombinationValid', () => {
@@ -271,18 +335,36 @@ describe('panel capabilities guard', () => {
 		});
 	});
 
-	describe('resolveQueryType', () => {
-		it('keeps a supported query type', () => {
-			expect(resolveQueryType('signoz/TimeSeriesPanel', PROM)).toBe(PROM);
-			expect(resolveQueryType('signoz/ListPanel', QUERY_BUILDER)).toBe(
-				QUERY_BUILDER,
+	describe('getSupportedQueryModes', () => {
+		it.each(Object.entries(EXPECTED_QUERY_MODES))(
+			'%s supports %j',
+			(kind, modes) => {
+				expect(getSupportedQueryModes(kind as PanelKind)).toStrictEqual(modes);
+			},
+		);
+
+		it('keeps AI out of the query types', () => {
+			expect(getSupportedQueryTypes('signoz/TimeSeriesPanel')).not.toContain(
+				QueryMode.AI_QUERY_BUILDER,
 			);
 		});
+	});
 
-		it('coerces an unsupported query type to the first supported one', () => {
+	describe('resolveQueryMode', () => {
+		it('keeps a supported mode', () => {
+			expect(resolveQueryMode('signoz/TimeSeriesPanel', PROM)).toBe(PROM);
+			expect(
+				resolveQueryMode('signoz/TablePanel', QueryMode.AI_QUERY_BUILDER),
+			).toBe(QueryMode.AI_QUERY_BUILDER);
+			expect(
+				resolveQueryMode('signoz/ListPanel', QueryMode.AI_QUERY_BUILDER),
+			).toBe(QueryMode.AI_QUERY_BUILDER);
+		});
+
+		it('coerces an unsupported mode to the first supported one', () => {
 			// PromQL → List has no PromQL, falls back to its first (and only) type.
-			expect(resolveQueryType('signoz/ListPanel', PROM)).toBe(QUERY_BUILDER);
-			expect(resolveQueryType('signoz/TablePanel', PROM)).toBe(QUERY_BUILDER);
+			expect(resolveQueryMode('signoz/ListPanel', PROM)).toBe(QUERY_BUILDER);
+			expect(resolveQueryMode('signoz/TablePanel', PROM)).toBe(QUERY_BUILDER);
 		});
 	});
 });

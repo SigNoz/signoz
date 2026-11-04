@@ -9,7 +9,7 @@ import type { VariableSelection } from '../../selectionTypes';
 import { dynamicVariableOptions } from '../../utils/dynamicVariableOptions';
 import { areSelectionsEqual } from '../../utils/resolveVariableSelection';
 import { selectionFromCommittedValues } from '../../utils/selectionUtils';
-import OverflowValuesTooltip from './OverflowValuesTooltip';
+import OverflowValuesTooltip from 'components/OverflowValuesTooltip/OverflowValuesTooltip';
 import styles from '../../VariablesBar.module.scss';
 
 interface ValueSelectorProps {

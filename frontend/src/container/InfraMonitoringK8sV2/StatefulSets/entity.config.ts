@@ -7,7 +7,6 @@ import {
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
-import { InfraMonitoringEvents } from 'constants/events';
 import { createPodMetricsTab } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/createPodMetricsTab';
 
 import { K8sEntityConfig } from '../Base/entity.config.types';
@@ -42,7 +41,10 @@ async function fetchListData(
 	try {
 		const response = await listStatefulSets(
 			{
-				filter: { expression: filters.filter.expression },
+				filter: {
+					expression: filters.filter.expression,
+					filterByPodStatus: filters.filter.filterByPodStatus,
+				},
 				groupBy: filters.groupBy?.map((g) => ({ name: g.name })),
 				offset: filters.offset,
 				limit: filters.limit ?? 10,
@@ -122,7 +124,6 @@ export const statefulSetEntityConfig: K8sEntityConfig<
 > = {
 	list: {
 		entity: InfraMonitoringEntity.STATEFULSETS,
-		eventCategory: InfraMonitoringEvents.StatefulSet,
 		tableColumns: k8sStatefulSetsColumnsConfig,
 		fetchListData,
 		getRowKey: getK8sStatefulSetRowKey,
@@ -131,7 +132,6 @@ export const statefulSetEntityConfig: K8sEntityConfig<
 	},
 	details: {
 		category: InfraMonitoringEntity.STATEFULSETS,
-		eventCategory: InfraMonitoringEvents.StatefulSet,
 		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'statefulSet',
 		getSelectedItemExpression: k8sStatefulSetGetSelectedItemExpression,

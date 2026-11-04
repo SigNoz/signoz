@@ -20,13 +20,26 @@ export enum QueryBuilderField {
 	// Builder level
 	Formula = 'formula',
 	AdditionalQueries = 'additional_queries',
+	TraceOperator = 'trace_operator',
 }
 
-/** `reason` is required on `disabled`: an inert control the user can see has to explain itself. */
+/** Per-query builder fields that can be kept equal across a panel's queries. */
+export type SyncedQueryBuilderField =
+	| QueryBuilderField.GroupBy
+	| QueryBuilderField.OrderBy
+	| QueryBuilderField.Having
+	| QueryBuilderField.Limit
+	| QueryBuilderField.StepInterval
+	| QueryBuilderField.ReduceTo;
+
+/**
+ * `reason` is required on `disabled`: an inert control the user can see has to explain itself.
+ * `placeholder` on `pinned` names the value an empty field falls back to.
+ */
 export type QueryBuilderFieldRule =
 	| { state: 'hidden' }
 	| { state: 'disabled'; reason: string }
-	| { state: 'pinned' };
+	| { state: 'pinned'; placeholder?: string };
 
 /**
  * A caller's narrowing of the builder's surface. The builder works out which fields suit

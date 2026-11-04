@@ -55,10 +55,6 @@
 	overflow-wrap: anywhere;
 }
 
-.legacyBadge {
-	flex: none;
-}
-
 .lockIcon {
 	display: inline-flex;
 	align-items: center;
@@ -67,45 +63,17 @@
 	color: var(--l3-foreground);
 }
 
-/* Wrap so the tooltip has a hoverable target even when the pin button is disabled
-   (a legacy dashboard can't be pinned). */
-.pinButtonWrap {
-	display: inline-flex;
-	flex: none;
-}
-
-.pinButtonWrap button:disabled {
-	pointer-events: none;
-}
-
 .pinButton {
 	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 24px;
-	height: 24px;
 	flex: none;
-	border: none;
-	border-radius: 5px;
-	background: transparent;
-	color: transparent;
-	cursor: pointer;
-	transition:
-		background 0.12s,
-		color 0.12s;
-}
-
-.row:hover .pinButton {
-	color: var(--l3-foreground);
 }
 
 .pinButton:hover {
-	background: var(--l1-background);
-	color: var(--bg-amber-500);
+	--button-variant-ghost-hover-color: var(--bg-amber-500);
 }
 
 .pinButtonOn {
-	color: var(--bg-amber-500);
+	--button-variant-ghost-color: var(--bg-amber-500);
 
 	svg {
 		fill: currentColor;
@@ -128,12 +96,6 @@
 
 .pinButton:hover .unpinIcon {
 	display: inline-flex;
-}
-
-// Cap the name tooltip so a long name wraps instead of spanning the page.
-.nameTooltip {
-	max-width: 480px;
-	overflow-wrap: break-word;
 }
 
 .details {

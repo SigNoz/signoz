@@ -9,6 +9,7 @@ interface PublicDashboardSettingsFormProps {
 	timeRangeEnabled: boolean;
 	defaultTimeRange: string;
 	disabled: boolean;
+	disabledTooltip: string | undefined;
 	onTimeRangeEnabledChange: (value: boolean) => void;
 	onDefaultTimeRangeChange: (value: string) => void;
 }
@@ -17,6 +18,7 @@ function PublicDashboardSettingsForm({
 	timeRangeEnabled,
 	defaultTimeRange,
 	disabled,
+	disabledTooltip,
 	onTimeRangeEnabledChange,
 	onDefaultTimeRangeChange,
 }: PublicDashboardSettingsFormProps): JSX.Element {
@@ -24,6 +26,9 @@ function PublicDashboardSettingsForm({
 		<>
 			<div className={styles.switchRow}>
 				<Switch
+					color="primary"
+					textPlacement="right"
+					disabledTooltip={disabledTooltip}
 					testId="public-dashboard-time-range-toggle"
 					value={timeRangeEnabled}
 					disabled={disabled}

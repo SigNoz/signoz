@@ -88,7 +88,7 @@ const openQuickFiltersSettings = async (): Promise<void> => {
 	const control = await waitFor(() => {
 		const settings = screen.getByTestId('settings-icon-container');
 
-		expect(settings).toBeEnabled();
+		expect(settings).not.toHaveAttribute('aria-disabled', 'true');
 
 		return settings;
 	}, untilLoaded);
@@ -126,7 +126,7 @@ export const TimeSeries: Story = {
  * their empty states.
  */
 export const NoSpans: Story = {
-	args: { spans: 0, quickFilters: 0, savedViews: 0 },
+	args: { spans: 0, quickFilters: 0 },
 };
 
 /** The list mid-query, with the cancel action the toolbar offers while it runs. */

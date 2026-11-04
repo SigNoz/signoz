@@ -7,7 +7,6 @@ import {
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
-import { InfraMonitoringEvents } from 'constants/events';
 
 import { K8sEntityConfig } from '../Base/entity.config.types';
 import { K8sBaseFilters, K8sDetailsFilters } from '../Base/types';
@@ -39,7 +38,11 @@ async function fetchListData(
 	try {
 		const response = await listNodes(
 			{
-				filter: { expression: filters.filter.expression },
+				filter: {
+					expression: filters.filter.expression,
+					filterByPodStatus: filters.filter.filterByPodStatus,
+					filterByNodeReadiness: filters.filter.filterByNodeReadiness,
+				},
 				groupBy: filters.groupBy?.map((g) => ({ name: g.name })),
 				offset: filters.offset,
 				limit: filters.limit ?? 10,
@@ -119,7 +122,6 @@ export const nodeEntityConfig: K8sEntityConfig<
 > = {
 	list: {
 		entity: InfraMonitoringEntity.NODES,
-		eventCategory: InfraMonitoringEvents.Node,
 		tableColumns: k8sNodesColumnsConfig,
 		fetchListData,
 		getRowKey: getK8sNodeRowKey,
@@ -128,7 +130,6 @@ export const nodeEntityConfig: K8sEntityConfig<
 	},
 	details: {
 		category: InfraMonitoringEntity.NODES,
-		eventCategory: InfraMonitoringEvents.Node,
 		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'node',
 		getSelectedItemExpression: k8sNodeGetSelectedItemExpression,

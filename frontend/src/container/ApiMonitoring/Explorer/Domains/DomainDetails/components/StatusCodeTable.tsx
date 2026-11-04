@@ -35,7 +35,10 @@ function StatusCodeTable({
 	}
 
 	return (
-		<div className="status-code-table-container">
+		<div
+			className="status-code-table-container"
+			data-testid="endpoint-status-code-table"
+		>
 			<Table
 				loading={isLoading || isRefetching}
 				dataSource={statusCodeData || []}

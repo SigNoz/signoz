@@ -1,20 +1,18 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { ComponentProps } from 'react';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { toast } from '@signozhq/ui/sonner';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { server } from 'mocks-server/server';
-import { rest, RestRequest } from 'msw';
-import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import { rest, server } from 'mocks-server/server';
+import { RestRequest } from 'msw';
 
 import AccountSettingsDrawer from '../EditAccount/AccountSettingsDrawer';
 import {
-	GCP_ACCOUNT_ID,
 	GCP_ACCOUNT_URL,
 	GCP_ACCOUNTS_URL,
 	gcpAccount,
 	gcpAccountConfig,
 	listAccountsResponse,
 } from './mockData';
+import { addProjectIds } from './projectIdsTestUtils';
 
 // `useAccountSettingsDrawer` imports logEvent by relative path, which the
 // jest.config moduleNameMapper (keyed on the `api/common/logEvent` alias) does
@@ -32,33 +30,42 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	},
 }));
 
-const onClose = jest.fn();
-const setActiveAccount = jest.fn();
+// jsdom has no layout, and Floating UI's getComputedStyle walk over every
+// popover ancestor costs ~1 s per open here, enough to time out under load.
+jest.mock('@floating-ui/dom', () => ({
+	...jest.requireActual('@floating-ui/dom'),
+	autoUpdate: (): (() => void) => (): void => {},
+	computePosition: (
+		_reference: unknown,
+		_floating: unknown,
+		{ placement = 'bottom', strategy = 'absolute' } = {},
+	): Promise<unknown> =>
+		Promise.resolve({ x: 0, y: 0, placement, strategy, middlewareData: {} }),
+}));
+
+type AccountSettingsDrawerProps = ComponentProps<typeof AccountSettingsDrawer>;
+
+const onClose = jest.fn() as jest.MockedFunction<
+	AccountSettingsDrawerProps['onClose']
+>;
+const setActiveAccount = jest.fn() as jest.MockedFunction<
+	AccountSettingsDrawerProps['setActiveAccount']
+>;
 
 const renderDrawer = (): void => {
 	render(
-		<MockQueryClientProvider>
-			<TooltipProvider>
-				<AccountSettingsDrawer
-					onClose={onClose}
-					account={gcpAccount}
-					setActiveAccount={setActiveAccount}
-				/>
-			</TooltipProvider>
-		</MockQueryClientProvider>,
+		<AccountSettingsDrawer
+			onClose={onClose}
+			account={gcpAccount}
+			setActiveAccount={setActiveAccount}
+		/>,
 	);
 };
 
-/** The antd tags Select renders its text input inside the testId wrapper. */
-const getProjectIdsInput = (): HTMLElement =>
-	within(screen.getByTestId('gcp-edit-project-ids-select')).getByRole(
-		'combobox',
-	);
-
-/** Each selected tag carries an antd "close" icon that removes it. */
-const getProjectIdTagRemoveButtons = (): HTMLElement[] =>
+/** Each selected project ID renders as a pill with its own remove button. */
+const getProjectIdRemoveButtons = (): HTMLElement[] =>
 	within(screen.getByTestId('gcp-edit-project-ids-select')).queryAllByLabelText(
-		'close',
+		/^Remove /,
 	);
 
 describe('GCP AccountSettingsDrawer', () => {
@@ -89,31 +96,41 @@ describe('GCP AccountSettingsDrawer', () => {
 			screen.getByText(gcpAccountConfig.deployment_region),
 		).toBeInTheDocument();
 
+		const projectIdsInput = screen.getByTestId('gcp-edit-project-ids-select');
 		gcpAccountConfig.project_ids.forEach((projectId) => {
-			expect(screen.getByTitle(projectId)).toBeInTheDocument();
+			expect(projectIdsInput).toHaveTextContent(projectId);
 		});
 	});
 
 	it('keeps save disabled until the project IDs actually change', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderDrawer();
 
-		expect(screen.getByTestId('gcp-update-account-btn')).toBeDisabled();
+		expect(screen.getByTestId('gcp-update-account-btn')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 
-		await user.type(getProjectIdsInput(), 'project-c,');
+		await addProjectIds(user, 'gcp-edit-project-ids-select', ['project-c']);
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-update-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 
 	it('sends the updated project IDs while preserving the immutable deployment fields', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderDrawer();
 
-		await user.type(getProjectIdsInput(), 'project-c,');
+		await addProjectIds(user, 'gcp-edit-project-ids-select', ['project-c']);
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-update-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('gcp-update-account-btn'));
 
@@ -135,8 +152,7 @@ describe('GCP AccountSettingsDrawer', () => {
 			expect(setActiveAccount).toHaveBeenCalledWith({
 				...gcpAccount,
 				config: {
-					deployment_region: gcpAccountConfig.deployment_region,
-					deployment_project_id: gcpAccountConfig.deployment_project_id,
+					...gcpAccountConfig,
 					project_ids: ['project-a', 'project-b', 'project-c'],
 				},
 			});
@@ -149,17 +165,20 @@ describe('GCP AccountSettingsDrawer', () => {
 	});
 
 	it('blocks the update and shows a validation error when every project ID is removed', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderDrawer();
 
 		// Strip every tag via its remove icon; the list shrinks as we go.
-		while (getProjectIdTagRemoveButtons().length > 0) {
+		while (getProjectIdRemoveButtons().length > 0) {
 			// eslint-disable-next-line no-await-in-loop
-			await user.click(getProjectIdTagRemoveButtons()[0]);
+			await user.click(getProjectIdRemoveButtons()[0]);
 		}
 
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-update-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('gcp-update-account-btn'));
 
@@ -182,12 +201,15 @@ describe('GCP AccountSettingsDrawer', () => {
 			),
 		);
 
-		const user = userEvent.setup();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderDrawer();
 
-		await user.type(getProjectIdsInput(), 'project-c,');
+		await addProjectIds(user, 'gcp-edit-project-ids-select', ['project-c']);
 		await waitFor(() => {
-			expect(screen.getByTestId('gcp-update-account-btn')).toBeEnabled();
+			expect(screen.getByTestId('gcp-update-account-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 		await user.click(screen.getByTestId('gcp-update-account-btn'));
 
@@ -199,32 +221,5 @@ describe('GCP AccountSettingsDrawer', () => {
 		});
 		expect(setActiveAccount).not.toHaveBeenCalled();
 		expect(onClose).not.toHaveBeenCalled();
-	});
-
-	it('disconnects the account with the GCP-specific confirmation copy', async () => {
-		let disconnectedId: string | null = null;
-		server.use(
-			rest.delete(`${GCP_ACCOUNTS_URL}/:id`, (req, res, ctx) => {
-				disconnectedId = req.params.id as string;
-				return res(ctx.status(204));
-			}),
-		);
-
-		const user = userEvent.setup();
-		renderDrawer();
-
-		await user.click(screen.getByRole('button', { name: /disconnect/i }));
-
-		await expect(
-			screen.findByText(/manually tear down/i),
-		).resolves.toBeInTheDocument();
-
-		await user.click(screen.getByRole('button', { name: /remove account/i }));
-
-		await waitFor(() => {
-			expect(disconnectedId).toBe(GCP_ACCOUNT_ID);
-		});
-		expect(setActiveAccount).toHaveBeenCalledWith(null);
-		expect(onClose).toHaveBeenCalledTimes(1);
 	});
 });

@@ -4,7 +4,12 @@
  */
 
 import { rest } from 'msw';
-import type { CloudintegrationtypesUpdatableServiceDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	CloudintegrationtypesGCPConnectionMethodDTO,
+	type CloudintegrationtypesPostableAccountDTO,
+	type CloudintegrationtypesUpdatableServiceDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -17,7 +22,14 @@ import {
 	CLOUD_PROVIDERS,
 	CLOUD_SERVICE_CAP,
 	type CloudProvider,
+	GCP_CONNECTION_METHODS,
+	MUTATION_STATES,
+	type MutationState,
+	NEW_ACCOUNT_CHECK_INS,
+	type NewAccountCheckIn,
 	createdAccountResponse,
+	newAccountId,
+	newAccountResponse,
 	BUILT_IN_INTEGRATION_NOT_FOUND,
 	credentialsResponse,
 	seedServiceSignals,
@@ -33,7 +45,52 @@ import {
 const builtInIntegrationNotFound: MockResolver = (_req, res, ctx) =>
 	res(ctx.status(404), ctx.json(BUILT_IN_INTEGRATION_NOT_FOUND));
 
+const FAILED_REQUEST = {
+	status: 'error',
+	error: { code: 'internal', message: 'Request failed' },
+};
+
+/**
+ * Answers a mutation by the control's state: never, with a failure, or with the
+ * success body the caller builds.
+ */
+const mutationResolver =
+	(state: MutationState, ok: MockResolver): MockResolver =>
+	(req, res, ctx, ...rest) => {
+		if (state === 'loading') {
+			return res(ctx.delay('infinite'));
+		}
+
+		return state === 'error'
+			? res(ctx.status(500), ctx.json(FAILED_REQUEST))
+			: ok(req, res, ctx, ...rest);
+	};
+
+/**
+ * The account the connect flow just created answers by the check-in control;
+ * every other account is the page's data.
+ */
+const accountResolver =
+	(
+		provider: CloudProvider,
+		checkIn: NewAccountCheckIn,
+		existing: MockResolver,
+	): MockResolver =>
+	(req, res, ctx, ...rest) => {
+		if (String(req.params.id) !== newAccountId(provider)) {
+			return existing(req, res, ctx, ...rest);
+		}
+
+		return checkIn === 'error'
+			? res(ctx.status(500), ctx.json(FAILED_REQUEST))
+			: res(
+					ctx.status(200),
+					ctx.json(newAccountResponse(provider, checkIn === 'checked-in')),
+				);
+	};
+
 const PROVIDER = 'Cloud integration · provider';
+const MUTATIONS = 'Cloud integration · mutations';
 const SERVICES = 'Cloud integration · services';
 
 export const cloudIntegrationMocks = defineStoryMocks({
@@ -45,6 +102,17 @@ export const cloudIntegrationMocks = defineStoryMocks({
 			options: CLOUD_PROVIDERS,
 			value: 'aws',
 		}),
+		gcpConnectionMethod:
+			choiceControl<CloudintegrationtypesGCPConnectionMethodDTO>(
+				'GCP connection method',
+				{
+					group: PROVIDER,
+					description:
+						'How the connected GCP accounts were set up. `agent` makes the account settings drawer read-only and switches the Disconnect copy to the agent cleanup.',
+					options: GCP_CONNECTION_METHODS,
+					value: CloudintegrationtypesGCPConnectionMethodDTO.manual,
+				},
+			),
 		accounts: countControl('Connected accounts', {
 			group: PROVIDER,
 			description:
@@ -66,6 +134,34 @@ export const cloudIntegrationMocks = defineStoryMocks({
 			value: 3,
 			max: CLOUD_SERVICE_CAP,
 		}),
+		accountCreate: choiceControl<MutationState>('Account connection', {
+			group: MUTATIONS,
+			description:
+				'How the POST behind the connect flow answers. AWS and Azure raise "Failed to create account connection" on `error` and the "account connected" toast on `success`, GCP raises its toast after the agent check-in and shows `error` inline. `loading` never answers.',
+			options: MUTATION_STATES,
+			value: 'success',
+		}),
+		newAccountCheckIn: choiceControl<NewAccountCheckIn>('New account check-in', {
+			group: MUTATIONS,
+			description:
+				'How the poll for the account the connect flow just created answers. `checked-in` connects it on the first poll and the drawer closes with the success toast, `pending` keeps the drawer waiting on the agent with the AWS, Azure or GCP agent setup command up, `error` fails the poll so the drawer reports it could not connect.',
+			options: NEW_ACCOUNT_CHECK_INS,
+			value: 'checked-in',
+		}),
+		accountUpdate: choiceControl<MutationState>('Account settings update', {
+			group: MUTATIONS,
+			description:
+				'How the PUT behind Update Changes in the account settings drawer answers. `success` raises "Account settings updated successfully", `error` raises "Failed to update account settings".',
+			options: MUTATION_STATES,
+			value: 'success',
+		}),
+		serviceUpdate: choiceControl<MutationState>('Service config update', {
+			group: MUTATIONS,
+			description:
+				'How the PUT behind Save on a service answers. `error` raises "Failed to update service config", `loading` leaves Save spinning.',
+			options: MUTATION_STATES,
+			value: 'success',
+		}),
 	},
 	handlers: (values, response) => [
 		rest.get(
@@ -75,12 +171,12 @@ export const cloudIntegrationMocks = defineStoryMocks({
 
 		rest.put(
 			'http://localhost/api/v1/cloud_integrations/:cloudProvider/accounts/:id/services/:serviceId',
-			response.json(async (req) => {
+			mutationResolver(values.serviceUpdate, async (req, res, ctx) => {
 				const body = (await req.json()) as CloudintegrationtypesUpdatableServiceDTO;
 
 				setServiceSignals(String(req.params.serviceId), body.config ?? {});
 
-				return { status: 'success', data: null };
+				return res(ctx.status(200), ctx.json({ status: 'success', data: null }));
 			}),
 		),
 
@@ -118,27 +214,68 @@ export const cloudIntegrationMocks = defineStoryMocks({
 		),
 
 		rest.post(
+			'http://localhost/api/v1/cloud_integrations/:cloudProvider/accounts/check_in',
+			(_req, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: null })),
+		),
+
+		rest.post(
 			'http://localhost/api/v1/cloud_integrations/:cloudProvider/accounts',
-			response.json(() => createdAccountResponse(values.provider)),
+			mutationResolver(values.accountCreate, async (req, res, ctx) => {
+				const body = (await req.json()) as CloudintegrationtypesPostableAccountDTO;
+
+				return res(
+					ctx.status(201),
+					ctx.json(
+						createdAccountResponse(
+							values.provider,
+							body.config?.gcp?.connectionMethod,
+						),
+					),
+				);
+			}),
 		),
 
 		rest.put(
 			'http://localhost/api/v1/cloud_integrations/:cloudProvider/accounts/:id',
-			response.json((req) =>
-				accountResponse(values.provider, String(req.params.id)),
+			mutationResolver(values.accountUpdate, (req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json(
+						accountResponse(
+							values.provider,
+							String(req.params.id),
+							values.gcpConnectionMethod,
+						),
+					),
+				),
 			),
 		),
 
 		rest.get(
 			'http://localhost/api/v1/cloud_integrations/:cloudProvider/accounts/:id',
-			response.json((req) =>
-				accountResponse(values.provider, String(req.params.id)),
+			accountResolver(
+				values.provider,
+				values.newAccountCheckIn,
+				response.json((req) =>
+					accountResponse(
+						values.provider,
+						String(req.params.id),
+						values.gcpConnectionMethod,
+					),
+				),
 			),
 		),
 
 		rest.get(
 			'http://localhost/api/v1/cloud_integrations/:cloudProvider/accounts',
-			response.json(() => accountsResponse(values.provider, values.accounts)),
+			response.json(() =>
+				accountsResponse(
+					values.provider,
+					values.accounts,
+					values.gcpConnectionMethod,
+				),
+			),
 		),
 	],
 	config: (values) => ({
@@ -148,3 +285,171 @@ export const cloudIntegrationMocks = defineStoryMocks({
 		seedServiceSignals(values.provider, values.services, values.enabledServices);
 	},
 });
+
+/** The page picks its first service before it can render it. */
+export const untilLoaded = { timeout: 20_000 };
+
+export const expectToast = async (text: RegExp): Promise<void> => {
+	await waitFor(() => expect(screen.getByText(text)).toBeVisible(), {
+		timeout: 10_000,
+	});
+};
+
+export const openConnectFlow = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByText(
+			/integrate now/i,
+			undefined,
+			untilLoaded,
+		),
+	);
+};
+
+export const connectAwsAccount = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openConnectFlow(canvasElement);
+	await userEvent.click(
+		await screen.findByRole('combobox', undefined, untilLoaded),
+	);
+	await userEvent.click(await screen.findByText('US East (N. Virginia)'));
+	await userEvent.click(
+		await screen.findByRole('checkbox', { name: /us-east-1/i }),
+	);
+	await userEvent.click(
+		await screen.findByRole('button', { name: /generate command/i }),
+	);
+};
+
+export const connectAzureAccount = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openConnectFlow(canvasElement);
+	const [region, resourceGroups] = await screen.findAllByRole(
+		'combobox',
+		undefined,
+		untilLoaded,
+	);
+
+	await userEvent.click(region);
+	await userEvent.click(
+		await screen.findByText('Australia East (australiaeast)'),
+	);
+	await userEvent.type(resourceGroups, 'prod-platform-rg{Enter}');
+	await userEvent.click(
+		await screen.findByRole('button', { name: /generate command/i }),
+	);
+};
+
+const addGcpProjectId = async (
+	testId: string,
+	projectId: string,
+): Promise<void> => {
+	await userEvent.click(screen.getByTestId(testId));
+	await userEvent.type(
+		await screen.findByPlaceholderText('Type a project ID and press Enter'),
+		`${projectId}{Enter}`,
+	);
+};
+
+export const connectGcpAccount = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openConnectFlow(canvasElement);
+	await userEvent.type(
+		await screen.findByTestId('gcp-account-name-input', undefined, untilLoaded),
+		'acme-org',
+	);
+	await userEvent.type(
+		screen.getByTestId('gcp-deployment-project-id-input'),
+		'acme-deploy-123',
+	);
+	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
+	await userEvent.click(await screen.findByText('Mumbai (asia-south1)'));
+	await addGcpProjectId('gcp-project-ids-select', 'project-a');
+	await userEvent.click(screen.getByTestId('gcp-connect-account-btn'));
+};
+
+export const openGcpAgentSetup = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openConnectFlow(canvasElement);
+	await userEvent.click(
+		await screen.findByTestId(
+			'gcp-connection-method-agent',
+			undefined,
+			untilLoaded,
+		),
+	);
+	await screen.findByTestId('gcp-generate-command-btn', undefined, untilLoaded);
+};
+
+export const generateGcpAgentCommand = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openGcpAgentSetup(canvasElement);
+	await userEvent.type(
+		screen.getByTestId('gcp-deployment-project-id-input'),
+		'signoz-prod-4471',
+	);
+	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
+	await userEvent.click(await screen.findByText('Council Bluffs (us-central1)'));
+	await userEvent.click(screen.getByTestId('gcp-generate-command-btn'));
+};
+
+export const openEditAccount = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByText(
+			/edit account/i,
+			undefined,
+			untilLoaded,
+		),
+	);
+	await screen.findByRole('dialog', undefined, untilLoaded);
+};
+
+export const updateAwsAccount = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await openEditAccount(canvasElement);
+	await userEvent.click(
+		await screen.findByRole('checkbox', { name: /us-east-2/i }),
+	);
+	await userEvent.click(
+		await screen.findByRole('button', { name: /update changes/i }),
+	);
+};
+
+export const updateGcpProjects = async (
+	canvasElement: HTMLElement,
+	projectId: string,
+): Promise<void> => {
+	await openEditAccount(canvasElement);
+	await addGcpProjectId('gcp-edit-project-ids-select', projectId);
+	await userEvent.click(
+		await screen.findByRole('button', { name: /update changes/i }),
+	);
+};
+
+export const updateTaggedAccount = async (
+	canvasElement: HTMLElement,
+	tag: string,
+): Promise<void> => {
+	await openEditAccount(canvasElement);
+	const dialog = await screen.findByRole('dialog');
+
+	await userEvent.type(await within(dialog).findByRole('combobox'), tag);
+	const option = await screen.findByText(tag, {
+		selector: '.ant-select-item-option-content',
+	});
+
+	// The drawer disables pointer events outside itself, which the portalled popup is.
+	await userEvent.click(option, { pointerEventsCheck: 0 });
+	await userEvent.click(
+		await screen.findByRole('button', { name: /update changes/i }),
+	);
+};

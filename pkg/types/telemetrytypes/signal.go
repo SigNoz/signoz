@@ -22,3 +22,18 @@ func (Signal) Enum() []any {
 		SignalUnspecified,
 	}
 }
+
+// SignalFromText resolves a signal word to its Signal; ok is false for an
+// unknown word.
+func SignalFromText(text string) (Signal, bool) {
+	s := Signal{valuer.NewString(text)}
+	switch s {
+	case SignalTraces:
+		return SignalTraces, true
+	case SignalLogs:
+		return SignalLogs, true
+	case SignalMetrics:
+		return SignalMetrics, true
+	}
+	return Signal{}, false
+}

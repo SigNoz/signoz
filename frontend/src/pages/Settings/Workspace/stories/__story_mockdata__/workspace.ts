@@ -84,6 +84,10 @@ const CUSTOM_HOST = {
 
 export const WORKSPACE_URLS = ['default', 'custom'] as const;
 
+export const DOMAIN_UPDATES = ['success', 'loading', 'error'] as const;
+
+export type DomainUpdate = (typeof DOMAIN_UPDATES)[number];
+
 export type WorkspaceUrl = (typeof WORKSPACE_URLS)[number];
 
 /**

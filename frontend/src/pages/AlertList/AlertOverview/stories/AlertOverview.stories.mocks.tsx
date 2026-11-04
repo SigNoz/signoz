@@ -4,6 +4,7 @@
  */
 
 import { rest } from 'msw';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -11,11 +12,13 @@ import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import {
 	alertRuleByIdResponse,
 	ALERT_SCHEMAS,
-	channelsResponse,
+	notificationChannelsResponse,
 	CHANNEL_MAX,
+	RULE_KINDS,
 	RULE_STATE_CHOICES,
 	SEVERITY_CHOICES,
 	type AlertSchema,
+	type RuleKind,
 	type RuleStateChoice,
 	type SeverityChoice,
 } from '../../stories/__story_mockdata__/alerts';
@@ -33,6 +36,9 @@ const STORY_RELATIVE_TIME = '6h';
 const RULE = 'Alert overview · rule';
 const PREVIEW = 'Alert overview · preview';
 
+const TEST_NOTIFICATIONS = ['sent', 'no-alerts'] as const;
+type TestNotification = (typeof TEST_NOTIFICATIONS)[number];
+
 export const alertOverviewMocks = defineStoryMocks({
 	controls: {
 		alertSchema: choiceControl<AlertSchema>('Alert schema', {
@@ -41,6 +47,13 @@ export const alertOverviewMocks = defineStoryMocks({
 				'`v2` opens the stepper the new alert form uses; `classic` is the single-form page rules written before it still open in.',
 			options: ALERT_SCHEMAS,
 			value: 'v2',
+		}),
+		ruleKind: choiceControl<RuleKind>('Rule kind', {
+			group: RULE,
+			description:
+				'`anomaly` fires on how far each point strays from the seasonal forecast, in deviations, rather than on a fixed value.',
+			options: RULE_KINDS,
+			value: 'threshold',
 		}),
 		ruleState: choiceControl<RuleStateChoice>('State', {
 			group: RULE,
@@ -66,6 +79,13 @@ export const alertOverviewMocks = defineStoryMocks({
 			value: 3,
 			max: 6,
 		}),
+		testNotification: choiceControl<TestNotification>('Test notification', {
+			group: 'Alert overview · rule',
+			description:
+				'What the test run finds. `sent` raises the success toast, `no-alerts` the error toast saying the condition was not met.',
+			options: TEST_NOTIFICATIONS,
+			value: 'sent',
+		}),
 	},
 	handlers: (values, response) => [
 		rest.get(
@@ -75,6 +95,7 @@ export const alertOverviewMocks = defineStoryMocks({
 					severity: values.ruleSeverity,
 					state: values.ruleState,
 					schema: values.alertSchema,
+					kind: values.ruleKind,
 				}),
 			),
 		),
@@ -96,14 +117,17 @@ export const alertOverviewMocks = defineStoryMocks({
 				ctx.status(200),
 				ctx.json({
 					status: 'success',
-					data: { alertCount: 2, message: 'Rule tested against the last 6 hours' },
+					data: {
+						alertCount: values.testNotification === 'no-alerts' ? 0 : 2,
+						message: 'Rule tested against the last 6 hours',
+					},
 				}),
 			),
 		),
 
 		rest.get(
-			'http://localhost/api/v1/channels',
-			response.json(() => channelsResponse(values.channels)),
+			'http://localhost/api/v2/notification_channels',
+			response.json(() => notificationChannelsResponse(values.channels)),
 		),
 
 		rest.post(
@@ -146,3 +170,22 @@ export const alertOverviewMocks = defineStoryMocks({
 		route: `/alerts/overview?ruleId=${STORY_RULE_ID}&relativeTime=${STORY_RELATIVE_TIME}`,
 	}),
 });
+
+export const clickFooterButton = async (
+	canvasElement: HTMLElement,
+	testId: string,
+): Promise<void> => {
+	// The footer stays disabled, and remounts, until the rule has loaded.
+	const button = await waitFor(
+		() => {
+			const element = within(canvasElement).getByTestId(testId);
+
+			expect(element).toBeEnabled();
+			expect(element).not.toHaveAttribute('aria-disabled', 'true');
+
+			return element;
+		},
+		{ timeout: 15_000 },
+	);
+	await userEvent.click(button);
+};

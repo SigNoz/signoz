@@ -29,6 +29,7 @@ import PanelEditorLayout, {
 import PreviewPane from './PreviewPane/PreviewPane';
 import { useLegendSeries } from './hooks/useLegendSeries';
 import type { PanelEditorDraftApi } from './types';
+import { useGroupColumns } from './hooks/useGroupColumns';
 import { usePanelEditSession } from './hooks/usePanelEditSession';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
 import { useSeedMetricUnit } from './hooks/useSeedMetricUnit';
@@ -71,6 +72,8 @@ interface QueryEditorBodyProps {
 	/** Kind switch, owned by the shell (its cache must survive the fork swap). */
 	onChangePanelKind: (kind: PanelKind) => void;
 	originalPanelKind?: PanelKind;
+	/** Tab switch, owned by the shell alongside the kind switch it shares memory with. */
+	onChangeQueryMode: (key: string) => void;
 }
 
 /**
@@ -92,6 +95,7 @@ function QueryEditorBody({
 	panelDefinition,
 	onChangePanelKind,
 	originalPanelKind,
+	onChangeQueryMode,
 }: QueryEditorBodyProps): JSX.Element {
 	// Read here rather than taken as props: this renders inside a loaded dashboard
 	// subtree, so it resolves the same context every other consumer does.
@@ -196,6 +200,7 @@ function QueryEditorBody({
 	const { onDragSelect } = usePanelInteractions();
 	const legendSeries = useLegendSeries(draft, data);
 	const tableColumns = useTableColumns(draft, data);
+	const groupColumns = useGroupColumns(draft, data);
 
 	// Resolves the selected metric's unit and, on a new panel, seeds it into the right
 	// formatting field for the kind (panel-wide `unit`, or per-column `columnUnits` for
@@ -307,6 +312,7 @@ function QueryEditorBody({
 						panelDefinition={panelDefinition}
 						signal={listSignal}
 						isLoadingQueries={isFetching}
+						onChangeQueryMode={onChangeQueryMode}
 						onStageRunQuery={runQuery}
 						onCancelQuery={cancelQuery}
 						spec={spec}
@@ -326,6 +332,7 @@ function QueryEditorBody({
 					queryType={currentQuery.queryType}
 					legendSeries={legendSeries}
 					tableColumns={tableColumns}
+					groupColumns={groupColumns}
 					stepInterval={stepInterval}
 					metricUnit={metricUnit}
 				/>

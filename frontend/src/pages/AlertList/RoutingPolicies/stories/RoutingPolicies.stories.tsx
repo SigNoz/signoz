@@ -1,10 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { routingPoliciesMocks } from './RoutingPolicies.stories.mocks';
+import {
+	fillNewPolicy,
+	openEditPolicy,
+	routingPoliciesMocks,
+	untilLoaded,
+} from './RoutingPolicies.stories.mocks';
 import { FIRST_POLICY_NAME } from './__story_mockdata__/routingPolicies';
 
 import AlertList from '../../index';
@@ -17,7 +22,7 @@ const pageStory = storyMocks(routingPoliciesMocks, { layout: 'app' });
  * Policies that route a firing alert to channels by expression, in the order they
  * are evaluated.
  *
- * Route: `/alerts?tab=Configuration&subTab=RoutingPolicies`.
+ * Route: `/alerts?tab=Configuration&subTab=routing-policies`.
  */
 const meta = {
 	title: 'Pages/Alerts/Routing Policies',
@@ -31,9 +36,6 @@ export default meta;
 
 type Story = StoryObj<RoutingPoliciesArgs>;
 
-/** The page fetches before it renders a row, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
-
 /**
  * The rules that decide which channel an alert reaches, matched on the labels
  * the alert carries.
@@ -45,20 +47,20 @@ export const NoPolicies: Story = {
 	args: { policies: 0 },
 };
 
-/** A viewer: the row actions and the New routing policy button are gone. */
+/** A viewer: the row actions are gone and New routing policy is disabled. */
 export const Viewer: Story = {
 	args: { access: 'viewer' },
 };
 
-/** A policy opened up: the expression it matches on and where it sends. */
-export const Expanded: Story = {
+/** A policy opened from its row: the form prefilled with its expression and channels. */
+export const EditPolicy: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		const canvas = within(canvasElement);
 
 		await userEvent.click(
 			await canvas.findByText(FIRST_POLICY_NAME, undefined, untilLoaded),
 		);
-		await canvas.findByText(/expression/i);
+		await screen.findByText(/edit routing policy/i);
 	},
 };
 
@@ -81,15 +83,13 @@ export const DeletePolicyConfirm: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		const canvas = within(canvasElement);
 
-		await userEvent.click(
-			(
-				await canvas.findAllByTestId(
-					'delete-routing-policy',
-					undefined,
-					untilLoaded,
-				)
-			)[0],
+		const [firstRowActions] = await canvas.findAllByRole(
+			'button',
+			{ name: /^Actions for / },
+			untilLoaded,
 		);
+		await userEvent.click(firstRowActions);
+		await userEvent.click(await screen.findByText('Delete'));
 		// The modal titles itself and its confirm button the same.
 		await screen.findByRole('button', { name: 'Delete Routing Policy' });
 	},
@@ -100,13 +100,13 @@ export const SearchNoResults: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		const canvas = within(canvasElement);
 		const search = await canvas.findByPlaceholderText(
-			'Search for a routing policy...',
+			'Search by name or description',
 			undefined,
 			untilLoaded,
 		);
 
 		await userEvent.type(search, 'no matching policy');
-		await canvas.findByText('No matching routing policies found.');
+		await canvas.findByText('No matching routing policies');
 	},
 };
 
@@ -136,4 +136,73 @@ export const FormValidationError: Story = {
 		);
 		await screen.findByText('Please provide a name for the routing policy');
 	},
+};
+
+const expectToast = async (text: RegExp): Promise<void> => {
+	await waitFor(() => expect(screen.getByText(text)).toBeVisible());
+};
+
+const confirmDelete = async (canvasElement: HTMLElement): Promise<void> => {
+	await DeletePolicyConfirm.play?.({ canvasElement } as never);
+	await userEvent.click(
+		await screen.findByRole('button', { name: 'Delete Routing Policy' }),
+	);
+};
+
+/** A new policy saved: the toast raised once the POST answers. */
+export const CreatePolicyToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await NewPolicy.play?.({ canvasElement } as never);
+		await fillNewPolicy();
+		await expectToast(
+			args.createState === 'success'
+				? /routing policy created successfully/i
+				: /Policy name already exists/i,
+		);
+	},
+};
+
+/** The POST failed: the error toast carries the server message. */
+export const CreatePolicyErrorToast: Story = {
+	args: { createState: 'error' },
+	parameters: { allowConsoleErrors: true },
+	play: CreatePolicyToast.play,
+};
+
+/** An existing policy saved unchanged from its edit form. */
+export const UpdatePolicyToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await openEditPolicy(canvasElement);
+		await expectToast(
+			args.updateState === 'success'
+				? /routing policy updated successfully/i
+				: /failed to update routing policy/i,
+		);
+	},
+};
+
+/** The PUT failed. */
+export const UpdatePolicyErrorToast: Story = {
+	args: { updateState: 'error' },
+	parameters: { allowConsoleErrors: true },
+	play: UpdatePolicyToast.play,
+};
+
+/** The first policy deleted from its confirmation. */
+export const DeletePolicyToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await confirmDelete(canvasElement);
+		await expectToast(
+			args.deleteState === 'success'
+				? /routing policy deleted successfully/i
+				: /failed to delete routing policy/i,
+		);
+	},
+};
+
+/** The DELETE failed. */
+export const DeletePolicyErrorToast: Story = {
+	args: { deleteState: 'error' },
+	parameters: { allowConsoleErrors: true },
+	play: DeletePolicyToast.play,
 };

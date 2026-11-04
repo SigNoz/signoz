@@ -1,5 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 
 import CustomColorSwatch from './CustomColorSwatch';
@@ -47,7 +47,7 @@ function ColorSwatches<T extends string>({
 			<div role="radiogroup" aria-label={label} className={styles.group}>
 				{options.map((option, index) => (
 					<Fragment key={option.id}>
-						<TooltipSimple title={option.tooltip ?? option.label} arrow>
+						<Tooltip title={option.tooltip ?? option.label}>
 							<label
 								className={cx(styles.swatch, {
 									[styles.transparent]: option.pattern === 'transparent',
@@ -67,7 +67,7 @@ function ColorSwatches<T extends string>({
 									onChange={(): void => onChange(option.value)}
 								/>
 							</label>
-						</TooltipSimple>
+						</Tooltip>
 						{index === dividerAfter && <span className={styles.divider} />}
 					</Fragment>
 				))}

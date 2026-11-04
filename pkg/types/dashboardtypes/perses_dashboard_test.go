@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/stretchr/testify/assert"
@@ -1869,6 +1870,344 @@ func TestInvalidateAreaChartPanelSpecValues(t *testing.T) {
 	}
 }
 
+func TestScatterPlotPanelDefaults(t *testing.T) {
+	data := []byte(`{
+		"variables": [],
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"links": [],
+					"plugin": {
+						"kind": "signoz/ScatterPlotPanel",
+						"spec": {}
+					},
+					"queries": [{"kind": "scalar", "spec": {"plugin": {"kind": "signoz/ClickHouseSQL", "spec": {"name": "A", "query": "SELECT 1"}}}}]
+				}
+			}
+		},
+		"links": [],
+		"layouts": []
+	}`)
+	d, err := unmarshalDashboard(data)
+	require.NoError(t, err, "unmarshal and validate failed")
+
+	require.IsType(t, &ScatterPlotPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+	spec := d.Panels["p1"].Spec.Plugin.Spec.(*ScatterPlotPanelSpec)
+
+	assert.Empty(t, spec.Dimensions.X, "an omitted x stays empty so the renderer picks the first value column")
+	assert.Empty(t, spec.Dimensions.Y, "an omitted y stays empty so the renderer picks the second value column")
+	assert.Empty(t, spec.Dimensions.ColorBy, "an omitted colorBy stays empty so the renderer colours by every group-by label")
+	assert.Equal(t, "auto", spec.Axes.X.Scale.ValueOrDefault(), "expected x scale default auto")
+	assert.Equal(t, "auto", spec.Axes.Y.Scale.ValueOrDefault(), "expected y scale default auto")
+	assert.Nil(t, spec.Axes.X.SoftMin, "expected x softMin unset")
+	assert.Equal(t, "2", spec.Formatting.DecimalPrecision.ValueOrDefault(), "expected DecimalPrecision default 2")
+	assert.Equal(t, "global_time", spec.Visualization.TimePreference.ValueOrDefault(), "expected TimePreference default global_time")
+	assert.Equal(t, "bottom", spec.Legend.Position.ValueOrDefault(), "expected LegendPosition default bottom")
+
+	output, err := json.Marshal(d)
+	require.NoError(t, err, "marshal dashboard failed")
+	assert.Contains(t, string(output), `"axes":{"x":{"softMin":null,"softMax":null,"scale":"auto","label":""},"y":{"softMin":null,"softMax":null,"scale":"auto","label":""}}`, "expected default axes in stored/response JSON")
+	assert.Contains(t, string(output), `"dimensions":{"x":"","y":"","sizeBy":"","colorBy":null}`, "expected empty dimensions in stored/response JSON")
+	assert.Contains(t, string(output), `"chartAppearance":{"points":{"size":null,"minSize":null,"maxSize":null,"opacity":null}}`, "omitted point settings stay null so the renderer applies its defaults")
+}
+
+func TestValidateScatterPlotDashboard(t *testing.T) {
+	data, err := os.ReadFile("testdata/perses_scatter_plot_panel.json")
+	require.NoError(t, err, "reading example file")
+
+	spec, err := unmarshalDashboard(data)
+	require.NoError(t, err, "unmarshal and validate failed")
+
+	require.IsType(t, &ScatterPlotPanelSpec{}, spec.Panels["p1"].Spec.Plugin.Spec)
+	panelSpec := spec.Panels["p1"].Spec.Plugin.Spec.(*ScatterPlotPanelSpec)
+	softMin, softMax := 0.0, 1000.0
+	size, minSize, maxSize, opacity := PointDiameter(8), PointDiameter(4), PointDiameter(24), PointOpacity(0.1)
+	assert.Equal(t, &ScatterPlotPanelSpec{
+		Visualization: BasicVisualization{TimePreference: TimePreferenceLast1Hr},
+		Dimensions:    ScatterPlotDimensions{X: "A.count()", Y: "A.p99(duration_nano)", SizeBy: "A.countIf(has_error = true)", ColorBy: []string{"k8s.namespace.name", "k8s.pod.name"}},
+		Formatting:    TableFormatting{ColumnUnits: map[string]string{"A.p99(duration_nano)": "ns"}, DecimalPrecision: PrecisionOption1},
+		Axes: ScatterPlotAxes{
+			X: ScatterPlotAxis{SoftMin: &softMin, Scale: AxisScaleLog, Label: "Throughput"},
+			Y: ScatterPlotAxis{SoftMax: &softMax, Scale: AxisScaleSymlog, Label: "p99 latency"},
+		},
+		ChartAppearance: ScatterPlotChartAppearance{Points: ScatterPlotPoints{Size: &size, MinSize: &minSize, MaxSize: &maxSize, Opacity: &opacity}},
+		Legend:          Legend{Position: LegendPositionRight, Mode: LegendModeList, CustomColors: map[string]string{"checkout": "#1f77b4"}},
+		Thresholds: []ScatterPlotThreshold{
+			{ThresholdWithLabel: ThresholdWithLabel{Value: 300, Unit: "ms", Color: "#f00", Label: "p99 SLO"}, Axis: ThresholdAxisY},
+			{ThresholdWithLabel: ThresholdWithLabel{Value: 50, Color: "#0f0"}, Axis: ThresholdAxisX},
+		},
+	}, panelSpec)
+
+	dashboard := &DashboardV2{Spec: *spec}
+	request, err := dashboard.GetPanelQuery(1, 2, "p1")
+	require.NoError(t, err, "building the panel's query failed")
+	assert.Equal(t, qb.RequestTypeScalar, request.RequestType)
+	require.NotNil(t, request.FormatOptions)
+	assert.True(t, request.FormatOptions.FormatTableResultForUI, "scatter rows are joined the way a table's are")
+
+	require.Len(t, request.CompositeQuery.Queries, 1)
+	query, ok := request.CompositeQuery.Queries[0].Spec.(qb.QueryBuilderQuery[qb.TraceAggregation])
+	require.True(t, ok, "expected a traces builder query")
+	assert.Len(t, query.Aggregations, 3)
+	assert.Len(t, query.GroupBy, 2)
+
+	assert.NoError(t, request.Validate(), "the request built from the panel is not a valid scalar request")
+
+	// the panel read back out of storage draws the same scatter plot
+	stored, err := json.Marshal(spec)
+	require.NoError(t, err, "marshal dashboard failed")
+	reread, err := unmarshalDashboard(stored)
+	require.NoError(t, err, "the stored dashboard does not validate")
+	assert.Equal(t, panelSpec, reread.Panels["p1"].Spec.Plugin.Spec)
+	rereadRequest, err := (&DashboardV2{Spec: *reread}).GetPanelQuery(1, 2, "p1")
+	require.NoError(t, err, "building the stored panel's query failed")
+	assert.Equal(t, request, rereadRequest)
+}
+
+func TestInvalidateScatterPlotPanelSpecValues(t *testing.T) {
+	testCases := []struct {
+		name                   string
+		panelKind              string
+		panelSpec              string
+		expectedErrorSubstring string
+	}{
+		{
+			name:                   "AxisScale_Unknown_Invalid",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"axes": {"x": {"scale": "sqrt"}}}`,
+			expectedErrorSubstring: "invalid axis scale \"sqrt\": must be `auto`, `linear`, `log`, or `symlog`",
+		},
+		{
+			name:                   "AxisScale_NonString_UnmarshalError",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"axes": {"y": {"scale": true}}}`,
+			expectedErrorSubstring: "cannot unmarshal bool",
+		},
+		{
+			name:                   "Axis_IsLogScale_UnknownField",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"axes": {"x": {"isLogScale": true}}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+		{
+			name:                   "Axes_SingleAxisShape_UnknownField",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"axes": {"softMin": 0}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+		{
+			name:                   "ThresholdAxis_Unknown_Invalid",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"thresholds": [{"value": 1, "color": "#f00", "axis": "z"}]}`,
+			expectedErrorSubstring: "invalid threshold axis \"z\": must be `x` or `y`",
+		},
+		{
+			name:                   "Dimensions_UnknownKey_UnknownField",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"dimensions": {"z": "A"}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+		{
+			name:                   "PointSize_BelowMinimum_Invalid",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"size": 1}}}`,
+			expectedErrorSubstring: "invalid point diameter 1: must be a whole number between 2 and 40",
+		},
+		{
+			name:                   "PointMaxSize_AboveMaximum_Invalid",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"maxSize": 41}}}`,
+			expectedErrorSubstring: "invalid point diameter 41",
+		},
+		{
+			name:                   "PointMinSize_Fractional_UnmarshalError",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"minSize": 4.5}}}`,
+			expectedErrorSubstring: "cannot unmarshal number 4.5",
+		},
+		{
+			name:                   "PointMinSize_AboveMaxSize_Invalid",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"minSize": 20, "maxSize": 10}}}`,
+			expectedErrorSubstring: "minSize 20 must not exceed maxSize 10",
+		},
+		{
+			name:                   "PointMaxSize_BelowDefaultMinSize_Invalid",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"maxSize": 2}}}`,
+			expectedErrorSubstring: "minSize 4 must not exceed maxSize 2",
+		},
+		{
+			name:                   "PointMinSize_AboveDefaultMaxSize_Invalid",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"minSize": 40}}}`,
+			expectedErrorSubstring: "minSize 40 must not exceed maxSize 24",
+		},
+		{
+			name:                   "PointOpacity_BelowFloor_Invalid",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"opacity": 0.05}}}`,
+			expectedErrorSubstring: "invalid point opacity 0.05: must be between 0.1 and 1",
+		},
+		{
+			name:                   "PointOpacity_Percentage_Invalid",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"opacity": 70}}}`,
+			expectedErrorSubstring: "invalid point opacity 70",
+		},
+		{
+			name:                   "Points_MisspelledField_UnknownField",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"points": {"opactiy": 0.5}}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+		{
+			name:                   "ChartAppearance_FillOpacity_UnknownField",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"chartAppearance": {"fillOpacity": 0.5}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+		{
+			name:                   "ColorBy_String_UnmarshalError",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"dimensions": {"colorBy": "service.name"}}`,
+			expectedErrorSubstring: "cannot unmarshal string",
+		},
+		{
+			name:                   "Formatting_PanelUnit_UnknownField",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"formatting": {"unit": "ms"}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+		{
+			name:                   "Threshold_NoColor_Required",
+			panelKind:              "signoz/ScatterPlotPanel",
+			panelSpec:              `{"thresholds": [{"value": 300}]}`,
+			expectedErrorSubstring: "Color' Error:Field validation for 'Color' failed on the 'required' tag",
+		},
+		{
+			name:                   "TimeSeriesAxes_Scale_UnknownField",
+			panelKind:              "signoz/TimeSeriesPanel",
+			panelSpec:              `{"axes": {"scale": "log"}}`,
+			expectedErrorSubstring: "unknown field",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			data := []byte(`{
+				"variables": [],
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"links": [],
+							"plugin": {"kind": "` + testCase.panelKind + `", "spec": ` + testCase.panelSpec + `},
+							"queries": [{"kind": "scalar", "spec": {"plugin": {"kind": "signoz/ClickHouseSQL", "spec": {"name": "A", "query": "SELECT 1"}}}}]
+						}
+					}
+				},
+				"links": [],
+				"layouts": []
+			}`)
+			_, err := unmarshalDashboard(data)
+			require.Error(t, err, "expected the spec to be rejected")
+			assert.Contains(t, err.Error(), testCase.expectedErrorSubstring, "unexpected error message: %s", err.Error())
+		})
+	}
+}
+
+func TestScatterPlotDimensionsBindToQuery(t *testing.T) {
+	testCases := []struct {
+		name                   string
+		queryPlugin            string
+		dimensions             string
+		expectedErrorSubstring string
+	}{
+		{
+			name:                   "MultiAggregationQuery_BareQueryName_NotAValueColumn",
+			queryPlugin:            `{"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "traces", "aggregations": [{"expression": "count()"}, {"expression": "p99(duration_nano)"}]}}`,
+			dimensions:             `{"x": "A"}`,
+			expectedErrorSubstring: "dimensions.x: \"A\" is not a value column of the panel's query; value columns: `A.count()`, `A.p99(duration_nano)`",
+		},
+		{
+			name:                   "ColorBy_NotAGroupByKey_Rejected",
+			queryPlugin:            `{"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "traces", "aggregations": [{"expression": "count()"}], "groupBy": [{"name": "service.name"}]}}`,
+			dimensions:             `{"colorBy": ["service.name", "k8s.pod.name"]}`,
+			expectedErrorSubstring: "dimensions.colorBy: \"k8s.pod.name\" is not a group-by key of the panel's query; group-by keys: `service.name`",
+		},
+		{
+			name: "Formula_ValueColumn_CarriesDisabledQueryLabels",
+			queryPlugin: `{"kind": "signoz/CompositeQuery", "spec": {"queries": [
+				{"type": "builder_query", "spec": {"name": "A", "signal": "traces", "disabled": true, "aggregations": [{"expression": "count()"}], "groupBy": [{"name": "service.name"}]}},
+				{"type": "builder_query", "spec": {"name": "B", "signal": "traces", "disabled": true, "aggregations": [{"expression": "countIf(has_error = true)"}], "groupBy": [{"name": "service.name"}]}},
+				{"type": "builder_formula", "spec": {"name": "F1", "expression": "B / A"}}
+			]}}`,
+			dimensions: `{"x": "F1", "colorBy": ["service.name"]}`,
+		},
+		{
+			name:        "ClickHouseQuery_ColumnsUnknownUntilRunTime_BindingsUnchecked",
+			queryPlugin: `{"kind": "signoz/ClickHouseSQL", "spec": {"name": "A", "query": "SELECT 1"}}`,
+			dimensions:  `{"x": "throughput", "colorBy": ["pod"]}`,
+		},
+		{
+			name: "Queries_DifferentGroupBy_Rejected",
+			queryPlugin: `{"kind": "signoz/CompositeQuery", "spec": {"queries": [
+				{"type": "builder_query", "spec": {"name": "A", "signal": "traces", "aggregations": [{"expression": "count()"}], "groupBy": [{"name": "service.name"}]}},
+				{"type": "builder_query", "spec": {"name": "B", "signal": "traces", "aggregations": [{"expression": "p99(duration_nano)"}], "groupBy": [{"name": "k8s.pod.name"}]}}
+			]}}`,
+			dimensions:             `{"x": "A", "y": "B"}`,
+			expectedErrorSubstring: "queries must group by the same keys so their rows join into dots; \"A\" groups by [`service.name`], \"B\" groups by [`k8s.pod.name`]",
+		},
+		{
+			name: "Queries_SameGroupByDifferentOrder_Accepted",
+			queryPlugin: `{"kind": "signoz/CompositeQuery", "spec": {"queries": [
+				{"type": "builder_query", "spec": {"name": "A", "signal": "traces", "aggregations": [{"expression": "count()"}], "groupBy": [{"name": "service.name"}, {"name": "k8s.pod.name"}]}},
+				{"type": "builder_query", "spec": {"name": "B", "signal": "traces", "aggregations": [{"expression": "p99(duration_nano)"}], "groupBy": [{"name": "k8s.pod.name"}, {"name": "service.name"}]}}
+			]}}`,
+			dimensions: `{"x": "A", "y": "B", "colorBy": ["service.name"]}`,
+		},
+		{
+			name: "Queries_DisabledUnreadQueryDifferentGroupBy_Rejected",
+			queryPlugin: `{"kind": "signoz/CompositeQuery", "spec": {"queries": [
+				{"type": "builder_query", "spec": {"name": "A", "signal": "traces", "aggregations": [{"expression": "count()"}], "groupBy": [{"name": "service.name"}]}},
+				{"type": "builder_query", "spec": {"name": "B", "signal": "traces", "aggregations": [{"expression": "p99(duration_nano)"}], "groupBy": [{"name": "service.name"}]}},
+				{"type": "builder_query", "spec": {"name": "C", "signal": "traces", "disabled": true, "aggregations": [{"expression": "count()"}], "groupBy": [{"name": "k8s.pod.name"}]}}
+			]}}`,
+			dimensions:             `{"x": "A", "y": "B"}`,
+			expectedErrorSubstring: "\"A\" groups by [`service.name`], \"C\" groups by [`k8s.pod.name`]",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			data := []byte(`{
+				"variables": [],
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"links": [],
+							"plugin": {"kind": "signoz/ScatterPlotPanel", "spec": {"dimensions": ` + testCase.dimensions + `}},
+							"queries": [{"kind": "scalar", "spec": {"plugin": ` + testCase.queryPlugin + `}}]
+						}
+					}
+				},
+				"links": [],
+				"layouts": []
+			}`)
+			_, err := unmarshalDashboard(data)
+			if testCase.expectedErrorSubstring == "" {
+				assert.NoError(t, err)
+				return
+			}
+			require.Error(t, err, "expected the binding to be rejected")
+			assert.Contains(t, err.Error(), testCase.expectedErrorSubstring, "unexpected error message: %s", err.Error())
+		})
+	}
+}
+
 func TestNumberPanelDefaults(t *testing.T) {
 	data := []byte(`{
 		"variables": [],
@@ -2018,6 +2357,43 @@ func TestStorageRoundTrip(t *testing.T) {
 	}
 
 	assert.Contains(t, responseStr, `"operator":"above"`, "expected operator:above after storage round-trip")
+}
+
+// An AI builder query carries no signal of its own: the plugin kind implies
+// gen_ai, which only reads traces, so decode pins the signal and marshal emits it.
+func TestAIBuilderQueryStorageRoundTrip(t *testing.T) {
+	input := []byte(`{
+		"variables": [],
+		"panels": {"p1": {"kind": "Panel", "spec": {
+			"links": [],
+			"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+			"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/AIBuilderQuery", "spec": {
+				"name": "A", "aggregations": [{"expression": "count()"}]
+			}}}}]
+		}}},
+		"links": [],
+		"layouts": []
+	}`)
+
+	d, err := unmarshalDashboard(input)
+	require.NoError(t, err)
+
+	plugin := d.Panels["p1"].Spec.Queries[0].Spec.Plugin
+	assert.Equal(t, QueryKindAIBuilder, plugin.Kind)
+
+	aiSpec, ok := plugin.Spec.(*AIBuilderQuerySpec)
+	require.True(t, ok, "expected *AIBuilderQuerySpec, got %T", plugin.Spec)
+	assert.Equal(t, "A", aiSpec.Name)
+	assert.Equal(t, telemetrytypes.SignalTraces, aiSpec.Signal)
+
+	stored, err := json.Marshal(plugin)
+	require.NoError(t, err)
+	assert.Contains(t, string(stored), `"kind":"signoz/AIBuilderQuery"`)
+	assert.Contains(t, string(stored), `"signal":"traces"`)
+
+	var loaded QueryPlugin
+	require.NoError(t, json.Unmarshal(stored, &loaded))
+	assert.Equal(t, plugin, loaded)
 }
 
 func TestPostableDashboardV2GenerateNameFlag(t *testing.T) {
@@ -2190,7 +2566,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		switch panelKind {
 		case "signoz/ListPanel":
 			return "raw"
-		case "signoz/TablePanel", "signoz/NumberPanel", "signoz/PieChartPanel", "signoz/HistogramPanel":
+		case "signoz/TablePanel", "signoz/NumberPanel", "signoz/PieChartPanel", "signoz/HistogramPanel", "signoz/ScatterPlotPanel":
 			return "scalar"
 		default:
 			return "time_series"
@@ -2232,15 +2608,22 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		{"TimeSeries+PromQL", mkQuery("signoz/TimeSeriesPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), false},
 		{"Table+ClickHouse", mkQuery("signoz/TablePanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), false},
 		{"List+Builder", mkQuery("signoz/ListPanel", "signoz/BuilderQuery", `{"name":"A","signal":"logs"}`), false},
+		{"TimeSeries+AIBuilder", mkQuery("signoz/TimeSeriesPanel", "signoz/AIBuilderQuery", `{"name":"A","aggregations":[{"expression":"count()"}]}`), false},
+		{"List+AIBuilder", mkQuery("signoz/ListPanel", "signoz/AIBuilderQuery", `{"name":"A"}`), false},
+		{"ScatterPlot+ClickHouse", mkQuery("signoz/ScatterPlotPanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), false},
 		// Top-level: rejected
 		{"Table+PromQL", mkQuery("signoz/TablePanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
+		{"ScatterPlot+PromQL", mkQuery("signoz/ScatterPlotPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
+		{"ScatterPlot+TraceOperator", mkQuery("signoz/ScatterPlotPanel", "signoz/TraceOperator", `{"name":"T1","expression":"A => B"}`), true},
 		{"List+ClickHouse", mkQuery("signoz/ListPanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), true},
 		{"List+PromQL", mkQuery("signoz/ListPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
 		{"List+Composite", mkQuery("signoz/ListPanel", "signoz/CompositeQuery", `{"queries":[]}`), true},
 		{"List+Formula", mkQuery("signoz/ListPanel", "signoz/Formula", `{"name":"F1","expression":"A+B"}`), true},
 		// Composite sub-queries
 		{"Table+Composite(promql)", mkComposite("signoz/TablePanel", "promql", `{"name":"A","query":"up"}`), true},
+		{"ScatterPlot+Composite(promql)", mkComposite("signoz/ScatterPlotPanel", "promql", `{"name":"A","query":"up"}`), true},
 		{"Table+Composite(clickhouse)", mkComposite("signoz/TablePanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
+		{"Table+Composite(builder_ai)", mkComposite("signoz/TablePanel", "builder_ai_query", `{"name":"A","aggregations":[{"expression":"count()"}]}`), false},
 	}
 
 	for _, tc := range cases {

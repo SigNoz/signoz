@@ -15,6 +15,9 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import type { OptionsQuery } from 'container/OptionsMenu/types';
+import { STORAGE_VERSION } from 'lib/recentQueries/constants';
+import type { RecentQueriesStoreShape } from 'lib/recentQueries/types';
+import { makeId, storageKeyFor } from 'lib/recentQueries/utils';
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { quickFiltersListResponse } from 'mocks-server/__mockdata__/customQuickFilters';
 import type { AppState } from 'store/reducers';
@@ -24,7 +27,11 @@ import type { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import type { IGetAttributeSuggestionsSuccessResponse } from 'types/api/queryBuilder/getAttributeSuggestions';
 import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import type { MetricRangePayloadV5, TimeSeries } from 'types/api/v5/queryRange';
+import type {
+	MetricRangePayloadV5,
+	TelemetryFieldKey,
+	TimeSeries,
+} from 'types/api/v5/queryRange';
 import type { ListItem } from 'types/api/widgets/getQuery';
 
 import { dashboardsForUserResponse } from '@/storybook/msw/__story_mockdata__/dashboards';
@@ -135,6 +142,19 @@ const jsonBodyFor = (
 	http: { method: 'POST', route: '/api/v1/checkout', status_code: 200 },
 });
 
+/**
+ * Every fourth JSON-body log is what the collector makes of a plain line on a
+ * `use_json_body` tenant: an object holding only `message`.
+ */
+const jsonBodyAt = (
+	severity: LogSeverity,
+	service: string,
+	index: number,
+): ILogBody =>
+	index % 4 === 3
+		? { message: MESSAGES[severity] }
+		: jsonBodyFor(severity, service, index);
+
 export interface LogsResponseOptions {
 	/** `use_json_body`: the body arrives as an object instead of a line. */
 	jsonBody?: boolean;
@@ -166,7 +186,7 @@ export const logRows = (
 			data: {
 				id: `01JBQ${hex(index, 8).toUpperCase()}`,
 				body: jsonBody
-					? jsonBodyFor(severity, service, index)
+					? jsonBodyAt(severity, service, index)
 					: `${timestamp} ${severity} ${service} ${MESSAGES[severity]}`,
 				severity_text: severity,
 				severity_number: SEVERITY_NUMBERS[severity],
@@ -453,13 +473,35 @@ export const filterSuggestionsResponse = (
  * this is what decides the format, and the columns have to be in it or the list
  * loses `body` and `timestamp`.
  */
-export const logsListOptions = (
-	options: Pick<OptionsQuery, 'format' | 'maxLines' | 'fontSize'>,
-): OptionsQuery => ({
-	selectColumns: defaultLogsSelectedColumns,
+export const logsListOptions = ({
+	bodyColumns = false,
+	...options
+}: Pick<OptionsQuery, 'format' | 'maxLines' | 'fontSize'> & {
+	bodyColumns?: boolean;
+}): OptionsQuery => ({
+	selectColumns: bodyColumns
+		? [...defaultLogsSelectedColumns, ...BODY_FIELD_COLUMNS]
+		: defaultLogsSelectedColumns,
 	version: 1,
 	...options,
 });
+
+/**
+ * Keys of the JSON body picked as columns: a nested object, an array and a
+ * leaf, which is what tells a list format apart on how it renders a non-string
+ * field value.
+ */
+const BODY_FIELD_COLUMNS: TelemetryFieldKey[] = [
+	'order',
+	'order.coupons',
+	'http.status_code',
+].map((name) => ({
+	name,
+	signal: 'logs',
+	fieldContext: 'log',
+	fieldDataType: '',
+	isIndexed: false,
+}));
 
 const DASHBOARD_NAMES = [
 	'Logs overview',
@@ -470,3 +512,34 @@ const DASHBOARD_NAMES = [
 
 export const dashboardsResponse = (): ListDashboardsForUserV2200 =>
 	dashboardsForUserResponse(DASHBOARD_NAMES);
+
+const RECENT_FILTERS = [
+	"service.name = 'checkout' AND severity_text = 'ERROR'",
+	"k8s.namespace.name = 'observability'",
+	"body CONTAINS 'timeout'",
+	'http.status_code >= 500',
+	"deployment.environment IN ['production', 'staging']",
+];
+
+/** The filter lists this many recent entries at most. */
+export const RECENT_FILTER_MAX = RECENT_FILTERS.length;
+
+/**
+ * The explorer's recent filters as the store keeps them in localStorage,
+ * newest first, five minutes apart. Dated off `new Date()`, which the story
+ * clock freezes, so the "5 minutes ago" labels hold still.
+ */
+export const recentFiltersStorage = (count: number): [string, string] => {
+	const store: RecentQueriesStoreShape = {
+		version: STORAGE_VERSION,
+		entries: RECENT_FILTERS.slice(0, count).map((expression, index) => ({
+			id: makeId('logs', '', expression),
+			signal: 'logs',
+			source: '',
+			filter: { expression },
+			lastUsedAt: new Date().getTime() - (index + 1) * 5 * 60_000,
+		})),
+	};
+
+	return [storageKeyFor('logs', ''), JSON.stringify(store)];
+};

@@ -2,9 +2,7 @@ import { useCallback } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Select } from 'antd';
 import { Download, SlidersVertical } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
-import logEvent from 'api/common/logEvent';
-import { InfraMonitoringEvents } from 'constants/events';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import {
 	INFRA_MONITORING_ATTR_KEYS,
@@ -35,7 +33,6 @@ const NAME_COLUMN_KEYS: Set<string> = new Set([
 
 interface K8sTableToolbarProps {
 	entity: InfraMonitoringEntity;
-	eventCategory: InfraMonitoringEvents;
 	leftFilters?: React.ReactNode;
 	onOpenOptionsDrawer: () => void;
 	onDownload?: () => void;
@@ -43,7 +40,6 @@ interface K8sTableToolbarProps {
 
 function K8sTableToolbar({
 	entity,
-	eventCategory,
 	leftFilters,
 	onOpenOptionsDrawer,
 	onDownload,
@@ -65,15 +61,9 @@ function K8sTableToolbar({
 
 			void setGroupBy(value);
 
-			void logEvent(InfraMonitoringEvents.GroupByChanged, {
-				entity: InfraMonitoringEvents.K8sEntity,
-				page: InfraMonitoringEvents.ListPage,
-				category: eventCategory,
-			});
-
 			logInfraGroupByCustomizedEvent(entity, value);
 		},
-		[entity, eventCategory, orderBy, setCurrentPage, setOrderBy, setGroupBy],
+		[entity, orderBy, setCurrentPage, setOrderBy, setGroupBy],
 	);
 
 	return (
@@ -99,34 +89,36 @@ function K8sTableToolbar({
 			{leftFilters}
 
 			{onDownload && (
-				<TooltipSimple title="Download">
+				<Tooltip title="Download">
 					<Button
+						aria-label="Action"
 						type="button"
 						variant="ghost"
-						size="icon"
+						size="sm"
+						icon
 						color="secondary"
-						data-testid="k8s-table-download-button"
+						testId="k8s-table-download-button"
 						onClick={onDownload}
-						className={styles.toolbarButton}
 					>
 						<Download size={14} />
 					</Button>
-				</TooltipSimple>
+				</Tooltip>
 			)}
 
-			<TooltipSimple title="Options">
+			<Tooltip title="Options">
 				<Button
+					aria-label="Action"
 					type="button"
 					variant="ghost"
-					size="icon"
+					size="sm"
+					icon
 					color="secondary"
-					data-testid="k8s-table-options-button"
+					testId="k8s-table-options-button"
 					onClick={onOpenOptionsDrawer}
-					className={styles.toolbarButton}
 				>
 					<SlidersVertical size={14} />
 				</Button>
-			</TooltipSimple>
+			</Tooltip>
 		</div>
 	);
 }

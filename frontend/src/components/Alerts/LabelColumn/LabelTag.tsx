@@ -1,35 +1,24 @@
 import { Copy } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
+import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
 import { toast } from '@signozhq/ui/sonner';
-import {
-	TooltipContent,
-	TooltipRoot,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { useCopyToClipboard } from 'react-use';
 
 import styles from './LabelTag.module.scss';
 
 export interface LabelTagProps {
 	label: string;
-	color?:
-		| 'primary'
-		| 'secondary'
-		| 'success'
-		| 'error'
-		| 'warning'
-		| 'robin'
-		| 'forest'
-		| 'amber'
-		| 'sienna'
-		| 'cherry'
-		| 'sakura'
-		| 'aqua'
-		| 'vanilla';
+	color?: BadgeColorType;
 	value?: string;
+	className?: string;
 }
 
-function LabelTag({ label, value, color }: LabelTagProps): JSX.Element {
+function LabelTag({
+	label,
+	value,
+	color,
+	className,
+}: LabelTagProps): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
 	const displayText = value ? `${label}: ${value}` : label;
 	const searchFormat = value ? `${label} ${value}` : label;
@@ -41,20 +30,8 @@ function LabelTag({ label, value, color }: LabelTagProps): JSX.Element {
 	};
 
 	return (
-		<TooltipRoot>
-			<TooltipTrigger asChild>
-				<span>
-					<Badge
-						color={color}
-						className={styles.labelBadge}
-						variant="outline"
-						data-testid={`label-tag-${label}`}
-					>
-						<span className={styles.labelValue}>{displayText}</span>
-					</Badge>
-				</span>
-			</TooltipTrigger>
-			<TooltipContent>
+		<Tooltip
+			title={
 				<div className={styles.tooltipContent}>
 					<span>{displayText}</span>
 					<button
@@ -66,8 +43,19 @@ function LabelTag({ label, value, color }: LabelTagProps): JSX.Element {
 						<Copy size={12} />
 					</button>
 				</div>
-			</TooltipContent>
-		</TooltipRoot>
+			}
+		>
+			<span className={className}>
+				<Badge
+					textTransform="none"
+					color={color ?? 'secondary'}
+					variant="outlined"
+					testId={`label-tag-${label}`}
+				>
+					<span className={styles.labelValue}>{displayText}</span>
+				</Badge>
+			</span>
+		</Tooltip>
 	);
 }
 

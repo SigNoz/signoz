@@ -1,5 +1,6 @@
 import {
 	Bot,
+	Cable,
 	ChartLine,
 	DraftingCompass,
 	FileKey,
@@ -10,6 +11,7 @@ import {
 	Logs,
 	Receipt,
 	Shield,
+	TowerControl,
 } from '@signozhq/icons';
 
 import permissionsType from 'lib/authz/hooks/useAuthZ/permissions.type';
@@ -94,6 +96,23 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		selectorPlaceholder:
 			'Type quick filter ID, separate multiple with comma or space',
 		docsAnchor: 'quick-filter',
+	},
+	'saved-view': {
+		label: 'Saved Views',
+		description: 'Saved views in the logs, traces, metrics and meter explorers.',
+		icon: TowerControl,
+		selectorPlaceholder:
+			'Type saved view ID, separate multiple with comma or space',
+		docsAnchor: 'saved-view',
+	},
+	'notification-channel': {
+		label: 'Notification Channels',
+		description:
+			'Destinations for alert notifications, such as Slack, PagerDuty, webhooks, etc.',
+		icon: Cable,
+		selectorPlaceholder:
+			'Type notification channel ID, separate multiple with comma or space',
+		docsAnchor: 'notification-channel',
 	},
 	logs: {
 		label: 'Logs',

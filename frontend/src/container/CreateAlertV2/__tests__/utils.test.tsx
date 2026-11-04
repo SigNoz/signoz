@@ -1,5 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 
 import { defaultPostableAlertRuleV2 } from '../constants';
@@ -11,6 +12,7 @@ import {
 import {
 	getAdvancedOptionsStateFromAlertDef,
 	getColorForThreshold,
+	getAlertTypeFromAlertDef,
 	getCreateAlertLocalStateFromAlertDef,
 	getEvaluationWindowStateFromAlertDef,
 	getNotificationSettingsStateFromAlertDef,
@@ -271,7 +273,7 @@ describe('CreateAlertV2 utils', () => {
 		});
 	});
 
-	describe('getThresholdStateFromAlertDef', () => {
+	it('getThresholdStateFromAlertDef maps thresholds, query, operator and match type', () => {
 		const args: PostableAlertRuleV2 = {
 			...defaultPostableAlertRuleV2,
 			annotations: {
@@ -313,6 +315,81 @@ describe('CreateAlertV2 utils', () => {
 					channels: ['email'],
 				},
 			],
+		});
+	});
+
+	describe('getThresholdStateFromAlertDef for anomaly rules', () => {
+		const anomalyDef: PostableAlertRuleV2 = {
+			...defaultPostableAlertRuleV2,
+			ruleType: 'anomaly_rule',
+			condition: {
+				...defaultPostableAlertRuleV2.condition,
+				algorithm: 'standard',
+				seasonality: 'weekly',
+				thresholds: {
+					kind: 'basic',
+					spec: [
+						{
+							name: 'critical',
+							target: -3,
+							targetUnit: '',
+							channels: ['email'],
+							matchType: AlertThresholdMatchType.ALL_THE_TIME,
+							op: AlertThresholdOperator.IS_BELOW,
+						},
+					],
+				},
+			},
+			evaluation: {
+				kind: 'rolling',
+				spec: { evalWindow: '1h0m0s', frequency: '1m' },
+			},
+		};
+
+		it('shows deviations unsigned and restores the anomaly settings', () => {
+			expect(getThresholdStateFromAlertDef(anomalyDef)).toMatchObject({
+				operator: AlertThresholdOperator.IS_BELOW,
+				thresholds: [{ thresholdValue: 3 }],
+				algorithm: 'standard',
+				seasonality: 'weekly',
+			});
+		});
+
+		it('loads the anomaly window into the shared evaluation window', () => {
+			expect(getEvaluationWindowStateFromAlertDef(anomalyDef)).toMatchObject({
+				windowType: 'rolling',
+				timeframe: '1h0m0s',
+			});
+		});
+
+		it('keeps signed targets for threshold rules', () => {
+			const state = getThresholdStateFromAlertDef({
+				...anomalyDef,
+				ruleType: 'threshold_rule',
+			});
+			expect(state.thresholds[0].thresholdValue).toBe(-3);
+		});
+	});
+
+	describe('getAlertTypeFromAlertDef', () => {
+		it('maps anomaly rules to the anomaly alert type', () => {
+			expect(
+				getAlertTypeFromAlertDef({
+					...defaultPostableAlertRuleV2,
+					alertType: AlertTypes.METRICS_BASED_ALERT,
+					ruleType: 'anomaly_rule',
+				}),
+			).toBe(AlertTypes.ANOMALY_BASED_ALERT);
+		});
+
+		it('keeps the stored alert type for other rules', () => {
+			expect(
+				getAlertTypeFromAlertDef({
+					...defaultPostableAlertRuleV2,
+					alertType: AlertTypes.LOGS_BASED_ALERT,
+					ruleType: 'threshold_rule',
+				}),
+			).toBe(AlertTypes.LOGS_BASED_ALERT);
 		});
 	});
 

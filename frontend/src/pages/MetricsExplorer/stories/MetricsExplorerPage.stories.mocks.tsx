@@ -22,6 +22,7 @@ import {
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { rest } from 'msw';
 import type { AppState } from 'store/reducers';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { defaultFeatureFlags } from 'tests/fixtures/appContextMock';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import type { QueryRangeRequestV5, TimeSeries } from 'types/api/v5/queryRange';
@@ -62,7 +63,7 @@ import {
 	metricMetadataResponse,
 	metricTemporalityOf,
 	metricTypeOf,
-	metricsSavedViewsResponse,
+	metricsSavedViewsV2Response,
 	metricsStatsResponse,
 	metricsTreemapResponse,
 	REDUCTION_RULE_MAX,
@@ -78,12 +79,7 @@ const SUMMARY = 'Metrics · summary';
 const EXPLORER = 'Metrics · explorer';
 const VOLUME = 'Metrics · volume control';
 
-const METRICS_TABS = [
-	'summary',
-	'volume-control',
-	'explorer',
-	'views',
-] as const;
+const METRICS_TABS = ['summary', 'volume-control', 'explorer'] as const;
 
 type MetricsTab = (typeof METRICS_TABS)[number];
 
@@ -171,10 +167,6 @@ const metricsRoute = ({
 	drawerMetric,
 	explorerMetrics,
 }: RouteValues): string => {
-	if (tab === 'views') {
-		return ROUTES.METRICS_EXPLORER_VIEWS;
-	}
-
 	if (tab === 'volume-control') {
 		return ROUTES.METRICS_EXPLORER_VOLUME_CONTROL;
 	}
@@ -267,7 +259,7 @@ export const metricsMocks = defineStoryMocks({
 		tab: choiceControl<MetricsTab>('Tab', {
 			group: VIEW,
 			description:
-				'The four pathnames the module tabs between. Clicking another tab leaves the story, so switch it here.',
+				'The three pathnames the module tabs between. Clicking another tab leaves the story, so switch it here.',
 			options: METRICS_TABS,
 			value: 'summary',
 		}),
@@ -331,9 +323,22 @@ export const metricsMocks = defineStoryMocks({
 			value: 4,
 			max: SERIES_SERVICES.length,
 		}),
+		metricUnit: choiceControl<'saved' | 'unset'>('Explorer metric unit', {
+			group: EXPLORER,
+			description:
+				'Whether the metadata carries a unit. Unset, the explorer offers to save the unit picked in the selector.',
+			options: ['saved', 'unset'],
+			value: 'saved',
+		}),
+		unitSave: choiceControl<'success' | 'error'>('Unit save', {
+			group: EXPLORER,
+			description: 'How the metadata write answers when the unit is saved.',
+			options: ['success', 'error'],
+			value: 'success',
+		}),
 		savedViews: countControl('Saved views', {
 			group: EXPLORER,
-			description: 'Fills the explorer views dropdown and the Views tab.',
+			description: 'Fills the saved views list beside the explorer.',
 			value: 4,
 			max: SAVED_VIEW_MAX,
 		}),
@@ -385,16 +390,24 @@ export const metricsMocks = defineStoryMocks({
 
 		rest.get(
 			'http://localhost/api/v2/metrics/metadata',
-			response.json((req) =>
-				metricMetadataResponse(req.url.searchParams.get('metricName') ?? ''),
-			),
+			response.json((req) => {
+				const metadata = metricMetadataResponse(
+					req.url.searchParams.get('metricName') ?? '',
+				);
+
+				return values.metricUnit === 'unset'
+					? { ...metadata, data: { ...metadata.data, unit: '' } }
+					: metadata;
+			}),
 		),
 
 		// The drawer writes description, unit and type back. The metadata a story
 		// answers with comes from the catalogue, so the save succeeds and the
 		// refetch reads the metric as it was.
 		rest.post('http://localhost/api/v2/metrics/metadata', (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json({ status: 'success', data: null })),
+			values.unitSave === 'error'
+				? res(ctx.status(500), ctx.json({ status: 'error', error: 'forced' }))
+				: res(ctx.status(200), ctx.json({ status: 'success', data: null })),
 		),
 
 		rest.get(
@@ -491,8 +504,8 @@ export const metricsMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v1/explorer/views',
-			response.json(() => metricsSavedViewsResponse(values.savedViews)),
+			'http://localhost/api/v2/saved_views',
+			response.json(() => metricsSavedViewsV2Response(values.savedViews)),
 		),
 
 		rest.post(
@@ -539,3 +552,26 @@ export const metricsMocks = defineStoryMocks({
 		);
 	},
 });
+
+export const saveUnit = async (
+	canvasElement: HTMLElement,
+	expected: string | false,
+): Promise<void> => {
+	const selector = await within(canvasElement).findByTestId(
+		'y-axis-unit-selector',
+		{},
+		{ timeout: 15000 },
+	);
+
+	await userEvent.click(within(selector).getByRole('combobox'));
+	await userEvent.keyboard('bytes');
+	const bytes = await screen.findByText('Bytes (B)');
+
+	await userEvent.click(
+		(bytes.closest('.ant-select-item-option') as HTMLElement | null) ?? bytes,
+	);
+	await userEvent.click(await screen.findByRole('button', { name: 'Yes' }));
+	if (expected) {
+		await waitFor(() => expect(screen.getByText(expected)).toBeVisible());
+	}
+};

@@ -32,11 +32,12 @@ function DeleteRoleModal({
 			title="Delete Role"
 			titleIcon={<Trash2 size={14} />}
 			confirmText="Delete Role"
-			confirmColor="destructive"
+			confirmColor="danger"
 			cancelText="Cancel"
 			onConfirm={onConfirm}
 			onCancel={onCancel}
 			disableOutsideClick
+			testId="delete-role-modal"
 		>
 			<Typography>
 				Are you sure you want to delete the role <strong>{roleName}</strong>? This

@@ -1,13 +1,12 @@
 import { KeyboardEvent, memo, MouseEvent, useCallback } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 
 import { LegendAction, OnLegendAction } from '../types';
 
-import { LEGEND_TOOLTIP_DELAY_MS } from './constants';
 import styles from './LegendRow.module.scss';
 
 export interface LegendRowProps {
@@ -131,45 +130,26 @@ function LegendRow({
 				data-is-legend-marker={true}
 				data-testid={`legend-marker-${seriesIndex}`}
 			/>
-			<TooltipSimple
-				title={label}
-				arrow
-				side="top"
-				delayDuration={LEGEND_TOOLTIP_DELAY_MS}
-				disableHoverableContent
-				tooltipContentProps={{ className: styles.rowTooltip }}
-			>
+			<Tooltip title={label} side="top">
 				<span className={styles.label}>{label}</span>
-			</TooltipSimple>
+			</Tooltip>
 			<div className={styles.actions}>
-				<TooltipSimple
-					title={scopeActionLabel}
-					arrow
-					side="top"
-					delayDuration={LEGEND_TOOLTIP_DELAY_MS}
-					disableHoverableContent
-					tooltipContentProps={{ className: styles.rowTooltip }}
-				>
-					{/* Radix's asChild merge strips the button's own data-testid. */}
-					<span className={styles.actionTrigger}>
-						<Button
-							variant="ghost"
-							color="secondary"
-							size="sm"
-							className={cx(styles.actionButton, styles.scopeButton)}
-							onClick={handleScopeClick}
-							aria-label={scopeActionLabel}
-							testId={`legend-scope-${seriesIndex}`}
-						>
-							{isShowAllAction ? 'All' : 'Only'}
-						</Button>
-					</span>
-				</TooltipSimple>
+				<Tooltip title={scopeActionLabel} side="top">
+					<Button
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						onClick={handleScopeClick}
+						aria-label={scopeActionLabel}
+						testId={`legend-scope-${seriesIndex}`}
+					>
+						{isShowAllAction ? 'All' : 'Only'}
+					</Button>
+				</Tooltip>
 				{showCopy && (
 					<CopyButton
 						value={label}
 						size={13}
-						className={styles.actionButton}
 						ariaLabel={`Copy ${label}`}
 						testId={`legend-copy-${seriesIndex}`}
 					/>

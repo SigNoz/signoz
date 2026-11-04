@@ -7,7 +7,6 @@ import {
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
-import { InfraMonitoringEvents } from 'constants/events';
 
 import { K8sEntityConfig } from '../Base/entity.config.types';
 import { K8sBaseFilters, K8sDetailsFilters } from '../Base/types';
@@ -42,7 +41,10 @@ async function fetchListData(
 	try {
 		const response = await listDaemonSets(
 			{
-				filter: { expression: filters.filter.expression },
+				filter: {
+					expression: filters.filter.expression,
+					filterByPodStatus: filters.filter.filterByPodStatus,
+				},
 				groupBy: filters.groupBy?.map((g) => ({ name: g.name })),
 				offset: filters.offset,
 				limit: filters.limit ?? 10,
@@ -122,7 +124,6 @@ export const daemonSetEntityConfig: K8sEntityConfig<
 > = {
 	list: {
 		entity: InfraMonitoringEntity.DAEMONSETS,
-		eventCategory: InfraMonitoringEvents.DaemonSet,
 		tableColumns: k8sDaemonSetsColumnsConfig,
 		fetchListData,
 		getRowKey: getK8sDaemonSetRowKey,
@@ -131,7 +132,6 @@ export const daemonSetEntityConfig: K8sEntityConfig<
 	},
 	details: {
 		category: InfraMonitoringEntity.DAEMONSETS,
-		eventCategory: InfraMonitoringEvents.DaemonSet,
 		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'daemonset',
 		getSelectedItemExpression: k8sDaemonSetGetSelectedItemExpression,

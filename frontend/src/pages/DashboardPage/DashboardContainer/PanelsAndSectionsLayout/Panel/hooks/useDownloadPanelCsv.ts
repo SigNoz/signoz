@@ -8,14 +8,17 @@ import type { PanelOfKind } from 'pages/DashboardPage/DashboardContainer/Panels/
 import { downloadCsv } from 'pages/DashboardPage/DashboardContainer/Panels/utils/downloadCsv';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
+import { usePanelTitle } from './usePanelTitle';
+
 interface UseDownloadPanelCsvArgs {
 	panel: DashboardtypesPanelDTO;
 	data: PanelQueryData;
 	/**
 	 * Whether the kind's definition declares CSV as a downloadable format
-	 * (`actions.download.csv`). Only tables carry tabular data, so this is the
-	 * same gate the menu uses — kept here so the callback stays a no-op when
-	 * invoked for a kind that can't produce CSV.
+	 * (`actions.download.csv`). Only kinds drawn from a joined scalar table
+	 * (Table, Scatter Plot) carry tabular data, so this is the same gate the menu
+	 * uses — kept here so the callback stays a no-op when invoked for a kind that
+	 * can't produce CSV.
 	 */
 	canDownloadCsv: boolean;
 }
@@ -29,13 +32,16 @@ export function useDownloadPanelCsv({
 	data,
 	canDownloadCsv,
 }: UseDownloadPanelCsvArgs): () => void {
-	const fileName = panel.spec.display.name;
+	const fileName = usePanelTitle(panel);
 
 	return useCallback((): void => {
 		if (!canDownloadCsv) {
 			return;
 		}
-		const rows = getTableCsvRows(panel as PanelOfKind<'signoz/TablePanel'>, data);
+		const rows = getTableCsvRows(
+			panel as PanelOfKind<'signoz/TablePanel' | 'signoz/ScatterPlotPanel'>,
+			data,
+		);
 		if (rows.length === 0) {
 			return;
 		}

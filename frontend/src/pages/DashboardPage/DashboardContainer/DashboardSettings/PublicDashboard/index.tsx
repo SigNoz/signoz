@@ -37,6 +37,12 @@ function PublicDashboardSettings({
 	} = usePublicDashboard(dashboard.id);
 
 	const controlsDisabled = isLoading || !canManage;
+	let controlsDisabledReason: string | undefined;
+	if (isLoading) {
+		controlsDisabledReason = 'Loading public dashboard settings';
+	} else if (!canManage) {
+		controlsDisabledReason = 'You need edit permission on this dashboard';
+	}
 
 	return (
 		<div className={styles.publishTab}>
@@ -54,6 +60,7 @@ function PublicDashboardSettings({
 					timeRangeEnabled={timeRangeEnabled}
 					defaultTimeRange={defaultTimeRange}
 					disabled={controlsDisabled}
+					disabledTooltip={controlsDisabledReason}
 					onTimeRangeEnabledChange={setTimeRangeEnabled}
 					onDefaultTimeRangeChange={setDefaultTimeRange}
 				/>

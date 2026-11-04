@@ -12,8 +12,13 @@ import {
 	QueryBuilderField,
 	QueryBuilderFieldsConfig,
 } from '../../queryBuilderFields.types';
-import { resolveQueryBuilderField } from '../../queryBuilderFields.utils';
+import {
+	resolveQueryBuilderField,
+	type ResolvedQueryBuilderField,
+	STEP_INTERVAL_PLACEHOLDER,
+} from '../../queryBuilderFields.utils';
 
+import { isScalarPanelType } from '../panelTypes';
 import QueryAggregationSelect from './QueryAggregationSelect';
 
 import './QueryAggregation.styles.scss';
@@ -33,19 +38,16 @@ function QueryAggregationOptions({
 	queryData: IBuilderQuery | IBuilderTraceOperator;
 	fieldsConfig?: QueryBuilderFieldsConfig;
 }): JSX.Element {
-	const stepInterval = useMemo(() => {
+	const stepInterval = useMemo<ResolvedQueryBuilderField>(() => {
 		if (panelType === PANEL_TYPES.VALUE) {
-			return { hidden: true, disabled: false, reason: undefined };
+			return { hidden: true, disabled: false, pinned: false };
 		}
 
 		const isNonMetricSource =
 			dataSource === DataSource.TRACES || dataSource === DataSource.LOGS;
 
-		if (
-			isNonMetricSource &&
-			(panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.PIE)
-		) {
-			return { hidden: true, disabled: false, reason: undefined };
+		if (isNonMetricSource && isScalarPanelType(panelType)) {
+			return { hidden: true, disabled: false, pinned: false };
 		}
 
 		return resolveQueryBuilderField(QueryBuilderField.StepInterval, fieldsConfig);
@@ -105,7 +107,7 @@ function QueryAggregationOptions({
 								initialValue={queryData?.stepInterval ? queryData?.stepInterval : null}
 								className="query-aggregation-interval-input"
 								label="Seconds"
-								placeholder="Auto"
+								placeholder={stepInterval.placeholder ?? STEP_INTERVAL_PLACEHOLDER}
 								type="number"
 								onChange={handleAggregationIntervalChange}
 								disabled={stepInterval.disabled}

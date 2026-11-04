@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tooltip } from 'antd';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
 import { Divider } from '@signozhq/ui/divider';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Switch } from '@signozhq/ui/switch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Copy, Ellipsis, PenLine, Trash2 } from '@signozhq/icons';
 import {
+	useAlertRuleClone,
 	useAlertRuleDelete,
-	useAlertRuleDuplicate,
 	useAlertRuleStatusToggle,
 	useAlertRuleUpdate,
 } from 'pages/AlertDetails/hooks';
@@ -38,9 +38,7 @@ function AlertActionButtons({
 	const isDarkMode = useIsDarkMode();
 
 	const { handleAlertStateToggle } = useAlertRuleStatusToggle({ ruleId });
-	const { handleAlertDuplicate } = useAlertRuleDuplicate({
-		alertDetails: alertDetails as unknown as AlertDef,
-	});
+	const { handleAlertClone } = useAlertRuleClone({ ruleId });
 	const { handleAlertDelete } = useAlertRuleDelete({ ruleId });
 	const { handleAlertUpdate, isLoading } = useAlertRuleUpdate({
 		alertDetails: alertDetails as unknown as AlertDef,
@@ -59,31 +57,33 @@ function AlertActionButtons({
 
 	const isV2Alert = alertDetails.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
 
-	const menuItems: MenuItem[] = [
-		...(!isV2Alert
-			? [
-					{
-						key: 'rename-rule',
-						label: 'Rename',
-						icon: <PenLine size={16} color={Color.BG_VANILLA_400} />,
-						onClick: handleRename,
-					},
-				]
-			: []),
+	const menuItems: DropdownItemType[] = [];
+	if (!isV2Alert) {
+		menuItems.push({
+			type: 'item',
+			value: 'rename-rule',
+			label: 'Rename',
+			prefix: <PenLine size={16} color={Color.BG_VANILLA_400} />,
+			onClick: handleRename,
+		});
+	}
+	menuItems.push(
 		{
-			key: 'duplicate-rule',
-			label: 'Duplicate',
-			icon: <Copy size={16} color={Color.BG_VANILLA_400} />,
-			onClick: handleAlertDuplicate,
+			type: 'item',
+			value: 'clone-rule',
+			label: 'Clone',
+			prefix: <Copy size={16} color={Color.BG_VANILLA_400} />,
+			onClick: handleAlertClone,
 		},
 		{
-			key: 'delete-rule',
+			type: 'item',
+			value: 'delete-rule',
 			label: 'Delete',
-			icon: <Trash2 size={16} color={Color.BG_CHERRY_400} />,
+			prefix: <Trash2 size={16} color={Color.BG_CHERRY_400} />,
 			onClick: handleAlertDelete,
 			danger: true,
 		},
-	];
+	);
 
 	// state for immediate UI feedback rather than waiting for onSuccess of handleAlertStateTiggle to updating the alertRuleState
 	const [isAlertRuleDisabled, setIsAlertRuleDisabled] = useState<
@@ -118,6 +118,8 @@ function AlertActionButtons({
 				<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
 					{isAlertRuleDisabled !== undefined && (
 						<Switch
+							color="primary"
+							textPlacement="right"
 							onChange={toggleAlertRule}
 							value={!isAlertRuleDisabled}
 							testId="alert-actions-toggle"
@@ -128,9 +130,9 @@ function AlertActionButtons({
 
 				<Divider type="vertical" className="alert-action-buttons__divider" />
 
-				<DropdownMenuSimple menu={{ items: menuItems }}>
+				<Tooltip title="More options">
 					<span className="dropdown-trigger-wrapper">
-						<Tooltip title="More options">
+						<Dropdown items={menuItems} nativeButton align="end" side="bottom">
 							<Button
 								type="text"
 								data-testid="alert-actions-menu"
@@ -141,9 +143,9 @@ function AlertActionButtons({
 									/>
 								}
 							/>
-						</Tooltip>
+						</Dropdown>
 					</span>
-				</DropdownMenuSimple>
+				</Tooltip>
 			</div>
 
 			<RenameModal

@@ -1,10 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { alertOverviewMocks } from './AlertOverview.stories.mocks';
+import {
+	alertOverviewMocks,
+	clickFooterButton,
+} from './AlertOverview.stories.mocks';
 
 import AlertList from '../../index';
 
@@ -41,6 +44,35 @@ export const ClassicSchema: Story = {
 	args: { alertSchema: 'classic' },
 };
 
+/**
+ * An anomaly rule in the current schema: the condition reads in deviations from
+ * the forecast, and the preview draws the band the rule compares against.
+ */
+export const AnomalyRule: Story = {
+	args: { ruleKind: 'anomaly' },
+};
+
+/**
+ * The anomaly rule with one series picked in the preview: that series drawn
+ * against its forecast, inside the band of deviations the rule allows.
+ */
+export const AnomalyRuleForecastBand: Story = {
+	args: { ruleKind: 'anomaly' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const [firstSeries] = await within(canvasElement).findAllByTestId(
+			'anomaly-series-option',
+			undefined,
+			{ timeout: 15_000 },
+		);
+		await userEvent.click(firstSeries);
+	},
+};
+
+/** An anomaly rule written before the current schema, still in the classic form. */
+export const ClassicAnomalyRule: Story = {
+	args: { ruleKind: 'anomaly', alertSchema: 'classic' },
+};
+
 /** A rule someone turned off: the toggle in the header is what turns it back on. */
 export const Disabled: Story = {
 	args: { ruleState: 'disabled' },
@@ -74,4 +106,34 @@ export const AlertActionsMenu: Story = {
 		);
 		await screen.findByRole('menu');
 	},
+};
+
+/** The rule saved unchanged from the footer: the toast raised once the PUT answers. */
+export const AlertRuleUpdatedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await clickFooterButton(canvasElement, 'save-alert-rule-button');
+		await waitFor(() =>
+			expect(screen.getByText(/alert rule updated successfully/i)).toBeVisible(),
+		);
+	},
+};
+
+/** Test Notification from the footer. */
+export const TestNotificationSentToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickFooterButton(canvasElement, 'test-notification-button');
+		if (args.testNotification === 'sent') {
+			await waitFor(() =>
+				expect(
+					screen.getByText(/test notification sent successfully/i),
+				).toBeVisible(),
+			);
+		}
+	},
+};
+
+/** Test Notification finding nothing to alert on: the error toast. */
+export const TestNotificationNoAlertsToast: Story = {
+	args: { testNotification: 'no-alerts' },
+	play: TestNotificationSentToast.play,
 };

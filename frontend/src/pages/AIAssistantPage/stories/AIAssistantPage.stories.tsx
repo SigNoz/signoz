@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '@/storybook/renderAtRoute';
 import { screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -9,7 +9,11 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import AIAssistantPage from '../AIAssistantPage';
 import {
 	aiAssistantMocks,
+	failVoiceInput,
+	forgetVoiceFailure,
 	longActionTooltipHandlers,
+	speak,
+	startVoiceInput,
 } from './AIAssistantPage.stories.mocks';
 import type { ThreadPart } from './__story_mockdata__/aiAssistant';
 
@@ -30,14 +34,13 @@ const meta = {
 	component: AIAssistantPage,
 	// The conversation id is in the pathname, so the page renders under its own
 	// route rather than being mounted on its own.
-	render: (): JSX.Element => (
-		<Route
-			path={[ROUTES.AI_ASSISTANT_BASE, ROUTES.AI_ASSISTANT]}
-			component={AIAssistantPage}
-		/>
+	render: renderAtRoute(
+		[ROUTES.AI_ASSISTANT_BASE, ROUTES.AI_ASSISTANT],
+		AIAssistantPage,
 	),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
+	beforeEach: forgetVoiceFailure,
 } satisfies Meta<AIAssistantArgs>;
 
 export default meta;
@@ -47,11 +50,15 @@ type Story = StoryObj<AIAssistantArgs>;
 /** The thread list resolves before the thread does, which outlasts the 1s default. */
 const untilLoaded = { timeout: 15_000 };
 
+/** How long what a click opened has to stay on screen to count as open. */
+const HOLD_MS = 1_000;
+
 /**
  * Click something, and keep clicking until what it opens is on screen. The
  * message list remounts its items while it measures a freshly loaded thread, so
  * a single click can land on a row that is about to be replaced, taking the
- * state it just set with it.
+ * state it just set with it. The replacement can land after that state has
+ * rendered, so it has to still be there `HOLD_MS` later.
  */
 const clickUntil = async (
 	find: () => Promise<HTMLElement>,
@@ -60,6 +67,10 @@ const clickUntil = async (
 	await waitFor(async () => {
 		await userEvent.click(await find());
 		await screen.findByText(opens, undefined, { timeout: 1_000 });
+		await new Promise((resolve) => {
+			setTimeout(resolve, HOLD_MS);
+		});
+		screen.getByText(opens);
 	}, untilLoaded);
 };
 
@@ -173,6 +184,36 @@ export const ApprovalDiff: Story = {
 	play: openApprovalDiff,
 };
 
+/**
+ * Dictating a question: the mic listening, the words heard so far in the
+ * composer, and the controls to discard them or stop and send.
+ */
+export const VoiceRecording: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await startVoiceInput(canvasElement);
+		speak('why did checkout p99 jump after the 14:00 deploy');
+		await within(canvasElement).findByDisplayValue(/checkout p99 jump/);
+	},
+};
+
+/** The recognizer reporting it cannot reach the speech service. */
+export const VoiceInputUnavailableToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await startVoiceInput(canvasElement);
+		failVoiceInput('network');
+		await screen.findByText(/voice input unavailable in this browser/i);
+	},
+};
+
+/** The browser refusing the microphone. */
+export const MicrophoneDeniedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await startVoiceInput(canvasElement);
+		failVoiceInput('not-allowed');
+		await screen.findByText(/microphone access denied/i);
+	},
+};
+
 /** The comment box a thumbs down opens, which a thumbs up does not. */
 export const NegativeFeedback: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
@@ -223,6 +264,23 @@ export const AddContext: Story = {
 	},
 };
 
+/** "Copy link" on a conversation row, which toasts once the link is copied. */
+export const ConversationLinkCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await clickUntil(async () => {
+			const [actions] = await within(canvasElement).findAllByLabelText(
+				/conversation actions/i,
+				undefined,
+				untilLoaded,
+			);
+
+			return actions;
+		}, /copy link/i);
+		await userEvent.click(await screen.findByText(/copy link/i));
+		await screen.findByText(/conversation link copied to clipboard/i);
+	},
+};
+
 /**
  * Every tooltip the thread carries, held open at once: the composer's voice and
  * send buttons, the sidebar's new conversation, the copy chip under each user
@@ -245,9 +303,11 @@ export const TooltipsInApprovalDiff: Story = {
 };
 
 /**
- * The conversation count in the bottom strip, in place of the build version.
- * Archived threads are left out of it.
+ * The recording controls' tooltips, held open: discard, stop and send, and the
+ * send button beside them, which waits for words.
  */
-export const BottomStrip: Story = {
-	args: { bottomStrip: true },
+export const TooltipsInVoiceRecording: Story = {
+	args: { tooltipsOpen: true, contents: BRIEF },
+	play: async ({ canvasElement }): Promise<void> =>
+		startVoiceInput(canvasElement),
 };

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { useHistory, useLocation } from 'react-router-dom';
 import { Button, Card, Modal } from 'antd';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { getCurrentLocation } from 'lib/router/navigation';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { createSubscription } from 'api/generated/services/subscriptions';
@@ -87,23 +88,23 @@ const supportChannels = [
 ];
 
 export default function Support(): JSX.Element {
-	const history = useHistory();
 	const { notifications } = useNotifications();
 	const { trialInfo, featureFlags } = useAppContext();
 	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] =
 		useState(false);
 
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const handleChannelWithRedirects = (url: string): void => {
 		openInNewTab(url);
 	};
 
 	useEffect(() => {
-		if (history?.location?.state) {
-			const histroyState = history?.location?.state as any;
+		const currentLocation = getCurrentLocation();
+		if (currentLocation?.state) {
+			const locationState = currentLocation.state as any;
 
-			if (histroyState && histroyState?.from) {
-				logEvent(`Support : From URL : ${histroyState.from}`, {});
+			if (locationState && locationState?.from) {
+				logEvent(`Support : From URL : ${locationState.from}`, {});
 			}
 		}
 
@@ -201,30 +202,28 @@ export default function Support(): JSX.Element {
 				</div>
 
 				<div className="support-channels">
-					{supportChannels.map(
-						(channel): JSX.Element => (
-							<Card className="support-channel" key={channel.key}>
-								<div className="support-channel-content">
-									<Title truncate={1} level={5} className="support-channel-title">
-										{channel.icon}
-										{channel.name}{' '}
-									</Title>
-									<Text> {channel.title} </Text>
-								</div>
+					{supportChannels.map((channel): JSX.Element => (
+						<Card className="support-channel" key={channel.key}>
+							<div className="support-channel-content">
+								<Title truncate={1} level={5} className="support-channel-title">
+									{channel.icon}
+									{channel.name}{' '}
+								</Title>
+								<Text> {channel.title} </Text>
+							</div>
 
-								<div className="support-channel-action">
-									<Button
-										className="periscope-btn secondary support-channel-btn"
-										type="default"
-										onClick={(): void => handleChannelClick(channel)}
-									>
-										<Text truncate={1}>{channel.btnText} </Text>
-										{channel.isExternal && <ArrowUpRight size={14} />}
-									</Button>
-								</div>
-							</Card>
-						),
-					)}
+							<div className="support-channel-action">
+								<Button
+									className="periscope-btn secondary support-channel-btn"
+									type="default"
+									onClick={(): void => handleChannelClick(channel)}
+								>
+									<Text truncate={1}>{channel.btnText} </Text>
+									{channel.isExternal && <ArrowUpRight size={14} />}
+								</Button>
+							</div>
+						</Card>
+					))}
 				</div>
 			</div>
 

@@ -15,10 +15,10 @@ import type { EQueryType } from 'types/common/dashboard';
 import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
 import ConfigActions from './ConfigActions/ConfigActions';
+import PanelTitleInput from './PanelTitleInput/PanelTitleInput';
 import SectionSlot from './SectionSlot/SectionSlot';
 
 import styles from './ConfigPane.module.scss';
-import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
 import { PanelKind } from '../../Panels/types/panelKind';
 
 interface ConfigPaneProps {
@@ -40,6 +40,8 @@ interface ConfigPaneProps {
 	legendSeries: LegendSeries[];
 	/** Table panel's resolved value columns, for the table-only editors. */
 	tableColumns: TableColumnOption[];
+	/** Group-by columns of the joined scalar result. */
+	groupColumns?: string[];
 	/** Query step interval (seconds), for the chart-appearance span-gaps floor. */
 	stepInterval?: number;
 	/**
@@ -67,6 +69,7 @@ function ConfigPane({
 	queryType,
 	legendSeries,
 	tableColumns,
+	groupColumns,
 	stepInterval,
 	panel,
 	panelId,
@@ -96,7 +99,7 @@ function ConfigPane({
 		onChangeSpec({ ...spec, display: { ...spec.display, [field]: value } });
 
 	return (
-		<div className={styles.config}>
+		<div className={styles.config} data-testid="panel-editor-v2-config">
 			<header className={styles.heading}>
 				<span className={styles.marker} />
 				<Typography.Text>Panel Details</Typography.Text>
@@ -106,12 +109,9 @@ function ConfigPane({
 			<div className={styles.group}>
 				<div className={styles.field}>
 					<Typography.Text>Title</Typography.Text>
-					<Input
-						data-testid="panel-editor-v2-title"
+					<PanelTitleInput
 						value={spec.display.name}
-						placeholder="Panel title"
-						maxLength={DASHBOARD_NAME_MAX_LENGTH}
-						onChange={(e): void => setDisplayField('name', e.target.value)}
+						onChange={(value): void => setDisplayField('name', value)}
 					/>
 				</div>
 
@@ -136,6 +136,7 @@ function ConfigPane({
 						defaults={defaults}
 						legendSeries={legendSeries}
 						tableColumns={tableColumns}
+						groupColumns={groupColumns}
 						signal={signal}
 						panelKind={panelKind}
 						onChangePanelKind={onChangePanelKind}
@@ -163,6 +164,7 @@ function ConfigPane({
 									defaults={defaults}
 									legendSeries={legendSeries}
 									tableColumns={tableColumns}
+									groupColumns={groupColumns}
 									signal={signal}
 									panelKind={panelKind}
 									onChangePanelKind={onChangePanelKind}

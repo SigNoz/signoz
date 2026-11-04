@@ -1,9 +1,11 @@
+import json
 import uuid
 from collections.abc import Callable
 from http import HTTPStatus
 
 import pytest
 import requests
+from sqlalchemy import sql
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
@@ -42,12 +44,14 @@ GCP_ACCOUNT_SPEC = ProviderAccountSpec(
     },
     build_config=lambda p: {
         "gcp": {
+            "connectionMethod": "manual",
             "deploymentProjectId": p["deployment_project_id"],
             "deploymentRegion": p["deployment_region"],
             "projectIds": p["project_ids"],
         }
     },
     expected_config=lambda p: {
+        "connectionMethod": "manual",
         "deploymentProjectId": p["deployment_project_id"],
         "deploymentRegion": p["deployment_region"],
         "projectIds": p["project_ids"],
@@ -71,6 +75,47 @@ def test_apply_license(
 ) -> None:
     """Apply a license so that subsequent cloud integration calls succeed."""
     add_license(signoz, make_http_mocks, get_token)
+
+
+def test_gcp_account_without_connection_method_remains_manual(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    """A stored manual account without the new field can still be read, connected and updated."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    project_id = "signoz-test-project"
+    config = {"deploymentProjectId": project_id, "deploymentRegion": "us-central1", "projectIds": [project_id]}
+    account = create_cloud_integration_account(admin_token, "gcp", config={"gcp": config | {"connectionMethod": "manual"}})
+
+    # Reproduce the released manual account format, which had no connection method.
+    with signoz.sqlstore.conn.begin() as conn:
+        conn.execute(
+            sql.text("UPDATE cloud_integration SET config=:config WHERE id=:id"),
+            {"config": json.dumps(config), "id": account["id"]},
+        )
+
+    account_url = signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/gcp/accounts/{account['id']}")
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    response = requests.get(
+        account_url,
+        headers=headers,
+        timeout=10,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["config"]["gcp"] == config | {"connectionMethod": "manual"}
+
+    checkin = simulate_agent_checkin(signoz, admin_token, "gcp", account["id"], project_id)
+    assert checkin.status_code == HTTPStatus.OK, checkin.text
+    assert checkin.json()["data"]["integrationConfig"] == {}
+
+    updated_config = config | {"projectIds": [project_id, "signoz-test-project-2"]}
+    response = requests.put(account_url, headers=headers, json={"config": {"gcp": updated_config}}, timeout=10)
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    with signoz.sqlstore.conn.connect() as conn:
+        stored = conn.execute(sql.text("SELECT config FROM cloud_integration WHERE id=:id"), {"id": account["id"]}).scalar_one()
+    assert json.loads(stored) == updated_config | {"connectionMethod": "manual"}
 
 
 @provider_spec
@@ -291,6 +336,34 @@ def test_update_account_after_checkin_preserves_connected_status(
     assert found_after["agentReport"]["syncState"] == found_before["agentReport"]["syncState"], "config update must not change syncState"
     assert found_after["config"][spec.provider] == spec.expected_config(spec.updated_params), "Config should reflect the update"
     assert found_after["removedAt"] is None, "removedAt should still be null"
+
+
+def test_update_gcp_agent_account_rejected(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    project_id = "signoz-agent-update-project"
+    account_id = create_cloud_integration_account(admin_token, "gcp", config={"gcp": {"connectionMethod": "agent", "deploymentProjectId": project_id, "deploymentRegion": "us-central1", "projectIds": [project_id]}})["id"]
+    account_url = signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/gcp/accounts/{account_id}")
+
+    checkin = simulate_agent_checkin(signoz, admin_token, "gcp", account_id, project_id)
+    assert checkin.status_code == HTTPStatus.OK, checkin.text
+
+    response = requests.put(account_url, headers=headers, json={"config": {"gcp": {"deploymentProjectId": project_id, "deploymentRegion": "us-central1", "projectIds": [project_id, "signoz-agent-update-project-2"]}}}, timeout=10)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+
+    response = requests.get(account_url, headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["config"]["gcp"] == {
+        "connectionMethod": "agent",
+        "deploymentProjectId": project_id,
+        "deploymentRegion": "us-central1",
+        "projectIds": [project_id],
+    }, "a rejected update must not change the agent account config"
 
 
 @provider_spec

@@ -1,4 +1,6 @@
-import { act, screen, within } from 'tests/test-utils';
+import logEvent from 'api/common/logEvent';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import { act, screen, userEvent, within } from 'tests/test-utils';
 
 import { renderEntityTraces } from './testUtils';
 import { mockQueryRangeV5WithTracesResponse } from '__tests__/query_range_v5.util';
@@ -19,6 +21,11 @@ jest.spyOn(window, 'matchMedia').mockImplementation(
 			dispatchEvent: jest.fn(),
 		}) as unknown as MediaQueryList,
 );
+
+jest.mock('api/common/logEvent', () => ({
+	__esModule: true,
+	default: jest.fn(() => Promise.resolve()),
+}));
 
 describe('EntityTraces - Table Rendering', () => {
 	it('should render table with all column headers', async () => {
@@ -72,7 +79,7 @@ describe('EntityTraces - Table Rendering', () => {
 		expect(screen.getByTestId('responseStatusCode')).toHaveTextContent('200');
 	});
 
-	it('should render http method as robin colored outline badge', async () => {
+	it('should render http method as primary colored outlined badge', async () => {
 		mockQueryRangeV5WithTracesResponse({
 			customTraces: [{ httpMethod: 'POST', responseStatusCode: '200' }],
 		});
@@ -83,8 +90,8 @@ describe('EntityTraces - Table Rendering', () => {
 
 		const badge = await screen.findByTestId('httpMethod');
 		expect(badge).toHaveTextContent('POST');
-		expect(badge).toHaveAttribute('data-color', 'robin');
-		expect(badge).toHaveAttribute('data-variant', 'outline');
+		expect(badge).toHaveAttribute('data-color', 'primary');
+		expect(badge).toHaveAttribute('data-variant', 'outlined');
 	});
 
 	it('should render - when http method is empty', async () => {
@@ -119,11 +126,11 @@ describe('EntityTraces - Table Rendering', () => {
 		const badgeColors = badges.map((badge) => badge.getAttribute('data-color'));
 
 		expect(badgeColors).toStrictEqual([
-			'forest', // 2xx -> success
-			'robin', // 3xx -> redirect
-			'amber', // 4xx -> client error
-			'cherry', // 5xx -> server error
-			'vanilla', // 1xx -> informational
+			'success', // 2xx -> success
+			'primary', // 3xx -> redirect
+			'warning', // 4xx -> client error
+			'danger', // 5xx -> server error
+			'secondary', // 1xx -> informational
 		]);
 	});
 
@@ -181,5 +188,24 @@ describe('EntityTraces - Table Rendering', () => {
 			'backend',
 			'database',
 		]);
+	});
+
+	it('should log the drawer trace clicked event when a trace row is clicked', async () => {
+		mockQueryRangeV5WithTracesResponse({
+			customTraces: [{ serviceName: 'frontend' }],
+		});
+
+		renderEntityTraces();
+
+		const user = userEvent.setup();
+		const cell = await screen.findByTestId('serviceName');
+		await user.click(cell.closest('tr') as HTMLElement);
+
+		expect(logEvent).toHaveBeenCalledWith(
+			'Infra Monitoring: Drawer trace clicked',
+			{
+				entityType: InfraMonitoringEntity.PODS,
+			},
+		);
 	});
 });

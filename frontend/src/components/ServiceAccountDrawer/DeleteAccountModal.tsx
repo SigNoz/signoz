@@ -80,21 +80,26 @@ function DeleteAccountModal(): JSX.Element {
 
 	const footer = (
 		<div className="sa-delete-dialog__footer">
-			<Button variant="solid" color="secondary" onClick={handleCancel}>
-				<X size={12} />
+			<Button
+				size="md"
+				variant="solid"
+				color="secondary"
+				onClick={handleCancel}
+				prefix={<X size={12} />}
+			>
 				Cancel
 			</Button>
 			<AuthZButton
+				size="md"
 				checks={[buildSADeletePermission(accountId ?? '')]}
 				authZEnabled={!!accountId}
 				variant="solid"
-				color="destructive"
+				color="danger"
 				loading={isDeleting}
 				onClick={handleConfirm}
 				data-testid="confirm-delete-btn"
-				withPortal={false}
+				prefix={<Trash2 size={12} />}
 			>
-				<Trash2 size={12} />
 				Delete
 			</AuthZButton>
 		</div>
