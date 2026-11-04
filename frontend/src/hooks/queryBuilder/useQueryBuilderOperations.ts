@@ -54,6 +54,7 @@ import {
 } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
+import { isBucketCountingPanelType } from 'lib/query/bucketCountingPanelTypes';
 
 export const useQueryOperations: UseQueryOperations = ({
 	query,
@@ -177,10 +178,9 @@ export const useQueryOperations: UseQueryOperations = ({
 							(aggregateAttribute?.type as ATTRIBUTE_TYPES) || ATTRIBUTE_TYPES.GAUGE,
 					});
 
-			const histogramSpaceAggregationOptions =
-				panelType === PANEL_TYPES.HEATMAP
-					? metricsHeatmapHistogramSpaceAggregateOperatorOptions
-					: metricsHistogramSpaceAggregateOperatorOptions;
+			const histogramSpaceAggregationOptions = isBucketCountingPanelType(panelType)
+				? metricsHeatmapHistogramSpaceAggregateOperatorOptions
+				: metricsHistogramSpaceAggregateOperatorOptions;
 
 			switch (aggregateAttribute?.type) {
 				case ATTRIBUTE_TYPES.SUM:
@@ -307,10 +307,9 @@ export const useQueryOperations: UseQueryOperations = ({
 									// A heatmap cell holds a count of observations per `le` band, which is
 									// the one option the kind offers — a percentile default would sit in the
 									// selector with nothing behind it.
-									spaceAggregation:
-										panelType === PANEL_TYPES.HEATMAP
-											? MetricAggregateOperator.COUNT
-											: MetricAggregateOperator.P90,
+									spaceAggregation: isBucketCountingPanelType(panelType)
+										? MetricAggregateOperator.COUNT
+										: MetricAggregateOperator.P90,
 									reduceTo: ReduceOperators.AVG,
 								},
 							];
