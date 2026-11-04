@@ -50,7 +50,6 @@ func newRenderer() renderer.NodeRenderer {
 }
 
 func (r *nodeRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
-	// Blocks
 	reg.Register(ast.KindDocument, r.renderDocument)
 	reg.Register(ast.KindHeading, r.renderHeading)
 	reg.Register(ast.KindBlockquote, r.renderBlockquote)
@@ -63,7 +62,6 @@ func (r *nodeRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
 	reg.Register(ast.KindTextBlock, r.renderTextBlock)
 	reg.Register(ast.KindThematicBreak, r.renderThematicBreak)
 
-	// Inlines
 	reg.Register(ast.KindAutoLink, r.renderAutoLink)
 	reg.Register(ast.KindCodeSpan, r.renderCodeSpan)
 	reg.Register(ast.KindEmphasis, r.renderEmphasis)
@@ -73,7 +71,6 @@ func (r *nodeRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
 	reg.Register(ast.KindString, r.renderString)
 	reg.Register(ast.KindRawHTML, r.renderSkip)
 
-	// Extensions
 	reg.Register(extensionast.KindStrikethrough, r.renderStrikethrough)
 	reg.Register(extensionast.KindTable, r.renderTable)
 }
@@ -96,8 +93,6 @@ func (r *nodeRenderer) separateFromPrevious(w util.BufWriter, n ast.Node) {
 
 func (r *nodeRenderer) renderDocument(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if entering {
-		// The renderer is pooled; wipe any marker stack left over from a prior
-		// document (e.g. one that errored mid-walk) before starting fresh.
 		r.listMarkers = r.listMarkers[:0]
 		r.lastRune = ' '
 	}

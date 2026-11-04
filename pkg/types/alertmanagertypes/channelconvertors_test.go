@@ -200,8 +200,6 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Email:             "oncall@acme.com",
 				APIToken:          "api-token",
 			},
-			// A spec posted without deployment reads back as cloud, the default the
-			// receiver fills.
 			expectedRoundTrip: &ChannelJiraConfig{
 				SendResolved:      &sendResolved,
 				Deployment:        JiraDeploymentCloud,
@@ -559,8 +557,6 @@ func TestDeriveChannelConfigRejectsUnrepresentableChannels(t *testing.T) {
 			},
 		},
 		{
-			// A self-hosted receiver lifts only the Bearer authorization; basic auth
-			// stored next to it would be dropped on the next write.
 			description: "jira self-hosted basic auth",
 			channel: Channel{
 				DisplayName: "jira-sh-basic",

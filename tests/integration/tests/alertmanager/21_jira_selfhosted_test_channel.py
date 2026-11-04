@@ -28,11 +28,6 @@ from fixtures.notification_channel import (
     wait_for_alertmanager_sync,
 )
 
-# Same channel-test drive as 14_jira_test_channel.py, against a self-hosted
-# Jira: the v2 API on the site host, a Bearer personal access token, and wiki
-# markup strings instead of ADF. Stub shapes follow what Jira 10.3 answered in
-# notes/alert-integrations/jira-selfhosted-phase0/phase0-results.json.
-
 BEARER_AUTH = f"Bearer {JIRA_TEST_PAT}"
 FIRING_PANEL = "{panel:bgColor=#ffebe6}*🔴 FIRING*{panel}"
 
@@ -82,12 +77,10 @@ def test_jira_selfhosted_create_issue(
     assert fields["issuetype"] == {"name": "Task"}
     assert re.search(r"\[FIRING:1\] Test Alert \(", fields["summary"]), fields["summary"]
     assert "signoz-alert" in fields["labels"]
-    # the v2 description is a wiki markup string that leads with the status panel
     assert isinstance(fields["description"], str), fields["description"]
     assert fields["description"].startswith(FIRING_PANEL), fields["description"]
     assert "*Alert:*" in fields["description"], fields["description"]
 
-    # nothing goes to the Cloud-only endpoints
     assert len(find_requests(notification_channel, "POST", f"{JIRA_API_BASE}/search/jql")) == 0
     assert len(find_requests(notification_channel, "POST", f"{JIRA_API_BASE}/issue")) == 0
     assert len(find_requests(notification_channel, "GET", "/_edge/tenant_info")) == 0
@@ -186,7 +179,6 @@ def test_jira_selfhosted_reopens_done_issue(
     assert len(find_requests(notification_channel, "PUT", f"{JIRA_SELFHOSTED_API_BASE}/issue/OPS-9")) == 1
     assert len(find_requests(notification_channel, "GET", f"{JIRA_SELFHOSTED_API_BASE}/issue/OPS-9/transitions")) == 1
 
-    # a done issue within the reopen window moves back to the first non-done transition
     transitions = find_requests(notification_channel, "POST", f"{JIRA_SELFHOSTED_API_BASE}/issue/OPS-9/transitions")
     assert len(transitions) == 1
     assert json.loads(base64.b64decode(transitions[0]["bodyAsBase64"]).decode("utf-8")) == {"transition": {"id": "11"}}
