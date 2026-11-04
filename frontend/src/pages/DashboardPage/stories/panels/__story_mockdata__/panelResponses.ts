@@ -144,18 +144,31 @@ const heatmapResponse = (
 	});
 };
 
+/**
+ * On a `use_json_body` tenant every body is an object: a plain line arrives as
+ * `{ message }` alone, a structured one with its own keys beside it.
+ */
+const logBodyAt = (index: number, line: string): Record<string, unknown> =>
+	index % 3 === 2
+		? { message: line, service: serviceAt(index % MAX_SERIES), attempt: 1 }
+		: { message: line };
+
 /** Spaced by the window, newest first, as the `timestamp desc` order asks for. */
 const logRows = (
 	{ start, end }: PanelWindow,
 	total: number,
 	offset: number,
 	limit: number,
+	jsonBody: boolean,
 ): RawRow[] =>
 	Array.from(
 		{ length: Math.max(0, Math.min(limit, total - offset)) },
 		(_unused, position) => {
 			const index = offset + position;
 			const service = serviceAt(index % MAX_SERIES);
+			const line = `log line ${index + 1}: ${service} served the request in ${
+				8 + (index % 9) * 3
+			}ms`;
 
 			return {
 				timestamp: new Date(
@@ -163,9 +176,7 @@ const logRows = (
 				).toISOString(),
 				data: {
 					id: `storybook-log-${index + 1}`,
-					body: `log line ${index + 1}: ${service} served the request in ${
-						8 + (index % 9) * 3
-					}ms`,
+					body: jsonBody ? logBodyAt(index, line) : line,
 					severity_text: index % 5 === 0 ? 'ERROR' : 'INFO',
 					resources_string: { 'service.name': service },
 				},
@@ -179,6 +190,7 @@ export const panelQueryResponse = ({
 	result,
 	series,
 	listRows,
+	listJsonBody,
 	gaps,
 	window,
 	offset,
@@ -217,9 +229,12 @@ export const panelQueryResponse = ({
 		case 'Number':
 			return queryRangeV5ScalarResponse(NUMBER_VALUE, QUERY_NAME, { warning });
 		case 'List':
-			return queryRangeV5RawResponse(logRows(window, listRows, offset, limit), {
-				warning,
-			});
+			return queryRangeV5RawResponse(
+				logRows(window, listRows, offset, limit, listJsonBody),
+				{
+					warning,
+				},
+			);
 		default:
 			return latencySeries(window, series, gaps, warning);
 	}

@@ -22,6 +22,7 @@ import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants'
 import LoadingContainer from 'container/InfraMonitoringK8sV2/LoadingContainer';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import { getBodyDisplay } from 'lib/logs/logBody';
 import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { useQueryState } from 'nuqs';
 import { DataSource } from 'types/common/queryBuilder';
@@ -163,7 +164,7 @@ function EntityEventsContent({
 				key: event.data.id,
 				id: event.data.id,
 				timestamp: event.timestamp,
-				body: event.data.body,
+				body: getBodyDisplay(event.data.body),
 				severity: event.data.severity_text,
 				attributes_string: event.data.attributes_string,
 				resources_string: event.data.resources_string,
