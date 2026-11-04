@@ -1,0 +1,55 @@
+import { normalizeCountry } from '../../geo/normalizeCountry';
+import { normalizeSubdivision } from '../../geo/normalizeSubdivision';
+import { SubdivisionSet } from '../../geo/subdivisions';
+import { GeoMapDatum, GeoMapSelection, SubdivisionCountry } from '../../types';
+import { Fixture } from './types';
+
+/**
+ * Stand-in for the panel's prepareGeoMapData: normalise, keep the first row per
+ * shape. State datasets need their country's subdivisions loaded first.
+ */
+export function prepareFixture(
+	fixture: Fixture,
+	subdivisions: SubdivisionSet | null,
+): GeoMapDatum[] {
+	const data: GeoMapDatum[] = [];
+	const seen = new Set<string>();
+	fixture.rows.forEach((row) => {
+		const code =
+			fixture.country && subdivisions
+				? normalizeSubdivision(subdivisions, row.country, row.raw)
+				: normalizeCountry(row.raw);
+		if (!code || seen.has(code)) {
+			return;
+		}
+		seen.add(code);
+		data.push({ code, value: row.value, raw: String(row.raw), size: row.size });
+	});
+	return data;
+}
+
+const COMPACT = new Intl.NumberFormat('en', {
+	notation: 'compact',
+	maximumFractionDigits: 1,
+});
+
+export function formatterFor(unit: Fixture['unit']): (value: number) => string {
+	if (unit === 'percent') {
+		return (value): string => `${value.toFixed(2)}%`;
+	}
+	if (unit === 'ms') {
+		return (value): string => `${Math.round(value)} ms`;
+	}
+	return (value): string => COMPACT.format(value);
+}
+
+/** The group-by key a drilldown on this selection would filter by. */
+export function drilldownFieldOf(
+	selection: GeoMapSelection,
+	country: SubdivisionCountry | undefined,
+): string {
+	if (selection.point) {
+		return 'geo.location';
+	}
+	return country ? 'geo.region.iso_code' : 'geo.country.iso_code';
+}

@@ -4,7 +4,7 @@ import {
 	DashboardtypesHeatmapColorScaleDTO,
 	DashboardtypesHeatmapPaletteDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { DEFAULT_COLOR_STEPS } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
+import { DEFAULT_COLOR_STEPS } from 'lib/visualization/colorRamp/colorScale';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import HeatmapColorsField from '../HeatmapColorsField';
