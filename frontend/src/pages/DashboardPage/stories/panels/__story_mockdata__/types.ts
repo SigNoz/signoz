@@ -63,6 +63,7 @@ export interface PanelArgs {
 	showPoints: boolean;
 	spanGaps: SpanGaps;
 	columnUnits: boolean;
+	valueNames: boolean;
 }
 
 /** What one `query_range` call asked for, as the handler reads it. */

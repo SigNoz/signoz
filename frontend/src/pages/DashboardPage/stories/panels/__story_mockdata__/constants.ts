@@ -29,6 +29,9 @@ export const PANEL_KINDS = [
 	'Table',
 	'List',
 	'Text',
+	'ScatterPlot',
+	'TopList',
+	'GeoMap',
 ] as const;
 
 export const PANEL_RESULTS = ['data', 'empty', 'warning'] as const;
@@ -83,6 +86,9 @@ export const PANEL_NAME: Record<PanelKind, string> = {
 	Table: 'Calls by service',
 	List: 'Recent logs',
 	Text: 'Runbook',
+	ScatterPlot: 'Latency against errors by service',
+	TopList: 'Slowest services',
+	GeoMap: 'p99 latency by country',
 };
 
 /** A colour no series palette draws in, so a canvas probe for it finds only the line. */
@@ -110,6 +116,11 @@ export const TABLE_VALUE_COLUMN = QUERY_NAME;
 /** The table's second value column, which no threshold targets. */
 export const TABLE_SECOND_COLUMN = 'B';
 
+export const VALUE_NAMES = {
+	[QUERY_NAME]: 'p99 latency',
+	[TABLE_SECOND_COLUMN]: 'errors',
+};
+
 /** Linear, so `auto` lays the rows out linearly and `log` visibly changes it. */
 export const HEATMAP_BUCKETS = [
 	100, 200, 300, 400, 500, 600, 700, 800, 900, 1000,
@@ -129,3 +140,17 @@ export const SERVICES = [
 ] as const;
 
 export const MAX_SERIES = SERVICES.length;
+
+export const GEO_COUNTRY_KEY = 'geo.country.iso_code';
+
+/** ISO codes GeoIP enrichment writes; one per series, all on the world map. */
+export const COUNTRIES = [
+	'US',
+	'IN',
+	'BR',
+	'DE',
+	'AU',
+	'JP',
+	'ZA',
+	'CA',
+] as const;

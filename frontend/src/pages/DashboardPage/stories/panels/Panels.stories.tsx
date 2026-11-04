@@ -178,6 +178,39 @@ export const ListPaginated: Story = {
 	},
 };
 
+/** Each service as one dot, its p99 latency (`A`) across and its errors (`B`) up. */
+export const ScatterPlot: Story = {
+	args: { kind: 'ScatterPlot' },
+	play,
+};
+
+/** The services ranked by p99 latency, slowest first, each with a bar to scale. */
+export const TopList: Story = {
+	args: { kind: 'TopList' },
+	play,
+};
+
+/** p99 latency per country, each country shaded by its value on a world map. */
+export const GeoMap: Story = {
+	args: { kind: 'GeoMap' },
+	play,
+};
+
+/**
+ * Countries above the threshold painted in its colour instead of the palette,
+ * with a legend key that reads in the latency column's unit.
+ */
+export const GeoMapThresholds: Story = {
+	args: { kind: 'GeoMap', thresholds: true },
+	play,
+};
+
+/** The colour bar titled by the query's legend, `p99 latency`, not `A.p99 latency`. */
+export const GeoMapValueNames: Story = {
+	args: { kind: 'GeoMap', valueNames: true },
+	play,
+};
+
 /** A Markdown runbook: heading, list, link and code block. */
 export const Text: Story = {
 	args: { kind: 'Text' },

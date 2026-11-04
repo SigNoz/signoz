@@ -96,13 +96,13 @@ export const panelsMocks = defineStoryMocks({
 		thresholds: toggleControl('Thresholds', {
 			group: PANEL,
 			description:
-				'A dashed labelled line on Time Series, Bar and Area; a background colour on Number when the value is above it; a filled `A` cell on Table rows above it, never a `B` cell. Other kinds have none.',
+				'A dashed labelled line on Time Series, Bar and Area; a background colour on Number when the value is above it; a filled `A` cell on Table rows above it, never a `B` cell; Geo Map countries above it in its colour. Other kinds have none.',
 			value: false,
 		}),
 		unit: choiceControl<PanelUnit>('Unit', {
 			group: PANEL,
 			description:
-				'Formatting unit: the y axis and tooltip of the charts, the Number value, the pie total, the Table value column.',
+				'Formatting unit: the y axis and tooltip of the charts, the Number value, the pie total, the Table value column, the Geo Map color column.',
 			options: UNITS,
 			value: 'ms',
 		}),
@@ -185,6 +185,12 @@ export const panelsMocks = defineStoryMocks({
 			description: 'Formats the Table value column in the Unit above.',
 			value: false,
 		}),
+		valueNames: toggleControl('Value names', {
+			group: PANEL,
+			description:
+				'A legend on each query, so Table, Scatter Plot and Geo Map name their values `p99 latency` and `errors` instead of `A.p99(signoz_latency)`.',
+			value: false,
+		}),
 		result: choiceControl<PanelResult>('Query result', {
 			group: DATA,
 			description:
@@ -195,7 +201,7 @@ export const panelsMocks = defineStoryMocks({
 		series: countControl('Series', {
 			group: DATA,
 			description:
-				'Series on the charts, groups on the heatmap, slices on the pie, rows on the table.',
+				'Series on the charts, groups on the heatmap, slices on the pie, rows on the table and top list, dots on the scatter plot, countries on the geo map.',
 			value: 4,
 			max: MAX_SERIES,
 		}),
