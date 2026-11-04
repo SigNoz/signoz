@@ -1,4 +1,7 @@
+import { CharStreams, CommonTokenStream } from 'antlr4';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import FilterQueryLexer from 'parser/FilterQueryLexer';
+import { IQueryPair, IToken } from 'types/antlrQueryTypes';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 
 import {
@@ -240,6 +243,53 @@ export function resolveRelatedCategory(
 	return match ?? related[0] ?? null;
 }
 
+/**
+ * Key offsets of the clauses a prefix NOT negates. Null when the expression is
+ * not a plain AND of clauses (it has an OR, or a NOT over a group), so no
+ * subset of its clauses means the same thing.
+ */
+function findNegatedKeyStarts(
+	expression: string,
+	pairs: IQueryPair[],
+): Set<number> | null {
+	const tokenStream = new CommonTokenStream(
+		new FilterQueryLexer(CharStreams.fromString(expression)),
+	);
+	tokenStream.fill();
+
+	const tokens = (tokenStream.tokens as IToken[]).filter(
+		(token) => token.channel === 0 && token.type !== FilterQueryLexer.EOF,
+	);
+	const keyStarts = new Set(pairs.map((pair) => pair.position.keyStart));
+	const negated = new Set<number>();
+
+	for (let index = 0; index < tokens.length; index += 1) {
+		const token = tokens[index];
+
+		if (token.type === FilterQueryLexer.OR) {
+			return null;
+		}
+
+		const previous = tokens[index - 1];
+		const followsKey =
+			previous?.type === FilterQueryLexer.KEY && keyStarts.has(previous.start);
+
+		if (token.type === FilterQueryLexer.NOT && !followsKey) {
+			const next = tokens[index + 1];
+
+			if (next?.type === FilterQueryLexer.LPAREN) {
+				return null;
+			}
+
+			if (next?.type === FilterQueryLexer.KEY) {
+				negated.add(next.start);
+			}
+		}
+	}
+
+	return negated;
+}
+
 export function carryOverListFilters(
 	expression: string,
 	target: InfraMonitoringEntity,
@@ -248,10 +298,20 @@ export function carryOverListFilters(
 		return '';
 	}
 
+	const pairs = extractQueryPairs(expression);
+	const negatedKeyStarts = findNegatedKeyStarts(expression, pairs);
+
+	if (!negatedKeyStarts) {
+		return '';
+	}
+
 	const supported = new Set(FILTERABLE_KEYS[target]);
 
-	return extractQueryPairs(expression)
-		.filter((pair) => supported.has(pair.key))
+	return pairs
+		.filter(
+			(pair) =>
+				supported.has(pair.key) && !negatedKeyStarts.has(pair.position.keyStart),
+		)
 		.map((pair) => {
 			const end = pair.position.valueEnd ?? pair.position.operatorEnd;
 
