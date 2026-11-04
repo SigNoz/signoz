@@ -60,4 +60,39 @@ describe('createVariableWidthBarsPathBuilder', () => {
 		expect([...fills.keys()]).toStrictEqual(['#ff0000', '#ff000066', pattern]);
 		expect(fills.get(pattern)?.rects).toStrictEqual([[41, 70, 18, 20]]);
 	});
+	it('reads a fill callback on every draw', () => {
+		let fill = '#ff0000';
+		const builder = createVariableWidthBarsPathBuilder({
+			getBars: () => [{ x0: 0, x1: 1, y0: 0, y1: 1, hatched: false }],
+			fill: () => fill,
+			hatchedFill: '#00ff00',
+			getHatchPattern: () => null,
+			gapPx: 0,
+		});
+
+		const first = builder(plot, 1, 0, 0)?.fill as unknown as Map<string, unknown>;
+		fill = '#0000ff';
+		const second = builder(plot, 1, 0, 0)?.fill as unknown as Map<
+			string,
+			unknown
+		>;
+
+		expect([...first.keys()]).toStrictEqual(['#ff0000']);
+		expect([...second.keys()]).toStrictEqual(['#0000ff']);
+	});
+
+	it('keeps solid bars when the hatched fill is the same colour', () => {
+		const fills = createVariableWidthBarsPathBuilder({
+			getBars: () => [
+				{ x0: 0, x1: 1, y0: 0, y1: 1, hatched: false },
+				{ x0: 1, x1: 2, y0: 0, y1: 1, hatched: true },
+			],
+			fill: 'red',
+			hatchedFill: 'red',
+			getHatchPattern: () => null,
+			gapPx: 0,
+		})(plot, 1, 0, 0)?.fill as unknown as Map<string, FakePath2D>;
+
+		expect(fills.get('red')?.rects).toHaveLength(2);
+	});
 });

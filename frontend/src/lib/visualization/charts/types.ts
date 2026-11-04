@@ -198,6 +198,8 @@ export interface DistributionChartProps {
 	decimalPrecision?: PrecisionOption;
 	/** Hex colours keyed by group label, overriding the automatic palette. */
 	customColors?: Record<string, string>;
+	/** 0–100. Marked across the plot, over the visible groups combined. */
+	percentiles?: number[];
 	showLegend?: boolean;
 	legendPosition?: LegendPosition;
 	showTooltip?: boolean;
