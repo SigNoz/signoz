@@ -1,3 +1,4 @@
+import { Color } from '@signozhq/design-tokens';
 import { themeColors } from 'constants/theme';
 import { PrecisionOption } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
@@ -60,6 +61,11 @@ export function createBoundFormatter(
 ): (value: number) => string {
 	return (value: number): string =>
 		getToolTipValue(String(value), unit, decimalPrecision);
+}
+
+/** Neutral, so the summed remainder never reads as one more group. */
+export function resolveOtherColor(isDarkMode: boolean): string {
+	return isDarkMode ? Color.BG_VANILLA_400 : Color.BG_SLATE_50;
 }
 
 export function resolveSeriesColor(

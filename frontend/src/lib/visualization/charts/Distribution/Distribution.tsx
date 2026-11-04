@@ -20,13 +20,23 @@ import {
 	sumVisibleCounts,
 } from './layout';
 import { computeDistributionPercentiles } from './percentiles';
+import { groupIntoOther, resolveMaxDrawnGroups } from './topGroups';
 import { DistributionXScale, DistributionYScale } from './types';
+
+import styles from './Distribution.module.scss';
 import {
 	buildDistributionConfig,
 	createBoundFormatter,
+	resolveOtherColor,
 	prepareDistributionChartData,
 	resolveSeriesColor,
 } from './utils';
+
+/** Rough share of the panel width the plot gets, for fitting side-by-side bars. */
+const PLOT_SHARE = 0.9;
+const PLOT_SHARE_WITH_RIGHT_LEGEND = 0.65;
+/** Vertical space the Other notice takes out of the container. */
+const NOTICE_HEIGHT = 20;
 
 export default function Distribution({
 	id,
@@ -86,9 +96,50 @@ export default function Distribution({
 	const isLogY =
 		yScale === DistributionYScale.Log && stack !== StackMode.Percent;
 
+	// The legend lists every group; the plot draws the largest and sums the rest into
+	// Other, so a toggle re-ranks without a refetch.
+	const drawn = useMemo(
+		() =>
+			groupIntoOther({
+				labels,
+				counts,
+				colors,
+				visible,
+				maxGroups: resolveMaxDrawnGroups({
+					stack,
+					xAxis,
+					plotWidth:
+						width *
+						(legendPosition === LegendPosition.RIGHT
+							? PLOT_SHARE_WITH_RIGHT_LEGEND
+							: PLOT_SHARE),
+				}),
+				otherColor: resolveOtherColor(isDarkMode),
+			}),
+		[
+			labels,
+			counts,
+			colors,
+			visible,
+			stack,
+			xAxis,
+			width,
+			legendPosition,
+			isDarkMode,
+		],
+	);
+	const drawnVisible = useMemo(() => drawn.labels.map(() => true), [drawn]);
+
 	const layout = useMemo(
-		() => resolveDistributionBars({ xAxis, counts, visible, stack, isLogY }),
-		[xAxis, counts, visible, stack, isLogY],
+		() =>
+			resolveDistributionBars({
+				xAxis,
+				counts: drawn.counts,
+				visible: drawnVisible,
+				stack,
+				isLogY,
+			}),
+		[xAxis, drawn, drawnVisible, stack, isLogY],
 	);
 
 	const boundaryPrecision = useMemo(
@@ -112,9 +163,9 @@ export default function Distribution({
 				id,
 				xAxis,
 				layout,
-				labels,
-				colors,
-				visible,
+				labels: drawn.labels,
+				colors: drawn.colors,
+				visible: drawnVisible,
 				stack,
 				isLogY,
 				isDarkMode,
@@ -126,9 +177,8 @@ export default function Distribution({
 			id,
 			xAxis,
 			layout,
-			labels,
-			colors,
-			visible,
+			drawn,
+			drawnVisible,
 			stack,
 			isLogY,
 			isDarkMode,
@@ -146,10 +196,10 @@ export default function Distribution({
 				dismiss={args.dismiss}
 				xAxis={xAxis}
 				layout={layout}
-				labels={labels}
-				colors={colors}
-				counts={counts}
-				visible={visible}
+				labels={drawn.labels}
+				colors={drawn.colors}
+				counts={drawn.counts}
+				visible={drawnVisible}
 				stack={stack}
 				markers={markers}
 				formatBound={formatBound}
@@ -159,10 +209,8 @@ export default function Distribution({
 		[
 			xAxis,
 			layout,
-			labels,
-			colors,
-			counts,
-			visible,
+			drawn,
+			drawnVisible,
 			stack,
 			markers,
 			formatBound,
@@ -171,8 +219,8 @@ export default function Distribution({
 	);
 
 	const data = useMemo(
-		() => prepareDistributionChartData(xAxis, counts),
-		[xAxis, counts],
+		() => prepareDistributionChartData(xAxis, drawn.counts),
+		[xAxis, drawn],
 	);
 
 	const legendItems = useMemo<LegendItem[]>(
@@ -206,7 +254,9 @@ export default function Distribution({
 			config={config}
 			data={data}
 			width={width}
-			height={height}
+			height={
+				drawn.otherGroupCount > 0 ? Math.max(0, height - NOTICE_HEIGHT) : height
+			}
 			legendConfig={{ position: legendPosition }}
 			showLegend={showLegend}
 			customLegend={groupLegend}
@@ -215,6 +265,14 @@ export default function Distribution({
 			canPinTooltip={canPinTooltip}
 			decimalPrecision={decimalPrecision}
 			customTooltip={renderTooltip}
+			contentFooter={
+				drawn.otherGroupCount > 0 && (
+					<div className={styles.notice} data-testid="distribution-other-notice">
+						Showing top {drawn.labels.length - 1} of {drawn.visibleGroupCount} groups;
+						the rest are summed into Other.
+					</div>
+				)
+			}
 			renderTooltipFooter={renderTooltipFooter}
 			tooltipPortalRoot={tooltipPortalRoot}
 			layoutChildren={layoutChildren}
