@@ -95,7 +95,8 @@ func (store *store) GetNonDeletedUsersByEmailAndOrgID(ctx context.Context, email
 		NewSelect().
 		Model(&users).
 		Where("org_id = ?", orgID).
-		Where("email = ?", email).
+		// rows created before emails were lowercased may be stored mixed case
+		Where("LOWER(email) = ?", email).
 		Where("status != ?", types.UserStatusDeleted).
 		Scan(ctx)
 	if err != nil {
@@ -494,7 +495,7 @@ func (store *store) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.
 		BunDB().
 		NewSelect().
 		Model(&users).
-		Where("email = ?", email).
+		Where("LOWER(email) = ?", email).
 		Where("org_id IN (?)", bun.In(orgIDs)).
 		Scan(ctx)
 	if err != nil {
