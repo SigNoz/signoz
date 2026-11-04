@@ -156,6 +156,20 @@ const CASES: PrefillCase[] = [
 		],
 	},
 	{
+		kind: 'jira',
+		spec: {
+			deployment: 'selfhosted',
+			site: 'https://jira.acme.com',
+			project: 'OPS',
+			issueType: 'Task',
+			pat: 'jira-pat',
+		},
+		fields: [
+			['jira-site-textbox', 'https://jira.acme.com'],
+			['jira-pat-textbox', 'jira-pat'],
+		],
+	},
+	{
 		kind: 'jsmops',
 		spec: {
 			apiKey: 'jsm-api-key',

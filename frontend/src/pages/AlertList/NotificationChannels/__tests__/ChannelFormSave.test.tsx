@@ -176,6 +176,64 @@ describe('ChannelForm save', () => {
 	);
 
 	it(
+		'sends only the credentials of the picked jira deployment',
+		async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				rest.post(
+					'http://localhost/api/v2/notification_channels',
+					async (req, res, ctx) => {
+						body = await req.json();
+						return res(ctx.status(201), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
+			await user.click(await screen.findByRole('option', { name: /^Jira$/ }));
+
+			await user.type(screen.getByTestId('channel-name-textbox'), 'jira alerts');
+			await user.type(screen.getByTestId('jira-email-textbox'), 'ops@acme.io');
+
+			await user.click(
+				screen.getByTestId('jira-deployment-radio-item-selfhosted'),
+			);
+			expect(screen.queryByTestId('jira-email-textbox')).not.toBeInTheDocument();
+			await user.type(
+				screen.getByTestId('jira-site-textbox'),
+				'https://jira.acme.com',
+			);
+			await user.type(screen.getByTestId('jira-pat-textbox'), 'pat-1');
+			await user.type(screen.getByTestId('jira-project-textbox'), 'OPS');
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await waitFor(() => expect(body).toBeDefined(), FIND);
+			expect(
+				(body as { config: { spec: Record<string, unknown> } }).config.spec,
+			).toMatchObject({
+				deployment: 'selfhosted',
+				site: 'https://jira.acme.com',
+				pat: 'pat-1',
+				project: 'OPS',
+				issueType: 'Task',
+			});
+			expect(
+				(body as { config: { spec: Record<string, unknown> } }).config.spec,
+			).not.toHaveProperty('email');
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
 		'flags a slack field without a value instead of sending it',
 		async () => {
 			const onCreate = jest.fn();

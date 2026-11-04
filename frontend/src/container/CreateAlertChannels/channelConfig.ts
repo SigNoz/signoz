@@ -22,11 +22,13 @@ import {
 	ChannelFormValues,
 	ChannelKind,
 	ChannelSpecFormValues,
+	JiraDeployment,
 	WebhookAuth,
 } from './types';
 import {
 	canonicalJiraReopenDuration,
 	filledRows,
+	jiraDeploymentOf,
 	webhookAuthOf,
 } from './utils';
 
@@ -95,11 +97,13 @@ const SPEC_FIELDS = {
 		'sendResolved',
 	] as const satisfies readonly (keyof AlertmanagertypesChannelGoogleChatConfigDTO)[],
 	[ChannelKind.jira]: [
+		'deployment',
 		'site',
 		'project',
 		'issueType',
 		'email',
 		'apiToken',
+		'pat',
 		'summary',
 		'description',
 		'priority',
@@ -227,6 +231,17 @@ export function toChannelConfig(
 		}
 		if (auth !== WebhookAuth.bearer) {
 			delete picked.bearerToken;
+		}
+	}
+
+	if (kind === ChannelKind.jira) {
+		const deployment = jiraDeploymentOf(values);
+		picked.deployment = deployment;
+		if (deployment === JiraDeployment.selfhosted) {
+			delete picked.email;
+			delete picked.apiToken;
+		} else {
+			delete picked.pat;
 		}
 	}
 

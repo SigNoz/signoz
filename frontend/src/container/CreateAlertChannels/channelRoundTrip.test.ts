@@ -68,6 +68,7 @@ const SPECS: Record<string, Record<string, unknown>> = {
 		sendResolved: true,
 	},
 	jira: {
+		deployment: 'cloud',
 		site: 'https://acme.atlassian.net',
 		project: 'OPS',
 		issueType: 'Task',

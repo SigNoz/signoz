@@ -2,7 +2,12 @@ import { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/s
 
 import { toChannelConfig, toPostableChannel } from './channelConfig';
 import { toChannelFormState } from './channelFormValues';
-import { ChannelFormValues, ChannelKind, WebhookAuth } from './types';
+import {
+	ChannelFormValues,
+	ChannelKind,
+	JiraDeployment,
+	WebhookAuth,
+} from './types';
 
 const slackValues: ChannelFormValues = {
 	name: 'prod alerts',
@@ -159,5 +164,49 @@ describe('jira reopen duration', () => {
 		expect(
 			toChannelConfig(ChannelKind.jira, { reopenDuration: 'tomorrow' }).spec,
 		).toMatchObject({ reopenDuration: 'tomorrow' });
+	});
+});
+
+describe('jira deployment', () => {
+	const base = {
+		site: 'https://jira.acme.com',
+		project: 'OPS',
+		issueType: 'Task',
+	};
+
+	it('sends cloud with email and api token, never the pat', () => {
+		expect(
+			toChannelConfig(ChannelKind.jira, {
+				...base,
+				deployment: JiraDeployment.cloud,
+				email: 'a@b.c',
+				apiToken: 'tok',
+				pat: 'stale-pat',
+			}).spec,
+		).toStrictEqual({
+			...base,
+			deployment: 'cloud',
+			email: 'a@b.c',
+			apiToken: 'tok',
+		});
+	});
+
+	it('sends selfhosted with the pat, never email or api token', () => {
+		expect(
+			toChannelConfig(ChannelKind.jira, {
+				...base,
+				deployment: JiraDeployment.selfhosted,
+				email: 'stale@b.c',
+				apiToken: 'stale',
+				pat: 'pat-1',
+			}).spec,
+		).toStrictEqual({ ...base, deployment: 'selfhosted', pat: 'pat-1' });
+	});
+
+	it('defaults a spec without deployment to cloud', () => {
+		expect(
+			toChannelConfig(ChannelKind.jira, { ...base, email: 'a@b.c', apiToken: 't' })
+				.spec,
+		).toMatchObject({ deployment: 'cloud' });
 	});
 });

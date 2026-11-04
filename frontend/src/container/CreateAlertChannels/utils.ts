@@ -1,4 +1,4 @@
-import { ChannelFormValues, WebhookAuth } from './types';
+import { ChannelFormValues, JiraDeployment, WebhookAuth } from './types';
 
 // mirrors go's prometheus model.Duration units
 const JIRA_DURATION_UNIT_MS: Record<string, number> = {
@@ -84,6 +84,16 @@ export const webhookAuthOf = (
 	return values.username || values.password
 		? WebhookAuth.basic
 		: WebhookAuth.none;
+};
+
+/** A spec saved before the field existed is Cloud, as the API reads it. */
+export const jiraDeploymentOf = (
+	values: Pick<ChannelFormValues, 'deployment' | 'pat'>,
+): JiraDeployment => {
+	if (values.deployment) {
+		return values.deployment;
+	}
+	return values.pat ? JiraDeployment.selfhosted : JiraDeployment.cloud;
 };
 
 export const filledRows = <T>(

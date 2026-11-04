@@ -1,6 +1,11 @@
 import { TFunction } from 'i18next';
 
-import { ChannelFormValues, ChannelKind, WebhookAuth } from './types';
+import {
+	ChannelFormValues,
+	ChannelKind,
+	JiraDeployment,
+	WebhookAuth,
+} from './types';
 import { validateChannel } from './validation';
 
 const t = ((key: string) => key) as TFunction;
@@ -24,6 +29,42 @@ describe('validateChannel', () => {
 				issueType: 'Bug',
 			},
 			null,
+		],
+		[
+			'a self-hosted jira site with a personal access token',
+			ChannelKind.jira,
+			{
+				deployment: JiraDeployment.selfhosted,
+				site: 'https://jira.acme.com',
+				pat: 'pat-1',
+				project: 'OPS',
+				issueType: 'Task',
+			},
+			null,
+		],
+		[
+			'a self-hosted jira site without a personal access token',
+			ChannelKind.jira,
+			{
+				deployment: JiraDeployment.selfhosted,
+				site: 'https://jira.acme.com',
+				email: 'a@acme.com',
+				apiToken: 't',
+				project: 'OPS',
+				issueType: 'Task',
+			},
+			'jira_pat_required',
+		],
+		[
+			'a jira cloud site without an api token',
+			ChannelKind.jira,
+			{
+				site: 'https://acme.atlassian.net',
+				email: 'a@acme.com',
+				project: 'OPS',
+				issueType: 'Task',
+			},
+			'jira_cloud_credentials_required',
 		],
 		[
 			'any incident.io url',

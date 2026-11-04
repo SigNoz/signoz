@@ -11,10 +11,14 @@ import {
 	AlertmanagertypesChannelSlackConfigDTO,
 	AlertmanagertypesChannelTelegramConfigDTO,
 	AlertmanagertypesChannelWebhookConfigDTO,
+	AlertmanagertypesJiraDeploymentDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 export const ChannelKind = AlertmanagertypesChannelKindDTO;
 export type ChannelKind = AlertmanagertypesChannelKindDTO;
+
+export const JiraDeployment = AlertmanagertypesJiraDeploymentDTO;
+export type JiraDeployment = AlertmanagertypesJiraDeploymentDTO;
 
 /** Merged so switching kind keeps the fields the kinds share. */
 export type ChannelSpecFormValues = Partial<
