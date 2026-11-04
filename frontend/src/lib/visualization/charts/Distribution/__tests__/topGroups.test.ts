@@ -3,6 +3,7 @@ import { StackMode } from 'lib/uPlotV2/config/types';
 import { resolveDistributionXAxis } from '../layout';
 import {
 	groupIntoOther,
+	resolveClickedGroup,
 	MAX_STACKED_GROUPS,
 	OTHER_GROUP_LABEL,
 	resolveMaxDrawnGroups,
@@ -76,5 +77,32 @@ describe('groupIntoOther', () => {
 		expect(drawn.labels).toStrictEqual(['d', OTHER_GROUP_LABEL]);
 		expect(drawn.counts[1]).toStrictEqual([3, 1]);
 		expect(drawn.visibleGroupCount).toBe(3);
+	});
+});
+
+describe('resolveClickedGroup', () => {
+	const series = ['a', 'b', 'c'].map((label) => ({
+		label,
+		counts: [label === 'a' ? 5 : 1],
+	}));
+	const drawn = groupIntoOther({
+		labels: ['a', 'b', 'c'],
+		counts: series.map(({ counts }) => counts),
+		colors: ['#a', '#b', '#c'],
+		visible: [true, true, true],
+		maxGroups: 2,
+		otherColor: '#999',
+	});
+
+	it('maps a drawn bar back to its source group and colour', () => {
+		expect(resolveClickedGroup(drawn, 0, series)).toStrictEqual({
+			series: series[0],
+			color: '#a',
+		});
+	});
+
+	it('refuses Other and empty space', () => {
+		expect(resolveClickedGroup(drawn, 1, series)).toBeNull();
+		expect(resolveClickedGroup(drawn, null, series)).toBeNull();
 	});
 });

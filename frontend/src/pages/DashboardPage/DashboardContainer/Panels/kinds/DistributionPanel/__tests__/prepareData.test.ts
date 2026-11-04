@@ -22,7 +22,7 @@ function result({
 
 describe('prepareDistributionData', () => {
 	it('reads the bucket bounds and one count array per group', () => {
-		const { buckets, series } = prepareDistributionData({
+		const { buckets, series, queryName } = prepareDistributionData({
 			results: [
 				result({
 					distributions: [
@@ -41,9 +41,18 @@ describe('prepareDistributionData', () => {
 		});
 
 		expect(buckets).toStrictEqual([1, 2, 4]);
+		expect(queryName).toBe('A');
 		expect(series).toStrictEqual([
-			{ label: '{service="redis"}', counts: [5, 12, 3, 1] },
-			{ label: '{service="cart"}', counts: [0, 4, 8, 0] },
+			{
+				label: '{service="redis"}',
+				groupLabels: { service: 'redis' },
+				counts: [5, 12, 3, 1],
+			},
+			{
+				label: '{service="cart"}',
+				groupLabels: { service: 'cart' },
+				counts: [0, 4, 8, 0],
+			},
 		]);
 	});
 
@@ -119,11 +128,12 @@ describe('prepareDistributionData', () => {
 				results: [result({ buckets: [] })],
 				legendMap: {},
 			}),
-		).toStrictEqual({ buckets: [], series: [] });
+		).toStrictEqual({ buckets: [], series: [], queryName: '' });
 		expect(prepareDistributionData({ results: [], legendMap: {} })).toStrictEqual(
 			{
 				buckets: [],
 				series: [],
+				queryName: '',
 			},
 		);
 	});

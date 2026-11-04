@@ -28,6 +28,7 @@ import {
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { StackMode } from 'lib/uPlotV2/config/types';
 import type {
+	DistributionBarClick,
 	DistributionSeries,
 	DistributionXScale,
 	DistributionYScale,
@@ -201,6 +202,8 @@ export interface DistributionChartProps {
 	customColors?: Record<string, string>;
 	/** 0–100. Marked across the plot, over the visible groups combined. */
 	percentiles?: number[];
+	/** Fires for a click on a group's bar; not on Other or empty space. */
+	onBarClick?: (click: DistributionBarClick) => void;
 	showLegend?: boolean;
 	legendPosition?: LegendPosition;
 	showTooltip?: boolean;

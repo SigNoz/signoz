@@ -9,9 +9,15 @@ export interface DistributionPanelData {
 	/** Ascending bucket upper bounds shared by every group; empty means no chart. */
 	buckets: number[];
 	series: DistributionSeries[];
+	/** The query the series came from, for drilldown. */
+	queryName: string;
 }
 
-const EMPTY_DATA: DistributionPanelData = { buckets: [], series: [] };
+const EMPTY_DATA: DistributionPanelData = {
+	buckets: [],
+	series: [],
+	queryName: '',
+};
 
 /**
  * V5 distribution results → the chart's `buckets` + `series`. Only the first
@@ -34,6 +40,7 @@ export function prepareDistributionData({
 			}
 			return {
 				buckets,
+				queryName,
 				series: (aggregation.distributions ?? []).map((distribution) =>
 					toDistributionSeries(
 						distribution,
@@ -66,6 +73,7 @@ function toDistributionSeries(
 	const counts = distribution.counts ?? [];
 	return {
 		label: getLabelName(record, queryName, legend),
+		groupLabels: record,
 		counts: Array.from({ length }, (_, index) => {
 			const count = counts[index];
 			return Number.isFinite(count) ? count : 0;

@@ -53,6 +53,6 @@ export const definition: PanelDefinition<'signoz/DistributionPanel'> = {
 		download: { csv: false, png: true, svg: true },
 		createAlert: false,
 		search: false,
-		drilldown: false,
+		drilldown: true,
 	},
 };

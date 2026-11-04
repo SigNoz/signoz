@@ -1,6 +1,6 @@
 import { StackMode } from 'lib/uPlotV2/config/types';
 
-import { DistributionXAxis } from './types';
+import { DistributionSeries, DistributionXAxis } from './types';
 
 /** Colours stop being told apart past this many stacked groups. */
 export const MAX_STACKED_GROUPS = 10;
@@ -109,4 +109,23 @@ export function groupIntoOther({
 		otherGroupCount: folded.length,
 		visibleGroupCount: visibleIndexes.length,
 	};
+}
+
+/**
+ * The drawn group at `drawnIndex` as a source series and its colour; `null` for Other,
+ * which sums several groups no single filter can name.
+ */
+export function resolveClickedGroup(
+	drawn: DrawnGroups,
+	drawnIndex: number | null,
+	series: DistributionSeries[],
+): { series: DistributionSeries; color: string } | null {
+	const isOther =
+		drawn.otherGroupCount > 0 && drawnIndex === drawn.labels.length - 1;
+	if (drawnIndex === null || isOther) {
+		return null;
+	}
+	const label = drawn.labels[drawnIndex];
+	const clicked = series.find((entry) => entry.label === label);
+	return clicked ? { series: clicked, color: drawn.colors[drawnIndex] } : null;
 }
