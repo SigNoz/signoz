@@ -146,5 +146,5 @@ Do not use Zustand, Redux, or Context for purely local UI state.
 
 ## Additional resources
 
-- Project rule: [.cursor/rules/state-management.mdc](../../rules/state-management.mdc)
+- Project rule: [.claude/rules/frontend-state.md](../../../../.claude/rules/frontend-state.md)
 - Detailed patterns and rationale: [reference.md](reference.md)
