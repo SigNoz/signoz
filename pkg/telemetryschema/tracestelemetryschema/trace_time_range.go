@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -21,12 +22,12 @@ func NewTraceTimeRangeFinder(telemetryStore telemetrystore.TelemetryStore) *Trac
 	}
 }
 
-func (f *TraceTimeRangeFinder) GetTraceTimeRange(ctx context.Context, traceID string) (startNano, endNano int64, exists bool, error error) {
+func (f *TraceTimeRangeFinder) GetTraceTimeRange(ctx context.Context, traceID string, searchFromMS, searchToMS uint64) (startNano, endNano int64, exists bool, error error) {
 	traceIDs := []string{traceID}
-	return f.GetTraceTimeRangeMulti(ctx, traceIDs)
+	return f.GetTraceTimeRangeMulti(ctx, traceIDs, searchFromMS, searchToMS)
 }
 
-func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, traceIDs []string) (startNano, endNano int64, exists bool, error error) {
+func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, traceIDs []string, searchFromMS, searchToMS uint64) (startNano, endNano int64, exists bool, error error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
 		instrumentationtypes.CodeNamespace:    "trace-time-range",
@@ -48,24 +49,30 @@ func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, trace
 		args[i] = id
 	}
 
-	query := fmt.Sprintf(`
-		SELECT
-			count(),
-			%s,
-			%s
-		FROM %s.%s
-		WHERE trace_id IN (%s)
-	`, UnixNanoExpr("min(start)"), UnixNanoExpr("max(end)"), DBName, TraceSummaryTableName, strings.Join(placeholders, ", "))
+	boundedQuery, unboundedQuery := buildTraceTimeRangeQueries(strings.Join(placeholders, ", "), searchFromMS, searchToMS)
 
-	row := f.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...)
+	if boundedQuery != "" {
+		var uniqueCount uint64
+		err := f.telemetryStore.ClickhouseDB().QueryRow(ctx, boundedQuery, args...).Scan(&uniqueCount, &startNano, &endNano)
+		if err == nil && uniqueCount == uint64(len(traceIDs)) {
+			if !isSuspiciouslyCloseToEdge(searchFromMS, searchToMS, uint64(startNano), uint64(endNano)) {
+				if startNano > 1_000_000_000 {
+					startNano -= 1_000_000_000
+				}
+				endNano += 1_000_000_000
 
-	var rowCount uint64
-	err := row.Scan(&rowCount, &startNano, &endNano)
+				return startNano, endNano, true, nil
+			}
+		}
+	}
+
+	var uniqueCount uint64
+	err := f.telemetryStore.ClickhouseDB().QueryRow(ctx, unboundedQuery, args...).Scan(&uniqueCount, &startNano, &endNano)
 	if err != nil {
 		return 0, 0, false, err
 	}
 
-	if rowCount == 0 {
+	if uniqueCount != uint64(len(traceIDs)) {
 		return 0, 0, false, nil
 	}
 
@@ -75,6 +82,17 @@ func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, trace
 	endNano += 1_000_000_000
 
 	return startNano, endNano, true, nil
+}
+
+func isSuspiciouslyCloseToEdge(searchFromMS, searchToMS, startNano, endNano uint64) bool {
+	marginNano := uint64(time.Hour.Nanoseconds())
+	if searchFromMS > 0 && startNano < (searchFromMS*1_000_000)+marginNano {
+		return true
+	}
+	if searchToMS > 0 && endNano > (searchToMS*1_000_000)-marginNano {
+		return true
+	}
+	return false
 }
 
 // UnixNanoExpr renders the conversion of a timestamp-typed column expression
