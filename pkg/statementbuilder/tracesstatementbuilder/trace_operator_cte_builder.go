@@ -462,6 +462,7 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 }
 
 func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey, isSelectFieldsEmpty bool) (*qbtypes.Statement, error) {
+	var columnWarnings []string
 	sb := sqlbuilder.NewSelectBuilder()
 
 	// Select core fields. These are always present so the trace operator
@@ -490,12 +491,13 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		if selectedFields[field.Name] {
 			continue
 		}
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			b.stmtBuilder.logger.WarnContext(ctx, "failed to map select field",
 				slog.String("field", field.Name), errors.Attr(err))
 			continue
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", expr, selectColumnAlias(i, field.Name))))
 		selectedFields[field.Name] = true
 	}
@@ -511,10 +513,11 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	// Add order by support
 	orderApplied := false
 	for _, orderBy := range b.operator.Order {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 		sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(expr), orderBy.Direction.StringValue()))
 		orderApplied = true
 	}
@@ -535,8 +538,9 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{
-		Query: sql,
-		Args:  args,
+		Query:    sql,
+		Args:     args,
+		Warnings: querybuilder.AppendWarnings(nil, columnWarnings...),
 	}, nil
 }
 
@@ -622,6 +626,7 @@ func (b *traceOperatorCTEBuilder) getKeySelectors() []*telemetrytypes.FieldKeySe
 }
 
 func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey) (*qbtypes.Statement, error) {
+	var columnWarnings []string
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select(fmt.Sprintf(
@@ -631,7 +636,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 
 	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for _, gb := range b.operator.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -640,12 +645,13 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 				err,
 			)
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, clickhousesql.Identifier(gb.Name))))
 	}
 
 	var allAggChArgs []any
 	for i, agg := range b.operator.Aggregations {
-		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
+		rewritten, chArgs, aggWarnings, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			ctx,
 			b.orgID,
 			b.start,
@@ -662,6 +668,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 				err,
 			)
 		}
+		columnWarnings = append(columnWarnings, aggWarnings...)
 		allAggChArgs = append(allAggChArgs, chArgs...)
 
 		alias := fmt.Sprintf("__result_%d", i)
@@ -700,8 +707,9 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
-		Query: sql,
-		Args:  args,
+		Query:    sql,
+		Args:     args,
+		Warnings: querybuilder.AppendWarnings(nil, columnWarnings...),
 	}, nil
 }
 
@@ -722,13 +730,14 @@ func (b *traceOperatorCTEBuilder) buildTraceSummaryCTE(selectFromCTE string) {
 }
 
 func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey) (*qbtypes.Statement, error) {
+	var columnWarnings []string
 	b.buildTraceSummaryCTE(selectFromCTE)
 
 	sb := sqlbuilder.NewSelectBuilder()
 
 	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for _, gb := range b.operator.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -737,6 +746,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 				err,
 			)
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, clickhousesql.Identifier(gb.Name))))
 	}
 
@@ -744,7 +754,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 
 	var allAggChArgs []any
 	for i, agg := range b.operator.Aggregations {
-		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
+		rewritten, chArgs, aggWarnings, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			ctx,
 			b.orgID,
 			b.start,
@@ -761,6 +771,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 				err,
 			)
 		}
+		columnWarnings = append(columnWarnings, aggWarnings...)
 		allAggChArgs = append(allAggChArgs, chArgs...)
 
 		alias := fmt.Sprintf("__result_%d", i)
@@ -845,17 +856,19 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
-		Query: sql,
-		Args:  args,
+		Query:    sql,
+		Args:     args,
+		Warnings: querybuilder.AppendWarnings(nil, columnWarnings...),
 	}, nil
 }
 
 func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFromCTE string, keys map[string][]*telemetrytypes.TelemetryFieldKey) (*qbtypes.Statement, error) {
+	var columnWarnings []string
 	sb := sqlbuilder.NewSelectBuilder()
 
 	info := querybuilder.NewQueryInfo(ctx, b.orgID, b.stmtBuilder.fl, telemetrytypes.SignalTraces, nil, b.start, b.end)
 	for _, gb := range b.operator.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.stmtBuilder.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -864,12 +877,13 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 				err,
 			)
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, clickhousesql.Identifier(gb.Name))))
 	}
 
 	var allAggChArgs []any
 	for i, agg := range b.operator.Aggregations {
-		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
+		rewritten, chArgs, aggWarnings, err := b.stmtBuilder.aggExprRewriter.Rewrite(
 			ctx,
 			b.orgID,
 			b.start,
@@ -886,6 +900,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 				err,
 			)
 		}
+		columnWarnings = append(columnWarnings, aggWarnings...)
 		allAggChArgs = append(allAggChArgs, chArgs...)
 
 		alias := fmt.Sprintf("__result_%d", i)
@@ -931,8 +946,9 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
-		Query: sql,
-		Args:  args,
+		Query:    sql,
+		Args:     args,
+		Warnings: querybuilder.AppendWarnings(nil, columnWarnings...),
 	}, nil
 }
 

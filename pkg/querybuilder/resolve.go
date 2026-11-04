@@ -111,7 +111,8 @@ func Resolve(
 }
 
 // ResolveColumn resolves one key for a select field, group by, order by, or
-// aggregation, and renders its column expression.
+// aggregation, and renders its column expression. The warnings are the ones
+// a filter on the same key reports.
 func ResolveColumn(
 	ctx context.Context,
 	q qbtypes.QueryInfo,
@@ -119,12 +120,27 @@ func ResolveColumn(
 	key *telemetrytypes.TelemetryFieldKey,
 	target telemetrytypes.FieldDataType,
 	fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
-) (string, error) {
+) (string, []string, error) {
 	resolved, err := Resolve(ctx, q, storage, key, qbtypes.FilterOperatorUnknown, nil, fieldKeys)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
-	return Column(ctx, q, storage, resolved, target)
+	column, err := Column(ctx, q, storage, resolved, target)
+	if err != nil {
+		return "", nil, err
+	}
+	return column, resolved.Warnings, nil
+}
+
+// AppendWarnings appends each warning dst does not hold yet, so a key in both
+// the filter and a group by warns once.
+func AppendWarnings(dst []string, warnings ...string) []string {
+	for _, warning := range warnings {
+		if !slices.Contains(dst, warning) {
+			dst = append(dst, warning)
+		}
+	}
+	return dst
 }
 
 // intrinsicColumnFirst puts a column every row has first for a bare key.

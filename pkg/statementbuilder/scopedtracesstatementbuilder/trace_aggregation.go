@@ -478,19 +478,21 @@ func groupBySelectors(groupBy []qbtypes.GroupByKey) []*telemetrytypes.FieldKeySe
 
 // resolveGroupColumns resolves group-by keys through the storage for selection
 // inside the per-trace scan; keys must cover the group-by selectors.
-func (b *scopedTraceStatementBuilder) resolveGroupColumns(ctx context.Context, q qbtypes.QueryInfo, groupBy []qbtypes.GroupByKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]groupColumn, error) {
+func (b *scopedTraceStatementBuilder) resolveGroupColumns(ctx context.Context, q qbtypes.QueryInfo, groupBy []qbtypes.GroupByKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]groupColumn, []string, error) {
 	if len(groupBy) == 0 {
-		return nil, nil
+		return nil, nil, nil
 	}
 	out := make([]groupColumn, 0, len(groupBy))
+	var warnings []string
 	for i := range groupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, q, b.storage, &groupBy[i].TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, q, b.storage, &groupBy[i].TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+		warnings = append(warnings, keyWarnings...)
 		out = append(out, groupColumn{alias: groupByColumnAlias(i, groupBy[i].Name), expr: sqlbuilder.Escape(expr)})
 	}
-	return out, nil
+	return out, warnings, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -598,7 +600,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		}
 	}
 
-	groupCols, err := b.resolveGroupColumns(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), query.GroupBy, keys)
+	groupCols, groupWarnings, err := b.resolveGroupColumns(ctx, querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end), query.GroupBy, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -731,7 +733,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 	return &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       msc.warnings,
+		Warnings:       querybuilder.AppendWarnings(msc.warnings, groupWarnings...),
 		WarningsDocURL: msc.warnURL,
 	}, nil
 }
