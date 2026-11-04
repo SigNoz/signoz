@@ -2205,10 +2205,10 @@ components:
       type: object
     CloudintegrationtypesAWSConnectionArtifact:
       properties:
-        connectionUrl:
+        cliCommand:
           type: string
       required:
-      - connectionUrl
+      - cliCommand
       type: object
     CloudintegrationtypesAWSIntegrationConfig:
       properties:
@@ -2364,11 +2364,8 @@ components:
       properties:
         cliCommand:
           type: string
-        cloudPowerShellCommand:
-          type: string
       required:
       - cliCommand
-      - cloudPowerShellCommand
       type: object
     CloudintegrationtypesAzureIntegrationConfig:
       properties:

@@ -210,15 +210,13 @@ export interface AwsFlow {
 	toggleRegion(code: string): Promise<void>;
 	/** Fill whichever credential inputs the credentials endpoint left empty. */
 	fillMissingCredentials(): Promise<void>;
-	/**
-	 * Submit the add-account drawer. `window.open` is replaced first, so no AWS
-	 * console tab opens; the URL it was called with is returned instead.
-	 */
-	launch(): Promise<{
+	/** Submit the add-account drawer. Resolves the agent setup command it returned. */
+	generateCommand(): Promise<{
 		accountId: string;
-		connectionUrl: string;
+		command: string;
 		body: { config?: { aws?: { regions?: string[] } } };
 	}>;
+	agentCommand(): Locator;
 	/** Set exactly `codes` in the edit drawer and press Update Changes. */
 	updateRegions(codes: string[]): Promise<Response>;
 }
@@ -492,33 +490,22 @@ export function cloudDriver(page: Page, provider: CloudProvider): Cloud {
 				}
 			},
 
-			launch: async () => {
-				await page.evaluate(() => {
-					const w = window as unknown as {
-						open: (url?: string) => null;
-						__e2eOpened?: string;
-					};
-					w.open = (url?: string): null => {
-						w.__e2eOpened = String(url ?? '');
-						return null;
-					};
-				});
+			generateCommand: async () => {
 				const created = page.waitForResponse(isCall('POST', `${base}/accounts`));
-				await page.getByTestId('aws-launch-cfn-btn').click();
+				await page.getByTestId('aws-generate-command-btn').click();
 				const response = await created;
 				expect(response.status(), await response.text()).toBe(201);
-				const { data } = (await response.json()) as { data: { id: string } };
-				const connectionUrl = await page
-					.waitForFunction(
-						() => (window as unknown as { __e2eOpened?: string }).__e2eOpened,
-					)
-					.then((handle) => handle.jsonValue() as Promise<string>);
+				const { data } = (await response.json()) as {
+					data: { id: string; connectionArtifact: { aws: { cliCommand: string } } };
+				};
 				return {
 					accountId: data.id,
-					connectionUrl,
+					command: data.connectionArtifact.aws.cliCommand,
 					body: response.request().postDataJSON(),
 				};
 			},
+
+			agentCommand: () => page.getByTestId('aws-agent-command'),
 
 			updateRegions: async (codes) => {
 				const boxes = page.locator('[data-testid^="aws-region-"]');
