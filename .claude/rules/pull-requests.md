@@ -10,4 +10,5 @@
 - **Use convensional commit format** for commits and PR title.
 - **Do not amend the commits once pushed.** Always create a new commit once changes are pushed to remote.
 - **Review fixes are new commits too.** A force push hides what changed from human reviewers and makes Greptile post its findings again. Bring in `main` with a merge; only a stacked branch (`gh stack`) rebases, since the stack moves as a unit.
-- **Answer every review thread.** Reply with the commit that fixes it (`Fixed in 4df6f3198d: <what changed>`) or the reason it stays, then resolve. Never resolve a thread with neither: Greptile withdraws a finding, and remembers it, only when told why.
+- **Answer every Greptile thread.** Reply with the commit that fixes it (`Fixed in 4df6f3198d: <what changed>`) or the reason it stays, then resolve. Never resolve one with neither: Greptile withdraws a finding, and remembers it, only when told why.
+- **Leave human review threads to the author.** Fix the code they ask for, but never reply to or resolve a human reviewer's thread.

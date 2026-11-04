@@ -9,7 +9,7 @@ paths:
 Examples and the harness API live in [`frontend/src/tests/README.md`](../../frontend/src/tests/README.md).
 
 - **Import from the harness.** `render`, `screen`, `userEvent`, `waitFor` and the rest come from `tests/test-utils`, never from `@testing-library/react`. The harness mounts the router, React Query, Redux, app context and preferences. When it can't do what a test needs, extend `tests/test-utils` instead of importing around it.
-- **Find elements by test ID.** Query with `getByTestId`/`findByTestId` on the `data-testid` or `testId` the component exposes, and add one to the component when it has none. Fall back to role or text only for markup the app doesn't own.
+- **Find elements by test ID.** Query with `getByTestId`/`findByTestId` on the `data-testid` or `testId` the component exposes, and add one to the component when it has none. Fall back to role or text only for markup the app doesn't own. A test ID matches exactly one element and survives copy and markup changes; `getByRole` computes the accessibility tree on every call and is the slowest query.
 - **Interact like a user.** `const user = userEvent.setup({ pointerEventsCheck: 0 })`, then an awaited `user.click`, `hover`, `keyboard` or `type`. `fireEvent` only for events `userEvent` has no equivalent for: scroll, resize, setting `scrollTop`.
 - **Fake timers per test only**, for debounce or throttle, with `userEvent.setup({ advanceTimers: (ms) => jest.advanceTimersByTime(ms) })`. Never global.
 - **Network through MSW.** The global server runs for every test; override per test with `server.use(...)` from `mocks-server/server`. Large fixtures go in `mocks-server/__mockdata__`.
