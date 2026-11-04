@@ -4,6 +4,7 @@
  */
 
 import {
+	DashboardtypesDistributionXScaleDTO as DistributionXScale,
 	DashboardtypesHeatmapPaletteDTO as HeatmapPalette,
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
 	DashboardtypesLegendPositionDTO as LegendPosition,
@@ -24,6 +25,7 @@ export const PANEL_KINDS = [
 	'Area',
 	'Histogram',
 	'Heatmap',
+	'Distribution',
 	'Pie',
 	'Number',
 	'Table',
@@ -83,6 +85,7 @@ export const PANEL_NAME: Record<PanelKind, string> = {
 	Area: 'Request rate by service',
 	Histogram: 'Latency distribution',
 	Heatmap: 'Latency heatmap',
+	Distribution: 'Latency buckets',
 	Pie: 'Traffic share',
 	Number: 'p99 latency',
 	Table: 'Calls by service',
@@ -121,6 +124,19 @@ export const HEATMAP_BUCKETS = [
 ];
 
 export const HEATMAP_COLUMNS = 30;
+
+/** Exponential, as a latency histogram's `le` bounds are, so `auto` picks log. */
+export const DISTRIBUTION_BUCKETS = [
+	5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000,
+];
+
+export const DISTRIBUTION_X_SCALES = Object.values(DistributionXScale);
+
+/** `high` puts a quarter of each group past the last bound, over the warning's 10%. */
+export const DISTRIBUTION_OVERFLOWS = ['low', 'high'] as const;
+
+/** Groups the series control allows: past the 10 a stacked distribution draws. */
+export const MAX_SERIES_CONTROL = 14;
 
 export const SERVICES = [
 	'checkout',

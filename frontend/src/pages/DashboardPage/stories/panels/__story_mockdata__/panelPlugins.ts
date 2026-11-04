@@ -6,6 +6,8 @@
 import {
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpecDTOKind as AreaChartKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTOKind as BarChartKind,
+	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpecDTOKind as DistributionKind,
+	DashboardtypesDistributionYScaleDTO as DistributionYScale,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind as HeatmapKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTOKind as HistogramKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTOKind as ListKind,
@@ -129,6 +131,35 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 				},
 				queries: [
 					metricQuery(RequestType.heatmap, { grouped: true, heatmap: true }),
+				],
+			};
+		case 'Distribution':
+			return {
+				plugin: {
+					kind: DistributionKind['signoz/DistributionPanel'],
+					spec: {
+						formatting,
+						legend,
+						axes: {
+							x: { scale: args.distributionXScale },
+							y: {
+								scale:
+									args.yScale === 'log'
+										? DistributionYScale.log
+										: DistributionYScale.linear,
+							},
+						},
+						chartAppearance: {
+							stack: args.stack,
+							percentiles: { enabled: args.percentiles, values: [50, 90, 99] },
+						},
+					},
+				},
+				queries: [
+					metricQuery(RequestType.distribution, {
+						grouped: true,
+						histogram: true,
+					}),
 				],
 			};
 		case 'Pie':
