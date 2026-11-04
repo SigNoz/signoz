@@ -302,3 +302,8 @@ go.mod @therealpandey
 /frontend/.storybook/ @H4ad
 /frontend/src/storybook/ @H4ad
 /.claude/skills/signoz-page-story/ @H4ad
+
+## AI Assistant
+/frontend/src/container/AIAssistant/ @SigNoz/nerve
+/frontend/src/hooks/aiAssistant/ @SigNoz/nerve
+/frontend/src/pages/AIAssistantPage/ @SigNoz/nerve
