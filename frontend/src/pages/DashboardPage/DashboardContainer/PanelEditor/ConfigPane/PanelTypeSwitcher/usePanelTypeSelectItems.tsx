@@ -9,6 +9,8 @@ import type { ConfigSelectItem } from '../controls/ConfigSelect/ConfigSelect';
 import { getPanelTypeDisabledReason } from './utils';
 
 interface UsePanelTypeSelectItemsArgs {
+	/** The panel's current kind, which some kinds can't be switched to from. */
+	fromKind?: PanelKind;
 	/** Active query type — a kind that can't be authored in it is disabled. */
 	queryType: EQueryType;
 	/** Current datasource — also gates the disabled rule (List needs logs/traces, not metrics). */
@@ -21,6 +23,7 @@ interface UsePanelTypeSelectItemsArgs {
  * the capabilities guard, the same rule the editor's `PanelTypeSwitcher` applies.
  */
 export function usePanelTypeSelectItems({
+	fromKind,
 	queryType,
 	signal,
 }: UsePanelTypeSelectItemsArgs): ConfigSelectItem<PanelKind>[] {
@@ -30,6 +33,7 @@ export function usePanelTypeSelectItems({
 				// One reason drives both the disabled flag and the tooltip, so they can't disagree.
 				const disabledReason = getPanelTypeDisabledReason({
 					kind,
+					fromKind,
 					queryType,
 					signal,
 					label: displayName,
@@ -42,6 +46,6 @@ export function usePanelTypeSelectItems({
 					tooltip: disabledReason,
 				};
 			}),
-		[queryType, signal],
+		[fromKind, queryType, signal],
 	);
 }
