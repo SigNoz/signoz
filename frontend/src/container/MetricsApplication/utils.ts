@@ -31,9 +31,13 @@ export const navigateToTrace = ({
 
 	const JSONCompositeQuery = encodeURIComponent(JSON.stringify(apmToTraceQuery));
 
+	const selectedParam = encodeURIComponent(
+		`{"serviceName":["${servicename}"],"operation":["${operation}"]}`,
+	);
+
 	const newTraceExplorerPath = `${
 		ROUTES.TRACES_EXPLORER
-	}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
+	}?${urlParams.toString()}&selected=${selectedParam}&filterToFetchData=["duration","status","serviceName","operation"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&${
 		QueryParams.compositeQuery
 	}=${JSONCompositeQuery}`;
 
