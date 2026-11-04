@@ -14,6 +14,7 @@ import { SWITCH_SKETCHES } from '../../controls/drawings/switchSketches';
 import type { SectionEditorContext } from '../../sectionContext';
 import { createFieldResetter } from '../../utils/changes';
 import DisconnectValuesField from './DisconnectValuesField';
+import DistributionPercentilesField from './DistributionPercentilesField';
 import HeatmapColorsField from './HeatmapColorsField';
 import PointsFields from './PointsFields';
 import {
@@ -66,6 +67,14 @@ function ChartAppearanceSection({
 						onChange={(next): void => onChange({ ...value, stack: next })}
 					/>
 				</ConfigField>
+			)}
+
+			{controls.percentiles && (
+				<DistributionPercentilesField
+					value={value?.percentiles}
+					savedValue={savedValue?.percentiles}
+					onChange={(percentiles): void => onChange({ ...value, percentiles })}
+				/>
 			)}
 
 			{controls.lineStyle && (

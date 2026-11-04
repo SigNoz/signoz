@@ -10,6 +10,7 @@ import PanelStyles from '../../panel.module.scss';
 import { PanelRendererProps } from '../../types/rendererProps';
 import {
 	resolveDecimalPrecision,
+	resolveDistributionPercentiles,
 	resolveDistributionStackMode,
 	resolveDistributionXScale,
 	resolveDistributionYScale,
@@ -53,6 +54,11 @@ function DistributionPanelRenderer({
 		[spec.axes?.x?.scale, data.requestPayload],
 	);
 
+	const percentiles = useMemo(
+		() => resolveDistributionPercentiles(spec.chartAppearance?.percentiles),
+		[spec.chartAppearance?.percentiles],
+	);
+
 	const decimalPrecision = useMemo(
 		() => resolveDecimalPrecision(spec.formatting?.decimalPrecision),
 		[spec.formatting?.decimalPrecision],
@@ -83,6 +89,7 @@ function DistributionPanelRenderer({
 						xAxisUnit={spec.formatting?.unit}
 						decimalPrecision={decimalPrecision}
 						customColors={spec.legend?.customColors ?? undefined}
+						percentiles={percentiles}
 						legendPosition={resolveLegendPosition(spec.legend?.position)}
 						isDarkMode={isDarkMode}
 						width={containerDimensions.width}
