@@ -5,6 +5,7 @@ import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { isBucketCountingPanelType } from 'lib/query/bucketCountingPanelTypes';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
 import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter';
 import { ReduceToFilter } from 'container/QueryBuilder/filters/ReduceToFilter/ReduceToFilter';
@@ -98,7 +99,7 @@ function QueryAddOns({
 		}
 
 		if (
-			panelType === PANEL_TYPES.HEATMAP &&
+			isBucketCountingPanelType(panelType) &&
 			query.dataSource === DataSource.METRICS &&
 			!HISTOGRAM_ATTRIBUTE_TYPES.has(query.aggregateAttribute?.type ?? '')
 		) {
