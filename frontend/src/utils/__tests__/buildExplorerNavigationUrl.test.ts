@@ -1,6 +1,7 @@
 import ROUTES from 'constants/routes';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { buildExplorerNavigationUrl } from '../buildExplorerNavigationUrl';
 
@@ -18,5 +19,15 @@ describe('buildExplorerNavigationUrl', () => {
 		expect(url).toContain(ROUTES.LOGS_EXPLORER);
 		expect(url).toContain(`${QueryParams.compositeQuery}=`);
 		expect(url).toContain(`${QueryParams.viewKey}=`);
+	});
+
+	it('JSON-encodes panelTypes so the explorer opens the right view', () => {
+		const url = buildExplorerNavigationUrl(
+			ROUTES.LOGS_EXPLORER,
+			initialQueriesMap[DataSource.LOGS],
+			{ [QueryParams.panelTypes]: PANEL_TYPES.TABLE },
+		);
+
+		expect(url).toContain(`${QueryParams.panelTypes}=%22table%22`);
 	});
 });

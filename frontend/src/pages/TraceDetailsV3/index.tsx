@@ -16,6 +16,8 @@ function TraceDetailsV3(): JSX.Element {
 	// Tracks which traceId the load event already fired for, so navigating
 	// between traces (the route component stays mounted) re-fires it once each.
 	const dataLoadedFiredForRef = useRef<string>('');
+	const threadDataLoadedFiredForRef = useRef<string>('');
+	const threadEmptyFiredForRef = useRef<string>('');
 
 	const handleFilteredSpansChange = useCallback(
 		(spanIds: string[], isActive: boolean): void => {
@@ -39,7 +41,10 @@ function TraceDetailsV3(): JSX.Element {
 					dataLoadedFiredForRef={dataLoadedFiredForRef}
 				/>
 			) : (
-				<TraceDetailsThread />
+				<TraceDetailsThread
+					dataLoadedFiredForRef={threadDataLoadedFiredForRef}
+					threadEmptyFiredForRef={threadEmptyFiredForRef}
+				/>
 			)}
 		</TraceDetailsWrapper>
 	);

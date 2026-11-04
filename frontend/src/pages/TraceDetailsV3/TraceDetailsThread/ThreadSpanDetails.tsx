@@ -34,7 +34,8 @@ function ThreadSpanDetails({
 	const [width, setWidth] = useState(RIGHT_DOCK_MIN);
 	const [height, setHeight] = useState(BOTTOM_DOCK_DEFAULT);
 	const { id: traceId = '' } = useAppParams<'id'>();
-	const { data: traceSummary } = useTraceSummary(traceId);
+	const { data: traceSummary, isLoading: isTraceSummaryLoading } =
+		useTraceSummary(traceId);
 
 	const panel = (
 		<SpanDetailsPanel
@@ -44,6 +45,7 @@ function ThreadSpanDetails({
 			onVariantChange={onVariantChange}
 			traceStartTime={traceSummary?.startTimestampMillis}
 			traceEndTime={traceSummary?.endTimestampMillis}
+			isTraceBoundsLoading={isTraceSummaryLoading}
 		/>
 	);
 
