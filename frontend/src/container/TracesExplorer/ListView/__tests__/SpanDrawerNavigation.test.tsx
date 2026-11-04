@@ -1,3 +1,9 @@
+import logEvent from 'api/common/logEvent';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	OpenTraceSource,
+	TracesExplorerEvents,
+} from 'container/TracesExplorer/events';
 import { getCurrentLocation } from 'lib/router/navigation';
 import { server } from 'mocks-server/server';
 import { screen, userEvent, waitFor, within } from 'tests/test-utils';
@@ -7,6 +13,8 @@ import {
 	mockTraceSummary,
 	renderListView,
 } from './testUtils';
+
+jest.mock('api/common/logEvent');
 
 // globalTime starts with loading:true, which gates the list query. Force just that
 // slice's loading to false so the query fires; every other selector is untouched.
@@ -134,6 +142,54 @@ describe('Traces ListView - span drawer navigation', () => {
 		);
 		expect(getCurrentLocation().pathname).toBe('/traces-explorer');
 		expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument();
+		expect(logEvent).toHaveBeenCalledWith(TracesExplorerEvents.OpenTraceClicked, {
+			panelType: PANEL_TYPES.LIST,
+			source: OpenTraceSource.RowIcon,
+		});
+	});
+
+	it('opens the trace page in a new tab from the drawer', async () => {
+		const open = jest.spyOn(window, 'open').mockImplementation(() => null);
+		const user = userEvent.setup();
+		renderListView();
+
+		await user.click(await screen.findByText('HTTP GET'));
+		expect(logEvent).not.toHaveBeenCalledWith(
+			TracesExplorerEvents.OpenTraceClicked,
+			{ panelType: PANEL_TYPES.LIST, source: OpenTraceSource.Row },
+		);
+		await user.click(await screen.findByTestId('span-drawer-view-full-trace'));
+
+		expect(open).toHaveBeenCalledWith(
+			expect.stringMatching(/\/trace\/0000000000000000344ded1387b08a7e\?/),
+			'_blank',
+		);
+		expect(logEvent).toHaveBeenCalledWith(TracesExplorerEvents.OpenTraceClicked, {
+			panelType: PANEL_TYPES.LIST,
+			source: OpenTraceSource.SpanDrawer,
+		});
+	});
+
+	it('opens the trace page in a new tab on a Cmd-click without opening the drawer', async () => {
+		const open = jest.spyOn(window, 'open').mockImplementation(() => null);
+		const user = userEvent.setup();
+		renderListView();
+
+		const row = await screen.findByText('HTTP GET');
+		await user.keyboard('{Meta>}');
+		await user.click(row);
+		await user.keyboard('{/Meta}');
+
+		expect(open).toHaveBeenCalledWith(
+			expect.stringMatching(/\/trace\/0000000000000000344ded1387b08a7e\?/),
+			'_blank',
+			'noopener',
+		);
+		expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument();
+		expect(logEvent).toHaveBeenCalledWith(TracesExplorerEvents.OpenTraceClicked, {
+			panelType: PANEL_TYPES.LIST,
+			source: OpenTraceSource.Row,
+		});
 	});
 
 	it('shows the row icon only on the hovered copy of a duplicate span', async () => {
