@@ -258,9 +258,15 @@ export function messagingQueuesDriver(page: Page): MessagingQueues {
 
 		openHealthCheck: async () => {
 			// "Configuration", or "Missing Configuration (N)" when checks fail.
-			await page.getByRole('button', { name: /Configuration/ }).click();
+			const button = page.getByRole('button', { name: /Configuration/ });
 			const dialog = page.getByRole('dialog');
-			await expect(dialog).toBeVisible();
+			// The button drops clicks while its checks load, and is not disabled.
+			await expect(async () => {
+				if (!(await dialog.isVisible())) {
+					await button.click({ timeout: 5_000 });
+				}
+				await expect(dialog).toBeVisible({ timeout: 1_000 });
+			}).toPass();
 			return dialog;
 		},
 

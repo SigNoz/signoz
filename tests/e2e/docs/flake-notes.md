@@ -259,3 +259,20 @@ neither antd 5.11 nor `@rc-component/trigger` closes it on Escape, so
 it, but when the popover covered the Advanced Options header, that click waited
 on "intercepts pointer events" for the rest of the budget. The driver now closes
 the popover through its trigger and waits for it to go.
+
+## dnd-kit stops clicks right after a drop
+
+`app-shell/sidenav` TC-03 needed a retry in half its CI jobs and failed all
+three attempts in four of 22. dnd-kit 6.1 adds a capture-phase click handler on
+`document` that stops propagation once a drag activates, and removes it 50 ms
+after the drop. `saveShortcuts` clicked Save inside that window, so the modal
+stayed open and no preference request went out. It now clicks again while the
+dialog is still open.
+
+## The Kafka configuration button drops clicks while loading
+
+`messaging-queues/kafka` TC-01 failed its first attempt in four of 20 CI jobs.
+The health check button passes `loading` to an antd 5.11 `Button` while the
+three onboarding status queries fetch, and a loading antd button ignores clicks
+without being disabled, so Playwright clicks it and nothing opens.
+`openHealthCheck` clicks again until the dialog shows.
