@@ -120,7 +120,18 @@ func WhichSamplesTableToUse(start, end int64, mq *v3.BuilderQuery) string {
 func AggregationColumnForSamplesTable(start, end int64, mq *v3.BuilderQuery) string {
 	tableName := WhichSamplesTableToUse(start, end, mq)
 	var aggregationColumn string
-	switch mq.Temporality {
+
+	// An unset or unrecognized temporality is treated as Unspecified. Queries built
+	// without a temporality, e.g. the metric details page redirect to the metrics
+	// explorer which hardcodes an empty temporality, must still resolve to a valid
+	// aggregation column instead of an empty string.
+	// See https://github.com/SigNoz/signoz/issues/8912
+	temporality := mq.Temporality
+	if temporality != v3.Delta && temporality != v3.Cumulative {
+		temporality = v3.Unspecified
+	}
+
+	switch temporality {
 	case v3.Delta:
 		// for delta metrics, we only support `RATE`/`INCREASE` both of which are sum
 		// although it doesn't make sense to use anyLast, avg, min, max, count on delta metrics,
@@ -247,6 +258,21 @@ func AggregationColumnForSamplesTable(start, end int64, mq *v3.BuilderQuery) str
 			}
 		}
 	}
+
+	// Fall back to anyLast for unset or unrecognized time aggregations instead of
+	// returning an empty string, which the callers interpolate into
+	// "... as per_series_value" producing invalid SQL. anyLast matches the
+	// explorer's default "latest" time aggregation.
+	// See https://github.com/SigNoz/signoz/issues/8912
+	if aggregationColumn == "" {
+		switch tableName {
+		case constants.SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME, constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME:
+			aggregationColumn = "anyLast(last)"
+		case constants.SIGNOZ_SAMPLES_V4_TABLENAME:
+			aggregationColumn = "anyLast(value)"
+		}
+	}
+
 	return aggregationColumn
 }
 
