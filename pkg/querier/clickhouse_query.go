@@ -107,7 +107,9 @@ func (q *chSQLQuery) render(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	clickhousesql.LogIfStatementIsNotValid(ctx, q.logger, rendered)
+	if err := clickhousesql.ErrIfStatementIsNotValid(rendered); err != nil {
+		return "", err
+	}
 
 	return rendered, nil
 }

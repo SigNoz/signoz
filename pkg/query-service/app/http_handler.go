@@ -728,7 +728,10 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	clickhousesql.LogIfStatementIsNotValid(r.Context(), aH.logger, query)
+	if err := clickhousesql.ErrIfStatementIsNotValid(query); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
 
 	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
 	if err != nil {
