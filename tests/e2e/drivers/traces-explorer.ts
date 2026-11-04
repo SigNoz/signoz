@@ -74,8 +74,6 @@ export interface TracesExplorer {
 	/** Re-run the query until `key`'s row renders: the list fetches once. */
 	waitForRow(key: string): Promise<void>;
 	cell(rowKey: string, field: string): Locator;
-	/** Click a list row and wait for its trace-details URL. */
-	openRow(rowKey: string, traceId: string): Promise<void>;
 	/** Click a list row and wait for its span drawer. */
 	openSpanDrawer(rowKey: string): Promise<void>;
 	spanDrawer(): Locator;
@@ -202,13 +200,6 @@ export function tracesExplorerDriver(page: Page): TracesExplorer {
 		},
 
 		cell: (rowKey, field) => explorer.row(rowKey).getByTestId(field).first(),
-
-		openRow: async (rowKey, traceId) => {
-			await explorer.cell(rowKey, 'name').click();
-			await expect(page).toHaveURL(
-				new RegExp(`/trace/${traceId}\\?.*spanId=${rowKey}`),
-			);
-		},
 
 		openSpanDrawer: async (rowKey) => {
 			await explorer.cell(rowKey, 'name').click();
