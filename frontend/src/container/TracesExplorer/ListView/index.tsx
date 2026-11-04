@@ -40,8 +40,6 @@ import { defaultSelectedColumns, TIMESTAMP_FIELD } from './configs';
 import { useListViewInfiniteQuery } from './useListViewInfiniteQuery';
 import { getTraceLink } from './utils';
 
-import './ListView.styles.scss';
-
 import styles from './ListView.module.scss';
 
 interface ListViewProps {
@@ -176,10 +174,10 @@ function ListView({
 
 	return (
 		<div className={styles.container}>
-			<div className="trace-explorer-controls">
+			<div className={styles.controls}>
 				{headerActions}
-				<div className="order-by-container">
-					<div className="order-by-label">
+				<div className={styles.orderBy}>
+					<div className={styles.orderByLabel}>
 						Order by <Minus size={14} /> <ArrowUp10 size={14} />
 					</div>
 
