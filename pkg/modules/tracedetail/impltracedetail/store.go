@@ -28,7 +28,7 @@ const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$
 // JSON holds the attributes.
 var storableSpanColumns = []string{
 	"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "has_error", "kind",
-	colServiceName, "name", "attributes", "resources_string",
+	colServiceName, "name", "attributes", "resources_string", "scope",
 	"if(notEmpty(attributes), map(), attributes_string) AS attributes_string",
 	"if(notEmpty(attributes), map(), attributes_number) AS attributes_number",
 	"if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool",
@@ -64,11 +64,11 @@ type traceStore struct {
 	flagger        flagger.Flagger
 }
 
-func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, fl flagger.Flagger) *traceStore {
+func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, schemaMetadataStore telemetrytypes.SchemaMetadataStore, fl flagger.Flagger) *traceStore {
 	return &traceStore{
 		telemetryStore: ts,
 		metadataStore:  metadataStore,
-		storage:        tracestelemetryschema.NewStorage(),
+		storage:        tracestelemetryschema.NewStorage(schemaMetadataStore),
 		flagger:        fl,
 	}
 }
@@ -382,6 +382,7 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, sta
 		"if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number",
 		"if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool",
 		"any(resources_string) AS resources_string",
+		"any(scope) AS scope",
 	)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	conditions := []string{

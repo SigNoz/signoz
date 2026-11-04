@@ -123,8 +123,20 @@ func (d *DashboardSpec) validatePanels() error {
 				return err
 			}
 		}
+		// validatePanelQueryCount left exactly one query for a spec that reads it.
+		if spec, ok := panel.Spec.Plugin.Spec.(queryBoundPanelSpec); ok {
+			if err := spec.validateAgainstQuery(panel.Spec.Queries[0], path+".spec.plugin.spec"); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
+}
+
+// queryBoundPanelSpec is a panel spec with fields that depend on the panel's
+// query. It is checked after the query itself validates.
+type queryBoundPanelSpec interface {
+	validateAgainstQuery(query Query, path string) error
 }
 
 func validatePanelQueryCount(queries []Query, panelKind PanelPluginKind, path string) error {

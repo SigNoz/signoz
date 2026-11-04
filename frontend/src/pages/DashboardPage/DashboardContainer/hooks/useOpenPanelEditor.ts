@@ -9,7 +9,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import type { PanelEditorHandoffState } from '../PanelEditor/panelEditorHandoff';
 import { getPanelBuilderQuery } from '../Panels/utils/getPanelBuilderQuery';
 import { useDashboardStore } from '../store/useDashboardStore';
-import { useTimeSearchParams } from './useTimeSearchParams';
+import { useTimeSearchParams } from 'hooks/useTimeSearchParams';
 import logEvent from '@/api/common/logEvent';
 import { DashboardDetailEvents } from '../../constants/events';
 

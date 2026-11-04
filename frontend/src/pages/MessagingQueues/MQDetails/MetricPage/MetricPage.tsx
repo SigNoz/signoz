@@ -140,7 +140,7 @@ function MetricPage(): JSX.Element {
 	}, []);
 
 	return (
-		<div className="metric-page">
+		<div className="metric-page" data-testid="mq-metric-page">
 			<MetricColumnGraphs checkIfDataExists={checkIfDataExists} />
 			{metricSections.map(({ key, title, description, graphCount }) => (
 				<CollapsibleMetricSection

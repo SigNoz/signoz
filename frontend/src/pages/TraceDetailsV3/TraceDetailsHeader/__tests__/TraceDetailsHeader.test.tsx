@@ -1,11 +1,16 @@
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import logEvent from 'api/common/logEvent';
 import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import ROUTES from 'constants/routes';
 import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 
+import { TraceDetailsTab } from '../../constants';
+import { TraceDetailEvents } from '../../events';
 import TraceDetailsHeader from '../TraceDetailsHeader';
 import { useTraceSummary } from '../useTraceSummary';
+
+jest.mock('api/common/logEvent');
 
 jest.mock('../useTraceSummary', () => ({
 	useTraceSummary: jest.fn(() => ({ data: undefined, isLoading: false })),
@@ -415,5 +420,24 @@ describe('TraceDetailsHeader – tabs', () => {
 			'data-open',
 			'false',
 		);
+	});
+
+	it('logs the tab change with the previous and next tab', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+		jest.mocked(logEvent).mockClear();
+
+		await user.click(screen.getByTestId('trace-details-tab-overview'));
+		expect(logEvent).not.toHaveBeenCalled();
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(logEvent).toHaveBeenCalledTimes(1);
+		expect(logEvent).toHaveBeenCalledWith(TraceDetailEvents.DetailsTabChanged, {
+			view: 'v3',
+			traceId: 'trace-123',
+			from: TraceDetailsTab.Overview,
+			to: TraceDetailsTab.Thread,
+		});
 	});
 });
