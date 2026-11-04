@@ -380,7 +380,7 @@ func escapeBetween(s string, prev, after rune) string {
 			out.WriteByte('\\')
 		case c == '!' && next != utf8.RuneError && !unicode.IsSpace(next):
 			out.WriteByte('\\')
-		case strings.ContainsRune(inlineMarkers, c) && !(isWordRune(prev) && isWordRune(next)):
+		case strings.ContainsRune(inlineMarkers, c) && (!isWordRune(prev) || !isWordRune(next)):
 			out.WriteByte('\\')
 		}
 		out.WriteRune(c)
