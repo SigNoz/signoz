@@ -5,6 +5,7 @@ import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
 } from 'constants/queryBuilder';
+import { TelemetrytypesTelemetryFieldValuesDTO } from 'api/generated/services/sigNoz.schemas';
 import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
@@ -107,7 +108,7 @@ jest.mock('hooks/querySuggestions/useFieldKeysSuggestion', () => ({
 	})),
 }));
 
-const mockFieldValues = {
+const mockFieldValues: TelemetrytypesTelemetryFieldValuesDTO = {
 	stringValues: ['200', '404', '500'],
 	numberValues: [200, 404, 500],
 };
