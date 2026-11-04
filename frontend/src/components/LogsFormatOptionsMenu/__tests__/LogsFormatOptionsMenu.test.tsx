@@ -1,5 +1,11 @@
 import { FontSize } from 'container/OptionsMenu/types';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import LogsFormatOptionsMenu from '../LogsFormatOptionsMenu';
 
@@ -120,6 +126,32 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		await waitFor(() => {
 			expect(maxLinesOnChange).toHaveBeenCalledWith(initial + 1);
 		});
+	});
+
+	it('clamps a typed max-lines value to 10', async () => {
+		const { maxLinesOnChange, getByTestId } = setup();
+		const input = getByTestId('max-lines-per-row') as HTMLInputElement;
+		const user = userEvent.setup();
+
+		await user.clear(input);
+		await user.type(input, '15');
+		await user.tab();
+
+		await waitFor(() => expect(input.value).toBe('10'));
+		expect(maxLinesOnChange).toHaveBeenLastCalledWith(10);
+	});
+
+	it('stops max-lines at 10', async () => {
+		const { getByTestId } = setup();
+		const input = getByTestId('max-lines-per-row') as HTMLInputElement;
+		const increment = screen.getByRole('button', { name: 'More lines per row' });
+		const user = userEvent.setup();
+
+		for (let i = 0; i < 12; i++) {
+			await user.click(increment);
+		}
+
+		await waitFor(() => expect(input.value).toBe('10'));
 	});
 
 	it('changes font size to MEDIUM and calls onChange', async () => {

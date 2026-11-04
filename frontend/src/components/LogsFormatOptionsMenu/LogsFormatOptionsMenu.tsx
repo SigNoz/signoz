@@ -66,13 +66,10 @@ function OptionsMenu({
 	};
 
 	const handleLinesPerRowChange = (value: number | null): void => {
-		if (
-			value !== null &&
-			Number.isInteger(value) &&
-			value >= MIN_LINES_PER_ROW &&
-			value <= MAX_LINES_PER_ROW
-		) {
-			setMaxLinesPerRow(value);
+		if (value !== null) {
+			setMaxLinesPerRow(
+				Math.min(Math.max(value, MIN_LINES_PER_ROW), MAX_LINES_PER_ROW),
+			);
 		}
 	};
 
@@ -192,6 +189,7 @@ function OptionsMenu({
 									precision={0}
 									value={maxLinesPerRow}
 									onChange={handleLinesPerRowChange}
+									aria-label="Max lines per row"
 									decrementAriaLabel="Fewer lines per row"
 									incrementAriaLabel="More lines per row"
 									testId="max-lines-per-row"
