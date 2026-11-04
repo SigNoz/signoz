@@ -332,6 +332,7 @@ function HavingFilter({
 					value={input}
 					onChange={handleChange}
 					theme={isDarkMode ? copilot : githubLight}
+					data-testid="having-editor"
 					className="having-filter-select-editor"
 					width="100%"
 					extensions={[

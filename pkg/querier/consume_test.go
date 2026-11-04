@@ -95,6 +95,9 @@ func jsonColumn(paths map[string]any) telemetrystoretypes.JSONValue {
 func TestUnwrapVariant(t *testing.T) {
 	jsonCol := jsonColumn(map[string]any{"level": "error", "attrs.code": int64(500)})
 	nullCol := jsonColumn(map[string]any{"level": "error", "absent": chcol.Variant{}})
+	scopeAttrs := chcol.NewJSON()
+	scopeAttrs.SetValueAtPath("lib.lang", "go")
+	scopeCol := jsonColumn(map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": scopeAttrs})
 
 	testCases := []struct {
 		name   string
@@ -108,6 +111,7 @@ func TestUnwrapVariant(t *testing.T) {
 		{name: "JSONColumnNested", column: "body_v2", input: jsonCol, want: map[string]any{"level": "error", "attrs": map[string]any{"code": float64(500)}}},
 		{name: "AttributesColumnFlat", column: "attributes", input: jsonCol, want: map[string]any{"level": "error", "attrs.code": float64(500)}},
 		{name: "AttributesColumnDropsNullPaths", column: "attributes", input: nullCol, want: map[string]any{"level": "error"}},
+		{name: "ScopeColumnFlat", column: "scope", input: scopeCol, want: map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": map[string]any{"lib.lang": "go"}}},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -129,6 +133,32 @@ func TestMergeSpanAttributeColumns_EmptyEventsAndLinks(t *testing.T) {
 	}
 	if links, ok := data["links"].([]spantypes.Link); !ok || len(links) != 0 {
 		t.Fatalf("expected empty []spantypes.Link, got %#v", data["links"])
+	}
+}
+
+func TestMergeSpanAttributeColumns_Scope(t *testing.T) {
+	testCases := []struct {
+		name  string
+		scope map[string]any
+		want  spantypes.Scope
+	}{
+		{
+			name:  "SetFields_Kept",
+			scope: map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": map[string]any{"lib.lang": "go"}},
+			want:  spantypes.Scope{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": map[string]any{"lib.lang": "go"}},
+		},
+		{
+			name:  "UnsetDeclaredPaths_Empty",
+			scope: map[string]any{"name": "", "version": "", "attributes": map[string]any{}},
+			want:  spantypes.Scope{},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			data := map[string]any{"scope": testCase.scope}
+			mergeSpanAttributeColumns(data)
+			assert.Equal(t, testCase.want, data["scope"])
+		})
 	}
 }
 

@@ -30,7 +30,7 @@ import { useHomeStripInfo } from 'container/Home/useHomeStripInfo';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { AnimatePresence, motion } from 'motion/react';
 import Card from 'periscope/components/Card/Card';
@@ -38,8 +38,7 @@ import { useAppContext } from 'providers/App/App';
 import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
-import { isIngestionActive } from 'utils/app';
-import { isModifierKeyPressed } from 'utils/app';
+import { isIngestionActive, isModifierKeyPressed } from 'utils/app';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import crackerUrl from '@/assets/Icons/cracker.svg';
@@ -279,7 +278,7 @@ export default function Home(): JSX.Element {
 	}, []);
 
 	return (
-		<div className="home-container">
+		<div className="home-container" data-testid="home-page">
 			{getIsNoAuthMode() && <NoAuthBanner />}
 			<div className="sticky-header">
 				<Header
@@ -317,6 +316,7 @@ export default function Home(): JSX.Element {
 										variant="solid"
 										color="secondary"
 										prefix={<ClipboardList size={14} />}
+										testId="welcome-checklist-btn"
 									>
 										Welcome checklist
 									</Button>
@@ -371,7 +371,7 @@ export default function Home(): JSX.Element {
 													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Logs',
 													});
-													history.push(ROUTES.LOGS_EXPLORER);
+													navigate(ROUTES.LOGS_EXPLORER);
 												}
 											}}
 										>
@@ -414,7 +414,7 @@ export default function Home(): JSX.Element {
 													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Traces',
 													});
-													history.push(ROUTES.TRACES_EXPLORER);
+													navigate(ROUTES.TRACES_EXPLORER);
 												}
 											}}
 										>
@@ -457,7 +457,7 @@ export default function Home(): JSX.Element {
 													void logEvent('Homepage: Ingestion Active Explore clicked', {
 														source: 'Metrics',
 													});
-													history.push(ROUTES.METRICS_EXPLORER);
+													navigate(ROUTES.METRICS_EXPLORER);
 												}
 											}}
 										>
@@ -663,7 +663,10 @@ export default function Home(): JSX.Element {
 										exit={{ opacity: 0, scale: 0 }}
 										key="box"
 									>
-										<div className="checklist-container">
+										<div
+											className="checklist-container"
+											data-testid="home-checklist-card"
+										>
 											<div className="checklist-items-container">
 												<StepsProgress checklistItems={checklistItems} />
 
@@ -702,6 +705,7 @@ export default function Home(): JSX.Element {
 											color="secondary"
 											onClick={handleWillDoThisLater}
 											loading={updatingUserPreferences}
+											testId="checklist-do-later-btn"
 										>
 											I&apos;ll do this later
 										</Button>

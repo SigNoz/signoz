@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 import {
 	convertAggregationToExpression,
 	convertFiltersToExpressionWithExistingQuery,
@@ -7,6 +6,7 @@ import {
 } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { isPlainObject } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -18,7 +18,7 @@ import {
 
 export const useNormalizedCompositeQueryParam = (): NormalizedQuery | null => {
 	const urlQuery = useUrlQuery();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	return useMemo(() => {
 		const compositeQuery = urlQuery.get(QueryParams.compositeQuery);

@@ -16,6 +16,14 @@ packages:
       filename: "maintenance.go"
       structname: 'Mock{{.InterfaceName}}'
       pkgname: '{{.SrcPackageName}}test'
+  github.com/SigNoz/signoz/pkg/types/telemetrytypes:
+    interfaces:
+      SchemaMetadataStore:
+    config:
+      dir: '{{.InterfaceDir}}/telemetrytypestest'
+      filename: "schema_metadata_store.go"
+      structname: 'Mock{{.InterfaceName}}'
+      pkgname: '{{.SrcPackageName}}test'
   github.com/SigNoz/signoz/pkg/tokenizer:
     config:
       all: true

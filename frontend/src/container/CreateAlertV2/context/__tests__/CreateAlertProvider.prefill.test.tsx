@@ -1,4 +1,4 @@
-import { useHistory } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
@@ -125,12 +125,11 @@ function SearchMutator({
 }: {
 	to?: string;
 }): JSX.Element {
-	const routerHistory = useHistory();
 	return (
 		<button
 			type="button"
 			data-testid="mutate-search"
-			onClick={(): void => routerHistory.replace(to)}
+			onClick={(): void => navigate(to, { replace: true })}
 		>
 			change search
 		</button>
@@ -173,6 +172,45 @@ describe('CreateAlertProvider — edit mode ignores URL prefill', () => {
 		await clickTestId('mutate-search');
 
 		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
+	});
+
+	it('ignores prefill params that are present on an edit URL', () => {
+		// A deep link into the editor can carry the create form's prefill params.
+		// The loaded rule has to win, or opening an edited rule from such a link
+		// would silently rewrite its condition.
+		const initialAlertState = {
+			...INITIAL_CREATE_ALERT_STATE,
+			threshold: {
+				...INITIAL_CREATE_ALERT_STATE.threshold,
+				matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
+				thresholds: [
+					{
+						...INITIAL_CREATE_ALERT_STATE.threshold.thresholds[0],
+						thresholdValue: 245,
+					},
+				],
+			},
+		};
+
+		render(
+			<CreateAlertProvider
+				initialAlertType={AlertTypes.METRICS_BASED_ALERT}
+				isEditMode
+				ruleId="r1"
+				initialAlertState={initialAlertState}
+			>
+				<Probe />
+			</CreateAlertProvider>,
+			undefined,
+			{
+				initialRoute: `/alerts/overview?ruleId=r1&matchType=in_total&compareOp=below&thresholds=${serializeThreshold(
+					90,
+				)}`,
+			},
+		);
+
+		expect(screen.getByTestId('threshold-value')).toHaveTextContent('245');
+		expect(screen.getByTestId('match-type')).toHaveTextContent('at_least_once');
 	});
 });
 

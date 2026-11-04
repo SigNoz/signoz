@@ -24,7 +24,7 @@ var (
 // `attributes_promoted` alone after promotion — fanning out only across an evolution boundary.
 func TestFieldForAttributePromotedEvolution(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockPromotedAttributeEvolutionData("span.operation", promoJSONRelease, promoPromoRelease)
 
 	win := func(from, to string) [2]uint64 {
@@ -65,7 +65,7 @@ func TestFieldForAttributePromotedEvolution(t *testing.T) {
 // attributes_promoted_paths_tokenbf) — not the attributes column.
 func TestConditionForAttributePromoted(t *testing.T) {
 	ctx := context.Background()
-	storage := NewStorage()
+	storage := NewStorage(nil)
 	evo := MockPromotedAttributeEvolutionData("span.operation", promoJSONRelease, promoPromoRelease)
 	afterPromo := [2]uint64{
 		uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),

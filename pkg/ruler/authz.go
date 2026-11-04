@@ -26,7 +26,7 @@ var DowntimeRuleIDsExtractor = coretypes.ResourceIDsExtractor{Phase: coretypes.P
 		return nil, err
 	}
 
-	return defaultToAllRules(ids), nil
+	return defaultToWildcardIfEmpty(ids), nil
 }}
 
 var DowntimeRuleSelector coretypes.SelectorFunc = func(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
@@ -51,12 +51,18 @@ func newDowntimeDiffExtractor(rulerService Ruler, side diffSide) coretypes.Resou
 			return nil, nil
 		}
 
+		ctx := ec.Request.Context()
+		orgID, err := orgIDFromContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		scheduleID, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
 		if err != nil {
 			return nil, err
 		}
 
-		stored, err := rulerService.MaintenanceStore().GetPlannedMaintenanceByID(ec.Request.Context(), scheduleID)
+		stored, err := rulerService.MaintenanceStore().GetPlannedMaintenanceByID(ctx, orgID.StringValue(), scheduleID)
 		if err != nil {
 			return nil, err
 		}
@@ -76,10 +82,10 @@ func newDowntimeDiffExtractor(rulerService Ruler, side diffSide) coretypes.Resou
 }
 
 func diffDowntimeRuleLinks(stored, incoming []string) (attached, detached []string) {
-	return diffLinks(defaultToAllRules(stored), incoming)
+	return diffLinks(defaultToWildcardIfEmpty(stored), incoming)
 }
 
-func defaultToAllRules(ids []string) []string {
+func defaultToWildcardIfEmpty(ids []string) []string {
 	if len(ids) == 0 {
 		return []string{coretypes.WildCardSelectorString}
 	}
