@@ -1,5 +1,5 @@
 import { FontSize } from 'container/OptionsMenu/types';
-import { fireEvent, render, waitFor } from 'tests/test-utils';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import LogsFormatOptionsMenu from '../LogsFormatOptionsMenu';
 
@@ -107,18 +107,12 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 	});
 
 	it('increments max-lines and calls onChange', async () => {
-		const { maxLinesOnChange } = setup();
+		const { maxLinesOnChange, getByTestId } = setup();
 
 		// Increment max lines
-		const input = document.querySelector(
-			'.max-lines-per-row-input input',
-		) as HTMLInputElement;
+		const input = getByTestId('max-lines-per-row') as HTMLInputElement;
 		const initial = Number(input.value);
-		const buttons = document.querySelectorAll(
-			'.max-lines-per-row-input .periscope-btn',
-		);
-		const incrementBtn = buttons[1] as HTMLElement;
-		fireEvent.click(incrementBtn);
+		fireEvent.click(screen.getByRole('button', { name: 'More lines per row' }));
 
 		await waitFor(() => {
 			expect(Number(input.value)).toBe(initial + 1);
@@ -129,27 +123,20 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 	});
 
 	it('changes font size to MEDIUM and calls onChange', async () => {
-		const { fontSizeOnChange } = setup();
+		const { fontSizeOnChange, getByTestId } = setup();
 		// Open font dropdown
-		const fontButton = document.querySelector(
-			'.font-size-container .value',
-		) as HTMLElement;
-		fireEvent.click(fontButton);
+		fireEvent.click(getByTestId('font-size-select'));
 
 		// Choose MEDIUM
-		const optionButtons = Array.from(
-			document.querySelectorAll('.font-size-dropdown .option-btn'),
-		);
-		const mediumBtn = optionButtons[1] as HTMLElement;
-		fireEvent.click(mediumBtn);
+		fireEvent.click(getByTestId(`font-size-option-${FontSize.MEDIUM}`));
 
 		await waitFor(() => {
 			expect(
-				document.querySelectorAll('.font-size-dropdown .option-btn .icon'),
-			).toHaveLength(1);
-			expect(
-				(optionButtons[1] as Element).querySelector('.icon'),
+				getByTestId(`font-size-option-${FontSize.MEDIUM}`).querySelector('svg'),
 			).toBeInTheDocument();
+			expect(
+				getByTestId(`font-size-option-${FontSize.SMALL}`).querySelector('svg'),
+			).not.toBeInTheDocument();
 		});
 		await waitFor(() => {
 			expect(fontSizeOnChange).toHaveBeenCalledWith(FontSize.MEDIUM);
