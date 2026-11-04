@@ -216,7 +216,8 @@ def test_logs_aggregate_arguments_are_field_names(
 
     Tests:
     Aggregation arguments are read as field names, so keys with hyphens,
-    slashes and a type suffix resolve, and count(*) counts every log.
+    slashes and a type suffix resolve, count(*) counts every log, and DISTINCT
+    keeps its meaning.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     # (service, http.response.body-size, k8s.pod.labels.app.kubernetes.io/name)
@@ -247,6 +248,7 @@ def test_logs_aggregate_arguments_are_field_names(
             build_aggregation("sum(http.response.body-size)", "body_size"),
             build_aggregation("max(http.response.body-size:float64)", "max_body_size"),
             build_aggregation("count_distinct(k8s.pod.labels.app.kubernetes.io/name)", "apps"),
+            build_aggregation("count(DISTINCT k8s.pod.labels.app.kubernetes.io/name)", "distinct_apps"),
         ],
         group_by=[build_group_by_field("service.name", "string", "resource")],
         order=[build_order_by("count(*)", "desc")],
@@ -261,7 +263,7 @@ def test_logs_aggregate_arguments_are_field_names(
     for service in ["svc-a", "svc-b"]:
         sizes = [size for svc, size, _ in specs if svc == service]
         apps = {app for svc, _, app in specs if svc == service}
-        expected = [len(sizes), sum(sizes), max(sizes), len(apps)]
+        expected = [len(sizes), sum(sizes), max(sizes), len(apps), len(apps)]
         assert by_service[service] == expected, f"{service}: {by_service[service]} != {expected}"
 
 
@@ -274,6 +276,7 @@ def test_logs_aggregate_arguments_are_field_names(
         pytest.param("sum(1)", id="literal_argument"),
         pytest.param("sum(latency_ms * 2)", id="arithmetic_in_argument"),
         pytest.param("sum(attributes_number['latency_ms'])", id="column_expression_argument"),
+        pytest.param("countIf(search('timeout'))", id="search_in_predicate"),
     ],
 )
 def test_logs_aggregate_invalid_expression_is_bad_request(
@@ -284,8 +287,9 @@ def test_logs_aggregate_invalid_expression_is_bad_request(
 ) -> None:
     """
     An aggregation expression the parser rejects, one with the wrong number of
-    arguments, or one whose argument is not a field name is the caller's
-    mistake and returns 400.
+    arguments, one whose argument is not a field name, or one whose predicate
+    uses search(), which the search scan budget covers only in the filter,
+    returns 400.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)

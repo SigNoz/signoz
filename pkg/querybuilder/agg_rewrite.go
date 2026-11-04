@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"unicode"
 
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -205,6 +206,10 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		if err != nil {
 			return err
 		}
+		// The search scan budget applies only to the filter.
+		if whereClause.RequiresCostGuard {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "%q does not support search(); use search() in the filter", name)
+		}
 		// not possible for whereClause to be empty here but still adding a check.
 		if whereClause.IsEmpty() {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid predicate argument for %q: %q", name, origPred)
@@ -343,6 +348,11 @@ func extractArguments(expr string, arguments map[string]string) string {
 				out.WriteString(", ")
 			}
 			text := strings.TrimSpace(expr[bounds[j-1]+1 : bounds[j]])
+			// DISTINCT modifies the whole argument list, so it stays for the parser.
+			if end := strings.IndexFunc(text, unicode.IsSpace); j == 1 && end > 0 && strings.EqualFold(text[:end], "DISTINCT") {
+				out.WriteString("DISTINCT ")
+				text = strings.TrimSpace(text[end:])
+			}
 			if text == "" {
 				continue
 			}
