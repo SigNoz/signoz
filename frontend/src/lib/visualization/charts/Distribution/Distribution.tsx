@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
 import DistributionTooltip from 'lib/uPlotV2/components/Tooltip/components/DistributionTooltip/DistributionTooltip';
 import {
@@ -6,6 +6,7 @@ import {
 	type TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
+import type { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { StackMode } from 'lib/uPlotV2/config/types';
 import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
 import { resolveBoundaryPrecision } from 'lib/visualization/charts/Heatmap/utils';
@@ -19,8 +20,15 @@ import {
 	resolveDistributionXAxis,
 	sumVisibleCounts,
 } from './layout';
-import { computeDistributionPercentiles } from './percentiles';
-import { groupIntoOther, resolveMaxDrawnGroups } from './topGroups';
+import {
+	computeDistributionPercentiles,
+	resolveHoveredSeries,
+} from './percentiles';
+import {
+	groupIntoOther,
+	resolveClickedGroup,
+	resolveMaxDrawnGroups,
+} from './topGroups';
 import { DistributionXScale, DistributionYScale } from './types';
 
 import styles from './Distribution.module.scss';
@@ -52,6 +60,7 @@ export default function Distribution({
 	decimalPrecision,
 	customColors,
 	percentiles = [],
+	onBarClick,
 	showLegend = true,
 	legendPosition = LegendPosition.BOTTOM,
 	showTooltip = true,
@@ -218,6 +227,31 @@ export default function Distribution({
 		],
 	);
 
+	const onBarClickRef = useRef(onBarClick);
+	onBarClickRef.current = onBarClick;
+
+	const handleClick = useCallback(
+		({
+			xValue,
+			yValue,
+			absoluteMouseX,
+			absoluteMouseY,
+		}: ChartClickData): void => {
+			const clicked = resolveClickedGroup(
+				drawn,
+				resolveHoveredSeries(layout, xValue, yValue),
+				series,
+			);
+			if (clicked) {
+				onBarClickRef.current?.({
+					...clicked,
+					coordinates: { x: absoluteMouseX, y: absoluteMouseY },
+				});
+			}
+		},
+		[layout, drawn, series],
+	);
+
 	const data = useMemo(
 		() => prepareDistributionChartData(xAxis, drawn.counts),
 		[xAxis, drawn],
@@ -265,6 +299,7 @@ export default function Distribution({
 			canPinTooltip={canPinTooltip}
 			decimalPrecision={decimalPrecision}
 			customTooltip={renderTooltip}
+			onClick={onBarClick ? handleClick : undefined}
 			contentFooter={
 				drawn.otherGroupCount > 0 && (
 					<div className={styles.notice} data-testid="distribution-other-notice">

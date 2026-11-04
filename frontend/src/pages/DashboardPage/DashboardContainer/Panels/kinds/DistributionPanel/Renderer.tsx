@@ -1,6 +1,9 @@
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import type { DashboardtypesDistributionPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import Distribution from 'lib/visualization/charts/Distribution/Distribution';
+import type { DistributionBarClick } from 'lib/visualization/charts/Distribution/types';
+import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
+import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getDistributionResults } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
@@ -16,6 +19,9 @@ import {
 	resolveDistributionYScale,
 	resolveLegendPosition,
 } from '../../utils/chartAppearance/resolvers';
+import { enrichDistributionClick } from '../../utils/drilldown/enrichDistributionClick';
+import { getBuilderQueries } from '../../utils/getBuilderQueries';
+import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 import { resolveRequestedBucketKind } from '../HeatmapPanel/prepareData';
 
 import { prepareDistributionData } from './prepareData';
@@ -26,6 +32,8 @@ function DistributionPanelRenderer({
 	data,
 	isFetching,
 	refetch,
+	onClick,
+	enableDrillDown,
 }: PanelRendererProps<'signoz/DistributionPanel'>): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const containerDimensions = useResizeObserver(graphRef);
@@ -36,7 +44,7 @@ function DistributionPanelRenderer({
 		[panel.spec.plugin.spec],
 	);
 
-	const { buckets, series } = useMemo(
+	const { buckets, series, queryName } = useMemo(
 		() =>
 			prepareDistributionData({
 				results: getDistributionResults(data.response),
@@ -62,6 +70,38 @@ function DistributionPanelRenderer({
 	const decimalPrecision = useMemo(
 		() => resolveDecimalPrecision(spec.formatting?.decimalPrecision),
 		[spec.formatting?.decimalPrecision],
+	);
+
+	const builderQueries = useMemo(
+		() => getBuilderQueries(panel.spec.queries),
+		[panel.spec.queries],
+	);
+
+	const handleBarClick = useCallback(
+		(click: DistributionBarClick): void => {
+			const payload = enrichDistributionClick({
+				click,
+				queryName,
+				builderQueries,
+				timeRange: getPanelTimeRange(data.requestPayload),
+			});
+			if (payload) {
+				onClick?.(payload);
+			}
+		},
+		[onClick, queryName, builderQueries, data.requestPayload],
+	);
+
+	const renderTooltipFooter = useCallback(
+		({ isPinned, dismiss }: IRenderTooltipFooterArgs) => (
+			<TooltipFooter
+				id={panelId}
+				isPinned={isPinned}
+				canDrilldown={!!enableDrillDown}
+				dismiss={dismiss}
+			/>
+		),
+		[panelId, enableDrillDown],
 	);
 
 	const hasBars = buckets.length > 0 && series.length > 0;
@@ -90,6 +130,9 @@ function DistributionPanelRenderer({
 						decimalPrecision={decimalPrecision}
 						customColors={spec.legend?.customColors ?? undefined}
 						percentiles={percentiles}
+						canPinTooltip
+						renderTooltipFooter={renderTooltipFooter}
+						onBarClick={enableDrillDown && onClick ? handleBarClick : undefined}
 						legendPosition={resolveLegendPosition(spec.legend?.position)}
 						isDarkMode={isDarkMode}
 						width={containerDimensions.width}
