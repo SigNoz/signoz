@@ -4,6 +4,7 @@ import {
 	NuqsTestingAdapter,
 	type OnUrlUpdateFunction,
 } from 'nuqs/adapters/testing';
+import logEvent from 'api/common/logEvent';
 import { act, render, waitFor } from 'tests/test-utils';
 
 import {
@@ -17,6 +18,13 @@ jest.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="mock-datetime" />,
 }));
+
+jest.mock('api/common/logEvent', () => ({
+	__esModule: true,
+	default: jest.fn(() => Promise.resolve()),
+}));
+
+const logEventMock = jest.mocked(logEvent);
 
 type TestEntity = { name: string };
 
@@ -69,6 +77,7 @@ function renderDrawer(onUrlUpdate?: OnUrlUpdateFunction): void {
 describe('K8sBaseDetails - back navigation', () => {
 	beforeEach(() => {
 		useDrawerHistoryStore.getState().reset();
+		logEventMock.mockClear();
 	});
 
 	it('closes rather than going back when opened from the list', async () => {
@@ -146,5 +155,37 @@ describe('K8sBaseDetails - back navigation', () => {
 		await waitFor(() => {
 			expect(useDrawerHistoryStore.getState().entries).toHaveLength(0);
 		});
+	});
+
+	it('logs a drawer visit for a resource reached from the cache', async () => {
+		const user = userEvent.setup();
+
+		useDrawerHistoryStore.getState().push({
+			params: {
+				selectedItem: 'container-0',
+				category: InfraMonitoringEntity.CONTAINERS,
+				clusterName: null,
+				namespaceName: null,
+			},
+			category: InfraMonitoringEntity.CONTAINERS,
+			label: 'container-0',
+			entity: { name: 'container-0' },
+			queryKeyPrefix: 'testContainer',
+		});
+
+		act(() => {
+			renderDrawer();
+		});
+
+		const drawerVisits = (): number =>
+			logEventMock.mock.calls.filter(
+				([name]) => name === 'Infra Monitoring: Drawer tab viewed',
+			).length;
+
+		await waitFor(() => expect(drawerVisits()).toBe(1));
+
+		await user.click(await screen.findByTestId('drawer-back-button'));
+
+		await waitFor(() => expect(drawerVisits()).toBe(2));
 	});
 });

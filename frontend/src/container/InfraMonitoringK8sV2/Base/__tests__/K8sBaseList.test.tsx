@@ -3,13 +3,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import {
-	fireEvent,
-	render,
-	screen,
-	waitFor,
-	within,
-} from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -22,6 +16,7 @@ import { AppProvider } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import { TestRouter } from 'tests/router';
+import { within } from 'tests/test-utils';
 import APIError from 'types/api/error';
 import logEvent from 'api/common/logEvent';
 import { openInNewTab } from 'utils/navigation';
@@ -52,7 +47,7 @@ jest.mock('api/common/logEvent', () => ({
 }));
 
 const openInNewTabMock = openInNewTab as jest.Mock;
-const logEventMock = logEvent as jest.Mock;
+const logEventMock = jest.mocked(logEvent);
 
 // Mock Date.now to prevent flaky tests due to time-dependent values
 const MOCK_NOW = 1700000000000; // Fixed timestamp

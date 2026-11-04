@@ -35,7 +35,7 @@ export function logInfraMonitoringListViewedEvent(
 	const referrer = getNavigationReferrer();
 
 	void logEvent('Infra Monitoring: List viewed', {
-		entity,
+		entityType: entity,
 		referrer,
 	});
 }

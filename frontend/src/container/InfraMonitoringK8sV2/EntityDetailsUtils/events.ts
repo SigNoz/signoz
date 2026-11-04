@@ -26,10 +26,6 @@ export function logInfraDrawerFilterCustomizedEvent(
 		(pair) => pair.key,
 	);
 
-	if (expressionKeys.length === 0) {
-		return;
-	}
-
 	void logEvent('Infra Monitoring: Drawer filter customized', {
 		entityType,
 		tab,

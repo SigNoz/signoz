@@ -1,7 +1,6 @@
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
-import userEvent from '@testing-library/user-event';
-import { act, screen, within } from 'tests/test-utils';
+import { act, screen, userEvent, within } from 'tests/test-utils';
 
 import { renderEntityTraces } from './testUtils';
 import { mockQueryRangeV5WithTracesResponse } from '__tests__/query_range_v5.util';
@@ -196,9 +195,7 @@ describe('EntityTraces - Table Rendering', () => {
 			customTraces: [{ serviceName: 'frontend' }],
 		});
 
-		act(() => {
-			renderEntityTraces();
-		});
+		renderEntityTraces();
 
 		const user = userEvent.setup();
 		const cell = await screen.findByTestId('serviceName');

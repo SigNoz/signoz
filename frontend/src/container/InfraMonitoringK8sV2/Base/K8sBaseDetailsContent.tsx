@@ -135,14 +135,18 @@ export default function K8sBaseDetailsContent<T>({
 
 	// Wait until the view is a valid tab so we don't log a pending value before
 	// the validation effect above corrects an out-of-scope query param
-	const hasLoggedDefaultTab = useRef(false);
+	const loggedDefaultTabFor = useRef<string | null>(null);
 	useEffect(() => {
-		if (hasLoggedDefaultTab.current || !validTabs.includes(effectiveView)) {
+		const visitKey = `${category}:${selectedItem}`;
+		if (
+			loggedDefaultTabFor.current === visitKey ||
+			!validTabs.includes(effectiveView)
+		) {
 			return;
 		}
-		hasLoggedDefaultTab.current = true;
+		loggedDefaultTabFor.current = visitKey;
 		logInfraDrawerTabViewedEvent(category, effectiveView, true);
-	}, [validTabs, effectiveView, category]);
+	}, [validTabs, effectiveView, category, selectedItem]);
 
 	const [, setLogFiltersParam] = useInfraMonitoringLogFilters();
 	const [, setTracesFiltersParam] = useInfraMonitoringTracesFilters();
