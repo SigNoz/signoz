@@ -107,12 +107,15 @@ const createMockSpan = (): SpanV3 => ({
 
 const panelState = { isOpen: true, open: jest.fn(), close: jest.fn() };
 
-function renderPanel(width: number): ReturnType<typeof render> {
+function renderPanel(
+	width: number,
+	span: SpanV3 = createMockSpan(),
+): ReturnType<typeof render> {
 	mockWidth = width;
 	return render(
 		<SpanDetailsPanel
 			panelState={panelState}
-			selectedSpan={createMockSpan()}
+			selectedSpan={span}
 			variant={SpanDetailVariant.DOCKED}
 			traceStartTime={1}
 			traceEndTime={101}
@@ -163,6 +166,32 @@ describe('SpanDetailsPanel – tabs', () => {
 
 		await user.click(screen.getByRole('tab', { name: /logs/i }));
 		expect(screen.getByTestId('logs-tab')).toBeInTheDocument();
+	});
+});
+
+describe('SpanDetailsPanel – Events count badge', () => {
+	const makeEvent = (name: string): SpanV3['events'][number] => ({
+		name,
+		timeUnixNano: 1_700_000_000_000_000_000,
+		attributeMap: {},
+		isError: false,
+	});
+
+	it('shows the number of span events on the Events tab', () => {
+		renderPanel(400, {
+			...createMockSpan(),
+			events: [makeEvent('a'), makeEvent('b')],
+		});
+
+		const eventsTab = screen.getByRole('tab', { name: /events/i });
+		expect(within(eventsTab).getByText('2')).toBeInTheDocument();
+	});
+
+	it('shows no count when the span has no events', () => {
+		renderPanel(400);
+
+		const eventsTab = screen.getByRole('tab', { name: /events/i });
+		expect(eventsTab).toHaveTextContent(/^Events$/);
 	});
 });
 

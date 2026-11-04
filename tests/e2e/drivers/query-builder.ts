@@ -9,9 +9,9 @@ import {
 	type Request,
 } from '@playwright/test';
 
-import { watchConsole } from '../helpers/common';
-import { isQueryRange } from '../helpers/query-range-mock';
-import { dismissQuickFiltersAnnouncement } from '../helpers/quick-filters';
+import { watchConsole } from './console';
+import { isQueryRange } from './query-range-mock';
+import { dismissQuickFiltersAnnouncement } from './logs/explorer';
 
 import { driver, kit } from './kit';
 import { EXPLORER, RELATIVE_TIME } from './query-builder/constants';

@@ -1,17 +1,11 @@
-import { withQueryBuilder } from '../../drivers/query-builder';
 import {
+	AlertType,
 	expect,
-	test as alertRulesTest,
-} from '../../fixtures/alerts/alert-rules';
-import { AlertType } from '../../helpers/alert-forms/constants';
-import { gotoCreateAlertV2 } from '../../helpers/alert-forms/navigation';
-import {
-	selectThresholdChannel,
-	v2SaveButton,
-} from '../../helpers/alert-forms/v2';
-import { gotoAlertOverview } from '../../helpers/alerts/navigation';
+	test as alertsTest,
+} from '../../drivers/alerts';
+import { withQueryBuilder } from '../../drivers/query-builder';
 
-const test = withQueryBuilder(alertRulesTest);
+const test = withQueryBuilder(alertsTest);
 
 const FILTER_A = "http.method = 'GET'";
 const FILTER_B = "http.status_code = '500'";
@@ -35,12 +29,13 @@ interface SavedRule {
 test.describe('Query builder — alerts', () => {
 	test('TC-06 a trace-matching traces alert saves and reopens intact', async ({
 		authedPage: page,
+		alerts,
 		alertChannel,
 		ownedRules,
 		qb,
 	}) => {
-		await gotoCreateAlertV2(page, { alertType: AlertType.TRACES });
-		await page.getByTestId('alert-name-input').fill(`e2e-qb-tc06-${Date.now()}`);
+		await alerts.form.gotoV2({ alertType: AlertType.TRACES });
+		await alerts.form.name().fill(`e2e-qb-tc06-${Date.now()}`);
 
 		await qb.query('A').filter.type(FILTER_A);
 		await qb.query('A').filter.press('Escape');
@@ -53,13 +48,13 @@ test.describe('Query builder — alerts', () => {
 		// Blur first: the editor's blur re-renders the condition section, which
 		// otherwise closes the channel select as its click opens it.
 		await qb.traceOperator.editor.content().blur();
-		await selectThresholdChannel(page, 0, alertChannel.name);
+		await alerts.form.selectThresholdChannel(0, alertChannel.name);
 
 		const [response] = await Promise.all([
 			page.waitForResponse(
 				(r) => r.url().includes('/api/v2/rules') && r.request().method() === 'POST',
 			),
-			v2SaveButton(page).click(),
+			alerts.form.saveButton().click(),
 		]);
 		await ownedRules.register(response);
 		const saved = response.request().postDataJSON() as SavedRule;
@@ -74,7 +69,7 @@ test.describe('Query builder — alerts', () => {
 		);
 
 		const { data } = (await response.json()) as { data: { id: string } };
-		await gotoAlertOverview(page, String(data.id));
+		await alerts.details.gotoOverview(String(data.id));
 
 		await expect.poll(() => qb.query('A').filter.expression()).toBe(FILTER_A);
 		await expect.poll(() => qb.query('B').filter.expression()).toBe(FILTER_B);

@@ -4,7 +4,7 @@
  */
 import type { Locator } from '@playwright/test';
 
-import type { ConsoleWatch } from '../../helpers/common';
+import type { ConsoleWatch } from '../console';
 
 /** The golden dataset has only Sums; these are seeded per worker. */
 export interface MetricTypes {

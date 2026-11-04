@@ -4,7 +4,7 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { ownDropdown } from '../../helpers/alert-forms/shared';
+import { antdDriver } from '../antd';
 
 import { editorAt } from './editor';
 import type { AddOnField, AddOns, MetricControls } from './types';
@@ -18,7 +18,7 @@ export async function openSelect(
 	select: Locator,
 ): Promise<Locator> {
 	await select.locator('.ant-select-selector').click();
-	const list = await ownDropdown(page, select);
+	const list = await antdDriver(page).ownDropdown(select);
 	await expect(list).toBeVisible();
 	return list.locator('.ant-select-item-option');
 }

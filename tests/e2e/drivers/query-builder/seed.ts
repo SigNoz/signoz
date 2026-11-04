@@ -2,7 +2,7 @@
  * AI-owned. Generated and maintained by coding agents alongside the specs that
  * use it. Do not hand-edit: regenerate it with the spec that needs the change.
  */
-import { postToSeeder } from '../../helpers/alerts/seeding';
+import { postToSeeder } from '../telemetry';
 
 import { seeded } from '../kit';
 
@@ -44,7 +44,7 @@ export const withMetricTypes = seeded(
 				});
 			});
 		}
-		await postToSeeder(page, '/telemetry/metrics', points);
+		await postToSeeder(page.request, '/telemetry/metrics', points);
 		return types;
 	},
 );

@@ -5,7 +5,7 @@ import {
 	mockQueryRangeError,
 	QueryRange,
 	unmockQueryRange,
-} from '../../helpers/query-range-mock';
+} from '../../drivers/query-range-mock';
 
 test.describe('Query builder — run and cancel', () => {
 	test('TC-34 a held run can be cancelled and the next run goes through', async ({
