@@ -44,8 +44,8 @@ describe('TracesView (grouped root-span table)', () => {
 		// span_count renders as text
 		expect(screen.getByText('8')).toBeInTheDocument();
 
-		// empty field renders "-"
-		expect(screen.getAllByText('-').length).toBeGreaterThanOrEqual(1);
+		// empty field renders the dash icon
+		expect(screen.getAllByTestId('empty-value').length).toBeGreaterThanOrEqual(1);
 
 		// trace_id renders as a link to the trace detail
 		const traceLinks = screen.getAllByTestId('trace-id');
