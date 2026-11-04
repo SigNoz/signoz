@@ -8,6 +8,7 @@ import type { Warning } from 'types/api';
 import type { MetricRangePayloadV5, RawRow } from 'types/api/v5/queryRange';
 
 import {
+	queryRangeV5DistributionResponse,
 	queryRangeV5EmptyResponse,
 	queryRangeV5HeatmapResponse,
 	queryRangeV5RawResponse,
@@ -23,6 +24,7 @@ import {
 } from '../../__story_mockdata__/panelData';
 
 import {
+	DISTRIBUTION_BUCKETS,
 	HEATMAP_BUCKETS,
 	HEATMAP_COLUMNS,
 	HOLE,
@@ -32,7 +34,12 @@ import {
 	SERVICES,
 	TABLE_SECOND_COLUMN,
 } from './constants';
-import type { Gaps, PanelRequest, PanelResponseArgs } from './types';
+import type {
+	DistributionOverflow,
+	Gaps,
+	PanelRequest,
+	PanelResponseArgs,
+} from './types';
 
 export const serviceAt = (index: number): string =>
 	index < SERVICES.length
@@ -144,6 +151,38 @@ const heatmapResponse = (
 	});
 };
 
+/**
+ * A latency-shaped hump per group, peaking a bucket further right every third
+ * group, plus the overflow count `overflow` asks for.
+ */
+export const distributionCounts = (
+	group: number,
+	overflow: DistributionOverflow,
+): number[] => {
+	const peak = 3 + (group % 3);
+	const scale = 1 + (group % 4) * 0.4;
+	const finite = DISTRIBUTION_BUCKETS.map((_bound, index) =>
+		Math.round(scale * 120 * Math.exp(-((index - peak) ** 2) / 3)),
+	);
+	const total = finite.reduce((sum, count) => sum + count, 0);
+	const share = overflow === 'high' ? 0.25 : 0.02;
+	return [...finite, Math.round((total * share) / (1 - share))];
+};
+
+const distributionResponse = (
+	count: number,
+	overflow: DistributionOverflow,
+	warning: Warning | undefined,
+): QueryRangeV5200 =>
+	queryRangeV5DistributionResponse({
+		buckets: DISTRIBUTION_BUCKETS,
+		warning,
+		distributions: Array.from({ length: count }, (_unused, group) => ({
+			labels: [{ key: { name: 'service.name' }, value: serviceAt(group) }],
+			counts: distributionCounts(group, overflow),
+		})),
+	});
+
 /** Spaced by the window, newest first, as the `timestamp desc` order asks for. */
 const logRows = (
 	{ start, end }: PanelWindow,
@@ -180,6 +219,7 @@ export const panelQueryResponse = ({
 	series,
 	listRows,
 	gaps,
+	overflow,
 	window,
 	offset,
 	limit,
@@ -193,6 +233,8 @@ export const panelQueryResponse = ({
 	switch (kind) {
 		case 'Heatmap':
 			return heatmapResponse(window, series, warning);
+		case 'Distribution':
+			return distributionResponse(series, overflow, warning);
 		case 'Pie':
 			return queryRangeV5ScalarTableResponse({
 				groupBy: ['service.name'],

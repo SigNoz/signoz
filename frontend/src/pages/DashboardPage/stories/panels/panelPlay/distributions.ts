@@ -1,10 +1,16 @@
-import { DashboardtypesHeatmapYScaleDTO as HeatmapYScale } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesDistributionXScaleDTO as DistributionXScale,
+	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
+	DashboardtypesStackModeDTO as StackMode,
+} from 'api/generated/services/sigNoz.schemas';
+import { MAX_STACKED_GROUPS } from 'lib/visualization/charts/Distribution/topGroups';
 import { getPaletteStops } from 'lib/uPlotV2/plugins/HeatmapPlugin/palettes';
 import { HEATMAP_PALETTE_MAP } from 'pages/DashboardPage/DashboardContainer/Panels/utils/chartAppearance/enumMaps';
 import { expect, waitFor, within } from 'storybook/test';
 import type uPlot from 'uplot';
 
 import {
+	DISTRIBUTION_BUCKETS,
 	HEATMAP_BUCKETS,
 	HEATMAP_FIXED_COUNTS,
 } from '../__story_mockdata__/constants';
@@ -87,5 +93,59 @@ export const expectHeatmap = async (
 		await expect(yMax).toBeGreaterThanOrEqual(
 			HEATMAP_BUCKETS[HEATMAP_BUCKETS.length - 1],
 		);
+	}
+};
+
+export const expectDistribution = async (
+	root: HTMLElement,
+	args: PanelPlayArgs,
+): Promise<void> => {
+	const isStacked = args.stack !== StackMode.none;
+	let plot: uPlot | undefined;
+	await waitFor(async () => {
+		plot = findPlot(root);
+		await expect(plot).toBeDefined();
+	}, PANEL_LOAD);
+	const drawn = plot as uPlot;
+
+	// Side by side fits as many groups as the panel's width allows, never more than a
+	// stack, so only a stack has an exact count to hold it to.
+	const notice = within(root).queryByTestId('distribution-other-notice');
+	if (args.series > MAX_STACKED_GROUPS) {
+		await expect(notice).toHaveTextContent(
+			isStacked
+				? `Showing top ${MAX_STACKED_GROUPS - 1} of ${args.series} groups`
+				: `of ${args.series} groups; the rest are summed into Other.`,
+		);
+	} else if (isStacked) {
+		await expect(notice).not.toBeInTheDocument();
+	}
+	if (isStacked) {
+		await expect(drawn.series.length - 1).toBe(
+			Math.min(args.series, MAX_STACKED_GROUPS),
+		);
+	} else {
+		await expect(drawn.series.length - 1).toBeLessThanOrEqual(MAX_STACKED_GROUPS);
+	}
+
+	const xMax = drawn.scales.x.max ?? 0;
+	const lastBound = DISTRIBUTION_BUCKETS[DISTRIBUTION_BUCKETS.length - 1];
+	switch (args.distributionXScale) {
+		case DistributionXScale.ordinal:
+			// One slot a bucket: the bounds plus underflow and overflow.
+			await expect(xMax).toBe(DISTRIBUTION_BUCKETS.length + 1);
+			break;
+		case DistributionXScale.linear:
+			await expect(xMax).toBeGreaterThan(lastBound);
+			break;
+		default:
+			// The exponential bounds put auto on log10 of them, as log and symlog are.
+			await expect(xMax).toBeLessThan(10);
+	}
+
+	if (args.stack === StackMode.percent) {
+		await expect(drawn.scales.y.max ?? 0).toBeGreaterThanOrEqual(100);
+	} else {
+		await expect(drawn.scales.y.distr).toBe(args.yScale === 'log' ? 3 : 1);
 	}
 };

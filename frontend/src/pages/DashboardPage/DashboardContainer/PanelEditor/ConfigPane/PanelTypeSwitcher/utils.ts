@@ -8,6 +8,16 @@ import {
 } from '../../../Panels/capabilities';
 import type { PanelKind } from '../../../Panels/types/panelKind';
 
+/** Kinds whose queries differ in shape, so neither converts into the other. */
+const UNSWITCHABLE_KIND_PAIRS: ReadonlyArray<readonly [PanelKind, PanelKind]> =
+	[['signoz/HistogramPanel', 'signoz/DistributionPanel']];
+
+function isUnswitchablePair(from: PanelKind, to: PanelKind): boolean {
+	return UNSWITCHABLE_KIND_PAIRS.some(
+		([a, b]) => (a === from && b === to) || (a === to && b === from),
+	);
+}
+
 const QUERY_TYPE_LABEL: Record<EQueryType, string> = {
 	[EQueryType.QUERY_BUILDER]: 'Query Builder',
 	[EQueryType.CLICKHOUSE]: 'ClickHouse',
@@ -29,15 +39,21 @@ const SIGNAL_LABEL: Record<TelemetrytypesSignalDTO, string> = {
  */
 export function getPanelTypeDisabledReason({
 	kind,
+	fromKind,
 	queryType,
 	signal,
 	label,
 }: {
 	kind: PanelKind;
+	/** The panel's current kind; some pairs can't switch into each other. */
+	fromKind?: PanelKind;
 	queryType: EQueryType;
 	signal?: TelemetrytypesSignalDTO;
 	label: string;
 }): string | undefined {
+	if (fromKind && isUnswitchablePair(fromKind, kind)) {
+		return "Histogram and Distribution query differently, so a panel can't switch between them";
+	}
 	// A kind that renders without a query pairs with anything — it declares no
 	// query types or signals, and the checks below would read that as "supports
 	// nothing" and disable it everywhere.

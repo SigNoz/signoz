@@ -6,6 +6,7 @@
 import {
 	Querybuildertypesv5RequestTypeDTO,
 	type QueryRangeV5200,
+	type Querybuildertypesv5DistributionDTO,
 	type Querybuildertypesv5TimeSeriesDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { Warning } from 'types/api';
@@ -515,5 +516,36 @@ export const queryRangeV5HeatmapResponse = ({
 			durationMs: 0,
 			stepIntervals: { [queryName]: stepSeconds },
 		},
+	},
+});
+
+interface DistributionResponseSpec {
+	/** Ascending bucket upper bounds; each distribution carries one count per bound plus the overflow. */
+	buckets: number[];
+	distributions: Querybuildertypesv5DistributionDTO[];
+	queryName?: string;
+	warning?: Warning;
+}
+
+/** A distribution panel's answer: per-group counts summed over the range. */
+export const queryRangeV5DistributionResponse = ({
+	buckets,
+	distributions,
+	queryName = 'A',
+	warning,
+}: DistributionResponseSpec): QueryRangeV5200 => ({
+	status: 'success',
+	data: {
+		warning,
+		type: Querybuildertypesv5RequestTypeDTO.distribution,
+		data: {
+			results: [
+				{
+					queryName,
+					aggregations: [{ index: 0, meta: { buckets }, distributions }],
+				},
+			],
+		},
+		meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0 },
 	},
 });

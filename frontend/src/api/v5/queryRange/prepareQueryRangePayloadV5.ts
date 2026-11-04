@@ -47,8 +47,11 @@ type PrepareQueryRangePayloadV5Result = {
  */
 export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 	switch (panelType) {
+		// Histogram bins a time series in the browser; `distribution` is the
+		// Distribution panel's request type.
 		case PANEL_TYPES.TIME_SERIES:
 		case PANEL_TYPES.BAR:
+		case PANEL_TYPES.HISTOGRAM:
 			return 'time_series';
 		case PANEL_TYPES.TABLE:
 		case PANEL_TYPES.SCATTER:
@@ -59,8 +62,6 @@ export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 			return 'trace';
 		case PANEL_TYPES.LIST:
 			return 'raw';
-		case PANEL_TYPES.HISTOGRAM:
-			return 'distribution';
 		default:
 			return '';
 	}

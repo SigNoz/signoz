@@ -25,6 +25,39 @@ describe('getPanelTypeDisabledReason', () => {
 		).toBeUndefined();
 	});
 
+	it('blocks Histogram and Distribution switching into each other, both ways', () => {
+		expect(
+			getPanelTypeDisabledReason({
+				kind: 'signoz/DistributionPanel',
+				fromKind: 'signoz/HistogramPanel',
+				queryType: QUERY_BUILDER,
+				signal: metrics,
+				label: 'Distribution',
+			}),
+		).toMatch(/can't switch between them/);
+		expect(
+			getPanelTypeDisabledReason({
+				kind: 'signoz/HistogramPanel',
+				fromKind: 'signoz/DistributionPanel',
+				queryType: QUERY_BUILDER,
+				signal: metrics,
+				label: 'Histogram',
+			}),
+		).toMatch(/can't switch between them/);
+	});
+
+	it('lets Distribution switch to other kinds', () => {
+		expect(
+			getPanelTypeDisabledReason({
+				kind: 'signoz/HeatmapPanel',
+				fromKind: 'signoz/DistributionPanel',
+				queryType: QUERY_BUILDER,
+				signal: metrics,
+				label: 'Heatmap',
+			}),
+		).toBeUndefined();
+	});
+
 	it('explains an unsupported query type', () => {
 		expect(
 			getPanelTypeDisabledReason({
