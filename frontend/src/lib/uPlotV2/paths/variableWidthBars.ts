@@ -10,6 +10,9 @@ export interface VariableWidthBar {
 	hatched: boolean;
 }
 
+/** A fill, or one read on every draw (e.g. to dim a series on hover). */
+type BarFill = string | (() => string);
+
 /** Bars narrower than this, in CSS pixels, keep no gap between them. */
 const MIN_WIDTH_FOR_GAP_PX = 3;
 
@@ -28,15 +31,18 @@ export function createVariableWidthBarsPathBuilder({
 	gapPx,
 }: {
 	getBars: (u: uPlot, seriesIdx: number) => VariableWidthBar[];
-	fill: string;
-	hatchedFill: string;
+	fill: BarFill;
+	hatchedFill: BarFill;
 	getHatchPattern: (ctx: CanvasRenderingContext2D) => CanvasPattern | null;
 	/** Space between neighbouring bars, in CSS pixels. */
 	gapPx: number;
 }): uPlot.Series.PathBuilder {
 	return (u, seriesIdx): uPlot.Series.Paths => {
+		const solidFill = resolveFill(fill);
+		const overflowFill = resolveFill(hatchedFill);
 		const solidPath = new Path2D();
-		const hatchedPath = new Path2D();
+		// A Map keyed by fill would let the second path overwrite the first.
+		const hatchedPath = overflowFill === solidFill ? solidPath : new Path2D();
 		const inset = (gapPx * uPlot.pxRatio) / 2;
 		const minWidthForGap = MIN_WIDTH_FOR_GAP_PX * uPlot.pxRatio;
 		let hasHatched = false;
@@ -54,10 +60,10 @@ export function createVariableWidthBarsPathBuilder({
 		});
 
 		const fills = new Map<CanvasRenderingContext2D['fillStyle'], Path2D>([
-			[fill, solidPath],
+			[solidFill, solidPath],
 		]);
 		if (hasHatched) {
-			fills.set(hatchedFill, hatchedPath);
+			fills.set(overflowFill, hatchedPath);
 			const pattern = getHatchPattern(u.ctx);
 			if (pattern) {
 				fills.set(pattern, hatchedPath);
@@ -66,4 +72,8 @@ export function createVariableWidthBarsPathBuilder({
 
 		return { stroke: null, fill: fills, clip: null, band: null, flags: 0 };
 	};
+}
+
+function resolveFill(fill: BarFill): string {
+	return typeof fill === 'function' ? fill() : fill;
 }

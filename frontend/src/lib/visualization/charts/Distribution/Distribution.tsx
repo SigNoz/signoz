@@ -1,6 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
-import { LegendPosition } from 'lib/uPlotV2/components/types';
+import DistributionTooltip from 'lib/uPlotV2/components/Tooltip/components/DistributionTooltip/DistributionTooltip';
+import {
+	LegendPosition,
+	type TooltipRenderArgs,
+} from 'lib/uPlotV2/components/types';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
 import { StackMode } from 'lib/uPlotV2/config/types';
 import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
@@ -15,9 +19,11 @@ import {
 	resolveDistributionXAxis,
 	sumVisibleCounts,
 } from './layout';
+import { computeDistributionPercentiles } from './percentiles';
 import { DistributionXScale, DistributionYScale } from './types';
 import {
 	buildDistributionConfig,
+	createBoundFormatter,
 	prepareDistributionChartData,
 	resolveSeriesColor,
 } from './utils';
@@ -35,9 +41,10 @@ export default function Distribution({
 	xAxisUnit,
 	decimalPrecision,
 	customColors,
+	percentiles = [],
 	showLegend = true,
 	legendPosition = LegendPosition.BOTTOM,
-	showTooltip = false,
+	showTooltip = true,
 	canPinTooltip = false,
 	renderTooltipFooter,
 	tooltipPortalRoot,
@@ -61,13 +68,20 @@ export default function Distribution({
 		[labels, isDarkMode, customColors],
 	);
 
-	const xAxis = useMemo(() => {
+	const { xAxis, totals } = useMemo(() => {
 		const full = resolveDistributionXAxis(buckets, xScale);
-		return cropDistributionXAxis(
-			full,
-			sumVisibleCounts(counts, visible, full.rows.length),
-		);
+		const visibleTotals = sumVisibleCounts(counts, visible, full.rows.length);
+		return {
+			xAxis: cropDistributionXAxis(full, visibleTotals),
+			totals: visibleTotals,
+		};
 	}, [buckets, xScale, counts, visible]);
+
+	// Over the visible groups combined, so a legend toggle moves them without a refetch.
+	const markers = useMemo(
+		() => computeDistributionPercentiles({ xAxis, totals, percentiles }),
+		[xAxis, totals, percentiles],
+	);
 
 	const isLogY =
 		yScale === DistributionYScale.Log && stack !== StackMode.Percent;
@@ -87,6 +101,11 @@ export default function Distribution({
 		[xAxis, xAxisUnit, decimalPrecision],
 	);
 
+	const formatBound = useMemo(
+		() => createBoundFormatter(xAxisUnit, boundaryPrecision),
+		[xAxisUnit, boundaryPrecision],
+	);
+
 	const config = useMemo(
 		() =>
 			buildDistributionConfig({
@@ -99,6 +118,7 @@ export default function Distribution({
 				stack,
 				isLogY,
 				isDarkMode,
+				markers,
 				xAxisUnit,
 				decimalPrecision: boundaryPrecision,
 			}),
@@ -112,8 +132,41 @@ export default function Distribution({
 			stack,
 			isLogY,
 			isDarkMode,
+			markers,
 			xAxisUnit,
 			boundaryPrecision,
+		],
+	);
+
+	const renderTooltip = useCallback(
+		(args: TooltipRenderArgs): React.ReactNode => (
+			<DistributionTooltip
+				uPlotInstance={args.uPlotInstance}
+				isPinned={args.isPinned}
+				dismiss={args.dismiss}
+				xAxis={xAxis}
+				layout={layout}
+				labels={labels}
+				colors={colors}
+				counts={counts}
+				visible={visible}
+				stack={stack}
+				markers={markers}
+				formatBound={formatBound}
+				renderTooltipFooter={renderTooltipFooter}
+			/>
+		),
+		[
+			xAxis,
+			layout,
+			labels,
+			colors,
+			counts,
+			visible,
+			stack,
+			markers,
+			formatBound,
+			renderTooltipFooter,
 		],
 	);
 
@@ -161,6 +214,7 @@ export default function Distribution({
 			showTooltip={showTooltip}
 			canPinTooltip={canPinTooltip}
 			decimalPrecision={decimalPrecision}
+			customTooltip={renderTooltip}
 			renderTooltipFooter={renderTooltipFooter}
 			tooltipPortalRoot={tooltipPortalRoot}
 			layoutChildren={layoutChildren}

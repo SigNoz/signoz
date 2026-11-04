@@ -15,6 +15,12 @@ import { toAlphaHex } from 'lib/uPlotV2/utils/fillOpacity';
 import uPlot from 'uplot';
 
 import { DistributionBarsLayout, LOG_Y_BASE } from './layout';
+import {
+	DistributionPercentile,
+	formatPercentileMarker,
+	layoutMarkerLabels,
+	resolveHoveredSeries,
+} from './percentiles';
 import { DistributionXAxis } from './types';
 
 /** Minimum gap between x tick labels, in CSS pixels. */
@@ -22,15 +28,34 @@ const MIN_X_TICK_GAP_PX = 56;
 const BAR_GAP_PX = 1;
 const BAR_OPACITY = 0.85;
 const OVERFLOW_BAR_OPACITY = 0.4;
+/** Every group but the hovered one fades to this. */
+const DIMMED_BAR_OPACITY = 0.25;
+const DIMMED_OVERFLOW_BAR_OPACITY = 0.12;
 const OVERFLOW_DASH: [number, number] = [4, 3];
 const OVERFLOW_AXIS_LABEL = '∞';
-/** Headroom above the tallest bar: a fraction on linear, a factor on log. */
+/** Headroom above the tallest bar: a fraction on linear, a factor on log. Marker
+ *  labels sit at the top of the plot, so they take more. */
 const LINEAR_HEADROOM = 1.1;
+const LINEAR_HEADROOM_WITH_MARKERS = 1.3;
 const LOG_HEADROOM = 2;
+const LOG_HEADROOM_WITH_MARKERS = 6;
+const MARKER_DASH: [number, number] = [3, 3];
+const MARKER_FONT_SIZE_PX = 10;
+const MARKER_LABEL_ROW_PX = 13;
+const MARKER_LABEL_GAP_PX = 6;
+const MARKER_LABEL_OFFSET_PX = 3;
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 function withOpacity(color: string, opacity: number): string {
 	return HEX_COLOR.test(color) ? `${color}${toAlphaHex(opacity)}` : color;
+}
+
+export function createBoundFormatter(
+	unit?: string,
+	decimalPrecision?: PrecisionOption,
+): (value: number) => string {
+	return (value: number): string =>
+		getToolTipValue(String(value), unit, decimalPrecision);
 }
 
 export function resolveSeriesColor(
@@ -66,18 +91,78 @@ export function prepareDistributionChartData(
 	] as unknown as uPlot.AlignedData;
 }
 
-function resolveYRange(
-	yMax: number,
-	isLogY: boolean,
-	stack: StackMode,
-): [number, number] {
+function resolveYRange({
+	yMax,
+	isLogY,
+	stack,
+	hasMarkers,
+}: {
+	yMax: number;
+	isLogY: boolean;
+	stack: StackMode;
+	hasMarkers: boolean;
+}): [number, number] {
 	if (stack === StackMode.Percent) {
-		return [0, 100];
+		return [0, hasMarkers ? 100 * LINEAR_HEADROOM_WITH_MARKERS : 100];
 	}
 	if (isLogY) {
-		return [LOG_Y_BASE, Math.max(yMax, LOG_Y_BASE) * LOG_HEADROOM];
+		const headroom = hasMarkers ? LOG_HEADROOM_WITH_MARKERS : LOG_HEADROOM;
+		return [LOG_Y_BASE, Math.max(yMax, LOG_Y_BASE) * headroom];
 	}
-	return [0, yMax > 0 ? yMax * LINEAR_HEADROOM : 1];
+	const headroom = hasMarkers ? LINEAR_HEADROOM_WITH_MARKERS : LINEAR_HEADROOM;
+	return [0, yMax > 0 ? yMax * headroom : 1];
+}
+
+/** Dashed lines across the plot, labels stacked in rows at the top so none overlap. */
+function drawPercentileMarkers(
+	u: uPlot,
+	markers: DistributionPercentile[],
+	formatBound: (value: number) => string,
+	isDarkMode: boolean,
+): void {
+	if (markers.length === 0) {
+		return;
+	}
+	const { ctx, bbox } = u;
+	const { pxRatio } = uPlot;
+	const color = isDarkMode ? themeColors.white : themeColors.black;
+
+	ctx.save();
+	ctx.font = `500 ${MARKER_FONT_SIZE_PX * pxRatio}px Inter, sans-serif`;
+	ctx.textBaseline = 'top';
+
+	const labels = markers.map((marker) => {
+		const text = formatPercentileMarker(marker, formatBound);
+		const x = u.valToPos(marker.axisValue, 'x', true);
+		return { text, x, width: ctx.measureText(text).width };
+	});
+	const rows = layoutMarkerLabels(
+		labels.map(({ x, width }) => ({
+			x: x + MARKER_LABEL_OFFSET_PX * pxRatio,
+			width,
+		})),
+		MARKER_LABEL_GAP_PX * pxRatio,
+	);
+
+	labels.forEach(({ text, x }, index) => {
+		ctx.globalAlpha = 0.55;
+		ctx.strokeStyle = color;
+		ctx.lineWidth = pxRatio;
+		ctx.setLineDash(MARKER_DASH.map((dash) => dash * pxRatio));
+		ctx.beginPath();
+		ctx.moveTo(x, bbox.top);
+		ctx.lineTo(x, bbox.top + bbox.height);
+		ctx.stroke();
+
+		ctx.globalAlpha = 0.85;
+		ctx.fillStyle = color;
+		ctx.fillText(
+			text,
+			x + MARKER_LABEL_OFFSET_PX * pxRatio,
+			bbox.top + rows[index] * MARKER_LABEL_ROW_PX * pxRatio,
+		);
+	});
+	ctx.restore();
 }
 
 function drawOverflowBoundary(
@@ -112,6 +197,8 @@ export interface BuildDistributionConfigArgs {
 	stack: StackMode;
 	isLogY: boolean;
 	isDarkMode: boolean;
+	/** Drawn across the plot, labelled at the top. */
+	markers: DistributionPercentile[];
 	/** Unit of the bucket bounds; counts take none. */
 	xAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
@@ -127,14 +214,14 @@ export function buildDistributionConfig({
 	stack,
 	isLogY,
 	isDarkMode,
+	markers,
 	xAxisUnit,
 	decimalPrecision,
 }: BuildDistributionConfigArgs): UPlotConfigBuilder {
 	const builder = new UPlotConfigBuilder({ id });
 	builder.setCursor({ focus: { prox: -1 }, points: { show: false } });
 
-	const formatBound = (value: number): string =>
-		getToolTipValue(String(value), xAxisUnit, decimalPrecision);
+	const formatBound = createBoundFormatter(xAxisUnit, decimalPrecision);
 
 	builder.addScale({
 		scaleKey: 'x',
@@ -142,7 +229,12 @@ export function buildDistributionConfig({
 		auto: false,
 		range: (): [number, number] => [xAxis.min, xAxis.max],
 	});
-	const yRange = resolveYRange(layout.yMax, isLogY, stack);
+	const yRange = resolveYRange({
+		yMax: layout.yMax,
+		isLogY,
+		stack,
+		hasMarkers: markers.length > 0,
+	});
 	builder.addScale({
 		scaleKey: 'y',
 		time: false,
@@ -197,6 +289,11 @@ export function buildDistributionConfig({
 		return hatchPattern;
 	};
 
+	// Read by every series' fill on each draw; a change redraws the paths.
+	const hover: { series: number | null } = { series: null };
+	const isDimmed = (seriesIndex: number): boolean =>
+		hover.series !== null && hover.series !== seriesIndex;
+
 	labels.forEach((label, seriesIndex) => {
 		const color = colors[seriesIndex];
 		builder.addSeries({
@@ -205,8 +302,18 @@ export function buildDistributionConfig({
 			drawStyle: DrawStyle.Bar,
 			pathBuilder: createVariableWidthBarsPathBuilder({
 				getBars: () => layout.rects[seriesIndex] ?? [],
-				fill: withOpacity(color, BAR_OPACITY),
-				hatchedFill: withOpacity(color, OVERFLOW_BAR_OPACITY),
+				fill: () =>
+					withOpacity(
+						color,
+						isDimmed(seriesIndex) ? DIMMED_BAR_OPACITY : BAR_OPACITY,
+					),
+				hatchedFill: () =>
+					withOpacity(
+						color,
+						isDimmed(seriesIndex)
+							? DIMMED_OVERFLOW_BAR_OPACITY
+							: OVERFLOW_BAR_OPACITY,
+					),
 				getHatchPattern,
 				gapPx: BAR_GAP_PX,
 			}),
@@ -220,9 +327,22 @@ export function buildDistributionConfig({
 		});
 	});
 
-	builder.addHook('draw', (u: uPlot): void =>
-		drawOverflowBoundary(u, xAxis, isDarkMode),
-	);
+	builder.addHook('draw', (u: uPlot): void => {
+		drawOverflowBoundary(u, xAxis, isDarkMode);
+		drawPercentileMarkers(u, markers, formatBound, isDarkMode);
+	});
+
+	builder.addHook('setCursor', (u: uPlot): void => {
+		const { left = -1, top = -1 } = u.cursor;
+		const next =
+			left < 0 || top < 0
+				? null
+				: resolveHoveredSeries(layout, u.posToVal(left, 'x'), u.posToVal(top, 'y'));
+		if (next !== hover.series) {
+			hover.series = next;
+			u.redraw(true, false);
+		}
+	});
 
 	return builder;
 }
