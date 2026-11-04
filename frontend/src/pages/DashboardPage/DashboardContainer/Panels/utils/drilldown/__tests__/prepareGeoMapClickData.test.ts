@@ -48,14 +48,12 @@ describe('prepareGeoMapClickData', () => {
 		});
 	});
 
-	it("falls back to size's query, then the first, for a formula", () => {
+	it("falls back to size's query for a formula", () => {
 		expect(click(['F1', 'B'])?.context.queryName).toBe('B');
-		expect(click(['F1'])?.context).toMatchObject({
-			queryName: 'A',
-			filters: [
-				{ filterKey: 'geo.country.iso_code', filterValue: 'DE', operator: '=' },
-			],
-		});
+	});
+
+	it('returns null when only a formula is drawn', () => {
+		expect(click(['F1'])).toBeNull();
 	});
 
 	it('returns null without a builder query', () => {

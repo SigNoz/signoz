@@ -179,6 +179,16 @@ describe('getGeoMapEmptyMessage', () => {
 		});
 	});
 
+	it('points to the size column when it hides every location', () => {
+		expect(
+			getGeoMapEmptyMessage(
+				makeData({ regions: [], totalRows: 2, missingSizeRows: 2 }),
+			)?.description,
+		).toBe(
+			'2 rows without a positive size value, so no bubble. Pick another Size by column.',
+		);
+	});
+
 	it('stays quiet when something draws or nothing came back', () => {
 		expect(getGeoMapEmptyMessage(makeData())).toBeUndefined();
 		expect(getGeoMapEmptyMessage(makeData({ totalRows: 0 }))).toBeUndefined();
