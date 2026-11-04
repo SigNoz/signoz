@@ -9,7 +9,12 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
+    BuilderQuery,
+    OrderBy,
+    RequestType,
+    TelemetryFieldKey,
     assert_identical_query_response,
+    get_rows,
     make_query_request,
 )
 
@@ -498,3 +503,103 @@ def test_logs_list_with_order_by(
     ids = [row["data"]["attributes_string"].get("id", "") for row in rows]
 
     assert ids == expected_order
+
+
+@pytest.mark.parametrize("direction", ["desc", "asc"])
+def test_logs_list_cursor_pages_every_row_once(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    direction: str,
+) -> None:
+    """
+    Setup:
+    7 logs: one alone in its millisecond at each end, 5 inside one millisecond,
+    3 of them at the same instant.
+
+    Tests:
+    Paging by nextCursor with limit 2 returns every log once, ordered by
+    timestamp then id, although page boundaries fall inside the shared
+    millisecond and inside the shared instant.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    shared = now - timedelta(seconds=5) + timedelta(microseconds=300)
+    instants = [
+        now - timedelta(seconds=6),
+        shared,
+        shared + timedelta(microseconds=1),
+        shared + timedelta(microseconds=2),
+        shared + timedelta(microseconds=2),
+        shared + timedelta(microseconds=2),
+        now - timedelta(seconds=4),
+    ]
+    logs = [Logs(timestamp=instant, resources={"service.name": "cursor-service"}, body=f"log-{i}") for i, instant in enumerate(instants)]
+    insert_logs(logs)
+    expected = [log.id for log in sorted(logs, key=lambda log: (int(log.timestamp), log.id), reverse=direction == "desc")]
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    seen: list[str] = []
+    cursor = None
+    for _ in range(len(logs) + 1):
+        response = make_query_request(
+            signoz,
+            token,
+            start_ms=int((now - timedelta(minutes=1)).timestamp() * 1000),
+            end_ms=int((now + timedelta(seconds=1)).timestamp() * 1000),
+            request_type=RequestType.RAW,
+            queries=[
+                BuilderQuery(
+                    signal="logs",
+                    limit=2,
+                    cursor=cursor,
+                    filter_expression="service.name = 'cursor-service'",
+                    order=[OrderBy(TelemetryFieldKey("timestamp"), direction), OrderBy(TelemetryFieldKey("id"), direction)],
+                ).to_dict()
+            ],
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        seen += [row["data"]["id"] for row in get_rows(response)]
+        cursor = response.json()["data"]["data"]["results"][0].get("nextCursor")
+        if not cursor:
+            break
+
+    assert seen == expected
+
+
+@pytest.mark.parametrize(
+    "order,offset,cursor,message",
+    [
+        pytest.param(["timestamp", "id"], 2, "MTc5MzA0MDgzNjc5NQ==", "offset cannot be combined with cursor, got offset 2", id="offset_with_cursor"),
+        pytest.param(["timestamp"], 0, "MTc5MzA0MDgzNjc5NQ==", "cursor needs a raw query ordered by timestamp first", id="order_without_id"),
+        pytest.param(["timestamp", "id"], 0, "not-a-cursor", 'invalid cursor "not-a-cursor"', id="invalid_cursor"),
+    ],
+)
+def test_logs_list_cursor_rejections(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    order: list[str],
+    offset: int,
+    cursor: str,
+    message: str,
+) -> None:
+    now = datetime.now(tz=UTC)
+    response = make_query_request(
+        signoz,
+        get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD),
+        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[
+            BuilderQuery(
+                signal="logs",
+                limit=2,
+                offset=offset,
+                cursor=cursor,
+                order=[OrderBy(TelemetryFieldKey(name), "desc") for name in order],
+            ).to_dict()
+        ],
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert message in response.json()["error"]["message"], response.text

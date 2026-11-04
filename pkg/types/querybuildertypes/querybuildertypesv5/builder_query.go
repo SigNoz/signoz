@@ -38,9 +38,9 @@ type QueryBuilderQuery[T any] struct {
 
 	LimitBy *LimitBy `json:"limitBy,omitempty" description:"Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored."`
 
-	Offset int `json:"offset,omitempty" description:"The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging."`
+	Offset int `json:"offset,omitempty" description:"The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit, and cannot be combined with cursor. On raw requests the skipped rows are still read, so prefer cursor for paging."`
 
-	Cursor string `json:"cursor,omitempty" description:"The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it."`
+	Cursor string `json:"cursor,omitempty" description:"The opaque nextCursor value from a previous raw result, used to fetch the next page. Cannot be combined with offset. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; any other raw request rejects it, and other request types ignore it."`
 
 	Having *Having `json:"having,omitempty" description:"A filter applied to aggregation results, referencing aliases or expressions, for example count() > 100."`
 
@@ -53,6 +53,19 @@ type QueryBuilderQuery[T any] struct {
 	// ShiftBy is extracted from timeShift function for internal use
 	// This field is not serialized to JSON
 	ShiftBy int64 `json:"-"`
+
+	// StartAfter is the row a raw page continues from, decoded from Cursor.
+	// The page holds only rows strictly after it in the requested order.
+	StartAfter *RawRowKey `json:"-"`
+}
+
+// RawRowKey is the full order key of one raw row: the timestamp, then the
+// signal's tie-break column, id for logs and span_id for traces.
+// It is the content of a raw nextCursor.
+type RawRowKey struct {
+	TimeUnixNano uint64 `json:"timeUnixNano"`
+	ID           string `json:"id,omitempty"`
+	SpanID       string `json:"spanId,omitempty"`
 }
 
 // PrepareJSONSchema pins `signal` to the single value implied by the aggregation
@@ -141,6 +154,11 @@ func (q QueryBuilderQuery[T]) Copy() QueryBuilderQuery[T] {
 	if q.BucketOptions != nil {
 		bucketOptionsCopy := *q.BucketOptions
 		c.BucketOptions = &bucketOptionsCopy
+	}
+
+	if q.StartAfter != nil {
+		startAfterCopy := *q.StartAfter
+		c.StartAfter = &startAfterCopy
 	}
 
 	return c

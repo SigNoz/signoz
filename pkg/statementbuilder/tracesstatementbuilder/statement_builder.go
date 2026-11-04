@@ -404,6 +404,19 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		return nil, err
 	}
 
+	if after := query.StartAfter; after != nil {
+		// an OR, not a tuple comparison, so ClickHouse can use it to skip granules
+		compare := sb.G
+		if query.Order[0].Direction == qbtypes.OrderDirectionDesc {
+			compare = sb.L
+		}
+		timestamp := fmt.Sprintf("%d", after.TimeUnixNano)
+		sb.Where(sb.Or(
+			compare(tracestelemetryschema.SpanTimestampColumn, timestamp),
+			sb.And(sb.E(tracestelemetryschema.SpanTimestampColumn, timestamp), compare(tracestelemetryschema.SpanSpanIDColumn, after.SpanID)),
+		))
+	}
+
 	// Add order by
 	for _, orderBy := range query.Order {
 		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)

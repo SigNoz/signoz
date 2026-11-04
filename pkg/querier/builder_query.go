@@ -3,8 +3,10 @@ package querier
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -254,6 +256,10 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 	// can we do window based pagination?
 	if q.kind == qbtypes.RequestTypeRaw && q.isWindowList() {
 		return q.executeWindowList(ctx)
+	}
+	if q.kind == qbtypes.RequestTypeRaw && strings.TrimSpace(q.spec.Cursor) != "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "cursor needs a raw query ordered by timestamp first").
+			WithSuggestions("order logs by timestamp then id, both in one direction, and traces by timestamp")
 	}
 
 	fromMS, toMS := q.fromMS, q.toMS
@@ -517,19 +523,47 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 	isAsc := len(q.spec.Order) > 0 &&
 		strings.ToLower(string(q.spec.Order[0].Direction.StringValue())) == "asc"
 
+	// A cursor names one row only when the order ends in the signal's tie-break
+	// column. Logs already order by timestamp then id. A traces order of
+	// timestamp alone gets span_id, 8 random bytes, so spans at one instant differ.
+	rowKeyed := q.spec.Signal == telemetrytypes.SignalLogs || len(q.spec.Order) == 1
+	if q.spec.Signal == telemetrytypes.SignalTraces && rowKeyed {
+		q.spec.Order = append(slices.Clip(q.spec.Order),
+			qbtypes.OrderBy{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: tracestelemetryschema.SpanSpanIDColumn, FieldContext: telemetrytypes.FieldContextSpan}}, Direction: q.spec.Order[0].Direction},
+		)
+	}
+
 	fromMS, toMS := q.fromMS, q.toMS
 
 	// Adjust [fromMS,toMS] window if a cursor was supplied
 	if cur := strings.TrimSpace(q.spec.Cursor); cur != "" {
-		if ts, err := decodeCursor(cur); err == nil {
+		after, legacyMS, err := decodeCursor(cur)
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case after == nil:
+			// a cursor issued before the row key moves the window edge as it always did
 			if isAsc {
-				if uint64(ts) >= fromMS {
-					fromMS = uint64(ts + 1)
+				if uint64(legacyMS) >= fromMS {
+					fromMS = uint64(legacyMS + 1)
 				}
 			} else { // DESC
-				if uint64(ts) <= toMS {
-					toMS = uint64(ts - 1)
+				if uint64(legacyMS) <= toMS {
+					toMS = uint64(legacyMS - 1)
 				}
+			}
+		case !rowKeyed || (q.spec.Signal == telemetrytypes.SignalLogs && after.ID == "") || (q.spec.Signal == telemetrytypes.SignalTraces && after.SpanID == ""):
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "cursor does not belong to this query").
+				WithSuggestions("send the nextCursor with the same signal and order as the query that returned it")
+		default:
+			q.spec.StartAfter = after
+			// the window keeps the whole boundary millisecond; StartAfter cuts inside it
+			boundaryMS := after.TimeUnixNano / uint64(time.Millisecond)
+			if isAsc {
+				fromMS = max(fromMS, boundaryMS)
+			} else {
+				toMS = min(toMS, boundaryMS+1)
 			}
 		}
 	}
@@ -637,8 +671,21 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 
 	nextCursor := ""
 	if len(rows) == reqLimit {
-		lastTS := rows[len(rows)-1].Timestamp.UnixMilli()
-		nextCursor = encodeCursor(lastTS)
+		last := rows[len(rows)-1]
+		if rowKeyed {
+			// the list builders always select the tie-break column, as a string
+			key := qbtypes.RawRowKey{TimeUnixNano: uint64(last.Timestamp.UnixNano())}
+			if q.spec.Signal == telemetrytypes.SignalLogs {
+				key.ID, _ = last.Data["id"].(string)
+			} else {
+				key.SpanID, _ = last.Data["span_id"].(string)
+			}
+			// a number and strings always encode
+			data, _ := json.Marshal(key)
+			nextCursor = base64.RawURLEncoding.EncodeToString(data)
+		} else {
+			nextCursor = encodeCursor(last.Timestamp.UnixMilli())
+		}
 	}
 
 	return &qbtypes.Result{
@@ -662,10 +709,23 @@ func encodeCursor(tsMilli int64) string {
 	return base64.StdEncoding.EncodeToString([]byte(strconv.FormatInt(tsMilli, 10)))
 }
 
-func decodeCursor(cur string) (int64, error) {
-	b, err := base64.StdEncoding.DecodeString(cur)
-	if err != nil {
-		return 0, err
+// decodeCursor reads a raw nextCursor. A cursor issued before the row key
+// holds only the last row's millisecond; it comes back as legacyMS.
+func decodeCursor(cursor string) (*qbtypes.RawRowKey, int64, error) {
+	if data, err := base64.StdEncoding.DecodeString(cursor); err == nil {
+		if legacyMS, err := strconv.ParseInt(string(data), 10, 64); err == nil {
+			return nil, legacyMS, nil
+		}
 	}
-	return strconv.ParseInt(string(b), 10, 64)
+
+	after := &qbtypes.RawRowKey{}
+	data, err := base64.RawURLEncoding.DecodeString(cursor)
+	if err == nil {
+		err = json.Unmarshal(data, after)
+	}
+	if err != nil || after.TimeUnixNano == 0 {
+		return nil, 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid cursor %q", cursor).
+			WithSuggestions("send the nextCursor of the previous page unchanged")
+	}
+	return after, 0, nil
 }
