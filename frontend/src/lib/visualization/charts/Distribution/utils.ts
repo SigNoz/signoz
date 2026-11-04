@@ -293,6 +293,11 @@ export function buildDistributionConfig({
 		side: 3,
 		isDarkMode,
 		yAxisUnit: stack === StackMode.Percent ? 'percent' : 'short',
+		// The marker headroom runs a share axis past 100%, which labels nothing real.
+		...(stack === StackMode.Percent && {
+			filter: (_self: uPlot, splits: number[]): Array<number | null> =>
+				splits.map((split) => (split <= 100 ? split : null)),
+		}),
 	});
 
 	let hatchPattern: CanvasPattern | null | undefined;
