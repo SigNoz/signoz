@@ -4,6 +4,7 @@
  */
 
 import type {
+	DashboardtypesDistributionXScaleDTO as DistributionXScale,
 	DashboardtypesHeatmapPaletteDTO as HeatmapPalette,
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
 	DashboardtypesLegendPositionDTO as LegendPosition,
@@ -16,6 +17,7 @@ import type { PanelWindow } from '../../__story_mockdata__/panelData';
 
 import type {
 	BUCKET_WIDTHS,
+	DISTRIBUTION_OVERFLOWS,
 	GAPS,
 	HEATMAP_COUNT_RANGES,
 	PANEL_KINDS,
@@ -44,6 +46,8 @@ export type Gaps = (typeof GAPS)[number];
 
 export type SpanGaps = (typeof SPAN_GAPS)[number];
 
+export type DistributionOverflow = (typeof DISTRIBUTION_OVERFLOWS)[number];
+
 /** The controls that shape the dashboard document. */
 export interface PanelArgs {
 	kind: PanelKind;
@@ -63,6 +67,8 @@ export interface PanelArgs {
 	showPoints: boolean;
 	spanGaps: SpanGaps;
 	columnUnits: boolean;
+	distributionXScale: DistributionXScale;
+	percentiles: boolean;
 }
 
 /** What one `query_range` call asked for, as the handler reads it. */
@@ -78,4 +84,5 @@ export interface PanelResponseArgs extends PanelRequest {
 	series: number;
 	listRows: number;
 	gaps: Gaps;
+	overflow: DistributionOverflow;
 }
