@@ -2245,6 +2245,86 @@ func TestNumberPanelDefaults(t *testing.T) {
 	assert.Contains(t, outputStr, `"operator":"above"`, "expected stored/response JSON to contain operator:above")
 }
 
+func TestTopListPanelSpec(t *testing.T) {
+	testCases := []struct {
+		name           string
+		spec           string
+		wantErr        bool
+		wantAppearance TopListAppearance
+	}{
+		{
+			name: "AllFields_RoundTrip",
+			spec: `{
+				"formatting": {"unit": "ms", "decimalPrecision": 2},
+				"appearance": {"showRank": true, "showShare": true, "barColor": "#E5484D"},
+				"thresholds": [{"value": 500, "operator": "above", "format": "background", "color": "Red"}]
+			}`,
+			wantAppearance: TopListAppearance{ShowRank: true, ShowShare: true, BarColor: "#E5484D"},
+		},
+		{
+			name: "MissingBarColor_Defaulted",
+			spec: `{
+				"formatting": {"unit": "s", "decimalPrecision": 1},
+				"appearance": {"showRank": true},
+				"thresholds": [{"value": 5, "operator": "below", "format": "text", "color": "Green"}]
+			}`,
+			wantAppearance: TopListAppearance{ShowRank: true, BarColor: DefaultTopListBarColor},
+		},
+		{
+			name:    "InvalidBarColor_Rejected",
+			spec:    `{"appearance": {"barColor": "blue"}}`,
+			wantErr: true,
+		},
+		{
+			name:    "UnknownField_Rejected",
+			spec:    `{"legend": {}}`,
+			wantErr: true,
+		},
+		{
+			name:    "UnknownAppearanceField_Rejected",
+			spec:    `{"appearance": {"showPoints": true}}`,
+			wantErr: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			d, err := unmarshalDashboard([]byte(`{
+				"variables": [],
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"links": [],
+							"plugin": {"kind": "signoz/TopListPanel", "spec": ` + testCase.spec + `},
+							"queries": [{"kind": "scalar", "spec": {"plugin": {"kind": "signoz/ClickHouseSQL", "spec": {"name": "A", "query": "SELECT 1"}}}}]
+						}
+					}
+				},
+				"links": [],
+				"layouts": []
+			}`))
+			if testCase.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err, "unmarshal and validate failed")
+			require.IsType(t, &TopListPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+			spec := d.Panels["p1"].Spec.Plugin.Spec.(*TopListPanelSpec)
+
+			output, err := json.Marshal(d)
+			require.NoError(t, err, "marshal dashboard failed")
+			roundTripped, err := unmarshalDashboard(output)
+			require.NoError(t, err, "round trip failed")
+			require.IsType(t, &TopListPanelSpec{}, roundTripped.Panels["p1"].Spec.Plugin.Spec)
+			roundTrippedSpec := roundTripped.Panels["p1"].Spec.Plugin.Spec.(*TopListPanelSpec)
+			assert.Equal(t, spec.Formatting, roundTrippedSpec.Formatting)
+			assert.Equal(t, spec.Thresholds, roundTrippedSpec.Thresholds)
+			assert.Equal(t, testCase.wantAppearance, roundTrippedSpec.Appearance)
+		})
+	}
+}
+
 func geoMapDashboard(spec, queryPlugin string) []byte {
 	return []byte(`{
 		"variables": [],
@@ -2734,7 +2814,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		switch panelKind {
 		case "signoz/ListPanel":
 			return "raw"
-		case "signoz/TablePanel", "signoz/NumberPanel", "signoz/PieChartPanel", "signoz/HistogramPanel", "signoz/ScatterPlotPanel", "signoz/GeoMapPanel":
+		case "signoz/TablePanel", "signoz/NumberPanel", "signoz/PieChartPanel", "signoz/HistogramPanel", "signoz/ScatterPlotPanel", "signoz/TopListPanel", "signoz/GeoMapPanel":
 			return "scalar"
 		default:
 			return "time_series"
@@ -2792,6 +2872,13 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		{"ScatterPlot+Composite(promql)", mkComposite("signoz/ScatterPlotPanel", "promql", `{"name":"A","query":"up"}`), true},
 		{"Table+Composite(clickhouse)", mkComposite("signoz/TablePanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
 		{"Table+Composite(builder_ai)", mkComposite("signoz/TablePanel", "builder_ai_query", `{"name":"A","aggregations":[{"expression":"count()"}]}`), false},
+		{"TopList+ClickHouse", mkQuery("signoz/TopListPanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), false},
+		{"TopList+PromQL", mkQuery("signoz/TopListPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
+		{"TopList+Formula", mkQuery("signoz/TopListPanel", "signoz/Formula", `{"name":"F1","expression":"A+B"}`), false},
+		{"TopList+TraceOperator", mkQuery("signoz/TopListPanel", "signoz/TraceOperator", `{"name":"T1","expression":"A => B"}`), false},
+		{"TopList+Composite(clickhouse)", mkComposite("signoz/TopListPanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
+		{"TopList+Composite(formula)", mkComposite("signoz/TopListPanel", "builder_formula", `{"name":"F1","expression":"A+B"}`), false},
+		{"TopList+Composite(promql)", mkComposite("signoz/TopListPanel", "promql", `{"name":"A","query":"up"}`), true},
 		{"GeoMap+ClickHouse", mkQuery("signoz/GeoMapPanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), false},
 		{"GeoMap+PromQL", mkQuery("signoz/GeoMapPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
 		{"GeoMap+Formula", mkQuery("signoz/GeoMapPanel", "signoz/Formula", `{"name":"F1","expression":"A+B"}`), false},
