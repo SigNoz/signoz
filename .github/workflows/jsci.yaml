@@ -134,7 +134,6 @@ jobs:
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated web settings types. Run pnpm generate:config:web-settings in frontend/ locally and commit."; exit 1)
   geo-outlines:
     if: |
-      github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     runs-on: ubuntu-latest
