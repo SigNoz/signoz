@@ -10,15 +10,16 @@ import {
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { createVariableWidthBarsPathBuilder } from 'lib/uPlotV2/paths/variableWidthBars';
-import {
-	decimateAxisSplits,
-	resolveRowIndex,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
+import { resolveRowIndex } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import { createHatchPattern } from 'lib/uPlotV2/plugins/HeatmapPlugin/paint';
 import { toAlphaHex } from 'lib/uPlotV2/utils/fillOpacity';
 import uPlot from 'uplot';
 
-import { DistributionBarsLayout, LOG_Y_BASE } from './layout';
+import {
+	DistributionBarsLayout,
+	LOG_Y_BASE,
+	thinLabelledSplits,
+} from './layout';
 import {
 	DistributionPercentile,
 	formatPercentileMarker,
@@ -28,8 +29,8 @@ import {
 } from './percentiles';
 import { DistributionXAxis } from './types';
 
-/** Minimum gap between x tick labels, in CSS pixels. */
-const MIN_X_TICK_GAP_PX = 56;
+/** Minimum space between two x tick labels, in CSS pixels. */
+const X_LABEL_GAP_PX = 12;
 const BAR_GAP_PX = 1;
 const BAR_OPACITY = 0.85;
 const OVERFLOW_BAR_OPACITY = 0.4;
@@ -270,23 +271,31 @@ export function buildDistributionConfig({
 		splitLabels.set(xAxis.overflowSplit, OVERFLOW_AXIS_LABEL);
 	}
 
+	const labelOf = (split: number): string =>
+		splitLabels.get(split) ?? formatBound(xAxis.toBucketValue(split));
+
 	builder.addAxis({
 		scaleKey: 'x',
 		side: 2,
 		isDarkMode,
-		splits: (self): number[] =>
-			decimateAxisSplits({
-				splits: axisSplits,
-				min: xAxis.min,
-				max: xAxis.max,
-				plotHeight: self.bbox.width / uPlot.pxRatio,
-				minGapPx: MIN_X_TICK_GAP_PX,
-			}),
-		values: (_, splits): string[] =>
-			splits.map(
-				(split) =>
-					splitLabels.get(split) ?? formatBound(xAxis.toBucketValue(split)),
-			),
+		// Thinned by each label's own width: bound labels run from `5 s` to
+		// `16.67 mins`, so no fixed spacing keeps them apart.
+		splits: (self, axisIdx): number[] => {
+			const visible = axisSplits.filter((split) => split <= xAxis.max);
+			const font = self.axes[axisIdx]?.font?.[0];
+			if (font) {
+				self.ctx.font = font;
+			}
+			const kept = thinLabelledSplits({
+				positions: visible.map((split) => self.valToPos(split, 'x')),
+				widths: visible.map(
+					(split) => self.ctx.measureText(labelOf(split)).width / uPlot.pxRatio,
+				),
+				gap: X_LABEL_GAP_PX,
+			});
+			return kept.map((index) => visible[index]);
+		},
+		values: (_, splits): string[] => splits.map(labelOf),
 	});
 	builder.addAxis({
 		scaleKey: 'y',
