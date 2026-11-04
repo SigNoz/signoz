@@ -698,8 +698,8 @@ func (e QueryEnvelope) Validate(opts ...ValidationOption) error {
 	return validateQueryEnvelope(e, opts...)
 }
 
-// Enum lists the request types a query can use. distribution decodes but has
-// no query path.
+// Enum is the one list of request types a query can use, so the spec and the
+// suggestions agree with what is accepted.
 func (r *QueryRangeRequest) validateRequestType() error {
 	if slices.Contains(RequestType{}.Enum(), any(r.RequestType)) {
 		return nil

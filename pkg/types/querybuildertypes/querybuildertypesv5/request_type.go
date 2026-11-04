@@ -12,8 +12,6 @@ type RequestType struct {
 }
 
 // UnmarshalJSON rejects values that are not a known request type.
-// distribution decodes but is not in Enum, because saved views and dashboards
-// can store it.
 func (r *RequestType) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {

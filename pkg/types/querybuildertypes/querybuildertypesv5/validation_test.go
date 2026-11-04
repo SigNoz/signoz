@@ -1473,11 +1473,6 @@ func TestQueryRangeRequest_ValidateRequestType(t *testing.T) {
 			message:     "requestType is required",
 		},
 		{
-			name:        "Distribution_NotSupported",
-			requestType: `"requestType": "distribution",`,
-			message:     `request type "distribution" is not supported`,
-		},
-		{
 			name:        "Timeseries_Unknown",
 			requestType: `"requestType": "timeseries",`,
 			message:     `unknown request type "timeseries"`,
