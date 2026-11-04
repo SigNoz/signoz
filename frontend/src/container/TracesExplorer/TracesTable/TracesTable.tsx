@@ -18,12 +18,9 @@ import { getAbsoluteUrl } from 'utils/basePath';
 import { TRACES_TABLE_QUERY_PARAMS } from './constants';
 import type { TracesTableRow } from './getFieldColumn';
 import type { TracesTablePagination } from './useTracesTablePagination';
-import { getRollingTotal } from './utils';
+import { getRollingTotal, getRowKey } from './utils';
 
 import styles from './TracesTable.module.scss';
-
-// The API can return the same span twice; the table suffixes repeated keys so each row hovers on its own.
-const getRowKey = (row: TracesTableRow): string => row.id;
 
 export type TracesTableProps = {
 	data: TracesTableRow[];

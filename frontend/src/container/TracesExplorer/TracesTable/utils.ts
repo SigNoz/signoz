@@ -1,3 +1,5 @@
+import type { TracesTableRow } from './getFieldColumn';
+
 export function stringifyCellValue(value: unknown): string {
 	if (value == null) {
 		return '';
@@ -21,4 +23,9 @@ export function getRollingTotal(
 	limit: number,
 ): number {
 	return offset + rowCount + (rowCount >= limit ? 1 : 0);
+}
+
+/** The API can return the same span twice; the table suffixes repeated keys so each row hovers on its own. */
+export function getRowKey(row: TracesTableRow): string {
+	return row.id;
 }
