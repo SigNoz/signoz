@@ -38,6 +38,23 @@ function bucketRowsDrawing(ys: number[], dashed = false): JSX.Element {
 	);
 }
 
+/** Bucket columns along an x axis; `xs` sets the column spacing a scale gives. */
+function bucketColumnsDrawing(xs: number[], dashed = false): JSX.Element {
+	return (
+		<TileSvg>
+			<path d="M4 22 H60" strokeWidth={1.4} opacity={0.35} />
+			{xs.map((x) => (
+				<path
+					key={x}
+					d={`M${x} 4 V20`}
+					strokeWidth={2}
+					strokeDasharray={dashed ? '3 3' : undefined}
+				/>
+			))}
+		</TileSvg>
+	);
+}
+
 export const TILE_DRAWINGS = {
 	lineSolid: (
 		<TileSvg>
@@ -159,6 +176,25 @@ export const TILE_DRAWINGS = {
 	bucketsLinear: bucketRowsDrawing([4, 9, 14, 19]),
 	bucketsLog: bucketRowsDrawing([3, 5, 9, 17]),
 	bucketsSymlog: bucketRowsDrawing([3, 9, 11, 13, 19]),
+	bucketColumnsAuto: bucketColumnsDrawing([10, 20, 30, 42, 56], true),
+	bucketColumnsLinear: bucketColumnsDrawing([8, 20, 32, 44, 56]),
+	bucketColumnsLog: bucketColumnsDrawing([8, 12, 18, 30, 56]),
+	bucketColumnsSymlog: bucketColumnsDrawing([8, 26, 32, 38, 56]),
+	bucketColumnsOrdinal: (
+		<TileSvg>
+			<path d="M4 22 H60" strokeWidth={1.4} opacity={0.35} />
+			{[8, 20, 32, 44].map((x, i) => (
+				<rect
+					key={x}
+					x={x}
+					y={[14, 6, 10, 16][i]}
+					width={10}
+					height={[6, 14, 10, 4][i]}
+					{...FILLED}
+				/>
+			))}
+		</TileSvg>
+	),
 	scaleSymlog: (
 		<TileSvg>
 			<path d="M4 20 C 20 20, 22 12, 32 12 S 44 4, 60 4" />
@@ -178,6 +214,22 @@ export const TILE_DRAWINGS = {
 			<rect x={14} y={4} width={11} height={8} {...FILLED} />
 			<rect x={38} y={15} width={11} height={7} {...FILLED} opacity={0.5} />
 			<rect x={38} y={8} width={11} height={6} {...FILLED} />
+		</TileSvg>
+	),
+	barsSideBySide: (
+		<TileSvg>
+			<rect x={10} y={8} width={7} height={14} {...FILLED} opacity={0.5} />
+			<rect x={18} y={12} width={7} height={10} {...FILLED} />
+			<rect x={36} y={11} width={7} height={11} {...FILLED} opacity={0.5} />
+			<rect x={44} y={6} width={7} height={16} {...FILLED} />
+		</TileSvg>
+	),
+	barsPercent: (
+		<TileSvg>
+			<rect x={14} y={12} width={11} height={10} {...FILLED} opacity={0.5} />
+			<rect x={14} y={2} width={11} height={9} {...FILLED} />
+			<rect x={38} y={8} width={11} height={14} {...FILLED} opacity={0.5} />
+			<rect x={38} y={2} width={11} height={5} {...FILLED} />
 		</TileSvg>
 	),
 	areaOverlap: (
