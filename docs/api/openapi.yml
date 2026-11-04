@@ -10714,7 +10714,8 @@ components:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5RequestType'
           description: 'The shape of the result: scalar, time_series, raw, raw_stream,
-            trace or heatmap. It decides which result type data.results carries.'
+            trace, distribution or heatmap. It decides which result type data.results
+            carries.'
         schemaVersion:
           description: The version of the request payload schema, currently v1.
           type: string
