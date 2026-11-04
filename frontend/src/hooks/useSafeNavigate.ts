@@ -1,11 +1,12 @@
 import { useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigate } from 'react-router';
 import { cloneDeep, isEqual } from 'lodash-es';
 import { withBasePath } from 'utils/basePath';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 interface NavigateOptions {
 	replace?: boolean;
-	state?: any;
+	state?: unknown;
 	newTab?: boolean;
 }
 
@@ -108,6 +109,12 @@ export const useSafeNavigate = (
 			// oxlint-disable-next-line signoz/no-raw-absolute-path
 			const base = window.location.origin;
 			const currentUrl = new URL(`${location.pathname}${location.search}`, base);
+			// nuqs writes shallowly, so the address bar can be ahead of the router.
+			// Navigating to it anyway makes nuqs drop its queued writes.
+			const publishedUrl = new URL(
+				`${location.pathname}?${getUnstableCurrentSearchParams().toString()}`,
+				base,
+			);
 
 			let targetUrl: URL;
 
@@ -131,7 +138,9 @@ export const useSafeNavigate = (
 				return;
 			}
 
-			const urlsAreSame = areUrlsEffectivelySame(currentUrl, targetUrl);
+			const urlsAreSame =
+				areUrlsEffectivelySame(currentUrl, targetUrl) ||
+				areUrlsEffectivelySame(publishedUrl, targetUrl);
 			const isDefaultParamsNavigation = isDefaultNavigation(currentUrl, targetUrl);
 
 			if (preventSameUrlNavigation && urlsAreSame) {
@@ -144,9 +153,9 @@ export const useSafeNavigate = (
 			};
 
 			if (typeof to === 'string') {
-				navigate(to, navigationOptions);
+				void navigate(to, navigationOptions);
 			} else {
-				navigate(
+				void navigate(
 					{
 						pathname: to.pathname || location.pathname,
 						search: to.search,

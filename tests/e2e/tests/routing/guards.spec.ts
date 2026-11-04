@@ -32,14 +32,10 @@ test.describe('Routing — auth guards', () => {
 
 		await guest.login();
 		await guest.waitForPath(PATH.services);
-		expect(await guest.historyDepth()).toBe(depthAtLogin + 1);
 
-		// Back reaches the replaced /login entry, where being logged in redirects
-		// straight out again.
-		await guest.goBack();
-		await expect
-			.poll(() => guest.url().pathname, { timeout: 15_000 })
-			.not.toBe(PATH.login);
-		expect(guest.url().pathname).toBe(PATH.services);
+		// The page's own query writes can push after the redirect, so depth says
+		// nothing here. A pushing redirect leaves /login under /services, where
+		// Back lands logged in and redirects to /home.
+		expect(await guest.historyPaths()).not.toContain(PATH.login);
 	});
 });

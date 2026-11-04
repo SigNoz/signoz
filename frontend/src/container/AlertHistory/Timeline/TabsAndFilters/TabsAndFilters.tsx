@@ -5,6 +5,7 @@ import { useAppLocation } from 'lib/router/useAppLocation';
 import { navigate } from 'lib/router/navigation';
 import { Info } from '@signozhq/icons';
 import Tabs2 from 'periscope/components/Tabs2';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import './TabsAndFilters.styles.scss';
 
@@ -51,8 +52,9 @@ function TimelineFilters(): JSX.Element {
 	);
 
 	const handleFilter = (value: TimelineFilter): void => {
-		searchParams.set('timelineFilter', value);
-		navigate({ search: searchParams.toString() });
+		const params = getUnstableCurrentSearchParams();
+		params.set('timelineFilter', value);
+		navigate({ search: params.toString() });
 	};
 
 	const tabs = [

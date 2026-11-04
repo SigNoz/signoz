@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { act, renderHook } from '@testing-library/react';
 
 import {
@@ -108,6 +108,83 @@ describe('QuerySearchExpressionProvider', () => {
 
 		expect(result.current.userExpression).toBe('status = 500');
 		expect(result.current.expression).toBe('status = 500');
+	});
+
+	it('should follow the URL when the param is dropped', () => {
+		mockUrlValue = 'status = 500';
+
+		const { result, rerender } = renderHook(() => useTestHooks(), {
+			wrapper: createWrapper(),
+		});
+		expect(result.current.expression).toBe('status = 500');
+
+		mockSetQueryState.mockClear();
+		mockUrlValue = null;
+		rerender();
+
+		expect(result.current.expression).toBe('');
+		expect(mockSetQueryState).not.toHaveBeenCalledWith('status = 500');
+	});
+
+	it('should keep an expression a child runs on mount', () => {
+		function RunOnMount(): null {
+			const onRun = useQuerySearchOnRun();
+			useEffect(() => {
+				onRun('service = "api"');
+			}, [onRun]);
+			return null;
+		}
+		const Wrapper = createWrapper();
+
+		const { result } = renderHook(() => useTestHooks(), {
+			wrapper: ({ children }: { children: ReactNode }) => (
+				<Wrapper>
+					<RunOnMount />
+					{children}
+				</Wrapper>
+			),
+		});
+
+		expect(result.current.userExpression).toBe('service = "api"');
+		expect(mockSetQueryState).toHaveBeenCalledWith('service = "api"');
+	});
+
+	it('should keep an expression a child runs when the initial expression changes', () => {
+		mockUrlValue = "k8s.pod.name = 'pod-1'";
+		let initialExpression = "k8s.cluster.name = 'a'";
+		let runExpression = "k8s.pod.name = 'pod-1'";
+		// Runs once per initial expression, as the K8s carry-over does.
+		function RunOnce(): null {
+			const onRun = useQuerySearchOnRun();
+			const hasRun = useRef(false);
+			useEffect(() => {
+				if (!hasRun.current) {
+					hasRun.current = true;
+					onRun(runExpression);
+				}
+			}, [onRun]);
+			return null;
+		}
+
+		const { result, rerender } = renderHook(() => useTestHooks(), {
+			wrapper: ({ children }: { children: ReactNode }) => (
+				<QuerySearchV2Provider
+					queryParamKey="testExpression"
+					initialExpression={initialExpression}
+				>
+					<RunOnce key={initialExpression} />
+					{children}
+				</QuerySearchV2Provider>
+			),
+		});
+		expect(result.current.userExpression).toBe("k8s.pod.name = 'pod-1'");
+
+		initialExpression = "k8s.node.name = 'b'";
+		runExpression = '';
+		rerender();
+
+		expect(result.current.userExpression).toBe('');
+		expect(mockSetQueryState).toHaveBeenLastCalledWith(null);
 	});
 
 	it('should throw error when used outside provider', () => {

@@ -355,4 +355,29 @@ test.describe('Alert history — filters', () => {
 		await fired;
 		await expect(alerts.history.rows()).toHaveCount(resolvedHistory.firingCount);
 	});
+
+	test('TC-13 a state tab clicked after a run keeps the expression', async ({
+		authedPage: page,
+		alerts,
+		alertHistory,
+	}) => {
+		await alerts.history.goto(alertHistory.ruleId);
+		const expression = `service.name = '${alertHistory.services[3]}'`;
+		const applied = alerts.history.waitForResponse('timeline', {
+			filterExpression: expression,
+		});
+		await alerts.history.runFilter(expression);
+		await applied;
+
+		const request = page.waitForRequest((req) =>
+			alerts.history.isRequest(req, 'timeline'),
+		);
+		await alerts.history.stateFilter('fired').click();
+
+		const params = new URL((await request).url()).searchParams;
+		expect(params.get('state')).toBe('firing');
+		expect(params.get('filterExpression')).toBe(expression);
+		await expect(page).toHaveURL(/[?&]alertHistoryExpression=/);
+		await expect(alerts.history.rows()).toHaveCount(1);
+	});
 });

@@ -1,27 +1,26 @@
-import { ReactElement, ReactNode, useRef } from 'react';
-import { Route, Router } from 'react-router-dom';
-import { CompatRouter, useInRouterContext } from 'react-router-dom-v5-compat';
-import history from 'lib/history';
+import { ReactElement, ReactNode, useEffect, useState } from 'react';
+import { Route, Routes, useInRouterContext } from 'react-router';
+import { HostRouter } from 'lib/router/HostRouter';
 
-import { resetTestRoute } from './router-utils';
+import { attachTestRouter, resetTestRoute } from './router-utils';
 
-// Mounts on the `lib/history` singleton like `src/AppRoutes/index.tsx`, so
-// imperative `navigate()` calls move the router. `CompatRouter` is always
-// present for the v6-only facade hooks. A `TestRouter` inside another renders
-// its children on the outer router and cannot take an `initialRoute`: the outer
-// `CompatRouter` has already read the location, so v6-backed hooks would keep
-// the outer route.
+// Each mount creates a browser data router over jsdom's `window.history`, the
+// way `src/AppRoutes/index.tsx` mounts one, and attaches it to
+// `lib/router/navigation`, so imperative `navigate()` calls move it and
+// `useAppBlocker` works. The base path is applied as the real mount applies it.
+// A `TestRouter` inside another renders its children on the outer router and
+// cannot take an `initialRoute`: the outer router has already read the URL.
 
 interface TestRouterProps {
 	children: ReactNode;
 	/**
-	 * Seeded onto the history singleton before the router reads it. Omit to mount
-	 * at whatever URL the test has already set up. `render()` defaults it to `/`.
+	 * Seeded onto `window.history` before the router reads it. Omit to mount at
+	 * whatever URL the test has already set up. `render()` defaults it to `/`.
 	 */
 	initialRoute?: string;
 	/**
 	 * Route pattern(s) to mount the children under, for a component that reads
-	 * `useParams`. Matching is exact.
+	 * `useParams`. Matching is exact, which is `<Routes>`'s default.
 	 */
 	routePath?: string | string[];
 }
@@ -37,34 +36,29 @@ export function TestRouter({
 			'A nested TestRouter cannot take initialRoute. Pass it to the outermost TestRouter or to render().',
 		);
 	}
-
-	// The seed has to land before `<Router>` reads `history.location`, hence the
-	// render body rather than an effect. The ref keeps it to the first render, so
-	// a navigation made by the component under test is not undone.
-	const seeded = useRef(false);
-	if (!seeded.current) {
-		seeded.current = true;
-		if (initialRoute) {
-			history.replace(initialRoute);
-		}
-	}
-
-	const tree = routePath ? (
-		<Route exact path={routePath}>
-			{children}
-		</Route>
-	) : (
-		children
+	const patterns = routePath === undefined ? undefined : [routePath].flat();
+	// Attached while rendering rather than in an effect: children run their
+	// effects first, and one that subscribes or navigates must reach this router.
+	const [mounted] = useState(() =>
+		nested ? undefined : attachTestRouter(initialRoute, patterns),
 	);
 
-	if (nested) {
-		return <>{tree}</>;
+	useEffect(() => (): void => mounted?.release(), [mounted]);
+
+	if (mounted) {
+		return <HostRouter router={mounted.router}>{children}</HostRouter>;
+	}
+
+	if (!patterns) {
+		return <>{children}</>;
 	}
 
 	return (
-		<Router history={history}>
-			<CompatRouter>{tree}</CompatRouter>
-		</Router>
+		<Routes>
+			{patterns.map((pattern) => (
+				<Route key={pattern} path={pattern} element={children} />
+			))}
+		</Routes>
 	);
 }
 

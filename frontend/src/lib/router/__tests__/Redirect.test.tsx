@@ -1,19 +1,19 @@
-import { useHistory } from 'react-router-dom';
 import { render, screen } from 'tests/test-utils';
 
 import { Redirect, type RedirectProps } from '../Redirect';
 import { useAppLocation } from '../useAppLocation';
+import { useAppNavigationType } from '../useAppNavigationType';
 
 function LocationProbe(): JSX.Element {
 	const location = useAppLocation();
-	const history = useHistory();
+	const navigationType = useAppNavigationType();
 
 	return (
 		<div>
 			<span data-testid="pathname">{location.pathname}</span>
 			<span data-testid="search">{location.search}</span>
 			<span data-testid="state">{JSON.stringify(location.state ?? null)}</span>
-			<span data-testid="action">{history.action}</span>
+			<span data-testid="action">{navigationType}</span>
 		</div>
 	);
 }

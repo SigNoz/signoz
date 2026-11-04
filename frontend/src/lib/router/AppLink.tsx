@@ -1,10 +1,8 @@
 import { forwardRef } from 'react';
 import type { AnchorHTMLAttributes, ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import type { To } from './types';
-import { useAppLocation } from './useAppLocation';
-import { withState } from './utils';
 
 export interface AppLinkProps extends Omit<
 	AnchorHTMLAttributes<HTMLAnchorElement>,
@@ -18,15 +16,8 @@ export interface AppLinkProps extends Omit<
 
 export const AppLink = forwardRef<HTMLAnchorElement, AppLinkProps>(
 	function AppLink({ to, replace, state, children, ...rest }, ref) {
-		const location = useAppLocation();
-
 		return (
-			<Link
-				ref={ref}
-				to={withState(to, state, location)}
-				replace={replace}
-				{...rest}
-			>
+			<Link ref={ref} to={to} replace={replace} state={state} {...rest}>
 				{children}
 			</Link>
 		);

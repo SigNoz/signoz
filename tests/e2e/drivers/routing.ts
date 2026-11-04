@@ -9,9 +9,10 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { authToken } from './api';
 import { ADMIN } from './auth';
 import { buildDashboard, createViaApi, deleteViaApi } from './dashboards';
-import { seedPodMetricsViaSeeder } from './infra/pods';
+import { SAMPLE_POD, seedPodMetricsViaSeeder } from './infra/pods';
 import { driver, kit, seeded } from './kit';
 import { logsExplorerDriver } from './logs/explorer';
+import { querySearchDriver } from './querysearch';
 import {
 	gotoTraceUntilLoaded,
 	type LargeTrace,
@@ -81,6 +82,8 @@ export interface Routing {
 	waitForParam(key: string, value: string): Promise<void>;
 	/** `history.length`: Chromium keeps it on POP and REPLACE, grows it on PUSH. */
 	historyDepth(): Promise<number>;
+	/** Pathnames of the tab's same-origin history entries, oldest first. */
+	historyPaths(): Promise<string[]>;
 	/** Complete the login form on the page as it stands, without navigating. */
 	login(): Promise<void>;
 	/** Sidebar entries are `div.nav-item`, not links. */
@@ -129,6 +132,17 @@ export interface Routing {
 		groupBy(attribute: string): Promise<void>;
 		waitUntilGrouped(attribute: string, grouped?: boolean): Promise<void>;
 		groupBySelect(): Locator;
+		/** Run `expression` from the list's search box. */
+		filter(expression: string): Promise<void>;
+		/** Sort by the first sortable column: a nuqs write the router never sees. */
+		sort(): Promise<void>;
+		category(key: string): Locator;
+		/** Click a pod's name once, with no retry: a second click is the bug. */
+		openPod(name: string): Promise<void>;
+		drawer(): Locator;
+		drawerTab(label: string): Locator;
+		/** The search box of the drawer's Overview tab. */
+		overviewSearch(): Locator;
 	};
 	trace: {
 		path(trace: LargeTrace): string;
@@ -181,6 +195,18 @@ export function routingDriver(page: Page): Routing {
 				() =>
 					(globalThis as unknown as { history: { length: number } }).history.length,
 			),
+		historyPaths: async () => {
+			const urls = await page.evaluate(() =>
+				(
+					globalThis as unknown as {
+						navigation: { entries(): { url: string | null }[] };
+					}
+				).navigation
+					.entries()
+					.map((entry) => entry.url ?? ''),
+			);
+			return urls.map((url) => new URL(url).pathname);
+		},
 
 		login: async () => {
 			await page.getByTestId('email').fill(ADMIN.email);
@@ -312,6 +338,23 @@ export function routingDriver(page: Page): Routing {
 			waitUntilGrouped: (attribute, grouped = true) =>
 				page.waitForURL((url) => groupByOf(url).includes(attribute) === grouped),
 			groupBySelect: () => page.getByTestId('k8s-table-group-by-select'),
+			filter: (expression) =>
+				querySearchDriver(page, { runTestId: 'list-run-query-btn' }).apply(
+					expression,
+				),
+			sort: async () => {
+				await page.locator('thead button[data-sort]').first().click();
+				await page.waitForURL((url) => url.searchParams.has('orderBy'));
+			},
+			category: (key) => page.getByTestId(`category-${key}`),
+			openPod: async (name) => {
+				await page.getByRole('row').getByText(name, { exact: true }).click();
+			},
+			drawer: () => page.getByRole('dialog'),
+			drawerTab: (label) =>
+				routing.k8s.drawer().getByRole('button', { name: label, exact: true }),
+			overviewSearch: () =>
+				routing.k8s.drawer().locator('.query-where-clause-editor .cm-content'),
 		},
 
 		trace: {
@@ -406,7 +449,7 @@ const withPods = seeded(
 	'pods',
 	async ({ page }) => {
 		await seedWithRetry(() => seedPodMetricsViaSeeder(page));
-		return { groupBy: NAMESPACE_ATTR };
+		return { groupBy: NAMESPACE_ATTR, pod: SAMPLE_POD };
 	},
 	undefined,
 	{ timeout: SEED_TIMEOUT_MS },
