@@ -306,7 +306,7 @@ func parseFragment(sql string) (chparser.Expr, error) {
 
 // extractArguments replaces every argument of an aggregation call with a
 // placeholder kept in arguments, because the ClickHouse parser cannot read
-// the filter grammar: predicates such as EXISTS or CONTAINS, and field keys
+// the predicates such as EXISTS or CONTAINS, and field keys
 // with hyphens or slashes. Unbalanced input is returned unchanged for the
 // parser to reject.
 func extractArguments(expr string, arguments map[string]string) string {
