@@ -71,7 +71,7 @@ describe('RoutingPolicyList', () => {
 		const resizable = Array.from(document.querySelectorAll('th'))
 			.filter((th) => th.querySelector('[title="Drag to resize column"]'))
 			.map((th) => th.textContent?.trim());
-		expect(resizable).toStrictEqual(['Routing Policy', 'Expression', 'Channels']);
+		expect(resizable).toStrictEqual(['Routing Policy', 'Channels', 'Expression']);
 	});
 
 	it('opens the policy on row click', async () => {

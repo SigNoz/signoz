@@ -26,6 +26,7 @@ import {
 } from 'api/ai-assistant/chat';
 import ROUTES from 'constants/routes';
 import { QueryParams } from 'constants/query';
+import { buildExplorerNavigationUrl } from 'utils/buildExplorerNavigationUrl';
 import { openInNewTab } from 'utils/navigation';
 import {
 	ArchiveRestore,
@@ -48,6 +49,10 @@ import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyt
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 
 import { getOpenResourceTarget } from './utils/getOpenResourceTarget';
+import {
+	getPanelTypeForRequestType,
+	requestTypeFromActionQuery,
+} from './utils/getPanelTypeForRequestType';
 import { isOnResourcePage } from './utils/isOnResourcePage';
 import { openSavedViewByKey } from './utils/openSavedView';
 import {
@@ -334,6 +339,11 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 		);
 		return;
 	}
+	// Read before toUrlCompositeQuery, which drops the requestType envelope.
+	const panelType = getPanelTypeForRequestType(
+		requestTypeFromActionQuery(action.query),
+		action.signal,
+	);
 	const normalized = withDerivedFilterExpressions(urlQuery as unknown as Query);
 	// eslint-disable-next-line no-console
 	console.log('[apply_filter] normalized', normalized);
@@ -343,7 +353,9 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 		normalized.builder.queryData.forEach((q, i) => {
 			deps.handleSetQueryData(i, q);
 		});
-		deps.redirectWithQueryBuilderData(normalized);
+		deps.redirectWithQueryBuilderData(normalized, {
+			[QueryParams.panelTypes]: panelType,
+		});
 		return;
 	}
 	const base = explorerRouteForSignal(action.signal);
@@ -354,8 +366,10 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 	}
 	// eslint-disable-next-line no-console
 	console.log('[apply_filter] off-page → navigate', base);
-	const encoded = encodeURIComponent(JSON.stringify(normalized));
-	navigate(`${base}?${QueryParams.compositeQuery}=${encoded}`);
+	const url = buildExplorerNavigationUrl(base, normalized, {
+		[QueryParams.panelTypes]: panelType,
+	});
+	navigate(url);
 }
 
 /** Picks the right rollback API call for a given action kind. */

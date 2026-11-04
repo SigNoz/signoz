@@ -257,6 +257,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								size="sm"
 								icon
 								color="secondary"
+								testId="quick-filters-toggle"
 								onClick={handleFilterVisibilityChange}
 							>
 								<Filter size={14} />
@@ -287,6 +288,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 													style={{ transform: 'rotate(270deg)' }}
 													onClick={handleFilterVisibilityChange}
 													size="md"
+													data-testid="quick-filters-toggle"
 												/>
 											</Tooltip>
 										</div>

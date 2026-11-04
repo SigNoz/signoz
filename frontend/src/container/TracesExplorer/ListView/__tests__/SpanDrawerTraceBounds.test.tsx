@@ -1,0 +1,192 @@
+import remove from 'api/browser/localstorage/remove';
+import set from 'api/browser/localstorage/set';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
+import { screen, userEvent, waitFor, within } from 'tests/test-utils';
+import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import {
+	FIVE_MINUTES_IN_MS,
+	listResponse,
+	listRows,
+	mockSuccess,
+	mockTraceSummary,
+	QUERY_RANGE_URL,
+	renderListView,
+	TraceBounds,
+} from './testUtils';
+
+// globalTime starts with loading:true, which gates the list query. Force just that
+// slice's loading to false so the query fires; every other selector is untouched.
+jest.mock('react-redux', () => {
+	const actual = jest.requireActual('react-redux');
+	return {
+		...actual,
+		useSelector: (selector: (state: unknown) => unknown): unknown => {
+			const result = actual.useSelector(selector);
+			if (result && typeof result === 'object' && 'loading' in result) {
+				return { ...result, loading: false };
+			}
+			return result;
+		},
+	};
+});
+
+// List columns come from the options menu (server-synced preferences). Pin them
+// so the expected columns render, independent of that API.
+jest.mock('container/OptionsMenu/useOptionsMenu', () => ({
+	__esModule: true,
+	default: (): unknown => ({
+		options: {
+			selectColumns: [
+				{ name: 'service.name', fieldContext: 'resource' },
+				{ name: 'name', fieldContext: 'span' },
+				{ name: 'duration_nano', fieldContext: 'span' },
+				{ name: 'http_method', fieldContext: 'span' },
+				{ name: 'response_status_code', fieldContext: 'span' },
+				{ name: 'http.route', fieldContext: 'attribute' },
+				{ name: 'cache.hit', fieldContext: 'attribute' },
+			],
+		},
+		config: { addColumn: { onRemove: jest.fn() } },
+	}),
+}));
+
+describe('Traces ListView - span drawer trace bounds', () => {
+	beforeEach(() => {
+		set(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED, 'true');
+		mockSuccess();
+		mockTraceSummary({});
+	});
+
+	afterEach(() => {
+		remove(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED);
+		server.resetHandlers();
+	});
+
+	it('requests span logs over whole milliseconds', async () => {
+		const logsRequests: QueryRangeRequestV5[] = [];
+		server.use(
+			rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+				const body = await req.json<QueryRangeRequestV5>();
+				const spec = body.compositeQuery.queries[0]?.spec;
+				if (spec && 'signal' in spec && spec.signal === 'logs') {
+					logsRequests.push(body);
+					// No logs, so no context queries follow to outlive the test.
+					return res(ctx.status(200), ctx.json(listResponse([])));
+				}
+				return res(ctx.status(200), ctx.json(listResponse(listRows)));
+			}),
+		);
+		const user = userEvent.setup();
+		renderListView();
+
+		// Its 790.94939 ms duration makes the span window end mid-millisecond.
+		await user.click(await screen.findByText('authenticate_check_db'));
+
+		await waitFor(() => expect(logsRequests.length).toBeGreaterThan(0));
+		logsRequests.forEach(({ start, end }) => {
+			expect(Number.isInteger(start)).toBe(true);
+			expect(Number.isInteger(end)).toBe(true);
+		});
+	});
+
+	it('reads the trace bounds from the trace summary', async () => {
+		const bounds: TraceBounds = {
+			'0000000000000000344ded1387b08a7e': {
+				start: Date.parse('2024-07-19T08:39:58.700Z'),
+				end: Date.parse('2024-07-19T08:39:58.900Z'),
+			},
+			a364a8e15af3e9a8c866e0528db8b637: {
+				start: Date.parse('2024-07-19T08:39:59.900Z'),
+				end: Date.parse('2024-07-19T08:40:01.000Z'),
+			},
+		};
+		mockTraceSummary(bounds);
+		const logsRequests: {
+			traceId: string;
+			isTraceWide: boolean;
+			start: number;
+			end: number;
+		}[] = [];
+		server.use(
+			rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+				const body = await req.json<QueryRangeRequestV5>();
+				const spec = body.compositeQuery.queries[0]?.spec;
+				if (spec && 'signal' in spec && spec.signal === 'logs') {
+					const traceId =
+						Object.keys(bounds).find((id) => spec.filter?.expression?.includes(id)) ??
+						'';
+					// The payload carries the window in µs.
+					logsRequests.push({
+						traceId,
+						isTraceWide: !spec.filter?.expression?.includes('span_id'),
+						start: body.start / 1e3,
+						end: body.end / 1e3,
+					});
+					return res(ctx.status(200), ctx.json(listResponse([])));
+				}
+				return res(ctx.status(200), ctx.json(listResponse(listRows)));
+			}),
+		);
+		const user = userEvent.setup();
+		renderListView();
+
+		await user.click(await screen.findByText('HTTP GET'));
+		const drawer = await screen.findByTestId('span-details-drawer');
+		await expect(
+			within(drawer).findByText(/of total exec time/),
+		).resolves.toBeInTheDocument();
+
+		// The next span is in another trace, so it needs that trace's bounds.
+		// Both its span logs and its trace-wide check must land before the test ends.
+		await user.keyboard('{ArrowDown}');
+		await waitFor(() =>
+			expect(
+				logsRequests
+					.filter(({ traceId }) => traceId === 'a364a8e15af3e9a8c866e0528db8b637')
+					.map(({ isTraceWide }) => isTraceWide),
+			).toStrictEqual(expect.arrayContaining([false, true])),
+		);
+
+		// Logs wait for the bounds: no request ever goes out with another window.
+		logsRequests.forEach(({ traceId, start, end }) => {
+			expect(start).toBe(bounds[traceId].start - FIVE_MINUTES_IN_MS);
+			expect(end).toBe(bounds[traceId].end + FIVE_MINUTES_IN_MS);
+		});
+	});
+
+	it('speaks only for the span when the trace has no summary', async () => {
+		const logsFilters: string[] = [];
+		server.use(
+			rest.post(QUERY_RANGE_URL, async (req, res, ctx) => {
+				const body = await req.json<QueryRangeRequestV5>();
+				const spec = body.compositeQuery.queries[0]?.spec;
+				if (spec && 'signal' in spec && spec.signal === 'logs') {
+					logsFilters.push(spec.filter?.expression ?? '');
+					return res(ctx.status(200), ctx.json(listResponse([])));
+				}
+				return res(ctx.status(200), ctx.json(listResponse(listRows)));
+			}),
+		);
+		const user = userEvent.setup();
+		renderListView();
+
+		await user.click(await screen.findByText('HTTP GET'));
+		const drawer = await screen.findByTestId('span-details-drawer');
+
+		await user.click(within(drawer).getByRole('tab', { name: /logs/i }));
+		await expect(
+			within(drawer).findByText('No logs found for this span.'),
+		).resolves.toBeInTheDocument();
+		// Checked once the 404 has settled; before it, exec time is absent anyway.
+		expect(
+			within(drawer).queryByText(/of total exec time/),
+		).not.toBeInTheDocument();
+		// No trace-wide check: every logs request is scoped to the span.
+		expect(logsFilters.length).toBeGreaterThan(0);
+		logsFilters.forEach((expression) => {
+			expect(expression).toContain('span_id');
+		});
+	});
+});

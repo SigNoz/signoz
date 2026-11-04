@@ -2205,10 +2205,10 @@ components:
       type: object
     CloudintegrationtypesAWSConnectionArtifact:
       properties:
-        connectionUrl:
+        cliCommand:
           type: string
       required:
-      - connectionUrl
+      - cliCommand
       type: object
     CloudintegrationtypesAWSIntegrationConfig:
       properties:
@@ -2364,11 +2364,8 @@ components:
       properties:
         cliCommand:
           type: string
-        cloudPowerShellCommand:
-          type: string
       required:
       - cliCommand
-      - cloudPowerShellCommand
       type: object
     CloudintegrationtypesAzureIntegrationConfig:
       properties:
@@ -25153,9 +25150,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: List rule saved views
       tags:
       - rules
@@ -25211,9 +25208,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: Create rule saved view
       tags:
       - rules
@@ -25265,9 +25262,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: Delete rule saved view
       tags:
       - rules
@@ -25334,9 +25331,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: Update rule saved view
       tags:
       - rules
