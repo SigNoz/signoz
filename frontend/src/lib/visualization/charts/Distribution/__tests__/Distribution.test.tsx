@@ -94,4 +94,26 @@ describe('Distribution', () => {
 		expect(legendItem(CHECKOUT)).toHaveAttribute('aria-checked', 'false');
 		expect(legendItem(CART)).toHaveAttribute('aria-checked', 'true');
 	});
+	it('sums groups past the stacked cap into Other, with a notice', () => {
+		renderDistribution({
+			series: Array.from({ length: 12 }, (_, index) => ({
+				label: `group-${index}`,
+				counts: [index, 1, 1, 0, 0],
+			})),
+		});
+
+		expect(screen.getByTestId('distribution-other-notice')).toHaveTextContent(
+			'Showing top 9 of 12 groups; the rest are summed into Other.',
+		);
+		// The legend still lists every group, so any can be isolated.
+		expect(legendItem('group-0')).toBeInTheDocument();
+	});
+
+	it('shows no notice when every group fits', () => {
+		renderDistribution();
+
+		expect(
+			screen.queryByTestId('distribution-other-notice'),
+		).not.toBeInTheDocument();
+	});
 });
