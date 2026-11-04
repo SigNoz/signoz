@@ -11,7 +11,12 @@ import {
 import GeoMap from '../../GeoMap';
 import { useGeoMapShapes } from '../../hooks/useGeoMapShapes';
 import { useSubdivisionSet } from '../../hooks/useSubdivisionSet';
-import { GeoMapLayer, GeoMapSelection, GeoMapView } from '../../types';
+import {
+	GeoMapLayer,
+	GeoMapProjection,
+	GeoMapSelection,
+	GeoMapView,
+} from '../../types';
 import { FIXTURES } from '../fixtures/fixtures';
 import {
 	drilldownFieldOf,
@@ -28,6 +33,7 @@ const BUBBLE_RADIUS: [number, number] = [3, 28];
 export interface GeoMapStoryProps {
 	dataset: FixtureDataset;
 	view: GeoMapView;
+	projection: GeoMapProjection;
 	layer: GeoMapLayer;
 	palette: ColorRampPalette;
 }
@@ -35,6 +41,7 @@ export interface GeoMapStoryProps {
 export default function GeoMapStory({
 	dataset,
 	view,
+	projection,
 	layer,
 	palette,
 }: GeoMapStoryProps): JSX.Element {
@@ -93,7 +100,7 @@ export default function GeoMapStory({
 					<GeoMap
 						data={data}
 						view={mapView}
-						projection="mercator"
+						projection={projection}
 						country={fixture.country}
 						layer={fixture.points ? 'points' : layer}
 						points={fixture.points}
