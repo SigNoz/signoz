@@ -61,8 +61,6 @@ describe('selectionFromCommittedValues', () => {
 		});
 	});
 
-	// A dynamic ALL is sent as `__all__`, so reading it as a list would filter the
-	// panels down to the truncated option set.
 	it('reads every option PLUS a value outside the list as ALL for a dynamic variable', () => {
 		expect(
 			commit([...OPTIONS, 'searched'], { isDynamic: true }).allSelected,

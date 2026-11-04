@@ -195,8 +195,6 @@ describe('ValueSelector', () => {
 		});
 
 		it('commits ALL even when the selection holds a value outside the list', async () => {
-			// A search pick, or one an older time window offered: ALL must still go out as
-			// `__all__`, not as a list that filters the panels to the truncated options.
 			const onChange = jest.fn();
 			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
 			render(
