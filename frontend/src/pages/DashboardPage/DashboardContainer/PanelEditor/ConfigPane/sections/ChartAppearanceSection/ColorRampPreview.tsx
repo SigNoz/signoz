@@ -16,14 +16,14 @@ import {
 	DEFAULT_COLOR_SCALE,
 	DEFAULT_PALETTE,
 	rampGradient,
-} from './heatmapColorOptions';
+} from './colorRampOptions';
 
-import styles from './HeatmapColorsField.module.scss';
+import styles from './ColorRamp.module.scss';
 
 /** The ramp is domain-independent; the preview shows colours, not positions. */
 const NOMINAL_DOMAIN = { min: 0, max: 1, logFloor: 1 };
 
-interface HeatmapRampPreviewProps {
+interface ColorRampPreviewProps {
 	colors: DashboardtypesHeatmapColorsDTO | undefined;
 }
 
@@ -32,7 +32,7 @@ interface HeatmapRampPreviewProps {
  * Its ends carry the counts it is stretched between; an unset maximum is only
  * known once the data arrives.
  */
-function HeatmapRampPreview({ colors }: HeatmapRampPreviewProps): JSX.Element {
+function ColorRampPreview({ colors }: ColorRampPreviewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const options = useMemo(
@@ -81,4 +81,4 @@ function HeatmapRampPreview({ colors }: HeatmapRampPreviewProps): JSX.Element {
 	);
 }
 
-export default HeatmapRampPreview;
+export default ColorRampPreview;

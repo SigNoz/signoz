@@ -1,0 +1,62 @@
+import type { BuilderQuery } from 'types/api/v5/queryRange';
+
+import { prepareGeoMapClickData } from '../prepareGeoMapClickData';
+
+const builderQuery = (spec: Record<string, unknown>): BuilderQuery =>
+	spec as unknown as BuilderQuery;
+
+const QUERIES = [
+	builderQuery({
+		name: 'A',
+		signal: 'logs',
+		groupBy: [{ name: 'geo.country.iso_code' }],
+	}),
+	builderQuery({
+		name: 'B',
+		signal: 'traces',
+		groupBy: [{ name: 'geo.country.iso_code' }, { name: 'service.name' }],
+	}),
+];
+
+const click = (
+	queryNames: string[],
+	builderQueries = QUERIES,
+): ReturnType<typeof prepareGeoMapClickData> =>
+	prepareGeoMapClickData({
+		labels: { 'geo.country.iso_code': 'DE', 'service.name': 'cart' },
+		label: 'DE',
+		queryNames,
+		builderQueries,
+		coordinates: { x: 7, y: 8 },
+		timeRange: { startTime: 1, endTime: 2 },
+	});
+
+describe('prepareGeoMapClickData', () => {
+	it("follows the color column's query and filters to the location's row", () => {
+		expect(click(['B'])).toStrictEqual({
+			coordinates: { x: 7, y: 8 },
+			context: {
+				queryName: 'B',
+				signal: 'traces',
+				filters: [
+					{ filterKey: 'geo.country.iso_code', filterValue: 'DE', operator: '=' },
+					{ filterKey: 'service.name', filterValue: 'cart', operator: '=' },
+				],
+				timeRange: { startTime: 1, endTime: 2 },
+				label: 'DE',
+			},
+		});
+	});
+
+	it("falls back to size's query for a formula", () => {
+		expect(click(['F1', 'B'])?.context.queryName).toBe('B');
+	});
+
+	it('returns null when only a formula is drawn', () => {
+		expect(click(['F1'])).toBeNull();
+	});
+
+	it('returns null without a builder query', () => {
+		expect(click(['A'], [])).toBeNull();
+	});
+});

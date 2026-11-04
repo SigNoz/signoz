@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from 'tests/test-utils';
 import userEvent from '@testing-library/user-event';
 import {
 	type DashboardtypesPanelDTO,
 	Querybuildertypesv5VariableTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { rememberSubdivisions } from 'lib/visualization/charts/GeoMap/geo/subdivisionCache';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 import type { ReactElement } from 'react';
@@ -294,5 +295,69 @@ describe('PanelHeader time-preference pill', () => {
 	it('renders no pill when the panel follows the dashboard time', () => {
 		render(<PanelHeader {...baseProps} timeLabel={null} />);
 		expect(screen.queryByTestId('panel-time-preference')).not.toBeInTheDocument();
+	});
+});
+
+describe('PanelHeader data warning', () => {
+	it('recomputes a geo map warning once its states load', () => {
+		const panel = {
+			kind: 'Panel',
+			spec: {
+				display: { name: 'Map' },
+				plugin: {
+					kind: 'signoz/GeoMapPanel',
+					spec: { map: { view: 'country', viewCountry: 'CA' } },
+				},
+				queries: [],
+			},
+		} as unknown as DashboardtypesPanelDTO;
+		const data = {
+			response: {
+				status: 'success',
+				data: {
+					type: 'scalar',
+					data: {
+						results: [
+							{
+								queryName: 'A',
+								columns: [
+									{ name: 'geo.country.iso_code', queryName: '', columnType: 'group' },
+									{ name: 'geo.region.iso_code', queryName: '', columnType: 'group' },
+									{
+										name: '__result_0',
+										queryName: 'A',
+										columnType: 'aggregation',
+										aggregationIndex: 0,
+									},
+								],
+								data: [
+									['CA', 'ON', 10],
+									['FR', '75', 3],
+								],
+							},
+						],
+					},
+				},
+			},
+			requestPayload: undefined,
+			legendMap: {},
+		} as unknown as PanelQueryData;
+
+		render(<PanelHeader {...baseProps} panel={panel} data={data} hideActions />);
+		expect(
+			screen.queryByTestId('panel-status-data-warning'),
+		).not.toBeInTheDocument();
+
+		act(() =>
+			rememberSubdivisions({
+				country: 'CA',
+				shapes: [],
+				codes: new Set(['CA-ON']),
+				aliases: {},
+				names: {},
+			}),
+		);
+
+		expect(screen.getByTestId('panel-status-data-warning')).toBeInTheDocument();
 	});
 });

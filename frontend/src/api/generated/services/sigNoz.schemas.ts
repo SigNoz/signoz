@@ -5634,6 +5634,13 @@ export interface DashboardtypesBasicVisualizationDTO {
 	timePreference?: DashboardtypesTimePreferenceDTO;
 }
 
+/**
+ * @minimum 1
+ * @maximum 64
+ * @nullable
+ */
+export type DashboardtypesBubbleRadiusDTO = number | null;
+
 export interface Querybuildertypesv5LogAggregationDTO {
 	/**
 	 * @type string
@@ -6917,6 +6924,246 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesScatterPlotPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTOKind {
+	'signoz/GeoMapPanel' = 'signoz/GeoMapPanel',
+}
+/**
+ * Radius of the largest circle, in CSS pixels from 1 to 64. Null means 8 on the points layer, 28 otherwise.
+ */
+export type DashboardtypesGeoMapBubblesDTOMaxRadius = DashboardtypesBubbleRadiusDTO | null;
+
+/**
+ * Radius of the smallest circle, in CSS pixels from 1 to 64. Null means 2 on the points layer, 3 otherwise.
+ */
+export type DashboardtypesGeoMapBubblesDTOMinRadius = DashboardtypesBubbleRadiusDTO | null;
+
+export interface DashboardtypesGeoMapBubblesDTO {
+	/**
+	 * @description Radius of the largest circle, in CSS pixels from 1 to 64. Null means 8 on the points layer, 28 otherwise.
+	 */
+	maxRadius?: DashboardtypesGeoMapBubblesDTOMaxRadius;
+	/**
+	 * @description Radius of the smallest circle, in CSS pixels from 1 to 64. Null means 2 on the points layer, 3 otherwise.
+	 */
+	minRadius?: DashboardtypesGeoMapBubblesDTOMinRadius;
+}
+
+export interface DashboardtypesGeoMapColorsDTO {
+	/**
+	 * @type string
+	 * @description The hex color varied in opacity mode. Empty uses the default fill.
+	 */
+	fill?: string;
+	/**
+	 * @type number,null
+	 * @description The value mapped to the highest color. Null uses the highest value in the data.
+	 */
+	max?: number | null;
+	/**
+	 * @type number,null
+	 * @description The value mapped to the lowest color. Null uses the lowest value in the data. Must not exceed max.
+	 */
+	min?: number | null;
+	/**
+	 * @description How values are colored: palette (default) picks a hue from palette, opacity varies the opacity of fill.
+	 */
+	mode?: DashboardtypesHeatmapColorModeDTO;
+	/**
+	 * @description The named color ramp used in palette mode, such as lava (default), ice or ember.
+	 */
+	palette?: DashboardtypesHeatmapPaletteDTO;
+	/**
+	 * @description How values map onto the color range: log (default), sqrt or linear.
+	 */
+	scale?: DashboardtypesHeatmapColorScaleDTO;
+	/**
+	 * @type integer
+	 * @description The number of distinct color steps, 2 to 128. 0 uses the chart default.
+	 */
+	steps?: number;
+}
+
+export interface DashboardtypesGeoMapChartAppearanceDTO {
+	/**
+	 * @description The circle radius range of the bubbles and points layers.
+	 */
+	bubbles?: DashboardtypesGeoMapBubblesDTO;
+	/**
+	 * @description The color scale applied to the colorBy values.
+	 */
+	colors?: DashboardtypesGeoMapColorsDTO;
+	/**
+	 * @type boolean,null
+	 * @description Shows country and state names once each fits inside its shape. Null shows them.
+	 */
+	labels?: boolean | null;
+}
+
+export enum DashboardtypesGeoMapCountryFormatDTO {
+	auto = 'auto',
+	alpha2 = 'alpha2',
+	alpha3 = 'alpha3',
+	name = 'name',
+}
+export enum DashboardtypesGeoMapLocationModeDTO {
+	auto = 'auto',
+	country = 'country',
+	subdivision = 'subdivision',
+	coordinates = 'coordinates',
+}
+export interface DashboardtypesGeoMapLocationDTO {
+	/**
+	 * @type string
+	 * @description Group-by key holding the country, for the country and subdivision modes. Empty detects it by name, such as geo.country.iso_code.
+	 */
+	country?: string;
+	/**
+	 * @description How country values are written: auto (default) detects it, alpha2, alpha3 or name.
+	 */
+	countryFormat: DashboardtypesGeoMapCountryFormatDTO;
+	/**
+	 * @type string
+	 * @description Group-by key holding the latitude, for the coordinates mode. Empty detects it by name.
+	 */
+	lat?: string;
+	/**
+	 * @type string
+	 * @description Group-by key holding the longitude, for the coordinates mode. Empty detects it by name.
+	 */
+	lon?: string;
+	/**
+	 * @description How rows are placed: auto (default) detects it from the group-by keys, country, subdivision or coordinates.
+	 */
+	mode: DashboardtypesGeoMapLocationModeDTO;
+	/**
+	 * @type string
+	 * @description Group-by key holding the ISO 3166-2 region code (e.g. geo.region.iso_code), for the subdivision mode. Empty detects it by name.
+	 */
+	region?: string;
+}
+
+export enum DashboardtypesGeoMapLayerDTO {
+	regions = 'regions',
+	bubbles = 'bubbles',
+	points = 'points',
+}
+export enum DashboardtypesGeoMapProjectionDTO {
+	mercator = 'mercator',
+	equal_earth = 'equal_earth',
+	natural_earth = 'natural_earth',
+}
+export enum DashboardtypesGeoMapViewDTO {
+	world = 'world',
+	fit = 'fit',
+	africa = 'africa',
+	asia = 'asia',
+	europe = 'europe',
+	north_america = 'north_america',
+	south_america = 'south_america',
+	oceania = 'oceania',
+	country = 'country',
+}
+export interface DashboardtypesGeoMapSettingsDTO {
+	/**
+	 * @type string
+	 * @description Value column key, as in a Table panel, that sets the color. Empty uses the first value column.
+	 */
+	colorBy?: string;
+	/**
+	 * @description What is drawn: regions (default) fills each shape, bubbles draws a circle per region, points a circle per coordinate.
+	 */
+	layer: DashboardtypesGeoMapLayerDTO;
+	/**
+	 * @description The map projection: mercator (default), equal_earth or natural_earth.
+	 */
+	projection: DashboardtypesGeoMapProjectionDTO;
+	/**
+	 * @type string
+	 * @description Value column key, as in a Table panel, that sets the bubble or point size. Empty uses colorBy.
+	 */
+	sizeBy?: string;
+	/**
+	 * @description The area shown: world (default), fit to the data, a continent, or country with viewCountry.
+	 */
+	view: DashboardtypesGeoMapViewDTO;
+	/**
+	 * @type string
+	 * @description Uppercase ISO 3166-1 alpha-2 code of the country the country view shows.
+	 */
+	viewCountry?: string;
+}
+
+export interface DashboardtypesGeoMapThresholdDTO {
+	/**
+	 * @type string
+	 * @description The CSS color of the shape, bubble or point while the threshold is active, for example #F1575F; CSS named colors such as red also work.
+	 */
+	color: string;
+	/**
+	 * @description The comparison that activates the threshold: above (default), below, above_or_equal, below_or_equal, equal or not_equal.
+	 */
+	operator?: DashboardtypesComparisonOperatorDTO;
+	/**
+	 * @type string
+	 * @description The unit id of value, such as ms or percent. Empty means the colorBy column's unit.
+	 */
+	unit?: string;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The value compared against, in unit.
+	 */
+	value: number;
+}
+
+export interface DashboardtypesGeoMapPanelSpecDTO {
+	/**
+	 * @description Color scale, bubble size and labels.
+	 */
+	chartAppearance?: DashboardtypesGeoMapChartAppearanceDTO;
+	/**
+	 * @description Per-column units and decimal precision.
+	 */
+	formatting?: DashboardtypesTableFormattingDTO;
+	/**
+	 * @description Legend placement.
+	 */
+	legend?: DashboardtypesLegendDTO;
+	/**
+	 * @description The group-by columns that place each row on the map.
+	 */
+	location?: DashboardtypesGeoMapLocationDTO;
+	/**
+	 * @description Layer, view, projection and the value columns drawn.
+	 */
+	map?: DashboardtypesGeoMapSettingsDTO;
+	/**
+	 * @type array,null
+	 * @description Rules that recolor a shape, bubble or point when its value compares to a threshold as specified.
+	 */
+	thresholds?: DashboardtypesGeoMapThresholdDTO[] | null;
+	/**
+	 * @description The time range the values are computed over.
+	 */
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTO {
+	/**
+	 * @enum signoz/GeoMapPanel
+	 * @type string
+	 * @description The panel kind.
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTOKind;
+	/**
+	 * @description The options for this panel kind. {} accepts every default.
+	 */
+	spec: DashboardtypesGeoMapPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -6928,7 +7175,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -8209,6 +8457,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TextPanel' = 'signoz/TextPanel',
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 	'signoz/ScatterPlotPanel' = 'signoz/ScatterPlotPanel',
+	'signoz/GeoMapPanel' = 'signoz/GeoMapPanel',
 }
 /**
  * The RFC 6902 operations, applied in order against the dashboard's postable shape.
