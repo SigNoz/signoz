@@ -25,7 +25,7 @@ const pageStory = storyMocks(tracesMocks, { layout: 'app' });
  * Route: `/traces-explorer`.
  */
 const meta = {
-	title: 'Pages/Traces/Explorer',
+	title: 'Pages/Traces/Explorer/Overview',
 	tags: ['play'],
 	component: TracesModulePage,
 	...pageStory,
