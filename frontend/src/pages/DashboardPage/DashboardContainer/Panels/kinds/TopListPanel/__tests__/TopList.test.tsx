@@ -315,6 +315,15 @@ describe('TopList', () => {
 		expect(tabStops()).toStrictEqual(['1']);
 	});
 
+	it('moves through rows that are not clickable by keyboard', async () => {
+		renderList(20);
+		renderedRows()[0].focus();
+
+		await pressKey('End');
+
+		expect(focusedRowIndex()).toBe('19');
+	});
+
 	it('positions each row in the whole list', () => {
 		renderList(100);
 
