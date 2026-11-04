@@ -4,9 +4,6 @@
  */
 
 import { rest } from 'msw';
-import remove from 'api/browser/localstorage/remove';
-import set from 'api/browser/localstorage/set';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { USER_PREFERENCES } from 'constants/userPreferences';
@@ -118,12 +115,6 @@ export const tracesMocks = defineStoryMocks({
 			description:
 				'Answers 503 on the spans of the services that fail, which is what the status column and the error colouring read.',
 			value: true,
-		}),
-		spanDrawer: toggleControl('Span drawer', {
-			group: LIST,
-			description:
-				'The `TRACES_SPAN_DRAWER_ENABLED` localStorage flag the span drawer ships behind. Off, a row click opens the trace page.',
-			value: false,
 		}),
 		traceSummary: choiceControl<TraceSummaryState>('Trace summary', {
 			group: LIST,
@@ -362,11 +353,4 @@ export const tracesMocks = defineStoryMocks({
 		),
 	],
 	config: (values) => ({ route: tracesRoute(values) }),
-	effect: (values) => {
-		if (values.spanDrawer) {
-			set(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED, 'true');
-		} else {
-			remove(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED);
-		}
-	},
 });

@@ -15,7 +15,6 @@ import { useCloseOnOutsidePress } from 'hooks/useCloseOnOutsidePress';
 
 import { OPEN_TRACE_COLUMN } from './openTraceColumn';
 import type { SpanDrawerProps } from './SpanDrawer';
-import { isSpanDrawerEnabled } from './utils';
 
 type ActiveSpan = { id: string; index: number };
 
@@ -24,16 +23,14 @@ type UseSpanDrawerResult = {
 		TracesTableProps,
 		'onRowClick' | 'isRowActive' | 'activeRowIndex'
 	>;
-	/** Leading column that opens the trace page; null while the drawer flag is off. */
-	openTraceColumn: TableColumnDef<TracesTableRow> | null;
-	/** Null while the drawer flag is off. */
-	drawerProps: SpanDrawerProps | null;
+	/** Leading column that opens the trace page. */
+	openTraceColumn: TableColumnDef<TracesTableRow>;
+	drawerProps: SpanDrawerProps;
 	/** `onPointerDownCapture` for the area a press keeps the drawer open in. */
 	onPressInside: (event: PointerEvent) => void;
 };
 
 export function useSpanDrawer(rows: TracesTableRow[]): UseSpanDrawerResult {
-	const [isEnabled] = useState(isSpanDrawerEnabled);
 	// The index lets navigation step past a duplicate span; the id survives a refetch.
 	const [activeSpan, setActiveSpan] = useState<ActiveSpan | null>(null);
 
@@ -84,7 +81,7 @@ export function useSpanDrawer(rows: TracesTableRow[]): UseSpanDrawerResult {
 	}, [queryId]);
 
 	const onPressInside = useCloseOnOutsidePress(
-		isEnabled && activeRowIndex !== -1,
+		activeRowIndex !== -1,
 		clearActiveSpan,
 	);
 
@@ -93,15 +90,6 @@ export function useSpanDrawer(rows: TracesTableRow[]): UseSpanDrawerResult {
 		activeIndex: activeRowIndex,
 		onNavigate: handleNavigate,
 	});
-
-	if (!isEnabled) {
-		return {
-			tableProps: {},
-			openTraceColumn: null,
-			drawerProps: null,
-			onPressInside,
-		};
-	}
 
 	return {
 		tableProps: {

@@ -1,7 +1,4 @@
 import { act, renderHook } from 'tests/test-utils';
-import remove from 'api/browser/localstorage/remove';
-import set from 'api/browser/localstorage/set';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 
 import { useSpanDrawer } from '../useSpanDrawer';
@@ -15,12 +12,7 @@ const rows: TracesTableRow[] = [{ id: 'span-a' }, { id: 'span-b' }];
 
 describe('useSpanDrawer', () => {
 	beforeEach(() => {
-		set(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED, 'true');
 		mockQueryId = 'query-1';
-	});
-
-	afterEach(() => {
-		remove(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED);
 	});
 
 	it('does not reopen a span that a refetch dropped and a later one brings back', () => {

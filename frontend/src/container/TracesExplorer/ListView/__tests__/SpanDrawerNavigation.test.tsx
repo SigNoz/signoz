@@ -1,6 +1,3 @@
-import remove from 'api/browser/localstorage/remove';
-import set from 'api/browser/localstorage/set';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { getCurrentLocation } from 'lib/router/navigation';
 import { server } from 'mocks-server/server';
 import { screen, userEvent, waitFor, within } from 'tests/test-utils';
@@ -49,13 +46,11 @@ jest.mock('container/OptionsMenu/useOptionsMenu', () => ({
 
 describe('Traces ListView - span drawer navigation', () => {
 	beforeEach(() => {
-		set(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED, 'true');
 		mockSuccess();
 		mockTraceSummary({});
 	});
 
 	afterEach(() => {
-		remove(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED);
 		server.resetHandlers();
 		jest.restoreAllMocks();
 	});

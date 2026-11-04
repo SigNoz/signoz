@@ -149,7 +149,7 @@ function ListView({
 			),
 		];
 		const fieldColumns = fields.map((field) => getFieldColumn(field));
-		return openTraceColumn ? [openTraceColumn, ...fieldColumns] : fieldColumns;
+		return [openTraceColumn, ...fieldColumns];
 	}, [options?.selectColumns, openTraceColumn]);
 
 	const handleColumnOrderChange = useCallback(
@@ -217,7 +217,7 @@ function ListView({
 					onEndReached={loadMore}
 				/>
 
-				{drawerProps && <SpanDrawer {...drawerProps} />}
+				<SpanDrawer {...drawerProps} />
 			</div>
 		</div>
 	);

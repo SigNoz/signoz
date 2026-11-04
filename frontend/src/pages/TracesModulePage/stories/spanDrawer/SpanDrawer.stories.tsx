@@ -25,7 +25,6 @@ const meta = {
 	component: TracesModulePage,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
-	args: { spanDrawer: true },
 } satisfies Meta<TracesArgs>;
 
 export default meta;
