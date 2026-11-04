@@ -14,6 +14,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// sha256HexLen is the length of a hex-encoded SHA-256 digest (32 bytes -> 64 hex chars).
+const sha256HexLen = 64
+
 var (
 	symbols                                []rune = []rune("~!@#$%^&*()_+`-={}|[]\\:\"<>?,./")
 	minPasswordLength                      int    = 12
@@ -159,7 +162,44 @@ func NewResetPasswordToken(passwordID valuer.UUID, expiresAt time.Time) (*ResetP
 	}, nil
 }
 
+// IsPasswordValid accepts two shapes of input:
+//  1. A hex-encoded SHA-256 digest (64 lowercase hex chars) -- this is what
+//     every browser-facing flow now sends, since the frontend hashes the
+//     password client-side before it ever reaches the server (see
+//     frontend/src/utils/hashPassword.ts). Complexity is validated on the
+//     raw password client-side (frontend/src/utils/passwordPolicy.ts)
+//     before hashing, since the server can no longer see the raw password.
+//  2. A raw, complex password meeting isComplexPassword's rules -- this
+//     path exists for callers that never go through the browser/frontend
+//     JS: the config-driven admin bootstrap password
+//     (pkg/modules/user/impluser/service.go) and the internal placeholder
+//     password generated for SSO users pending their first reset
+//     (GenerateFactorPassword below).
 func IsPasswordValid(password string) bool {
+	if isSHA256Hex(password) {
+		return true
+	}
+
+	return isComplexPassword(password)
+}
+
+func isSHA256Hex(s string) bool {
+	if len(s) != sha256HexLen {
+		return false
+	}
+
+	for _, char := range s {
+		isDigit := char >= '0' && char <= '9'
+		isLowerHex := char >= 'a' && char <= 'f'
+		if !isDigit && !isLowerHex {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isComplexPassword(password string) bool {
 	if len(password) < minPasswordLength {
 		return false
 	}

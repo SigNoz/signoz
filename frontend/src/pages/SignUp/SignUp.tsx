@@ -13,6 +13,10 @@ import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight } from '@signozhq/icons';
 import APIError from 'types/api/error';
+import {
+	isPasswordComplex,
+	PASSWORD_POLICY_MESSAGE,
+} from 'utils/passwordPolicy';
 
 import tvUrl from '@/assets/svgs/tv.svg';
 
@@ -68,6 +72,15 @@ function SignUp(): JSX.Element {
 		(async (): Promise<void> => {
 			try {
 				const values = form.getFieldsValue();
+
+				if (!isPasswordComplex(values.password)) {
+					notifications.error({
+						message: 'Weak password',
+						description: PASSWORD_POLICY_MESSAGE,
+					});
+					return;
+				}
+
 				setLoading(true);
 				setFormError(null);
 
