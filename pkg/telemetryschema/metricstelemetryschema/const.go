@@ -159,6 +159,23 @@ func ValueColumnForSamplesTable(tableName string) string {
 	return "value"
 }
 
+// StaleMarkerFilterForSamplesTable returns the WHERE predicate that drops
+// Prometheus staleness markers, or "" for tables that carry no flags column.
+//
+// The prometheus receiver converts a stale marker into a data point with
+// NoRecordedValue set and no value; the exporter persists it as value 0 with
+// flags bit 1. Only the raw tables (samples_v4, samples_v4_buffer, exp_hist)
+// carry a flags column; the 5m/30m/60s rollups do not.
+func StaleMarkerFilterForSamplesTable(tableName string) string {
+	switch tableName {
+	case SamplesV4TableName, SamplesV4LocalTableName,
+		SamplesV4BufferTableName, SamplesV4BufferLocalTableName,
+		ExpHistogramTableName, ExpHistogramLocalTableName:
+		return "bitAnd(flags, 1) = 0"
+	}
+	return ""
+}
+
 // WhichSamplesTableToUse returns the distributed and local samples table names
 // (in that order) appropriate for the given window, metric type, and time aggregation.
 //
