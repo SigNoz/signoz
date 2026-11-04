@@ -180,14 +180,6 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 		return nil, err
 	}
 
-	server, err := alertmanagerserver.New(
-		ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID,
-		service.stateStore, service.notificationManager, service.maintenanceStore,
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	config, err = service.compareAndSelectConfig(ctx, config)
 	if err != nil {
 		return nil, err
@@ -199,15 +191,17 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 	// so that other code paths reading directly from the store see the up-to-date config.
 	if storedHash == config.StoreableConfig().Hash {
 		service.settings.Logger().DebugContext(ctx, "skipping config store update for org", slog.String("org_id", orgID), slog.String("hash", config.StoreableConfig().Hash))
-		return server, nil
+	} else {
+		if err := service.configStore.Set(ctx, config); err != nil {
+			return nil, err
+		}
 	}
 
-	err = service.configStore.Set(ctx, config)
-	if err != nil {
-		return nil, err
-	}
-
-	return server, nil
+	// A rejected reconciliation must not leave the constructor's maintenance workers running.
+	return alertmanagerserver.New(
+		ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID,
+		service.stateStore, service.notificationManager, service.maintenanceStore,
+	)
 }
 
 // getConfig returns the config for the given orgID with overlays applied, along
@@ -264,7 +258,7 @@ func (service *Service) compareAndSelectConfig(ctx context.Context, incomingConf
 
 	if incomingConfig.StoreableConfig().Hash != config.StoreableConfig().Hash {
 		service.settings.Logger().InfoContext(ctx, "mismatch found, updating config to match channels and matchers")
-		return config, nil
+		incomingConfig.ReplaceWith(config)
 	}
 
 	return incomingConfig, nil
