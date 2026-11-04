@@ -4,7 +4,12 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { getCurrentLocation } from 'lib/router/navigation';
 import { server } from 'mocks-server/server';
 import { screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { mockSuccess, mockTraceSummary, renderListView } from './testUtils';
+import {
+	listRows,
+	mockSuccess,
+	mockTraceSummary,
+	renderListView,
+} from './testUtils';
 
 // globalTime starts with loading:true, which gates the list query. Force just that
 // slice's loading to false so the query fires; every other selector is untouched.
@@ -134,5 +139,19 @@ describe('Traces ListView - span drawer navigation', () => {
 		);
 		expect(getCurrentLocation().pathname).toBe('/traces-explorer');
 		expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument();
+	});
+
+	it('shows the row icon only on the hovered copy of a duplicate span', async () => {
+		mockSuccess([listRows[0], listRows[0]]);
+		// user-event leaves the row on its way to the button, which clears the hover.
+		const user = userEvent.setup({ skipHover: true });
+		renderListView();
+
+		const [first] = await screen.findAllByText('HTTP GET');
+		await user.hover(first.closest('tr') as HTMLElement);
+
+		await expect(
+			screen.findAllByTestId('span-row-open-trace'),
+		).resolves.toHaveLength(1);
 	});
 });

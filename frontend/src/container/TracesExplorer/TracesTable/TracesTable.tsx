@@ -22,6 +22,9 @@ import { getRollingTotal } from './utils';
 
 import styles from './TracesTable.module.scss';
 
+// The API can return the same span twice; the table suffixes repeated keys so each row hovers on its own.
+const getRowKey = (row: TracesTableRow): string => row.id;
+
 export type TracesTableProps = {
 	data: TracesTableRow[];
 	columns: TableColumnDef<TracesTableRow>[];
@@ -143,6 +146,7 @@ function TracesTable({
 						onRowClickNewTab={handleRowClickNewTab}
 						isRowActive={isRowActive}
 						activeRowIndex={activeRowIndex}
+						getRowKey={getRowKey}
 						getRowTestId={(row): string => `traces-table-row-${row.id}`}
 						testId={`traces-table-${panelType.toLowerCase()}`}
 						onEndReached={onEndReached}
