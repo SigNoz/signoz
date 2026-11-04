@@ -89,6 +89,12 @@ def pytest_addoption(parser: pytest.Parser):
         help="Build and run with web. Run pytest --basetemp=./tmp/ -vv --with-web src/bootstrap/setup::test_setup to setup your local dev environment with web.",
     )
     parser.addoption(
+        "--no-race",
+        action="store_true",
+        default=False,
+        help="Build the signoz image without the race detector, for faster local stacks. CI keeps it. Applies when the image is built: a fresh stack or --rebuild.",
+    )
+    parser.addoption(
         "--sqlstore-provider",
         action="store",
         default="postgres",
