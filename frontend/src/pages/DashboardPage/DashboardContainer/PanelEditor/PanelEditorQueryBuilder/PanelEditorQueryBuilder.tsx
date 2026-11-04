@@ -45,6 +45,8 @@ interface PanelEditorQueryBuilderProps {
 	onStageRunQuery: () => void;
 	/** Abort the in-flight preview fetch (the button's cancel action). */
 	onCancelQuery: () => void;
+	/** Optional content above the tabs (e.g. Histogram's pointer to Distribution). */
+	banner?: ReactNode;
 	/** Optional content pinned below the builder (e.g. the List columns editor). */
 	footer?: ReactNode;
 	/** Pin the tabs + Run Query row to the top of the scroll area. Off in the View modal, which shares a scroll area with its own header. */
@@ -62,6 +64,7 @@ function PanelEditorQueryBuilder({
 	isLoadingQueries,
 	onStageRunQuery,
 	onCancelQuery,
+	banner,
 	footer,
 	stickyHeader = true,
 }: PanelEditorQueryBuilderProps): JSX.Element {
@@ -188,6 +191,7 @@ function PanelEditorQueryBuilder({
 			role="presentation"
 		>
 			<div className={styles.scrollArea}>
+				{banner}
 				<Tabs
 					type="card"
 					className={cx(styles.tabsContainer, {
