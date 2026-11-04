@@ -1,7 +1,12 @@
+import {
+	DashboardtypesGeoMapCountryFormatDTO,
+	DashboardtypesGeoMapLocationModeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { ColorRampScale } from 'lib/visualization/colorRamp/types';
 import { prepareGeoMapData } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/utils/prepareData';
 import type { GeoMapPlacementSlice } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { render, screen, userEvent, within } from 'tests/test-utils';
+import { EQueryType } from 'types/common/dashboard';
 
 import LocationSection from '../LocationSection';
 import { COUNTRY_ROWS, renderSection } from './renderLocationSection';
@@ -125,5 +130,44 @@ describe('LocationSection points', () => {
 		expect(
 			screen.getByTestId('panel-editor-v2-geo-map-color-by'),
 		).toHaveTextContent('Auto · hits');
+	});
+
+	it('lets SQL points bind numeric columns with any name', async () => {
+		const onChange = jest.fn();
+		render(
+			<LocationSection
+				value={{
+					location: {
+						mode: DashboardtypesGeoMapLocationModeDTO.coordinates,
+						countryFormat: DashboardtypesGeoMapCountryFormatDTO.auto,
+						lat: 'y',
+					},
+				}}
+				groupColumns={[]}
+				tableColumns={[
+					{ key: 'x', label: 'x', name: 'x' },
+					{ key: 'y', label: 'y', name: 'y' },
+					{ key: 'hits', label: 'hits', name: 'hits' },
+				]}
+				queryType={EQueryType.CLICKHOUSE}
+				onChange={onChange}
+			/>,
+		);
+
+		await userEvent.click(
+			within(screen.getByTestId('panel-editor-v2-geo-location-lon')).getByRole(
+				'combobox',
+			),
+		);
+		await userEvent.click(await screen.findByTitle('x'));
+
+		expect(onChange).toHaveBeenLastCalledWith(
+			expect.objectContaining({
+				location: expect.objectContaining({ lat: 'y', lon: 'x' }),
+			}),
+		);
+		expect(
+			screen.getByTestId('panel-editor-v2-geo-map-color-by'),
+		).not.toHaveTextContent('y');
 	});
 });
