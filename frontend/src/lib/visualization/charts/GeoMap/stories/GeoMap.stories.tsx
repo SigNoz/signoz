@@ -12,6 +12,7 @@ const meta = {
 	args: {
 		dataset: 'errorRate',
 		view: 'world',
+		projection: 'mercator',
 		layer: 'regions',
 		palette: ColorRampPalette.Lava,
 	},
@@ -45,6 +46,16 @@ export const World: Story = {
 			expect(screen.queryByTestId('geo-map-drilldown-menu')).toBeNull(),
 		);
 	},
+};
+
+/** World drawn with the Equal Earth projection. */
+export const EqualEarth: Story = {
+	args: { projection: 'equal_earth' },
+};
+
+/** World drawn with the Natural Earth projection. */
+export const NaturalEarth: Story = {
+	args: { projection: 'natural_earth' },
 };
 
 /** Zoom in, then back to the fitted frame. */

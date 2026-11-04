@@ -45,7 +45,6 @@ export const definition: PanelDefinition<'signoz/GeoMapPanel'> = {
 		// Order means nothing on a map, and a limit would drop locations.
 		[QueryBuilderField.OrderBy]: { state: 'hidden' },
 		[QueryBuilderField.Limit]: { state: 'hidden' },
-		[QueryBuilderField.Functions]: { state: 'hidden' },
 		// Pinned so it opens empty: the group-by template a click would seed names nothing here.
 		[QueryBuilderField.Legend]: {
 			state: 'pinned',
