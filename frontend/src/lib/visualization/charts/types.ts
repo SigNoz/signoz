@@ -27,6 +27,11 @@ import {
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { StackMode } from 'lib/uPlotV2/config/types';
+import type {
+	DistributionSeries,
+	DistributionXScale,
+	DistributionYScale,
+} from 'lib/visualization/charts/Distribution/types';
 
 interface BaseChartProps {
 	width: number;
@@ -162,6 +167,42 @@ export interface HeatmapChartProps {
 	maxTimeScale?: number;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	onCellClick?: (cell: HeatmapCell, clickData: ChartClickData) => void;
+	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;
+	tooltipPortalRoot?: HTMLElement | null;
+	layoutChildren?: React.ReactNode;
+	'data-testid'?: string;
+}
+
+/**
+ * Whole-range bucket counts, one series per group, drawn as bars whose widths follow
+ * the bucket bounds. Builds its own config, since `buckets` fully determines the x
+ * axis. `buckets` and `series` must be referentially stable: a new identity rebuilds
+ * the plot.
+ */
+export interface DistributionChartProps {
+	/** Widget id; the group selection persists under it. */
+	id: string;
+	/** Ascending. N boundaries describe N+1 buckets, the last one overflow. */
+	buckets: number[];
+	series: DistributionSeries[];
+	width: number;
+	height: number;
+	isDarkMode: boolean;
+	/** Default auto. */
+	xScale?: DistributionXScale;
+	/** Default linear. Ignored under `percent`, whose axis is a share. */
+	yScale?: DistributionYScale;
+	/** Default normal. `none` draws the groups side by side. */
+	stack?: StackMode;
+	/** Unit of the bucket bounds; counts are always plain numbers. */
+	xAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
+	/** Hex colours keyed by group label, overriding the automatic palette. */
+	customColors?: Record<string, string>;
+	showLegend?: boolean;
+	legendPosition?: LegendPosition;
+	showTooltip?: boolean;
+	canPinTooltip?: boolean;
 	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;
 	tooltipPortalRoot?: HTMLElement | null;
 	layoutChildren?: React.ReactNode;
