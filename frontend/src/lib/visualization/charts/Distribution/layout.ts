@@ -184,3 +184,28 @@ export function resolveDistributionBars({
 
 	return { rects, yMax };
 }
+
+/**
+ * Indexes of the ticks whose centred labels fit without touching, walking from the
+ * right so the `∞` edge survives. Positions and widths share one pixel space.
+ */
+export function thinLabelledSplits({
+	positions,
+	widths,
+	gap,
+}: {
+	positions: number[];
+	widths: number[];
+	gap: number;
+}): number[] {
+	const kept: number[] = [];
+	let leftEdge = Number.POSITIVE_INFINITY;
+	for (let index = positions.length - 1; index >= 0; index -= 1) {
+		const half = widths[index] / 2;
+		if (positions[index] + half + gap <= leftEdge) {
+			kept.push(index);
+			leftEdge = positions[index] - half;
+		}
+	}
+	return kept.reverse();
+}

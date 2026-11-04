@@ -6,6 +6,7 @@ import {
 	resolveDistributionBars,
 	resolveDistributionXAxis,
 	sumVisibleCounts,
+	thinLabelledSplits,
 } from '../layout';
 import { DistributionXScale } from '../types';
 
@@ -184,5 +185,28 @@ describe('resolveDistributionBars', () => {
 
 		expect(rects[0].map(({ y0 }) => y0)).toStrictEqual([LOG_Y_BASE, LOG_Y_BASE]);
 		expect(rects[0].map(({ bucketIndex }) => bucketIndex)).toStrictEqual([0, 1]);
+	});
+});
+
+describe('thinLabelledSplits', () => {
+	it('keeps labels that clear each other by the gap', () => {
+		expect(
+			thinLabelledSplits({
+				positions: [0, 50, 100],
+				widths: [20, 20, 20],
+				gap: 10,
+			}),
+		).toStrictEqual([0, 1, 2]);
+	});
+
+	it('drops a wide label that would touch its neighbour, keeping the rightmost', () => {
+		// 16.67 mins-wide labels 60 px apart: each needs 70 px of centre distance.
+		expect(
+			thinLabelledSplits({
+				positions: [0, 60, 120, 180],
+				widths: [60, 60, 60, 60],
+				gap: 10,
+			}),
+		).toStrictEqual([1, 3]);
 	});
 });
