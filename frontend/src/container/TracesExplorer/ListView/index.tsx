@@ -29,6 +29,8 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
+import SpanDrawer from 'container/TracesExplorer/SpanDrawer/SpanDrawer';
+import { useSpanDrawer } from 'container/TracesExplorer/SpanDrawer/useSpanDrawer';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
@@ -202,6 +204,8 @@ function ListView({
 		[queryTableData],
 	);
 
+	const { tableProps, drawerProps, onPressInside } = useSpanDrawer(rows);
+
 	const handleColumnOrderChange = useCallback(
 		(cols: TableColumnDef<TracesTableRow>[]): void => {
 			config?.addColumn?.onReorder(cols.map((c) => c.id));
@@ -253,20 +257,26 @@ function ListView({
 				/>
 			</div>
 
-			<TracesTable
-				data={rows}
-				columns={columns}
-				columnStorageKey={LOCALSTORAGE.TRACES_LIST_COLUMNS}
-				panelType="LIST"
-				getRowHref={getTraceLink}
-				isLoading={isLoading}
-				isFetching={isFetching}
-				isError={isError}
-				error={error}
-				isFilterApplied={isFilterApplied}
-				onColumnOrderChange={handleColumnOrderChange}
-				onColumnRemove={config?.addColumn?.onRemove}
-			/>
+			{/* A press in the table or the drawer (a portal) keeps the drawer open. */}
+			<div className={styles.drawerScope} onPointerDownCapture={onPressInside}>
+				<TracesTable
+					data={rows}
+					columns={columns}
+					columnStorageKey={LOCALSTORAGE.TRACES_LIST_COLUMNS}
+					panelType="LIST"
+					getRowHref={getTraceLink}
+					{...tableProps}
+					isLoading={isLoading}
+					isFetching={isFetching}
+					isError={isError}
+					error={error}
+					isFilterApplied={isFilterApplied}
+					onColumnOrderChange={handleColumnOrderChange}
+					onColumnRemove={config?.addColumn?.onRemove}
+				/>
+
+				{drawerProps && <SpanDrawer {...drawerProps} />}
+			</div>
 		</div>
 	);
 }
