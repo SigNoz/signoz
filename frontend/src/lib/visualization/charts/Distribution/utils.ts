@@ -9,7 +9,10 @@ import {
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { createVariableWidthBarsPathBuilder } from 'lib/uPlotV2/paths/variableWidthBars';
-import { decimateAxisSplits } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
+import {
+	decimateAxisSplits,
+	resolveRowIndex,
+} from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import { createHatchPattern } from 'lib/uPlotV2/plugins/HeatmapPlugin/paint';
 import { toAlphaHex } from 'lib/uPlotV2/utils/fillOpacity';
 import uPlot from 'uplot';
@@ -19,6 +22,7 @@ import {
 	DistributionPercentile,
 	formatPercentileMarker,
 	layoutMarkerLabels,
+	resolveFocusedSeries,
 	resolveHoveredSeries,
 } from './percentiles';
 import { DistributionXAxis } from './types';
@@ -219,6 +223,10 @@ export function buildDistributionConfig({
 	decimalPrecision,
 }: BuildDistributionConfigArgs): UPlotConfigBuilder {
 	const builder = new UPlotConfigBuilder({ id });
+	// uPlot's focus picks the series nearest in value, meaningless for stacked bars; the
+	// setCursor hook focuses the one under the cursor itself. Alpha 1 leaves the
+	// dimming to the bar fills.
+	builder.setFocus({ alpha: 1 });
 	builder.setCursor({ focus: { prox: -1 }, points: { show: false } });
 
 	const formatBound = createBoundFormatter(xAxisUnit, decimalPrecision);
@@ -290,7 +298,10 @@ export function buildDistributionConfig({
 	};
 
 	// Read by every series' fill on each draw; a change redraws the paths.
-	const hover: { series: number | null } = { series: null };
+	const hover: { series: number | null; focused: number | null } = {
+		series: null,
+		focused: null,
+	};
 	const isDimmed = (seriesIndex: number): boolean =>
 		hover.series !== null && hover.series !== seriesIndex;
 
@@ -332,14 +343,25 @@ export function buildDistributionConfig({
 		drawPercentileMarkers(u, markers, formatBound, isDarkMode);
 	});
 
+	// Registered as a hook, not a plugin, so it runs before TooltipPlugin's: the tooltip
+	// only shows for a focused series, and must find it focused when it positions.
 	builder.addHook('setCursor', (u: uPlot): void => {
 		const { left = -1, top = -1 } = u.cursor;
-		const next =
-			left < 0 || top < 0
-				? null
-				: resolveHoveredSeries(layout, u.posToVal(left, 'x'), u.posToVal(top, 'y'));
-		if (next !== hover.series) {
-			hover.series = next;
+		const isOnPlot = left >= 0 && top >= 0;
+		const x = isOnPlot ? u.posToVal(left, 'x') : Number.NaN;
+		const hovered = isOnPlot
+			? resolveHoveredSeries(layout, x, u.posToVal(top, 'y'))
+			: null;
+		const focused = isOnPlot
+			? resolveFocusedSeries(layout, hovered, resolveRowIndex(xAxis.edges, x))
+			: null;
+
+		if (focused !== hover.focused) {
+			hover.focused = focused;
+			u.setSeries(focused === null ? null : focused + 1, { focus: true });
+		}
+		if (hovered !== hover.series) {
+			hover.series = hovered;
 			u.redraw(true, false);
 		}
 	});

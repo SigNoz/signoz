@@ -99,6 +99,28 @@ export function resolveHoveredSeries(
 }
 
 /**
+ * The series the tooltip follows at `(x, y)`: the one under the cursor, else the
+ * first with a bar in that bucket, so the tooltip shows anywhere over an occupied
+ * bucket. `null` over an empty one.
+ */
+export function resolveFocusedSeries(
+	layout: DistributionBarsLayout,
+	hovered: number | null,
+	bucket: number | null,
+): number | null {
+	if (hovered !== null) {
+		return hovered;
+	}
+	if (bucket === null) {
+		return null;
+	}
+	const series = layout.rects.findIndex((rects) =>
+		rects.some((rect) => rect.bucketIndex === bucket),
+	);
+	return series === -1 ? null : series;
+}
+
+/**
  * Stacks marker labels into rows so none overlap: each goes in the first row whose
  * last label ends before it starts. Input and output are in the same pixel space.
  */
