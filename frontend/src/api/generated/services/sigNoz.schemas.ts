@@ -6949,6 +6949,108 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesScatterPlotPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpecDTOKind {
+	'signoz/DistributionPanel' = 'signoz/DistributionPanel',
+}
+export enum DashboardtypesDistributionXScaleDTO {
+	auto = 'auto',
+	linear = 'linear',
+	log = 'log',
+	symlog = 'symlog',
+	ordinal = 'ordinal',
+}
+export interface DashboardtypesDistributionXAxisDTO {
+	/**
+	 * @description How bucket bounds are spaced: auto (default), linear, log, symlog, or ordinal (equal widths labelled by range).
+	 */
+	scale: DashboardtypesDistributionXScaleDTO;
+}
+
+export enum DashboardtypesDistributionYScaleDTO {
+	linear = 'linear',
+	log = 'log',
+}
+export interface DashboardtypesDistributionYAxisDTO {
+	/**
+	 * @description How counts are spaced: linear (default) or log.
+	 */
+	scale: DashboardtypesDistributionYScaleDTO;
+}
+
+export interface DashboardtypesDistributionAxesDTO {
+	/**
+	 * @description The bucket axis.
+	 */
+	x?: DashboardtypesDistributionXAxisDTO;
+	/**
+	 * @description The count axis.
+	 */
+	y?: DashboardtypesDistributionYAxisDTO;
+}
+
+export interface DashboardtypesDistributionPercentilesDTO {
+	/**
+	 * @type boolean
+	 * @description Whether percentile markers are drawn. Defaults to true.
+	 */
+	enabled: boolean;
+	/**
+	 * @type array,null
+	 * @description The percentiles to mark, each in (0, 100), at most 5, no duplicates. Defaults to [50, 90, 99].
+	 */
+	values: number[] | null;
+}
+
+export interface DashboardtypesDistributionChartAppearanceDTO {
+	/**
+	 * @description Percentile markers drawn across the bucket axis.
+	 */
+	percentiles?: DashboardtypesDistributionPercentilesDTO;
+	/**
+	 * @description How groups combine in a bucket: normal (default) stacks them, none draws them side by side, percent stacks them as shares of the bucket.
+	 */
+	stack: DashboardtypesStackModeDTO;
+}
+
+export interface DashboardtypesDistributionPanelSpecDTO {
+	/**
+	 * @description The X (bucket) and Y (count) axis scales.
+	 */
+	axes?: DashboardtypesDistributionAxesDTO;
+	/**
+	 * @description Stacking and percentile markers.
+	 */
+	chartAppearance?: DashboardtypesDistributionChartAppearanceDTO;
+	/**
+	 * @description Unit and decimal precision of the bucket bounds; counts take no unit.
+	 */
+	formatting?: DashboardtypesPanelFormattingDTO;
+	/**
+	 * @description Legend placement and series colors.
+	 */
+	legend?: DashboardtypesLegendDTO;
+	/**
+	 * @description The time range the bucket counts are summed over.
+	 */
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpecDTO {
+	/**
+	 * @enum signoz/DistributionPanel
+	 * @type string
+	 * @description The panel kind.
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpecDTOKind;
+	/**
+	 * @description The options for this panel kind. {} accepts every default.
+	 */
+	spec: DashboardtypesDistributionPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -6960,7 +7062,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -7449,14 +7552,14 @@ export interface DashboardtypesQuerySpecDTO {
 	 */
 	name?: string;
 	/**
-	 * @description The query: kind is one of signoz/BuilderQuery, signoz/AIBuilderQuery (builder query over AI observability traces), signoz/CompositeQuery (several named queries and formulas), signoz/Formula, signoz/PromQLQuery, signoz/ClickHouseSQL or signoz/TraceOperator, and spec holds that kind's query. Pie and table panels reject signoz/PromQLQuery; heatmap panels reject signoz/AIBuilderQuery and signoz/TraceOperator; list panels accept only signoz/BuilderQuery and signoz/AIBuilderQuery.
+	 * @description The query: kind is one of signoz/BuilderQuery, signoz/AIBuilderQuery (builder query over AI observability traces), signoz/CompositeQuery (several named queries and formulas), signoz/Formula, signoz/PromQLQuery, signoz/ClickHouseSQL or signoz/TraceOperator, and spec holds that kind's query. Pie and table panels reject signoz/PromQLQuery; heatmap and distribution panels reject signoz/AIBuilderQuery and signoz/TraceOperator; list panels accept only signoz/BuilderQuery and signoz/AIBuilderQuery.
 	 */
 	plugin: DashboardtypesQueryPluginDTO;
 }
 
 export interface DashboardtypesQueryDTO {
 	/**
-	 * @description The result shape the panel requests: time_series for time series, bar, area and histogram panels, scalar for number, table and pie panels, raw for list panels, heatmap for heatmap panels, trace for trace panels.
+	 * @description The result shape the panel requests: time_series for time series, bar, area and histogram panels, scalar for number, table and pie panels, raw for list panels, heatmap for heatmap panels, distribution for distribution panels, trace for trace panels.
 	 */
 	kind: Querybuildertypesv5RequestTypeDTO;
 	/**
@@ -7476,7 +7579,7 @@ export interface DashboardtypesPanelSpecDTO {
 	 */
 	links?: DashboardtypesLinkDTO[] | null;
 	/**
-	 * @description The visualization: kind is one of signoz/TimeSeriesPanel, signoz/BarChartPanel, signoz/AreaChartPanel, signoz/NumberPanel, signoz/PieChartPanel, signoz/TablePanel, signoz/HistogramPanel, signoz/ListPanel, signoz/TextPanel or signoz/HeatmapPanel, and spec holds that kind's options ({} accepts every default).
+	 * @description The visualization: kind is one of signoz/TimeSeriesPanel, signoz/BarChartPanel, signoz/AreaChartPanel, signoz/NumberPanel, signoz/PieChartPanel, signoz/TablePanel, signoz/HistogramPanel, signoz/ListPanel, signoz/TextPanel, signoz/HeatmapPanel or signoz/DistributionPanel, and spec holds that kind's options ({} accepts every default).
 	 */
 	plugin: DashboardtypesPanelPluginDTO;
 	/**
@@ -8247,6 +8350,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TextPanel' = 'signoz/TextPanel',
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 	'signoz/ScatterPlotPanel' = 'signoz/ScatterPlotPanel',
+	'signoz/DistributionPanel' = 'signoz/DistributionPanel',
 }
 /**
  * The RFC 6902 operations, applied in order against the dashboard's postable shape.
