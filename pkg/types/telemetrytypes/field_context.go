@@ -164,6 +164,15 @@ func (f FieldContext) TagType() string {
 	return ""
 }
 
+// MetricAttrType returns the attr_type the metrics metadata table stores for the context;
+// metric attributes are stored as point.
+func (f FieldContext) MetricAttrType() string {
+	if f == FieldContextAttribute {
+		return "point"
+	}
+	return f.TagType()
+}
+
 func isContextValidForSignal(ctx FieldContext, signal Signal) bool {
 	if ctx == FieldContextResource ||
 		ctx == FieldContextAttribute ||

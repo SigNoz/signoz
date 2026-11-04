@@ -3,6 +3,9 @@ package telemetrytypes
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetFieldKeyFromKeyText(t *testing.T) {
@@ -420,5 +423,170 @@ func TestNewFieldKeySelectorFromPostableFieldKeysParamsMetricNamespace(t *testin
 	}
 	if selector.MetricContext.MetricName != "" {
 		t.Fatalf("expected metric name to remain empty, got %q", selector.MetricContext.MetricName)
+	}
+}
+
+func TestNewFieldValueSelectorFromPostableFieldValueParams(t *testing.T) {
+	testCases := []struct {
+		name             string
+		params           PostableFieldValueParams
+		expectedName     string
+		expectedContext  FieldContext
+		expectedDataType FieldDataType
+		expectedValue    string
+		expectedLookups  []TelemetryFieldKey
+	}{
+		{
+			name:            "ResourcePrefix_Parsed",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs}, Name: "resource.service.name"},
+			expectedName:    "service.name",
+			expectedContext: FieldContextResource,
+			expectedLookups: []TelemetryFieldKey{{Name: "resource.service.name", FieldContext: FieldContextUnspecified}, {Name: "service.name", FieldContext: FieldContextResource}},
+		},
+		{
+			name:            "AttributePrefix_Parsed",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs}, Name: "attribute.key"},
+			expectedName:    "key",
+			expectedContext: FieldContextAttribute,
+			expectedLookups: []TelemetryFieldKey{{Name: "attribute.key", FieldContext: FieldContextUnspecified}, {Name: "key", FieldContext: FieldContextAttribute}},
+		},
+		{
+			name:            "DoubleAttributePrefix_OnlyFirstStripped",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs}, Name: "attribute.attribute.key"},
+			expectedName:    "attribute.key",
+			expectedContext: FieldContextAttribute,
+			expectedLookups: []TelemetryFieldKey{{Name: "attribute.attribute.key", FieldContext: FieldContextUnspecified}, {Name: "attribute.key", FieldContext: FieldContextAttribute}},
+		},
+		{
+			name:            "TagAlias_ExactMatchAsWritten",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs}, Name: "tag.region"},
+			expectedName:    "region",
+			expectedContext: FieldContextAttribute,
+			expectedLookups: []TelemetryFieldKey{{Name: "tag.region", FieldContext: FieldContextUnspecified}, {Name: "region", FieldContext: FieldContextAttribute}},
+		},
+		{
+			name:            "LogPrefix_Parsed",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs}, Name: "log.level"},
+			expectedName:    "level",
+			expectedContext: FieldContextLog,
+			expectedLookups: []TelemetryFieldKey{{Name: "log.level", FieldContext: FieldContextUnspecified}, {Name: "level", FieldContext: FieldContextLog}},
+		},
+		{
+			name:            "SpanPrefix_Parsed",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalTraces}, Name: "span.kind"},
+			expectedName:    "kind",
+			expectedContext: FieldContextSpan,
+			expectedLookups: []TelemetryFieldKey{{Name: "span.kind", FieldContext: FieldContextUnspecified}, {Name: "kind", FieldContext: FieldContextSpan}},
+		},
+		{
+			name:            "ContextInvalidForSignal_KeptAsWritten",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs}, Name: "span.kind"},
+			expectedName:    "span.kind",
+			expectedContext: FieldContextUnspecified,
+			expectedLookups: []TelemetryFieldKey{{Name: "span.kind", FieldContext: FieldContextUnspecified}},
+		},
+		{
+			name:            "ExplicitContext_NameNotParsed",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs, FieldContext: FieldContextAttribute}, Name: "log.level"},
+			expectedName:    "log.level",
+			expectedContext: FieldContextAttribute,
+			expectedLookups: []TelemetryFieldKey{{Name: "log.level", FieldContext: FieldContextAttribute}},
+		},
+		{
+			name:            "ExplicitBodyContext_SingleLookup",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs, FieldContext: FieldContextBody}, Name: "key"},
+			expectedName:    "key",
+			expectedContext: FieldContextBody,
+			expectedLookups: []TelemetryFieldKey{{Name: "key", FieldContext: FieldContextBody}},
+		},
+		{
+			name:            "ExplicitAttributeContext_SingleLookup",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs, FieldContext: FieldContextAttribute}, Name: "key"},
+			expectedName:    "key",
+			expectedContext: FieldContextAttribute,
+			expectedLookups: []TelemetryFieldKey{{Name: "key", FieldContext: FieldContextAttribute}},
+		},
+		{
+			name:            "ExplicitAttributeContext_PrefixedStoredName",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs, FieldContext: FieldContextAttribute}, Name: "attribute.key"},
+			expectedName:    "attribute.key",
+			expectedContext: FieldContextAttribute,
+			expectedLookups: []TelemetryFieldKey{{Name: "attribute.key", FieldContext: FieldContextAttribute}},
+		},
+		{
+			name:            "ExplicitContext_TypeSuffixNotParsed",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs, FieldContext: FieldContextAttribute}, Name: "http.method:string"},
+			expectedName:    "http.method:string",
+			expectedContext: FieldContextAttribute,
+			expectedLookups: []TelemetryFieldKey{{Name: "http.method:string", FieldContext: FieldContextAttribute}},
+		},
+		{
+			name:             "DataTypeSuffix_WithoutContext",
+			params:           PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs}, Name: "service.name:string"},
+			expectedName:     "service.name",
+			expectedContext:  FieldContextUnspecified,
+			expectedDataType: FieldDataTypeString,
+			expectedLookups:  []TelemetryFieldKey{{Name: "service.name", FieldContext: FieldContextUnspecified}},
+		},
+		{
+			name:             "DataTypeSuffix_WithContext",
+			params:           PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs}, Name: "resource.host.name:string"},
+			expectedName:     "host.name",
+			expectedContext:  FieldContextResource,
+			expectedDataType: FieldDataTypeString,
+			expectedLookups:  []TelemetryFieldKey{{Name: "resource.host.name", FieldContext: FieldContextUnspecified}, {Name: "host.name", FieldContext: FieldContextResource}},
+		},
+		{
+			name:             "DataTypeSuffix_WithInvalidContext",
+			params:           PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs}, Name: "span.kind:int64"},
+			expectedName:     "span.kind",
+			expectedContext:  FieldContextUnspecified,
+			expectedDataType: FieldDataTypeInt64,
+			expectedLookups:  []TelemetryFieldKey{{Name: "span.kind", FieldContext: FieldContextUnspecified}},
+		},
+		{
+			name:             "ExplicitDataType_SuffixKept",
+			params:           PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs, FieldDataType: FieldDataTypeBool}, Name: "http.method:string"},
+			expectedName:     "http.method:string",
+			expectedContext:  FieldContextUnspecified,
+			expectedDataType: FieldDataTypeBool,
+			expectedLookups:  []TelemetryFieldKey{{Name: "http.method:string", FieldContext: FieldContextUnspecified}},
+		},
+		{
+			name:            "SearchTextWithContextPrefix_NotParsedAsKey",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs, SearchText: "log.x"}, Name: "service.name"},
+			expectedName:    "service.name",
+			expectedContext: FieldContextUnspecified,
+			expectedValue:   "log.x",
+			expectedLookups: []TelemetryFieldKey{{Name: "service.name", FieldContext: FieldContextUnspecified}},
+		},
+		{
+			name:            "SearchTextWithContextPrefix_NameStillParsed",
+			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs, SearchText: "attribute.x"}, Name: "resource.k8s.pod.name"},
+			expectedName:    "k8s.pod.name",
+			expectedContext: FieldContextResource,
+			expectedValue:   "attribute.x",
+			expectedLookups: []TelemetryFieldKey{{Name: "resource.k8s.pod.name", FieldContext: FieldContextUnspecified}, {Name: "k8s.pod.name", FieldContext: FieldContextResource}},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			selector := NewFieldValueSelectorFromPostableFieldValueParams(testCase.params)
+
+			assert.Equal(t, testCase.expectedName, selector.Name)
+			assert.Equal(t, testCase.expectedContext, selector.FieldContext)
+			assert.Equal(t, testCase.expectedDataType, selector.FieldDataType)
+			assert.Equal(t, testCase.expectedValue, selector.Value)
+
+			lookups := selector.NameMatchSelectors()
+			require.Len(t, lookups, len(testCase.expectedLookups))
+			for i, expected := range testCase.expectedLookups {
+				assert.Equal(t, expected.Name, lookups[i].Name)
+				assert.Equal(t, expected.FieldContext, lookups[i].FieldContext)
+				assert.Equal(t, selector.FieldDataType, lookups[i].FieldDataType)
+			}
+			assert.Equal(t, testCase.expectedName, selector.Name, "lookups must not mutate the selector")
+		})
 	}
 }

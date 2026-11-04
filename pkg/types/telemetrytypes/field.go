@@ -147,7 +147,11 @@ func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {
 //	key.Normalize()
 //	// Result: Name: "service.name", FieldContext: FieldContextResource, FieldDataType: FieldDataTypeString
 func (f *TelemetryFieldKey) Normalize() {
+	f.normalizeDataType()
+	f.normalizeContext()
+}
 
+func (f *TelemetryFieldKey) normalizeDataType() {
 	// Step 1: Parse data type from the right (after the last ":") if not already specified
 	if f.FieldDataType == FieldDataTypeUnspecified {
 		if colonIdx := strings.LastIndex(f.Name, ":"); colonIdx != -1 {
@@ -158,7 +162,9 @@ func (f *TelemetryFieldKey) Normalize() {
 			}
 		}
 	}
+}
 
+func (f *TelemetryFieldKey) normalizeContext() {
 	// Step 2: Parse field context from the left if not already specified
 	if f.FieldContext == FieldContextUnspecified {
 		if dotIdx := strings.Index(f.Name, "."); dotIdx != -1 {
@@ -279,6 +285,9 @@ type FieldValueSelector struct {
 	ExistingQuery string `json:"existingQuery" description:"Filter expression already applied in the explorer. Used to compute relatedValues; empty disables them."`
 	Value         string `json:"value" description:"Substring the returned values must contain, case-insensitive except for the meter source, where it is case-sensitive and % and _ act as wildcards. Empty returns any value."`
 	Limit         int    `json:"limit" description:"Maximum number of values to return."`
+
+	// nameAsWritten is set when FieldContext was parsed from the name's prefix.
+	nameAsWritten string
 }
 
 type GettableFieldKeys struct {
@@ -306,7 +315,7 @@ type GettableFieldValues struct {
 
 type PostableFieldValueParams struct {
 	PostableFieldKeysParams
-	Name          string `query:"name" description:"The key whose values to return, such as service.name. A context prefix such as resource.service.name sets fieldContext when it is empty."`
+	Name          string `query:"name" description:"The key whose values to return, such as service.name. With fieldContext set, it is the stored name as is. Otherwise a context prefix such as resource.service.name sets the context and a type suffix such as service.name:string sets fieldDataType when that is empty; as in filter expressions, a prefixed name also matches a key stored under the full name, whose values come first: log.level returns values of a key named log.level, then of the log field level."`
 	ExistingQuery string `query:"existingQuery" description:"Filter expression already applied in the explorer. When set, relatedValues lists the values seen on data matching it."`
 }
 
@@ -358,26 +367,35 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 }
 
 func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValueParams) *FieldValueSelector {
-
-	keySelector := NewFieldKeySelectorFromPostableFieldKeysParams(params.PostableFieldKeysParams)
+	// SearchText filters values here, so it must not be parsed as a key.
+	keyParams := params.PostableFieldKeysParams
+	keyParams.SearchText = ""
+	keySelector := NewFieldKeySelectorFromPostableFieldKeysParams(keyParams)
 
 	fieldValueSelector := &FieldValueSelector{
 		FieldKeySelector: keySelector,
 	}
 
-	fieldValueSelector.Name = params.Name
-
-	if params.Name != "" && fieldValueSelector.FieldContext == FieldContextUnspecified {
-		parsedFieldKey := GetFieldKeyFromKeyText(params.Name)
-		if parsedFieldKey.FieldContext != FieldContextUnspecified {
-			// Only apply inferred context if it is valid for the current signal
-			if isContextValidForSignal(parsedFieldKey.FieldContext, fieldValueSelector.Signal) {
-				fieldValueSelector.Name = parsedFieldKey.Name
-				fieldValueSelector.FieldContext = parsedFieldKey.FieldContext
+	// An explicit context means the name is the stored name as is.
+	key := TelemetryFieldKey{Name: params.Name, FieldContext: keySelector.FieldContext, FieldDataType: keySelector.FieldDataType}
+	if keySelector.FieldContext == FieldContextUnspecified {
+		key.normalizeDataType()
+		nameWithContext := key.Name
+		key.normalizeContext()
+		// Only apply inferred context if it is valid for the current signal
+		if isContextValidForSignal(key.FieldContext, keySelector.Signal) {
+			if key.FieldContext != FieldContextUnspecified {
+				fieldValueSelector.nameAsWritten = nameWithContext
 			}
+		} else {
+			key.Name = nameWithContext
+			key.FieldContext = FieldContextUnspecified
 		}
 	}
 
+	fieldValueSelector.Name = key.Name
+	fieldValueSelector.FieldContext = key.FieldContext
+	fieldValueSelector.FieldDataType = key.FieldDataType
 	fieldValueSelector.ExistingQuery = params.ExistingQuery
 	fieldValueSelector.Value = params.SearchText
 
@@ -388,6 +406,29 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 	}
 
 	return fieldValueSelector
+}
+
+// NameMatchSelectors returns the lookups for the requested key, highest priority first.
+// A context parsed from the name may instead be part of the stored name (attribute.key
+// may be the attribute named attribute.key), so like the query builder both readings are
+// looked up: the name as written, in any context, before the name with its prefix stripped.
+func (s *FieldValueSelector) NameMatchSelectors() []*FieldValueSelector {
+	if s.nameAsWritten != "" {
+		return []*FieldValueSelector{s.withName(s.nameAsWritten), s}
+	}
+	return []*FieldValueSelector{s}
+}
+
+// withName returns a copy looking up name in any context.
+func (s *FieldValueSelector) withName(name string) *FieldValueSelector {
+	keySelector := *s.FieldKeySelector
+	keySelector.Name = name
+	keySelector.FieldContext = FieldContextUnspecified
+
+	selector := *s
+	selector.FieldKeySelector = &keySelector
+	selector.nameAsWritten = ""
+	return &selector
 }
 
 func NewTelemetryFieldKey(name string, fieldContext FieldContext, fieldDataType FieldDataType) *TelemetryFieldKey {
