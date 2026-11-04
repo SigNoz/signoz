@@ -94,7 +94,7 @@ function TopListRow({
 	const handleMouseMove = (event: ReactMouseEvent<HTMLElement>): void =>
 		onHover(row.key, event);
 
-	const handleKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>): void => {
+	const handleKeyDown = (event: ReactKeyboardEvent<HTMLElement>): void => {
 		if (onNavigate(index, event.key)) {
 			event.preventDefault();
 		}
@@ -170,11 +170,17 @@ function TopListRow({
 					{content}
 				</button>
 			) : (
+				// Focusable without an action so the keyboard can still walk the list.
+				// oxlint-disable-next-line jsx-a11y/no-static-element-interactions
 				<div
+					// oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+					tabIndex={isTabStop ? 0 : -1}
 					data-row-index={index}
 					data-testid="top-list-row"
 					className={styles.row}
 					onMouseMove={handleMouseMove}
+					onKeyDown={handleKeyDown}
+					onFocus={(): void => onFocus(index)}
 				>
 					{content}
 				</div>
