@@ -355,6 +355,9 @@ func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
 		if c.HTTPConfig == nil || c.HTTPConfig.Authorization == nil || c.HTTPConfig.Authorization.Credentials == "" {
 			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "self-hosted jira requires http_config.authorization with a Bearer personal access token")
 		}
+		if c.HTTPConfig.BasicAuth != nil {
+			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "self-hosted jira takes a personal access token, not basic auth")
+		}
 		return nil
 	}
 	if c.HTTPConfig == nil || c.HTTPConfig.BasicAuth == nil {
@@ -367,10 +370,11 @@ func (c *JiraReceiverConfig) IsSelfHosted() bool {
 	return c.Deployment == JiraDeploymentSelfHosted
 }
 
-// IsServiceAccount reports whether the basic-auth user is an Atlassian service
-// account, identified by its email domain. Service accounts must go through the
-// api.atlassian.com gateway; personal API tokens use the site host directly.
-func (c *JiraReceiverConfig) IsServiceAccount() bool {
+// IsCloudServiceAccount reports whether this is a Jira Cloud channel whose
+// basic-auth user is an Atlassian service account, identified by its email
+// domain. Those must go through the api.atlassian.com gateway; personal API
+// tokens and self-hosted sites use the site host directly.
+func (c *JiraReceiverConfig) IsCloudServiceAccount() bool {
 	if c.IsSelfHosted() || c.HTTPConfig == nil || c.HTTPConfig.BasicAuth == nil {
 		return false
 	}

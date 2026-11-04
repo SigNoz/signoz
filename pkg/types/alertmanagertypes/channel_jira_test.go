@@ -60,7 +60,7 @@ func TestJiraReceiverConfigSelfHosted(t *testing.T) {
 	assert.Equal(t, "https://jira.acme.com/rest/api/2", jc.APIBaseURL(""))
 	assert.Equal(t, "https://jira.acme.com/rest/api/2", jc.APIBaseURL("ignored-cloud-id"))
 	assert.Equal(t, "/search", jc.SearchPath())
-	assert.False(t, jc.IsServiceAccount())
+	assert.False(t, jc.IsCloudServiceAccount())
 }
 
 func TestJiraReceiverConfigSendResolved(t *testing.T) {
@@ -115,7 +115,7 @@ func TestJiraAPIBaseURL(t *testing.T) {
 	}
 }
 
-func TestJiraIsServiceAccount(t *testing.T) {
+func TestJiraIsCloudServiceAccount(t *testing.T) {
 	withUser := func(deployment JiraDeployment, username string) *JiraReceiverConfig {
 		return &JiraReceiverConfig{Deployment: deployment, HTTPConfig: &commoncfg.HTTPClientConfig{BasicAuth: &commoncfg.BasicAuth{Username: username}}}
 	}
@@ -128,11 +128,11 @@ func TestJiraIsServiceAccount(t *testing.T) {
 		{"Cloud_ServiceAccountDomain_CaseInsensitive", withUser(JiraDeploymentCloud, "Bot@ServiceAccount.Atlassian.Com"), true},
 		{"Cloud_PersonalEmail", withUser(JiraDeploymentCloud, "temp@signoz.io"), false},
 		{"Cloud_NoAuth", &JiraReceiverConfig{}, false},
-		{"SelfHosted_ServiceAccountDomain_Ignored", withUser(JiraDeploymentSelfHosted, "bot@serviceaccount.atlassian.com"), false},
+		{"SelfHosted_ServiceAccountEmail_NotCloud", withUser(JiraDeploymentSelfHosted, "bot@serviceaccount.atlassian.com"), false},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.expected, testCase.config.IsServiceAccount())
+			assert.Equal(t, testCase.expected, testCase.config.IsCloudServiceAccount())
 		})
 	}
 }
@@ -149,6 +149,7 @@ func TestJiraReceiverConfigValidation(t *testing.T) {
 		{"InvalidReopenDurationFormat", `{"name":"j","jira_configs":[{"site":"https://acme.atlassian.net","project":"KAN","issue_type":"Task","reopen_duration":"3days","http_config":{"basic_auth":{"username":"e","password":"t"}}}]}`},
 		{"SelfHosted_MissingAuthorization", jiraSelfHostedReceiverJSON(``)},
 		{"SelfHosted_BasicAuthOnly", jiraSelfHostedReceiverJSON(`,"http_config":{"basic_auth":{"username":"e","password":"t"}}`)},
+		{"SelfHosted_BasicAuthNextToBearer", jiraSelfHostedReceiverJSON(`,"http_config":{"basic_auth":{"username":"e","password":"t"},"authorization":{"type":"Bearer","credentials":"p"}}`)},
 		{"SelfHosted_EmptyCredentials", jiraSelfHostedReceiverJSON(`,"http_config":{"authorization":{"type":"Bearer"}}`)},
 		{"UnknownDeployment", `{"name":"j","jira_configs":[{"deployment":"onprem","site":"https://jira.acme.com","project":"KAN","issue_type":"Task","http_config":{"authorization":{"type":"Bearer","credentials":"p"}}}]}`},
 	}
