@@ -1,15 +1,11 @@
 import { useQuery } from 'react-query';
-// eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
 import type { DefaultOptionType } from 'antd/es/select';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { toFieldValues } from 'hooks/querySuggestions/useFieldValuesSuggestion';
-import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { getValuesForDataType } from 'utils/fieldValues';
 
 export interface Filters {
@@ -34,10 +30,6 @@ export function useGetAllFilters(props: Filters): GetAllFiltersResponse {
 		filterAttributeKeyDataType,
 	} = props;
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
 	const { data, isLoading } = useQuery(
 		[
 			REACT_QUERY_KEY.GET_ATTRIBUTE_VALUES,
@@ -45,8 +37,6 @@ export function useGetAllFilters(props: Filters): GetAllFiltersResponse {
 			metricName,
 			attributeKey,
 			searchText,
-			minTime,
-			maxTime,
 		],
 		async () => {
 			const keys = Array.isArray(attributeKey) ? attributeKey : [attributeKey];
