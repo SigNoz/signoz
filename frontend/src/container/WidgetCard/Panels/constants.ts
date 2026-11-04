@@ -24,5 +24,6 @@ export const PanelTypeVsPanelWrapper = {
 	[PANEL_TYPES.HISTOGRAM]: HistogramPanel,
 	// V2-only kind; it renders through the V2 panel registry.
 	[PANEL_TYPES.HEATMAP]: null,
+	[PANEL_TYPES.TOP_LIST]: null,
 	[PANEL_TYPES.GEO_MAP]: null,
 };

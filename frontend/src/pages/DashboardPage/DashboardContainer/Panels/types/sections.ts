@@ -28,6 +28,7 @@ import type {
 	DashboardtypesTextPresentationDTO,
 	DashboardtypesThresholdWithLabelDTO,
 	DashboardtypesTimePreferenceDTO,
+	DashboardtypesTopListAppearanceDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { LegendSeriesResolver } from '../utils/legendSeries';
@@ -77,6 +78,8 @@ export enum SectionKind {
 	Dimensions = 'dimensions',
 	/** Scatter Plot's per-axis `axes` shape; `Axes` is the single y-axis shape. */
 	ScatterAxes = 'scatterAxes',
+	/** Top List's row display, for a kind with no chart to style. */
+	Appearance = 'appearance',
 	/** Geo Map's placement: what a row is, its columns, the area, the layer and the value columns. */
 	Location = 'location',
 }
@@ -168,6 +171,7 @@ export interface SectionSpecMap {
 	[SectionKind.PanelHeader]: DashboardtypesHeaderOptionsDTO; // spec.plugin.spec.headerOptions (Text)
 	[SectionKind.Dimensions]: DashboardtypesScatterPlotDimensionsDTO; // spec.plugin.spec.dimensions (Scatter Plot)
 	[SectionKind.ScatterAxes]: DashboardtypesScatterPlotAxesDTO; // spec.plugin.spec.axes (Scatter Plot)
+	[SectionKind.Appearance]: DashboardtypesTopListAppearanceDTO; // spec.plugin.spec.appearance (Top List)
 	[SectionKind.Location]: GeoMapPlacementSlice; // spec.plugin.spec.location + .map (Geo Map)
 }
 
@@ -234,6 +238,11 @@ export interface SectionControls {
 	// Editor discriminator (not a spec field): which threshold variant a kind edits.
 	// axis → a `label` threshold picks the axis it marks (Scatter Plot).
 	[SectionKind.Thresholds]: { variant?: ThresholdVariant; axis?: boolean };
+	[SectionKind.Appearance]: {
+		showRank?: boolean;
+		showShare?: boolean;
+		barColor?: boolean;
+	};
 }
 
 export type ControlledSectionKind = keyof SectionControls;
@@ -283,6 +292,7 @@ export const SECTION_METADATA = {
 	[SectionKind.PanelHeader]: { title: 'Panel header', icon: PanelTop },
 	[SectionKind.Dimensions]: { title: 'Dimensions', icon: Crosshair },
 	[SectionKind.ScatterAxes]: { title: 'Axes', icon: Scale3D },
+	[SectionKind.Appearance]: { title: 'Appearance', icon: Palette },
 	[SectionKind.Location]: { title: 'Location', icon: MapPin },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
