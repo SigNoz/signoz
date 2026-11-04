@@ -128,6 +128,105 @@ def test_logs_aggregate_functions(
         assert by_service[service] == pytest.approx(expected), f"{service}: {by_service[service]} != {expected}"
 
 
+def test_logs_aggregate_if_predicates_use_filter_syntax(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+) -> None:
+    """
+    Setup:
+    svc-a: 3 logs, two with a k8s.pod.name and an x-request-id header, two
+    with "timeout" in the body; svc-b: 1 log without either, with "timeout".
+
+    Tests:
+    countIf predicates accept the filter-only operators EXISTS, NOT EXISTS,
+    CONTAINS and NOT CONTAINS, a combination of them, and a key with hyphens.
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    # (service, k8s.pod.name, x-request-id header, body)
+    specs = [
+        ("svc-a", "pod-1", "abc", "request timeout"),
+        ("svc-a", None, None, "request ok"),
+        ("svc-a", "pod-2", "def", "upstream timeout"),
+        ("svc-b", None, None, "timeout"),
+    ]
+    logs = [
+        Logs(
+            timestamp=now - timedelta(seconds=i + 1),
+            resources={"service.name": service} | ({"k8s.pod.name": pod} if pod else {}),
+            attributes={"http.request.header.x-request-id": request_id} if request_id else {},
+            body=body,
+        )
+        for i, (service, pod, request_id, body) in enumerate(specs)
+    ]
+    insert_logs(logs)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    query = build_scalar_query(
+        name="A",
+        signal="logs",
+        aggregations=[
+            build_aggregation("count()", "cnt"),
+            build_aggregation("countIf(k8s.pod.name EXISTS)", "with_pod"),
+            build_aggregation("countIf(k8s.pod.name NOT EXISTS)", "without_pod"),
+            build_aggregation("countIf(body CONTAINS 'timeout')", "timeouts"),
+            build_aggregation("countIf(body NOT CONTAINS 'timeout')", "not_timeouts"),
+            build_aggregation("countIf(body CONTAINS 'timeout' AND k8s.pod.name EXISTS)", "pod_timeouts"),
+            build_aggregation("countIf(http.request.header.x-request-id = 'abc')", "request_abc"),
+        ],
+        group_by=[build_group_by_field("service.name", "string", "resource")],
+        order=[build_order_by("count()", "desc")],
+    )
+    response = make_scalar_query_request(signoz, token, now, [query])
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = get_scalar_table_data(response.json())
+    assert [row[0] for row in data] == ["svc-a", "svc-b"]
+    by_service = {row[0]: row[1:] for row in data}
+
+    for service in ["svc-a", "svc-b"]:
+        rows = [(pod, request_id, body) for svc, pod, request_id, body in specs if svc == service]
+        expected = [
+            len(rows),
+            sum(1 for pod, _, _ in rows if pod),
+            sum(1 for pod, _, _ in rows if not pod),
+            sum(1 for _, _, body in rows if "timeout" in body),
+            sum(1 for _, _, body in rows if "timeout" not in body),
+            sum(1 for pod, _, body in rows if "timeout" in body and pod),
+            sum(1 for _, request_id, _ in rows if request_id == "abc"),
+        ]
+        assert by_service[service] == expected, f"{service}: {by_service[service]} != {expected}"
+
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        pytest.param("countIf(k8s.pod.name EXISTS", id="unclosed_parenthesis"),
+        pytest.param("countIf()", id="missing_predicate"),
+        pytest.param("countIf(latency_ms >= 25, latency_ms < 100)", id="extra_argument"),
+    ],
+)
+def test_logs_aggregate_invalid_expression_is_bad_request(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    expression: str,
+) -> None:
+    """
+    An aggregation expression the parser rejects, or one with the wrong number
+    of arguments, is the caller's mistake and returns 400.
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    query = build_scalar_query(name="A", signal="logs", aggregations=[build_aggregation(expression)])
+    response = make_scalar_query_request(signoz, token, now, [query])
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+
+
 @pytest.mark.parametrize(
     "having_expression,aggregations,expected_services",
     [

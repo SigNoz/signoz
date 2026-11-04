@@ -16,6 +16,8 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+const filterPredicatePlaceholderPrefix = "__signoz_predicate_"
+
 type aggExprRewriter struct {
 	logger         *slog.Logger
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
@@ -57,12 +59,13 @@ func (r *aggExprRewriter) Rewrite(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
 
-	wrapped := fmt.Sprintf("SELECT %s", expr)
+	predicates := map[string]string{}
+	wrapped := fmt.Sprintf("SELECT %s", extractFilterPredicates(expr, predicates))
 	p := chparser.NewParser(wrapped)
 	stmts, err := p.ParseStmts()
 
 	if err != nil {
-		return "", nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to parse aggregation expression %q", expr)
+		return "", nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to parse aggregation expression %q", expr)
 	}
 
 	if len(stmts) == 0 {
@@ -85,6 +88,7 @@ func (r *aggExprRewriter) Rewrite(
 		fieldKeys:      keys,
 		fullTextColumn: r.fullTextColumn,
 		storage:        r.storage,
+		predicates:     predicates,
 	}
 	// Rewrite the first select item (our expression)
 	if err := sel.SelectItems[0].Accept(visitor); err != nil {
@@ -136,6 +140,7 @@ type exprVisitor struct {
 	fieldKeys      map[string][]*telemetrytypes.TelemetryFieldKey
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
 	storage        qbtypes.Storage
+	predicates     map[string]string
 	Modified       bool
 	chArgs         []any
 	isRate         bool
@@ -158,7 +163,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 	// if we know aggregation function, we must ensure that the number of arguments is correct
 	if aggFunc.RequireArgs {
 		if len(args) < aggFunc.MinArgs || len(args) > aggFunc.MaxArgs {
-			return errors.NewInternalf(errors.CodeInternal, "invalid number of arguments for %q: %d", name, len(args))
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid number of arguments for %q: %d", name, len(args))
 		}
 	}
 	fn.Name.Name = aggFunc.FuncName
@@ -174,7 +179,10 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 	// Handle *If functions with predicate + values
 	if aggFunc.FuncCombinator {
 		// Map the predicate (last argument)
-		origPred := chparser.Format(args[len(args)-1])
+		origPred, ok := v.predicates[chparser.Format(args[len(args)-1])]
+		if !ok {
+			return errors.NewInternalf(errors.CodeInternal, "predicate of %q was not extracted before parsing", name)
+		}
 		whereClause, err := PrepareWhereClause(
 			origPred,
 			FilterExprVisitorOpts{
@@ -261,4 +269,114 @@ func parseFragment(sql string) (chparser.Expr, error) {
 		return nil, errors.NewInternalf(errors.CodeInternal, "no select items in re-written expression %q", sql)
 	}
 	return sel.SelectItems[0].Expr, nil
+}
+
+// extractFilterPredicates replaces the predicate of every filtered aggregation
+// with a placeholder kept in predicates, because the ClickHouse parser cannot
+// read the filter grammar (EXISTS, CONTAINS, keys with hyphens). Unbalanced
+// input is returned unchanged for the parser to reject.
+func extractFilterPredicates(expr string, predicates map[string]string) string {
+	var out strings.Builder
+	written := 0
+	for i := 0; i < len(expr); i++ {
+		c := expr[i]
+		if c == '\'' || c == '"' || c == '`' {
+			end := skipQuoted(expr, i)
+			if end < 0 {
+				return expr
+			}
+			i = end
+			continue
+		}
+		if !isIdentifierStart(c) || (i > 0 && (isIdentifierPart(expr[i-1]) || expr[i-1] == '.')) {
+			continue
+		}
+		nameEnd := i
+		for nameEnd < len(expr) && isIdentifierPart(expr[nameEnd]) {
+			nameEnd++
+		}
+		open := nameEnd
+		for open < len(expr) && strings.ContainsRune(" \t\r\n", rune(expr[open])) {
+			open++
+		}
+		aggFunc, ok := AggreFuncMap[valuer.NewString(strings.ToLower(expr[i:nameEnd]))]
+		if !ok || !aggFunc.FuncCombinator || open == len(expr) || expr[open] != '(' {
+			i = nameEnd - 1
+			continue
+		}
+		lastComma, closing := scanArguments(expr, open)
+		if closing < 0 {
+			return expr
+		}
+		predicateStart := open + 1
+		if lastComma >= 0 {
+			predicateStart = lastComma + 1
+		}
+		if predicate := strings.TrimSpace(expr[predicateStart:closing]); predicate != "" {
+			placeholder := fmt.Sprintf("%s%d", filterPredicatePlaceholderPrefix, len(predicates))
+			predicates[placeholder] = predicate
+			out.WriteString(expr[written : open+1])
+			out.WriteString(extractFilterPredicates(expr[open+1:predicateStart], predicates))
+			out.WriteString(placeholder)
+			written = closing
+		}
+		i = closing
+	}
+	out.WriteString(expr[written:])
+	return out.String()
+}
+
+// scanArguments returns the last top-level comma and the closing parenthesis
+// of the argument list that opens at open, or -1 for either when absent.
+func scanArguments(expr string, open int) (int, int) {
+	lastComma, depth := -1, 0
+	for i := open + 1; i < len(expr); i++ {
+		switch expr[i] {
+		case '\'', '"', '`':
+			end := skipQuoted(expr, i)
+			if end < 0 {
+				return -1, -1
+			}
+			i = end
+		case '(', '[':
+			depth++
+		case ']':
+			depth--
+		case ')':
+			if depth == 0 {
+				return lastComma, i
+			}
+			depth--
+		case ',':
+			if depth == 0 {
+				lastComma = i
+			}
+		}
+	}
+	return -1, -1
+}
+
+// skipQuoted returns the index of the quote closing the one at start, honoring
+// backslash escapes and doubled quotes, or -1 when it is unterminated.
+func skipQuoted(expr string, start int) int {
+	quote := expr[start]
+	for i := start + 1; i < len(expr); i++ {
+		switch {
+		case expr[i] == '\\':
+			i++
+		case expr[i] == quote && i+1 < len(expr) && expr[i+1] == quote:
+			i++
+		case expr[i] == quote:
+			return i
+		}
+	}
+	return -1
+}
+
+func isIdentifierStart(c byte) bool {
+	return c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+}
+
+func isIdentifierPart(c byte) bool {
+	return isIdentifierStart(c) || (c >= '0' && c <= '9')
 }
