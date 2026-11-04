@@ -128,11 +128,20 @@ function mergeByCode(features) {
 	return { shapes: shapes.sort((a, b) => a.id.localeCompare(b.id)), merged };
 }
 
-/** Lower-cased English names → code, for data that names a state. */
+/**
+ * Lower-cased English names → code, for data that names a state. A main name
+ * outranks a neighbour's alternate spelling of it.
+ */
 function namesOf(members) {
 	const names = {};
+	const mainNames = new Set();
 	for (const { properties: p } of members) {
-		for (const name of [p.name, p.name_en, p.gn_name, p.woe_name]) {
+		const main = p.name?.toLowerCase();
+		if (main && !mainNames.has(main)) {
+			mainNames.add(main);
+			names[main] = p.iso_3166_2;
+		}
+		for (const name of [p.name_en, p.gn_name, p.woe_name]) {
 			if (name) {
 				names[name.toLowerCase()] ??= p.iso_3166_2;
 			}
