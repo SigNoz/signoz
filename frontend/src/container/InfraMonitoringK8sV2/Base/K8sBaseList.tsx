@@ -280,15 +280,6 @@ export function K8sBaseList<
 		[groupBy],
 	);
 
-	useEffect(() => {
-		void logEvent(InfraMonitoringEvents.PageVisited, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.ListPage,
-			category: eventCategory,
-			total: totalCount,
-		});
-	}, [eventCategory, totalCount]);
-
 	const prevSelectedTimeRef = useRef(selectedTime);
 	useEffect(() => {
 		if (prevSelectedTimeRef.current !== selectedTime) {
@@ -491,7 +482,6 @@ export function K8sBaseList<
 
 			<K8sTableToolbar
 				entity={entity}
-				eventCategory={eventCategory}
 				leftFilters={leftFilters}
 				onOpenOptionsDrawer={handleOpenOptionsDrawer}
 			/>

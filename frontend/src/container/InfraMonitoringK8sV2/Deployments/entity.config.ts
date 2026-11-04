@@ -149,7 +149,6 @@ export const deploymentEntityConfig: K8sEntityConfig<
 	},
 	details: {
 		category: InfraMonitoringEntity.DEPLOYMENTS,
-		eventCategory: InfraMonitoringEvents.Deployment,
 		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'deployment',
 		getSelectedItemExpression: k8sDeploymentGetSelectedItemExpression,

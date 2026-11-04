@@ -134,7 +134,6 @@ export const statefulSetEntityConfig: K8sEntityConfig<
 	},
 	details: {
 		category: InfraMonitoringEntity.STATEFULSETS,
-		eventCategory: InfraMonitoringEvents.StatefulSet,
 		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'statefulSet',
 		getSelectedItemExpression: k8sStatefulSetGetSelectedItemExpression,

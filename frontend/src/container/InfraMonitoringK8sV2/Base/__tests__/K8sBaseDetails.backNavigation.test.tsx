@@ -1,6 +1,5 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { InfraMonitoringEvents } from 'constants/events';
 import {
 	NuqsTestingAdapter,
 	type OnUrlUpdateFunction,
@@ -49,7 +48,6 @@ function renderDrawer(onUrlUpdate?: OnUrlUpdateFunction): void {
 		>
 			<K8sBaseDetails<TestEntity>
 				category={InfraMonitoringEntity.CONTAINERS}
-				eventCategory={InfraMonitoringEvents.Pod}
 				getSelectedItemExpression={(): string => "k8s.pod.uid = 'abc'"}
 				fetchEntityData={jest
 					.fn()

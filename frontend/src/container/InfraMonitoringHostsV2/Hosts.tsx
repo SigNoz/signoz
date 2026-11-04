@@ -281,7 +281,6 @@ function Hosts(): JSX.Element {
 			</div>
 			<K8sBaseDetails
 				category={InfraMonitoringEntity.HOSTS}
-				eventCategory={InfraMonitoringEvents.HostEntity}
 				getSelectedItemExpression={hostGetSelectedItemExpression}
 				fetchEntityData={fetchEntityData}
 				getEntityName={hostGetEntityName}

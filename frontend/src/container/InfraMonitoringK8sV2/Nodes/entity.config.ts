@@ -132,7 +132,6 @@ export const nodeEntityConfig: K8sEntityConfig<
 	},
 	details: {
 		category: InfraMonitoringEntity.NODES,
-		eventCategory: InfraMonitoringEvents.Node,
 		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'node',
 		getSelectedItemExpression: k8sNodeGetSelectedItemExpression,

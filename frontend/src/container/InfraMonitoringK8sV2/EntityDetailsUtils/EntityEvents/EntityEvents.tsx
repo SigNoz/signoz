@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { Table, TableColumnsType } from 'antd';
-import logEvent from 'api/common/logEvent';
 import {
 	QuerySearchV2Provider,
 	useExpression,
@@ -16,7 +15,6 @@ import {
 	combineInitialAndUserExpression,
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { InfraMonitoringEvents } from 'constants/events';
 import Controls from 'container/Controls';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import LoadingContainer from 'container/InfraMonitoringK8sV2/LoadingContainer';
@@ -52,7 +50,6 @@ interface EventDataType {
 }
 
 interface Props {
-	eventEntity: string;
 	queryKey: string;
 	category: InfraMonitoringEntity;
 	initialExpression: string;
@@ -67,7 +64,6 @@ const handleExpandRow = (record: EventDataType): JSX.Element => (
 );
 
 function EntityEventsContent({
-	eventEntity,
 	queryKey,
 	category,
 }: Omit<Props, 'initialExpression'>): JSX.Element {
@@ -120,13 +116,6 @@ function EntityEventsContent({
 				saveRecentQueryByExpression(DataSource.LOGS, newUserExpression);
 				querySearchOnRun(newUserExpression || '');
 
-				void logEvent(InfraMonitoringEvents.FilterApplied, {
-					entity: eventEntity,
-					page: InfraMonitoringEvents.DetailedPage,
-					category,
-					view: InfraMonitoringEvents.EventsView,
-				});
-
 				logInfraDrawerFilterCustomizedEvent(
 					category,
 					'events',
@@ -137,14 +126,7 @@ function EntityEventsContent({
 				refetch();
 			}
 		},
-		[
-			inputExpression,
-			initialExpression,
-			refetch,
-			querySearchOnRun,
-			category,
-			eventEntity,
-		],
+		[inputExpression, initialExpression, refetch, querySearchOnRun, category],
 	);
 
 	const queryData = useMemo(
@@ -232,11 +214,7 @@ function EntityEventsContent({
 		<div className={styles.container}>
 			<div className={styles.filterContainer}>
 				<div className={styles.filterContainerTime}>
-					<EntityDateTimeSelector
-						eventEntity={eventEntity}
-						category={category}
-						view={InfraMonitoringEvents.EventsView}
-					/>
+					<EntityDateTimeSelector category={category} />
 
 					<RunQueryBtn
 						isLoadingQueries={isFetching}

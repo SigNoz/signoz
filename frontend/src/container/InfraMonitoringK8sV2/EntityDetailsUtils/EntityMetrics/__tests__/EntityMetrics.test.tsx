@@ -293,7 +293,6 @@ const renderEntityMetrics = (overrides = {}): any => {
 		<TestRouter>
 			<EntityMetrics
 				entity={defaultProps.entity}
-				eventEntity="test"
 				entityWidgetInfo={defaultProps.entityWidgetInfo}
 				getEntityQueryPayload={defaultProps.getEntityQueryPayload}
 				queryKey={defaultProps.queryKey}

@@ -42,14 +42,12 @@ import { useTimezone } from 'providers/Timezone';
 import { logInfraDrawerFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 
 interface Props {
-	eventEntity: string;
 	queryKey: string;
 	category: InfraMonitoringEntity;
 	initialExpression: string;
 }
 
 function EntityTracesContent({
-	eventEntity,
 	queryKey,
 	category,
 }: Omit<Props, 'initialExpression'>): JSX.Element {
@@ -102,13 +100,6 @@ function EntityTracesContent({
 				saveRecentQueryByExpression(DataSource.TRACES, newUserExpression);
 				querySearchOnRun(newUserExpression || '');
 
-				void logEvent(InfraMonitoringEvents.FilterApplied, {
-					entity: eventEntity,
-					page: InfraMonitoringEvents.DetailedPage,
-					category,
-					view: InfraMonitoringEvents.TracesView,
-				});
-
 				logInfraDrawerFilterCustomizedEvent(
 					category,
 					'traces',
@@ -119,14 +110,7 @@ function EntityTracesContent({
 				refetch();
 			}
 		},
-		[
-			inputExpression,
-			initialExpression,
-			refetch,
-			querySearchOnRun,
-			category,
-			eventEntity,
-		],
+		[inputExpression, initialExpression, refetch, querySearchOnRun, category],
 	);
 
 	const queryData = useMemo(
@@ -171,11 +155,7 @@ function EntityTracesContent({
 		<div className={styles.container}>
 			<div className={styles.filterContainer}>
 				<div className={styles.filterContainerTime}>
-					<EntityDateTimeSelector
-						eventEntity={eventEntity}
-						category={category}
-						view={InfraMonitoringEvents.TracesView}
-					/>
+					<EntityDateTimeSelector category={category} />
 
 					<RunQueryBtn
 						isLoadingQueries={isFetching}

@@ -134,7 +134,6 @@ export const daemonSetEntityConfig: K8sEntityConfig<
 	},
 	details: {
 		category: InfraMonitoringEntity.DAEMONSETS,
-		eventCategory: InfraMonitoringEvents.DaemonSet,
 		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'daemonset',
 		getSelectedItemExpression: k8sDaemonSetGetSelectedItemExpression,

@@ -126,7 +126,6 @@ export const volumeEntityConfig: K8sEntityConfig<
 	},
 	details: {
 		category: InfraMonitoringEntity.VOLUMES,
-		eventCategory: InfraMonitoringEvents.Volume,
 		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'volume',
 		getSelectedItemExpression: k8sVolumeGetSelectedItemExpression,
