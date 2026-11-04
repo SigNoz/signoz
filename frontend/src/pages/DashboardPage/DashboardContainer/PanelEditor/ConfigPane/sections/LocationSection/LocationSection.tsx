@@ -12,6 +12,7 @@ import type {
 	SectionEditorProps,
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
+import { EQueryType } from 'types/common/dashboard';
 
 import type { TableColumnOption } from '../../../hooks/useTableColumns';
 import type { SectionEditorContext } from '../../sectionContext';
@@ -48,7 +49,7 @@ const NO_TABLE_COLUMNS: TableColumnOption[] = [];
 type LocationSectionProps = SectionEditorProps<SectionKind.Location> &
 	Pick<
 		SectionEditorContext,
-		'groupColumns' | 'tableColumns' | 'geoMapPlacement'
+		'groupColumns' | 'tableColumns' | 'geoMapPlacement' | 'queryType'
 	>;
 
 /**
@@ -62,6 +63,7 @@ function LocationSection({
 	groupColumns: groupByColumns = NO_GROUP_COLUMNS,
 	tableColumns = NO_TABLE_COLUMNS,
 	geoMapPlacement,
+	queryType,
 }: LocationSectionProps): JSX.Element {
 	const addGroupBy = useAddGroupBy();
 	const data = geoMapPlacement?.data;
@@ -90,7 +92,15 @@ function LocationSection({
 				})),
 		[tableColumns, coordinateColumns],
 	);
-	const hasGroupBy = groupColumns.length > 0;
+	// SQL can return coordinates under any name, so points may bind any column.
+	const locationColumns = useMemo(
+		() =>
+			kind === RowKind.Point && queryType === EQueryType.CLICKHOUSE
+				? [...groupByColumns, ...tableColumns.map((column) => column.key)]
+				: groupColumns,
+		[kind, queryType, groupByColumns, tableColumns, groupColumns],
+	);
+	const hasGroupBy = locationColumns.length > 0;
 	const viewCountry = value?.map?.viewCountry;
 	const detected = useMemo(
 		() => detectLocationColumns(groupColumns),
@@ -163,7 +173,7 @@ function LocationSection({
 				<LocationColumns
 					kind={kind}
 					location={value?.location}
-					groupColumns={groupColumns}
+					groupColumns={locationColumns}
 					autoColumn={autoColumn}
 					onChange={setLocation}
 				/>
