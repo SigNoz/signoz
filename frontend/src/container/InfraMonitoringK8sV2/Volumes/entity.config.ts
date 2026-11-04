@@ -7,7 +7,6 @@ import {
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
-import { InfraMonitoringEvents } from 'constants/events';
 
 import { K8sEntityConfig } from '../Base/entity.config.types';
 import { K8sBaseFilters, K8sDetailsFilters } from '../Base/types';
@@ -117,7 +116,6 @@ export const volumeEntityConfig: K8sEntityConfig<
 > = {
 	list: {
 		entity: InfraMonitoringEntity.VOLUMES,
-		eventCategory: InfraMonitoringEvents.Volumes,
 		tableColumns: k8sVolumesColumnsConfig,
 		fetchListData,
 		getRowKey: getK8sVolumeRowKey,

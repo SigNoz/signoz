@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Typography } from '@signozhq/ui/typography';
-import logEvent from 'api/common/logEvent';
 import TanStackTable, {
 	SortState,
 	TableColumnDef,
@@ -10,7 +9,6 @@ import TanStackTable, {
 	useRecoverFromEmptyPage,
 	useTableParams,
 } from 'components/TanStackTableView';
-import { InfraMonitoringEvents } from 'constants/events';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
@@ -51,6 +49,7 @@ import styles from './K8sBaseList.module.scss';
 import cx from 'classnames';
 import {
 	logInfraColumnSortedEvent,
+	logInfraListRowClickedEvent,
 	logInfraTimeRangeCustomizedEvent,
 } from 'container/InfraMonitoringK8sV2/Base/events';
 
@@ -92,7 +91,6 @@ export type K8sBaseListProps<
 	getRowKey: (record: T) => string;
 	/** Function to get the item key used for selection. Can return string or SelectedItemParams. */
 	getItemKey: (record: T) => TItemKey;
-	eventCategory: InfraMonitoringEvents;
 	renderEmptyState?: (
 		context: K8sBaseListEmptyStateContext,
 	) => React.ReactNode | null;
@@ -115,7 +113,6 @@ export function K8sBaseList<
 	fetchListData,
 	getRowKey,
 	getItemKey,
-	eventCategory,
 	renderEmptyState,
 	extraQueryKeyParts = [],
 	detailsQueryKeyPrefix,
@@ -317,14 +314,10 @@ export function K8sBaseList<
 				setSelectedItemParams(params);
 			}
 
-			void logEvent(InfraMonitoringEvents.ItemClicked, {
-				entity: InfraMonitoringEvents.K8sEntity,
-				page: InfraMonitoringEvents.ListPage,
-				category: eventCategory,
-			});
+			logInfraListRowClickedEvent(entity, false, groupBy.length > 0);
 		},
 		[
-			eventCategory,
+			entity,
 			groupBy.length,
 			setSelectedItemParams,
 			detailsQueryKeyPrefix,
@@ -376,13 +369,9 @@ export function K8sBaseList<
 			}
 			openInNewTab(url.pathname + url.search);
 
-			void logEvent(InfraMonitoringEvents.ItemClicked, {
-				entity: InfraMonitoringEvents.K8sEntity,
-				page: InfraMonitoringEvents.ListPage,
-				category: eventCategory,
-			});
+			logInfraListRowClickedEvent(entity, true, false);
 		},
-		[eventCategory, groupBy.length],
+		[entity, groupBy.length],
 	);
 
 	const isGroupedByAttribute = groupBy.length > 0;

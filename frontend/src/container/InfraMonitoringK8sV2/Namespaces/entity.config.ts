@@ -7,7 +7,6 @@ import {
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
-import { InfraMonitoringEvents } from 'constants/events';
 import { createPodMetricsTab } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/createPodMetricsTab';
 
 import { K8sEntityConfig } from '../Base/entity.config.types';
@@ -136,7 +135,6 @@ export const namespaceEntityConfig: K8sEntityConfig<
 > = {
 	list: {
 		entity: InfraMonitoringEntity.NAMESPACES,
-		eventCategory: InfraMonitoringEvents.Namespace,
 		tableColumns: k8sNamespacesColumnsConfig,
 		fetchListData,
 		getRowKey: getK8sNamespaceRowKey,

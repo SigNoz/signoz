@@ -8,21 +8,3 @@ export enum Events {
 	TOOLTIP_CONTENT_SCROLLED = 'TOOLTIP_CONTENT_SCROLLED',
 	TOOLTIP_SYNC_MODE_CHANGED = 'TOOLTIP_SYNC_MODE_CHANGED',
 }
-
-export enum InfraMonitoringEvents {
-	ItemClicked = 'Infra Monitoring: item clicked',
-	HostEntity = 'host',
-	K8sEntity = 'k8s',
-	ListPage = 'list',
-	TracesView = 'traces',
-	Cluster = 'cluster',
-	Container = 'container',
-	DaemonSet = 'daemonSet',
-	Deployment = 'deployment',
-	Job = 'job',
-	Namespace = 'namespace',
-	Node = 'node',
-	Pod = 'pod',
-	StatefulSet = 'statefulSet',
-	Volumes = 'volumes',
-}

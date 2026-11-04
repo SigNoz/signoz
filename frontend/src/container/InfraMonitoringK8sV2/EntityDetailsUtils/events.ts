@@ -49,3 +49,11 @@ export function logInfraDrawerTabViewedEvent(
 		is_default_tab: isDefaultTab,
 	});
 }
+
+export function logInfraDrawerTraceClickedEvent(
+	entityType: InfraMonitoringEntity,
+): void {
+	void logEvent('Infra Monitoring: Drawer trace clicked', {
+		entityType,
+	});
+}

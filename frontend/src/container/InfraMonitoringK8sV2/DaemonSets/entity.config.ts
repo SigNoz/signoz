@@ -7,7 +7,6 @@ import {
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
-import { InfraMonitoringEvents } from 'constants/events';
 
 import { K8sEntityConfig } from '../Base/entity.config.types';
 import { K8sBaseFilters, K8sDetailsFilters } from '../Base/types';
@@ -125,7 +124,6 @@ export const daemonSetEntityConfig: K8sEntityConfig<
 > = {
 	list: {
 		entity: InfraMonitoringEntity.DAEMONSETS,
-		eventCategory: InfraMonitoringEvents.DaemonSet,
 		tableColumns: k8sDaemonSetsColumnsConfig,
 		fetchListData,
 		getRowKey: getK8sDaemonSetRowKey,

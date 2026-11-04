@@ -115,3 +115,15 @@ export function logInfraExplorerNavigatedEvent(params: {
 		drawer_duration_ms_at_navigation: params.drawerDurationMsAtNavigation,
 	});
 }
+
+export function logInfraListRowClickedEvent(
+	entityType: InfraMonitoringEntity,
+	openedInNewTab: boolean,
+	isGrouped: boolean,
+): void {
+	void logEvent('Infra Monitoring: List row clicked', {
+		entityType,
+		openedInNewTab,
+		isGrouped,
+	});
+}
