@@ -527,7 +527,7 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 			errMsg:  "expression cannot be blank",
 		},
 		{
-			name: "formula with negative limit should return error",
+			name: "Formula_NegativeLimit_Rejected",
 			request: QueryRangeRequest{
 				Start:       1640995200000,
 				End:         1640998800000,
@@ -724,7 +724,7 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 			errMsg:  "raw request type is not supported for metric queries",
 		},
 		{
-			name: "raw request with empty order key should return error",
+			name: "Raw_EmptyOrderKey_Rejected",
 			request: QueryRangeRequest{
 				Start:       1640995200000,
 				End:         1640998800000,
