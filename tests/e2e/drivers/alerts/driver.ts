@@ -38,6 +38,7 @@ import {
 } from './configuration';
 import { alertSeeder, type AlertSeeder } from './seed';
 import type { TimelineItem, TimelineResponse } from './types';
+import { wheelTo } from '../scroll';
 
 /**
  * The alerts driver: one object per surface, all bound to one page.
@@ -520,6 +521,7 @@ export function alertsDriver(page: Page): Alerts {
 			page.getByTestId('threshold-value-input').nth(index),
 
 		selectThresholdChannel: async (index, channelName) => {
+			await wheelTo(form.thresholdChannelSelects().nth(index));
 			await antd.pickByName(
 				form.thresholdChannelSelects().nth(index),
 				channelName,
@@ -533,6 +535,7 @@ export function alertsDriver(page: Page): Alerts {
 		 * and without that a second call waits forever for the add button.
 		 */
 		addLabel: async (key, value) => {
+			await wheelTo(page.getByTestId('alert-add-label-button'));
 			await page.getByTestId('alert-add-label-button').click();
 			const input = page.getByTestId('alert-add-label-input');
 			await input.fill(key);
@@ -556,6 +559,7 @@ export function alertsDriver(page: Page): Alerts {
 		 */
 		expandAdvancedOptions: async () => {
 			const header = page.getByRole('button', { name: /ADVANCED OPTIONS/i });
+			await wheelTo(header);
 			if ((await header.getAttribute('aria-expanded')) !== 'true') {
 				await header.click();
 			}
@@ -570,6 +574,7 @@ export function alertsDriver(page: Page): Alerts {
 		// The popover's content is only in the DOM while open, so every option
 		// lookup has to come after this.
 		openEvaluationSettings: async () => {
+			await wheelTo(form.evaluationSettingsButton());
 			await form.evaluationSettingsButton().click();
 			await expect(page.locator('.evaluation-window-popover')).toBeVisible();
 		},
@@ -659,6 +664,7 @@ export function alertsDriver(page: Page): Alerts {
 
 		openChannelDropdown: async (index = 0) => {
 			const select = form.thresholdChannelSelects().nth(index);
+			await wheelTo(select);
 			await select.click();
 			const dropdown = await antd.ownDropdown(select);
 			return {
