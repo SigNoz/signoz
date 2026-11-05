@@ -513,6 +513,36 @@ func TestStatementBuilder(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			name:        "test_gauge_group_by_unknown_le_warns",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Signal:       telemetrytypes.SignalMetrics,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.MetricAggregation{
+					{
+						MetricName:       "system.memory.usage",
+						Type:             metrictypes.GaugeType,
+						Temporality:      metrictypes.Unspecified,
+						TimeAggregation:  metrictypes.TimeAggregationMax,
+						SpaceAggregation: metrictypes.SpaceAggregationMax,
+					},
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name: "le",
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query:    "WITH __temporal_aggregation_cte AS (SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts, `le`, max(value) AS per_series_value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) GROUP BY fingerprint, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY fingerprint, ts, `le` ORDER BY fingerprint, ts), __spatial_aggregation_cte AS (SELECT ts, `le`, max(per_series_value) AS value FROM __temporal_aggregation_cte WHERE isNaN(per_series_value) = ? GROUP BY ts, `le`) SELECT * FROM __spatial_aggregation_cte ORDER BY `le`, ts",
+				Args:     []any{"system.memory.usage", uint64(1747936800000), uint64(1747983420000), "unspecified", "system.memory.usage", uint64(1747947360000), uint64(1747983420000), 0},
+				Warnings: []string{"key `le` not found in metadata; querying the underlying data directly. If this is unexpected, check the key name for typos."},
+			},
+			expectedErr: nil,
+		},
+		{
 			name:        "test_histogram_percentile2",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{

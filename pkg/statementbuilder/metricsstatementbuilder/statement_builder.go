@@ -552,7 +552,7 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 			return "", nil, nil, err
 		}
 		// the histogram rewrite adds le itself, so its warning is not the caller's
-		if !isHistogramBucket(g) {
+		if query.Aggregations[0].Type != metrictypes.HistogramType || !isHistogramBucket(g) {
 			columnWarnings = append(columnWarnings, keyWarnings...)
 		}
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", col, GroupByColumnAlias(i, g.Name))))
