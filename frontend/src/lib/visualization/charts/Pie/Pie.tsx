@@ -152,6 +152,28 @@ export default function Pie({
 			? (drawnColorByLabel.get(labels[focusedSeriesIndex]) ?? null)
 			: null);
 
+	// The tooltip re-renders Pie on every mouse move; a stable element lets React skip the legend.
+	const legend = useMemo(
+		() => (
+			<Legend
+				items={legendItems}
+				position={position}
+				averageLegendWidth={averageLegendWidth}
+				showSearch={showLegendSearch}
+				focusedSeriesIndex={focusedSeriesIndex}
+				onAction={onLegendAction}
+			/>
+		),
+		[
+			legendItems,
+			position,
+			averageLegendWidth,
+			showLegendSearch,
+			focusedSeriesIndex,
+			onLegendAction,
+		],
+	);
+
 	const formatValue = useCallback(
 		(value: number): string =>
 			getYAxisFormattedValue(
@@ -387,14 +409,7 @@ export default function Pie({
 					height: legendHeight,
 				}}
 			>
-				<Legend
-					items={legendItems}
-					position={position}
-					averageLegendWidth={averageLegendWidth}
-					showSearch={showLegendSearch}
-					focusedSeriesIndex={focusedSeriesIndex}
-					onAction={onLegendAction}
-				/>
+				{legend}
 			</div>
 		</div>
 	);

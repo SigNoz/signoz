@@ -14,6 +14,8 @@ jest.mock('components/Graph/yAxisConfig', () => ({
 	getYAxisFormattedValue: jest.fn((value: string) => value),
 }));
 
+let mockLegendRenders = 0;
+
 // Virtuoso only renders a window in jsdom; render every item so we can
 // assert on legend entries and tooltip rows.
 jest.mock('react-virtuoso', () => ({
@@ -40,6 +42,7 @@ jest.mock('react-virtuoso', () => ({
 		data: LegendItem[];
 		itemContent: (index: number, item: LegendItem) => React.ReactNode;
 	}): JSX.Element => {
+		mockLegendRenders += 1;
 		return (
 			<div data-testid="virtuoso-grid">
 				{data.map((item, index) => (
@@ -161,6 +164,18 @@ describe('Pie', () => {
 		renderPie();
 		fireEvent.mouseEnter(arc());
 		expect(screen.queryByTestId('pie-tooltip-footer')).toBeNull();
+	});
+
+	it('does not re-render the legend while the tooltip follows the cursor', () => {
+		renderPie();
+		const arc = screen.getByTestId('pie').querySelectorAll('svg g g')[0];
+		fireEvent.mouseEnter(arc, { clientX: 10, clientY: 10 });
+		const rendersAfterEnter = mockLegendRenders;
+
+		fireEvent.mouseMove(arc, { clientX: 20, clientY: 20 });
+		fireEvent.mouseMove(arc, { clientX: 30, clientY: 30 });
+
+		expect(mockLegendRenders).toBe(rendersAfterEnter);
 	});
 
 	describe('grouped slice', () => {
