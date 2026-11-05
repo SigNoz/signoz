@@ -151,7 +151,7 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		ctx, cancel = context.WithTimeout(ctx, q.limits.MaxExecutionTime)
 		defer cancel()
 	}
-	ctx = telemetrystore.NewContextWithQuerySettings(ctx, q.limits.settings())
+	ctx = telemetrystore.NewContextWithQuerySettings(ctx, q.limits.settings(q.kind))
 
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, q.args...)
 	if err != nil {
@@ -177,12 +177,13 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 
 // settings returns the limits as ClickHouse query settings. A SETTINGS clause in the user's SQL
 // overrides them. MaxExecutionTime is a context deadline instead.
-func (config ClickHouseQueryConfig) settings() clickhouse.Settings {
+func (config ClickHouseQueryConfig) settings(requestType qbtypes.RequestType) clickhouse.Settings {
 	settings := clickhouse.Settings{}
 	if config.MaxMemoryUsage > 0 {
 		settings["max_memory_usage"] = config.MaxMemoryUsage
 	}
-	if config.MaxResultRows > 0 {
+	// Other request types return one row per series and point; MaxResultBytes bounds them.
+	if config.MaxResultRows > 0 && requestType == qbtypes.RequestTypeRaw {
 		settings["max_result_rows"] = config.MaxResultRows
 		settings["result_overflow_mode"] = "throw"
 	}

@@ -28,6 +28,24 @@ def test_clickhouse_query_within_budget(
     assert len(response.json()["data"]["data"]["results"][0]["rows"]) == 1000
 
 
+def test_clickhouse_query_row_limit_only_for_raw(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    now = datetime.now(tz=UTC)
+    response = make_query_request(
+        signoz,
+        get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD),
+        int((now - timedelta(hours=1)).timestamp() * 1000),
+        int(now.timestamp() * 1000),
+        [{"type": "clickhouse_sql", "spec": {"name": "A", "query": "SELECT toString(number) AS k, toFloat64(number) AS __result_0 FROM numbers(2000)"}}],
+        request_type=RequestType.SCALAR,
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+
+
 @pytest.mark.parametrize(
     "query, expected_status, expected_code, expected_suggestion",
     [
