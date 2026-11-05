@@ -138,7 +138,8 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		instrumentationtypes.CodeFunctionName: "buildAndRunQuery",
 	})
 
-	v5Result, err := r.querier.QueryRange(ctx, orgID, params)
+	// Rules run their ClickHouse SQL without the query_range API limits.
+	v5Result, err := r.querier.QueryRange(ctx, orgID, params, querier.WithClickHouseQueryLimits(querier.ClickHouseQueryConfig{}))
 	if err != nil {
 		return nil, err
 	}

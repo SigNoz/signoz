@@ -70,7 +70,7 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	queryRangeResponse, err := handler.querier.QueryRange(newContextWithClickHouseQueryBudget(ctx), orgID, &queryRangeRequest)
+	queryRangeResponse, err := handler.querier.QueryRange(ctx, orgID, &queryRangeRequest)
 	if err != nil {
 		render.Error(rw, err)
 		return

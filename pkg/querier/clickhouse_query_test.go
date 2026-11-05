@@ -1,7 +1,6 @@
 package querier
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -35,26 +34,6 @@ func TestClickHouseQueryConfigSettings(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			assert.Equal(t, testCase.want, testCase.config.settings())
-		})
-	}
-}
-
-func TestChSQLQueryBudgetFor(t *testing.T) {
-	budget := ClickHouseQueryConfig{MaxExecutionTime: time.Second, MaxResultRows: 10}
-	query := &chSQLQuery{budget: budget}
-
-	testCases := []struct {
-		name string
-		ctx  context.Context
-		want ClickHouseQueryConfig
-	}{
-		{name: "QueryRangeAPI_Budget", ctx: newContextWithClickHouseQueryBudget(context.Background()), want: budget},
-		{name: "InternalCaller_NoBudget", ctx: context.Background(), want: ClickHouseQueryConfig{}},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.want, query.budgetFor(testCase.ctx))
 		})
 	}
 }

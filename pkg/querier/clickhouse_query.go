@@ -30,7 +30,7 @@ type chSQLQuery struct {
 	toMS   uint64
 	kind   qbtypes.RequestType
 	vars   map[string]qbtypes.VariableItem
-	budget ClickHouseQueryConfig
+	limits ClickHouseQueryConfig
 }
 
 var _ qbtypes.Query = (*chSQLQuery)(nil)
@@ -44,7 +44,7 @@ func newchSQLQuery(
 	tr qbtypes.TimeRange,
 	kind qbtypes.RequestType,
 	variables map[string]qbtypes.VariableItem,
-	budget ClickHouseQueryConfig,
+	limits ClickHouseQueryConfig,
 ) *chSQLQuery {
 	return &chSQLQuery{
 		logger:         logger,
@@ -55,7 +55,7 @@ func newchSQLQuery(
 		toMS:           tr.To,
 		kind:           kind,
 		vars:           variables,
-		budget:         budget,
+		limits:         limits,
 	}
 }
 
@@ -144,13 +144,12 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		return nil, err
 	}
 
-	budget := q.budgetFor(ctx)
-	if budget.MaxExecutionTime > 0 {
+	if q.limits.MaxExecutionTime > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = telemetrystore.NewContextWithQueryTimeout(ctx, budget.MaxExecutionTime)
+		ctx, cancel = telemetrystore.NewContextWithQueryTimeout(ctx, q.limits.MaxExecutionTime)
 		defer cancel()
 	}
-	ctx = telemetrystore.NewContextWithQuerySettings(ctx, budget.settings())
+	ctx = telemetrystore.NewContextWithQuerySettings(ctx, q.limits.settings())
 
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, q.args...)
 	if err != nil {
@@ -174,7 +173,7 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	}, nil
 }
 
-// settings returns the budget as ClickHouse query settings. A SETTINGS clause in the user's SQL
+// settings returns the limits as ClickHouse query settings. A SETTINGS clause in the user's SQL
 // overrides them. MaxExecutionTime is a context deadline instead.
 func (c ClickHouseQueryConfig) settings() clickhouse.Settings {
 	settings := clickhouse.Settings{}
@@ -190,19 +189,4 @@ func (c ClickHouseQueryConfig) settings() clickhouse.Settings {
 		settings["result_overflow_mode"] = "throw"
 	}
 	return settings
-}
-
-type clickHouseQueryBudgetKey struct{}
-
-// newContextWithClickHouseQueryBudget applies the ClickHouse SQL query budget to the queries run with ctx.
-// Internal callers, such as alert rules, do not set it and run without the budget.
-func newContextWithClickHouseQueryBudget(ctx context.Context) context.Context {
-	return context.WithValue(ctx, clickHouseQueryBudgetKey{}, struct{}{})
-}
-
-func (q *chSQLQuery) budgetFor(ctx context.Context) ClickHouseQueryConfig {
-	if ctx.Value(clickHouseQueryBudgetKey{}) == nil {
-		return ClickHouseQueryConfig{}
-	}
-	return q.budget
 }

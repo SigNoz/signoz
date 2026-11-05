@@ -231,7 +231,7 @@ func (q *querier) buildPreviewProviders(
 			sub.CompositeQuery = qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{query}}
 		}
 
-		built, _, bErr := q.buildQueries(orgID, &sub, deps, missingMetricQuerySet, event)
+		built, _, bErr := q.buildQueries(orgID, &sub, deps, missingMetricQuerySet, event, q.clickHouseQueryBudget)
 		if bErr != nil {
 			errs[name] = bErr
 			continue
