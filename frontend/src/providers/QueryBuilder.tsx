@@ -1001,14 +1001,19 @@ export function QueryBuilderProvider({
 			);
 
 			if (searchParams) {
-				Object.keys(searchParams).forEach((param) =>
+				Object.keys(searchParams).forEach((param) => {
+					// null removes the param instead of writing "null".
+					if (searchParams[param] === null) {
+						urlQuery.delete(param);
+						return;
+					}
 					urlQuery.set(
 						param,
 						shouldNotStringify
 							? (searchParams[param] as string)
 							: JSON.stringify(searchParams[param]),
-					),
-				);
+					);
+				});
 			}
 			// Remove Hidden Filters from URL query parameters on query change
 			urlQuery.delete(QueryParams.activeLogId);
