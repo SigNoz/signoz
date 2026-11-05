@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"maps"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -20,7 +21,28 @@ var (
 	CodeReadingFunction    = errors.MustNewCode("clickhouse_sql_reading_function")
 	CodeInternalDatabase   = errors.MustNewCode("clickhouse_sql_internal_database")
 	CodeReadonlyOverride   = errors.MustNewCode("clickhouse_sql_readonly_override")
+	CodeLimitOverride      = errors.MustNewCode("clickhouse_sql_limit_override")
 )
+
+// limitSettings bound a query's time, memory, reads and result. The caller applies them, and a
+// query-level setting takes precedence over the context setting.
+//
+// Keyed by the lowercased name, since ClickHouse resolves setting names case-insensitively.
+var limitSettings = map[string]struct{}{
+	"max_execution_time":      {},
+	"max_execution_time_leaf": {},
+	"timeout_overflow_mode":   {},
+	"max_memory_usage":        {},
+	"max_bytes_to_read":       {},
+	"read_overflow_mode":      {},
+	"max_result_rows":         {},
+	"max_result_bytes":        {},
+	"result_overflow_mode":    {},
+}
+
+// settingsOverrideRe is the fallback for SQL the parser cannot read: a SETTINGS keyword followed
+// anywhere by an assignment to readonly or a limit setting.
+var settingsOverrideRe = regexp.MustCompile(`(?is)\bsettings\b.*\b(readonly|` + strings.Join(slices.Sorted(maps.Keys(limitSettings)), "|") + `)\b\s*=`)
 
 // internalDatabases hold server metadata, credentials and grants rather than telemetry.
 var internalDatabases = map[string]struct{}{
@@ -144,10 +166,7 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 			}
 
 		case *chparser.SettingExpr:
-			// A query-level setting takes precedence over the context setting.
-			if strings.EqualFold(expr.Name.Name, "readonly") {
-				return errors.NewInvalidInputf(CodeReadonlyOverride, "the ClickHouse readonly setting cannot be overridden")
-			}
+			return errIfSettingOverridden(expr.Name.Name)
 		}
 
 		return nil
@@ -156,11 +175,61 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 	return selectQuery.Accept(visitor)
 }
 
+// ErrIfStatementOverridesSettings refuses a SETTINGS clause, at any depth, that assigns readonly or
+// a limit setting. Unlike ErrIfStatementIsNotValid it is safe to enforce: SQL the parser cannot read
+// falls back to a lexical match instead of being refused.
+func ErrIfStatementOverridesSettings(query string) (err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = errIfSettingsOverriddenLexically(query)
+		}
+	}()
+
+	stmts, parseErr := chparser.NewParser(query).ParseStmts()
+	if parseErr != nil {
+		return errIfSettingsOverriddenLexically(query)
+	}
+
+	visitor := &chparser.DefaultASTVisitor{Visit: func(node chparser.Expr) error {
+		if expr, ok := node.(*chparser.SettingExpr); ok {
+			return errIfSettingOverridden(expr.Name.Name)
+		}
+		return nil
+	}}
+
+	for _, stmt := range stmts {
+		if err := stmt.Accept(visitor); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // TODO(@therealpandey): remove this and move to ErrIfStatementIsNotValid.
 func LogIfStatementIsNotValid(ctx context.Context, logger *slog.Logger, query string) {
 	if err := ErrIfStatementIsNotValid(query); err != nil {
 		logger.WarnContext(ctx, "clickhouse sql is not valid", errors.Attr(err), slog.String("query", query))
 	}
+}
+
+func errIfSettingOverridden(name string) error {
+	if strings.EqualFold(name, "readonly") {
+		return errors.NewInvalidInputf(CodeReadonlyOverride, "the ClickHouse readonly setting cannot be overridden")
+	}
+
+	if _, ok := limitSettings[strings.ToLower(name)]; ok {
+		return errors.NewInvalidInputf(CodeLimitOverride, "the ClickHouse %s setting cannot be overridden", name)
+	}
+
+	return nil
+}
+
+func errIfSettingsOverriddenLexically(query string) error {
+	match := settingsOverrideRe.FindStringSubmatch(query)
+	if match == nil {
+		return nil
+	}
+	return errIfSettingOverridden(match[1])
 }
 
 func errIfFunctionReads(name string) error {
