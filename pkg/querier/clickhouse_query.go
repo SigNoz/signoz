@@ -177,17 +177,17 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 
 // settings returns the limits as ClickHouse query settings. A SETTINGS clause in the user's SQL
 // overrides them. MaxExecutionTime is a context deadline instead.
-func (c ClickHouseQueryConfig) settings() clickhouse.Settings {
+func (config ClickHouseQueryConfig) settings() clickhouse.Settings {
 	settings := clickhouse.Settings{}
-	if c.MaxMemoryUsage > 0 {
-		settings["max_memory_usage"] = c.MaxMemoryUsage
+	if config.MaxMemoryUsage > 0 {
+		settings["max_memory_usage"] = config.MaxMemoryUsage
 	}
-	if c.MaxResultRows > 0 {
-		settings["max_result_rows"] = c.MaxResultRows
+	if config.MaxResultRows > 0 {
+		settings["max_result_rows"] = config.MaxResultRows
 		settings["result_overflow_mode"] = "throw"
 	}
-	if c.MaxResultBytes > 0 {
-		settings["max_result_bytes"] = c.MaxResultBytes
+	if config.MaxResultBytes > 0 {
+		settings["max_result_bytes"] = config.MaxResultBytes
 		settings["result_overflow_mode"] = "throw"
 	}
 	return settings

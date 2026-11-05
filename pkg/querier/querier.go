@@ -45,7 +45,6 @@ type Querier interface {
 	QueryRangePreview(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, opts qbtypes.QueryRangePreviewOptions) (*qbtypes.QueryRangePreviewResponse, error)
 }
 
-// QueryRangeOption changes how one QueryRange call runs.
 type QueryRangeOption func(*queryRangeOptions)
 
 // WithClickHouseQueryLimits replaces the configured querier.clickhouse_query limits for the ClickHouse SQL queries

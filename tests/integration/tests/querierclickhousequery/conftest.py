@@ -16,7 +16,6 @@ def signoz_clickhouse_query(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.SigNoz:
-    """SigNoz with a small ClickHouse SQL query budget."""
     return create_signoz(
         network=network,
         zeus=zeus,
