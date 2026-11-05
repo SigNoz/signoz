@@ -586,9 +586,9 @@ export const retryMigration = async (
 	const retry = await screen.findByTestId('legacy-dashboard-retry-migration');
 
 	await waitFor(
-		() => {
-			expect(retry).toBeEnabled();
-			expect(retry).not.toHaveAttribute('aria-disabled', 'true');
+		async () => {
+			await expect(retry).toBeEnabled();
+			await expect(retry).not.toHaveAttribute('aria-disabled', 'true');
 		},
 		{ timeout: TOAST_TIMEOUT },
 	);

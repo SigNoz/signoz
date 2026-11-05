@@ -250,7 +250,7 @@ function DashboardsList(): JSX.Element {
 	);
 
 	const openCreate = useCallback((): void => {
-		logEvent('Dashboard List: New dashboard clicked', {});
+		void logEvent('Dashboard List: New dashboard clicked', {});
 		setIsCreateOpen(true);
 	}, []);
 
@@ -278,7 +278,9 @@ function DashboardsList(): JSX.Element {
 	const visitLoggedRef = useRef(false);
 	useEffect(() => {
 		if (!visitLoggedRef.current && !isLoading && response !== undefined) {
-			logEvent('Dashboard List V2: Page visited', { number: dashboards.length });
+			void logEvent('Dashboard List V2: Page visited', {
+				number: dashboards.length,
+			});
 			visitLoggedRef.current = true;
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -356,7 +358,7 @@ function DashboardsList(): JSX.Element {
 										hasError={!!error}
 										isCloudUser={!!isCloudUser}
 										onRetry={(): void => {
-											refetch();
+											void refetch();
 										}}
 										errorHttpStatus={errorHttpStatus}
 										errorMessage={errorMessage}
