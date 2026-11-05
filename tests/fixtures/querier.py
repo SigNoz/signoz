@@ -670,6 +670,7 @@ def build_scalar_query(
     limit: int | None = None,
     filter_expression: str | None = None,
     having_expression: str | None = None,
+    limit_by: dict | None = None,
     step_interval: int = DEFAULT_STEP_INTERVAL,
     disabled: bool = False,
     functions: list[dict] | None = None,
@@ -699,6 +700,9 @@ def build_scalar_query(
 
     if having_expression:
         spec["having"] = {"expression": having_expression}
+
+    if limit_by:
+        spec["limitBy"] = limit_by
 
     if functions:
         spec["functions"] = functions

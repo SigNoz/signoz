@@ -36,7 +36,7 @@ type QueryBuilderQuery[T any] struct {
 
 	Limit int `json:"limit,omitempty" description:"The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest."`
 
-	LimitBy *LimitBy `json:"limitBy,omitempty" description:"Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored."`
+	LimitBy *LimitBy `json:"limitBy,omitempty" description:"Keeps at most value rows for each combination of the given group-by keys, in the query order, before limit applies. Supported for scalar requests only."`
 
 	Offset int `json:"offset,omitempty" description:"The number of rows to skip before returning results. Prefer cursor for raw requests."`
 

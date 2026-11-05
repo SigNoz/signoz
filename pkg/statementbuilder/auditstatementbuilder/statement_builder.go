@@ -374,7 +374,10 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		cteSB := sqlbuilder.NewSelectBuilder()
-		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, true, variables)
+		// limitBy is a scalar setting; a stored alert skips validation and can carry one
+		cteQuery := query
+		cteQuery.LimitBy = nil
+		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, cteQuery, start, end, keys, true, variables)
 		if err != nil {
 			return nil, err
 		}
@@ -530,6 +533,16 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 
 	if len(query.Order) == 0 {
 		sb.OrderBy("__result_0 DESC")
+	}
+
+	// LIMIT BY runs after ORDER BY and before LIMIT; validation keeps every key a
+	// group-by key, which this query selects under its own name
+	if query.LimitBy != nil {
+		columns := make([]string, len(query.LimitBy.Keys))
+		for i, key := range query.LimitBy.Keys {
+			columns[i] = clickhousesql.Identifier(key)
+		}
+		sb.SQL(sqlbuilder.Escape(fmt.Sprintf("LIMIT %d BY %s", query.LimitBy.Rows(), strings.Join(columns, ", "))))
 	}
 
 	if query.Limit > 0 {

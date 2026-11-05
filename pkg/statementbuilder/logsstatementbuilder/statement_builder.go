@@ -506,7 +506,10 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		// build the scalar “top/bottom-N” query in its own builder.
 		cteSB := sqlbuilder.NewSelectBuilder()
-		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, true, variables)
+		// limitBy is a scalar setting; a stored alert skips validation and can carry one
+		cteQuery := query
+		cteQuery.LimitBy = nil
+		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, cteQuery, start, end, keys, true, variables)
 		if err != nil {
 			return nil, err
 		}
@@ -700,6 +703,16 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	// if there is no order by, then use the __result_0 as the order by
 	if len(query.Order) == 0 {
 		sb.OrderBy("__result_0 DESC")
+	}
+
+	// LIMIT BY runs after ORDER BY and before LIMIT; validation keeps every key a
+	// group-by key
+	if query.LimitBy != nil {
+		columns := make([]string, len(query.LimitBy.Keys))
+		for i, key := range query.LimitBy.Keys {
+			columns[i], _ = groupByOrderAlias(key, query.GroupBy)
+		}
+		sb.SQL(sqlbuilder.Escape(fmt.Sprintf("LIMIT %d BY %s", query.LimitBy.Rows(), strings.Join(columns, ", "))))
 	}
 
 	// Add limit and offset
