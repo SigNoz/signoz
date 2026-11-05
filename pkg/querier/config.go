@@ -52,7 +52,7 @@ func newConfig() factory.Config {
 		MaxConcurrentQueries:    DefaultMaxConcurrentQueries,
 		LogTraceIDWindowPadding: 5 * time.Minute,
 		ClickHouseQuery: ClickHouseQueryConfig{
-			MaxExecutionTime: time.Minute,
+			MaxExecutionTime: 55 * time.Second,
 			MaxMemoryUsage:   10_000_000_000,
 			MaxResultRows:    100_000,
 			MaxResultBytes:   500 << 20,
