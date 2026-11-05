@@ -20,20 +20,14 @@ func TestClickHouseQueryConfigSettings(t *testing.T) {
 			want:   clickhouse.Settings{},
 		},
 		{
-			name:   "AllSet",
+			name:   "AllSet_NoExecutionTimeSetting",
 			config: ClickHouseQueryConfig{MaxExecutionTime: time.Minute, MaxMemoryUsage: 1 << 30, MaxResultRows: 1000, MaxResultBytes: 1 << 20},
 			want: clickhouse.Settings{
-				"max_execution_time":   60,
 				"max_memory_usage":     int64(1 << 30),
 				"max_result_rows":      int64(1000),
 				"max_result_bytes":     int64(1 << 20),
 				"result_overflow_mode": "throw",
 			},
-		},
-		{
-			name:   "SubSecondTime_RoundsUp",
-			config: ClickHouseQueryConfig{MaxExecutionTime: 1500 * time.Millisecond},
-			want:   clickhouse.Settings{"max_execution_time": 2},
 		},
 	}
 

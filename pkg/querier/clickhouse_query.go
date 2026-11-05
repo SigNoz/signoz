@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math"
 	"sort"
 	"strings"
 	"text/template"
@@ -145,6 +144,11 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		return nil, err
 	}
 
+	if q.budget.MaxExecutionTime > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = telemetrystore.NewContextWithQueryTimeout(ctx, q.budget.MaxExecutionTime)
+		defer cancel()
+	}
 	ctx = telemetrystore.NewContextWithQuerySettings(ctx, q.budget.settings())
 
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, q.args...)
@@ -170,12 +174,9 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 }
 
 // settings returns the budget as ClickHouse query settings. A SETTINGS clause in the user's SQL
-// overrides them.
+// overrides them. MaxExecutionTime is a context deadline instead.
 func (c ClickHouseQueryConfig) settings() clickhouse.Settings {
 	settings := clickhouse.Settings{}
-	if c.MaxExecutionTime > 0 {
-		settings["max_execution_time"] = int(math.Ceil(c.MaxExecutionTime.Seconds()))
-	}
 	if c.MaxMemoryUsage > 0 {
 		settings["max_memory_usage"] = c.MaxMemoryUsage
 	}

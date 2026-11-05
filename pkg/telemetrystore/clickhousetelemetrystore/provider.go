@@ -30,6 +30,8 @@ var (
 	ErrCodeExecutionFailed = errors.MustNewCode("execution_failed")
 )
 
+const queryTimeoutSuggestion = "optimize your query: narrow the time range or add filters to read less data"
+
 // Codes absent from this map fall through to the raw driver error in castError.
 var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickhouse.Exception) error{
 	chproto.ErrSyntaxError: func(cause error, ex *clickhouse.Exception) error {
@@ -91,7 +93,7 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 	},
 	chproto.ErrTimeoutExceeded: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapTimeoutf(cause, ErrCodeQueryTimeout, "query timed out: %s", ex.Message).
-			WithSuggestions("optimize your query: narrow the time range or add filters to read less data")
+			WithSuggestions(queryTimeoutSuggestion)
 	},
 	chproto.ErrMemoryLimitExceeded: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeMemoryLimitExceeded, "query memory limit exceeded: %s", ex.Message).
@@ -211,7 +213,7 @@ func (p *provider) Query(ctx context.Context, query string, args ...interface{})
 	if err != nil {
 		event.Err = err
 		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
-		return nil, castError(err)
+		return nil, castQueryError(ctx, err)
 	}
 
 	return &rowsWithHooks{
@@ -296,6 +298,16 @@ func (p *provider) ServerVersion() (*driver.ServerVersion, error) {
 
 func (p *provider) Contributors() []string {
 	return p.clickHouseConn.Contributors()
+}
+
+// castQueryError is castError that also tells a query timeout set with telemetrystore.NewContextWithQueryTimeout
+// apart from the caller's own deadline.
+func castQueryError(ctx context.Context, err error) error {
+	if errors.Is(err, context.DeadlineExceeded) && errors.Is(context.Cause(ctx), telemetrystore.ErrQueryTimeoutExceeded) {
+		return errors.WrapTimeoutf(err, ErrCodeQueryTimeout, "query timed out").WithSuggestions(queryTimeoutSuggestion)
+	}
+
+	return castError(err)
 }
 
 func castError(err error) error {
