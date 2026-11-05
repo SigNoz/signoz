@@ -1,7 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
 import {
 	autocompletion,
 	closeCompletion,
@@ -24,14 +23,17 @@ import CodeMirror, {
 	ViewUpdate,
 } from '@uiw/react-codemirror';
 import { Button, Popover, Tooltip } from 'antd';
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { QueryBuilderKeys } from 'constants/queryBuilder';
+import { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Info, TriangleAlert } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { FieldDataType } from 'types/api/v5/queryRange';
-import { TracesAggregatorOperator } from 'types/common/queryBuilder';
+import {
+	DATA_SOURCE_TO_SIGNAL,
+	TracesAggregatorOperator,
+} from 'types/common/queryBuilder';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
 
@@ -40,6 +42,18 @@ import './QueryAggregation.styles.scss';
 const chipDecoration = Decoration.mark({
 	class: 'chip-decorator',
 });
+
+const OPERATORS_WITHOUT_DATA_TYPE: string[] = [
+	TracesAggregatorOperator.COUNT,
+	TracesAggregatorOperator.COUNT_DISTINCT,
+	TracesAggregatorOperator.RATE,
+];
+
+const NUMERIC_DATA_TYPES: (FieldDataType | undefined)[] = [
+	'number',
+	'float64',
+	'int64',
+];
 
 const operatorArgMeta: Record<
 	string,
@@ -310,31 +324,24 @@ function QueryAggregationSelect({
 	// Find function context for fetching suggestions
 	const functionContextForFetch = getFunctionContextAtCursor(input, cursorPos);
 
-	const { data: aggregateAttributeData, isLoading: isLoadingFields } = useQuery(
-		[
-			QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
-			functionContextForFetch,
-			queryData.dataSource,
-		],
-		() => {
-			const operatorsWithoutDataType: (string | undefined)[] = [
-				TracesAggregatorOperator.COUNT,
-				TracesAggregatorOperator.COUNT_DISTINCT,
-				TracesAggregatorOperator.RATE,
-			];
+	const numericKeysOnly = !(
+		functionContextForFetch &&
+		OPERATORS_WITHOUT_DATA_TYPE.includes(functionContextForFetch)
+	);
+	// A number filter drops the float64 trace aggregates, so AI keys are type-filtered client-side.
+	const filtersNumericClientSide =
+		numericKeysOnly && queryData.builderQueryType === 'builder_ai_query';
 
-			const fieldDataType: FieldDataType | undefined =
-				functionContextForFetch &&
-				operatorsWithoutDataType.includes(functionContextForFetch)
-					? undefined
-					: 'number';
-
-			return getKeySuggestions({
-				signal: queryData.dataSource,
-				searchText: '',
-				fieldDataType,
-			});
+	const { data: fieldKeys, isLoading: isLoadingFields } = useFieldKeysSuggestion(
+		{
+			signal: DATA_SOURCE_TO_SIGNAL[queryData.dataSource],
+			searchText: '',
+			fieldDataType:
+				numericKeysOnly && !filtersNumericClientSide
+					? TelemetrytypesFieldDataTypeDTO.number
+					: undefined,
 		},
+		queryData.builderQueryType,
 		{
 			enabled:
 				!!functionContextForFetch &&
@@ -427,19 +434,20 @@ function QueryAggregationSelect({
 		}),
 	);
 
-	// Memoize field suggestions from API (no filtering here)
+	// Memoize field suggestions from API (no search filtering here)
 	const fieldSuggestions = useMemo(
 		() =>
-			Object.keys(aggregateAttributeData?.data.data.keys || {}).flatMap((key) => {
-				const attributeKeys = aggregateAttributeData?.data.data.keys[key];
-				if (!attributeKeys) {
-					return [];
-				}
-
-				return attributeKeys.map((attributeKey) => ({
-					label: attributeKey.name,
+			(fieldKeys ?? [])
+				.filter(
+					(key) =>
+						!filtersNumericClientSide ||
+						NUMERIC_DATA_TYPES.includes(key.fieldDataType),
+				)
+				.map((key) => ({
+					// The backend reads trace.-prefixed columns as per-trace aggregates.
+					label: key.fieldContext === 'trace' ? `trace.${key.name}` : key.name,
 					type: 'variable',
-					info: attributeKey.fieldDataType,
+					info: key.fieldDataType,
 					apply: (
 						view: EditorView,
 						completion: Completion,
@@ -466,9 +474,8 @@ function QueryAggregationSelect({
 							safeStartCompletion();
 						}, 50);
 					},
-				}));
-			}) || [],
-		[aggregateAttributeData, safeStartCompletion],
+				})),
+		[fieldKeys, filtersNumericClientSide, safeStartCompletion],
 	);
 
 	const aggregatorAutocomplete = useMemo(
