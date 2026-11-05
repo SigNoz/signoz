@@ -12,6 +12,7 @@ import { toAPIError } from 'utils/errorUtils';
 
 import { dashboardToUpdatable } from './dashboardToUpdatable';
 import { findPanelLayoutIssues } from './danglingPanels';
+import { lineOfJsonEntry } from './lineOfJsonEntry';
 import { compactSpecLayouts } from '../../layoutCompaction';
 import { isValidDashboardImage } from '../../dashboardIcons';
 import { useDashboardStore } from '../../store/useDashboardStore';
@@ -131,6 +132,7 @@ export function useJsonEditor({
 			return {
 				valid: false,
 				lineCount,
+				errorLine: lineOfJsonEntry(draft, 'image', image),
 				message:
 					'"image" must be an /assets/Icons/<name> or /assets/Logos/<name> path, or a base64 image data URI',
 			};

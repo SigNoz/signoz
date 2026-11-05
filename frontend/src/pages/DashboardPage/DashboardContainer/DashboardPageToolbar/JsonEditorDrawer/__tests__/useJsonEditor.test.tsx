@@ -95,6 +95,18 @@ describe('useJsonEditor', () => {
 		expect(result.current.isDirty).toBe(true);
 	});
 
+	it.each([
+		['image', '{\n  "spec": {},\n  "image": "https://x.io/a.png"\n}', 3],
+	])('points at the line of an invalid %s', (_field, draft, errorLine) => {
+		const { result } = renderHook(() =>
+			useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
+		);
+
+		act(() => result.current.setDraft(draft));
+
+		expect(result.current.validity.errorLine).toBe(errorLine);
+	});
+
 	it('format() pretty-prints valid JSON and leaves invalid JSON untouched', () => {
 		const { result } = renderHook(() =>
 			useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
