@@ -23,6 +23,7 @@ import {
 	ChannelKind,
 	ChannelSpecFormValues,
 	JiraDeployment,
+	KeysOfUnion,
 	WebhookAuth,
 } from './types';
 import {
@@ -114,7 +115,7 @@ const SPEC_FIELDS = {
 		'reopenDuration',
 		'customFields',
 		'sendResolved',
-	] as const satisfies readonly (keyof AlertmanagertypesChannelJiraConfigDTO)[],
+	] as const satisfies readonly KeysOfUnion<AlertmanagertypesChannelJiraConfigDTO>[],
 	[ChannelKind.jsmops]: [
 		'apiKey',
 		'message',
@@ -149,7 +150,7 @@ const SPEC_FIELDS = {
  * instead, and the error names the missing field.
  */
 type MissingFrom<D, T extends readonly PropertyKey[]> = Exclude<
-	keyof D,
+	KeysOfUnion<D>,
 	T[number]
 >;
 

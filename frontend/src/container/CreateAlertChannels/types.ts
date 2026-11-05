@@ -2,7 +2,9 @@ import {
 	AlertmanagertypesChannelEmailConfigDTO,
 	AlertmanagertypesChannelGoogleChatConfigDTO,
 	AlertmanagertypesChannelIncidentIOConfigDTO,
+	AlertmanagertypesChannelJiraCloudConfigDTODeployment,
 	AlertmanagertypesChannelJiraConfigDTO,
+	AlertmanagertypesChannelJiraSelfHostedConfigDTODeployment,
 	AlertmanagertypesChannelJSMOpsConfigDTO,
 	AlertmanagertypesChannelKindDTO,
 	AlertmanagertypesChannelMSTeamsConfigDTO,
@@ -11,14 +13,33 @@ import {
 	AlertmanagertypesChannelSlackConfigDTO,
 	AlertmanagertypesChannelTelegramConfigDTO,
 	AlertmanagertypesChannelWebhookConfigDTO,
-	AlertmanagertypesJiraDeploymentDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 export const ChannelKind = AlertmanagertypesChannelKindDTO;
 export type ChannelKind = AlertmanagertypesChannelKindDTO;
 
-export const JiraDeployment = AlertmanagertypesJiraDeploymentDTO;
-export type JiraDeployment = AlertmanagertypesJiraDeploymentDTO;
+/** Each union member pins its own deployment enum; the form accepts either. */
+export const JiraDeployment = {
+	cloud: AlertmanagertypesChannelJiraCloudConfigDTODeployment.cloud,
+	selfhosted:
+		AlertmanagertypesChannelJiraSelfHostedConfigDTODeployment.selfhosted,
+} as const;
+export type JiraDeployment =
+	| AlertmanagertypesChannelJiraCloudConfigDTODeployment
+	| AlertmanagertypesChannelJiraSelfHostedConfigDTODeployment;
+
+export type KeysOfUnion<T> = T extends unknown ? keyof T : never;
+
+/** Every key of every member, optional, so a form can hold any member's fields. */
+export type FlattenUnion<T> = {
+	[K in KeysOfUnion<T>]?: T extends unknown
+		? K extends keyof T
+			? T[K]
+			: never
+		: never;
+};
+
+export type JiraFormSpec = FlattenUnion<AlertmanagertypesChannelJiraConfigDTO>;
 
 /** Merged so switching kind keeps the fields the kinds share. */
 export type ChannelSpecFormValues = Partial<
@@ -29,7 +50,7 @@ export type ChannelSpecFormValues = Partial<
 		AlertmanagertypesChannelOpsgenieConfigDTO &
 		AlertmanagertypesChannelMSTeamsConfigDTO &
 		AlertmanagertypesChannelGoogleChatConfigDTO &
-		AlertmanagertypesChannelJiraConfigDTO &
+		JiraFormSpec &
 		AlertmanagertypesChannelJSMOpsConfigDTO &
 		AlertmanagertypesChannelIncidentIOConfigDTO &
 		AlertmanagertypesChannelTelegramConfigDTO
