@@ -25,6 +25,7 @@ import { QueryParams } from 'constants/query';
 import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useOptionsMenu from 'container/OptionsMenu/useOptionsMenu';
+import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { getTraceLink, transformSpanRows } from './utils';
 import { getFieldColumn, TracesTableRow } from '../TracesTable/getFieldColumn';
@@ -96,12 +97,13 @@ function ListView({
 		[stagedQuery, orderBy],
 	);
 
-	// Sorted names: stable on reorder, changes on add/remove, which must refetch
-	// since the list query returns only the listed columns.
+	// Sorted field keys: reorder keeps the cache, any field change refetches.
 	const selectColumnsSignature = useMemo(
 		() =>
 			selectColumns
-				.map((column) => column.name)
+				.map(({ name, fieldContext, fieldDataType }) =>
+					buildCompositeKey(name, fieldContext, fieldDataType),
+				)
 				.sort()
 				.join(','),
 		[selectColumns],
