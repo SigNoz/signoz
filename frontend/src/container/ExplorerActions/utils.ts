@@ -10,26 +10,30 @@ import { cloneDeep } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
-export const EXPLORER_ACTION_EVENTS: Record<
-	DataSource,
-	{ createAlert: string; addToDashboard: string; exported: string }
-> = {
-	[DataSource.LOGS]: {
-		createAlert: 'Logs Explorer: Create alert',
-		addToDashboard: 'Logs Explorer: Add to dashboard clicked',
-		exported: 'Logs Explorer: Add to dashboard successful',
-	},
-	[DataSource.TRACES]: {
-		createAlert: 'Traces Explorer: Create alert',
-		addToDashboard: 'Traces Explorer: Add to dashboard clicked',
-		exported: 'Traces Explorer: Add to dashboard successful',
-	},
-	[DataSource.METRICS]: {
-		createAlert: MetricsExplorerEvents.AddToAlertClicked,
-		addToDashboard: MetricsExplorerEvents.AddToDashboardClicked,
-		exported: MetricsExplorerEvents.AddToDashboardSuccessful,
-	},
-};
+export interface AddToDashboardEvents {
+	addToDashboard: string;
+	exported: string;
+	createAlert: string;
+}
+
+export const EXPLORER_ACTION_EVENTS: Record<DataSource, AddToDashboardEvents> =
+	{
+		[DataSource.LOGS]: {
+			createAlert: 'Logs Explorer: Create alert',
+			addToDashboard: 'Logs Explorer: Add to dashboard clicked',
+			exported: 'Logs Explorer: Add to dashboard successful',
+		},
+		[DataSource.TRACES]: {
+			createAlert: 'Traces Explorer: Create alert',
+			addToDashboard: 'Traces Explorer: Add to dashboard clicked',
+			exported: 'Traces Explorer: Add to dashboard successful',
+		},
+		[DataSource.METRICS]: {
+			createAlert: MetricsExplorerEvents.AddToAlertClicked,
+			addToDashboard: MetricsExplorerEvents.AddToDashboardClicked,
+			exported: MetricsExplorerEvents.AddToDashboardSuccessful,
+		},
+	};
 
 export function getExplorerActionEventPayload({
 	sourcepage,

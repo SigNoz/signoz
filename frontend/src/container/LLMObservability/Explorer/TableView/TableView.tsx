@@ -6,6 +6,7 @@ import {
 	useEffect,
 	useMemo,
 } from 'react';
+import { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Space } from 'antd';
@@ -24,6 +25,8 @@ import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import AIExplorerActions from '../AIExplorerActions/AIExplorerActions';
+
 import './TableView.styles.scss';
 
 function TableView({
@@ -33,7 +36,7 @@ function TableView({
 }: {
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
-	queryKeyRef?: MutableRefObject<any>;
+	queryKeyRef?: MutableRefObject<QueryKey | undefined>;
 }): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
@@ -101,14 +104,17 @@ function TableView({
 	return (
 		<Space.Compact block direction="vertical">
 			{isError && error && <ErrorInPlace error={error as APIError} />}
-			{!isError && data && (
+			{!isError && (
 				<div className="traces-table-view-header">
-					<ExportMenu
-						dataSource={DataSource.TRACES}
-						data={data}
-						query={stagedQuery || initialQueriesMap.traces}
-						fileName="ai-traces-table"
-					/>
+					<AIExplorerActions />
+					{data && (
+						<ExportMenu
+							dataSource={DataSource.TRACES}
+							data={data}
+							query={stagedQuery || initialQueriesMap.traces}
+							fileName="ai-traces-table"
+						/>
+					)}
 				</div>
 			)}
 			{!isError && (
