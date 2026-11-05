@@ -9564,7 +9564,8 @@ components:
         buckets:
           description: The ascending upper bounds of the value buckets, set for heatmap
             and distribution results; each point then carries one count per bound
-            plus a trailing overflow count in values.
+            plus a trailing overflow count in values. The first bucket starts at -Inf
+            when its bound is at or under zero, else at zero.
           items:
             format: double
             type: number
