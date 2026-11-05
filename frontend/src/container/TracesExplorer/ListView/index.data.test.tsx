@@ -78,8 +78,8 @@ describe('Traces ListView - Data Loaded', () => {
 			'200',
 		);
 
-		// empty status fields render "-"
-		expect(screen.getAllByText('-').length).toBeGreaterThanOrEqual(1);
+		// empty status fields render the dash icon
+		expect(screen.getAllByTestId('empty-value').length).toBeGreaterThanOrEqual(1);
 	});
 
 	it('requests every span field instead of the selected columns', async () => {

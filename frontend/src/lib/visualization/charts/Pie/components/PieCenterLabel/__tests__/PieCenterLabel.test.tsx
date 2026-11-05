@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 
-import PieCenterLabel from 'lib/visualization/charts/Pie/PieCenterLabel';
+import PieCenterLabel from 'lib/visualization/charts/Pie/components/PieCenterLabel/PieCenterLabel';
 
 jest.mock('components/Graph/yAxisConfig', () => ({
 	getYAxisFormattedValue: jest.fn(),

@@ -1,7 +1,7 @@
 import type { PrecisionOption } from 'components/Graph/types';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 
-import { getScaledFontSize } from 'lib/visualization/charts/Pie/utils';
+import { getScaledFontSize } from 'lib/visualization/charts/Pie/utils/geometry';
 
 interface PieCenterLabelProps {
 	/** Sum of the visible slice values, shown in the donut hole. */
