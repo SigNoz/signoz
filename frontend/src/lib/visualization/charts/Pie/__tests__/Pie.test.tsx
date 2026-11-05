@@ -124,4 +124,56 @@ describe('Pie', () => {
 		// One slice hidden → one fewer arc drawn.
 		expect(svg.querySelectorAll('path')).toHaveLength(1);
 	});
+
+	describe('grouped slice', () => {
+		// Each member is under 1% of the 2078 total, so the 12 fold into Other.
+		const members: PieSlice[] = Array.from({ length: 12 }, (_, index) => ({
+			label: `svc-${index}`,
+			value: 12 - index,
+			color: '#123456',
+		}));
+		const GROUPED: PieSlice[] = [
+			{ label: 'frontend', value: 1000, color: '#aa0000' },
+			{ label: 'cart', value: 600, color: '#00aa00' },
+			{ label: 'checkout', value: 400, color: '#0000aa' },
+			...members,
+		];
+		const arcs = (): NodeListOf<SVGPathElement> =>
+			(
+				screen.getByTestId('pie').querySelector('svg') as SVGElement
+			).querySelectorAll('path');
+
+		it('draws one Other arc but lists every series in the legend', () => {
+			renderPie({ data: GROUPED });
+
+			expect(arcs()).toHaveLength(4);
+			expect(screen.getByText('Other (12)')).toBeInTheDocument();
+			const legend = screen.getByTestId('virtuoso-grid');
+			expect(within(legend).getByText('svc-11')).toBeInTheDocument();
+			expect(within(legend).queryByText(/^Other/)).toBeNull();
+		});
+
+		it('highlights the Other arc when a series inside it is hovered in the legend', () => {
+			renderPie({ data: GROUPED });
+
+			fireEvent.mouseEnter(screen.getByTestId('legend-item-5'));
+
+			const fills = [...arcs()].map((arc) => arc.getAttribute('fill'));
+			expect(fills[0]).toBe('rgba(170, 0, 0, 0.4)');
+			expect(fills[3]).not.toMatch(/^rgba/);
+		});
+
+		it('regroups Other from the series left showing', () => {
+			renderPie({ data: GROUPED });
+
+			// Isolate one member, then add a second back: Other can't hold just one.
+			fireEvent.click(screen.getByTestId('legend-item-3'));
+			expect(arcs()).toHaveLength(1);
+			fireEvent.click(screen.getByTestId('legend-item-0'));
+			fireEvent.click(screen.getByTestId('legend-item-4'));
+
+			expect(arcs()).toHaveLength(3);
+			expect(screen.queryByText(/^Other/)).toBeNull();
+		});
+	});
 });

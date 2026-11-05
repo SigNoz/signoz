@@ -15,12 +15,15 @@ import { calculateChartDimensions } from 'lib/visualization/charts/utils';
 
 import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
 import PieArc from 'lib/visualization/charts/Pie/PieArc';
+import { groupPieSlices } from 'lib/visualization/charts/Pie/groupPieSlices';
 import PieCenterLabel from 'lib/visualization/charts/Pie/PieCenterLabel';
 import styles from 'lib/visualization/charts/Pie/Pie.module.scss';
 import { PieTooltipData } from 'lib/visualization/charts/Pie/types';
 import {
+	compareSlices,
 	getDonutGeometry,
 	getFillColor,
+	getSliceDisplayLabel,
 } from 'lib/visualization/charts/Pie/utils';
 
 /**
@@ -56,10 +59,28 @@ export default function Pie({
 		[data, hiddenKeys],
 	);
 
-	// Hidden slices drop out so the remaining arcs + centre total recompute.
+	// Hidden slices drop out before grouping, so Other and the centre total recompute.
 	const visibleData = useMemo(
-		() => data.filter((slice) => !hiddenKeys.has(slice.label)),
-		[data, hiddenKeys],
+		() =>
+			groupPieSlices(
+				data.filter((slice) => !hiddenKeys.has(slice.label)),
+				isDarkMode,
+			),
+		[data, hiddenKeys, isDarkMode],
+	);
+
+	// A series folded into Other highlights the Other arc.
+	const drawnColorByLabel = useMemo(
+		() =>
+			new Map(
+				visibleData.flatMap((slice) =>
+					[slice, ...(slice.members ?? [])].map((entry): [string, string] => [
+						entry.label,
+						slice.color,
+					]),
+				),
+			),
+		[visibleData],
 	);
 
 	const {
@@ -113,14 +134,18 @@ export default function Pie({
 	);
 
 	const labelColor = isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400;
+	const hoveredColor = tooltipOpen ? tooltipData?.color : undefined;
 	const activeColor =
-		focusedSeriesIndex !== null ? data[focusedSeriesIndex].color : null;
+		hoveredColor ??
+		(focusedSeriesIndex !== null
+			? (drawnColorByLabel.get(labels[focusedSeriesIndex]) ?? null)
+			: null);
 
 	const handleSliceEnter = useCallback(
 		(slice: PieSlice, centroidX: number, centroidY: number): void => {
 			showTooltip({
 				tooltipData: {
-					label: slice.label,
+					label: getSliceDisplayLabel(slice),
 					value: getYAxisFormattedValue(
 						slice.value.toString(),
 						yAxisUnit || 'none',
@@ -169,6 +194,7 @@ export default function Pie({
 							<VisxPie
 								data={visibleData}
 								pieValue={(slice: PieSlice): number => slice.value}
+								pieSort={compareSlices}
 								outerRadius={radius}
 								innerRadius={innerRadius}
 								padAngle={0.01}

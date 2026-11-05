@@ -180,6 +180,8 @@ export interface PieSlice {
 	queryName?: string;
 	/** Group-by key→value of the slice's source row, used to build drill-down filters. */
 	labels?: Record<string, string>;
+	/** Slices folded into this one, largest first. Present only on the "Other" slice. */
+	members?: PieSlice[];
 }
 
 /**

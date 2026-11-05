@@ -4,7 +4,10 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 
 import { PieSlice } from 'lib/visualization/charts/types';
 
-import { getArcGeometry } from 'lib/visualization/charts/Pie/utils';
+import {
+	getArcGeometry,
+	getSliceDisplayLabel,
+} from 'lib/visualization/charts/Pie/utils';
 
 // Slices below this share of the total don't get a leader label (too cramped).
 const MIN_LABEL_SHARE = 0.03;
@@ -52,7 +55,8 @@ export default function PieArc({
 	onLeave,
 	onClick,
 }: PieArcProps): JSX.Element {
-	const { label, value } = slice;
+	const { value } = slice;
+	const label = getSliceDisplayLabel(slice);
 	const [centroidX, centroidY] = centroid;
 	const { labelX, labelY, lineEndX, lineEndY, textAnchor } = getArcGeometry(
 		startAngle,
