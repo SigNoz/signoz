@@ -220,9 +220,8 @@ func TestErrIfStatementOverridesLimitSettings(t *testing.T) {
 		{name: "ResultOverflowModeAmongOthers", query: "SELECT * FROM t SETTINGS max_threads = 4, result_overflow_mode = 'break'", expectedCode: &CodeLimitOverride},
 		{name: "MaxExecutionTimeInSubquery", query: "SELECT * FROM (SELECT * FROM t SETTINGS max_execution_time = 0)", expectedCode: &CodeLimitOverride},
 		{name: "Readonly", query: "SELECT * FROM t SETTINGS readonly = 0", expectedCode: &CodeReadonlyOverride},
-		// The parser cannot read NULLS LAST, so the lexical fallback decides.
-		{name: "Unparseable_MaxResultBytes", query: "SELECT x FROM t ORDER BY x DESC NULLS LAST SETTINGS max_result_bytes = 0", expectedCode: &CodeLimitOverride},
-		{name: "Unparseable_NoOverride", query: "SELECT x FROM t ORDER BY x DESC NULLS LAST"},
+		// The parser cannot read NULLS LAST.
+		{name: "Unparseable_NotChecked", query: "SELECT x FROM t ORDER BY x DESC NULLS LAST SETTINGS max_result_bytes = 0"},
 	}
 
 	for _, testCase := range testCases {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"maps"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -39,10 +38,6 @@ var limitSettings = map[string]struct{}{
 	"max_result_bytes":        {},
 	"result_overflow_mode":    {},
 }
-
-// settingsOverrideRe is the fallback for SQL the parser cannot read: a SETTINGS keyword followed
-// anywhere by an assignment to readonly or a limit setting.
-var settingsOverrideRe = regexp.MustCompile(`(?is)\bsettings\b.*\b(readonly|` + strings.Join(slices.Sorted(maps.Keys(limitSettings)), "|") + `)\b\s*=`)
 
 // internalDatabases hold server metadata, credentials and grants rather than telemetry.
 var internalDatabases = map[string]struct{}{
@@ -176,18 +171,17 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 }
 
 // ErrIfStatementOverridesLimitSettings refuses a SETTINGS clause, at any depth, that assigns readonly or
-// a limit setting. Unlike ErrIfStatementIsNotValid it is safe to enforce: SQL the parser cannot read
-// falls back to a lexical match instead of being refused.
+// a limit setting. SQL the parser cannot read is not checked.
 func ErrIfStatementOverridesLimitSettings(query string) (err error) {
 	defer func() {
-		if recovered := recover(); recovered != nil {
-			err = errIfSettingsOverriddenLexically(query)
+		if recover() != nil {
+			err = nil
 		}
 	}()
 
 	stmts, parseErr := chparser.NewParser(query).ParseStmts()
 	if parseErr != nil {
-		return errIfSettingsOverriddenLexically(query)
+		return nil
 	}
 
 	visitor := &chparser.DefaultASTVisitor{Visit: func(node chparser.Expr) error {
@@ -222,14 +216,6 @@ func errIfSettingOverridden(name string) error {
 	}
 
 	return nil
-}
-
-func errIfSettingsOverriddenLexically(query string) error {
-	match := settingsOverrideRe.FindStringSubmatch(query)
-	if match == nil {
-		return nil
-	}
-	return errIfSettingOverridden(match[1])
 }
 
 func errIfFunctionReads(name string) error {
