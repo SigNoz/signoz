@@ -205,7 +205,7 @@ func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
 	}
 }
 
-func TestErrIfStatementOverridesSettings(t *testing.T) {
+func TestErrIfStatementOverridesLimitSettings(t *testing.T) {
 	testCases := []struct {
 		name         string
 		query        string
@@ -227,7 +227,7 @@ func TestErrIfStatementOverridesSettings(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			err := ErrIfStatementOverridesSettings(testCase.query)
+			err := ErrIfStatementOverridesLimitSettings(testCase.query)
 			if testCase.expectedCode == nil {
 				assert.NoError(t, err)
 				return

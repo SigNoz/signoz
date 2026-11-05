@@ -175,10 +175,10 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 	return selectQuery.Accept(visitor)
 }
 
-// ErrIfStatementOverridesSettings refuses a SETTINGS clause, at any depth, that assigns readonly or
+// ErrIfStatementOverridesLimitSettings refuses a SETTINGS clause, at any depth, that assigns readonly or
 // a limit setting. Unlike ErrIfStatementIsNotValid it is safe to enforce: SQL the parser cannot read
 // falls back to a lexical match instead of being refused.
-func ErrIfStatementOverridesSettings(query string) (err error) {
+func ErrIfStatementOverridesLimitSettings(query string) (err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			err = errIfSettingsOverriddenLexically(query)
