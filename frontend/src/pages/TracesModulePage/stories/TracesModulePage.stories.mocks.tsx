@@ -4,9 +4,6 @@
  */
 
 import { rest } from 'msw';
-import remove from 'api/browser/localstorage/remove';
-import set from 'api/browser/localstorage/set';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { USER_PREFERENCES } from 'constants/userPreferences';
@@ -109,21 +106,15 @@ export const tracesMocks = defineStoryMocks({
 		spans: countControl('Spans', {
 			group: LIST,
 			description:
-				'Spans the endpoint has, one root span per trace in the Trace view. The table asks for a page at a time, so a higher count paginates.',
+				'Spans the endpoint has, one root span per trace in the Trace view. The list loads 100 more as it scrolls to the end; the Trace view pages 20 at a time.',
 			value: 24,
-			max: 40,
+			max: 250,
 		}),
 		errors: toggleControl('Failing spans', {
 			group: LIST,
 			description:
 				'Answers 503 on the spans of the services that fail, which is what the status column and the error colouring read.',
 			value: true,
-		}),
-		spanDrawer: toggleControl('Span drawer', {
-			group: LIST,
-			description:
-				'The `TRACES_SPAN_DRAWER_ENABLED` localStorage flag the span drawer ships behind. Off, a row click opens the trace page.',
-			value: false,
 		}),
 		traceSummary: choiceControl<TraceSummaryState>('Trace summary', {
 			group: LIST,
@@ -362,11 +353,4 @@ export const tracesMocks = defineStoryMocks({
 		),
 	],
 	config: (values) => ({ route: tracesRoute(values) }),
-	effect: (values) => {
-		if (values.spanDrawer) {
-			set(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED, 'true');
-		} else {
-			remove(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED);
-		}
-	},
 });

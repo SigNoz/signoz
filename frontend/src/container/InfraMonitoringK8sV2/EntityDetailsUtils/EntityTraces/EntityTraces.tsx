@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import logEvent from 'api/common/logEvent';
 import {
 	QuerySearchV2Provider,
 	useExpression,
@@ -16,7 +15,6 @@ import {
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { ResizeTable } from 'components/ResizeTable';
-import { InfraMonitoringEvents } from 'constants/events';
 import Controls from 'container/Controls';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
@@ -39,17 +37,18 @@ import { getEntityTracesQueryPayload } from './utils';
 
 import styles from './EntityTraces.module.scss';
 import { useTimezone } from 'providers/Timezone';
-import { logInfraDrawerFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
+import {
+	logInfraDrawerFilterCustomizedEvent,
+	logInfraDrawerTraceClickedEvent,
+} from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 
 interface Props {
-	eventEntity: string;
 	queryKey: string;
 	category: InfraMonitoringEntity;
 	initialExpression: string;
 }
 
 function EntityTracesContent({
-	eventEntity,
 	queryKey,
 	category,
 }: Omit<Props, 'initialExpression'>): JSX.Element {
@@ -102,13 +101,6 @@ function EntityTracesContent({
 				saveRecentQueryByExpression(DataSource.TRACES, newUserExpression);
 				querySearchOnRun(newUserExpression || '');
 
-				void logEvent(InfraMonitoringEvents.FilterApplied, {
-					entity: eventEntity,
-					page: InfraMonitoringEvents.DetailedPage,
-					category,
-					view: InfraMonitoringEvents.TracesView,
-				});
-
 				logInfraDrawerFilterCustomizedEvent(
 					category,
 					'traces',
@@ -119,14 +111,7 @@ function EntityTracesContent({
 				refetch();
 			}
 		},
-		[
-			inputExpression,
-			initialExpression,
-			refetch,
-			querySearchOnRun,
-			category,
-			eventEntity,
-		],
+		[inputExpression, initialExpression, refetch, querySearchOnRun, category],
 	);
 
 	const queryData = useMemo(
@@ -154,11 +139,7 @@ function EntityTracesContent({
 	const hasAdditionalFilters = !!userExpression?.trim();
 
 	const handleRowClick = useCallback(() => {
-		void logEvent(InfraMonitoringEvents.ItemClicked, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			category,
-			view: InfraMonitoringEvents.TracesView,
-		});
+		logInfraDrawerTraceClickedEvent(category);
 	}, [category]);
 
 	useEffect(() => {
@@ -171,11 +152,7 @@ function EntityTracesContent({
 		<div className={styles.container}>
 			<div className={styles.filterContainer}>
 				<div className={styles.filterContainerTime}>
-					<EntityDateTimeSelector
-						eventEntity={eventEntity}
-						category={category}
-						view={InfraMonitoringEvents.TracesView}
-					/>
+					<EntityDateTimeSelector category={category} />
 
 					<RunQueryBtn
 						isLoadingQueries={isFetching}

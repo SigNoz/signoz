@@ -1,11 +1,20 @@
-import { PointerEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	PointerEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import type { TableColumnDef } from 'components/TanStackTableView/types';
 import { useRowNavigation } from 'components/TanStackTableView/useRowNavigation';
 import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import type { TracesTableProps } from 'container/TracesExplorer/TracesTable/TracesTable';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useCloseOnOutsidePress } from 'hooks/useCloseOnOutsidePress';
 
+import { OPEN_TRACE_COLUMN } from './openTraceColumn';
 import type { SpanDrawerProps } from './SpanDrawer';
-import { isSpanDrawerEnabled } from './utils';
 
 type ActiveSpan = { id: string; index: number };
 
@@ -14,14 +23,14 @@ type UseSpanDrawerResult = {
 		TracesTableProps,
 		'onRowClick' | 'isRowActive' | 'activeRowIndex'
 	>;
-	/** Null while the drawer flag is off. */
-	drawerProps: SpanDrawerProps | null;
+	/** Leading column that opens the trace page. */
+	openTraceColumn: TableColumnDef<TracesTableRow>;
+	drawerProps: SpanDrawerProps;
 	/** `onPointerDownCapture` for the area a press keeps the drawer open in. */
 	onPressInside: (event: PointerEvent) => void;
 };
 
 export function useSpanDrawer(rows: TracesTableRow[]): UseSpanDrawerResult {
-	const [isEnabled] = useState(isSpanDrawerEnabled);
 	// The index lets navigation step past a duplicate span; the id survives a refetch.
 	const [activeSpan, setActiveSpan] = useState<ActiveSpan | null>(null);
 
@@ -60,8 +69,19 @@ export function useSpanDrawer(rows: TracesTableRow[]): UseSpanDrawerResult {
 		}
 	}, [activeSpan, activeRowIndex]);
 
+	// A new query closes the drawer at once instead of waiting for its rows.
+	const { stagedQuery } = useQueryBuilder();
+	const queryId = stagedQuery?.id;
+	const lastQueryIdRef = useRef(queryId);
+	useEffect(() => {
+		if (lastQueryIdRef.current && lastQueryIdRef.current !== queryId) {
+			setActiveSpan(null);
+		}
+		lastQueryIdRef.current = queryId;
+	}, [queryId]);
+
 	const onPressInside = useCloseOnOutsidePress(
-		isEnabled && activeRowIndex !== -1,
+		activeRowIndex !== -1,
 		clearActiveSpan,
 	);
 
@@ -71,12 +91,13 @@ export function useSpanDrawer(rows: TracesTableRow[]): UseSpanDrawerResult {
 		onNavigate: handleNavigate,
 	});
 
-	if (!isEnabled) {
-		return { tableProps: {}, drawerProps: null, onPressInside };
-	}
-
 	return {
-		tableProps: { onRowClick: selectRow, isRowActive, activeRowIndex },
+		tableProps: {
+			onRowClick: selectRow,
+			isRowActive,
+			activeRowIndex,
+		},
+		openTraceColumn: OPEN_TRACE_COLUMN,
 		drawerProps: {
 			row: rows[activeRowIndex] ?? null,
 			onClose: clearActiveSpan,

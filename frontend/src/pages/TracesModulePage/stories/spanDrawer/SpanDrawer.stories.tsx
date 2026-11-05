@@ -25,7 +25,6 @@ const meta = {
 	component: TracesModulePage,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
-	args: { spanDrawer: true },
 } satisfies Meta<TracesArgs>;
 
 export default meta;
@@ -37,8 +36,8 @@ const untilLoaded = { timeout: 15_000 };
 
 // The quick filters list the same span name, so the row is found by its test
 // id; the table renders its rows a few at a time, so it waits for this one.
-const openDrawer = async (): Promise<HTMLElement> => {
-	const row = await waitFor((): HTMLElement => {
+const findOrdersRow = (): Promise<HTMLElement> =>
+	waitFor((): HTMLElement => {
 		const match = screen
 			.getAllByTestId(/^traces-table-row-/)
 			.find((candidate) => candidate.textContent?.includes('POST /api/orders'));
@@ -47,6 +46,9 @@ const openDrawer = async (): Promise<HTMLElement> => {
 
 		return match as HTMLElement;
 	}, untilLoaded);
+
+const openDrawer = async (): Promise<HTMLElement> => {
+	const row = await findOrdersRow();
 
 	await userEvent.click(within(row).getByText('POST /api/orders'));
 
@@ -77,6 +79,19 @@ export const Default: Story = {
 				untilLoaded,
 			),
 		).toBeVisible();
+	},
+};
+
+/**
+ * A hovered row with the icon at its start that opens the trace page in a new
+ * tab, without opening the drawer.
+ */
+export const OpenTraceIcon: Story = {
+	play: async ({ mount }): Promise<void> => {
+		await mount();
+		await userEvent.hover(await findOrdersRow());
+
+		await expect(await screen.findByTestId('span-row-open-trace')).toBeVisible();
 	},
 };
 

@@ -9,16 +9,16 @@ import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import {
-	getBodyDisplayString,
-	getSanitizedLogBody,
-} from 'container/LogDetailedView/utils';
+import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import { useIsBodyJsonEnabled } from 'hooks/logs/useIsBodyJsonEnabled';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { FlatLogData } from 'lib/logs/flatLogData';
-import { isEmpty, isNumber, isUndefined } from 'lodash-es';
+import { getLogFieldValue } from 'lib/logs/flatLogData';
+import { getBodyDisplay } from 'lib/logs/logBody';
+import { isBoolean, isEmpty, isNumber, isUndefined } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
+import { coerceToString } from 'utils/stringUtils';
 
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
@@ -46,7 +46,7 @@ function RawLogView({
 		isLogsExplorerPage,
 		onLogCopy,
 	} = useCopyLogLink(data.id);
-	const flattenLogData = useMemo(() => FlatLogData(data), [data]);
+	const isBodyJsonEnabled = useIsBodyJsonEnabled();
 
 	const isDarkMode = useIsDarkMode();
 	const isReadOnlyLog = !isLogsExplorerPage || isReadOnly;
@@ -60,15 +60,16 @@ function RawLogView({
 
 	const attributesValues = updatedSelecedFields
 		.filter((field) => !['timestamp', 'body'].includes(field.name))
-		.map((field) => flattenLogData[field.name])
+		.map((field) => getLogFieldValue(data, field.name, isBodyJsonEnabled))
 		.filter((attribute) => {
 			// loadash isEmpty doesnot work with numbers
-			if (isNumber(attribute)) {
+			if (isNumber(attribute) || isBoolean(attribute)) {
 				return true;
 			}
 
 			return !isUndefined(attribute) && !isEmpty(attribute);
-		});
+		})
+		.map((attribute) => coerceToString(attribute));
 
 	let attributesText = attributesValues.join(' | ');
 
@@ -102,7 +103,7 @@ function RawLogView({
 		// Check if body is selected
 		const showBody = selectedFields.some((field) => field.name === 'body');
 		if (showBody) {
-			parts.push(`${attributesText} ${getBodyDisplayString(data.body)}`);
+			parts.push(`${attributesText} ${getBodyDisplay(data.body)}`);
 		} else {
 			parts.push(attributesText);
 		}

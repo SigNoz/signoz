@@ -67,7 +67,7 @@ jobs:
       matrix:
         project:
           - chromium
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     needs: changes
     if: needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
@@ -162,7 +162,7 @@ jobs:
       - name: playwright-test
         run: |
           cd tests/e2e && \
-            pnpm playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/4
+            pnpm playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/10
       - name: teardown-stack
         if: always()
         run: |
