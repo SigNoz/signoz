@@ -11,7 +11,7 @@ import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { LIST_CHECKS } from 'pages/DashboardsListPage/constants/permissions';
 
-import { DASHBOARDS_DSL_GRAMMAR } from '../../utils/dashboardsDslGrammar';
+import { DASHBOARDS_DSL_GRAMMAR } from '../../list.config';
 
 interface Props {
 	query: string;

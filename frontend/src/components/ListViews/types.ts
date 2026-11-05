@@ -10,6 +10,22 @@ export interface BuiltinListView {
 	section: 'personal' | 'system';
 }
 
+export interface EmptyStateCopy {
+	title: string;
+	description: string;
+}
+
+// `clientFilter` narrows the rows the server already returned.
+export interface BuiltinViewConfig<
+	F,
+	Ctx = undefined,
+	Row = never,
+> extends BuiltinListView {
+	filter: (current: F, ctx: Ctx) => F;
+	clientFilter?: (rows: Row[], ctx: Ctx) => Row[];
+	emptyState?: EmptyStateCopy;
+}
+
 export interface SavedListView<F> {
 	id: string;
 	name: string;

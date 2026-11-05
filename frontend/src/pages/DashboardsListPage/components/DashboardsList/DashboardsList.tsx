@@ -27,10 +27,10 @@ import {
 } from '../../hooks/useDashboardsListQueryParams';
 import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
 import { useDashboardsListVisibleColumnsStore } from '../../store/useVisibleColumnsStore';
-import { BuiltinViewId } from '../../types';
+import { DEFAULT_DASHBOARD_VIEW, findBuiltinView } from '../../list.config';
+import type { DashboardViewCtx } from '../../types';
 import type { SuggestionSource } from 'components/ListFilter/dsl/types';
 import type { DashboardListItem } from '../../utils/helpers';
-import { applyClientView } from '../../utils/views';
 import DashboardsFilterZone from '../DashboardsFilterZone/DashboardsFilterZone';
 import NewDashboardModal from '../NewDashboardModal/NewDashboardModal';
 import type { ReactElement } from 'react';
@@ -62,6 +62,12 @@ function DashboardsList(): JSX.Element {
 	const [sortOrder, setSortOrder] = useSortOrder();
 	const [page, setPage] = usePage();
 
+	const recent = useDashboardViewsStore((s) => s.recent);
+	const viewCtx = useMemo<DashboardViewCtx>(
+		() => ({ userEmail: user.email, recent }),
+		[user.email, recent],
+	);
+
 	const {
 		activeViewId,
 		builtinViews,
@@ -79,7 +85,7 @@ function DashboardsList(): JSX.Element {
 	} = useActiveView({
 		query,
 		setQuery,
-		userEmail: user.email,
+		ctx: viewCtx,
 		sortColumn,
 		sortOrder,
 		setSortColumn,
@@ -89,7 +95,6 @@ function DashboardsList(): JSX.Element {
 
 	const railCollapsed = useDashboardViewsStore((s) => s.railCollapsed);
 	const setRailCollapsed = useDashboardViewsStore((s) => s.setRailCollapsed);
-	const recent = useDashboardViewsStore((s) => s.recent);
 
 	// Any filter change resets to the first page so the user isn't stranded on a
 	// now-out-of-range offset.
@@ -180,13 +185,10 @@ function DashboardsList(): JSX.Element {
 
 	// Favorites / recently-viewed constrain the fetched rows by a client-side id
 	// set; all other views are already constrained server-side.
-	const dashboards = useMemo<DashboardListItem[]>(
-		() =>
-			clientView
-				? applyClientView(rawDashboards, activeViewId, recent)
-				: rawDashboards,
-		[clientView, rawDashboards, activeViewId, recent],
-	);
+	const dashboards = useMemo<DashboardListItem[]>(() => {
+		const clientFilter = findBuiltinView(activeViewId)?.clientFilter;
+		return clientFilter ? clientFilter(rawDashboards, viewCtx) : rawDashboards;
+	}, [rawDashboards, activeViewId, viewCtx]);
 	const total = clientView ? dashboards.length : (response?.data?.total ?? 0);
 
 	// Step back a page when a delete empties the current one, instead of showing nothing.
@@ -293,7 +295,7 @@ function DashboardsList(): JSX.Element {
 		canList &&
 		!error &&
 		dashboards.length === 0 &&
-		activeViewId === BuiltinViewId.All &&
+		activeViewId === DEFAULT_DASHBOARD_VIEW &&
 		filtersEmpty &&
 		page === 1;
 

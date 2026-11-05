@@ -10,7 +10,11 @@ import {
 	type RestRequest,
 } from 'msw';
 import logEvent from 'api/common/logEvent';
-import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesListOrderDTO,
+	DashboardtypesListSortDTO,
+	type GetDashboardV2200,
+} from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import {
 	expect,
@@ -58,21 +62,24 @@ import {
 	type DashboardDynamicColumns,
 	useDashboardsListVisibleColumnsStore,
 } from '../store/useVisibleColumnsStore';
-import { BuiltinViewId } from '../types';
-import { builtinViewQuery } from '../utils/views';
+import {
+	DEFAULT_DASHBOARD_VIEW,
+	type DashboardViewId,
+	findBuiltinView,
+} from '../list.config';
 
 const LIST = 'Dashboards · list';
 const VIEWS = 'Dashboards · views';
 const WRITES = 'Dashboards · writes';
 
 const VIEWS_OPTIONS = [
-	BuiltinViewId.All,
-	BuiltinViewId.Mine,
-	BuiltinViewId.Pinned,
-	BuiltinViewId.Recent,
-	BuiltinViewId.Locked,
+	'all',
+	'mine',
+	'pinned',
+	'recent',
+	'locked',
 	'saved',
-] as const;
+] as const satisfies readonly (DashboardViewId | 'saved')[];
 
 type ViewOption = (typeof VIEWS_OPTIONS)[number];
 
@@ -146,7 +153,18 @@ const listRoute = (view: ViewOption): string => {
 	const { id, query } =
 		view === 'saved'
 			? savedView(0)
-			: { id: view, query: builtinViewQuery(view, STORY_USER_EMAIL) ?? '' };
+			: {
+					id: view,
+					query:
+						findBuiltinView(view)?.filter(
+							{
+								query: '',
+								sort: DashboardtypesListSortDTO.updated_at,
+								order: DashboardtypesListOrderDTO.desc,
+							},
+							{ userEmail: STORY_USER_EMAIL, recent: [] },
+						).query ?? '',
+				};
 
 	const params = new URLSearchParams({ view: id });
 
@@ -281,7 +299,7 @@ export const dashboardsListMocks = defineStoryMocks({
 			description:
 				'The rail entry the page opens on. Pinned and Recently viewed constrain the fetched rows client-side; the rest apply a query.',
 			options: VIEWS_OPTIONS,
-			value: BuiltinViewId.All,
+			value: DEFAULT_DASHBOARD_VIEW,
 		}),
 		savedViews: countControl('Saved views', {
 			group: VIEWS,

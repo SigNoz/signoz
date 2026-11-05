@@ -14,10 +14,16 @@ interface Filter {
 	sort: string;
 }
 
-const BUILTIN_QUERIES: Record<string, string> = { all: '', locked: 'locked' };
-
-const builtinFilter = (id: string, current: Filter): Filter | null =>
-	id in BUILTIN_QUERIES ? { ...current, query: BUILTIN_QUERIES[id] } : null;
+const BUILTIN_VIEWS = [
+	{
+		id: 'all',
+		filter: (current: Filter): Filter => ({ ...current, query: '' }),
+	},
+	{
+		id: 'locked',
+		filter: (current: Filter): Filter => ({ ...current, query: 'locked' }),
+	},
+];
 
 const isEqual = (a: Filter, b: Filter): boolean =>
 	a.query.trim() === b.query.trim();
@@ -64,7 +70,8 @@ function setup(
 				filter,
 				applyFilter: setFilter,
 				isEqual,
-				builtinFilter,
+				builtinViews: BUILTIN_VIEWS,
+				ctx: undefined,
 				defaultViewId: 'all',
 				api,
 			});

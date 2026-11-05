@@ -9,19 +9,19 @@ import type {
 } from 'components/ListViews/types';
 import { useListViews } from 'hooks/listViews/useListViews';
 
-import { BuiltinViewId, type DashboardViewFilter } from '../types';
 import {
-	areViewFiltersEqual,
 	BUILTIN_VIEWS,
-	builtinViewFilter,
-	isClientView,
-} from '../utils/views';
+	DEFAULT_DASHBOARD_VIEW,
+	findBuiltinView,
+} from '../list.config';
+import type { DashboardViewCtx, DashboardViewFilter } from '../types';
+import { areViewFiltersEqual } from '../utils/views';
 import { useSavedViews } from './useSavedViews';
 
 interface UseActiveViewArgs {
 	query: string;
 	setQuery: (next: string) => void;
-	userEmail: string;
+	ctx: DashboardViewCtx;
 	sortColumn: DashboardtypesListSortDTO;
 	sortOrder: DashboardtypesListOrderDTO;
 	setSortColumn: (column: DashboardtypesListSortDTO) => void;
@@ -32,7 +32,7 @@ interface UseActiveViewArgs {
 
 export interface UseActiveViewResult {
 	activeViewId: string;
-	builtinViews: BuiltinListView[];
+	builtinViews: readonly BuiltinListView[];
 	customViews: SavedListView<DashboardViewFilter>[];
 	customViewsLoading: boolean;
 	isCustomActive: boolean;
@@ -54,7 +54,7 @@ export interface UseActiveViewResult {
 export function useActiveView({
 	query,
 	setQuery,
-	userEmail,
+	ctx,
 	sortColumn,
 	sortOrder,
 	setSortColumn,
@@ -81,18 +81,13 @@ export function useActiveView({
 		[setQuery, sortColumn, sortOrder, setSortColumn, setSortOrder],
 	);
 
-	const builtinFilter = useCallback(
-		(id: string, current: DashboardViewFilter): DashboardViewFilter | null =>
-			builtinViewFilter(id, current, userEmail),
-		[userEmail],
-	);
-
-	const views = useListViews<DashboardViewFilter>({
+	const views = useListViews<DashboardViewFilter, DashboardViewCtx>({
 		filter,
 		applyFilter,
 		isEqual: areViewFiltersEqual,
-		builtinFilter,
-		defaultViewId: BuiltinViewId.All,
+		builtinViews: BUILTIN_VIEWS,
+		ctx,
+		defaultViewId: DEFAULT_DASHBOARD_VIEW,
 		api,
 	});
 
@@ -103,7 +98,7 @@ export function useActiveView({
 		customViewsLoading: api.isLoading,
 		isCustomActive: views.isCustomActive,
 		isModified: views.isModified,
-		clientView: isClientView(views.activeViewId),
+		clientView: !!findBuiltinView(views.activeViewId)?.clientFilter,
 		selectView: views.selectView,
 		saveView: views.saveView,
 		saveActiveView: views.saveActiveView,

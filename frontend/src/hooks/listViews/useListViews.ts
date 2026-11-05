@@ -6,18 +6,25 @@ import type { UseListViewsArgs, UseListViewsResult } from './types';
 // Orchestrates a list page's active view: which view is selected (URL param),
 // applying a view's filter on select, dirty detection, and save/reset/delete
 // via the page's saved-views API.
-export function useListViews<F>({
+export function useListViews<F, Ctx = undefined>({
 	filter,
 	applyFilter,
 	isEqual,
-	builtinFilter,
+	builtinViews,
+	ctx,
 	defaultViewId,
 	api,
 	urlParam = 'view',
-}: UseListViewsArgs<F>): UseListViewsResult<F> {
+}: UseListViewsArgs<F, Ctx>): UseListViewsResult<F> {
 	const [activeViewId, setActiveViewId] = useQueryState(
 		urlParam,
 		parseAsString.withDefault(defaultViewId).withOptions({ history: 'push' }),
+	);
+
+	const builtinFilter = useCallback(
+		(id: string, current: F): F | null =>
+			builtinViews.find((v) => v.id === id)?.filter(current, ctx) ?? null,
+		[builtinViews, ctx],
 	);
 
 	const { views: customViews, createView, updateView, deleteView } = api;

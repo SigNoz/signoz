@@ -11,7 +11,7 @@
 //   locked = true
 import dayjs from 'dayjs';
 
-import type { UpdatedWindow } from './types';
+import type { ClauseValue, UpdatedWindow } from './types';
 import { literal } from './dslGrammar';
 import { scanTerm, splitTopLevelTerms } from './dslTokenizer';
 
@@ -36,6 +36,16 @@ export const isQueryEmpty = (query: string): boolean => !query.trim();
 
 export const areQueriesEqual = (a: string, b: string): boolean =>
 	a.trim() === b.trim();
+
+export const clause = (key: string, op: string, value: ClauseValue): string => {
+	if (typeof value === 'boolean') {
+		return `${key} ${op} ${value}`;
+	}
+	if (typeof value === 'string') {
+		return `${key} ${op} ${literal(value)}`;
+	}
+	return `${key} ${op} [${value.map(literal).join(', ')}]`;
+};
 
 // The `created_by` clause for a set of emails (single `=`, multiple `IN [...]`).
 export const createdByClause = (emails: string[]): string | null => {

@@ -1,4 +1,4 @@
-import { DASHBOARDS_DSL_GRAMMAR } from 'pages/DashboardsListPage/utils/dashboardsDslGrammar';
+import { DASHBOARDS_DSL_GRAMMAR } from 'pages/DashboardsListPage/list.config';
 
 import { getSuggestions } from './dslSuggestions';
 import type { SuggestionSource } from './types';

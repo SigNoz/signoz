@@ -21,7 +21,7 @@ import styles from './ViewsRail.module.scss';
 
 interface Props {
 	activeViewId: string;
-	builtinViews: BuiltinListView[];
+	builtinViews: readonly BuiltinListView[];
 	customViews: { id: string; name: string }[];
 	customViewsLoading: boolean;
 	isCustomActive: boolean;

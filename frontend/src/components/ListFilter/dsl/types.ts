@@ -3,19 +3,30 @@ import type { CaretContext } from './dslTokenizer';
 // `dynamic` keys (tags, labels) take string ops plus EXISTS / NOT EXISTS.
 export type DslFieldType = 'string' | 'timestamp' | 'bool' | 'enum' | 'dynamic';
 
+export interface DslField {
+	key: string;
+	type: DslFieldType;
+	values?: readonly string[];
+}
+
 // A list-filter DSL grammar, mirroring a backend `list_filter.go` allow-list.
 export interface DslGrammar {
-	// Reserved keys in suggestion order.
-	reservedKeys: readonly string[];
-	// Reserved key -> type. Any key not listed here is dynamic.
-	fieldTypes: Record<string, DslFieldType>;
+	// Reserved fields in suggestion order. Any key not listed here is dynamic.
+	fields: readonly DslField[];
 	// `detail` labels dynamic keys in the popup. A reserved dynamic key (e.g.
 	// rules' `severity`) aliases `${prefix}${key}` for value lookups.
 	dynamicKey: { detail: string; prefix: string };
-	enumValues?: Record<string, readonly string[]>;
 	// Advertised by the API but not filterable (e.g. `labels.<key>`).
 	hiddenKeys?: readonly string[];
 }
+
+export type ClauseValue = string | boolean | readonly string[];
+
+export type ClauseBuilder<K extends string> = (
+	key: K,
+	op: string,
+	value: ClauseValue,
+) => string;
 
 export interface SuggestionSource {
 	// Reserved keys from the list response, falling back to the grammar's.

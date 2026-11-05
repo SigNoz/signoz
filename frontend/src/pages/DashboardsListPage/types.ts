@@ -12,13 +12,7 @@ export interface DashboardViewFilter {
 	order: DashboardtypesListOrderDTO;
 }
 
-// Built-in views rendered above the user's saved views. Their result set is
-// derived (a fixed query fragment or a client-side id set), never persisted.
-// String values double as the URL `view` param, so they must stay stable.
-export enum BuiltinViewId {
-	Mine = 'mine',
-	Pinned = 'pinned',
-	Recent = 'recent',
-	All = 'all',
-	Locked = 'locked',
+export interface DashboardViewCtx {
+	userEmail: string;
+	recent: string[];
 }

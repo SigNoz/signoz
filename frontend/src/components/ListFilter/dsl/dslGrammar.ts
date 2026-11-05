@@ -3,11 +3,17 @@
 // (e.g. pkg/types/dashboardtypes/list_filter.go); keep those configs in sync.
 import { negateOperator, OPERATORS } from 'constants/antlrQueryConstants';
 
-import type { DslFieldType, DslGrammar } from './types';
+import type { DslField, DslFieldType, DslGrammar } from './types';
+
+export const findField = (
+	grammar: DslGrammar,
+	key: string,
+): DslField | undefined =>
+	grammar.fields.find((f) => f.key === key.toLowerCase());
 
 // A reserved key maps to its column type; anything else is dynamic.
 export const classifyField = (grammar: DslGrammar, key: string): DslFieldType =>
-	grammar.fieldTypes[key.toLowerCase()] ?? 'dynamic';
+	findField(grammar, key)?.type ?? 'dynamic';
 
 // String/dynamic comparison operators, reusing the shared operator constants
 // (REGEXP is allow-listed by the backend but unimplemented, so it is omitted).

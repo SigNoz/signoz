@@ -1,15 +1,17 @@
 import type {
+	BuiltinViewConfig,
 	SavedListView,
 	SavedListViewsApi,
 } from 'components/ListViews/types';
 
-export interface UseListViewsArgs<F> {
+export interface UseListViewsArgs<F, Ctx> {
 	/** The currently applied filter. */
 	filter: F;
 	applyFilter: (next: F) => void;
 	isEqual: (a: F, b: F) => boolean;
-	/** The filter a builtin view applies given the current one; `null` when `id` is not builtin. */
-	builtinFilter: (id: string, current: F) => F | null;
+	builtinViews: readonly Pick<BuiltinViewConfig<F, Ctx>, 'id' | 'filter'>[];
+	/** Passed to each built-in view's `filter`. */
+	ctx: Ctx;
 	defaultViewId: string;
 	api: SavedListViewsApi<F>;
 	/** URL search param holding the active view id. */

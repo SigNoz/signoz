@@ -4,6 +4,7 @@
 // dslGrammar.ts; caret/stage detection in dslTokenizer.ts.
 import {
 	classifyField,
+	findField,
 	LIST_OPERATORS,
 	literal,
 	OPERATOR_MATRIX,
@@ -35,14 +36,12 @@ const keySuggestions = (
 	grammar: DslGrammar,
 ): Suggestion[] => {
 	const hidden = new Set(grammar.hiddenKeys ?? []);
-	const reserved = (source.reservedKeys ?? [...grammar.reservedKeys]).filter(
-		(k) => !hidden.has(k),
-	);
+	const known = grammar.fields.map((f) => f.key);
+	const reserved = (source.reservedKeys ?? known).filter((k) => !hidden.has(k));
 	const reservedSet = new Set(reserved.map((k) => k.toLowerCase()));
 	// Show reserved keys in the grammar's (purpose) order — name, description, … —
 	// rather than the API's alphabetical order; any extra API keys follow, then
 	// dynamic keys.
-	const known = grammar.reservedKeys;
 	const orderedReserved = [
 		...known.filter((k) => reserved.includes(k)),
 		...reserved.filter((k) => !known.includes(k)),
@@ -157,7 +156,7 @@ const knownValues = (
 			: source.creatorEmails;
 	}
 	if (type === 'enum') {
-		return [...(grammar.enumValues?.[key] ?? [])];
+		return [...(findField(grammar, key)?.values ?? [])];
 	}
 	if (type === 'dynamic') {
 		const alias = `${grammar.dynamicKey.prefix}${key}`.toLowerCase();

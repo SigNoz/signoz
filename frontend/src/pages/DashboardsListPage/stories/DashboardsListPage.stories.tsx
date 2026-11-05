@@ -16,7 +16,6 @@ import {
 	TOAST_TIMEOUT,
 	uploadDashboardJson,
 } from './DashboardsListPage.stories.mocks';
-import { BuiltinViewId } from '../types';
 
 import DashboardsListPage from '../DashboardsListPage';
 
@@ -72,7 +71,7 @@ export const Viewer: Story = {
 
 /** The rows the user pinned, which the page filters out of the fetched page. */
 export const Pinned: Story = {
-	args: { view: BuiltinViewId.Pinned },
+	args: { view: 'pinned' },
 };
 
 /** The template tab of the New dashboard dialog. */
