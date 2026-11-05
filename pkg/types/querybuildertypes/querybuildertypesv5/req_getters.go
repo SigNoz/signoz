@@ -225,6 +225,14 @@ func (q *QueryEnvelope) GetGroupBy() []GroupByKey {
 	return nil
 }
 
+func (q *QueryEnvelope) GetGroupByKeyNames() []string {
+	names := make([]string, 0, len(q.GetGroupBy()))
+	for _, key := range q.GetGroupBy() {
+		names = append(names, key.Name)
+	}
+	return names
+}
+
 // GetAggregationExpressions returns one entry per aggregation. A metric
 // aggregation has no expression, so it contributes an empty entry.
 func (q *QueryEnvelope) GetAggregationExpressions() []string {

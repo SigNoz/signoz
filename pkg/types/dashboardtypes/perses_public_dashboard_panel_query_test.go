@@ -252,7 +252,7 @@ func TestDashboardV2GetPanelQuery(t *testing.T) {
 	})
 
 	t.Run("sets FormatTableResultForUI for panels that join scalar rows", func(t *testing.T) {
-		for _, kind := range []PanelPluginKind{PanelKindTable, PanelKindScatterPlot} {
+		for _, kind := range []PanelPluginKind{PanelKindTable, PanelKindScatterPlot, PanelKindGeoMap} {
 			t.Run(string(kind), func(t *testing.T) {
 				dashboard := &DashboardV2{
 					Spec: DashboardSpec{
@@ -265,8 +265,11 @@ func TestDashboardV2GetPanelQuery(t *testing.T) {
 											Kind: qb.RequestTypeScalar,
 											Spec: QuerySpec{
 												Plugin: QueryPlugin{
-													Kind: QueryKindBuilder,
-													Spec: &BuilderQuerySpec{Spec: qb.QueryBuilderQuery[qb.MetricAggregation]{Name: "A"}},
+													Kind: QueryKindComposite,
+													Spec: &CompositeQuerySpec{Queries: []qb.QueryEnvelope{
+														{Type: qb.QueryTypeBuilder, Spec: qb.QueryBuilderQuery[qb.MetricAggregation]{Name: "A"}},
+														{Type: qb.QueryTypeBuilder, Spec: qb.QueryBuilderQuery[qb.MetricAggregation]{Name: "B"}},
+													}},
 												},
 											},
 										},
@@ -281,6 +284,7 @@ func TestDashboardV2GetPanelQuery(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, req.FormatOptions)
 				assert.True(t, req.FormatOptions.FormatTableResultForUI)
+				assert.Len(t, req.CompositeQuery.Queries, 2)
 			})
 		}
 	})
