@@ -38,11 +38,26 @@ var (
 
 // Querier interface defines the contract for querying data.
 type Querier interface {
-	QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error)
+	QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, opts ...QueryRangeOption) (*qbtypes.QueryRangeResponse, error)
 	QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream)
 	statsreporter.StatsCollector
 	// QueryRangePreview validates and renders the queries without executing them.
 	QueryRangePreview(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, opts qbtypes.QueryRangePreviewOptions) (*qbtypes.QueryRangePreviewResponse, error)
+}
+
+type QueryRangeOption func(*queryRangeOptions)
+
+// WithClickHouseQueryLimits replaces the configured querier.clickhouse_query limits for the ClickHouse SQL queries
+// of the call. A zero ClickHouseQueryConfig runs them without limits. The query_range API does not pass it, so API
+// callers always get the configured limits.
+func WithClickHouseQueryLimits(limits ClickHouseQueryConfig) QueryRangeOption {
+	return func(options *queryRangeOptions) {
+		options.clickHouseQueryLimits = limits
+	}
+}
+
+type queryRangeOptions struct {
+	clickHouseQueryLimits ClickHouseQueryConfig
 }
 
 type querier struct {
@@ -62,6 +77,7 @@ type querier struct {
 	liveDataRefresh          time.Duration
 	builderConfig            builderConfig
 	maxConcurrentQueries     int
+	clickHouseQueryBudget    ClickHouseQueryConfig
 }
 
 var _ Querier = (*querier)(nil)
@@ -82,6 +98,7 @@ func New(
 	flagger flagger.Flagger,
 	logTraceIDWindowPadding time.Duration,
 	maxConcurrentQueries int,
+	clickHouseQueryBudget ClickHouseQueryConfig,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
 	if maxConcurrentQueries <= 0 {
@@ -105,11 +122,13 @@ func New(
 		builderConfig: builderConfig{
 			logTraceIDWindowPaddingMS: uint64(logTraceIDWindowPadding.Milliseconds()),
 		},
-		maxConcurrentQueries: maxConcurrentQueries,
+		maxConcurrentQueries:  maxConcurrentQueries,
+		clickHouseQueryBudget: clickHouseQueryBudget,
 	}
 }
 
-func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
+func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, opts ...QueryRangeOption) (*qbtypes.QueryRangeResponse, error) {
+	options := q.newQueryRangeOptions(opts)
 
 	// Callers that build the request in-process never pass through
 	// UnmarshalJSON, so normalise here too.
@@ -144,7 +163,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		missingMetricQuerySet[name] = true
 	}
 
-	queries, steps, err := q.buildQueries(orgID, req, dependencyQueries, missingMetricQuerySet, event)
+	queries, steps, err := q.buildQueries(orgID, req, dependencyQueries, missingMetricQuerySet, event, options.clickHouseQueryLimits)
 	if err != nil {
 		return nil, err
 	}
@@ -187,12 +206,21 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	return qbResp, qbErr
 }
 
+func (q *querier) newQueryRangeOptions(opts []QueryRangeOption) queryRangeOptions {
+	options := queryRangeOptions{clickHouseQueryLimits: q.clickHouseQueryBudget}
+	for _, opt := range opts {
+		opt(&options)
+	}
+	return options
+}
+
 func (q *querier) buildQueries(
 	orgID valuer.UUID,
 	req *qbtypes.QueryRangeRequest,
 	dependencyQueries map[string]bool,
 	missingMetricQuerySet map[string]bool,
 	event *qbtypes.QBEvent,
+	clickHouseQueryLimits ClickHouseQueryConfig,
 ) (map[string]qbtypes.Query, map[string]qbtypes.Step, error) {
 
 	tmplVars := req.Variables
@@ -225,7 +253,7 @@ func (q *querier) buildQueries(
 			if !ok {
 				return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid clickhouse query spec %T", query.Spec)
 			}
-			chSQLQuery := newchSQLQuery(q.logger, q.telemetryStore, chQuery, nil, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars)
+			chSQLQuery := newchSQLQuery(q.logger, q.telemetryStore, chQuery, nil, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars, clickHouseQueryLimits)
 			queries[chQuery.Name] = chSQLQuery
 		case qbtypes.QueryTypeTraceOperator:
 			traceOpQuery, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator)
@@ -920,7 +948,7 @@ func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, 
 		queryCopy := qt.query.Copy()
 		argsCopy := make([]any, len(qt.args))
 		copy(argsCopy, qt.args)
-		return newchSQLQuery(q.logger, q.telemetryStore, queryCopy, argsCopy, timeRange, qt.kind, qt.vars)
+		return newchSQLQuery(q.logger, q.telemetryStore, queryCopy, argsCopy, timeRange, qt.kind, qt.vars, qt.limits)
 
 	case *builderQuery[qbtypes.TraceAggregation]:
 		specCopy := qt.spec.Copy()

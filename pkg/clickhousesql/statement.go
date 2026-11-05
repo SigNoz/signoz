@@ -20,7 +20,24 @@ var (
 	CodeReadingFunction    = errors.MustNewCode("clickhouse_sql_reading_function")
 	CodeInternalDatabase   = errors.MustNewCode("clickhouse_sql_internal_database")
 	CodeReadonlyOverride   = errors.MustNewCode("clickhouse_sql_readonly_override")
+	CodeLimitOverride      = errors.MustNewCode("clickhouse_sql_limit_override")
 )
+
+// limitSettings bound a query's time, memory, reads and result. The caller applies them, and a
+// query-level setting takes precedence over the context setting.
+//
+// Keyed by the lowercased name, since ClickHouse resolves setting names case-insensitively.
+var limitSettings = map[string]struct{}{
+	"max_execution_time":      {},
+	"max_execution_time_leaf": {},
+	"timeout_overflow_mode":   {},
+	"max_memory_usage":        {},
+	"max_bytes_to_read":       {},
+	"read_overflow_mode":      {},
+	"max_result_rows":         {},
+	"max_result_bytes":        {},
+	"result_overflow_mode":    {},
+}
 
 // internalDatabases hold server metadata, credentials and grants rather than telemetry.
 var internalDatabases = map[string]struct{}{
@@ -144,10 +161,7 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 			}
 
 		case *chparser.SettingExpr:
-			// A query-level setting takes precedence over the context setting.
-			if strings.EqualFold(expr.Name.Name, "readonly") {
-				return errors.NewInvalidInputf(CodeReadonlyOverride, "the ClickHouse readonly setting cannot be overridden")
-			}
+			return errIfSettingOverridden(expr.Name.Name)
 		}
 
 		return nil
@@ -161,6 +175,18 @@ func LogIfStatementIsNotValid(ctx context.Context, logger *slog.Logger, query st
 	if err := ErrIfStatementIsNotValid(query); err != nil {
 		logger.WarnContext(ctx, "clickhouse sql is not valid", errors.Attr(err), slog.String("query", query))
 	}
+}
+
+func errIfSettingOverridden(name string) error {
+	if strings.EqualFold(name, "readonly") {
+		return errors.NewInvalidInputf(CodeReadonlyOverride, "the ClickHouse readonly setting cannot be overridden")
+	}
+
+	if _, ok := limitSettings[strings.ToLower(name)]; ok {
+		return errors.NewInvalidInputf(CodeLimitOverride, "the ClickHouse %s setting cannot be overridden", name)
+	}
+
+	return nil
 }
 
 func errIfFunctionReads(name string) error {

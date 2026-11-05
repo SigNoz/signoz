@@ -59,6 +59,7 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		flaggertest.New(t), // flagger
 		0,                  // logTraceIDWindowPadding
 		0,                  // maxConcurrentQueries
+		ClickHouseQueryConfig{},
 	)
 
 	req := &qbtypes.QueryRangeRequest{
@@ -132,6 +133,7 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		flaggertest.New(t), // flagger
 		0,                  // logTraceIDWindowPadding
 		0,                  // maxConcurrentQueries
+		ClickHouseQueryConfig{},
 	)
 
 	req := &qbtypes.QueryRangeRequest{
@@ -309,4 +311,37 @@ func TestRunQueryErrorCancelsSiblings(t *testing.T) {
 	_, err := q.run(context.Background(), valuer.GenerateUUID(), qs, req, nil, &qbtypes.QBEvent{}, nil)
 	require.ErrorContains(t, err, "query A failed")
 	assert.True(t, bCanceled.Load(), "query B should be canceled once query A fails")
+}
+
+func TestQueryRangeClickHouseQueryLimits(t *testing.T) {
+	configured := ClickHouseQueryConfig{MaxExecutionTime: time.Second, MaxResultRows: 10}
+	moduleLimits := ClickHouseQueryConfig{MaxResultRows: 5}
+	q := New(instrumentationtest.New().ToProviderSettings(), nil, telemetrytypestest.NewMockMetadataStore(), nil, nil, nil, nil, nil, nil, nil, nil, nil, flaggertest.New(t), 0, 0, configured)
+
+	testCases := []struct {
+		name string
+		opts []QueryRangeOption
+		want ClickHouseQueryConfig
+	}{
+		{name: "NoOption_ConfiguredLimits", want: configured},
+		{name: "ModuleLimits_Replace", opts: []QueryRangeOption{WithClickHouseQueryLimits(moduleLimits)}, want: moduleLimits},
+		{name: "ZeroLimits_NoLimits", opts: []QueryRangeOption{WithClickHouseQueryLimits(ClickHouseQueryConfig{})}, want: ClickHouseQueryConfig{}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			req := &qbtypes.QueryRangeRequest{
+				RequestType: qbtypes.RequestTypeRaw,
+				CompositeQuery: qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeClickHouseSQL,
+					Spec: qbtypes.ClickHouseQuery{Name: "A", Query: "SELECT 1"},
+				}}},
+			}
+
+			queries, _, err := q.buildQueries(valuer.GenerateUUID(), req, nil, nil, &qbtypes.QBEvent{}, q.newQueryRangeOptions(testCase.opts).clickHouseQueryLimits)
+			require.NoError(t, err)
+			require.IsType(t, &chSQLQuery{}, queries["A"])
+			assert.Equal(t, testCase.want, queries["A"].(*chSQLQuery).limits)
+		})
+	}
 }

@@ -30,6 +30,7 @@ type chSQLQuery struct {
 	toMS   uint64
 	kind   qbtypes.RequestType
 	vars   map[string]qbtypes.VariableItem
+	limits ClickHouseQueryConfig
 }
 
 var _ qbtypes.Query = (*chSQLQuery)(nil)
@@ -43,6 +44,7 @@ func newchSQLQuery(
 	tr qbtypes.TimeRange,
 	kind qbtypes.RequestType,
 	variables map[string]qbtypes.VariableItem,
+	limits ClickHouseQueryConfig,
 ) *chSQLQuery {
 	return &chSQLQuery{
 		logger:         logger,
@@ -53,6 +55,7 @@ func newchSQLQuery(
 		toMS:           tr.To,
 		kind:           kind,
 		vars:           variables,
+		limits:         limits,
 	}
 }
 
@@ -141,6 +144,15 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		return nil, err
 	}
 
+	if q.limits.MaxExecutionTime > 0 {
+		var cancel context.CancelFunc
+		// TODO: clickhouse-go replaces a lower max_execution_time setting with the ctx deadline, so the limit is a
+		// deadline until https://github.com/ClickHouse/clickhouse-go/issues/2100 is fixed.
+		ctx, cancel = context.WithTimeout(ctx, q.limits.MaxExecutionTime)
+		defer cancel()
+	}
+	ctx = telemetrystore.NewContextWithQuerySettings(ctx, q.limits.settings(q.kind))
+
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, q.args...)
 	if err != nil {
 		return nil, err
@@ -161,4 +173,23 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 			DurationMS:   uint64(elapsed.Milliseconds()),
 		},
 	}, nil
+}
+
+// settings returns the limits as ClickHouse query settings. A SETTINGS clause in the user's SQL
+// overrides them. MaxExecutionTime is a context deadline instead.
+func (config ClickHouseQueryConfig) settings(requestType qbtypes.RequestType) clickhouse.Settings {
+	settings := clickhouse.Settings{}
+	if config.MaxMemoryUsage > 0 {
+		settings["max_memory_usage"] = config.MaxMemoryUsage
+	}
+	// Aggregation request types return one row per series and point; MaxResultBytes bounds them.
+	if config.MaxResultRows > 0 && !requestType.IsAggregation() {
+		settings["max_result_rows"] = config.MaxResultRows
+		settings["result_overflow_mode"] = "throw"
+	}
+	if config.MaxResultBytes > 0 {
+		settings["max_result_bytes"] = config.MaxResultBytes
+		settings["result_overflow_mode"] = "throw"
+	}
+	return settings
 }

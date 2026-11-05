@@ -2,6 +2,7 @@ package clickhousetelemetrystore
 
 import (
 	"context"
+	"os"
 
 	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -22,11 +23,15 @@ var (
 
 	ErrCodeDistributedSubqueryDenied = errors.MustNewCode("distributed_subquery_denied")
 	ErrCodeDecimalOverflow           = errors.MustNewCode("decimal_overflow")
+	ErrCodeMemoryLimitExceeded       = errors.MustNewCode("memory_limit_exceeded")
+	ErrCodeResultTooLarge            = errors.MustNewCode("result_too_large")
 
 	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
 	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
 	ErrCodeExecutionFailed = errors.MustNewCode("execution_failed")
 )
+
+const queryTimeoutSuggestion = "optimize your query: narrow the time range or add filters to read less data"
 
 // Codes absent from this map fall through to the raw driver error in castError.
 var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickhouse.Exception) error{
@@ -86,6 +91,23 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 	chproto.ErrDecimalOverflow: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeDecimalOverflow, "decimal overflow: %s", ex.Message).
 			WithSuggestions("cast the Decimal values to Float64, or to a wider Decimal such as Decimal128, before the arithmetic")
+	},
+	chproto.ErrTimeoutExceeded: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapTimeoutf(cause, ErrCodeQueryTimeout, "query timed out: %s", ex.Message).
+			WithSuggestions(queryTimeoutSuggestion)
+	},
+	// ClickHouse estimates the query will run past max_execution_time and stops it early.
+	chproto.ErrTooSlow: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapTimeoutf(cause, ErrCodeQueryTimeout, "query is estimated to time out: %s", ex.Message).
+			WithSuggestions(queryTimeoutSuggestion)
+	},
+	chproto.ErrMemoryLimitExceeded: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeMemoryLimitExceeded, "query memory limit exceeded: %s", ex.Message).
+			WithSuggestions("narrow the time range, add filters or reduce the number of groups")
+	},
+	chproto.ErrTooManyRowsOrBytes: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeResultTooLarge, "query result too large: %s", ex.Message).
+			WithSuggestions("add a LIMIT, narrow the time range or select fewer columns")
 	},
 }
 
@@ -292,8 +314,9 @@ func castError(err error) error {
 	if errors.Is(err, context.Canceled) {
 		return errors.WrapCanceledf(err, ErrCodeQueryCanceled, "query canceled")
 	}
-	if errors.Is(err, context.DeadlineExceeded) {
-		return errors.WrapTimeoutf(err, ErrCodeQueryTimeout, "query timed out")
+	// A socket read can hit the deadline the driver copies from ctx before the driver sees ctx is done.
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, os.ErrDeadlineExceeded) {
+		return errors.WrapTimeoutf(err, ErrCodeQueryTimeout, "query timed out").WithSuggestions(queryTimeoutSuggestion)
 	}
 
 	var ex *clickhouse.Exception

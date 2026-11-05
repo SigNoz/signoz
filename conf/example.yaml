@@ -178,6 +178,17 @@ querier:
   # range with padding to include slightly delayed log exports. Logs only; set
   # to 0 to disable.
   log_trace_id_window_padding: 5m
+  # Limits of one user-written ClickHouse SQL query; 0 disables a limit. Applies to the
+  # query_range API, and to modules that do not pass their own limits.
+  clickhouse_query:
+    # Covers ClickHouse execution and reading the result.
+    max_execution_time: 55s
+    # ClickHouse memory limit of the query, in bytes.
+    max_memory_usage: 10000000000
+    # Result row limit of list requests (raw, raw_stream, trace).
+    max_result_rows: 100000
+    # Result size limit, in bytes.
+    max_result_bytes: 524288000
   schemametadatastore:
     # How long found schema metadata stays cached; 0 caches it for the life of the process.
     cache_ttl: 0s

@@ -30,6 +30,7 @@ class TelemetryFieldKey:
 
 class RequestType:
     RAW = "raw"
+    TRACE = "trace"
     TIME_SERIES = "time_series"
     SCALAR = "scalar"
     TABLE = "table"

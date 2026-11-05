@@ -20,9 +20,24 @@ type Config struct {
 	MaxConcurrentQueries int `yaml:"max_concurrent_queries" mapstructure:"max_concurrent_queries"`
 	// LogTraceIDWindowPadding is the padding added to narrowed down timerange from trace summary to logs with trace_id filter.
 	LogTraceIDWindowPadding time.Duration `yaml:"log_trace_id_window_padding" mapstructure:"log_trace_id_window_padding"`
+	// ClickHouseQuery bounds user-written ClickHouse SQL queries. A QueryRange caller can replace it with
+	// WithClickHouseQueryLimits.
+	ClickHouseQuery ClickHouseQueryConfig `yaml:"clickhouse_query" mapstructure:"clickhouse_query"`
 
 	// Keys sit under querier.skip_resource_fingerprint.
 	statementbuilder.Config `mapstructure:",squash" yaml:",squash"`
+}
+
+// ClickHouseQueryConfig is the budget of one user-written ClickHouse SQL query. A zero value disables that limit.
+type ClickHouseQueryConfig struct {
+	// MaxExecutionTime is enforced as a context deadline.
+	MaxExecutionTime time.Duration `yaml:"max_execution_time" mapstructure:"max_execution_time"`
+	// MaxMemoryUsage is the ClickHouse memory limit of the query, in bytes.
+	MaxMemoryUsage int64 `yaml:"max_memory_usage" mapstructure:"max_memory_usage"`
+	// MaxResultRows applies to list requests (raw, raw_stream, trace) only.
+	MaxResultRows int64 `yaml:"max_result_rows" mapstructure:"max_result_rows"`
+	// MaxResultBytes caps the uncompressed result size, in bytes.
+	MaxResultBytes int64 `yaml:"max_result_bytes" mapstructure:"max_result_bytes"`
 }
 
 // NewConfigFactory creates a new config factory for querier.
@@ -37,7 +52,13 @@ func newConfig() factory.Config {
 		FluxInterval:            5 * time.Minute,
 		MaxConcurrentQueries:    DefaultMaxConcurrentQueries,
 		LogTraceIDWindowPadding: 5 * time.Minute,
-		Config:                  statementbuilder.NewConfig(),
+		ClickHouseQuery: ClickHouseQueryConfig{
+			MaxExecutionTime: 55 * time.Second,
+			MaxMemoryUsage:   10_000_000_000,
+			MaxResultRows:    100_000,
+			MaxResultBytes:   500 << 20,
+		},
+		Config: statementbuilder.NewConfig(),
 	}
 }
 
@@ -54,6 +75,18 @@ func (c Config) Validate() error {
 	}
 	if c.LogTraceIDWindowPadding < 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "log_trace_id_window_padding must not be negative, got %v", c.LogTraceIDWindowPadding)
+	}
+	if c.ClickHouseQuery.MaxExecutionTime < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "clickhouse_query.max_execution_time must not be negative, got %v", c.ClickHouseQuery.MaxExecutionTime)
+	}
+	if c.ClickHouseQuery.MaxMemoryUsage < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "clickhouse_query.max_memory_usage must not be negative, got %v", c.ClickHouseQuery.MaxMemoryUsage)
+	}
+	if c.ClickHouseQuery.MaxResultRows < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "clickhouse_query.max_result_rows must not be negative, got %v", c.ClickHouseQuery.MaxResultRows)
+	}
+	if c.ClickHouseQuery.MaxResultBytes < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "clickhouse_query.max_result_bytes must not be negative, got %v", c.ClickHouseQuery.MaxResultBytes)
 	}
 	// Embedded Validate is shadowed by this one; call it explicitly.
 	if err := c.Config.Validate(); err != nil {

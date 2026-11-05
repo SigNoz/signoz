@@ -31,6 +31,7 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"ParenthesisedUnionLeftOperandAtStatementLevel", "(SELECT 1 AS a) UNION ALL (SELECT 2 AS a)"},
 		{"WindowFunction", "SELECT sum(v) OVER (PARTITION BY a ORDER BY t) FROM t"},
 		{"UnrelatedSetting", "SELECT * FROM t SETTINGS max_threads = 4"},
+		{"LimitSettingNameInStringLiteral", "SELECT * FROM t WHERE body = 'max_result_rows'"},
 		{"TerminatedBlockComment", "SELECT /* keep me */ count() FROM t"},
 		{"BlockCommentMarkerInsideStringLiteral", "SELECT count() FROM t WHERE body = '/* not a comment'"},
 		// Looped forever before v0.5.2.
@@ -168,6 +169,9 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		// Takes precedence over the setting the caller applies.
 		{"ReadonlySettingOverride", "SELECT * FROM t SETTINGS readonly = 0", CodeReadonlyOverride},
 		{"ReadonlySettingOverrideAmongOthers", "SELECT * FROM t SETTINGS max_threads = 4, readonly = 0", CodeReadonlyOverride},
+		{"LimitSettingOverride", "SELECT * FROM t SETTINGS max_result_rows = 0", CodeLimitOverride},
+		{"LimitSettingOverrideUppercase", "SELECT * FROM t SETTINGS MAX_MEMORY_USAGE = 0", CodeLimitOverride},
+		{"LimitSettingOverrideInSubquery", "SELECT * FROM (SELECT * FROM t SETTINGS max_execution_time = 0)", CodeLimitOverride},
 	}
 
 	for _, testCase := range testCases {

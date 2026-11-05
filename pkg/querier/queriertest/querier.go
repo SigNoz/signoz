@@ -24,7 +24,7 @@ func NewMockQuerier() *MockQuerier {
 	return &MockQuerier{}
 }
 
-func (m *MockQuerier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
+func (m *MockQuerier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, _ ...querier.QueryRangeOption) (*qbtypes.QueryRangeResponse, error) {
 	if m.QueryRangeFunc != nil {
 		return m.QueryRangeFunc(ctx, orgID, req)
 	}
