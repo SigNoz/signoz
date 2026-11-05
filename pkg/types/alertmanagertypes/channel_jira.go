@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
+	"github.com/swaggest/jsonschema-go"
 )
 
 const defaultJiraReopenDuration = model.Duration(3 * 24 * time.Hour)
@@ -83,6 +84,62 @@ type ChannelJiraConfig struct {
 	Email    string `json:"email,omitempty" description:"The Atlassian account email used for basic auth. Required when deployment is cloud."`
 	APIToken string `json:"apiToken,omitempty" format:"password" description:"The Atlassian API token paired with email. Required when deployment is cloud. A secret; returned by create, update and fetch by ID, never by list."`
 	PAT      string `json:"pat,omitempty" format:"password" description:"The Jira personal access token, sent as a Bearer header. Required when deployment is selfhosted. A secret; returned by create, update and fetch by ID, never by list."`
+}
+
+var (
+	_ jsonschema.OneOfExposer = ChannelJiraConfig{}
+	_ jsonschema.Preparer     = ChannelJiraConfig{}
+)
+
+// channelJiraSharedConfig lists the fields both deployments accept, for the
+// schema variants only.
+type channelJiraSharedConfig struct {
+	SendResolved      *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
+	Site              string                       `json:"site" required:"true" description:"The base URL of the Jira site, for example https://example.atlassian.net or https://jira.example.com."`
+	Project           string                       `json:"project" required:"true" description:"The key of the project issues are created in."`
+	IssueType         string                       `json:"issueType" required:"true" description:"The issue type name, such as Bug."`
+	Summary           valuer.UnsetOrNonEmptyString `json:"summary,omitzero" description:"Alertmanager template for the issue summary; defaults to the SigNoz Jira default."`
+	Description       valuer.UnsetOrNonEmptyString `json:"description,omitzero" description:"Alertmanager template for the issue description, rendered as markdown; defaults to the SigNoz Jira default."`
+	Priority          string                       `json:"priority" description:"The priority name assigned to new issues."`
+	Labels            []string                     `json:"labels,omitzero" description:"Labels added to every issue."`
+	ResolveTransition string                       `json:"resolveTransition" description:"The transition applied to the issue when the alert resolves."`
+	ReopenTransition  string                       `json:"reopenTransition" description:"The transition applied when an alert fires again on a resolved issue."`
+	ReopenDuration    valuer.UnsetOrNonEmptyString `json:"reopenDuration,omitzero" description:"How long after resolution a firing alert reopens the issue instead of creating a new one, as a Prometheus duration in canonical form such as 3d; defaults to 3d."`
+	WontFixResolution string                       `json:"wontFixResolution" description:"The resolution name that stops an issue from being reopened."`
+	CustomFields      map[string]any               `json:"customFields,omitzero" description:"Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives."`
+}
+
+type channelJiraCloudConfig struct {
+	Deployment JiraDeployment `json:"deployment" required:"true" description:"cloud: an Atlassian-hosted site."`
+	channelJiraSharedConfig
+	Email    string `json:"email" required:"true" description:"The Atlassian account email used for basic auth."`
+	APIToken string `json:"apiToken" required:"true" format:"password" description:"The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list."`
+}
+
+type channelJiraSelfHostedConfig struct {
+	Deployment JiraDeployment `json:"deployment" required:"true" description:"selfhosted: Jira Data Center or Server."`
+	channelJiraSharedConfig
+	PAT string `json:"pat" required:"true" format:"password" description:"The Jira personal access token, sent as a Bearer header. A secret; returned by create, update and fetch by ID, never by list."`
+}
+
+func (ChannelJiraConfig) JSONSchemaOneOf() []any {
+	return []any{channelJiraCloudConfig{}, channelJiraSelfHostedConfig{}}
+}
+
+func (ChannelJiraConfig) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	if schema.ExtraProperties == nil {
+		schema.ExtraProperties = map[string]any{}
+	}
+
+	schema.ExtraProperties["x-signoz-discriminator"] = map[string]any{
+		"propertyName": "deployment",
+		"mapping": map[string]string{
+			JiraDeploymentCloud.StringValue():      "#/components/schemas/AlertmanagertypesChannelJiraCloudConfig",
+			JiraDeploymentSelfHosted.StringValue(): "#/components/schemas/AlertmanagertypesChannelJiraSelfHostedConfig",
+		},
+	}
+
+	return nil
 }
 
 // UnmarshalJSON seeds send_resolved off, as JiraReceiverConfig does.
