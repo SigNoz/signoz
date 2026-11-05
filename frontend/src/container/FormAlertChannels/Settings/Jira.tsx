@@ -9,7 +9,6 @@ import {
 	ChannelSpecFormValues,
 	JiraDeployment,
 } from '../../CreateAlertChannels/types';
-import { jiraDeploymentOf } from '../../CreateAlertChannels/utils';
 import FormCard from '../FormCard';
 import FormField from '../FormField';
 
@@ -24,11 +23,7 @@ function JiraSettings(): JSX.Element {
 		control,
 		formState: { errors },
 	} = useFormContext<ChannelSpecFormValues>();
-	const [deploymentValue, pat] = useWatch({
-		control,
-		name: ['deployment', 'pat'],
-	});
-	const deployment = jiraDeploymentOf({ deployment: deploymentValue, pat });
+	const deployment = useWatch({ control, name: 'deployment' });
 	const selfHosted = deployment === JiraDeployment.selfhosted;
 
 	const advanced = (

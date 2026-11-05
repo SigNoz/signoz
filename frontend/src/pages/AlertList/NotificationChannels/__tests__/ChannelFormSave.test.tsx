@@ -194,6 +194,9 @@ describe('ChannelForm save', () => {
 			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
 			await user.click(await screen.findByRole('option', { name: /^Jira$/ }));
+			expect(
+				screen.getByTestId('jira-deployment-radio-item-cloud'),
+			).toHaveAttribute('aria-checked', 'true');
 
 			await user.type(screen.getByTestId('channel-name-textbox'), 'jira alerts');
 			await user.type(screen.getByTestId('jira-email-textbox'), 'ops@acme.io');

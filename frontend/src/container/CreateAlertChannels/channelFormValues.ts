@@ -1,7 +1,7 @@
 import { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { ChannelFormValues, ChannelKind } from './types';
-import { jiraDeploymentOf, webhookAuthOf } from './utils';
+import { webhookAuthOf } from './utils';
 
 export interface ChannelFormState {
 	kind: ChannelKind;
@@ -31,10 +31,6 @@ export function toChannelFormState(
 
 	if (kind === ChannelKind.webhook) {
 		values.webhookAuth = webhookAuthOf(values);
-	}
-
-	if (kind === ChannelKind.jira) {
-		values.deployment = jiraDeploymentOf(values);
 	}
 
 	return { kind, values };

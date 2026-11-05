@@ -203,10 +203,14 @@ describe('jira deployment', () => {
 		).toStrictEqual({ ...base, deployment: 'selfhosted', pat: 'pat-1' });
 	});
 
-	it('defaults a spec without deployment to cloud', () => {
+	it('sends a spec without deployment as cloud, as the API reads it', () => {
 		expect(
-			toChannelConfig(ChannelKind.jira, { ...base, email: 'a@b.c', apiToken: 't' })
-				.spec,
-		).toMatchObject({ deployment: 'cloud' });
+			toChannelConfig(ChannelKind.jira, {
+				...base,
+				email: 'a@b.c',
+				apiToken: 't',
+				pat: 'stale-pat',
+			}).spec,
+		).toStrictEqual({ ...base, email: 'a@b.c', apiToken: 't' });
 	});
 });

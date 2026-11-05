@@ -29,7 +29,6 @@ import {
 import {
 	canonicalJiraReopenDuration,
 	filledRows,
-	jiraDeploymentOf,
 	webhookAuthOf,
 } from './utils';
 
@@ -236,9 +235,7 @@ export function toChannelConfig(
 	}
 
 	if (kind === ChannelKind.jira) {
-		const deployment = jiraDeploymentOf(values);
-		picked.deployment = deployment;
-		if (deployment === JiraDeployment.selfhosted) {
+		if (values.deployment === JiraDeployment.selfhosted) {
 			delete picked.email;
 			delete picked.apiToken;
 		} else {
