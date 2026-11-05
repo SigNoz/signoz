@@ -109,7 +109,14 @@ func (b *auditQueryStatementBuilder) Build(
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeRawStream:
 		stmt, err = b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeTimeSeries:
-		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
+		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables, nil)
+	case qbtypes.RequestTypeHeatmap:
+		var heatmapField *telemetrytypes.TelemetryFieldKey
+		heatmapField, query, err = qbtypes.HeatmapCountQuery(query)
+		if err != nil {
+			return nil, err
+		}
+		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables, heatmapField)
 	case qbtypes.RequestTypeScalar:
 		stmt, err = b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, false, variables)
 	default:
@@ -311,6 +318,9 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 	return stmt, nil
 }
 
+// buildTimeSeriesQuery builds one row per (time bucket, group). A non-nil
+// heatmapField makes it a heatmap instead: the bucket a row's heatmapField
+// falls in joins the group keys, so a row is one cell.
 func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 	ctx context.Context,
 	orgID valuer.UUID,
@@ -319,6 +329,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 	start, end uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
+	heatmapField *telemetrytypes.TelemetryFieldKey,
 ) (*qbtypes.Statement, error) {
 	var (
 		cteFragments []string
@@ -352,6 +363,17 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 		fieldNames = append(fieldNames, sqlbuilder.Escape(clickhousesql.Identifier(gb.Name)))
 	}
 
+	var bucketAliases, bucketWarnings []string
+	var heatmapValuePresent string
+	if heatmapField != nil {
+		valueFragment, valuePresent, aliases, warnings, err := querybuilder.HeatmapBucketColumns(ctx, info, b.storage, sb, heatmapField, query.BucketOptions, keys)
+		if err != nil {
+			return nil, err
+		}
+		cteFragments = append(cteFragments, valueFragment)
+		bucketAliases, bucketWarnings, heatmapValuePresent = aliases, warnings, valuePresent
+	}
+
 	allAggChArgs := make([]any, 0)
 	for i, agg := range query.Aggregations {
 		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, orgID, start, end, agg.Expression, uint64(query.StepInterval.Seconds()), keys)
@@ -374,6 +396,9 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		cteSB := sqlbuilder.NewSelectBuilder()
+		if heatmapValuePresent != "" {
+			cteSB.Where(heatmapValuePresent)
+		}
 		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, true, variables)
 		if err != nil {
 			return nil, err
@@ -387,6 +412,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 		sb.GroupBy("ts")
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		sb.GroupBy(bucketAliases...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
@@ -414,6 +440,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 	} else {
 		sb.GroupBy("ts")
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		sb.GroupBy(bucketAliases...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
@@ -443,7 +470,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       preparedWhereClause.Warnings,
+		Warnings:       append(preparedWhereClause.Warnings, bucketWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 

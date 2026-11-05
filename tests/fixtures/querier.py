@@ -732,6 +732,7 @@ def build_heatmap_query(
     signal: str,
     field: str,
     *,
+    source: str | None = None,
     group_by: list[dict] | None = None,
     filter_expression: str | None = None,
     bucket_options: dict | None = None,
@@ -744,6 +745,9 @@ def build_heatmap_query(
         "stepInterval": step_interval,
         "aggregations": [{"expression": f"heatmap({field})"}],
     }
+
+    if source:
+        spec["source"] = source
 
     if group_by:
         spec["groupBy"] = group_by
