@@ -387,15 +387,26 @@ type DistributionData struct {
 }
 
 type DistributionAggregation struct {
-	Index         int             `json:"index" description:"The zero-based position of the aggregation in the query."`
-	Alias         string          `json:"alias" description:"The alias of the aggregation, or the internal name __result_N, with N its index, when no alias was given."`
-	Meta          AggregationMeta `json:"meta,omitempty" description:"Display metadata for the aggregation, including the bucket upper bounds the counts are positional against."`
-	Distributions []*Distribution `json:"distributions" description:"One distribution per group-by combination."`
+	Index         int                      `json:"index" description:"The zero-based position of the aggregation in the query."`
+	Alias         string                   `json:"alias" description:"The alias of the aggregation, or the internal name __result_N, with N its index, when no alias was given."`
+	Meta          AggregationMeta          `json:"meta,omitempty" description:"Display metadata for the aggregation, including the bucket upper bounds the counts are positional against."`
+	Percentiles   *DistributionPercentiles `json:"percentiles,omitempty" description:"Percentiles over the counts of every distribution added together, estimated the way histogram_quantile does by interpolating linearly within the bucket each rank falls in. Omitted when nothing was counted or meta.buckets is empty."`
+	Distributions []*Distribution          `json:"distributions" description:"One distribution per group-by combination."`
 }
 
 type Distribution struct {
 	Labels []*Label  `json:"labels,omitempty" description:"The group-by field values that identify this distribution."`
 	Counts []float64 `json:"counts" description:"One count per bound in meta.buckets plus a trailing overflow count, summed over every step of the requested time range."`
+}
+
+// DistributionPercentiles are estimates: a rank in the overflow reports the last
+// upper bound, and one in a bucket at or under zero reports that bound.
+type DistributionPercentiles struct {
+	P50 float64 `json:"p50" description:"The 50th percentile."`
+	P75 float64 `json:"p75" description:"The 75th percentile."`
+	P90 float64 `json:"p90" description:"The 90th percentile."`
+	P95 float64 `json:"p95" description:"The 95th percentile."`
+	P99 float64 `json:"p99" description:"The 99th percentile."`
 }
 
 type ColumnType struct {

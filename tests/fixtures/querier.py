@@ -902,7 +902,8 @@ def assert_distribution_sums_heatmap(
 ) -> None:
     """A distribution request over the queries a heatmap was drawn from answers with that heatmap's
     columns added up: the same aggregations and buckets, and for each series one count per bucket
-    plus the overflow under the same labels, with nothing time-shaped."""
+    plus the overflow under the same labels, and the percentiles every series' counts rank to
+    together, with nothing time-shaped."""
     response = make_query_request(signoz, token, start_ms, end_ms, queries, request_type=RequestType.DISTRIBUTION, no_cache=no_cache)
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()
@@ -933,6 +934,25 @@ def assert_distribution_sums_heatmap(
                 assert set(distribution) <= {"labels", "counts"}, f"{name} {dict(labels)}: distribution fields {sorted(distribution)}"
                 summed = [sum(column["values"][slot] for column in series.get("values") or [] if slot < len(column.get("values") or [])) for slot in range(len(buckets) + 1)]
                 assert distribution["counts"] == pytest.approx(summed), f"{name} {dict(labels)}: distribution counts {distribution['counts']}, heatmap columns add up to {summed}"
+
+            # histogram_quantile over every series' counts added together: interpolated inside the
+            # bucket the rank falls in, the last bound past it, the bound itself at or under zero
+            totals = [sum(column["values"][slot] for series in series_by_labels.values() for column in series.get("values") or [] if slot < len(column.get("values") or [])) for slot in range(len(buckets) + 1)]
+            if sum(totals) == 0 or not buckets:
+                assert "percentiles" not in distribution_aggregation, f"{name}: percentiles {distribution_aggregation.get('percentiles')} with nothing to rank"
+                continue
+            expected = {}
+            for percentile, q in (("p50", 0.5), ("p75", 0.75), ("p90", 0.9), ("p95", 0.95), ("p99", 0.99)):
+                rank, cumulative, value = q * sum(totals), 0.0, buckets[-1]
+                for slot, upper in enumerate(buckets):
+                    if cumulative + totals[slot] < rank:
+                        cumulative += totals[slot]
+                        continue
+                    lower = buckets[slot - 1] if slot > 0 else 0.0
+                    value = upper if slot == 0 and upper <= 0 else lower + (upper - lower) * (rank - cumulative) / totals[slot]
+                    break
+                expected[percentile] = value
+            assert distribution_aggregation["percentiles"] == pytest.approx(expected), f"{name}: percentiles {distribution_aggregation['percentiles']}, counts rank to {expected}"
 
 
 # we already create the evolution for resource during schema migration

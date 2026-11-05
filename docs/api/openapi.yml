@@ -9755,6 +9755,13 @@ components:
           - $ref: '#/components/schemas/Querybuildertypesv5AggregationMeta'
           description: Display metadata for the aggregation, including the bucket
             upper bounds the counts are positional against.
+        percentiles:
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5DistributionPercentiles'
+          description: Percentiles over the counts of every distribution added together,
+            estimated the way histogram_quantile does by interpolating linearly within
+            the bucket each rank falls in. Omitted when nothing was counted or meta.buckets
+            is empty.
       type: object
     Querybuildertypesv5DistributionData:
       properties:
@@ -9768,6 +9775,29 @@ components:
         queryName:
           description: The name of the query that produced this result.
           type: string
+      type: object
+    Querybuildertypesv5DistributionPercentiles:
+      properties:
+        p50:
+          description: The 50th percentile.
+          format: double
+          type: number
+        p75:
+          description: The 75th percentile.
+          format: double
+          type: number
+        p90:
+          description: The 90th percentile.
+          format: double
+          type: number
+        p95:
+          description: The 95th percentile.
+          format: double
+          type: number
+        p99:
+          description: The 99th percentile.
+          format: double
+          type: number
       type: object
     Querybuildertypesv5ExecStats:
       description: 'Execution cost of the request: rows and bytes scanned and execution
