@@ -21,7 +21,8 @@ export const editorTheme = EditorView.theme({
 		caretColor: 'var(--l1-foreground)',
 	},
 	'.cm-line': { padding: '0' },
-	'.cm-scroller': { fontFamily: 'inherit', lineHeight: '1.5' },
+	// Whole pixels: at 19.5px the placeholder line rounds 1px taller than text.
+	'.cm-scroller': { fontFamily: 'inherit', lineHeight: '20px' },
 	'.cm-placeholder': { color: 'var(--l3-foreground)' },
 });
 

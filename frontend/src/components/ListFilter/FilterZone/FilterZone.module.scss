@@ -94,6 +94,8 @@
 }
 
 .creatorCheck {
+	// Flex, not block: a line box would shift with the check mark's baseline.
+	display: flex;
 	flex-shrink: 0;
 	pointer-events: none;
 }
