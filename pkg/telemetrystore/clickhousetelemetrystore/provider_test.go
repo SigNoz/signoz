@@ -25,6 +25,7 @@ func TestCastError_LimitExceptions(t *testing.T) {
 		{name: "TooManyRowsOrBytes_ResultTooLarge", code: chproto.ErrTooManyRowsOrBytes, wantCode: ErrCodeResultTooLarge},
 		{name: "MemoryLimitExceeded_InvalidInput", code: chproto.ErrMemoryLimitExceeded, wantCode: ErrCodeMemoryLimitExceeded},
 		{name: "TimeoutExceeded_Timeout", code: chproto.ErrTimeoutExceeded, wantTimeout: true, wantCode: ErrCodeQueryTimeout},
+		{name: "TooSlow_Timeout", code: chproto.ErrTooSlow, wantTimeout: true, wantCode: ErrCodeQueryTimeout},
 	}
 
 	for _, testCase := range testCases {
@@ -34,6 +35,7 @@ func TestCastError_LimitExceptions(t *testing.T) {
 			// Required rather than asserted: errors.Asc dereferences the error it is given.
 			require.Error(t, err)
 			assert.True(t, errors.Asc(err, testCase.wantCode), "got %v", err)
+			assert.NotEmpty(t, errors.AsJSON(err).Suggestions)
 			if testCase.wantTimeout {
 				assert.True(t, errors.Ast(err, errors.TypeTimeout))
 			} else {
