@@ -22,15 +22,11 @@ const (
 	TraceFlagsColumn        = "trace_flags"
 	SeverityTextColumn      = "severity_text"
 	SeverityNumberColumn    = "severity_number"
-	ScopeNameColumn         = "scope_name"
-	ScopeVersionColumn      = "scope_version"
 
 	// Contextual Columns.
-	AttributesStringColumn = "attributes_string"
-	AttributesNumberColumn = "attributes_number"
-	AttributesBoolColumn   = "attributes_bool"
-	ResourceColumn         = "resource"
-	ScopeStringColumn      = "scope_string"
+	AttributesColumn = "attributes"
+	ResourceColumn   = "resource"
+	ScopeColumn      = "scope"
 )
 
 var (
@@ -86,6 +82,18 @@ var (
 		},
 	}
 
+	// ResourceFields are the resource keys the audit writer emits, so a bare name resolves to resource.
+	ResourceFields = map[string]telemetrytypes.TelemetryFieldKey{
+		"service.name":                        newResourceField("service.name"),
+		"service.version":                     newResourceField("service.version"),
+		"signoz.audit.resource.kind":          newResourceField("signoz.audit.resource.kind"),
+		"signoz.audit.resource.id":            newResourceField("signoz.audit.resource.id"),
+		"signoz.audit.resource.object":        newResourceField("signoz.audit.resource.object"),
+		"signoz.audit.resource.target.kind":   newResourceField("signoz.audit.resource.target.kind"),
+		"signoz.audit.resource.target.id":     newResourceField("signoz.audit.resource.target.id"),
+		"signoz.audit.resource.target.object": newResourceField("signoz.audit.resource.target.object"),
+	}
+
 	DefaultSortingOrder = []qbtypes.OrderBy{
 		{
 			Key: qbtypes.OrderByKey{
@@ -117,15 +125,11 @@ var auditLogColumns = map[string]*schema.Column{
 	"trace_flags":          {Name: "trace_flags", Type: schema.ColumnTypeUInt32},
 	"severity_text":        {Name: "severity_text", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
 	"severity_number":      {Name: "severity_number", Type: schema.ColumnTypeUInt8},
-	"body":                 {Name: "body", Type: schema.ColumnTypeString},
-	"attributes_string":    {Name: "attributes_string", Type: schema.MapColumnType{KeyType: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}, ValueType: schema.ColumnTypeString}},
-	"attributes_number":    {Name: "attributes_number", Type: schema.MapColumnType{KeyType: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}, ValueType: schema.ColumnTypeFloat64}},
-	"attributes_bool":      {Name: "attributes_bool", Type: schema.MapColumnType{KeyType: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}, ValueType: schema.ColumnTypeBool}},
+	"body":                 {Name: "body", Type: schema.JSONColumnType{}},
+	"scope":                {Name: "scope", Type: schema.JSONColumnType{}},
+	"attributes":           {Name: "attributes", Type: schema.JSONColumnType{}},
 	"resource":             {Name: "resource", Type: schema.JSONColumnType{}},
 	"event_name":           {Name: "event_name", Type: schema.ColumnTypeString},
-	"scope_name":           {Name: "scope_name", Type: schema.ColumnTypeString},
-	"scope_version":        {Name: "scope_version", Type: schema.ColumnTypeString},
-	"scope_string":         {Name: "scope_string", Type: schema.MapColumnType{KeyType: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}, ValueType: schema.ColumnTypeString}},
 }
 
 const (
@@ -138,3 +142,12 @@ const (
 	LogResourceKeysTblName      = "distributed_logs_resource_keys"
 	LogsResourceTableName       = "distributed_logs_resource"
 )
+
+func newResourceField(name string) telemetrytypes.TelemetryFieldKey {
+	return telemetrytypes.TelemetryFieldKey{
+		Name:          name,
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	}
+}

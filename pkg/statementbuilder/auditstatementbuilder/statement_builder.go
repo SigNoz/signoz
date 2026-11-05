@@ -248,15 +248,11 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(audittelemetryschema.TraceFlagsColumn)
 		sb.SelectMore(audittelemetryschema.SeverityTextColumn)
 		sb.SelectMore(audittelemetryschema.SeverityNumberColumn)
-		sb.SelectMore(audittelemetryschema.ScopeNameColumn)
-		sb.SelectMore(audittelemetryschema.ScopeVersionColumn)
 		sb.SelectMore(audittelemetryschema.BodyColumn)
 		sb.SelectMore(audittelemetryschema.EventNameColumn)
-		sb.SelectMore(audittelemetryschema.AttributesStringColumn)
-		sb.SelectMore(audittelemetryschema.AttributesNumberColumn)
-		sb.SelectMore(audittelemetryschema.AttributesBoolColumn)
+		sb.SelectMore(audittelemetryschema.AttributesColumn)
 		sb.SelectMore(audittelemetryschema.ResourceColumn)
-		sb.SelectMore(audittelemetryschema.ScopeStringColumn)
+		sb.SelectMore(audittelemetryschema.ScopeColumn)
 	} else {
 		for index := range query.SelectFields {
 			if query.SelectFields[index].Name == audittelemetryschema.TimestampColumn || query.SelectFields[index].Name == audittelemetryschema.IDColumn {

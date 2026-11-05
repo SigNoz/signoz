@@ -98,24 +98,31 @@ func TestUnwrapVariant(t *testing.T) {
 	scopeAttrs := chcol.NewJSON()
 	scopeAttrs.SetValueAtPath("lib.lang", "go")
 	scopeCol := jsonColumn(map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": scopeAttrs})
+	resourceAttrs := chcol.NewJSON()
+	resourceAttrs.SetValueAtPath("service.name", "signoz")
+	resourceAttrs.SetValueAtPath("signoz.audit.resource.kind", "role")
+	resourceCol := jsonColumn(map[string]any{"attributes": resourceAttrs})
 
 	testCases := []struct {
-		name   string
-		column string
-		input  any
-		want   any
+		name        string
+		column      string
+		input       any
+		flatColumns []string
+		want        any
 	}{
-		{name: "VariantScalar", column: "", input: chcol.NewDynamicWithType("error", "String"), want: "error"},
-		{name: "EmptyDynamic", column: "", input: chcol.Dynamic{}, want: nil},
-		{name: "PlainValuePassthrough", column: "", input: uint64(3), want: uint64(3)},
-		{name: "JSONColumnNested", column: "body_v2", input: jsonCol, want: map[string]any{"level": "error", "attrs": map[string]any{"code": float64(500)}}},
-		{name: "AttributesColumnFlat", column: "attributes", input: jsonCol, want: map[string]any{"level": "error", "attrs.code": float64(500)}},
-		{name: "AttributesColumnDropsNullPaths", column: "attributes", input: nullCol, want: map[string]any{"level": "error"}},
-		{name: "ScopeColumnFlat", column: "scope", input: scopeCol, want: map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": map[string]any{"lib.lang": "go"}}},
+		{name: "VariantScalar", column: "", input: chcol.NewDynamicWithType("error", "String"), flatColumns: defaultFlatJSONColumns, want: "error"},
+		{name: "EmptyDynamic", column: "", input: chcol.Dynamic{}, flatColumns: defaultFlatJSONColumns, want: nil},
+		{name: "PlainValuePassthrough", column: "", input: uint64(3), flatColumns: defaultFlatJSONColumns, want: uint64(3)},
+		{name: "JSONColumnNested", column: "body_v2", input: jsonCol, flatColumns: defaultFlatJSONColumns, want: map[string]any{"level": "error", "attrs": map[string]any{"code": float64(500)}}},
+		{name: "AttributesColumnFlat", column: "attributes", input: jsonCol, flatColumns: defaultFlatJSONColumns, want: map[string]any{"level": "error", "attrs.code": float64(500)}},
+		{name: "AttributesColumnDropsNullPaths", column: "attributes", input: nullCol, flatColumns: defaultFlatJSONColumns, want: map[string]any{"level": "error"}},
+		{name: "ScopeColumnFlat", column: "scope", input: scopeCol, flatColumns: defaultFlatJSONColumns, want: map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": map[string]any{"lib.lang": "go"}}},
+		{name: "ResourceColumnNested_Default", column: "resource", input: resourceCol, flatColumns: defaultFlatJSONColumns, want: map[string]any{"attributes": map[string]any{"service": map[string]any{"name": "signoz"}, "signoz": map[string]any{"audit": map[string]any{"resource": map[string]any{"kind": "role"}}}}}},
+		{name: "ResourceColumnFlat_Audit", column: "resource", input: resourceCol, flatColumns: auditFlatJSONColumns, want: map[string]any{"attributes": map[string]any{"service.name": "signoz", "signoz.audit.resource.kind": "role"}}},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.want, unwrapVariant(testCase.column, testCase.input))
+			assert.Equal(t, testCase.want, unwrapVariant(testCase.column, testCase.input, testCase.flatColumns))
 		})
 	}
 }

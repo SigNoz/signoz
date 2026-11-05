@@ -89,7 +89,7 @@ func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query strin
 	queryWindow := &qbtypes.TimeRange{From: q.fromMS, To: q.toMS}
 
 	// Use the consume function like builderQuery does
-	payload, err := consume(rows, q.kind, queryWindow, q.spec.StepInterval, q.spec.Name)
+	payload, err := consume(rows, q.kind, queryWindow, q.spec.StepInterval, q.spec.Name, defaultFlatJSONColumns)
 	if err != nil {
 		return nil, err
 	}

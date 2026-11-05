@@ -32,7 +32,17 @@ var (
 	// written clickhouse query. The column alias indcate which value is
 	// to be considered as final result (or target).
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
+	defaultFlatJSONColumns            = []string{"attributes", "scope"}
+	// auditFlatJSONColumns adds resource, which only audit returns as a JSON column.
+	auditFlatJSONColumns = []string{"attributes", "scope", "resource"}
 )
+
+func flatJSONColumns(signal telemetrytypes.Signal, source telemetrytypes.Source) []string {
+	if signal == telemetrytypes.SignalLogs && source == telemetrytypes.SourceAudit {
+		return auditFlatJSONColumns
+	}
+	return defaultFlatJSONColumns
+}
 
 // stripKeyAlias removes the __SELECT_KEY_<n>_ / __GROUP_BY_KEY_<n>_ prefix from a result
 // column name, recovering the field name; unprefixed names are returned unchanged.
@@ -45,13 +55,12 @@ func stripKeyAlias(name string) string {
 // bag decodes flat so its dotted keys merge with the legacy attribute maps and a key stored at both a
 // scalar and an object path stays two keys; the scope decodes flat too, keeping its attributes dotted;
 // every other JSON column decodes nested.
-func unwrapVariant(name string, val any) any {
+func unwrapVariant(name string, val any, flatColumns []string) any {
 	switch v := val.(type) {
 	case chcol.Variant:
 		return v.Any()
 	case telemetrystoretypes.JSONValue:
-		switch name {
-		case "attributes", "scope":
+		if slices.Contains(flatColumns, name) {
 			return v.Flatten()
 		}
 		return v.Nest()
@@ -64,7 +73,7 @@ func unwrapVariant(name string, val any) any {
 // series. JSON goes through encoding/json for its sorted map keys: ClickHouse groups documents by
 // structure, so two rows it considers equal have to produce the same label.
 func labelValue(val any) string {
-	val = unwrapVariant("", val)
+	val = unwrapVariant("", val, nil)
 	if val == nil {
 		return ""
 	}
@@ -83,7 +92,7 @@ func labelValue(val any) string {
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
 // * Distribution- *qbtypes.DistributionData.
-func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
+func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string, flatColumns []string) (any, error) {
 	var (
 		payload any
 		err     error
@@ -97,7 +106,7 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 	case qbtypes.RequestTypeHeatmap:
 		payload, err = readAsHeatmap(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
-		payload, err = readAsRaw(rows, queryName)
+		payload, err = readAsRaw(rows, queryName, flatColumns)
 		// TODO: add support for other request types
 	}
 
@@ -488,7 +497,7 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 		// 2. deref each slot into the output row
 		row := make([]any, len(scan))
 		for i, cell := range scan {
-			row[i] = unwrapVariant(stripKeyAlias(colNames[i]), derefValue(cell))
+			row[i] = unwrapVariant(stripKeyAlias(colNames[i]), derefValue(cell), defaultFlatJSONColumns)
 		}
 		data = append(data, row)
 	}
@@ -520,7 +529,7 @@ func derefValue(v any) any {
 	return val.Interface()
 }
 
-func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
+func readAsRaw(rows driver.Rows, queryName string, flatColumns []string) (*qbtypes.RawData, error) {
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 	colCnt := len(colNames)
@@ -546,7 +555,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 			name := stripKeyAlias(colNames[i])
 
 			// de-reference the typed pointer to any
-			val := unwrapVariant(name, reflect.ValueOf(cellPtr).Elem().Interface())
+			val := unwrapVariant(name, reflect.ValueOf(cellPtr).Elem().Interface(), flatColumns)
 
 			// special-case: timestamp column
 			if name == "timestamp" || name == "timestamp_datetime" {
