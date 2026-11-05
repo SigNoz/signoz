@@ -5136,7 +5136,7 @@ export interface Querybuildertypesv5LimitByDTO {
 	keys?: string[] | null;
 	/**
 	 * @type string
-	 * @description The aggregation alias or expression whose value ranks entries within each partition.
+	 * @description The number of rows to keep in each partition, a positive integer sent as a string. The query order decides which rows are kept.
 	 */
 	value?: string;
 }
@@ -5310,7 +5310,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	 */
 	limit?: number;
 	/**
-	 * @description Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored.
+	 * @description Keeps at most value rows for each combination of the given group-by keys, in the query order, before limit applies. Supported for scalar requests only.
 	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
@@ -5702,7 +5702,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	limit?: number;
 	/**
-	 * @description Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored.
+	 * @description Keeps at most value rows for each combination of the given group-by keys, in the query order, before limit applies. Supported for scalar requests only.
 	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
@@ -5882,7 +5882,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	limit?: number;
 	/**
-	 * @description Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored.
+	 * @description Keeps at most value rows for each combination of the given group-by keys, in the query order, before limit applies. Supported for scalar requests only.
 	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
@@ -5981,7 +5981,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	 */
 	limit?: number;
 	/**
-	 * @description Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored.
+	 * @description Keeps at most value rows for each combination of the given group-by keys, in the query order, before limit applies. Supported for scalar requests only.
 	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**

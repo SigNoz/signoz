@@ -4072,8 +4072,9 @@ components:
         limitBy:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
-          description: Reserved for applying limit within each combination of the
-            given group-by keys. Accepted but currently ignored.
+          description: Keeps at most value rows for each combination of the given
+            group-by keys, in the query order, before limit applies. Supported for
+            scalar requests only.
         name:
           description: The unique name of the query, such as A or B; formulas, trace
             operators and selectedQueryName refer to it.
@@ -9883,8 +9884,8 @@ components:
           nullable: true
           type: array
         value:
-          description: The aggregation alias or expression whose value ranks entries
-            within each partition.
+          description: The number of rows to keep in each partition, a positive integer
+            sent as a string. The query order decides which rows are kept.
           type: string
       type: object
     Querybuildertypesv5LinearBucketsSpec:
@@ -10171,8 +10172,9 @@ components:
         limitBy:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
-          description: Reserved for applying limit within each combination of the
-            given group-by keys. Accepted but currently ignored.
+          description: Keeps at most value rows for each combination of the given
+            group-by keys, in the query order, before limit applies. Supported for
+            scalar requests only.
         name:
           description: The unique name of the query, such as A or B; formulas, trace
             operators and selectedQueryName refer to it.
@@ -10286,8 +10288,9 @@ components:
         limitBy:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
-          description: Reserved for applying limit within each combination of the
-            given group-by keys. Accepted but currently ignored.
+          description: Keeps at most value rows for each combination of the given
+            group-by keys, in the query order, before limit applies. Supported for
+            scalar requests only.
         name:
           description: The unique name of the query, such as A or B; formulas, trace
             operators and selectedQueryName refer to it.
@@ -10401,8 +10404,9 @@ components:
         limitBy:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5LimitBy'
-          description: Reserved for applying limit within each combination of the
-            given group-by keys. Accepted but currently ignored.
+          description: Keeps at most value rows for each combination of the given
+            group-by keys, in the query order, before limit applies. Supported for
+            scalar requests only.
         name:
           description: The unique name of the query, such as A or B; formulas, trace
             operators and selectedQueryName refer to it.
