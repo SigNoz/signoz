@@ -43,7 +43,7 @@ def test_linear_heatmap_grouped(
             for service, values in bytes_by_service.items()
             for index, response_bytes in enumerate(values)
         ]
-        # a log without the field has no bucket, so it is not counted
+        # a log without the field counts as 0
         + [
             Logs(
                 timestamp=now - timedelta(seconds=index + 1),
@@ -85,7 +85,7 @@ def test_linear_heatmap_grouped(
 
     totals_by_service = {service: [sum(column["values"][slot] for column in series["values"]) for slot in range(len(buckets) + 1)] for service, series in series_by_service.items()}
     assert totals_by_service == {
-        "heatmap-svc-a": [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        "heatmap-svc-a": [2, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
         "heatmap-svc-b": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
     }
 

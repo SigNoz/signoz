@@ -364,14 +364,13 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	var bucketAliases, bucketWarnings []string
-	var heatmapValuePresent string
 	if heatmapField != nil {
-		valueFragment, valuePresent, aliases, warnings, err := querybuilder.HeatmapBucketColumns(ctx, info, b.storage, sb, heatmapField, query.BucketOptions, keys)
+		valueFragment, aliases, warnings, err := querybuilder.HeatmapBucketColumns(ctx, info, b.storage, sb, heatmapField, query.BucketOptions, keys)
 		if err != nil {
 			return nil, err
 		}
 		cteFragments = append(cteFragments, valueFragment)
-		bucketAliases, bucketWarnings, heatmapValuePresent = aliases, warnings, valuePresent
+		bucketAliases, bucketWarnings = aliases, warnings
 	}
 
 	allAggChArgs := make([]any, 0)
@@ -396,9 +395,6 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		cteSB := sqlbuilder.NewSelectBuilder()
-		if heatmapValuePresent != "" {
-			cteSB.Where(heatmapValuePresent)
-		}
 		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, true, variables)
 		if err != nil {
 			return nil, err
