@@ -77,20 +77,24 @@ func (migration *addJiraChannelDeployment) fillConfigs(ctx context.Context, tx b
 		return err
 	}
 
+	var migrated, skipped, failed int
 	for _, row := range rows {
 		cfg := make(map[string]json.RawMessage)
 		if err := json.Unmarshal([]byte(row.Config), &cfg); err != nil {
 			migration.logger.WarnContext(ctx, "skipping alertmanager config with unreadable config", slog.String("config_id", row.ID), errors.Attr(err))
+			failed++
 			continue
 		}
 
 		receiversRaw, ok := cfg["receivers"]
 		if !ok || string(receiversRaw) == "null" {
+			skipped++
 			continue
 		}
 		receivers := make([]map[string]json.RawMessage, 0)
 		if err := json.Unmarshal(receiversRaw, &receivers); err != nil {
 			migration.logger.WarnContext(ctx, "skipping alertmanager config with unreadable receivers", slog.String("config_id", row.ID), errors.Attr(err))
+			failed++
 			continue
 		}
 
@@ -105,19 +109,26 @@ func (migration *addJiraChannelDeployment) fillConfigs(ctx context.Context, tx b
 			}
 			changed = changed || filled
 		}
-		if unreadable || !changed {
+		if unreadable {
+			failed++
+			continue
+		}
+		if !changed {
+			skipped++
 			continue
 		}
 
 		newReceivers, err := json.Marshal(receivers)
 		if err != nil {
 			migration.logger.WarnContext(ctx, "skipping alertmanager config, cannot marshal receivers", slog.String("config_id", row.ID), errors.Attr(err))
+			failed++
 			continue
 		}
 		cfg["receivers"] = newReceivers
 		newConfig, err := json.Marshal(cfg)
 		if err != nil {
 			migration.logger.WarnContext(ctx, "skipping alertmanager config, cannot marshal config", slog.String("config_id", row.ID), errors.Attr(err))
+			failed++
 			continue
 		}
 
@@ -129,8 +140,10 @@ func (migration *addJiraChannelDeployment) fillConfigs(ctx context.Context, tx b
 			Exec(ctx); err != nil {
 			return err
 		}
+		migrated++
 	}
 
+	migration.logger.InfoContext(ctx, "backfilled jira deployment on alertmanager configs", slog.Int("total", len(rows)), slog.Int("migrated", migrated), slog.Int("skipped", skipped), slog.Int("failed", failed))
 	return nil
 }
 
@@ -140,15 +153,18 @@ func (migration *addJiraChannelDeployment) fillChannels(ctx context.Context, tx 
 		return err
 	}
 
+	var migrated, skipped, failed int
 	for _, row := range rows {
 		receiver := make(map[string]json.RawMessage)
 		if err := json.Unmarshal([]byte(row.Data), &receiver); err != nil {
 			migration.logger.WarnContext(ctx, "skipping notification channel with unreadable data", slog.String("channel_id", row.ID), errors.Attr(err))
+			failed++
 			continue
 		}
 		dataChanged, err := fillJiraConfigsDeployment(receiver)
 		if err != nil {
 			migration.logger.WarnContext(ctx, "skipping notification channel with unreadable jira configs", slog.String("channel_id", row.ID), errors.Attr(err))
+			failed++
 			continue
 		}
 
@@ -157,12 +173,14 @@ func (migration *addJiraChannelDeployment) fillChannels(ctx context.Context, tx 
 		if row.Spec != "" {
 			if err := json.Unmarshal([]byte(row.Spec), &spec); err != nil {
 				migration.logger.WarnContext(ctx, "skipping notification channel with unreadable spec", slog.String("channel_id", row.ID), errors.Attr(err))
+				failed++
 				continue
 			}
 			specChanged = fillJiraDeployment(spec)
 		}
 
 		if !dataChanged && !specChanged {
+			skipped++
 			continue
 		}
 
@@ -171,6 +189,7 @@ func (migration *addJiraChannelDeployment) fillChannels(ctx context.Context, tx 
 			newData, err := json.Marshal(receiver)
 			if err != nil {
 				migration.logger.WarnContext(ctx, "skipping notification channel, cannot marshal data", slog.String("channel_id", row.ID), errors.Attr(err))
+				failed++
 				continue
 			}
 			update = update.Set("data = ?", string(newData))
@@ -179,6 +198,7 @@ func (migration *addJiraChannelDeployment) fillChannels(ctx context.Context, tx 
 			newSpec, err := json.Marshal(spec)
 			if err != nil {
 				migration.logger.WarnContext(ctx, "skipping notification channel, cannot marshal spec", slog.String("channel_id", row.ID), errors.Attr(err))
+				failed++
 				continue
 			}
 			update = update.Set("spec = ?", string(newSpec))
@@ -186,8 +206,10 @@ func (migration *addJiraChannelDeployment) fillChannels(ctx context.Context, tx 
 		if _, err := update.Exec(ctx); err != nil {
 			return err
 		}
+		migrated++
 	}
 
+	migration.logger.InfoContext(ctx, "backfilled jira deployment on notification channels", slog.Int("total", len(rows)), slog.Int("migrated", migrated), slog.Int("skipped", skipped), slog.Int("failed", failed))
 	return nil
 }
 

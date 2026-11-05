@@ -234,6 +234,22 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
                 "config": {
                     "kind": "jira",
                     "spec": {
+                        "deployment": "",
+                        "site": "https://jira.integration.test",
+                        "project": "OPS",
+                        "issueType": "Bug",
+                        "pat": "jira-personal-access-token",
+                    },
+                },
+            },
+            id="jira_empty_deployment",
+        ),
+        pytest.param(
+            {
+                "name": "rejected",
+                "config": {
+                    "kind": "jira",
+                    "spec": {
                         "site": "https://acme.atlassian.net",
                         "issueType": "Bug",
                         "email": "oncall@integration.test",

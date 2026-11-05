@@ -42,12 +42,12 @@ const (
 // Cloud (v3 API, email + API token) or a self-hosted Server / Data Center
 // instance (v2 API, personal access token as a Bearer header).
 type JiraDeployment struct {
-	valuer.String
+	valuer.UnsetOrNonEmptyString
 }
 
 var (
-	JiraDeploymentCloud      = JiraDeployment{valuer.NewString("cloud")}
-	JiraDeploymentSelfHosted = JiraDeployment{valuer.NewString("selfhosted")}
+	JiraDeploymentCloud      = JiraDeployment{valuer.MustNewUnsetOrNonEmptyString("cloud")}
+	JiraDeploymentSelfHosted = JiraDeployment{valuer.MustNewUnsetOrNonEmptyString("selfhosted")}
 
 	jiraDeployments = []JiraDeployment{JiraDeploymentCloud, JiraDeploymentSelfHosted}
 )
@@ -93,9 +93,7 @@ func (c *ChannelJiraConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	fillSendResolved(&c.SendResolved, false)
-	if c.Deployment.IsZero() {
-		c.Deployment = JiraDeploymentCloud
-	}
+	c.Deployment.SetIfUnset(JiraDeploymentCloud.StringValue())
 	c.Summary.SetIfUnset(DefaultJiraSummaryTemplate)
 	c.Description.SetIfUnset(DefaultJiraDescriptionTemplate)
 	c.ReopenDuration.SetIfUnset(defaultJiraReopenDuration.String())
@@ -256,9 +254,7 @@ func newChannelJiraConfigFromReceiver(name string, receiver *Receiver) (ChannelS
 		WontFixResolution: jira.WontFixResolution,
 		CustomFields:      jira.CustomFields,
 	}
-	if spec.Deployment.IsZero() {
-		spec.Deployment = JiraDeploymentCloud
-	}
+	spec.Deployment.SetIfUnset(JiraDeploymentCloud.StringValue())
 
 	if jira.HTTPConfig == nil {
 		return spec, nil
@@ -318,9 +314,7 @@ func (c *JiraReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
 		return err
 	}
 
-	if c.Deployment.IsZero() {
-		c.Deployment = JiraDeploymentCloud
-	}
+	c.Deployment.SetIfUnset(JiraDeploymentCloud.StringValue())
 	if !c.Deployment.IsValid() {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "jira deployment %q is not supported; allowed values: cloud, selfhosted", c.Deployment.StringValue())
 	}

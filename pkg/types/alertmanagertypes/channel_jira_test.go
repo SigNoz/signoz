@@ -177,6 +177,7 @@ func TestChannelJiraConfigUnmarshal(t *testing.T) {
 		{"SelfHosted_MissingPAT", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task"}`, "config.spec.pat is required for a self-hosted jira channel", JiraDeploymentSelfHosted},
 		{"SelfHosted_WithEmail_Rejected", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task","pat":"p","email":"e"}`, "not used by a self-hosted jira channel", JiraDeploymentSelfHosted},
 		{"UnknownDeployment", `{"deployment":"onprem","site":"https://jira.acme.com","project":"OPS","issueType":"Task","pat":"p"}`, `config.spec.deployment "onprem" is not supported`, JiraDeployment{}},
+		{"EmptyDeployment_Rejected", `{"deployment":"","site":"https://jira.acme.com","project":"OPS","issueType":"Task","pat":"p"}`, "string must not be empty", JiraDeployment{}},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
