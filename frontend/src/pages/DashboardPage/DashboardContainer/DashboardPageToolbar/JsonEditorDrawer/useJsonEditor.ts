@@ -15,6 +15,7 @@ import { findPanelLayoutIssues } from './danglingPanels';
 import { lineOfJsonEntry } from './lineOfJsonEntry';
 import { compactSpecLayouts } from '../../layoutCompaction';
 import { isValidDashboardImage } from '../../dashboardIcons';
+import { dashboardDurationError } from '../../utils/dashboardDuration';
 import { useDashboardStore } from '../../store/useDashboardStore';
 
 export interface JsonValidity {
@@ -110,7 +111,7 @@ export function useJsonEditor({
 
 	const validity = useMemo<JsonValidity>(() => {
 		const lineCount = draft.split('\n').length;
-		let parsed: { image?: unknown };
+		let parsed: { image?: unknown; spec?: { duration?: unknown } };
 		try {
 			parsed = JSON.parse(draft);
 		} catch (error) {
@@ -135,6 +136,16 @@ export function useJsonEditor({
 				errorLine: lineOfJsonEntry(draft, 'image', image),
 				message:
 					'"image" must be an /assets/Icons/<name> or /assets/Logos/<name> path, or a base64 image data URI',
+			};
+		}
+		const duration = parsed.spec?.duration;
+		const durationError = dashboardDurationError(duration);
+		if (durationError) {
+			return {
+				valid: false,
+				lineCount,
+				errorLine: lineOfJsonEntry(draft, 'duration', duration),
+				message: durationError,
 			};
 		}
 		return { valid: true, lineCount };

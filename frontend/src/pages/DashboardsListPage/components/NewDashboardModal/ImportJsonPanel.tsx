@@ -17,6 +17,7 @@ import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import APIError from 'types/api/error';
 
 import { isValidDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
+import { dashboardDurationError } from 'pages/DashboardPage/DashboardContainer/utils/dashboardDuration';
 
 import { normalizeToPostable } from './importUtils';
 import JsonEditor from './JsonEditor';
@@ -76,6 +77,15 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 				toast.error(
 					'Dashboard "image" must be an /assets/Icons or /assets/Logos path, or a base64 image',
 				);
+				return;
+			}
+			const durationError = dashboardDurationError(payload.spec?.duration);
+			if (durationError) {
+				setIsCreateError(true);
+				void logEvent(DashboardListEvents.ImportFailed, {
+					reason: 'invalid-duration',
+				});
+				toast.error(durationError);
 				return;
 			}
 			const response = await createDashboardV2(payload);
