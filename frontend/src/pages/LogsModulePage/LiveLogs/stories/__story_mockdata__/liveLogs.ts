@@ -68,8 +68,9 @@ export const liveLogsStream = (
 	count: number,
 	severities: readonly LogSeverity[],
 	endMilli: number,
+	jsonBody = false,
 ): string =>
-	`retry: ${NO_RECONNECT_MS}\n\n${logRows(count, severities, endMilli, false)
+	`retry: ${NO_RECONNECT_MS}\n\n${logRows(count, severities, endMilli, jsonBody)
 		.map(
 			(row) =>
 				`data: ${JSON.stringify({

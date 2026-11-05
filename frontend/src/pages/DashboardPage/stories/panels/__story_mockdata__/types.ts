@@ -77,5 +77,6 @@ export interface PanelResponseArgs extends PanelRequest {
 	result: PanelResult;
 	series: number;
 	listRows: number;
+	listJsonBody: boolean;
 	gaps: Gaps;
 }

@@ -124,6 +124,28 @@ export const JsonBody: Story = {
 	args: { jsonBody: true },
 };
 
+/**
+ * Keys of the JSON body as columns in the Column format: the nested `order`
+ * object and the `order.coupons` array render as JSON, `http.status_code` as
+ * its number.
+ */
+export const JsonBodyFieldsColumn: Story = {
+	args: { jsonBody: true, bodyColumns: true },
+};
+
+/**
+ * The same body keys in the Default format: each selected field under the
+ * body line, object and array values as JSON with no add-to-query on them.
+ */
+export const JsonBodyFieldsDefault: Story = {
+	args: { jsonBody: true, bodyColumns: true, format: 'list' },
+};
+
+/** The same body keys joined into the raw line ahead of the body. */
+export const JsonBodyFieldsRaw: Story = {
+	args: { jsonBody: true, bodyColumns: true, format: 'raw' },
+};
+
 /** One log opened up: its own fields, then the resource that sent it. */
 export const LogDetails: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
