@@ -3,8 +3,9 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 
-import { PieSlice } from 'lib/visualization/charts/types';
+import { PieChartProps, PieSlice } from 'lib/visualization/charts/types';
 import Pie from 'lib/visualization/charts/Pie/Pie';
+import { userEvent } from 'tests/test-utils';
 
 jest.mock('hooks/useDimensions', () => ({
 	useResizeObserver: jest.fn().mockReturnValue({ width: 400, height: 300 }),
@@ -61,9 +62,15 @@ const DATA: PieSlice[] = [
 
 function renderPie(
 	props: Partial<React.ComponentProps<typeof Pie>> = {},
-): void {
-	render(<Pie data={DATA} isDarkMode={false} data-testid="pie" {...props} />);
+): ReturnType<typeof render> {
+	return render(
+		<Pie data={DATA} isDarkMode={false} data-testid="pie" {...props} />,
+	);
 }
+
+const mockSliceClick = (): jest.MockedFunction<
+	NonNullable<PieChartProps['onSliceClick']>
+> => jest.fn();
 
 describe('Pie', () => {
 	it('renders the "No data" state for empty data', () => {
@@ -146,32 +153,28 @@ describe('Pie', () => {
 		expect(svg.querySelectorAll('path')).toHaveLength(1);
 	});
 
-	it('hints at drill-down on a plain slice only when clickable', () => {
-		const { unmount } = render(
-			<Pie
-				data={DATA}
-				isDarkMode={false}
-				data-testid="pie"
-				onSliceClick={jest.fn()}
-			/>,
-		);
+	it('hints at drill-down on a plain slice only when clickable', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const { unmount } = renderPie({ onSliceClick: mockSliceClick() });
 		const arc = (): Element =>
 			screen.getByTestId('pie').querySelectorAll('svg g g')[0];
-		fireEvent.mouseEnter(arc());
+		await user.hover(arc());
 		expect(screen.getByText('Click to drilldown')).toBeInTheDocument();
 		unmount();
 
 		renderPie();
-		fireEvent.mouseEnter(arc());
+		await user.hover(arc());
 		expect(screen.queryByTestId('pie-tooltip-footer')).toBeNull();
 	});
 
-	it('does not re-render the legend while the tooltip follows the cursor', () => {
+	it('does not re-render the legend while the tooltip follows the cursor', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderPie();
 		const arc = screen.getByTestId('pie').querySelectorAll('svg g g')[0];
-		fireEvent.mouseEnter(arc, { clientX: 10, clientY: 10 });
+		await user.hover(arc);
 		const rendersAfterEnter = mockLegendRenders;
 
+		// user-event leaves clientX/Y at 0 in jsdom, so cursor moves go through fireEvent.
 		fireEvent.mouseMove(arc, { clientX: 20, clientY: 20 });
 		fireEvent.mouseMove(arc, { clientX: 30, clientY: 30 });
 
@@ -191,10 +194,29 @@ describe('Pie', () => {
 			{ label: 'checkout', value: 400, color: '#0000aa' },
 			...members,
 		];
-		const arcs = (): NodeListOf<SVGPathElement> =>
+		const arcs = (testId = 'pie'): NodeListOf<SVGPathElement> =>
 			(
-				screen.getByTestId('pie').querySelector('svg') as SVGElement
+				screen.getByTestId(testId).querySelector('svg') as SVGElement
 			).querySelectorAll('path');
+		const arcGroups = (testId = 'pie'): NodeListOf<SVGGElement> =>
+			(
+				screen.getByTestId(testId).querySelector('svg') as SVGElement
+			).querySelectorAll('g g');
+		const tooltipList = (): HTMLElement =>
+			screen.getByTestId('uplot-tooltip-list');
+		const tooltip = (): HTMLElement =>
+			document.querySelector('[data-pie-tooltip]') as HTMLElement;
+
+		let user: ReturnType<typeof userEvent.setup>;
+		beforeEach(() => {
+			user = userEvent.setup({ pointerEventsCheck: 0 });
+		});
+
+		const hoverOther = async (testId = 'pie'): Promise<SVGGElement> => {
+			const otherArc = arcGroups(testId)[3];
+			await user.hover(otherArc);
+			return otherArc;
+		};
 
 		it('draws one Other arc but lists every series in the legend', () => {
 			renderPie({ data: GROUPED });
@@ -206,43 +228,49 @@ describe('Pie', () => {
 			expect(within(legend).queryByText(/^Other/)).toBeNull();
 		});
 
-		it('highlights the Other arc when a series inside it is hovered in the legend', () => {
+		it('highlights the Other arc when a series inside it is hovered in the legend', async () => {
 			renderPie({ data: GROUPED });
 
-			fireEvent.mouseEnter(screen.getByTestId('legend-item-5'));
+			await user.hover(screen.getByTestId('legend-item-5'));
 
 			const fills = [...arcs()].map((arc) => arc.getAttribute('fill'));
 			expect(fills[0]).toBe('rgba(170, 0, 0, 0.4)');
 			expect(fills[3]).not.toMatch(/^rgba/);
 		});
 
-		it('regroups Other from the series left showing', () => {
+		it('highlights a real series named Other, not the grouped slice', async () => {
+			renderPie({
+				data: [
+					...GROUPED.slice(0, 3),
+					{ label: 'Other', value: 500, color: '#00aaaa' },
+					...members,
+				],
+			});
+
+			await user.hover(screen.getByTestId('legend-item-3'));
+
+			const fills = [...arcs()].map((arc) => arc.getAttribute('fill'));
+			expect(fills[3]).toBe('#00aaaa');
+			expect(fills[fills.length - 1]).toMatch(/^rgba/);
+		});
+
+		it('regroups Other from the series left showing', async () => {
 			renderPie({ data: GROUPED });
 
 			// Isolate one member, then add a second back: Other can't hold just one.
-			fireEvent.click(screen.getByTestId('legend-item-3'));
+			await user.click(screen.getByTestId('legend-item-3'));
 			expect(arcs()).toHaveLength(1);
-			fireEvent.click(screen.getByTestId('legend-item-0'));
-			fireEvent.click(screen.getByTestId('legend-item-4'));
+			await user.click(screen.getByTestId('legend-item-0'));
+			await user.click(screen.getByTestId('legend-item-4'));
 
 			expect(arcs()).toHaveLength(3);
 			expect(screen.queryByText(/^Other/)).toBeNull();
 		});
 
-		const hoverOther = (): SVGElement => {
-			const svg = screen.getByTestId('pie').querySelector('svg') as SVGElement;
-			const otherArc = svg.querySelectorAll('g g')[3] as SVGElement;
-			fireEvent.mouseEnter(otherArc);
-			return otherArc;
-		};
+		it('lists every member in the hover tooltip, not yet clickable', async () => {
+			renderPie({ data: GROUPED, onSliceClick: mockSliceClick() });
 
-		const tooltipList = (): HTMLElement =>
-			screen.getByTestId('uplot-tooltip-list');
-
-		it('lists every member in the hover tooltip, not yet clickable', () => {
-			renderPie({ data: GROUPED, onSliceClick: jest.fn() });
-
-			hoverOther();
+			await hoverOther();
 
 			expect(tooltipList().children).toHaveLength(12);
 			expect(within(tooltipList()).getByText('svc-11')).toBeInTheDocument();
@@ -253,70 +281,92 @@ describe('Pie', () => {
 			expect(screen.queryByTestId('uplot-tooltip-status')).toBeNull();
 		});
 
-		it('follows the cursor until pinned', () => {
-			renderPie({ data: GROUPED, onSliceClick: jest.fn() });
-			const otherArc = hoverOther();
-			const tooltip = (): HTMLElement =>
-				document.querySelector('[data-pie-tooltip]') as HTMLElement;
+		it('follows the cursor until pinned', async () => {
+			renderPie({ data: GROUPED, onSliceClick: mockSliceClick() });
+			const otherArc = await hoverOther();
 
+			// user-event leaves clientX/Y at 0 in jsdom, so cursor moves go through fireEvent.
 			fireEvent.mouseMove(otherArc, { clientX: 100, clientY: 50 });
 			const first = tooltip().getAttribute('style');
 			fireEvent.mouseMove(otherArc, { clientX: 140, clientY: 90 });
 			const moved = tooltip().getAttribute('style');
 			expect(moved).not.toBe(first);
 
-			fireEvent.click(otherArc);
+			await user.click(otherArc);
 			fireEvent.mouseMove(otherArc, { clientX: 10, clientY: 10 });
 			expect(tooltip().getAttribute('style')).toBe(moved);
 		});
 
-		it('pins on click, then drills into the clicked member', () => {
-			const onSliceClick = jest.fn();
+		it('pins on click, then drills into the clicked member', async () => {
+			const onSliceClick = mockSliceClick();
 			renderPie({ data: GROUPED, onSliceClick });
 
-			const otherArc = hoverOther();
-			fireEvent.click(otherArc);
-			fireEvent.mouseLeave(otherArc);
+			const otherArc = await hoverOther();
+			await user.click(otherArc);
+			await user.unhover(otherArc);
 
 			expect(onSliceClick).not.toHaveBeenCalled();
 			expect(screen.getByTestId('uplot-tooltip-status')).toBeInTheDocument();
 			expect(screen.getByText('12 series')).toBeInTheDocument();
 			expect(screen.getByText('Click a series to drilldown')).toBeInTheDocument();
 
-			const tooltip = document.querySelector('[data-pie-tooltip]') as HTMLElement;
 			jest
-				.spyOn(tooltip, 'getBoundingClientRect')
+				.spyOn(tooltip(), 'getBoundingClientRect')
 				.mockReturnValue({ left: 40, top: 70 } as DOMRect);
-			fireEvent.click(within(tooltipList()).getByText('svc-3'), {
-				clientX: 300,
-				clientY: 400,
-			});
+			await user.click(within(tooltipList()).getByText('svc-3'));
 
 			// The drill-down menu opens where the pinned tooltip was, not at the row.
 			expect(onSliceClick).toHaveBeenCalledWith(members[3], { x: 40, y: 70 });
 			expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
 		});
 
-		it('unpins on Escape, a click outside and the Unpin button', () => {
-			renderPie({ data: GROUPED, onSliceClick: jest.fn() });
+		it('unpins on Escape, a click outside and the Unpin button', async () => {
+			renderPie({ data: GROUPED, onSliceClick: mockSliceClick() });
 
-			fireEvent.click(hoverOther());
-			fireEvent.keyDown(document, { key: 'Escape' });
+			await user.click(await hoverOther());
+			await user.keyboard('{Escape}');
 			expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
 
-			fireEvent.click(hoverOther());
-			fireEvent.pointerDown(document.body);
+			await user.click(await hoverOther());
+			await user.click(document.body);
 			expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
 
-			fireEvent.click(hoverOther());
-			fireEvent.click(screen.getByTestId('pie-tooltip-unpin'));
+			await user.click(await hoverOther());
+			await user.click(screen.getByTestId('pie-tooltip-unpin'));
 			expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
 		});
 
-		it('pins without drill-down targets when drill-down is off', () => {
+		it('unpins when a click lands on another pie', async () => {
+			render(
+				<>
+					<Pie data={GROUPED} isDarkMode={false} data-testid="pie" />
+					<Pie data={DATA} isDarkMode={false} data-testid="other-pie" />
+				</>,
+			);
+
+			await user.click(await hoverOther());
+			expect(tooltipList()).toBeInTheDocument();
+
+			await user.click(arcGroups('other-pie')[0]);
+
+			expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
+		});
+
+		it('drops the pinned tooltip when new data arrives', async () => {
+			const { rerender } = renderPie({ data: GROUPED });
+
+			await user.click(await hoverOther());
+			expect(tooltipList()).toBeInTheDocument();
+
+			rerender(<Pie data={[...GROUPED]} isDarkMode={false} data-testid="pie" />);
+
+			expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
+		});
+
+		it('pins without drill-down targets when drill-down is off', async () => {
 			renderPie({ data: GROUPED });
 
-			fireEvent.click(hoverOther());
+			await user.click(await hoverOther());
 
 			expect(screen.queryByTestId('uplot-tooltip-item-button')).toBeNull();
 			expect(screen.getByTestId('pie-tooltip-unpin')).toBeInTheDocument();

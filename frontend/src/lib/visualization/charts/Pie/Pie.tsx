@@ -72,7 +72,7 @@ export default function Pie({
 		() =>
 			new Map(
 				visibleData.flatMap((slice) =>
-					[slice, ...(slice.members ?? [])].map((entry): [string, string] => [
+					(slice.members ?? [slice]).map((entry): [string, string] => [
 						entry.label,
 						slice.color,
 					]),
@@ -145,6 +145,7 @@ export default function Pie({
 		handleMemberClick,
 	} = usePieTooltip({
 		slices: visibleData,
+		chartRef: wrapperRef,
 		formatValue,
 		setFocusedKey,
 		onSliceClick,

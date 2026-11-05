@@ -1,6 +1,5 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, within } from 'storybook/test';
 import {
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
 	DashboardtypesLegendPositionDTO as LegendPosition,
@@ -16,9 +15,13 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import DashboardPage from '../../DashboardPage';
 
 import { panelsMocks } from './Panels.stories.mocks';
-import { expectPanel } from './panelPlay/expectPanel';
-import { filterLegend, searchTable } from './panelPlay/interactions';
-import { walkListPages } from './panelPlay/list';
+import {
+	playLegendRight,
+	playListJsonBody,
+	playListPaginated,
+	playPanel,
+	playTableSearch,
+} from './panelPlay/plays';
 
 type PanelsArgs = PageStoryArgs<typeof panelsMocks>;
 
@@ -49,53 +52,49 @@ export default meta;
 
 type Story = StoryObj<PanelsArgs>;
 
-const play: Story['play'] = async ({ canvasElement, args }) => {
-	await expectPanel(canvasElement, args);
-};
-
 /** A time series panel: p99 latency, one line per service, with a bottom legend. */
-export const Default: Story = { play };
+export const Default: Story = { play: playPanel };
 
 /** One bar series per service over time, side by side. */
 export const Bar: Story = {
 	args: { kind: 'Bar' },
-	play,
+	play: playPanel,
 };
 
 /** The services' bars stacked on one another at every moment. */
 export const BarStacked: Story = {
 	args: { kind: 'Bar', stack: StackMode.normal },
-	play,
+	play: playPanel,
 };
 
 /** The services as filled areas, drawn independently. */
 export const Area: Story = {
 	args: { kind: 'Area' },
-	play,
+	play: playPanel,
 };
 
 /** The services' areas stacked on one another, each band filling to the one below. */
 export const AreaStacked: Story = {
 	args: { kind: 'Area', stack: StackMode.normal },
-	play,
+	play: playPanel,
 };
 
 /** The stacked areas rescaled so every moment sums to 100%, each band its service's share. */
 export const AreaPercent: Story = {
 	args: { kind: 'Area', stack: StackMode.percent },
-	play,
+	play: playPanel,
 };
 
 /** How the latency values distribute across buckets, one bar set per service. */
 export const Histogram: Story = {
 	args: { kind: 'Histogram' },
-	play,
+	play: playPanel,
 };
 
 /** The histogram binned 50 apart, every bin starting on a multiple of 50. */
 export const HistogramBucketWidth: Story = {
 	args: { kind: 'Histogram', bucketWidth: '50' },
-	play,
+	play: playPanel,
 };
 
 /**
@@ -104,25 +103,25 @@ export const HistogramBucketWidth: Story = {
  */
 export const Heatmap: Story = {
 	args: { kind: 'Heatmap' },
-	play,
+	play: playPanel,
 };
 
 /** The heatmap's bucket rows laid out on a log scale. */
 export const HeatmapLog: Story = {
 	args: { kind: 'Heatmap', heatmapScale: HeatmapYScale.log },
-	play,
+	play: playPanel,
 };
 
 /** The heatmap's colour bar pinned to a fixed 5–250 count range. */
 export const HeatmapCountRange: Story = {
 	args: { kind: 'Heatmap', heatmapCounts: 'fixed' },
-	play,
+	play: playPanel,
 };
 
 /** Each service's share of traffic as a donut, with the total in the middle. */
 export const Pie: Story = {
 	args: { kind: 'Pie' },
-	play,
+	play: playPanel,
 };
 
 /**
@@ -131,7 +130,7 @@ export const Pie: Story = {
  */
 export const PieOther: Story = {
 	args: { kind: 'Pie', pieSlices: 'long-tail' },
-	play,
+	play: playPanel,
 };
 
 /**
@@ -140,13 +139,13 @@ export const PieOther: Story = {
  */
 export const Number: Story = {
 	args: { kind: 'Number', thresholds: true },
-	play,
+	play: playPanel,
 };
 
 /** The value's query matched nothing, which the Number panel draws as its own no-data state. */
 export const NumberNoData: Story = {
 	args: { kind: 'Number', result: 'empty' },
-	play,
+	play: playPanel,
 };
 
 /**
@@ -155,7 +154,7 @@ export const NumberNoData: Story = {
  */
 export const Table: Story = {
 	args: { kind: 'Table', thresholds: true, columnUnits: true },
-	play,
+	play: playPanel,
 };
 
 /**
@@ -164,16 +163,13 @@ export const Table: Story = {
  */
 export const TableSearch: Story = {
 	args: { kind: 'Table' },
-	play: async ({ canvasElement, args }): Promise<void> => {
-		await expectPanel(canvasElement, args);
-		await searchTable(canvasElement, args);
-	},
+	play: playTableSearch,
 };
 
 /** The latest log lines, newest first, on a single page. */
 export const List: Story = {
 	args: { kind: 'List' },
-	play,
+	play: playPanel,
 };
 
 /**
@@ -182,16 +178,7 @@ export const List: Story = {
  */
 export const ListJsonBody: Story = {
 	args: { kind: 'List', listJsonBody: true },
-	play: async ({ canvasElement, args }): Promise<void> => {
-		await expectPanel(canvasElement, args);
-		const [first, , third] = within(canvasElement)
-			.getByTestId('list-panel-renderer')
-			.querySelectorAll<HTMLElement>('tbody tr.ant-table-row');
-		await expect(within(first).getByText(/^log line 1:/)).toBeInTheDocument();
-		await expect(
-			within(third).getByText(/^\{"message":"log line 3:/),
-		).toBeInTheDocument();
-	},
+	play: playListJsonBody,
 };
 
 /**
@@ -200,28 +187,25 @@ export const ListJsonBody: Story = {
  */
 export const ListPaginated: Story = {
 	args: { kind: 'List', listRows: 60 },
-	play: async ({ canvasElement, args }): Promise<void> => {
-		await expectPanel(canvasElement, args);
-		await walkListPages(canvasElement, args);
-	},
+	play: playListPaginated,
 };
 
 /** A Markdown runbook: heading, list, link and code block. */
 export const Text: Story = {
 	args: { kind: 'Text' },
-	play,
+	play: playPanel,
 };
 
 /** The time series on a logarithmic y axis. */
 export const LogScale: Story = {
 	args: { yScale: 'log' },
-	play,
+	play: playPanel,
 };
 
 /** Dashed lines with a marker on every sample. */
 export const LineStyle: Story = {
 	args: { lineStyle: LineStyleDTO.dashed, showPoints: true },
-	play,
+	play: playPanel,
 };
 
 /**
@@ -230,7 +214,7 @@ export const LineStyle: Story = {
  */
 export const SpanGaps: Story = {
 	args: { gaps: 'hole', spanGaps: 'break-10m' },
-	play,
+	play: playPanel,
 };
 
 /**
@@ -239,26 +223,23 @@ export const SpanGaps: Story = {
  */
 export const LegendRight: Story = {
 	args: { legend: LegendPosition.right },
-	play: async ({ canvasElement, args }): Promise<void> => {
-		await expectPanel(canvasElement, args);
-		await filterLegend(canvasElement, args);
-	},
+	play: playLegendRight,
 };
 
 /** The dashed SLO line across the time series, with its label. */
 export const Thresholds: Story = {
 	args: { thresholds: true },
-	play,
+	play: playPanel,
 };
 
 /** The query ran and matched nothing, which the panel draws as its no-data state. */
 export const NoData: Story = {
 	args: { result: 'empty' },
-	play,
+	play: playPanel,
 };
 
 /** Data that came back with a warning, flagged in the panel header. */
 export const Warning: Story = {
 	args: { result: 'warning' },
-	play,
+	play: playPanel,
 };

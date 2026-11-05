@@ -4,6 +4,7 @@ import {
 	useMemo,
 	useState,
 	type MouseEvent as ReactMouseEvent,
+	type RefObject,
 } from 'react';
 import { useTooltip } from '@visx/tooltip';
 
@@ -17,6 +18,8 @@ const TOOLTIP_CURSOR_OFFSET = 12;
 interface UsePieTooltipArgs {
 	/** The drawn slices, Other included. */
 	slices: PieSlice[];
+	/** The chart's root: a click on its own arcs resolves the pin, one anywhere else unpins. */
+	chartRef: RefObject<HTMLElement>;
 	formatValue: (value: number) => string;
 	setFocusedKey: (key: string | null) => void;
 	onSliceClick: PieChartProps['onSliceClick'];
@@ -44,6 +47,7 @@ interface UsePieTooltipResult {
  */
 export function usePieTooltip({
 	slices,
+	chartRef,
 	formatValue,
 	setFocusedKey,
 	onSliceClick,
@@ -66,9 +70,12 @@ export function usePieTooltip({
 		setFocusedKey(null);
 	}, [hideTooltip, setFocusedKey]);
 
+	// New data replaces the pinned slice, whose members may no longer be drawn.
 	useEffect(() => {
-		setPinnedSlice(null);
-	}, [slices]);
+		if (pinnedSlice && !slices.includes(pinnedSlice)) {
+			unpin();
+		}
+	}, [slices, pinnedSlice, unpin]);
 
 	useEffect(() => {
 		if (!pinnedSlice) {
@@ -76,8 +83,10 @@ export function usePieTooltip({
 		}
 		const onPointerDown = (event: PointerEvent): void => {
 			const target = event.target as Element | null;
-			// Arc clicks resolve the pin themselves (see handleSliceClick).
-			if (target?.closest('[data-pie-tooltip], [data-pie-arc]')) {
+			// This chart's arc clicks resolve the pin themselves (see handleSliceClick).
+			const isOwnArc =
+				!!target?.closest('[data-pie-arc]') && !!chartRef.current?.contains(target);
+			if (isOwnArc || target?.closest('[data-pie-tooltip]')) {
 				return;
 			}
 			unpin();
@@ -93,7 +102,7 @@ export function usePieTooltip({
 			document.removeEventListener('pointerdown', onPointerDown);
 			document.removeEventListener('keydown', onKeyDown);
 		};
-	}, [pinnedSlice, unpin]);
+	}, [pinnedSlice, unpin, chartRef]);
 
 	// Built once per data change, not on every mouse move.
 	const tooltipDataBySlice = useMemo(
