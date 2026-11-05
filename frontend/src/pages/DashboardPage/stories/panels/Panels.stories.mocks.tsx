@@ -38,6 +38,7 @@ import {
 	PANEL_KINDS,
 	PANEL_RESULTS,
 	PANELS_DASHBOARD_ID,
+	PIE_SLICES,
 	SPAN_GAPS,
 	STACK_MODES,
 	TEXT_ALIGNS,
@@ -63,6 +64,7 @@ import type {
 	PanelKind,
 	PanelResult,
 	PanelUnit,
+	PieSlices,
 	SpanGaps,
 	TextSample,
 	YScale,
@@ -199,6 +201,13 @@ export const panelsMocks = defineStoryMocks({
 			value: 4,
 			max: MAX_SERIES,
 		}),
+		pieSlices: choiceControl<PieSlices>('Pie slices', {
+			group: DATA,
+			description:
+				'`even` steps down per service (Series sets how many); `long-tail` answers 24 services, the smallest 10 folding into Other.',
+			options: PIE_SLICES,
+			value: 'even',
+		}),
 		gaps: choiceControl<Gaps>('Gaps', {
 			group: DATA,
 			description:
@@ -267,6 +276,7 @@ export const panelsMocks = defineStoryMocks({
 						listRows: values.listRows,
 						listJsonBody: values.listJsonBody,
 						gaps: values.gaps,
+						pieSlices: values.pieSlices,
 					});
 				}),
 			),
