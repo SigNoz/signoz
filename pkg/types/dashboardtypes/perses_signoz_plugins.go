@@ -211,6 +211,10 @@ func (k PanelPluginKind) rendersWithoutQuery() bool {
 	return k == PanelKindText
 }
 
+func (k PanelPluginKind) joinsQueryRowsIntoOneTable() bool {
+	return k == PanelKindTable || k == PanelKindScatterPlot || k == PanelKindGeoMap
+}
+
 type TimeSeriesPanelSpec struct {
 	Visualization   TimeSeriesVisualization   `json:"visualization" description:"Time range and gap handling."`
 	Formatting      PanelFormatting           `json:"formatting" description:"Unit and decimal precision of the values."`
