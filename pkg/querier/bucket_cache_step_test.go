@@ -59,7 +59,7 @@ func TestBucketCacheStepAlignment(t *testing.T) {
 	}
 
 	// Put result in cache
-	bc.Put(ctx, orgID, query, step, result)
+	bc.Put(ctx, orgID, query, step, result, nil)
 
 	// Get cached data
 	cached, missing := bc.GetMissRanges(ctx, orgID, query, step)
@@ -109,7 +109,7 @@ func TestBucketCacheNoStepInterval(t *testing.T) {
 	}
 
 	// Should cache the entire range when step is 0
-	bc.Put(ctx, orgID, query, step, result)
+	bc.Put(ctx, orgID, query, step, result, nil)
 
 	cached, missing := bc.GetMissRanges(ctx, orgID, query, step)
 	assert.NotNil(t, cached)

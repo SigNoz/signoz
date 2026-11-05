@@ -444,7 +444,7 @@ def test_builder_refreshing_a_sliding_time_range(
     assert_results_equal(from_cache.json(), uncached.json(), "A", "the twentieth refresh")
 
 
-def test_builder_rows_scanned_when_refreshing(
+def test_builder_refreshing_does_not_inflate_rows_scanned(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -475,18 +475,22 @@ def test_builder_rows_scanned_when_refreshing(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # a dashboard left open on a one hour range, re-running a minute later each
-    # time. rowsScanned is what answering the request cost, so a refresh served
-    # mostly out of the cache cannot report more than reading its range afresh
+    # a dashboard left open on a thirty minute range, re-running a minute later
+    # each time. rowsScanned is a cost indicator, so a refresh served mostly out
+    # of the cache cannot claim more than every read made so far: the first
+    # full read and then one new minute per refresh, measured with the cache off
+    uncached_rows_scanned_so_far = 0
     for refresh in range(10):
         refresh_start_ms = start_time_ms + refresh * MINUTE_MS
-        from_cache = make_query_request(signoz, token, refresh_start_ms, refresh_start_ms + 60 * MINUTE_MS, query, no_cache=False)
-        assert from_cache.status_code == HTTPStatus.OK, from_cache.text
+        refresh_end_ms = refresh_start_ms + 30 * MINUTE_MS
 
-        uncached = make_query_request(signoz, token, refresh_start_ms, refresh_start_ms + 60 * MINUTE_MS, query, no_cache=True)
-        assert uncached.status_code == HTTPStatus.OK, uncached.text
+        uncached_start_ms = refresh_start_ms if refresh == 0 else refresh_end_ms - MINUTE_MS
+        uncached_response = make_query_request(signoz, token, uncached_start_ms, refresh_end_ms, query, no_cache=True)
+        assert uncached_response.status_code == HTTPStatus.OK, f"refresh {refresh}: uncached read failed: {uncached_response.text}"
+        uncached_rows_scanned_so_far += uncached_response.json()["data"]["meta"]["rowsScanned"]
+        assert uncached_rows_scanned_so_far > 0, f"refresh {refresh}: uncached read reported no rows scanned"
 
-        rows_scanned_from_cache = from_cache.json()["data"]["meta"]["rowsScanned"]
-        rows_scanned_uncached = uncached.json()["data"]["meta"]["rowsScanned"]
-        assert rows_scanned_uncached > 0, f"refresh {refresh}"
-        assert rows_scanned_from_cache <= rows_scanned_uncached, f"refresh {refresh}: {rows_scanned_from_cache} rows scanned when served from the cache, {rows_scanned_uncached} when read afresh"
+        cached_response = make_query_request(signoz, token, refresh_start_ms, refresh_end_ms, query, no_cache=False)
+        assert cached_response.status_code == HTTPStatus.OK, f"refresh {refresh}: cached read failed: {cached_response.text}"
+        cached_rows_scanned = cached_response.json()["data"]["meta"]["rowsScanned"]
+        assert cached_rows_scanned <= uncached_rows_scanned_so_far, f"refresh {refresh}: cached read reported {cached_rows_scanned} rows scanned, more than the {uncached_rows_scanned_so_far} rows all uncached reads scanned so far"

@@ -823,7 +823,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 				return nil, err
 			}
 			// Store in cache for future use
-			q.bucketCache.Put(ctx, orgID, query, step, result)
+			q.bucketCache.Put(ctx, orgID, query, step, result, map[qbtypes.TimeRange]qbtypes.ExecStats{{From: startMs, To: endMs}: result.Stats})
 			return result, nil
 		}
 	}
@@ -879,16 +879,19 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 			if err != nil {
 				return nil, err
 			}
-			q.bucketCache.Put(ctx, orgID, query, step, result)
+			startMs, endMs := query.Window()
+			q.bucketCache.Put(ctx, orgID, query, step, result, map[qbtypes.TimeRange]qbtypes.ExecStats{{From: startMs, To: endMs}: result.Stats})
 			return result, nil
 		}
 	}
 
 	// Calculate total stats and filter out nil results
 	validResults := make([]*qbtypes.Result, 0, len(freshResults))
-	for _, result := range freshResults {
+	execStatsForQueriedTimeRanges := make(map[qbtypes.TimeRange]qbtypes.ExecStats, len(freshResults))
+	for i, result := range freshResults {
 		if result != nil {
 			validResults = append(validResults, result)
+			execStatsForQueriedTimeRanges[*missingRanges[i]] = result.Stats
 			totalStats.RowsScanned += result.Stats.RowsScanned
 			totalStats.BytesScanned += result.Stats.BytesScanned
 			totalStats.DurationMS += result.Stats.DurationMS
@@ -903,7 +906,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	mergedResult.Stats.DurationMS += totalStats.DurationMS
 
 	// Store merged result in cache
-	q.bucketCache.Put(ctx, orgID, query, step, mergedResult)
+	q.bucketCache.Put(ctx, orgID, query, step, mergedResult, execStatsForQueriedTimeRanges)
 
 	return mergedResult, nil
 }

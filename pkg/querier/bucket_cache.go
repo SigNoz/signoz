@@ -26,8 +26,9 @@ const bucketCacheCellSteps = 60
 type BucketCache interface {
 	// cached portion + list of gaps to fetch
 	GetMissRanges(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step) (cached *qbtypes.Result, missing []*qbtypes.TimeRange)
-	// store fresh buckets for future hits
-	Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result)
+	// store fresh buckets for future hits; only the ranges in the map were
+	// queried for fresh, the rest of it came from the cache
+	Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result, execStatsForQueriedTimeRanges map[qbtypes.TimeRange]qbtypes.ExecStats)
 }
 
 // bucketCache implements the BucketCache interface.
@@ -116,7 +117,7 @@ func (bc *bucketCache) GetMissRanges(
 	}
 
 	// Merge buckets into a single result
-	mergedResult := bc.mergeBuckets(ctx, relevantBuckets, cachedWarnings)
+	mergedResult := bc.mergeBuckets(ctx, relevantBuckets, cachedWarnings, startMs, endMs)
 
 	// Filter the merged result to only include values within the requested time range
 	mergedResult = bc.filterResultToTimeRange(mergedResult, q, startMs, endMs, stepMs)
@@ -125,7 +126,7 @@ func (bc *bucketCache) GetMissRanges(
 }
 
 // Put stores fresh query results in the cache.
-func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result) {
+func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result, execStatsForQueriedTimeRanges map[qbtypes.TimeRange]qbtypes.ExecStats) {
 	// Get query window
 	startMs, endMs := q.Window()
 
@@ -188,7 +189,7 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 
 	// Convert trimmed result to buckets, one per grid cell it spans
 	cellWidthMs := bucketCacheCellSteps * stepMs
-	freshBuckets := bc.resultToBuckets(ctx, trimmedResult, cachableStartMs, cachableEndMs, cellWidthMs)
+	freshBuckets := bc.resultToBuckets(ctx, trimmedResult, cachableStartMs, cachableEndMs, cellWidthMs, execStatsForQueriedTimeRanges)
 
 	cellKeys := make([]string, len(freshBuckets))
 	cellEntries := make([]cachetypes.Cacheable, len(freshBuckets))
@@ -210,7 +211,7 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 			cellEntry = cellEntries[i].(*qbtypes.CachedData)
 		}
 
-		cellBuckets, changed := bc.mergeFreshBucketIntoCell(ctx, cellEntry.Buckets, freshBucket)
+		cellBuckets, changed := bc.mergeFreshBucketIntoCell(ctx, cellEntry.Buckets, freshBucket, execStatsForQueriedTimeRanges)
 		if !changed {
 			continue
 		}
@@ -463,7 +464,7 @@ func (bc *bucketCache) filterRelevantBuckets(buckets []*qbtypes.CachedBucket, st
 }
 
 // mergeBuckets combines multiple cached buckets into a single result.
-func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*qbtypes.CachedBucket, warnings []string) *qbtypes.Result {
+func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*qbtypes.CachedBucket, warnings []string, startMs, endMs uint64) *qbtypes.Result {
 	if len(buckets) == 0 {
 		return &qbtypes.Result{}
 	}
@@ -471,12 +472,13 @@ func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*qbtypes.Cach
 	// All buckets should have the same type
 	resultType := buckets[0].Type
 
-	// Aggregate stats
+	// A bucket can reach past the window; only the part inside it is served
 	var totalStats qbtypes.ExecStats
 	for _, bucket := range buckets {
-		totalStats.RowsScanned += bucket.Stats.RowsScanned
-		totalStats.BytesScanned += bucket.Stats.BytesScanned
-		totalStats.DurationMS += bucket.Stats.DurationMS
+		servedStats := bucket.ProrateStatsToWindow(startMs, endMs)
+		totalStats.RowsScanned += servedStats.RowsScanned
+		totalStats.BytesScanned += servedStats.BytesScanned
+		totalStats.DurationMS += servedStats.DurationMS
 	}
 
 	// Merge values based on type
@@ -674,7 +676,7 @@ func (bc *bucketCache) isEmptyResult(result *qbtypes.Result) (isEmpty bool, isFi
 }
 
 // resultToBuckets converts a query result into time-based buckets.
-func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Result, startMs, endMs, cellWidthMs uint64) []*qbtypes.CachedBucket {
+func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Result, startMs, endMs, cellWidthMs uint64, execStatsForQueriedTimeRanges map[qbtypes.TimeRange]qbtypes.ExecStats) []*qbtypes.CachedBucket {
 	// Check if result is empty
 	isEmpty, isFiltered := bc.isEmptyResult(result)
 
@@ -686,7 +688,7 @@ func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Resu
 	}
 
 	// Empty filtered results still become buckets, so the range is not re-queried
-	perCellBuckets, err := result.SplitIntoCacheCellBuckets(startMs, endMs, cellWidthMs)
+	perCellBuckets, err := result.SplitIntoCacheCellBuckets(startMs, endMs, cellWidthMs, execStatsForQueriedTimeRanges)
 	if err != nil {
 		bc.logger.ErrorContext(ctx, "failed to convert result to buckets", errors.Attr(err))
 		return nil
@@ -698,7 +700,7 @@ func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Resu
 // and reports whether the cell changed: a bucket already covering the fresh
 // one leaves it as is, buckets inside the fresh one are replaced, buckets
 // overlapping or edge to edge with it are unioned, and the rest are kept apart.
-func (bc *bucketCache) mergeFreshBucketIntoCell(ctx context.Context, cellBuckets []*qbtypes.CachedBucket, freshBucket *qbtypes.CachedBucket) ([]*qbtypes.CachedBucket, bool) {
+func (bc *bucketCache) mergeFreshBucketIntoCell(ctx context.Context, cellBuckets []*qbtypes.CachedBucket, freshBucket *qbtypes.CachedBucket, execStatsForQueriedTimeRanges map[qbtypes.TimeRange]qbtypes.ExecStats) ([]*qbtypes.CachedBucket, bool) {
 	keptBuckets := make([]*qbtypes.CachedBucket, 0, len(cellBuckets)+1)
 	touchingBuckets := []*qbtypes.CachedBucket{}
 	for _, cellBucket := range cellBuckets {
@@ -711,7 +713,7 @@ func (bc *bucketCache) mergeFreshBucketIntoCell(ctx context.Context, cellBuckets
 			keptBuckets = append(keptBuckets, cellBucket)
 		}
 	}
-	keptBuckets = append(keptBuckets, bc.unionBuckets(ctx, freshBucket, touchingBuckets))
+	keptBuckets = append(keptBuckets, bc.unionBuckets(ctx, freshBucket, touchingBuckets, execStatsForQueriedTimeRanges))
 
 	slices.SortFunc(keptBuckets, func(a, b *qbtypes.CachedBucket) int {
 		return cmp.Compare(a.StartMs, b.StartMs)
@@ -722,7 +724,16 @@ func (bc *bucketCache) mergeFreshBucketIntoCell(ctx context.Context, cellBuckets
 // unionBuckets widens the fresh bucket by the buckets it touches. Buckets
 // inside it are replaced outright, so only a genuine partial overlap decodes
 // anything.
-func (bc *bucketCache) unionBuckets(ctx context.Context, freshBucket *qbtypes.CachedBucket, touchingBuckets []*qbtypes.CachedBucket) *qbtypes.CachedBucket {
+func (bc *bucketCache) unionBuckets(ctx context.Context, freshBucket *qbtypes.CachedBucket, touchingBuckets []*qbtypes.CachedBucket, execStatsForQueriedTimeRanges map[qbtypes.TimeRange]qbtypes.ExecStats) *qbtypes.CachedBucket {
+	// Data queried again takes the new query's cost, which the fresh bucket
+	// carries; a touching bucket keeps its cost only for what was not queried again
+	for _, touchingBucket := range touchingBuckets {
+		keptStats := touchingBucket.ProrateStatsToUnqueried(execStatsForQueriedTimeRanges)
+		freshBucket.Stats.RowsScanned += keptStats.RowsScanned
+		freshBucket.Stats.BytesScanned += keptStats.BytesScanned
+		freshBucket.Stats.DurationMS += keptStats.DurationMS
+	}
+
 	bucketsToMerge := []*qbtypes.CachedBucket{freshBucket}
 	for _, touchingBucket := range touchingBuckets {
 		if !freshBucket.Contains(touchingBucket) {
@@ -743,14 +754,11 @@ func (bc *bucketCache) unionBuckets(ctx context.Context, freshBucket *qbtypes.Ca
 		EndMs:   freshBucket.EndMs,
 		Type:    freshBucket.Type,
 		Value:   value,
-		Stats:   qbtypes.ExecStats{StepIntervals: freshBucket.Stats.StepIntervals},
+		Stats:   freshBucket.Stats,
 	}
 	for _, mergedBucket := range bucketsToMerge {
 		unionBucket.StartMs = min(unionBucket.StartMs, mergedBucket.StartMs)
 		unionBucket.EndMs = max(unionBucket.EndMs, mergedBucket.EndMs)
-		unionBucket.Stats.RowsScanned += mergedBucket.Stats.RowsScanned
-		unionBucket.Stats.BytesScanned += mergedBucket.Stats.BytesScanned
-		unionBucket.Stats.DurationMS += mergedBucket.Stats.DurationMS
 	}
 	return unionBucket
 }
