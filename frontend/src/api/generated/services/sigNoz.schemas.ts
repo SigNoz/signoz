@@ -7704,7 +7704,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
-	 * @description The default time range, as a Prometheus duration such as 1h or 7d. Stored, but not applied by the UI.
+	 * @description The default time range, as a Prometheus duration such as 1h or 7d. The UI opens the dashboard on it, rounded up to whole minutes, when neither the URL nor the viewer's last pick sets a time range.
 	 */
 	duration?: string;
 	/**

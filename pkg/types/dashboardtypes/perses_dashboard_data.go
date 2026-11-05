@@ -25,7 +25,7 @@ type DashboardSpec struct {
 	Variables       []Variable            `json:"variables" required:"true" nullable:"false" description:"The dashboard variables, each a ListVariable or TextVariable envelope, referenced in queries as $name. Names must be unique. Use [] for none."`
 	Panels          map[string]*Panel     `json:"panels" required:"true" nullable:"false" description:"The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen. A panel is shown only where a layout item references it as #/spec/panels/<id>. Use {} for none."`
 	Layouts         []Layout              `json:"layouts" required:"true" nullable:"false" description:"The Grid layouts that place panels, at most 500. Each panel can be placed at most once. Use [] for none."`
-	Duration        common.DurationString `json:"duration" description:"The default time range, as a Prometheus duration such as 1h or 7d. Stored, but not applied by the UI."`
+	Duration        common.DurationString `json:"duration" description:"The default time range, as a Prometheus duration such as 1h or 7d. The UI opens the dashboard on it, rounded up to whole minutes, when neither the URL nor the viewer's last pick sets a time range."`
 	RefreshInterval common.DurationString `json:"refreshInterval" description:"The auto refresh interval, as a Prometheus duration such as 30s. Stored, but not applied by the UI."`
 	Links           []Link                `json:"links,omitzero" description:"External links stored with the dashboard. Not shown by the UI."`
 }
