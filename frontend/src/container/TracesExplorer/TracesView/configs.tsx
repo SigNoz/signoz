@@ -4,9 +4,6 @@ import {
 	getFieldColumn,
 	TracesTableRow,
 } from 'container/TracesExplorer/TracesTable/getFieldColumn';
-import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
-
-export const PER_PAGE_OPTIONS: number[] = [10, ...DEFAULT_PER_PAGE_OPTIONS];
 
 const TRACE_FIELDS = [
 	{ name: 'service.name', fieldContext: 'resource' },

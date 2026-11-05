@@ -58,7 +58,6 @@ type Story = StoryObj<OverviewArgs>;
 export const Default: Story = {
 	args: {
 		category: InfraMonitoringEntity.PODS,
-		eventEntity: 'pod',
 		attributes: POD_ATTRIBUTES,
 		entity: { podUID: POD_UID },
 		entityName: POD_ATTRIBUTES['k8s.pod.name'],

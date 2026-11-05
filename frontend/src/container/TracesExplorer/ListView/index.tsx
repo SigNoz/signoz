@@ -20,22 +20,15 @@ import {
 	getFieldColumn,
 	TracesTableRow,
 } from 'container/TracesExplorer/TracesTable/getFieldColumn';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import SpanDrawer from 'container/TracesExplorer/SpanDrawer/SpanDrawer';
 import { useSpanDrawer } from 'container/TracesExplorer/SpanDrawer/useSpanDrawer';
-import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Pagination } from 'hooks/queryPagination';
-import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
-import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 import { ArrowUp10, Minus } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
@@ -43,12 +36,9 @@ import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import {
-	defaultSelectedColumns,
-	PER_PAGE_OPTIONS,
-	TIMESTAMP_FIELD,
-} from './configs';
-import { getTraceLink, transformSpanRows } from './utils';
+import { defaultSelectedColumns, TIMESTAMP_FIELD } from './configs';
+import { useListViewInfiniteQuery } from './useListViewInfiniteQuery';
+import { getTraceLink } from './utils';
 
 import './ListView.styles.scss';
 
@@ -96,12 +86,6 @@ function ListView({
 		},
 	});
 
-	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
-		QueryParams.pagination,
-	);
-	const paginationConfig =
-		paginationQueryData ?? getDefaultPaginationConfig(PER_PAGE_OPTIONS);
-
 	// Empty selectFields makes the API return every span field.
 	const requestQuery = useMemo(() => {
 		const query = getListViewQuery(
@@ -125,51 +109,26 @@ function ListView({
 			minTime,
 			stagedQuery,
 			panelType,
-			paginationConfig,
 		],
-		[
-			stagedQuery,
-			panelType,
-			globalSelectedTime,
-			paginationConfig,
-			maxTime,
-			minTime,
-		],
+		[stagedQuery, panelType, globalSelectedTime, maxTime, minTime],
 	);
 
 	if (queryKeyRef) {
 		queryKeyRef.current = queryKey;
 	}
 
-	const { data, isFetching, isLoading, isError, error } = useGetQueryRange(
-		{
+	const { rows, warning, isFetching, isLoading, isError, error, loadMore } =
+		useListViewInfiniteQuery({
 			query: requestQuery,
-			graphType: panelType,
-			selectedTime: 'GLOBAL_TIME' as const,
-			globalSelectedInterval: globalSelectedTime as CustomTimeType,
-			params: {
-				dataSource: 'traces',
-			},
-			tableParams: {
-				pagination: paginationConfig,
-			},
-		},
-		// ENTITY_VERSION_V4,
-		ENTITY_VERSION_V5,
-		{
 			queryKey,
 			enabled:
 				// don't make api call while the time range state in redux is loading
 				!timeRangeUpdateLoading && !!stagedQuery && panelType === PANEL_TYPES.LIST,
-		},
-	);
+		});
 
 	useEffect(() => {
-		if (data?.payload) {
-			setWarning(data?.warning);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [data?.payload, data?.warning]);
+		setWarning(warning);
+	}, [warning, setWarning]);
 
 	useEffect(() => {
 		if (isLoading || isFetching) {
@@ -179,15 +138,8 @@ function ListView({
 		}
 	}, [isLoading, isFetching, setIsLoadingQueries]);
 
-	const dataLength =
-		data?.payload?.data?.newResult?.data?.result[0]?.list?.length;
-	const totalCount = useMemo(() => dataLength || 0, [dataLength]);
-
-	const queryTableDataResult = data?.payload?.data?.newResult?.data?.result;
-	const queryTableData = useMemo(
-		() => queryTableDataResult || [],
-		[queryTableDataResult],
-	);
+	const { tableProps, openTraceColumn, drawerProps, onPressInside } =
+		useSpanDrawer(rows);
 
 	const columns = useMemo<TableColumnDef<TracesTableRow>[]>(() => {
 		const fields = [
@@ -196,15 +148,9 @@ function ListView({
 				(field) => field.name !== TIMESTAMP_FIELD.name,
 			),
 		];
-		return fields.map((field) => getFieldColumn(field));
-	}, [options?.selectColumns]);
-
-	const rows = useMemo(
-		() => transformSpanRows(queryTableData),
-		[queryTableData],
-	);
-
-	const { tableProps, drawerProps, onPressInside } = useSpanDrawer(rows);
+		const fieldColumns = fields.map((field) => getFieldColumn(field));
+		return [openTraceColumn, ...fieldColumns];
+	}, [options?.selectColumns, openTraceColumn]);
 
 	const handleColumnOrderChange = useCallback(
 		(cols: TableColumnDef<TracesTableRow>[]): void => {
@@ -249,12 +195,7 @@ function ListView({
 					selectedColumns={options?.selectColumns}
 				/>
 
-				<TraceExplorerControls
-					isLoading={isFetching}
-					totalCount={totalCount}
-					config={config}
-					perPageOptions={PER_PAGE_OPTIONS}
-				/>
+				<TraceExplorerControls config={config} />
 			</div>
 
 			{/* A press in the table or the drawer (a portal) keeps the drawer open. */}
@@ -273,9 +214,10 @@ function ListView({
 					isFilterApplied={isFilterApplied}
 					onColumnOrderChange={handleColumnOrderChange}
 					onColumnRemove={config?.addColumn?.onRemove}
+					onEndReached={loadMore}
 				/>
 
-				{drawerProps && <SpanDrawer {...drawerProps} />}
+				<SpanDrawer {...drawerProps} />
 			</div>
 		</div>
 	);
