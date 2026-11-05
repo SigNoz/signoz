@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"sort"
 	"strings"
 	"text/template"
@@ -144,7 +145,6 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		return nil, err
 	}
 
-	parentCtx := ctx
 	if q.budget.MaxExecutionTime > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, q.budget.MaxExecutionTime)
@@ -154,13 +154,13 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, q.args...)
 	if err != nil {
-		return nil, q.budgetError(parentCtx, ctx, err)
+		return nil, err
 	}
 	defer rows.Close()
 
 	payload, err := consume(rows, q.kind, nil, qbtypes.Step{}, q.query.Name)
 	if err != nil {
-		return nil, q.budgetError(parentCtx, ctx, err)
+		return nil, err
 	}
 
 	return &qbtypes.Result{
@@ -172,4 +172,25 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 			DurationMS:   uint64(elapsed.Milliseconds()),
 		},
 	}, nil
+}
+
+// settings returns the budget as ClickHouse query settings. A SETTINGS clause in the user's SQL
+// overrides them.
+func (c ClickHouseQueryConfig) settings() clickhouse.Settings {
+	settings := clickhouse.Settings{}
+	if c.MaxExecutionTime > 0 {
+		settings["max_execution_time"] = int(math.Ceil(c.MaxExecutionTime.Seconds()))
+	}
+	if c.MaxMemoryUsage > 0 {
+		settings["max_memory_usage"] = c.MaxMemoryUsage
+	}
+	if c.MaxResultRows > 0 {
+		settings["max_result_rows"] = c.MaxResultRows
+		settings["result_overflow_mode"] = "throw"
+	}
+	if c.MaxResultBytes > 0 {
+		settings["max_result_bytes"] = c.MaxResultBytes
+		settings["result_overflow_mode"] = "throw"
+	}
+	return settings
 }
