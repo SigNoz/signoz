@@ -1,4 +1,4 @@
-import logEvent from 'api/common/logEvent';
+import { logEventMock } from '__tests__/logEventMock';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	OpenTraceSource,
@@ -7,7 +7,7 @@ import {
 import { getCurrentLocation } from 'lib/router/navigation';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { screen, userEvent, waitFor } from 'tests/test-utils';
+import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import {
 	groupedResponse,
@@ -16,7 +16,8 @@ import {
 	renderTracesView,
 } from './testUtils';
 
-jest.mock('api/common/logEvent');
+const TRACE_ID = '0000000000000000344ded1387b08a7e';
+const ROW_TEST_ID = `traces-table-row-${TRACE_ID}`;
 
 describe('TracesView - open trace clicked', () => {
 	beforeEach(() => {
@@ -35,30 +36,37 @@ describe('TracesView - open trace clicked', () => {
 		const user = userEvent.setup();
 		renderTracesView();
 
-		await user.click(await screen.findByText('HTTP GET'));
+		const row = await screen.findByTestId(ROW_TEST_ID);
+		// The row click handler sits on each cell, so a click on the <tr> does nothing.
+		await user.click(within(row).getAllByRole('cell')[0]);
 
 		await waitFor(() =>
-			expect(getCurrentLocation().pathname).toBe(
-				'/trace/0000000000000000344ded1387b08a7e',
-			),
+			expect(getCurrentLocation().pathname).toBe(`/trace/${TRACE_ID}`),
 		);
-		expect(logEvent).toHaveBeenCalledWith(TracesExplorerEvents.OpenTraceClicked, {
-			panelType: PANEL_TYPES.TRACE,
-			source: OpenTraceSource.Row,
-		});
+		expect(logEventMock).toHaveBeenCalledWith(
+			TracesExplorerEvents.OpenTraceClicked,
+			{
+				panelType: PANEL_TYPES.TRACE,
+				source: OpenTraceSource.Row,
+			},
+		);
 	});
 
 	it('logs a trace_id link click', async () => {
 		const user = userEvent.setup();
 		renderTracesView();
 
-		await user.click(await screen.findByText('0000000000000000344ded1387b08a7e'));
+		const row = await screen.findByTestId(ROW_TEST_ID);
+		await user.click(within(row).getByTestId('trace-id'));
 
-		expect(logEvent).toHaveBeenCalledWith(TracesExplorerEvents.OpenTraceClicked, {
-			panelType: PANEL_TYPES.TRACE,
-			source: OpenTraceSource.TraceId,
-		});
-		expect(logEvent).not.toHaveBeenCalledWith(
+		expect(logEventMock).toHaveBeenCalledWith(
+			TracesExplorerEvents.OpenTraceClicked,
+			{
+				panelType: PANEL_TYPES.TRACE,
+				source: OpenTraceSource.TraceId,
+			},
+		);
+		expect(logEventMock).not.toHaveBeenCalledWith(
 			TracesExplorerEvents.OpenTraceClicked,
 			{ panelType: PANEL_TYPES.TRACE, source: OpenTraceSource.Row },
 		);
@@ -68,14 +76,18 @@ describe('TracesView - open trace clicked', () => {
 		const user = userEvent.setup();
 		renderTracesView();
 
+		const row = await screen.findByTestId(ROW_TEST_ID);
 		await user.pointer({
 			keys: '[MouseMiddle]',
-			target: await screen.findByText('0000000000000000344ded1387b08a7e'),
+			target: within(row).getByTestId('trace-id'),
 		});
 
-		expect(logEvent).toHaveBeenCalledWith(TracesExplorerEvents.OpenTraceClicked, {
-			panelType: PANEL_TYPES.TRACE,
-			source: OpenTraceSource.TraceId,
-		});
+		expect(logEventMock).toHaveBeenCalledWith(
+			TracesExplorerEvents.OpenTraceClicked,
+			{
+				panelType: PANEL_TYPES.TRACE,
+				source: OpenTraceSource.TraceId,
+			},
+		);
 	});
 });

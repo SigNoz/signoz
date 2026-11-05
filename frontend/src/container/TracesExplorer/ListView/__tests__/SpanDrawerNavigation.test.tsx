@@ -1,4 +1,4 @@
-import logEvent from 'api/common/logEvent';
+import { logEventMock } from '__tests__/logEventMock';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	OpenTraceSource,
@@ -13,8 +13,6 @@ import {
 	mockTraceSummary,
 	renderListView,
 } from './testUtils';
-
-jest.mock('api/common/logEvent');
 
 // globalTime starts with loading:true, which gates the list query. Force just that
 // slice's loading to false so the query fires; every other selector is untouched.
@@ -51,6 +49,12 @@ jest.mock('container/OptionsMenu/useOptionsMenu', () => ({
 		config: { addColumn: { onRemove: jest.fn() } },
 	}),
 }));
+
+const ROW_TEST_ID = `traces-table-row-${listRows[0].data.span_id}`;
+
+// The row click handler sits on each cell, so a click on the <tr> does nothing.
+const getRowCell = (row: HTMLElement): HTMLElement =>
+	within(row).getAllByRole('cell')[0];
 
 describe('Traces ListView - span drawer navigation', () => {
 	beforeEach(() => {
@@ -142,10 +146,13 @@ describe('Traces ListView - span drawer navigation', () => {
 		);
 		expect(getCurrentLocation().pathname).toBe('/traces-explorer');
 		expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument();
-		expect(logEvent).toHaveBeenCalledWith(TracesExplorerEvents.OpenTraceClicked, {
-			panelType: PANEL_TYPES.LIST,
-			source: OpenTraceSource.RowIcon,
-		});
+		expect(logEventMock).toHaveBeenCalledWith(
+			TracesExplorerEvents.OpenTraceClicked,
+			{
+				panelType: PANEL_TYPES.LIST,
+				source: OpenTraceSource.RowIcon,
+			},
+		);
 	});
 
 	it('opens the trace page in a new tab from the drawer', async () => {
@@ -153,8 +160,8 @@ describe('Traces ListView - span drawer navigation', () => {
 		const user = userEvent.setup();
 		renderListView();
 
-		await user.click(await screen.findByText('HTTP GET'));
-		expect(logEvent).not.toHaveBeenCalledWith(
+		await user.click(getRowCell(await screen.findByTestId(ROW_TEST_ID)));
+		expect(logEventMock).not.toHaveBeenCalledWith(
 			TracesExplorerEvents.OpenTraceClicked,
 			{ panelType: PANEL_TYPES.LIST, source: OpenTraceSource.Row },
 		);
@@ -164,10 +171,13 @@ describe('Traces ListView - span drawer navigation', () => {
 			expect.stringMatching(/\/trace\/0000000000000000344ded1387b08a7e\?/),
 			'_blank',
 		);
-		expect(logEvent).toHaveBeenCalledWith(TracesExplorerEvents.OpenTraceClicked, {
-			panelType: PANEL_TYPES.LIST,
-			source: OpenTraceSource.SpanDrawer,
-		});
+		expect(logEventMock).toHaveBeenCalledWith(
+			TracesExplorerEvents.OpenTraceClicked,
+			{
+				panelType: PANEL_TYPES.LIST,
+				source: OpenTraceSource.SpanDrawer,
+			},
+		);
 	});
 
 	it('opens the trace page in a new tab on a Cmd-click without opening the drawer', async () => {
@@ -175,9 +185,9 @@ describe('Traces ListView - span drawer navigation', () => {
 		const user = userEvent.setup();
 		renderListView();
 
-		const row = await screen.findByText('HTTP GET');
+		const cell = getRowCell(await screen.findByTestId(ROW_TEST_ID));
 		await user.keyboard('{Meta>}');
-		await user.click(row);
+		await user.click(cell);
 		await user.keyboard('{/Meta}');
 
 		expect(open).toHaveBeenCalledWith(
@@ -186,10 +196,13 @@ describe('Traces ListView - span drawer navigation', () => {
 			'noopener',
 		);
 		expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument();
-		expect(logEvent).toHaveBeenCalledWith(TracesExplorerEvents.OpenTraceClicked, {
-			panelType: PANEL_TYPES.LIST,
-			source: OpenTraceSource.Row,
-		});
+		expect(logEventMock).toHaveBeenCalledWith(
+			TracesExplorerEvents.OpenTraceClicked,
+			{
+				panelType: PANEL_TYPES.LIST,
+				source: OpenTraceSource.Row,
+			},
+		);
 	});
 
 	it('shows the row icon only on the hovered copy of a duplicate span', async () => {
