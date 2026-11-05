@@ -87,12 +87,33 @@ const VISIBLE_SPAN_FIELDS_IN_DETAILS_VIEW = [
 	// Keys must exist on the waterfall DTO.
 ] as const satisfies readonly (keyof SpantypesWaterfallSpanDTO)[];
 
-/**
- * Shallow-copies the allow-listed span fields, for display in the Span Details
- * DataViewer.
- */
+function parseJsonAttributeValue(value: unknown): unknown {
+	if (typeof value !== 'string') {
+		return value;
+	}
+
+	try {
+		const parsed: unknown = JSON.parse(value);
+		return parsed !== null && typeof parsed === 'object' ? parsed : value;
+	} catch {
+		return value;
+	}
+}
+
+/** Returns the visible span fields, parsing JSON-encoded attribute objects and arrays. */
 export function getSpanDisplayData(span: SpanV3): Record<string, unknown> {
-	return pick(span, VISIBLE_SPAN_FIELDS_IN_DETAILS_VIEW);
+	const displayData = pick(span, VISIBLE_SPAN_FIELDS_IN_DETAILS_VIEW);
+
+	if (span.attributes && typeof span.attributes === 'object') {
+		displayData.attributes = Object.fromEntries(
+			Object.entries(span.attributes).map(([key, value]) => [
+				key,
+				parseJsonAttributeValue(value),
+			]),
+		);
+	}
+
+	return displayData;
 }
 
 /**
