@@ -66,7 +66,7 @@ func TestCastError_Timeout(t *testing.T) {
 			require.Error(t, err)
 			assert.True(t, errors.Asc(err, ErrCodeQueryTimeout), "got %v", err)
 			assert.True(t, errors.Ast(err, errors.TypeTimeout))
-			assert.Empty(t, errors.AsJSON(err).Suggestions)
+			assert.Equal(t, []string{queryTimeoutSuggestion}, errors.AsJSON(err).Suggestions)
 		})
 	}
 }

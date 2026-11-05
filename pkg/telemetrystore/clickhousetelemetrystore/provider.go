@@ -31,6 +31,8 @@ var (
 	ErrCodeExecutionFailed = errors.MustNewCode("execution_failed")
 )
 
+const queryTimeoutSuggestion = "optimize your query: narrow the time range or add filters to read less data"
+
 // Codes absent from this map fall through to the raw driver error in castError.
 var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickhouse.Exception) error{
 	chproto.ErrSyntaxError: func(cause error, ex *clickhouse.Exception) error {
@@ -92,12 +94,12 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 	},
 	chproto.ErrTimeoutExceeded: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapTimeoutf(cause, ErrCodeQueryTimeout, "query timed out: %s", ex.Message).
-			WithSuggestions("optimize your query: narrow the time range or add filters to read less data")
+			WithSuggestions(queryTimeoutSuggestion)
 	},
 	// ClickHouse estimates the query will run past max_execution_time and stops it early.
 	chproto.ErrTooSlow: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapTimeoutf(cause, ErrCodeQueryTimeout, "query is estimated to time out: %s", ex.Message).
-			WithSuggestions("optimize your query: narrow the time range or add filters to read less data")
+			WithSuggestions(queryTimeoutSuggestion)
 	},
 	chproto.ErrMemoryLimitExceeded: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeMemoryLimitExceeded, "query memory limit exceeded: %s", ex.Message).
@@ -314,7 +316,7 @@ func castError(err error) error {
 	}
 	// A socket read can hit the deadline the driver copies from ctx before the driver sees ctx is done.
 	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, os.ErrDeadlineExceeded) {
-		return errors.WrapTimeoutf(err, ErrCodeQueryTimeout, "query timed out")
+		return errors.WrapTimeoutf(err, ErrCodeQueryTimeout, "query timed out").WithSuggestions(queryTimeoutSuggestion)
 	}
 
 	var ex *clickhouse.Exception

@@ -56,7 +56,7 @@ def test_clickhouse_query_within_budget(
             "SELECT sleep(3)",
             HTTPStatus.GATEWAY_TIMEOUT,
             "query_timeout",
-            None,
+            "optimize your query: narrow the time range or add filters to read less data",
             id="max_execution_time",
         ),
     ],
@@ -68,7 +68,7 @@ def test_clickhouse_query_over_budget(
     query: str,
     expected_status: HTTPStatus,
     expected_code: str,
-    expected_suggestion: str | None,
+    expected_suggestion: str,
 ) -> None:
     now = datetime.now(tz=UTC)
     response = make_query_request(
@@ -83,8 +83,7 @@ def test_clickhouse_query_over_budget(
     assert response.status_code == expected_status, response.text
     error = response.json()["error"]
     assert error["code"] == expected_code
-    # The time limit is a client-side deadline (clickhouse-go#2100), which returns a plain timeout.
-    assert error["suggestions"] == ([expected_suggestion] if expected_suggestion else [])
+    assert error["suggestions"] == [expected_suggestion]
 
 
 def test_clickhouse_query_budget_reaches_clickhouse(
