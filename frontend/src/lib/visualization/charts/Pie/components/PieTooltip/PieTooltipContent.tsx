@@ -5,9 +5,9 @@ import TooltipList from 'lib/uPlotV2/components/Tooltip/components/TooltipList/T
 import TooltipPinnedBadge from 'lib/uPlotV2/components/Tooltip/components/TooltipPinnedBadge/TooltipPinnedBadge';
 
 import { PieTooltipData } from 'lib/visualization/charts/Pie/types';
-import PieTooltipFooter from 'lib/visualization/charts/Pie/PieTooltipFooter';
+import PieTooltipFooter from 'lib/visualization/charts/Pie/components/PieTooltip/PieTooltipFooter';
 
-import styles from 'lib/visualization/charts/Pie/Pie.module.scss';
+import styles from 'lib/visualization/charts/Pie/components/PieTooltip/PieTooltip.module.scss';
 
 interface PieTooltipContentProps {
 	/** Widget id, for the list's analytics. */
@@ -35,22 +35,22 @@ export default function PieTooltipContent({
 
 	return (
 		<div
-			className={cx(styles.pieChartTooltipBody, {
-				[styles.pieChartTooltipPinned]: isPinned,
+			className={cx(styles.body, {
+				[styles.pinned]: isPinned,
 			})}
 		>
 			{isPinned && (
-				<div className={styles.pieChartTooltipHeaderRow}>
+				<div className={styles.headerRow}>
 					<span>{members?.length} series</span>
 					<TooltipPinnedBadge />
 				</div>
 			)}
-			<div className={styles.pieChartTooltipActiveItem}>
+			<div className={styles.activeItem}>
 				<TooltipItem item={slice} isItemActive />
 			</div>
 			{members && (
 				<>
-					<span className={styles.pieChartTooltipDivider} />
+					<span className={styles.divider} />
 					<TooltipList
 						id={id}
 						content={members}

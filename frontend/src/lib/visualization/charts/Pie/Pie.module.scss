@@ -29,46 +29,6 @@
 	z-index: 9999;
 }
 
-// Mirrors the uPlot tooltip container (uPlotV2/components/Tooltip).
-.pieChartTooltipBody {
-	display: flex;
-	flex-direction: column;
-	width: 360px;
-	max-width: 80vw;
-	font-family: 'Inter';
-	font-size: 12px;
-	-webkit-font-smoothing: antialiased;
-	color: var(--l2-foreground);
-	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
-	border-radius: 6px;
-	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-
-.pieChartTooltipPinned {
-	border-color: var(--ring);
-}
-
-.pieChartTooltipHeaderRow {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--spacing-2);
-	padding: var(--spacing-8) var(--spacing-8) 0;
-	font-size: var(--font-size-sm);
-	font-weight: 500;
-}
-
-.pieChartTooltipActiveItem {
-	padding: var(--spacing-4);
-}
-
-.pieChartTooltipDivider {
-	display: block;
-	height: 1px;
-	background-color: var(--l2-border);
-}
-
 // width/height are set inline from the computed chart dimensions; border-box
 // keeps the padding inside that height and overflow:hidden clips the
 // virtualized grid to the rectangle.

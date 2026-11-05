@@ -4,10 +4,8 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 
 import { PieSlice } from 'lib/visualization/charts/types';
 
-import {
-	getArcGeometry,
-	getSliceDisplayLabel,
-} from 'lib/visualization/charts/Pie/utils';
+import { getArcGeometry } from 'lib/visualization/charts/Pie/utils/geometry';
+import { getSliceDisplayLabel } from 'lib/visualization/charts/Pie/utils/slices';
 
 // Slices below this share of the total don't get a leader label (too cramped).
 const MIN_LABEL_SHARE = 0.03;

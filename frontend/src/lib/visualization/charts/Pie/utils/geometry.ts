@@ -1,13 +1,8 @@
-/**
- * Pure presentation helpers for the Pie chart. Kept out of the component file
- * so the renderer stays declarative (per the one-component-per-file rule).
- */
+/** Donut, label and font sizing for the Pie chart. */
 
-import type { PieSlice } from 'lib/visualization/charts/types';
 import {
 	ArcGeometry,
 	DonutGeometry,
-	ParsedRgb,
 	ScaledFontSizeArgs,
 } from 'lib/visualization/charts/Pie/types';
 
@@ -77,56 +72,4 @@ export function getArcGeometry(
 		lineEndY: -Math.cos(angle) * lineEndRadius,
 		textAnchor: Math.sin(angle) > 0 ? 'start' : 'end',
 	};
-}
-
-// Parses `#rrggbb` into its components. Returns null for anything else (e.g. an
-// already-rgba string), letting callers fall back to the original colour.
-function hexToRgb(color: string): ParsedRgb | null {
-	const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
-	return result
-		? {
-				r: parseInt(result[1], 16),
-				g: parseInt(result[2], 16),
-				b: parseInt(result[3], 16),
-			}
-		: null;
-}
-
-/**
- * Returns an rgba() string for `color` at the given opacity. Used to dim the
- * non-hovered slices. Falls back to the original colour if it can't be parsed.
- */
-export function lightenColor(color: string, opacity: number): string {
-	const rgb = hexToRgb(color);
-	if (!rgb) {
-		return color;
-	}
-	return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
-}
-
-/**
- * Resolves the fill for a slice given the currently-hovered slice colour:
- * everything but the active slice dims to 40% opacity. With nothing hovered
- * (`activeColor === null`) every slice keeps its full colour.
- */
-export function getFillColor(
-	color: string,
-	activeColor: string | null,
-): string {
-	if (activeColor === null) {
-		return color;
-	}
-	return activeColor === color ? color : lightenColor(color, 0.4);
-}
-
-/** Grouped slices read "Other (n)"; `label` stays the key for colours and visibility. */
-export function getSliceDisplayLabel(slice: PieSlice): string {
-	return slice.members
-		? `${slice.label} (${slice.members.length})`
-		: slice.label;
-}
-
-/** Arc order: largest first, with a grouped slice always last so it closes the circle. */
-export function compareSlices(a: PieSlice, b: PieSlice): number {
-	return Number(!!a.members) - Number(!!b.members) || b.value - a.value;
 }

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { PieSlice } from 'lib/visualization/charts/types';
-import PieArc from 'lib/visualization/charts/Pie/PieArc';
+import PieArc from 'lib/visualization/charts/Pie/components/PieArc/PieArc';
 
 jest.mock('components/Graph/yAxisConfig', () => ({
 	// Echo the raw value so assertions are deterministic.

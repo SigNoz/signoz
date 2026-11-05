@@ -3,7 +3,7 @@ import type { PieSlice } from 'lib/visualization/charts/types';
 import {
 	groupPieSlices,
 	OTHER_SLICE_LABEL,
-} from 'lib/visualization/charts/Pie/groupPieSlices';
+} from 'lib/visualization/charts/Pie/utils/groupPieSlices';
 
 const slice = (label: string, value: number): PieSlice => ({
 	label,
