@@ -177,13 +177,9 @@ func (b *traceQueryStatementBuilder) Build(
 	case qbtypes.RequestTypeRaw:
 		return b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables, isSelectFieldsEmpty)
 	case qbtypes.RequestTypeTimeSeries:
-		return b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables, nil)
+		return b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeHeatmap:
-		heatmapField, countQuery, err := qbtypes.HeatmapCountQuery(query)
-		if err != nil {
-			return nil, err
-		}
-		return b.buildTimeSeriesQuery(ctx, orgID, q, countQuery, start, end, keys, variables, heatmapField)
+		return b.buildHeatmapTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, variables, false, false)
 	case qbtypes.RequestTypeTrace:
@@ -564,10 +560,40 @@ func (b *traceQueryStatementBuilder) buildTraceQuery(
 	return stmt, nil
 }
 
-// buildTimeSeriesQuery builds one row per (time bucket, group). A non-nil
-// heatmapField makes it a heatmap instead: the bucket a row's heatmapField
-// falls in joins the group keys, so a row is one cell.
 func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
+	ctx context.Context,
+	orgID valuer.UUID,
+	sb *sqlbuilder.SelectBuilder,
+	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	return b.buildTimeSeriesOrHeatmapQuery(ctx, orgID, sb, query, start, end, keys, variables, nil)
+}
+
+// buildHeatmapTimeSeriesQuery counts rows per (time bucket, group, value
+// bucket) of the field named in heatmap(<field>).
+func (b *traceQueryStatementBuilder) buildHeatmapTimeSeriesQuery(
+	ctx context.Context,
+	orgID valuer.UUID,
+	sb *sqlbuilder.SelectBuilder,
+	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	heatmapField, countQuery, err := qbtypes.HeatmapCountQuery(query)
+	if err != nil {
+		return nil, err
+	}
+	return b.buildTimeSeriesOrHeatmapQuery(ctx, orgID, sb, countQuery, start, end, keys, variables, heatmapField)
+}
+
+// buildTimeSeriesOrHeatmapQuery builds one row per (time bucket, group). A
+// non-nil heatmapField makes it a heatmap instead: the bucket a row's
+// heatmapField falls in joins the group keys, so a row is one cell.
+func (b *traceQueryStatementBuilder) buildTimeSeriesOrHeatmapQuery(
 	ctx context.Context,
 	orgID valuer.UUID,
 	sb *sqlbuilder.SelectBuilder,
