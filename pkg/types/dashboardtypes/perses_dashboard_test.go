@@ -1612,6 +1612,80 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 	}
 }
 
+func TestLegendCustomOrderRoundTrip(t *testing.T) {
+	dashboardWithLegend := func(legend string) []byte {
+		return []byte(`{
+			"variables": [],
+			"panels": {
+				"p1": {
+					"kind": "Panel",
+					"spec": {
+						"links": [],
+						"plugin": {
+							"kind": "signoz/TimeSeriesPanel",
+							"spec": {"legend": ` + legend + `}
+						},
+						"queries": [{"kind": "time_series", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
+					}
+				}
+			},
+			"links": [],
+			"layouts": []
+		}`)
+	}
+
+	tests := []struct {
+		name        string
+		legend      string
+		wantOrder   string
+		wantIndexes map[string]int
+		wantJSON    []string
+	}{
+		{
+			name:      "absent",
+			legend:    `{}`,
+			wantOrder: "value",
+			wantJSON:  []string{`"order":"value"`, `"customOrder":null`},
+		},
+		{
+			name:        "custom without indexes",
+			legend:      `{"order": "custom", "customOrder": {}}`,
+			wantOrder:   "custom",
+			wantIndexes: map[string]int{},
+			wantJSON:    []string{`"order":"custom"`, `"customOrder":{}`},
+		},
+		{
+			name:        "custom with indexes",
+			legend:      `{"order": "custom", "customOrder": {"CPU %": 1, "MEM %": 2, "idle": -1}}`,
+			wantOrder:   "custom",
+			wantIndexes: map[string]int{"CPU %": 1, "MEM %": 2, "idle": -1},
+			wantJSON:    []string{`"order":"custom"`, `"customOrder":{"CPU %":1,"MEM %":2,"idle":-1}`},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d, err := unmarshalDashboard(dashboardWithLegend(tt.legend))
+			require.NoError(t, err)
+			spec := d.Panels["p1"].Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
+			assert.Equal(t, tt.wantOrder, spec.Legend.Order.ValueOrDefault())
+			assert.Equal(t, tt.wantIndexes, spec.Legend.CustomOrder)
+
+			output, err := json.Marshal(d)
+			require.NoError(t, err)
+			for _, want := range tt.wantJSON {
+				assert.Contains(t, string(output), want)
+			}
+		})
+	}
+
+	_, err := unmarshalDashboard(dashboardWithLegend(`{"order": "alphabetical"}`))
+	require.ErrorContains(t, err, "legend order")
+
+	_, err = unmarshalDashboard(dashboardWithLegend(`{"customOrder": {"CPU %": "first"}}`))
+	require.Error(t, err, "a non-integer index must be rejected")
+}
+
 func TestAreaChartPanelDefaults(t *testing.T) {
 	data := []byte(`{
 		"variables": [],
