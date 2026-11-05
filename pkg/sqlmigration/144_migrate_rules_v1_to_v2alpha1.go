@@ -140,12 +140,7 @@ func (migration *migrateRulesV1ToV2Alpha1) convertOrg(ctx context.Context, orgID
 			continue
 		}
 
-		convertedRule, convertedRoute, err := convertRule(storedRule.ID, storedRuleData, storedRoute)
-		if err != nil {
-			unmigratable++
-			migration.logger.WarnContext(ctx, "leaving rule at v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), errors.Attr(err))
-			continue
-		}
+		convertedRule, convertedRoute := convertRule(storedRule.ID, storedRuleData, storedRoute)
 		if cause := convertedRule.disableIfNeverFired(); cause != "" {
 			disabled++
 			migration.logger.WarnContext(ctx, "migrating rule as disabled, it never fired in v1", slog.String("org_id", orgID), slog.String("rule_id", storedRule.ID), slog.String("cause", cause))
@@ -186,10 +181,7 @@ func validateRoute(route *routePolicyRow, preferredChannels []string) error {
 // the v1 decode derived the same values, with the rule's route_policy row as it
 // must be stored alongside. Version and source are left as stored. A nil
 // storedRoute is a rule that never had channels.
-func convertRule(ruleID string, storedRuleData *postableRule, storedRoute *routePolicyRow) (*postableRule, *routePolicyRow, error) {
-	if storedRuleData.RuleCondition == nil {
-		return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition in stored rule data is null")
-	}
+func convertRule(ruleID string, storedRuleData *postableRule, storedRoute *routePolicyRow) (*postableRule, *routePolicyRow) {
 	channels := []string{}
 	if storedRoute != nil {
 		channels = storedRoute.Channels
@@ -197,21 +189,26 @@ func convertRule(ruleID string, storedRuleData *postableRule, storedRoute *route
 
 	rule := storedRuleData.clone()
 	rule.fillDurationDefaults()
-	rule.deriveAlertType()
-	rule.deriveQueryType()
-	rule.repairPanelType()
-	rule.disableUnmetMinPoints()
-	rule.deriveRuleType()
-	rule.deriveSelectedQuery()
-	rule.negateAnomalyBelowTarget()
-	convertedRoute := rule.repairEmptySeverity(ruleID, storedRoute)
-	rule.relocateThreshold(channels)
+	convertedRoute := storedRoute
+	// a null condition is written back null: nothing derives from it, the v2
+	// read path rejects it as v1 did, and the list still shows the rule, disabled
+	if rule.RuleCondition != nil {
+		rule.deriveAlertType()
+		rule.deriveQueryType()
+		rule.repairPanelType()
+		rule.disableUnmetMinPoints()
+		rule.deriveRuleType()
+		rule.deriveSelectedQuery()
+		rule.negateAnomalyBelowTarget()
+		convertedRoute = rule.repairEmptySeverity(ruleID, storedRoute)
+		rule.relocateThreshold(channels)
+	}
 	rule.relocateEvaluation()
 	rule.synthesizeNotificationSettings()
 	rule.SchemaVersion = schemaVersionV2Alpha1
 	rule.clearV1Fields()
 
-	return rule, convertedRoute, nil
+	return rule, convertedRoute
 }
 
 type routePolicyRow struct {
@@ -331,8 +328,8 @@ func (rule *postableRule) clone() *postableRule {
 
 // disableIfNeverFired disables a rule v1 stored but could never fire: a
 // negative evalWindow or frequency, which is reset to its default since no
-// read of a rolling window accepts it, a null compositeQuery, one with no
-// queries or with every query disabled, or a threshold with a null target or
+// read of a rolling window accepts it, a null condition or compositeQuery, one
+// with no queries or with every query disabled, or a threshold with a null target or
 // an op or matchType outside the supported sets, which the v2 write path
 // rejects. It reads the relocated fields, so it runs after convertRule, and
 // returns the offending fields, or "" when the rule stays enabled.
@@ -348,6 +345,8 @@ func (rule *postableRule) disableIfNeverFired() string {
 		window.Frequency = mustParseTextDuration(defaultFrequency)
 	}
 	switch {
+	case rule.RuleCondition == nil:
+		causes = append(causes, "condition is null")
 	case rule.RuleCondition.CompositeQuery == nil:
 		causes = append(causes, "condition.compositeQuery is null")
 	case len(rule.decodeQueryEnvelopes()) == 0:
@@ -355,14 +354,16 @@ func (rule *postableRule) disableIfNeverFired() string {
 	case rule.RuleCondition.SelectedQuery == "":
 		causes = append(causes, "condition.selectedQueryName is omitted and every query is disabled")
 	}
-	threshold := rule.RuleCondition.Thresholds.Spec[0]
-	switch {
-	case threshold.TargetValue == nil:
-		causes = append(causes, "condition.target is null")
-	case !slices.Contains(supportedCompareOperators, threshold.CompareOperator):
-		causes = append(causes, fmt.Sprintf("condition.op: unsupported value %q", threshold.CompareOperator))
-	case !slices.Contains(supportedMatchTypes, threshold.MatchType):
-		causes = append(causes, fmt.Sprintf("condition.matchType: unsupported value %q", threshold.MatchType))
+	if rule.RuleCondition != nil {
+		threshold := rule.RuleCondition.Thresholds.Spec[0]
+		switch {
+		case threshold.TargetValue == nil:
+			causes = append(causes, "condition.target is null")
+		case !slices.Contains(supportedCompareOperators, threshold.CompareOperator):
+			causes = append(causes, fmt.Sprintf("condition.op: unsupported value %q", threshold.CompareOperator))
+		case !slices.Contains(supportedMatchTypes, threshold.MatchType):
+			causes = append(causes, fmt.Sprintf("condition.matchType: unsupported value %q", threshold.MatchType))
+		}
 	}
 	if len(causes) == 0 {
 		return ""
@@ -546,7 +547,7 @@ func (rule *postableRule) relocateEvaluation() {
 
 func (rule *postableRule) synthesizeNotificationSettings() {
 	alertStates := []string{"firing"}
-	if rule.RuleCondition.AlertOnAbsent {
+	if rule.RuleCondition != nil && rule.RuleCondition.AlertOnAbsent {
 		alertStates = append(alertStates, "nodata")
 	}
 	rule.NotificationSettings = &notificationSettings{
@@ -563,10 +564,12 @@ func (rule *postableRule) clearV1Fields() {
 	rule.EvalWindow = textDuration{}
 	rule.Frequency = textDuration{}
 	rule.PreferredChannels = nil
-	rule.RuleCondition.Target = nil
-	rule.RuleCondition.CompareOperator = ""
-	rule.RuleCondition.MatchType = ""
-	rule.RuleCondition.TargetUnit = ""
+	if condition := rule.RuleCondition; condition != nil {
+		condition.Target = nil
+		condition.CompareOperator = ""
+		condition.MatchType = ""
+		condition.TargetUnit = ""
+	}
 }
 
 // textDuration decodes a duration the way the app's TextDuration does, a
