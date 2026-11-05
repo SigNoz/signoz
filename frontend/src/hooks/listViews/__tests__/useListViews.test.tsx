@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from 'react';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from 'tests/test-utils';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import type {
 	SavedListView,

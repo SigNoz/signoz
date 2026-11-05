@@ -1,21 +1,25 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook } from 'tests/test-utils';
 
 import { useFilterZoneDraft } from '../useFilterZoneDraft';
 
 const BASE_QUERY = "name = 'x'";
 
+type Args = Required<Parameters<typeof useFilterZoneDraft>[0]>;
+
 function setup(query = BASE_QUERY): {
 	result: { current: ReturnType<typeof useFilterZoneDraft> };
 	rerender: (props: { query: string }) => void;
-	onQueryChange: jest.Mock;
-	onFilterApplied: jest.Mock;
-	onCleared: jest.Mock;
-	onClearAll: jest.Mock;
+	onQueryChange: jest.MockedFunction<Args['onQueryChange']>;
+	onFilterApplied: jest.MockedFunction<Args['onFilterApplied']>;
+	onCleared: jest.MockedFunction<Args['onCleared']>;
+	onClearAll: jest.MockedFunction<Args['onClearAll']>;
 } {
-	const onQueryChange = jest.fn();
-	const onFilterApplied = jest.fn();
-	const onCleared = jest.fn();
-	const onClearAll = jest.fn();
+	const onQueryChange = jest.fn() as jest.MockedFunction<Args['onQueryChange']>;
+	const onFilterApplied = jest.fn() as jest.MockedFunction<
+		Args['onFilterApplied']
+	>;
+	const onCleared = jest.fn() as jest.MockedFunction<Args['onCleared']>;
+	const onClearAll = jest.fn() as jest.MockedFunction<Args['onClearAll']>;
 	const { result, rerender } = renderHook(
 		({ query: q }: { query: string }) =>
 			useFilterZoneDraft({

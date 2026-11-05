@@ -1,5 +1,5 @@
 import { Bookmark, Pin } from '@signozhq/icons';
-import { fireEvent, render, screen } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import type { BuiltinListView } from '../../types';
 import ViewsRail from '../ViewsRail';
@@ -51,25 +51,28 @@ describe('ViewsRail', () => {
 		);
 	});
 
-	it('selects a view by id', () => {
+	it('selects a view by id', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const props = renderRail();
 
-		fireEvent.click(screen.getByTestId(`${PREFIX}-view-view-2`));
+		await user.click(screen.getByTestId(`${PREFIX}-view-view-2`));
 
 		expect(props.onSelect).toHaveBeenCalledWith('view-2');
 	});
 
-	it('filters views by name and says when none match', () => {
+	it('filters views by name and says when none match', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderRail();
 		const search = screen.getByTestId(`${PREFIX}-view-search`);
 
-		fireEvent.change(search, { target: { value: 'prod' } });
+		await user.type(search, 'prod');
 
 		expect(screen.getByTestId(`${PREFIX}-view-view-1`)).toBeInTheDocument();
 		expect(screen.queryByTestId(`${PREFIX}-view-view-2`)).not.toBeInTheDocument();
 		expect(screen.queryByTestId(`${PREFIX}-view-all`)).not.toBeInTheDocument();
 
-		fireEvent.change(search, { target: { value: 'nothing' } });
+		await user.clear(search);
+		await user.type(search, 'nothing');
 
 		expect(screen.getByText(/No views match/)).toBeInTheDocument();
 	});
@@ -105,7 +108,8 @@ describe('ViewsRail', () => {
 		expect(screen.queryByTestId(`${PREFIX}-view-reset`)).not.toBeInTheDocument();
 	});
 
-	it('offers save, save as and reset for a modified custom view', () => {
+	it('offers save, save as and reset for a modified custom view', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onViewSaved = jest.fn();
 		const props = renderRail({
 			activeViewId: 'view-1',
@@ -114,13 +118,13 @@ describe('ViewsRail', () => {
 			onViewSaved,
 		});
 
-		fireEvent.click(screen.getByTestId(`${PREFIX}-view-save-changes`));
+		await user.click(screen.getByTestId(`${PREFIX}-view-save-changes`));
 		expect(onViewSaved).toHaveBeenCalledWith('update');
 		expect(props.onSaveChanges).toHaveBeenCalledTimes(1);
 
 		expect(screen.getByTestId(`${PREFIX}-view-save-as`)).toBeInTheDocument();
 
-		fireEvent.click(screen.getByTestId(`${PREFIX}-view-reset`));
+		await user.click(screen.getByTestId(`${PREFIX}-view-reset`));
 		expect(props.onReset).toHaveBeenCalledTimes(1);
 	});
 
