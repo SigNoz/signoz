@@ -213,6 +213,12 @@ export const panelsMocks = defineStoryMocks({
 			value: 20,
 			max: 80,
 		}),
+		listJsonBody: toggleControl('List JSON body', {
+			group: DATA,
+			description:
+				'`use_json_body`: the List panel’s log bodies arrive as objects, every third one with keys beside `message`.',
+			value: false,
+		}),
 	},
 	handlers: (values, response) => {
 		const args: PanelArgs = values;
@@ -259,6 +265,7 @@ export const panelsMocks = defineStoryMocks({
 						result: values.result,
 						series: values.series,
 						listRows: values.listRows,
+						listJsonBody: values.listJsonBody,
 						gaps: values.gaps,
 					});
 				}),

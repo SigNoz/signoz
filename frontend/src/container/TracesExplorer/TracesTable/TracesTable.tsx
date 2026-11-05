@@ -24,6 +24,10 @@ export type TracesTableProps = {
 	panelType: PanelTypeKeys;
 	/** Builds the trace-detail href for a row; drives row click + cmd/ctrl-click. */
 	getRowHref: (row: TracesTableRow) => string;
+	/** Replaces the default row click, which opens the trace detail page. */
+	onRowClick?: (row: TracesTableRow) => void;
+	isRowActive?: (row: TracesTableRow) => boolean;
+	activeRowIndex?: number;
 	isLoading: boolean;
 	isFetching: boolean;
 	isError: boolean;
@@ -41,6 +45,9 @@ function TracesTable({
 	respectColumnOrder = false,
 	panelType,
 	getRowHref,
+	onRowClick,
+	isRowActive,
+	activeRowIndex,
 	isLoading,
 	isFetching,
 	isError,
@@ -57,9 +64,13 @@ function TracesTable({
 
 	const handleRowClick = useCallback(
 		(row: TracesTableRow): void => {
+			if (onRowClick) {
+				onRowClick(row);
+				return;
+			}
 			navigate(getRowHref(row));
 		},
-		[navigate, getRowHref],
+		[onRowClick, navigate, getRowHref],
 	);
 
 	const handleRowClickNewTab = useCallback(
@@ -97,7 +108,10 @@ function TracesTable({
 						onColumnRemove={onColumnRemove}
 						onRowClick={handleRowClick}
 						onRowClickNewTab={handleRowClickNewTab}
+						isRowActive={isRowActive}
+						activeRowIndex={activeRowIndex}
 						getRowTestId={(row): string => `traces-table-row-${row.id}`}
+						testId={`traces-table-${panelType.toLowerCase()}`}
 					/>
 				</div>
 			)}
@@ -108,6 +122,9 @@ function TracesTable({
 TracesTable.defaultProps = {
 	columnStorageKey: undefined,
 	respectColumnOrder: false,
+	onRowClick: undefined,
+	isRowActive: undefined,
+	activeRowIndex: undefined,
 	onColumnOrderChange: undefined,
 	onColumnRemove: undefined,
 	cellTypographySize: 'medium',

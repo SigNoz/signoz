@@ -1,8 +1,6 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import logEvent from 'api/common/logEvent';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
-import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -92,12 +90,6 @@ function K8sHeader({
 			void invalidateQueries();
 
 			if (finalExpression?.trim()) {
-				void logEvent(InfraMonitoringEvents.FilterApplied, {
-					entity: InfraMonitoringEvents.K8sEntity,
-					page: InfraMonitoringEvents.ListPage,
-					category: entity,
-				});
-
 				logInfraFilterCustomizedEvent(entity, 'search', finalExpression);
 			}
 		},
@@ -141,6 +133,7 @@ function K8sHeader({
 					isLoadingQueries={isFetching}
 					onStageRunQuery={handleStageRunQuery}
 					handleCancelQuery={handleCancelQuery}
+					testId="list-run-query-btn"
 				/>
 			</div>
 

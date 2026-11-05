@@ -69,6 +69,8 @@ function AccountActionsRenderer({
 
 					<span className="account-selector">
 						<Select
+							data-testid="cloud-account-selector"
+							aria-label="Cloud account"
 							value={activeAccount?.providerAccountId}
 							options={selectOptions}
 							rootClassName={cx('cloud-account-selector', {
@@ -88,6 +90,7 @@ function AccountActionsRenderer({
 						color="secondary"
 						prefix={<PencilLine size={14} />}
 						onClick={onAccountSettingsModalOpen}
+						testId="cloud-edit-account-btn"
 					>
 						Edit Account
 					</Button>
@@ -98,6 +101,7 @@ function AccountActionsRenderer({
 						color="secondary"
 						onClick={onIntegrationModalOpen}
 						prefix={<Plus size={14} />}
+						testId="cloud-add-account-btn"
 					>
 						Add New Account
 					</Button>
@@ -112,6 +116,7 @@ function AccountActionsRenderer({
 			prefix={<Plug size={14} />}
 			onClick={onIntegrationModalOpen}
 			size="sm"
+			testId="cloud-integrate-now-btn"
 		>
 			Integrate Now
 		</Button>
