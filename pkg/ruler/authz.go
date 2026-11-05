@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -208,36 +208,7 @@ func mapFieldResources(body []byte) ([]coretypes.ResourceWithID, error) {
 		return nil, err
 	}
 
-	seen := make(map[string]struct{}, 3)
-	refs := make([]coretypes.ResourceWithID, 0, 3)
-	for _, ref := range telemetry {
-		field, err := fieldResourceForKind(ref.Resource.Kind())
-		if err != nil {
-			return nil, err
-		}
-
-		kind := field.Kind().String()
-		if _, ok := seen[kind]; ok {
-			continue
-		}
-		seen[kind] = struct{}{}
-		refs = append(refs, coretypes.ResourceWithID{Resource: field})
-	}
-
-	return refs, nil
-}
-
-func fieldResourceForKind(kind coretypes.Kind) (coretypes.Resource, error) {
-	switch kind {
-	case coretypes.KindLogs, coretypes.KindAuditLogs:
-		return coretypes.ResourceMetaResourceLogsField, nil
-	case coretypes.KindTraces:
-		return coretypes.ResourceMetaResourceTracesField, nil
-	case coretypes.KindMetrics, coretypes.KindMeterMetrics:
-		return coretypes.ResourceMetaResourceMetricsField, nil
-	default:
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "no field resource for telemetry kind %q", kind.String())
-	}
+	return ruletypes.NewFieldResources(telemetry)
 }
 
 func diffLinks(stored, incoming []string) (attached, detached []string) {
