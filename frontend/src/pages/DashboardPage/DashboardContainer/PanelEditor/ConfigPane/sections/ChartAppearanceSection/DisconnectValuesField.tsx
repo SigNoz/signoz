@@ -1,36 +1,21 @@
 import { useEffect, useState } from 'react';
-import { rangeUtil } from '@grafana/data';
-import { Typography } from '@signozhq/ui/typography';
 import type { DashboardtypesSpanGapsDTO } from 'api/generated/services/sigNoz.schemas';
 
-import ConfigSegmented from '../../controls/ConfigSegmented/ConfigSegmented';
+import ConfigField from '../../controls/ConfigField/ConfigField';
+import ConfigTiles from '../../controls/ConfigTiles/ConfigTiles';
+import type { FieldResetProps } from '../../utils/changes';
 import DisconnectValuesThresholdInput from './DisconnectValuesThresholdInput';
+import { DISCONNECT_MODE_OPTIONS, DisconnectValuesMode } from './options';
+import { defaultDisconnectDuration } from './utils';
 
 import styles from './ChartAppearanceSection.module.scss';
 
-const DEFAULT_THRESHOLD = '1m';
-enum DisconnectValuesMode {
-	NEVER = 'never',
-	THRESHOLD = 'threshold',
-}
-const MODE_OPTIONS = [
-	{ value: DisconnectValuesMode.NEVER, label: 'Never' },
-	{ value: DisconnectValuesMode.THRESHOLD, label: 'Threshold' },
-];
-
-interface DisconnectValuesFieldProps {
+interface DisconnectValuesFieldProps extends FieldResetProps {
 	testId: string;
 	value: DashboardtypesSpanGapsDTO | undefined;
 	/** Query step interval (seconds): seeds the default threshold and floors it. */
 	stepInterval?: number;
 	onChange: (next: DashboardtypesSpanGapsDTO | undefined) => void;
-}
-
-/** Default threshold duration: the step interval (smallest meaningful), else 1m. */
-function defaultDuration(stepInterval?: number): string {
-	return stepInterval && stepInterval > 0
-		? rangeUtil.secondsToHms(stepInterval)
-		: DEFAULT_THRESHOLD;
 }
 
 /**
@@ -43,6 +28,8 @@ function DisconnectValuesField({
 	testId,
 	value,
 	stepInterval,
+	changed,
+	onReset,
 	onChange,
 }: DisconnectValuesFieldProps): JSX.Element {
 	const duration = value?.fillLessThan || undefined;
@@ -63,7 +50,7 @@ function DisconnectValuesField({
 				...value,
 				fillOnlyBelow: true,
 				// Seed from the live stepInterval (async — undefined until results load), not mount.
-				fillLessThan: lastDuration ?? defaultDuration(stepInterval),
+				fillLessThan: lastDuration ?? defaultDisconnectDuration(stepInterval),
 			});
 			return;
 		}
@@ -72,21 +59,24 @@ function DisconnectValuesField({
 	};
 
 	return (
-		<>
-			<div className={styles.field}>
-				<Typography.Text>Disconnect values</Typography.Text>
-				<ConfigSegmented
-					testId={testId}
-					value={
-						isThreshold ? DisconnectValuesMode.THRESHOLD : DisconnectValuesMode.NEVER
-					}
-					items={MODE_OPTIONS}
-					onChange={handleMode}
-				/>
-			</div>
+		<ConfigField
+			label="When data is missing"
+			help="Breaking the line makes outages and restarts visible."
+			changed={changed}
+			onReset={onReset}
+		>
+			<ConfigTiles
+				testId={testId}
+				aria-label="When data is missing"
+				value={
+					isThreshold ? DisconnectValuesMode.THRESHOLD : DisconnectValuesMode.NEVER
+				}
+				items={DISCONNECT_MODE_OPTIONS}
+				onChange={handleMode}
+			/>
 			{isThreshold && duration && (
-				<div className={styles.field}>
-					<Typography.Text>Threshold value</Typography.Text>
+				<div className={styles.inset}>
+					<span className={styles.insetLabel}>Break when a gap is longer than</span>
 					<DisconnectValuesThresholdInput
 						testId={`${testId}-value`}
 						value={duration}
@@ -97,7 +87,7 @@ function DisconnectValuesField({
 					/>
 				</div>
 			)}
-		</>
+		</ConfigField>
 	);
 }
 

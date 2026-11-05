@@ -1,5 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import {
+	expect,
+	fireEvent,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -147,4 +154,24 @@ export const ManyFilterPills: Story = {
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
 	parameters: { msw: { handlers: [overflowingLabels] } },
+};
+
+/** The copy button in the overflow chip's tooltip, clicked. */
+export const OverflowLabelsCopiedToast: Story = {
+	args: { tooltipsOpen: true },
+	parameters: { msw: { handlers: [overflowingLabels] } },
+	play: async (): Promise<void> => {
+		// The overflow tooltips render after the label ones, and theirs come last.
+		await screen.findAllByText(/^ruleId: /, undefined, { timeout: 15_000 });
+		const copyButtons = screen.getAllByRole('button', {
+			name: 'Copy to clipboard',
+		});
+
+		// A pointerdown re-renders the held-open tooltip under the pointer, so the
+		// click is dispatched alone.
+		await fireEvent.click(copyButtons[copyButtons.length - 1]);
+		await waitFor(() =>
+			expect(screen.getByText(/copied! use in search/i)).toBeVisible(),
+		);
+	},
 };

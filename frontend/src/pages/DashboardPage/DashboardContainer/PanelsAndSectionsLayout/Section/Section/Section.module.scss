@@ -4,6 +4,12 @@
 	border-radius: 4px;
 }
 
+.pickerTarget {
+	border-radius: 4px;
+	outline: 1px dashed var(--bg-robin-500);
+	outline-offset: 2px;
+}
+
 .dragging {
 	opacity: 0.8;
 }

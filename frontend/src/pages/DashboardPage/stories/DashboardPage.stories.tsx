@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route } from 'react-router-dom';
+import * as monaco from 'monaco-editor';
 import ROUTES from 'constants/routes';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
@@ -8,9 +9,15 @@ import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
+	clickAction,
+	clickPanelAction,
+	clickSectionAction,
 	dashboardMocks,
 	desyncedDashboardHandler,
+	expectToast,
 	metricsListHandler,
+	openJsonEditor,
+	PAGE_LOAD,
 	tooltipDashboardHandler,
 	tooltipRoute,
 	warnedPanelQueryHandler,
@@ -282,12 +289,111 @@ export const RenameSectionDialog: Story = {
 	},
 };
 
-/** New panel, including the section picker in the dialog footer. */
-export const AddPanelDialog: Story = {
-	play: async (context) => {
-		await SectionActionsMenu.play?.(context);
+const openNewPanelPicker = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	const canvas = within(canvasElement);
+
+	await userEvent.click(
+		await canvas.findByTestId('add-panel-header', {}, { timeout: 10000 }),
+	);
+	await screen.findByTestId('panel-type-signoz/TimeSeriesPanel');
+};
+
+/**
+ * The new-panel drawer opened from the toolbar: the panel kinds grouped by
+ * category, Time Series preselected, and the target section on the split
+ * button.
+ */
+export const NewPanelPicker: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+	},
+};
+
+/** The drawer with another kind picked, previewed where it will be added. */
+export const NewPanelPickerTypeSelected: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.click(
+			await screen.findByTestId('panel-type-signoz/BarChartPanel'),
+		);
+	},
+};
+
+/** The drawer filtered by a search that matches one kind. */
+export const NewPanelPickerSearch: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.type(
+			await screen.findByTestId('panel-type-search-field'),
+			'heat',
+		);
+	},
+};
+
+/** The drawer narrowed to one category. */
+export const NewPanelPickerCategory: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.click(
+			await screen.findByRole('button', { name: /Distributions/ }),
+		);
+	},
+};
+
+/** The split button's menu: the sections to add to, and "New section". */
+export const NewPanelPickerSectionMenu: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Choose section' }),
+		);
+		await screen.findByTestId('panel-section-create');
+	},
+};
+
+/** Naming a new section, previewed on the dashboard behind the drawer. */
+export const NewPanelPickerNewSection: Story = {
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Choose section' }),
+		);
+		await userEvent.click(await screen.findByTestId('panel-section-create'));
+		await userEvent.type(
+			await screen.findByTestId('panel-section-name-field'),
+			'Errors',
+		);
+	},
+};
+
+/**
+ * The drawer on a dashboard without sections: the panel goes to the root, and
+ * the split button can still start a section.
+ */
+export const NewPanelPickerNoSections: Story = {
+	args: { sectioned: false },
+	play: async ({ canvasElement }) => {
+		await openNewPanelPicker(canvasElement);
+	},
+};
+
+/**
+ * The drawer opened from the second section's menu, targeting that section.
+ */
+export const NewPanelPickerFromSection: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		const [, secondSection] = await canvas.findAllByRole(
+			'button',
+			{ name: 'Section actions' },
+			{ timeout: 10000 },
+		);
+		await userEvent.click(secondSection);
 		await userEvent.click(await screen.findByText('Add panel'));
-		await screen.findByText('Add panel to');
+		await screen.findByTestId('panel-type-signoz/TimeSeriesPanel');
 	},
 };
 
@@ -300,6 +406,182 @@ export const PanelMoveToSectionSubmenu: Story = {
 		await waitFor(() => expect(screen.getAllByRole('menu')).toHaveLength(2), {
 			timeout: 10000,
 		});
+	},
+};
+
+/**
+ * Actions, Clone dashboard: the toast announcing the copy, raised once the
+ * clone endpoint answers. Set Dashboard clone to `error` to see the error
+ * modal instead.
+ */
+export const DashboardClonedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickAction(canvasElement, 'Clone dashboard');
+		if (args.dashboardClone === 'success') {
+			await expectToast('Dashboard cloned');
+		}
+	},
+};
+
+/**
+ * The title edited inline: the toast announcing the new name, raised once the
+ * patch answers.
+ */
+export const DashboardRenamedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickAction(canvasElement, 'Rename');
+		const input = await screen.findByTestId('dashboard-title-input-field');
+		await userEvent.clear(input);
+		await userEvent.type(input, 'Service overview (renamed){enter}');
+		if (args.dashboardPatch === 'success') {
+			await expectToast('Dashboard renamed successfully');
+		}
+	},
+};
+
+/**
+ * Actions, Delete dashboard, confirmed: the toast announcing the deletion,
+ * raised once the delete endpoint answers and before the page leaves for the
+ * list.
+ */
+export const DashboardDeletedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickAction(canvasElement, 'Delete dashboard');
+		await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
+		if (args.dashboardDelete === 'success') {
+			await expectToast('Dashboard deleted successfully');
+		}
+	},
+};
+
+/** A panel's Clone: the promise toast, loading until the patch answers. */
+export const PanelClonedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickPanelAction(canvasElement, 'p99-latency', 'Clone');
+		if (args.dashboardPatch === 'success') {
+			await expectToast('Panel cloned');
+		}
+	},
+};
+
+/** A panel's Clone whose patch is refused. */
+export const PanelCloneFailedToast: Story = {
+	args: { dashboardPatch: 'error' },
+	// The refused patch is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async (context) => {
+		await PanelClonedToast.play?.(context);
+		await expectToast('Failed to clone panel');
+	},
+};
+
+/** A panel's Clone whose patch never answers, so the toast stays on loading. */
+export const PanelCloneLoadingToast: Story = {
+	args: { dashboardPatch: 'loading' },
+	play: async (context) => {
+		await PanelClonedToast.play?.(context);
+		await expectToast('Cloning panel…');
+	},
+};
+
+/** A section's Clone section: the promise toast, loading until the patch answers. */
+export const SectionClonedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await clickSectionAction(canvasElement, 'Clone section');
+		if (args.dashboardPatch === 'success') {
+			await expectToast('Section cloned');
+		}
+	},
+};
+
+/** A section's Clone section whose patch is refused. */
+export const SectionCloneFailedToast: Story = {
+	args: { dashboardPatch: 'error' },
+	// The refused patch is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async (context) => {
+		await SectionClonedToast.play?.(context);
+		await expectToast('Failed to clone section');
+	},
+};
+
+/** A section's Clone section whose patch never answers, so the toast stays on loading. */
+export const SectionCloneLoadingToast: Story = {
+	args: { dashboardPatch: 'loading' },
+	play: async (context) => {
+		await SectionClonedToast.play?.(context);
+		await expectToast('Cloning section…');
+	},
+};
+
+/**
+ * A panel's Create Alerts when the substitute-variables call is refused: the
+ * dashboard has variables selected, so the query is resolved before the alert
+ * page opens.
+ */
+export const PanelCreateAlertErrorToast: Story = {
+	args: { substituteVars: 'error' },
+	// The refused request is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await clickPanelAction(canvasElement, 'p99-latency', 'Create Alerts');
+		await expectToast('Failed to create alert from panel');
+	},
+};
+
+/**
+ * The View modal on a time series panel, Save in its series manager: the toast
+ * confirming the legend state was stored.
+ */
+export const ChartManagerSavedToast: Story = {
+	parameters: { msw: { handlers: [metricsListHandler] } },
+	play: async ({ canvasElement }): Promise<void> => {
+		await clickPanelAction(canvasElement, 'request-rate', 'View');
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Save' }, PAGE_LOAD),
+		);
+		await expectToast('The updated graphs & legends are saved');
+	},
+};
+
+/** The JSON editor's Copy: the toast confirming the clipboard write. */
+export const JsonCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openJsonEditor(canvasElement);
+		await userEvent.click(screen.getByTestId('json-editor-copy'));
+		await expectToast('JSON copied to clipboard');
+	},
+};
+
+/**
+ * The JSON editor with a whitespace edit, applied: the toast announcing the
+ * update, raised once the PUT answers.
+ */
+export const JsonAppliedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await openJsonEditor(canvasElement);
+		await waitFor(
+			() => {
+				if (monaco.editor.getModels().length === 0) {
+					throw new Error('Monaco has not mounted');
+				}
+			},
+			{ timeout: 20000 },
+		);
+		// Typing into Monaco's hidden textarea never reaches its model in this runner.
+		monaco.editor
+			.getModels()[0]
+			.applyEdits([{ range: new monaco.Range(1, 1, 1, 1), text: ' ' }]);
+		await waitFor(() =>
+			expect(screen.getByTestId('json-editor-apply')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
+		);
+		await userEvent.click(screen.getByTestId('json-editor-apply'));
+		if (args.dashboardUpdate === 'success') {
+			await expectToast('Dashboard updated');
+		}
 	},
 };
 

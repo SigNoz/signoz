@@ -6,6 +6,7 @@
 import type {
 	GetFlamegraph200,
 	GetTraceAggregations200,
+	GetTraceSummary200,
 	GetWaterfallV4200,
 	SpantypesFlamegraphSpanDTO,
 	SpantypesSpanAggregationDTO,
@@ -299,6 +300,27 @@ export const traceWaterfallResponse = (
 			totalErrorSpansCount: spans.filter(({ hasError }) => hasError).length,
 			rootServiceName: root?.template.service ?? '',
 			rootServiceEntryPoint: root?.template.name ?? '',
+		},
+	};
+};
+
+export const traceSummaryResponse = (
+	options: TraceOptions & { missingSpans: boolean },
+): GetTraceSummary200 => {
+	const spans = buildSpans(options);
+	const root = spans[0];
+
+	return {
+		status: 'success',
+		data: {
+			startTimestampMillis: Math.round(options.traceStart),
+			endTimestampMillis: Math.round(options.traceStart + ROOT_DURATION_MS),
+			rootServiceName: root?.template.service ?? '',
+			rootServiceEntryPoint: root?.template.name ?? '',
+			rootSpanStatusCode: root?.hasError ? '503' : '200',
+			totalSpansCount: spans.length,
+			totalErrorSpansCount: spans.filter(({ hasError }) => hasError).length,
+			hasMissingSpans: options.missingSpans,
 		},
 	};
 };

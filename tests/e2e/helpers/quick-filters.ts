@@ -6,6 +6,7 @@ export const LOGS_EXPLORER_PATH = '/logs/logs-explorer';
 
 const SETTINGS_PANEL_TITLE = 'Edit quick filters';
 const SETTINGS_ICON_TEST_ID = 'settings-icon';
+const SETTINGS_CLOSE_TEST_ID = 'quick-filters-settings-close';
 const ANNOUNCEMENT_DISMISSED_KEY = 'QUICK_FILTERS_SETTINGS_ANNOUNCEMENT';
 /**
  * Conservative lower bound for the open panel width. The panel is 342px in
@@ -127,7 +128,7 @@ export async function assertQuickFiltersSettingsDrawerOpen(
 	await expect(panel).not.toHaveClass(/hidden/);
 	await expect(page.getByText(SETTINGS_PANEL_TITLE)).toBeVisible();
 	await expect(page.getByPlaceholder('Search for a filter...')).toBeVisible();
-	await expect(panel.locator('.qf-header-icon')).toBeVisible();
+	await expect(panel.getByTestId(SETTINGS_CLOSE_TEST_ID)).toBeVisible();
 
 	const addedList = panel.locator('.qf-added-filters-list');
 	await expect(panel.getByText('ADDED FILTERS')).toBeVisible();
@@ -161,6 +162,6 @@ export async function assertQuickFiltersSettingsDrawerOpen(
 export async function closeQuickFiltersSettingsPanel(
 	page: Page,
 ): Promise<void> {
-	await settingsPanel(page).locator('.qf-header-icon').click();
+	await settingsPanel(page).getByTestId(SETTINGS_CLOSE_TEST_ID).click();
 	await assertQuickFiltersSettingsDrawerClosed(page);
 }

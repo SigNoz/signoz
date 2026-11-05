@@ -1,17 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { DashboardtypesPrecisionOptionDTO } from 'api/generated/services/sigNoz.schemas';
 
 import FormattingSection from '../FormattingSection';
 
 // Auto-seeding is covered by useSeedMetricUnit's tests; here `metricUnit` is just a prop.
 
-// Open the Decimals select (clicking its antd selector) and pick the option with the
-// given visible label.
-async function pickDecimal(label: string): Promise<void> {
-	const user = userEvent.setup();
-	const trigger = screen.getByTestId('panel-editor-v2-decimals');
-	await user.click(trigger.querySelector('.ant-select-selector') as HTMLElement);
-	await user.click(await screen.findByRole('option', { name: label }));
+async function pickDecimal(value: string): Promise<void> {
+	await userEvent
+		.setup()
+		.click(screen.getByTestId(`panel-editor-v2-decimals-${value}`));
 }
 
 describe('FormattingSection', () => {
@@ -51,7 +49,7 @@ describe('FormattingSection', () => {
 			/>,
 		);
 
-		await pickDecimal('Full');
+		await pickDecimal('full');
 
 		expect(onChange).toHaveBeenCalledWith({ decimalPrecision: 'full' });
 	});
@@ -66,12 +64,59 @@ describe('FormattingSection', () => {
 			/>,
 		);
 
-		await pickDecimal('2 decimals');
+		await pickDecimal('3');
 
 		expect(onChange).toHaveBeenCalledWith({
 			unit: 'bytes',
-			decimalPrecision: '2',
+			decimalPrecision: '3',
 		});
+	});
+
+	it('previews a sample value at the chosen precision', () => {
+		render(
+			<FormattingSection
+				value={{ decimalPrecision: DashboardtypesPrecisionOptionDTO.NUMBER_1 }}
+				controls={{ decimals: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.getByTestId('decimals-preview')).toHaveTextContent('1,234.5');
+	});
+
+	it('reverts a changed precision to its saved value', async () => {
+		const onChange = jest.fn();
+		render(
+			<FormattingSection
+				value={{
+					unit: 'bytes',
+					decimalPrecision: DashboardtypesPrecisionOptionDTO.NUMBER_4,
+				}}
+				savedValue={{ unit: 'bytes' }}
+				controls={{ decimals: true }}
+				onChange={onChange}
+			/>,
+		);
+
+		await userEvent.setup().click(screen.getByTestId('config-field-reset'));
+
+		expect(onChange).toHaveBeenCalledWith({
+			unit: 'bytes',
+			decimalPrecision: undefined,
+		});
+	});
+
+	it('offers no reset for a unit that matches the saved one', () => {
+		render(
+			<FormattingSection
+				value={{ unit: 'ms' }}
+				savedValue={{ unit: 'ms' }}
+				controls={{ unit: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.queryByTestId('config-field-reset')).not.toBeInTheDocument();
 	});
 
 	it('warns when the selected unit mismatches the metric unit', () => {

@@ -1,0 +1,43 @@
+.panel {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	color: var(--l1-foreground);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--spacing-2) var(--spacing-5);
+	border-bottom: 1px solid var(--l1-border);
+	flex-shrink: 0;
+}
+
+.search {
+	--input-height: var(--spacing-20);
+	--input-border-radius: 0;
+	--input-border-color: transparent;
+	--input-hover-border-color: transparent;
+	--input-focus-border-color: transparent;
+	--input-focus-outline-width: 0;
+	--input-background: var(--l1-background);
+	--input-hover-background: var(--l1-background);
+	--input-focus-background: var(--l1-background);
+
+	border-bottom: 1px solid var(--l1-border);
+	flex-shrink: 0;
+}
+
+.title {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-6);
+	color: var(--l2-foreground);
+}
+
+.titleText {
+	color: inherit;
+	font-size: var(--font-size-sm);
+}

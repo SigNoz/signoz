@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { userEvent, waitFor, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -83,4 +83,34 @@ export const Default: Story = {};
 /** Connected with nothing through yet, which is where every live tail starts. */
 export const Waiting: Story = {
 	args: { liveLogs: 0 },
+};
+
+/** Row actions render on hover, so a streamed line is hovered before its copy link is pressed. */
+export const LogLinkCopiedToast: Story = {
+	play: async ({ mount, canvasElement }): Promise<void> => {
+		await mount();
+		await goLive(canvasElement);
+
+		const [line] = await within(canvasElement).findAllByText(
+			/order 8412 placed/,
+			undefined,
+			untilLoaded,
+		);
+
+		await userEvent.hover(line);
+		await userEvent.click(
+			await waitFor(() => {
+				const button = canvasElement.querySelector<HTMLElement>('.copy-log-btn');
+
+				if (!button) {
+					throw new Error('Row actions did not render');
+				}
+
+				return button;
+			}, untilLoaded),
+		);
+		await waitFor(() =>
+			expect(screen.getByText('Copied to clipboard')).toBeVisible(),
+		);
+	},
 };

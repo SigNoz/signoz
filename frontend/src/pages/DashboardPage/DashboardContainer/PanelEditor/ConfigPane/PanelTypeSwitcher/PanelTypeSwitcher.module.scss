@@ -1,6 +1,61 @@
-// Matches ConfigPane's `.field` so the switcher lines up with the title/description fields.
-.field {
+@use '../../../../../../styles/scrollbar' as *;
+
+.field > [data-slot='button'] {
+	align-self: flex-start;
+}
+
+// A field row rather than a button: the label spans the trigger so the
+// Change chip sits at the far end.
+.trigger {
+	--button-height: 36px;
+	--button-padding: 0 5px 0 12px;
+	--button-justify-content: flex-start;
+	--button-label-display: flex;
+	--button-variant-outlined-border: 1px solid var(--l2-border);
+	--button-variant-outlined-background-color: var(--l2-background);
+	--button-variant-outlined-hover-background-color: var(--l2-background);
+
+	&:hover {
+		--button-variant-outlined-border: 1px solid var(--l3-border);
+	}
+
+	[data-slot='button-label'] {
+		flex: 1;
+		align-items: center;
+		gap: 8px;
+		text-align: left;
+	}
+}
+
+.triggerIcon {
+	flex-shrink: 0;
+	color: var(--l2-foreground);
+}
+
+.triggerName {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	color: var(--l1-foreground);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.triggerAction {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: 3px;
+	background: var(--l3-background);
+	color: var(--l2-foreground);
+	font-size: 12px;
+}
+
+.drawerBody {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	min-height: 0;
+	overflow-y: auto;
+	@include custom-scrollbar;
 }

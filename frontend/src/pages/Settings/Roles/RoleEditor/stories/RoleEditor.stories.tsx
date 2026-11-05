@@ -1,10 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { openLogsCard, roleEditorMocks } from './RoleEditor.stories.mocks';
+import {
+	openLogsCard,
+	roleEditorMocks,
+	save,
+} from './RoleEditor.stories.mocks';
 
 import SettingsPage from '../../../Settings';
 
@@ -97,5 +101,52 @@ export const TelemetrySelectorWizard: Story = {
 			await within(card).findByRole('button', { name: 'Wizard' }),
 		);
 		await screen.findByRole('dialog', { name: 'Selector Wizard' });
+	},
+};
+
+/**
+ * A new role saved: the toast confirming it. Set Saving the role to `error` or
+ * `loading` to see the page instead.
+ */
+export const RoleCreatedToast: Story = {
+	play: async ({ canvasElement, args }): Promise<void> => {
+		await userEvent.type(
+			await within(canvasElement).findByTestId('role-name-input', undefined, {
+				timeout: 15_000,
+			}),
+			'release-manager',
+		);
+		await save(canvasElement);
+		if (args.roleSave === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/role created successfully/i)).toBeVisible(),
+			);
+		}
+	},
+};
+
+/**
+ * An existing role's description changed and saved: the toast confirming it.
+ * Set Saving the role to `error` or `loading` to see the page instead.
+ */
+export const RoleUpdatedToast: Story = {
+	args: { mode: 'edit' },
+	play: async ({ canvasElement, args }): Promise<void> => {
+		const description = await within(canvasElement).findByTestId(
+			'role-description-input',
+			undefined,
+			{ timeout: 15_000 },
+		);
+
+		await waitFor(() => expect(description).not.toHaveValue(''), {
+			timeout: 15_000,
+		});
+		await userEvent.type(description, ' Also pages the secondary.');
+		await save(canvasElement);
+		if (args.roleSave === 'success') {
+			await waitFor(() =>
+				expect(screen.getByText(/role updated successfully/i)).toBeVisible(),
+			);
+		}
 	},
 };

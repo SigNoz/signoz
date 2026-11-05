@@ -11,6 +11,8 @@ import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantS
 import { VariantContext } from 'container/AIAssistant/VariantContext';
 import Noz from 'components/Noz/Noz';
 
+import { useAIAssistantStripInfo } from './useAIAssistantStripInfo';
+
 import styles from './AIAssistantPage.module.scss';
 import ConversationsList from 'container/AIAssistant/components/ConversationsList';
 
@@ -40,6 +42,8 @@ export default function AIAssistantPage(): JSX.Element {
 		// Only on mount; route param changes inside the same page aren't a re-open.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	useAIAssistantStripInfo();
 
 	const conversations = useAIAssistantStore((s) => s.conversations);
 	const activeConversationId = useAIAssistantStore(

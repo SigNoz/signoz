@@ -190,14 +190,12 @@ function Explorer(): JSX.Element {
 				className="trace-explorer-page"
 				testId="llm-observability-explorer"
 				showFilters={isOpen}
+				onToggleFilters={(): void => setOpen(!isOpen)}
 				quickFilterProps={{
 					className: 'qf-traces-explorer',
 					source: QuickFiltersSource.AI_OBSERVABILITY,
 					signal: SignalType.AI_OBSERVABILITY,
 					useFieldApis: quickFiltersFieldApis,
-					handleFilterVisibilityChange: (): void => {
-						setOpen(!isOpen);
-					},
 				}}
 			>
 				<div className="trace-explorer">

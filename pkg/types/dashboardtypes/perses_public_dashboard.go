@@ -106,6 +106,13 @@ func redactQuery(spec any) any {
 			return spec
 		}
 		return &BuilderQuerySpec{Spec: redactLeafQuery(s.Spec)}
+	case *AIBuilderQuerySpec:
+		if s == nil {
+			return spec
+		}
+		redacted := redactLeafQuery(qb.QueryBuilderQuery[qb.TraceAggregation](*s)).(qb.QueryBuilderQuery[qb.TraceAggregation])
+		out := AIBuilderQuerySpec(redacted)
+		return &out
 	case *qb.PromQuery:
 		return redactQueryPtr(s)
 	case *qb.ClickHouseQuery:

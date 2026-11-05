@@ -9,6 +9,8 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import AIAssistantPage from '../AIAssistantPage';
 import {
 	aiAssistantMocks,
+	failVoiceInput,
+	forgetVoiceFailure,
 	longActionTooltipHandlers,
 	speak,
 	startVoiceInput,
@@ -40,6 +42,7 @@ const meta = {
 	),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
+	beforeEach: forgetVoiceFailure,
 } satisfies Meta<AIAssistantArgs>;
 
 export default meta;
@@ -224,6 +227,24 @@ export const VoiceRecording: Story = {
 	},
 };
 
+/** The recognizer reporting it cannot reach the speech service. */
+export const VoiceInputUnavailableToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await startVoiceInput(canvasElement);
+		failVoiceInput('network');
+		await screen.findByText(/voice input unavailable in this browser/i);
+	},
+};
+
+/** The browser refusing the microphone. */
+export const MicrophoneDeniedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await startVoiceInput(canvasElement);
+		failVoiceInput('not-allowed');
+		await screen.findByText(/microphone access denied/i);
+	},
+};
+
 /** The comment box a thumbs down opens, which a thumbs up does not. */
 export const NegativeFeedback: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
@@ -291,6 +312,23 @@ export const AddContext: Story = {
 	},
 };
 
+/** "Copy link" on a conversation row, which toasts once the link is copied. */
+export const ConversationLinkCopiedToast: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await clickUntil(async () => {
+			const [actions] = await within(canvasElement).findAllByLabelText(
+				/conversation actions/i,
+				undefined,
+				untilLoaded,
+			);
+
+			return actions;
+		}, /copy link/i);
+		await userEvent.click(await screen.findByText(/copy link/i));
+		await screen.findByText(/conversation link copied to clipboard/i);
+	},
+};
+
 /**
  * Every tooltip the thread carries, held open at once: the composer's voice and
  * send buttons, the sidebar's new conversation, the copy chip under each user
@@ -310,6 +348,14 @@ export const Tooltips: Story = {
 export const TooltipsInApprovalDiff: Story = {
 	args: { tooltipsOpen: true, agent: 'awaiting-approval', contents: BRIEF },
 	play: openApprovalDiff,
+};
+
+/**
+ * The conversation count in the bottom strip, in place of the build version.
+ * Archived threads are left out of it.
+ */
+export const BottomStrip: Story = {
+	args: { bottomStrip: true },
 };
 
 /**

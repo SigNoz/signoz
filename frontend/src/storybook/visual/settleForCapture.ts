@@ -21,7 +21,7 @@ const snapPinnedScrollers = (): void => {
 
 /**
  * Runs after the story's `play`, which is where both capture stacks take the
- * picture: Chromatic snapshots there, and `scripts/story-shots.mjs` waits for
+ * picture: Chromatic snapshots there, and sbshot waits for
  * the same render phase. Only what Chromatic cannot do for itself lives here -
  * it already pauses animations, videos and GIFs, and waits for the network to
  * go quiet.

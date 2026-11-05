@@ -250,4 +250,58 @@ describe('ComparisonThresholdsSection', () => {
 			screen.getByTestId('comparison-threshold-unit-invalid-0'),
 		).toBeInTheDocument();
 	});
+
+	it('summarises how the threshold paints', () => {
+		render(
+			<ComparisonThresholdsSection value={THRESHOLDS} onChange={jest.fn()} />,
+		);
+
+		expect(screen.getByText('Orange background')).toBeInTheDocument();
+	});
+
+	it('heads the form "New threshold" for an added row and "Edit threshold" otherwise', async () => {
+		const user = userEvent.setup();
+		render(<Harness initial={THRESHOLDS} />);
+
+		await user.click(screen.getByTestId('comparison-threshold-edit-0'));
+		expect(screen.getByText('Edit threshold')).toBeInTheDocument();
+		await user.click(screen.getByTestId('comparison-threshold-discard-0'));
+
+		await user.click(
+			screen.getByTestId('panel-editor-v2-add-comparison-threshold'),
+		);
+		expect(screen.getByText('New threshold')).toBeInTheDocument();
+	});
+
+	it('saves the operator, color and display picked from the tiles', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		render(
+			<ComparisonThresholdsSection value={THRESHOLDS} onChange={onChange} />,
+		);
+
+		await user.click(screen.getByTestId('comparison-threshold-edit-0'));
+		await user.click(
+			screen.getByTestId(
+				`comparison-threshold-operator-0-${DashboardtypesComparisonOperatorDTO.below_or_equal}`,
+			),
+		);
+		expect(screen.getByText('below or equal to')).toBeInTheDocument();
+		await user.click(screen.getByTestId('comparison-threshold-color-0-green'));
+		await user.click(
+			screen.getByTestId(
+				`comparison-threshold-format-0-${DashboardtypesThresholdFormatDTO.text}`,
+			),
+		);
+		await user.click(screen.getByTestId('comparison-threshold-save-0'));
+
+		expect(onChange).toHaveBeenLastCalledWith([
+			{
+				...THRESHOLDS[0],
+				operator: DashboardtypesComparisonOperatorDTO.below_or_equal,
+				color: '#2BB673',
+				format: DashboardtypesThresholdFormatDTO.text,
+			},
+		]);
+	});
 });

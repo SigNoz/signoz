@@ -5,7 +5,7 @@ import {
 	InframonitoringtypesHostRecordDTO,
 	InframonitoringtypesHostStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
+import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/types';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import { TextNoData } from 'container/InfraMonitoringK8sV2/components';

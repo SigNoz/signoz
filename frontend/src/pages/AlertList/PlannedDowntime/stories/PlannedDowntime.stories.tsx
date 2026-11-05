@@ -4,7 +4,11 @@ import { screen, userEvent, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { plannedDowntimeMocks } from './PlannedDowntime.stories.mocks';
+import {
+	clickFirstRowAction,
+	plannedDowntimeMocks,
+	untilLoaded,
+} from './PlannedDowntime.stories.mocks';
 import { FIRST_DOWNTIME_NAME } from './__story_mockdata__/plannedDowntime';
 
 import AlertList from '../../index';
@@ -30,9 +34,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<PlannedDowntimeArgs>;
-
-/** The page fetches before it renders a row, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
 
 /**
  * The windows where alerting is held back: what is running now, what is
@@ -77,28 +78,6 @@ export const NewDowntime: Story = {
 		);
 		await screen.findByText(/new planned downtime/i);
 	},
-};
-
-const clickFirstRowAction = async (
-	canvasElement: HTMLElement,
-	action: 'edit' | 'delete',
-): Promise<void> => {
-	const icon = (
-		await within(canvasElement).findByText(
-			FIRST_DOWNTIME_NAME,
-			undefined,
-			untilLoaded,
-		)
-	)
-		.closest('.header-content')
-		// The row action holds edit then delete, neither of them labelled.
-		?.querySelectorAll('.action-btn svg')[action === 'edit' ? 0 : 1];
-
-	if (!icon) {
-		throw new Error(`Downtime ${action} action did not render`);
-	}
-
-	await userEvent.click(icon);
 };
 
 /** The deletion confirmation opened from the first schedule's real row action. */

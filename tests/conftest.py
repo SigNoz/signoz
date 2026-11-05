@@ -99,6 +99,7 @@ def pytest_addoption(parser: pytest.Parser):
         default="delete",
         help="sqlite mode",
     )
+    # Keep the version defaults below in sync with pull-images in .github/workflows/e2eci.yaml.
     parser.addoption(
         "--postgres-version",
         action="store",

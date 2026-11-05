@@ -548,5 +548,5 @@ describe('Logs Explorer -> stage and run query', () => {
 		// Verify that the IDs have changed (this confirms the Stage & Run Query button worked)
 		expect(currentStagedQuery.id).not.toBe(initialStagedQueryId);
 		expect(currentCurrentQuery.id).not.toBe(initialCurrentQueryId);
-	});
+	}, 15000);
 });

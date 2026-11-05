@@ -18,7 +18,7 @@ type MockMetadataStore struct {
 	TemporalityMap             map[string]metrictypes.Temporality
 	TypeMap                    map[string]metrictypes.Type
 	ReducedMap                 map[string]bool
-	PromotedPathsMap           map[string]bool
+	PromotedPathsMap           map[telemetrytypes.Signal]map[string]bool
 	LogsJSONIndexes            []telemetrytypes.TelemetryFieldKeySkipIndex
 	ColumnEvolutionMetadataMap map[string][]*telemetrytypes.EvolutionEntry
 	LookupKeysMap              map[telemetrytypes.MetricMetadataLookupKey]int64
@@ -34,7 +34,7 @@ func NewMockMetadataStore() *MockMetadataStore {
 		AllValuesMap:               make(map[string]*telemetrytypes.TelemetryFieldValues),
 		TemporalityMap:             make(map[string]metrictypes.Temporality),
 		TypeMap:                    make(map[string]metrictypes.Type),
-		PromotedPathsMap:           make(map[string]bool),
+		PromotedPathsMap:           make(map[telemetrytypes.Signal]map[string]bool),
 		LogsJSONIndexes:            []telemetrytypes.TelemetryFieldKeySkipIndex{},
 		ColumnEvolutionMetadataMap: make(map[string][]*telemetrytypes.EvolutionEntry),
 		LookupKeysMap:              make(map[telemetrytypes.MetricMetadataLookupKey]int64),
@@ -361,21 +361,30 @@ func (m *MockMetadataStore) SetTemporality(metricName string, temporality metric
 }
 
 // PromotePaths promotes the paths.
-func (m *MockMetadataStore) PromotePaths(ctx context.Context, paths ...string) error {
+func (m *MockMetadataStore) PromotePaths(_ context.Context, entry telemetrytypes.EvolutionEntry, paths ...string) error {
+	if m.PromotedPathsMap[entry.Signal] == nil {
+		m.PromotedPathsMap[entry.Signal] = make(map[string]bool)
+	}
 	for _, path := range paths {
-		m.PromotedPathsMap[path] = true
+		m.PromotedPathsMap[entry.Signal][path] = true
 	}
 	return nil
 }
 
 // GetPromotedPaths returns the promoted paths.
-func (m *MockMetadataStore) GetPromotedPaths(ctx context.Context, paths ...string) (map[string]bool, error) {
-	return m.PromotedPathsMap, nil
+func (m *MockMetadataStore) GetPromotedPaths(_ context.Context, entry telemetrytypes.EvolutionEntry, _ ...string) (map[string]bool, error) {
+	return m.PromotedPathsMap[entry.Signal], nil
 }
 
-// ListLogsJSONIndexes lists the JSON indexes for the logs table.
-func (m *MockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...string) ([]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
-	return m.LogsJSONIndexes, nil
+// ListJSONIndexes narrows the stored indexes to the lookup's field context like the real query.
+func (m *MockMetadataStore) ListJSONIndexes(ctx context.Context, lookup telemetrytypes.JSONIndexLookup, filters ...string) ([]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
+	indexes := []telemetrytypes.TelemetryFieldKeySkipIndex{}
+	for _, index := range m.LogsJSONIndexes {
+		if index.FieldContext.StringValue() == lookup.FieldContext.StringValue() {
+			indexes = append(indexes, index)
+		}
+	}
+	return indexes, nil
 }
 
 func (m *MockMetadataStore) updateColumnEvolutionMetadataForKeys(_ context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) map[string][]*telemetrytypes.EvolutionEntry {

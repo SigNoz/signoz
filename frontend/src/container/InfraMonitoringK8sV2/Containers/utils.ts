@@ -104,6 +104,20 @@ const CONTAINER_ERROR_STATUS_LABELS: Partial<
 	containerCannotRun: 'ContainerCannotRun',
 };
 
+const CONTAINER_STATUS_VALUES = new Set<string>(
+	Object.values(InframonitoringtypesContainerStatusDTO),
+);
+
+/** See countKeyToPodStatus in commonUtils — the counts DTO uses camelCase keys. */
+function countKeyToContainerStatus(
+	key: string,
+): InframonitoringtypesContainerStatusDTO | null {
+	const value = key.toLowerCase();
+	return CONTAINER_STATUS_VALUES.has(value)
+		? (value as InframonitoringtypesContainerStatusDTO)
+		: null;
+}
+
 export function getContainerStatusItems(
 	counts: InframonitoringtypesContainerCountsByStatusDTO,
 ): StatusCountItem[] {
@@ -111,32 +125,67 @@ export function getContainerStatusItems(
 		keyof typeof CONTAINER_ERROR_STATUS_LABELS
 	>;
 
+	const errorBreakdown = errorKeys.map((key) => ({
+		label: CONTAINER_ERROR_STATUS_LABELS[key] as string,
+		value: counts[key],
+		statuses: [countKeyToContainerStatus(key)].filter(
+			(status): status is InframonitoringtypesContainerStatusDTO =>
+				status !== null,
+		),
+	}));
+
 	return [
-		{ value: counts.running, label: 'Running', color: Color.BG_FOREST_500 },
-		{ value: counts.completed, label: 'Completed', color: Color.BG_ROBIN_500 },
+		{
+			value: counts.running,
+			label: 'Running',
+			color: Color.BG_FOREST_500,
+			statuses: [InframonitoringtypesContainerStatusDTO.running],
+		},
+		{
+			value: counts.completed,
+			label: 'Completed',
+			color: Color.BG_ROBIN_500,
+			statuses: [InframonitoringtypesContainerStatusDTO.completed],
+		},
 		{
 			value: counts.waiting + counts.containerCreating,
 			label: 'Waiting',
 			color: Color.BG_AMBER_500,
 			breakdown: [
-				{ label: 'Waiting', value: counts.waiting },
-				{ label: 'ContainerCreating', value: counts.containerCreating },
+				{
+					label: 'Waiting',
+					value: counts.waiting,
+					statuses: [InframonitoringtypesContainerStatusDTO.waiting],
+				},
+				{
+					label: 'ContainerCreating',
+					value: counts.containerCreating,
+					statuses: [InframonitoringtypesContainerStatusDTO.containercreating],
+				},
+			],
+			statuses: [
+				InframonitoringtypesContainerStatusDTO.waiting,
+				InframonitoringtypesContainerStatusDTO.containercreating,
 			],
 		},
 		{
 			value: counts.terminated,
 			label: 'Terminated',
 			color: Color.BG_SIENNA_500,
+			statuses: [InframonitoringtypesContainerStatusDTO.terminated],
 		},
-		{ value: counts.unknown, label: 'Unknown', color: Color.BG_SLATE_400 },
+		{
+			value: counts.unknown,
+			label: 'Unknown',
+			color: Color.BG_SLATE_400,
+			statuses: [InframonitoringtypesContainerStatusDTO.unknown],
+		},
 		{
 			value: errorKeys.reduce((sum, key) => sum + counts[key], 0),
 			label: 'Error Status',
 			color: Color.BG_CHERRY_500,
-			breakdown: errorKeys.map((key) => ({
-				label: CONTAINER_ERROR_STATUS_LABELS[key] as string,
-				value: counts[key],
-			})),
+			breakdown: errorBreakdown,
+			statuses: errorBreakdown.flatMap((item) => item.statuses),
 		},
 	];
 }

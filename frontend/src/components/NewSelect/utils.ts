@@ -69,6 +69,28 @@ export const prioritizeOrAddOptionForSingleSelect = (
 	return [foundOption, ...filteredOptions];
 };
 
+/**
+ * Options may be grouped into sections, so resolving a value's label has to look
+ * one level down as well — a sectioned list has no label at the top level.
+ */
+export const findOptionLabel = (
+	options: OptionData[],
+	value: string,
+): string | undefined => {
+	for (const option of options) {
+		if (option.value === value) {
+			return option.label;
+		}
+
+		const nested = option.options?.find((subOption) => subOption.value === value);
+		if (nested) {
+			return nested.label;
+		}
+	}
+
+	return undefined;
+};
+
 export const prioritizeOrAddOptionForMultiSelect = (
 	options: OptionData[],
 	values: string[], // Only supports multiple values (string[])

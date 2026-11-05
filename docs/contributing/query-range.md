@@ -84,9 +84,9 @@ A storage answers four questions and nothing else:
 | WhenAbsent | Absent row reads | Positive filter | Raw select | Multi-candidate column | Field keys |
 |---|---|---|---|---|---|
 | `AlwaysPresent` | a real value | no guard | no guard | no branch, ends the candidate list | table columns |
-| `AbsentIsSentinel` | `''`, 0, false, and that is not a value | exists guard | exists guard | presence branch | map attributes, cast JSON paths, string families |
+| `AbsentIsSentinel` | `''`, 0, false, and that is not a value | exists guard | exists guard | presence branch | map attributes, cast JSON paths, string families of such members |
 | `AbsentIsNull` | NULL | no guard | no guard | presence branch | multi-era folds, body JSON paths, numeric families |
-| `AbsentIsValue` | `''`, and that is the keyless contract | no guard | no guard | no presence branch | metrics labels, rule state history labels |
+| `AbsentIsValue` | `''`, and that is the keyless contract | no guard | no guard | no presence branch | metrics labels, rule state history labels, and families of such members |
 
 ### The generic layer
 
@@ -109,7 +109,7 @@ The functions, from the outside in:
 | `RejectsBodyFunction(traits, operator)` | Runs before resolution. A storage without body functions (`has`, `hasAny`, `hasAll`, `hasToken`, `search`) errors. The fingerprint side of a split skips the term, because the main query evaluates it. After resolution, `Condition` errors when `has`, `hasAny`, `hasAll`, or `hasToken` lands on a map-backed key (resource, attribute, scope), before the split can drop it. |
 | `SharedCondition(...)` | The `Compile` of every storage without its own condition language: `LogicalRead`, the shared data-type collision cast, `OperatorCondition`, then the guard rule. |
 | `OperatorCondition(...)` | The operator switch over an already cast read. A storage with its own cast policy composes with it. |
-| `LogicalRead(...)` | The only place family expressions are built. A single-member field reads through its member. A family merges the member reads, current member first: `COALESCE(NULLIF(m1, ''), NULLIF(m2, ''), '')` for strings, `multiIf` with a NULL tail for numbers. It ORs the member presence tests. A row without any member reads what the tail of the merge reads. A member with a value map reads through `TransformRead`. `NOT EXISTS` is the read's `Absence`, the storage's own negated form. |
+| `LogicalRead(...)` | The only place family expressions are built. A single-member field reads through its member. A family merges the member reads, current member first: `COALESCE(NULLIF(m1, ''), NULLIF(m2, ''), '')` for strings, `multiIf` with a NULL tail for numbers. It ORs the member presence tests. A row without any member reads what the tail of the merge reads. When every member reads its sentinel as a value, so does the family. A member with a value map reads through `TransformRead`. `NOT EXISTS` is the read's `Absence`, the storage's own negated form. |
 
 ### A resolved key
 

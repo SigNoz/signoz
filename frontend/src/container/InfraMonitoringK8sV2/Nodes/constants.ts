@@ -12,7 +12,7 @@ import {
 	buildLogsTracesExpression,
 } from 'container/InfraMonitoringK8sV2/Base/utils';
 
-import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
+import { K8sDetailsMetadataConfig } from '../Base/types';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
 import { SelectedItemParams } from '../hooks';
 

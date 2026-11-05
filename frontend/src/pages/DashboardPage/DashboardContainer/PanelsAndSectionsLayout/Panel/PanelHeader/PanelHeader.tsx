@@ -12,6 +12,7 @@ import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/quer
 import type { PanelActionsConfig } from '../Panel';
 import PanelActionsMenu from '../PanelActionsMenu/PanelActionsMenu';
 import { EMPTY_PANEL_QUERY_DATA } from '../utils/emptyPanelQueryData';
+import { usePanelTitle } from '../hooks/usePanelTitle';
 import PanelHeaderSearch from './PanelHeaderSearch';
 import PanelStatusPopover from '../PanelStatus/PanelStatusPopover';
 import {
@@ -67,7 +68,7 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 	const { panelId, panel, panelActions, hideActions } = props;
 	const query = props.mode === 'query' ? props : null;
 
-	const name = panel.spec.display.name;
+	const name = usePanelTitle(panel);
 	const description = panel.spec.display.description;
 	const errorDetail = useMemo(
 		() => panelStatusFromError(query?.error),

@@ -6,7 +6,7 @@ import {
 import {
 	buildQueryRangeRequest,
 	extractLegendMap,
-	getBarStepIntervalSeconds,
+	getBucketedStepIntervalSeconds,
 	hasRunnableQueries,
 	toQueryEnvelopes,
 } from '../buildQueryRangeRequest';
@@ -51,8 +51,13 @@ const TIME_SERIES_CAPABILITIES = {
 	orderTiebreaker: false,
 	serverPaginated: false,
 };
-const BAR_CAPABILITIES = {
+const BUCKETED_CAPABILITIES = {
 	...TIME_SERIES_CAPABILITIES,
+	bucketedStepInterval: true,
+};
+const HEATMAP_CAPABILITIES = {
+	...TIME_SERIES_CAPABILITIES,
+	requestType: Querybuildertypesv5RequestTypeDTO.heatmap,
 	bucketedStepInterval: true,
 };
 const TABLE_CAPABILITIES = {
@@ -65,6 +70,10 @@ const LIST_PANEL_CAPABILITIES = {
 	requestType: Querybuildertypesv5RequestTypeDTO.raw,
 	orderTiebreaker: true,
 	serverPaginated: true,
+};
+const DEFAULT_LIMIT_CAPABILITIES = {
+	...TABLE_CAPABILITIES,
+	defaultRowLimit: 10_000,
 };
 
 describe('requestType', () => {
@@ -91,6 +100,23 @@ describe('toQueryEnvelopes', () => {
 		);
 		expect(envelopes).toStrictEqual([
 			{ type: 'builder_query', spec: { name: 'A', signal: 'metrics' } },
+		]);
+	});
+
+	it('wraps a bare AI builder plugin as a builder_ai_query envelope', () => {
+		const ai = [
+			{
+				kind: 'TimeSeriesQuery',
+				spec: {
+					plugin: {
+						kind: 'signoz/AIBuilderQuery',
+						spec: { name: 'A', signal: 'traces' },
+					},
+				},
+			},
+		] as unknown as DashboardtypesQueryDTO[];
+		expect(toQueryEnvelopes(ai)).toStrictEqual([
+			{ type: 'builder_ai_query', spec: { name: 'A', signal: 'traces' } },
 		]);
 	});
 
@@ -202,6 +228,30 @@ describe('buildQueryRangeRequest', () => {
 		expect(request.formatOptions?.fillGaps).toBe(true);
 	});
 
+	it('stamps offset/limit onto an AI builder query when pagination is given', () => {
+		const request = buildQueryRangeRequest({
+			queries: [
+				{
+					kind: 'raw',
+					spec: {
+						plugin: {
+							kind: 'signoz/AIBuilderQuery',
+							spec: { name: 'A', signal: 'traces' },
+						},
+					},
+				},
+			] as unknown as DashboardtypesQueryDTO[],
+			queryCapabilities: LIST_PANEL_CAPABILITIES,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+			pagination: { offset: 25, limit: 10 },
+		});
+		expect(request.compositeQuery?.queries?.[0]).toMatchObject({
+			type: 'builder_ai_query',
+			spec: { name: 'A', signal: 'traces', offset: 25, limit: 10 },
+		});
+	});
+
 	it('stamps offset/limit onto builder queries when pagination is given', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'logs' }),
@@ -289,10 +339,10 @@ describe('buildQueryRangeRequest', () => {
 		expect(spec.order).toStrictEqual(order);
 	});
 
-	it('injects the range-derived stepInterval into BAR builder queries without one', () => {
+	it('injects the range-derived stepInterval into builder queries without one', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', signal: 'metrics' }),
-			queryCapabilities: BAR_CAPABILITIES,
+			queryCapabilities: BUCKETED_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -300,14 +350,33 @@ describe('buildQueryRangeRequest', () => {
 			stepInterval?: number;
 		};
 		expect(spec.stepInterval).toBe(
-			getBarStepIntervalSeconds(START_MS, START_MS + HOUR_MS),
+			getBucketedStepIntervalSeconds(START_MS, START_MS + HOUR_MS),
 		);
 	});
 
-	it('preserves a user-set stepInterval on BAR builder queries', () => {
+	// The bucket axis rides on the query it draws, so it reaches the request the same
+	// way every other query field does — nothing at request level carries it.
+	it("carries a query's bucket options into the payload", () => {
+		const bucketOptions = { kind: 'log', spec: { scale: 0 } };
+		const request = buildQueryRangeRequest({
+			queries: bareBuilderQuery({ name: 'A', signal: 'metrics', bucketOptions }),
+			queryCapabilities: HEATMAP_CAPABILITIES,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+		});
+
+		expect(request.requestType).toBe(Querybuildertypesv5RequestTypeDTO.heatmap);
+		const spec = (request.compositeQuery?.queries?.[0]?.spec ?? {}) as {
+			bucketOptions?: unknown;
+		};
+		expect(spec.bucketOptions).toStrictEqual(bucketOptions);
+		expect(request).not.toHaveProperty('bucketOptions');
+	});
+
+	it('preserves a user-set stepInterval', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A', stepInterval: 300 }),
-			queryCapabilities: BAR_CAPABILITIES,
+			queryCapabilities: BUCKETED_CAPABILITIES,
 			startMs: START_MS,
 			endMs: START_MS + HOUR_MS,
 		});
@@ -317,7 +386,7 @@ describe('buildQueryRangeRequest', () => {
 		expect(spec.stepInterval).toBe(300);
 	});
 
-	it('does not touch stepInterval for non-BAR panels', () => {
+	it('does not touch stepInterval for kinds that plot every point', () => {
 		const request = buildQueryRangeRequest({
 			queries: bareBuilderQuery({ name: 'A' }),
 			queryCapabilities: TIME_SERIES_CAPABILITIES,
@@ -331,7 +400,52 @@ describe('buildQueryRangeRequest', () => {
 	});
 });
 
-describe('getBarStepIntervalSeconds', () => {
+describe('defaultRowLimit', () => {
+	function limits(queries: DashboardtypesQueryDTO[]): unknown[] {
+		const request = buildQueryRangeRequest({
+			queries,
+			queryCapabilities: DEFAULT_LIMIT_CAPABILITIES,
+			startMs: START_MS,
+			endMs: START_MS + HOUR_MS,
+		});
+		return (request.compositeQuery?.queries ?? []).map(
+			(envelope) => (envelope.spec as { limit?: number }).limit,
+		);
+	}
+
+	it('limits a lone builder query', () => {
+		expect(limits(bareBuilderQuery({ name: 'A' }))).toStrictEqual([10_000]);
+	});
+
+	it('keeps a limit the user set', () => {
+		expect(limits(bareBuilderQuery({ name: 'A', limit: 50 }))).toStrictEqual([
+			50,
+		]);
+	});
+
+	it('leaves several queries unlimited so their join keeps every group', () => {
+		expect(
+			limits(
+				compositeQuery([
+					{ type: 'builder_query', spec: { name: 'A' } },
+					{ type: 'builder_query', spec: { name: 'B' } },
+				]),
+			),
+		).toStrictEqual([undefined, undefined]);
+	});
+
+	it('leaves a lone non-builder query alone', () => {
+		expect(
+			limits(
+				compositeQuery([
+					{ type: 'clickhouse_sql', spec: { name: 'A', query: 'SELECT 1' } },
+				]),
+			),
+		).toStrictEqual([undefined]);
+	});
+});
+
+describe('getBucketedStepIntervalSeconds', () => {
 	// V1 parity: getBarStepIntervalPoints in container/GridCardLayout/utils.ts
 	it.each([
 		[30, 60],
@@ -340,12 +454,12 @@ describe('getBarStepIntervalSeconds', () => {
 		[180, 120],
 		[300, 180],
 	])('%s min range → %s s step', (minutes, step) => {
-		expect(getBarStepIntervalSeconds(0, minutes * 60 * 1000)).toBe(step);
+		expect(getBucketedStepIntervalSeconds(0, minutes * 60 * 1000)).toBe(step);
 	});
 
-	it('caps long ranges at ~80 bars, rounded to 5-minute steps', () => {
+	it('caps long ranges at ~80 points, rounded to 5-minute steps', () => {
 		// 24h = 1440 min → 1440/80 = 18 → rounded up to 20 min → 1200 s
-		expect(getBarStepIntervalSeconds(0, 24 * HOUR_MS)).toBe(1200);
+		expect(getBucketedStepIntervalSeconds(0, 24 * HOUR_MS)).toBe(1200);
 	});
 });
 

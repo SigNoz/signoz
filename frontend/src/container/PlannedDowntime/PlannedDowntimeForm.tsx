@@ -462,7 +462,7 @@ export function PlannedDowntimeForm(
 					<div className="scheduleTimeInfoText">{endTimeText}</div>
 				)}
 				<div>
-					<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
+					<Typography>Silence Alerts</Typography>
 					<Form.Item
 						name="alertRuleScope"
 						initialValue="specific"

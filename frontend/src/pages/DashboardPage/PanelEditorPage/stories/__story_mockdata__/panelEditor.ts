@@ -21,12 +21,13 @@ import type { PanelKind } from '../../../DashboardContainer/Panels/types/panelKi
  */
 export const NEW_PANEL_KINDS = [
 	'time-series',
+	'number',
+	'table',
 	'bar-chart',
 	'area-chart',
-	'number',
 	'pie-chart',
-	'table',
 	'histogram',
+	'heatmap',
 	'list',
 	'text',
 ] as const;
@@ -41,6 +42,7 @@ const KIND_BY_OPTION: Record<NewPanelKind, PanelKind> = {
 	'pie-chart': 'signoz/PieChartPanel',
 	table: 'signoz/TablePanel',
 	histogram: 'signoz/HistogramPanel',
+	heatmap: 'signoz/HeatmapPanel',
 	list: 'signoz/ListPanel',
 	text: 'signoz/TextPanel',
 };

@@ -66,6 +66,7 @@ import {
 import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 import { v4 as uuid } from 'uuid';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
+import { readPanelTypeFromUrl } from 'utils/readPanelTypeFromUrl';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	currentQuery: initialQueriesMap.metrics,
@@ -182,6 +183,11 @@ export function QueryBuilderProvider({
 					})) ?? [],
 			};
 
+			const urlPanelType = readPanelTypeFromUrl(PANEL_TYPES.LIST);
+
+			const isRawPanel =
+				urlPanelType === PANEL_TYPES.LIST || urlPanelType === PANEL_TYPES.TRACE;
+
 			const setupedQueryData = builder.queryData.map((item) => {
 				const currentElement: IBuilderQuery = {
 					...item,
@@ -200,8 +206,10 @@ export function QueryBuilderProvider({
 
 				// Explorer pages: sanitize stale orderBy before first query
 				const isExplorer =
-					location.pathname === ROUTES.LOGS_EXPLORER ||
-					location.pathname === ROUTES.TRACES_EXPLORER;
+					(location.pathname === ROUTES.LOGS_EXPLORER ||
+						location.pathname === ROUTES.TRACES_EXPLORER ||
+						location.pathname === ROUTES.AI_OBSERVABILITY_EXPLORER) &&
+					!isRawPanel;
 				if (isExplorer) {
 					const sanitizedOrderBy = sanitizeOrderByForExplorer(currentElement);
 					return calledFromHandleRunQuery
@@ -262,6 +270,8 @@ export function QueryBuilderProvider({
 			setStagedQuery(nextQuery);
 			setCurrentQuery(newQueryState);
 			setQueryType(type);
+
+			setCalledFromHandleRunQuery(false);
 		},
 		[prepareQueryBuilderData],
 	);
@@ -1038,7 +1048,8 @@ export function QueryBuilderProvider({
 	const handleRunQuery = useCallback(() => {
 		const isExplorer =
 			location.pathname === ROUTES.LOGS_EXPLORER ||
-			location.pathname === ROUTES.TRACES_EXPLORER;
+			location.pathname === ROUTES.TRACES_EXPLORER ||
+			location.pathname === ROUTES.AI_OBSERVABILITY_EXPLORER;
 		if (isExplorer) {
 			setCalledFromHandleRunQuery(true);
 		}

@@ -1,4 +1,5 @@
 import { MemoryRouter } from 'react-router-dom-v5-compat';
+import * as panelTypesQueryParamHooks from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 // https://virtuoso.dev/mocking-in-tests/
 import { VirtuosoMockContext } from 'react-virtuoso';
 import {
@@ -128,6 +129,30 @@ describe('Logs Explorer Tests', () => {
 		// // check the presence of old logs explorer CTA - TODO: add this once we have the header updated
 		// const oldLogsCTA = getByText('Switch to Old Logs Explorer');
 		// expect(oldLogsCTA).toBeInTheDocument();
+	});
+
+	it('renders the tab the url panelTypes param names', () => {
+		// useLocation is mocked without a search string in this file, so drive
+		// the param through the hook that reads it.
+		const panelTypeSpy = jest
+			.spyOn(panelTypesQueryParamHooks, 'useGetPanelTypesQueryParam')
+			.mockReturnValue(PANEL_TYPES.TIME_SERIES);
+
+		const { container } = render(
+			<MemoryRouter initialEntries={['/logs-explorer/?panelTypes=%22graph%22']}>
+				<PreferenceContextProvider>
+					<LogsExplorer />
+				</PreferenceContextProvider>
+			</MemoryRouter>,
+		);
+
+		expect(container.querySelector('.timeseries-view-tab')).toHaveClass(
+			'active-tab',
+		);
+		expect(container.querySelector('.list-view-tab')).not.toHaveClass(
+			'active-tab',
+		);
+		panelTypeSpy.mockRestore();
 	});
 
 	// update this test properly

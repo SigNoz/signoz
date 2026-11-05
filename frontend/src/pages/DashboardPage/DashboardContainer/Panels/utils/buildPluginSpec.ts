@@ -1,6 +1,10 @@
 import {
 	DashboardtypesComparisonOperatorDTO,
 	DashboardtypesFillModeDTO,
+	DashboardtypesHeatmapColorModeDTO,
+	DashboardtypesHeatmapColorScaleDTO,
+	DashboardtypesHeatmapPaletteDTO,
+	DashboardtypesHeatmapYScaleDTO,
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
@@ -205,10 +209,7 @@ const SECTION_SEEDS: SectionSeeds = {
 	[SectionKind.Axes]: {
 		specKey: 'axes',
 		seed: (controls, { oldPluginSpec }): SectionSpecMap[SectionKind.Axes] => {
-			const old = oldPluginSpec?.axes;
-			if (!old) {
-				return {};
-			}
+			const old = oldPluginSpec?.axes ?? {};
 			return {
 				...(controls.minMax &&
 					typeof old.softMin === 'number' && { softMin: old.softMin }),
@@ -216,6 +217,13 @@ const SECTION_SEEDS: SectionSeeds = {
 					typeof old.softMax === 'number' && { softMax: old.softMax }),
 				...(controls.logScale &&
 					old.isLogScale !== undefined && { isLogScale: old.isLogScale }),
+				// Seeded so the control opens on the axis being drawn.
+				...(controls.y && {
+					y: {
+						...old.y,
+						scale: old.y?.scale ?? DashboardtypesHeatmapYScaleDTO.auto,
+					},
+				}),
 			};
 		},
 	},
@@ -243,6 +251,7 @@ const SECTION_SEEDS: SectionSeeds = {
 				fillOpacity,
 				showPoints,
 				spanGaps,
+				colors,
 			} = oldPluginSpec?.chartAppearance ?? {};
 			const appearance: SectionSpecMap[SectionKind.ChartAppearance] = {};
 			if (controls.lineStyle) {
@@ -268,6 +277,16 @@ const SECTION_SEEDS: SectionSeeds = {
 			}
 			if (controls.spanGaps && spanGaps !== undefined) {
 				appearance.spanGaps = spanGaps;
+			}
+			// Seeded so the controls open on the ramp the grid is drawn with; the
+			// count bounds and step count stay unset, which reads as derived.
+			if (controls.colors) {
+				appearance.colors = {
+					...colors,
+					mode: colors?.mode ?? DashboardtypesHeatmapColorModeDTO.palette,
+					palette: colors?.palette ?? DashboardtypesHeatmapPaletteDTO.lava,
+					scale: colors?.scale ?? DashboardtypesHeatmapColorScaleDTO.log,
+				};
 			}
 			return appearance;
 		},

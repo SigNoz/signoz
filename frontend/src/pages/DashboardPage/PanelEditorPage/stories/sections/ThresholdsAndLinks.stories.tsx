@@ -7,8 +7,11 @@ import { expect, screen, userEvent, waitFor } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { panelEditorMocks } from '../PanelEditorPage.stories.mocks';
-import { addThreshold, openLinkDialog } from './panelEditorPlay';
+import {
+	addThreshold,
+	openLinkDialog,
+	panelEditorMocks,
+} from '../PanelEditorPage.stories.mocks';
 
 import PanelEditorPage from '../../PanelEditorPage';
 
@@ -47,12 +50,16 @@ export const Threshold: Story = {
 	},
 };
 
-/** The threshold's color picker, open on the palette presets. */
+/** The threshold's custom color picker, open beside the preset swatches. */
 export const ThresholdColorOpen: Story = {
 	play: async (context) => {
 		await Threshold.play?.(context);
-		await userEvent.click(screen.getByTestId('threshold-color-0'));
-		await screen.findByText('Defaults');
+		await userEvent.click(screen.getByTestId('threshold-color-0-custom'));
+		await waitFor(() =>
+			expect(
+				document.querySelector('.ant-color-picker-inner-content'),
+			).toBeVisible(),
+		);
 	},
 };
 

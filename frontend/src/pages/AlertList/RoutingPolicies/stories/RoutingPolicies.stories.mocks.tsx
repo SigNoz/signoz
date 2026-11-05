@@ -4,6 +4,7 @@
  */
 
 import { rest } from 'msw';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -25,6 +26,18 @@ const REQUEST = 'Routing policies · requests';
 
 const REQUEST_STATES = ['loaded', 'error'] as const;
 type RequestState = (typeof REQUEST_STATES)[number];
+
+const MUTATION_STATES = ['success', 'error'] as const;
+type MutationState = (typeof MUTATION_STATES)[number];
+
+const MUTATION = 'Routing policies · mutations';
+
+const mutationError = (
+	message: string,
+): { status: string; error: { code: string; message: string } } => ({
+	status: 'error',
+	error: { code: 'invalid_input', message },
+});
 
 export const routingPoliciesMocks = defineStoryMocks({
 	controls: {
@@ -51,6 +64,27 @@ export const routingPoliciesMocks = defineStoryMocks({
 			options: REQUEST_STATES,
 			value: 'loaded',
 		}),
+		createState: choiceControl<MutationState>('Create policy', {
+			group: MUTATION,
+			description:
+				'How the POST behind "Save Routing Policy" answers. `error` raises the error toast.',
+			options: MUTATION_STATES,
+			value: 'success',
+		}),
+		updateState: choiceControl<MutationState>('Update policy', {
+			group: MUTATION,
+			description:
+				'How the PUT behind "Save Routing Policy" answers when editing. `error` raises the error toast.',
+			options: MUTATION_STATES,
+			value: 'success',
+		}),
+		deleteState: choiceControl<MutationState>('Delete policy', {
+			group: MUTATION,
+			description:
+				'How the DELETE behind the confirmation answers. `error` raises the error toast.',
+			options: MUTATION_STATES,
+			value: 'success',
+		}),
 	},
 	handlers: (values, _response) => [
 		rest.get('http://localhost/api/v1/route_policies', (_req, res, ctx) =>
@@ -64,15 +98,24 @@ export const routingPoliciesMocks = defineStoryMocks({
 		),
 
 		rest.post('http://localhost/api/v1/route_policies', (_req, res, ctx) =>
-			res(ctx.status(201), ctx.json({ status: 'success', data: null })),
+			values.createState === 'error'
+				? res(
+						ctx.status(400),
+						ctx.json(mutationError('Policy name already exists')),
+					)
+				: res(ctx.status(201), ctx.json({ status: 'success', data: null })),
 		),
 
 		rest.put('http://localhost/api/v1/route_policies/:id', (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json({ status: 'success', data: null })),
+			values.updateState === 'error'
+				? res(ctx.status(500), ctx.json(mutationError('Could not update')))
+				: res(ctx.status(200), ctx.json({ status: 'success', data: null })),
 		),
 
 		rest.delete('http://localhost/api/v1/route_policies/:id', (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json({ status: 'success', data: null })),
+			values.deleteState === 'error'
+				? res(ctx.status(500), ctx.json(mutationError('Could not delete')))
+				: res(ctx.status(200), ctx.json({ status: 'success', data: null })),
 		),
 
 		rest.get('http://localhost/api/v1/channels', (_req, res, ctx) =>
@@ -85,3 +128,40 @@ export const routingPoliciesMocks = defineStoryMocks({
 		route: `/alerts?tab=${AlertListTabs.CONFIGURATION}&subTab=${AlertListSubTabs.ROUTING_POLICIES}`,
 	}),
 });
+
+/** The page fetches before it renders a row, which outlasts the 1s default. */
+export const untilLoaded = { timeout: 15_000 };
+
+export const fillNewPolicy = async (): Promise<void> => {
+	await userEvent.type(
+		await screen.findByPlaceholderText('e.g. Base routing policy...'),
+		'Toast policy',
+	);
+	await userEvent.type(
+		await screen.findByPlaceholderText(/e\.g\. service\.name/),
+		'severity = "critical"',
+	);
+	await userEvent.click(await screen.findByRole('combobox'));
+	await userEvent.click(await screen.findByTitle('ops-slack'));
+	await userEvent.keyboard('{Escape}');
+	await userEvent.click(
+		await screen.findByRole('button', { name: 'Save Routing Policy' }),
+	);
+};
+
+export const openEditPolicy = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	await userEvent.click(
+		(
+			await within(canvasElement).findAllByTestId(
+				'edit-routing-policy',
+				undefined,
+				untilLoaded,
+			)
+		)[0],
+	);
+	await userEvent.click(
+		await screen.findByRole('button', { name: 'Save Routing Policy' }),
+	);
+};

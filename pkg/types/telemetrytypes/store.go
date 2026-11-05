@@ -34,14 +34,16 @@ type MetadataStore interface {
 
 	FetchTemporalityAndTypeMulti(ctx context.Context, orgID valuer.UUID, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, map[string]bool, error)
 
-	// ListLogsJSONIndexes lists the JSON indexes for the logs table.
-	ListLogsJSONIndexes(ctx context.Context, filters ...string) ([]TelemetryFieldKeySkipIndex, error)
+	// ListJSONIndexes lists the per-path JSON skip indexes of the given source.
+	ListJSONIndexes(ctx context.Context, lookup JSONIndexLookup, filters ...string) ([]TelemetryFieldKeySkipIndex, error)
 
-	// ListPromotedPaths lists the promoted paths.
-	GetPromotedPaths(ctx context.Context, paths ...string) (map[string]bool, error)
+	// GetPromotedPaths lists the promoted paths recorded in the column
+	// evolution table for the entry's signal, column and field context.
+	GetPromotedPaths(ctx context.Context, entry EvolutionEntry, paths ...string) (map[string]bool, error)
 
-	// PromotePaths promotes the paths.
-	PromotePaths(ctx context.Context, paths ...string) error
+	// PromotePaths records promoted paths in the column evolution table as
+	// rows templated by entry; FieldName and ReleaseTime are set per path.
+	PromotePaths(ctx context.Context, entry EvolutionEntry, paths ...string) error
 
 	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
 	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)

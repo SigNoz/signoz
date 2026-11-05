@@ -25,6 +25,7 @@ function convertFormulasToV5(
 				disabled: formulaData.disabled,
 				limit: formulaData.limit ?? undefined,
 				legend: formulaData.legend,
+				bucketOptions: formulaData.bucketOptions,
 				order: formulaData.orderBy?.map(
 					(order: any): OrderBy => ({
 						key: {

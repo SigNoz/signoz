@@ -5,7 +5,9 @@
 
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
+import dayjs from 'dayjs';
 import { rest } from 'msw';
+import { screen, userEvent, within } from 'storybook/test';
 import { defaultFeatureFlags } from 'tests/fixtures/appContextMock';
 
 import {
@@ -150,3 +152,46 @@ export const ingestionMocks = defineStoryMocks({
 		},
 	}),
 });
+
+/** The list fetches before it renders a row, which outlasts the 1s default. */
+export const untilLoaded = { timeout: 15_000 };
+
+export async function openCreateKey(
+	canvasElement: HTMLElement,
+): Promise<ReturnType<typeof within>> {
+	await userEvent.click(
+		await within(canvasElement).findByText(
+			'New Ingestion key',
+			undefined,
+			untilLoaded,
+		),
+	);
+	return within(
+		await screen.findByRole(
+			'dialog',
+			{ name: 'Create new ingestion key' },
+			untilLoaded,
+		),
+	);
+}
+
+export async function addTag(
+	dialog: ReturnType<typeof within>,
+	tag: string,
+): Promise<void> {
+	await userEvent.click(await dialog.findByRole('button', { name: /New Tag/ }));
+	await userEvent.keyboard(`${tag}{Enter}`);
+}
+
+export async function submitCreateKey(
+	dialog: ReturnType<typeof within>,
+): Promise<void> {
+	await userEvent.type(dialog.getByLabelText('Name'), 'otel-collectors');
+	await userEvent.click(dialog.getByLabelText('Expiration'));
+	await userEvent.click(
+		await screen.findByTitle(dayjs().add(1, 'day').format('YYYY-MM-DD')),
+	);
+	await userEvent.click(
+		dialog.getByRole('button', { name: 'Create new Ingestion key' }),
+	);
+}

@@ -5,12 +5,17 @@
 
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
-import { userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { RoleType } from 'types/roles';
 
 import { choiceControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
+import {
+	MUTATION_OUTCOMES,
+	type MutationOutcome,
+	mutationResolver,
+} from '../../../stories/__story_mockdata__/mutationOutcome';
 import {
 	CUSTOM_ROLE_ID,
 	PERMISSION_BREADTHS,
@@ -64,6 +69,13 @@ export const roleEditorMocks = defineStoryMocks({
 			options: PERMISSION_BREADTHS,
 			value: 'broad',
 		}),
+		roleSave: choiceControl<MutationOutcome>('Saving the role', {
+			group: EDITOR,
+			description:
+				'How the request behind the save button answers. `success` raises the created or updated toast, `loading` leaves the button spinning, `error` shows the failure above the form.',
+			options: MUTATION_OUTCOMES,
+			value: 'success',
+		}),
 	},
 	handlers: (values, response) => [
 		rest.get(
@@ -75,12 +87,15 @@ export const roleEditorMocks = defineStoryMocks({
 
 		rest.post(
 			'http://localhost/api/v1/roles',
-			response.json(() => ({ status: 'success', data: { id: CUSTOM_ROLE_ID } })),
+			mutationResolver(values.roleSave, {
+				status: 'success',
+				data: { id: CUSTOM_ROLE_ID },
+			}),
 		),
 
 		rest.put(
 			'http://localhost/api/v1/roles/:id',
-			response.json(() => ({ status: 'success', data: null })),
+			mutationResolver(values.roleSave),
 		),
 	],
 	config: (values) => ({ route: routeFor(values.mode, values.editor) }),
@@ -99,4 +114,20 @@ export const openLogsCard = async (
 	await userEvent.click(header);
 
 	return header.parentElement as HTMLElement;
+};
+
+/** Clicks save once the permission check behind the button has answered. */
+export const save = async (canvasElement: HTMLElement): Promise<void> => {
+	const button = await waitFor(
+		async () => {
+			const found = within(canvasElement).getByTestId('save-button');
+
+			await expect(found).not.toHaveAttribute('aria-disabled', 'true');
+
+			return found;
+		},
+		{ timeout: 15_000 },
+	);
+
+	await userEvent.click(button);
 };

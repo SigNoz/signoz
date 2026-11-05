@@ -231,5 +231,7 @@ pyrightconfig.json
 
 # dev
 .dev/
+.deepsec/
+.deepsec.zip
 .claude/worktrees/
 .claude/settings.local.json

@@ -40,7 +40,7 @@ function LegendColors({
 	if (series.length === 0) {
 		return (
 			<Typography.Text className={styles.empty}>
-				Run the panel to customise series colors.
+				Run the query to set a color for each series.
 			</Typography.Text>
 		);
 	}

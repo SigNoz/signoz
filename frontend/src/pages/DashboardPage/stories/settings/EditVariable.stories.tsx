@@ -10,12 +10,10 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import {
 	cyclicVariablesDashboardHandler,
 	dashboardMocks,
-} from '../DashboardPage.stories.mocks';
-import {
 	findPreviewValue,
 	openVariableEditor,
 	openVariableSelect,
-} from './settingsPlay';
+} from '../DashboardPage.stories.mocks';
 
 import DashboardPage from '../../DashboardPage';
 

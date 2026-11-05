@@ -132,6 +132,7 @@ function DashboardRow({
 								color="warning"
 								variant="outlined"
 								testId={`dashboard-legacy-${index}`}
+								textTransform="none"
 							>
 								Legacy
 							</Badge>

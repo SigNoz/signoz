@@ -27,7 +27,7 @@ func TestListRulesParamsValidate(t *testing.T) {
 		},
 		{
 			name:      "ExplicitValues_Kept",
-			params:    ListRulesParams{Sort: ListSortSeverity, Order: ListOrderAsc, Limit: 50, Offset: 100},
+			params:    ListRulesParams{ListFilter: ListFilter{Sort: ListSortSeverity, Order: ListOrderAsc}, Limit: 50, Offset: 100},
 			wantSort:  ListSortSeverity,
 			wantOrder: ListOrderAsc,
 			wantLimit: 50,
@@ -41,17 +41,17 @@ func TestListRulesParamsValidate(t *testing.T) {
 		},
 		{
 			name:    "InvalidState_Rejected",
-			params:  ListRulesParams{States: []string{"bogus"}},
+			params:  ListRulesParams{ListFilter: ListFilter{States: []string{"bogus"}}},
 			wantErr: `invalid state "bogus"`,
 		},
 		{
 			name:    "InvalidSort_Rejected",
-			params:  ListRulesParams{Sort: ListSort{valuer.NewString("bogus")}},
+			params:  ListRulesParams{ListFilter: ListFilter{Sort: ListSort{valuer.NewString("bogus")}}},
 			wantErr: "invalid sort",
 		},
 		{
 			name:    "InvalidOrder_Rejected",
-			params:  ListRulesParams{Order: ListOrder{valuer.NewString("bogus")}},
+			params:  ListRulesParams{ListFilter: ListFilter{Order: ListOrder{valuer.NewString("bogus")}}},
 			wantErr: "invalid order",
 		},
 		{
@@ -66,7 +66,7 @@ func TestListRulesParamsValidate(t *testing.T) {
 		},
 		{
 			name:    "OverLongQuery_Rejected",
-			params:  ListRulesParams{Query: strings.Repeat("a", MaxListQueryLen+1)},
+			params:  ListRulesParams{ListFilter: ListFilter{Query: strings.Repeat("a", MaxListQueryLen+1)}},
 			wantErr: "query cannot be longer",
 		},
 	}
@@ -112,7 +112,7 @@ func TestListRulesParamsAlertStates(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			params := ListRulesParams{States: tc.states}
+			params := ListRulesParams{ListFilter: ListFilter{States: tc.states}}
 			states, err := params.GetAlertStates()
 			if tc.wantErr != "" {
 				require.Error(t, err)

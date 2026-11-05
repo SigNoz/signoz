@@ -1,24 +1,17 @@
-import {
-	type DashboardtypesComparisonOperatorDTO,
-	type DashboardtypesTableThresholdDTO,
-	type DashboardtypesThresholdFormatDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesTableThresholdDTO } from 'api/generated/services/sigNoz.schemas';
+import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 import { formatPanelValue } from 'pages/DashboardPage/DashboardContainer/Panels/utils/formatPanelValue';
 
 import type { TableColumnOption } from '../../../../hooks/useTableColumns';
-import {
-	FORMAT_OPTIONS,
-	OPERATOR_OPTIONS,
-	OPERATOR_SYMBOL,
-} from '../thresholdOptions';
+import { describeThresholdPaint, OPERATOR_SYMBOL } from '../thresholdOptions';
+import ThresholdAmountField from './shared/ThresholdAmountField';
 import ThresholdColorField from './shared/ThresholdColorField';
+import ThresholdFormatField from './shared/ThresholdFormatField';
+import ThresholdMarker from './shared/ThresholdMarker';
+import ThresholdOperatorField from './shared/ThresholdOperatorField';
 import ThresholdRowShell from './shared/ThresholdRowShell';
 import ThresholdSelectField from './shared/ThresholdSelectField';
-import ThresholdUnitField from './shared/ThresholdUnitField';
 import { useThresholdDraft } from './shared/useThresholdDraft';
-import ThresholdValueField from './shared/ThresholdValueField';
-
-import styles from '../ThresholdsSection.module.scss';
 
 interface TableThresholdRowProps {
 	index: number;
@@ -26,6 +19,7 @@ interface TableThresholdRowProps {
 	/** Resolved value columns (with their configured units); the rule targets one. */
 	tableColumns: TableColumnOption[];
 	isEditing: boolean;
+	isNew: boolean;
 	onEdit: () => void;
 	onSave: (next: DashboardtypesTableThresholdDTO) => void;
 	onLiveChange: (next: DashboardtypesTableThresholdDTO) => void;
@@ -44,6 +38,7 @@ function TableThresholdRow({
 	threshold,
 	tableColumns,
 	isEditing,
+	isNew,
 	onEdit,
 	onSave,
 	onLiveChange,
@@ -63,26 +58,32 @@ function TableThresholdRow({
 		threshold.columnName;
 	const columnItems = tableColumns.map((column) => ({
 		value: column.key,
-		label: column.label,
+		label: column.unit
+			? `${column.label} · ${getUniversalNameFromMetricUnit(column.unit)}`
+			: column.label,
 	}));
 
 	const symbol = threshold.operator ? OPERATOR_SYMBOL[threshold.operator] : '';
-	const summary = (
-		<>
-			<span className={styles.viewLabel}>{columnLabel}</span>
-			<span className={styles.viewValue}>
-				{symbol} {formatPanelValue(threshold.value, threshold.unit)}
-			</span>
-		</>
-	);
+	const paint = describeThresholdPaint(threshold.color, threshold.format);
 
 	return (
 		<ThresholdRowShell
 			index={index}
 			testIdPrefix="table-threshold"
-			color={threshold.color}
+			marker={
+				<ThresholdMarker
+					kind="format"
+					color={threshold.color}
+					format={threshold.format}
+				/>
+			}
 			isEditing={isEditing}
-			summary={summary}
+			isNew={isNew}
+			title={`${threshold.columnName} ${symbol} ${formatPanelValue(
+				threshold.value,
+				threshold.unit,
+			)}`}
+			subtitle={columnLabel ? `${paint} · ${columnLabel}` : paint}
 			onEdit={onEdit}
 			onSave={(): void => onSave(draft)}
 			onDiscard={onDiscard}
@@ -96,49 +97,32 @@ function TableThresholdRow({
 				items={columnItems}
 				onChange={(columnName): void => setDraft((d) => ({ ...d, columnName }))}
 			/>
-			<ThresholdSelectField
-				label="If value is"
+			<ThresholdOperatorField
 				testId={`table-threshold-operator-${index}`}
-				placeholder="Select condition"
 				value={draft.operator}
-				items={OPERATOR_OPTIONS}
-				onChange={(operator): void =>
-					setDraft((d) => ({
-						...d,
-						operator: operator as DashboardtypesComparisonOperatorDTO,
-					}))
-				}
+				onChange={(operator): void => setDraft((d) => ({ ...d, operator }))}
 			/>
-			<ThresholdValueField
-				testId={`table-threshold-value-${index}`}
+			<ThresholdAmountField
+				label="Value"
+				testIdPrefix="table-threshold"
+				index={index}
 				value={draft.value}
-				onChange={setValue}
-			/>
-			<ThresholdUnitField
-				testId={`table-threshold-unit-${index}`}
-				invalidTestId={`table-threshold-unit-invalid-${index}`}
-				value={draft.unit}
+				onValueChange={setValue}
+				unit={draft.unit}
 				scopeUnit={columnUnit}
 				scopeLabel="column unit"
-				onChange={(unit): void => setDraft((d) => ({ ...d, unit }))}
+				onUnitChange={(unit): void => setDraft((d) => ({ ...d, unit }))}
 			/>
 			<ThresholdColorField
 				testId={`table-threshold-color-${index}`}
 				value={draft.color}
 				onChange={(color): void => setDraft((d) => ({ ...d, color }))}
 			/>
-			<ThresholdSelectField
-				label="Display"
+			<ThresholdFormatField
 				testId={`table-threshold-format-${index}`}
-				placeholder="Select display"
 				value={draft.format}
-				items={FORMAT_OPTIONS}
-				onChange={(format): void =>
-					setDraft((d) => ({
-						...d,
-						format: format as DashboardtypesThresholdFormatDTO,
-					}))
-				}
+				color={draft.color}
+				onChange={(format): void => setDraft((d) => ({ ...d, format }))}
 			/>
 		</ThresholdRowShell>
 	);

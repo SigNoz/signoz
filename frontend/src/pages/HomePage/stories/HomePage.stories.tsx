@@ -128,3 +128,11 @@ export const CommandPalette: Story = {
 		await screen.findByText('Go to Home');
 	},
 };
+
+/**
+ * The firing alert count in the bottom strip, in place of the build version. It
+ * counts firing instances, so it does not match the alert rules widget above.
+ */
+export const BottomStrip: Story = {
+	args: { bottomStrip: true },
+};

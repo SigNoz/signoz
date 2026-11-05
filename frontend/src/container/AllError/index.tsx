@@ -38,6 +38,7 @@ import { Exception, PayloadProps } from 'types/api/errors/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { FilterDropdownExtendsProps } from './types';
+import { useExceptionsStripInfo } from './useExceptionsStripInfo';
 import {
 	extractFilterValues,
 	getDefaultFilterValue,
@@ -159,6 +160,11 @@ function AllErrors(): JSX.Element {
 				enabled: !loading,
 			},
 		]);
+
+	useExceptionsStripInfo({
+		shownCount: data?.payload?.length ?? 0,
+		totalCount: errorCountResponse.data?.payload ?? 0,
+	});
 
 	const isFetching = isErrorsFetching || errorCountResponse.isFetching;
 	useEffect(() => {

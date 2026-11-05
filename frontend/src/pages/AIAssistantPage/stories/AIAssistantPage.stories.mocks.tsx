@@ -4,6 +4,7 @@
  */
 
 import { AI_API_PATH, setAIBackendUrl } from 'api/AIAPIInstance';
+import removeSessionStorage from 'api/browser/sessionstorage/remove';
 import ROUTES from 'constants/routes';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { rest, type RequestHandler } from 'msw';
@@ -274,7 +275,10 @@ export const longActionTooltipHandlers: RequestHandler[] = onBothBases(
 
 /** The recognizer `.storybook/preview-head.html` installs in place of the browser's. */
 interface StorySpeechRecognition {
-	listening: { hear: (transcript: string) => void } | null;
+	listening: {
+		hear: (transcript: string) => void;
+		onerror: ((event: { error: string }) => void) | null;
+	} | null;
 }
 
 /**
@@ -307,4 +311,19 @@ export const speak = (transcript: string): void => {
 	(
 		window as unknown as { webkitSpeechRecognition: StorySpeechRecognition }
 	).webkitSpeechRecognition.listening?.hear(transcript);
+};
+
+/**
+ * Clears the flag `ChatInput` keeps in sessionStorage after a failed recording,
+ * which hides the mic for the rest of the tab, test-runner's included.
+ */
+export const forgetVoiceFailure = (): void => {
+	removeSessionStorage('ai-assistant-voice-unavailable');
+};
+
+/** Fails the open recording the way the browser's recognizer reports it. */
+export const failVoiceInput = (error: 'network' | 'not-allowed'): void => {
+	(
+		window as unknown as { webkitSpeechRecognition: StorySpeechRecognition }
+	).webkitSpeechRecognition.listening?.onerror?.({ error });
 };

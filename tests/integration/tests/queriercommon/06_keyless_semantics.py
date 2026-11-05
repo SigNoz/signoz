@@ -17,7 +17,7 @@ pkg/types/querybuildertypes/querybuildertypesv5/builder_elements.go):
 
 Any implementation change that makes these assertions fail is a behavior
 break, not a cleanup. Family-field behavior must mirror this matrix; see
-queriertraces/13_semconv_evolution.py.
+semconvfamilies/01_family_matrix.py.
 
 Seed data lives in fixtures/queriercommon.py: GOLD and SILVER carry the
 keys, NONE carries none. Every case asserts which identities a filter

@@ -7,12 +7,12 @@ import { expect, screen, userEvent, waitFor } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { panelEditorMocks } from '../PanelEditorPage.stories.mocks';
 import {
 	expandSection,
 	openConfigSelect,
+	panelEditorMocks,
 	pickSegment,
-} from './panelEditorPlay';
+} from '../PanelEditorPage.stories.mocks';
 
 import PanelEditorPage from '../../PanelEditorPage';
 
@@ -41,14 +41,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<PanelEditorArgs>;
-
-/** The panel type picker, open on the kinds this query can be drawn as. */
-export const PanelTypeOpen: Story = {
-	play: async () => {
-		await openConfigSelect('panel-editor-v2-type-switcher');
-		await screen.findByRole('listbox');
-	},
-};
 
 /** The time range the panel reads, open on its choices. */
 export const TimePreferenceOpen: Story = {
@@ -87,7 +79,7 @@ export const Axes: Story = {
 export const AxesLogScale: Story = {
 	play: async (context) => {
 		await Axes.play?.(context);
-		await pickSegment('panel-editor-v2-log-scale', 'Log');
+		await pickSegment('panel-editor-v2-log-scale', 'log');
 	},
 };
 
@@ -103,7 +95,7 @@ export const Legend: Story = {
 export const LegendRight: Story = {
 	play: async (context) => {
 		await Legend.play?.(context);
-		await pickSegment('panel-editor-v2-legend-position', 'Right');
+		await pickSegment('panel-editor-v2-legend-position', 'right');
 	},
 };
 
@@ -119,7 +111,7 @@ export const ChartAppearance: Story = {
 export const ChartAppearanceDisconnectThreshold: Story = {
 	play: async (context) => {
 		await ChartAppearance.play?.(context);
-		await pickSegment('panel-editor-v2-span-gaps', 'Threshold');
+		await pickSegment('panel-editor-v2-span-gaps', 'threshold');
 		const input = await screen.findByTestId('panel-editor-v2-span-gaps-value');
 
 		await userEvent.clear(input);
@@ -132,8 +124,8 @@ export const ChartAppearanceDisconnectThreshold: Story = {
 export const ChartAppearanceDashedGradient: Story = {
 	play: async (context) => {
 		await ChartAppearance.play?.(context);
-		await pickSegment('panel-editor-v2-line-style', 'Dashed');
-		await pickSegment('panel-editor-v2-fill-mode', 'Gradient');
+		await pickSegment('panel-editor-v2-line-style', 'dashed');
+		await pickSegment('panel-editor-v2-fill-mode', 'gradient');
 		const points = screen.getByTestId('panel-editor-v2-show-points');
 
 		await userEvent.click(points);
@@ -155,14 +147,7 @@ export const BarStacked: Story = {
 	args: { panel: 'errors-by-status' },
 	play: async () => {
 		await expandSection('Visualization');
-		const stack = await screen.findByTestId(
-			'panel-editor-v2-stacked-bar-chart',
-			{},
-			{ timeout: 10000 },
-		);
-
-		await userEvent.click(stack);
-		await waitFor(() => expect(stack).toHaveAttribute('aria-checked', 'true'));
+		await pickSegment('panel-editor-v2-stacked-bar-chart', 'stacked');
 	},
 };
 
@@ -188,7 +173,7 @@ export const PieLegend: Story = {
 export const HistogramBuckets: Story = {
 	args: { panel: 'new', newPanelKind: 'histogram' },
 	play: async () => {
-		await expandSection('Histogram / Buckets');
+		await expandSection('Buckets');
 		await screen.findByTestId('panel-editor-v2-bucket-count');
 	},
 };
@@ -198,6 +183,6 @@ export const TextAppearance: Story = {
 	args: { panel: 'new', newPanelKind: 'text' },
 	play: async () => {
 		await expandSection('Panel appearance');
-		await screen.findByTestId('text-layout-horizontal-align');
+		await screen.findByTestId('text-layout-align');
 	},
 };

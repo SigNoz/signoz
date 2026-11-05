@@ -10,6 +10,13 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
+import {
+	QueryBuilderField,
+	type QueryBuilderFieldsConfig,
+} from '../../queryBuilderFields.types';
+import { resolveQueryBuilderField } from '../../queryBuilderFields.utils';
+
+import { BUILT_IN_PLACEHOLDERS } from './constants';
 
 import './MetricsAggregateSection.styles.scss';
 
@@ -18,15 +25,18 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	index,
 	version,
 	panelType,
-	signalSource = '',
+	fieldsConfig,
 }: {
 	query: IBuilderQuery;
 	index: number;
 	version: string;
 	panelType: PANEL_TYPES | null;
-	signalSource: string;
+	fieldsConfig?: QueryBuilderFieldsConfig;
 }): JSX.Element {
 	const { setAggregationOptions } = useQueryBuilderV2Context();
+	const placeholderOf = (key: keyof typeof BUILT_IN_PLACEHOLDERS): string =>
+		resolveQueryBuilderField(key, fieldsConfig).placeholder ??
+		BUILT_IN_PLACEHOLDERS[key];
 	const {
 		operators,
 		spaceAggregationOptions,
@@ -154,7 +164,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										<InputWithLabel
 											onChange={handleChangeAggregateEvery}
 											label="Seconds"
-											placeholder="Auto"
+											placeholder={placeholderOf(QueryBuilderField.StepInterval)}
 											labelAfter
 											initialValue={query?.stepInterval ?? null}
 										/>
@@ -206,7 +216,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										disabled={!queryAggregation.metricName}
 										query={query}
 										onChange={handleChangeGroupByKeys}
-										signalSource={signalSource}
+										placeholder={placeholderOf(QueryBuilderField.GroupBy)}
 									/>
 								</div>
 							</div>
@@ -243,7 +253,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 									disabled={!queryAggregation.metricName}
 									query={query}
 									onChange={handleChangeGroupByKeys}
-									signalSource={signalSource}
+									placeholder={placeholderOf(QueryBuilderField.GroupBy)}
 								/>
 							</div>
 						</div>
@@ -277,7 +287,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 								<InputWithLabel
 									onChange={handleChangeAggregateEvery}
 									label="Seconds"
-									placeholder="Auto"
+									placeholder={placeholderOf(QueryBuilderField.StepInterval)}
 									labelAfter
 									initialValue={query?.stepInterval ?? null}
 									className="histogram-every-input"

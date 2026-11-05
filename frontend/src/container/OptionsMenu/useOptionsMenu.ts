@@ -41,7 +41,7 @@ import { buildCompositeKey, getOptionsFromKeys } from './utils';
 interface UseOptionsMenuProps {
 	storageKey?: string;
 	dataSource: DataSource;
-	aggregateOperator: string;
+	aggregateOperator?: string;
 	initialOptions?: InitialOptions;
 }
 

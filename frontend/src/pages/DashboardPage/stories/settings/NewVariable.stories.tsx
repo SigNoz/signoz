@@ -7,14 +7,14 @@ import { screen, userEvent } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { dashboardMocks } from '../DashboardPage.stories.mocks';
 import {
+	dashboardMocks,
 	findPreviewValue,
 	openNewVariable,
 	openVariableSelect,
 	pickVariableType,
 	typeVariableName,
-} from './settingsPlay';
+} from '../DashboardPage.stories.mocks';
 
 import DashboardPage from '../../DashboardPage';
 

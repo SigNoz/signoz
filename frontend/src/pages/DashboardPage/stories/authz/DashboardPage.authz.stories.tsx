@@ -7,13 +7,13 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { dashboardMocks } from '../DashboardPage.stories.mocks';
 import {
+	dashboardMocks,
 	expectDisabled,
 	menuItem,
 	openActionsMenu,
 	toolbarButton,
-} from './authzPlay';
+} from '../DashboardPage.stories.mocks';
 
 import DashboardPage from '../../DashboardPage';
 

@@ -7,7 +7,7 @@ import { screen, userEvent, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { panelEditorMocks } from './PanelEditorPage.stories.mocks';
+import { panelEditorMocks, savePanel } from './PanelEditorPage.stories.mocks';
 
 import PanelEditorPage from '../PanelEditorPage';
 
@@ -23,7 +23,7 @@ const pageStory = storyMocks(panelEditorMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Dashboards/Panel Editor/Overview',
-	tags: ['authz'],
+	tags: ['authz', 'play'],
 	// The page is wrapped in `withAuthZPage`, which types its props as an index
 	// signature; the story's args are what the controls resolve to.
 	component: PanelEditorPage as ComponentType<PanelEditorArgs>,
@@ -39,6 +39,25 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<PanelEditorArgs>;
+
+const expandConfigSections: Story['play'] = async ({ canvasElement }) => {
+	const canvas = within(canvasElement);
+
+	const headers = await canvas.findAllByTestId(
+		/^config-section-/,
+		{},
+		{ timeout: 10000 },
+	);
+	for (const header of headers) {
+		if (header.getAttribute('aria-expanded') === 'false') {
+			await userEvent.click(header);
+		}
+	}
+	(document.activeElement as HTMLElement | null)?.blur();
+	for (let el = headers[0].parentElement; el; el = el.parentElement) {
+		el.scrollTop = 0;
+	}
+};
 
 /**
  * Editing a saved time series panel: the live preview over the query builder on
@@ -100,6 +119,19 @@ export const ListPanel: Story = {
 	args: { panel: 'recent-logs' },
 };
 
+/** Interaction: the list panel's add column menu, searching field keys. */
+export const ListPanelAddColumnOpen: Story = {
+	args: { panel: 'recent-logs' },
+	play: async (): Promise<void> => {
+		await userEvent.click(
+			await screen.findByTestId('list-columns-add', undefined, {
+				timeout: 10_000,
+			}),
+		);
+		await screen.findAllByTestId('list-columns-suggestion');
+	},
+};
+
 /** A table panel, with its column units and thresholds. */
 export const TablePanel: Story = {
 	args: { panel: 'top-endpoints' },
@@ -131,4 +163,118 @@ export const ReadOnly: Story = {
  */
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
+};
+
+/** The panel type browser, opened from the config pane to switch kinds. */
+export const ChangePanelType: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		await userEvent.click(
+			await canvas.findByTestId(
+				'panel-editor-v2-type-switcher',
+				{},
+				{ timeout: 10000 },
+			),
+		);
+		await screen.findByTestId('panel-type-switcher-drawer');
+	},
+};
+
+/** A new time series panel's config pane, every section expanded. */
+export const ConfigTimeSeries: Story = {
+	args: { panel: 'new', newPanelKind: 'time-series' },
+	play: expandConfigSections,
+};
+
+/** A new number panel's config pane, every section expanded. */
+export const ConfigNumber: Story = {
+	args: { panel: 'new', newPanelKind: 'number' },
+	play: expandConfigSections,
+};
+
+/** A new table panel's config pane, every section expanded. */
+export const ConfigTable: Story = {
+	args: { panel: 'new', newPanelKind: 'table' },
+	play: expandConfigSections,
+};
+
+/** A new bar chart panel's config pane, every section expanded. */
+export const ConfigBarChart: Story = {
+	args: { panel: 'new', newPanelKind: 'bar-chart' },
+	play: expandConfigSections,
+};
+
+/** A new area chart panel's config pane, every section expanded. */
+export const ConfigAreaChart: Story = {
+	args: { panel: 'new', newPanelKind: 'area-chart' },
+	play: expandConfigSections,
+};
+
+/** A new pie chart panel's config pane, every section expanded. */
+export const ConfigPieChart: Story = {
+	args: { panel: 'new', newPanelKind: 'pie-chart' },
+	play: expandConfigSections,
+};
+
+/** A new histogram panel's config pane, every section expanded. */
+export const ConfigHistogram: Story = {
+	args: { panel: 'new', newPanelKind: 'histogram' },
+	play: expandConfigSections,
+};
+
+/** A new heatmap panel's config pane, every section expanded. */
+export const ConfigHeatmap: Story = {
+	args: { panel: 'new', newPanelKind: 'heatmap' },
+	play: expandConfigSections,
+};
+
+/** A new list panel's config pane, every section expanded. */
+export const ConfigList: Story = {
+	args: { panel: 'new', newPanelKind: 'list' },
+	play: expandConfigSections,
+};
+
+/** A new text panel's config pane, every section expanded. */
+export const ConfigText: Story = {
+	args: { panel: 'new', newPanelKind: 'text' },
+	play: expandConfigSections,
+};
+
+/**
+ * A saved panel with settings changed: each changed setting and its section
+ * carry the unsaved-changes dot.
+ */
+export const ConfigChanged: Story = {
+	play: async (context) => {
+		const canvas = within(context.canvasElement);
+
+		await expandConfigSections(context);
+		await userEvent.click(
+			await canvas.findByTestId('panel-editor-v2-log-scale-log'),
+		);
+		await userEvent.click(
+			await canvas.findByTestId('panel-editor-v2-line-style-dashed'),
+		);
+	},
+};
+
+/**
+ * Save changes on a saved panel: the toast raised once the patch answers,
+ * before the editor hands back to the dashboard. Set Panel save to `loading`
+ * to see the button spin instead.
+ */
+export const PanelSavedToast: Story = {
+	play: async ({ args }): Promise<void> => {
+		await savePanel();
+		if (args.panelSave === 'success') {
+			await screen.findByText('Panel saved');
+		}
+	},
+};
+
+/** Save changes on a new text panel, the editor kind with no query to bake in. */
+export const TextPanelSavedToast: Story = {
+	args: { panel: 'new', newPanelKind: 'text' },
+	play: PanelSavedToast.play,
 };
