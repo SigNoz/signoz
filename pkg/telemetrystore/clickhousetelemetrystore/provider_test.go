@@ -43,7 +43,7 @@ func TestCastError_LimitExceptions(t *testing.T) {
 	}
 }
 
-func TestCastError_Timeout_Suggestion(t *testing.T) {
+func TestCastError_Timeout(t *testing.T) {
 	deadlineCtx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
 	defer cancel()
 	<-deadlineCtx.Done()
@@ -64,7 +64,7 @@ func TestCastError_Timeout_Suggestion(t *testing.T) {
 			require.Error(t, err)
 			assert.True(t, errors.Asc(err, ErrCodeQueryTimeout), "got %v", err)
 			assert.True(t, errors.Ast(err, errors.TypeTimeout))
-			assert.Equal(t, []string{queryTimeoutSuggestion}, errors.AsJSON(err).Suggestions)
+			assert.Empty(t, errors.AsJSON(err).Suggestions)
 		})
 	}
 }
