@@ -249,7 +249,7 @@ func getNormalizePipeline() pipelinetypes.GettablePipeline {
 		},
 		Config: []pipelinetypes.PipelineOperator{
 			{
-				ID:      uuid.NewString(),
+				ID:      "normalize_body_default",
 				Type:    "normalize",
 				Enabled: true,
 				If:      "body != nil",
