@@ -30,6 +30,7 @@ type chSQLQuery struct {
 	toMS   uint64
 	kind   qbtypes.RequestType
 	vars   map[string]qbtypes.VariableItem
+	budget ClickHouseQueryConfig
 }
 
 var _ qbtypes.Query = (*chSQLQuery)(nil)
@@ -43,6 +44,7 @@ func newchSQLQuery(
 	tr qbtypes.TimeRange,
 	kind qbtypes.RequestType,
 	variables map[string]qbtypes.VariableItem,
+	budget ClickHouseQueryConfig,
 ) *chSQLQuery {
 	return &chSQLQuery{
 		logger:         logger,
@@ -53,6 +55,7 @@ func newchSQLQuery(
 		toMS:           tr.To,
 		kind:           kind,
 		vars:           variables,
+		budget:         budget,
 	}
 }
 
@@ -141,15 +144,26 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		return nil, err
 	}
 
+	parentCtx := ctx
+	var cancel context.CancelFunc
+	if q.budget.MaxExecutionTime > 0 {
+		ctx, cancel = context.WithTimeout(ctx, q.budget.MaxExecutionTime)
+	} else {
+		ctx, cancel = context.WithCancel(ctx)
+	}
+	defer cancel()
+	ctx = telemetrystore.NewContextWithQuerySettings(ctx, q.budget.settings())
+
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, q.args...)
 	if err != nil {
-		return nil, err
+		return nil, q.budgetError(parentCtx, ctx, err)
 	}
+	rows = newResultBudgetRows(rows, cancel, q.budget.MaxResultRows, q.budget.MaxResultBytes)
 	defer rows.Close()
 
 	payload, err := consume(rows, q.kind, nil, qbtypes.Step{}, q.query.Name)
 	if err != nil {
-		return nil, err
+		return nil, q.budgetError(parentCtx, ctx, err)
 	}
 
 	return &qbtypes.Result{

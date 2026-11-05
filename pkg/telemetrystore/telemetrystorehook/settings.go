@@ -2,6 +2,7 @@ package telemetrystorehook
 
 import (
 	"context"
+	"maps"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -71,6 +72,8 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 		settings["max_rows_to_group_by"] = ctx.Value("max_rows_to_group_by").(int)
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
+
+	maps.Copy(settings, telemetrystore.QuerySettingsFromContext(ctx))
 
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
 	return ctx

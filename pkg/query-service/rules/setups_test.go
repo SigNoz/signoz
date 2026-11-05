@@ -52,6 +52,7 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 		fl,
 		0,
 		0, // maxConcurrentQueries (0 means default)
+		querier.ClickHouseQueryConfig{},
 	), metadataStore
 }
 
@@ -87,6 +88,7 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		fl,
 		5*time.Minute, // logTraceIDWindowPadding
 		0,             // maxConcurrentQueries (0 means default)
+		querier.ClickHouseQueryConfig{},
 	)
 }
 
@@ -123,6 +125,7 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 		fl,
 		0,
 		0, // maxConcurrentQueries (0 means default)
+		querier.ClickHouseQueryConfig{},
 	)
 }
 
@@ -159,5 +162,6 @@ func prepareQuerierForAITraces(t *testing.T, telemetryStore telemetrystore.Telem
 		fl,
 		0,
 		0, // maxConcurrentQueries (0 means default)
+		querier.ClickHouseQueryConfig{},
 	)
 }

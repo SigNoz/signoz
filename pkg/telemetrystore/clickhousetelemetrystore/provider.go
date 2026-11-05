@@ -22,6 +22,8 @@ var (
 
 	ErrCodeDistributedSubqueryDenied = errors.MustNewCode("distributed_subquery_denied")
 	ErrCodeDecimalOverflow           = errors.MustNewCode("decimal_overflow")
+	ErrCodeMemoryLimitExceeded       = errors.MustNewCode("memory_limit_exceeded")
+	ErrCodeResultTooLarge            = errors.MustNewCode("result_too_large")
 
 	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
 	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
@@ -86,6 +88,17 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 	chproto.ErrDecimalOverflow: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeDecimalOverflow, "decimal overflow: %s", ex.Message).
 			WithSuggestions("cast the Decimal values to Float64, or to a wider Decimal such as Decimal128, before the arithmetic")
+	},
+	chproto.ErrTimeoutExceeded: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapTimeoutf(cause, ErrCodeQueryTimeout, "query timed out: %s", ex.Message)
+	},
+	chproto.ErrMemoryLimitExceeded: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeMemoryLimitExceeded, "query memory limit exceeded: %s", ex.Message).
+			WithSuggestions("narrow the time range, add filters or reduce the number of groups")
+	},
+	chproto.ErrTooManyRowsOrBytes: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeResultTooLarge, "query result too large: %s", ex.Message).
+			WithSuggestions("add a LIMIT, narrow the time range or select fewer columns")
 	},
 }
 

@@ -62,6 +62,7 @@ type querier struct {
 	liveDataRefresh          time.Duration
 	builderConfig            builderConfig
 	maxConcurrentQueries     int
+	clickHouseQueryBudget    ClickHouseQueryConfig
 }
 
 var _ Querier = (*querier)(nil)
@@ -82,6 +83,7 @@ func New(
 	flagger flagger.Flagger,
 	logTraceIDWindowPadding time.Duration,
 	maxConcurrentQueries int,
+	clickHouseQueryBudget ClickHouseQueryConfig,
 ) *querier {
 	querierSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier")
 	if maxConcurrentQueries <= 0 {
@@ -105,7 +107,8 @@ func New(
 		builderConfig: builderConfig{
 			logTraceIDWindowPaddingMS: uint64(logTraceIDWindowPadding.Milliseconds()),
 		},
-		maxConcurrentQueries: maxConcurrentQueries,
+		maxConcurrentQueries:  maxConcurrentQueries,
+		clickHouseQueryBudget: clickHouseQueryBudget,
 	}
 }
 
@@ -225,7 +228,7 @@ func (q *querier) buildQueries(
 			if !ok {
 				return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid clickhouse query spec %T", query.Spec)
 			}
-			chSQLQuery := newchSQLQuery(q.logger, q.telemetryStore, chQuery, nil, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars)
+			chSQLQuery := newchSQLQuery(q.logger, q.telemetryStore, chQuery, nil, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars, q.clickHouseQueryBudget)
 			queries[chQuery.Name] = chSQLQuery
 		case qbtypes.QueryTypeTraceOperator:
 			traceOpQuery, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator)
@@ -920,7 +923,7 @@ func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, 
 		queryCopy := qt.query.Copy()
 		argsCopy := make([]any, len(qt.args))
 		copy(argsCopy, qt.args)
-		return newchSQLQuery(q.logger, q.telemetryStore, queryCopy, argsCopy, timeRange, qt.kind, qt.vars)
+		return newchSQLQuery(q.logger, q.telemetryStore, queryCopy, argsCopy, timeRange, qt.kind, qt.vars, qt.budget)
 
 	case *builderQuery[qbtypes.TraceAggregation]:
 		specCopy := qt.spec.Copy()
