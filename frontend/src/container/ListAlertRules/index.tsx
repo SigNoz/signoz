@@ -189,6 +189,7 @@ function ListAlertRules(): JSX.Element {
 							label={activeLabel}
 							count={total}
 							isModified={ruleViews.isModified}
+							testIdPrefix="alert-rules"
 							action={
 								<AlertRulesHeaderActions
 									columns={columns}

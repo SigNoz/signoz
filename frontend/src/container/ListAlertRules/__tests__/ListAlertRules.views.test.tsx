@@ -1,14 +1,20 @@
-import userEvent from '@testing-library/user-event';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
 import {
 	alertRulesFixture,
 	listRulesV3Response,
+	ruleViewsFixture,
 } from 'mocks-server/__mockdata__/alert_rules';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { getCurrentNuqsSearchParams } from 'tests/nuqs-helpers';
-import { getAppContextMock, screen, waitFor, within } from 'tests/test-utils';
+import {
+	getAppContextMock,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 
 import { renderListAlertRules, runSearchQuery } from './_helpers';
 
@@ -92,12 +98,19 @@ function urlParam(key: string): string | null {
 	return getCurrentNuqsSearchParams().get(key);
 }
 
+// The linked-view restore writes the URL a tick after the views render.
+function urlSettled(): Promise<void> {
+	return new Promise((resolve) => {
+		setTimeout(resolve, 0);
+	});
+}
+
 function viewItem(id: string): HTMLElement {
 	return screen.getByTestId(`alert-rules-view-${id}`);
 }
 
 function activeHeading(): HTMLElement {
-	return screen.getByRole('heading', { level: 1 });
+	return screen.getByTestId('alert-rules-list-heading');
 }
 
 async function selectView(user: User, id: string): Promise<void> {
@@ -464,6 +477,48 @@ describe('ListAlertRules — saved views rail', () => {
 			expect(urlParam('query')).toBe('foo');
 			expect(urlParam('states')).toBeNull();
 			expect(activeHeading()).toHaveTextContent('Critical firing');
+		});
+
+		it('marks a cleared view filter in the URL', async () => {
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			renderListAlertRules();
+			await selectView(user, 'view-2');
+
+			await user.click(screen.getByTestId('alert-rules-filter-clear'));
+
+			await waitFor(() => expect(urlParam('query')).toBe(''));
+			expect(urlParam('view')).toBe('view-2');
+		});
+
+		it('keeps a cleared view filter cleared on reload', async () => {
+			const requests = captureRulesRequests();
+			renderListAlertRules({ initialRoute: '/?view=view-1&query=' });
+
+			await screen.findByTestId('alert-rules-view-save-changes');
+			await urlSettled();
+			expect(urlParam('query')).toBe('');
+			expect(urlParam('states')).toBeNull();
+			expect(lastRequest(requests).get('query') ?? '').toBe('');
+		});
+
+		it('keeps a query run while the linked views are still loading', async () => {
+			server.use(
+				rest.get('http://localhost/api/v2/rule_views', (_, res, ctx) =>
+					res(
+						ctx.delay(300),
+						ctx.status(200),
+						ctx.json({ data: { views: ruleViewsFixture }, status: 'success' }),
+					),
+				),
+			);
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			renderListAlertRules({ initialRoute: '/?view=view-1' });
+
+			await runSearchQuery(user, 'foo');
+			await screen.findByTestId('alert-rules-view-save-changes');
+			await urlSettled();
+			expect(urlParam('query')).toBe('foo');
+			expect(urlParam('states')).toBeNull();
 		});
 	});
 

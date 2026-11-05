@@ -333,6 +333,7 @@ function DashboardsList(): JSX.Element {
 									label={activeLabel}
 									count={total}
 									isModified={isModified}
+									testIdPrefix="dashboards"
 									action={<NewDashboardButton onClick={openCreate} />}
 								/>
 								<DashboardsFilterZone

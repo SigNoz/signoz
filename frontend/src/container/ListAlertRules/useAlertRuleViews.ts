@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { useQueryState } from 'nuqs';
 import type { UseListViewsResult } from 'hooks/listViews/types';
 import { useListViews } from 'hooks/listViews/useListViews';
 
@@ -19,7 +20,8 @@ export interface UseAlertRuleViewsResult extends UseListViewsResult<RuleListFilt
 }
 
 // A link carrying only `view=<custom id>` gets that view's filter applied once
-// the views load; a link carrying its own filter params keeps them.
+// the views load; a link carrying its own filter params keeps them. Clearing a
+// custom view's filter writes an empty `query=` so a reload keeps it cleared.
 export function useAlertRuleViews({
 	filter,
 	applyFilter,
@@ -44,17 +46,34 @@ export function useAlertRuleViews({
 	});
 
 	const { activeView } = views;
-	const startedWithDefaultFilter = useRef(isDefaultRuleListFilter(filter));
+	const [rawQuery, setRawQuery] = useQueryState(ALERT_RULES_PARAMS.QUERY);
+	const startedFromViewLink = useRef(
+		isDefaultRuleListFilter(filter) && rawQuery === null,
+	);
 	const hasResolvedLinkedView = useRef(false);
+
+	// Declared before the restore so it skips the render that applies a linked view.
+	const clearedCustomView =
+		!!activeView && rawQuery === null && isDefaultRuleListFilter(filter);
+	useEffect(() => {
+		if (hasResolvedLinkedView.current && clearedCustomView) {
+			void setRawQuery('', { clearOnDefault: false, history: 'replace' });
+		}
+	}, [clearedCustomView, setRawQuery]);
+
 	useEffect(() => {
 		if (hasResolvedLinkedView.current || api.isLoading) {
 			return;
 		}
 		hasResolvedLinkedView.current = true;
-		if (activeView && startedWithDefaultFilter.current) {
+		if (
+			activeView &&
+			startedFromViewLink.current &&
+			isDefaultRuleListFilter(filter)
+		) {
 			applyFilter(activeView.filter);
 		}
-	}, [api.isLoading, activeView, applyFilter]);
+	}, [api.isLoading, activeView, applyFilter, filter]);
 
 	return { ...views, customViewsLoading: api.isLoading };
 }

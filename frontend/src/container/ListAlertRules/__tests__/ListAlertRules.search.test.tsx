@@ -1,11 +1,10 @@
-import userEvent from '@testing-library/user-event';
 import {
 	alertRulesFixture,
 	listRulesV3Response,
 } from 'mocks-server/__mockdata__/alert_rules';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { screen, waitFor, within } from 'tests/test-utils';
+import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 import {
 	getCurrentNuqsQueryString,
 	getCurrentNuqsSearchParams,
