@@ -86,6 +86,10 @@ func FormatHeatmapFloat(v float64) string {
 // The bounds read the value through an expression alias rather than repeating
 // it, so the returned fragment has to be declared alongside the caller's CTEs.
 // It carries no arguments of its own.
+//
+// Rows without the value are filtered out of sb. valuePresent is that same
+// condition for a statement outside the alias's scope, such as a group limit
+// ranking, which must not count rows the heatmap drops.
 func HeatmapBucketColumns(
 	ctx context.Context,
 	info qbtypes.QueryInfo,
@@ -94,17 +98,17 @@ func HeatmapBucketColumns(
 	key *telemetrytypes.TelemetryFieldKey,
 	bucketOptions *qbtypes.BucketOptions,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-) (valueFragment string, groupByAliases []string, warnings []string, err error) {
+) (valueFragment string, valuePresent string, groupByAliases []string, warnings []string, err error) {
 	// Resolved directly rather than through ResolveColumn: a row whose value is
 	// absent has no bucket and drops out, so a key nothing carries draws an empty
 	// heatmap, and the warning is the only thing that says why.
 	resolved, err := Resolve(ctx, info, storage, key, qbtypes.FilterOperatorUnknown, nil, keys)
 	if err != nil {
-		return "", nil, nil, err
+		return "", "", nil, nil, err
 	}
 	valueExpr, err := Column(ctx, info, storage, resolved, telemetrytypes.FieldDataTypeFloat64)
 	if err != nil {
-		return "", nil, nil, err
+		return "", "", nil, nil, err
 	}
 
 	bucketMin, bucketMax := RenderHeatmapBucketExprs(bucketOptions.ToHeatmapBucketing(), heatmapBucketValueAlias)
@@ -112,6 +116,9 @@ func HeatmapBucketColumns(
 	sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", bucketMin, qbtypes.HeatmapBucketMinColumn)))
 	sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", bucketMax, qbtypes.HeatmapBucketMaxColumn)))
 
-	valueFragment = sqlbuilder.Escape(fmt.Sprintf("%s AS %s", valueExpr, heatmapBucketValueAlias))
-	return valueFragment, []string{qbtypes.HeatmapBucketMinColumn, qbtypes.HeatmapBucketMaxColumn}, resolved.Warnings, nil
+	sb.Where(fmt.Sprintf("isNotNull(%s)", heatmapBucketValueAlias))
+
+	valueFragment = fmt.Sprintf("%s AS %s", valueExpr, heatmapBucketValueAlias)
+	valuePresent = sqlbuilder.Escape(fmt.Sprintf("isNotNull(%s)", valueExpr))
+	return valueFragment, valuePresent, []string{qbtypes.HeatmapBucketMinColumn, qbtypes.HeatmapBucketMaxColumn}, resolved.Warnings, nil
 }

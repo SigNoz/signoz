@@ -488,15 +488,16 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	}
 
 	var bucketAliases, bucketWarnings []string
+	var heatmapValuePresent string
 	if heatmapField != nil {
-		valueFragment, aliases, warnings, err := querybuilder.HeatmapBucketColumns(
+		valueFragment, valuePresent, aliases, warnings, err := querybuilder.HeatmapBucketColumns(
 			ctx, info, b.storage, sb, columnKey(heatmapField), query.BucketOptions, keys,
 		)
 		if err != nil {
 			return nil, err
 		}
 		cteFragments = append(cteFragments, valueFragment)
-		bucketAliases, bucketWarnings = aliases, warnings
+		bucketAliases, bucketWarnings, heatmapValuePresent = aliases, warnings, valuePresent
 	}
 
 	// Aggregations
@@ -529,6 +530,9 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		// build the scalar “top/bottom-N” query in its own builder.
 		cteSB := sqlbuilder.NewSelectBuilder()
+		if heatmapValuePresent != "" {
+			cteSB.Where(heatmapValuePresent)
+		}
 		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, true, variables)
 		if err != nil {
 			return nil, err

@@ -77,7 +77,7 @@ func newBuilderQuery[T any](
 func (q *builderQuery[T]) Fingerprint() string {
 
 	if (q.spec.Signal == telemetrytypes.SignalTraces ||
-		q.spec.Signal == telemetrytypes.SignalLogs) && q.kind != qbtypes.RequestTypeTimeSeries {
+		q.spec.Signal == telemetrytypes.SignalLogs) && q.kind != qbtypes.RequestTypeTimeSeries && q.kind != qbtypes.RequestTypeHeatmap {
 		// No caching for non-timeseries queries
 		return ""
 	}
