@@ -4027,7 +4027,9 @@ components:
             the query they draw.
         cursor:
           description: The opaque nextCursor value from a previous raw result, used
-            to fetch the next page.
+            to fetch the next page. Honored only by raw requests whose order starts
+            with timestamp, for logs followed by id in the same direction; every other
+            request ignores it.
           type: string
         disabled:
           description: When true, the result is excluded from the response; the query
@@ -4064,10 +4066,11 @@ components:
             are replaced by group-by label values.
           type: string
         limit:
-          description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. When
-            0, aggregations are unlimited while raw requests ordered by timestamp
-            return a page of 10000 rows; follow nextCursor for the rest.
+          description: The maximum number of rows for raw and trace requests, or of
+            series or rows for grouped scalar and time_series requests, keeping the
+            top entries by order. When 0, scalar and time_series requests are unlimited,
+            raw requests ordered by timestamp return a page of 10000 rows to continue
+            with nextCursor, and other raw and trace requests return 100 rows.
           type: integer
         limitBy:
           allOf:
@@ -4079,8 +4082,10 @@ components:
             operators and selectedQueryName refer to it.
           type: string
         offset:
-          description: The number of rows to skip before returning results. Prefer
-            cursor for raw requests.
+          description: The number of rows for raw and trace requests, or of ordered
+            series or rows for scalar and time_series requests, to skip before the
+            page starts. On raw requests the skip counts from where a cursor resumes,
+            and the skipped rows are still read, so prefer cursor for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10102,6 +10107,10 @@ components:
           description: The unique name of the formula, such as F1, used by selectedQueryName
             and by panels. Referencing a formula from another formula is not reliable.
           type: string
+        offset:
+          description: The number of ordered series or rows to skip before the page
+            starts.
+          type: integer
         order:
           description: The sort order of the formula result.
           items:
@@ -10127,7 +10136,9 @@ components:
             the query they draw.
         cursor:
           description: The opaque nextCursor value from a previous raw result, used
-            to fetch the next page.
+            to fetch the next page. Honored only by raw requests whose order starts
+            with timestamp, for logs followed by id in the same direction; every other
+            request ignores it.
           type: string
         disabled:
           description: When true, the result is excluded from the response; the query
@@ -10163,10 +10174,11 @@ components:
             are replaced by group-by label values.
           type: string
         limit:
-          description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. When
-            0, aggregations are unlimited while raw requests ordered by timestamp
-            return a page of 10000 rows; follow nextCursor for the rest.
+          description: The maximum number of rows for raw and trace requests, or of
+            series or rows for grouped scalar and time_series requests, keeping the
+            top entries by order. When 0, scalar and time_series requests are unlimited,
+            raw requests ordered by timestamp return a page of 10000 rows to continue
+            with nextCursor, and other raw and trace requests return 100 rows.
           type: integer
         limitBy:
           allOf:
@@ -10178,8 +10190,10 @@ components:
             operators and selectedQueryName refer to it.
           type: string
         offset:
-          description: The number of rows to skip before returning results. Prefer
-            cursor for raw requests.
+          description: The number of rows for raw and trace requests, or of ordered
+            series or rows for scalar and time_series requests, to skip before the
+            page starts. On raw requests the skip counts from where a cursor resumes,
+            and the skipped rows are still read, so prefer cursor for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10241,7 +10255,9 @@ components:
             the query they draw.
         cursor:
           description: The opaque nextCursor value from a previous raw result, used
-            to fetch the next page.
+            to fetch the next page. Honored only by raw requests whose order starts
+            with timestamp, for logs followed by id in the same direction; every other
+            request ignores it.
           type: string
         disabled:
           description: When true, the result is excluded from the response; the query
@@ -10278,10 +10294,11 @@ components:
             are replaced by group-by label values.
           type: string
         limit:
-          description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. When
-            0, aggregations are unlimited while raw requests ordered by timestamp
-            return a page of 10000 rows; follow nextCursor for the rest.
+          description: The maximum number of rows for raw and trace requests, or of
+            series or rows for grouped scalar and time_series requests, keeping the
+            top entries by order. When 0, scalar and time_series requests are unlimited,
+            raw requests ordered by timestamp return a page of 10000 rows to continue
+            with nextCursor, and other raw and trace requests return 100 rows.
           type: integer
         limitBy:
           allOf:
@@ -10293,8 +10310,10 @@ components:
             operators and selectedQueryName refer to it.
           type: string
         offset:
-          description: The number of rows to skip before returning results. Prefer
-            cursor for raw requests.
+          description: The number of rows for raw and trace requests, or of ordered
+            series or rows for scalar and time_series requests, to skip before the
+            page starts. On raw requests the skip counts from where a cursor resumes,
+            and the skipped rows are still read, so prefer cursor for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10356,7 +10375,9 @@ components:
             the query they draw.
         cursor:
           description: The opaque nextCursor value from a previous raw result, used
-            to fetch the next page.
+            to fetch the next page. Honored only by raw requests whose order starts
+            with timestamp, for logs followed by id in the same direction; every other
+            request ignores it.
           type: string
         disabled:
           description: When true, the result is excluded from the response; the query
@@ -10393,10 +10414,11 @@ components:
             are replaced by group-by label values.
           type: string
         limit:
-          description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. When
-            0, aggregations are unlimited while raw requests ordered by timestamp
-            return a page of 10000 rows; follow nextCursor for the rest.
+          description: The maximum number of rows for raw and trace requests, or of
+            series or rows for grouped scalar and time_series requests, keeping the
+            top entries by order. When 0, scalar and time_series requests are unlimited,
+            raw requests ordered by timestamp return a page of 10000 rows to continue
+            with nextCursor, and other raw and trace requests return 100 rows.
           type: integer
         limitBy:
           allOf:
@@ -10408,8 +10430,10 @@ components:
             operators and selectedQueryName refer to it.
           type: string
         offset:
-          description: The number of rows to skip before returning results. Prefer
-            cursor for raw requests.
+          description: The number of rows for raw and trace requests, or of ordered
+            series or rows for scalar and time_series requests, to skip before the
+            page starts. On raw requests the skip counts from where a cursor resumes,
+            and the skipped rows are still read, so prefer cursor for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10510,8 +10534,8 @@ components:
           description: The unique name of the trace operator query.
           type: string
         offset:
-          description: The number of raw results to skip before returning. Aggregation
-            requests ignore it.
+          description: The number of raw or trace rows, or of ordered series or rows
+            for time_series and scalar requests, to skip before the page starts.
           type: integer
         order:
           description: The sort order of the matched traces; only span_count and trace_duration

@@ -300,6 +300,9 @@ def build_builder_query(
     functions: list[dict] | None = None,
     bucket_options: dict | None = None,
     disabled: bool = False,
+    order: list[dict] | None = None,
+    limit: int | None = None,
+    offset: int | None = None,
 ) -> dict:
     spec: dict[str, Any] = {
         "name": name,
@@ -336,6 +339,15 @@ def build_builder_query(
     if functions:
         spec["functions"] = functions
 
+    if order:
+        spec["order"] = order
+
+    if limit is not None:
+        spec["limit"] = limit
+
+    if offset is not None:
+        spec["offset"] = offset
+
     return {"type": "builder_query", "spec": spec}
 
 
@@ -348,6 +360,7 @@ def build_formula_query(
     disabled: bool = False,
     order: list[dict] | None = None,
     limit: int | None = None,
+    offset: int | None = None,
 ) -> dict:
     spec: dict[str, Any] = {
         "name": name,
@@ -362,6 +375,8 @@ def build_formula_query(
         spec["order"] = order
     if limit is not None:
         spec["limit"] = limit
+    if offset is not None:
+        spec["offset"] = offset
     return {"type": "builder_formula", "spec": spec}
 
 
@@ -668,6 +683,7 @@ def build_scalar_query(
     group_by: list[dict] | None = None,
     order: list[dict] | None = None,
     limit: int | None = None,
+    offset: int | None = None,
     filter_expression: str | None = None,
     having_expression: str | None = None,
     step_interval: int = DEFAULT_STEP_INTERVAL,
@@ -693,6 +709,9 @@ def build_scalar_query(
 
     if limit is not None:
         spec["limit"] = limit
+
+    if offset is not None:
+        spec["offset"] = offset
 
     if filter_expression:
         spec["filter"] = {"expression": filter_expression}

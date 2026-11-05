@@ -55,7 +55,7 @@ type QueryBuilderTraceOperator struct {
 	Having *Having `json:"having,omitempty" description:"A condition on the aggregation results, for example count() > 10."`
 
 	Limit  int    `json:"limit,omitempty" description:"The maximum number of traces or groups to return. For raw requests 0 means 100 rows; for aggregations 0 means unlimited."`
-	Offset int    `json:"offset,omitempty" description:"The number of raw results to skip before returning. Aggregation requests ignore it."`
+	Offset int    `json:"offset,omitempty" description:"The number of raw or trace rows, or of ordered series or rows for time_series and scalar requests, to skip before the page starts."`
 	Cursor string `json:"cursor,omitempty" description:"Accepted but currently ignored by the trace operator; page raw results with offset."`
 
 	Legend string `json:"legend" description:"The display name template for each series; {{field}} placeholders are replaced by group-by label values."`

@@ -182,7 +182,7 @@ func postProcessBuilderQuery[T any](
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 
-	result = q.applySeriesLimit(result, query.Limit, query.Order)
+	result = q.applySeriesLimit(result, query.Limit, query.Offset, query.Order)
 
 	// Apply functions
 	if len(query.Functions) > 0 {
@@ -234,7 +234,7 @@ func postProcessMetricQuery(
 	reducesToScalar := req.RequestType == qbtypes.RequestTypeScalar && config.ReduceTo != qbtypes.ReduceToUnknown
 
 	if !reducesToScalar {
-		result = q.applySeriesLimit(result, query.Limit, query.Order)
+		result = q.applySeriesLimit(result, query.Limit, query.Offset, query.Order)
 	}
 
 	if len(query.Functions) > 0 {
@@ -246,7 +246,7 @@ func postProcessMetricQuery(
 	// Apply reduce to for scalar request type
 	if reducesToScalar {
 		result = q.applyMetricReduceTo(result, config.ReduceTo)
-		result = q.applySeriesLimit(result, query.Limit, query.Order)
+		result = q.applySeriesLimit(result, query.Limit, query.Offset, query.Order)
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			result.Value = convertTimeSeriesDataToScalar(tsData, tsData.QueryName)
 		}
@@ -263,7 +263,7 @@ func postProcessTraceOperator(
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 
-	result = q.applySeriesLimit(result, query.Limit, query.Order)
+	result = q.applySeriesLimit(result, query.Limit, query.Offset, query.Order)
 
 	// Apply functions if any
 	if len(query.Functions) > 0 {
@@ -296,7 +296,7 @@ func (q *querier) applyMetricReduceTo(result *qbtypes.Result, reduceOp qbtypes.R
 }
 
 // applySeriesLimit limits the number of series in the result.
-func (q *querier) applySeriesLimit(result *qbtypes.Result, limit int, orderBy []qbtypes.OrderBy) *qbtypes.Result {
+func (q *querier) applySeriesLimit(result *qbtypes.Result, limit, offset int, orderBy []qbtypes.OrderBy) *qbtypes.Result {
 	tsData, ok := result.Value.(*qbtypes.TimeSeriesData)
 	if !ok {
 		return result
@@ -305,7 +305,7 @@ func (q *querier) applySeriesLimit(result *qbtypes.Result, limit int, orderBy []
 	if tsData != nil {
 		for _, agg := range tsData.Aggregations {
 			// Use the ApplySeriesLimit function from querybuildertypes
-			agg.Series = qbtypes.ApplySeriesLimit(agg.Series, orderBy, limit)
+			agg.Series = qbtypes.ApplySeriesLimit(agg.Series, orderBy, limit, offset)
 		}
 	}
 
@@ -357,7 +357,7 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 		case qbtypes.RequestTypeTimeSeries:
 			result := q.processTimeSeriesFormula(ctx, results, formula, req)
 			if result != nil {
-				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
+				result = q.applySeriesLimit(result, formula.Limit, formula.Offset, formula.Order)
 				results[name] = result
 			}
 		case qbtypes.RequestTypeHeatmap:
@@ -370,7 +370,7 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 					bucketFormulaOutputAsHeatmap(tsData, bucketing)
 					resolveHeatmapBucketAxis(tsData, bucketing)
 				}
-				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
+				result = q.applySeriesLimit(result, formula.Limit, formula.Offset, formula.Order)
 				results[name] = result
 			}
 		case qbtypes.RequestTypeScalar:
@@ -651,7 +651,7 @@ func (q *querier) processScalarFormula(
 	}
 
 	// Apply ordering (and limit) before converting to scalar format.
-	formulaSeries = qbtypes.ApplySeriesLimit(formulaSeries, formula.Order, formula.Limit)
+	formulaSeries = qbtypes.ApplySeriesLimit(formulaSeries, formula.Order, formula.Limit, formula.Offset)
 
 	// Convert back to scalar format
 	scalarResult := &qbtypes.ScalarData{

@@ -26,6 +26,8 @@ type QueryBuilderFormula struct {
 
 	Limit int `json:"limit,omitempty" description:"The maximum number of series or rows to return. Unlimited when 0."`
 
+	Offset int `json:"offset,omitempty" description:"The number of ordered series or rows to skip before the page starts."`
+
 	Having *Having `json:"having,omitempty" description:"Accepted but currently ignored; the computed values are returned unfiltered."`
 
 	Functions []Function `json:"functions,omitzero" description:"Post-processing functions applied in order to each result series."`
@@ -91,6 +93,14 @@ func (f QueryBuilderFormula) Validate() error {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"formula expression cannot be blank",
+		)
+	}
+
+	if f.Offset < 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"offset must be non-negative, got %d",
+			f.Offset,
 		)
 	}
 
