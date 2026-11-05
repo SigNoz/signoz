@@ -1,8 +1,4 @@
-import {
-	useCallback,
-	useMemo,
-	type MouseEvent as ReactMouseEvent,
-} from 'react';
+import { useCallback, useMemo } from 'react';
 import type { DashboardtypesPieChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import Pie from 'lib/visualization/charts/Pie/Pie';
 import type { PieSlice } from 'lib/visualization/charts/types';
@@ -75,14 +71,14 @@ function PiePanelRenderer({
 	);
 
 	const handleSliceClick = useCallback(
-		(slice: PieSlice, event: ReactMouseEvent): void => {
+		(slice: PieSlice, coordinates: { x: number; y: number }): void => {
 			if (!onClick) {
 				return;
 			}
 			const payload = enrichPieClick({
 				slice,
 				builderQueries,
-				coordinates: { x: event.clientX, y: event.clientY },
+				coordinates,
 				timeRange: getPanelTimeRange(data.requestPayload),
 			});
 			if (payload) {

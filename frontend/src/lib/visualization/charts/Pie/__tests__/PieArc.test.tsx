@@ -11,12 +11,12 @@ jest.mock('components/Graph/yAxisConfig', () => ({
 const SLICE: PieSlice = { label: 'frontend', value: 50, color: '#f00' };
 
 function renderArc(props: Partial<React.ComponentProps<typeof PieArc>> = {}): {
-	onEnter: jest.Mock;
+	onHover: jest.Mock;
 	onLeave: jest.Mock;
 	onClick: jest.Mock;
 	container: HTMLElement;
 } {
-	const onEnter = jest.fn();
+	const onHover = jest.fn();
 	const onLeave = jest.fn();
 	const onClick = jest.fn();
 	const { container } = render(
@@ -31,14 +31,14 @@ function renderArc(props: Partial<React.ComponentProps<typeof PieArc>> = {}): {
 				totalValue={100}
 				labelColor="#fff"
 				fill="#f00"
-				onEnter={onEnter}
+				onHover={onHover}
 				onLeave={onLeave}
 				onClick={onClick}
 				{...props}
 			/>
 		</svg>,
 	);
-	return { onEnter, onLeave, onClick, container };
+	return { onHover, onLeave, onClick, container };
 }
 
 describe('PieArc', () => {
@@ -69,12 +69,14 @@ describe('PieArc', () => {
 		expect(screen.getByText('a-really-lon...')).toBeInTheDocument();
 	});
 
-	it('fires onEnter with the slice + centroid, and onLeave / onClick', () => {
-		const { onEnter, onLeave, onClick, container } = renderArc();
+	it('fires onHover with the slice on enter and move, and onLeave / onClick', () => {
+		const { onHover, onLeave, onClick, container } = renderArc();
 		const g = container.querySelector('g') as SVGGElement;
 
 		fireEvent.mouseEnter(g);
-		expect(onEnter).toHaveBeenCalledWith(SLICE, 10, 20);
+		fireEvent.mouseMove(g);
+		expect(onHover).toHaveBeenCalledTimes(2);
+		expect(onHover).toHaveBeenCalledWith(SLICE, expect.anything());
 
 		fireEvent.mouseLeave(g);
 		expect(onLeave).toHaveBeenCalledTimes(1);

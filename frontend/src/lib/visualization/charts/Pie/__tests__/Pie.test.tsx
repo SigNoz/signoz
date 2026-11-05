@@ -14,22 +14,40 @@ jest.mock('components/Graph/yAxisConfig', () => ({
 	getYAxisFormattedValue: jest.fn((value: string) => value),
 }));
 
-// VirtuosoGrid only renders a window in jsdom; render every item so we can
-// assert on legend entries.
+// Virtuoso only renders a window in jsdom; render every item so we can
+// assert on legend entries and tooltip rows.
 jest.mock('react-virtuoso', () => ({
+	Virtuoso: ({
+		data,
+		itemContent,
+		'data-testid': testId,
+	}: {
+		data: unknown[];
+		itemContent: (index: number, item: unknown) => React.ReactNode;
+		'data-testid'?: string;
+	}): JSX.Element => (
+		<div data-testid={testId}>
+			{data.map((item, index) => (
+				// eslint-disable-next-line react/no-array-index-key
+				<div key={index}>{itemContent(index, item)}</div>
+			))}
+		</div>
+	),
 	VirtuosoGrid: ({
 		data,
 		itemContent,
 	}: {
 		data: LegendItem[];
 		itemContent: (index: number, item: LegendItem) => React.ReactNode;
-	}): JSX.Element => (
-		<div data-testid="virtuoso-grid">
-			{data.map((item, index) => (
-				<div key={item.seriesIndex ?? index}>{itemContent(index, item)}</div>
-			))}
-		</div>
-	),
+	}): JSX.Element => {
+		return (
+			<div data-testid="virtuoso-grid">
+				{data.map((item, index) => (
+					<div key={item.seriesIndex ?? index}>{itemContent(index, item)}</div>
+				))}
+			</div>
+		);
+	},
 }));
 
 const DATA: PieSlice[] = [
@@ -125,6 +143,26 @@ describe('Pie', () => {
 		expect(svg.querySelectorAll('path')).toHaveLength(1);
 	});
 
+	it('hints at drill-down on a plain slice only when clickable', () => {
+		const { unmount } = render(
+			<Pie
+				data={DATA}
+				isDarkMode={false}
+				data-testid="pie"
+				onSliceClick={jest.fn()}
+			/>,
+		);
+		const arc = (): Element =>
+			screen.getByTestId('pie').querySelectorAll('svg g g')[0];
+		fireEvent.mouseEnter(arc());
+		expect(screen.getByText('Click to drilldown')).toBeInTheDocument();
+		unmount();
+
+		renderPie();
+		fireEvent.mouseEnter(arc());
+		expect(screen.queryByTestId('pie-tooltip-footer')).toBeNull();
+	});
+
 	describe('grouped slice', () => {
 		// Each member is under 1% of the 2078 total, so the 12 fold into Other.
 		const members: PieSlice[] = Array.from({ length: 12 }, (_, index) => ({
@@ -174,6 +212,99 @@ describe('Pie', () => {
 
 			expect(arcs()).toHaveLength(3);
 			expect(screen.queryByText(/^Other/)).toBeNull();
+		});
+
+		const hoverOther = (): SVGElement => {
+			const svg = screen.getByTestId('pie').querySelector('svg') as SVGElement;
+			const otherArc = svg.querySelectorAll('g g')[3] as SVGElement;
+			fireEvent.mouseEnter(otherArc);
+			return otherArc;
+		};
+
+		const tooltipList = (): HTMLElement =>
+			screen.getByTestId('uplot-tooltip-list');
+
+		it('lists every member in the hover tooltip, not yet clickable', () => {
+			renderPie({ data: GROUPED, onSliceClick: jest.fn() });
+
+			hoverOther();
+
+			expect(tooltipList().children).toHaveLength(12);
+			expect(within(tooltipList()).getByText('svc-11')).toBeInTheDocument();
+			expect(
+				screen.getByText('Click to pin, then pick a series'),
+			).toBeInTheDocument();
+			expect(screen.queryByTestId('uplot-tooltip-item-button')).toBeNull();
+			expect(screen.queryByTestId('uplot-tooltip-status')).toBeNull();
+		});
+
+		it('follows the cursor until pinned', () => {
+			renderPie({ data: GROUPED, onSliceClick: jest.fn() });
+			const otherArc = hoverOther();
+			const tooltip = (): HTMLElement =>
+				document.querySelector('[data-pie-tooltip]') as HTMLElement;
+
+			fireEvent.mouseMove(otherArc, { clientX: 100, clientY: 50 });
+			const first = tooltip().getAttribute('style');
+			fireEvent.mouseMove(otherArc, { clientX: 140, clientY: 90 });
+			const moved = tooltip().getAttribute('style');
+			expect(moved).not.toBe(first);
+
+			fireEvent.click(otherArc);
+			fireEvent.mouseMove(otherArc, { clientX: 10, clientY: 10 });
+			expect(tooltip().getAttribute('style')).toBe(moved);
+		});
+
+		it('pins on click, then drills into the clicked member', () => {
+			const onSliceClick = jest.fn();
+			renderPie({ data: GROUPED, onSliceClick });
+
+			const otherArc = hoverOther();
+			fireEvent.click(otherArc);
+			fireEvent.mouseLeave(otherArc);
+
+			expect(onSliceClick).not.toHaveBeenCalled();
+			expect(screen.getByTestId('uplot-tooltip-status')).toBeInTheDocument();
+			expect(screen.getByText('12 series')).toBeInTheDocument();
+			expect(screen.getByText('Click a series to drilldown')).toBeInTheDocument();
+
+			const tooltip = document.querySelector('[data-pie-tooltip]') as HTMLElement;
+			jest
+				.spyOn(tooltip, 'getBoundingClientRect')
+				.mockReturnValue({ left: 40, top: 70 } as DOMRect);
+			fireEvent.click(within(tooltipList()).getByText('svc-3'), {
+				clientX: 300,
+				clientY: 400,
+			});
+
+			// The drill-down menu opens where the pinned tooltip was, not at the row.
+			expect(onSliceClick).toHaveBeenCalledWith(members[3], { x: 40, y: 70 });
+			expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
+		});
+
+		it('unpins on Escape, a click outside and the Unpin button', () => {
+			renderPie({ data: GROUPED, onSliceClick: jest.fn() });
+
+			fireEvent.click(hoverOther());
+			fireEvent.keyDown(document, { key: 'Escape' });
+			expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
+
+			fireEvent.click(hoverOther());
+			fireEvent.pointerDown(document.body);
+			expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
+
+			fireEvent.click(hoverOther());
+			fireEvent.click(screen.getByTestId('pie-tooltip-unpin'));
+			expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
+		});
+
+		it('pins without drill-down targets when drill-down is off', () => {
+			renderPie({ data: GROUPED });
+
+			fireEvent.click(hoverOther());
+
+			expect(screen.queryByTestId('uplot-tooltip-item-button')).toBeNull();
+			expect(screen.getByTestId('pie-tooltip-unpin')).toBeInTheDocument();
 		});
 	});
 });

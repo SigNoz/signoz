@@ -17,7 +17,7 @@ interface PieArcProps {
 	slice: PieSlice;
 	/** SVG path `d` for the arc, from the visx pie generator. */
 	arcPath: string;
-	/** Arc centroid `[x, y]`, used to anchor the leader line and tooltip. */
+	/** Arc centroid `[x, y]`, used to anchor the leader line. */
 	centroid: [number, number];
 	startAngle: number;
 	endAngle: number;
@@ -29,7 +29,8 @@ interface PieArcProps {
 	labelColor: string;
 	/** Resolved fill (already dimmed if another slice is active). */
 	fill: string;
-	onEnter: (slice: PieSlice, centroidX: number, centroidY: number) => void;
+	/** Fired on enter and on every move, so the tooltip can follow the cursor. */
+	onHover: (slice: PieSlice, event: ReactMouseEvent<SVGGElement>) => void;
 	onLeave: () => void;
 	onClick?: (slice: PieSlice, event: ReactMouseEvent) => void;
 }
@@ -37,7 +38,7 @@ interface PieArcProps {
 /**
  * A single donut slice: the arc path plus, for non-tiny slices, a leader line
  * out to an external label + value. Pure presentation — interaction is
- * delegated to the `onEnter`/`onLeave`/`onClick` callbacks.
+ * delegated to the `onHover`/`onLeave`/`onClick` callbacks.
  */
 export default function PieArc({
 	slice,
@@ -51,7 +52,7 @@ export default function PieArc({
 	decimalPrecision,
 	labelColor,
 	fill,
-	onEnter,
+	onHover,
 	onLeave,
 	onClick,
 }: PieArcProps): JSX.Element {
@@ -75,7 +76,9 @@ export default function PieArc({
 
 	return (
 		<g
-			onMouseEnter={(): void => onEnter(slice, centroidX, centroidY)}
+			data-pie-arc=""
+			onMouseEnter={(event): void => onHover(slice, event)}
+			onMouseMove={(event): void => onHover(slice, event)}
 			onMouseLeave={onLeave}
 			onClick={(event): void => onClick?.(slice, event)}
 		>

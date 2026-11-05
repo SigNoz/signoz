@@ -1,8 +1,15 @@
-import { useCallback, useMemo, useRef } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+	type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Group } from '@visx/group';
 import { Pie as VisxPie } from '@visx/shape';
-import { defaultStyles, useTooltip, useTooltipInPortal } from '@visx/tooltip';
+import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -17,14 +24,18 @@ import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility
 import PieArc from 'lib/visualization/charts/Pie/PieArc';
 import { groupPieSlices } from 'lib/visualization/charts/Pie/groupPieSlices';
 import PieCenterLabel from 'lib/visualization/charts/Pie/PieCenterLabel';
+import PieTooltipContent from 'lib/visualization/charts/Pie/PieTooltipContent';
 import styles from 'lib/visualization/charts/Pie/Pie.module.scss';
 import { PieTooltipData } from 'lib/visualization/charts/Pie/types';
 import {
-	compareSlices,
 	getDonutGeometry,
+	compareSlices,
 	getFillColor,
 	getSliceDisplayLabel,
 } from 'lib/visualization/charts/Pie/utils';
+
+// Keeps the cursor off the tooltip so it never steals the hover.
+const TOOLTIP_CURSOR_OFFSET = 12;
 
 /**
  * Donut chart rendered with @visx. Splits its area into chart + legend with the
@@ -134,37 +145,146 @@ export default function Pie({
 	);
 
 	const labelColor = isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400;
-	const hoveredColor = tooltipOpen ? tooltipData?.color : undefined;
+	const hoveredColor = tooltipOpen ? tooltipData?.slice.color : undefined;
 	const activeColor =
 		hoveredColor ??
 		(focusedSeriesIndex !== null
 			? (drawnColorByLabel.get(labels[focusedSeriesIndex]) ?? null)
 			: null);
 
-	const handleSliceEnter = useCallback(
-		(slice: PieSlice, centroidX: number, centroidY: number): void => {
-			showTooltip({
-				tooltipData: {
-					label: getSliceDisplayLabel(slice),
-					value: getYAxisFormattedValue(
-						slice.value.toString(),
-						yAxisUnit || 'none',
-						decimalPrecision,
-					),
-					color: slice.color,
-				},
-				tooltipTop: centroidY + height / 2,
-				tooltipLeft: centroidX + width / 2,
-			});
-			setFocusedKey(slice.label);
-		},
-		[showTooltip, setFocusedKey, yAxisUnit, decimalPrecision, height, width],
+	const formatValue = useCallback(
+		(value: number): string =>
+			getYAxisFormattedValue(
+				value.toString(),
+				yAxisUnit || 'none',
+				decimalPrecision,
+			),
+		[yAxisUnit, decimalPrecision],
 	);
 
-	const handleSliceLeave = useCallback((): void => {
+	// A grouped slice's click pins its tooltip so its members can be drilled into.
+	const [pinnedSlice, setPinnedSlice] = useState<PieSlice | null>(null);
+
+	const unpin = useCallback((): void => {
+		setPinnedSlice(null);
 		hideTooltip();
 		setFocusedKey(null);
 	}, [hideTooltip, setFocusedKey]);
+
+	useEffect(() => {
+		setPinnedSlice(null);
+	}, [visibleData]);
+
+	useEffect(() => {
+		if (!pinnedSlice) {
+			return undefined;
+		}
+		const onPointerDown = (event: PointerEvent): void => {
+			const target = event.target as Element | null;
+			// Arc clicks resolve the pin themselves (see handleSliceClick).
+			if (target?.closest('[data-pie-tooltip], [data-pie-arc]')) {
+				return;
+			}
+			unpin();
+		};
+		const onKeyDown = (event: KeyboardEvent): void => {
+			if (event.key === 'Escape') {
+				unpin();
+			}
+		};
+		document.addEventListener('pointerdown', onPointerDown);
+		document.addEventListener('keydown', onKeyDown);
+		return (): void => {
+			document.removeEventListener('pointerdown', onPointerDown);
+			document.removeEventListener('keydown', onKeyDown);
+		};
+	}, [pinnedSlice, unpin]);
+
+	// Built once per data change, not on every mouse move.
+	const tooltipDataBySlice = useMemo(
+		() =>
+			new Map<PieSlice, PieTooltipData>(
+				visibleData.map((slice) => [
+					slice,
+					{
+						slice: {
+							label: getSliceDisplayLabel(slice),
+							value: slice.value,
+							tooltipValue: formatValue(slice.value),
+							color: slice.color,
+							isActive: true,
+						},
+						members: slice.members?.map((member) => ({
+							label: member.label,
+							value: member.value,
+							tooltipValue: formatValue(member.value),
+							color: member.color,
+							isActive: false,
+						})),
+					},
+				]),
+			),
+		[visibleData, formatValue],
+	);
+
+	const handleSliceHover = useCallback(
+		(slice: PieSlice, event: ReactMouseEvent<SVGGElement>): void => {
+			if (pinnedSlice) {
+				return;
+			}
+			const svgRect = event.currentTarget.ownerSVGElement?.getBoundingClientRect();
+			showTooltip({
+				tooltipData: tooltipDataBySlice.get(slice),
+				tooltipTop: event.clientY - (svgRect?.top ?? 0) + TOOLTIP_CURSOR_OFFSET,
+				tooltipLeft: event.clientX - (svgRect?.left ?? 0) + TOOLTIP_CURSOR_OFFSET,
+			});
+			setFocusedKey(slice.label);
+		},
+		[pinnedSlice, showTooltip, setFocusedKey, tooltipDataBySlice],
+	);
+
+	const handleSliceLeave = useCallback((): void => {
+		if (pinnedSlice) {
+			return;
+		}
+		hideTooltip();
+		setFocusedKey(null);
+	}, [pinnedSlice, hideTooltip, setFocusedKey]);
+
+	const handleSliceClick = useCallback(
+		(slice: PieSlice, event: ReactMouseEvent): void => {
+			if (slice.members) {
+				if (pinnedSlice === slice) {
+					unpin();
+				} else {
+					setPinnedSlice(slice);
+				}
+				return;
+			}
+			if (pinnedSlice) {
+				unpin();
+			}
+			onSliceClick?.(slice, { x: event.clientX, y: event.clientY });
+		},
+		[pinnedSlice, unpin, onSliceClick],
+	);
+
+	const handleMemberClick = useCallback(
+		(index: number, event: ReactMouseEvent): void => {
+			const member = pinnedSlice?.members?.[index];
+			const tooltipRect = (event.currentTarget as Element)
+				.closest('[data-pie-tooltip]')
+				?.getBoundingClientRect();
+			unpin();
+			if (member) {
+				onSliceClick?.(member, {
+					x: tooltipRect?.left ?? event.clientX,
+					y: tooltipRect?.top ?? event.clientY,
+				});
+			}
+		},
+		[pinnedSlice, unpin, onSliceClick],
+	);
 
 	if (!data.length) {
 		return (
@@ -219,9 +339,9 @@ export default function Pie({
 											decimalPrecision={decimalPrecision}
 											labelColor={labelColor}
 											fill={getFillColor(arc.data.color, activeColor)}
-											onEnter={handleSliceEnter}
+											onHover={handleSliceHover}
 											onLeave={handleSliceLeave}
-											onClick={onSliceClick}
+											onClick={handleSliceClick}
 										/>
 									))
 								}
@@ -242,19 +362,19 @@ export default function Pie({
 						top={tooltipTop}
 						left={tooltipLeft}
 						className={styles.pieChartTooltip}
-						style={{
-							...defaultStyles,
-							color: labelColor,
-						}}
+						unstyled
+						applyPositionStyle
+						style={{ pointerEvents: pinnedSlice ? 'auto' : 'none' }}
+						data-pie-tooltip=""
 					>
-						<div
-							className={styles.pieChartIndicator}
-							style={{ background: tooltipData.color }}
+						<PieTooltipContent
+							id={id ?? ''}
+							data={tooltipData}
+							isPinned={!!pinnedSlice}
+							canDrilldown={!!onSliceClick}
+							onMemberClick={handleMemberClick}
+							onUnpin={unpin}
 						/>
-						<div className={styles.pieChartTooltipContent}>
-							<span>{tooltipData.label}</span>
-							<span className={styles.pieChartTooltipValue}>{tooltipData.value}</span>
-						</div>
 					</TooltipInPortal>
 				)}
 			</div>
