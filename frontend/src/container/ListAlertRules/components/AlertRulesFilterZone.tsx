@@ -2,7 +2,7 @@ import FilterZone from 'components/ListFilter/FilterZone/FilterZone';
 import type { SuggestionSource } from 'components/ListFilter/dsl/types';
 import type { CreatorOption } from 'components/ListFilter/types';
 
-import { RULES_DSL_GRAMMAR } from '../rulesDslGrammar';
+import { RULES_DSL_GRAMMAR } from '../list.config';
 import RuleStatesFilter from './RuleStatesFilter';
 
 interface Props {

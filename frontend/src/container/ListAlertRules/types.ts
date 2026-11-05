@@ -16,3 +16,7 @@ export interface RuleListFilter {
 }
 
 export type RuleView = SavedListView<RuleListFilter>;
+
+export interface RuleViewCtx {
+	userEmail: string;
+}

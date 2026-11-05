@@ -19,9 +19,10 @@ import {
 import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
 import { DEFAULT_RULE_LIST_FILTER } from 'container/ListAlertRules/utils';
 import {
-	builtinRuleViewFilter,
-	RuleBuiltinViewId,
-} from 'container/ListAlertRules/views';
+	DEFAULT_RULE_VIEW,
+	RULE_BUILTIN_VIEWS,
+	type RuleViewId,
+} from 'container/ListAlertRules/list.config';
 
 import {
 	alertRulesResponse,
@@ -50,12 +51,12 @@ const ACTION_STATES = ['success', 'loading', 'error'] as const;
 type ActionState = (typeof ACTION_STATES)[number];
 
 const VIEW_CHOICES = [
-	RuleBuiltinViewId.All,
-	RuleBuiltinViewId.Mine,
-	RuleBuiltinViewId.Firing,
-	RuleBuiltinViewId.Disabled,
+	'all',
+	'mine',
+	'firing',
+	'disabled',
 	'saved',
-] as const;
+] as const satisfies readonly (RuleViewId | 'saved')[];
 type ViewChoice = (typeof VIEW_CHOICES)[number];
 
 /**
@@ -64,7 +65,7 @@ type ViewChoice = (typeof VIEW_CHOICES)[number];
  */
 const listRoute = (view: ViewChoice): string => {
 	const params = new URLSearchParams({ tab: AlertListTabs.ALERT_RULES });
-	if (view === RuleBuiltinViewId.All) {
+	if (view === DEFAULT_RULE_VIEW) {
 		return `/alerts?${params.toString()}`;
 	}
 
@@ -72,7 +73,10 @@ const listRoute = (view: ViewChoice): string => {
 	const filter =
 		view === 'saved'
 			? { query: saved.data.query ?? '', states: saved.data.states ?? [] }
-			: builtinRuleViewFilter(view, DEFAULT_RULE_LIST_FILTER, STORY_USER_EMAIL);
+			: RULE_BUILTIN_VIEWS.find((v) => v.id === view)?.filter(
+					DEFAULT_RULE_LIST_FILTER,
+					{ userEmail: STORY_USER_EMAIL },
+				);
 
 	params.set('view', view === 'saved' ? saved.id : view);
 	if (filter?.query) {
@@ -140,7 +144,7 @@ export const alertRulesMocks = defineStoryMocks({
 			description:
 				'The rail entry the page opens on. `saved` is the first saved view; the built-ins apply a query or a state set.',
 			options: VIEW_CHOICES,
-			value: RuleBuiltinViewId.All,
+			value: DEFAULT_RULE_VIEW,
 		}),
 		railCollapsed: toggleControl('Rail collapsed', {
 			group: VIEWS,

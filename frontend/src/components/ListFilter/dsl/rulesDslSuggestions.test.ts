@@ -1,4 +1,4 @@
-import { RULES_DSL_GRAMMAR } from 'container/ListAlertRules/rulesDslGrammar';
+import { RULES_DSL_GRAMMAR } from 'container/ListAlertRules/list.config';
 
 import { getSuggestions } from './dslSuggestions';
 import type { SuggestionSource } from './types';

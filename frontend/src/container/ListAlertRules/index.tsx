@@ -25,7 +25,7 @@ import { useAlertRulesHandlers } from './useAlertRulesHandlers';
 import { useAlertRulesListFilter } from './useAlertRulesListFilter';
 import { useAlertRuleViews } from './useAlertRuleViews';
 import { useAlertRuleViewsStore } from './useAlertRuleViewsStore';
-import { RULE_BUILTIN_VIEWS, RuleBuiltinViewId } from './views';
+import { DEFAULT_RULE_VIEW, RULE_BUILTIN_VIEWS } from './list.config';
 
 const QUERY_PARAMS_CONFIG = {
 	orderBy: 'orderBy',
@@ -110,7 +110,7 @@ function ListAlertRules(): JSX.Element {
 
 	const { selectView } = ruleViews;
 	const handleClearFilters = useCallback((): void => {
-		selectView(RuleBuiltinViewId.All);
+		selectView(DEFAULT_RULE_VIEW);
 	}, [selectView]);
 
 	const columns = useMemo(

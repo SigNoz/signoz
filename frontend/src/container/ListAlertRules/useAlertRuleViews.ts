@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useQueryState } from 'nuqs';
 import type { UseListViewsResult } from 'hooks/listViews/types';
 import { useListViews } from 'hooks/listViews/useListViews';
 
 import { ALERT_RULES_PARAMS } from './hooks';
-import type { RuleListFilter } from './types';
+import { DEFAULT_RULE_VIEW, RULE_BUILTIN_VIEWS } from './list.config';
+import type { RuleListFilter, RuleViewCtx } from './types';
 import { useRuleViews } from './useRuleViews';
 import { isDefaultRuleListFilter, isSameRuleListFilter } from './utils';
-import { builtinRuleViewFilter, RuleBuiltinViewId } from './views';
 
 interface UseAlertRuleViewsArgs {
 	filter: RuleListFilter;
@@ -29,18 +29,15 @@ export function useAlertRuleViews({
 }: UseAlertRuleViewsArgs): UseAlertRuleViewsResult {
 	const api = useRuleViews();
 
-	const builtinFilter = useCallback(
-		(id: string, current: RuleListFilter): RuleListFilter | null =>
-			builtinRuleViewFilter(id, current, userEmail),
-		[userEmail],
-	);
+	const ctx = useMemo<RuleViewCtx>(() => ({ userEmail }), [userEmail]);
 
-	const views = useListViews<RuleListFilter>({
+	const views = useListViews<RuleListFilter, RuleViewCtx>({
 		filter,
 		applyFilter,
 		isEqual: isSameRuleListFilter,
-		builtinFilter,
-		defaultViewId: RuleBuiltinViewId.All,
+		builtinViews: RULE_BUILTIN_VIEWS,
+		ctx,
+		defaultViewId: DEFAULT_RULE_VIEW,
 		api,
 		urlParam: ALERT_RULES_PARAMS.VIEW,
 	});
