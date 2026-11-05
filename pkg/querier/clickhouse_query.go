@@ -145,20 +145,17 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	}
 
 	parentCtx := ctx
-	var cancel context.CancelFunc
 	if q.budget.MaxExecutionTime > 0 {
+		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, q.budget.MaxExecutionTime)
-	} else {
-		ctx, cancel = context.WithCancel(ctx)
+		defer cancel()
 	}
-	defer cancel()
 	ctx = telemetrystore.NewContextWithQuerySettings(ctx, q.budget.settings())
 
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, q.args...)
 	if err != nil {
 		return nil, q.budgetError(parentCtx, ctx, err)
 	}
-	rows = newResultBudgetRows(rows, cancel, q.budget.MaxResultRows, q.budget.MaxResultBytes)
 	defer rows.Close()
 
 	payload, err := consume(rows, q.kind, nil, qbtypes.Step{}, q.query.Name)

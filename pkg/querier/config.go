@@ -33,9 +33,9 @@ type ClickHouseQueryConfig struct {
 	MaxExecutionTime time.Duration `yaml:"max_execution_time" mapstructure:"max_execution_time"`
 	// MaxMemoryUsage is the ClickHouse memory limit of the query, in bytes.
 	MaxMemoryUsage int64 `yaml:"max_memory_usage" mapstructure:"max_memory_usage"`
-	// MaxResultRows caps the number of result rows, both in ClickHouse and while reading rows.
+	// MaxResultRows caps the number of result rows.
 	MaxResultRows int64 `yaml:"max_result_rows" mapstructure:"max_result_rows"`
-	// MaxResultBytes caps the result size, in bytes, both in ClickHouse and while reading rows.
+	// MaxResultBytes caps the uncompressed result size, in bytes.
 	MaxResultBytes int64 `yaml:"max_result_bytes" mapstructure:"max_result_bytes"`
 }
 
