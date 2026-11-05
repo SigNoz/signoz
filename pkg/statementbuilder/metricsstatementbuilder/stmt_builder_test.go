@@ -513,7 +513,7 @@ func TestStatementBuilder(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:        "test_gauge_group_by_unknown_le_warns",
+			name:        "Gauge_GroupByUnknownLe_Warns",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 				Signal:       telemetrytypes.SignalMetrics,
