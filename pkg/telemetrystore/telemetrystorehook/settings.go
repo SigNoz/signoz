@@ -73,6 +73,7 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
+	// Per-query settings override the ones above.
 	maps.Copy(settings, telemetrystore.QuerySettingsFromContext(ctx))
 
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
