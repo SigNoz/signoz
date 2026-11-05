@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { ensureAiRequiredColumns } from 'container/LLMObservability/Explorer/constants';
 import { ensureLogsRequiredColumns } from 'container/OptionsMenu/constants';
 import { has } from 'lodash-es';
 
@@ -79,7 +80,7 @@ function aiObservabilityPreferencesLoader(
 	const { columns } = preferencesLoader<Preferences>(
 		getAiObservabilityLoaderConfig(panelType),
 	);
-	return { columns, panelType };
+	return { columns: ensureAiRequiredColumns(columns, panelType), panelType };
 }
 
 const PREFERENCE_LOADERS: Record<

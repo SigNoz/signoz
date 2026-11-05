@@ -200,7 +200,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		);
 	});
 
-	it('passes AI trace selectedFields through and uses the defaults when absent', () => {
+	it('adds trace_id to AI trace selectedFields and uses the defaults when absent', () => {
 		mockViews([
 			makeView('ai-with-fields', SavedviewtypesSourceDTO.ai_observability, {
 				panelType: SavedviewtypesPanelTypeDTO.trace,
@@ -227,7 +227,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		);
 
 		expect(withFields.result.current.preferences).toStrictEqual({
-			columns: [{ name: 'total_tokens' }],
+			columns: [{ name: 'trace_id' }, { name: 'total_tokens' }],
 			panelType: PANEL_TYPES.TRACE,
 		});
 		expect(withoutFields.result.current.preferences).toStrictEqual({

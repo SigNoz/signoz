@@ -138,6 +138,20 @@ describe('TracesView columns', () => {
 		expect(shownColumns()).toStrictEqual(['total_tokens', 'trace_id']);
 	});
 
+	it('keeps a dragged trace_id in place when the stored list lacks it', async () => {
+		const user = userEvent.setup();
+		localStorage.setItem(
+			PANEL_COLUMNS_KEY,
+			JSON.stringify({ [PANEL_TYPES.TRACE]: [TOTAL_TOKENS] }),
+		);
+		renderTracesView();
+
+		await user.click(screen.getByTestId('reverse-columns'));
+
+		expect(storedColumnNames()).toStrictEqual(['total_tokens', 'trace_id']);
+		expect(shownColumns()).toStrictEqual(['total_tokens', 'trace_id']);
+	});
+
 	it('drops a column removed from the table', async () => {
 		const user = userEvent.setup();
 		localStorage.setItem(

@@ -52,7 +52,6 @@ import {
 	buildTraceViewColumns,
 	PER_PAGE_OPTIONS,
 	REQUIRED_FIELDS,
-	withTraceId,
 } from './configs';
 import styles from './TracesView.module.scss';
 
@@ -81,14 +80,9 @@ function TracesView({
 		sourcePage: SavedviewtypesSourceDTO.ai_observability,
 	});
 
-	// trace_id is the row's link, so a stored list without it still shows it.
-	const selectedFields = useMemo(
-		() => withTraceId(options.selectColumns),
-		[options.selectColumns],
-	);
 	const tableColumns = useMemo(
-		() => buildTraceViewColumns(selectedFields),
-		[selectedFields],
+		() => buildTraceViewColumns(options.selectColumns),
+		[options.selectColumns],
 	);
 
 	const handleColumnOrderChange = useCallback(

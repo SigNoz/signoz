@@ -473,7 +473,7 @@ describe('PreferencesProvider integration', () => {
 
 			renderAiConsumer();
 
-			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('2');
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('3');
 		});
 
 		const URL_COLUMNS = [{ name: 'ai.url.a' }, { name: 'ai.url.b' }];
@@ -521,7 +521,7 @@ describe('PreferencesProvider integration', () => {
 				panelTypes: PANEL_TYPES.TRACE,
 			});
 
-			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('2');
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('3');
 		});
 
 		it('files the url columns under the panel in panelTypes', () => {
@@ -545,7 +545,7 @@ describe('PreferencesProvider integration', () => {
 				panelTypes: PANEL_TYPES.TRACE,
 			});
 
-			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('1');
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('2');
 		});
 
 		it('keeps its url columns out of the traces slice', () => {
@@ -585,7 +585,7 @@ describe('PreferencesProvider integration', () => {
 
 			renderAiConsumer();
 
-			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('1');
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('2');
 		});
 
 		it('ignores a stored panel that is not a list', () => {
@@ -610,7 +610,7 @@ describe('PreferencesProvider integration', () => {
 				panelTypes: PANEL_TYPES.TRACE,
 			});
 
-			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('2');
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('3');
 		});
 
 		it('loads the columns of the panel open in the url', () => {
@@ -653,7 +653,7 @@ describe('PreferencesProvider integration', () => {
 
 			await user.click(screen.getByTestId('ai-update-columns'));
 
-			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('1');
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('2');
 			expect(
 				getLocalStorageJSON<PanelColumns>(
 					LOCALSTORAGE.AI_OBSERVABILITY_PANEL_COLUMNS,

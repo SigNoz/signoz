@@ -9,7 +9,10 @@ import {
 	defaultTraceSelectedColumns,
 	ensureLogsRequiredColumns,
 } from 'container/OptionsMenu/constants';
-import { DEFAULT_PANEL_TYPE } from 'container/LLMObservability/Explorer/constants';
+import {
+	DEFAULT_PANEL_TYPE,
+	ensureAiRequiredColumns,
+} from 'container/LLMObservability/Explorer/constants';
 import { FontSize, LogViewMode } from 'container/OptionsMenu/types';
 import getAiObservabilityLoaderConfig from 'providers/preferences/configs/aiObservabilityLoaderConfig';
 import { Preferences } from 'providers/preferences/types';
@@ -55,9 +58,11 @@ export function getViewColumnsAndFormatting(
 			(spec?.panelType as unknown as PANEL_TYPES | undefined) ??
 			DEFAULT_PANEL_TYPE;
 		return {
-			columns:
+			columns: ensureAiRequiredColumns(
 				selectedFields ||
-				getAiObservabilityLoaderConfig(panelType).default().columns,
+					getAiObservabilityLoaderConfig(panelType).default().columns,
+				panelType,
+			),
 			panelType,
 		};
 	}

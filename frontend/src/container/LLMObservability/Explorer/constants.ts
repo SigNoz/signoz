@@ -4,6 +4,9 @@ import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 export const DEFAULT_PANEL_TYPE = PANEL_TYPES.TRACE;
 
+/** Always present: it is the row's link to the trace, but it can be reordered. */
+export const TRACE_ID_COLUMN_ID = 'trace_id';
+
 export const TOOLBAR_VIEWS = {
 	trace: {
 		name: 'trace',
@@ -122,6 +125,15 @@ export const TRACE_VIEW_DEFAULT_COLUMNS: TelemetryFieldKey[] = [
 		fieldDataType: 'float64',
 	},
 ];
+
+export const ensureAiRequiredColumns = (
+	columns: TelemetryFieldKey[],
+	panelType: PANEL_TYPES,
+): TelemetryFieldKey[] =>
+	panelType !== PANEL_TYPES.TRACE ||
+	columns.some((column) => column.name === TRACE_ID_COLUMN_ID)
+		? columns
+		: [{ name: TRACE_ID_COLUMN_ID }, ...columns];
 
 export const TRACE_VIEW_FIELD_KEYS = {
 	fieldContext: TelemetrytypesFieldContextDTO.trace,
