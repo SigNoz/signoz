@@ -90,7 +90,8 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 			WithSuggestions("cast the Decimal values to Float64, or to a wider Decimal such as Decimal128, before the arithmetic")
 	},
 	chproto.ErrTimeoutExceeded: func(cause error, ex *clickhouse.Exception) error {
-		return errors.WrapTimeoutf(cause, ErrCodeQueryTimeout, "query timed out: %s", ex.Message)
+		return errors.WrapTimeoutf(cause, ErrCodeQueryTimeout, "query timed out: %s", ex.Message).
+			WithSuggestions("narrow the time range or add filters to read less data")
 	},
 	chproto.ErrMemoryLimitExceeded: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeMemoryLimitExceeded, "query memory limit exceeded: %s", ex.Message).
