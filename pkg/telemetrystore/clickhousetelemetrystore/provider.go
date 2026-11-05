@@ -301,9 +301,14 @@ func (p *provider) Contributors() []string {
 // castQueryError is castError that returns the cause of a deadline set with one, such as the ClickHouse exception
 // from telemetrystore.NewContextWithQueryTimeout.
 func castQueryError(ctx context.Context, err error) error {
-	if errors.Is(err, context.DeadlineExceeded) {
-		// Cause is nil while ctx is live, e.g. when the driver's own dial timeout ended the call.
-		if cause := context.Cause(ctx); cause != nil && !errors.Is(cause, context.DeadlineExceeded) {
+	if err == nil {
+		return nil
+	}
+
+	// Once ctx is done, the driver returns ctx.Err() or a socket i/o timeout, whichever it sees first; both mean the
+	// deadline ended the query.
+	if ctx.Err() != nil {
+		if cause := context.Cause(ctx); !errors.Is(cause, context.DeadlineExceeded) && !errors.Is(cause, context.Canceled) {
 			return castError(cause)
 		}
 	}

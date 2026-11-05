@@ -3,6 +3,7 @@ package clickhousetelemetrystore
 import (
 	"context"
 	"net"
+	"os"
 	"testing"
 	"time"
 
@@ -101,4 +102,17 @@ func TestCastQueryError_LiveContext_KeepsDeadlineError(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errors.Asc(err, ErrCodeQueryTimeout), "got %v", err)
 	assert.Empty(t, errors.AsJSON(err).Suggestions)
+}
+
+func TestCastQueryError_QueryTimeout_SocketTimeout(t *testing.T) {
+	ctx, cancel := telemetrystore.NewContextWithQueryTimeout(context.Background(), time.Nanosecond)
+	defer cancel()
+	<-ctx.Done()
+
+	// The driver sets the socket deadline from ctx, so the read can fail before it notices ctx is done.
+	err := castQueryError(ctx, &net.OpError{Op: "read", Net: "tcp", Err: os.ErrDeadlineExceeded})
+
+	require.Error(t, err)
+	assert.True(t, errors.Asc(err, ErrCodeQueryTimeout), "got %v", err)
+	assert.NotEmpty(t, errors.AsJSON(err).Suggestions)
 }
