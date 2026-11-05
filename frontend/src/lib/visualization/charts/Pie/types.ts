@@ -43,5 +43,5 @@ export interface ParsedRgb {
 export interface PieTooltipData {
 	slice: TooltipContentItem;
 	/** Grouped slice only: every member, largest first. */
-	members?: TooltipContentItem[];
+	groupedMembers?: TooltipContentItem[];
 }

@@ -31,7 +31,7 @@ describe('groupPieSlices', () => {
 			['a', 500],
 			[OTHER_SLICE_LABEL, 7],
 		]);
-		expect(result[2].members?.map((s) => s.label)).toStrictEqual([
+		expect(result[2].groupedMembers?.map((s) => s.label)).toStrictEqual([
 			'tail2',
 			'tail1',
 			'tail3',
@@ -49,7 +49,7 @@ describe('groupPieSlices', () => {
 			slices.slice(0, 14).map((s) => s.label),
 		);
 		expect(result[14].label).toBe(OTHER_SLICE_LABEL);
-		expect(result[14].members).toHaveLength(16);
+		expect(result[14].groupedMembers).toHaveLength(16);
 	});
 
 	it('keeps exactly 15 large slices ungrouped', () => {
@@ -72,11 +72,28 @@ describe('groupPieSlices', () => {
 
 		const result = group(slices);
 
-		expect(result).toHaveLength(15);
-		expect(result[0].label).toBe('a');
-		expect(result[14].label).toBe(OTHER_SLICE_LABEL);
-		expect(result[14].value).toBe(387);
-		expect(result[14].members).toHaveLength(387);
+		expect(result.map((s) => s.label)).toStrictEqual(['a', OTHER_SLICE_LABEL]);
+		expect(result[1].value).toBe(400);
+		expect(result[1].groupedMembers).toHaveLength(400);
+	});
+
+	it('keeps tiny slices grouped past 15 series', () => {
+		const slices = [
+			slice('a', 3000),
+			slice('b', 2000),
+			slice('c', 1000),
+			...Array.from({ length: 13 }, (_, i) => slice(`t${i}`, 1)),
+		];
+
+		const result = group(slices);
+
+		expect(result.map((s) => s.label)).toStrictEqual([
+			'a',
+			'b',
+			'c',
+			OTHER_SLICE_LABEL,
+		]);
+		expect(result[3].groupedMembers).toHaveLength(13);
 	});
 
 	it('keeps 14 slices when every slice is under the share threshold', () => {
@@ -89,7 +106,7 @@ describe('groupPieSlices', () => {
 			slices.slice(0, 14).map((s) => s.label),
 		);
 		expect(result[14].label).toBe(OTHER_SLICE_LABEL);
-		expect(result[14].members).toHaveLength(186);
+		expect(result[14].groupedMembers).toHaveLength(186);
 		expect(result[14].value).toBe(930);
 	});
 
@@ -101,7 +118,7 @@ describe('groupPieSlices', () => {
 		expect(result.slice(0, 14).map((s) => s.label)).toStrictEqual(
 			slices.slice(0, 14).map((s) => s.label),
 		);
-		expect(result[14].members?.map((s) => s.label)).toStrictEqual(
+		expect(result[14].groupedMembers?.map((s) => s.label)).toStrictEqual(
 			slices.slice(14).map((s) => s.label),
 		);
 	});

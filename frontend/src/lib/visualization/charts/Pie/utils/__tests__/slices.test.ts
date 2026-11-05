@@ -8,7 +8,7 @@ describe('Pie slices', () => {
 				label,
 				value,
 				color: '#000000',
-				...(grouped ? { members: [] } : {}),
+				...(grouped ? { groupedMembers: [] } : {}),
 			});
 			const slices = [
 				slice('small', 1),

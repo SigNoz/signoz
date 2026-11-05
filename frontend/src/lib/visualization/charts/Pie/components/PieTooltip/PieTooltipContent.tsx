@@ -29,9 +29,9 @@ export default function PieTooltipContent({
 	onMemberClick,
 	onUnpin,
 }: PieTooltipContentProps): JSX.Element {
-	const { slice, members } = data;
+	const { slice, groupedMembers } = data;
 	const canDrillMember = isPinned && canDrilldown;
-	const showFooter = !!members || canDrilldown;
+	const showFooter = !!groupedMembers || canDrilldown;
 
 	return (
 		<div
@@ -41,26 +41,26 @@ export default function PieTooltipContent({
 		>
 			{isPinned && (
 				<div className={styles.headerRow}>
-					<span>{members?.length} series</span>
+					<span>{groupedMembers?.length} series</span>
 					<TooltipPinnedBadge />
 				</div>
 			)}
 			<div className={styles.activeItem}>
 				<TooltipItem item={slice} isItemActive />
 			</div>
-			{members && (
+			{groupedMembers && (
 				<>
 					<span className={styles.divider} />
 					<TooltipList
 						id={id}
-						content={members}
+						content={groupedMembers}
 						onItemClick={canDrillMember ? onMemberClick : undefined}
 					/>
 				</>
 			)}
 			{showFooter && (
 				<PieTooltipFooter
-					isGroup={!!members}
+					isGroup={!!groupedMembers}
 					isPinned={isPinned}
 					canDrilldown={canDrilldown}
 					onUnpin={onUnpin}

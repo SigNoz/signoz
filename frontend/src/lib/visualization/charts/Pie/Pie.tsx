@@ -72,7 +72,7 @@ export default function Pie({
 		() =>
 			new Map(
 				visibleData.flatMap((slice) =>
-					(slice.members ?? [slice]).map((entry): [string, string] => [
+					(slice.groupedMembers ?? [slice]).map((entry): [string, string] => [
 						entry.label,
 						slice.color,
 					]),

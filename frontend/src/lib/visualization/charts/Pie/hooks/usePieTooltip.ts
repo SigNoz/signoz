@@ -118,7 +118,7 @@ export function usePieTooltip({
 							color: slice.color,
 							isActive: true,
 						},
-						members: slice.members?.map((member) => ({
+						groupedMembers: slice.groupedMembers?.map((member) => ({
 							label: member.label,
 							value: member.value,
 							tooltipValue: formatValue(member.value),
@@ -157,7 +157,7 @@ export function usePieTooltip({
 
 	const handleSliceClick = useCallback(
 		(slice: PieSlice, event: ReactMouseEvent): void => {
-			if (slice.members) {
+			if (slice.groupedMembers) {
 				if (pinnedSlice === slice) {
 					unpin();
 				} else {
@@ -175,7 +175,7 @@ export function usePieTooltip({
 
 	const handleMemberClick = useCallback(
 		(index: number, event: ReactMouseEvent): void => {
-			const member = pinnedSlice?.members?.[index];
+			const member = pinnedSlice?.groupedMembers?.[index];
 			const tooltipRect = (event.currentTarget as Element)
 				.closest('[data-pie-tooltip]')
 				?.getBoundingClientRect();
