@@ -2,16 +2,13 @@ package telemetrystore
 
 import (
 	"context"
+	"fmt"
 	"maps"
 	"time"
 
+	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
-
-	"github.com/SigNoz/signoz/pkg/errors"
 )
-
-// ErrQueryTimeoutExceeded is the cause of a deadline set by NewContextWithQueryTimeout.
-var ErrQueryTimeoutExceeded = errors.New(errors.TypeTimeout, errors.MustNewCode("query_timeout_exceeded"), "query timeout exceeded")
 
 type querySettingsKey struct{}
 
@@ -31,8 +28,12 @@ func QuerySettingsFromContext(ctx context.Context) clickhouse.Settings {
 }
 
 // NewContextWithQueryTimeout bounds the queries run with ctx. clickhouse-go replaces max_execution_time with the
-// context deadline, so the deadline is what enforces a query timeout. Its cause tells it apart from the caller's own
-// deadline.
+// context deadline, so the deadline is what enforces a query timeout. Its cause is the exception ClickHouse raises
+// for max_execution_time.
 func NewContextWithQueryTimeout(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
-	return context.WithTimeoutCause(ctx, timeout, ErrQueryTimeoutExceeded)
+	return context.WithTimeoutCause(ctx, timeout, &clickhouse.Exception{
+		Code:    int32(chproto.ErrTimeoutExceeded),
+		Name:    "TIMEOUT_EXCEEDED",
+		Message: fmt.Sprintf("Timeout exceeded: maximum: %s", timeout),
+	})
 }
