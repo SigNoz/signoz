@@ -91,7 +91,7 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 	},
 	chproto.ErrTimeoutExceeded: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapTimeoutf(cause, ErrCodeQueryTimeout, "query timed out: %s", ex.Message).
-			WithSuggestions("narrow the time range or add filters to read less data")
+			WithSuggestions("optimize your query: narrow the time range or add filters to read less data")
 	},
 	chproto.ErrMemoryLimitExceeded: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeMemoryLimitExceeded, "query memory limit exceeded: %s", ex.Message).
