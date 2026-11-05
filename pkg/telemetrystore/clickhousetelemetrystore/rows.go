@@ -25,10 +25,10 @@ func (r *rowsWithHooks) Close() error {
 
 	// mark as closed and run the onClose hook
 	r.closed = true
-	if err := castQueryError(r.ctx, r.Rows.Err()); err != nil {
+	if err := castError(r.Rows.Err()); err != nil {
 		r.event.Err = err
 	}
-	closeErr := castQueryError(r.ctx, r.Rows.Close())
+	closeErr := castError(r.Rows.Close())
 	if closeErr != nil {
 		r.event.Err = closeErr
 	}
@@ -37,19 +37,19 @@ func (r *rowsWithHooks) Close() error {
 }
 
 func (r *rowsWithHooks) Err() error {
-	return castQueryError(r.ctx, r.Rows.Err())
+	return castError(r.Rows.Err())
 }
 
 func (r *rowsWithHooks) Scan(dest ...any) error {
-	return castQueryError(r.ctx, r.Rows.Scan(dest...))
+	return castError(r.Rows.Scan(dest...))
 }
 
 func (r *rowsWithHooks) ScanStruct(dest any) error {
-	return castQueryError(r.ctx, r.Rows.ScanStruct(dest))
+	return castError(r.Rows.ScanStruct(dest))
 }
 
 func (r *rowsWithHooks) Totals(dest ...any) error {
-	return castQueryError(r.ctx, r.Rows.Totals(dest...))
+	return castError(r.Rows.Totals(dest...))
 }
 
 // rowWithCastError wraps driver.Row so errors surfaced by Err/Scan/ScanStruct

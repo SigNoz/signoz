@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 )
 
 func TestCastError_LimitExceptions(t *testing.T) {
@@ -44,98 +43,28 @@ func TestCastError_LimitExceptions(t *testing.T) {
 	}
 }
 
-func TestCastQueryError_DeadlineExceeded(t *testing.T) {
+func TestCastError_Timeout_Suggestion(t *testing.T) {
+	deadlineCtx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
+	defer cancel()
+	<-deadlineCtx.Done()
+
 	testCases := []struct {
-		name           string
-		ctx            func() (context.Context, context.CancelFunc)
-		wantSuggestion bool
+		name string
+		err  error
 	}{
-		{
-			name: "QueryTimeout_Suggestion",
-			ctx: func() (context.Context, context.CancelFunc) {
-				return telemetrystore.NewContextWithQueryTimeout(context.Background(), time.Nanosecond)
-			},
-			wantSuggestion: true,
-		},
-		{
-			name: "CallerDeadline_NoSuggestion",
-			ctx: func() (context.Context, context.CancelFunc) {
-				return context.WithTimeout(context.Background(), time.Nanosecond)
-			},
-		},
-		{
-			name: "CallerDeadlineBeforeQueryTimeout_NoSuggestion",
-			ctx: func() (context.Context, context.CancelFunc) {
-				ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
-				ctx, cancelQuery := telemetrystore.NewContextWithQueryTimeout(ctx, time.Hour)
-				return ctx, func() { cancelQuery(); cancel() }
-			},
-		},
+		{name: "ContextDeadline", err: deadlineCtx.Err()},
+		// The driver sets the socket deadline from ctx, so a read can fail before it sees ctx is done.
+		{name: "SocketTimeout", err: &net.OpError{Op: "read", Net: "tcp", Err: os.ErrDeadlineExceeded}},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			ctx, cancel := testCase.ctx()
-			defer cancel()
-			<-ctx.Done()
-
-			err := castQueryError(ctx, ctx.Err())
+			err := castError(testCase.err)
 
 			require.Error(t, err)
 			assert.True(t, errors.Asc(err, ErrCodeQueryTimeout), "got %v", err)
-			assert.Equal(t, testCase.wantSuggestion, len(errors.AsJSON(err).Suggestions) > 0, "got %v", err)
+			assert.True(t, errors.Ast(err, errors.TypeTimeout))
+			assert.Equal(t, []string{queryTimeoutSuggestion}, errors.AsJSON(err).Suggestions)
 		})
 	}
-}
-
-func TestCastQueryError_LiveContext_KeepsDeadlineError(t *testing.T) {
-	ctx, cancel := telemetrystore.NewContextWithQueryTimeout(context.Background(), time.Hour)
-	defer cancel()
-
-	// A driver-internal timeout, such as the dial timeout, while ctx is still live.
-	dialCtx, cancelDial := context.WithTimeout(context.Background(), time.Nanosecond)
-	defer cancelDial()
-	<-dialCtx.Done()
-
-	err := castQueryError(ctx, &net.OpError{Op: "dial", Net: "tcp", Err: dialCtx.Err()})
-
-	require.Error(t, err)
-	assert.True(t, errors.Asc(err, ErrCodeQueryTimeout), "got %v", err)
-	assert.Empty(t, errors.AsJSON(err).Suggestions)
-}
-
-func TestCastQueryError_QueryTimeout_SocketTimeout(t *testing.T) {
-	ctx, cancel := telemetrystore.NewContextWithQueryTimeout(context.Background(), time.Nanosecond)
-	defer cancel()
-	<-ctx.Done()
-
-	// The driver sets the socket deadline from ctx, so the read can fail before it notices ctx is done.
-	err := castQueryError(ctx, &net.OpError{Op: "read", Net: "tcp", Err: os.ErrDeadlineExceeded})
-
-	require.Error(t, err)
-	assert.True(t, errors.Asc(err, ErrCodeQueryTimeout), "got %v", err)
-	assert.NotEmpty(t, errors.AsJSON(err).Suggestions)
-}
-
-// socketDeadlineFirstContext reports its deadline as passed before Done is closed, as when the socket deadline
-// fires a moment before the ctx timer.
-type socketDeadlineFirstContext struct {
-	context.Context
-}
-
-func (socketDeadlineFirstContext) Deadline() (time.Time, bool) {
-	return time.Now().Add(-time.Millisecond), true
-}
-
-func TestCastQueryError_QueryTimeout_SocketTimeoutBeforeContextDone(t *testing.T) {
-	queryCtx, cancel := telemetrystore.NewContextWithQueryTimeout(context.Background(), 20*time.Millisecond)
-	defer cancel()
-	ctx := socketDeadlineFirstContext{Context: queryCtx}
-	require.NoError(t, ctx.Err())
-
-	err := castQueryError(ctx, &net.OpError{Op: "read", Net: "tcp", Err: os.ErrDeadlineExceeded})
-
-	require.Error(t, err)
-	assert.True(t, errors.Asc(err, ErrCodeQueryTimeout), "got %v", err)
-	assert.NotEmpty(t, errors.AsJSON(err).Suggestions)
 }

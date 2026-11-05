@@ -3,7 +3,6 @@ package clickhousetelemetrystore
 import (
 	"context"
 	"os"
-	"time"
 
 	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -31,6 +30,8 @@ var (
 	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
 	ErrCodeExecutionFailed = errors.MustNewCode("execution_failed")
 )
+
+const queryTimeoutSuggestion = "optimize your query: narrow the time range or add filters to read less data"
 
 // Codes absent from this map fall through to the raw driver error in castError.
 var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickhouse.Exception) error{
@@ -93,7 +94,7 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 	},
 	chproto.ErrTimeoutExceeded: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapTimeoutf(cause, ErrCodeQueryTimeout, "query timed out: %s", ex.Message).
-			WithSuggestions("optimize your query: narrow the time range or add filters to read less data")
+			WithSuggestions(queryTimeoutSuggestion)
 	},
 	chproto.ErrMemoryLimitExceeded: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeMemoryLimitExceeded, "query memory limit exceeded: %s", ex.Message).
@@ -213,7 +214,7 @@ func (p *provider) Query(ctx context.Context, query string, args ...interface{})
 	if err != nil {
 		event.Err = err
 		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
-		return nil, castQueryError(ctx, err)
+		return nil, castError(err)
 	}
 
 	return &rowsWithHooks{
@@ -300,32 +301,6 @@ func (p *provider) Contributors() []string {
 	return p.clickHouseConn.Contributors()
 }
 
-// castQueryError is castError that returns the cause of a deadline set with one, such as the ClickHouse exception
-// from telemetrystore.NewContextWithQueryTimeout.
-func castQueryError(ctx context.Context, err error) error {
-	if err == nil {
-		return nil
-	}
-
-	// The driver sets the socket deadline to the ctx deadline, so a read can time out a moment before ctx is done.
-	// Once the deadline has passed, ctx is done right after.
-	if ctx.Err() == nil && errors.Is(err, os.ErrDeadlineExceeded) {
-		if deadline, ok := ctx.Deadline(); ok && !time.Now().Before(deadline) {
-			<-ctx.Done()
-		}
-	}
-
-	// Once ctx is done, the driver returns ctx.Err() or a socket i/o timeout, whichever it sees first; both mean the
-	// deadline ended the query.
-	if ctx.Err() != nil {
-		if cause := context.Cause(ctx); !errors.Is(cause, context.DeadlineExceeded) && !errors.Is(cause, context.Canceled) {
-			return castError(cause)
-		}
-	}
-
-	return castError(err)
-}
-
 func castError(err error) error {
 	if err == nil {
 		return nil
@@ -334,8 +309,9 @@ func castError(err error) error {
 	if errors.Is(err, context.Canceled) {
 		return errors.WrapCanceledf(err, ErrCodeQueryCanceled, "query canceled")
 	}
-	if errors.Is(err, context.DeadlineExceeded) {
-		return errors.WrapTimeoutf(err, ErrCodeQueryTimeout, "query timed out")
+	// A socket read can hit the deadline the driver copies from ctx before the driver sees ctx is done.
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, os.ErrDeadlineExceeded) {
+		return errors.WrapTimeoutf(err, ErrCodeQueryTimeout, "query timed out").WithSuggestions(queryTimeoutSuggestion)
 	}
 
 	var ex *clickhouse.Exception

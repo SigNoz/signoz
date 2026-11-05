@@ -146,7 +146,9 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 
 	if q.limits.MaxExecutionTime > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = telemetrystore.NewContextWithQueryTimeout(ctx, q.limits.MaxExecutionTime)
+		// TODO: clickhouse-go replaces a lower max_execution_time setting with the ctx deadline, so the limit is a
+		// deadline until https://github.com/ClickHouse/clickhouse-go/issues/2100 is fixed.
+		ctx, cancel = context.WithTimeout(ctx, q.limits.MaxExecutionTime)
 		defer cancel()
 	}
 	ctx = telemetrystore.NewContextWithQuerySettings(ctx, q.limits.settings())
