@@ -170,35 +170,6 @@ func ErrIfStatementIsNotValid(query string) (err error) {
 	return selectQuery.Accept(visitor)
 }
 
-// ErrIfStatementOverridesLimitSettings refuses a SETTINGS clause, at any depth, that assigns readonly or
-// a limit setting. SQL the parser cannot read is not checked.
-func ErrIfStatementOverridesLimitSettings(query string) (err error) {
-	defer func() {
-		if recover() != nil {
-			err = nil
-		}
-	}()
-
-	stmts, parseErr := chparser.NewParser(query).ParseStmts()
-	if parseErr != nil {
-		return nil
-	}
-
-	visitor := &chparser.DefaultASTVisitor{Visit: func(node chparser.Expr) error {
-		if expr, ok := node.(*chparser.SettingExpr); ok {
-			return errIfSettingOverridden(expr.Name.Name)
-		}
-		return nil
-	}}
-
-	for _, stmt := range stmts {
-		if err := stmt.Accept(visitor); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // TODO(@therealpandey): remove this and move to ErrIfStatementIsNotValid.
 func LogIfStatementIsNotValid(ctx context.Context, logger *slog.Logger, query string) {
 	if err := ErrIfStatementIsNotValid(query); err != nil {

@@ -31,6 +31,7 @@ func TestErrIfStatementIsNotValid_Pass(t *testing.T) {
 		{"ParenthesisedUnionLeftOperandAtStatementLevel", "(SELECT 1 AS a) UNION ALL (SELECT 2 AS a)"},
 		{"WindowFunction", "SELECT sum(v) OVER (PARTITION BY a ORDER BY t) FROM t"},
 		{"UnrelatedSetting", "SELECT * FROM t SETTINGS max_threads = 4"},
+		{"LimitSettingNameInStringLiteral", "SELECT * FROM t WHERE body = 'max_result_rows'"},
 		{"TerminatedBlockComment", "SELECT /* keep me */ count() FROM t"},
 		{"BlockCommentMarkerInsideStringLiteral", "SELECT count() FROM t WHERE body = '/* not a comment'"},
 		// Looped forever before v0.5.2.
@@ -169,6 +170,8 @@ func TestErrIfStatementIsNotValid_Fail(t *testing.T) {
 		{"ReadonlySettingOverride", "SELECT * FROM t SETTINGS readonly = 0", CodeReadonlyOverride},
 		{"ReadonlySettingOverrideAmongOthers", "SELECT * FROM t SETTINGS max_threads = 4, readonly = 0", CodeReadonlyOverride},
 		{"LimitSettingOverride", "SELECT * FROM t SETTINGS max_result_rows = 0", CodeLimitOverride},
+		{"LimitSettingOverrideUppercase", "SELECT * FROM t SETTINGS MAX_MEMORY_USAGE = 0", CodeLimitOverride},
+		{"LimitSettingOverrideInSubquery", "SELECT * FROM (SELECT * FROM t SETTINGS max_execution_time = 0)", CodeLimitOverride},
 	}
 
 	for _, testCase := range testCases {
@@ -201,40 +204,6 @@ func TestErrIfStatementIsNotValid_ShouldPassButFails(t *testing.T) {
 			// Required rather than asserted: errors.Asc dereferences the error it is given.
 			require.Error(t, err)
 			assert.True(t, errors.Asc(err, testCase.expectedCode), "expected code %s, got %v", testCase.expectedCode, err)
-		})
-	}
-}
-
-func TestErrIfStatementOverridesLimitSettings(t *testing.T) {
-	testCases := []struct {
-		name         string
-		query        string
-		expectedCode *errors.Code
-	}{
-		{name: "NoSettings", query: "SELECT body FROM signoz_logs.distributed_logs_v2 LIMIT 10"},
-		{name: "UnrelatedSetting", query: "SELECT * FROM t SETTINGS max_threads = 4"},
-		{name: "SettingNameInStringLiteral", query: "SELECT * FROM t WHERE body = 'max_result_rows'"},
-		{name: "ColumnNamedSettings", query: "SELECT sum(settings) FROM t"},
-		{name: "MaxResultRows", query: "SELECT * FROM t SETTINGS max_result_rows = 0", expectedCode: &CodeLimitOverride},
-		{name: "MaxMemoryUsageUppercase", query: "SELECT * FROM t SETTINGS MAX_MEMORY_USAGE = 0", expectedCode: &CodeLimitOverride},
-		{name: "ResultOverflowModeAmongOthers", query: "SELECT * FROM t SETTINGS max_threads = 4, result_overflow_mode = 'break'", expectedCode: &CodeLimitOverride},
-		{name: "MaxExecutionTimeInSubquery", query: "SELECT * FROM (SELECT * FROM t SETTINGS max_execution_time = 0)", expectedCode: &CodeLimitOverride},
-		{name: "Readonly", query: "SELECT * FROM t SETTINGS readonly = 0", expectedCode: &CodeReadonlyOverride},
-		// The parser cannot read NULLS LAST.
-		{name: "Unparseable_NotChecked", query: "SELECT x FROM t ORDER BY x DESC NULLS LAST SETTINGS max_result_bytes = 0"},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			err := ErrIfStatementOverridesLimitSettings(testCase.query)
-			if testCase.expectedCode == nil {
-				assert.NoError(t, err)
-				return
-			}
-
-			// Required rather than asserted: errors.Asc dereferences the error it is given.
-			require.Error(t, err)
-			assert.True(t, errors.Asc(err, *testCase.expectedCode), "expected code %s, got %v", *testCase.expectedCode, err)
 		})
 	}
 }

@@ -144,10 +144,6 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		return nil, err
 	}
 
-	if err := clickhousesql.ErrIfStatementOverridesLimitSettings(query); err != nil {
-		q.logger.WarnContext(ctx, "clickhouse sql overrides a limit setting", errors.Attr(err), slog.String("query", query))
-	}
-
 	parentCtx := ctx
 	var cancel context.CancelFunc
 	if q.budget.MaxExecutionTime > 0 {
