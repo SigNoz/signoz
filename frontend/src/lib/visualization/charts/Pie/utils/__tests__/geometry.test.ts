@@ -1,12 +1,10 @@
 import {
 	getArcGeometry,
 	getDonutGeometry,
-	getFillColor,
 	getScaledFontSize,
-	lightenColor,
-} from 'lib/visualization/charts/Pie/utils';
+} from 'lib/visualization/charts/Pie/utils/geometry';
 
-describe('Pie utils', () => {
+describe('Pie geometry', () => {
 	describe('getDonutGeometry', () => {
 		it('keeps the label anchor inside the box (reserves room for leader labels)', () => {
 			const { radius } = getDonutGeometry(400, 300);
@@ -96,35 +94,6 @@ describe('Pie utils', () => {
 			const g = getArcGeometry(Math.PI, 2 * Math.PI, 100);
 			expect(g.labelX).toBeCloseTo(-130);
 			expect(g.textAnchor).toBe('end');
-		});
-	});
-
-	describe('lightenColor', () => {
-		it('converts a #rrggbb hex to rgba at the given opacity', () => {
-			expect(lightenColor('#ff0000', 0.4)).toBe('rgba(255, 0, 0, 0.4)');
-		});
-
-		it('accepts hex without a leading #', () => {
-			expect(lightenColor('00ff00', 0.4)).toBe('rgba(0, 255, 0, 0.4)');
-		});
-
-		it('returns the original colour when it is not parseable hex', () => {
-			expect(lightenColor('rgba(0,0,0,1)', 0.4)).toBe('rgba(0,0,0,1)');
-			expect(lightenColor('red', 0.4)).toBe('red');
-		});
-	});
-
-	describe('getFillColor', () => {
-		it('returns the colour unchanged when nothing is active', () => {
-			expect(getFillColor('#ff0000', null)).toBe('#ff0000');
-		});
-
-		it('returns the colour unchanged for the active slice', () => {
-			expect(getFillColor('#ff0000', '#ff0000')).toBe('#ff0000');
-		});
-
-		it('dims non-active slices to 40% opacity', () => {
-			expect(getFillColor('#00ff00', '#ff0000')).toBe('rgba(0, 255, 0, 0.4)');
 		});
 	});
 });
