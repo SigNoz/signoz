@@ -60,12 +60,14 @@ export function useActiveSavedView(
 		}
 		return hasUnsavedViewChanges({
 			view,
+			source,
 			stagedQuery,
 			panelType: panelType ?? PANEL_TYPES.LIST,
 			options: hasOptions ? options : undefined,
 		});
 	}, [
 		view,
+		source,
 		isError,
 		isStagedQueryCurrent,
 		stagedQuery,

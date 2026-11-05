@@ -3,7 +3,7 @@ import {
 	ApplyFilterSignalDTO,
 	SavedViewEntityDTO,
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
-import { DataSource } from 'types/common/queryBuilder';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { ResourceType } from './resourceRoute';
 
@@ -119,15 +119,15 @@ export function resolveActionEntity(
 }
 
 function normalizeToSavedViewEntity(value: string): SavedViewEntityDTO | null {
-	const source = entityToDataSource(value);
+	const source = entityToSavedViewSource(value);
 	switch (source) {
-		case DataSource.LOGS:
+		case SavedviewtypesSourceDTO.logs:
 			return SavedViewEntityDTO.logs;
-		case DataSource.TRACES:
+		case SavedviewtypesSourceDTO.traces:
 			return SavedViewEntityDTO.traces;
-		case DataSource.METRICS:
+		case SavedviewtypesSourceDTO.metrics:
 			return SavedViewEntityDTO.metrics;
-		case 'meter':
+		case SavedviewtypesSourceDTO.meter:
 			return SavedViewEntityDTO.meter;
 		default:
 			return null;
@@ -135,26 +135,26 @@ function normalizeToSavedViewEntity(value: string): SavedViewEntityDTO | null {
 }
 
 /**
- * Maps an action `entity` to an explorer `DataSource` for saved-view lookups.
+ * Maps an action `entity` to the saved views api source for saved-view lookups.
  * Accepts both short (`logs`) and taxonomy (`logs_explorer`) values.
  */
-export function entityToDataSource(
+export function entityToSavedViewSource(
 	entity: SavedViewEntityDTO | string,
-): DataSource | 'meter' | null {
+): SavedviewtypesSourceDTO | null {
 	const normalized = entity.trim().toLowerCase().replace(/-/g, '_');
 
 	switch (normalized) {
 		case SavedViewEntityDTO.logs:
 		case ResourceType.logs_explorer:
-			return DataSource.LOGS;
+			return SavedviewtypesSourceDTO.logs;
 		case SavedViewEntityDTO.traces:
 		case ResourceType.traces_explorer:
-			return DataSource.TRACES;
+			return SavedviewtypesSourceDTO.traces;
 		case SavedViewEntityDTO.metrics:
 		case ResourceType.metrics_explorer:
-			return DataSource.METRICS;
+			return SavedviewtypesSourceDTO.metrics;
 		case SavedViewEntityDTO.meter:
-			return 'meter';
+			return SavedviewtypesSourceDTO.meter;
 		default:
 			return null;
 	}
@@ -166,10 +166,10 @@ export function entityToDataSource(
  */
 export function resolveSavedViewSourceHint(
 	action: MessageActionDTO,
-): DataSource | 'meter' | null {
+): SavedviewtypesSourceDTO | null {
 	const entity = resolveActionEntity(action);
 	if (entity) {
-		const fromEntity = entityToDataSource(entity);
+		const fromEntity = entityToSavedViewSource(entity);
 		if (fromEntity) {
 			return fromEntity;
 		}
@@ -178,11 +178,11 @@ export function resolveSavedViewSourceHint(
 	if (action.signal) {
 		switch (action.signal) {
 			case ApplyFilterSignalDTO.logs:
-				return DataSource.LOGS;
+				return SavedviewtypesSourceDTO.logs;
 			case ApplyFilterSignalDTO.traces:
-				return DataSource.TRACES;
+				return SavedviewtypesSourceDTO.traces;
 			case ApplyFilterSignalDTO.metrics:
-				return DataSource.METRICS;
+				return SavedviewtypesSourceDTO.metrics;
 			default: {
 				const _exhaustive: never = action.signal;
 				return _exhaustive;
