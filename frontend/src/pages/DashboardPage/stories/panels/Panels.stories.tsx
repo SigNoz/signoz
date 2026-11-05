@@ -126,6 +126,15 @@ export const Pie: Story = {
 };
 
 /**
+ * 24 services of falling traffic: the smallest 10 fold into one grey "Other (10)" slice,
+ * which lists them on hover; click pins the list to drill into any of them.
+ */
+export const PieOther: Story = {
+	args: { kind: 'Pie', pieSlices: 'long-tail' },
+	play,
+};
+
+/**
  * A single p99 latency value with its unit, filled with the threshold colour
  * because it is above the threshold.
  */

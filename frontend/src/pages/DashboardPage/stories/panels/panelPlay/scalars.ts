@@ -6,11 +6,15 @@ import {
 	TABLE_THRESHOLD_VALUE,
 } from '../__story_mockdata__/constants';
 import {
+	PIE_VALUES,
 	serviceIndex,
 	TABLE_VALUES,
 } from '../__story_mockdata__/panelResponses';
 
 import { PANEL_LOAD, type PanelPlayArgs } from './args';
+
+// `long-tail` draws 14 slices and folds the other 10 into Other.
+const LONG_TAIL_KEPT = 14;
 
 export const expectPie = async (
 	root: HTMLElement,
@@ -19,9 +23,18 @@ export const expectPie = async (
 	const chart = await within(root).findByTestId('pie-chart', {}, PANEL_LOAD);
 	// The legend's icons are SVGs too; the donut is the first one.
 	const donut = chart.querySelector('svg');
-	await expect(donut?.querySelectorAll('g > path')).toHaveLength(args.series);
+	const values = PIE_VALUES(args.pieSlices, args.series);
+	const isGrouped = args.pieSlices === 'long-tail';
+	await expect(donut?.querySelectorAll('g > path')).toHaveLength(
+		isGrouped ? LONG_TAIL_KEPT + 1 : values.length,
+	);
+	if (isGrouped) {
+		await expect(
+			within(chart).getByText(`Other (${values.length - LONG_TAIL_KEPT})`),
+		).toBeInTheDocument();
+	}
 	// The centre shows the slices' sum, formatted as the panel formats values.
-	const total = TABLE_VALUES(args.series).reduce((sum, value) => sum + value, 0);
+	const total = values.reduce((sum, value) => sum + value, 0);
 	await expect(
 		donut?.querySelector('text[text-anchor="middle"]')?.textContent,
 	).toBe(getYAxisFormattedValue(String(total), args.unit).replace(/\s+/g, ''));
