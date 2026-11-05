@@ -1,8 +1,15 @@
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { AddToDashboardEvents } from 'container/ExplorerActions/utils';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 export const DEFAULT_PANEL_TYPE = PANEL_TYPES.TRACE;
+
+export const AI_EXPLORER_ACTION_EVENTS: AddToDashboardEvents = {
+	createAlert: 'AI Observability Explorer: Create alert',
+	addToDashboard: 'AI Observability Explorer: Add to dashboard clicked',
+	exported: 'AI Observability Explorer: Add to dashboard successful',
+};
 
 export const TOOLBAR_VIEWS = {
 	trace: {

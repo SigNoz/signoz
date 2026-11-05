@@ -5,6 +5,7 @@ import {
 	useEffect,
 	useMemo,
 } from 'react';
+import { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -20,6 +21,8 @@ import { Warning } from 'types/api';
 import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+
+import AIExplorerActions from '../AIExplorerActions/AIExplorerActions';
 
 import './TimeSeriesView.styles.scss';
 
@@ -127,6 +130,7 @@ function TimeSeriesViewContainer({
 				setWarning={setWarning}
 				allowExport
 				exportFileName="ai-traces-timeseries"
+				headerActions={<AIExplorerActions />}
 			/>
 		</div>
 	);
@@ -137,7 +141,7 @@ interface TimeSeriesViewProps {
 	isFilterApplied: boolean;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
-	queryKeyRef?: MutableRefObject<any>;
+	queryKeyRef?: MutableRefObject<QueryKey | undefined>;
 }
 
 TimeSeriesViewContainer.defaultProps = {

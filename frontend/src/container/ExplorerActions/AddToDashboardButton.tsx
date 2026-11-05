@@ -14,6 +14,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import {
+	AddToDashboardEvents,
 	EXPLORER_ACTION_EVENTS,
 	getExplorerActionEventPayload,
 	getExportPanelType,
@@ -24,23 +25,28 @@ function AddToDashboardButton({
 	sourcepage,
 	panelType,
 	isOneChartPerQuery = false,
+	events,
 }: {
 	query: Query | null;
 	sourcepage: DataSource;
 	panelType?: PANEL_TYPES;
 	isOneChartPerQuery?: boolean;
+	// For explorers that share a data source but log their own events.
+	events?: AddToDashboardEvents;
 }): JSX.Element {
 	const [queryToExport, setQueryToExport] = useState<Query | null>(null);
 	const { panelType: contextPanelType } = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
 	const getExportToDashboardLink = useGetExportToDashboardLink();
+	const { addToDashboard, exported } =
+		events ?? EXPLORER_ACTION_EVENTS[sourcepage];
 
 	const open = (): void => {
 		if (!query) {
 			return;
 		}
 		void logEvent(
-			EXPLORER_ACTION_EVENTS[sourcepage].addToDashboard,
+			addToDashboard,
 			getExplorerActionEventPayload({
 				sourcepage,
 				panelType: contextPanelType,
@@ -59,7 +65,7 @@ function AddToDashboardButton({
 		}
 		const exportPanelType = panelType ?? getExportPanelType(contextPanelType);
 
-		void logEvent(EXPLORER_ACTION_EVENTS[sourcepage].exported, {
+		void logEvent(exported, {
 			...getExplorerActionEventPayload({
 				sourcepage,
 				panelType: contextPanelType,
