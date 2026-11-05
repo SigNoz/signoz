@@ -37,6 +37,18 @@ func TestClickHouseQueryConfigSettings(t *testing.T) {
 			},
 		},
 		{
+			name:        "RowsOnly_Trace_RowLimit",
+			config:      ClickHouseQueryConfig{MaxResultRows: 1000},
+			requestType: qbtypes.RequestTypeTrace,
+			want:        clickhouse.Settings{"max_result_rows": int64(1000), "result_overflow_mode": "throw"},
+		},
+		{
+			name:        "RowsOnly_RawStream_RowLimit",
+			config:      ClickHouseQueryConfig{MaxResultRows: 1000},
+			requestType: qbtypes.RequestTypeRawStream,
+			want:        clickhouse.Settings{"max_result_rows": int64(1000), "result_overflow_mode": "throw"},
+		},
+		{
 			name:        "AllSet_TimeSeries_NoRowLimit",
 			config:      allSet,
 			requestType: qbtypes.RequestTypeTimeSeries,

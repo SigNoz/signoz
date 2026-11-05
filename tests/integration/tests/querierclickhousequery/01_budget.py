@@ -47,17 +47,27 @@ def test_clickhouse_query_row_limit_only_for_raw(
 
 
 @pytest.mark.parametrize(
-    "query, expected_status, expected_code, expected_suggestion",
+    "query, request_type, expected_status, expected_code, expected_suggestion",
     [
         pytest.param(
             "SELECT number FROM numbers(2000)",
+            RequestType.RAW,
             HTTPStatus.BAD_REQUEST,
             "result_too_large",
             "add a LIMIT, narrow the time range or select fewer columns",
             id="max_result_rows",
         ),
         pytest.param(
+            "SELECT number FROM numbers(2000)",
+            RequestType.TRACE,
+            HTTPStatus.BAD_REQUEST,
+            "result_too_large",
+            "add a LIMIT, narrow the time range or select fewer columns",
+            id="max_result_rows_trace",
+        ),
+        pytest.param(
             "SELECT repeat(toString(number), 4000) AS s FROM numbers(500)",
+            RequestType.RAW,
             HTTPStatus.BAD_REQUEST,
             "result_too_large",
             "add a LIMIT, narrow the time range or select fewer columns",
@@ -65,6 +75,7 @@ def test_clickhouse_query_row_limit_only_for_raw(
         ),
         pytest.param(
             "SELECT groupArray(number) FROM numbers(50000000)",
+            RequestType.RAW,
             HTTPStatus.BAD_REQUEST,
             "memory_limit_exceeded",
             "narrow the time range, add filters or reduce the number of groups",
@@ -72,6 +83,7 @@ def test_clickhouse_query_row_limit_only_for_raw(
         ),
         pytest.param(
             "SELECT sleep(3)",
+            RequestType.RAW,
             HTTPStatus.GATEWAY_TIMEOUT,
             "query_timeout",
             "optimize your query: narrow the time range or add filters to read less data",
@@ -84,6 +96,7 @@ def test_clickhouse_query_over_budget(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     query: str,
+    request_type: str,
     expected_status: HTTPStatus,
     expected_code: str,
     expected_suggestion: str,
@@ -95,7 +108,7 @@ def test_clickhouse_query_over_budget(
         int((now - timedelta(hours=1)).timestamp() * 1000),
         int(now.timestamp() * 1000),
         [{"type": "clickhouse_sql", "spec": {"name": "A", "query": query}}],
-        request_type=RequestType.RAW,
+        request_type=request_type,
     )
 
     assert response.status_code == expected_status, response.text

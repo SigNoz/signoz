@@ -185,7 +185,7 @@ querier:
     max_execution_time: 55s
     # ClickHouse memory limit of the query, in bytes.
     max_memory_usage: 10000000000
-    # Result row limit of raw (list) requests.
+    # Result row limit of list requests (raw, raw_stream, trace).
     max_result_rows: 100000
     # Result size limit, in bytes.
     max_result_bytes: 524288000

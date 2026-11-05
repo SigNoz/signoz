@@ -182,8 +182,8 @@ func (config ClickHouseQueryConfig) settings(requestType qbtypes.RequestType) cl
 	if config.MaxMemoryUsage > 0 {
 		settings["max_memory_usage"] = config.MaxMemoryUsage
 	}
-	// Other request types return one row per series and point; MaxResultBytes bounds them.
-	if config.MaxResultRows > 0 && requestType == qbtypes.RequestTypeRaw {
+	// Aggregation request types return one row per series and point; MaxResultBytes bounds them.
+	if config.MaxResultRows > 0 && !requestType.IsAggregation() {
 		settings["max_result_rows"] = config.MaxResultRows
 		settings["result_overflow_mode"] = "throw"
 	}
