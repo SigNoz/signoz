@@ -116,3 +116,26 @@ func TestCastQueryError_QueryTimeout_SocketTimeout(t *testing.T) {
 	assert.True(t, errors.Asc(err, ErrCodeQueryTimeout), "got %v", err)
 	assert.NotEmpty(t, errors.AsJSON(err).Suggestions)
 }
+
+// socketDeadlineFirstContext reports its deadline as passed before Done is closed, as when the socket deadline
+// fires a moment before the ctx timer.
+type socketDeadlineFirstContext struct {
+	context.Context
+}
+
+func (socketDeadlineFirstContext) Deadline() (time.Time, bool) {
+	return time.Now().Add(-time.Millisecond), true
+}
+
+func TestCastQueryError_QueryTimeout_SocketTimeoutBeforeContextDone(t *testing.T) {
+	queryCtx, cancel := telemetrystore.NewContextWithQueryTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+	ctx := socketDeadlineFirstContext{Context: queryCtx}
+	require.NoError(t, ctx.Err())
+
+	err := castQueryError(ctx, &net.OpError{Op: "read", Net: "tcp", Err: os.ErrDeadlineExceeded})
+
+	require.Error(t, err)
+	assert.True(t, errors.Asc(err, ErrCodeQueryTimeout), "got %v", err)
+	assert.NotEmpty(t, errors.AsJSON(err).Suggestions)
+}

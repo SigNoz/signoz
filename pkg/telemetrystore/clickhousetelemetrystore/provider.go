@@ -2,6 +2,8 @@ package clickhousetelemetrystore
 
 import (
 	"context"
+	"os"
+	"time"
 
 	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -303,6 +305,14 @@ func (p *provider) Contributors() []string {
 func castQueryError(ctx context.Context, err error) error {
 	if err == nil {
 		return nil
+	}
+
+	// The driver sets the socket deadline to the ctx deadline, so a read can time out a moment before ctx is done.
+	// Once the deadline has passed, ctx is done right after.
+	if ctx.Err() == nil && errors.Is(err, os.ErrDeadlineExceeded) {
+		if deadline, ok := ctx.Deadline(); ok && !time.Now().Before(deadline) {
+			<-ctx.Done()
+		}
 	}
 
 	// Once ctx is done, the driver returns ctx.Err() or a socket i/o timeout, whichever it sees first; both mean the
