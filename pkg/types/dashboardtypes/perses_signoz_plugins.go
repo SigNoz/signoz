@@ -377,31 +377,14 @@ func (s *ScatterPlotPanelSpec) validateAgainstQuery(query Query, path string) er
 	if !known {
 		return nil
 	}
-	if err := validateQueriesShareGroupBy(composite, path); err != nil {
-		return err
+	if err := composite.ValidateQueriesShareGroupBy(); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
 	}
 	if err := s.validateValueDimensions(keys, path); err != nil {
 		return err
 	}
 	if err := s.validateColorDimensions(keys, path); err != nil {
 		return err
-	}
-	return nil
-}
-
-// Order is ignored since rows join on sorted labels; disabled queries count, as formulas carry their keys.
-func validateQueriesShareGroupBy(composite qb.CompositeQuery, path string) error {
-	var queries []qb.QueryEnvelope
-	for _, envelope := range composite.Queries {
-		if envelope.GetType() != qb.QueryTypeFormula {
-			queries = append(queries, envelope)
-		}
-	}
-	for i := 1; i < len(queries); i++ {
-		first, other := groupByKeyNames(queries[0]), groupByKeyNames(queries[i])
-		if !slices.Equal(first, other) {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: queries must group by the same keys so their rows join; %q groups by [%s], %q groups by [%s]", path, queries[0].GetQueryName(), allowedValuesForKind(first), queries[i].GetQueryName(), allowedValuesForKind(other))
-		}
 	}
 	return nil
 }
@@ -426,15 +409,6 @@ func (s *ScatterPlotPanelSpec) validateColorDimensions(keys qb.ResultColumnKeys,
 		}
 	}
 	return nil
-}
-
-func groupByKeyNames(envelope qb.QueryEnvelope) []string {
-	names := make([]string, 0, len(envelope.GetGroupBy()))
-	for _, key := range envelope.GetGroupBy() {
-		names = append(names, key.Name)
-	}
-	slices.Sort(names)
-	return names
 }
 
 // ScatterPlotDimensions binds result columns to what a dot encodes. Value columns
@@ -523,8 +497,8 @@ func (s *GeoMapPanelSpec) validateAgainstQuery(query Query, path string) error {
 	if !known {
 		return nil
 	}
-	if err := validateQueriesShareGroupBy(composite, path); err != nil {
-		return err
+	if err := composite.ValidateQueriesShareGroupBy(); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
 	}
 	for _, binding := range []struct{ field, key string }{{"location.country", s.Location.Country}, {"location.region", s.Location.Region}, {"location.lat", s.Location.Lat}, {"location.lon", s.Location.Lon}} {
 		// Empty is unset: the renderer detects the column by name.
