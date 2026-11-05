@@ -202,6 +202,7 @@ func convertRule(ruleID string, storedRuleData *postableRule, storedRoute *route
 	rule.repairPanelType()
 	rule.disableUnmetMinPoints()
 	rule.deriveRuleType()
+	rule.deriveSelectedQuery()
 	rule.negateAnomalyBelowTarget()
 	convertedRoute := rule.repairEmptySeverity(ruleID, storedRoute)
 	rule.relocateThreshold(channels)
@@ -253,7 +254,7 @@ type ruleCondition struct {
 	MatchType         string          `json:"matchType,omitempty"`
 	TargetUnit        string          `json:"targetUnit,omitempty"`
 	Seasonality       string          `json:"seasonality,omitempty"`
-	SelectedQuery     json.RawMessage `json:"selectedQueryName,omitempty"`
+	SelectedQuery     string          `json:"selectedQueryName,omitempty"`
 	RequireMinPoints  json.RawMessage `json:"requireMinPoints,omitempty"`
 	RequiredNumPoints json.RawMessage `json:"requiredNumPoints,omitempty"`
 	Thresholds        *ruleThresholds `json:"thresholds,omitempty"`
@@ -266,11 +267,13 @@ type compositeQuery struct {
 	Unit      json.RawMessage `json:"unit,omitempty"`
 }
 
-// ruleQueryEnvelope reads the two envelope keys the derivations need.
+// ruleQueryEnvelope reads the envelope keys the derivations need.
 type ruleQueryEnvelope struct {
 	Type string `json:"type"`
 	Spec struct {
-		Signal string `json:"signal"`
+		Name     string `json:"name"`
+		Signal   string `json:"signal"`
+		Disabled bool   `json:"disabled"`
 	} `json:"spec"`
 }
 
@@ -328,11 +331,11 @@ func (rule *postableRule) clone() *postableRule {
 
 // disableIfNeverFired disables a rule v1 stored but could never fire: a
 // negative evalWindow or frequency, which is reset to its default since no
-// read of a rolling window accepts it, a null compositeQuery or one with no
-// queries, or a threshold with a null target or an op or matchType outside the
-// supported sets, which the v2 write path rejects. It reads the relocated
-// fields, so it runs after convertRule, and returns the offending fields, or
-// "" when the rule stays enabled.
+// read of a rolling window accepts it, a null compositeQuery, one with no
+// queries or with every query disabled, or a threshold with a null target or
+// an op or matchType outside the supported sets, which the v2 write path
+// rejects. It reads the relocated fields, so it runs after convertRule, and
+// returns the offending fields, or "" when the rule stays enabled.
 func (rule *postableRule) disableIfNeverFired() string {
 	var causes []string
 	window := &rule.Evaluation.Spec
@@ -349,6 +352,8 @@ func (rule *postableRule) disableIfNeverFired() string {
 		causes = append(causes, "condition.compositeQuery is null")
 	case len(rule.decodeQueryEnvelopes()) == 0:
 		causes = append(causes, "condition.compositeQuery.queries is empty")
+	case rule.RuleCondition.SelectedQuery == "":
+		causes = append(causes, "condition.selectedQueryName is omitted and every query is disabled")
 	}
 	threshold := rule.RuleCondition.Thresholds.Spec[0]
 	switch {
@@ -461,6 +466,25 @@ func (rule *postableRule) deriveRuleType() {
 		}
 	case queryTypePromQL:
 		rule.RuleType = ruleTypeProm
+	}
+}
+
+// deriveSelectedQuery fills an omitted selectedQueryName the way v1 resolved it
+// at evaluation: F1 when enabled, else the enabled query with the highest name.
+func (rule *postableRule) deriveSelectedQuery() {
+	condition := rule.RuleCondition
+	if condition.SelectedQuery != "" {
+		return
+	}
+	for _, envelope := range rule.decodeQueryEnvelopes() {
+		if envelope.Spec.Disabled {
+			continue
+		}
+		if envelope.Spec.Name == "F1" {
+			condition.SelectedQuery = "F1"
+			return
+		}
+		condition.SelectedQuery = max(condition.SelectedQuery, envelope.Spec.Name)
 	}
 }
 
