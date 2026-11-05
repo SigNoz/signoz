@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
+import { matchRoute } from 'lib/router/matchRoute';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
@@ -24,6 +26,7 @@ import {
 } from 'api/ai-assistant/chat';
 import ROUTES from 'constants/routes';
 import { QueryParams } from 'constants/query';
+import { buildExplorerNavigationUrl } from 'utils/buildExplorerNavigationUrl';
 import { openInNewTab } from 'utils/navigation';
 import {
 	ArchiveRestore,
@@ -45,6 +48,10 @@ import { AIAssistantEvents, SuggestedPromptCategory } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 
+import {
+	getPanelTypeForRequestType,
+	requestTypeFromActionQuery,
+} from './utils/getPanelTypeForRequestType';
 import { openSavedViewByKey } from './utils/openSavedView';
 import {
 	isSavedViewOpenAction,
@@ -213,20 +220,11 @@ function signalMatchesPathname(
 ): boolean {
 	switch (signal) {
 		case ApplyFilterSignalDTO.logs:
-			return Boolean(
-				matchPath(pathname, { path: ROUTES.LOGS_EXPLORER, exact: false }),
-			);
+			return Boolean(matchRoute(pathname, ROUTES.LOGS_EXPLORER));
 		case ApplyFilterSignalDTO.traces:
-			return Boolean(
-				matchPath(pathname, { path: ROUTES.TRACES_EXPLORER, exact: false }),
-			);
+			return Boolean(matchRoute(pathname, ROUTES.TRACES_EXPLORER));
 		case ApplyFilterSignalDTO.metrics:
-			return Boolean(
-				matchPath(pathname, {
-					path: ROUTES.METRICS_EXPLORER_EXPLORER,
-					exact: false,
-				}),
-			);
+			return Boolean(matchRoute(pathname, ROUTES.METRICS_EXPLORER_EXPLORER));
 		default:
 			return false;
 	}
@@ -275,7 +273,6 @@ function explorerRouteForSignal(signal: ApplyFilterSignalDTO): string | null {
 }
 
 interface ApplyFilterDeps {
-	history: ReturnType<typeof useHistory>;
 	pathname: string;
 	redirectWithQueryBuilderData: ReturnType<
 		typeof useQueryBuilder
@@ -317,8 +314,8 @@ function withDerivedFilterExpressions(query: Query): Query {
  *     page-action recipe — calling redirect alone is not sufficient because
  *     the URL→state effect runs after the next render and the editor binds
  *     to `filter.expression`, not `filters.items`.
- *   - Off-page: use `history.push` so the landing explorer initializes from
- *     the new URL on mount.
+ *   - Off-page: `navigate()` so the landing explorer initializes from the
+ *     new URL on mount.
  */
 function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 	// eslint-disable-next-line no-console
@@ -341,6 +338,11 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 		);
 		return;
 	}
+	// Read before toUrlCompositeQuery, which drops the requestType envelope.
+	const panelType = getPanelTypeForRequestType(
+		requestTypeFromActionQuery(action.query),
+		action.signal,
+	);
 	const normalized = withDerivedFilterExpressions(urlQuery as unknown as Query);
 	// eslint-disable-next-line no-console
 	console.log('[apply_filter] normalized', normalized);
@@ -350,7 +352,9 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 		normalized.builder.queryData.forEach((q, i) => {
 			deps.handleSetQueryData(i, q);
 		});
-		deps.redirectWithQueryBuilderData(normalized);
+		deps.redirectWithQueryBuilderData(normalized, {
+			[QueryParams.panelTypes]: panelType,
+		});
 		return;
 	}
 	const base = explorerRouteForSignal(action.signal);
@@ -360,9 +364,11 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 		return;
 	}
 	// eslint-disable-next-line no-console
-	console.log('[apply_filter] off-page → history.push', base);
-	const encoded = encodeURIComponent(JSON.stringify(normalized));
-	deps.history.push(`${base}?${QueryParams.compositeQuery}=${encoded}`);
+	console.log('[apply_filter] off-page → navigate', base);
+	const url = buildExplorerNavigationUrl(base, normalized, {
+		[QueryParams.panelTypes]: panelType,
+	});
+	navigate(url);
 }
 
 /** Picks the right rollback API call for a given action kind. */
@@ -391,8 +397,7 @@ export default function ActionsSection({
 	actions,
 	messageId,
 }: ActionsSectionProps): JSX.Element | null {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 	const { threadId, page, mode } = useAIAssistantAnalyticsContext();
 	const { redirectWithQueryBuilderData, handleSetQueryData } = useQueryBuilder();
@@ -424,19 +429,12 @@ export default function ActionsSection({
 			}
 			autoAppliedFilterKeys.add(key);
 			applyFilter(action, {
-				history,
 				pathname,
 				redirectWithQueryBuilderData,
 				handleSetQueryData,
 			});
 		});
-	}, [
-		actions,
-		pathname,
-		history,
-		redirectWithQueryBuilderData,
-		handleSetQueryData,
-	]);
+	}, [actions, pathname, redirectWithQueryBuilderData, handleSetQueryData]);
 
 	if (actions.length === 0) {
 		return null;
@@ -456,11 +454,7 @@ export default function ActionsSection({
 		}
 		setResult(key, { state: 'loading' });
 		try {
-			await openSavedViewByKey(
-				resourceId,
-				resolveSavedViewSourceHint(action),
-				history,
-			);
+			await openSavedViewByKey(resourceId, resolveSavedViewSourceHint(action));
 			void logEvent(AIAssistantEvents.ResourceOpened, {
 				threadId,
 				messageId,
@@ -515,7 +509,7 @@ export default function ActionsSection({
 			targetModule: targetModuleForResource(resourceType),
 			resourceId,
 		});
-		history.push(path);
+		navigate(path);
 	};
 
 	const handleClick = (key: string, action: MessageActionDTO): void => {
@@ -576,7 +570,6 @@ export default function ActionsSection({
 					});
 				}
 				applyFilter(action, {
-					history,
 					pathname,
 					redirectWithQueryBuilderData,
 					handleSetQueryData,
@@ -634,6 +627,7 @@ export default function ActionsSection({
 							disabled={isSuccess}
 							loading={isLoading}
 							aria-label={action.label}
+							testId={`ai-action-chip-${action.kind}`}
 							prefix={icon}
 						>
 							<span className={styles.chipLabel}>{action.label}</span>

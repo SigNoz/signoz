@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '@/storybook/renderAtRoute';
 import {
 	expect,
 	fireEvent,
@@ -13,7 +13,11 @@ import {
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { STORY_TRACE_ID } from './__story_mockdata__/traceDetails';
+import {
+	focusSpanIndex,
+	scenarioSpanCount,
+	spanIdAt,
+} from './__story_mockdata__/traceDetails';
 import {
 	hangingTraceExport,
 	openRowMenu,
@@ -40,9 +44,7 @@ const meta = {
 	component: TraceDetailsV3,
 	// The page reads the trace id out of the pathname, so it renders under its
 	// own route rather than being mounted on its own.
-	render: (): JSX.Element => (
-		<Route path={ROUTES.TRACE_DETAIL} component={TraceDetailsV3} />
-	),
+	render: renderAtRoute(ROUTES.TRACE_DETAIL, TraceDetailsV3),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<TraceDetailsArgs>;
@@ -79,22 +81,43 @@ export const Loading: Story = {
 	args: { dataState: 'loading' },
 };
 
-/**
- * The trace's span and error counts in the bottom strip, in place of the build
- * version, the error icon red while any span failed.
- */
-export const BottomStrip: Story = {
-	args: { bottomStrip: true },
-};
-
 /** The strip over a trace with no failing span: the error icon stays neutral. */
 export const BottomStripNoErrors: Story = {
-	args: { bottomStrip: true, errors: false },
+	args: { errors: false },
 };
 
-/** The strip mid-fetch, whose counts read zero until the trace resolves. */
-export const BottomStripLoading: Story = {
-	args: { bottomStrip: true, dataState: 'loading' },
+/**
+ * One span per HTTP status badge the waterfall draws: informational, success,
+ * redirect, client and server errors, and a span with no status code and so no
+ * badge.
+ */
+export const StatusCodes: Story = {
+	args: {
+		scenario: 'status-codes',
+		spans: scenarioSpanCount('status-codes'),
+		spanPanel: false,
+	},
+};
+
+const AI_SPANS = scenarioSpanCount('ai');
+
+/**
+ * An agent run: LLM, tool and agent badges with sparkle icons in the waterfall,
+ * token and cost totals in the header, the span panel on an LLM call with its
+ * tokens and cost, and that span's hover card open on its usage breakdown.
+ */
+export const AiTrace: Story = {
+	args: { scenario: 'ai', spans: AI_SPANS },
+	play: async ({ canvasElement }): Promise<void> => {
+		const row = await within(canvasElement).findByTestId(
+			`cell-0-${spanIdAt(focusSpanIndex('ai', AI_SPANS))}`,
+			undefined,
+			untilLoaded,
+		);
+
+		await fireEvent.mouseOver(row);
+		await screen.findByText('Usage Breakdown', undefined, untilLoaded);
+	},
 };
 
 /**
@@ -309,18 +332,35 @@ export const AddSpanToFunnelCreateStep: Story = {
 	},
 };
 
-/** The span's trace id clicked in the panel, which copies it. */
-export const TraceIdCopiedToast: Story = {
+/** The span has no logs of its own but its trace does, so the Logs tab points to the trace's. */
+export const SpanPanelTraceOnlyLogs: Story = {
+	args: { traceOnlyLogs: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole('tab', { name: /Logs/ }, untilLoaded),
+		);
+		await expect(
+			await within(canvasElement).findByText(
+				'No logs found for selected span. View logs for the current trace.',
+				undefined,
+				untilLoaded,
+			),
+		).toBeVisible();
+	},
+};
+
+/** The span panel's trace id copied with its copy button, which turns into a check. */
+export const TraceIdCopied: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await userEvent.click(
 			await within(canvasElement).findByRole(
 				'button',
-				{ name: STORY_TRACE_ID },
+				{ name: 'Copy trace ID' },
 				untilLoaded,
 			),
 		);
 		await expect(
-			await screen.findByText('Trace ID copied to clipboard'),
+			await within(canvasElement).findByRole('button', { name: 'Copied' }),
 		).toBeVisible();
 	},
 };

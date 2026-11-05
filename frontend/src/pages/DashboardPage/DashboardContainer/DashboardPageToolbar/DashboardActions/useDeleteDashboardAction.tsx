@@ -10,7 +10,7 @@ import {
 import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
 import ROUTES from 'constants/routes';
 import { useDashboardPreferencesStore } from 'hooks/dashboard/useDashboardPreference';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -53,7 +53,7 @@ export function useDeleteDashboardAction({
 				removePreferences(dashboardId);
 				await invalidateListDashboardsForUserV2(queryClient);
 				toast.success('Dashboard deleted successfully');
-				history.replace(ROUTES.ALL_DASHBOARD);
+				navigate(ROUTES.ALL_DASHBOARD, { replace: true });
 			},
 			onError: (error: unknown): void => {
 				showErrorModal(error as APIError);

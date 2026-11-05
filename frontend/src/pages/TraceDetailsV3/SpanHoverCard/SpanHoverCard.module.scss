@@ -1,29 +1,18 @@
 .content {
+	composes: tooltipBody from '../shared.module.scss';
+	min-width: 223px;
+	max-width: 360px;
 	// The popover shell carries no padding of its own, so the card owns it. Same values the
 	// tooltip used to supply, so the card reads exactly as it did before.
 	padding: var(--spacing-1) var(--spacing-4);
-	font-size: 12px;
-	color: var(--l1-foreground);
 }
 
-.name {
-	font-weight: 600;
-	margin-bottom: 4px;
+.title {
+	composes: tooltipTitle from '../shared.module.scss';
 }
 
-.row {
-	line-height: 1.5;
-	color: var(--l2-foreground);
-}
-
-.preview {
-	// container for additional preview rows
-}
-
-.previewKey {
-	color: var(--l2-foreground);
-}
-
-.previewValue {
-	color: var(--l1-foreground);
+.header {
+	display: flex;
+	flex-direction: column;
+	padding-bottom: var(--spacing-2);
 }

@@ -2,7 +2,6 @@
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	font-family: 'Space Mono', monospace;
 	font-size: 14px;
 	font-weight: 400;
 	line-height: 18px;
@@ -19,7 +18,6 @@
 			thead {
 				tr {
 					th {
-						font-family: 'Space Mono', monospace;
 						font-size: 12px;
 						color: white !important;
 
@@ -37,7 +35,6 @@
 					}
 
 					td {
-						font-family: 'Space Mono', monospace;
 						font-size: 12px;
 					}
 
@@ -57,7 +54,6 @@
 			tbody {
 				tr {
 					td {
-						font-family: 'Space Mono', monospace;
 						font-size: 12px;
 						padding: 4px !important;
 
@@ -74,12 +70,7 @@
 				}
 
 				tr:has(.active-log) {
-					background-color: rgba(
-						78,
-						116,
-						248,
-						0.5
-					) !important; // same as bg-robin-500
+					background-color: rgba(78, 116, 248, 0.5) !important; // same as bg-robin-500
 					color: var(--l1-foreground) !important;
 				}
 			}

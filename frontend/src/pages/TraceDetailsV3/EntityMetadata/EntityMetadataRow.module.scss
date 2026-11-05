@@ -6,3 +6,12 @@
 	font-size: var(--periscope-font-size-base);
 	color: var(--l2-foreground);
 }
+
+.tokenTooltip {
+	composes: tooltipBody from '../shared.module.scss';
+	min-width: 180px;
+}
+
+.tokenTooltipTitle {
+	padding-bottom: var(--spacing-4);
+}

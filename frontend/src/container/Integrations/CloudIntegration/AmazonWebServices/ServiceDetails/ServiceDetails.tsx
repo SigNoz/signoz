@@ -410,6 +410,7 @@ function ServiceDetails({
 													}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
+													testId="cloud-service-logs-switch"
 													onChange={(checked): void => {
 														field.onChange(checked);
 													}}
@@ -458,6 +459,7 @@ function ServiceDetails({
 													}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
+													testId="cloud-service-metrics-switch"
 													onChange={field.onChange}
 												/>
 											)}
@@ -473,6 +475,7 @@ function ServiceDetails({
 									disabledTooltip="Wait for the changes to save"
 									variant="solid"
 									color="secondary"
+									testId="cloud-service-discard-btn"
 									onClick={handleDiscard}
 									disabled={isUpdatingServiceConfig}
 									size="sm"
@@ -489,6 +492,7 @@ function ServiceDetails({
 									size="sm"
 									width={100}
 									prefix={<Save size={14} />}
+									testId="cloud-service-save-btn"
 									type="submit"
 									loading={isUpdatingServiceConfig}
 									disabled={isS3SyncBucketsMissing}

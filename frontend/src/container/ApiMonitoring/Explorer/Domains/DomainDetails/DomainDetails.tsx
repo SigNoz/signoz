@@ -166,6 +166,7 @@ function DomainDetails({
 								weight="medium"
 								color="muted"
 								className="title"
+								testId="domain-details-title"
 							>
 								{domainData.domainName}
 							</Typography.Text>
@@ -219,6 +220,7 @@ function DomainDetails({
 				background: 'var(--l1-background)',
 			}}
 			className="domain-detail-drawer"
+			data-testid="domain-details-drawer"
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 		>
@@ -238,9 +240,21 @@ function DomainDetails({
 							value={selectedView}
 							size="md"
 							items={[
-								{ value: VIEW_TYPES.ALL_ENDPOINTS, label: 'All Endpoints' },
-								{ value: VIEW_TYPES.ENDPOINT_STATS, label: 'Endpoint(s) Stats' },
-								{ value: VIEW_TYPES.TOP_ERRORS, label: 'Top 10 Errors' },
+								{
+									value: VIEW_TYPES.ALL_ENDPOINTS,
+									label: 'All Endpoints',
+									testId: `domain-view-${VIEW_TYPES.ALL_ENDPOINTS}`,
+								},
+								{
+									value: VIEW_TYPES.ENDPOINT_STATS,
+									label: 'Endpoint(s) Stats',
+									testId: `domain-view-${VIEW_TYPES.ENDPOINT_STATS}`,
+								},
+								{
+									value: VIEW_TYPES.TOP_ERRORS,
+									label: 'Top 10 Errors',
+									testId: `domain-view-${VIEW_TYPES.TOP_ERRORS}`,
+								},
 							]}
 						/>
 					</div>

@@ -16,24 +16,29 @@ function AlertMessage({
 	switch (modalState) {
 		case ModalStateEnum.WAITING:
 			return (
-				<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+				<Callout
+					color="info"
+					size="sm"
+					icon={<SolidInfoCircle />}
+					testId="cloud-connect-waiting"
+				>
 					<div className="cloud-account-setup-form__alert-message">
-						<Spin
-							indicator={
-								<LoaderCircle
-									size={14}
-									className="anticon anticon-loading anticon-spin ant-spin-dot"
-								/>
-							}
-						/>
-						Waiting for connection, retrying in <span className="retry-time">10</span>{' '}
+						<Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />
+						Waiting for connection, retrying in <span className="retry-time">
+							10
+						</span>{' '}
 						secs...
 					</div>
 				</Callout>
 			);
 		case ModalStateEnum.ERROR:
 			return (
-				<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
+				<Callout
+					color="danger"
+					size="sm"
+					icon={<SolidAlertCircle />}
+					testId="cloud-connect-error"
+				>
 					<div className="cloud-account-setup-form__alert-message">
 						We couldn&apos;t establish a connection to your AWS account. Please try
 						again

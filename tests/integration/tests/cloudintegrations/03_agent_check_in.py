@@ -31,12 +31,14 @@ GCP_ACCOUNT_SPEC = ProviderAccountSpec(
     },
     build_config=lambda p: {
         "gcp": {
+            "connectionMethod": "manual",
             "deploymentProjectId": p["deployment_project_id"],
             "deploymentRegion": p["deployment_region"],
             "projectIds": p["project_ids"],
         }
     },
     expected_config=lambda p: {
+        "connectionMethod": "manual",
         "deploymentProjectId": p["deployment_project_id"],
         "deploymentRegion": p["deployment_region"],
         "projectIds": p["project_ids"],
@@ -49,6 +51,25 @@ provider_spec = pytest.mark.parametrize(
     "spec",
     PROVIDER_ACCOUNT_SPECS,
     ids=[s.id for s in PROVIDER_ACCOUNT_SPECS],
+)
+
+provider_account_reuse = pytest.mark.parametrize(
+    "provider,account_config,provider_account_id",
+    [
+        pytest.param("aws", {"aws": {"deploymentRegion": "us-east-1", "regions": ["us-east-1"]}}, "123456789012", id="aws"),
+        pytest.param(
+            "gcp",
+            {"gcp": {"connectionMethod": "manual", "deploymentProjectId": "signoz-reuse-project", "deploymentRegion": "us-central1", "projectIds": ["signoz-reuse-project"]}},
+            "reused-manual-account",
+            id="gcp_manual",
+        ),
+        pytest.param(
+            "gcp",
+            {"gcp": {"connectionMethod": "agent", "deploymentProjectId": "signoz-reuse-project", "deploymentRegion": "us-central1", "projectIds": ["signoz-reuse-project"]}},
+            "signoz-reuse-project",
+            id="gcp_agent",
+        ),
+    ],
 )
 
 
@@ -153,6 +174,201 @@ def test_duplicate_cloud_account_checkins(
     # Second check-in: account2 tries to claim the same provider account ID → 409
     response = simulate_agent_checkin(signoz, admin_token, spec.provider, account2["id"], same_provider_account_id)
     assert response.status_code == HTTPStatus.CONFLICT, f"Expected 409 for duplicate providerAccountId, got {response.status_code}: {response.text}"
+
+
+def test_gcp_agent_check_in_returns_collection_strategy(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    project_id = "signoz-agent-strategy-project"
+    account_id = create_cloud_integration_account(admin_token, "gcp", config={"gcp": {"connectionMethod": "agent", "deploymentProjectId": project_id, "deploymentRegion": "us-central1", "projectIds": [project_id]}})["id"]
+    services_url = signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/gcp/accounts/{account_id}/services")
+    mysql_sink_filter = '(resource.type="cloudsql_database" AND (logName:"/logs/cloudsql.googleapis.com%2Fmysql" OR (log_id("cloudaudit.googleapis.com/data_access") AND protoPayload.request.@type="type.googleapis.com/google.cloud.sql.audit.v1.MysqlAuditEntry")))'
+    postgres_sink_filter = '(resource.type="cloudsql_database" AND (logName:"/logs/cloudsql.googleapis.com%2Fpostgres" OR (log_id("cloudaudit.googleapis.com/data_access") AND protoPayload.request.@type="type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry")))'
+
+    response = simulate_agent_checkin(signoz, admin_token, "gcp", account_id, project_id)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["integrationConfig"]["gcp"] == {
+        "connectionMethod": "agent",
+        "deploymentProjectId": project_id,
+        "deploymentRegion": "us-central1",
+        "projectIds": [project_id],
+        "telemetryCollectionStrategy": {"metrics": None, "logs": None},
+    }
+
+    for service_id, service_config in (
+        ("cloudsql_mysql", {"metrics": {"enabled": True}, "logs": {"enabled": False}}),
+        ("cloudsql_postgres", {"metrics": {"enabled": True}, "logs": {"enabled": True}}),
+    ):
+        response = requests.put(f"{services_url}/{service_id}", headers=headers, json={"config": {"gcp": service_config}}, timeout=10)
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = simulate_agent_checkin(signoz, admin_token, "gcp", account_id, project_id)
+    assert response.status_code == HTTPStatus.OK, response.text
+    strategy = response.json()["data"]["integrationConfig"]["gcp"]["telemetryCollectionStrategy"]
+    metric_names = strategy["metrics"]["metricNames"]
+    assert metric_names == sorted(set(metric_names)), "metrics shared by MySQL and Postgres should be listed once, sorted"
+    assert {"cloudsql.googleapis.com/database/up", "cloudsql.googleapis.com/database/mysql/queries", "cloudsql.googleapis.com/database/postgresql/num_backends"} <= set(metric_names)
+    assert strategy["logs"] == {"sinkFilter": postgres_sink_filter}, "only services with logs enabled should contribute a sink filter"
+
+    response = requests.put(f"{services_url}/cloudsql_mysql", headers=headers, json={"config": {"gcp": {"metrics": {"enabled": False}, "logs": {"enabled": True}}}}, timeout=10)
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = simulate_agent_checkin(signoz, admin_token, "gcp", account_id, project_id)
+    assert response.status_code == HTTPStatus.OK, response.text
+    strategy = response.json()["data"]["integrationConfig"]["gcp"]["telemetryCollectionStrategy"]
+    assert "cloudsql.googleapis.com/database/up" in strategy["metrics"]["metricNames"], "Postgres should still collect the shared metrics"
+    assert not [name for name in strategy["metrics"]["metricNames"] if "/database/mysql/" in name], "MySQL metrics should stop once its metrics are disabled"
+    assert strategy["logs"] == {"sinkFilter": f"{mysql_sink_filter} OR {postgres_sink_filter}"}
+
+
+def test_gcp_agent_check_in_rejects_other_project(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    project_id = "signoz-agent-mismatch-project"
+    account_id = create_cloud_integration_account(admin_token, "gcp", config={"gcp": {"connectionMethod": "agent", "deploymentProjectId": project_id, "deploymentRegion": "us-central1", "projectIds": [project_id]}})["id"]
+
+    response = simulate_agent_checkin(signoz, admin_token, "gcp", account_id, "signoz-other-project")
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+
+    response = requests.get(signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/gcp/accounts/{account_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["providerAccountId"] is None, "a rejected check-in must not connect the account"
+    assert response.json()["data"]["agentReport"] is None
+
+    response = simulate_agent_checkin(signoz, admin_token, "gcp", account_id, project_id)
+    assert response.status_code == HTTPStatus.OK, response.text
+
+
+@provider_account_reuse
+def test_removed_account_checkins_after_provider_account_id_is_reused(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+    provider: str,
+    account_config: dict,
+    provider_account_id: str,
+) -> None:
+    """Connect old account, remove it, connect replacement, then check in from the old agent."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    accounts_url = signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{provider}/accounts")
+
+    # The original agent connects before its integration is removed.
+    old_account_id = create_cloud_integration_account(admin_token, provider, config=account_config)["id"]
+    response = simulate_agent_checkin(signoz, admin_token, provider, old_account_id, provider_account_id, data={"version": "old-agent"})
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.delete(f"{accounts_url}/{old_account_id}", headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.get(f"{accounts_url}/{old_account_id}", headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    old_account_before_checkins = response.json()["data"]
+
+    # A new integration claims the same provider account ID.
+    replacement_id = create_cloud_integration_account(admin_token, provider, config=account_config)["id"]
+    response = simulate_agent_checkin(signoz, admin_token, provider, replacement_id, provider_account_id, data={"version": "replacement-agent"})
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.get(f"{accounts_url}/{replacement_id}", headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    replacement_before_checkins = response.json()["data"]
+
+    # The old agent keeps retrying. It must receive removal instructions, rather than a 409.
+    for _ in range(3):
+        response = simulate_agent_checkin(signoz, admin_token, provider, old_account_id, provider_account_id, data={"version": "old-agent-after-removal"})
+        assert response.status_code == HTTPStatus.OK, response.text
+        cleanup_response = response.json()["data"]
+        assert cleanup_response["cloudIntegrationId"] == old_account_id
+        assert cleanup_response["providerAccountId"] == provider_account_id
+        assert cleanup_response["removedAt"] is not None
+        assert cleanup_response["removedAt"] == old_account_before_checkins["removedAt"]
+        assert cleanup_response["integrationConfig"] == {}
+
+    # Cleanup may update sync state, but must preserve the original heartbeat, data and identity.
+    response = requests.get(f"{accounts_url}/{old_account_id}", headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    removed_account = response.json()["data"]
+    assert removed_account["providerAccountId"] == old_account_before_checkins["providerAccountId"]
+    assert removed_account["agentReport"]["timestampMillis"] == old_account_before_checkins["agentReport"]["timestampMillis"]
+    assert removed_account["agentReport"]["data"] == old_account_before_checkins["agentReport"]["data"]
+    assert removed_account["agentReport"]["syncState"] == cleanup_response["syncState"]
+
+    response = requests.get(f"{accounts_url}/{replacement_id}", headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"] == replacement_before_checkins, "old check-ins must not change the replacement account"
+
+    response = simulate_agent_checkin(signoz, admin_token, provider, replacement_id, provider_account_id)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["removedAt"] is None
+
+
+@provider_account_reuse
+def test_removed_account_first_checkin_after_provider_account_id_is_reused(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+    provider: str,
+    account_config: dict,
+    provider_account_id: str,
+) -> None:
+    """Removal before the first heartbeat must still be reported after another integration claims the provider ID."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    accounts_url = signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{provider}/accounts")
+
+    # Remove the original integration before its agent has checked in even once.
+    old_account_id = create_cloud_integration_account(admin_token, provider, config=account_config)["id"]
+    response = requests.delete(f"{accounts_url}/{old_account_id}", headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.get(f"{accounts_url}/{old_account_id}", headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    old_account_before_checkins = response.json()["data"]
+    assert old_account_before_checkins["providerAccountId"] is None
+    assert old_account_before_checkins["agentReport"] is None
+
+    replacement_id = create_cloud_integration_account(admin_token, provider, config=account_config)["id"]
+    response = simulate_agent_checkin(signoz, admin_token, provider, replacement_id, provider_account_id)
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.get(f"{accounts_url}/{replacement_id}", headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    replacement_before_checkins = response.json()["data"]
+
+    # Late first check-ins must report removal without creating a heartbeat or claiming the ID.
+    for _ in range(3):
+        response = simulate_agent_checkin(signoz, admin_token, provider, old_account_id, provider_account_id)
+        assert response.status_code == HTTPStatus.OK, response.text
+        cleanup_response = response.json()["data"]
+        assert cleanup_response["cloudIntegrationId"] == old_account_id
+        assert cleanup_response["providerAccountId"] == provider_account_id
+        assert cleanup_response["removedAt"] == old_account_before_checkins["removedAt"]
+        assert cleanup_response["removedAt"] is not None
+        assert cleanup_response["integrationConfig"] == {}
+
+    response = requests.get(f"{accounts_url}/{old_account_id}", headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"] == old_account_before_checkins, "late first check-ins must not change a removed account"
+
+    response = requests.get(f"{accounts_url}/{replacement_id}", headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"] == replacement_before_checkins
+
+    response = simulate_agent_checkin(signoz, admin_token, provider, replacement_id, provider_account_id)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["removedAt"] is None
 
 
 def test_sync_state_drops_removed_region_after_ack(
@@ -346,12 +562,13 @@ def test_sync_state_region_removed_during_sync(
     }
 
 
-def test_sync_state_after_disconnect(
+def test_sync_state_after_disconnect_when_provider_account_id_is_reused(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
+    """The old AWS agent can finish cleanup while its provider ID belongs to a replacement integration."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     account_id = create_cloud_integration_account(admin_token, "aws", regions=["us-east-1", "us-west-2"])["id"]
     provider_account_id = str(uuid.uuid4())
@@ -365,6 +582,10 @@ def test_sync_state_after_disconnect(
         timeout=10,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    replacement_id = create_cloud_integration_account(admin_token, "aws", regions=["us-east-1", "us-west-2"])["id"]
+    response = simulate_agent_checkin(signoz, admin_token, "aws", replacement_id, provider_account_id)
+    assert response.status_code == HTTPStatus.OK, response.text
 
     for _ in range(2):
         response = simulate_agent_checkin(signoz, admin_token, "aws", account_id, provider_account_id)
@@ -380,3 +601,11 @@ def test_sync_state_after_disconnect(
         response = simulate_agent_checkin(signoz, admin_token, "aws", account_id, provider_account_id, synced_version=2)
         assert response.status_code == HTTPStatus.OK, response.text
         assert response.json()["data"]["syncState"] == {"version": 2, "inSync": True, "regions": {}}, "acked removal should leave no regions"
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/aws/accounts/{account_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["agentReport"]["syncState"] == {"version": 2, "inSync": True, "regions": {}}, "cleanup acknowledgment must be saved"

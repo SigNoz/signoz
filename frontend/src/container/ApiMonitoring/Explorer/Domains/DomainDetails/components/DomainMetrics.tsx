@@ -85,7 +85,7 @@ function DomainMetrics({
 	}
 
 	return (
-		<div className="domain-detail-drawer__endpoint">
+		<div className="domain-detail-drawer__endpoint" data-testid="domain-metrics">
 			<div className="domain-details-grid">
 				<div className="labels-row">
 					<Typography.Text
@@ -122,7 +122,7 @@ function DomainMetrics({
 					</Typography.Text>
 				</div>
 
-				<div className="values-row">
+				<div className="values-row" data-testid="domain-metrics-values">
 					<Typography.Text
 						size="small"
 						weight="medium"

@@ -42,9 +42,9 @@
     "@types/node": "^20.0.0",
     "dotenv": "^16.0.0",
     "eslint-plugin-playwright": "^2.10.2",
-    "oxfmt": "^0.41.0",
-    "oxlint": "^1.59.0",
-    "oxlint-tsgolint": "^0.20.0",
+    "oxfmt": "0.73.0",
+    "oxlint": "1.88.0",
+    "oxlint-tsgolint": "7.0.2004",
     "typescript": "^5.0.0"
   },
   "engines": {

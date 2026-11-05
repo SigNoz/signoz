@@ -206,6 +206,7 @@ function VariableForm({
 						color="secondary"
 						prefix={<X size={14} />}
 						onClick={onClose}
+						testId="variable-discard"
 					>
 						Discard
 					</Button>

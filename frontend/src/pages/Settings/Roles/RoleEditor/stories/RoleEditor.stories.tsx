@@ -6,6 +6,7 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	openLogsCard,
+	openSelectorWizard,
 	roleEditorMocks,
 	save,
 } from './RoleEditor.stories.mocks';
@@ -93,14 +94,46 @@ export const PermissionEditorScope: Story = {
 /** The selector wizard, opened from a Logs verb scoped to named objects. */
 export const TelemetrySelectorWizard: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
-		const card = await openLogsCard(canvasElement);
-		const [onlySelected] = await within(card).findAllByText('Only selected');
+		await openSelectorWizard(canvasElement);
+	},
+};
 
-		await userEvent.click(onlySelected);
-		await userEvent.click(
-			await within(card).findByRole('button', { name: 'Wizard' }),
+/** The Key dropdown open, showing the three supported telemetry grant keys. */
+export const TelemetryKeyDropdown: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openSelectorWizard(canvasElement);
+
+		await userEvent.click(screen.getByTestId('wizard-key-select-logs-read'));
+		await screen.findByTestId(
+			'wizard-key-option-signoz.workspace.key.id-logs-read',
 		);
-		await screen.findByRole('dialog', { name: 'Selector Wizard' });
+		await screen.findByTestId(
+			'wizard-key-option-resource.service.name-logs-read',
+		);
+		await screen.findByTestId(
+			'wizard-key-option-resource.deployment.environment.name-logs-read',
+		);
+	},
+};
+
+/** A service-name key picked with a value: the selector rebuilds to match. */
+export const TelemetryKeyScoped: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openSelectorWizard(canvasElement);
+
+		await userEvent.click(screen.getByTestId('wizard-key-select-logs-read'));
+		await userEvent.click(
+			await screen.findByTestId(
+				'wizard-key-option-resource.service.name-logs-read',
+			),
+		);
+		await userEvent.type(
+			screen.getByTestId('wizard-value-input-logs-read-field'),
+			'checkout',
+		);
+		await expect(
+			screen.getByTestId('wizard-selector-input-logs-read-field'),
+		).toHaveValue('builder_query/resource.service.name/checkout');
 	},
 };
 

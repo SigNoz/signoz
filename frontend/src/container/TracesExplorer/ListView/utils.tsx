@@ -1,4 +1,5 @@
-import { generatePath, Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import type { TableColumnsType as ColumnsType } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
@@ -13,6 +14,7 @@ import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter'
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { ILog } from 'types/api/logs/log';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 export function BlockLink({
@@ -26,13 +28,13 @@ export function BlockLink({
 }): any {
 	// Display block to make the whole cell clickable
 	return (
-		<Link
+		<AppLink
 			to={to}
 			style={{ display: 'block' }}
 			target={openInNewTab ? '_blank' : '_self'}
 		>
 			{children}
-		</Link>
+		</AppLink>
 	);
 }
 
@@ -57,11 +59,13 @@ export const getTraceLink = (record: Record<string, unknown>): string => {
 		return '';
 	}
 
-	return `${generatePath(ROUTES.TRACE_DETAIL, { id: traceId })}${formUrlParams({
-		spanId,
-		levelUp: 0,
-		levelDown: 0,
-	})}`;
+	return `${buildRoutePath(ROUTES.TRACE_DETAIL, { id: traceId })}${formUrlParams(
+		{
+			spanId,
+			levelUp: 0,
+			levelDown: 0,
+		},
+	)}`;
 };
 
 export const getListColumns = (
@@ -174,4 +178,24 @@ export const transformSpanRows = (data: QueryDataV3[]): TracesTableRow[] => {
 			id: row.span_id,
 		};
 	}) as TracesTableRow[];
+};
+
+export const getListLimit = (query: Query): number | null =>
+	query.builder.queryTraceOperator?.[0]?.limit ??
+	query.builder.queryData[0]?.limit ??
+	null;
+
+/** Offset of the next page, or undefined once a short page or the limit ends the list. */
+export const getNextPageOffset = (
+	pageLengths: number[],
+	pageSize: number,
+	limit: number | null,
+): number | undefined => {
+	const loaded = pageLengths.reduce((sum, length) => sum + length, 0);
+	const lastLength = pageLengths[pageLengths.length - 1] ?? 0;
+
+	if (lastLength < pageSize || (limit && loaded >= limit)) {
+		return undefined;
+	}
+	return loaded;
 };

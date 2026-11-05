@@ -62,13 +62,18 @@ function SearchBar({
 				placement="bottomRight"
 				arrow={false}
 			>
-				<Button type="text" className="search__sort-btn">
+				<Button
+					type="text"
+					className="search__sort-btn"
+					data-testid="traces-funnels-sort-btn"
+				>
 					<ArrowDownWideNarrow size={12} data-testid="sort-by" />
 					<div className="search__sort-btn-text">Sort</div>
 				</Button>
 			</Popover>
 			<div className="search__input">
 				<Input
+					testId="traces-funnels-search"
 					placeholder="Search by name, description, or tags..."
 					prefix={
 						<Search
@@ -92,6 +97,7 @@ function SearchBar({
 					type="primary"
 					icon={<Plus size={16} />}
 					className="search__new-btn"
+					data-testid="traces-funnels-new-btn"
 					onClick={onCreateFunnel}
 					disabled={!hasEditPermission}
 				>

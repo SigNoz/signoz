@@ -266,6 +266,7 @@ function AddSpanToFunnelModal({
 								disabledTooltip="No changes to save"
 								size="md"
 								key="save"
+								testId="add-span-save-btn"
 								variant="solid"
 								color="primary"
 								width="135px"

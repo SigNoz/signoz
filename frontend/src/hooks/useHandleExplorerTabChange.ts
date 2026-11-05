@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { QueryParams } from 'constants/query';
 import { initialAutocompleteData, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -9,10 +10,14 @@ import { useGetSavedViewParams } from './saveViews/useGetSavedViewParams';
 import { useQueryBuilder } from './queryBuilder/useQueryBuilder';
 
 export interface ICurrentQueryData {
-	viewName?: string;
 	viewKey?: string;
 	query: Query;
 }
+
+export type ChangeViewFunctionType = (
+	view: ExplorerViews,
+	querySearchParameters?: ICurrentQueryData,
+) => void;
 
 export const useHandleExplorerTabChange = (): {
 	handleExplorerTabChange: (
@@ -30,7 +35,7 @@ export const useHandleExplorerTabChange = (): {
 		updateQueriesData,
 	} = useQueryBuilder();
 
-	const { viewName, viewKey } = useGetSavedViewParams();
+	const { viewKey } = useGetSavedViewParams();
 
 	const getUpdateQuery = useCallback(
 		(newPanelType: PANEL_TYPES): Query => {
@@ -73,21 +78,19 @@ export const useHandleExplorerTabChange = (): {
 
 			const query = currentQueryData?.query || getUpdateQuery(newPanelType);
 			const nextViewKey = currentQueryData?.viewKey || viewKey;
-			const nextViewName = currentQueryData?.viewName || viewName;
 
 			redirectWithQueryBuilderData(
 				query,
 				{
 					[QueryParams.panelTypes]: newPanelType,
 					...(nextViewKey ? { [QueryParams.viewKey]: nextViewKey } : {}),
-					...(nextViewName ? { [QueryParams.viewName]: nextViewName } : {}),
 				},
 				redirectToUrl,
 				undefined,
 				newTab,
 			);
 		},
-		[panelType, getUpdateQuery, redirectWithQueryBuilderData, viewName, viewKey],
+		[panelType, getUpdateQuery, redirectWithQueryBuilderData, viewKey],
 	);
 
 	return { handleExplorerTabChange };

@@ -160,15 +160,29 @@ func TestFormat_OpenInference(t *testing.T) {
 			// which the mapper moves onto gen_ai.output.messages
 			// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/python/instrumentation/openinference-instrumentation-pipecat/src/openinference/instrumentation/pipecat/_attributes.py#L430
 			// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/python/instrumentation/openinference-instrumentation-pipecat/src/openinference/instrumentation/pipecat/_observer.py#L628
-			name: "OutputKeysAbsent_RawOutputFormatted_Warns",
+			name: "OutputKeysAbsent_RawOutputFormatted",
 			attributes: map[string]any{
 				"llm.input_messages.0.message.role":    "user",
 				"llm.input_messages.0.message.content": "hi",
 				GenAIOutputMessages:                    "Hello there.",
 			},
-			warnings:   []string{"bare assistant text, role assumed", "output formatted as text, input as openinference"},
+			warnings:   []string{"bare assistant text, role assumed"},
 			wantInput:  `[{"role": "user", "parts": [{"type": "text", "content": "hi"}]}]`,
 			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "Hello there."}]}]`,
+		},
+		{
+			// LiteLLM's OpenInference mode leaves the output bucket empty on a tool-calling turn; the calls are
+			// the Langfuse output the mapper moved onto gen_ai.output.messages
+			name: "EmptyOutputBucket_RawOutputFormatted",
+			attributes: map[string]any{
+				"llm.input_messages.0.message.role":     "user",
+				"llm.input_messages.0.message.content":  "Yes, go ahead.",
+				"llm.output_messages.0.message.role":    "assistant",
+				"llm.output_messages.0.message.content": "",
+				GenAIOutputMessages:                     `[{"id": "chatcmpl-2", "name": "set_stage", "call_id": "call_8", "type": "function_call", "arguments": {"fields": {"stage": "email"}}}]`,
+			},
+			wantInput:  `[{"role": "user", "parts": [{"type": "text", "content": "Yes, go ahead."}]}]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "tool_call", "name": "set_stage", "id": "call_8", "arguments": {"fields": {"stage": "email"}}}]}]`,
 		},
 		{
 			// message.role left unset by some instrumentors: tool_call_id, tool_calls or neither decide it,
@@ -318,6 +332,19 @@ func TestFormat_OpenInference(t *testing.T) {
 				"llm.input_messages.0.message.content":      "2001",
 			},
 			wantInput:  `[{"role": "tool", "name": "multiply", "parts": [{"type": "tool_call_response", "id": "call_62136355", "response": "2001"}]}]`,
+			wantOutput: `[]`,
+		},
+		{
+			// OpenInference replaces a base64 image over 32,000 characters with __REDACTED__:
+			// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/python/openinference-instrumentation/src/openinference/instrumentation/config.py#L431
+			name: "RedactedImage_GenericPart_Warns",
+			attributes: map[string]any{
+				"llm.input_messages.0.message.role":                                       "user",
+				"llm.input_messages.0.message.contents.0.message_content.type":            "image",
+				"llm.input_messages.0.message.contents.0.message_content.image.image.url": "__REDACTED__",
+			},
+			warnings:   []string{"media without a URL kept as generic"},
+			wantInput:  `[{"role": "user", "parts": [{"type": "generic", "modality": "image", "content": "__REDACTED__"}]}]`,
 			wantOutput: `[]`,
 		},
 	})

@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { useLocation } from 'react-router-dom';
 import { toast } from '@signozhq/ui/toast';
 import {
 	useCreateSavedView,
@@ -17,25 +16,32 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import useOptionsMenu from 'container/OptionsMenu/useOptionsMenu';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
-import { DataSource } from 'types/common/queryBuilder';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { usePreferenceSlice } from 'providers/preferences/context/usePreferenceSlice';
+import { isPreferenceSourcePage } from 'providers/preferences/utils';
 import { toAPIError } from 'utils/errorUtils';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import {
-	SAVED_VIEW_OPTIONS_DATA_SOURCE,
 	SAVED_VIEW_SCHEMA_VERSION,
 	SAVED_VIEW_TOAST_POSITION,
 	SAVED_VIEW_URL_PARAMS,
 } from '../constants';
+import {
+	SavedViewCreatedFrom,
+	SavedViewEventKeys,
+	SavedViewEvents,
+} from '../events';
 import { UseSavedViewActionsResult } from '../types';
 import { getSavedViewQuery } from '../utils/getSavedViewQuery';
 import { getViewColumnsAndFormatting } from '../utils/getViewColumnsAndFormatting';
 import { invalidateSavedViews } from '../utils/invalidateSavedViews';
 import { toSavedViewSpec } from '../utils/toSavedViewSpec';
 import { useLastUsedView } from './useLastUsedView';
+import { useSavedViewLogEvent } from './useSavedViewLogEvent';
 
 // Columns and formatting need no handling here: with a viewKey in the url the
 // preference provider reads them from the view, and without one it falls back
@@ -44,22 +50,20 @@ export function useSavedViewActions(
 	source: SavedviewtypesSourceDTO,
 ): UseSavedViewActionsResult {
 	const queryClient = useQueryClient();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const { safeNavigate } = useSafeNavigate();
 	const { currentQuery, stagedQuery, panelType, redirectWithQueryBuilderData } =
 		useQueryBuilder();
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const { setLastUsedView, clearLastUsedView } = useLastUsedView(source);
+	const { viewKey } = useGetSavedViewParams();
+	const logSavedViewEvent = useSavedViewLogEvent(source);
 
-	const optionsDataSource = SAVED_VIEW_OPTIONS_DATA_SOURCE[source];
+	const hasOptions = isPreferenceSourcePage(source);
 	const { options } = useOptionsMenu({
-		dataSource: optionsDataSource ?? DataSource.LOGS,
+		sourcePage: hasOptions ? source : SavedviewtypesSourceDTO.logs,
 	});
-	const preferences = usePreferenceContext();
-	const preferencesSlice =
-		optionsDataSource === DataSource.TRACES
-			? preferences.traces
-			: preferences.logs;
+	const preferenceSlice = usePreferenceSlice(source);
 
 	const { mutateAsync: createSavedView, isLoading: isCreating } =
 		useCreateSavedView();
@@ -77,10 +81,10 @@ export function useSavedViewActions(
 				query: stagedQuery ?? currentQuery,
 				panelType: panelType ?? PANEL_TYPES.LIST,
 				displayName,
-				options: optionsDataSource ? options : undefined,
+				options: hasOptions ? options : undefined,
 				color,
 			}),
-		[stagedQuery, currentQuery, panelType, optionsDataSource, options],
+		[stagedQuery, currentQuery, panelType, hasOptions, options],
 	);
 
 	const selectView = useCallback(
@@ -96,24 +100,27 @@ export function useSavedViewActions(
 
 	const revertView = useCallback(
 		(view: SavedviewtypesSavedViewDTO): void => {
-			if (optionsDataSource) {
+			if (preferenceSlice) {
 				const { columns, formatting } = getViewColumnsAndFormatting(
 					view.spec,
-					optionsDataSource,
+					source,
 				);
-				preferencesSlice.updateColumns(columns);
+				preferenceSlice.updateColumns(columns);
 				if (formatting) {
-					preferencesSlice.updateFormatting(formatting);
+					preferenceSlice.updateFormatting(formatting);
 				}
 			}
 			selectView(view);
+			logSavedViewEvent(SavedViewEvents.ChangesDiscarded, {
+				[SavedViewEventKeys.ViewId]: view.id,
+			});
 		},
-		[optionsDataSource, preferencesSlice, selectView],
+		[source, preferenceSlice, selectView, logSavedViewEvent],
 	);
 
 	// The query builder redirects only ever add params, so the url is rebuilt
 	// here; the time range and everything else a view does not set stays.
-	const clearView = useCallback((): void => {
+	const resetView = useCallback((): void => {
 		clearLastUsedView();
 
 		const params = getUnstableCurrentSearchParams();
@@ -121,8 +128,18 @@ export function useSavedViewActions(
 		safeNavigate(`${pathname}?${params.toString()}`);
 	}, [clearLastUsedView, pathname, safeNavigate]);
 
+	const clearView = useCallback((): void => {
+		resetView();
+		logSavedViewEvent(SavedViewEvents.ViewCleared, {
+			[SavedViewEventKeys.ViewId]: viewKey,
+		});
+	}, [resetView, logSavedViewEvent, viewKey]);
+
 	const createView = useCallback(
-		async (displayName: string): Promise<string | undefined> => {
+		async (
+			displayName: string,
+			from: SavedViewCreatedFrom,
+		): Promise<string | undefined> => {
 			try {
 				const { data } = await createSavedView({
 					data: {
@@ -137,6 +154,10 @@ export function useSavedViewActions(
 					[QueryParams.viewKey]: data.id,
 				});
 				setLastUsedView(data.id, displayName);
+				logSavedViewEvent(SavedViewEvents.ViewCreated, {
+					[SavedViewEventKeys.ViewId]: data.id,
+					[SavedViewEventKeys.From]: from,
+				});
 				return data.id;
 			} catch (error) {
 				toast.danger(
@@ -161,6 +182,7 @@ export function useSavedViewActions(
 			stagedQuery,
 			currentQuery,
 			setLastUsedView,
+			logSavedViewEvent,
 		],
 	);
 
@@ -176,6 +198,9 @@ export function useSavedViewActions(
 					},
 				});
 				await invalidateViews(view.id);
+				logSavedViewEvent(SavedViewEvents.ViewUpdated, {
+					[SavedViewEventKeys.ViewId]: view.id,
+				});
 				return true;
 			} catch (error) {
 				toast.danger(
@@ -191,13 +216,14 @@ export function useSavedViewActions(
 				return false;
 			}
 		},
-		[updateSavedView, source, toCurrentSpec, invalidateViews],
+		[updateSavedView, source, toCurrentSpec, invalidateViews, logSavedViewEvent],
 	);
 
 	return {
 		selectView,
 		revertView,
 		clearView,
+		resetView,
 		createView,
 		updateView,
 		isSaving: isCreating || isUpdating,

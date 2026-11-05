@@ -3,7 +3,6 @@ import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
@@ -337,6 +336,7 @@ export enum PANEL_TYPES {
 	TRACE = 'trace',
 	BAR = 'bar',
 	AREA = 'area',
+	SCATTER = 'scatter',
 	PIE = 'pie',
 	HISTOGRAM = 'histogram',
 	HEATMAP = 'heatmap',
@@ -511,7 +511,7 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 };
 
 export enum OperatorConfigKeys {
-	'EXCEPTIONS' = 'EXCEPTIONS',
+	EXCEPTIONS = 'EXCEPTIONS',
 }
 
 export const OPERATORS_CONFIG = {
@@ -591,7 +591,6 @@ export const listViewInitialTraceQuery: Query = {
 				orderBy: [{ columnName: 'timestamp', order: 'desc' }],
 				offset: 0,
 				pageSize: 10,
-				selectColumns: defaultTraceSelectedColumns,
 			},
 		],
 	},

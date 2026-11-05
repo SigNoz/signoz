@@ -1,0 +1,28 @@
+.header {
+	box-sizing: border-box;
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: var(--spacing-4);
+	height: 48px;
+	padding: 0 var(--spacing-8) 0 var(--spacing-4);
+	border-bottom: 1px solid var(--l1-border);
+	background: var(--l2-background);
+}
+
+.title {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 14px;
+	color: var(--l1-foreground);
+}
+
+.actions {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: var(--spacing-4);
+}

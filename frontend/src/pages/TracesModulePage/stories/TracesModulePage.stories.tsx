@@ -20,12 +20,12 @@ const pageStory = storyMocks(tracesMocks, { layout: 'app' });
 
 /**
  * The traces explorer: the query builder, the span list and its detail drawer,
- * with saved views and funnels as tabs.
+ * with saved views beside it and funnels as a tab.
  *
  * Route: `/traces-explorer`.
  */
 const meta = {
-	title: 'Pages/Traces/Explorer',
+	title: 'Pages/Traces/Explorer/Overview',
 	tags: ['play'],
 	component: TracesModulePage,
 	...pageStory,
@@ -58,17 +58,54 @@ const openQuickFiltersSettings = async (): Promise<void> => {
 
 /**
  * The Explorer tab on a full window of spans: the org's quick filters down the
- * left, the query builder and the view switcher above, and the list paging ten
- * spans at a time with the failing ones answering 503.
+ * left, the query builder and the view switcher above, and the span list with
+ * the failing ones answering 503.
  */
 export const Default: Story = {};
 
 /**
  * The Trace view, which shows one row per trace: its root span, the root
- * duration and how many spans the trace has.
+ * duration and how many spans the trace has, twenty traces to a page.
  */
 export const RootSpans: Story = {
 	args: { view: ExplorerViews.TRACE },
+};
+
+/**
+ * The Trace view on its second page. The API sends no total, so the pager
+ * offers one more page after each full one.
+ */
+export const RootSpansNextPage: Story = {
+	args: { view: ExplorerViews.TRACE, spans: 50 },
+	play: async (): Promise<void> => {
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Go to next page' }, untilLoaded),
+		);
+		const pager = screen.getByLabelText('pagination');
+
+		await expect(
+			await within(pager).findByText('3', undefined, untilLoaded),
+		).toBeVisible();
+	},
+};
+
+/** The span list scrolled to its end, with the next 100 spans loaded under the first. */
+export const ListNextPage: Story = {
+	args: { spans: 150 },
+	play: async ({ canvasElement }): Promise<void> => {
+		// Scrolls again on every attempt, since each loaded page moves the end.
+		await waitFor(async (): Promise<void> => {
+			const scroller = canvasElement.querySelector<HTMLElement>(
+				'[data-virtuoso-scroller]',
+			);
+
+			await expect(scroller).not.toBeNull();
+			(scroller as HTMLElement).scrollTop = (scroller as HTMLElement).scrollHeight;
+			await expect(
+				canvasElement.querySelector('tr[data-index="120"]'),
+			).not.toBeNull();
+		}, untilLoaded);
+	},
 };
 
 /** The charted view of the same trace query. */
@@ -121,11 +158,6 @@ export const RenameFunnel: Story = {
 		await userEvent.click(await screen.findByRole('button', { name: 'Rename' }));
 		await screen.findByRole('dialog', { name: /rename funnel/i });
 	},
-};
-
-/** The Views tab, where the saved views the explorer offers are managed. */
-export const SavedViews: Story = {
-	args: { tab: 'views' },
 };
 
 /**

@@ -10,12 +10,14 @@ import {
 import TagBadge from 'components/TagBadge/TagBadge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { toast } from '@signozhq/ui/toast';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { isEmpty } from 'lodash-es';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
+import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { linkifyText } from 'utils/linkifyText';
 import { openInNewTab } from 'utils/navigation';
 
@@ -120,6 +122,10 @@ function DashboardInfo({
 		openInNewTab(publicUrl);
 	};
 
+	const handleCopyId = (): void => {
+		toast.success('Dashboard ID copied to clipboard');
+	};
+
 	return (
 		<div className={styles.dashboardInfo}>
 			<img src={image} alt={title} className={styles.dashboardImage} />
@@ -162,17 +168,25 @@ function DashboardInfo({
 					</Button>
 				</div>
 			) : (
-				<Tooltip title={title}>
-					<Typography.Text
-						className={cx(styles.dashboardTitle, {
-							[styles.dashboardTitleHover]: canEdit,
-						})}
-						data-testid="dashboard-title"
-						onClick={canEdit ? onStartEdit : undefined}
-					>
-						{title}
-					</Typography.Text>
-				</Tooltip>
+				<>
+					<Tooltip title={title}>
+						<Typography.Text
+							className={cx(styles.dashboardTitle, {
+								[styles.dashboardTitleHover]: canEdit,
+							})}
+							data-testid="dashboard-title"
+							onClick={canEdit ? onStartEdit : undefined}
+						>
+							{title}
+						</Typography.Text>
+					</Tooltip>
+					<CopyButton
+						value={dashboardId}
+						ariaLabel="Copy dashboard ID"
+						testId="dashboard-copy-id"
+						onCopy={handleCopyId}
+					/>
+				</>
 			)}
 
 			{hasDescription && (

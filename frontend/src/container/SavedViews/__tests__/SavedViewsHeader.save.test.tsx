@@ -9,8 +9,11 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import SavedViewsHeader from '../SavedViewsHeader';
 import {
+	expectRowUsable,
+	expectUsable,
 	explorerUrl,
 	makeView,
+	MENU_CHECK_TIMEOUT,
 	queryWith,
 	renderWithExplorerProviders,
 	urlParam,
@@ -27,11 +30,14 @@ const PATH = ROUTES.TRACES_EXPLORER;
 
 function renderHeader(
 	url: string,
+	isViewsOpen = false,
 ): ReturnType<typeof renderWithExplorerProviders> {
 	return renderWithExplorerProviders(
 		<SavedViewsHeader
 			source={SavedviewtypesSourceDTO.traces}
 			onOpenViews={jest.fn()}
+			isViewsOpen={isViewsOpen}
+			onToggleViews={jest.fn()}
 		/>,
 		url,
 	);
@@ -42,8 +48,9 @@ const isModalOpen = (): boolean => !!screen.queryByTestId('save-view-modal');
 
 async function openDirtyView(
 	view: ReturnType<typeof makeView>,
+	isViewsOpen = false,
 ): Promise<ReturnType<typeof renderWithExplorerProviders>> {
-	const rendered = renderHeader(viewUrl(PATH, view));
+	const rendered = renderHeader(viewUrl(PATH, view), isViewsOpen);
 	await waitFor(() =>
 		expect(screen.getByTestId('saved-views-name')).toHaveTextContent(
 			view.spec.displayName,
@@ -67,9 +74,21 @@ async function openDirtyView(
 	return rendered;
 }
 
+const SAVE_MENU_ITEM_TEST_IDS: Record<string, string> = {
+	'Save as new view': 'saved-views-save-changes-item-save-as-new',
+	'Update selected view': 'saved-views-save-changes-item-update',
+};
+
 async function chooseFromSaveMenu(item: string): Promise<void> {
 	await userEvent.click(screen.getByTestId('saved-views-save-changes'));
-	await userEvent.click(await screen.findByRole('menuitem', { name: item }));
+	const menuItem = await screen.findByTestId(SAVE_MENU_ITEM_TEST_IDS[item]);
+	await waitFor(() => expectRowUsable(menuItem), MENU_CHECK_TIMEOUT);
+	await userEvent.click(menuItem);
+}
+
+async function clickCreate(): Promise<void> {
+	await waitFor(() => expectUsable(screen.getByTestId('saved-views-create')));
+	await userEvent.click(screen.getByTestId('saved-views-create'));
 }
 
 async function submitName(name: string): Promise<void> {
@@ -87,7 +106,7 @@ describe('SavedViewsHeader saving', () => {
 			const requests = mockSavedViewsApi([], { createdId: 'view-new' });
 			const { history } = renderHeader(explorerUrl(PATH, {}));
 
-			await userEvent.click(screen.getByTestId('saved-views-create'));
+			await clickCreate();
 
 			expect(within(modal()).getByText('Create new view')).toBeInTheDocument();
 			expect(screen.getByTestId('save-view-submit')).toHaveAttribute(
@@ -130,7 +149,7 @@ describe('SavedViewsHeader saving', () => {
 			const requests = mockSavedViewsApi([], { createStatus: 500 });
 			const { history } = renderHeader(explorerUrl(PATH, {}));
 
-			await userEvent.click(screen.getByTestId('saved-views-create'));
+			await clickCreate();
 			await submitName('Slow checkout');
 
 			await waitFor(() => expect(toast.danger).toHaveBeenCalled());
@@ -147,7 +166,7 @@ describe('SavedViewsHeader saving', () => {
 			const requests = mockSavedViewsApi([]);
 			renderHeader(explorerUrl(PATH, {}));
 
-			await userEvent.click(screen.getByTestId('saved-views-create'));
+			await clickCreate();
 			await userEvent.type(screen.getByTestId('save-view-name-field'), 'Draft');
 			await userEvent.click(screen.getByTestId('save-view-cancel'));
 
@@ -212,5 +231,37 @@ describe('SavedViewsHeader saving', () => {
 			),
 		);
 		expect(requests.created).toHaveLength(0);
+	});
+
+	describe('view name toggle with unsaved changes', () => {
+		const errors = makeView({ id: 'view-1', displayName: 'Errors' });
+
+		it('stops opening the views from the name once the view changes', async () => {
+			mockSavedViewsApi([errors]);
+			const { history } = renderHeader(viewUrl(PATH, errors));
+			await screen.findByTestId('saved-views-name-toggle');
+
+			act(() => {
+				history.push(
+					explorerUrl(PATH, {
+						query: queryWith(DataSource.TRACES, 'has_error = false'),
+						panelType: PANEL_TYPES.LIST,
+						viewKey: errors.id,
+					}),
+				);
+			});
+			await screen.findByTestId('saved-views-discard');
+
+			expect(
+				screen.queryByTestId('saved-views-name-toggle'),
+			).not.toBeInTheDocument();
+		});
+
+		it('still closes open views from the name', async () => {
+			mockSavedViewsApi([errors]);
+			await openDirtyView(errors, true);
+
+			expect(screen.getByTestId('saved-views-name-toggle')).toBeInTheDocument();
+		});
 	});
 });

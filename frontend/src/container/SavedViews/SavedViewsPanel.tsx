@@ -4,6 +4,13 @@ import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import {
+	SavedViewListPermission,
+	SavedViewReadPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+
 import SavedViewsIconButton from './SavedViewsIconButton';
 import SavedViewsList from './SavedViewsList';
 
@@ -18,6 +25,8 @@ function SavedViewsPanel({
 	onClose?: () => void;
 }): JSX.Element {
 	const [search, setSearch] = useState('');
+	// Batched with the list check, so the hover card reads it from cache.
+	useAuthZ([SavedViewReadPermission]);
 
 	return (
 		<div
@@ -39,16 +48,20 @@ function SavedViewsPanel({
 					/>
 				</div>
 			)}
-			<div className={styles.search}>
-				<Input
-					value={search}
-					onChange={(event): void => setSearch(event.target.value)}
-					placeholder="Search..."
-					aria-label="Search views"
-					testId="saved-views-search"
-				/>
-			</div>
-			<SavedViewsList source={source} search={search} />
+			<AuthZGuardContent checks={[SavedViewListPermission]}>
+				<>
+					<div className={styles.search}>
+						<Input
+							value={search}
+							onChange={(event): void => setSearch(event.target.value)}
+							placeholder="Search..."
+							aria-label="Search views"
+							testId="saved-views-search"
+						/>
+					</div>
+					<SavedViewsList source={source} search={search} />
+				</>
+			</AuthZGuardContent>
 		</div>
 	);
 }

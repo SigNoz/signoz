@@ -1,16 +1,18 @@
 import { useMemo } from 'react';
 import { Ellipsis } from '@signozhq/icons';
-import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
+import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
 
 import { SAVED_VIEW_ROW_ACTIONS } from './constants';
 import SavedViewsRowButton from './SavedViewsRowButton';
 import { SavedViewsRowMenuProps } from './types';
 
 function SavedViewsRowMenu({
+	viewId,
 	onAction,
 	onOpen,
 }: SavedViewsRowMenuProps): JSX.Element {
-	const items = useMemo<DropdownItemType[]>(
+	const items = useMemo<AuthZDropdownItemType[]>(
 		() =>
 			SAVED_VIEW_ROW_ACTIONS.flatMap(
 				({
@@ -19,7 +21,8 @@ function SavedViewsRowMenu({
 					icon: Icon,
 					danger,
 					hasDividerBefore,
-				}): DropdownItemType[] => [
+					buildPermission,
+				}): AuthZDropdownItemType[] => [
 					...(hasDividerBefore
 						? [{ type: 'separator' as const, value: `separator-${key}` }]
 						: []),
@@ -29,15 +32,16 @@ function SavedViewsRowMenu({
 						label,
 						prefix: <Icon size={14} />,
 						danger,
+						checks: buildPermission ? [buildPermission(viewId)] : undefined,
 						onClick: (): void => onAction(key),
 					},
 				],
 			),
-		[onAction],
+		[viewId, onAction],
 	);
 
 	return (
-		<Dropdown
+		<AuthZDropdown
 			items={items}
 			nativeButton
 			side="right"
@@ -47,6 +51,7 @@ function SavedViewsRowMenu({
 					onOpen();
 				}
 			}}
+			testId="saved-views-row-menu"
 		>
 			<SavedViewsRowButton
 				icon={<Ellipsis size={14} />}
@@ -54,7 +59,7 @@ function SavedViewsRowMenu({
 				tooltip="More options"
 				testId="saved-views-row-menu"
 			/>
-		</Dropdown>
+		</AuthZDropdown>
 	);
 }
 

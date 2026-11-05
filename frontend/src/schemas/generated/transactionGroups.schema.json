@@ -73,7 +73,8 @@
         "audit-logs",
         "meter-metrics",
         "logs-field",
-        "traces-field"
+        "traces-field",
+        "metrics-field"
       ],
       "type": "string"
     },

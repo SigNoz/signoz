@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { usePopoverHandle } from '@signozhq/ui/popover';
-import { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
 
 import {
 	SAVED_VIEW_HOVER_CARD_CLOSE_DELAY_MS,
@@ -11,7 +10,7 @@ import { UseSavedViewHoverCardResult } from '../types';
 // The delays are ours rather than the popover's: the card follows a handle, not a trigger, so
 // the list owns both when it appears and when it survives the pointer crossing into it.
 export function useSavedViewHoverCard(): UseSavedViewHoverCardResult {
-	const handle = usePopoverHandle<SavedviewtypesSavedViewDTO>();
+	const handle = usePopoverHandle<string>();
 	const openTimer = useRef<ReturnType<typeof setTimeout>>();
 	const closeTimer = useRef<ReturnType<typeof setTimeout>>();
 
@@ -33,11 +32,11 @@ export function useSavedViewHoverCard(): UseSavedViewHoverCardResult {
 	}, [cancelClose, handle]);
 
 	const onRowEnter = useCallback(
-		(view: SavedviewtypesSavedViewDTO, row: HTMLElement): void => {
+		(viewId: string, row: HTMLElement): void => {
 			cancelOpen();
 			openTimer.current = setTimeout(() => {
 				cancelClose();
-				handle.showAt(row, view);
+				handle.showAt(row, viewId);
 			}, SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS);
 		},
 		[cancelOpen, cancelClose, handle],

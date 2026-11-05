@@ -505,6 +505,7 @@ export default function CeleryOverviewTable({
 				allowClear
 			/>
 			<ResizeTable
+				data-testid="mq-overview-table"
 				className="celery-overview-table"
 				pagination={paginationConfig}
 				size="middle"

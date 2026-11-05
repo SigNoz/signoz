@@ -615,6 +615,7 @@ function QueryAggregationSelect({
 					setInput(value);
 					onChange?.(value);
 				}}
+				data-testid="query-aggregation-editor"
 				className={`query-aggregation-select-editor ${
 					validationError ? 'error' : ''
 				}`}

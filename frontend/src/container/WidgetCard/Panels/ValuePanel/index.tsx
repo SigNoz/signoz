@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Typography } from '@signozhq/ui/typography';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
@@ -26,7 +26,7 @@ function GridValueComponent({
 }: GridValueComponentProps): JSX.Element {
 	const value = ((data[1] || [])[0] || 0) as number;
 
-	const location = useLocation();
+	const location = useAppLocation();
 	const gridTitle = useMemo(() => generateGridTitle(title), [title]);
 
 	const isDashboardPage = location.pathname.split('/').length === 3;

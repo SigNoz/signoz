@@ -102,7 +102,6 @@ export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 			dataType: DataTypes.String,
 			type: 'resource',
 		},
-		dataSource: DataSource.TRACES,
 		defaultOpen: true,
 	},
 	{
@@ -113,7 +112,6 @@ export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 			dataType: DataTypes.String,
 			type: 'resource',
 		},
-		dataSource: DataSource.TRACES,
 		defaultOpen: true,
 	},
 	{
@@ -124,7 +122,6 @@ export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 			dataType: DataTypes.String,
 			type: 'tag',
 		},
-		dataSource: DataSource.TRACES,
 		defaultOpen: true,
 	},
 ];

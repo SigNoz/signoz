@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
@@ -19,7 +19,6 @@ import './MembersSettings.styles.scss';
 const PAGE_SIZE = 20;
 
 function MembersSettings(): JSX.Element {
-	const history = useHistory();
 	const urlQuery = useUrlQuery();
 	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
 	const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
@@ -72,9 +71,9 @@ function MembersSettings(): JSX.Element {
 	const setPage = useCallback(
 		(page: number): void => {
 			urlQuery.set('page', String(page));
-			history.replace({ search: urlQuery.toString() });
+			navigate({ search: urlQuery.toString() }, { replace: true });
 		},
-		[history, urlQuery],
+		[urlQuery],
 	);
 
 	useEffect(() => {
@@ -185,6 +184,7 @@ function MembersSettings(): JSX.Element {
 							suffix={
 								<ChevronDown size={12} className="members-filter-trigger__chevron" />
 							}
+							testId="members-filter-trigger"
 						>
 							<span>{filterLabel}</span>
 						</Button>
@@ -200,6 +200,7 @@ function MembersSettings(): JSX.Element {
 								setPage(1);
 							}}
 							name="members-search"
+							testId="members-search-input"
 						/>
 					</div>
 
@@ -209,6 +210,7 @@ function MembersSettings(): JSX.Element {
 						color="primary"
 						onClick={(): void => void setIsInviteModalOpen(true)}
 						prefix={<Plus size={12} />}
+						testId="invite-member-btn"
 					>
 						Invite member
 					</Button>

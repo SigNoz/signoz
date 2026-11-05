@@ -5,11 +5,9 @@ import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigN
 function RenderConnectionFields({
 	isConnectionParamsLoading,
 	connectionParams,
-	isFormDisabled,
 }: {
 	isConnectionParamsLoading?: boolean;
 	connectionParams?: CloudintegrationtypesCredentialsDTO | null;
-	isFormDisabled?: boolean;
 }): JSX.Element | null {
 	if (
 		isConnectionParamsLoading ||
@@ -29,11 +27,7 @@ function RenderConnectionFields({
 					label="Ingestion URL"
 					rules={[{ required: true, message: 'Please enter ingestion URL' }]}
 				>
-					<Input
-						placeholder="Enter ingestion URL"
-						disabled={isFormDisabled}
-						disabledTooltip={undefined}
-					/>
+					<Input placeholder="Enter ingestion URL" />
 				</Form.Item>
 			)}
 			{!connectionParams?.ingestionKey && (
@@ -42,11 +36,7 @@ function RenderConnectionFields({
 					label="Ingestion Key"
 					rules={[{ required: true, message: 'Please enter ingestion key' }]}
 				>
-					<Input
-						placeholder="Enter ingestion key"
-						disabled={isFormDisabled}
-						disabledTooltip={undefined}
-					/>
+					<Input placeholder="Enter ingestion key" />
 				</Form.Item>
 			)}
 			{!connectionParams?.sigNozApiUrl && (
@@ -55,11 +45,7 @@ function RenderConnectionFields({
 					label="SigNoz API URL"
 					rules={[{ required: true, message: 'Please enter SigNoz API URL' }]}
 				>
-					<Input
-						placeholder="Enter SigNoz API URL"
-						disabled={isFormDisabled}
-						disabledTooltip={undefined}
-					/>
+					<Input placeholder="Enter SigNoz API URL" />
 				</Form.Item>
 			)}
 			{!connectionParams?.sigNozApiKey && (
@@ -68,11 +54,7 @@ function RenderConnectionFields({
 					label="SigNoz API KEY"
 					rules={[{ required: true, message: 'Please enter SigNoz API Key' }]}
 				>
-					<Input
-						placeholder="Enter SigNoz API Key"
-						disabled={isFormDisabled}
-						disabledTooltip={undefined}
-					/>
+					<Input placeholder="Enter SigNoz API Key" />
 				</Form.Item>
 			)}
 		</Form.Item>
@@ -81,7 +63,6 @@ function RenderConnectionFields({
 
 RenderConnectionFields.defaultProps = {
 	connectionParams: null,
-	isFormDisabled: false,
 	isConnectionParamsLoading: false,
 };
 

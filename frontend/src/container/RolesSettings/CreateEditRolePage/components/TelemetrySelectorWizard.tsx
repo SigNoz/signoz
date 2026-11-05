@@ -9,7 +9,7 @@ import { Typography } from '@signozhq/ui/typography';
 import {
 	ANY_RESOURCE_VALUE,
 	QUERY_TYPES,
-	SUPPORTED_GRANT_KEY,
+	SUPPORTED_GRANT_KEYS,
 } from './TelemetrySelectorWizard.constants';
 import { isQueryTypeAvailable } from './TelemetrySelectorWizard.utils';
 import useTelemetrySelectorWizard from './useTelemetrySelectorWizard';
@@ -31,6 +31,7 @@ function TelemetrySelectorWizard({
 	const {
 		open,
 		queryType,
+		grantKey,
 		value,
 		selector,
 		isAnyResource,
@@ -39,6 +40,7 @@ function TelemetrySelectorWizard({
 		canAdd,
 		handleOpenChange,
 		handleQueryTypeChange,
+		handleKeyChange,
 		handleValueChange,
 		handleAnyResourceChange,
 		handleSelectorChange,
@@ -118,11 +120,17 @@ function TelemetrySelectorWizard({
 						<Typography as="label" weight="medium">
 							Key
 						</Typography>
-						<Input
-							value={SUPPORTED_GRANT_KEY}
-							readOnly
-							readOnlyTooltip={undefined}
-							testId={`wizard-key-input-${testId}`}
+						<Select
+							placeholder="Select a key"
+							value={grantKey}
+							onChange={handleKeyChange}
+							items={SUPPORTED_GRANT_KEYS.map((supportedKey) => ({
+								type: 'item' as const,
+								value: supportedKey,
+								label: supportedKey,
+								testId: `wizard-key-option-${supportedKey}-${testId}`,
+							}))}
+							testId={`wizard-key-select-${testId}`}
 						/>
 					</div>
 				)}

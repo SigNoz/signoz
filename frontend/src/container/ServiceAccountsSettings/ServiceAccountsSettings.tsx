@@ -243,6 +243,7 @@ function ServiceAccountsSettings(): JSX.Element {
 									loading={isAuthZLoading}
 									disabled={!canListServiceAccounts}
 									disabledTooltip={undefined}
+									testId="sa-filter-trigger"
 									suffix={
 										<ChevronDown
 											size={12}
@@ -270,6 +271,7 @@ function ServiceAccountsSettings(): JSX.Element {
 									void setSearchQuery(e.target.value);
 									void setPage(1);
 								}}
+								testId="sa-search-input"
 								disabled={controlsDisabled}
 								disabledTooltip={undefined}
 							/>
@@ -285,6 +287,7 @@ function ServiceAccountsSettings(): JSX.Element {
 							await setIsCreateModalOpen(true);
 						}}
 						prefix={<Plus size={12} />}
+						testId="new-sa-btn"
 					>
 						New Service Account
 					</AuthZButton>

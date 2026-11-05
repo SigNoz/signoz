@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '@/storybook/renderAtRoute';
 import { expect, screen, userEvent, waitFor } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -31,9 +31,7 @@ const meta = {
 	title: 'Pages/Dashboards/Panel Editor/Chart Options',
 	tags: ['authz', 'play'],
 	component: PanelEditorPage as ComponentType<PanelEditorArgs>,
-	render: (): JSX.Element => (
-		<Route path={ROUTES.DASHBOARD_PANEL_EDITOR} component={PanelEditorPage} />
-	),
+	render: renderAtRoute(ROUTES.DASHBOARD_PANEL_EDITOR, PanelEditorPage),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<PanelEditorArgs>;

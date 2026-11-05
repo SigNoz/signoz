@@ -111,14 +111,11 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 
 		const lineChartRef = useRef<Chart>();
 
-		useImperativeHandle(
-			ref,
-			(): ToggleGraphProps => ({
-				toggleGraph(graphIndex: number, isVisible: boolean): void {
-					toggleGraph(graphIndex, isVisible, lineChartRef);
-				},
-			}),
-		);
+		useImperativeHandle(ref, (): ToggleGraphProps => ({
+			toggleGraph(graphIndex: number, isVisible: boolean): void {
+				toggleGraph(graphIndex, isVisible, lineChartRef);
+			},
+		}));
 
 		const getGridColor = useCallback(() => {
 			if (currentTheme === undefined) {

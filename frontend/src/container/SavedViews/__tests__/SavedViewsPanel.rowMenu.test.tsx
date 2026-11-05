@@ -4,16 +4,20 @@ import { toast } from '@signozhq/ui/toast';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { NANO_SECOND_MULTIPLIER } from 'store/globalTime';
 
 import SavedViewsHeader from '../SavedViewsHeader';
 import SavedViewsPanel from '../SavedViewsPanel';
 import { mockSavedViewsApi } from './savedViewsApiMock';
 import {
+	expectRowUsable,
 	explorerUrl,
 	makeView,
+	MENU_CHECK_TIMEOUT,
 	renderWithExplorerProviders,
 	urlParam,
 	viewUrl,
+	withGlobalTime,
 } from './savedViewsTestUtils';
 
 const mockCopy = jest.fn();
@@ -30,6 +34,8 @@ jest.mock('@signozhq/ui/toast', () => ({
 }));
 
 const PATH = ROUTES.TRACES_EXPLORER;
+const START_MS = 1700000000000;
+const END_MS = 1700003600000;
 
 const errors = makeView({ id: 'view-1', displayName: 'Errors' });
 const slow = makeView({
@@ -58,13 +64,22 @@ const row = (name: string): HTMLElement =>
 		.getAllByTestId('saved-views-row')
 		.find((element) => element.textContent?.includes(name)) as HTMLElement;
 
+const ROW_MENU_ITEM_TEST_IDS: Record<string, string> = {
+	'Copy link': 'saved-views-row-menu-item-copyLink',
+	'Copy ID': 'saved-views-row-menu-item-copyId',
+	'Edit details': 'saved-views-row-menu-item-editDetails',
+	Delete: 'saved-views-row-menu-item-delete',
+};
+
 async function chooseFromRowMenu(
 	viewName: string,
 	item: string,
 ): Promise<void> {
 	await screen.findByTestId('saved-views-list');
 	fireEvent.click(within(row(viewName)).getByTestId('saved-views-row-menu'));
-	fireEvent.click(await screen.findByRole('menuitem', { name: item }));
+	const menuItem = await screen.findByTestId(ROW_MENU_ITEM_TEST_IDS[item]);
+	await waitFor(() => expectRowUsable(menuItem), MENU_CHECK_TIMEOUT);
+	fireEvent.click(menuItem);
 }
 
 const chip = (): HTMLElement => screen.getByTestId('saved-views-name');
@@ -76,24 +91,54 @@ describe('SavedViewsPanel row menu', () => {
 		jest.mocked(toast.success).mockClear();
 	});
 
-	it('offers copy link, edit details and delete', async () => {
+	it('offers copy link, copy id, edit details and delete', async () => {
 		mockSavedViewsApi([errors]);
 		renderPanelWithHeader();
 		await screen.findByTestId('saved-views-list');
 
 		fireEvent.click(within(row('Errors')).getByTestId('saved-views-row-menu'));
 
-		const items = await screen.findAllByRole('menuitem');
-		expect(items.map((item) => item.textContent)).toStrictEqual([
+		await screen.findByTestId(ROW_MENU_ITEM_TEST_IDS['Copy link']);
+		const items = Object.values(ROW_MENU_ITEM_TEST_IDS).map(
+			(testId) => screen.getByTestId(testId).textContent,
+		);
+		expect(items).toStrictEqual([
 			'Copy link',
+			'Copy ID',
 			'Edit details',
 			'Delete',
 		]);
 	});
 
-	it('copies a link that opens the view with its query and tab', async () => {
+	it('copies the view id', async () => {
 		mockSavedViewsApi([errors, slow]);
 		renderPanelWithHeader();
+
+		await chooseFromRowMenu('Slow spans', 'Copy ID');
+
+		expect(mockCopy).toHaveBeenCalledWith(slow.id);
+		expect(toast.success).toHaveBeenCalledWith(
+			'View ID copied',
+			expect.anything(),
+		);
+	});
+
+	it('copies a link that opens the view with its query, tab and time range', async () => {
+		mockSavedViewsApi([errors, slow]);
+		renderWithExplorerProviders(
+			withGlobalTime(
+				<SavedViewsPanel
+					source={SavedviewtypesSourceDTO.traces}
+					onClose={jest.fn()}
+				/>,
+				{
+					selectedTime: 'custom',
+					minTime: START_MS * NANO_SECOND_MULTIPLIER,
+					maxTime: END_MS * NANO_SECOND_MULTIPLIER,
+				},
+			),
+			explorerUrl(PATH, {}),
+		);
 
 		await chooseFromRowMenu('Slow spans', 'Copy link');
 
@@ -109,6 +154,9 @@ describe('SavedViewsPanel row menu', () => {
 		expect(
 			decodeURIComponent(link.searchParams.get(QueryParams.compositeQuery) ?? ''),
 		).toContain('duration_nano > 1000');
+		expect(link.searchParams.get(QueryParams.startTime)).toBe(String(START_MS));
+		expect(link.searchParams.get(QueryParams.endTime)).toBe(String(END_MS));
+		expect(link.searchParams.has(QueryParams.relativeTime)).toBe(false);
 		expect(toast.success).toHaveBeenCalledWith('Link copied', expect.anything());
 	});
 

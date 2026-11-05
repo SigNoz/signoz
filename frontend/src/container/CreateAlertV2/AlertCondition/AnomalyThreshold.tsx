@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { Button } from '@signozhq/ui/button';
 import { Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useAppContext } from 'providers/App/App';
+import { Plus } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../context';
 import {
@@ -10,19 +10,20 @@ import {
 	ANOMALY_SEASONALITY_OPTIONS,
 	ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS,
 	ANOMALY_THRESHOLD_OPERATOR_OPTIONS,
-	ANOMALY_TIME_DURATION_OPTIONS,
+	INITIAL_ANOMALY_THRESHOLD,
 } from '../context/constants';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 } from '../context/types';
+import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
 import { normalizeMatchType, normalizeOperator } from '../utils';
+import ThresholdItem from './ThresholdItem';
 import { AnomalyAndThresholdProps } from './types';
-import {
-	getQueryNames,
-	NotificationChannelsNotFoundContent,
-	RoutingPolicyBanner,
-} from './utils';
+import { useThresholdList } from './useThresholdList';
+import { getQueryNames, RoutingPolicyBanner } from './utils';
+
+import styles from './AnomalyThreshold.module.scss';
 
 function AnomalyThreshold({
 	channels,
@@ -30,7 +31,6 @@ function AnomalyThreshold({
 	isErrorChannels,
 	refreshChannels,
 }: AnomalyAndThresholdProps): JSX.Element {
-	const { user } = useAppContext();
 	const {
 		thresholdState,
 		setThresholdState,
@@ -42,23 +42,13 @@ function AnomalyThreshold({
 
 	const queryNames = getQueryNames(currentQuery);
 
-	const deviationOptions = useMemo(() => {
-		const options = [];
-		for (let i = 1; i <= 7; i++) {
-			options.push({ label: i.toString(), value: i });
-		}
-		return options;
-	}, []);
+	const { addThreshold, removeThreshold, updateThreshold } = useThresholdList();
 
-	const updateThreshold = (
-		id: string,
-		field: string,
-		value: string | string[],
-	): void => {
-		setThresholdState({
-			type: 'SET_THRESHOLDS',
-			payload: thresholdState.thresholds.map((t) =>
-				t.id === id ? { ...t, [field]: value } : t,
+	const handleAddThreshold = (): void => {
+		addThreshold({
+			thresholdValue: Math.max(
+				1,
+				INITIAL_ANOMALY_THRESHOLD.thresholdValue - thresholdState.thresholds.length,
 			),
 		});
 	};
@@ -73,11 +63,12 @@ function AnomalyThreshold({
 						className="sentence-text"
 						color="muted"
 					>
-						Send notification when the observed value for
+						Send a notification when
 					</Typography.Text>
 					<Select
 						value={thresholdState.selectedQuery}
 						data-testid="query-select"
+						className={styles.querySelect}
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_SELECTED_QUERY',
@@ -87,27 +78,6 @@ function AnomalyThreshold({
 						options={queryNames}
 					/>
 					<Typography.Text
-						data-testid="evaluation-window-text"
-						className="sentence-text"
-						color="muted"
-					>
-						during the last
-					</Typography.Text>
-					<Select
-						value={thresholdState.evaluationWindow}
-						data-testid="evaluation-window-select"
-						onChange={(value): void => {
-							setThresholdState({
-								type: 'SET_EVALUATION_WINDOW',
-								payload: value,
-							});
-						}}
-						options={ANOMALY_TIME_DURATION_OPTIONS}
-					/>
-				</div>
-				<div className="alert-condition-sentence">
-					{/* Sentence 2 */}
-					<Typography.Text
 						data-testid="threshold-text"
 						className="sentence-text"
 						color="muted"
@@ -115,30 +85,12 @@ function AnomalyThreshold({
 						is
 					</Typography.Text>
 					<Select
-						value={thresholdState.thresholds[0].thresholdValue}
-						data-testid="threshold-value-select"
-						onChange={(value): void => {
-							updateThreshold(
-								thresholdState.thresholds[0].id,
-								'thresholdValue',
-								value.toString(),
-							);
-						}}
-						options={deviationOptions}
-					/>
-					<Typography.Text
-						data-testid="deviations-text"
-						className="sentence-text"
-						color="muted"
-					>
-						deviations
-					</Typography.Text>
-					<Select
 						value={
 							(normalizeOperator(thresholdState.operator) ??
 								thresholdState.operator) as AlertThresholdOperator
 						}
 						data-testid="operator-select"
+						className={styles.operatorSelect}
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_OPERATOR',
@@ -152,7 +104,7 @@ function AnomalyThreshold({
 						className="sentence-text"
 						color="muted"
 					>
-						the predicted data
+						the prediction
 					</Typography.Text>
 					<Select
 						value={
@@ -160,6 +112,7 @@ function AnomalyThreshold({
 								thresholdState.matchType) as AlertThresholdMatchType
 						}
 						data-testid="match-type-select"
+						className={styles.matchTypeSelect}
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_MATCH_TYPE',
@@ -168,9 +121,16 @@ function AnomalyThreshold({
 						}}
 						options={ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS}
 					/>
+					<Typography.Text
+						data-testid="evaluation-window-text"
+						className="sentence-text"
+						color="muted"
+					>
+						during the <EvaluationSettings rollingOnly />
+					</Typography.Text>
 				</div>
-				{/* Sentence 3 */}
 				<div className="alert-condition-sentence">
+					{/* Sentence 2 */}
 					<Typography.Text
 						data-testid="using-the-text"
 						className="sentence-text"
@@ -181,6 +141,7 @@ function AnomalyThreshold({
 					<Select
 						value={thresholdState.algorithm}
 						data-testid="algorithm-select"
+						className={styles.algorithmSelect}
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_ALGORITHM',
@@ -199,6 +160,7 @@ function AnomalyThreshold({
 					<Select
 						value={thresholdState.seasonality}
 						data-testid="seasonality-select"
+						className={styles.seasonalitySelect}
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_SEASONALITY',
@@ -207,56 +169,42 @@ function AnomalyThreshold({
 						}}
 						options={ANOMALY_SEASONALITY_OPTIONS}
 					/>
-					{notificationSettings.routingPolicies ? (
-						<>
-							<Typography.Text
-								data-testid="seasonality-text"
-								className="sentence-text"
-								color="muted"
-							>
-								seasonality to
-							</Typography.Text>
-							<Select
-								value={thresholdState.thresholds[0].channels}
-								onChange={(value): void =>
-									updateThreshold(thresholdState.thresholds[0].id, 'channels', value)
-								}
-								style={{ width: 350 }}
-								options={channels.map((channel) => ({
-									value: channel.id,
-									label: channel.name,
-								}))}
-								mode="multiple"
-								placeholder="Select notification channels"
-								showSearch
-								maxTagCount={2}
-								maxTagPlaceholder={(omittedValues): string =>
-									`+${omittedValues.length} more`
-								}
-								maxTagTextLength={10}
-								filterOption={(input, option): boolean =>
-									option?.label?.toLowerCase().includes(input.toLowerCase()) || false
-								}
-								status={isErrorChannels ? 'error' : undefined}
-								disabled={isLoadingChannels}
-								notFoundContent={
-									<NotificationChannelsNotFoundContent
-										user={user}
-										refreshChannels={refreshChannels}
-									/>
-								}
-							/>
-						</>
-					) : (
-						<Typography.Text
-							data-testid="seasonality-text"
-							className="sentence-text"
-							color="muted"
-						>
-							seasonality
-						</Typography.Text>
-					)}
+					<Typography.Text
+						data-testid="seasonality-text"
+						className="sentence-text"
+						color="muted"
+					>
+						seasonality
+					</Typography.Text>
 				</div>
+			</div>
+			{/* Sentence 3 */}
+			<div className="thresholds-section">
+				{thresholdState.thresholds.map((threshold, index) => (
+					<ThresholdItem
+						key={threshold.id}
+						threshold={threshold}
+						updateThreshold={updateThreshold}
+						removeThreshold={removeThreshold}
+						showRemoveButton={index !== 0 && thresholdState.thresholds.length > 1}
+						channels={channels}
+						isLoadingChannels={isLoadingChannels}
+						units={[]}
+						isErrorChannels={isErrorChannels}
+						refreshChannels={refreshChannels}
+						isAnomaly
+					/>
+				))}
+				<Button
+					variant="dashed"
+					color="secondary"
+					size="md"
+					prefix={<Plus size={14} />}
+					onClick={handleAddThreshold}
+					testId="add-threshold-button"
+				>
+					Add Threshold
+				</Button>
 			</div>
 			<RoutingPolicyBanner
 				notificationSettings={notificationSettings}

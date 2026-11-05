@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { jest } from '@jest/globals';
 import { fireEvent, waitFor } from '@testing-library/react';
+import { ENVIRONMENT } from 'constants/env';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import { render, screen, userEvent } from 'tests/test-utils';
 import {
 	Having,
@@ -22,6 +25,8 @@ import {
 import '@testing-library/jest-dom';
 
 import { QueryBuilderV2 } from '../../QueryBuilderV2';
+import { QueryBuilderV2Provider } from '../../QueryBuilderV2Context';
+import { QueryV2 } from '../QueryV2';
 
 // Local mocks for domain-specific heavy child components
 jest.mock(
@@ -53,6 +58,15 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 	let baseQBContext: QueryBuilderContextType;
 
 	beforeEach(() => {
+		server.use(
+			rest.get(`${ENVIRONMENT.baseURL}/api/v1/fields/keys`, (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({ status: 'success', data: { complete: true, keys: {} } }),
+				),
+			),
+		);
+
 		const mockCloneQuery = jest.fn() as jest.MockedFunction<
 			(type: string, q: IBuilderQuery) => void
 		>;
@@ -130,7 +144,6 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData: jest.fn(),
-			isStagedQueryUpdated: jest.fn(() => false),
 			isDefaultQuery: jest.fn(() => false),
 		} as unknown as QueryBuilderContextType;
 
@@ -234,6 +247,70 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		expect(
 			document.querySelector('.qb-formulas-container'),
 		).not.toBeInTheDocument();
+	});
+
+	describe('query actions menu', () => {
+		const openQueryActions = async (): Promise<void> => {
+			await userEvent.click(screen.getAllByTestId('query-actions')[0]);
+		};
+
+		it('Clone calls cloneQuery with the query', async () => {
+			render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
+
+			await openQueryActions();
+			await userEvent.click(
+				await screen.findByTestId('query-actions-item-clone-query'),
+			);
+
+			expect(baseQBContext.cloneQuery).toHaveBeenCalledTimes(1);
+			expect(baseQBContext.cloneQuery).toHaveBeenCalledWith(
+				'query',
+				expect.objectContaining({ queryName: 'A' }),
+			);
+		});
+
+		it('hides Delete when there is a single query', async () => {
+			render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
+
+			await openQueryActions();
+			await screen.findByTestId('query-actions-item-clone-query');
+
+			expect(
+				screen.queryByTestId('query-actions-item-delete-query'),
+			).not.toBeInTheDocument();
+		});
+
+		it('shows Delete with more than one query and deletes on click', async () => {
+			const [queryA] = (baseQBContext.currentQuery as Query).builder.queryData;
+			const handleDeleteQuery = jest.fn();
+			mockedUseQueryOperations.mockReturnValue({
+				...mockedUseQueryOperations({} as Parameters<UseQueryOperations>[0]),
+				handleDeleteQuery,
+			});
+
+			render(
+				<QueryBuilderV2Provider>
+					<QueryV2
+						index={0}
+						query={queryA}
+						version="v4"
+						isAvailableToDisable={false}
+						isMultiQueryAllowed
+						queriesCount={2}
+						onSignalSourceChange={jest.fn()}
+						signalSourceChangeEnabled={false}
+						savePreviousQuery={false}
+					/>
+				</QueryBuilderV2Provider>,
+			);
+
+			await openQueryActions();
+			await userEvent.click(
+				await screen.findByTestId('query-actions-item-delete-query'),
+			);
+
+			expect(handleDeleteQuery).toHaveBeenCalledTimes(1);
+		}, 15000);
 	});
 
 	it('fx button is disabled when functions already exist', () => {

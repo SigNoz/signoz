@@ -5,6 +5,7 @@ import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { toast } from '@signozhq/ui/toast';
 import { Card } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
@@ -30,7 +31,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEventSource } from 'providers/EventSource';
 // interfaces
 import { ILog } from 'types/api/logs/log';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { StringOperators } from 'types/common/queryBuilder';
 
 import loadingPlaneUrl from '@/assets/Icons/loading-plane.gif';
 import { getAbsoluteUrl } from 'utils/basePath';
@@ -68,7 +69,7 @@ function LiveLogsList({
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: DataSource.LOGS,
+		sourcePage: SavedviewtypesSourceDTO.logs,
 		aggregateOperator: StringOperators.NOOP,
 	});
 
@@ -186,7 +187,7 @@ function LiveLogsList({
 	);
 
 	return (
-		<div className="live-logs-list">
+		<div className="live-logs-list" data-testid="live-logs-list">
 			{(formattedLogs.length === 0 || isLoading || isLoadingList) &&
 				renderLoading()}
 
@@ -203,6 +204,7 @@ function LiveLogsList({
 							cellTypographySize={options.fontSize}
 							data={formattedLogs}
 							isLoading={false}
+							getRowTestId={(log): string => `logs-table-row-${log.id}`}
 							isRowActive={(log): boolean => log.id === activeLog?.id}
 							getRowClassName={(log): string =>
 								log.id === activeLogId ? 'logs-linked-row' : ''
@@ -259,8 +261,6 @@ function LiveLogsList({
 					selectedTab={selectedTab}
 					log={activeLog}
 					onClose={handleCloseLogDetail}
-					onAddToQuery={onAddToQuery}
-					onClickActionItem={onAddToQuery}
 					handleChangeSelectedView={handleChangeSelectedView}
 					logs={formattedLogs}
 					onNavigateLog={handleSetActiveLog}

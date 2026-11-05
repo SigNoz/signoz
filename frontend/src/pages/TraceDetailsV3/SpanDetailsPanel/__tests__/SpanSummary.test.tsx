@@ -95,4 +95,26 @@ describe('SpanSummary', () => {
 
 		expect(screen.queryByText(/of total exec time/)).not.toBeInTheDocument();
 	});
+
+	it('renders tokens and cost from the gen_ai usage attributes', () => {
+		const span = {
+			...createMockSpan(),
+			attributes: {
+				'gen_ai.usage.input_tokens': 1000,
+				'gen_ai.usage.output_tokens': 9,
+				'signoz.gen_ai.usage.tokens.cost': 0.000009,
+			},
+		};
+		render(<SpanSummary selectedSpan={span} />);
+
+		expect(screen.getByText(/Tokens: 1,000 → 9/)).toBeInTheDocument();
+		expect(screen.getByText(/Cost — \$ 0.000009/)).toBeInTheDocument();
+	});
+
+	it('omits tokens and cost for non-AI spans', () => {
+		render(<SpanSummary selectedSpan={createMockSpan()} />);
+
+		expect(screen.queryByText(/Tokens:/)).not.toBeInTheDocument();
+		expect(screen.queryByText(/Cost —/)).not.toBeInTheDocument();
+	});
 });

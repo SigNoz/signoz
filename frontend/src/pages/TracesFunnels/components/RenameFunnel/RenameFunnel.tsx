@@ -89,6 +89,7 @@ function RenameFunnel({
 			<div className="funnel-modal-content">
 				<span className="funnel-modal-content__label">Enter a new name</span>
 				<Input
+					testId="rename-funnel-name-input"
 					value={newFunnelName}
 					onChange={(e): void => setNewFunnelName(e.target.value)}
 					autoFocus

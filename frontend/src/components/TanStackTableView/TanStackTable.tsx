@@ -53,7 +53,11 @@ import { useFlatItems } from './useFlatItems';
 import { useResetScroll } from './useResetScroll';
 import { useRowKeyData } from './useRowKeyData';
 import { useTableParams } from './useTableParams';
-import { buildPageSizeItems, buildTanstackColumnDef } from './utils';
+import {
+	buildPageSizeItems,
+	buildTanstackColumnDef,
+	getFillColumnIndex,
+} from './utils';
 import { VirtuosoTableColGroup } from './VirtuosoTableColGroup';
 
 import tableStyles from './TanStackTable.module.scss';
@@ -428,6 +432,9 @@ function TanStackTableInner<TData, TItemKey = string>(
 	);
 
 	const tableHeader = useCallback(() => {
+		const fillColumnIndex = getFillColumnIndex(
+			flatHeaders.map((header) => columnsById.get(header.id)),
+		);
 		return (
 			<DndContext
 				sensors={sensors}
@@ -453,7 +460,7 @@ function TanStackTableInner<TData, TItemKey = string>(
 									canRemoveColumn={canRemoveColumn}
 									orderBy={orderBy}
 									onSort={setOrderBy}
-									isLastColumn={index === flatHeaders.length - 1}
+									isLastColumn={index >= fillColumnIndex}
 								/>
 							);
 						})}

@@ -71,6 +71,7 @@ export const AIAssistantOpenSource = {
 	Shortcut: 'shortcut',
 	Cmdk: 'cmdk',
 	TraceDetails: 'trace_details',
+	BottomStrip: 'bottom_strip',
 } as const;
 export type AIAssistantOpenSource =
 	(typeof AIAssistantOpenSource)[keyof typeof AIAssistantOpenSource];

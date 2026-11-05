@@ -6,9 +6,11 @@ import useOptionsMenu from 'container/OptionsMenu/useOptionsMenu';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
-import { DataSource } from 'types/common/queryBuilder';
+import { buildSavedViewReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { isPreferenceSourcePage } from 'providers/preferences/utils';
+import { toAPIError } from 'utils/errorUtils';
 
-import { SAVED_VIEW_OPTIONS_DATA_SOURCE } from '../constants';
 import { UseActiveSavedViewResult } from '../types';
 import { hasUnsavedViewChanges } from '../utils/hasUnsavedViewChanges';
 
@@ -18,16 +20,24 @@ export function useActiveSavedView(
 	const { viewKey } = useGetSavedViewParams();
 	const { stagedQuery, panelType } = useQueryBuilder();
 
-	const optionsDataSource = SAVED_VIEW_OPTIONS_DATA_SOURCE[source];
+	const hasOptions = isPreferenceSourcePage(source);
 	const { options } = useOptionsMenu({
-		dataSource: optionsDataSource ?? DataSource.LOGS,
+		sourcePage: hasOptions ? source : SavedviewtypesSourceDTO.logs,
 	});
 
-	const { data, isLoading, isError } = useGetSavedView(
-		{ id: viewKey },
-		{ query: { enabled: !!viewKey } },
+	const { isLoading: isCheckingRead, deniedPermissions } = useAuthZ(
+		[buildSavedViewReadPermission(viewKey)],
+		{ enabled: !!viewKey },
 	);
-	const view = viewKey ? data?.data : undefined;
+	const isReadDenied = !!viewKey && deniedPermissions.length > 0;
+
+	const canFetch = !!viewKey && !isCheckingRead && !isReadDenied;
+
+	const { data, isLoading, isError, error } = useGetSavedView(
+		{ id: viewKey },
+		{ query: { enabled: canFetch } },
+	);
+	const view = canFetch ? data?.data : undefined;
 
 	// The query builder stages the url query a render later. Until the ids
 	// match, keep the last answer for this view; another view starts clean.
@@ -52,7 +62,7 @@ export function useActiveSavedView(
 			view,
 			stagedQuery,
 			panelType: panelType ?? PANEL_TYPES.LIST,
-			options: optionsDataSource ? options : undefined,
+			options: hasOptions ? options : undefined,
 		});
 	}, [
 		view,
@@ -60,7 +70,7 @@ export function useActiveSavedView(
 		isStagedQueryCurrent,
 		stagedQuery,
 		panelType,
-		optionsDataSource,
+		hasOptions,
 		options,
 	]);
 
@@ -68,10 +78,17 @@ export function useActiveSavedView(
 		lastResult.current = { viewId: view?.id, hasUnsavedChanges };
 	}, [view?.id, hasUnsavedChanges]);
 
+	const errorMessage =
+		viewKey && isError && error
+			? toAPIError(error, '').getErrorMessage() || undefined
+			: undefined;
+
 	return {
 		view,
-		isLoading: !!viewKey && isLoading,
-		isError: !!viewKey && isError,
+		isLoading: !!viewKey && (isCheckingRead || isLoading),
+		isError: !!viewKey && (isError || isReadDenied),
+		isReadDenied,
+		errorMessage,
 		hasUnsavedChanges,
 	};
 }

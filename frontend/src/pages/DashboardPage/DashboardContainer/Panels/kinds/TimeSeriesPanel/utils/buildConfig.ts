@@ -13,6 +13,7 @@ import { resolveSpanGaps } from 'pages/DashboardPage/DashboardContainer/Panels/u
 import { resolveSeriesLabelV5 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/resolveSeriesLabel';
 import type { PanelSeries } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import {
+	getPartialTimestamps,
 	hasSingleVisiblePoint,
 	toClickPluginPayload,
 } from 'pages/DashboardPage/DashboardContainer/queryV5/uplotData';
@@ -149,6 +150,7 @@ function addSeries({
 			fillMode,
 			isDarkMode,
 			metric: s.labels,
+			partialTimestamps: getPartialTimestamps(s.values),
 		});
 	});
 }

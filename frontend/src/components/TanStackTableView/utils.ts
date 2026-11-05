@@ -63,6 +63,19 @@ export const getColumnWidthStyle = <TData>(
 	};
 };
 
+/**
+ * Index of the column that fills spare width: the last one, or the one before
+ * it when the last sets `width.passLastColumnFill`.
+ */
+export const getFillColumnIndex = <TData>(
+	columns: (TableColumnDef<TData> | undefined)[],
+): number => {
+	const lastIndex = columns.length - 1;
+	return columns[lastIndex]?.width?.passLastColumnFill
+		? lastIndex - 1
+		: lastIndex;
+};
+
 const isSkeletonRow = (row: unknown): boolean => {
 	const r = row as Record<string, unknown>;
 	return typeof r?.id === 'string' && r.id.startsWith('skeleton-');

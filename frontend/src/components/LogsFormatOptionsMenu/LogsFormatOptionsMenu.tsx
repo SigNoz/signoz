@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Popover, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { Button, Popover, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
-import { LogViewMode } from 'container/OptionsMenu/types';
-import { FontSize, OptionsMenuConfig } from 'container/OptionsMenu/types';
+import {
+	LogViewMode,
+	FontSize,
+	OptionsMenuConfig,
+} from 'container/OptionsMenu/types';
 import {
 	Check,
 	ChevronLeft,
@@ -15,6 +18,10 @@ import {
 } from '@signozhq/icons';
 
 import './LogsFormatOptionsMenu.styles.scss';
+
+const MIN_LINES_PER_ROW = 1;
+const MAX_LINES_PER_ROW = 10;
+const FONT_SIZES = [FontSize.SMALL, FontSize.MEDIUM, FontSize.LARGE];
 
 interface LogsFormatOptionsMenuProps {
 	items: any;
@@ -60,25 +67,11 @@ function OptionsMenu({
 		onChange(key);
 	};
 
-	const incrementMaxLinesPerRow = (): void => {
-		if (maxLinesPerRow < 10) {
-			setMaxLinesPerRow(maxLinesPerRow + 1);
-		}
-	};
-
-	const decrementMaxLinesPerRow = (): void => {
-		if (maxLinesPerRow > 1) {
-			setMaxLinesPerRow(maxLinesPerRow - 1);
-		}
-	};
-
-	const handleLinesPerRowChange = (maxLinesPerRow: number | null): void => {
-		if (
-			maxLinesPerRow &&
-			Number.isInteger(maxLinesNumber) &&
-			maxLinesPerRow > 1
-		) {
-			setMaxLinesPerRow(maxLinesPerRow);
+	const handleLinesPerRowChange = (value: number | null): void => {
+		if (value !== null) {
+			setMaxLinesPerRow(
+				Math.min(Math.max(value, MIN_LINES_PER_ROW), MAX_LINES_PER_ROW),
+			);
 		}
 	};
 
@@ -109,51 +102,36 @@ function OptionsMenu({
 			{isFontSizeOptionsOpen ? (
 				<div className="font-size-dropdown">
 					<Button
+						variant="link"
+						color="secondary"
+						size="sm"
+						width="100%"
+						data-format-menu="back"
+						testId="font-size-back"
+						prefix={<ChevronLeft size={14} />}
 						onClick={(): void => setIsFontSizeOptionsOpen(false)}
-						className="back-btn"
-						type="text"
 					>
-						<ChevronLeft size={14} className="icon" />
-						<Typography.Text className="text">Select font size</Typography.Text>
+						Select font size
 					</Button>
 					<div className="horizontal-line" />
 					<div className="content">
-						<Button
-							onClick={(): void => {
-								setFontSizeValue(FontSize.SMALL);
-							}}
-							className="option-btn"
-							type="text"
-						>
-							<Typography.Text className="text">{FontSize.SMALL}</Typography.Text>
-							{fontSizeValue === FontSize.SMALL && (
-								<Check size={14} className="icon" />
-							)}
-						</Button>
-						<Button
-							onClick={(): void => {
-								setFontSizeValue(FontSize.MEDIUM);
-							}}
-							className="option-btn"
-							type="text"
-						>
-							<Typography.Text className="text">{FontSize.MEDIUM}</Typography.Text>
-							{fontSizeValue === FontSize.MEDIUM && (
-								<Check size={14} className="icon" />
-							)}
-						</Button>
-						<Button
-							onClick={(): void => {
-								setFontSizeValue(FontSize.LARGE);
-							}}
-							className="option-btn"
-							type="text"
-						>
-							<Typography.Text className="text">{FontSize.LARGE}</Typography.Text>
-							{fontSizeValue === FontSize.LARGE && (
-								<Check size={14} className="icon" />
-							)}
-						</Button>
+						{FONT_SIZES.map((size) => (
+							<Button
+								key={size}
+								variant="link"
+								color="secondary"
+								size="sm"
+								width="100%"
+								data-format-menu="font-option"
+								testId={`font-size-option-${size}`}
+								onClick={(): void => setFontSizeValue(size)}
+							>
+								<span className="menu-row">
+									{size}
+									{fontSizeValue === size && <Check size={14} />}
+								</span>
+							</Button>
+						))}
 					</div>
 				</div>
 			) : (
@@ -161,14 +139,20 @@ function OptionsMenu({
 					<div className="font-size-container">
 						<div className="title">Font Size</div>
 						<Button
-							className="value"
-							type="text"
+							variant="link"
+							color="secondary"
+							size="sm"
+							width="100%"
+							data-format-menu="font-size"
+							testId="font-size-select"
 							onClick={(): void => {
 								setIsFontSizeOptionsOpen(true);
 							}}
 						>
-							<Typography.Text className="font-value">{fontSizeValue}</Typography.Text>
-							<ChevronRight size={14} className="icon" />
+							<span className="menu-row">
+								{fontSizeValue}
+								<ChevronRight size={14} />
+							</span>
 						</Button>
 					</div>
 					<div className="horizontal-line" />
@@ -176,21 +160,20 @@ function OptionsMenu({
 						<div className="title">FORMAT</div>
 
 						<div className="menu-items">
-							{items.map(
-								(item: any): JSX.Element => (
-									<div
-										className="item"
-										key={item.label}
-										onClick={(): void => handleMenuItemClick(item.key)}
-									>
-										<div className={cx('item-label')}>
-											{item.label}
+							{items.map((item: any): JSX.Element => (
+								<div
+									className="item"
+									key={item.label}
+									data-testid={`format-option-${item.key}`}
+									onClick={(): void => handleMenuItemClick(item.key)}
+								>
+									<div className={cx('item-label')}>
+										{item.label}
 
-											{selectedItem === item.key && <Check size={12} />}
-										</div>
+										{selectedItem === item.key && <Check size={12} />}
 									</div>
-								),
-							)}
+								</div>
+							))}
 						</div>
 					</div>
 
@@ -203,27 +186,29 @@ function OptionsMenu({
 									<button
 										type="button"
 										className="periscope-btn"
-										onClick={decrementMaxLinesPerRow}
+										aria-label="Fewer lines per row"
+										onClick={(): void => handleLinesPerRowChange(maxLinesPerRow - 1)}
 									>
-										{' '}
-										<Minus size={12} />{' '}
+										<Minus size={12} />
 									</button>
 									<Input.Number
-										min={1}
-										max={10}
+										min={MIN_LINES_PER_ROW}
+										max={MAX_LINES_PER_ROW}
+										format={{ maximumFractionDigits: 0 }}
 										value={maxLinesPerRow}
 										onChange={handleLinesPerRowChange}
 										controls={false}
 										noFocusRing
-										testId="max-lines-per-row-field"
+										aria-label="Max lines per row"
+										testId="max-lines-per-row"
 									/>
 									<button
 										type="button"
 										className="periscope-btn"
-										onClick={incrementMaxLinesPerRow}
+										aria-label="More lines per row"
+										onClick={(): void => handleLinesPerRowChange(maxLinesPerRow + 1)}
 									>
-										{' '}
-										<Plus size={12} />{' '}
+										<Plus size={12} />
 									</button>
 								</div>
 							</div>
@@ -235,15 +220,18 @@ function OptionsMenu({
 							<div className="horizontal-line" />
 							<div className="edit-columns-container">
 								<Button
-									className="edit-columns-btn"
-									type="text"
+									variant="link"
+									color="secondary"
+									size="sm"
+									width="100%"
+									data-format-menu="edit-columns"
 									onClick={handleEditColumns}
-									data-testid="periscope-btn-edit-columns"
+									testId="periscope-btn-edit-columns"
 								>
-									<Typography.Text className="edit-columns-text">
+									<span className="menu-row">
 										Edit columns
-									</Typography.Text>
-									<ChevronRight size={14} className="icon" />
+										<ChevronRight size={14} />
+									</span>
 								</Button>
 							</div>
 						</>
@@ -282,10 +270,15 @@ function LogsFormatOptionsMenu({
 		>
 			<Tooltip title="Options">
 				<Button
-					className="periscope-btn ghost"
-					icon={<SlidersVertical size="md" />}
-					data-testid="periscope-btn-format-options"
-				/>
+					variant="ghost"
+					color="secondary"
+					size="sm"
+					icon
+					aria-label="Options"
+					testId="periscope-btn-format-options"
+				>
+					<SlidersVertical size={14} />
+				</Button>
 			</Tooltip>
 		</Popover>
 	);

@@ -21,6 +21,7 @@ function ThresholdItem({
 	isErrorChannels,
 	refreshChannels,
 	isLoadingChannels,
+	isAnomaly = false,
 }: ThresholdItemProps): JSX.Element {
 	const { user } = useAppContext();
 	const { thresholdState, notificationSettings } = useCreateAlertState();
@@ -104,12 +105,20 @@ function ThresholdItem({
 						width={200}
 						testId="threshold-name-input"
 					/>
-					<Typography.Text className="sentence-text" color="muted">
-						on value
-					</Typography.Text>
-					<Typography.Text className="sentence-text highlighted-text">
-						{getOperatorSymbol()}
-					</Typography.Text>
+					{isAnomaly ? (
+						<Typography.Text className="sentence-text" color="muted">
+							at
+						</Typography.Text>
+					) : (
+						<>
+							<Typography.Text className="sentence-text" color="muted">
+								on value
+							</Typography.Text>
+							<Typography.Text className="sentence-text highlighted-text">
+								{getOperatorSymbol()}
+							</Typography.Text>
+						</>
+					)}
 					<Input
 						placeholder="Enter threshold value"
 						value={threshold.thresholdValue}
@@ -120,7 +129,13 @@ function ThresholdItem({
 						type="number"
 						testId="threshold-value-input"
 					/>
-					{yAxisUnitSelect}
+					{isAnomaly ? (
+						<Typography.Text className="sentence-text" color="muted">
+							deviations
+						</Typography.Text>
+					) : (
+						yAxisUnitSelect
+					)}
 					{!notificationSettings.routingPolicies && (
 						<>
 							<Typography.Text className="sentence-text" color="muted">

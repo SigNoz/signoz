@@ -82,10 +82,9 @@ export function applyAuthZ(
 	items: AuthZDropdownItemType[],
 	state: GateState,
 ): DropdownItemType[] {
-	return items.map(
-		(item): DropdownItemType =>
-			item.type === 'group'
-				? { ...item, items: item.items.map((child) => gateRow(child, state)) }
-				: gateRow(item, state),
+	return items.map((item): DropdownItemType =>
+		item.type === 'group'
+			? { ...item, items: item.items.map((child) => gateRow(child, state)) }
+			: gateRow(item, state),
 	);
 }

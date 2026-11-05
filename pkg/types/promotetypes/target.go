@@ -27,14 +27,24 @@ func (t Target) BaseColumnPrefix() string { return t.BaseColumn + "." }
 func (t Target) PromotedColumnPrefix() string { return t.PromotedColumn() + "." }
 
 // IndexExpression folds logs strings to lower case over assumeNotNull for
-// case-insensitive LIKE searches; traces indexes are a bare type cast.
+// case-insensitive LIKE searches; traces indexes are the querier's read, which
+// an index matches only as that exact text.
 func (t Target) IndexExpression(column, path, jsonDataType string) string {
-	switch t.Entry.Signal {
-	case telemetrytypes.SignalLogs:
+	if t.Entry.Signal == telemetrytypes.SignalLogs {
 		return schemamigrator.JSONSubColumnIndexExpr(column, path, jsonDataType)
-	default:
-		return simpleJSONSubColumnIndexExpr(column, path, jsonDataType)
 	}
+	subColumn := fmt.Sprintf("%s.%s", column, clickhousesql.Identifier(path))
+	expr, _ := tracestelemetryschema.AttributeJSONValueExpr(subColumn, telemetrytypes.MappingJSONDataTypeToFieldDataType[jsonDataType])
+	return expr
+}
+
+// IndexDataType folds traces Int64 into Float64, the one type the querier
+// reads every traces number as.
+func (t Target) IndexDataType(jsonDataType telemetrytypes.JSONDataType) telemetrytypes.JSONDataType {
+	if t.Entry.Signal != telemetrytypes.SignalLogs && jsonDataType == telemetrytypes.Int64 {
+		return telemetrytypes.Float64
+	}
+	return jsonDataType
 }
 
 func (t Target) JSONIndexLookup() telemetrytypes.JSONIndexLookup {
@@ -119,14 +129,6 @@ func TargetFor(signal telemetrytypes.Signal, context telemetrytypes.FieldContext
 		}
 	}
 	return Target{}, false
-}
-
-// simpleJSONSubColumnIndexExpr renders column.`path`::Type with the path
-// quoted as one identifier, the form trace queries read the sub-column with;
-// the cast unwraps the Nullable the sub-column access returns, which bloom
-// filter indexes reject.
-func simpleJSONSubColumnIndexExpr(column, path, jsonDataType string) string {
-	return fmt.Sprintf("%s.%s::%s", column, clickhousesql.Identifier(path), jsonDataType)
 }
 
 // reservedPathPrefix returns the target prefix path carries, if any: the base

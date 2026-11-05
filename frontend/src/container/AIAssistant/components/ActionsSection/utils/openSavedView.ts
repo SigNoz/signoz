@@ -9,10 +9,10 @@ import { SavedViewSourcePage } from 'container/SavedViews/types';
 import { findSavedView } from 'container/SavedViews/utils/findSavedView';
 import { getSavedViewQuery } from 'container/SavedViews/utils/getSavedViewQuery';
 import { toSavedViewSource } from 'container/SavedViews/utils/toSavedViewSource';
-import { SOURCEPAGE_VS_ROUTES } from 'pages/SaveView/constants';
+import { SOURCEPAGE_VS_ROUTES } from 'container/SavedViews/constants';
+import { navigate } from 'lib/router/navigation';
 import { DataSource } from 'types/common/queryBuilder';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { History } from 'history';
+import { buildExplorerNavigationUrl } from 'utils/buildExplorerNavigationUrl';
 
 type SavedViewSourceHint = SavedViewSourcePage;
 
@@ -72,30 +72,7 @@ export function explorerRouteForSourcePage(
 	return SOURCEPAGE_VS_ROUTES[sourcePage] ?? null;
 }
 
-/**
- * Builds an explorer URL the same way `redirectWithQueryBuilderData` does —
- * without inheriting stale query params from the current page's `urlQuery`.
- */
-export function buildExplorerNavigationUrl(
-	route: string,
-	query: Query,
-	searchParams: Record<string, unknown>,
-): string {
-	const params = new URLSearchParams();
-	params.set(
-		QueryParams.compositeQuery,
-		encodeURIComponent(JSON.stringify(query)),
-	);
-	Object.entries(searchParams).forEach(([key, value]) => {
-		params.set(key, JSON.stringify(value));
-	});
-	return `${route}?${params.toString()}`;
-}
-
-export function openSavedView(
-	view: SavedviewtypesSavedViewDTO,
-	history: History,
-): void {
+export function openSavedView(view: SavedviewtypesSavedViewDTO): void {
 	const route = view.source ? explorerRouteForSourcePage(view.source) : null;
 	if (!route) {
 		throw new Error('Unsupported saved view source');
@@ -108,17 +85,15 @@ export function openSavedView(
 	const query = getSavedViewQuery(view);
 	const url = buildExplorerNavigationUrl(route, query, {
 		[QueryParams.panelTypes]: view.spec.panelType as unknown as PANEL_TYPES,
-		[QueryParams.viewName]: view.spec.displayName,
 		[QueryParams.viewKey]: view.id,
 	});
-	history.push(url);
+	navigate(url);
 }
 
 export async function openSavedViewByKey(
 	viewKey: string,
 	sourceHint: SavedViewSourceHint | null | undefined,
-	history: History,
 ): Promise<void> {
 	const view = await loadSavedView(viewKey, sourceHint);
-	openSavedView(view, history);
+	openSavedView(view);
 }

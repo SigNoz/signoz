@@ -7,8 +7,8 @@ import { Switch } from '@signozhq/ui/switch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Copy, Ellipsis, PenLine, Trash2 } from '@signozhq/icons';
 import {
+	useAlertRuleClone,
 	useAlertRuleDelete,
-	useAlertRuleDuplicate,
 	useAlertRuleStatusToggle,
 	useAlertRuleUpdate,
 } from 'pages/AlertDetails/hooks';
@@ -38,9 +38,7 @@ function AlertActionButtons({
 	const isDarkMode = useIsDarkMode();
 
 	const { handleAlertStateToggle } = useAlertRuleStatusToggle({ ruleId });
-	const { handleAlertDuplicate } = useAlertRuleDuplicate({
-		alertDetails: alertDetails as unknown as AlertDef,
-	});
+	const { handleAlertClone } = useAlertRuleClone({ ruleId });
 	const { handleAlertDelete } = useAlertRuleDelete({ ruleId });
 	const { handleAlertUpdate, isLoading } = useAlertRuleUpdate({
 		alertDetails: alertDetails as unknown as AlertDef,
@@ -72,10 +70,10 @@ function AlertActionButtons({
 	menuItems.push(
 		{
 			type: 'item',
-			value: 'duplicate-rule',
-			label: 'Duplicate',
+			value: 'clone-rule',
+			label: 'Clone',
 			prefix: <Copy size={16} color={Color.BG_VANILLA_400} />,
-			onClick: handleAlertDuplicate,
+			onClick: handleAlertClone,
 		},
 		{
 			type: 'item',

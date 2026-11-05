@@ -1,8 +1,8 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import * as monaco from 'monaco-editor';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '@/storybook/renderAtRoute';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -44,9 +44,7 @@ const meta = {
 	component: DashboardPage as ComponentType<DashboardArgs>,
 	// The page reads the dashboard id out of the pathname, so it renders under
 	// its own route rather than being mounted on its own.
-	render: (): JSX.Element => (
-		<Route path={ROUTES.DASHBOARD} component={DashboardPage} />
-	),
+	render: renderAtRoute(ROUTES.DASHBOARD, DashboardPage),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<DashboardArgs>;

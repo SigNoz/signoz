@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import {
 	Command,
 	type CommandActionItemType,
@@ -18,7 +17,8 @@ import {
 import { useThemeMode } from 'hooks/useDarkMode';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { IS_DEV } from 'lib/env';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { ROLES as UserRole } from 'types/roles';
 
 import {
@@ -64,7 +64,7 @@ export function CmdKPalette({
 	const { open, setOpen } = useCmdK();
 
 	const { setAutoSwitch, setTheme } = useThemeMode();
-	const location = useLocation();
+	const location = useAppLocation();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const startNewConversation = useAIAssistantStore(
 		(s) => s.startNewConversation,
@@ -107,7 +107,7 @@ export function CmdKPalette({
 	}
 
 	function onClickHandler(key: string): void {
-		history.push(key);
+		navigate(key);
 	}
 
 	const handleOpenAIAssistant = (): void => {
