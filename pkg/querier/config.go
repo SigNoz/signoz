@@ -29,7 +29,7 @@ type Config struct {
 
 // ClickHouseQueryConfig is the budget of one user-written ClickHouse SQL query. A zero value disables that limit.
 type ClickHouseQueryConfig struct {
-	// MaxExecutionTime covers ClickHouse execution and reading the result.
+	// MaxExecutionTime is rounded up to whole seconds.
 	MaxExecutionTime time.Duration `yaml:"max_execution_time" mapstructure:"max_execution_time"`
 	// MaxMemoryUsage is the ClickHouse memory limit of the query, in bytes.
 	MaxMemoryUsage int64 `yaml:"max_memory_usage" mapstructure:"max_memory_usage"`

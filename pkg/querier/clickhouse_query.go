@@ -145,11 +145,6 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		return nil, err
 	}
 
-	if q.budget.MaxExecutionTime > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, q.budget.MaxExecutionTime)
-		defer cancel()
-	}
 	ctx = telemetrystore.NewContextWithQuerySettings(ctx, q.budget.settings())
 
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, q.args...)
