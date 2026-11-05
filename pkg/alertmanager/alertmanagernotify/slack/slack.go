@@ -273,7 +273,7 @@ func buildRelatedLinkActions(alert *types.Alert) []config.SlackAction {
 		actions = append(actions, config.SlackAction{Type: "button", Text: "View Related Logs", URL: string(link)})
 	}
 	if link := alert.Annotations[ruletypes.AnnotationRelatedTraces]; link != "" {
-		actions = append(actions, config.SlackAction{Type: "button", Text: "View Related Traces", URL: string(link)})
+		actions = append(actions, config.SlackAction{Type: "button", Text: ruletypes.RelatedTracesLabel(string(link)), URL: string(link)})
 	}
 	return actions
 }

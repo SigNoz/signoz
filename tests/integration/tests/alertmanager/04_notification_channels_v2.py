@@ -421,7 +421,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                     "\n"
                     "{{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})\n"
                     "\n"
-                    "{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})\n"
+                    '{{ end }}{{ if .Annotations.related_traces }}{{ if match "^https?://[^?#]*/ai-observability/" .Annotations.related_traces }}[View related AI traces]{{ else }}[View related traces]{{ end }}({{ .Annotations.related_traces }})\n'
                     "\n"
                     "{{ end }}{{ end }}"
                 ),
@@ -452,7 +452,7 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
                     "\n"
                     "{{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})\n"
                     "\n"
-                    "{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})\n"
+                    '{{ end }}{{ if .Annotations.related_traces }}{{ if match "^https?://[^?#]*/ai-observability/" .Annotations.related_traces }}[View related AI traces]{{ else }}[View related traces]{{ end }}({{ .Annotations.related_traces }})\n'
                     "\n"
                     "{{ end }}{{ end }}"
                 ),
