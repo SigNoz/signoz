@@ -1,8 +1,4 @@
-import {
-	AlertType,
-	expect,
-	test as alertsTest,
-} from '../../drivers/alerts';
+import { AlertType, expect, test as alertsTest } from '../../drivers/alerts';
 import { withQueryBuilder } from '../../drivers/query-builder';
 
 const test = withQueryBuilder(alertsTest);
