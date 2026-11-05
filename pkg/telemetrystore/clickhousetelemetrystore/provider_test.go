@@ -2,6 +2,7 @@ package clickhousetelemetrystore
 
 import (
 	"context"
+	"net"
 	"testing"
 	"time"
 
@@ -84,4 +85,20 @@ func TestCastQueryError_DeadlineExceeded(t *testing.T) {
 			assert.Equal(t, testCase.wantSuggestion, len(errors.AsJSON(err).Suggestions) > 0, "got %v", err)
 		})
 	}
+}
+
+func TestCastQueryError_LiveContext_KeepsDeadlineError(t *testing.T) {
+	ctx, cancel := telemetrystore.NewContextWithQueryTimeout(context.Background(), time.Hour)
+	defer cancel()
+
+	// A driver-internal timeout, such as the dial timeout, while ctx is still live.
+	dialCtx, cancelDial := context.WithTimeout(context.Background(), time.Nanosecond)
+	defer cancelDial()
+	<-dialCtx.Done()
+
+	err := castQueryError(ctx, &net.OpError{Op: "dial", Net: "tcp", Err: dialCtx.Err()})
+
+	require.Error(t, err)
+	assert.True(t, errors.Asc(err, ErrCodeQueryTimeout), "got %v", err)
+	assert.Empty(t, errors.AsJSON(err).Suggestions)
 }

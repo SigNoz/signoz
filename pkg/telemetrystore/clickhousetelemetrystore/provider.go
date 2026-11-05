@@ -302,7 +302,8 @@ func (p *provider) Contributors() []string {
 // from telemetrystore.NewContextWithQueryTimeout.
 func castQueryError(ctx context.Context, err error) error {
 	if errors.Is(err, context.DeadlineExceeded) {
-		if cause := context.Cause(ctx); !errors.Is(cause, context.DeadlineExceeded) {
+		// Cause is nil while ctx is live, e.g. when the driver's own dial timeout ended the call.
+		if cause := context.Cause(ctx); cause != nil && !errors.Is(cause, context.DeadlineExceeded) {
 			return castError(cause)
 		}
 	}
