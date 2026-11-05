@@ -20,7 +20,7 @@ type Config struct {
 	MaxConcurrentQueries int `yaml:"max_concurrent_queries" mapstructure:"max_concurrent_queries"`
 	// LogTraceIDWindowPadding is the padding added to narrowed down timerange from trace summary to logs with trace_id filter.
 	LogTraceIDWindowPadding time.Duration `yaml:"log_trace_id_window_padding" mapstructure:"log_trace_id_window_padding"`
-	// ClickHouseQuery bounds user-written ClickHouse SQL queries.
+	// ClickHouseQuery bounds user-written ClickHouse SQL queries sent to the query_range API.
 	ClickHouseQuery ClickHouseQueryConfig `yaml:"clickhouse_query" mapstructure:"clickhouse_query"`
 
 	// Keys sit under querier.skip_resource_fingerprint.

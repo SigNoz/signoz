@@ -178,7 +178,8 @@ querier:
   # range with padding to include slightly delayed log exports. Logs only; set
   # to 0 to disable.
   log_trace_id_window_padding: 5m
-  # Budget of one user-written ClickHouse SQL query; 0 disables a limit.
+  # Budget of one user-written ClickHouse SQL query sent to the query_range API (not alert
+  # rules or other internal queries); 0 disables a limit.
   clickhouse_query:
     # Covers ClickHouse execution and reading the result.
     max_execution_time: 55s

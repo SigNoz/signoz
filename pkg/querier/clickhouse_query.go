@@ -144,12 +144,13 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		return nil, err
 	}
 
-	if q.budget.MaxExecutionTime > 0 {
+	budget := q.budgetFor(ctx)
+	if budget.MaxExecutionTime > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = telemetrystore.NewContextWithQueryTimeout(ctx, q.budget.MaxExecutionTime)
+		ctx, cancel = telemetrystore.NewContextWithQueryTimeout(ctx, budget.MaxExecutionTime)
 		defer cancel()
 	}
-	ctx = telemetrystore.NewContextWithQuerySettings(ctx, q.budget.settings())
+	ctx = telemetrystore.NewContextWithQuerySettings(ctx, budget.settings())
 
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, q.args...)
 	if err != nil {
@@ -189,4 +190,19 @@ func (c ClickHouseQueryConfig) settings() clickhouse.Settings {
 		settings["result_overflow_mode"] = "throw"
 	}
 	return settings
+}
+
+type clickHouseQueryBudgetKey struct{}
+
+// newContextWithClickHouseQueryBudget applies the ClickHouse SQL query budget to the queries run with ctx.
+// Internal callers, such as alert rules, do not set it and run without the budget.
+func newContextWithClickHouseQueryBudget(ctx context.Context) context.Context {
+	return context.WithValue(ctx, clickHouseQueryBudgetKey{}, struct{}{})
+}
+
+func (q *chSQLQuery) budgetFor(ctx context.Context) ClickHouseQueryConfig {
+	if ctx.Value(clickHouseQueryBudgetKey{}) == nil {
+		return ClickHouseQueryConfig{}
+	}
+	return q.budget
 }
