@@ -29,7 +29,7 @@
   "field_jira_deployment": "Jira deployment",
   "option_jira_deployment_cloud": "Jira Cloud",
   "option_jira_deployment_selfhosted": "Self-hosted Jira",
-  "jira_selfhosted_tip": "Works with Jira Data Center or Server 8.14 and newer. Create the personal access token from a dedicated service user so issues aren't reported under a personal name.",
+  "jira_selfhosted_tip": "Works with Jira Data Center 8.14 and newer. Create the personal access token from a dedicated service user so issues aren't reported under a personal name.",
   "jira_selfhosted_tip_link": "Learn how",
   "field_jira_site": "Site URL",
   "tooltip_jira_site": "Your Jira Cloud base URL, e.g. https://your-domain.atlassian.net, or a proxy in front of it.",
