@@ -484,8 +484,22 @@ type GeoMapPanelSpec struct {
 	Thresholds      []GeoMapThreshold     `json:"thresholds" validate:"dive" description:"Rules that recolor a shape, bubble or point when its value compares to a threshold as specified."`
 }
 
+// A null radius bound is compared at the layer's renderer default, so a one-sided setting can't invert the range.
 func (s GeoMapPanelSpec) validate() error {
-	return s.ChartAppearance.Bubbles.validate(s.Map.Layer)
+	minRadius, maxRadius := defaultBubbleMinRadius, defaultBubbleMaxRadius
+	if s.Map.Layer == GeoMapLayerPoints {
+		minRadius, maxRadius = defaultPointMinRadius, defaultPointMaxRadius
+	}
+	if s.ChartAppearance.Bubbles.MinRadius != nil {
+		minRadius = *s.ChartAppearance.Bubbles.MinRadius
+	}
+	if s.ChartAppearance.Bubbles.MaxRadius != nil {
+		maxRadius = *s.ChartAppearance.Bubbles.MaxRadius
+	}
+	if minRadius > maxRadius {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid bubbles: minRadius %d must not exceed maxRadius %d", minRadius, maxRadius)
+	}
+	return nil
 }
 
 func (s *GeoMapPanelSpec) validateAgainstQuery(query Query, path string) error {
@@ -597,20 +611,21 @@ type GeoMapBubbles struct {
 	MaxRadius *BubbleRadius `json:"maxRadius" description:"Radius of the largest circle, in CSS pixels from 1 to 64. Null means 8 on the points layer, 28 otherwise."`
 }
 
-// Null bounds are compared at the layer's renderer defaults, so one-sided settings can't invert the range.
-func (b GeoMapBubbles) validate(layer GeoMapLayer) error {
-	minRadius, maxRadius := defaultBubbleMinRadius, defaultBubbleMaxRadius
-	if layer == GeoMapLayerPoints {
-		minRadius, maxRadius = defaultPointMinRadius, defaultPointMaxRadius
+func (b *GeoMapBubbles) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	type alias GeoMapBubbles
+	var tmp alias
+	if err := dec.Decode(&tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid bubbles")
 	}
-	if b.MinRadius != nil {
-		minRadius = *b.MinRadius
-	}
-	if b.MaxRadius != nil {
-		maxRadius = *b.MaxRadius
-	}
-	if minRadius > maxRadius {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid bubbles: minRadius %d must not exceed maxRadius %d", minRadius, maxRadius)
+	*b = GeoMapBubbles(tmp)
+	return b.validate()
+}
+
+func (b GeoMapBubbles) validate() error {
+	if b.MinRadius != nil && b.MaxRadius != nil && *b.MinRadius > *b.MaxRadius {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid bubbles: minRadius %d must not exceed maxRadius %d", *b.MinRadius, *b.MaxRadius)
 	}
 	return nil
 }
