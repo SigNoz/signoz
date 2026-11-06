@@ -28,6 +28,10 @@ updater_role = "llm-pricing-updater"
 updater_email = "llm-pricing-updater@integration.test"
 scoped_role = "llm-pricing-scoped"
 scoped_email = "llm-pricing-scoped@integration.test"
+lister_role = "llm-pricing-lister"
+lister_email = "llm-pricing-lister@integration.test"
+trace_reader_role = "llm-pricing-trace-reader"
+trace_reader_email = "llm-pricing-trace-reader@integration.test"
 
 PROBE_RULE = {
     "modelName": "authz-probe",
@@ -83,6 +87,21 @@ def test_setup(
     scoped = create_active_user(signoz, admin_token, email=scoped_email, role="signoz-viewer", password=user_password)
     change_user_role(signoz, admin_token, scoped, "signoz-viewer", scoped_role)
 
+    create_role(admin_token, lister_role, [transaction_group("list", "metaresource", "llm-pricing-rule", ["*"])])
+    lister = create_active_user(signoz, admin_token, email=lister_email, role="signoz-viewer", password=user_password)
+    change_user_role(signoz, admin_token, lister, "signoz-viewer", lister_role)
+
+    create_role(
+        admin_token,
+        trace_reader_role,
+        [
+            transaction_group("list", "metaresource", "llm-pricing-rule", ["*"]),
+            transaction_group("read", "telemetryresource", "traces", ["builder_query/*"]),
+        ],
+    )
+    trace_reader = create_active_user(signoz, admin_token, email=trace_reader_email, role="signoz-viewer", password=user_password)
+    change_user_role(signoz, admin_token, trace_reader, "signoz-viewer", trace_reader_role)
+
 
 @pytest.mark.parametrize(
     "path",
@@ -117,6 +136,32 @@ def test_reads_need_list_grant(
     assert response.status_code == expected, response.text
     if expected == HTTPStatus.FORBIDDEN:
         assert "llm-pricing-rule:list" in response.text
+
+
+@pytest.mark.parametrize(
+    ("email", "path", "expected"),
+    [
+        (lister_email, LLM_PRICING_RULES_URL, HTTPStatus.OK),
+        (lister_email, f"{LLM_PRICING_RULES_URL}/unmapped_models", HTTPStatus.FORBIDDEN),
+        (trace_reader_email, f"{LLM_PRICING_RULES_URL}/unmapped_models", HTTPStatus.OK),
+    ],
+    ids=["lister_list", "lister_unmapped_models", "trace_reader_unmapped_models"],
+)
+def test_unmapped_models_needs_traces_read(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    email: str,
+    path: str,
+    expected: HTTPStatus,
+) -> None:
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(path),
+        headers={"Authorization": f"Bearer {get_token(email, user_password)}"},
+        timeout=10,
+    )
+    assert response.status_code == expected, response.text
+    if expected == HTTPStatus.FORBIDDEN:
+        assert "traces:read" in response.text
 
 
 @pytest.mark.parametrize(

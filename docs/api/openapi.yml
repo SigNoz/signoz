@@ -16188,8 +16188,10 @@ paths:
       security:
       - api_key:
         - llm-pricing-rule:list
+        - traces:read
       - tokenizer:
         - llm-pricing-rule:list
+        - traces:read
       summary: List unmapped models
       tags:
       - llmpricingrules

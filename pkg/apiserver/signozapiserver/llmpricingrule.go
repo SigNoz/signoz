@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/llmpricingruletypes"
@@ -76,14 +77,22 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
 			Deprecated:          false,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceLLMPricingRule.Scope(coretypes.VerbList)}),
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceLLMPricingRule.Scope(coretypes.VerbList), coretypes.ResourceTelemetryResourceTraces.Scope(coretypes.VerbRead)}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceLLMPricingRule,
-			Verb:     coretypes.VerbList,
-			Category: coretypes.ActionCategoryDataAccess,
-			Selector: coretypes.WildcardSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceLLMPricingRule,
+				Verb:     coretypes.VerbList,
+				Category: coretypes.ActionCategoryDataAccess,
+				Selector: coretypes.WildcardSelector,
+			},
+			handler.TelemetryResourceDef{
+				Verb:      coretypes.VerbRead,
+				Category:  coretypes.ActionCategoryDataAccess,
+				Selector:  querybuilder.TelemetrySelector,
+				Resources: querybuilder.BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceTraces),
+			},
+		),
 	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
