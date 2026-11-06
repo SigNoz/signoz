@@ -63,11 +63,7 @@ function ListAlertRules(): JSX.Element {
 	const { filter, applyFilter, submitQuery, changeStates } =
 		useAlertRulesListFilter({ orderBy, setOrderBy, setPage });
 
-	const ruleViews = useAlertRuleViews({
-		filter,
-		applyFilter,
-		userEmail: user.email,
-	});
+	const ruleViews = useAlertRuleViews({ filter, applyFilter });
 
 	const railCollapsed = useAlertRuleViewsStore((s) => s.railCollapsed);
 	const setRailCollapsed = useAlertRuleViewsStore((s) => s.setRailCollapsed);

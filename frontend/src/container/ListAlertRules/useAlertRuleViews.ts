@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQueryState } from 'nuqs';
 import type { UseListViewsResult } from 'hooks/listViews/types';
 import { useListViews } from 'hooks/listViews/useListViews';
@@ -6,13 +6,13 @@ import { useListViews } from 'hooks/listViews/useListViews';
 import { ALERT_RULES_PARAMS } from './hooks';
 import { DEFAULT_RULE_VIEW, RULE_BUILTIN_VIEWS } from './list.config';
 import type { RuleListFilter, RuleViewCtx } from './types';
+import { useRuleViewCtx } from './useRuleViewCtx';
 import { useRuleViews } from './useRuleViews';
 import { isDefaultRuleListFilter, isSameRuleListFilter } from './utils';
 
 interface UseAlertRuleViewsArgs {
 	filter: RuleListFilter;
 	applyFilter: (next: RuleListFilter) => void;
-	userEmail: string;
 }
 
 export interface UseAlertRuleViewsResult extends UseListViewsResult<RuleListFilter> {
@@ -25,11 +25,10 @@ export interface UseAlertRuleViewsResult extends UseListViewsResult<RuleListFilt
 export function useAlertRuleViews({
 	filter,
 	applyFilter,
-	userEmail,
 }: UseAlertRuleViewsArgs): UseAlertRuleViewsResult {
 	const api = useRuleViews();
 
-	const ctx = useMemo<RuleViewCtx>(() => ({ userEmail }), [userEmail]);
+	const ctx = useRuleViewCtx();
 
 	const views = useListViews<RuleListFilter, RuleViewCtx>({
 		filter,
