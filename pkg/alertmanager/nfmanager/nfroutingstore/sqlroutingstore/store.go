@@ -50,6 +50,23 @@ func (store *store) CreateBatch(ctx context.Context, route []*routeTypes.RoutePo
 	return nil
 }
 
+func (store *store) Update(ctx context.Context, orgID string, route *routeTypes.RoutePolicy) error {
+	res, err := store.sqlstore.BunDBCtx(ctx).NewUpdate().Model(route).Where("org_id = ?", orgID).WherePK().Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to update routing policy with ID: %s", route.ID)
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to read rows affected updating routing policy with ID: %s", route.ID)
+	}
+	if affected == 0 {
+		return errors.NewNotFoundf(errors.CodeNotFound, "routing policy with ID: %s does not exist", route.ID)
+	}
+
+	return nil
+}
+
 func (store *store) Delete(ctx context.Context, orgId string, id string) error {
 	_, err := store.sqlstore.BunDBCtx(ctx).NewDelete().Model((*routeTypes.RoutePolicy)(nil)).Where("org_id = ?", orgId).Where("id = ?", id).Exec(ctx)
 	if err != nil {
@@ -102,4 +119,24 @@ func (store *store) DeleteRouteByName(ctx context.Context, orgID string, name st
 	}
 
 	return nil
+}
+
+func (store *store) ReplaceRouteByName(ctx context.Context, orgID string, name string, routes []*routeTypes.RoutePolicy) error {
+	return store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		_, err := store.sqlstore.BunDBCtx(ctx).NewDelete().Model((*routeTypes.RoutePolicy)(nil)).Where("org_id = ?", orgID).Where("name = ?", name).Exec(ctx)
+		if err != nil {
+			return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "unable to delete routing policies with name: %s", name)
+		}
+
+		if len(routes) == 0 {
+			return nil
+		}
+
+		_, err = store.sqlstore.BunDBCtx(ctx).NewInsert().Model(&routes).Exec(ctx)
+		if err != nil {
+			return errors.NewInternalf(errors.CodeInternal, "error creating routing policies: %v", err)
+		}
+
+		return nil
+	})
 }

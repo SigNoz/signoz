@@ -531,3 +531,192 @@ func TestProvider_CreateRoutes(t *testing.T) {
 		})
 	}
 }
+
+func TestProvider_UpdateRoute(t *testing.T) {
+	ctx := context.Background()
+	providerSettings := createTestProviderSettings()
+	config := nfmanager.Config{}
+
+	validRoute := &alertmanagertypes.RoutePolicy{
+		Identifiable:   types.Identifiable{ID: valuer.GenerateUUID()},
+		Expression:     `service == "auth"`,
+		ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+		Name:           "auth-service-route",
+		Description:    "Route for auth service alerts",
+		Enabled:        true,
+		OrgID:          "test-org-123",
+		Channels:       []string{"slack-channel"},
+	}
+
+	tests := []struct {
+		name         string
+		orgID        string
+		route        *alertmanagertypes.RoutePolicy
+		rowsAffected int64
+		wantErr      bool
+	}{
+		{
+			name:         "valid update",
+			orgID:        "test-org-123",
+			route:        validRoute,
+			rowsAffected: 1,
+			wantErr:      false,
+		},
+		{
+			name:         "missing route returns not found",
+			orgID:        "test-org-123",
+			route:        validRoute,
+			rowsAffected: 0,
+			wantErr:      true,
+		},
+		{
+			name:    "nil route",
+			orgID:   "test-org-123",
+			route:   nil,
+			wantErr: true,
+		},
+		{
+			name:  "invalid route - empty expression",
+			orgID: "test-org-123",
+			route: &alertmanagertypes.RoutePolicy{
+				Identifiable:   types.Identifiable{ID: valuer.GenerateUUID()},
+				Expression:     "",
+				ExpressionKind: alertmanagertypes.PolicyBasedExpression,
+				Name:           "broken",
+				OrgID:          "test-org-123",
+				Channels:       []string{"slack-channel"},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			routeStore := nfroutingstoretest.NewMockSQLRouteStore()
+			provider, err := New(ctx, providerSettings, config, routeStore)
+			require.NoError(t, err)
+
+			// A validation failure must surface before the store is touched: no
+			// expectations registered, so any stray SQL call fails the mock.
+			expectStoreCall := !tt.wantErr || tt.name == "missing route returns not found"
+			if expectStoreCall {
+				routeStore.ExpectUpdate(tt.orgID, tt.route, tt.rowsAffected)
+			}
+
+			err = provider.UpdateRoutePolicy(ctx, tt.orgID, tt.route)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.NoError(t, routeStore.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestProvider_ReplaceRoutePoliciesByName(t *testing.T) {
+	ctx := context.Background()
+	providerSettings := createTestProviderSettings()
+	config := nfmanager.Config{}
+
+	makeRoute := func(name string) *alertmanagertypes.RoutePolicy {
+		return &alertmanagertypes.RoutePolicy{
+			Identifiable:   types.Identifiable{ID: valuer.GenerateUUID()},
+			Expression:     `service == "auth"`,
+			ExpressionKind: alertmanagertypes.RuleBasedExpression,
+			Name:           name,
+			Enabled:        true,
+			OrgID:          "test-org-123",
+			Channels:       []string{"slack-channel"},
+		}
+	}
+
+	tests := []struct {
+		name      string
+		orgID     string
+		routeName string
+		routes    []*alertmanagertypes.RoutePolicy
+		wantErr   bool
+	}{
+		{
+			name:      "replace with two new routes",
+			orgID:     "test-org-123",
+			routeName: "rule-1",
+			routes:    []*alertmanagertypes.RoutePolicy{makeRoute("rule-1"), makeRoute("rule-1")},
+			wantErr:   false,
+		},
+		{
+			name:      "replace with empty list deletes the old set",
+			orgID:     "test-org-123",
+			routeName: "rule-1",
+			routes:    []*alertmanagertypes.RoutePolicy{},
+			wantErr:   false,
+		},
+		{
+			name:      "empty orgID",
+			orgID:     "",
+			routeName: "rule-1",
+			routes:    []*alertmanagertypes.RoutePolicy{makeRoute("rule-1")},
+			wantErr:   true,
+		},
+		{
+			name:      "empty name",
+			orgID:     "test-org-123",
+			routeName: "",
+			routes:    []*alertmanagertypes.RoutePolicy{makeRoute("rule-1")},
+			wantErr:   true,
+		},
+		{
+			name:      "nil route in batch",
+			orgID:     "test-org-123",
+			routeName: "rule-1",
+			routes:    []*alertmanagertypes.RoutePolicy{makeRoute("rule-1"), nil},
+			wantErr:   true,
+		},
+		{
+			name:      "invalid route in batch",
+			orgID:     "test-org-123",
+			routeName: "rule-1",
+			routes: []*alertmanagertypes.RoutePolicy{
+				makeRoute("rule-1"),
+				{
+					Identifiable:   types.Identifiable{ID: valuer.GenerateUUID()},
+					Expression:     "",
+					ExpressionKind: alertmanagertypes.RuleBasedExpression,
+					Name:           "rule-1",
+					OrgID:          "test-org-123",
+					Channels:       []string{"slack-channel"},
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			routeStore := nfroutingstoretest.NewMockSQLRouteStore()
+			provider, err := New(ctx, providerSettings, config, routeStore)
+			require.NoError(t, err)
+
+			if !tt.wantErr {
+				// The replacement is one store-level operation: delete the named
+				// set, then insert the new batch. sqlmock matches expectations
+				// in order, so an insert landing before the delete fails here.
+				routeStore.ExpectDeleteRouteByName(tt.orgID, tt.routeName)
+				routeStore.ExpectCreateBatch(tt.routes)
+			}
+
+			// On validation errors nothing may reach the store: the old route
+			// set has to survive a rejected replacement untouched.
+			err = provider.ReplaceRoutePoliciesByName(ctx, tt.orgID, tt.routeName, tt.routes)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.NoError(t, routeStore.ExpectationsWereMet())
+		})
+	}
+}

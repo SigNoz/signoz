@@ -138,9 +138,11 @@ type RouteStore interface {
 	GetByID(ctx context.Context, orgId string, id string) (*RoutePolicy, error)
 	Create(ctx context.Context, route *RoutePolicy) error
 	CreateBatch(ctx context.Context, routes []*RoutePolicy) error
+	Update(ctx context.Context, orgID string, route *RoutePolicy) error
 	Delete(ctx context.Context, orgId string, id string) error
 	GetAllByKind(ctx context.Context, orgID string, kind ExpressionKind) ([]*RoutePolicy, error)
 	GetAllByName(ctx context.Context, orgID string, name string) ([]*RoutePolicy, error)
 	DeleteRouteByName(ctx context.Context, orgID string, name string) error
+	ReplaceRouteByName(ctx context.Context, orgID string, name string, routes []*RoutePolicy) error
 	GetAll(ctx context.Context, orgID string) ([]*RoutePolicy, error)
 }
