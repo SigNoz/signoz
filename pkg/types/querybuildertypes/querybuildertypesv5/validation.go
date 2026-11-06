@@ -921,15 +921,26 @@ func (r *QueryRangeRequest) validateBucketCounting() error {
 				continue
 			}
 			enabled++
-		// An AI query decodes to the traces spec, so it lands here too. Admitting
-		// either signal means capping Aggregations at one: each carries its own
-		// Meta.Buckets, and a heatmap renders against a single bucket axis.
-		case QueryBuilderQuery[LogAggregation], QueryBuilderQuery[TraceAggregation]:
-			return errors.New(errors.TypeUnsupported, errors.CodeUnsupported,
-				"heatmaps are not supported for the logs and traces signals yet")
+		// An AI query decodes to the traces spec, so it lands here too.
+		case QueryBuilderQuery[LogAggregation]:
+			if err := validateEventHeatmapQuery(r.RequestType, spec.Functions, spec.Having, aggregationExpressions(spec.Aggregations), spec.Disabled); err != nil {
+				return err
+			}
+			if spec.Disabled {
+				continue
+			}
+			enabled++
+		case QueryBuilderQuery[TraceAggregation]:
+			if err := validateEventHeatmapQuery(r.RequestType, spec.Functions, spec.Having, aggregationExpressions(spec.Aggregations), spec.Disabled); err != nil {
+				return err
+			}
+			if spec.Disabled {
+				continue
+			}
+			enabled++
 		default:
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"%s requests support one metrics builder query, one formula over them, one clickhouse query, or one promql query, got %q", r.RequestType.StringValue(), envelope.Type.StringValue())
+				"%s requests support one builder query, one formula over them, one clickhouse query, or one promql query, got %q", r.RequestType.StringValue(), envelope.Type.StringValue())
 		}
 	}
 
@@ -1031,6 +1042,48 @@ func validateBucketCountingQuery(requestType RequestType, functions []Function, 
 	}
 
 	return nil
+}
+
+// validateEventHeatmapQuery holds a logs or traces query to what a per-event
+// heatmap can draw. A disabled query feeds a formula rather than the chart, so
+// it aggregates as a time series.
+func validateEventHeatmapQuery(requestType RequestType, functions []Function, having *Having, expressions []string, disabled bool) error {
+	if err := validateBucketCountingQuery(requestType, functions, having); err != nil {
+		return err
+	}
+
+	if disabled {
+		return nil
+	}
+
+	// Every aggregation carries its own Meta.Buckets, and a heatmap renders
+	// against a single bucket axis.
+	if len(expressions) != 1 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a heatmap renders one bucket axis, but the query has %d aggregations", len(expressions)).
+			WithAdditional("Keep the one aggregation whose distribution you want to plot")
+	}
+
+	if _, ok := HeatmapAggregationField(expressions[0]); !ok {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a logs or traces heatmap counts events by the field named as its aggregation, got %q", expressions[0]).
+			WithAdditional("Use an aggregation such as duration_nano")
+	}
+
+	return nil
+}
+
+func aggregationExpressions[T LogAggregation | TraceAggregation](aggregations []T) []string {
+	expressions := make([]string, len(aggregations))
+	for i, aggregation := range aggregations {
+		switch a := any(aggregation).(type) {
+		case LogAggregation:
+			expressions[i] = a.Expression
+		case TraceAggregation:
+			expressions[i] = a.Expression
+		}
+	}
+	return expressions
 }
 
 func GetValidationOptions(requestType RequestType) []ValidationOption {
