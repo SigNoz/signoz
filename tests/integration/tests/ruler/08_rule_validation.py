@@ -232,6 +232,26 @@ def test_create_defaults_clickhouse_rule_type(
     assert response.json()["data"]["ruleType"] == "threshold_rule"
 
 
+def test_get_echoes_alert_on_absent_false(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_alert_rule: Callable[[dict], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    rule_id = create_alert_rule({**VALID_RULE, "condition": {**VALID_RULE["condition"], "alertOnAbsent": False, "absentFor": 0}})
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{rule_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["condition"]["alertOnAbsent"] is False
+    assert response.json()["data"]["condition"]["absentFor"] == 0
+
+
 def test_timeline_rejects_unknown_state(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument

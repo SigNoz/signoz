@@ -128,8 +128,8 @@ type AlertCompositeQuery struct {
 
 type RuleCondition struct {
 	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery" required:"true" description:"The queries whose result is compared against the thresholds."`
-	AlertOnAbsent     bool                 `json:"alertOnAbsent,omitempty" description:"Whether to fire a nodata alert when the query returns no data. Defaults to false."`
-	AbsentFor         uint64               `json:"absentFor,omitempty" description:"How many minutes without data pass before the nodata alert fires. Ignored unless alertOnAbsent is true."`
+	AlertOnAbsent     bool                 `json:"alertOnAbsent" description:"Whether to fire a nodata alert when the query returns no data. Defaults to false."`
+	AbsentFor         uint64               `json:"absentFor" description:"How many minutes without data pass before the nodata alert fires. Ignored unless alertOnAbsent is true."`
 	Seasonality       Seasonality          `json:"seasonality,omitzero" description:"anomaly_rule only: the seasonal period the history is compared against, hourly, daily or weekly."`
 	SelectedQuery     string               `json:"selectedQueryName" required:"true" description:"The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery."`
 	RequireMinPoints  bool                 `json:"requireMinPoints,omitempty" description:"Whether a series is skipped until it has at least requiredNumPoints points in the window. Defaults to false."`
