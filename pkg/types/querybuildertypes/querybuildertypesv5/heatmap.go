@@ -301,9 +301,9 @@ func addHeatmapBucketsWithNoCountsForAggregation(aggBucket *AggregationBucket, b
 // ToDistributionData sums every series over all its steps, keeping the bucket
 // axis, and ranks the percentiles over every series together. A partial step
 // counts too, since what it holds was observed.
-func (t *TimeSeriesData) ToDistributionData() *DistributionData {
-	data := &DistributionData{QueryName: t.QueryName, Aggregations: make([]*DistributionAggregation, 0, len(t.Aggregations))}
-	for _, aggBucket := range t.Aggregations {
+func (tsData *TimeSeriesData) ToDistributionData() *DistributionData {
+	data := &DistributionData{QueryName: tsData.QueryName, Aggregations: make([]*DistributionAggregation, 0, len(tsData.Aggregations))}
+	for _, aggBucket := range tsData.Aggregations {
 		if aggBucket == nil {
 			continue
 		}

@@ -56,12 +56,12 @@ func (r RequestType) IsAggregation() bool {
 	return r == RequestTypeTimeSeries || r == RequestTypeScalar || r == RequestTypeDistribution || r == RequestTypeHeatmap
 }
 
-func (r RequestType) CountsIntoBuckets() bool {
-	return r == RequestTypeHeatmap || r == RequestTypeDistribution
+func (requestType RequestType) CountsIntoBuckets() bool {
+	return requestType == RequestTypeHeatmap || requestType == RequestTypeDistribution
 }
 
-func (r RequestType) IsBuiltFromTimeSeries() bool {
-	return r == RequestTypeTimeSeries || r.CountsIntoBuckets()
+func (requestType RequestType) IsBuiltFromTimeSeries() bool {
+	return requestType == RequestTypeTimeSeries || requestType.CountsIntoBuckets()
 }
 
 // Enum implements jsonschema.Enum; returns the acceptable values for RequestType.
