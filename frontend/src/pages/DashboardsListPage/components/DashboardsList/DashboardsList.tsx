@@ -18,6 +18,7 @@ import {
 	useAccumulatedTags,
 } from '../../hooks/useAccumulatedTags';
 import { useActiveView } from '../../hooks/useActiveView';
+import { useDashboardViewCtx } from '../../hooks/useDashboardViewCtx';
 import { useCreatorOptions } from 'components/ListFilter/useCreatorOptions';
 import { useDashboardFilters } from '../../hooks/useDashboardFilters';
 import {
@@ -28,7 +29,6 @@ import {
 import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
 import { useDashboardsListVisibleColumnsStore } from '../../store/useVisibleColumnsStore';
 import { DEFAULT_DASHBOARD_VIEW, findBuiltinView } from '../../list.config';
-import type { DashboardViewCtx } from '../../types';
 import type { SuggestionSource } from 'components/ListFilter/dsl/types';
 import type { DashboardListItem } from '../../utils/helpers';
 import DashboardsFilterZone from '../DashboardsFilterZone/DashboardsFilterZone';
@@ -62,11 +62,7 @@ function DashboardsList(): JSX.Element {
 	const [sortOrder, setSortOrder] = useSortOrder();
 	const [page, setPage] = usePage();
 
-	const recent = useDashboardViewsStore((s) => s.recent);
-	const viewCtx = useMemo<DashboardViewCtx>(
-		() => ({ userEmail: user.email, recent }),
-		[user.email, recent],
-	);
+	const viewCtx = useDashboardViewCtx();
 
 	const {
 		activeViewId,
