@@ -68,39 +68,53 @@ def test_setup(
     assert upsert_llm_pricing_rules(signoz, admin_token, [PROBE_RULE, OTHER_RULE]).status_code == HTTPStatus.NO_CONTENT
     probe_id = next(r["id"] for r in list_llm_pricing_rules(signoz, admin_token) if r["modelName"] == PROBE_RULE["modelName"])
 
-    create_active_user(signoz, admin_token, email=editor_email, role="signoz-editor", password=user_password)
-    create_active_user(signoz, admin_token, email=viewer_email, role="signoz-viewer", password=user_password)
+    headers = {"Authorization": f"Bearer {admin_token}"}
 
-    create_role(admin_token, updater_role, [transaction_group("update", "metaresource", "llm-pricing-rule", ["*"])])
-    updater = create_active_user(signoz, admin_token, email=updater_email, role="signoz-viewer", password=user_password)
-    change_user_role(signoz, admin_token, updater, "signoz-viewer", updater_role)
-
-    create_role(
-        admin_token,
-        scoped_role,
-        [
+    # A --reuse stack keeps users and roles from earlier runs, and probe_id changes every run.
+    response = requests.get(signoz.self.host_configs["8080"].get("/api/v1/roles"), headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.OK, response.text
+    existing_roles = {role["name"]: role["id"] for role in response.json()["data"]}
+    grants = {
+        updater_role: [transaction_group("update", "metaresource", "llm-pricing-rule", ["*"])],
+        scoped_role: [
             transaction_group("read", "metaresource", "llm-pricing-rule", [probe_id]),
             transaction_group("update", "metaresource", "llm-pricing-rule", [probe_id]),
             transaction_group("delete", "metaresource", "llm-pricing-rule", [probe_id]),
         ],
-    )
-    scoped = create_active_user(signoz, admin_token, email=scoped_email, role="signoz-viewer", password=user_password)
-    change_user_role(signoz, admin_token, scoped, "signoz-viewer", scoped_role)
-
-    create_role(admin_token, lister_role, [transaction_group("list", "metaresource", "llm-pricing-rule", ["*"])])
-    lister = create_active_user(signoz, admin_token, email=lister_email, role="signoz-viewer", password=user_password)
-    change_user_role(signoz, admin_token, lister, "signoz-viewer", lister_role)
-
-    create_role(
-        admin_token,
-        trace_reader_role,
-        [
+        lister_role: [transaction_group("list", "metaresource", "llm-pricing-rule", ["*"])],
+        trace_reader_role: [
             transaction_group("list", "metaresource", "llm-pricing-rule", ["*"]),
             transaction_group("read", "telemetryresource", "traces", ["builder_query/*"]),
         ],
-    )
-    trace_reader = create_active_user(signoz, admin_token, email=trace_reader_email, role="signoz-viewer", password=user_password)
-    change_user_role(signoz, admin_token, trace_reader, "signoz-viewer", trace_reader_role)
+    }
+    for name, transaction_groups in grants.items():
+        if name not in existing_roles:
+            create_role(admin_token, name, transaction_groups)
+            continue
+        response = requests.put(
+            signoz.self.host_configs["8080"].get(f"/api/v1/roles/{existing_roles[name]}"),
+            json={"description": "", "transactionGroups": transaction_groups},
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    response = requests.get(signoz.self.host_configs["8080"].get("/api/v2/users"), headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.OK, response.text
+    existing_emails = {user["email"] for user in response.json()["data"]}
+    for email, role in (
+        (editor_email, "signoz-editor"),
+        (viewer_email, "signoz-viewer"),
+        (updater_email, updater_role),
+        (scoped_email, scoped_role),
+        (lister_email, lister_role),
+        (trace_reader_email, trace_reader_role),
+    ):
+        if email in existing_emails:
+            continue
+        user_id = create_active_user(signoz, admin_token, email=email, role="signoz-viewer", password=user_password)
+        if role != "signoz-viewer":
+            change_user_role(signoz, admin_token, user_id, "signoz-viewer", role)
 
 
 @pytest.mark.parametrize(
