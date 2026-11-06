@@ -13,7 +13,7 @@ from fixtures.querier import (
     build_heatmap_query,
     build_linear_bucket_options,
     get_all_series,
-    get_heatmap_buckets,
+    get_buckets,
     index_series_by_label,
     make_query_request,
 )
@@ -74,7 +74,7 @@ def test_audit_heatmap(
     # 20 split into 4 gives (0, 5], (5, 10], (10, 15], (15, 20]; the axis stops
     # at the highest bucket reached, and 25 is past 20 so it counts in the
     # trailing overflow
-    buckets = get_heatmap_buckets(data, "A")
+    buckets = get_buckets(data, "A")
     assert buckets == pytest.approx([0.0, 5.0, 10.0])
 
     series_by_action = index_series_by_label(get_all_series(data, "A"), "signoz.audit.action")

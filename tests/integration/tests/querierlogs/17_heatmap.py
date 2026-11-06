@@ -17,7 +17,7 @@ from fixtures.querier import (
     build_scalar_query,
     get_all_series,
     get_error_message,
-    get_heatmap_buckets,
+    get_buckets,
     get_heatmap_columns,
     index_series_by_label,
     make_query_request,
@@ -77,7 +77,7 @@ def test_linear_heatmap_grouped(
     data = response.json()
     # 1000 split into 10 gives (0, 100], (100, 200], ... (900, 1000], and 5000
     # is past 1000 so it counts in the trailing overflow
-    buckets = get_heatmap_buckets(data, "A")
+    buckets = get_buckets(data, "A")
     assert buckets == pytest.approx([0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0, 900.0, 1000.0])
 
     series_by_service = index_series_by_label(get_all_series(data, "A"), "service.name")
@@ -123,7 +123,7 @@ def test_log_heatmap(
     data = response.json()
     # a doubling per bucket, with one rung under the lowest bucket reached so
     # its lower bound is on the axis; (128, 256] holds nothing but stays
-    buckets = get_heatmap_buckets(data, "A")
+    buckets = get_buckets(data, "A")
     assert buckets == pytest.approx([64.0, 128.0, 256.0, 512.0, 1024.0])
     assert [sum(column["values"][slot] for column in get_heatmap_columns(data, "A")) for slot in range(len(buckets) + 1)] == [0, 1, 0, 1, 1, 0]
 
@@ -161,7 +161,7 @@ def test_default_axis(
     data = response.json()
     # no bucketOptions is the finest log axis, 16 buckets per doubling: 1000
     # sits in (2^(159/16), 2^10]
-    buckets = get_heatmap_buckets(data, "A")
+    buckets = get_buckets(data, "A")
     totals = [sum(column["values"][slot] for column in get_heatmap_columns(data, "A")) for slot in range(len(buckets) + 1)]
     holding = [slot for slot, total in enumerate(totals) if total]
     assert holding == [len(buckets) - 1]
