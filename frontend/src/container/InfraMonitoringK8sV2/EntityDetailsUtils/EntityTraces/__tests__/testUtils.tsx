@@ -33,7 +33,6 @@ export function renderEntityTraces({
 	return render(
 		<NuqsTestingAdapter searchParams={searchParams}>
 			<EntityTraces
-				eventEntity="test"
 				queryKey="test"
 				category={category}
 				initialExpression={expression}

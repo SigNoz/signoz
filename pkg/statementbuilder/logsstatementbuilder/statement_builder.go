@@ -707,6 +707,10 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		sb.Limit(query.Limit)
 	}
 
+	if query.Offset > 0 {
+		sb.Offset(query.Offset)
+	}
+
 	combinedArgs := allAggChArgs
 
 	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)

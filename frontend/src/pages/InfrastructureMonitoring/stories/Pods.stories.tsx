@@ -46,6 +46,14 @@ export const PodDetailsEvents: StoryObj<PodsArgs> = {
 	args: { drawer: true, drawerTab: VIEWS.EVENTS },
 };
 
+/**
+ * The events tab on a `use_json_body` tenant: a warning's event object as JSON
+ * in the Body column, an info line's `message`-only body as its text.
+ */
+export const PodDetailsEventsJsonBody: StoryObj<PodsArgs> = {
+	args: { drawer: true, drawerTab: VIEWS.EVENTS, eventJsonBody: true },
+};
+
 /** The selected pod's details drawer, switched to its logs tab. */
 export const DetailsDrawerLogsTab: StoryObj<PodsArgs> = {
 	args: { drawer: true },

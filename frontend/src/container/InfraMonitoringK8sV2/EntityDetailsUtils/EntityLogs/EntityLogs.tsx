@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card } from 'antd';
-import logEvent from 'api/common/logEvent';
 import LogDetail from 'components/LogDetail';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -20,7 +19,6 @@ import {
 	combineInitialAndUserExpression,
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { InfraMonitoringEvents } from 'constants/events';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -52,14 +50,12 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { logInfraDrawerFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 
 interface Props {
-	eventEntity: string;
 	queryKey: string;
 	category: InfraMonitoringEntity;
 	initialExpression: string;
 }
 
 function EntityLogsContent({
-	eventEntity,
 	queryKey,
 	category,
 }: Omit<Props, 'initialExpression'>): JSX.Element {
@@ -126,13 +122,6 @@ function EntityLogsContent({
 			if (validation.isValid) {
 				saveRecentQueryByExpression(DataSource.LOGS, newUserExpression);
 				querySearchOnRun(newUserExpression);
-
-				void logEvent(InfraMonitoringEvents.FilterApplied, {
-					entity: InfraMonitoringEvents.K8sEntity,
-					page: InfraMonitoringEvents.DetailedPage,
-					category,
-					view: InfraMonitoringEvents.LogsView,
-				});
 
 				logInfraDrawerFilterCustomizedEvent(
 					category,
@@ -277,11 +266,7 @@ function EntityLogsContent({
 		<div className={styles.container}>
 			<div className={styles.filterContainer}>
 				<div className={styles.filterContainerTime}>
-					<EntityDateTimeSelector
-						eventEntity={eventEntity}
-						category={category}
-						view={InfraMonitoringEvents.LogsView}
-					/>
+					<EntityDateTimeSelector category={category} />
 
 					<RunQueryBtn
 						isLoadingQueries={isFetching}

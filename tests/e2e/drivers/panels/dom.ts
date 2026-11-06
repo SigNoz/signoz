@@ -3,6 +3,7 @@
  * use it. Do not hand-edit: regenerate it with the spec that needs the change.
  */
 import { expect, type Locator, type Page } from '@playwright/test';
+import { wheelTo } from '../scroll';
 
 export interface Box {
 	x: number;
@@ -15,7 +16,7 @@ export async function boxOf(
 	locator: Locator,
 	description: string,
 ): Promise<Box> {
-	await locator.scrollIntoViewIfNeeded();
+	await wheelTo(locator);
 	const box = await locator.boundingBox();
 	expect(box, `expected a bounding box for ${description}`).not.toBeNull();
 	return box as Box;
