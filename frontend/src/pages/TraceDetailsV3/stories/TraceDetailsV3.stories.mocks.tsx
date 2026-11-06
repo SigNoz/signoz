@@ -13,7 +13,7 @@ import type { SpantypesPostableTraceAggregationsDTO } from 'api/generated/servic
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import { screen, userEvent, within } from 'storybook/test';
-import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import type { QueryRangeRequestV5, RawRow } from 'types/api/v5/queryRange';
 
 import {
 	choiceControl,
@@ -150,6 +150,12 @@ export const traceDetailsMocks = defineStoryMocks({
 			value: 8,
 			max: 20,
 		}),
+		traceOnlyLogs: toggleControl('Logs only on the trace', {
+			group: PANEL,
+			description:
+				'The span has no logs of its own but the trace does, which is the Logs tab\'s "view logs for the current trace" state.',
+			value: false,
+		}),
 		exportState: choiceControl<ExportState>('Trace export', {
 			group: EXPORT,
 			description:
@@ -164,6 +170,12 @@ export const traceDetailsMocks = defineStoryMocks({
 			spans: values.spans,
 			errors: values.errors,
 			traceStart: traceStartOf(),
+		};
+		const spanLogRowsFor = (body: QueryRangeRequestV5): RawRow[] => {
+			const scope = spanLogScopeOf(body);
+			const count =
+				values.traceOnlyLogs && scope !== 'trace' ? 0 : values.spanLogs;
+			return spanLogRows(count, trace, scope);
 		};
 
 		return [
@@ -266,9 +278,7 @@ export const traceDetailsMocks = defineStoryMocks({
 
 					if (requestType === 'raw') {
 						return queryRangeV5RawResponse(
-							signalOf(body) === 'logs'
-								? spanLogRows(values.spanLogs, trace, spanLogScopeOf(body))
-								: spanMatchRows(trace),
+							signalOf(body) === 'logs' ? spanLogRowsFor(body) : spanMatchRows(trace),
 						);
 					}
 

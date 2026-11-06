@@ -128,6 +128,11 @@ never by reaching for another fixture.
 - Locate by testid. A missing one is added to the product in the same change.
   Role, label and CSS lookups are converted as you touch them; antd internals
   (`antd.ts`) are the exception.
+- Scroll with `wheelTo` (`drivers/scroll.ts`) before acting on an element that
+  may be off screen. It turns the mouse wheel and asserts `toBeInViewport()`.
+  Scripted scrolling (`scrollIntoView`, `scrollIntoViewIfNeeded`) moves even an
+  `overflow: hidden` box a user cannot scroll, so a clipped layout passes; lint
+  rejects it.
 - Never `test.slow()` in a driver: it triples the remaining budget on every
   call and compounds in loops. Use `allowFor(floor)`. Budgets and their
   measurements are in [`docs/flake-notes.md`](docs/flake-notes.md).

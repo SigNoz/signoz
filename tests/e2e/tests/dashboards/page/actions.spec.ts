@@ -44,7 +44,7 @@ test.describe('Dashboards — panel actions', () => {
 		);
 		await dashboards.seedAndOpen(compactDashboard());
 		const target = panels.panel(COMPACT_PANELS.timeseries);
-		await target.scrollIntoView();
+		await target.wheelIntoView();
 
 		const download = panels.nextDownload();
 		await target.actions.download('PNG');
