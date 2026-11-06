@@ -59,8 +59,6 @@ export interface PostableAlertRuleV2 {
 		};
 		usePolicy?: boolean;
 	};
-	version?: string;
-	source?: string;
 	state?: string;
 	disabled?: boolean;
 }

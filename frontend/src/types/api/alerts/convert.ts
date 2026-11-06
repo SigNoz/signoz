@@ -16,7 +16,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { AlertTypes } from './alertTypes';
 import { PostableAlertRuleV2 } from './alertTypesV2';
 import { ICompositeMetricQuery } from './compositeQuery';
-import { AlertDef, Labels } from './def';
+import { Labels } from './def';
 
 function toRuleTypeDTO(ruleType: string | undefined): RuletypesRuleTypeDTO {
 	switch (ruleType) {
@@ -69,7 +69,10 @@ function stripUndefinedLabels(
 export function toPostableRuleDTO(
 	local: PostableAlertRuleV2,
 ): RuletypesPostableRuleDTO {
-	const payload: Record<keyof RuletypesPostableRuleDTO, any> = {
+	const payload: Record<
+		Exclude<keyof RuletypesPostableRuleDTO, 'source' | 'version'>,
+		any
+	> = {
 		alert: local.alert,
 		alertType: toAlertTypeDTO(local.alertType),
 		ruleType: toRuleTypeDTO(local.ruleType),
@@ -83,47 +86,16 @@ export function toPostableRuleDTO(
 		notificationSettings: local.notificationSettings,
 		evaluation: local.evaluation,
 		schemaVersion: local.schemaVersion,
-		source: local.source,
-		version: local.version,
 		disabled: local.disabled,
 		description: (local as unknown as RuletypesPostableRuleDTO).description,
 	};
 	return payload as unknown as RuletypesPostableRuleDTO;
 }
 
-export function toPostableRuleDTOFromAlertDef(
-	local: AlertDef,
-): RuletypesPostableRuleDTO {
-	const payload: Record<keyof RuletypesPostableRuleDTO, any> = {
-		alert: local.alert,
-		alertType: toAlertTypeDTO(local.alertType),
-		ruleType: toRuleTypeDTO(local.ruleType),
-		condition: local.condition,
-		annotations: local.annotations,
-		labels: stripUndefinedLabels(local.labels),
-		evalWindow: local.evalWindow,
-		frequency: local.frequency,
-		preferredChannels: local.preferredChannels,
-		notificationSettings: (local as unknown as RuletypesPostableRuleDTO)
-			.notificationSettings,
-		evaluation: (local as unknown as RuletypesPostableRuleDTO).evaluation,
-		schemaVersion: (local as unknown as RuletypesPostableRuleDTO).schemaVersion,
-		source: local.source,
-		version: local.version,
-		disabled: local.disabled,
-		description: (local as unknown as RuletypesPostableRuleDTO).description,
-	};
-	return payload;
-}
-
 export function fromRuleDTOToPostableRuleV2(
 	dto: RuletypesRuleDTO,
 ): PostableAlertRuleV2 {
 	return dto as unknown as PostableAlertRuleV2;
-}
-
-export function fromRuleDTOToAlertDef(dto: RuletypesRuleDTO): AlertDef {
-	return dto as unknown as AlertDef;
 }
 
 function toEQueryType(queryType: RuletypesQueryTypeDTO): EQueryType {

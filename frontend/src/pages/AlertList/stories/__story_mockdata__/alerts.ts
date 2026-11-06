@@ -70,10 +70,6 @@ export const RULE_STATE_CHOICES = ['mixed', ...RULE_STATES] as const;
 
 export type RuleStateChoice = (typeof RULE_STATE_CHOICES)[number];
 
-export const ALERT_SCHEMAS = ['v2', 'classic'] as const;
-
-export type AlertSchema = (typeof ALERT_SCHEMAS)[number];
-
 export const RULE_KINDS = ['threshold', 'anomaly'] as const;
 
 export type RuleKind = (typeof RULE_KINDS)[number];
@@ -355,7 +351,6 @@ const ruleName = (index: number): string => {
 export interface RuleShape {
 	severity: SeverityChoice;
 	state: RuleStateChoice;
-	schema?: AlertSchema;
 	kind?: RuleKind;
 }
 
@@ -396,10 +391,7 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 		updatedAt: ago((index + 1) * HOUR),
 		createdBy: 'ada@signoz.io',
 		updatedBy: 'grace@signoz.io',
-		// classic rows predate schemaVersion, which the spec now requires
-		schemaVersion: (shape.schema === 'classic'
-			? undefined
-			: RuletypesRuleDTOSchemaVersion.v2alpha1) as RuletypesRuleDTOSchemaVersion,
+		schemaVersion: RuletypesRuleDTOSchemaVersion.v2alpha1,
 		version: 'v5',
 		source: 'http://localhost/alerts',
 		preferredChannels: ['ops-slack'],
