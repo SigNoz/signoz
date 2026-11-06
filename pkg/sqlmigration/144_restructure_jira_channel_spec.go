@@ -18,7 +18,7 @@ import (
 // default a missing key to cloud, and this stores that default explicitly.
 const jiraDeploymentCloudJSON = `"cloud"`
 
-type addJiraChannelDeployment struct {
+type restructureJiraChannelSpec struct {
 	sqlstore sqlstore.SQLStore
 	logger   *slog.Logger
 }
@@ -38,23 +38,23 @@ type notificationChannelJiraRow struct {
 	Spec string `bun:"spec,nullzero"`
 }
 
-func NewAddJiraChannelDeploymentFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
+func NewRestructureJiraChannelSpecFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
-		factory.MustNewName("add_jira_channel_deployment"),
+		factory.MustNewName("restructure_jira_channel_spec"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return &addJiraChannelDeployment{sqlstore: sqlstore, logger: ps.Logger}, nil
+			return &restructureJiraChannelSpec{sqlstore: sqlstore, logger: ps.Logger}, nil
 		},
 	)
 }
 
-func (migration *addJiraChannelDeployment) Register(migrations *migrate.Migrations) error {
+func (migration *restructureJiraChannelSpec) Register(migrations *migrate.Migrations) error {
 	if err := migrations.Register(migration.Up, migration.Down); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (migration *addJiraChannelDeployment) Up(ctx context.Context, db *bun.DB) error {
+func (migration *restructureJiraChannelSpec) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func (migration *addJiraChannelDeployment) Up(ctx context.Context, db *bun.DB) e
 	return tx.Commit()
 }
 
-func (migration *addJiraChannelDeployment) fillConfigs(ctx context.Context, tx bun.Tx) error {
+func (migration *restructureJiraChannelSpec) fillConfigs(ctx context.Context, tx bun.Tx) error {
 	rows := make([]*alertmanagerConfigJiraRow, 0)
 	if err := tx.NewSelect().Model(&rows).Scan(ctx); err != nil {
 		return err
@@ -147,7 +147,7 @@ func (migration *addJiraChannelDeployment) fillConfigs(ctx context.Context, tx b
 	return nil
 }
 
-func (migration *addJiraChannelDeployment) fillChannels(ctx context.Context, tx bun.Tx) error {
+func (migration *restructureJiraChannelSpec) fillChannels(ctx context.Context, tx bun.Tx) error {
 	rows := make([]*notificationChannelJiraRow, 0)
 	if err := tx.NewSelect().Model(&rows).Where("type = ?", "jira").Scan(ctx); err != nil {
 		return err
@@ -177,6 +177,13 @@ func (migration *addJiraChannelDeployment) fillChannels(ctx context.Context, tx 
 				continue
 			}
 			specChanged = fillJiraDeployment(spec)
+			nested, err := nestJiraChannelAuth(spec)
+			if err != nil {
+				migration.logger.WarnContext(ctx, "skipping notification channel, cannot nest jira auth", slog.String("channel_id", row.ID), errors.Attr(err))
+				failed++
+				continue
+			}
+			specChanged = specChanged || nested
 		}
 
 		if !dataChanged && !specChanged {
@@ -209,11 +216,11 @@ func (migration *addJiraChannelDeployment) fillChannels(ctx context.Context, tx 
 		migrated++
 	}
 
-	migration.logger.InfoContext(ctx, "backfilled jira deployment on notification channels", slog.Int("total", len(rows)), slog.Int("migrated", migrated), slog.Int("skipped", skipped), slog.Int("failed", failed))
+	migration.logger.InfoContext(ctx, "restructured jira notification channel specs", slog.Int("total", len(rows)), slog.Int("migrated", migrated), slog.Int("skipped", skipped), slog.Int("failed", failed))
 	return nil
 }
 
-func (migration *addJiraChannelDeployment) Down(context.Context, *bun.DB) error {
+func (migration *restructureJiraChannelSpec) Down(context.Context, *bun.DB) error {
 	return nil
 }
 
@@ -252,4 +259,30 @@ func fillJiraDeployment(object map[string]json.RawMessage) bool {
 	}
 	object["deployment"] = json.RawMessage(jiraDeploymentCloudJSON)
 	return true
+}
+
+func nestJiraChannelAuth(spec map[string]json.RawMessage) (bool, error) {
+	auth := make(map[string]json.RawMessage)
+	for _, key := range []string{"email", "apiToken", "pat"} {
+		value, ok := spec[key]
+		if !ok {
+			continue
+		}
+		auth[key] = value
+		delete(spec, key)
+	}
+	if len(auth) == 0 {
+		return false, nil
+	}
+
+	if existing, ok := spec["auth"]; ok && string(existing) != "null" {
+		return true, nil
+	}
+
+	newAuth, err := json.Marshal(auth)
+	if err != nil {
+		return false, err
+	}
+	spec["auth"] = newAuth
+	return true, nil
 }

@@ -150,11 +150,11 @@ describe('jira reopen duration', () => {
 	])('sends %s as %s, the only spelling the api accepts back', (typed, sent) => {
 		expect(
 			toChannelConfig(ChannelKind.jira, {
+				deployment: JiraDeployment.cloud,
 				site: 'https://acme.atlassian.net',
 				project: 'OPS',
 				issueType: 'Task',
-				email: 'a@b.c',
-				apiToken: 'tok',
+				auth: { email: 'a@b.c', apiToken: 'tok' },
 				reopenDuration: typed,
 			}).spec,
 		).toMatchObject({ reopenDuration: sent });
@@ -174,43 +174,45 @@ describe('jira deployment', () => {
 		issueType: 'Task',
 	};
 
-	it('sends cloud with email and api token, never the pat', () => {
+	it('sends cloud with email and api token under auth, never the pat', () => {
 		expect(
 			toChannelConfig(ChannelKind.jira, {
 				...base,
 				deployment: JiraDeployment.cloud,
-				email: 'a@b.c',
-				apiToken: 'tok',
-				pat: 'stale-pat',
+				auth: { email: 'a@b.c', apiToken: 'tok', pat: 'stale-pat' },
 			}).spec,
 		).toStrictEqual({
 			...base,
 			deployment: 'cloud',
-			email: 'a@b.c',
-			apiToken: 'tok',
+			auth: { email: 'a@b.c', apiToken: 'tok' },
 		});
 	});
 
-	it('sends selfhosted with the pat, never email or api token', () => {
+	it('sends selfhosted with the pat under auth, never email or api token', () => {
 		expect(
 			toChannelConfig(ChannelKind.jira, {
 				...base,
 				deployment: JiraDeployment.selfhosted,
-				email: 'stale@b.c',
-				apiToken: 'stale',
-				pat: 'pat-1',
+				auth: { email: 'stale@b.c', apiToken: 'stale', pat: 'pat-1' },
 			}).spec,
-		).toStrictEqual({ ...base, deployment: 'selfhosted', pat: 'pat-1' });
+		).toStrictEqual({
+			...base,
+			deployment: 'selfhosted',
+			auth: { pat: 'pat-1' },
+		});
 	});
 
-	it('sends a spec without deployment as cloud, as the API reads it', () => {
+	it('drops blank credentials inside auth', () => {
 		expect(
 			toChannelConfig(ChannelKind.jira, {
 				...base,
-				email: 'a@b.c',
-				apiToken: 't',
-				pat: 'stale-pat',
+				deployment: JiraDeployment.cloud,
+				auth: { email: 'a@b.c', apiToken: '' },
 			}).spec,
-		).toStrictEqual({ ...base, email: 'a@b.c', apiToken: 't' });
+		).toStrictEqual({
+			...base,
+			deployment: 'cloud',
+			auth: { email: 'a@b.c' },
+		});
 	});
 });

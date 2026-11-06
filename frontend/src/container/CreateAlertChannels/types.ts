@@ -2,9 +2,8 @@ import {
 	AlertmanagertypesChannelEmailConfigDTO,
 	AlertmanagertypesChannelGoogleChatConfigDTO,
 	AlertmanagertypesChannelIncidentIOConfigDTO,
-	AlertmanagertypesChannelJiraCloudConfigDTODeployment,
+	AlertmanagertypesChannelJiraAuthDTO,
 	AlertmanagertypesChannelJiraConfigDTO,
-	AlertmanagertypesChannelJiraSelfHostedConfigDTODeployment,
 	AlertmanagertypesChannelJSMOpsConfigDTO,
 	AlertmanagertypesChannelKindDTO,
 	AlertmanagertypesChannelMSTeamsConfigDTO,
@@ -13,20 +12,14 @@ import {
 	AlertmanagertypesChannelSlackConfigDTO,
 	AlertmanagertypesChannelTelegramConfigDTO,
 	AlertmanagertypesChannelWebhookConfigDTO,
+	AlertmanagertypesJiraDeploymentDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 export const ChannelKind = AlertmanagertypesChannelKindDTO;
 export type ChannelKind = AlertmanagertypesChannelKindDTO;
 
-/** Each union member pins its own deployment enum; the form accepts either. */
-export const JiraDeployment = {
-	cloud: AlertmanagertypesChannelJiraCloudConfigDTODeployment.cloud,
-	selfhosted:
-		AlertmanagertypesChannelJiraSelfHostedConfigDTODeployment.selfhosted,
-} as const;
-export type JiraDeployment =
-	| AlertmanagertypesChannelJiraCloudConfigDTODeployment
-	| AlertmanagertypesChannelJiraSelfHostedConfigDTODeployment;
+export const JiraDeployment = AlertmanagertypesJiraDeploymentDTO;
+export type JiraDeployment = AlertmanagertypesJiraDeploymentDTO;
 
 export type KeysOfUnion<T> = T extends unknown ? keyof T : never;
 
@@ -39,7 +32,12 @@ export type FlattenUnion<T> = {
 		: never;
 };
 
-export type JiraFormSpec = FlattenUnion<AlertmanagertypesChannelJiraConfigDTO>;
+export type JiraFormSpec = Omit<
+	AlertmanagertypesChannelJiraConfigDTO,
+	'auth'
+> & {
+	auth?: FlattenUnion<AlertmanagertypesChannelJiraAuthDTO>;
+};
 
 /** Merged so switching kind keeps the fields the kinds share. */
 export type ChannelSpecFormValues = Partial<

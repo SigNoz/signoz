@@ -873,15 +873,17 @@ export const JIRA_DEPLOYMENTS = ['cloud', 'selfhosted'] as const;
 
 export type JiraDeploymentChoice = (typeof JIRA_DEPLOYMENTS)[number];
 
-const JIRA_CONNECTIONS: Record<JiraDeploymentChoice, Record<string, string>> = {
+const JIRA_CONNECTIONS: Record<
+	JiraDeploymentChoice,
+	Record<string, unknown>
+> = {
 	cloud: {
 		site: 'https://story.atlassian.net',
-		email: 'story@signoz.io',
-		apiToken: 'story-jira-token',
+		auth: { email: 'story@signoz.io', apiToken: 'story-jira-token' },
 	},
 	selfhosted: {
 		site: 'https://jira.story.internal',
-		pat: 'story-jira-pat',
+		auth: { pat: 'story-jira-pat' },
 	},
 };
 

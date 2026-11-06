@@ -168,16 +168,20 @@ func TestChannelJiraConfigUnmarshal(t *testing.T) {
 		expectErr        string
 		expectDeployment JiraDeployment
 	}{
-		{"NoDeployment_DefaultsToCloud", `{"site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","email":"e","apiToken":"t"}`, "", JiraDeploymentCloud},
-		{"Cloud_Explicit", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","email":"e","apiToken":"t"}`, "", JiraDeploymentCloud},
-		{"SelfHosted_WithPAT", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task","pat":"p"}`, "", JiraDeploymentSelfHosted},
-		{"Cloud_MissingEmail", `{"site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","apiToken":"t"}`, "config.spec.email is required for a jira cloud channel", JiraDeploymentCloud},
-		{"Cloud_MissingAPIToken", `{"site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","email":"e"}`, "config.spec.apiToken is required for a jira cloud channel", JiraDeploymentCloud},
-		{"Cloud_WithPAT_Rejected", `{"site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","email":"e","apiToken":"t","pat":"p"}`, "config.spec.pat is not used by a jira cloud channel", JiraDeploymentCloud},
-		{"SelfHosted_MissingPAT", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task"}`, "config.spec.pat is required for a self-hosted jira channel", JiraDeploymentSelfHosted},
-		{"SelfHosted_WithEmail_Rejected", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task","pat":"p","email":"e"}`, "not used by a self-hosted jira channel", JiraDeploymentSelfHosted},
-		{"UnknownDeployment", `{"deployment":"onprem","site":"https://jira.acme.com","project":"OPS","issueType":"Task","pat":"p"}`, `config.spec.deployment "onprem" is not supported`, JiraDeployment{}},
-		{"EmptyDeployment_Rejected", `{"deployment":"","site":"https://jira.acme.com","project":"OPS","issueType":"Task","pat":"p"}`, "string must not be empty", JiraDeployment{}},
+		{"Cloud_Explicit", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":{"email":"e","apiToken":"t"}}`, "", JiraDeploymentCloud},
+		{"SelfHosted_WithPAT", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p"}}`, "", JiraDeploymentSelfHosted},
+		{"MissingDeployment_Rejected", `{"site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":{"email":"e","apiToken":"t"}}`, "config.spec.deployment is required for a jira channel", JiraDeployment{}},
+		{"MissingAuth_Rejected", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task"}`, "config.spec.auth.email is required for a jira cloud channel", JiraDeploymentCloud},
+		{"AuthUnknownField_Rejected", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":{"email":"e","apiToken":"t","token":"x"}}`, `unknown field "token"`, JiraDeploymentCloud},
+		{"AuthNotObject_Rejected", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":"e:t"}`, "cannot unmarshal string", JiraDeploymentCloud},
+		{"RootCredentials_Rejected", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","email":"e","apiToken":"t"}`, `unknown field "email"`, JiraDeploymentCloud},
+		{"Cloud_MissingEmail", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":{"apiToken":"t"}}`, "config.spec.auth.email is required for a jira cloud channel", JiraDeploymentCloud},
+		{"Cloud_MissingAPIToken", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":{"email":"e"}}`, "config.spec.auth.apiToken is required for a jira cloud channel", JiraDeploymentCloud},
+		{"Cloud_WithPAT_Rejected", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":{"email":"e","apiToken":"t","pat":"p"}}`, "config.spec.auth.pat is not used by a jira cloud channel", JiraDeploymentCloud},
+		{"SelfHosted_MissingPAT", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{}}`, "config.spec.auth.pat is required for a self-hosted jira channel", JiraDeploymentSelfHosted},
+		{"SelfHosted_WithEmail_Rejected", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p","email":"e"}}`, "not used by a self-hosted jira channel", JiraDeploymentSelfHosted},
+		{"UnknownDeployment", `{"deployment":"onprem","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p"}}`, `config.spec.deployment "onprem" is not supported`, JiraDeployment{}},
+		{"EmptyDeployment_Rejected", `{"deployment":"","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p"}}`, "string must not be empty", JiraDeployment{}},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -204,13 +208,13 @@ func TestChannelJiraConfigReceiverAuth(t *testing.T) {
 	}{
 		{
 			name:          "Cloud_BasicAuth",
-			spec:          ChannelJiraConfig{Deployment: JiraDeploymentCloud, Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Task", Email: "e@acme.com", APIToken: "t"},
+			spec:          ChannelJiraConfig{Deployment: JiraDeploymentCloud, Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Task", Auth: ChannelJiraAuth{Email: "e@acme.com", APIToken: "t"}},
 			expectBasic:   &commoncfg.BasicAuth{Username: "e@acme.com", Password: "t"},
 			expectJSONKey: `"basic_auth"`,
 		},
 		{
 			name:          "SelfHosted_BearerAuthorization",
-			spec:          ChannelJiraConfig{Deployment: JiraDeploymentSelfHosted, Site: "https://jira.acme.com", Project: "OPS", IssueType: "Task", PAT: "p"},
+			spec:          ChannelJiraConfig{Deployment: JiraDeploymentSelfHosted, Site: "https://jira.acme.com", Project: "OPS", IssueType: "Task", Auth: ChannelJiraAuth{PAT: "p"}},
 			expectBearer:  "p",
 			expectJSONKey: `"deployment":"selfhosted"`,
 		},

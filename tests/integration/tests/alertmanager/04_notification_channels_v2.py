@@ -161,15 +161,14 @@ DNS1123_LABEL = re.compile(r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
             },
             id="googlechat",
         ),
-        # The jira notifier only accepts Jira Cloud sites and basic auth.
         pytest.param(
             "jira",
             {
+                "deployment": "cloud",
                 "site": "https://acme.atlassian.net",
                 "project": "OPS",
                 "issueType": "Bug",
-                "email": "oncall@integration.test",
-                "apiToken": "jira-api-token",
+                "auth": {"email": "oncall@integration.test", "apiToken": "jira-api-token"},
                 "summary": "Alert",
                 "description": "{{ .CommonLabels.alertname }}",
                 "customFields": {"customfield_10010": "Ops"},
@@ -179,11 +178,11 @@ DNS1123_LABEL = re.compile(r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
         pytest.param(
             "jira",
             {
+                "deployment": "cloud",
                 "site": "https://acme.atlassian.net",
                 "project": "OPS",
                 "issueType": "Bug",
-                "email": "oncall@integration.test",
-                "apiToken": "jira-api-token",
+                "auth": {"email": "oncall@integration.test", "apiToken": "jira-api-token"},
                 "priority": "",
                 "labels": [],
                 "resolveTransition": "",
@@ -200,7 +199,7 @@ DNS1123_LABEL = re.compile(r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
                 "site": "https://jira.integration.test",
                 "project": "OPS",
                 "issueType": "Bug",
-                "pat": "jira-personal-access-token",
+                "auth": {"pat": "jira-personal-access-token"},
             },
             id="jira_selfhosted",
         ),
@@ -389,15 +388,14 @@ def test_create_channel(  # pylint: disable=too-many-arguments,too-many-position
         pytest.param(
             "jira",
             {
+                "deployment": "cloud",
                 "site": "https://acme.atlassian.net",
                 "project": "OPS",
                 "issueType": "Bug",
-                "email": "oncall@integration.test",
-                "apiToken": "jira-api-token",
+                "auth": {"email": "oncall@integration.test", "apiToken": "jira-api-token"},
             },
             {
                 "sendResolved": False,
-                "deployment": "cloud",
                 "summary": '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}',
                 "description": (
                     "{{ range .Alerts -}}\n"

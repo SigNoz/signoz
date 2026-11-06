@@ -127,11 +127,11 @@ const CASES: PrefillCase[] = [
 	{
 		kind: 'jira',
 		spec: {
+			deployment: 'cloud',
 			site: 'https://acme.atlassian.net',
 			project: 'OPS',
 			issueType: 'Task',
-			email: 'someone@acme.io',
-			apiToken: 'jira-token',
+			auth: { email: 'someone@acme.io', apiToken: 'jira-token' },
 			summary: 'jira summary',
 			description: 'jira description',
 			priority: 'High',
@@ -162,7 +162,7 @@ const CASES: PrefillCase[] = [
 			site: 'https://jira.acme.com',
 			project: 'OPS',
 			issueType: 'Task',
-			pat: 'jira-pat',
+			auth: { pat: 'jira-pat' },
 		},
 		fields: [
 			['jira-site-textbox', 'https://jira.acme.com'],

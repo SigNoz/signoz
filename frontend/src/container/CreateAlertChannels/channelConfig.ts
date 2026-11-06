@@ -101,9 +101,7 @@ const SPEC_FIELDS = {
 		'site',
 		'project',
 		'issueType',
-		'email',
-		'apiToken',
-		'pat',
+		'auth',
 		'summary',
 		'description',
 		'priority',
@@ -114,7 +112,7 @@ const SPEC_FIELDS = {
 		'reopenDuration',
 		'customFields',
 		'sendResolved',
-	] as const satisfies readonly KeysOfUnion<AlertmanagertypesChannelJiraConfigDTO>[],
+	] as const satisfies readonly (keyof AlertmanagertypesChannelJiraConfigDTO)[],
 	[ChannelKind.jsmops]: [
 		'apiKey',
 		'message',
@@ -235,12 +233,12 @@ export function toChannelConfig(
 	}
 
 	if (kind === ChannelKind.jira) {
-		if (values.deployment === JiraDeployment.selfhosted) {
-			delete picked.email;
-			delete picked.apiToken;
-		} else {
-			delete picked.pat;
-		}
+		const auth = values.auth ?? {};
+		picked.auth = omitBlank(
+			values.deployment === JiraDeployment.selfhosted
+				? pick(auth, ['pat'])
+				: pick(auth, ['email', 'apiToken']),
+		);
 	}
 
 	const spec: Record<string, unknown> = omitBlank(picked);

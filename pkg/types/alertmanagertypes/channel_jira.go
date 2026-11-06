@@ -67,7 +67,7 @@ func (d JiraDeployment) IsValid() bool {
 
 type ChannelJiraConfig struct {
 	SendResolved      *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
-	Deployment        JiraDeployment               `json:"deployment,omitzero" description:"The Jira edition: cloud for an Atlassian-hosted site, selfhosted for Jira Server or Data Center. Defaults to cloud."`
+	Deployment        JiraDeployment               `json:"deployment,omitzero" required:"true" description:"The Jira edition: cloud for an Atlassian-hosted site, selfhosted for Jira Server or Data Center."`
 	Site              string                       `json:"site" required:"true" description:"The base URL of the Jira site, for example https://example.atlassian.net or https://jira.example.com."`
 	Project           string                       `json:"project" required:"true" description:"The key of the project issues are created in."`
 	IssueType         string                       `json:"issueType" required:"true" description:"The issue type name, such as Bug."`
@@ -81,64 +81,27 @@ type ChannelJiraConfig struct {
 	WontFixResolution string                       `json:"wontFixResolution" description:"The resolution name that stops an issue from being reopened."`
 	CustomFields      map[string]any               `json:"customFields,omitzero" description:"Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives."`
 
+	Auth ChannelJiraAuth `json:"auth" required:"true" description:"The credentials: email and apiToken when deployment is cloud, pat when deployment is selfhosted."`
+}
+
+type ChannelJiraAuth struct {
 	Email    string `json:"email,omitempty" description:"The Atlassian account email used for basic auth. Required when deployment is cloud."`
 	APIToken string `json:"apiToken,omitempty" format:"password" description:"The Atlassian API token paired with email. Required when deployment is cloud. A secret; returned by create, update and fetch by ID, never by list."`
 	PAT      string `json:"pat,omitempty" format:"password" description:"The Jira personal access token, sent as a Bearer header. Required when deployment is selfhosted. A secret; returned by create, update and fetch by ID, never by list."`
 }
 
 var (
-	_ jsonschema.OneOfExposer = ChannelJiraConfig{}
-	_ jsonschema.Preparer     = ChannelJiraConfig{}
+	_ jsonschema.OneOfExposer = ChannelJiraAuth{}
+	_ jsonschema.Preparer     = ChannelJiraAuth{}
 )
 
-// channelJiraSharedConfig lists the fields both deployments accept, for the
-// schema variants only.
-type channelJiraSharedConfig struct {
-	SendResolved      *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to false."`
-	Site              string                       `json:"site" required:"true" description:"The base URL of the Jira site, for example https://example.atlassian.net or https://jira.example.com."`
-	Project           string                       `json:"project" required:"true" description:"The key of the project issues are created in."`
-	IssueType         string                       `json:"issueType" required:"true" description:"The issue type name, such as Bug."`
-	Summary           valuer.UnsetOrNonEmptyString `json:"summary,omitzero" description:"Alertmanager template for the issue summary; defaults to the SigNoz Jira default."`
-	Description       valuer.UnsetOrNonEmptyString `json:"description,omitzero" description:"Alertmanager template for the issue description, rendered as markdown; defaults to the SigNoz Jira default."`
-	Priority          string                       `json:"priority" description:"The priority name assigned to new issues."`
-	Labels            []string                     `json:"labels,omitzero" description:"Labels added to every issue."`
-	ResolveTransition string                       `json:"resolveTransition" description:"The transition applied to the issue when the alert resolves."`
-	ReopenTransition  string                       `json:"reopenTransition" description:"The transition applied when an alert fires again on a resolved issue."`
-	ReopenDuration    valuer.UnsetOrNonEmptyString `json:"reopenDuration,omitzero" description:"How long after resolution a firing alert reopens the issue instead of creating a new one, as a Prometheus duration in canonical form such as 3d; defaults to 3d."`
-	WontFixResolution string                       `json:"wontFixResolution" description:"The resolution name that stops an issue from being reopened."`
-	CustomFields      map[string]any               `json:"customFields,omitzero" description:"Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives."`
+func (ChannelJiraAuth) JSONSchemaOneOf() []any {
+	return []any{channelJiraCloudAuth{}, channelJiraSelfHostedAuth{}}
 }
 
-type channelJiraCloudConfig struct {
-	Deployment JiraDeployment `json:"deployment" required:"true" description:"cloud: an Atlassian-hosted site."`
-	channelJiraSharedConfig
-	Email    string `json:"email" required:"true" description:"The Atlassian account email used for basic auth."`
-	APIToken string `json:"apiToken" required:"true" format:"password" description:"The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list."`
-}
-
-type channelJiraSelfHostedConfig struct {
-	Deployment JiraDeployment `json:"deployment" required:"true" description:"selfhosted: Jira Data Center or Server."`
-	channelJiraSharedConfig
-	PAT string `json:"pat" required:"true" format:"password" description:"The Jira personal access token, sent as a Bearer header. A secret; returned by create, update and fetch by ID, never by list."`
-}
-
-func (ChannelJiraConfig) JSONSchemaOneOf() []any {
-	return []any{channelJiraCloudConfig{}, channelJiraSelfHostedConfig{}}
-}
-
-func (ChannelJiraConfig) PrepareJSONSchema(schema *jsonschema.Schema) error {
-	if schema.ExtraProperties == nil {
-		schema.ExtraProperties = map[string]any{}
-	}
-
-	schema.ExtraProperties["x-signoz-discriminator"] = map[string]any{
-		"propertyName": "deployment",
-		"mapping": map[string]string{
-			JiraDeploymentCloud.StringValue():      "#/components/schemas/AlertmanagertypesChannelJiraCloudConfig",
-			JiraDeploymentSelfHosted.StringValue(): "#/components/schemas/AlertmanagertypesChannelJiraSelfHostedConfig",
-		},
-	}
-
+func (ChannelJiraAuth) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	schema.Properties = nil
+	schema.Required = nil
 	return nil
 }
 
@@ -150,7 +113,6 @@ func (c *ChannelJiraConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	fillSendResolved(&c.SendResolved, false)
-	c.Deployment.SetIfUnset(JiraDeploymentCloud.StringValue())
 	c.Summary.SetIfUnset(DefaultJiraSummaryTemplate)
 	c.Description.SetIfUnset(DefaultJiraDescriptionTemplate)
 	c.ReopenDuration.SetIfUnset(defaultJiraReopenDuration.String())
@@ -159,7 +121,10 @@ func (c *ChannelJiraConfig) UnmarshalJSON(data []byte) error {
 }
 
 func (c ChannelJiraConfig) Validate() error {
-	if !c.Deployment.IsZero() && !c.Deployment.IsValid() {
+	if c.Deployment.IsZero() {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.deployment is required for a jira channel")
+	}
+	if !c.Deployment.IsValid() {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.deployment %q is not supported; allowed values: cloud, selfhosted", c.Deployment.StringValue())
 	}
 
@@ -199,11 +164,11 @@ func (c ChannelJiraConfig) Validate() error {
 
 func (c ChannelJiraConfig) validateCredentials() error {
 	if c.Deployment == JiraDeploymentSelfHosted {
-		if c.PAT == "" {
-			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.pat is required for a self-hosted jira channel")
+		if c.Auth.PAT == "" {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth.pat is required for a self-hosted jira channel")
 		}
-		if c.Email != "" || c.APIToken != "" {
-			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.email and config.spec.apiToken are not used by a self-hosted jira channel; set config.spec.pat only")
+		if c.Auth.Email != "" || c.Auth.APIToken != "" {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth.email and config.spec.auth.apiToken are not used by a self-hosted jira channel; set config.spec.auth.pat only")
 		}
 		return nil
 	}
@@ -212,26 +177,17 @@ func (c ChannelJiraConfig) validateCredentials() error {
 		value string
 		field string
 	}{
-		{c.Email, "email"},
-		{c.APIToken, "apiToken"},
+		{c.Auth.Email, "email"},
+		{c.Auth.APIToken, "apiToken"},
 	} {
 		if required.value == "" {
-			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.%s is required for a jira cloud channel", required.field)
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth.%s is required for a jira cloud channel", required.field)
 		}
 	}
-	if c.PAT != "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.pat is not used by a jira cloud channel; set config.spec.email and config.spec.apiToken only")
+	if c.Auth.PAT != "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth.pat is not used by a jira cloud channel; set config.spec.auth.email and config.spec.auth.apiToken only")
 	}
 	return nil
-}
-
-// deployment reads a spec assembled in code without the field as cloud, the
-// same default UnmarshalJSON fills.
-func (c ChannelJiraConfig) deployment() JiraDeployment {
-	if c.Deployment.IsZero() {
-		return JiraDeploymentCloud
-	}
-	return c.Deployment
 }
 
 func (c ChannelJiraConfig) toUndefaultedReceiver(displayName string) (*Receiver, error) {
@@ -239,22 +195,22 @@ func (c ChannelJiraConfig) toUndefaultedReceiver(displayName string) (*Receiver,
 	// and EnableHTTP2 marshal unconditionally, so a zero value would persist them
 	// as false and read back as a config ChannelJiraConfig cannot represent.
 	httpConfig := commoncfg.DefaultHTTPClientConfig
-	if c.deployment() == JiraDeploymentSelfHosted {
+	if c.Deployment == JiraDeploymentSelfHosted {
 		httpConfig.Authorization = &commoncfg.Authorization{
 			Type:        jiraBearerAuthorizationType,
-			Credentials: commoncfg.Secret(c.PAT),
+			Credentials: commoncfg.Secret(c.Auth.PAT),
 		}
 	} else {
 		httpConfig.BasicAuth = &commoncfg.BasicAuth{
-			Username: c.Email,
-			Password: commoncfg.Secret(c.APIToken),
+			Username: c.Auth.Email,
+			Password: commoncfg.Secret(c.Auth.APIToken),
 		}
 	}
 
 	jira := &JiraReceiverConfig{
 		// JiraReceiverConfig seeds no send_resolved of its own, so unset means off.
 		NotifierConfig:    config.NotifierConfig{VSendResolved: resolveSendResolved(c.SendResolved, false)},
-		Deployment:        c.deployment(),
+		Deployment:        c.Deployment,
 		Site:              c.Site,
 		Project:           c.Project,
 		IssueType:         c.IssueType,
@@ -325,7 +281,7 @@ func newChannelJiraConfigFromReceiver(name string, receiver *Receiver) (ChannelS
 			if !strings.EqualFold(authorization.Type, jiraBearerAuthorizationType) || authorization.CredentialsFile != "" || authorization.CredentialsRef != "" {
 				return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q must set http_config.authorization with type Bearer and inline credentials", name)
 			}
-			spec.PAT = string(authorization.Credentials)
+			spec.Auth.PAT = string(authorization.Credentials)
 		}
 		return spec, nil
 	}
@@ -334,8 +290,8 @@ func newChannelJiraConfigFromReceiver(name string, receiver *Receiver) (ChannelS
 		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization, which is not supported", name)
 	}
 	if jira.HTTPConfig.BasicAuth != nil {
-		spec.Email = jira.HTTPConfig.BasicAuth.Username
-		spec.APIToken = string(jira.HTTPConfig.BasicAuth.Password)
+		spec.Auth.Email = jira.HTTPConfig.BasicAuth.Username
+		spec.Auth.APIToken = string(jira.HTTPConfig.BasicAuth.Password)
 	}
 
 	return spec, nil
@@ -452,4 +408,13 @@ func (c *JiraReceiverConfig) SearchPath() string {
 		return "/search"
 	}
 	return "/search/jql"
+}
+
+type channelJiraCloudAuth struct {
+	Email    string `json:"email" required:"true" description:"The Atlassian account email used for basic auth."`
+	APIToken string `json:"apiToken" required:"true" format:"password" description:"The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list."`
+}
+
+type channelJiraSelfHostedAuth struct {
+	PAT string `json:"pat" required:"true" format:"password" description:"The Jira personal access token, sent as a Bearer header. A secret; returned by create, update and fetch by ID, never by list."`
 }

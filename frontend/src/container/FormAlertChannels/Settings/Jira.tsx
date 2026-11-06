@@ -193,11 +193,11 @@ function JiraSettings(): JSX.Element {
 					<FormField
 						label={t('field_jira_pat')}
 						help={t('help_jira_pat')}
-						error={errors.pat?.message}
+						error={errors.auth?.pat?.message}
 						required
 					>
 						<Input
-							{...register('pat')}
+							{...register('auth.pat')}
 							aria-required
 							type="password"
 							data-testid="jira-pat-textbox"
@@ -208,11 +208,11 @@ function JiraSettings(): JSX.Element {
 						<FormField
 							label={t('field_jira_email')}
 							help={t('help_jira_email')}
-							error={errors.email?.message}
+							error={errors.auth?.email?.message}
 							required
 						>
 							<Input
-								{...register('email')}
+								{...register('auth.email')}
 								aria-required
 								data-testid="jira-email-textbox"
 							/>
@@ -221,11 +221,11 @@ function JiraSettings(): JSX.Element {
 						<FormField
 							label={t('field_jira_api_token')}
 							help={t('help_jira_api_token')}
-							error={errors.apiToken?.message}
+							error={errors.auth?.apiToken?.message}
 							required
 						>
 							<Input
-								{...register('apiToken')}
+								{...register('auth.apiToken')}
 								aria-required
 								type="password"
 								data-testid="jira-api-token-textbox"

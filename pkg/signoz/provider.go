@@ -271,7 +271,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewRenameSavedViewDeprecatedTraceFieldsFactory(),
 		sqlmigration.NewAddDowntimeTuplesFactory(sqlstore),
 		sqlmigration.NewAddRuleTuplesFactory(sqlstore),
-		sqlmigration.NewAddJiraChannelDeploymentFactory(sqlstore),
+		sqlmigration.NewRestructureJiraChannelSpecFactory(sqlstore),
 	)
 }
 

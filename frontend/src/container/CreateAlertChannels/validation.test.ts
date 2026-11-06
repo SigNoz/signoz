@@ -22,9 +22,9 @@ describe('validateChannel', () => {
 			'a jira site that is not on atlassian.net',
 			ChannelKind.jira,
 			{
+				deployment: JiraDeployment.cloud,
 				site: 'https://jira-proxy.acme.com/',
-				email: 'a@acme.com',
-				apiToken: 't',
+				auth: { email: 'a@acme.com', apiToken: 't' },
 				project: 'OPS',
 				issueType: 'Bug',
 			},
@@ -36,7 +36,7 @@ describe('validateChannel', () => {
 			{
 				deployment: JiraDeployment.selfhosted,
 				site: 'https://jira.acme.com',
-				pat: 'pat-1',
+				auth: { pat: 'pat-1' },
 				project: 'OPS',
 				issueType: 'Task',
 			},
@@ -48,8 +48,7 @@ describe('validateChannel', () => {
 			{
 				deployment: JiraDeployment.selfhosted,
 				site: 'https://jira.acme.com',
-				email: 'a@acme.com',
-				apiToken: 't',
+				auth: { email: 'a@acme.com', apiToken: 't' },
 				project: 'OPS',
 				issueType: 'Task',
 			},
@@ -59,8 +58,9 @@ describe('validateChannel', () => {
 			'a jira cloud site without an api token',
 			ChannelKind.jira,
 			{
+				deployment: JiraDeployment.cloud,
 				site: 'https://acme.atlassian.net',
-				email: 'a@acme.com',
+				auth: { email: 'a@acme.com' },
 				project: 'OPS',
 				issueType: 'Task',
 			},

@@ -185,6 +185,7 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 			kind:        ChannelKindJira,
 			spec: &ChannelJiraConfig{
 				SendResolved:      &sendResolved,
+				Deployment:        JiraDeploymentCloud,
 				Site:              "https://acme.atlassian.net",
 				Project:           "OPS",
 				IssueType:         "Bug",
@@ -197,8 +198,7 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				ReopenDuration:    valuer.MustNewUnsetOrNonEmptyString("3d"),
 				WontFixResolution: "Won't Do",
 				CustomFields:      map[string]any{"customfield_10010": "Ops"},
-				Email:             "oncall@acme.com",
-				APIToken:          "api-token",
+				Auth:              ChannelJiraAuth{Email: "oncall@acme.com", APIToken: "api-token"},
 			},
 			expectedRoundTrip: &ChannelJiraConfig{
 				SendResolved:      &sendResolved,
@@ -215,8 +215,7 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				ReopenDuration:    valuer.MustNewUnsetOrNonEmptyString("3d"),
 				WontFixResolution: "Won't Do",
 				CustomFields:      map[string]any{"customfield_10010": "Ops"},
-				Email:             "oncall@acme.com",
-				APIToken:          "api-token",
+				Auth:              ChannelJiraAuth{Email: "oncall@acme.com", APIToken: "api-token"},
 			},
 		},
 		{
@@ -231,7 +230,7 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Summary:        valuer.MustNewUnsetOrNonEmptyString("jira summary"),
 				Description:    valuer.MustNewUnsetOrNonEmptyString("jira description"),
 				ReopenDuration: valuer.MustNewUnsetOrNonEmptyString("3d"),
-				PAT:            "personal-access-token",
+				Auth:           ChannelJiraAuth{PAT: "personal-access-token"},
 			},
 			expectedRoundTrip: &ChannelJiraConfig{
 				SendResolved:   &sendResolved,
@@ -242,7 +241,7 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Summary:        valuer.MustNewUnsetOrNonEmptyString("jira summary"),
 				Description:    valuer.MustNewUnsetOrNonEmptyString("jira description"),
 				ReopenDuration: valuer.MustNewUnsetOrNonEmptyString("3d"),
-				PAT:            "personal-access-token",
+				Auth:           ChannelJiraAuth{PAT: "personal-access-token"},
 			},
 		},
 		{

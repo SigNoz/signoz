@@ -225,13 +225,13 @@ describe('ChannelForm save', () => {
 			).toMatchObject({
 				deployment: 'selfhosted',
 				site: 'https://jira.acme.com',
-				pat: 'pat-1',
+				auth: { pat: 'pat-1' },
 				project: 'OPS',
 				issueType: 'Task',
 			});
 			expect(
 				(body as { config: { spec: Record<string, unknown> } }).config.spec,
-			).not.toHaveProperty('email');
+			).not.toHaveProperty('auth.email');
 		},
 		TEST_TIMEOUT,
 	);

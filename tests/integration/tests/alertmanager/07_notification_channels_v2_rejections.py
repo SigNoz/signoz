@@ -169,10 +169,10 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
                 "config": {
                     "kind": "jira",
                     "spec": {
+                        "deployment": "cloud",
                         "project": "OPS",
                         "issueType": "Bug",
-                        "email": "oncall@integration.test",
-                        "apiToken": "jira-api-token",
+                        "auth": {"email": "oncall@integration.test", "apiToken": "jira-api-token"},
                     },
                 },
             },
@@ -184,12 +184,90 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
                 "config": {
                     "kind": "jira",
                     "spec": {
-                        "deployment": "selfhosted",
-                        "site": "https://jira.integration.test",
+                        "site": "https://acme.atlassian.net",
+                        "project": "OPS",
+                        "issueType": "Bug",
+                        "auth": {"email": "oncall@integration.test", "apiToken": "jira-api-token"},
+                    },
+                },
+            },
+            id="jira_without_deployment",
+        ),
+        pytest.param(
+            {
+                "name": "rejected",
+                "config": {
+                    "kind": "jira",
+                    "spec": {
+                        "deployment": "cloud",
+                        "site": "https://acme.atlassian.net",
+                        "project": "OPS",
+                        "issueType": "Bug",
+                    },
+                },
+            },
+            id="jira_without_auth",
+        ),
+        pytest.param(
+            {
+                "name": "rejected",
+                "config": {
+                    "kind": "jira",
+                    "spec": {
+                        "deployment": "cloud",
+                        "site": "https://acme.atlassian.net",
+                        "project": "OPS",
+                        "issueType": "Bug",
+                        "auth": "oncall@integration.test:jira-api-token",
+                    },
+                },
+            },
+            id="jira_auth_not_object",
+        ),
+        pytest.param(
+            {
+                "name": "rejected",
+                "config": {
+                    "kind": "jira",
+                    "spec": {
+                        "deployment": "cloud",
+                        "site": "https://acme.atlassian.net",
+                        "project": "OPS",
+                        "issueType": "Bug",
+                        "auth": {"email": "oncall@integration.test", "apiToken": "jira-api-token", "token": "stray"},
+                    },
+                },
+            },
+            id="jira_auth_unknown_field",
+        ),
+        pytest.param(
+            {
+                "name": "rejected",
+                "config": {
+                    "kind": "jira",
+                    "spec": {
+                        "deployment": "cloud",
+                        "site": "https://acme.atlassian.net",
                         "project": "OPS",
                         "issueType": "Bug",
                         "email": "oncall@integration.test",
                         "apiToken": "jira-api-token",
+                    },
+                },
+            },
+            id="jira_credentials_at_root",
+        ),
+        pytest.param(
+            {
+                "name": "rejected",
+                "config": {
+                    "kind": "jira",
+                    "spec": {
+                        "deployment": "selfhosted",
+                        "site": "https://jira.integration.test",
+                        "project": "OPS",
+                        "issueType": "Bug",
+                        "auth": {"email": "oncall@integration.test", "apiToken": "jira-api-token"},
                     },
                 },
             },
@@ -201,12 +279,11 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
                 "config": {
                     "kind": "jira",
                     "spec": {
+                        "deployment": "cloud",
                         "site": "https://acme.atlassian.net",
                         "project": "OPS",
                         "issueType": "Bug",
-                        "email": "oncall@integration.test",
-                        "apiToken": "jira-api-token",
-                        "pat": "jira-personal-access-token",
+                        "auth": {"email": "oncall@integration.test", "apiToken": "jira-api-token", "pat": "jira-personal-access-token"},
                     },
                 },
             },
@@ -222,7 +299,7 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
                         "site": "https://jira.integration.test",
                         "project": "OPS",
                         "issueType": "Bug",
-                        "pat": "jira-personal-access-token",
+                        "auth": {"pat": "jira-personal-access-token"},
                     },
                 },
             },
@@ -238,7 +315,7 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
                         "site": "https://jira.integration.test",
                         "project": "OPS",
                         "issueType": "Bug",
-                        "pat": "jira-personal-access-token",
+                        "auth": {"pat": "jira-personal-access-token"},
                     },
                 },
             },
@@ -250,10 +327,10 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
                 "config": {
                     "kind": "jira",
                     "spec": {
+                        "deployment": "cloud",
                         "site": "https://acme.atlassian.net",
                         "issueType": "Bug",
-                        "email": "oncall@integration.test",
-                        "apiToken": "jira-api-token",
+                        "auth": {"email": "oncall@integration.test", "apiToken": "jira-api-token"},
                     },
                 },
             },
@@ -265,10 +342,10 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
                 "config": {
                     "kind": "jira",
                     "spec": {
+                        "deployment": "cloud",
                         "site": "https://acme.atlassian.net",
                         "project": "OPS",
-                        "email": "oncall@integration.test",
-                        "apiToken": "jira-api-token",
+                        "auth": {"email": "oncall@integration.test", "apiToken": "jira-api-token"},
                     },
                 },
             },
@@ -280,10 +357,11 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
                 "config": {
                     "kind": "jira",
                     "spec": {
+                        "deployment": "cloud",
                         "site": "https://acme.atlassian.net",
                         "project": "OPS",
                         "issueType": "Bug",
-                        "apiToken": "jira-api-token",
+                        "auth": {"apiToken": "jira-api-token"},
                     },
                 },
             },
@@ -295,10 +373,11 @@ def test_create_rejects_a_duplicate_with_conflict(  # pylint: disable=too-many-a
                 "config": {
                     "kind": "jira",
                     "spec": {
+                        "deployment": "cloud",
                         "site": "https://acme.atlassian.net",
                         "project": "OPS",
                         "issueType": "Bug",
-                        "email": "oncall@integration.test",
+                        "auth": {"email": "oncall@integration.test"},
                     },
                 },
             },
