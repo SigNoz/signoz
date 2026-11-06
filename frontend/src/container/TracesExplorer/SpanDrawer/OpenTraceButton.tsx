@@ -2,7 +2,12 @@ import { MouseEvent } from 'react';
 import { CornerUpRight } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useIsRowHovered } from 'components/TanStackTableView/TanStackTableStateContext';
+import {
+	logOpenTraceClicked,
+	OpenTraceSource,
+} from 'container/TracesExplorer/events';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
 import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { openInNewTab } from 'utils/navigation';
@@ -23,6 +28,7 @@ function OpenTraceButton({
 	const handleClick = (event: MouseEvent): void => {
 		// The row click would open the drawer instead.
 		event.stopPropagation();
+		logOpenTraceClicked(PANEL_TYPES.LIST, OpenTraceSource.RowIcon);
 		openInNewTab(getTraceLink(row));
 	};
 
