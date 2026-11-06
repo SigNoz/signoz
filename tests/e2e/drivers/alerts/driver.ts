@@ -117,7 +117,7 @@ export interface AlertList {
 	nextPageButton(): Locator;
 	pageSizeSelect(): Locator;
 	pageSizeOption(size: number): Locator;
-	/** A rule's name anywhere on the page, such as a clone's `<name> - Copy`. */
+	/** A rule's name in the list rows, such as a clone's `<name> - Copy`. */
 	ruleName(name: string, options?: { exact?: boolean }): Locator;
 }
 
@@ -433,7 +433,7 @@ export function alertsDriver(page: Page): Alerts {
 		pageSizeSelect: () => page.getByTestId('pagination-page-size'),
 		pageSizeOption: (size) =>
 			page.getByRole('option', { name: String(size), exact: true }),
-		ruleName: (name, options) => page.getByText(name, options),
+		ruleName: (name, options) => list.rows().getByText(name, options),
 	};
 
 	const form: AlertForm = {
