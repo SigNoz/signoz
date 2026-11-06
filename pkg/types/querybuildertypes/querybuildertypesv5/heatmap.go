@@ -132,6 +132,35 @@ func MergeBucketUpperBounds(tsData ...*TimeSeriesData) map[int][]float64 {
 	return upperBoundsByAggregation
 }
 
+// ToDistributionData sums every series over all its steps, keeping the bucket
+// axis, and ranks the percentiles over every series together. A partial step
+// counts too, since what it holds was observed.
+func (tsData *TimeSeriesData) ToDistributionData() *DistributionData {
+	data := &DistributionData{QueryName: tsData.QueryName, Aggregations: make([]*DistributionAggregation, 0, len(tsData.Aggregations))}
+	for _, aggBucket := range tsData.Aggregations {
+		if aggBucket == nil {
+			continue
+		}
+		aggregation := &DistributionAggregation{Index: aggBucket.Index, Alias: aggBucket.Alias, Meta: aggBucket.Meta, Distributions: make([]*Distribution, 0, len(aggBucket.Series))}
+		totalCounts := make([]float64, len(aggBucket.Meta.Buckets)+1)
+		for _, series := range aggBucket.Series {
+			counts := make([]float64, len(totalCounts))
+			for _, point := range series.Values {
+				for i, count := range point.Values {
+					if i < len(counts) {
+						counts[i] += count
+						totalCounts[i] += count
+					}
+				}
+			}
+			aggregation.Distributions = append(aggregation.Distributions, &Distribution{Labels: series.Labels, Counts: counts})
+		}
+		aggregation.Percentiles = newDistributionPercentiles(aggBucket.Meta.Buckets, totalCounts)
+		data.Aggregations = append(data.Aggregations, aggregation)
+	}
+	return data
+}
+
 // DownscaleHeatmapResolution folds the MaxLogScale axis ClickHouse buckets at
 // down to toScale, merging every 2^(MaxLogScale-toScale) adjacent bands into
 // one. The coarser upper bounds are a subset of the finer ones, so the fold is
@@ -296,35 +325,6 @@ func addHeatmapBucketsWithNoCountsForAggregation(aggBucket *AggregationBucket, b
 		}
 	}
 	aggBucket.Meta.Buckets = denseUpperBounds
-}
-
-// ToDistributionData sums every series over all its steps, keeping the bucket
-// axis, and ranks the percentiles over every series together. A partial step
-// counts too, since what it holds was observed.
-func (tsData *TimeSeriesData) ToDistributionData() *DistributionData {
-	data := &DistributionData{QueryName: tsData.QueryName, Aggregations: make([]*DistributionAggregation, 0, len(tsData.Aggregations))}
-	for _, aggBucket := range tsData.Aggregations {
-		if aggBucket == nil {
-			continue
-		}
-		aggregation := &DistributionAggregation{Index: aggBucket.Index, Alias: aggBucket.Alias, Meta: aggBucket.Meta, Distributions: make([]*Distribution, 0, len(aggBucket.Series))}
-		totalCounts := make([]float64, len(aggBucket.Meta.Buckets)+1)
-		for _, series := range aggBucket.Series {
-			counts := make([]float64, len(totalCounts))
-			for _, point := range series.Values {
-				for i, count := range point.Values {
-					if i < len(counts) {
-						counts[i] += count
-						totalCounts[i] += count
-					}
-				}
-			}
-			aggregation.Distributions = append(aggregation.Distributions, &Distribution{Labels: series.Labels, Counts: counts})
-		}
-		aggregation.Percentiles = newDistributionPercentiles(aggBucket.Meta.Buckets, totalCounts)
-		data.Aggregations = append(data.Aggregations, aggregation)
-	}
-	return data
 }
 
 // calculateIndexOfUpperBound and calculateUpperBoundAtIndex are inverses over
