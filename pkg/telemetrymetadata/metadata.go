@@ -1401,6 +1401,8 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 	}
 
 	sb := sqlbuilder.Select("DISTINCT " + selectColumn).From(t.relatedMetadataDBName + "." + t.relatedMetadataTblName)
+	// rows without the key read as empty; drop them so they do not count towards the limit
+	sb.Where(fmt.Sprintf("notEmpty(%s)", selectColumn))
 
 	if len(fieldValueSelector.ExistingQuery) != 0 {
 		keySelectors := querybuilder.QueryStringToKeysSelectors(fieldValueSelector.ExistingQuery)
