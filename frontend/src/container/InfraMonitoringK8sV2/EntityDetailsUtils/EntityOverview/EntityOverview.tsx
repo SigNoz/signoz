@@ -1,13 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Compass } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import {
@@ -131,13 +125,15 @@ function EntityOverviewContent({
 		[userExpression],
 	);
 
-	const handleCategoryChange = useCallback(
-		(value: string | string[]): void => {
-			if (typeof value === 'string') {
-				onCategoryChange(value);
-			}
-		},
-		[onCategoryChange],
+	const categoryItems = useMemo(
+		() =>
+			getRelatedCategories(category, attributes).map((relatedCategory) => ({
+				type: 'item' as const,
+				value: relatedCategory,
+				label: K8S_CATEGORY_LABELS[relatedCategory],
+				testId: `overview-resource-option-${relatedCategory}`,
+			})),
+		[category, attributes],
 	);
 
 	const handleRunQuery = useCallback(
@@ -224,26 +220,15 @@ function EntityOverviewContent({
 							Showing
 						</Typography.Text>
 
-						<Select value={targetCategory} onChange={handleCategoryChange}>
-							<SelectTrigger
-								className={styles.resourceTrigger}
-								data-testid="overview-resource-select"
-							>
-								<SelectValue>{targetLabel}</SelectValue>
-							</SelectTrigger>
-							{/* The drawer sits at z-index 50 and select content ships without one */}
-							<SelectContent className={styles.resourceOptions}>
-								{getRelatedCategories(category, attributes).map((relatedCategory) => (
-									<SelectItem
-										key={relatedCategory}
-										value={relatedCategory}
-										testId={`overview-resource-option-${relatedCategory}`}
-									>
-										{K8S_CATEGORY_LABELS[relatedCategory]}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
+						<Select
+							aria-label="Showing resource"
+							placeholder="Select a resource"
+							items={categoryItems}
+							value={targetCategory}
+							onChange={onCategoryChange}
+							width={240}
+							testId="overview-resource-select"
+						/>
 
 						<Tooltip title={`View on ${targetLabel.toLowerCase()} page`} side="top">
 							<Button

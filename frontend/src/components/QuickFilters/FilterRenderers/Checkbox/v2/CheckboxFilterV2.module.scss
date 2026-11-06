@@ -6,14 +6,6 @@
 	border-bottom: 1px solid var(--l1-border);
 }
 
-.search {
-	--input-background: var(--l2-background);
-	--input-hover-background: var(--l2-background);
-	--input-focus-background: var(--l2-background);
-	--input-border-color: var(--l2-border);
-	--input-focus-border-color: var(--l2-border);
-}
-
 .searchSpinner {
 	color: var(--l2-foreground);
 	animation: spin 0.8s linear infinite;

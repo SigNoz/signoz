@@ -92,7 +92,7 @@ function JsmOpsSettings(): JSX.Element {
 						{...register('apiKey')}
 						aria-required
 						type="password"
-						data-testid="jsmops-api-key-textbox"
+						testId="jsmops-api-key-textbox"
 					/>
 				</FormField>
 

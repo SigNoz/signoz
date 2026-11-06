@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { SelectSimple } from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
 import { Plus, Search, X } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
 import { type ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
@@ -66,7 +66,7 @@ function ModelCostTabPanel(): JSX.Element {
 		setPage(1);
 	};
 
-	const handleSourceChange = (value: string | string[]): void => {
+	const handleSourceChange = (value: string): void => {
 		void setSource(value as SourceFilter);
 		setPage(1);
 	};
@@ -103,7 +103,7 @@ function ModelCostTabPanel(): JSX.Element {
 			<div className={styles.filtersBar}>
 				<div className={styles.filtersBarLeft}>
 					<Input
-						className={styles.filtersBarSearch}
+						width={280}
 						placeholder="Search by model or provider"
 						value={search}
 						onChange={handleSearchChange}
@@ -125,9 +125,10 @@ function ModelCostTabPanel(): JSX.Element {
 						}
 						testId="model-cost-search"
 					/>
-					<SelectSimple
-						className={styles.filtersBarSource}
+					<Select
+						width={160}
 						items={SOURCE_FILTER_OPTIONS}
+						placeholder="Filter by source"
 						value={source}
 						onChange={handleSourceChange}
 						testId="source-filter"

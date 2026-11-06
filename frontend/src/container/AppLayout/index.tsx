@@ -13,7 +13,7 @@ import { useMutation, useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import * as Sentry from '@sentry/react';
-import { Toaster } from '@signozhq/ui/sonner';
+import { Toaster } from '@signozhq/ui/toast';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { Flex } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
@@ -843,9 +843,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
 				)}
 
-				<Toaster
-					offset={{ bottom: 'calc(var(--bottom-strip-height, 0px) + 24px)' }}
-				/>
+				<Toaster />
 			</Layout>
 		</TooltipProvider>
 	);

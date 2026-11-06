@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Search } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
-import { SelectSimple } from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -84,8 +84,7 @@ function NotificationChannels(): JSX.Element {
 	);
 
 	const handleKindChange = useCallback(
-		(value: string | string[]): void => {
-			const next = value as string;
+		(next: string): void => {
 			void setKind(next === KIND_FILTER_ALL ? null : next);
 			setPage(1);
 		},
@@ -211,22 +210,25 @@ function NotificationChannels(): JSX.Element {
 				</div>
 
 				<div className={styles.filtersRow}>
-					<Input
-						containerClassName={styles.searchInput}
-						placeholder="Search by channel name"
-						value={searchText}
-						onChange={handleSearchChange}
-						disabled={!canList}
-						suffix={<Search size={14} className={styles.searchIcon} />}
-						testId="channels-search"
-					/>
-					<SelectSimple
-						className={styles.kindSelect}
+					<div className={styles.searchInput}>
+						<Input
+							placeholder="Search by channel name"
+							value={searchText}
+							onChange={handleSearchChange}
+							disabled={!canList}
+							disabledTooltip={undefined}
+							suffix={<Search size={14} className={styles.searchIcon} />}
+							testId="channels-search"
+						/>
+					</div>
+					<Select
+						width={180}
 						items={KIND_FILTER_OPTIONS}
+						placeholder="All types"
 						value={kind}
 						onChange={handleKindChange}
 						disabled={!canList}
-						withPortal={false}
+						disabledTooltip={undefined}
 						testId="channels-kind-filter"
 					/>
 				</div>

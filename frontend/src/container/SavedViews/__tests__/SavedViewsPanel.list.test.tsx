@@ -1,4 +1,4 @@
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -22,9 +22,9 @@ import {
 	withGlobalTime,
 } from './savedViewsTestUtils';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 const PATH = ROUTES.TRACES_EXPLORER;
@@ -194,7 +194,10 @@ describe('SavedViewsPanel list', () => {
 			renderPanel();
 			await screen.findByTestId('saved-views-list');
 
-			await userEvent.type(screen.getByTestId('saved-views-search'), 'ERRORS');
+			await userEvent.type(
+				screen.getByTestId('saved-views-search-field'),
+				'ERRORS',
+			);
 
 			expect(rowNames('saved-views-created-by-me')).toStrictEqual(['Errors']);
 			expect(rowNames('saved-views-created-by-others')).toStrictEqual([
@@ -206,7 +209,7 @@ describe('SavedViewsPanel list', () => {
 			mockSavedViewsApi([mine]);
 			renderPanel();
 			await screen.findByTestId('saved-views-list');
-			const search = screen.getByTestId('saved-views-search');
+			const search = screen.getByTestId('saved-views-search-field');
 
 			await userEvent.type(search, 'nothing like this');
 			expect(
@@ -226,7 +229,10 @@ describe('SavedViewsPanel list', () => {
 		const create = await screen.findByTestId('saved-views-list-create');
 		await waitFor(() => expectUsable(create));
 		await userEvent.click(create);
-		await userEvent.type(screen.getByTestId('save-view-name'), 'First view');
+		await userEvent.type(
+			screen.getByTestId('save-view-name-field'),
+			'First view',
+		);
 		await userEvent.click(screen.getByTestId('save-view-submit'));
 
 		await waitFor(() => expect(requests.created).toHaveLength(1));

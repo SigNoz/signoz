@@ -4,6 +4,9 @@
 
 	border-radius: 2px 0px 0px 2px;
 
+	// The label chip and the Input share the --input-with-label-* theming
+	// contract (set by e.g. FormAlertRules, WidgetFullView) so the joined
+	// group recolors as one.
 	.label {
 		// Typography.Text takes its display from this token; at its `inline` default
 		// the label blockifies as a flex item and the text rides the top of the row.
@@ -31,66 +34,40 @@
 		display: flex;
 		justify-content: flex-start;
 		align-items: center;
-		font-weight: var(--font-weight-light);
 	}
 
 	.input {
 		flex: 1;
 		min-width: 150px;
-		font-family: 'Space Mono', monospace !important;
-
-		--input-border-radius: 0px;
-		border: 1px solid var(--input-with-label-border-color, var(--l2-border));
-		background: var(--input-with-label-background-color, var(--l2-background));
-		color: var(--input-with-label-color, var(--l2-foreground));
-
-		font-size: 12px !important;
-		line-height: 25px;
-
 		position: relative;
 
+		// Square corners: the input sits mid-group between label and close button.
+		--input-border-radius: 0px;
+		--input-border: var(--input-with-label-border-color, var(--l2-border));
+		--input-background: var(
+			--input-with-label-background-color,
+			var(--l2-background)
+		);
+		--input-foreground: var(--input-with-label-color, var(--l2-foreground));
+
 		&:hover,
-		&:focus {
-			z-index: 1;
-		}
-
-		.ant-select-selector {
-			position: relative;
-			border-radius: inherit;
-		}
-
-		.ant-select:hover .ant-select-selector,
-		.ant-select-focused .ant-select-selector {
+		&:focus-within {
 			z-index: 1;
 		}
 
 		&.input__has-label-after {
 			margin-left: -1px;
-
-			.ant-select-selector {
-				margin-left: -1px;
-				border-top-left-radius: 0;
-				border-bottom-left-radius: 0;
-			}
 		}
 
 		&.input__has-close-button {
-			.ant-select-selector {
-				border-top-right-radius: 0;
-				border-bottom-right-radius: 0;
-			}
-
 			~ .close-btn {
 				margin-left: -1px;
 			}
 		}
 
-		&::placeholder {
-			color: var(--input-with-label-color, var(--l3-foreground)) !important;
-			font-size: 12px !important;
-		}
-		&[type='number']::-webkit-inner-spin-button,
-		&[type='number']::-webkit-outer-spin-button {
+		// The Input has no token for the native number spinners.
+		input[type='number']::-webkit-inner-spin-button,
+		input[type='number']::-webkit-outer-spin-button {
 			-webkit-appearance: none;
 			-moz-appearance: none;
 			appearance: none;
@@ -114,16 +91,7 @@
 
 	&.labelAfter {
 		.input {
-			border-radius: 2px;
-			border: 1px solid var(--input-with-label-border-color, var(--l2-border));
-			background: var(--input-with-label-background-color, var(--l2-background));
-			border-top-right-radius: 0px;
-			border-bottom-right-radius: 0px;
-
-			.ant-select-selector {
-				border-top-right-radius: 0;
-				border-bottom-right-radius: 0;
-			}
+			--input-border-radius: 2px 0 0 2px;
 		}
 
 		.label {

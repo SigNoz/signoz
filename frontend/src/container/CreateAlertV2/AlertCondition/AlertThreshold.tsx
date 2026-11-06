@@ -190,7 +190,7 @@ function AlertThreshold({
 			{/* Main condition sentence */}
 			<div className="alert-condition-sentences">
 				<div className="alert-condition-sentence">
-					<Typography.Text className="sentence-text">
+					<Typography.Text className="sentence-text" color="muted">
 						Send a notification when
 					</Typography.Text>
 					<Select
@@ -200,7 +200,9 @@ function AlertThreshold({
 						options={queryNames}
 						data-testid="alert-threshold-query-select"
 					/>
-					<Typography.Text className="sentence-text">is</Typography.Text>
+					<Typography.Text className="sentence-text" color="muted">
+						is
+					</Typography.Text>
 					<Select
 						value={
 							(normalizeOperator(thresholdState.operator) ??
@@ -216,7 +218,7 @@ function AlertThreshold({
 						options={THRESHOLD_OPERATOR_OPTIONS}
 						data-testid="alert-threshold-operator-select"
 					/>
-					<Typography.Text className="sentence-text">
+					<Typography.Text className="sentence-text" color="muted">
 						the threshold(s)
 					</Typography.Text>
 					<Select
@@ -234,7 +236,7 @@ function AlertThreshold({
 						options={matchTypeOptionsWithTooltips}
 						data-testid="alert-threshold-match-type-select"
 					/>
-					<Typography.Text className="sentence-text">
+					<Typography.Text className="sentence-text" color="muted">
 						during the <EvaluationSettings />
 					</Typography.Text>
 				</div>

@@ -5,7 +5,9 @@ import { getCurrentNuqsQueryString } from 'tests/nuqs-helpers';
 import { renderListAlertRules } from './_helpers';
 
 function getSearchInput(): HTMLInputElement {
-	return screen.getByTestId('list-alerts-search-input') as HTMLInputElement;
+	return screen.getByTestId(
+		'list-alerts-search-input-field',
+	) as HTMLInputElement;
 }
 
 describe('ListAlertRules — search', () => {
@@ -88,7 +90,7 @@ describe('ListAlertRules — search', () => {
 
 		// Page 2 of the 4-rule fixture has no rows; we only need the search input
 		// to be mounted, which happens before data is fetched.
-		const input = await screen.findByTestId('list-alerts-search-input');
+		const input = await screen.findByTestId('list-alerts-search-input-field');
 		await user.clear(input);
 		await user.type(input, 'CPU');
 

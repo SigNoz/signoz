@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { cloneDeep } from 'lodash-es';
 import { v4 as uuid } from 'uuid';
 
@@ -40,10 +40,11 @@ export function useCloneSection(): (
 			const title = section.title ? `${section.title} (Copy)` : 'Section (Copy)';
 			const clone = patchAsync(cloneSectionOps(title, panels));
 
-			toast.promise(clone, {
+			void toast.promise(clone, {
 				loading: 'Cloning section…',
 				success: 'Section cloned',
 				error: 'Failed to clone section',
+				errorAction: { label: 'Dismiss' },
 				position: 'top-center',
 			});
 

@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { SolidAlertCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import Spinner from 'components/Spinner';
 import { useNotificationChannelPermissions } from 'hooks/notificationChannels/useNotificationChannelPermissions';
@@ -46,15 +47,16 @@ function ChannelForm({
 
 	if (loadError) {
 		return (
-			<Callout
-				type="error"
-				showIcon
-				title={t('channel_load_failed')}
-				className={styles.loadError}
-				testId="channel-load-error"
-			>
-				{loadError}
-			</Callout>
+			<div className={styles.loadError}>
+				<Callout
+					color="danger"
+					size="sm"
+					icon={<SolidAlertCircle />}
+					testId="channel-load-error"
+				>
+					{t('channel_load_failed')}. {loadError}
+				</Callout>
+			</div>
 		);
 	}
 

@@ -5,7 +5,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { aggregateAttributesResourcesToString } from 'container/LogDetailedView/utils';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import {
 	ChevronDown,
@@ -76,7 +76,7 @@ function LogDetailsHeader({
 	return (
 		<div className={styles.header} data-log-detail-ignore="true">
 			<div className={styles.leftSection}>
-				<Divider type="vertical" className={styles.divider} />
+				<Divider orientation="vertical" height={16} spacing={0} />
 				<Typography.Text
 					className={styles.timestamp}
 					data-testid="log-details-header-timestamp"

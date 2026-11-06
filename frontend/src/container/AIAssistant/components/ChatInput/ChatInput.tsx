@@ -10,8 +10,8 @@ import cx from 'classnames';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
-import { toast } from '@signozhq/ui/sonner';
+import { Popover, usePopoverHandle } from '@signozhq/ui/popover';
+import { toast } from '@signozhq/ui/toast';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import type { UploadFile } from 'antd';
 import getSessionStorage from 'api/browser/sessionstorage/get';
@@ -254,6 +254,13 @@ export default function ChatInput({
 	const [activeContextCategory, setActiveContextCategory] =
 		useState<ContextCategory>('Dashboards');
 	const [pickerSearchQuery, setPickerSearchQuery] = useState('');
+	// The picker resets to its first category on every open and close, and the entity queries
+	// below are gated on whether it is showing.
+	const contextPicker = usePopoverHandle((open) => {
+		setIsContextPickerOpen(open);
+		setActiveContextCategory('Dashboards');
+		setPickerSearchQuery('');
+	});
 	// Refs to each category tab so we can move DOM focus to the newly-active
 	// tab on ArrowUp/ArrowDown. Without this the roving-tabindex pattern
 	// stalls: focus stays on the original button (whose closure has the old
@@ -288,6 +295,7 @@ export default function ChatInput({
 	const committedTextRef = useRef('');
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const inputRootRef = useRef<HTMLDivElement>(null);
+	const addContextRef = useRef<HTMLButtonElement>(null);
 
 	const capText = useCallback(
 		(value: string) => value.slice(0, MAX_INPUT_LENGTH),
@@ -300,20 +308,24 @@ export default function ChatInput({
 			const atIndex = beforeCaret.lastIndexOf('@');
 			// `@` only triggers at a word start, so words containing `@` stay plain text.
 			if (atIndex < 0 || /\S/.test(beforeCaret.charAt(atIndex - 1))) {
-				setIsContextPickerOpen(false);
+				contextPicker.close();
 				setMentionRange(null);
 				return;
 			}
 			const query = beforeCaret.slice(atIndex + 1);
 			if (/\s/.test(query)) {
-				setIsContextPickerOpen(false);
+				contextPicker.close();
 				setMentionRange(null);
 				return;
 			}
-			setIsContextPickerOpen(true);
+			// Typed `@`, not pressed: the picker still belongs beside the button it has
+			// always hung off, so it is shown against that element rather than the caret.
+			if (addContextRef.current) {
+				contextPicker.showAt(addContextRef.current);
+			}
 			setMentionRange({ start: atIndex, end: caret });
 		},
-		[],
+		[contextPicker],
 	);
 
 	const toggleContextSelection = useCallback(
@@ -355,7 +367,7 @@ export default function ChatInput({
 			committedTextRef.current = next;
 			setMentionRange(null);
 			setPickerSearchQuery('');
-			setIsContextPickerOpen(false);
+			contextPicker.close();
 			// Defer so React commits the new value before we place the caret.
 			requestAnimationFrame(() => {
 				const el = textareaRef.current;
@@ -502,7 +514,7 @@ export default function ChatInput({
 	const handleKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 			if (e.key === 'Escape' && isContextPickerOpen) {
-				setIsContextPickerOpen(false);
+				contextPicker.close();
 				return;
 			}
 			if (e.key === 'Enter' && !e.shiftKey) {
@@ -510,7 +522,7 @@ export default function ChatInput({
 				void handleSend();
 			}
 		},
-		[handleSend, isContextPickerOpen],
+		[handleSend, isContextPickerOpen, contextPicker],
 	);
 
 	const removeFile = useCallback((uid: string) => {
@@ -592,19 +604,23 @@ export default function ChatInput({
 			});
 			if (error === 'network') {
 				markVoiceUnavailable();
-				toast.error('Voice input unavailable in this browser', {
+				toast.danger('Voice input unavailable in this browser', {
+					action: { label: 'Dismiss' },
 					description:
 						'This browser cannot reach the speech recognition service. Try Google Chrome or Microsoft Edge.',
 				});
 			} else if (error === 'not-allowed') {
 				markVoiceUnavailable();
-				toast.error('Microphone access denied', {
+				toast.danger('Microphone access denied', {
+					action: { label: 'Dismiss' },
 					description:
 						'Grant microphone permission in your browser settings to use voice input.',
 				});
 			} else if (error === 'not-supported') {
 				markVoiceUnavailable();
-				toast.error('Voice input is not supported in this browser.');
+				toast.danger('Voice input is not supported in this browser.', {
+					action: { label: 'Dismiss' },
+				});
 			}
 			// `no-speech` is benign (just silence) — don't toast or hide.
 		},
@@ -1006,158 +1022,146 @@ export default function ChatInput({
 
 			<div className={styles.footer}>
 				<div className={styles.leftActions}>
-					<Popover
-						open={isContextPickerOpen}
-						onOpenChange={(open): void => {
-							setIsContextPickerOpen(open);
-							if (!open) {
-								setActiveContextCategory('Dashboards');
-								setPickerSearchQuery('');
-							}
-						}}
+					<Button
+						ref={addContextRef}
+						disabledTooltip={disabledTooltip}
+						variant="solid"
+						color="secondary"
+						size="md"
+						disabled={disabled}
+						prefix={<Plus size={10} />}
+						aria-haspopup="dialog"
+						aria-expanded={isContextPickerOpen}
+						onClick={(event): void => contextPicker.showAt(event.currentTarget)}
 					>
-						<PopoverTrigger asChild>
-							<Button
-								disabledTooltip={disabledTooltip}
-								variant="solid"
-								color="secondary"
-								size="md"
-								disabled={disabled}
-								onClick={(): void => {
-									setActiveContextCategory('Dashboards');
-									setPickerSearchQuery('');
-								}}
-								prefix={<Plus size={10} />}
+						Add Context
+					</Button>
+					<Popover
+						side="top"
+						align="end"
+						width={480}
+						maxWidth="min(92vw, 480px)"
+						handle={contextPicker}
+						aria-label="Add context"
+					>
+						<div className={styles.contextPopoverContent}>
+							<div
+								className={styles.contextPopoverCategories}
+								role="tablist"
+								aria-orientation="vertical"
+								aria-label="Context categories"
 							>
-								Add Context
-							</Button>
-						</PopoverTrigger>
-						<PopoverContent
-							className={styles.contextPopover}
-							side="top"
-							align="end"
-							sideOffset={8}
-						>
-							<div className={styles.contextPopoverContent}>
-								<div
-									className={styles.contextPopoverCategories}
-									role="tablist"
-									aria-orientation="vertical"
-									aria-label="Context categories"
-								>
-									{CONTEXT_CATEGORIES.map((category) => {
-										const CategoryIcon = CONTEXT_CATEGORY_ICONS[category];
-										const isActive = activeContextCategory === category;
-										return (
-											<Button
-												key={category}
-												ref={(el): void => {
-													categoryTabRefs.current.set(category, el);
-												}}
-												type="button"
-												variant="ghost"
-												color="secondary"
-												size="sm"
-												id={`ai-context-tab-${category}`}
-												// Single stable panel id shared by every tab: only the
-												// active category's tabpanel is rendered, so per-category
-												// `aria-controls` ids would point at nonexistent nodes
-												// for the two inactive tabs. APG allows a single
-												// dynamic panel whose `aria-labelledby` swaps to the
-												// active tab.
-												aria-controls="ai-context-tabpanel"
-												// Roving tabindex: only the active tab participates in
-												// the Tab sequence; arrow keys move between tabs.
-												tabIndex={isActive ? 0 : -1}
-												aria-selected={isActive}
-												width="100%"
-												onClick={(): void => {
-													setActiveContextCategory(category);
-													setPickerSearchQuery('');
-												}}
-												onKeyDown={(e): void => handleCategoryKeyDown(e, category)}
-												prefix={<CategoryIcon size={13} />}
-											>
-												<span>{category}</span>
-											</Button>
-										);
-									})}
-								</div>
-
-								<div
-									className={styles.contextPopoverRight}
-									role="tabpanel"
-									id="ai-context-tabpanel"
-									aria-labelledby={`ai-context-tab-${activeContextCategory}`}
-								>
-									<div className={styles.contextPopoverSearch}>
-										<Input
-											type="text"
-											placeholder={`Search ${activeContextCategory.toLowerCase()}…`}
-											className={styles.contextPopoverSearchInput}
-											value={pickerSearchQuery}
-											onChange={(e): void => setPickerSearchQuery(e.target.value)}
-											prefix={<Search size={12} />}
-											// Skip the picker's roving keyboard focus — typing here
-											// shouldn't move category selection.
-											onKeyDown={(e): void => {
-												e.stopPropagation();
+								{CONTEXT_CATEGORIES.map((category) => {
+									const CategoryIcon = CONTEXT_CATEGORY_ICONS[category];
+									const isActive = activeContextCategory === category;
+									return (
+										<Button
+											key={category}
+											ref={(el): void => {
+												categoryTabRefs.current.set(category, el);
 											}}
-										/>
-									</div>
-									<div className={styles.contextPopoverEntities}>
-										{isActiveContextLoading ? (
-											<div className={styles.contextPopoverEmpty}>
-												Loading {activeContextCategory.toLowerCase()}...
-											</div>
-										) : isActiveContextError ? (
-											<div className={styles.contextPopoverEmpty}>
-												Failed to load {activeContextCategory.toLowerCase()}.
-											</div>
-										) : filteredContextOptions.length === 0 ? (
-											<ContextPickerEmptyState
-												category={activeContextCategory}
-												query={displayQuery}
-												onPrefill={handleContextPrefill}
-											/>
-										) : (
-											filteredContextOptions.map((option, index) => {
-												const isSelected = selectedContexts.some(
-													(item) =>
-														item.category === activeContextCategory &&
-														item.entityId === option.id,
-												);
+											type="button"
+											variant="ghost"
+											color="secondary"
+											size="sm"
+											id={`ai-context-tab-${category}`}
+											// Single stable panel id shared by every tab: only the
+											// active category's tabpanel is rendered, so per-category
+											// `aria-controls` ids would point at nonexistent nodes
+											// for the two inactive tabs. APG allows a single
+											// dynamic panel whose `aria-labelledby` swaps to the
+											// active tab.
+											aria-controls="ai-context-tabpanel"
+											// Roving tabindex: only the active tab participates in
+											// the Tab sequence; arrow keys move between tabs.
+											tabIndex={isActive ? 0 : -1}
+											aria-selected={isActive}
+											width="100%"
+											onClick={(): void => {
+												setActiveContextCategory(category);
+												setPickerSearchQuery('');
+											}}
+											onKeyDown={(e): void => handleCategoryKeyDown(e, category)}
+											prefix={<CategoryIcon size={13} />}
+										>
+											<span>{category}</span>
+										</Button>
+									);
+								})}
+							</div>
 
-												return (
-													<Button
-														key={option.id}
-														ref={(el): void => {
-															entityRefs.current[index] = el;
-														}}
-														type="button"
-														variant="ghost"
-														color="secondary"
-														size="sm"
-														aria-pressed={isSelected}
-														width="100%"
-														onClick={(): void =>
-															toggleContextSelection(
-																activeContextCategory,
-																option.id,
-																option.value,
-															)
-														}
-														onKeyDown={(e): void => handleEntityKeyDown(e, index)}
-													>
-														{option.value}
-													</Button>
-												);
-											})
-										)}
-									</div>
+							<div
+								className={styles.contextPopoverRight}
+								role="tabpanel"
+								id="ai-context-tabpanel"
+								aria-labelledby={`ai-context-tab-${activeContextCategory}`}
+							>
+								<div className={styles.contextPopoverSearch}>
+									<Input
+										type="text"
+										placeholder={`Search ${activeContextCategory.toLowerCase()}…`}
+										value={pickerSearchQuery}
+										onChange={(e): void => setPickerSearchQuery(e.target.value)}
+										prefix={<Search size={12} />}
+										// Skip the picker's roving keyboard focus — typing here
+										// shouldn't move category selection.
+										onKeyDown={(e): void => {
+											e.stopPropagation();
+										}}
+									/>
+								</div>
+								<div className={styles.contextPopoverEntities}>
+									{isActiveContextLoading ? (
+										<div className={styles.contextPopoverEmpty}>
+											Loading {activeContextCategory.toLowerCase()}...
+										</div>
+									) : isActiveContextError ? (
+										<div className={styles.contextPopoverEmpty}>
+											Failed to load {activeContextCategory.toLowerCase()}.
+										</div>
+									) : filteredContextOptions.length === 0 ? (
+										<ContextPickerEmptyState
+											category={activeContextCategory}
+											query={displayQuery}
+											onPrefill={handleContextPrefill}
+										/>
+									) : (
+										filteredContextOptions.map((option, index) => {
+											const isSelected = selectedContexts.some(
+												(item) =>
+													item.category === activeContextCategory &&
+													item.entityId === option.id,
+											);
+
+											return (
+												<Button
+													key={option.id}
+													ref={(el): void => {
+														entityRefs.current[index] = el;
+													}}
+													type="button"
+													variant="ghost"
+													color="secondary"
+													size="sm"
+													aria-pressed={isSelected}
+													width="100%"
+													onClick={(): void =>
+														toggleContextSelection(
+															activeContextCategory,
+															option.id,
+															option.value,
+														)
+													}
+													onKeyDown={(e): void => handleEntityKeyDown(e, index)}
+												>
+													{option.value}
+												</Button>
+											);
+										})
+									)}
 								</div>
 							</div>
-						</PopoverContent>
+						</div>
 					</Popover>
 				</div>
 

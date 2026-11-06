@@ -58,7 +58,11 @@ function AnomalyThreshold({
 			<div className="alert-condition-sentences">
 				{/* Sentence 1 */}
 				<div className="alert-condition-sentence">
-					<Typography.Text data-testid="notification-text" className="sentence-text">
+					<Typography.Text
+						data-testid="notification-text"
+						className="sentence-text"
+						color="muted"
+					>
 						Send a notification when
 					</Typography.Text>
 					<Select
@@ -73,7 +77,11 @@ function AnomalyThreshold({
 						}}
 						options={queryNames}
 					/>
-					<Typography.Text data-testid="threshold-text" className="sentence-text">
+					<Typography.Text
+						data-testid="threshold-text"
+						className="sentence-text"
+						color="muted"
+					>
 						is
 					</Typography.Text>
 					<Select
@@ -94,6 +102,7 @@ function AnomalyThreshold({
 					<Typography.Text
 						data-testid="predicted-data-text"
 						className="sentence-text"
+						color="muted"
 					>
 						the prediction
 					</Typography.Text>
@@ -115,13 +124,18 @@ function AnomalyThreshold({
 					<Typography.Text
 						data-testid="evaluation-window-text"
 						className="sentence-text"
+						color="muted"
 					>
 						during the <EvaluationSettings rollingOnly />
 					</Typography.Text>
 				</div>
 				<div className="alert-condition-sentence">
 					{/* Sentence 2 */}
-					<Typography.Text data-testid="using-the-text" className="sentence-text">
+					<Typography.Text
+						data-testid="using-the-text"
+						className="sentence-text"
+						color="muted"
+					>
 						using the
 					</Typography.Text>
 					<Select
@@ -139,6 +153,7 @@ function AnomalyThreshold({
 					<Typography.Text
 						data-testid="algorithm-with-text"
 						className="sentence-text"
+						color="muted"
 					>
 						algorithm with
 					</Typography.Text>
@@ -154,7 +169,11 @@ function AnomalyThreshold({
 						}}
 						options={ANOMALY_SEASONALITY_OPTIONS}
 					/>
-					<Typography.Text data-testid="seasonality-text" className="sentence-text">
+					<Typography.Text
+						data-testid="seasonality-text"
+						className="sentence-text"
+						color="muted"
+					>
 						seasonality
 					</Typography.Text>
 				</div>

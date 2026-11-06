@@ -46,13 +46,8 @@
 	}
 
 	.title {
-		color: var(--l2-foreground);
-		font-family: 'Geist Mono';
-		font-size: 14px;
-		font-style: normal;
-		font-weight: 500;
-		line-height: 20px;
-		letter-spacing: -0.07px;
+		// Typography's only monospace affordance is `code`, which also draws a chip.
+		font-family: var(--font-mono);
 	}
 
 	.radio-button {
@@ -93,24 +88,13 @@
 			}
 
 			.domain-details-metadata-label {
-				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 11px;
-				font-style: normal;
-				font-weight: 500;
-				line-height: 18px;
-				letter-spacing: 0.44px;
+				// Typography has no prop for casing.
 				text-transform: uppercase;
 			}
 
 			.domain-details-metadata-value {
-				color: var(--l2-foreground);
-				font-family: 'Geist Mono';
-				font-size: 12px;
-				font-style: normal;
-				font-weight: 500;
-				line-height: 20px;
-				letter-spacing: -0.07px;
+				// Typography's only monospace affordance is `code`, which also draws a chip.
+				font-family: var(--font-mono);
 
 				width: 100%;
 				white-space: nowrap;

@@ -1,6 +1,4 @@
 .form {
-	--input-foreground: var(--l1-foreground);
-	--input-placeholder-color: var(--l3-foreground);
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-10);
@@ -25,10 +23,6 @@
 .hint {
 	font-size: var(--font-size-xs);
 	color: var(--l3-foreground);
-}
-
-.fieldContext {
-	width: 200px;
 }
 
 .sources {

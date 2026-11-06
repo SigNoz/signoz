@@ -30,7 +30,7 @@ function MsTeams(): JSX.Element {
 					<Input
 						{...register('webhookUrl')}
 						aria-required
-						data-testid="webhook-url-textbox"
+						testId="webhook-url-textbox"
 					/>
 				</FormField>
 

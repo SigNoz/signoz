@@ -1,6 +1,6 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -21,9 +21,9 @@ import {
 } from './savedViewsTestUtils';
 import { mockSavedViewsApi } from './savedViewsApiMock';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 const PATH = ROUTES.TRACES_EXPLORER;
@@ -92,7 +92,7 @@ async function clickCreate(): Promise<void> {
 }
 
 async function submitName(name: string): Promise<void> {
-	await userEvent.type(screen.getByTestId('save-view-name'), name);
+	await userEvent.type(screen.getByTestId('save-view-name-field'), name);
 	await userEvent.click(screen.getByTestId('save-view-submit'));
 }
 
@@ -152,10 +152,12 @@ describe('SavedViewsHeader saving', () => {
 			await clickCreate();
 			await submitName('Slow checkout');
 
-			await waitFor(() => expect(toast.error).toHaveBeenCalled());
+			await waitFor(() => expect(toast.danger).toHaveBeenCalled());
 			expect(requests.created).toHaveLength(1);
 			expect(isModalOpen()).toBe(true);
-			expect(screen.getByTestId('save-view-name')).toHaveValue('Slow checkout');
+			expect(screen.getByTestId('save-view-name-field')).toHaveValue(
+				'Slow checkout',
+			);
 			expect(urlParam(history, QueryParams.viewKey)).toBeNull();
 			expect(toast.success).not.toHaveBeenCalled();
 		});
@@ -165,7 +167,7 @@ describe('SavedViewsHeader saving', () => {
 			renderHeader(explorerUrl(PATH, {}));
 
 			await clickCreate();
-			await userEvent.type(screen.getByTestId('save-view-name'), 'Draft');
+			await userEvent.type(screen.getByTestId('save-view-name-field'), 'Draft');
 			await userEvent.click(screen.getByTestId('save-view-cancel'));
 
 			await waitFor(() => expect(isModalOpen()).toBe(false));

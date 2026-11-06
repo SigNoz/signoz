@@ -68,7 +68,7 @@ export const NoList: Story = {
 		const canvas = within(canvasElement);
 
 		await canvas.findByText(/is not authorized/, undefined, PAGE_LOAD);
-		await expectDisabled(await canvas.findByTestId('channels-search'));
+		await expectDisabled(await canvas.findByTestId('channels-search-field'));
 	},
 };
 

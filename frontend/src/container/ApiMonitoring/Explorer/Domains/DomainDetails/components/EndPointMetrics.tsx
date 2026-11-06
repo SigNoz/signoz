@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Color } from '@signozhq/design-tokens';
 import { Skeleton, Tooltip } from 'antd';
 import { Progress } from '@signozhq/ui/progress';
 import { Typography } from '@signozhq/ui/typography';
@@ -39,22 +38,47 @@ function EndPointMetrics({
 		<div className="domain-detail-drawer__endpoint">
 			<div className="domain-details-grid">
 				<div className="labels-row">
-					<Typography.Text color="muted" className="domain-details-metadata-label">
+					<Typography.Text
+						size="sm"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-label"
+					>
 						Rate
 					</Typography.Text>
-					<Typography.Text color="muted" className="domain-details-metadata-label">
+					<Typography.Text
+						size="sm"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-label"
+					>
 						AVERAGE LATENCY
 					</Typography.Text>
-					<Typography.Text color="muted" className="domain-details-metadata-label">
+					<Typography.Text
+						size="sm"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-label"
+					>
 						ERROR %
 					</Typography.Text>
-					<Typography.Text color="muted" className="domain-details-metadata-label">
+					<Typography.Text
+						size="sm"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-label"
+					>
 						LAST USED
 					</Typography.Text>
 				</div>
 
 				<div className="values-row">
-					<Typography.Text className="domain-details-metadata-value">
+					<Typography.Text
+						size="small"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-value"
+					>
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />
 						) : (
@@ -65,7 +89,12 @@ function EndPointMetrics({
 							</Tooltip>
 						)}
 					</Typography.Text>
-					<Typography.Text className="domain-details-metadata-value">
+					<Typography.Text
+						size="small"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-value"
+					>
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />
 						) : (
@@ -74,37 +103,42 @@ function EndPointMetrics({
 							</Tooltip>
 						)}
 					</Typography.Text>
-					<Typography.Text className="domain-details-metadata-value error-rate">
+					<Typography.Text
+						size="small"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-value error-rate"
+					>
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />
 						) : (
 							<Tooltip title={metricsData?.errorRate}>
 								{metricsData?.errorRate !== '-' ? (
-									<Progress
-										percent={Number(Number(metricsData?.errorRate ?? 0).toFixed(2))}
-										strokeLinecap="butt"
-										showInfo
-										strokeColor={((): string => {
-											const errorRatePercent = Number(
-												Number(metricsData?.errorRate ?? 0).toFixed(2),
-											);
-											if (errorRatePercent >= 90) {
-												return Color.BG_SAKURA_500;
+									<div className="progress-bar">
+										<Progress
+											percent={Number(Number(metricsData?.errorRate ?? 0).toFixed(2))}
+											showInfo
+											color={
+												Number(metricsData?.errorRate ?? 0) >= 90
+													? 'highlight-danger'
+													: Number(metricsData?.errorRate ?? 0) >= 60
+														? 'warning'
+														: 'success'
 											}
-											if (errorRatePercent >= 60) {
-												return Color.BG_AMBER_500;
-											}
-											return Color.BG_FOREST_500;
-										})()}
-										className="progress-bar"
-									/>
+										/>
+									</div>
 								) : (
 									'-'
 								)}
 							</Tooltip>
 						)}
 					</Typography.Text>
-					<Typography.Text className="domain-details-metadata-value">
+					<Typography.Text
+						size="small"
+						weight="medium"
+						color="muted"
+						className="domain-details-metadata-value"
+					>
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />
 						) : (

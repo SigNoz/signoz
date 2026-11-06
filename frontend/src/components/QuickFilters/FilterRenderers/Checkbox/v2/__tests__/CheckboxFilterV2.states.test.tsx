@@ -111,7 +111,7 @@ describe('CheckboxFilterV2 - states', () => {
 
 			await screen.findByTestId('checkbox-value-row-production');
 
-			const searchInput = screen.getByTestId('checkbox-filter-search');
+			const searchInput = screen.getByTestId('checkbox-filter-search-field');
 			await user.type(searchInput, 'prod');
 
 			await waitFor(() => {

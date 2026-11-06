@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getSupportedSignals } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
@@ -106,22 +106,20 @@ jest.mock(
 
 jest.mock('@signozhq/ui/resizable', () => ({
 	__esModule: true,
-	ResizablePanelGroup: ({
-		children,
+	Resizable: ({
+		items,
 	}: {
-		children: React.ReactNode;
-	}): JSX.Element => <div>{children}</div>,
-	ResizablePanel: ({ children }: { children: React.ReactNode }): JSX.Element => (
-		<div>{children}</div>
+		items: Array<{ value: string; children: React.ReactNode }>;
+	}): JSX.Element => (
+		<div>
+			{items.map((item) => (
+				<div key={item.value}>{item.children}</div>
+			))}
+		</div>
 	),
-	ResizableHandle: (): null => null,
-	useDefaultLayout: (): unknown => ({
-		defaultLayout: undefined,
-		onLayoutChanged: jest.fn(),
-	}),
 }));
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 const mockShowErrorModal = jest.fn();
 jest.mock('providers/ErrorModalProvider', () => ({
@@ -374,7 +372,7 @@ describe('PanelEditorContainer composition', () => {
 		await userEvent.click(screen.getByTestId('editor-save'));
 
 		await waitFor(() => expect(mockShowErrorModal).toHaveBeenCalledWith(failure));
-		expect(toast.error).not.toHaveBeenCalled();
+		expect(toast.danger).not.toHaveBeenCalled();
 	});
 
 	it('marks the saved panel to be scrolled into view on the dashboard', async () => {

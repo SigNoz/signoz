@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { screen, userEvent } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -34,4 +35,21 @@ export const ExpiredLink: Story = {
 	args: { token: 'expired' },
 	// The deliberate 410 is the state under test.
 	parameters: { allowConsoleErrors: true },
+};
+
+/** The mismatch callout, after the two password fields disagree and blur. */
+export const PasswordMismatch: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const password = await screen.findByTestId('password', undefined, {
+			timeout: 15000,
+		});
+		const confirm = await screen.findByPlaceholderText(
+			/confirm your new password/i,
+		);
+
+		await userEvent.type(password, 'password123');
+		await userEvent.type(confirm, 'password456');
+		await userEvent.click(canvasElement);
+		await screen.findByText(/passwords don't match/i);
+	},
 };

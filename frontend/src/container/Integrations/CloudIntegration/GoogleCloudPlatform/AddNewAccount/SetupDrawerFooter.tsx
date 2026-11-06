@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { SolidAlertCircle } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 
@@ -29,17 +30,16 @@ function SetupDrawerFooter({
 	return createPortal(
 		<div className={styles.footerContainer}>
 			{error && (
-				<Callout
-					type="error"
-					size="small"
-					showIcon
-					action="dismissible"
-					onClick={onDismissError}
-					title={errorTitle}
+				<Callout.Closeable
+					color="danger"
+					size="sm"
+					icon={<SolidAlertCircle />}
+					closed={false}
+					onClose={onDismissError}
 					testId="gcp-connect-error"
 				>
-					{error}
-				</Callout>
+					{errorTitle}. {error}
+				</Callout.Closeable>
 			)}
 			<div className={styles.footer}>
 				<Button

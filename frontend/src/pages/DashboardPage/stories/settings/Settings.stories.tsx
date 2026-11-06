@@ -47,7 +47,10 @@ export const Overview: Story = {
 export const OverviewUnsavedChanges: Story = {
 	play: async ({ canvasElement }) => {
 		await openSettings(canvasElement);
-		await userEvent.type(await screen.findByTestId('dashboard-name'), ' (v2)');
+		await userEvent.type(
+			await screen.findByTestId('dashboard-name-field'),
+			' (v2)',
+		);
 		await userEvent.type(
 			screen.getByTestId('dashboard-desc'),
 			' Owned by the platform team.',
@@ -121,7 +124,10 @@ export const PublishPrivate: Story = {
 export const OverviewSavedToast: Story = {
 	play: async ({ canvasElement, args }) => {
 		await openSettings(canvasElement);
-		await userEvent.type(await screen.findByTestId('dashboard-name'), ' (v2)');
+		await userEvent.type(
+			await screen.findByTestId('dashboard-name-field'),
+			' (v2)',
+		);
 		await userEvent.click(await screen.findByTestId('save-dashboard-config'));
 		if (args.dashboardPatch === 'success') {
 			await screen.findByText('Dashboard updated');

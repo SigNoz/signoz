@@ -186,7 +186,7 @@ function Metadata({
 			if (field.key === TableFields.DESCRIPTION) {
 				return (
 					<Input
-						data-testid="description-input"
+						testId="description-input"
 						name={field.key}
 						defaultValue={metricMetadataState.description}
 						onChange={(e): void => {

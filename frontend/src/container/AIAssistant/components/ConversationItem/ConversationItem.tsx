@@ -5,7 +5,7 @@ import ROUTES from 'constants/routes';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 
 import {
@@ -176,16 +176,21 @@ export default function ConversationItem({
 
 			<div className={styles.body}>
 				{isEditing ? (
-					<Input
-						ref={inputRef}
-						className={styles.input}
-						value={editValue}
-						onChange={(e): void => setEditValue(e.target.value)}
-						onKeyDown={handleKeyDown}
-						onBlur={commitEdit}
-						onClick={(e): void => e.stopPropagation()}
-						maxLength={80}
-					/>
+					<div className={styles.input}>
+						<Input
+							ref={inputRef}
+							// The wrapper's accent bottom border is the edit/focus
+							// treatment, so the Input renders chromeless.
+							variant="unstyled"
+							noFocusRing
+							value={editValue}
+							onChange={(e): void => setEditValue(e.target.value)}
+							onKeyDown={handleKeyDown}
+							onBlur={commitEdit}
+							onClick={(e): void => e.stopPropagation()}
+							maxLength={80}
+						/>
+					</div>
 				) : (
 					<>
 						<span className={styles.title} title={displayTitle}>

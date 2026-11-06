@@ -17,7 +17,7 @@ import { USER_ROLES } from 'types/roles';
 import { PlannedDowntime } from '../PlannedDowntime';
 import { buildSchedule, createMockDowntime } from './testUtils';
 
-const SEARCH_TEST_ID = 'planned-downtime-search';
+const SEARCH_TEST_ID = 'planned-downtime-search-field';
 const CREATE_TEST_ID = 'planned-downtime-create';
 
 function renderPage(role: string = USER_ROLES.ADMIN): void {

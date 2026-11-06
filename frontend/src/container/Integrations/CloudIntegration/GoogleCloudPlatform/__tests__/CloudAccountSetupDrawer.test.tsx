@@ -124,9 +124,9 @@ describe('GCP CloudAccountSetupDrawer', () => {
 			);
 		});
 
-		await user.click(screen.getByTestId('gcp-account-name-input'));
+		await user.click(screen.getByTestId('gcp-account-name-input-field'));
 		await user.paste('billing@company.com');
-		await user.click(screen.getByTestId('gcp-deployment-project-id-input'));
+		await user.click(screen.getByTestId('gcp-deployment-project-id-input-field'));
 		await user.paste('my-deployment-project-123');
 
 		await user.click(screen.getByTestId('gcp-deployment-region-select'));
@@ -200,9 +200,9 @@ describe('GCP CloudAccountSetupDrawer', () => {
 			);
 		});
 
-		await user.click(screen.getByTestId('gcp-account-name-input'));
+		await user.click(screen.getByTestId('gcp-account-name-input-field'));
 		await user.paste('my-org');
-		await user.click(screen.getByTestId('gcp-deployment-project-id-input'));
+		await user.click(screen.getByTestId('gcp-deployment-project-id-input-field'));
 		await user.paste('my-deployment-project-123');
 		await user.click(screen.getByTestId('gcp-deployment-region-select'));
 		await user.click(await screen.findByText('Mumbai (asia-south1)'));

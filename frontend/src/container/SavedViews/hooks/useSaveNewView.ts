@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 
 import { SAVED_VIEW_TOAST_POSITION } from '../constants';
 import { SavedViewCreatedFrom } from '../events';

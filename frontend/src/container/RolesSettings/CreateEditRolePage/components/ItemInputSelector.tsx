@@ -131,7 +131,7 @@ function ItemInputSelector({
 				onChange={handleInputChange}
 				onKeyDown={handleInputKeyDown}
 				onBlur={handleInputBlur}
-				data-testid={`item-input-selector-input-${testId}`}
+				testId={`item-input-selector-input-${testId}`}
 				prefix={prefixElement}
 				suffix={
 					<Button

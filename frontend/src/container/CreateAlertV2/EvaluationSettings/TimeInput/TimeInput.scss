@@ -3,42 +3,13 @@
 	align-items: center;
 	gap: 0;
 
-	.time-input-field {
-		width: 40px;
-		height: 32px;
-		background-color: var(--l2-background);
-		border: 1px solid var(--l1-border);
-		color: var(--l1-foreground);
-		font-family: 'Space Mono', monospace;
-		font-size: 13px;
-		font-weight: 600;
+	// A clock reads as fixed-width digits, and each field is only 40px wide, so the
+	// default padding would clip a two digit value.
+	--input-font-family: 'Space Mono', monospace;
+	--input-padding: 0 4px;
+
+	input {
 		text-align: center;
-		border-radius: 4px;
-
-		&::placeholder {
-			color: var(--l2-foreground);
-			font-family: 'Space Mono', monospace;
-		}
-
-		&:hover {
-			border-color: var(--l1-border);
-		}
-
-		&:focus {
-			border-color: var(--l1-border);
-			box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
-			outline: none;
-		}
-
-		&:disabled {
-			background-color: var(--l2-background);
-			color: var(--l2-foreground);
-			cursor: not-allowed;
-
-			&:hover {
-				border-color: var(--l1-border);
-			}
-		}
 	}
 
 	.time-input-separator {

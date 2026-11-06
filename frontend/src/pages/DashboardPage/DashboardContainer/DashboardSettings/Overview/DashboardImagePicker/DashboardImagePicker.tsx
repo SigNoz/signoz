@@ -1,9 +1,5 @@
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-} from '@signozhq/ui/select';
+import { useRef } from 'react';
+import { Select } from '@signozhq/ui/select';
 import cx from 'classnames';
 import {
 	resolveDashboardImage,
@@ -18,7 +14,9 @@ interface Props {
 	image: string;
 	onChange: (value: string) => void;
 	// Consumers set the trigger's border-radius (e.g. rounded-left when joined to
-	// a name input); this component owns size / background / icon-only styling.
+	// a name input) through `--select-trigger-border-radius` in this class, which
+	// lands on the picker's wrapper; this component owns size / background /
+	// icon-only styling.
 	triggerClassName?: string;
 }
 
@@ -30,24 +28,33 @@ function DashboardImagePicker({
 	onChange,
 	triggerClassName,
 }: Props): JSX.Element {
+	// The popup is portalled into the wrapper (`container`) so the icon menu keeps
+	// its narrow width via the `.picker` descendant rules.
+	const pickerRef = useRef<HTMLDivElement>(null);
 	const isCustom = !!image && !SYSTEM_ICON_PATHS.includes(image);
 	const options = isCustom ? [image, ...SYSTEM_ICON_PATHS] : SYSTEM_ICON_PATHS;
 
 	return (
-		<Select value={image} onChange={(value): void => onChange(value as string)}>
-			<SelectTrigger className={cx(styles.trigger, triggerClassName)} />
-			<SelectContent className={styles.options} withPortal={false}>
-				{options.map((icon) => (
-					<SelectItem key={icon} value={icon} className={styles.item}>
+		<div ref={pickerRef} className={cx(styles.picker, triggerClassName)}>
+			<Select
+				aria-label="Dashboard icon"
+				placeholder="Select an icon"
+				items={options.map((icon) => ({
+					type: 'item' as const,
+					value: icon,
+					label: (
 						<img
 							src={resolveDashboardImage(icon)}
 							alt="dashboard-icon"
 							className={styles.image}
 						/>
-					</SelectItem>
-				))}
-			</SelectContent>
-		</Select>
+					),
+				}))}
+				value={image}
+				onChange={onChange}
+				container={pickerRef}
+			/>
+		</div>
 	);
 }
 

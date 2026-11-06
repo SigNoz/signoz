@@ -440,9 +440,9 @@ export const clickAction = async (
 	const item = await screen.findByText(label);
 	const menuItem = item.closest('[role="menuitem"]') ?? item;
 
-	await waitFor(() => {
-		expect(menuItem).not.toHaveAttribute('aria-disabled', 'true');
-		expect(menuItem).not.toHaveAttribute('data-disabled');
+	await waitFor(async () => {
+		await expect(menuItem).not.toHaveAttribute('aria-disabled', 'true');
+		await expect(menuItem).not.toHaveAttribute('data-disabled');
 	});
 	await userEvent.click(menuItem);
 };
@@ -615,7 +615,7 @@ export const pickVariableType = async (type: VariableType): Promise<void> => {
 };
 
 export const typeVariableName = async (name: string): Promise<void> => {
-	const input = await screen.findByTestId('variable-name');
+	const input = await screen.findByTestId('variable-name-field');
 
 	await userEvent.clear(input);
 	await userEvent.type(input, name);

@@ -3,7 +3,7 @@ import { useQueries, useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import {
@@ -207,7 +207,7 @@ function TimeSeries({
 						});
 					},
 					onError: () => {
-						toast.error('Failed to save unit');
+						toast.danger('Failed to save unit', { action: { label: 'Dismiss' } });
 					},
 				},
 			);

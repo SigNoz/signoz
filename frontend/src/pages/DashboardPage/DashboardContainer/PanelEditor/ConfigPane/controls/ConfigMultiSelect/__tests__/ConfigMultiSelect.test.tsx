@@ -35,6 +35,7 @@ describe('ConfigMultiSelect', () => {
 			<ConfigMultiSelect
 				testId="multi"
 				value={['c']}
+				placeholder="Every group key"
 				items={ITEMS}
 				onChange={onChange}
 			/>,

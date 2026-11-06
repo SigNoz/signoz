@@ -13,28 +13,11 @@
 		max-width: 736px;
 
 		.title {
-			color: var(--l1-foreground);
-			font-size: var(--font-size-lg);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 28px;
-			letter-spacing: -0.09px;
-
 			width: 72%; // arbitrary number to match input width
 			display: flex;
 			align-items: center;
 			gap: 8px;
 			justify-content: space-between;
-		}
-
-		.subtitle {
-			color: var(--l2-foreground);
-			font-size: var(--font-size-sm);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 20px;
-			/* 142.857% */
-			letter-spacing: -0.07px;
 		}
 
 		.ingestion-keys-search-add-new {
@@ -371,6 +354,7 @@
 
 							.subtitle {
 								font-size: 11px;
+								color: var(--l2-foreground);
 							}
 
 							padding: 4px 0px;

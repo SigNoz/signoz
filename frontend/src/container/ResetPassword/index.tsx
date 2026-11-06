@@ -89,7 +89,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 					<Typography.Title level={4} className="reset-password-header-title">
 						Reset Your Password
 					</Typography.Title>
-					<Typography.Text className="reset-password-header-subtitle">
+					<Typography.Text color="muted">
 						Monitor your applications. Find what is causing issues.
 					</Typography.Text>
 					{version && (
@@ -142,15 +142,11 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 					</div>
 
 					{showPasswordMismatchError && (
-						<Callout
-							type="error"
-							size="small"
-							showIcon
-							icon={<CircleAlert size={12} />}
-							className="reset-password-error-callout"
-						>
-							Passwords don&apos;t match. Please try again.
-						</Callout>
+						<div className="reset-password-error-callout">
+							<Callout color="danger" size="sm" icon={<CircleAlert />}>
+								Passwords don&apos;t match. Please try again.
+							</Callout>
+						</div>
 					)}
 
 					{errorMessage && !showPasswordMismatchError && (

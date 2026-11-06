@@ -64,8 +64,6 @@ function ViewsRail({
 	onDelete,
 	onRename,
 }: Props): JSX.Element {
-	const [saveOpen, setSaveOpen] = useState(false);
-	const [renamingId, setRenamingId] = useState<string | null>(null);
 	const [query, setQuery] = useState('');
 	const { contextHolder, confirmDelete } = useDeleteConfirm();
 
@@ -139,8 +137,6 @@ function ViewsRail({
 				{row.deletable && (
 					<div className={styles.itemActions}>
 						<ViewNamePopover
-							open={renamingId === row.id}
-							onOpenChange={(open): void => setRenamingId(open ? row.id : null)}
 							onSubmit={(name): void => {
 								void logEvent(DashboardListEvents.ViewRenamed, {});
 								onRename(row.id, name);
@@ -150,18 +146,21 @@ function ViewsRail({
 							initialName={row.label}
 							testIdPrefix="rename-view"
 							tooltip="Rename view"
-							trigger={
+							trigger={(open): JSX.Element => (
 								<Button
 									variant="ghost"
 									color="secondary"
 									size="sm"
 									icon
 									aria-label="Rename view"
-									onClick={(e): void => e.stopPropagation()}
+									onClick={(e): void => {
+										e.stopPropagation();
+										open(e.currentTarget);
+									}}
 								>
 									<PenLine size={12} />
 								</Button>
-							}
+							)}
 						/>
 						<Tooltip title="Delete view">
 							<Button
@@ -199,14 +198,12 @@ function ViewsRail({
 					<div className={styles.header}>
 						<h4 className={styles.headerTitle}>Views</h4>
 						<ViewNamePopover
-							open={saveOpen}
-							onOpenChange={setSaveOpen}
 							onSubmit={handleSaveAsView}
 							title="Save as view"
 							confirmLabel="Save view"
 							testIdPrefix="save-view"
 							tooltip="Save current filters as a view"
-							trigger={
+							trigger={(open): JSX.Element => (
 								<Button
 									aria-label="Save current filters as a view"
 									variant="ghost"
@@ -214,10 +211,11 @@ function ViewsRail({
 									size="sm"
 									icon
 									testId="dashboards-view-save-trigger"
+									onClick={(e): void => open(e.currentTarget)}
 								>
 									<Plus size={14} />
 								</Button>
-							}
+							)}
 						/>
 					</div>
 
@@ -297,14 +295,23 @@ function ViewsRail({
 								>
 									Save
 								</Button>
-								<Button
-									variant="outlined"
-									color="secondary"
-									size="sm"
-									onClick={(): void => setSaveOpen(true)}
-								>
-									Save as…
-								</Button>
+								<ViewNamePopover
+									onSubmit={handleSaveAsView}
+									title="Save as view"
+									confirmLabel="Save view"
+									testIdPrefix="save-view"
+									tooltip="Save current filters as a view"
+									trigger={(open): JSX.Element => (
+										<Button
+											variant="outlined"
+											color="secondary"
+											size="sm"
+											onClick={(e): void => open(e.currentTarget)}
+										>
+											Save as…
+										</Button>
+									)}
+								/>
 								<Button variant="ghost" color="secondary" size="sm" onClick={onReset}>
 									Reset
 								</Button>
@@ -316,16 +323,25 @@ function ViewsRail({
 						<div className={cx(styles.dirtyPanel, styles.dirtyPanelDefault)}>
 							<div className={styles.dirtyTitle}>Filters active</div>
 							<div className={styles.dirtyActions}>
-								<Button
-									variant="solid"
-									color="primary"
-									size="sm"
-									prefix={<Plus size={12} />}
-									onClick={(): void => setSaveOpen(true)}
-									testId="dashboards-view-save-as-new"
-								>
-									Save as new view
-								</Button>
+								<ViewNamePopover
+									onSubmit={handleSaveAsView}
+									title="Save as view"
+									confirmLabel="Save view"
+									testIdPrefix="save-view"
+									tooltip="Save current filters as a view"
+									trigger={(open): JSX.Element => (
+										<Button
+											variant="solid"
+											color="primary"
+											size="sm"
+											prefix={<Plus size={12} />}
+											onClick={(e): void => open(e.currentTarget)}
+											testId="dashboards-view-save-as-new"
+										>
+											Save as new view
+										</Button>
+									)}
+								/>
 								<Button variant="ghost" color="secondary" size="sm" onClick={onReset}>
 									Reset
 								</Button>

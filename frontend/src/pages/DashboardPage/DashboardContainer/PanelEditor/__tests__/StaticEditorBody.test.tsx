@@ -34,7 +34,7 @@ jest.mock(
 		default: (): JSX.Element => <div data-testid="static-preview-body" />,
 	}),
 );
-jest.mock('@signozhq/ui/sonner', () => ({ toast: { success: jest.fn() } }));
+jest.mock('@signozhq/ui/toast', () => ({ toast: { success: jest.fn() } }));
 jest.mock('providers/ErrorModalProvider', () => ({
 	useErrorModal: (): unknown => ({ showErrorModal: jest.fn() }),
 }));

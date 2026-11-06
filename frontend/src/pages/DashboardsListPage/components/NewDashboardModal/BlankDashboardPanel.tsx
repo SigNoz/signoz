@@ -4,7 +4,7 @@ import { Input as AntInput } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { AxiosError } from 'axios';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import logEvent from 'api/common/logEvent';
@@ -76,7 +76,9 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 			);
 		} catch (e) {
 			showErrorModal(e as APIError);
-			toast.error((e as AxiosError).toString() || 'Failed to create dashboard');
+			toast.danger((e as AxiosError).toString() || 'Failed to create dashboard', {
+				action: { label: 'Dismiss' },
+			});
 			setSubmitting(false);
 		}
 	};
@@ -94,22 +96,23 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 							onChange={setImage}
 							triggerClassName={styles.imageTrigger}
 						/>
-						<Input
-							className={styles.titleInput}
-							value={name}
-							autoFocus
-							maxLength={DASHBOARD_NAME_MAX_LENGTH}
-							placeholder="e.g. Sample Dashboard"
-							testId="create-dashboard-name"
-							onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-								setName(e.target.value)
-							}
-							onKeyDown={(e): void => {
-								if (e.key === 'Enter') {
-									void handleCreate();
+						<div className={styles.titleInput}>
+							<Input
+								value={name}
+								autoFocus
+								maxLength={DASHBOARD_NAME_MAX_LENGTH}
+								placeholder="e.g. Sample Dashboard"
+								testId="create-dashboard-name"
+								onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+									setName(e.target.value)
 								}
-							}}
-						/>
+								onKeyDown={(e): void => {
+									if (e.key === 'Enter') {
+										void handleCreate();
+									}
+								}}
+							/>
+						</div>
 					</div>
 				</div>
 

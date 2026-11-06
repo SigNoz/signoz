@@ -45,8 +45,8 @@ const mockAliases = [
 	},
 	{
 		// jest: not replaced, a test asserts on the toast it fires.
-		find: /^@signozhq\/ui\/sonner$/,
-		replacement: `${srcPath}/storybook/mocks/sonner.mock.tsx`,
+		find: /^@signozhq\/ui\/toast$/,
+		replacement: `${srcPath}/storybook/mocks/toast.mock.tsx`,
 	},
 ];
 

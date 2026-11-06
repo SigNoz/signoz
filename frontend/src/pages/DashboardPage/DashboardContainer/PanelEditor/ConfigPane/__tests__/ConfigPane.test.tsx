@@ -155,7 +155,7 @@ describe('ConfigPane', () => {
 	it('renders the seeded title and description', () => {
 		renderConfigPane();
 
-		expect(screen.getByTestId('panel-editor-v2-title')).toHaveValue('CPU');
+		expect(screen.getByTestId('panel-editor-v2-title-field')).toHaveValue('CPU');
 		expect(screen.getByTestId('panel-editor-v2-description')).toHaveValue(
 			'usage',
 		);
@@ -165,7 +165,7 @@ describe('ConfigPane', () => {
 		const user = userEvent.setup();
 		const { onChangeSpec } = renderConfigPane();
 
-		const title = screen.getByTestId('panel-editor-v2-title');
+		const title = screen.getByTestId('panel-editor-v2-title-field');
 		await user.clear(title);
 		await user.type(title, 'Memory');
 

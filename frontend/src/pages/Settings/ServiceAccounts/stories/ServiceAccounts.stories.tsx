@@ -314,7 +314,11 @@ export const AccountCreatedToast: Story = {
 	parameters: at('create-sa=true'),
 	play: async ({ args }): Promise<void> => {
 		await userEvent.type(
-			await screen.findByTestId('create-sa-name-input', undefined, untilLoaded),
+			await screen.findByTestId(
+				'create-sa-name-input-field',
+				undefined,
+				untilLoaded,
+			),
 			'release-signer',
 		);
 		await userEvent.click(

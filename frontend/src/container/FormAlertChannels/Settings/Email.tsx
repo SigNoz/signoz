@@ -26,7 +26,7 @@ function EmailForm(): JSX.Element {
 						{...register('to')}
 						aria-required
 						placeholder={t('placeholder_email_to')}
-						data-testid="email-to-textbox"
+						testId="email-to-textbox"
 					/>
 				</FormField>
 			</FormCard>

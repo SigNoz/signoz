@@ -5,7 +5,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
@@ -409,7 +409,8 @@ function EditMemberDrawer({
 				setShowResetLinkDialog(true);
 				onClose();
 			} else {
-				toast.error('Failed to generate password reset link', {
+				toast.danger('Failed to generate password reset link', {
+					action: { label: 'Dismiss' },
 					position: 'top-right',
 				});
 			}
@@ -438,7 +439,7 @@ function EditMemberDrawer({
 
 	useEffect(() => {
 		if (copyState.error) {
-			toast.error('Failed to copy link');
+			toast.danger('Failed to copy link', { action: { label: 'Dismiss' } });
 		}
 	}, [copyState.error]);
 
@@ -471,20 +472,19 @@ function EditMemberDrawer({
 				<label className="edit-member-drawer__label" htmlFor="member-name">
 					Name
 				</label>
-				<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
-					<Input
-						id="member-name"
-						value={localDisplayName}
-						onChange={(e): void => {
-							setLocalDisplayName(e.target.value);
-							setSaveErrors((prev) =>
-								prev.filter((err) => err.context !== 'Name update'),
-							);
-						}}
-						placeholder="Enter name"
-						disabled={isRootUser || isDeleted}
-					/>
-				</Tooltip>
+				<Input
+					id="member-name"
+					value={localDisplayName}
+					onChange={(e): void => {
+						setLocalDisplayName(e.target.value);
+						setSaveErrors((prev) =>
+							prev.filter((err) => err.context !== 'Name update'),
+						);
+					}}
+					placeholder="Enter name"
+					disabled={isRootUser || isDeleted}
+					disabledTooltip={isRootUser ? ROOT_USER_TOOLTIP : undefined}
+				/>
 			</div>
 
 			<div className="edit-member-drawer__field">

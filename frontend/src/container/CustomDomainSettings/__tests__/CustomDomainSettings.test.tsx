@@ -12,11 +12,11 @@ jest.mock('components/LaunchChatSupport/LaunchChatSupport', () => ({
 	),
 }));
 
-const mockToastCustom = jest.fn();
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+const mockToastInfo = jest.fn();
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
-		custom: (...args: unknown[]): unknown => mockToastCustom(...args),
+		info: (...args: unknown[]): unknown => mockToastInfo(...args),
 		dismiss: jest.fn(),
 	},
 }));
@@ -55,7 +55,7 @@ describe('CustomDomainSettings', () => {
 
 	afterEach(() => {
 		server.resetHandlers();
-		mockToastCustom.mockClear();
+		mockToastInfo.mockClear();
 	});
 
 	it('renders active host URL in the trigger button', async () => {
@@ -168,7 +168,7 @@ describe('CustomDomainSettings', () => {
 		expect(hrefs).toContain('https://custom-host.test.cloud');
 	});
 
-	it('calls toast.custom with new URL after successful domain update', async () => {
+	it('calls toast.info with new URL after successful domain update', async () => {
 		server.use(
 			rest.put(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({})),
@@ -184,17 +184,22 @@ describe('CustomDomainSettings', () => {
 		fireEvent.change(input, { target: { value: 'myteam' } });
 		fireEvent.click(screen.getByRole('button', { name: /apply changes/i }));
 
-		// Verify toast.custom was called
+		// Verify toast.info was called
 		await waitFor(() => {
-			expect(mockToastCustom).toHaveBeenCalledTimes(1);
+			expect(mockToastInfo).toHaveBeenCalledTimes(1);
 		});
 
 		// Render the toast element to verify its content
-		const toastRenderer = mockToastCustom.mock.calls[0][0] as (
-			id: string,
-		) => JSX.Element;
-		const { container } = render(toastRenderer('test-id'));
+		const toastElement = mockToastInfo.mock.calls[0][0] as JSX.Element;
+		const { container } = render(toastElement);
 		expect(container).toHaveTextContent(/myteam\.test\.cloud/i);
+		expect(mockToastInfo.mock.calls[0][1]).toStrictEqual(
+			expect.objectContaining({
+				id: 'domain-update:https://myteam.test.cloud',
+				timeout: 5000,
+				position: 'bottom-right',
+			}),
+		);
 	});
 
 	describe('Workspace Name rendering', () => {

@@ -47,7 +47,7 @@ const fillName = async (
 	name: string,
 ): Promise<void> => {
 	await userEvent.type(
-		await within(canvasElement).findByTestId('channel-name-textbox'),
+		await within(canvasElement).findByTestId('channel-name-textbox-field'),
 		name,
 	);
 };
@@ -81,7 +81,7 @@ export const InvalidRequiredFields: Story = {
 		// Save stays off until the form is touched, so filling the webhook first is
 		// how a missing name is reached.
 		await userEvent.type(
-			await canvas.findByTestId('webhook-url-textbox'),
+			await canvas.findByTestId('webhook-url-textbox-field'),
 			'https://hooks.slack.com/services/T/B/X',
 		);
 		await userEvent.click(canvas.getByTestId('save-channel-button'));
@@ -100,11 +100,11 @@ export const TestChannelFailure: Story = {
 		const canvas = within(canvasElement);
 
 		await userEvent.type(
-			await canvas.findByTestId('channel-name-textbox'),
+			await canvas.findByTestId('channel-name-textbox-field'),
 			'Storybook channel',
 		);
 		await userEvent.type(
-			await canvas.findByTestId('webhook-url-textbox'),
+			await canvas.findByTestId('webhook-url-textbox-field'),
 			'https://hooks.slack.com/services/storybook',
 		);
 		await userEvent.click(await canvas.findByTestId('test-channel-button'));
@@ -122,11 +122,11 @@ export const SaveFailure: Story = {
 		const canvas = within(canvasElement);
 
 		await userEvent.type(
-			await canvas.findByTestId('channel-name-textbox'),
+			await canvas.findByTestId('channel-name-textbox-field'),
 			'Storybook channel',
 		);
 		await userEvent.type(
-			await canvas.findByTestId('webhook-url-textbox'),
+			await canvas.findByTestId('webhook-url-textbox-field'),
 			'https://hooks.slack.com/services/storybook',
 		);
 		await userEvent.click(await canvas.findByTestId('save-channel-button'));
@@ -152,7 +152,7 @@ export const WebhookBasicAuth: Story = {
 		await selectChannelType(canvasElement, /^Webhook$/);
 		await fillName(canvasElement, 'alerts-webhook');
 		await userEvent.type(
-			canvas.getByTestId('webhook-url-textbox'),
+			canvas.getByTestId('webhook-url-textbox-field'),
 			'https://example.com/hook',
 		);
 		await userEvent.click(canvas.getByTestId('webhook-auth-radio-item-basic'));
@@ -160,7 +160,7 @@ export const WebhookBasicAuth: Story = {
 
 		await canvas.findByText('Enter a username or password');
 		await expect(
-			canvas.queryByTestId('webhook-bearer-token-textbox'),
+			canvas.queryByTestId('webhook-bearer-token-textbox-field'),
 		).not.toBeInTheDocument();
 	},
 };
@@ -176,7 +176,7 @@ export const WebhookBearerAuth: Story = {
 		await selectChannelType(canvasElement, /^Webhook$/);
 		await fillName(canvasElement, 'alerts-webhook');
 		await userEvent.type(
-			canvas.getByTestId('webhook-url-textbox'),
+			canvas.getByTestId('webhook-url-textbox-field'),
 			'https://example.com/hook',
 		);
 		await userEvent.click(canvas.getByTestId('webhook-auth-radio-item-bearer'));
@@ -184,7 +184,7 @@ export const WebhookBearerAuth: Story = {
 
 		await canvas.findByText('Enter a bearer token');
 		await expect(
-			canvas.queryByTestId('webhook-username-textbox'),
+			canvas.queryByTestId('webhook-username-textbox-field'),
 		).not.toBeInTheDocument();
 	},
 };
@@ -200,13 +200,19 @@ export const SlackRowErrors: Story = {
 
 		await fillName(canvasElement, 'alerts-slack');
 		await userEvent.type(
-			canvas.getByTestId('webhook-url-textbox'),
+			canvas.getByTestId('webhook-url-textbox-field'),
 			'https://hooks.slack.com/services/T/B/X',
 		);
 		await userEvent.click(canvas.getByTestId('slack-field-add'));
-		await userEvent.type(canvas.getByTestId('slack-field-title-0'), 'Region');
+		await userEvent.type(
+			canvas.getByTestId('slack-field-title-0-field'),
+			'Region',
+		);
 		await userEvent.click(canvas.getByTestId('slack-action-add'));
-		await userEvent.type(canvas.getByTestId('slack-action-text-0'), 'Dashboard');
+		await userEvent.type(
+			canvas.getByTestId('slack-action-text-0-field'),
+			'Dashboard',
+		);
 		await userEvent.click(canvas.getByTestId('save-channel-button'));
 
 		await canvas.findByText('Enter a value for this field');
@@ -258,7 +264,7 @@ export const GoogleChatRelayURL: Story = {
 		await selectChannelType(canvasElement, /^Google Chat$/);
 		await fillName(canvasElement, 'alerts-google-chat');
 		await userEvent.type(
-			within(canvasElement).getByTestId('webhook-url-textbox'),
+			within(canvasElement).getByTestId('webhook-url-textbox-field'),
 			'http://chat-relay.internal/v1/spaces/OPS/messages',
 		);
 
@@ -287,13 +293,22 @@ export const JiraProxySite: Story = {
 		await selectChannelType(canvasElement, /^Jira$/);
 		await fillName(canvasElement, 'alerts-jira');
 		await userEvent.type(
-			canvas.getByTestId('jira-site-textbox'),
+			canvas.getByTestId('jira-site-textbox-field'),
 			'https://jira-proxy.acme.internal',
 		);
-		await userEvent.type(canvas.getByTestId('jira-email-textbox'), 'ops@acme.io');
-		await userEvent.type(canvas.getByTestId('jira-api-token-textbox'), 'token');
-		await userEvent.type(canvas.getByTestId('jira-project-textbox'), 'OPS');
-		await userEvent.type(canvas.getByTestId('jira-issue-type-textbox'), 'Bug');
+		await userEvent.type(
+			canvas.getByTestId('jira-email-textbox-field'),
+			'ops@acme.io',
+		);
+		await userEvent.type(
+			canvas.getByTestId('jira-api-token-textbox-field'),
+			'token',
+		);
+		await userEvent.type(canvas.getByTestId('jira-project-textbox-field'), 'OPS');
+		await userEvent.type(
+			canvas.getByTestId('jira-issue-type-textbox-field'),
+			'Bug',
+		);
 
 		await sendTest(canvasElement);
 	},
@@ -325,11 +340,11 @@ export const IncidentIOBearerToken: Story = {
 		await selectChannelType(canvasElement, /^incident\.io$/);
 		await fillName(canvasElement, 'alerts-incidentio');
 		await userEvent.type(
-			canvas.getByTestId('incidentio-url-textbox'),
+			canvas.getByTestId('incidentio-url-textbox-field'),
 			'https://incidentio-relay.internal/alerts',
 		);
 		await userEvent.type(
-			canvas.getByTestId('incidentio-token-textbox'),
+			canvas.getByTestId('incidentio-token-textbox-field'),
 			'Bearer story-token',
 		);
 		await userEvent.click(canvas.getByTestId('save-channel-button'));
@@ -356,7 +371,7 @@ export const TelegramRequiredFields: Story = {
 
 		await selectChannelType(canvasElement, /^Telegram$/);
 		await userEvent.type(
-			await canvas.findByTestId('channel-name-textbox'),
+			await canvas.findByTestId('channel-name-textbox-field'),
 			'alerts-telegram',
 		);
 		await userEvent.click(await canvas.findByTestId('save-channel-button'));
@@ -379,13 +394,13 @@ export const RequiredFields: Story = {
 		const canvas = within(canvasElement);
 
 		await expect(
-			await canvas.findByTestId('channel-name-textbox', undefined, {
+			await canvas.findByTestId('channel-name-textbox-field', undefined, {
 				timeout: 15_000,
 			}),
 		).toHaveAttribute('aria-required', 'true');
 		// slack is the kind the form opens on, and its webhook URL is its one
 		// required spec field
-		await expect(canvas.getByTestId('webhook-url-textbox')).toHaveAttribute(
+		await expect(canvas.getByTestId('webhook-url-textbox-field')).toHaveAttribute(
 			'aria-required',
 			'true',
 		);

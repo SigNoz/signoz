@@ -69,8 +69,10 @@ function IntergrationsUninstallBar(
 	return (
 		<div className="uninstall-integration-bar">
 			<div className="unintall-integration-bar-text">
-				<Typography.Text className="heading">Remove Integration</Typography.Text>
-				<Typography.Text className="subtitle">
+				<Typography.Text size="lg" className="heading">
+					Remove Integration
+				</Typography.Text>
+				<Typography.Text size="lg" className="subtitle">
 					Removing the {integrationTitle} integration would make your workspace stop
 					listening for data from {integrationTitle} instances.
 				</Typography.Text>

@@ -3,7 +3,7 @@ import { navigate } from 'lib/router/navigation';
 import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -55,14 +55,16 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 				setIsRequestIntegrationDialogOpen(false);
 				setIsSubmittingRequestForIntegration(false);
 			} else {
-				toast.error(response.error || 'Something went wrong', {
+				toast.danger(response.error || 'Something went wrong', {
+					action: { label: 'Dismiss' },
 					position: 'top-right',
 				});
 
 				setIsSubmittingRequestForIntegration(false);
 			}
 		} catch (error) {
-			toast.error('Something went wrong', {
+			toast.danger('Something went wrong', {
+				action: { label: 'Dismiss' },
 				position: 'top-right',
 			});
 			setIsSubmittingRequestForIntegration(false);
@@ -71,13 +73,20 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 
 	return (
 		<div className="integrations-header">
-			<Typography.Title className="title">Integrations</Typography.Title>
+			<Typography variant="title" size="large" weight="medium" className="title">
+				Integrations
+			</Typography>
 			<Flex
 				justify="space-between"
 				align="center"
 				className="integrations-header__subrow"
 			>
-				<Typography.Text className="subtitle">
+				<Typography.Text
+					size="lg"
+					color="muted"
+					display="block"
+					className="subtitle"
+				>
 					Manage integrations for this workspace.
 				</Typography.Text>
 			</Flex>
@@ -123,6 +132,7 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 								}
 							}}
 							disabled={isSubmittingRequestForIntegration}
+							disabledTooltip={undefined}
 						/>
 					</div>
 

@@ -64,6 +64,70 @@ export const LongMultilineToast: Story = {
 	},
 };
 
+/** A request still in flight: the loading toast stays until the promise settles. */
+export const PromiseLoadingToast: Story = {
+	args: { state: 'promise-loading-toast' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			within(canvasElement).getByTestId('show-feedback-toast'),
+		);
+		await expect(
+			await screen.findByText('Enabling the alert rule'),
+		).toBeVisible();
+	},
+};
+
+/** A failed request: the rejected toast keeps a Dismiss action, stacked top-center. */
+export const PromiseErrorToast: Story = {
+	args: { state: 'promise-error-toast' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			within(canvasElement).getByTestId('show-feedback-toast'),
+		);
+		await expect(
+			await screen.findByText('Could not clone the panel'),
+		).toBeVisible();
+		await screen.findByRole('button', { name: 'Dismiss' });
+	},
+};
+
+/** A warning that stays up, matching invites that only partly succeed. */
+export const WarningToast: Story = {
+	args: { state: 'warning-toast' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			within(canvasElement).getByTestId('show-feedback-toast'),
+		);
+		await expect(await screen.findByText('Some invites failed')).toBeVisible();
+	},
+};
+
+/** An info toast pinned to the bottom-right stack, as export cancellation does. */
+export const InfoToast: Story = {
+	args: { state: 'info-toast' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			within(canvasElement).getByTestId('show-feedback-toast'),
+		);
+		await expect(await screen.findByText('Export cancelled')).toBeVisible();
+	},
+};
+
+/** A danger toast with a description and a Dismiss action, bottom-right. */
+export const DangerWithDescription: Story = {
+	args: { state: 'danger-description-toast' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			within(canvasElement).getByTestId('show-feedback-toast'),
+		);
+		await expect(
+			await screen.findByText('Failed to update account settings'),
+		).toBeVisible();
+		await screen.findByText(/does not have permission/i);
+		await screen.findByRole('button', { name: 'Dismiss' });
+	},
+};
+
 /** Mutation: the inline application alert preserves its action affordance. */
 export const InlineAlert: Story = {
 	args: { state: 'inline-alert' },

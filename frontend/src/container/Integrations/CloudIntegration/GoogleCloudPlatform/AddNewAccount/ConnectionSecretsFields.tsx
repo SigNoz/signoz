@@ -1,6 +1,6 @@
 import { Lock } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
 import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
@@ -156,10 +156,10 @@ function ConnectionSecretsFields({
 										label={field.label}
 										tooltip={field.tooltip}
 										error={fieldState.error}
+										className={styles.monoInput}
 									>
 										<Input
 											id={field.testId}
-											className={cx(styles.fullWidth, styles.mono)}
 											placeholder={field.placeholder}
 											value={rhfField.value}
 											onChange={(e): void => rhfField.onChange(e.target.value)}

@@ -102,12 +102,10 @@
 	letter-spacing: -0.07px;
 }
 
-/** Surface and metrics come from the `--input-*` tokens above; only the family has none. */
-.numberInput {
-	width: 104px;
-
-	font-family: 'Geist Mono';
-	letter-spacing: -0.07px;
+/** Surface and metrics come from the `--input-*` tokens; the family and tracking are set here. */
+.numberField {
+	--input-font-family: 'Geist Mono';
+	--input-letter-spacing: -0.07px;
 }
 
 /** Unfilled: a pill on the same row as the toggles above reads as another control,

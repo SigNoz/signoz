@@ -134,10 +134,10 @@ export const openSelectorWizard = async (
 /** Clicks save once the permission check behind the button has answered. */
 export const save = async (canvasElement: HTMLElement): Promise<void> => {
 	const button = await waitFor(
-		() => {
+		async () => {
 			const found = within(canvasElement).getByTestId('save-button');
 
-			expect(found).not.toHaveAttribute('aria-disabled', 'true');
+			await expect(found).not.toHaveAttribute('aria-disabled', 'true');
 
 			return found;
 		},

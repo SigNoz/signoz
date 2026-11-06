@@ -55,6 +55,34 @@ export const ModelCostActionsMenu: Story = {
 	},
 };
 
+/** Models seen in spans that no rule prices yet. */
+export const UnpricedModels: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'tab',
+				{ name: /unpriced models/i },
+				{ timeout: 15000 },
+			),
+		);
+		await screen.findByRole('tab', { name: /unpriced models/i, selected: true });
+	},
+};
+
+/** Creating a rule: the provider select starts empty and enabled. */
+export const ModelCostDrawerCreate: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: /add model cost/i },
+				{ timeout: 15000 },
+			),
+		);
+		await screen.findByText('Select a provider');
+	},
+};
+
 /** The first pricing rule's drawer, opened from its row menu. */
 export const ModelCostDrawer: Story = {
 	play: async (context): Promise<void> => {

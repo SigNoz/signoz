@@ -3,7 +3,7 @@ import { DialogWrapper } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowUpRight, Copy, RotateCw } from '@signozhq/icons';
 import { useCopyToClipboard } from 'react-use';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';

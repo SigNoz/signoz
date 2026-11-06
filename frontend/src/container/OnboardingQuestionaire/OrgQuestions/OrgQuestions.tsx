@@ -139,10 +139,18 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 		<div className="questions-container">
 			<div className="onboarding-header-section">
 				<div className="onboarding-header-icon">🎉</div>
-				<Typography.Title level={4} className="onboarding-header-title">
+				<Typography.Title
+					level={4}
+					align="center"
+					className="onboarding-header-title"
+				>
 					Welcome to SigNoz Cloud
 				</Typography.Title>
-				<Typography.Text className="onboarding-header-subtitle">
+				<Typography.Text
+					align="center"
+					color="muted"
+					className="onboarding-header-subtitle"
+				>
 					Let&apos;s get you started
 				</Typography.Text>
 			</div>
@@ -162,16 +170,19 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 								value: tool,
 								label:
 									tool === 'Others' && observabilityTool === 'Others' ? (
-										<Input
-											type="text"
+										<div
 											className="onboarding-questionaire-other-input"
-											placeholder="What tool do you currently use?"
-											value={otherTool || ''}
-											autoFocus
 											style={{ userSelect: 'text' }}
-											onKeyDown={(e): void => e.stopPropagation()}
-											onChange={(e): void => setOtherTool(e.target.value)}
-										/>
+										>
+											<Input
+												type="text"
+												placeholder="What tool do you currently use?"
+												value={otherTool || ''}
+												autoFocus
+												onKeyDown={(e): void => e.stopPropagation()}
+												onChange={(e): void => setOtherTool(e.target.value)}
+											/>
+										</div>
 									) : (
 										label
 									),

@@ -1,6 +1,6 @@
 import { Copy } from '@signozhq/icons';
 import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
 import { useLayoutEffect, useRef, useState } from 'react';

@@ -13,11 +13,11 @@ import UnpricedModelsTab from '../UnpricedModelsTab';
 
 const toastSuccess = jest.fn();
 const toastError = jest.fn();
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: (...args: unknown[]): void => toastSuccess(...args),
-		error: (...args: unknown[]): void => toastError(...args),
+		danger: (...args: unknown[]): void => toastError(...args),
 	},
 }));
 
@@ -175,6 +175,6 @@ describe('UnpricedModelsTab (integration)', () => {
 		// The shared add-cost drawer opens with the model name prefilled.
 		const drawerTitle = await screen.findByText('Add model cost');
 		expect(drawerTitle).toBeInTheDocument();
-		expect(screen.getByTestId('drawer-model-id-input')).toHaveValue(MODEL);
+		expect(screen.getByTestId('drawer-model-id-input-field')).toHaveValue(MODEL);
 	});
 });

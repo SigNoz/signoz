@@ -4,7 +4,7 @@ import { ArrowLeft, X } from '@signozhq/icons';
 import { Divider } from '@signozhq/ui/divider';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper, DrawerWrapperProps } from '@signozhq/ui/drawer';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Typography } from '@signozhq/ui/typography';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import APIError from 'types/api/error';
@@ -259,7 +259,7 @@ export default function K8sBaseDetails<T>({
 					<X />
 				</Button>
 			)}
-			<Divider type="vertical" />
+			<Divider orientation="vertical" />
 			<span className={styles.entityKind} data-testid="drawer-entity-kind">
 				<CategoryIcon category={category} />
 				{K8S_CATEGORY_SINGULAR_LABELS[category]}

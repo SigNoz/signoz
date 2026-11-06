@@ -28,37 +28,12 @@
 	width: 200px;
 }
 
-.sourceLabel {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-}
-
 .label {
 	color: var(--l2-foreground);
 	font-family: Inter;
 	font-size: 14px;
 	font-weight: 400;
 	line-height: 20px;
-}
-
-.column {
-	flex-direction: column;
-	gap: 8px;
-}
-
-.input,
-.textarea,
-.defaultInput {
-	padding: 6px 6px 6px 8px;
-	border: 1px solid var(--l2-border);
-	border-radius: 2px;
-	background: var(--l3-background);
-}
-
-.input,
-.textarea {
-	width: 100%;
 }
 
 .defaultInput {
@@ -99,11 +74,6 @@
 	@media (max-width: 1440px) {
 		flex-wrap: wrap;
 	}
-}
-
-/* Active tab panel — reset the Tabs default padding; body rows handle spacing. */
-.typePanel {
-	padding: 0 !important;
 }
 
 .typeContent {
@@ -249,16 +219,6 @@
 	overflow-y: auto;
 }
 
-.previewValues [data-slot='badge'] {
-	height: 30px;
-	align-items: center;
-	color: var(--l1-foreground);
-	font-family: 'Space Mono';
-	font-size: 14px;
-	border: 1px solid var(--l1-border);
-	border-radius: 2px;
-}
-
 .previewError {
 	color: var(--bg-amber-500);
 }
@@ -266,8 +226,7 @@
 /* Sort / multi / all / default rows */
 .sortSection,
 .multiSection,
-.allOptionSection,
-.dynamicSection {
+.allOptionSection {
 	align-items: flex-start;
 	justify-content: space-between;
 	margin-bottom: 0;

@@ -42,8 +42,7 @@
 
 .alert-details {
 	&__divider {
-		--divider-color: var(--l1-border);
-		--divider-margin: 16px 0;
+		margin: 16px 0;
 	}
 	.breadcrumb-divider {
 		margin-top: 10px;

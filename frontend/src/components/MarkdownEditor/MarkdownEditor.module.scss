@@ -184,8 +184,8 @@
 }
 
 .helpContent {
-	width: 280px;
-	max-height: 320px;
+	// The popover shell carries no padding of its own, so the content owns it.
+	padding: var(--spacing-8);
 	overflow-y: auto;
 	@include custom-scrollbar;
 }

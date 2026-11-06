@@ -16,10 +16,18 @@ export function OnboardingQuestionHeader({
 			<div className="onboarding-header-icon">
 				<img src={barberPoolUrl} alt="SigNoz" width="32" height="32" />
 			</div>
-			<Typography.Title level={4} className="onboarding-header-title">
+			<Typography.Title
+				level={4}
+				align="center"
+				className="onboarding-header-title"
+			>
 				{title}
 			</Typography.Title>
-			<Typography.Text className="onboarding-header-subtitle">
+			<Typography.Text
+				align="center"
+				color="muted"
+				className="onboarding-header-subtitle"
+			>
 				{subtitle}
 			</Typography.Text>
 		</div>

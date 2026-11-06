@@ -1,5 +1,11 @@
 import { useCallback, useState } from 'react';
-import { ChevronDown, ChevronRight, LoaderCircle } from '@signozhq/icons';
+import {
+	ChevronDown,
+	ChevronRight,
+	LoaderCircle,
+	SolidAlertCircle,
+	SolidInfoCircle,
+} from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
@@ -44,17 +50,13 @@ function CloudAccountSetupModal({
 		if (modalState === ModalStateEnum.WAITING) {
 			return (
 				<div className="cloud-account-setup-form__alert">
-					<Callout
-						title={
-							<div className="cloud-account-setup-form__alert-message">
-								<Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />
-								Waiting for Azure account connection, retrying in{' '}
-								<span className="retry-time">10</span> secs...
-							</div>
-						}
-						type="info"
-						showIcon={false}
-					/>
+					<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+						<div className="cloud-account-setup-form__alert-message">
+							<Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />
+							Waiting for Azure account connection, retrying in{' '}
+							<span className="retry-time">10</span> secs...
+						</div>
+					</Callout>
 				</div>
 			);
 		}
@@ -62,15 +64,12 @@ function CloudAccountSetupModal({
 		if (modalState === ModalStateEnum.ERROR) {
 			return (
 				<div className="cloud-account-setup-form__alert">
-					<Callout
-						title={
-							<div className="cloud-account-setup-form__alert-message">
-								We couldn&apos;t establish a connection to your Azure account. Please
-								try again
-							</div>
-						}
-						type="error"
-					/>
+					<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
+						<div className="cloud-account-setup-form__alert-message">
+							We couldn&apos;t establish a connection to your Azure account. Please try
+							again
+						</div>
+					</Callout>
 				</div>
 			);
 		}

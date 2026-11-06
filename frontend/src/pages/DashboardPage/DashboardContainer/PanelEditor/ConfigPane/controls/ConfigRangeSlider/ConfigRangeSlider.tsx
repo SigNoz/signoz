@@ -23,20 +23,19 @@ function ConfigRangeSlider({
 }: ConfigRangeSliderProps): JSX.Element {
 	return (
 		<div className={styles.row}>
-			<Slider
-				range
-				testId={testId}
-				className={styles.slider}
-				value={value}
-				min={min}
-				max={max}
-				step={step}
-				onChange={(next): void => {
-					if (Array.isArray(next) && next.length === 2) {
-						onChange([Math.min(next[0], next[1]), Math.max(next[0], next[1])]);
-					}
-				}}
-			/>
+			<div className={styles.slider}>
+				<Slider.Range
+					testId={testId}
+					color="primary"
+					value={value}
+					min={min}
+					max={max}
+					step={step}
+					onChange={([a, b]): void => {
+						onChange([Math.min(a, b), Math.max(a, b)]);
+					}}
+				/>
+			</div>
 			<span className={styles.value}>
 				{formatValue ? formatValue(value) : `${value[0]}–${value[1]}`}
 			</span>

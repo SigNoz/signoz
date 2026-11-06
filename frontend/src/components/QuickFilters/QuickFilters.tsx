@@ -5,14 +5,8 @@ import {
 	RefreshCw,
 	Settings2 as SettingsIcon,
 } from '@signozhq/icons';
-import {
-	Combobox,
-	ComboboxCommand,
-	ComboboxContent,
-	ComboboxItem,
-	ComboboxList,
-	ComboboxTrigger,
-} from '@signozhq/ui/combobox';
+import { Badge } from '@signozhq/ui/badge';
+import { Combobox, type ComboboxItemType } from '@signozhq/ui/combobox';
 import { Skeleton } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -86,7 +80,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		redirectWithQueryBuilderData,
 		panelType,
 	} = useQueryBuilder();
-	const [open, setOpen] = useState(false);
 
 	// Sync lastUsedQuery when queries change (e.g., after deletion)
 	const validQueryIndex = useMemo(
@@ -112,6 +105,16 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 			value: index,
 		}));
 	}, [currentQuery?.builder?.queryData]);
+
+	const queryItems = useMemo<ComboboxItemType[]>(
+		() =>
+			queryOptions.map((option) => ({
+				type: 'item',
+				value: String(option.value),
+				label: option.label,
+			})),
+		[queryOptions],
+	);
 
 	// Show dropdown in ListView only for TRACES_EXPLORER source
 	const shouldShowDropdownInListView =
@@ -188,42 +191,28 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 			{queryOptions.length > 1 &&
 			!isAIObservabilityRowView &&
 			(!isListView || shouldShowDropdownInListView) ? (
-				<Combobox open={open} onOpenChange={setOpen}>
-					<ComboboxTrigger
+				<div className="select-box">
+					<Combobox
+						aria-label="Select a query"
 						placeholder="Select a query"
-						value={queryOptions.find((f) => f.value === validQueryIndex)?.label || ''}
-						className="select-box"
+						searchInputProps={{ placeholder: 'Search queries' }}
+						items={queryItems}
+						value={String(validQueryIndex)}
+						onChange={(value): void => {
+							if (value !== undefined) {
+								handleQueryChange(Number(value));
+							}
+						}}
 					/>
-					{open && (
-						<ComboboxContent>
-							<ComboboxCommand>
-								<ComboboxList>
-									{queryOptions.map((option) => (
-										<ComboboxItem
-											key={option.value}
-											value={String(option.value)}
-											onSelect={(): void => {
-												handleQueryChange(option.value);
-												setOpen(false);
-											}}
-											isSelected={validQueryIndex === option.value}
-										>
-											{option.label}
-										</ComboboxItem>
-									))}
-								</ComboboxList>
-							</ComboboxCommand>
-						</ComboboxContent>
-					)}
-				</Combobox>
+				</div>
 			) : (
 				displayedQueryName && (
 					<Tooltip
 						title={`Filter currently in sync with query ${displayedQueryName}`}
 					>
-						<Typography.Text className="sync-tag">
+						<Badge variant="solid" color="primary" textTransform="uppercase">
 							{displayedQueryName}
-						</Typography.Text>
+						</Badge>
 					</Tooltip>
 				)
 			)}

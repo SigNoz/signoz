@@ -67,7 +67,7 @@ function TelegramSettings(): JSX.Element {
 						{...register('botToken')}
 						aria-required
 						type="password"
-						data-testid="telegram-bot-token-textbox"
+						testId="telegram-bot-token-textbox"
 					/>
 				</FormField>
 
@@ -82,7 +82,7 @@ function TelegramSettings(): JSX.Element {
 						aria-required
 						type="number"
 						placeholder={t('placeholder_telegram_chat_id')}
-						data-testid="telegram-chat-id-textbox"
+						testId="telegram-chat-id-textbox"
 					/>
 				</FormField>
 
@@ -94,7 +94,7 @@ function TelegramSettings(): JSX.Element {
 					<Input
 						{...register('messageThreadId', { setValueAs: asOptionalNumber })}
 						type="number"
-						data-testid="telegram-message-thread-id-textbox"
+						testId="telegram-message-thread-id-textbox"
 					/>
 				</FormField>
 			</FormCard>
@@ -145,7 +145,7 @@ function TelegramSettings(): JSX.Element {
 					tooltip={t('tooltip_telegram_api_url')}
 					error={errors.apiUrl?.message}
 				>
-					<Input {...register('apiUrl')} data-testid="telegram-api-url-textbox" />
+					<Input {...register('apiUrl')} testId="telegram-api-url-textbox" />
 				</FormField>
 
 				<FormField

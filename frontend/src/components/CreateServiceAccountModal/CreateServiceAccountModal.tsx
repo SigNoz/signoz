@@ -7,7 +7,7 @@ import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardCon
 import { SACreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 import { DialogFooter, DialogWrapper } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccounts,
@@ -116,11 +116,10 @@ function CreateServiceAccountModal(): JSX.Element {
 									<Input
 										id="sa-name"
 										placeholder="Enter a name"
-										className="create-sa-form__input"
 										value={field.value}
 										onChange={field.onChange}
 										onBlur={field.onBlur}
-										data-testid="create-sa-name-input"
+										testId="create-sa-name-input"
 									/>
 								)}
 							/>

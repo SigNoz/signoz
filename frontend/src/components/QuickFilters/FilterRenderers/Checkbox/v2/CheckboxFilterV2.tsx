@@ -19,7 +19,9 @@ import useActiveQueryIndex from 'components/QuickFilters/hooks/useActiveQueryInd
 import { DEFAULT_VISIBLE_ITEMS_COUNT } from '../constants';
 import useCheckboxDisclosure from '../useCheckboxDisclosure';
 import useCheckboxFilterActions from '../useCheckboxFilterActions';
-import useCheckboxFilterState from '../useCheckboxFilterState';
+import useCheckboxFilterState, {
+	FILTER_DISABLED_REASON,
+} from '../useCheckboxFilterState';
 import { useFieldValues } from './useFieldValues';
 import { useExistingQuery } from './useExistingQuery';
 import { isKeyMatch } from '../utils';
@@ -208,7 +210,8 @@ export default function CheckboxFilterV2(
 								placeholder="Filter values"
 								onChange={(e): void => setSearchTextDebounced(e.target.value)}
 								disabled={isFilterDisabled}
-								data-testid="checkbox-filter-search"
+								disabledTooltip={FILTER_DISABLED_REASON}
+								testId="checkbox-filter-search"
 								suffix={
 									isFetching ? (
 										<LoaderCircle

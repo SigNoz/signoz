@@ -33,7 +33,7 @@ function StepsProgress({
 					steps={totalChecklistItems}
 					percent={progress}
 					showInfo={false}
-					strokeLinecap="butt"
+					color="primary"
 				/>
 			</div>
 		</div>

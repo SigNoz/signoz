@@ -69,14 +69,3 @@
 		background: transparent;
 	}
 }
-
-.members-search-input {
-	height: 32px;
-	color: var(--l1-foreground);
-	background-color: var(--l2-background);
-	border-color: var(--l1-border);
-
-	&::placeholder {
-		color: var(--l3-foreground);
-	}
-}

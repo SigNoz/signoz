@@ -163,7 +163,7 @@ function ListAlertRules(): JSX.Element {
 			{!isEmptyNoRules && (
 				<div className={styles.filtersRow}>
 					<Input
-						className={styles.searchInput}
+						width={250}
 						placeholder="Search by Alert Name, Severity and Labels"
 						value={searchText}
 						onChange={handleSearchChange}

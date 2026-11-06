@@ -84,7 +84,11 @@ export const CheckFailed: Story = {
 		const canvas = within(canvasElement);
 
 		await userEvent.type(
-			await canvas.findByTestId('channel-name-textbox', undefined, PAGE_LOAD),
+			await canvas.findByTestId(
+				'channel-name-textbox-field',
+				undefined,
+				PAGE_LOAD,
+			),
 			'check-failed',
 		);
 

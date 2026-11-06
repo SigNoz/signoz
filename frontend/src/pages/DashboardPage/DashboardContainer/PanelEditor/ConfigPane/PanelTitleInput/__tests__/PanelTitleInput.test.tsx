@@ -20,7 +20,7 @@ describe('PanelTitleInput', () => {
 		const user = userEvent.setup();
 		render(<Harness />);
 
-		await user.type(screen.getByTestId('panel-editor-v2-title'), 'Latency');
+		await user.type(screen.getByTestId('panel-editor-v2-title-field'), 'Latency');
 
 		expect(screen.queryByText('env')).not.toBeInTheDocument();
 	});
@@ -30,7 +30,7 @@ describe('PanelTitleInput', () => {
 		render(<Harness />);
 
 		await user.type(
-			screen.getByTestId('panel-editor-v2-title'),
+			screen.getByTestId('panel-editor-v2-title-field'),
 			'Latency of $se',
 		);
 
@@ -41,7 +41,7 @@ describe('PanelTitleInput', () => {
 	it('inserts the picked variable into the title', async () => {
 		const user = userEvent.setup();
 		render(<Harness />);
-		const input = screen.getByTestId('panel-editor-v2-title');
+		const input = screen.getByTestId('panel-editor-v2-title-field');
 
 		await user.type(input, 'Latency of $se');
 		await user.click(await screen.findByText('service.name'));

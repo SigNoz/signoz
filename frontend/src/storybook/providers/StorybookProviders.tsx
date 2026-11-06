@@ -6,7 +6,7 @@ import AppProviders from '@/app/AppProviders';
 import AppShell from '@/app/AppShell';
 import type { AppLayer } from '@/app/types';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
-import { Toaster } from '@signozhq/ui/sonner';
+import { Toaster } from '@signozhq/ui/toast';
 import AppLayout from 'container/AppLayout';
 import history from 'lib/history';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';

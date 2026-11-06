@@ -29,7 +29,7 @@ function OpsgenieForm(): JSX.Element {
 					<Input
 						{...register('apiKey')}
 						aria-required
-						data-testid="opsgenie-api-key-textbox"
+						testId="opsgenie-api-key-textbox"
 					/>
 				</FormField>
 

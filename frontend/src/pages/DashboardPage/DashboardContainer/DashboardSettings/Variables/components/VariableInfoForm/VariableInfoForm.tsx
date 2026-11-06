@@ -29,7 +29,6 @@ function VariableInfoForm({
 
 				<Input
 					testId="variable-name"
-					className={styles.variableNameInput}
 					value={title}
 					maxLength={DASHBOARD_NAME_MAX_LENGTH}
 					onChange={(e): void => onTitleChange(e.target.value)}

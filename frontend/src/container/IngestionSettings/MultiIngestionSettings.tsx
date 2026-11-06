@@ -1629,8 +1629,11 @@ function MultiIngestionSettings(): JSX.Element {
 		<div className="ingestion-key-container">
 			<div className="ingestion-key-content">
 				<header>
-					<Typography.Title className="title"> Ingestion Keys </Typography.Title>
-					<Typography.Text className="subtitle">
+					<Typography.Title level={4} className="title">
+						{' '}
+						Ingestion Keys{' '}
+					</Typography.Title>
+					<Typography.Text color="muted">
 						Create and manage ingestion keys for the SigNoz Cloud{' '}
 						<a
 							href="https://signoz.io/docs/ingestion/signoz-cloud/keys/"
@@ -1861,7 +1864,11 @@ function MultiIngestionSettings(): JSX.Element {
 						label="Name"
 						rules={[{ required: true }, { type: 'string', min: 6 }]}
 					>
-						<Input placeholder="Enter Ingestion Key name" disabled />
+						<Input
+							placeholder="Enter Ingestion Key name"
+							disabled
+							disabledTooltip={undefined}
+						/>
 					</Form.Item>
 
 					<Form.Item name="tags" label="Tags">

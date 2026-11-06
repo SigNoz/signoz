@@ -44,10 +44,10 @@ const openQuickFiltersSettings = async (): Promise<void> => {
 	// flight and is swapped for the enabled one once the check answers, so it is
 	// looked up again on every attempt; a click on the disabled one is dropped in
 	// silence.
-	const control = await waitFor(() => {
+	const control = await waitFor(async () => {
 		const settings = screen.getByTestId('settings-icon-container');
 
-		expect(settings).not.toHaveAttribute('aria-disabled', 'true');
+		await expect(settings).not.toHaveAttribute('aria-disabled', 'true');
 
 		return settings;
 	}, untilLoaded);
@@ -121,6 +121,43 @@ export const AggregationTable: Story = {
 /** The Funnels tab, listing the funnels the workspace has saved. */
 export const Funnels: Story = {
 	args: { tab: 'funnels' },
+};
+
+/** The name field for a funnel that does not exist yet. */
+export const CreateFunnel: Story = {
+	args: { tab: 'funnels' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: /new funnel/i },
+				untilLoaded,
+			),
+		);
+		await screen.findByRole('dialog', { name: /create new funnel/i });
+	},
+};
+
+/** The rename field for a funnel already on the list. */
+export const RenameFunnel: Story = {
+	args: { tab: 'funnels' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const action = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'.funnel-item__action-icon',
+			);
+
+			if (!found) {
+				throw new Error('Funnel row actions are not rendered');
+			}
+
+			return found;
+		}, untilLoaded);
+
+		await userEvent.click(action);
+		await userEvent.click(await screen.findByRole('button', { name: 'Rename' }));
+		await screen.findByRole('dialog', { name: /rename funnel/i });
+	},
 };
 
 /**

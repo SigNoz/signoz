@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import { useCallback, useMemo } from 'react';
 import { Search } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
-import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import { Combobox } from '@signozhq/ui/combobox';
+import type { ComboboxItemType } from '@signozhq/ui/combobox';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
 import type { FilterValue } from 'components/Alerts/types';
@@ -35,23 +36,27 @@ const QUERY_PARAMS_CONFIG = {
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 
-const severyFilters: ComboboxSimpleItem[] = [
+const severyFilters: ComboboxItemType[] = [
 	{
+		type: 'item',
 		value: 'severity:critical',
 		label: 'Critical (severity:critical)',
 		displayValue: 'Critical',
 	},
 	{
+		type: 'item',
 		value: 'severity:error',
 		label: 'Error (severity:error)',
 		displayValue: 'Error',
 	},
 	{
+		type: 'item',
 		value: 'severity:warning',
 		label: 'Warning (severity:warning)',
 		displayValue: 'Warning',
 	},
 	{
+		type: 'item',
 		value: 'severity:info',
 		label: 'Info (severity:info)',
 		displayValue: 'Info',
@@ -109,10 +114,8 @@ function TriggeredAlerts(): JSX.Element {
 	);
 
 	const handleFilterChange = useCallback(
-		(values: unknown): void => {
-			if (Array.isArray(values)) {
-				void setFilterValues(values.length ? values : null);
-			}
+		(values: string[]): void => {
+			void setFilterValues(values.length ? values : null);
 		},
 		[setFilterValues],
 	);
@@ -125,7 +128,8 @@ function TriggeredAlerts(): JSX.Element {
 		[formatTimezoneAdjustedTimestamp],
 	);
 
-	const labelOptions: ComboboxSimpleItem[] = uniqueLabels.map((label) => ({
+	const labelOptions: ComboboxItemType[] = uniqueLabels.map((label) => ({
+		type: 'item',
 		value: label,
 		label,
 	}));
@@ -170,36 +174,40 @@ function TriggeredAlerts(): JSX.Element {
 		<div className={styles.container}>
 			<div className={styles.filtersRow}>
 				<Input
-					className={styles.searchInput}
+					width={250}
 					placeholder="Search alerts by name"
 					value={searchText}
 					onChange={handleSearchChange}
 					suffix={<Search size={14} className={styles.searchIcon} />}
 					testId="triggered-alerts-search-input"
 				/>
-				<ComboboxSimple
-					className={styles.filterSelect}
-					multiple
-					value={selectedFilter.map((f) => f.value)}
-					onChange={handleFilterChange}
-					placeholder="Filter by tags"
-					inputPlaceholder="Create new filters with 'label:value'"
-					allowCreate
-					items={severyFilters}
-					maxDisplayedPills={2}
-					testId="triggered-alerts-filter-combobox"
-				/>
-				<ComboboxSimple
-					className={styles.filterSelect}
-					value={selectedGroupBy}
-					onChange={handleGroupByChange}
-					placeholder="Group by tag"
-					inputPlaceholder="Select one or more"
-					items={labelOptions}
-					multiple
-					maxDisplayedPills={2}
-					testId="triggered-alerts-groupby-combobox"
-				/>
+				<div className={styles.filterSelect}>
+					<Combobox
+						multiple
+						value={selectedFilter.map((f) => f.value)}
+						onChange={handleFilterChange}
+						placeholder="Filter by tags"
+						searchInputProps={{
+							placeholder: "Create new filters with 'label:value'",
+						}}
+						allowCreate
+						items={severyFilters}
+						maxDisplayedPills={2}
+						testId="triggered-alerts-filter-combobox"
+					/>
+				</div>
+				<div className={styles.filterSelect}>
+					<Combobox
+						value={selectedGroupBy}
+						onChange={handleGroupByChange}
+						placeholder="Group by tag"
+						searchInputProps={{ placeholder: 'Select one or more' }}
+						items={labelOptions}
+						multiple
+						maxDisplayedPills={2}
+						testId="triggered-alerts-groupby-combobox"
+					/>
+				</div>
 			</div>
 
 			<div ref={containerRef} className={styles.tableContainer}>

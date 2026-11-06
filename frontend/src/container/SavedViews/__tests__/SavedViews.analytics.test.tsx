@@ -6,7 +6,7 @@ import {
 	within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -33,9 +33,9 @@ jest.mock('api/common/logEvent', () => ({
 	default: (...args: unknown[]): void => logEventMock(...args),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 // copy-to-clipboard falls back to window.prompt in jsdom.
@@ -90,7 +90,7 @@ async function chooseFromSaveMenu(key: string): Promise<void> {
 }
 
 async function submitName(name: string): Promise<void> {
-	await userEvent.type(screen.getByTestId('save-view-name'), name);
+	await userEvent.type(screen.getByTestId('save-view-name-field'), name);
 	await userEvent.click(screen.getByTestId('save-view-submit'));
 }
 
@@ -110,7 +110,7 @@ describe('SavedViews analytics', () => {
 	beforeEach(() => {
 		localStorage.clear();
 		logEventMock.mockClear();
-		jest.mocked(toast.error).mockClear();
+		jest.mocked(toast.danger).mockClear();
 	});
 
 	it('logs a view created from the header', async () => {
@@ -153,7 +153,7 @@ describe('SavedViews analytics', () => {
 		await clickWhenUsable('saved-views-create');
 		await submitName('Slow checkout');
 
-		await waitFor(() => expect(toast.error).toHaveBeenCalled());
+		await waitFor(() => expect(toast.danger).toHaveBeenCalled());
 		expect(callsOf(SavedViewEvents.ViewCreated)).toHaveLength(0);
 	});
 
@@ -179,7 +179,7 @@ describe('SavedViews analytics', () => {
 
 			await chooseFromSaveMenu('update');
 
-			await waitFor(() => expect(toast.error).toHaveBeenCalled());
+			await waitFor(() => expect(toast.danger).toHaveBeenCalled());
 			expect(callsOf(SavedViewEvents.ViewUpdated)).toHaveLength(0);
 		});
 
@@ -305,7 +305,7 @@ describe('SavedViews analytics', () => {
 		await chooseFromRowMenu('Errors', 'editDetails');
 		await submitName(' renamed');
 
-		await waitFor(() => expect(toast.error).toHaveBeenCalled());
+		await waitFor(() => expect(toast.danger).toHaveBeenCalled());
 		expect(callsOf(SavedViewEvents.ViewDetailsEdited)).toHaveLength(0);
 	});
 
@@ -316,7 +316,7 @@ describe('SavedViews analytics', () => {
 		await chooseFromRowMenu('Errors', 'delete');
 		await userEvent.click(screen.getByTestId('delete-saved-view-confirm'));
 
-		await waitFor(() => expect(toast.error).toHaveBeenCalled());
+		await waitFor(() => expect(toast.danger).toHaveBeenCalled());
 		expect(callsOf(SavedViewEvents.ViewDeleted)).toHaveLength(0);
 	});
 });

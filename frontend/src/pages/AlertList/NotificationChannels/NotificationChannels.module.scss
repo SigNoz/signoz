@@ -78,20 +78,6 @@
 	min-width: 220px;
 }
 
-.kindSelect {
-	/* the trigger sizes itself to 100%, so the flex item has to be bounded */
-	flex: 0 0 180px;
-	width: 180px;
-	max-width: 180px;
-}
-
-/* The options panel is rendered inline (withPortal={false}) so it can be told to
-   match the trigger; Radix publishes that width at the popper layer. */
-.filtersRow :global([data-slot='select-content']) {
-	width: var(--radix-select-trigger-width);
-	min-width: var(--radix-select-trigger-width);
-}
-
 .commandHeader > button {
 	flex: 0 0 auto;
 }

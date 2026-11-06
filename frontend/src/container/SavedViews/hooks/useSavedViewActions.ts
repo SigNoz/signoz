@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import {
 	useCreateSavedView,
 	useUpdateSavedView,
@@ -166,12 +166,15 @@ export function useSavedViewActions(
 				});
 				return data.id;
 			} catch (error) {
-				toast.error(
+				toast.danger(
 					toAPIError(
 						error as ErrorType<RenderErrorResponseDTO>,
 						'Could not save the view',
 					).getErrorMessage(),
-					{ position: SAVED_VIEW_TOAST_POSITION },
+					{
+						action: { label: 'Dismiss' },
+						position: SAVED_VIEW_TOAST_POSITION,
+					},
 				);
 				return undefined;
 			}
@@ -206,12 +209,15 @@ export function useSavedViewActions(
 				});
 				return true;
 			} catch (error) {
-				toast.error(
+				toast.danger(
 					toAPIError(
 						error as ErrorType<RenderErrorResponseDTO>,
 						'Could not update the view',
 					).getErrorMessage(),
-					{ position: SAVED_VIEW_TOAST_POSITION },
+					{
+						action: { label: 'Dismiss' },
+						position: SAVED_VIEW_TOAST_POSITION,
+					},
 				);
 				return false;
 			}

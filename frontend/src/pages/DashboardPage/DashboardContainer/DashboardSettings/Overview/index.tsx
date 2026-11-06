@@ -4,7 +4,7 @@ import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesJSONPatchOperationDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import { isEqual } from 'lodash-es';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';

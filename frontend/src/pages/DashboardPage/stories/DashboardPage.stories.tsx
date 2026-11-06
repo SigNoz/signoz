@@ -191,6 +191,22 @@ export const TooltipsInViewPanelModal: Story = {
 	},
 };
 
+/** A list or table panel's search field, expanded and filled. */
+export const PanelSearchExpanded: Story = {
+	play: async ({ canvasElement }) => {
+		// Both the table and the log list render a search trigger; expand the first.
+		const [trigger] = await within(canvasElement).findAllByTestId(
+			'panel-header-search-trigger',
+			{},
+			{ timeout: 15000 },
+		);
+		await userEvent.click(trigger);
+		const input = await screen.findByTestId('panel-header-search-input-field');
+
+		await userEvent.type(input, 'error');
+	},
+};
+
 /**
  * The dashboard's own Actions menu, open: rename, clone, lock, full screen and
  * delete, the menu the toolbar's Actions button carries.
@@ -243,6 +259,34 @@ export const SectionActionsMenu: Story = {
 	},
 };
 
+/** Delete dashboard, the confirm dialog the Actions menu opens. */
+export const DeleteDashboardDialog: Story = {
+	play: async (context) => {
+		await ActionsMenu.play?.(context);
+		// The row stays inert until its authz checks resolve, so one click can
+		// land too early; keep clicking until the confirm dialog is up.
+		await waitFor(
+			async () => {
+				const item = screen.queryByTestId('dashboard-action-delete');
+				if (item) {
+					await userEvent.click(item);
+				}
+				screen.getByText('This action cannot be undone.');
+			},
+			{ timeout: 10000 },
+		);
+	},
+};
+
+/** Rename section, the title dialog a section menu opens. */
+export const RenameSectionDialog: Story = {
+	play: async (context) => {
+		await SectionActionsMenu.play?.(context);
+		await userEvent.click(await screen.findByText('Rename section'));
+		await screen.findByRole('dialog', { name: /rename section/i });
+	},
+};
+
 const openNewPanelPicker = async (
 	canvasElement: HTMLElement,
 ): Promise<void> => {
@@ -279,7 +323,10 @@ export const NewPanelPickerTypeSelected: Story = {
 export const NewPanelPickerSearch: Story = {
 	play: async ({ canvasElement }) => {
 		await openNewPanelPicker(canvasElement);
-		await userEvent.type(await screen.findByTestId('panel-type-search'), 'heat');
+		await userEvent.type(
+			await screen.findByTestId('panel-type-search-field'),
+			'heat',
+		);
 	},
 };
 
@@ -313,7 +360,7 @@ export const NewPanelPickerNewSection: Story = {
 		);
 		await userEvent.click(await screen.findByTestId('panel-section-create'));
 		await userEvent.type(
-			await screen.findByTestId('panel-section-name'),
+			await screen.findByTestId('panel-section-name-field'),
 			'Errors',
 		);
 	},
@@ -381,7 +428,7 @@ export const DashboardClonedToast: Story = {
 export const DashboardRenamedToast: Story = {
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await clickAction(canvasElement, 'Rename');
-		const input = await screen.findByTestId('dashboard-title-input');
+		const input = await screen.findByTestId('dashboard-title-input-field');
 		await userEvent.clear(input);
 		await userEvent.type(input, 'Service overview (renamed){enter}');
 		if (args.dashboardPatch === 'success') {

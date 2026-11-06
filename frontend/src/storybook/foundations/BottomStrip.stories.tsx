@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { screen, userEvent } from 'storybook/test';
 
 import type { GlobalMockArgs } from '../globals';

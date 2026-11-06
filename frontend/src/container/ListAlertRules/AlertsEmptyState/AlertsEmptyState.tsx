@@ -148,7 +148,7 @@ export function AlertsEmptyState({
 					</div>
 				</section>
 				<div className={styles.getStartedText}>
-					<Divider className="get-started-text__divider">
+					<Divider>
 						<Typography.Text>Or get started with these sample alerts</Typography.Text>
 					</Divider>
 				</div>

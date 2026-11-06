@@ -1,6 +1,5 @@
 import { Input } from '@signozhq/ui/input';
 import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
-import cx from 'classnames';
 import { Control, Controller } from 'react-hook-form';
 
 import FormField from '../FormField';
@@ -36,10 +35,10 @@ function DeploymentProjectIdField({
 					tooltip={TOOLTIPS[connectionMethod]}
 					required
 					error={fieldState.error}
+					className={styles.monoInput}
 				>
 					<Input
 						id="gcp-deployment-project-id-input"
-						className={cx(styles.fullWidth, styles.mono)}
 						placeholder="e.g. my-deployment-project-123"
 						value={field.value}
 						onChange={(e): void => field.onChange(e.target.value)}

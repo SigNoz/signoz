@@ -10,15 +10,6 @@
 	font-size: 12px;
 }
 
-.variableNameInput {
-	border-radius: 2px;
-	border: 1px solid var(--l2-border);
-
-	&::placeholder {
-		color: var(--l3-foreground);
-	}
-}
-
 .descriptionTextArea {
 	border-radius: 2px;
 	border: 1px solid var(--l2-border);

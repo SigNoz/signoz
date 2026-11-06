@@ -122,6 +122,13 @@ export const Tooltips: Story = {
 	parameters: { msw: { handlers: [overflowingRows] } },
 };
 
+/** A pre-v2 dashboard, which opens the migration dialog instead of the page. */
+export const LegacyDashboardDialog: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openLegacyDialog(canvasElement);
+	},
+};
+
 /** The first row's actions menu, open over the list. */
 export const RowActionsMenu: Story = {
 	play: async ({ canvasElement }) => {
@@ -166,7 +173,7 @@ export const DashboardRenamedToast: Story = {
 	play: async ({ canvasElement, args }) => {
 		await openRowActions(canvasElement, 1);
 		await pickRowAction('Rename');
-		const input = await screen.findByTestId('rename-dashboard-input');
+		const input = await screen.findByTestId('rename-dashboard-input-field');
 
 		await userEvent.clear(input);
 		await userEvent.type(input, 'API latency overview');
@@ -469,7 +476,10 @@ export const SaveViewFailedToast: Story = {
 				{ timeout: TOAST_TIMEOUT },
 			),
 		);
-		await userEvent.type(await screen.findByTestId('save-view-name'), 'On-call');
+		await userEvent.type(
+			await screen.findByTestId('save-view-name-field'),
+			'On-call',
+		);
 		await userEvent.click(await screen.findByTestId('save-view-confirm'));
 		await screen.findByText(
 			'Failed to save view.',
@@ -492,7 +502,7 @@ export const RenameViewFailedToast: Story = {
 
 		// The actions only take pointer events while the row is hovered by CSS.
 		await userEvent.click(rename, { pointerEventsCheck: 0 });
-		const input = await screen.findByTestId('rename-view-name');
+		const input = await screen.findByTestId('rename-view-name-field');
 
 		await userEvent.clear(input);
 		await userEvent.type(input, 'Renamed view');

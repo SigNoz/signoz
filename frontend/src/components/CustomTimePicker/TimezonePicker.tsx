@@ -65,7 +65,8 @@ function SearchBar({
 				/>
 				<Input
 					type="text"
-					className="timezone-picker__input"
+					variant="unstyled"
+					noFocusRing
 					placeholder="Search timezones..."
 					value={value}
 					onChange={(e): void => onChange(e.target.value)}

@@ -1,3 +1,4 @@
+/* Segmented control with pressed states, which Button has no variant for. */
 .segmented {
 	display: inline-flex;
 	align-items: center;

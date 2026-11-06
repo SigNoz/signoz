@@ -4,7 +4,13 @@ import { Typography } from '@signozhq/ui/typography';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { CircleCheck, Landmark, MonitorDown } from '@signozhq/icons';
+import {
+	CircleCheck,
+	Landmark,
+	MonitorDown,
+	SolidAlertCircle,
+	SolidInfoCircle,
+} from '@signozhq/icons';
 import {
 	Card,
 	Col,
@@ -480,12 +486,11 @@ export default function BillingContainer(): JSX.Element {
 
 				{!isLoading && !isFetchingBillingData && !showGracePeriodMessage
 					? headerText && (
-							<Callout
-								title={headerText}
-								type="info"
-								showIcon
-								style={{ marginTop: 12 }}
-							/>
+							<div style={{ marginTop: 12 }}>
+								<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+									{headerText}
+								</Callout>
+							</div>
 						)
 					: null}
 
@@ -498,21 +503,22 @@ export default function BillingContainer(): JSX.Element {
 				billingData &&
 				trialInfo?.gracePeriodEnd &&
 				showGracePeriodMessage ? (
-					<Callout
-						title={`Your data is safe with us until ${getFormattedDate(
-							trialInfo?.gracePeriodEnd || Date.now(),
-						)}. Please upgrade plan now to retain your data.`}
-						type="info"
-						showIcon
-						style={{ marginTop: 12 }}
-					/>
+					<div style={{ marginTop: 12 }}>
+						<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+							{`Your data is safe with us until ${getFormattedDate(
+								trialInfo?.gracePeriodEnd || Date.now(),
+							)}. Please upgrade plan now to retain your data.`}
+						</Callout>
+					</div>
 				) : null}
 
 				{isSubscriptionPastDue &&
 					(!isLoading && !isFetchingBillingData ? (
-						<Callout type="error" showIcon style={{ marginTop: 12 }}>
-							{subscriptionPastDueMessage()}
-						</Callout>
+						<div style={{ marginTop: 12 }}>
+							<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
+								{subscriptionPastDueMessage()}
+							</Callout>
+						</div>
 					) : (
 						<Skeleton.Input active style={{ height: 20, marginTop: 20 }} />
 					))}
@@ -553,9 +559,11 @@ export default function BillingContainer(): JSX.Element {
 						)}
 					</div>
 					{!isLoading && !isFetchingBillingData && (
-						<Callout type="info" size="small" className={styles.billingUpdateNote}>
-							Billing metrics are updated once every 24 hours.
-						</Callout>
+						<div className={styles.billingUpdateNote}>
+							<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+								Billing metrics are updated once every 24 hours.
+							</Callout>
+						</div>
 					)}
 
 					<div className={styles.billingDetails}>

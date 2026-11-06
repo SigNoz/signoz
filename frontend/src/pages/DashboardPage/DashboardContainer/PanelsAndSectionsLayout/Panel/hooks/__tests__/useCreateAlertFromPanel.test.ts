@@ -33,8 +33,8 @@ jest.mock('hooks/useSafeNavigate', () => ({
 }));
 
 const mockToastError = jest.fn();
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { error: (...args: unknown[]): void => mockToastError(...args) },
+jest.mock('@signozhq/ui/toast', () => ({
+	toast: { danger: (...args: unknown[]): void => mockToastError(...args) },
 }));
 
 jest.mock('react-redux', () => ({
@@ -204,7 +204,10 @@ describe('useCreateAlertFromPanel', () => {
 
 			expect(mockToastError).toHaveBeenCalledWith(
 				expect.any(String),
-				expect.objectContaining({ description: expect.any(String) }),
+				expect.objectContaining({
+					action: expect.objectContaining({ label: 'Dismiss' }),
+					description: expect.any(String),
+				}),
 			);
 			expect(mockSafeNavigate).not.toHaveBeenCalled();
 		});

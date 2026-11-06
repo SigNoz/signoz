@@ -25,24 +25,11 @@
 		}
 
 		.signup-header-title {
-			font-family: Inter, sans-serif;
-			font-size: 18px;
-			font-weight: 600;
-			line-height: 1;
-			letter-spacing: 0;
-			color: var(--l1-foreground);
-			margin: 0 !important;
+			margin: 0;
 		}
 
 		.signup-header-subtitle {
-			font-family: Inter, sans-serif;
-			font-size: 13px;
-			font-weight: 400;
-			line-height: 20px;
-			letter-spacing: -0.065px;
-			color: var(--l2-foreground);
 			max-width: 360px;
-			margin: 0 !important;
 			text-align: center;
 		}
 	}
@@ -70,7 +57,6 @@
 				gap: 12px;
 			}
 
-			.signup-form-input,
 			.signup-antd-input {
 				height: 32px;
 				width: 100%;
@@ -99,33 +85,6 @@
 
 				&:focus {
 					border-color: var(--primary);
-				}
-			}
-
-			.signup-form-input {
-				height: 32px;
-				background: var(--l2-background);
-				border: 1px solid var(--l1-border);
-				border-radius: 2px;
-				padding: 6px 8px;
-				font-family: Inter, sans-serif;
-				font-size: 13px;
-				font-weight: 400;
-				line-height: 1;
-				letter-spacing: -0.065px;
-				color: var(--l1-foreground);
-
-				&::placeholder {
-					color: var(--l2-foreground);
-				}
-
-				&:hover {
-					border-color: var(--l1-border);
-				}
-
-				&:focus {
-					border-color: var(--primary);
-					box-shadow: none;
 				}
 			}
 		}

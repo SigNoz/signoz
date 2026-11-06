@@ -59,7 +59,8 @@
 				min-width: 70px;
 			}
 
-			.sync-tag,
+			// Query selector themed as the primary sync chip; the Combobox has no
+			// primary color variant.
 			.select-box {
 				display: flex;
 				padding: 5px 9px;
@@ -94,6 +95,18 @@
 
 			.select-box-item {
 				min-width: 60px;
+				text-transform: uppercase;
+				--combobox-trigger-background: var(--primary-background);
+				--combobox-trigger-border: color-mix(
+					in srgb,
+					var(--primary-background) 20%,
+					transparent
+				);
+				--combobox-trigger-border-hover: var(--primary-background);
+				--combobox-trigger-label: var(--primary-foreground);
+				--combobox-trigger-icon: var(--primary-foreground);
+				--combobox-trigger-icon-hover: var(--primary-foreground);
+				--combobox-trigger-min-block-size: 30px;
 			}
 		}
 
