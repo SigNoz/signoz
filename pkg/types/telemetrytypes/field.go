@@ -379,11 +379,11 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 // A context parsed from the name may instead be part of the stored name (attribute.key
 // may be the attribute named attribute.key), so like the query builder both readings are
 // looked up: the name as written, in any context, before the name with its prefix stripped.
-func (s *FieldValueSelector) NameMatchSelectors() []*FieldValueSelector {
-	if s.nameAsWritten != "" {
-		return []*FieldValueSelector{s.withName(s.nameAsWritten), s}
+func (selector *FieldValueSelector) NameMatchSelectors() []*FieldValueSelector {
+	if selector.nameAsWritten != "" {
+		return []*FieldValueSelector{selector.withName(selector.nameAsWritten), selector}
 	}
-	return []*FieldValueSelector{s}
+	return []*FieldValueSelector{selector}
 }
 
 func NewTelemetryFieldKey(name string, fieldContext FieldContext, fieldDataType FieldDataType) *TelemetryFieldKey {
@@ -418,32 +418,32 @@ type TelemetryFieldKeySkipIndex struct {
 	Granularity     int           `json:"granularity"`
 }
 
-func (f *TelemetryFieldKey) normalizeDataType() {
+func (key *TelemetryFieldKey) normalizeDataType() {
 	// Step 1: Parse data type from the right (after the last ":") if not already specified
-	if f.FieldDataType == FieldDataTypeUnspecified {
-		if colonIdx := strings.LastIndex(f.Name, ":"); colonIdx != -1 {
-			potentialDataType := f.Name[colonIdx+1:]
+	if key.FieldDataType == FieldDataTypeUnspecified {
+		if colonIdx := strings.LastIndex(key.Name, ":"); colonIdx != -1 {
+			potentialDataType := key.Name[colonIdx+1:]
 			if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
-				f.FieldDataType = dt
-				f.Name = f.Name[:colonIdx]
+				key.FieldDataType = dt
+				key.Name = key.Name[:colonIdx]
 			}
 		}
 	}
 }
 
-func (f *TelemetryFieldKey) normalizeContext() {
+func (key *TelemetryFieldKey) normalizeContext() {
 	// Step 2: Parse field context from the left if not already specified
-	if f.FieldContext == FieldContextUnspecified {
-		if dotIdx := strings.Index(f.Name, "."); dotIdx != -1 {
-			potentialContext := f.Name[:dotIdx]
+	if key.FieldContext == FieldContextUnspecified {
+		if dotIdx := strings.Index(key.Name, "."); dotIdx != -1 {
+			potentialContext := key.Name[:dotIdx]
 			if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
-				f.Name = f.Name[dotIdx+1:]
-				f.FieldContext = fc
+				key.Name = key.Name[dotIdx+1:]
+				key.FieldContext = fc
 
 				// Step 2a: Handle special case for log.body.* fields
-				if f.FieldContext == FieldContextLog && strings.HasPrefix(f.Name, BodyJSONStringSearchPrefix) {
-					f.FieldContext = FieldContextBody
-					f.Name = strings.TrimPrefix(f.Name, BodyJSONStringSearchPrefix)
+				if key.FieldContext == FieldContextLog && strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+					key.FieldContext = FieldContextBody
+					key.Name = strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
 				}
 
 			}
@@ -453,13 +453,13 @@ func (f *TelemetryFieldKey) normalizeContext() {
 }
 
 // withName returns a copy looking up name in any context.
-func (s *FieldValueSelector) withName(name string) *FieldValueSelector {
-	keySelector := *s.FieldKeySelector
+func (selector *FieldValueSelector) withName(name string) *FieldValueSelector {
+	keySelector := *selector.FieldKeySelector
 	keySelector.Name = name
 	keySelector.FieldContext = FieldContextUnspecified
 
-	selector := *s
-	selector.FieldKeySelector = &keySelector
-	selector.nameAsWritten = ""
-	return &selector
+	renamed := *selector
+	renamed.FieldKeySelector = &keySelector
+	renamed.nameAsWritten = ""
+	return &renamed
 }
