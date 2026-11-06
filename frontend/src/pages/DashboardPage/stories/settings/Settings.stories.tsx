@@ -7,7 +7,11 @@ import { screen, userEvent, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { dashboardMocks, openSettings } from '../DashboardPage.stories.mocks';
+import {
+	clickWhenEnabled,
+	dashboardMocks,
+	openSettings,
+} from '../DashboardPage.stories.mocks';
 
 import DashboardPage from '../../DashboardPage';
 
@@ -136,7 +140,7 @@ export const PublishedToast: Story = {
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement, args }) => {
 		await openSettings(canvasElement, 'Publish');
-		await userEvent.click(await screen.findByTestId('public-dashboard-publish'));
+		await clickWhenEnabled('public-dashboard-publish');
 		if (args.publicWrite === 'success') {
 			await screen.findByText('Dashboard published successfully');
 		}
@@ -147,7 +151,7 @@ export const PublishedToast: Story = {
 export const PublicUpdatedToast: Story = {
 	play: async ({ canvasElement, args }) => {
 		await openSettings(canvasElement, 'Publish');
-		await userEvent.click(await screen.findByTestId('public-dashboard-update'));
+		await clickWhenEnabled('public-dashboard-update');
 		if (args.publicWrite === 'success') {
 			await screen.findByText('Public dashboard updated successfully');
 		}
@@ -158,9 +162,7 @@ export const PublicUpdatedToast: Story = {
 export const UnpublishedToast: Story = {
 	play: async ({ canvasElement, args }) => {
 		await openSettings(canvasElement, 'Publish');
-		await userEvent.click(
-			await screen.findByTestId('public-dashboard-unpublish'),
-		);
+		await clickWhenEnabled('public-dashboard-unpublish');
 		if (args.publicWrite === 'success') {
 			await screen.findByText('Dashboard unpublished successfully');
 		}

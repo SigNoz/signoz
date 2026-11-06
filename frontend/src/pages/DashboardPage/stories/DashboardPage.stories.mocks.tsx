@@ -547,6 +547,18 @@ export const openSettings = async (
 	return screen.findByRole('tabpanel');
 };
 
+export const clickWhenEnabled = async (testId: string): Promise<void> => {
+	await waitFor(
+		() =>
+			expect(screen.getByTestId(testId)).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
+		PAGE_LOAD,
+	);
+	await userEvent.click(screen.getByTestId(testId));
+};
+
 export const variableRow = (name: string): Promise<HTMLElement> =>
 	screen.findByTestId(`variable-row-${name}`, {}, PAGE_LOAD);
 
