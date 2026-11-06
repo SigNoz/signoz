@@ -198,7 +198,7 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				ReopenDuration:    valuer.MustNewUnsetOrNonEmptyString("3d"),
 				WontFixResolution: "Won't Do",
 				CustomFields:      map[string]any{"customfield_10010": "Ops"},
-				Auth:              ChannelJiraAuth{Email: "oncall@acme.com", APIToken: "api-token"},
+				Auth:              ChannelJiraAuth{JiraAuth: ChannelJiraCloudAuth{Email: "oncall@acme.com", APIToken: "api-token"}},
 			},
 			expectedRoundTrip: &ChannelJiraConfig{
 				SendResolved:      &sendResolved,
@@ -215,7 +215,7 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				ReopenDuration:    valuer.MustNewUnsetOrNonEmptyString("3d"),
 				WontFixResolution: "Won't Do",
 				CustomFields:      map[string]any{"customfield_10010": "Ops"},
-				Auth:              ChannelJiraAuth{Email: "oncall@acme.com", APIToken: "api-token"},
+				Auth:              ChannelJiraAuth{JiraAuth: ChannelJiraCloudAuth{Email: "oncall@acme.com", APIToken: "api-token"}},
 			},
 		},
 		{
@@ -230,7 +230,7 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Summary:        valuer.MustNewUnsetOrNonEmptyString("jira summary"),
 				Description:    valuer.MustNewUnsetOrNonEmptyString("jira description"),
 				ReopenDuration: valuer.MustNewUnsetOrNonEmptyString("3d"),
-				Auth:           ChannelJiraAuth{PAT: "personal-access-token"},
+				Auth:           ChannelJiraAuth{JiraAuth: ChannelJiraSelfHostedAuth{PAT: "personal-access-token"}},
 			},
 			expectedRoundTrip: &ChannelJiraConfig{
 				SendResolved:   &sendResolved,
@@ -241,7 +241,7 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Summary:        valuer.MustNewUnsetOrNonEmptyString("jira summary"),
 				Description:    valuer.MustNewUnsetOrNonEmptyString("jira description"),
 				ReopenDuration: valuer.MustNewUnsetOrNonEmptyString("3d"),
-				Auth:           ChannelJiraAuth{PAT: "personal-access-token"},
+				Auth:           ChannelJiraAuth{JiraAuth: ChannelJiraSelfHostedAuth{PAT: "personal-access-token"}},
 			},
 		},
 		{
