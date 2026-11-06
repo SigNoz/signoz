@@ -18,6 +18,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+const noRenotifyInterval = 8760 * time.Hour //1 year for no renotify substitute
+
 type AlertType string
 
 const (
@@ -100,8 +102,8 @@ type Renotify struct {
 }
 
 func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {
-	var renotifyInterval time.Duration
-	var noDataRenotifyInterval time.Duration
+	renotifyInterval := noRenotifyInterval
+	noDataRenotifyInterval := noRenotifyInterval
 	if ns.Renotify != nil && ns.Renotify.Enabled {
 		if slices.Contains(ns.Renotify.AlertStates, StateNoData) {
 			noDataRenotifyInterval = ns.Renotify.ReNotifyInterval.Duration()
@@ -109,9 +111,6 @@ func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanager
 		if slices.Contains(ns.Renotify.AlertStates, StateFiring) {
 			renotifyInterval = ns.Renotify.ReNotifyInterval.Duration()
 		}
-	} else {
-		renotifyInterval = 8760 * time.Hour //1 year for no renotify substitute
-		noDataRenotifyInterval = 8760 * time.Hour
 	}
 	return alertmanagertypes.NewNotificationConfig(ns.GroupBy, renotifyInterval, noDataRenotifyInterval, ns.UsePolicy)
 }
