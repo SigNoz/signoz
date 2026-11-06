@@ -2,18 +2,16 @@ import type { ReactElement } from 'react';
 import { useMemo } from 'react';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { FeatureKeys } from 'constants/features';
-import {
-	getBodyDisplayString,
-	getSanitizedLogBody,
-} from 'container/LogDetailedView/utils';
+import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
+import { useIsBodyJsonEnabled } from 'hooks/logs/useIsBodyJsonEnabled';
 import { getLogFieldValue } from 'lib/logs/flatLogData';
-import { useAppContext } from 'providers/App/App';
+import { getBodyDisplay } from 'lib/logs/logBody';
 import { useTimezone } from 'providers/Timezone';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
+import { coerceToString } from 'utils/stringUtils';
 
 import type { TableColumnDef } from '../../TanStackTableView/types';
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
@@ -28,10 +26,7 @@ export function useLogsTableColumns({
 	fontSize,
 }: UseLogsTableColumnsProps): TableColumnDef<ILog>[] {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-	const { featureFlags } = useAppContext();
-	const isBodyJsonEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_JSON_BODY)
-			?.active || false;
+	const isBodyJsonEnabled = useIsBodyJsonEnabled();
 
 	return useMemo<TableColumnDef<ILog>[]>(() => {
 		const stateIndicatorCol: TableColumnDef<ILog> = {
@@ -75,7 +70,7 @@ export function useLogsTableColumns({
 		const bodyCol: TableColumnDef<ILog> = {
 			id: buildCompositeKey('body', 'log'),
 			header: 'Body',
-			accessorFn: (log): string => getBodyDisplayString(log.body),
+			accessorFn: (log): string => getBodyDisplay(log.body),
 			canBeHidden: false,
 			enableRemove: false,
 			width: { default: '100%', min: 300 },
@@ -99,7 +94,7 @@ export function useLogsTableColumns({
 			enableRemove: true,
 			width: { min: 192 },
 			cell: ({ value }): ReactElement => (
-				<TanStackTable.Text>{String(value ?? '')}</TanStackTable.Text>
+				<TanStackTable.Text>{coerceToString(value)}</TanStackTable.Text>
 			),
 		});
 

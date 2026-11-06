@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from 'react-query';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
+import { ILog } from 'types/api/logs/log';
 
 import { getEntityEventsQueryPayload } from './utils';
 
@@ -10,7 +11,7 @@ export const K8S_ENTITY_EVENTS_EXPRESSION_KEY = 'k8sEntityEventsExpression';
 
 export interface EventRowData {
 	id: string;
-	body: string;
+	body: ILog['body'];
 	severity_text: string;
 	attributes_string?: Record<string, string>;
 	resources_string?: Record<string, string>;

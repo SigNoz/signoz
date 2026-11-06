@@ -29,8 +29,8 @@ export default function WaitlistFragment({
 
 		setIsSubmitting(true);
 
-		logEvent('Infra Monitoring: Get Early Access Clicked', {
-			entity_type: entityType,
+		logEvent('Infra Monitoring: Get early access clicked', {
+			entityType,
 			userEmail: user.email,
 		})
 			.then(() => {

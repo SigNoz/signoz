@@ -28311,6 +28311,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -28319,9 +28325,15 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
+        - logs-field:list
+        - traces-field:list
+        - metrics-field:list
       - tokenizer:
-        - VIEWER
+        - rule:read
+        - logs-field:list
+        - traces-field:list
+        - metrics-field:list
       summary: Get rule history filter keys
       tags:
       - rules
@@ -28489,6 +28501,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -28497,9 +28515,15 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
+        - logs-field:read
+        - traces-field:read
+        - metrics-field:read
       - tokenizer:
-        - VIEWER
+        - rule:read
+        - logs-field:read
+        - traces-field:read
+        - metrics-field:read
       summary: Get rule history filter values
       tags:
       - rules
@@ -28572,9 +28596,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get rule overall status timeline
       tags:
       - rules
@@ -28644,9 +28668,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get rule history stats
       tags:
       - rules
@@ -28728,6 +28752,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -28736,9 +28766,19 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - rule:read
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Get rule history timeline
       tags:
       - rules
@@ -28803,6 +28843,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -28811,9 +28857,19 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - rule:read
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Get top contributors to rule firing
       tags:
       - rules
