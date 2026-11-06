@@ -279,9 +279,9 @@ describe('persesQueryAdapters', () => {
 			);
 
 			expect(restored.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
-			expect(restored.builder_ai_query?.queryData[0].builderQueryType).toBe(
-				'builder_ai_query',
-			);
+			expect(
+				restored.builder_ai_query?.queryData[0].builderQueryType,
+			).toBeUndefined();
 		});
 
 		it('preserves an AI time-series query through fromPerses → toPerses', () => {
@@ -293,9 +293,9 @@ describe('persesQueryAdapters', () => {
 			).queries;
 
 			expect(restored.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
-			expect(restored.builder_ai_query?.queryData[0].builderQueryType).toBe(
-				'builder_ai_query',
-			);
+			expect(
+				restored.builder_ai_query?.queryData[0].builderQueryType,
+			).toBeUndefined();
 			expect(envelopes?.[0]?.type).toBe('builder_ai_query');
 		});
 

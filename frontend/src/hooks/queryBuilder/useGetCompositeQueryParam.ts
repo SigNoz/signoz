@@ -44,12 +44,6 @@ export const useNormalizedCompositeQueryParam = (): NormalizedQuery | null => {
 				pathname,
 			));
 
-			const aiBuilder = parsedCompositeQuery.builder_ai_query;
-			if (aiBuilder) {
-				aiBuilder.queryFormulas = aiBuilder.queryFormulas ?? [];
-				aiBuilder.queryTraceOperator = aiBuilder.queryTraceOperator ?? [];
-			}
-
 			// Convert old format to new format for each query in builder.queryData
 			if (parsedCompositeQuery?.builder?.queryData) {
 				parsedCompositeQuery.builder.queryData =
