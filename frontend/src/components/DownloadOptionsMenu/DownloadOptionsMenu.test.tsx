@@ -125,9 +125,10 @@ describe.each([
 		expect(screen.getByText('Columns')).toBeInTheDocument();
 	});
 
-	it('hides columns scope in the trace view', () => {
+	it('hides columns scope in the trace view', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderWithStore(dataSource, PANEL_TYPES.TRACE);
-		fireEvent.click(screen.getByTestId(testId));
+		await user.click(screen.getByTestId(testId));
 
 		expect(screen.queryByText('Columns')).not.toBeInTheDocument();
 	});
@@ -259,10 +260,17 @@ describe.each([
 	});
 
 	it('sends no selectFields when column scope is All', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const mockQuery = createMockStagedQuery(dataSource);
+		mockQuery.builder.queryData[0].selectColumns = [
+			{ name: 'http.status', fieldDataType: 'int64', fieldContext: 'attribute' },
+		] as any;
+
+		mockUseQueryBuilder.mockReturnValue({ stagedQuery: mockQuery });
 		renderWithStore(dataSource);
-		fireEvent.click(screen.getByTestId(testId));
-		fireEvent.click(screen.getByRole('radio', { name: 'All' }));
-		fireEvent.click(screen.getByText('Export'));
+		await user.click(screen.getByTestId(testId));
+		await user.click(screen.getByRole('radio', { name: 'All' }));
+		await user.click(screen.getByText('Export'));
 
 		await waitFor(() => {
 			expect(mockDownloadExportData).toHaveBeenCalledTimes(1);
