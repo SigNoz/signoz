@@ -829,26 +829,7 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind {
 	jira = 'jira',
 }
-/**
- * cloud: an Atlassian-hosted site.
- */
-export enum AlertmanagertypesChannelJiraCloudConfigDTODeployment {
-	cloud = 'cloud',
-}
-/**
- * Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
- */
-export type AlertmanagertypesChannelJiraCloudConfigDTOCustomFieldsAnyOf = {
-	[key: string]: unknown;
-};
-
-/**
- * Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
- * @nullable
- */
-export type AlertmanagertypesChannelJiraCloudConfigDTOCustomFields = AlertmanagertypesChannelJiraCloudConfigDTOCustomFieldsAnyOf | null;
-
-export interface AlertmanagertypesChannelJiraCloudConfigDTO {
+export interface AlertmanagertypesChannelJiraCloudAuthDTO {
 	/**
 	 * @type string
 	 * @format password
@@ -856,93 +837,33 @@ export interface AlertmanagertypesChannelJiraCloudConfigDTO {
 	 */
 	apiToken: string;
 	/**
-	 * @type object,null
-	 * @description Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
-	 */
-	customFields?: AlertmanagertypesChannelJiraCloudConfigDTOCustomFields;
-	/**
-	 * @type string
-	 * @enum cloud
-	 * @description cloud: an Atlassian-hosted site.
-	 */
-	deployment: AlertmanagertypesChannelJiraCloudConfigDTODeployment;
-	/**
-	 * @type string
-	 * @description Alertmanager template for the issue description, rendered as markdown; defaults to the SigNoz Jira default.
-	 */
-	description?: string;
-	/**
 	 * @type string
 	 * @description The Atlassian account email used for basic auth.
 	 */
 	email: string;
-	/**
-	 * @type string
-	 * @description The issue type name, such as Bug.
-	 */
-	issueType: string;
-	/**
-	 * @type array,null
-	 * @description Labels added to every issue.
-	 */
-	labels?: string[] | null;
-	/**
-	 * @type string
-	 * @description The priority name assigned to new issues.
-	 */
-	priority?: string;
-	/**
-	 * @type string
-	 * @description The key of the project issues are created in.
-	 */
-	project: string;
-	/**
-	 * @type string
-	 * @description How long after resolution a firing alert reopens the issue instead of creating a new one, as a Prometheus duration in canonical form such as 3d; defaults to 3d.
-	 */
-	reopenDuration?: string;
-	/**
-	 * @type string
-	 * @description The transition applied when an alert fires again on a resolved issue.
-	 */
-	reopenTransition?: string;
-	/**
-	 * @type string
-	 * @description The transition applied to the issue when the alert resolves.
-	 */
-	resolveTransition?: string;
-	/**
-	 * @type boolean,null
-	 * @description Also notify when the alert resolves. Defaults to false.
-	 */
-	sendResolved?: boolean | null;
-	/**
-	 * @type string
-	 * @description The base URL of the Jira site, for example https://example.atlassian.net or https://jira.example.com.
-	 */
-	site: string;
-	/**
-	 * @type string
-	 * @description Alertmanager template for the issue summary; defaults to the SigNoz Jira default.
-	 */
-	summary?: string;
-	/**
-	 * @type string
-	 * @description The resolution name that stops an issue from being reopened.
-	 */
-	wontFixResolution?: string;
 }
 
-/**
- * selfhosted: Jira Data Center or Server.
- */
-export enum AlertmanagertypesChannelJiraSelfHostedConfigDTODeployment {
+export interface AlertmanagertypesChannelJiraSelfHostedAuthDTO {
+	/**
+	 * @type string
+	 * @format password
+	 * @description The Jira personal access token, sent as a Bearer header. A secret; returned by create, update and fetch by ID, never by list.
+	 */
+	pat: string;
+}
+
+export type AlertmanagertypesChannelJiraAuthDTO =
+	| AlertmanagertypesChannelJiraCloudAuthDTO
+	| AlertmanagertypesChannelJiraSelfHostedAuthDTO;
+
+export enum AlertmanagertypesJiraDeploymentDTO {
+	cloud = 'cloud',
 	selfhosted = 'selfhosted',
 }
 /**
  * Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
  */
-export type AlertmanagertypesChannelJiraSelfHostedConfigDTOCustomFieldsAnyOf = {
+export type AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf = {
 	[key: string]: unknown;
 };
 
@@ -950,20 +871,22 @@ export type AlertmanagertypesChannelJiraSelfHostedConfigDTOCustomFieldsAnyOf = {
  * Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
  * @nullable
  */
-export type AlertmanagertypesChannelJiraSelfHostedConfigDTOCustomFields = AlertmanagertypesChannelJiraSelfHostedConfigDTOCustomFieldsAnyOf | null;
+export type AlertmanagertypesChannelJiraConfigDTOCustomFields = AlertmanagertypesChannelJiraConfigDTOCustomFieldsAnyOf | null;
 
-export interface AlertmanagertypesChannelJiraSelfHostedConfigDTO {
+export interface AlertmanagertypesChannelJiraConfigDTO {
+	/**
+	 * @description The credentials: email and apiToken when deployment is cloud, pat when deployment is selfhosted.
+	 */
+	auth: AlertmanagertypesChannelJiraAuthDTO;
 	/**
 	 * @type object,null
 	 * @description Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
 	 */
-	customFields?: AlertmanagertypesChannelJiraSelfHostedConfigDTOCustomFields;
+	customFields?: AlertmanagertypesChannelJiraConfigDTOCustomFields;
 	/**
-	 * @type string
-	 * @enum selfhosted
-	 * @description selfhosted: Jira Data Center or Server.
+	 * @description The Jira edition: cloud for an Atlassian-hosted site, selfhosted for Jira Server or Data Center.
 	 */
-	deployment: AlertmanagertypesChannelJiraSelfHostedConfigDTODeployment;
+	deployment: AlertmanagertypesJiraDeploymentDTO;
 	/**
 	 * @type string
 	 * @description Alertmanager template for the issue description, rendered as markdown; defaults to the SigNoz Jira default.
@@ -979,12 +902,6 @@ export interface AlertmanagertypesChannelJiraSelfHostedConfigDTO {
 	 * @description Labels added to every issue.
 	 */
 	labels?: string[] | null;
-	/**
-	 * @type string
-	 * @format password
-	 * @description The Jira personal access token, sent as a Bearer header. A secret; returned by create, update and fetch by ID, never by list.
-	 */
-	pat: string;
 	/**
 	 * @type string
 	 * @description The priority name assigned to new issues.
@@ -1031,10 +948,6 @@ export interface AlertmanagertypesChannelJiraSelfHostedConfigDTO {
 	 */
 	wontFixResolution?: string;
 }
-
-export type AlertmanagertypesChannelJiraConfigDTO =
-	| AlertmanagertypesChannelJiraCloudConfigDTO
-	| AlertmanagertypesChannelJiraSelfHostedConfigDTO;
 
 export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTO {
 	/**
@@ -1816,10 +1729,6 @@ export interface AlertmanagertypesJSMOpsReceiverConfigDTO {
 	tags?: string;
 }
 
-export enum AlertmanagertypesJiraDeploymentDTO {
-	cloud = 'cloud',
-	selfhosted = 'selfhosted',
-}
 /**
  * Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
  */
