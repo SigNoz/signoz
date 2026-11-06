@@ -659,11 +659,12 @@ export interface AIAssistantStore {
 	) => Promise<void>;
 	approveAction: (conversationId: string, approvalId: string) => Promise<void>;
 	rejectAction: (conversationId: string, approvalId: string) => Promise<void>;
+	/** Resolves with an error message when /clarify rejects the answers, which keeps the form open. */
 	submitClarification: (
 		conversationId: string,
 		clarificationId: string,
 		answers: Record<string, unknown>,
-	) => Promise<void>;
+	) => Promise<string | null>;
 	cancelStream: (conversationId: string) => void;
 	regenerateAssistantMessage: (
 		conversationId: string,
@@ -1401,7 +1402,17 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				conversationId: string,
 				clarificationId: string,
 				answers: Record<string, unknown>,
-			): Promise<void> => {
+			): Promise<string | null> => {
+				const fallback =
+					'Something went wrong while processing your answers. Please try again.';
+				let acceptedExecutionId: string | null;
+				try {
+					acceptedExecutionId = await clarifyExecution(clarificationId, answers);
+				} catch (err) {
+					console.error('[AIAssistant] submitClarification failed:', err);
+					return resolveAssistantError(err, fallback).message;
+				}
+
 				set((s) => {
 					const st = s.streams[conversationId];
 					if (st) {
@@ -1413,17 +1424,26 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					}
 				});
 
+				// Streams the accepted execution first; retries re-issue /clarify for a fresh one.
+				const start = (): Promise<string> => {
+					const id = acceptedExecutionId;
+					acceptedExecutionId = null;
+					return id
+						? Promise.resolve(id)
+						: clarifyExecution(clarificationId, answers);
+				};
 				const run = (): Promise<void> =>
 					streamAndFinalize(
 						conversationId,
-						() => clarifyExecution(clarificationId, answers),
-						'Something went wrong while processing your answers. Please try again.',
+						start,
+						fallback,
 						'[AIAssistant] submitClarification failed:',
 						set,
 						get,
 						run,
 					);
 				await run();
+				return null;
 			},
 
 			retryAssistantMessage: async (conversationId: string): Promise<void> => {
