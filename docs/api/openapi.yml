@@ -9562,9 +9562,10 @@ components:
     Querybuildertypesv5AggregationMeta:
       properties:
         buckets:
-          description: The ascending upper bounds of the value bands, set only for
-            heatmap results; each point then carries one count per bound plus a trailing
-            overflow count in values.
+          description: The ascending upper bounds of the value buckets, set for heatmap
+            and distribution results; each point then carries one count per bound
+            plus a trailing overflow count in values. The first bucket starts at -Inf
+            when its bound is at or under zero, else at zero.
           items:
             format: double
             type: number
@@ -9718,6 +9719,101 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
           nullable: true
           type: array
+      type: object
+    Querybuildertypesv5Distribution:
+      properties:
+        counts:
+          description: One count per bound in meta.buckets plus a trailing overflow
+            count, summed over every step of the requested time range.
+          items:
+            format: double
+            type: number
+          nullable: true
+          type: array
+        labels:
+          description: The group-by field values that identify this distribution.
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Label'
+          type: array
+      required:
+      - counts
+      type: object
+    Querybuildertypesv5DistributionAggregation:
+      properties:
+        alias:
+          description: The alias of the aggregation, or the internal name __result_N,
+            with N its index, when no alias was given.
+          type: string
+        distributions:
+          description: One distribution per group-by combination.
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Distribution'
+          nullable: true
+          type: array
+        index:
+          description: The zero-based position of the aggregation in the query.
+          type: integer
+        meta:
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5AggregationMeta'
+          description: Display metadata for the aggregation, including the bucket
+            upper bounds the counts are positional against.
+        percentiles:
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5DistributionPercentiles'
+          description: Percentiles over the counts of every distribution added together,
+            estimated the way histogram_quantile does by interpolating linearly within
+            the bucket each rank falls in. Omitted when nothing was counted or meta.buckets
+            is empty.
+      required:
+      - index
+      - alias
+      - distributions
+      type: object
+    Querybuildertypesv5DistributionData:
+      properties:
+        aggregations:
+          description: One entry per aggregation of the query. The order is not guaranteed;
+            match entries to aggregations by index.
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5DistributionAggregation'
+          nullable: true
+          type: array
+        queryName:
+          description: The name of the query that produced this result.
+          type: string
+      required:
+      - queryName
+      - aggregations
+      type: object
+    Querybuildertypesv5DistributionPercentiles:
+      properties:
+        p50:
+          description: The 50th percentile.
+          format: double
+          type: number
+        p75:
+          description: The 75th percentile.
+          format: double
+          type: number
+        p90:
+          description: The 90th percentile.
+          format: double
+          type: number
+        p95:
+          description: The 95th percentile.
+          format: double
+          type: number
+        p99:
+          description: The 99th percentile.
+          format: double
+          type: number
+      required:
+      - p50
+      - p75
+      - p90
+      - p95
+      - p99
       type: object
     Querybuildertypesv5ExecStats:
       description: 'Execution cost of the request: rows and bytes scanned and execution
@@ -10542,10 +10638,12 @@ components:
       - $ref: '#/components/schemas/Querybuildertypesv5TimeSeriesData'
       - $ref: '#/components/schemas/Querybuildertypesv5ScalarData'
       - $ref: '#/components/schemas/Querybuildertypesv5RawData'
+      - $ref: '#/components/schemas/Querybuildertypesv5DistributionData'
       properties:
         results:
           description: 'One result per enabled query, typed by the request type: TimeSeriesData
-            for time_series, ScalarData for scalar and RawData for raw requests.'
+            for time_series and heatmap, ScalarData for scalar, RawData for raw and
+            DistributionData for distribution requests.'
           items: {}
           nullable: true
           type: array
@@ -10735,8 +10833,9 @@ components:
       type: object
     Querybuildertypesv5QueryRangeResponse:
       description: 'Response from the v5 query range endpoint. The data.results array
-        contains typed results depending on the requestType: TimeSeriesData for time_series,
-        ScalarData for scalar, or RawData for raw requests.'
+        contains typed results depending on the requestType: TimeSeriesData for time_series
+        and heatmap, ScalarData for scalar, RawData for raw, or DistributionData for
+        distribution requests.'
       properties:
         data:
           allOf:
@@ -10833,6 +10932,7 @@ components:
       - raw_stream
       - trace
       - heatmap
+      - distribution
       type: string
     Querybuildertypesv5ScalarData:
       properties:
@@ -10944,8 +11044,8 @@ components:
           format: double
           type: number
         values:
-          description: The per-band counts for heatmap results, in the order of meta.buckets
-            plus a trailing overflow count.
+          description: The per-bucket counts for heatmap results, in the order of
+            meta.buckets plus a trailing overflow count.
           items:
             format: double
             type: number

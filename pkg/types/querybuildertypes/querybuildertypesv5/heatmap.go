@@ -81,7 +81,7 @@ func (b *BucketOptions) ToHeatmapBucketing() HeatmapBucketing {
 	return resolved
 }
 
-// This cannot be called in validateHeatmap cuz metric type is resolved in querier.go.
+// This cannot be called in validateBucketCounting cuz metric type is resolved in querier.go.
 func (a *MetricAggregation) VerifyAndApplyBucketOptions(bucketOptions *BucketOptions) error {
 	switch a.Type {
 	case metrictypes.HistogramType:
@@ -130,6 +130,35 @@ func MergeBucketUpperBounds(tsData ...*TimeSeriesData) map[int][]float64 {
 	}
 
 	return upperBoundsByAggregation
+}
+
+// ToDistributionData sums every series over all its steps, keeping the bucket
+// axis, and ranks the percentiles over every series together. A partial step
+// counts too, since what it holds was observed.
+func (tsData *TimeSeriesData) ToDistributionData() *DistributionData {
+	data := &DistributionData{QueryName: tsData.QueryName, Aggregations: make([]*DistributionAggregation, 0, len(tsData.Aggregations))}
+	for _, aggBucket := range tsData.Aggregations {
+		if aggBucket == nil {
+			continue
+		}
+		aggregation := &DistributionAggregation{Index: aggBucket.Index, Alias: aggBucket.Alias, Meta: aggBucket.Meta, Distributions: make([]*Distribution, 0, len(aggBucket.Series))}
+		totalCounts := make([]float64, len(aggBucket.Meta.Buckets)+1)
+		for _, series := range aggBucket.Series {
+			counts := make([]float64, len(totalCounts))
+			for _, point := range series.Values {
+				for i, count := range point.Values {
+					if i < len(counts) {
+						counts[i] += count
+						totalCounts[i] += count
+					}
+				}
+			}
+			aggregation.Distributions = append(aggregation.Distributions, &Distribution{Labels: series.Labels, Counts: counts})
+		}
+		aggregation.Percentiles = newDistributionPercentiles(aggBucket.Meta.Buckets, totalCounts)
+		data.Aggregations = append(data.Aggregations, aggregation)
+	}
+	return data
 }
 
 // DownscaleHeatmapResolution folds the MaxLogScale axis ClickHouse buckets at
@@ -314,4 +343,43 @@ func (h HeatmapBucketing) calculateUpperBoundAtIndex(index int) float64 {
 		return float64(index) * h.MaxValue / float64(h.NumBuckets)
 	}
 	return math.Exp2(float64(index) / math.Exp2(float64(h.LogScale)))
+}
+
+func newDistributionPercentiles(upperBounds, counts []float64) *DistributionPercentiles {
+	total := 0.0
+	for _, count := range counts {
+		total += count
+	}
+	if total == 0 || len(upperBounds) == 0 {
+		return nil
+	}
+	return &DistributionPercentiles{
+		P50: bucketQuantile(0.5, total, upperBounds, counts),
+		P75: bucketQuantile(0.75, total, upperBounds, counts),
+		P90: bucketQuantile(0.9, total, upperBounds, counts),
+		P95: bucketQuantile(0.95, total, upperBounds, counts),
+		P99: bucketQuantile(0.99, total, upperBounds, counts),
+	}
+}
+
+// bucketQuantile is histogram_quantile over per-bucket counts. q and total must
+// be positive, so the bucket the rank lands in holds a count.
+func bucketQuantile(q, total float64, upperBounds, counts []float64) float64 {
+	rank := q * total
+	cumulative := 0.0
+	for i, upperBound := range upperBounds {
+		if cumulative+counts[i] < rank {
+			cumulative += counts[i]
+			continue
+		}
+		if i == 0 && upperBound <= 0 {
+			return upperBound
+		}
+		lowerBound := 0.0
+		if i > 0 {
+			lowerBound = upperBounds[i-1]
+		}
+		return lowerBound + (upperBound-lowerBound)*(rank-cumulative)/counts[i]
+	}
+	return upperBounds[len(upperBounds)-1]
 }
