@@ -31,17 +31,7 @@ def test_fields_keys_name_resolution(
     present: dict[str, str],
     absent: list[str],
 ) -> None:
-    """
-    Setup:
-    Insert a log whose attributes include names that start with a context word: attribute.key next
-    to key, log.severity_text next to the severity_text log field, and resource.service.name next to
-    the service.name resource.
-
-    Tests:
-    1. A context prefix in searchText that is valid for the signal sets the context and is searched
-       without it; an explicit fieldContext searches the text as is.
-    2. Keys search stays within that context, so prefixed stored names in another context are not listed.
-    """
+    """Unlike values, keys search only the prefix's context."""
     insert_logs(
         [
             Logs(

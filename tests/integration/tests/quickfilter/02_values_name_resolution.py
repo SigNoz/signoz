@@ -37,18 +37,7 @@ def test_fields_values_name_resolution(
     expected: list[str],
     complete: bool,
 ) -> None:
-    """
-    Setup:
-    Insert a log whose attributes include names that start with a context word: attribute.key next
-    to key, log.severity_text next to the severity_text log field, and resource.service.name next to
-    the service.name resource.
-
-    Tests:
-    1. A name with a context prefix returns values of the name as written first, then of the name
-       with the prefix stripped; resource. is always a context.
-    2. An explicit fieldContext takes the name as is.
-    3. A :type suffix is stripped, and searchText filters values without being read as a key.
-    """
+    """A prefixed name returns values of the name as written first, then with the prefix stripped. `resource.` is always a context."""
     insert_logs(
         [
             Logs(
@@ -80,13 +69,7 @@ def test_fields_values_metric_attribute_context(
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    """
-    Setup:
-    Insert a metric with a service label, stored with attr_type point.
-
-    Tests:
-    1. fieldContext=attribute returns the label's values.
-    """
+    """Metric attributes are stored with attr_type point."""
     insert_metrics([Metrics(metric_name="fields.requests_total", labels={"service": "svc-metric"}, value=1.0)])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)

@@ -33,17 +33,6 @@ def test_related_values_name_resolution(
     expected: list[str],
     complete: bool,
 ) -> None:
-    """
-    Setup:
-    Insert attributes_metadata rows for logs carrying key and attribute.key on service svc-rel, the
-    same keys on svc-other, and an attribute named resource.region next to a region resource.
-    A log registers service.name so existingQuery can resolve it.
-
-    Tests:
-    1. Related values resolve the name like all values: name as written first, then the prefix
-       stripped; resource. is always a context and an explicit fieldContext takes the name as is.
-    2. Rows outside existingQuery never surface.
-    """
     now = datetime.now(tz=UTC)
     insert_logs([Logs(timestamp=now, resources={"service.name": "svc-registration"}, body="registers service.name")])
     insert_attributes_metadata(
@@ -99,16 +88,7 @@ def test_related_values_unknown_keys(
     existing_query: str,
     expected: set[str],
 ) -> None:
-    """
-    Setup:
-    Insert attributes_metadata rows for logs with key on svc-a and on svc-b. A log registers
-    service.name so existingQuery can resolve it.
-
-    Tests:
-    1. An unknown name returns no values and no error.
-    2. A term on an unknown key is dropped whatever its operator, and NOT does not flip it: it reads
-       as true, so it vanishes from an AND and drops the whole OR.
-    """
+    """A term on an unknown key reads as true whatever its operator: it vanishes from an AND and drops the whole OR."""
     now = datetime.now(tz=UTC)
     insert_logs([Logs(timestamp=now, resources={"service.name": "svc-registration"}, body="registers service.name")])
     insert_attributes_metadata(
