@@ -3,15 +3,12 @@ package audittypes
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewAuditAttributesFromHTTP_OutcomeBoundary(t *testing.T) {
-	claims := authtypes.Claims{IdentNProvider: authtypes.IdentNProviderTokenizer}
-
 	testCases := []struct {
 		name            string
 		statusCode      int
@@ -36,7 +33,7 @@ func TestNewAuditAttributesFromHTTP_OutcomeBoundary(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			attrs := NewAuditAttributesFromHTTP(testCase.statusCode, coretypes.VerbUpdate, coretypes.ActionCategoryConfigurationChange, claims)
+			attrs := NewAuditAttributesFromHTTP(testCase.statusCode, coretypes.VerbUpdate, coretypes.ActionCategoryConfigurationChange)
 			assert.Equal(t, testCase.expectedOutcome, attrs.Outcome)
 		})
 	}
@@ -154,9 +151,8 @@ func TestNewBody(t *testing.T) {
 			},
 			errorAttributes: ErrorAttributes{
 				ErrorType: "forbidden",
-				ErrorCode: "authz_forbidden",
 			},
-			expectedBody: "viewer@acme.com (019aaaaa-bbbb-7000-8000-cccc00000002) failed to update dashboard (019b-5678): forbidden (authz_forbidden)",
+			expectedBody: "viewer@acme.com (019aaaaa-bbbb-7000-8000-cccc00000002) failed to update dashboard (019b-5678): forbidden",
 		},
 		{
 			name: "Failure_ErrorTypeOnly",
@@ -192,6 +188,39 @@ func TestNewBody(t *testing.T) {
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "test@acme.com (019a1234-abcd-7000-8000-567800000001) failed to create dashboard (019b-5678)",
+		},
+		{
+			name: "Success_Attach",
+			auditAttributes: AuditAttributes{
+				Action:  coretypes.VerbAttach,
+				Outcome: OutcomeSuccess,
+			},
+			principalAttributes: PrincipalAttributes{},
+			resourceAttributes:  NewRelatedResourceAttributes(coretypes.ResourceRole, "role-1", coretypes.ResourceServiceAccount, "sa-1"),
+			errorAttributes:     ErrorAttributes{},
+			expectedBody:        "attached role (role-1) to serviceaccount (sa-1)",
+		},
+		{
+			name: "Success_Detach",
+			auditAttributes: AuditAttributes{
+				Action:  coretypes.VerbDetach,
+				Outcome: OutcomeSuccess,
+			},
+			principalAttributes: PrincipalAttributes{},
+			resourceAttributes:  NewRelatedResourceAttributes(coretypes.ResourceRole, "role-1", coretypes.ResourceServiceAccount, "sa-1"),
+			errorAttributes:     ErrorAttributes{},
+			expectedBody:        "detached role (role-1) from serviceaccount (sa-1)",
+		},
+		{
+			name: "Failure_Detach",
+			auditAttributes: AuditAttributes{
+				Action:  coretypes.VerbDetach,
+				Outcome: OutcomeFailure,
+			},
+			principalAttributes: PrincipalAttributes{},
+			resourceAttributes:  NewRelatedResourceAttributes(coretypes.ResourceRole, "role-1", coretypes.ResourceServiceAccount, "sa-1"),
+			errorAttributes:     ErrorAttributes{},
+			expectedBody:        "failed to detach role (role-1) from serviceaccount (sa-1)",
 		},
 	}
 

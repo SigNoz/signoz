@@ -57,11 +57,10 @@ func NewAuditEventFromHTTPRequest(
 	claims authtypes.Claims,
 	resourceAttributes ResourceAttributes,
 	errorType string,
-	errorCode string,
 ) AuditEvent {
-	auditAttributes := NewAuditAttributesFromHTTP(statusCode, action, actionCategory, claims)
+	auditAttributes := NewAuditAttributesFromHTTP(statusCode, action, actionCategory)
 	principalAttributes := NewPrincipalAttributesFromClaims(claims)
-	errorAttributes := NewErrorAttributes(errorType, errorCode)
+	errorAttributes := NewErrorAttributes(errorType)
 	transportAttributes := NewTransportAttributesFromHTTP(req, route, statusCode)
 
 	return AuditEvent{
@@ -69,7 +68,7 @@ func NewAuditEventFromHTTPRequest(
 		TraceID:             traceID,
 		SpanID:              spanID,
 		Body:                newBody(auditAttributes, principalAttributes, resourceAttributes, errorAttributes),
-		EventName:           NewEventName(resourceAttributes.Resource.Kind(), auditAttributes.Action),
+		EventName:           NewEventName(auditAttributes.Action),
 		AuditAttributes:     auditAttributes,
 		PrincipalAttributes: principalAttributes,
 		ResourceAttributes:  resourceAttributes,
@@ -147,6 +146,8 @@ func (event AuditEvent) ToLogRecord(dest plog.LogRecord) {
 
 	// Resource attributes are set at the ResourceLogs level, not per-LogRecord.
 	// See NewPLogsFromAuditEvents.
+
+	event.ResourceAttributes.Put(event.PrincipalAttributes.PrincipalOrgID, attrs)
 
 	// Error attributes
 	event.ErrorAttributes.Put(attrs)

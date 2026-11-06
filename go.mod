@@ -10,6 +10,7 @@ require (
 	github.com/SigNoz/clickhouse-go-mock v0.14.0
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
 	github.com/SigNoz/signoz-otel-collector v0.144.6
+	github.com/SigNoz/signoz-semantic-conventions/semconv/go v0.0.0-20261106053310-1c638e9f15fe
 	github.com/antlr4-go/antlr/v4 v4.13.1
 	github.com/antonmedv/expr v1.15.3
 	github.com/cespare/xxhash/v2 v2.3.0

@@ -109,10 +109,9 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	statusCode := writer.StatusCode()
 	span := trace.SpanFromContext(req.Context())
 
-	var errorType, errorCode string
+	var errorType string
 	if statusCode >= 400 {
 		errorType = render.ErrorTypeFromStatusCode(statusCode)
-		errorCode = render.ErrorCodeFromBody(writer.BodyBytes())
 	}
 
 	extractorCtx := coretypes.ExtractorContext{Request: req, ResponseBody: writer.BodyBytes()}
@@ -122,8 +121,12 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 			continue
 		}
 
-		resource.ResolveResponse(extractorCtx)
 		verb, category := resource.Verb(), resource.Category()
+		if !audittypes.IsAudited(verb) {
+			continue
+		}
+
+		resource.ResolveResponse(extractorCtx)
 
 		switch typed := resource.(type) {
 		case coretypes.ResolvedResourceWithTargetResource:
@@ -138,15 +141,13 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 						),
 					}
 
-					// Sibling peers are symmetric, so mirror the event from the target's side too.
-					if !typed.IsParentChild() {
-						attributesList = append(attributesList, audittypes.NewRelatedResourceAttributes(
-							typed.TargetResource(),
-							targetID,
-							typed.SourceResource(),
-							sourceID,
-						))
-					}
+					// A relation is recorded once from each side.
+					attributesList = append(attributesList, audittypes.NewRelatedResourceAttributes(
+						typed.TargetResource(),
+						targetID,
+						typed.SourceResource(),
+						sourceID,
+					))
 
 					for _, attributes := range attributesList {
 						middleware.auditor.Audit(req.Context(), audittypes.NewAuditEventFromHTTPRequest(
@@ -160,7 +161,6 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 							claims,
 							attributes,
 							errorType,
-							errorCode,
 						))
 					}
 				}
@@ -180,7 +180,6 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 					claims,
 					attributes,
 					errorType,
-					errorCode,
 				))
 			}
 		}
