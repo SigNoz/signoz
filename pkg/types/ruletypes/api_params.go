@@ -336,6 +336,19 @@ func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	return r.validate()
 }
 
+func NewPatchedPostableRule(stored, patch []byte) (*PostableRule, error) {
+	patched := new(PostableRule)
+	if err := json.Unmarshal(stored, patched); err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(patch, patched); err != nil {
+		return nil, err
+	}
+
+	return patched, nil
+}
+
 var _ jsonschema.Preparer = PostableRule{}
 
 // PrepareJSONSchema marks version and source deprecated: nothing reads them,

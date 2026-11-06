@@ -1043,29 +1043,24 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 		return nil, err
 	}
 
-	storedRule := ruletypes.PostableRule{}
-	if err := json.Unmarshal([]byte(storedJSON.Data), &storedRule); err != nil {
-		m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", slog.String("rule.id", id.StringValue()), errors.Attr(err))
-		return nil, err
-	}
-
-	if err := json.Unmarshal([]byte(ruleStr), &storedRule); err != nil {
+	storedRule, err := ruletypes.NewPatchedPostableRule([]byte(storedJSON.Data), []byte(ruleStr))
+	if err != nil {
 		m.logger.ErrorContext(ctx, "failed to unmarshal patched rule with given id", slog.String("rule.id", id.StringValue()), errors.Attr(err))
 		return nil, err
 	}
 	if err := storedRule.Validate(); err != nil {
 		return nil, err
 	}
-	if err := m.validateChannels(ctx, claims.OrgID, &storedRule); err != nil {
+	if err := m.validateChannels(ctx, claims.OrgID, storedRule); err != nil {
 		return nil, err
 	}
 	// deploy or un-deploy task according to patched (new) rule state
-	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
+	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, storedRule); err != nil {
 		m.logger.ErrorContext(ctx, "failed to sync stored rule state with the task", slog.String("task.name", taskName), errors.Attr(err))
 		return nil, err
 	}
 
-	newStoredJson, err := json.Marshal(&storedRule)
+	newStoredJson, err := json.Marshal(storedRule)
 	if err != nil {
 		m.logger.ErrorContext(ctx, "failed to marshal new stored rule with given id", slog.String("rule.id", id.StringValue()), errors.Attr(err))
 		return nil, err
@@ -1078,7 +1073,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 
 	err = m.ruleStore.EditRule(ctx, storedJSON, func(ctx context.Context) error { return nil })
 	if err != nil {
-		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
+		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, storedRule); err != nil {
 			m.logger.ErrorContext(ctx, "failed to restore rule after patch failure", "task_name", taskName, errors.Attr(err))
 		}
 		return nil, err
@@ -1087,7 +1082,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 	// prepare http response
 	response := ruletypes.GettableRule{
 		Id:           id.StringValue(),
-		PostableRule: storedRule,
+		PostableRule: *storedRule,
 	}
 
 	// fetch state of rule from memory
