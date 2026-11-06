@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useSearchParams } from 'react-router-dom-v5-compat';
+import { useAppSearchParams } from 'lib/router/useAppSearchParams';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
@@ -60,7 +61,7 @@ function Explorer(): JSX.Element {
 
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
-	const [searchParams] = useSearchParams();
+	const [searchParams] = useAppSearchParams();
 	const queryClient = useQueryClient();
 	const listQueryKeyRef = useRef<any>();
 
@@ -85,8 +86,9 @@ function Explorer(): JSX.Element {
 		setIsLoadingQueries(false);
 	}, [queryClient]);
 
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
-		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
+	const selectedView = useMemo(
+		() => getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
+		[searchParams, panelTypesFromUrl],
 	);
 
 	const [warning, setWarning] = useState<Warning | undefined>();
@@ -114,8 +116,6 @@ function Explorer(): JSX.Element {
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
 			handleSetConfig(explorerViewToPanelType[view], DataSource.TRACES);
-
-			setSelectedView(view);
 
 			handleExplorerTabChange(
 				explorerViewToPanelType[view],
@@ -190,6 +190,7 @@ function Explorer(): JSX.Element {
 				testId="llm-observability-explorer"
 				showFilters={isOpen}
 				onToggleFilters={(): void => setOpen(!isOpen)}
+				savedViewProps={{ source: SavedviewtypesSourceDTO.ai_observability }}
 				quickFilterProps={{
 					className: 'qf-traces-explorer',
 					quickFilterSource: QuickFiltersSource.AI_OBSERVABILITY,

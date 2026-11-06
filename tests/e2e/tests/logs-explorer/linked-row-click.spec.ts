@@ -1,49 +1,33 @@
-import { expect, test } from '../../fixtures/auth';
-import {
-	activeLogIdFromUrl,
-	clickRowFirstCell,
-	gotoLogsExplorer,
-	highlightedLogsTableRows,
-	LINKED_ROW_CLASS,
-	logDetailsDrawer,
-	logsTableRow,
-	logsTableRows,
-	openFirstContextLogInNewTab,
-	openContextView,
-	openLogDetailsFromRow,
-	setLogsFormat,
-	unhighlightedLogsTableRows,
-} from '../../helpers/logs-explorer';
+import { expect, test } from '../../drivers/logs';
 
 test.describe('Logs Explorer — linked row in Column format', () => {
 	test('TC-01 the linked row in a newly opened tab is highlighted and toggles the details drawer on click', async ({
-		authedPage: page,
+		logs,
 	}) => {
-		await gotoLogsExplorer(page);
-		await setLogsFormat(page, 'Column');
+		await logs.goto();
+		await logs.setFormat('Column');
 
-		const rows = logsTableRows(page);
+		const rows = logs.rows();
 		await expect(rows.first()).toBeVisible();
-		await expect(highlightedLogsTableRows(page)).toHaveCount(0);
+		await expect(logs.highlightedRows()).toHaveCount(0);
 
-		await openLogDetailsFromRow(rows.first());
-		await openContextView(page);
+		await logs.openDetailsFromRow(rows.first());
+		await logs.openContextView();
 
-		const linkedTab = await openFirstContextLogInNewTab(page);
+		const linkedTab = await logs.openFirstContextLogInNewTab();
 		await expect(linkedTab).toHaveURL(/activeLogId=/);
 
-		const linkedLogId = activeLogIdFromUrl(linkedTab);
-		const linkedRow = logsTableRow(linkedTab, linkedLogId);
+		const linkedRow = logs.row(logs.activeLogId(linkedTab), linkedTab);
 		await expect(linkedRow).toBeVisible();
-		await expect(linkedRow).toHaveClass(new RegExp(LINKED_ROW_CLASS));
+		await expect(linkedRow).toHaveClass(/logs-linked-row/);
 
-		await expect(highlightedLogsTableRows(linkedTab)).toHaveCount(1);
-		await expect(unhighlightedLogsTableRows(linkedTab).first()).toBeVisible();
+		await expect(logs.highlightedRows(linkedTab)).toHaveCount(1);
+		await expect(logs.unhighlightedRows(linkedTab).first()).toBeVisible();
 
-		await expect(logDetailsDrawer(linkedTab)).toBeHidden();
-		await openLogDetailsFromRow(linkedRow);
+		await expect(logs.detailsDrawer(linkedTab)).toBeHidden();
+		await logs.openDetailsFromRow(linkedRow);
 
-		await clickRowFirstCell(linkedRow);
-		await expect(logDetailsDrawer(linkedTab)).toBeHidden();
+		await logs.clickRowFirstCell(linkedRow);
+		await expect(logs.detailsDrawer(linkedTab)).toBeHidden();
 	});
 });

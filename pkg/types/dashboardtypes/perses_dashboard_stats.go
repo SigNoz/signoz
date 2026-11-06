@@ -1,6 +1,7 @@
 package dashboardtypes
 
 import (
+	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -10,6 +11,7 @@ const (
 	statKeyPanelTracesCount  = "dashboard.panels.traces.count"
 	statKeyPanelMetricsCount = "dashboard.panels.metrics.count"
 	statKeyPanelLogsCount    = "dashboard.panels.logs.count"
+	statKeyPanelAICount      = "dashboard.panels.ai.count"
 )
 
 // panelSignalStatKeys maps a builder query's signal to the stat it contributes
@@ -22,14 +24,17 @@ var panelSignalStatKeys = map[telemetrytypes.Signal]string{
 }
 
 // NewStatsFromStorableDashboards reports the stats of stored dashboards. Rows that
-// do not decode as v2 contribute to dashboard.count only.
+// do not decode as v2 contribute to dashboard.count only. System dashboards are
+// provisioned into every org, so they are left out of every count.
 func NewStatsFromStorableDashboards(dashboards []*StorableDashboard) map[string]any {
-	stats := newPanelStats()
+	stats := newStats()
 
 	for _, dashboard := range dashboards {
-		if dashboard == nil {
+		if dashboard == nil || dashboard.Source == SourceSystem {
 			continue
 		}
+		incrementStat(stats, statKeyDashboardCount)
+
 		dashboardV2, err := dashboard.ToDashboardV2(nil)
 		if err != nil {
 			continue
@@ -37,7 +42,6 @@ func NewStatsFromStorableDashboards(dashboards []*StorableDashboard) map[string]
 		addPanelStats(&dashboardV2.Spec, stats)
 	}
 
-	stats[statKeyDashboardCount] = int64(len(dashboards))
 	return stats
 }
 
@@ -45,24 +49,26 @@ func NewStatsFromStorableDashboards(dashboards []*StorableDashboard) map[string]
 // created, straight off the postable spec — the create path has no reason to make
 // a storable round-trip just to be counted.
 func NewStatsFromPostableDashboardV2(postable PostableDashboardV2) map[string]any {
-	stats := newPanelStats()
+	stats := newStats()
+	stats[statKeyDashboardCount] = int64(1)
 	addPanelStats(&postable.Spec, stats)
 
-	stats[statKeyDashboardCount] = int64(1)
 	return stats
 }
 
-func newPanelStats() map[string]any {
+func newStats() map[string]any {
 	return map[string]any{
+		statKeyDashboardCount:    int64(0),
 		statKeyPanelCount:        int64(0),
 		statKeyPanelTracesCount:  int64(0),
 		statKeyPanelMetricsCount: int64(0),
 		statKeyPanelLogsCount:    int64(0),
+		statKeyPanelAICount:      int64(0),
 	}
 }
 
 // addPanelStats counts the panels of a v2 spec, and each panel's queries against
-// the signal they read.
+// the signal they read. AI queries count only towards the AI stat.
 func addPanelStats(spec *DashboardSpec, stats map[string]any) {
 	for _, panel := range spec.Panels {
 		if panel == nil {
@@ -76,6 +82,10 @@ func addPanelStats(spec *DashboardSpec, stats map[string]any) {
 				continue
 			}
 			for _, envelope := range composite.Queries {
+				if envelope.Type == qb.QueryTypeBuilderAI {
+					incrementStat(stats, statKeyPanelAICount)
+					continue
+				}
 				if key, ok := panelSignalStatKeys[envelope.GetSignal()]; ok {
 					incrementStat(stats, key)
 				}

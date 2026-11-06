@@ -56,13 +56,14 @@ func (r *maintenance) ListPlannedMaintenance(ctx context.Context, orgID string) 
 	return plannedMaintenances, nil
 }
 
-func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.UUID) (*alertmanagertypes.PlannedMaintenance, error) {
+func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, orgID string, id valuer.UUID) (*alertmanagertypes.PlannedMaintenance, error) {
 	storableMaintenanceRule := new(alertmanagertypes.PlannedMaintenanceWithRules)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
 		Model(storableMaintenanceRule).
 		Relation("Rules").
+		Where("org_id = ?", orgID).
 		Where("id = ?", id.StringValue()).
 		Scan(ctx)
 	if err != nil {
@@ -162,11 +163,12 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 	return pm, nil
 }
 
-func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, id valuer.UUID) error {
+func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, orgID string, id valuer.UUID) error {
 	_, err := r.sqlstore.
 		BunDB().
 		NewDelete().
 		Model(new(alertmanagertypes.StorablePlannedMaintenance)).
+		Where("org_id = ?", orgID).
 		Where("id = ?", id.StringValue()).
 		Exec(ctx)
 	if err != nil {
@@ -182,7 +184,7 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 		return err
 	}
 
-	existing, err := r.GetPlannedMaintenanceByID(ctx, id)
+	existing, err := r.GetPlannedMaintenanceByID(ctx, claims.OrgID, id)
 	if err != nil {
 		return err
 	}

@@ -4,6 +4,7 @@ import ROUTES from 'constants/routes';
 import { defaultPostableAlertRuleV2 } from 'container/CreateAlertV2/constants';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
 import * as useSafeNavigateHook from 'hooks/useSafeNavigate';
+import { mockAppLocation } from 'tests/router-mocks';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import * as rulesHook from '../../../../api/generated/services/rules';
@@ -42,12 +43,7 @@ jest.mock('uplot', () => {
 	};
 });
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { search: string } => ({
-		search: '',
-	}),
-}));
+mockAppLocation({ search: '' });
 
 const ENTER_ALERT_RULE_NAME_PLACEHOLDER = 'Enter alert rule name';
 

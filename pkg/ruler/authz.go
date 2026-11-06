@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -30,7 +31,7 @@ var DowntimeRuleIDsExtractor = coretypes.ResourceIDsExtractor{Phase: coretypes.P
 		return nil, err
 	}
 
-	return defaultToAllRules(ids), nil
+	return defaultToWildcardIfEmpty(ids), nil
 }}
 
 var DowntimeRuleSelector coretypes.SelectorFunc = func(ctx context.Context, resource coretypes.Resource, id string, orgID valuer.UUID) ([]coretypes.Selector, error) {
@@ -55,12 +56,18 @@ func newDowntimeDiffExtractor(rulerService Ruler, side diffSide) coretypes.Resou
 			return nil, nil
 		}
 
+		ctx := ec.Request.Context()
+		orgID, err := orgIDFromContext(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		scheduleID, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
 		if err != nil {
 			return nil, err
 		}
 
-		stored, err := rulerService.MaintenanceStore().GetPlannedMaintenanceByID(ec.Request.Context(), scheduleID)
+		stored, err := rulerService.MaintenanceStore().GetPlannedMaintenanceByID(ctx, orgID.StringValue(), scheduleID)
 		if err != nil {
 			return nil, err
 		}
@@ -200,10 +207,10 @@ func parseRuleChannels(body []byte) ([]string, error) {
 }
 
 func diffDowntimeRuleLinks(stored, incoming []string) (attached, detached []string) {
-	return diffLinks(defaultToAllRules(stored), incoming)
+	return diffLinks(defaultToWildcardIfEmpty(stored), incoming)
 }
 
-func defaultToAllRules(ids []string) []string {
+func defaultToWildcardIfEmpty(ids []string) []string {
 	if len(ids) == 0 {
 		return []string{coretypes.WildCardSelectorString}
 	}
@@ -276,33 +283,12 @@ func resolveStoredChannelIDs(ctx context.Context, alertmanagerService alertmanag
 		return nil, nil
 	}
 
-	idByName, err := mapChannelIDsByName(ctx, alertmanagerService, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	ids := make([]string, 0, len(names))
-	for _, name := range names {
-		if id, ok := idByName[name]; ok {
-			ids = append(ids, id)
-		}
-	}
-
-	return ids, nil
-}
-
-func mapChannelIDsByName(ctx context.Context, alertmanagerService alertmanager.Alertmanager, orgID valuer.UUID) (map[string]string, error) {
 	channels, err := alertmanagerService.ListChannels(ctx, orgID.StringValue())
 	if err != nil {
 		return nil, err
 	}
 
-	idByName := make(map[string]string, len(channels))
-	for _, channel := range channels {
-		idByName[channel.DisplayName] = channel.ID.StringValue()
-	}
-
-	return idByName, nil
+	return alertmanagertypes.MapKnownChannelNamesToIDs(channels, names), nil
 }
 
 func orgIDFromContext(ctx context.Context) (valuer.UUID, error) {
@@ -390,36 +376,7 @@ func mapFieldResources(body []byte) ([]coretypes.ResourceWithID, error) {
 		return nil, err
 	}
 
-	seen := make(map[string]struct{}, 3)
-	refs := make([]coretypes.ResourceWithID, 0, 3)
-	for _, ref := range telemetry {
-		field, err := fieldResourceForKind(ref.Resource.Kind())
-		if err != nil {
-			return nil, err
-		}
-
-		kind := field.Kind().String()
-		if _, ok := seen[kind]; ok {
-			continue
-		}
-		seen[kind] = struct{}{}
-		refs = append(refs, coretypes.ResourceWithID{Resource: field})
-	}
-
-	return refs, nil
-}
-
-func fieldResourceForKind(kind coretypes.Kind) (coretypes.Resource, error) {
-	switch kind {
-	case coretypes.KindLogs, coretypes.KindAuditLogs:
-		return coretypes.ResourceMetaResourceLogsField, nil
-	case coretypes.KindTraces:
-		return coretypes.ResourceMetaResourceTracesField, nil
-	case coretypes.KindMetrics, coretypes.KindMeterMetrics:
-		return coretypes.ResourceMetaResourceMetricsField, nil
-	default:
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "no field resource for telemetry kind %q", kind.String())
-	}
+	return ruletypes.NewFieldResources(telemetry)
 }
 
 func diffLinks(stored, incoming []string) (attached, detached []string) {

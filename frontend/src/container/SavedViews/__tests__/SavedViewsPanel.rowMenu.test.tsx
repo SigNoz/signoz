@@ -4,6 +4,7 @@ import { toast } from '@signozhq/ui/sonner';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { NANO_SECOND_MULTIPLIER } from 'store/globalTime';
 
 import SavedViewsHeader from '../SavedViewsHeader';
 import SavedViewsPanel from '../SavedViewsPanel';
@@ -16,6 +17,7 @@ import {
 	renderWithExplorerProviders,
 	urlParam,
 	viewUrl,
+	withGlobalTime,
 } from './savedViewsTestUtils';
 
 const mockCopy = jest.fn();
@@ -32,6 +34,8 @@ jest.mock('@signozhq/ui/sonner', () => ({
 }));
 
 const PATH = ROUTES.TRACES_EXPLORER;
+const START_MS = 1700000000000;
+const END_MS = 1700003600000;
 
 const errors = makeView({ id: 'view-1', displayName: 'Errors' });
 const slow = makeView({
@@ -119,9 +123,22 @@ describe('SavedViewsPanel row menu', () => {
 		);
 	});
 
-	it('copies a link that opens the view with its query and tab', async () => {
+	it('copies a link that opens the view with its query, tab and time range', async () => {
 		mockSavedViewsApi([errors, slow]);
-		renderPanelWithHeader();
+		renderWithExplorerProviders(
+			withGlobalTime(
+				<SavedViewsPanel
+					source={SavedviewtypesSourceDTO.traces}
+					onClose={jest.fn()}
+				/>,
+				{
+					selectedTime: 'custom',
+					minTime: START_MS * NANO_SECOND_MULTIPLIER,
+					maxTime: END_MS * NANO_SECOND_MULTIPLIER,
+				},
+			),
+			explorerUrl(PATH, {}),
+		);
 
 		await chooseFromRowMenu('Slow spans', 'Copy link');
 
@@ -137,6 +154,9 @@ describe('SavedViewsPanel row menu', () => {
 		expect(
 			decodeURIComponent(link.searchParams.get(QueryParams.compositeQuery) ?? ''),
 		).toContain('duration_nano > 1000');
+		expect(link.searchParams.get(QueryParams.startTime)).toBe(String(START_MS));
+		expect(link.searchParams.get(QueryParams.endTime)).toBe(String(END_MS));
+		expect(link.searchParams.has(QueryParams.relativeTime)).toBe(false);
 		expect(toast.success).toHaveBeenCalledWith('Link copied', expect.anything());
 	});
 

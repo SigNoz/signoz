@@ -384,6 +384,7 @@ function ServiceAccountDrawer({
 							void setIsDeleteOpen(true);
 						}}
 						prefix={<Trash2 size={12} />}
+						testId="sa-delete-btn"
 					>
 						Delete Service Account
 					</AuthZButton>
@@ -409,6 +410,7 @@ function ServiceAccountDrawer({
 							loading={isSaving}
 							disabled={!isDirty}
 							onClick={handleSave}
+							testId="sa-save-btn"
 						>
 							Save Changes
 						</AuthZButton>
@@ -437,6 +439,7 @@ function ServiceAccountDrawer({
 					type="single"
 					value={activeTab}
 					size="sm"
+					testId="sa-tab"
 					onChange={(val: string): void => {
 						if (val) {
 							void setActiveTab(val as ServiceAccountDrawerTab);
@@ -478,6 +481,7 @@ function ServiceAccountDrawer({
 							void setIsAddKeyOpen(true);
 						}}
 						prefix={<Plus size={12} />}
+						testId="sa-add-key-btn"
 					>
 						Add Key
 					</AuthZButton>

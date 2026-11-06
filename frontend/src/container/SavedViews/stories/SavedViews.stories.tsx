@@ -6,10 +6,17 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import SavedViewsPanel from '../SavedViewsPanel';
 import {
 	findRows,
+	hoverFirstRow,
+	hoverFirstRowLoading,
+	openCreateModal,
+	openDeleteDialog,
+	openEditDetailsModal,
 	openRowMenu,
+	openSaveAsNewModal,
 	openSaveChangesMenu,
 	SavedViewsSidebar,
 	savedViewsMocks,
+	searchWithNoResults,
 	sidebarCanvas,
 } from './SavedViews.stories.mocks';
 
@@ -77,4 +84,49 @@ export const SaveChangesMenu: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await openSaveChangesMenu(canvasElement);
 	},
+};
+
+/**
+ * Views whose names run past the sidebar, with one of them open: each row and
+ * the open view name truncate.
+ */
+export const LongNames: Story = {
+	args: { longNames: true, openView: 'created-by-me' },
+};
+
+/** The hover card of the first row: its query, who updated it and when. */
+export const HoverCard: Story = {
+	play: hoverFirstRow,
+};
+
+/** The hover card while its view is still loading: a skeleton in place of the query. */
+export const HoverCardLoading: Story = {
+	args: { viewPending: true },
+	play: hoverFirstRowLoading,
+};
+
+/** A search that matches no view: the list says so in place of the rows. */
+export const SearchNoResults: Story = {
+	play: searchWithNoResults,
+};
+
+/** The + in the header opens Save view for the current query. */
+export const CreateModal: Story = {
+	play: openCreateModal,
+};
+
+/** Edit details from a row's menu: the modal starts on the view's name. */
+export const EditDetailsModal: Story = {
+	play: openEditDetailsModal,
+};
+
+/** Save as new view from the ✓ menu on unsaved changes. */
+export const SaveAsNewModal: Story = {
+	args: { openView: 'unsaved-changes' },
+	play: openSaveAsNewModal,
+};
+
+/** Delete from a row's menu asks to confirm before the view goes. */
+export const DeleteDialog: Story = {
+	play: openDeleteDialog,
 };

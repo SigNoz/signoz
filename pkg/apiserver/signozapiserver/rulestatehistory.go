@@ -51,7 +51,7 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			Response:            new(rulestatehistorytypes.GettableRuleStateTimeline),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			SecuritySchemes:     newScopedSecuritySchemes(append([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}, telemetryReadScopes()...)),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
@@ -81,7 +81,7 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			Response:            new([]rulestatehistorytypes.GettableRuleStateHistoryContributor),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			SecuritySchemes:     newScopedSecuritySchemes(append([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}, telemetryReadScopes()...)),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
@@ -111,7 +111,7 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			Response:            new(telemetrytypes.GettableFieldKeys),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			SecuritySchemes:     newScopedSecuritySchemes(append([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}, buildFieldScopes(coretypes.VerbList)...)),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{
@@ -141,7 +141,7 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			Response:            new(telemetrytypes.GettableFieldValues),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			SecuritySchemes:     newScopedSecuritySchemes(append([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbRead)}, buildFieldScopes(coretypes.VerbRead)...)),
 		},
 		handler.WithResourceDefs(handler.BasicResourceDef{

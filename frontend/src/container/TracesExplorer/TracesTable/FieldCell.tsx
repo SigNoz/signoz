@@ -1,4 +1,6 @@
-import { generatePath, Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
+import { Minus } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -13,6 +15,8 @@ import {
 	TRACE_ID_FIELD_NAMES,
 } from './constants';
 import { stringifyCellValue } from './utils';
+
+import styles from './FieldCell.module.scss';
 
 type FieldCellProps = {
 	name: string;
@@ -36,20 +40,24 @@ function FieldCell({ name, value }: FieldCellProps): JSX.Element {
 	}
 
 	if (value === '' || value == null) {
-		return <TanStackTable.Text data-testid={name}>-</TanStackTable.Text>;
+		return (
+			<TanStackTable.Text data-testid={name}>
+				<Minus size={14} className={styles.emptyValue} data-testid="empty-value" />
+			</TanStackTable.Text>
+		);
 	}
 
 	const text = stringifyCellValue(value);
 
 	if (TRACE_ID_FIELD_NAMES.has(name)) {
 		return (
-			<Link
-				to={generatePath(ROUTES.TRACE_DETAIL, { id: text })}
+			<AppLink
+				to={buildRoutePath(ROUTES.TRACE_DETAIL, { id: text })}
 				data-testid="trace-id"
 				onClick={(e): void => e.stopPropagation()}
 			>
 				{text}
-			</Link>
+			</AppLink>
 		);
 	}
 
