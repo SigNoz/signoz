@@ -142,7 +142,7 @@ func (b *logQueryStatementBuilder) Build(
 		stmt, err = b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeTimeSeries:
 		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
-	case qbtypes.RequestTypeHeatmap:
+	case qbtypes.RequestTypeHeatmap, qbtypes.RequestTypeDistribution:
 		stmt, err = b.buildHeatmapTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
 		stmt, err = b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, false, variables)

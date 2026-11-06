@@ -77,7 +77,7 @@ func newBuilderQuery[T any](
 func (q *builderQuery[T]) Fingerprint() string {
 
 	if (q.spec.Signal == telemetrytypes.SignalTraces ||
-		q.spec.Signal == telemetrytypes.SignalLogs) && q.kind != qbtypes.RequestTypeTimeSeries && q.kind != qbtypes.RequestTypeHeatmap {
+		q.spec.Signal == telemetrytypes.SignalLogs) && !q.kind.IsBuiltFromTimeSeries() {
 		// No caching for non-timeseries queries
 		return ""
 	}
@@ -145,7 +145,7 @@ func (q *builderQuery[T]) Fingerprint() string {
 
 	// A metrics heatmap carries its axis on the aggregation, which the loop above
 	// already fingerprinted. Logs and traces carry it on the spec.
-	if q.kind == qbtypes.RequestTypeHeatmap && q.spec.Signal != telemetrytypes.SignalMetrics {
+	if q.kind.CountsIntoBuckets() && q.spec.Signal != telemetrytypes.SignalMetrics {
 		parts = append(parts, "buckets="+fingerprintHeatmapBucketing(q.spec.BucketOptions.ToHeatmapBucketing()))
 	}
 

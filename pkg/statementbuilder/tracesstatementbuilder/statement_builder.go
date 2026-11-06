@@ -178,7 +178,7 @@ func (b *traceQueryStatementBuilder) Build(
 		return b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables, isSelectFieldsEmpty)
 	case qbtypes.RequestTypeTimeSeries:
 		return b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
-	case qbtypes.RequestTypeHeatmap:
+	case qbtypes.RequestTypeHeatmap, qbtypes.RequestTypeDistribution:
 		return b.buildHeatmapTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, variables, false, false)
