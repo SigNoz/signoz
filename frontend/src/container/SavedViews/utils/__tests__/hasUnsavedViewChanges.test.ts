@@ -133,6 +133,7 @@ describe('hasUnsavedViewChanges', () => {
 				view,
 				stagedQuery: null,
 				panelType: PANEL_TYPES.LIST,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				options,
 			}),
 		).toBe(false);
@@ -144,6 +145,7 @@ describe('hasUnsavedViewChanges', () => {
 				view,
 				stagedQuery: staged,
 				panelType: PANEL_TYPES.LIST,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				options: { ...options, selectColumns: [columns[1], columns[0]] },
 			}),
 		).toBe(true);
@@ -155,6 +157,7 @@ describe('hasUnsavedViewChanges', () => {
 				view,
 				stagedQuery: staged,
 				panelType: PANEL_TYPES.LIST,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				options: {
 					...options,
 					selectColumns: [
@@ -232,6 +235,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: logsView,
 					stagedQuery: logsStaged,
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 					options: { selectColumns: shownColumns, ...formatting, ...change },
 				}),
 			).toBe(true);
@@ -402,6 +406,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: storedView,
 					stagedQuery: stagedLegacy,
 					panelType: PANEL_TYPES.TIME_SERIES,
+					sourcePage: SavedviewtypesSourceDTO.metrics,
 				}),
 			).toBe(false);
 		},
@@ -431,12 +436,14 @@ describe('hasUnsavedViewChanges', () => {
 			[
 				'a zero offset on a list',
 				DataSource.LOGS,
+				SavedviewtypesSourceDTO.logs,
 				PANEL_TYPES.LIST,
 				{ offset: 0 },
 			],
 			[
 				'an empty group-by description',
 				DataSource.TRACES,
+				SavedviewtypesSourceDTO.traces,
 				PANEL_TYPES.TIME_SERIES,
 				{
 					groupBy: [
@@ -452,10 +459,11 @@ describe('hasUnsavedViewChanges', () => {
 			[
 				'a function without arguments',
 				DataSource.METRICS,
+				SavedviewtypesSourceDTO.metrics,
 				PANEL_TYPES.TIME_SERIES,
 				{ functions: [{ name: 'absolute', args: [], namedArgs: {} }] },
 			],
-		])('is clean with %s', (_, dataSource, panelType, patch) => {
+		])('is clean with %s', (_, dataSource, sourcePage, panelType, patch) => {
 			const saved = withPatch(
 				dataSource,
 				patch as Partial<Query['builder']['queryData'][number]>,
@@ -469,6 +477,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: savedView,
 					stagedQuery: saved,
 					panelType,
+					sourcePage,
 				}),
 			).toBe(false);
 		});
