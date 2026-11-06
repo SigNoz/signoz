@@ -44,10 +44,10 @@ describe('QueryBuilder AI slot', () => {
 
 		expect(
 			result.current.currentQuery.builder_ai_query?.queryData[0],
-		).toMatchObject({
-			dataSource: 'traces',
-			builderQueryType: 'builder_ai_query',
-		});
+		).toMatchObject({ dataSource: 'traces' });
+		expect(
+			result.current.currentQuery.builder_ai_query?.queryData[0].builderQueryType,
+		).toBeUndefined();
 	});
 
 	it('edits the AI slot and leaves builder alone while AI is active', () => {

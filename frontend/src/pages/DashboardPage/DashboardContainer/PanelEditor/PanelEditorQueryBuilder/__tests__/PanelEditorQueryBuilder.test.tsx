@@ -173,9 +173,10 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 		);
 		const [seeded] = redirectWithQueryBuilderData.mock.calls[0];
 		expect(seeded.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
-		expect(seeded.builder_ai_query.queryData[0].builderQueryType).toBe(
-			'builder_ai_query',
-		);
+		expect(seeded.builder_ai_query.queryData[0]).toMatchObject({
+			dataSource: 'traces',
+		});
+		expect(seeded.builder_ai_query.queryData[0].builderQueryType).toBeUndefined();
 		expect(seeded.builder).toBe(BUILDER_QUERY.builder);
 	});
 
