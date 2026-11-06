@@ -1,4 +1,9 @@
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
+import {
+	getBuilderAt,
+	getBuilderSlotKey,
+	withBuilderAt,
+} from 'lib/query/builderSlot';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getKeySpellings, isKeyMatch } from '../Checkbox/utils';
@@ -20,34 +25,33 @@ export function clearFilterFromQuery({
 	activeQueryIndex: number;
 	operators?: string[];
 }): Query {
-	return {
-		...currentQuery,
-		builder: {
-			...currentQuery.builder,
-			queryData: currentQuery.builder.queryData.map((item, idx) => {
-				if (idx !== activeQueryIndex) {
-					return item;
-				}
-				return {
-					...item,
-					filter: {
-						expression: removeKeysFromExpression(
-							item.filter?.expression ?? '',
-							getKeySpellings(filterKey),
-							false,
-							operators,
-						),
-					},
-					filters: {
-						...item.filters,
-						items:
-							item.filters?.items?.filter(
-								(fil) => !isKeyMatch(fil.key?.key, filterKey),
-							) || [],
-						op: item.filters?.op || 'AND',
-					},
-				};
-			}),
-		},
-	};
+	const slot = getBuilderSlotKey(currentQuery.queryType);
+	const builder = getBuilderAt(currentQuery, slot);
+	return withBuilderAt(currentQuery, slot, {
+		...builder,
+		queryData: builder.queryData.map((item, idx) => {
+			if (idx !== activeQueryIndex) {
+				return item;
+			}
+			return {
+				...item,
+				filter: {
+					expression: removeKeysFromExpression(
+						item.filter?.expression ?? '',
+						getKeySpellings(filterKey),
+						false,
+						operators,
+					),
+				},
+				filters: {
+					...item.filters,
+					items:
+						item.filters?.items?.filter(
+							(fil) => !isKeyMatch(fil.key?.key, filterKey),
+						) || [],
+					op: item.filters?.op || 'AND',
+				},
+			};
+		}),
+	});
 }

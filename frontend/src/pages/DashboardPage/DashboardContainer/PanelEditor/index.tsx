@@ -6,7 +6,7 @@ import type { NewPanelTarget } from '../patchOps';
 import QueryEditorBody from './QueryEditorBody';
 import StaticEditorBody from './StaticEditorBody';
 import { usePanelEditorDraft } from './hooks/usePanelEditorDraft';
-import { usePanelKindAndQueryModeSwitch } from './hooks/usePanelKindAndQueryModeSwitch';
+import { usePanelKindChange } from './hooks/usePanelKindChange';
 
 export interface PanelEditorContainerProps {
 	dashboardId: string;
@@ -40,12 +40,11 @@ function PanelEditorContainer(props: PanelEditorContainerProps): JSX.Element {
 	const panelDefinition = getPanelDefinition(panelKind);
 	const originalPanelKind = (savedPanel ?? panel).spec.plugin.kind;
 
-	const { onChangePanelKind, onChangeQueryMode } =
-		usePanelKindAndQueryModeSwitch({
-			spec: draftApi.draft.spec,
-			panelType: toPanelType(panelKind),
-			setSpec: draftApi.setSpec,
-		});
+	const { onChangePanelKind } = usePanelKindChange({
+		spec: draftApi.draft.spec,
+		panelType: toPanelType(panelKind),
+		setSpec: draftApi.setSpec,
+	});
 
 	if (panelDefinition.mode === 'static') {
 		return (
@@ -66,7 +65,6 @@ function PanelEditorContainer(props: PanelEditorContainerProps): JSX.Element {
 			panelDefinition={panelDefinition}
 			onChangePanelKind={onChangePanelKind}
 			originalPanelKind={originalPanelKind}
-			onChangeQueryMode={onChangeQueryMode}
 		/>
 	);
 }

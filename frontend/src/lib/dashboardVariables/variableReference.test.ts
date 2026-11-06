@@ -161,6 +161,35 @@ describe('extractQueryTextStrings', () => {
 		expect(texts).toStrictEqual(['env = $deployment_environment']);
 	});
 
+	it('extracts from the AI slot, not builder, for an AI query', () => {
+		const query: Query = {
+			...baseQuery,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder: {
+				queryData: [
+					{
+						filter: { expression: 'env = $ignored' },
+					} as unknown as IBuilderQuery,
+				],
+				queryFormulas: [],
+				queryTraceOperator: [],
+			},
+			builder_ai_query: {
+				queryData: [
+					{
+						filter: { expression: 'service.name = $service' },
+					} as unknown as IBuilderQuery,
+				],
+				queryFormulas: [],
+				queryTraceOperator: [],
+			},
+		};
+
+		expect(extractQueryTextStrings(query)).toStrictEqual([
+			'service.name = $service',
+		]);
+	});
+
 	it('skips non-string filter values', () => {
 		const query: Query = {
 			...baseQuery,

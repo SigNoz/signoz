@@ -25,6 +25,25 @@ describe('getPanelTypeDisabledReason', () => {
 		).toBeUndefined();
 	});
 
+	it('offers the AI kinds to an AI query and explains the rest', () => {
+		expect(
+			getPanelTypeDisabledReason({
+				kind: 'signoz/TimeSeriesPanel',
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				signal: TelemetrytypesSignalDTO.traces,
+				label: 'Time Series',
+			}),
+		).toBeUndefined();
+		expect(
+			getPanelTypeDisabledReason({
+				kind: 'signoz/HeatmapPanel',
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				signal: TelemetrytypesSignalDTO.traces,
+				label: 'Heatmap',
+			}),
+		).toBe("Heatmap isn't available for AI Query Builder queries");
+	});
+
 	it('explains an unsupported query type', () => {
 		expect(
 			getPanelTypeDisabledReason({

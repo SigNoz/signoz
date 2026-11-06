@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { IQuickFiltersConfig } from 'components/QuickFilters/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 
 import { DEFAULT_VISIBLE_ITEMS_COUNT } from './constants';
 import { isKeyMatch } from './utils';
@@ -37,12 +38,13 @@ function useCheckboxDisclosure({
 		DEFAULT_VISIBLE_ITEMS_COUNT,
 	);
 
+	const { queryData } = getActiveBuilder(currentQuery);
 	const isSomeFilterPresentForCurrentAttribute = useMemo(
 		() =>
-			!!currentQuery.builder.queryData?.[activeQueryIndex]?.filters?.items?.some(
-				(item) => isKeyMatch(item.key?.key, filter.attributeKey.key),
+			!!queryData?.[activeQueryIndex]?.filters?.items?.some((item) =>
+				isKeyMatch(item.key?.key, filter.attributeKey.key),
 			),
-		[currentQuery.builder.queryData, activeQueryIndex, filter.attributeKey.key],
+		[queryData, activeQueryIndex, filter.attributeKey.key],
 	);
 
 	const isOpen = useMemo(() => {

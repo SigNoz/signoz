@@ -2,6 +2,7 @@ import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, initialQueryState } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { AllTheProviders, renderHook } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -105,18 +106,25 @@ describe('useGetCompositeQueryParam', () => {
 			},
 		});
 
+		const { QUERY_BUILDER, AI_QUERY_BUILDER } = EQueryType;
 		[
-			[ROUTES.LOGS_EXPLORER, DataSource.LOGS, ''],
-			[ROUTES.AI_OBSERVABILITY_EXPLORER, DataSource.TRACES, ''],
-			[ROUTES.METRICS_EXPLORER_EXPLORER, DataSource.METRICS, ''],
-			[ROUTES.METER_EXPLORER, DataSource.METRICS, TelemetrytypesSourceDTO.meter],
-		].forEach(([route, dataSource, source]) => {
+			[ROUTES.LOGS_EXPLORER, QUERY_BUILDER, DataSource.LOGS, ''],
+			[ROUTES.AI_OBSERVABILITY_EXPLORER, AI_QUERY_BUILDER, DataSource.TRACES, ''],
+			[ROUTES.METRICS_EXPLORER_EXPLORER, QUERY_BUILDER, DataSource.METRICS, ''],
+			[
+				ROUTES.METER_EXPLORER,
+				QUERY_BUILDER,
+				DataSource.METRICS,
+				TelemetrytypesSourceDTO.meter,
+			],
+		].forEach(([route, queryType, dataSource, source]) => {
 			const query = renderOn(clickhouseWithOperator, route);
+			const builder = query && getActiveBuilder(query);
 
-			expect(query?.queryType).toBe(EQueryType.QUERY_BUILDER);
-			expect(query?.builder.queryData[0].dataSource).toBe(dataSource);
-			expect(query?.builder.queryData[0].source ?? '').toBe(source);
-			expect(query?.builder.queryTraceOperator).toStrictEqual([]);
+			expect(query?.queryType).toBe(queryType);
+			expect(builder?.queryData[0].dataSource).toBe(dataSource);
+			expect(builder?.queryData[0].source ?? '').toBe(source);
+			expect(builder?.queryTraceOperator).toStrictEqual([]);
 		});
 	});
 

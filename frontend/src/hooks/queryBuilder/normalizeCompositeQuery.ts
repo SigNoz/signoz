@@ -7,8 +7,10 @@ import {
 	Querybuildertypesv5QueryTypeDTO,
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import type { QueryBuilderData } from 'types/common/queryBuilder';
 import { v5 as uuidv5 } from 'uuid';
 
 import {
@@ -78,6 +80,14 @@ function addMissingBlocks(query: Query, urlQuery: object): void {
 	if (!query.builder.queryTraceOperator) {
 		query.builder.queryTraceOperator = [];
 	}
+
+	if (isPlainObject(query.builder_ai_query)) {
+		const aiBuilder = query.builder_ai_query as QueryBuilderData;
+		aiBuilder.queryFormulas = aiBuilder.queryFormulas ?? [];
+		aiBuilder.queryTraceOperator = aiBuilder.queryTraceOperator ?? [];
+	} else {
+		delete query.builder_ai_query;
+	}
 }
 
 /**
@@ -93,8 +103,21 @@ function isListOfObjects(value: unknown): boolean {
 }
 
 function fitQueryToExplorer(query: Query, rules: ExplorerQueryRules): void {
-	// Explorers only have the query builder: no PromQL or ClickHouse editor.
-	query.queryType = EQueryType.QUERY_BUILDER;
+	// Explorers only have a query builder: no PromQL or ClickHouse editor.
+	query.queryType = rules.queryType;
+	if (rules.queryType === EQueryType.AI_QUERY_BUILDER) {
+		// Older links carry the AI queries inside `builder`.
+		if (!query.builder_ai_query) {
+			query.builder_ai_query = query.builder;
+			query.builder = cloneDeep(initialQueryState.builder);
+		}
+	} else {
+		delete query.builder_ai_query;
+	}
+	const builder = getActiveBuilder(query);
+	if (!isListOfObjects(builder.queryData) || builder.queryData.length === 0) {
+		builder.queryData = cloneDeep(initialQueryState.builder.queryData);
+	}
 
 	if (query.promql.some((promql) => promql.query !== '')) {
 		query.promql = cloneDeep(initialQueryState.promql);
@@ -105,10 +128,10 @@ function fitQueryToExplorer(query: Query, rules: ExplorerQueryRules): void {
 	}
 
 	if (!rules.allowsTraceOperator) {
-		query.builder.queryTraceOperator = [];
+		builder.queryTraceOperator = [];
 	}
 
-	query.builder.queryData = query.builder.queryData.map((builderQuery) =>
+	builder.queryData = builder.queryData.map((builderQuery) =>
 		fitBuilderQueryToExplorer(builderQuery, rules),
 	);
 }
@@ -148,12 +171,9 @@ function fillMissingSignal(
 		builderQuery.source = rules.source;
 	}
 
-	// A missing `builderQueryType` already means builder_query, so only AI needs it written.
-	if (
-		builderQuery.builderQueryType === undefined &&
-		rules.builderQueryType === Querybuildertypesv5QueryTypeDTO.builder_ai_query
-	) {
-		builderQuery.builderQueryType = rules.builderQueryType;
+	// The AI slot marks its queries as AI; a tag from an older link is redundant.
+	if (rules.queryType === EQueryType.AI_QUERY_BUILDER) {
+		delete builderQuery.builderQueryType;
 	}
 }
 
@@ -169,15 +189,11 @@ function belongsToExplorer(
 		return false;
 	}
 
-	const builderQueryType =
-		builderQuery.builderQueryType ??
-		Querybuildertypesv5QueryTypeDTO.builder_query;
-
-	if (builderQueryType !== rules.builderQueryType) {
-		return false;
-	}
-
-	return true;
+	// Only the AI explorer runs AI queries.
+	return (
+		builderQuery.builderQueryType !==
+		Querybuildertypesv5QueryTypeDTO.builder_ai_query
+	);
 }
 
 function getDefaultBuilderQuery(rules: ExplorerQueryRules): IBuilderQuery {
@@ -185,12 +201,6 @@ function getDefaultBuilderQuery(rules: ExplorerQueryRules): IBuilderQuery {
 		initialQueryBuilderFormValuesMap[rules.dataSource],
 	);
 	builderQuery.source = rules.source;
-
-	if (
-		rules.builderQueryType === Querybuildertypesv5QueryTypeDTO.builder_ai_query
-	) {
-		builderQuery.builderQueryType = rules.builderQueryType;
-	}
 
 	return builderQuery;
 }
