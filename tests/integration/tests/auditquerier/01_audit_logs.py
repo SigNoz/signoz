@@ -114,8 +114,18 @@ def test_audit_list_all(
     assert rows[2]["data"]["event_name"] == "alert-rule.created"
 
     # Verify event_name and body are present
-    assert rows[0]["data"]["body"] == "ops@acme.com (user-010) updated user (user-020)"
+    assert rows[0]["data"]["body"] == {"message": "ops@acme.com (user-010) updated user (user-020)"}
     assert rows[0]["data"]["severity_text"] == "INFO"
+
+    assert rows[0]["data"]["resource"] == {
+        "attributes": {
+            "service.name": "signoz",
+            "signoz.audit.resource.kind": "user",
+            "signoz.audit.resource.id": "user-020",
+        }
+    }
+    assert rows[0]["data"]["attributes"]["signoz.audit.action_category"] == "access_control"
+    assert rows[0]["data"]["scope"]["name"] == "signoz.audit"
 
 
 @pytest.mark.parametrize(
@@ -150,6 +160,18 @@ def test_audit_list_all(
             1,
             {"dashboard.deleted"},
             id="filter_by_resource_kind_and_action",
+        ),
+        pytest.param(
+            "resource.signoz.audit.resource.id = 'sa-001'",
+            1,
+            {"serviceaccount.apikey.created"},
+            id="filter_by_resource_prefix",
+        ),
+        pytest.param(
+            "body CONTAINS 'failed'",
+            1,
+            {"dashboard.deleted"},
+            id="filter_by_body_contains",
         ),
     ],
 )

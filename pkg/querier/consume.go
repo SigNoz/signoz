@@ -43,15 +43,15 @@ func stripKeyAlias(name string) string {
 // unwrapVariant decodes a scan envelope: the chcol.Variant the driver scans a Dynamic column (a JSON
 // path such as body_v2.level) into, and the JSONValue a whole JSON column scans into. The attributes
 // bag decodes flat so its dotted keys merge with the legacy attribute maps and a key stored at both a
-// scalar and an object path stays two keys; the scope decodes flat too, keeping its attributes dotted;
-// every other JSON column decodes nested.
+// scalar and an object path stays two keys; the scope and resource decode flat too, keeping their
+// attributes dotted; every other JSON column decodes nested.
 func unwrapVariant(name string, val any) any {
 	switch v := val.(type) {
 	case chcol.Variant:
 		return v.Any()
 	case telemetrystoretypes.JSONValue:
 		switch name {
-		case "attributes", "scope":
+		case "attributes", "scope", "resource":
 			return v.Flatten()
 		}
 		return v.Nest()
