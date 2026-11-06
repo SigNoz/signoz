@@ -334,21 +334,21 @@ func TestAdjustStepIntervalMeterWarnings(t *testing.T) {
 		queries      []qbtypes.QueryEnvelope
 		wantWarnings int
 	}{
-		{name: "logs only", queries: []qbtypes.QueryEnvelope{logsQuery()}, wantWarnings: 1},
-		{name: "meter only", queries: []qbtypes.QueryEnvelope{meterQuery()}, wantWarnings: 0},
-		{name: "logs then meter", queries: []qbtypes.QueryEnvelope{logsQuery(), meterQuery()}, wantWarnings: 1},
-		{name: "meter then logs", queries: []qbtypes.QueryEnvelope{meterQuery(), logsQuery()}, wantWarnings: 1},
+		{name: "LogsOnly", queries: []qbtypes.QueryEnvelope{logsQuery()}, wantWarnings: 1},
+		{name: "MeterOnly", queries: []qbtypes.QueryEnvelope{meterQuery()}, wantWarnings: 0},
+		{name: "LogsThenMeter", queries: []qbtypes.QueryEnvelope{logsQuery(), meterQuery()}, wantWarnings: 1},
+		{name: "MeterThenLogs", queries: []qbtypes.QueryEnvelope{meterQuery(), logsQuery()}, wantWarnings: 1},
 	}
 
 	q := &querier{}
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			warnings := q.adjustStepInterval(tc.queries, start, end)
-			assert.Len(t, warnings, tc.wantWarnings)
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			warnings := q.adjustStepInterval(testCase.queries, start, end)
+			assert.Len(t, warnings, testCase.wantWarnings)
 			for _, w := range warnings {
 				assert.Contains(t, w, "Query A ")
 			}
-			for _, qe := range tc.queries {
+			for _, qe := range testCase.queries {
 				assert.Greater(t, qe.GetStepInterval().Seconds(), step.Seconds())
 			}
 		})
