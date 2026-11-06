@@ -1,24 +1,34 @@
-import { Options, useQueryState, UseQueryStateReturn } from 'nuqs';
-import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
+import {
+	Options,
+	parseAsArrayOf,
+	parseAsString,
+	useQueryState,
+	UseQueryStateReturn,
+} from 'nuqs';
 
 const defaultNuqsOptions: Options = {
 	history: 'push',
 };
 
 export const ALERT_RULES_PARAMS = {
-	SEARCH: 'search',
+	QUERY: 'query',
+	STATES: 'states',
+	VIEW: 'view',
 	PAGE: 'page',
 	RULE_TYPE: 'ruleType',
-	FILTERS: 'alertRulesFilters',
 } as const;
 
-export const useAlertRulesFilters = (): UseQueryStateReturn<
+export const useAlertRulesQuery = (): UseQueryStateReturn<string, string> =>
+	useQueryState(
+		ALERT_RULES_PARAMS.QUERY,
+		parseAsString.withDefault('').withOptions(defaultNuqsOptions),
+	);
+
+export const useAlertRulesStates = (): UseQueryStateReturn<
 	string[],
 	string[]
 > =>
 	useQueryState(
-		ALERT_RULES_PARAMS.FILTERS,
-		parseAsJsonNoValidate<string[]>()
-			.withDefault([])
-			.withOptions(defaultNuqsOptions),
+		ALERT_RULES_PARAMS.STATES,
+		parseAsArrayOf(parseAsString).withDefault([]).withOptions(defaultNuqsOptions),
 	);
