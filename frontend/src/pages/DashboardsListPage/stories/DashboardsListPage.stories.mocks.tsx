@@ -36,7 +36,7 @@ import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import {
 	orgUsersResponse,
 	STORY_USER_EMAIL,
-} from './__story_mockdata__/orgUsers';
+} from '@/storybook/msw/__story_mockdata__/orgUsers';
 
 import { dashboardResponse } from '../../DashboardPage/stories/__story_mockdata__/dashboard';
 import {

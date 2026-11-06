@@ -12,8 +12,10 @@ import {
 	type ListDashboardsForUserV2200,
 	type TagtypesGettableTagDTO,
 } from 'api/generated/services/sigNoz.schemas';
-
-import { STORY_USER_EMAIL, TEAMMATE_EMAILS } from './orgUsers';
+import {
+	STORY_USER_EMAIL,
+	TEAMMATE_EMAILS,
+} from '@/storybook/msw/__story_mockdata__/orgUsers';
 
 const HOUR = 60 * 60 * 1000;
 
