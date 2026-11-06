@@ -12,10 +12,6 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
-import {
-	orgUsersResponse,
-	STORY_USER_EMAIL,
-} from '@/storybook/msw/__story_mockdata__/orgUsers';
 import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
 import { DEFAULT_RULE_LIST_FILTER } from 'container/ListAlertRules/utils';
 import {
@@ -24,6 +20,10 @@ import {
 	type RuleViewId,
 } from 'container/ListAlertRules/list.config';
 
+import {
+	orgUsersResponse,
+	STORY_USER_EMAIL,
+} from '../../../DashboardsListPage/stories/__story_mockdata__/orgUsers';
 import {
 	alertRulesResponse,
 	RULE_MAX,
