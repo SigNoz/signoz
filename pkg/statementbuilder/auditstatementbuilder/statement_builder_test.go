@@ -164,6 +164,25 @@ func TestStatementBuilder(t *testing.T) {
 				Args:  []any{"service_account", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
+		// List: the newest event of each principal
+		{
+			name:        "List_LimitBy_NewestPerPrincipal",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Source: telemetrytypes.SourceAudit,
+				Order: []qbtypes.OrderBy{
+					{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp"}}, Direction: qbtypes.OrderDirectionDesc},
+					{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "id"}}, Direction: qbtypes.OrderDirectionDesc},
+				},
+				LimitBy: &qbtypes.LimitBy{Keys: []string{"signoz.audit.principal.email"}, Value: "1"},
+				Limit:   100,
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, resource, scope_string FROM signoz_audit.distributed_logs WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY timestamp desc, id desc LIMIT 1 BY multiIf(`attribute_string_signoz$$audit$$principal$$email_exists` = true, `attribute_string_signoz$$audit$$principal$$email`, NULL) LIMIT ?",
+				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
+			},
+		},
 		// Scalar: alert — count forbidden errors (outcome + action AND)
 		{
 			name:        "ScalarCountByOutcomeAndAction",
@@ -182,6 +201,54 @@ func TestStatementBuilder(t *testing.T) {
 			expected: qbtypes.Statement{
 				Query: "SELECT count() AS __result_0 FROM signoz_audit.distributed_logs WHERE ((`attribute_string_signoz$$audit$$outcome` = ? AND `attribute_string_signoz$$audit$$outcome_exists` = true) AND (`attribute_string_signoz$$audit$$action` = ? AND `attribute_string_signoz$$audit$$action_exists` = true)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY __result_0 DESC",
 				Args:  []any{"failure", "update", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			},
+		},
+		// Scalar: the 2 busiest principals for each action
+		{
+			name:        "Scalar_LimitBy_TopPrincipalsPerAction",
+			requestType: qbtypes.RequestTypeScalar,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				Source:       telemetrytypes.SourceAudit,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{
+					{Expression: "count()"},
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.audit.action"}},
+					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.audit.principal.email"}},
+				},
+				LimitBy: &qbtypes.LimitBy{Keys: []string{"signoz.audit.action"}, Value: "2"},
+				Limit:   50,
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT toString(multiIf(`attribute_string_signoz$$audit$$action_exists` = true, `attribute_string_signoz$$audit$$action`, NULL)) AS `signoz.audit.action`, toString(multiIf(`attribute_string_signoz$$audit$$principal$$email_exists` = true, `attribute_string_signoz$$audit$$principal$$email`, NULL)) AS `signoz.audit.principal.email`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `signoz.audit.action`, `signoz.audit.principal.email` ORDER BY __result_0 DESC LIMIT 2 BY `signoz.audit.action` LIMIT ?",
+				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 50},
+			},
+		},
+		// TimeSeries: time series requests do not apply limitBy, so the top-N limit CTE leaves it out
+		{
+			name:        "TimeSeries_LimitBy_NotInLimitCTE",
+			requestType: qbtypes.RequestTypeTimeSeries,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				Source:       telemetrytypes.SourceAudit,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{
+					{Expression: "count()"},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "signoz.audit.outcome = 'failure'",
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.audit.principal.email"}},
+				},
+				LimitBy: &qbtypes.LimitBy{Keys: []string{"signoz.audit.principal.email"}, Value: "1"},
+				Limit:   5,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __limit_cte AS (SELECT toString(multiIf(`attribute_string_signoz$$audit$$principal$$email_exists` = true, `attribute_string_signoz$$audit$$principal$$email`, NULL)) AS `signoz.audit.principal.email`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE (`attribute_string_signoz$$audit$$outcome` = ? AND `attribute_string_signoz$$audit$$outcome_exists` = true) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `signoz.audit.principal.email` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toString(multiIf(`attribute_string_signoz$$audit$$principal$$email_exists` = true, `attribute_string_signoz$$audit$$principal$$email`, NULL)) AS `signoz.audit.principal.email`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE (`attribute_string_signoz$$audit$$outcome` = ? AND `attribute_string_signoz$$audit$$outcome_exists` = true) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`signoz.audit.principal.email`) GLOBAL IN (SELECT `signoz.audit.principal.email` FROM __limit_cte) GROUP BY ts, `signoz.audit.principal.email`",
+				Args:  []any{"failure", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 5, "failure", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
 		// TimeSeries: failures grouped by principal email with top-N limit

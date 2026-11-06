@@ -86,6 +86,7 @@ type validationConfig struct {
 	skipGroupByValidation          bool
 	withTimestampGroupByValidation bool
 	withReduceToValidation         bool
+	withLimitByValidation          bool
 }
 
 func applyValidationOptions(opts []ValidationOption) validationConfig {
@@ -160,6 +161,14 @@ func WithReduceToValidation() ValidationOption {
 	}
 }
 
+// WithLimitByValidation accepts a limitBy and checks it. Without this option a
+// limitBy is rejected, because only scalar and raw requests apply it.
+func WithLimitByValidation() ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.withLimitByValidation = true
+	}
+}
+
 // Validate performs preliminary validation on QueryBuilderQuery.
 func (q *QueryBuilderQuery[T]) Validate(opts ...ValidationOption) error {
 	cfg := applyValidationOptions(opts)
@@ -173,6 +182,10 @@ func (q *QueryBuilderQuery[T]) Validate(opts ...ValidationOption) error {
 	}
 
 	if err := q.validateGroupBy(cfg); err != nil {
+		return err
+	}
+
+	if err := q.validateLimitBy(cfg); err != nil {
 		return err
 	}
 
@@ -232,6 +245,43 @@ func (q *QueryBuilderQuery[T]) validateGroupBy(cfg validationConfig) error {
 			)
 		}
 	}
+	return nil
+}
+
+func (q *QueryBuilderQuery[T]) validateLimitBy(cfg validationConfig) error {
+	if q.LimitBy == nil {
+		return nil
+	}
+
+	if !cfg.withLimitByValidation {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limitBy is supported only for scalar and raw requests")
+	}
+
+	if q.LimitBy.Rows() == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limitBy value must be a positive integer, got %q", q.LimitBy.Value)
+	}
+
+	if len(q.LimitBy.Keys) == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limitBy keys cannot be empty")
+	}
+
+	// a raw list has no groups, so its keys can name any field
+	if cfg.skipGroupByValidation {
+		return nil
+	}
+
+	// the partitions of a scalar result are its groups, so each key must be a group-by key
+	groupByNames := make([]string, len(q.GroupBy))
+	for i, groupBy := range q.GroupBy {
+		groupByNames[i] = groupBy.Name
+	}
+	for _, key := range q.LimitBy.Keys {
+		if !slices.Contains(groupByNames, key) {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "limitBy key %q is not a group-by key", key).
+				WithSuggestions(errors.NewValidReferences(errors.NounKeys, groupByNames...))
+		}
+	}
+
 	return nil
 }
 
@@ -1033,8 +1083,10 @@ func GetValidationOptions(requestType RequestType) []ValidationOption {
 	case RequestTypeTimeSeries, RequestTypeHeatmap:
 		return []ValidationOption{WithSkipSelectFieldValidation(), WithTimestampGroupByValidation()}
 	case RequestTypeScalar:
-		return []ValidationOption{WithSkipSelectFieldValidation(), WithReduceToValidation()}
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
+		return []ValidationOption{WithSkipSelectFieldValidation(), WithReduceToValidation(), WithLimitByValidation()}
+	case RequestTypeRaw:
+		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation(), WithLimitByValidation()}
+	case RequestTypeRawStream, RequestTypeTrace:
 		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
 	default:
 		return []ValidationOption{}

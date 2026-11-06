@@ -217,6 +217,18 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], bo
 		})
 	}
 
+	if query.LimitBy != nil {
+		for _, name := range query.LimitBy.Keys {
+			key := telemetrytypes.GetFieldKeyFromKeyText(name)
+			keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+				Name:          key.Name,
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  key.FieldContext,
+				FieldDataType: key.FieldDataType,
+			})
+		}
+	}
+
 	for idx := range keySelectors {
 		keySelectors[idx].Signal = telemetrytypes.SignalLogs
 		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
@@ -403,6 +415,21 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(colExpr), orderBy.Direction.StringValue()))
 	}
 
+	// LIMIT BY runs after ORDER BY and before LIMIT, so the order decides which rows
+	// each key keeps
+	if query.LimitBy != nil {
+		columns := make([]string, len(query.LimitBy.Keys))
+		for i, name := range query.LimitBy.Keys {
+			key := telemetrytypes.GetFieldKeyFromKeyText(name)
+			b.adjustKey(&key, keys)
+			columns[i], err = querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&key), telemetrytypes.FieldDataTypeUnspecified, keys)
+			if err != nil {
+				return nil, err
+			}
+		}
+		sb.SQL(sqlbuilder.Escape(fmt.Sprintf("LIMIT %d BY %s", query.LimitBy.Rows(), strings.Join(columns, ", "))))
+	}
+
 	// Add limit and offset
 	if query.Limit > 0 {
 		sb.Limit(query.Limit)
@@ -506,7 +533,10 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		// build the scalar “top/bottom-N” query in its own builder.
 		cteSB := sqlbuilder.NewSelectBuilder()
-		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, true, variables)
+		// time series requests do not apply limitBy; a stored alert skips validation and can carry one
+		cteQuery := query
+		cteQuery.LimitBy = nil
+		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, cteQuery, start, end, keys, true, variables)
 		if err != nil {
 			return nil, err
 		}
@@ -700,6 +730,16 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	// if there is no order by, then use the __result_0 as the order by
 	if len(query.Order) == 0 {
 		sb.OrderBy("__result_0 DESC")
+	}
+
+	// LIMIT BY runs after ORDER BY and before LIMIT; validation keeps every key a
+	// group-by key
+	if query.LimitBy != nil {
+		columns := make([]string, len(query.LimitBy.Keys))
+		for i, key := range query.LimitBy.Keys {
+			columns[i], _ = groupByOrderAlias(key, query.GroupBy)
+		}
+		sb.SQL(sqlbuilder.Escape(fmt.Sprintf("LIMIT %d BY %s", query.LimitBy.Rows(), strings.Join(columns, ", "))))
 	}
 
 	// Add limit and offset

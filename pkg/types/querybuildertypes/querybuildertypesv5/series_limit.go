@@ -73,6 +73,41 @@ func ApplySeriesLimit(series []*TimeSeries, orderBy []OrderBy, limit int) []*Tim
 	return series
 }
 
+// ApplySeriesLimitBy sorts the series as ApplySeriesLimit does, then keeps the
+// first limitBy.Rows() series of each combination of the limitBy key labels, as
+// ClickHouse LIMIT n BY does for the queries it runs.
+func ApplySeriesLimitBy(series []*TimeSeries, orderBy []OrderBy, limitBy *LimitBy) []*TimeSeries {
+	if limitBy == nil || len(series) == 0 {
+		return series
+	}
+
+	series = ApplySeriesLimit(series, orderBy, 0)
+
+	rows := limitBy.Rows()
+	kept := series[:0]
+	keptByPartition := make(map[string]int)
+	partitionValues := make([]string, len(limitBy.Keys))
+	for _, s := range series {
+		for i, key := range limitBy.Keys {
+			partitionValues[i] = ""
+			for _, label := range s.Labels {
+				if label.Key.Name == key {
+					// quoted so that distinct value lists never join to the same key
+					partitionValues[i] = strconv.Quote(convertValueToString(label.Value))
+					break
+				}
+			}
+		}
+		partition := strings.Join(partitionValues, ",")
+		if keptByPartition[partition] < rows {
+			keptByPartition[partition]++
+			kept = append(kept, s)
+		}
+	}
+
+	return kept
+}
+
 // compareSeries compares two time series based on the order criteria
 // Returns true if series i should come before series j.
 func compareSeries(seriesI, seriesJ *TimeSeries, orderBy []OrderBy, seriesValues map[*TimeSeries]float64, seriesLabels map[*TimeSeries]map[string]string) bool {

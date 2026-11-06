@@ -5131,12 +5131,12 @@ export interface Querybuildertypesv5HavingDTO {
 export interface Querybuildertypesv5LimitByDTO {
 	/**
 	 * @type array,null
-	 * @description The group-by field names that partition the result before the limit is applied.
+	 * @description The field names that partition the result before the limit is applied. For a scalar request, each one must be a group-by key.
 	 */
 	keys?: string[] | null;
 	/**
 	 * @type string
-	 * @description The aggregation alias or expression whose value ranks entries within each partition.
+	 * @description The number of rows to keep in each partition, a positive integer sent as a string. The query order decides which rows are kept.
 	 */
 	value?: string;
 }
@@ -5306,11 +5306,11 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited. A raw request ordered by timestamp, with id next for logs, and without limitBy returns a page of 10000 rows; follow nextCursor for the rest. Any other raw request returns 100 rows; use offset for the rest.
 	 */
 	limit?: number;
 	/**
-	 * @description Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored.
+	 * @description Keeps at most value rows for each combination of the given keys, in the query order, before limit applies. A scalar request partitions its groups, so each key must be a group-by key. A raw request partitions its rows, so a key can be any field, and the request runs as one query over the whole range with no nextCursor. Time series and heatmap requests reject it.
 	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
@@ -5698,11 +5698,11 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited. A raw request ordered by timestamp, with id next for logs, and without limitBy returns a page of 10000 rows; follow nextCursor for the rest. Any other raw request returns 100 rows; use offset for the rest.
 	 */
 	limit?: number;
 	/**
-	 * @description Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored.
+	 * @description Keeps at most value rows for each combination of the given keys, in the query order, before limit applies. A scalar request partitions its groups, so each key must be a group-by key. A raw request partitions its rows, so a key can be any field, and the request runs as one query over the whole range with no nextCursor. Time series and heatmap requests reject it.
 	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
@@ -5878,11 +5878,11 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited. A raw request ordered by timestamp, with id next for logs, and without limitBy returns a page of 10000 rows; follow nextCursor for the rest. Any other raw request returns 100 rows; use offset for the rest.
 	 */
 	limit?: number;
 	/**
-	 * @description Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored.
+	 * @description Keeps at most value rows for each combination of the given keys, in the query order, before limit applies. A scalar request partitions its groups, so each key must be a group-by key. A raw request partitions its rows, so a key can be any field, and the request runs as one query over the whole range with no nextCursor. Time series and heatmap requests reject it.
 	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**
@@ -5977,11 +5977,11 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited. A raw request ordered by timestamp, with id next for logs, and without limitBy returns a page of 10000 rows; follow nextCursor for the rest. Any other raw request returns 100 rows; use offset for the rest.
 	 */
 	limit?: number;
 	/**
-	 * @description Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored.
+	 * @description Keeps at most value rows for each combination of the given keys, in the query order, before limit applies. A scalar request partitions its groups, so each key must be a group-by key. A raw request partitions its rows, so a key can be any field, and the request runs as one query over the whole range with no nextCursor. Time series and heatmap requests reject it.
 	 */
 	limitBy?: Querybuildertypesv5LimitByDTO;
 	/**

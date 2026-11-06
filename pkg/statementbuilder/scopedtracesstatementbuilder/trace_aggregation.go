@@ -719,6 +719,15 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		if len(query.Order) == 0 {
 			sb.OrderBy("__result_0 DESC")
 		}
+		// LIMIT BY runs after ORDER BY and before LIMIT; validation keeps every key a
+		// group-by key
+		if query.LimitBy != nil {
+			columns := make([]string, len(query.LimitBy.Keys))
+			for i, key := range query.LimitBy.Keys {
+				columns[i] = orderColumn(key, query.GroupBy)
+			}
+			sb.SQL(sqlbuilder.Escape(fmt.Sprintf("LIMIT %d BY %s", query.LimitBy.Rows(), strings.Join(columns, ", "))))
+		}
 		if query.Limit > 0 {
 			sb.Limit(query.Limit)
 		}

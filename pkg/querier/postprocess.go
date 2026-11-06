@@ -246,6 +246,12 @@ func postProcessMetricQuery(
 	// Apply reduce to for scalar request type
 	if reducesToScalar {
 		result = q.applyMetricReduceTo(result, config.ReduceTo)
+		// metrics reduce to scalar in Go, so limitBy runs here, before limit as in SQL
+		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok && query.LimitBy != nil {
+			for _, agg := range tsData.Aggregations {
+				agg.Series = qbtypes.ApplySeriesLimitBy(agg.Series, query.Order, query.LimitBy)
+			}
+		}
 		result = q.applySeriesLimit(result, query.Limit, query.Order)
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			result.Value = convertTimeSeriesDataToScalar(tsData, tsData.QueryName)

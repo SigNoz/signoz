@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -714,8 +715,18 @@ func (f Function) Validate() error {
 }
 
 type LimitBy struct {
-	Keys  []string `json:"keys" description:"The group-by field names that partition the result before the limit is applied."`
-	Value string   `json:"value" description:"The aggregation alias or expression whose value ranks entries within each partition."`
+	Keys  []string `json:"keys" description:"The field names that partition the result before the limit is applied. For a scalar request, each one must be a group-by key."`
+	Value string   `json:"value" description:"The number of rows to keep in each partition, a positive integer sent as a string. The query order decides which rows are kept."`
+}
+
+// Rows returns the number of rows each partition keeps, or 0 when the value is
+// not a positive integer.
+func (l *LimitBy) Rows() int {
+	rows, err := strconv.Atoi(l.Value)
+	if err != nil || rows < 0 {
+		return 0
+	}
+	return rows
 }
 
 // Copy creates a deep copy of LimitBy.
