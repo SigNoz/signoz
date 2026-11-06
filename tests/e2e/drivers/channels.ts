@@ -106,9 +106,9 @@ export const CHANNEL_TYPES: ChannelType[] = [
 		],
 		edit: ['jira-project-textbox', 'E2EEDIT'],
 		spec: {
+			deployment: 'cloud',
 			site: 'https://e2e.atlassian.net',
-			email: 'e2e@signoz.test',
-			apiToken: 'e2e-api-token',
+			auth: { email: 'e2e@signoz.test', apiToken: 'e2e-api-token' },
 			project: 'E2E',
 			issueType: 'Task',
 		},
