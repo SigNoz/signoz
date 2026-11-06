@@ -1,5 +1,5 @@
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { fieldContextToAttributeType } from 'utils/fieldContext';
 import { fieldDataTypeToDataType } from 'utils/fieldDataType';
 
 import { FiltersType, IQuickFiltersConfig } from './types';
@@ -13,19 +13,6 @@ const FILTER_TITLE_MAP: Record<string, string> = {
 const FILTER_TYPE_MAP: Record<string, FiltersType> = {
 	duration_nano: FiltersType.DURATION,
 };
-
-// The map below exists only for the old v3 attribute-values fetch
-// (useCheckboxFilterValues), the sole reader of attributeKey.dataType/type.
-// Once the values fetch moves to fields/values, remove this and reduce
-// attributeKey to { id, key }.
-
-const FIELD_CONTEXT_TO_ATTRIBUTE_TYPE: Record<string, string> = {
-	[TelemetrytypesFieldContextDTO.attribute]: 'tag',
-	[TelemetrytypesFieldContextDTO.resource]: 'resource',
-};
-
-const mapFieldContext = (fieldContext?: string): string =>
-	(fieldContext && FIELD_CONTEXT_TO_ATTRIBUTE_TYPE[fieldContext]) || '';
 
 const getFilterName = (str: string): string => {
 	if (FILTER_TITLE_MAP[str]) {
@@ -61,11 +48,15 @@ export const getFilterConfig = (
 			({
 				type: getFilterType(att),
 				title: getFilterName(att.name),
+				// The type mapping below exists only for the old v3 attribute-values fetch
+				// (useCheckboxFilterValues), the sole reader of attributeKey.dataType/type.
+				// Once the values fetch moves to fields/values, remove this and reduce
+				// attributeKey to { id, key }.
 				attributeKey: {
 					id: att.name,
 					key: att.name,
 					dataType: fieldDataTypeToDataType(att.fieldDataType),
-					type: mapFieldContext(att.fieldContext),
+					type: fieldContextToAttributeType(att.fieldContext),
 				},
 				defaultOpen: index < 2,
 			}) as IQuickFiltersConfig,

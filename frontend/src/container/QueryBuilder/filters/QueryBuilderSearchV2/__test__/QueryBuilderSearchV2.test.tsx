@@ -5,9 +5,12 @@ import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
 } from 'constants/queryBuilder';
+import { TelemetrytypesTelemetryFieldValuesDTO } from 'api/generated/services/sigNoz.schemas';
 import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { FieldDataType, TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import QueryBuilderSearchV2 from '../QueryBuilderSearchV2';
@@ -88,57 +91,31 @@ const renderWithContext = (props = {}): RenderResult => {
 const getSearchCombobox = (): HTMLElement =>
 	within(screen.getByTestId('qb-search-select')).getByRole('combobox');
 
-// Constants to fix linter errors
-const TYPE_TAG = 'tag';
-const IS_COLUMN_FALSE = false;
-const IS_JSON_FALSE = false;
-
-const mockAggregateKeysData = {
-	payload: {
-		attributeKeys: [
-			{
-				key: 'http.status',
-				dataType: DataTypes.String,
-				type: TYPE_TAG,
-				id: 'http.status--string--tag--false',
-			},
-			{
-				key: 'service.name',
-				dataType: DataTypes.String,
-				type: TYPE_TAG,
-				isColumn: IS_COLUMN_FALSE,
-				isJSON: IS_JSON_FALSE,
-				id: 'service.name--string--tag--false',
-			},
-			{
-				key: 'unmapped.attribute',
-				dataType: 'not-a-real-data-type' as unknown as DataTypes,
-				type: TYPE_TAG,
-				isColumn: IS_COLUMN_FALSE,
-				isJSON: IS_JSON_FALSE,
-				id: 'unmapped.attribute--String--tag--false',
-			},
-		],
+const mockFieldKeys: TelemetryFieldKey[] = [
+	{ name: 'http.status', fieldContext: 'attribute', fieldDataType: 'string' },
+	{ name: 'service.name', fieldContext: 'attribute', fieldDataType: 'string' },
+	{
+		name: 'unmapped.attribute',
+		fieldContext: 'attribute',
+		fieldDataType: 'not-a-real-data-type' as FieldDataType,
 	},
-};
+];
 
-jest.mock('hooks/queryBuilder/useGetAggregateKeys', () => ({
-	useGetAggregateKeys: jest.fn(() => ({
-		data: mockAggregateKeysData,
+jest.mock('hooks/querySuggestions/useFieldKeysSuggestion', () => ({
+	useFieldKeysSuggestion: jest.fn(() => ({
+		data: mockFieldKeys,
 		isFetching: false,
 	})),
 }));
 
-const mockAggregateValuesData = {
-	payload: {
-		stringAttributeValues: ['200', '404', '500'],
-		numberAttributeValues: [200, 404, 500],
-	},
+const mockFieldValues: TelemetrytypesTelemetryFieldValuesDTO = {
+	stringValues: ['200', '404', '500'],
+	numberValues: [200, 404, 500],
 };
 
-jest.mock('hooks/queryBuilder/useGetAggregateValues', () => ({
-	useGetAggregateValues: jest.fn(() => ({
-		data: mockAggregateValuesData,
+jest.mock('hooks/querySuggestions/useFieldValuesSuggestion', () => ({
+	useFieldValuesSuggestion: jest.fn(() => ({
+		data: mockFieldValues,
 		isFetching: false,
 	})),
 }));
@@ -196,7 +173,11 @@ describe('Suggestion Key -> Operator -> Value Flow', () => {
 			expect.objectContaining({
 				items: expect.arrayContaining([
 					expect.objectContaining({
-						key: expect.objectContaining({ key: 'http.status' }),
+						key: expect.objectContaining({
+							key: 'http.status',
+							type: 'attribute',
+							dataType: 'string',
+						}),
 						op: '=',
 						value: '200',
 					}),
@@ -292,7 +273,7 @@ describe('Filter chips', () => {
 					key: {
 						key: 'http.status',
 						dataType: DataTypes.String,
-						type: TYPE_TAG,
+						type: 'tag',
 						id: 'http.status--string--tag--false',
 					},
 					op: '=',
@@ -330,5 +311,35 @@ describe('Filter chips', () => {
 			screen.queryByRole('button', { name: `Remove ${CHIP_LABEL}` }),
 		).not.toBeInTheDocument();
 		expect(getSearchCombobox()).toHaveDisplayValue(CHIP_LABEL);
+	});
+});
+
+describe('Key fetch context', () => {
+	it('limits keys to the aggregate attribute context, as the resource filter needs', () => {
+		renderWithContext({
+			query: {
+				...defaultProps.query,
+				aggregateAttribute: {
+					...defaultProps.query.aggregateAttribute,
+					type: 'resource',
+				},
+			},
+		});
+
+		expect(useFieldKeysSuggestion).toHaveBeenLastCalledWith(
+			expect.objectContaining({ fieldContext: 'resource' }),
+			undefined,
+			expect.anything(),
+		);
+	});
+
+	it('fetches keys from every context when the aggregate attribute has no type', () => {
+		renderWithContext();
+
+		expect(useFieldKeysSuggestion).toHaveBeenLastCalledWith(
+			expect.objectContaining({ fieldContext: undefined }),
+			undefined,
+			expect.anything(),
+		);
 	});
 });
