@@ -3,10 +3,15 @@ package clickhouseprometheusv2
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"math"
 	"slices"
 
+	chproto "github.com/ClickHouse/ch-go/proto"
+	"github.com/ClickHouse/clickhouse-go/v2"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -29,6 +34,7 @@ type client struct {
 	settings       factory.ScopedProviderSettings
 	telemetryStore telemetrystore.TelemetryStore
 	lookbackMs     int64
+	cfg            prometheus.ClickhouseV2Config
 }
 
 func newClient(settings factory.ScopedProviderSettings, telemetryStore telemetrystore.TelemetryStore, cfg prometheus.Config) *client {
@@ -41,6 +47,7 @@ func newClient(settings factory.ScopedProviderSettings, telemetryStore telemetry
 		settings:       settings,
 		telemetryStore: telemetryStore,
 		lookbackMs:     lookback.Milliseconds(),
+		cfg:            cfg.ClickhouseV2,
 	}
 }
 
@@ -52,11 +59,49 @@ func (c *client) withContext(ctx context.Context, functionName string) context.C
 	})
 }
 
+// budgetSettings caps the result server-side; 'throw' refuses the query
+// instead of silently truncating the result.
+func budgetSettings(maxRows int64) string {
+	return fmt.Sprintf(" SETTINGS max_result_rows = %d, result_overflow_mode = 'throw'", maxRows)
+}
+
+// budgetExceeded reports whether err is ClickHouse refusing a query over its
+// result limit (the budgets above).
+func budgetExceeded(err error) bool {
+	var chErr *clickhouse.Exception
+	return errors.As(err, &chErr) && chErr.Code == int32(chproto.ErrTooManyRowsOrBytes)
+}
+
+func (c *client) seriesError(err error) error {
+	if budgetExceeded(err) {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"promql selector matched more than %d series; narrow the label matchers",
+			c.cfg.MaxFetchedSeries,
+		)
+	}
+	return err
+}
+
+func (c *client) samplesError(err error) error {
+	if budgetExceeded(err) {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"promql query would fetch more than %d samples; narrow the selector or time range",
+			c.cfg.MaxFetchedSamples,
+		)
+	}
+	return err
+}
+
 func (c *client) selectSeries(ctx context.Context, query string, args []any) (*seriesLookup, error) {
 	ctx = c.withContext(ctx, "selectSeries")
+	if c.cfg.MaxFetchedSeries > 0 {
+		query += budgetSettings(int64(c.cfg.MaxFetchedSeries))
+	}
 	rows, err := c.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, c.seriesError(err)
 	}
 	defer rows.Close()
 
@@ -79,7 +124,7 @@ func (c *client) selectSeries(ctx context.Context, query string, args []any) (*s
 		}
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, c.seriesError(err)
 	}
 
 	for name := range names {
@@ -119,9 +164,12 @@ func unmarshalLabels(s string) (labels.Labels, error) {
 // the engine as-is over the same dirty data.
 func (c *client) selectSamples(ctx context.Context, query string, args []any, lookup *seriesLookup) ([]*series, error) {
 	ctx = c.withContext(ctx, "selectSamples")
+	if c.cfg.MaxFetchedSamples > 0 {
+		query += budgetSettings(c.cfg.MaxFetchedSamples)
+	}
 	rows, err := c.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, c.samplesError(err)
 	}
 	defer rows.Close()
 
@@ -168,7 +216,7 @@ func (c *client) selectSamples(ctx context.Context, query string, args []any, lo
 		current.vs = append(current.vs, val)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, c.samplesError(err)
 	}
 
 	if unknownCount > 0 {
