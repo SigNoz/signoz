@@ -145,6 +145,9 @@ func (handler *handler) executeExport(rowChan <-chan *qbtypes.RawRow, errChan <-
 			return false, err
 		}
 		csvWriter.Flush()
+		if err := csvWriter.Error(); err != nil {
+			return false, err
+		}
 		return isComplete, nil
 	case "jsonl":
 		rw.Header().Set("Content-Type", "application/x-ndjson")
