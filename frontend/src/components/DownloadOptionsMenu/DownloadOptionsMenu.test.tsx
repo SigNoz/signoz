@@ -7,6 +7,7 @@ import configureStore from 'redux-mock-store';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import store from 'store';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
@@ -36,6 +37,12 @@ const mockUseQueryBuilder = jest.fn();
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): any => mockUseQueryBuilder(),
 }));
+
+const statusColumn: TelemetryFieldKey = {
+	name: 'http.status',
+	fieldDataType: 'int64',
+	fieldContext: 'attribute',
+};
 
 const mockStore = configureStore([]);
 const createMockReduxStore = (): any =>
@@ -219,9 +226,7 @@ describe.each([
 
 	it('keeps selectColumns when column scope is Selected', async () => {
 		const mockQuery = createMockStagedQuery(dataSource);
-		mockQuery.builder.queryData[0].selectColumns = [
-			{ name: 'http.status', fieldDataType: 'int64', fieldContext: 'attribute' },
-		] as any;
+		mockQuery.builder.queryData[0].selectColumns = [statusColumn];
 
 		mockUseQueryBuilder.mockReturnValue({ stagedQuery: mockQuery });
 		renderWithStore(dataSource);
@@ -245,9 +250,7 @@ describe.each([
 	it('sends no selectFields when column scope is All', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const mockQuery = createMockStagedQuery(dataSource);
-		mockQuery.builder.queryData[0].selectColumns = [
-			{ name: 'http.status', fieldDataType: 'int64', fieldContext: 'attribute' },
-		] as any;
+		mockQuery.builder.queryData[0].selectColumns = [statusColumn];
 
 		mockUseQueryBuilder.mockReturnValue({ stagedQuery: mockQuery });
 		renderWithStore(dataSource);
