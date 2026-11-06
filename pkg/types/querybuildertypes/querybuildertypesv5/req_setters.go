@@ -209,6 +209,9 @@ func (q *QueryEnvelope) SetOffset(offset int) {
 	case QueryBuilderQuery[MetricAggregation]:
 		spec.Offset = offset
 		q.Spec = spec
+	case QueryBuilderFormula:
+		spec.Offset = offset
+		q.Spec = spec
 	}
 }
 

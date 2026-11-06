@@ -829,6 +829,37 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind {
 	jira = 'jira',
 }
+export interface AlertmanagertypesChannelJiraCloudAuthDTO {
+	/**
+	 * @type string
+	 * @format password
+	 * @description The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list.
+	 */
+	apiToken: string;
+	/**
+	 * @type string
+	 * @description The Atlassian account email used for basic auth.
+	 */
+	email: string;
+}
+
+export interface AlertmanagertypesChannelJiraSelfHostedAuthDTO {
+	/**
+	 * @type string
+	 * @format password
+	 * @description The Jira personal access token, sent as a Bearer header. A secret; returned by create, update and fetch by ID, never by list.
+	 */
+	pat: string;
+}
+
+export type AlertmanagertypesChannelJiraAuthDTO =
+	| AlertmanagertypesChannelJiraCloudAuthDTO
+	| AlertmanagertypesChannelJiraSelfHostedAuthDTO;
+
+export enum AlertmanagertypesJiraDeploymentDTO {
+	cloud = 'cloud',
+	selfhosted = 'selfhosted',
+}
 /**
  * Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
  */
@@ -844,26 +875,23 @@ export type AlertmanagertypesChannelJiraConfigDTOCustomFields = Alertmanagertype
 
 export interface AlertmanagertypesChannelJiraConfigDTO {
 	/**
-	 * @type string
-	 * @format password
-	 * @description The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list.
+	 * @description The credentials: email and apiToken when deployment is cloud, pat when deployment is selfhosted.
 	 */
-	apiToken: string;
+	auth: AlertmanagertypesChannelJiraAuthDTO;
 	/**
 	 * @type object,null
 	 * @description Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
 	 */
 	customFields?: AlertmanagertypesChannelJiraConfigDTOCustomFields;
 	/**
+	 * @description The Jira edition: cloud for an Atlassian-hosted site, selfhosted for Jira Server or Data Center.
+	 */
+	deployment: AlertmanagertypesJiraDeploymentDTO;
+	/**
 	 * @type string
 	 * @description Alertmanager template for the issue description, rendered as markdown; defaults to the SigNoz Jira default.
 	 */
 	description?: string;
-	/**
-	 * @type string
-	 * @description The Atlassian account email used for basic auth.
-	 */
-	email: string;
 	/**
 	 * @type string
 	 * @description The issue type name, such as Bug.
@@ -906,7 +934,7 @@ export interface AlertmanagertypesChannelJiraConfigDTO {
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
-	 * @description The base URL of the Jira Cloud site, for example https://example.atlassian.net. Only Jira Cloud is supported.
+	 * @description The base URL of the Jira site, for example https://example.atlassian.net or https://jira.example.com.
 	 */
 	site: string;
 	/**
@@ -1717,12 +1745,16 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	 */
 	custom_fields?: AlertmanagertypesJiraReceiverConfigDTOCustomFields;
 	/**
+	 * @description The Jira edition, cloud or selfhosted; defaults to cloud.
+	 */
+	deployment?: AlertmanagertypesJiraDeploymentDTO;
+	/**
 	 * @type string
 	 * @description Alertmanager template for the issue description.
 	 */
 	description?: string;
 	/**
-	 * @description HTTP client settings; basic auth carries the account email and API token.
+	 * @description HTTP client settings; basic auth carries the account email and API token on cloud, authorization carries the Bearer personal access token on self-hosted.
 	 */
 	http_config?: ConfigHTTPClientConfigDTO;
 	/**
@@ -1765,7 +1797,7 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	send_resolved?: boolean;
 	/**
 	 * @type string
-	 * @description The Jira Cloud base URL.
+	 * @description The Jira base URL.
 	 */
 	site?: string;
 	/**
@@ -5274,7 +5306,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
 	 */
 	cursor?: string;
 	/**
@@ -5307,7 +5339,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw and trace requests, or of series or rows for grouped scalar and time_series requests, keeping the top entries by order. When 0, scalar and time_series requests are unlimited, raw requests ordered by timestamp return a page of 10000 rows to continue with nextCursor, and other raw and trace requests return 100 rows.
 	 */
 	limit?: number;
 	/**
@@ -5321,7 +5353,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5666,7 +5698,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
 	 */
 	cursor?: string;
 	/**
@@ -5699,7 +5731,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw and trace requests, or of series or rows for grouped scalar and time_series requests, keeping the top entries by order. When 0, scalar and time_series requests are unlimited, raw requests ordered by timestamp return a page of 10000 rows to continue with nextCursor, and other raw and trace requests return 100 rows.
 	 */
 	limit?: number;
 	/**
@@ -5713,7 +5745,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5846,7 +5878,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
 	 */
 	cursor?: string;
 	/**
@@ -5879,7 +5911,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw and trace requests, or of series or rows for grouped scalar and time_series requests, keeping the top entries by order. When 0, scalar and time_series requests are unlimited, raw requests ordered by timestamp return a page of 10000 rows to continue with nextCursor, and other raw and trace requests return 100 rows.
 	 */
 	limit?: number;
 	/**
@@ -5893,7 +5925,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5945,7 +5977,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
 	 */
 	cursor?: string;
 	/**
@@ -5978,7 +6010,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw and trace requests, or of series or rows for grouped scalar and time_series requests, keeping the top entries by order. When 0, scalar and time_series requests are unlimited, raw requests ordered by timestamp return a page of 10000 rows to continue with nextCursor, and other raw and trace requests return 100 rows.
 	 */
 	limit?: number;
 	/**
@@ -5992,7 +6024,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -6938,6 +6970,7 @@ export enum Querybuildertypesv5RequestTypeDTO {
 	raw_stream = 'raw_stream',
 	trace = 'trace',
 	heatmap = 'heatmap',
+	distribution = 'distribution',
 }
 /**
  * The query kind.
@@ -7066,6 +7099,11 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	 */
 	name?: string;
 	/**
+	 * @type integer
+	 * @description The number of ordered series or rows to skip before the page starts. Requires limit.
+	 */
+	offset?: number;
+	/**
 	 * @type array,null
 	 * @description The sort order of the formula result.
 	 */
@@ -7147,7 +7185,7 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of raw results to skip before returning. Aggregation requests ignore it.
+	 * @description The number of raw or trace rows, or of ordered series or rows for time_series and scalar requests, to skip before the page starts. Requires limit.
 	 */
 	offset?: number;
 	/**
@@ -10974,7 +11012,7 @@ export interface Querybuildertypesv5TimeSeriesValueDTO {
 	value?: number;
 	/**
 	 * @type array
-	 * @description The per-band counts for heatmap results, in the order of meta.buckets plus a trailing overflow count.
+	 * @description The per-bucket counts for heatmap results, in the order of meta.buckets plus a trailing overflow count.
 	 */
 	values?: number[];
 }
@@ -11595,7 +11633,7 @@ export interface PromotetypesPostableIndexMaterializedPathsDTO {
 export interface Querybuildertypesv5AggregationMetaDTO {
 	/**
 	 * @type array
-	 * @description The ascending upper bounds of the value bands, set only for heatmap results; each point then carries one count per bound plus a trailing overflow count in values.
+	 * @description The ascending upper bounds of the value buckets, set for heatmap and distribution results; each point then carries one count per bound plus a trailing overflow count in values. The first bucket starts at -Inf when its bound is at or under zero, else at zero.
 	 */
 	buckets?: number[];
 	/**
@@ -11714,6 +11752,91 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	 * @description Unit of the field values, present only for well-known fields.
 	 */
 	unit?: string;
+}
+
+export interface Querybuildertypesv5DistributionDTO {
+	/**
+	 * @type array,null
+	 * @description One count per bound in meta.buckets plus a trailing overflow count, summed over every step of the requested time range.
+	 */
+	counts: number[] | null;
+	/**
+	 * @type array
+	 * @description The group-by field values that identify this distribution.
+	 */
+	labels?: Querybuildertypesv5LabelDTO[];
+}
+
+export interface Querybuildertypesv5DistributionPercentilesDTO {
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 50th percentile.
+	 */
+	p50: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 75th percentile.
+	 */
+	p75: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 90th percentile.
+	 */
+	p90: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 95th percentile.
+	 */
+	p95: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 99th percentile.
+	 */
+	p99: number;
+}
+
+export interface Querybuildertypesv5DistributionAggregationDTO {
+	/**
+	 * @type string
+	 * @description The alias of the aggregation, or the internal name __result_N, with N its index, when no alias was given.
+	 */
+	alias: string;
+	/**
+	 * @type array,null
+	 * @description One distribution per group-by combination.
+	 */
+	distributions: Querybuildertypesv5DistributionDTO[] | null;
+	/**
+	 * @type integer
+	 * @description The zero-based position of the aggregation in the query.
+	 */
+	index: number;
+	/**
+	 * @description Display metadata for the aggregation, including the bucket upper bounds the counts are positional against.
+	 */
+	meta?: Querybuildertypesv5AggregationMetaDTO;
+	/**
+	 * @description Percentiles over the counts of every distribution added together, estimated the way histogram_quantile does by interpolating linearly within the bucket each rank falls in. Omitted when nothing was counted or meta.buckets is empty.
+	 */
+	percentiles?: Querybuildertypesv5DistributionPercentilesDTO;
+}
+
+export interface Querybuildertypesv5DistributionDataDTO {
+	/**
+	 * @type array,null
+	 * @description One entry per aggregation of the query. The order is not guaranteed; match entries to aggregations by index.
+	 */
+	aggregations: Querybuildertypesv5DistributionAggregationDTO[] | null;
+	/**
+	 * @type string
+	 * @description The name of the query that produced this result.
+	 */
+	queryName: string;
 }
 
 /**
@@ -11971,21 +12094,28 @@ export type Querybuildertypesv5QueryDataDTO =
 	| (Querybuildertypesv5TimeSeriesDataDTO & {
 			/**
 			 * @type array,null
-			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests.
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
 			 */
 			results?: unknown[] | null;
 	  })
 	| (Querybuildertypesv5ScalarDataDTO & {
 			/**
 			 * @type array,null
-			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests.
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
 			 */
 			results?: unknown[] | null;
 	  })
 	| (Querybuildertypesv5RawDataDTO & {
 			/**
 			 * @type array,null
-			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests.
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
+			 */
+			results?: unknown[] | null;
+	  })
+	| (Querybuildertypesv5DistributionDataDTO & {
+			/**
+			 * @type array,null
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
 			 */
 			results?: unknown[] | null;
 	  });
@@ -12119,7 +12249,7 @@ export interface Querybuildertypesv5QueryRangeRequestDTO {
 }
 
 /**
- * Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series, ScalarData for scalar, or RawData for raw requests.
+ * Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, or DistributionData for distribution requests.
  */
 export interface Querybuildertypesv5QueryRangeResponseDTO {
 	/**
