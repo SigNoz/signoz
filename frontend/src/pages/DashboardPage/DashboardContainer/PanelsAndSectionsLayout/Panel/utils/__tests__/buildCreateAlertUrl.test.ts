@@ -65,12 +65,17 @@ describe('buildCreateAlertUrl', () => {
 		);
 	});
 
-	it('tags the URL with panel type, v5 version, and the dashboards source', () => {
+	it('tags the URL with the v5 version and the dashboards source', () => {
 		const params = parse(buildCreateAlertUrl(makePanel()));
 
-		expect(params.get(QueryParams.panelTypes)).toBe(PANEL_TYPES.TIME_SERIES);
 		expect(params.get(QueryParams.version)).toBe(ENTITY_VERSION_V5);
 		expect(params.get(QueryParams.source)).toBe('dashboards');
+	});
+
+	it('does not tag the URL with a panel type, which the alert page ignores', () => {
+		const params = parse(buildCreateAlertUrl(makePanel()));
+
+		expect(params.get(QueryParams.panelTypes)).toBeNull();
 	});
 
 	it('encodes the translated query as the compositeQuery param', () => {

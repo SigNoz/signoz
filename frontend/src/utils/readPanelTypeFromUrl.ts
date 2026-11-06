@@ -2,6 +2,7 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
 import { getUnstableCurrentSearchParams } from './getUnstableCurrentSearchParams';
+import { parsePanelType } from './parsePanelType';
 
 // The param is JSON-encoded, but a hand-written link can carry it unencoded.
 export const readPanelTypeFromUrl = (
@@ -9,13 +10,5 @@ export const readPanelTypeFromUrl = (
 ): PANEL_TYPES | null => {
 	const raw = getUnstableCurrentSearchParams().get(QueryParams.panelTypes);
 
-	if (!raw) {
-		return fallback;
-	}
-
-	try {
-		return JSON.parse(raw) as PANEL_TYPES;
-	} catch {
-		return raw as PANEL_TYPES;
-	}
+	return (raw ? parsePanelType(raw) : null) ?? fallback;
 };

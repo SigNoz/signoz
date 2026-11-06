@@ -26,7 +26,7 @@ describe('ListAlertRules — row click navigation', () => {
 		const [url] = safeNavigateMock.mock.calls[0];
 		expect(url).toContain('/alerts/overview?');
 		expect(url).toContain('ruleId=rule-1');
-		expect(url).toContain('panelTypes=graph');
+		expect(url).not.toContain('panelTypes');
 		expect(url).toContain('compositeQuery=');
 	});
 

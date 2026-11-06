@@ -118,12 +118,8 @@ export function QueryBuilderProvider({
 		null,
 	);
 
-	const panelTypeQueryParams = getUnstableCurrentSearchParams().get(
-		QueryParams.panelTypes,
-	) as PANEL_TYPES | null;
-
-	const [panelType, setPanelType] = useState<PANEL_TYPES | null>(
-		panelTypeQueryParams,
+	const [panelType, setPanelType] = useState<PANEL_TYPES | null>(() =>
+		readPanelTypeFromUrl(),
 	);
 
 	const [currentQuery, setCurrentQuery] = useState<QueryState>(queryState);
