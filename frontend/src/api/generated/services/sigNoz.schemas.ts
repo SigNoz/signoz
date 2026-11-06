@@ -15352,7 +15352,7 @@ export type GetFieldsValuesParams = {
 	searchText?: string;
 	/**
 	 * @type string
-	 * @description The key whose values to return, such as service.name. A context prefix such as resource.service.name sets fieldContext when it is empty.
+	 * @description The key whose values to return, such as service.name. With fieldContext set, it is the stored name as is. Otherwise a context prefix such as resource.service.name sets the context and a type suffix such as service.name:string sets fieldDataType when that is empty; as in filter expressions, a prefixed name other than resource. also matches a key stored under the full name, whose values come first: log.level returns values of a key named log.level, then of the log field level.
 	 */
 	name?: string;
 	/**
@@ -16957,7 +16957,7 @@ export type GetRuleHistoryFilterValuesParams = {
 	searchText?: string;
 	/**
 	 * @type string
-	 * @description The key whose values to return, such as service.name. A context prefix such as resource.service.name sets fieldContext when it is empty.
+	 * @description The key whose values to return, such as service.name. With fieldContext set, it is the stored name as is. Otherwise a context prefix such as resource.service.name sets the context and a type suffix such as service.name:string sets fieldDataType when that is empty; as in filter expressions, a prefixed name other than resource. also matches a key stored under the full name, whose values come first: log.level returns values of a key named log.level, then of the log field level.
 	 */
 	name?: string;
 	/**
