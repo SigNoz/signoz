@@ -6,6 +6,7 @@ import { googleChatSchema } from './schemas/googlechat';
 import { incidentIOSchema } from './schemas/incidentio';
 import { jiraSchema } from './schemas/jira';
 import { jsmOpsSchema } from './schemas/jsmops';
+import { mattermostSchema } from './schemas/mattermost';
 import { msTeamsSchema } from './schemas/msteams';
 import { opsgenieSchema } from './schemas/opsgenie';
 import { pagerdutySchema } from './schemas/pagerduty';
@@ -27,6 +28,7 @@ export const CHANNEL_SCHEMAS: Record<ChannelKind, ZodType> = {
 	[ChannelKind.jira]: jiraSchema,
 	[ChannelKind.incidentio]: incidentIOSchema,
 	[ChannelKind.telegram]: telegramSchema,
+	[ChannelKind.mattermost]: mattermostSchema,
 };
 
 export function validateChannel(

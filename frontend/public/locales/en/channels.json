@@ -246,5 +246,18 @@
   "field_telegram_api_url": "Bot API URL",
   "tooltip_telegram_api_url": "Point at a self-hosted Bot API server. Leave empty to use Telegram's.",
   "field_telegram_disable_notifications": "Send silently",
-  "tooltip_telegram_disable_notifications": "Delivers without a sound or vibration on the recipients' devices."
+  "tooltip_telegram_disable_notifications": "Delivers without a sound or vibration on the recipients' devices.",
+  "mattermost_tip": "Create an incoming webhook in Mattermost under Integrations, then paste its URL below.",
+  "mattermost_tip_link": "Learn how",
+  "tooltip_mattermost_url": "The URL of the Mattermost incoming webhook to send alerts to. It carries the webhook's secret.",
+  "field_mattermost_channel": "Channel",
+  "tooltip_mattermost_channel": "The channel to post to, such as town-square or @username. Leave empty to use the webhook's channel; ignored when the webhook is locked to one.",
+  "field_mattermost_username": "Username",
+  "tooltip_mattermost_username": "Posts under this name. Needs username overrides enabled on the Mattermost server.",
+  "field_mattermost_icon_url": "Icon URL",
+  "tooltip_mattermost_icon_url": "Uses this image as the post's profile picture. Needs icon overrides enabled on the Mattermost server.",
+  "field_mattermost_icon_emoji": "Icon emoji",
+  "tooltip_mattermost_icon_emoji": "Uses this emoji, such as :bell:, as the post's profile picture. Needs icon overrides enabled on the Mattermost server.",
+  "field_mattermost_text": "Message",
+  "tooltip_mattermost_text": "Template for the body of each alert's card, rendered once per alert. Mattermost renders Markdown. The coloured bar, status icon, title and severity fields are added for you."
 }

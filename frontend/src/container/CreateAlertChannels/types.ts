@@ -6,6 +6,7 @@ import {
 	AlertmanagertypesChannelJiraConfigDTO,
 	AlertmanagertypesChannelJSMOpsConfigDTO,
 	AlertmanagertypesChannelKindDTO,
+	AlertmanagertypesChannelMattermostConfigDTO,
 	AlertmanagertypesChannelMSTeamsConfigDTO,
 	AlertmanagertypesChannelOpsgenieConfigDTO,
 	AlertmanagertypesChannelPagerdutyConfigDTO,
@@ -51,7 +52,8 @@ export type ChannelSpecFormValues = Partial<
 		JiraFormSpec &
 		AlertmanagertypesChannelJSMOpsConfigDTO &
 		AlertmanagertypesChannelIncidentIOConfigDTO &
-		AlertmanagertypesChannelTelegramConfigDTO
+		AlertmanagertypesChannelTelegramConfigDTO &
+		AlertmanagertypesChannelMattermostConfigDTO
 >;
 
 export const WebhookAuth = {

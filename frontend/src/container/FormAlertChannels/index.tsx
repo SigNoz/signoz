@@ -17,6 +17,7 @@ import GoogleChatSettings from './Settings/GoogleChat';
 import IncidentIOSettings from './Settings/IncidentIo';
 import JiraSettings from './Settings/Jira';
 import JsmOpsSettings from './Settings/JsmOps';
+import MattermostSettings from './Settings/Mattermost';
 import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
@@ -41,6 +42,7 @@ const CHANNEL_TYPE_OPTIONS = [
 	{ value: ChannelKind.jsmops, label: 'Jira Service Management Ops' },
 	{ value: ChannelKind.incidentio, label: 'incident.io' },
 	{ value: ChannelKind.telegram, label: 'Telegram' },
+	{ value: ChannelKind.mattermost, label: 'Mattermost' },
 ];
 
 function FormAlertChannels({
@@ -87,6 +89,8 @@ function FormAlertChannels({
 				return <OpsgenieSettings />;
 			case ChannelKind.telegram:
 				return <TelegramSettings />;
+			case ChannelKind.mattermost:
+				return <MattermostSettings />;
 			case ChannelKind.email:
 				return <EmailSettings />;
 			default:

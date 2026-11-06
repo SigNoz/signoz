@@ -97,6 +97,7 @@ func (ChannelConfig) JSONSchemaOneOf() []any {
 		ChannelConfigVariant[ChannelJSMOpsConfig]{Kind: ChannelKindJSMOps.StringValue()},
 		ChannelConfigVariant[ChannelIncidentIOConfig]{Kind: ChannelKindIncidentIO.StringValue()},
 		ChannelConfigVariant[ChannelTelegramConfig]{Kind: ChannelKindTelegram.StringValue()},
+		ChannelConfigVariant[ChannelMattermostConfig]{Kind: ChannelKindMattermost.StringValue()},
 	}
 }
 
@@ -115,6 +116,7 @@ func (ChannelConfig) PrepareJSONSchema(s *jsonschema.Schema) error {
 		ChannelKindJSMOps.StringValue():     channelVariantRef("ChannelJSMOpsConfig"),
 		ChannelKindIncidentIO.StringValue(): channelVariantRef("ChannelIncidentIOConfig"),
 		ChannelKindTelegram.StringValue():   channelVariantRef("ChannelTelegramConfig"),
+		ChannelKindMattermost.StringValue(): channelVariantRef("ChannelMattermostConfig"),
 	})
 }
 
