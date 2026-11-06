@@ -730,7 +730,7 @@ def build_scalar_query(
 def build_heatmap_query(
     name: str,
     signal: str,
-    field: str,
+    expression: str,
     *,
     source: str | None = None,
     group_by: list[dict] | None = None,
@@ -743,7 +743,7 @@ def build_heatmap_query(
         "name": name,
         "signal": signal,
         "stepInterval": step_interval,
-        "aggregations": [{"expression": f"heatmap({field})"}],
+        "aggregations": [{"expression": expression}],
     }
 
     if source:

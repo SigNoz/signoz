@@ -84,7 +84,7 @@ def test_span_attribute_heatmap(
             )
             for index, rows in enumerate(rows_returned)
         ]
-        # a span without the attribute counts as 0
+        # a span without the attribute is not counted
         + [
             Traces(
                 timestamp=now - timedelta(minutes=2, seconds=index),
@@ -114,4 +114,4 @@ def test_span_attribute_heatmap(
     # first, 45 in (40, 50], and 250 is past 100 so it counts in the overflow
     buckets = get_buckets(data, "A")
     assert buckets == pytest.approx([0.0, 10.0, 20.0, 30.0, 40.0, 50.0])
-    assert [sum(column["values"][slot] for column in get_heatmap_columns(data, "A")) for slot in range(len(buckets) + 1)] == [2, 3, 0, 0, 0, 2, 1]
+    assert [sum(column["values"][slot] for column in get_heatmap_columns(data, "A")) for slot in range(len(buckets) + 1)] == [0, 3, 0, 0, 0, 2, 1]

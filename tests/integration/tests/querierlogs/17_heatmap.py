@@ -16,8 +16,8 @@ from fixtures.querier import (
     build_log_bucket_options,
     build_scalar_query,
     get_all_series,
-    get_error_message,
     get_buckets,
+    get_error_message,
     get_heatmap_columns,
     index_series_by_label,
     make_query_request,
@@ -43,7 +43,7 @@ def test_linear_heatmap_grouped(
             for service, values in bytes_by_service.items()
             for index, response_bytes in enumerate(values)
         ]
-        # a log without the field counts as 0
+        # a log without the field is not counted
         + [
             Logs(
                 timestamp=now - timedelta(seconds=index + 1),
@@ -85,7 +85,7 @@ def test_linear_heatmap_grouped(
 
     totals_by_service = {service: [sum(column["values"][slot] for column in series["values"]) for slot in range(len(buckets) + 1)] for service, series in series_by_service.items()}
     assert totals_by_service == {
-        "heatmap-svc-a": [2, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        "heatmap-svc-a": [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
         "heatmap-svc-b": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
     }
 
@@ -170,35 +170,17 @@ def test_default_axis(
 
 
 @pytest.mark.parametrize(
-    "aggregations, request_type, disabled, expected_message",
+    "aggregations, expected_message",
     [
         pytest.param(
             [build_aggregation("count()")],
-            RequestType.HEATMAP,
-            False,
-            'a logs or traces heatmap counts events by the field named in heatmap(<field>), got "count()"',
+            'a logs or traces heatmap counts events by the field named as its aggregation, got "count()"',
             id="count_aggregation",
         ),
         pytest.param(
-            [build_aggregation("heatmap(response_bytes)"), build_aggregation("heatmap(queue_depth)")],
-            RequestType.HEATMAP,
-            False,
+            [build_aggregation("response_bytes"), build_aggregation("queue_depth")],
             "a heatmap renders one bucket axis, but the query has 2 aggregations",
             id="two_aggregations",
-        ),
-        pytest.param(
-            [build_aggregation("heatmap(response_bytes)")],
-            RequestType.TIME_SERIES,
-            False,
-            "heatmap() is not supported for time_series requests",
-            id="heatmap_in_a_time_series_request",
-        ),
-        pytest.param(
-            [build_aggregation("heatmap(response_bytes)")],
-            RequestType.HEATMAP,
-            True,
-            "heatmap() is not supported for a disabled query, which feeds a formula as a time series",
-            id="heatmap_on_a_disabled_query",
         ),
     ],
 )
@@ -207,8 +189,6 @@ def test_heatmap_rejections(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     aggregations: list[dict],
-    request_type: str,
-    disabled: bool,
     expected_message: str,
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
@@ -218,8 +198,8 @@ def test_heatmap_rejections(
         token,
         int((now - timedelta(minutes=5)).timestamp() * 1000),
         int(now.timestamp() * 1000),
-        [build_scalar_query("A", "logs", aggregations, disabled=disabled)],
-        request_type=request_type,
+        [build_scalar_query("A", "logs", aggregations)],
+        request_type=RequestType.HEATMAP,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     assert expected_message in get_error_message(response.json())

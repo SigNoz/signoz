@@ -326,7 +326,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 }
 
 // buildHeatmapTimeSeriesQuery counts rows per (time bucket, group, value
-// bucket) of the field named in heatmap(<field>).
+// bucket) of the field its aggregation names.
 func (b *auditQueryStatementBuilder) buildHeatmapTimeSeriesQuery(
 	ctx context.Context,
 	orgID valuer.UUID,

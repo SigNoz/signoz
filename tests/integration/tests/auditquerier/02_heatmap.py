@@ -38,7 +38,7 @@ def test_audit_heatmap(
             for action, values in changed_by_action.items()
             for index, fields_changed in enumerate(values)
         ]
-        # an event without the field counts as 0
+        # an event without the field is not counted
         + [
             AuditLog(
                 timestamp=now - timedelta(seconds=5),
@@ -80,6 +80,6 @@ def test_audit_heatmap(
     series_by_action = index_series_by_label(get_all_series(data, "A"), "signoz.audit.action")
     totals_by_action = {action: [sum(column["values"][slot] for column in series["values"]) for slot in range(len(buckets) + 1)] for action, series in series_by_action.items()}
     assert totals_by_action == {
-        "update": [1, 1, 1, 0],
+        "update": [0, 1, 1, 0],
         "delete": [0, 0, 0, 1],
     }
