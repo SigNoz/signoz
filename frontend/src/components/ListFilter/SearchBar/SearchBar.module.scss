@@ -165,8 +165,9 @@
 
 .leadIcon {
 	position: absolute;
-	top: 11px;
+	top: 50%;
 	left: 10px;
+	transform: translateY(-50%);
 	z-index: 1;
 }
 
@@ -176,9 +177,10 @@
 
 .submit {
 	position: absolute;
-	top: 6px;
+	top: 50%;
 	display: flex;
 	right: 6px;
+	transform: translateY(-50%);
 	z-index: 1;
 }
 

@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import { ConfigProvider, Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import cx from 'classnames';
 
@@ -7,6 +7,11 @@ import type { CreatorOption } from '../types';
 import { UPDATED_OPTIONS } from './constants';
 
 import styles from './FilterZone.module.scss';
+
+// The option checkbox already marks selection, so selected rows stay regular weight.
+const CREATOR_SELECT_THEME = {
+	components: { Select: { optionSelectedFontWeight: 400 } },
+};
 
 interface Props {
 	createdBy: string[];
@@ -47,34 +52,36 @@ function FilterChips({
 
 	return (
 		<div className={styles.chips}>
-			<Select
-				mode="multiple"
-				showSearch
-				allowClear
-				className={cx(styles.select, styles.selectWide)}
-				placeholder="Created by"
-				value={createdBy}
-				options={creatorOptionsData}
-				optionFilterProp="label"
-				maxTagCount={1}
-				menuItemSelectedIcon={null}
-				data-testid={`${testIdPrefix}-filter-created-by`}
-				disabled={disabled}
-				onClear={onClearCreatedBy}
-				optionRender={(option): JSX.Element => (
-					<div className={styles.creatorOption}>
-						<div className={styles.creatorCheck}>
-							<Checkbox
-								color="primary"
-								value={createdBy.includes(option.value as string)}
-							/>
+			<ConfigProvider theme={CREATOR_SELECT_THEME}>
+				<Select
+					mode="multiple"
+					showSearch
+					allowClear
+					className={cx(styles.select, styles.selectWide)}
+					placeholder="Created by"
+					value={createdBy}
+					options={creatorOptionsData}
+					optionFilterProp="label"
+					maxTagCount={1}
+					menuItemSelectedIcon={null}
+					data-testid={`${testIdPrefix}-filter-created-by`}
+					disabled={disabled}
+					onClear={onClearCreatedBy}
+					optionRender={(option): JSX.Element => (
+						<div className={styles.creatorOption}>
+							<div className={styles.creatorCheck}>
+								<Checkbox
+									color="primary"
+									value={createdBy.includes(option.value as string)}
+								/>
+							</div>
+							<span className={styles.creatorLabel}>{option.label}</span>
 						</div>
-						<span className={styles.creatorLabel}>{option.label}</span>
-					</div>
-				)}
-				onChange={(value): void => onCreatedByChange(value as string[])}
-				onDropdownVisibleChange={runOnClose}
-			/>
+					)}
+					onChange={(value): void => onCreatedByChange(value as string[])}
+					onDropdownVisibleChange={runOnClose}
+				/>
+			</ConfigProvider>
 			<Select
 				showSearch
 				className={cx(styles.select, styles.selectNarrow)}
