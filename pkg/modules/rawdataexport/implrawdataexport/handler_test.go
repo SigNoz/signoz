@@ -198,7 +198,6 @@ func TestConstructCSVRecordFromQueryResponse(t *testing.T) {
 	assert.Equal(t, "test-id", record[3])
 }
 
-
 type failingResponseWriter struct {
 	*httptest.ResponseRecorder
 }
@@ -239,7 +238,7 @@ func TestExecuteExportCSVFlush(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.True(t, isComplete)
-			assert.Equal(t, "body\\nhello\\n", responseRecorder.Body.String())
+			assert.Equal(t, "body\nhello\n", responseRecorder.Body.String())
 		})
 	}
 }
