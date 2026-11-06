@@ -2,10 +2,13 @@ package ruler
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -157,6 +160,55 @@ func orgIDFromContext(ctx context.Context) (valuer.UUID, error) {
 	}
 
 	return valuer.NewUUID(claims.OrgID)
+}
+
+func NewRuleQueryTelemetryResources(rulerService Ruler) coretypes.ResourceExtractor {
+	return func(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+		body, err := fetchStoredCompositeQuery(ec, rulerService)
+		if err != nil {
+			return nil, err
+		}
+
+		return querybuilder.QueryRangeResources(coretypes.ExtractorContext{Request: ec.Request, RequestBody: body})
+	}
+}
+
+func NewRuleQueryFieldResources(rulerService Ruler) coretypes.ResourceExtractor {
+	return func(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+		body, err := fetchStoredCompositeQuery(ec, rulerService)
+		if err != nil {
+			return nil, err
+		}
+
+		return mapFieldResources(body)
+	}
+}
+
+func fetchStoredCompositeQuery(ec coretypes.ExtractorContext, rulerService Ruler) ([]byte, error) {
+	if ec.Request == nil {
+		return nil, nil
+	}
+
+	ruleID, err := valuer.NewUUID(mux.Vars(ec.Request)["id"])
+	if err != nil {
+		return nil, err
+	}
+
+	stored, err := rulerService.GetRule(ec.Request.Context(), ruleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(map[string]any{"compositeQuery": stored.RuleCondition.CompositeQuery})
+}
+
+func mapFieldResources(body []byte) ([]coretypes.ResourceWithID, error) {
+	telemetry, err := querybuilder.QueryRangeResources(coretypes.ExtractorContext{RequestBody: body})
+	if err != nil {
+		return nil, err
+	}
+
+	return ruletypes.NewFieldResources(telemetry)
 }
 
 func diffLinks(stored, incoming []string) (attached, detached []string) {
