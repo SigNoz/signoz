@@ -11,7 +11,7 @@ import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import EditAlertV2 from 'container/EditAlertV2';
+import EditAlert from 'container/EditAlert';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -93,10 +93,7 @@ function EditRules(): JSX.Element {
 
 	return (
 		<div className="edit-rules-container">
-			<EditAlertV2
-				initialAlert={initialAlert}
-				alertType={initialAlert.alertType}
-			/>
+			<EditAlert initialAlert={initialAlert} alertType={initialAlert.alertType} />
 		</div>
 	);
 }

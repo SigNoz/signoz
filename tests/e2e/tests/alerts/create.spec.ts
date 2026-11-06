@@ -13,7 +13,7 @@ import {
 // real browser: type selection and its URL contract, the save round-trip, and
 // the error paths. The builder's own validation, threshold tiers, option lists
 // and payload shaping are asserted against the components in jest — see
-// `frontend/src/container/CreateAlertV2/**/__tests__/`.
+// `frontend/src/container/CreateAlert/**/__tests__/`.
 
 test.describe('Alert create', () => {
 	test('TC-01 the type cards render and picking one mounts the builder', async ({

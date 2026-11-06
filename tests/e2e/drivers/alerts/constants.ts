@@ -78,7 +78,7 @@ export const RuleType = {
 } as const;
 
 /**
- * `AlertThresholdOperator` (`CreateAlertV2/context/types.ts:97-105`) and its
+ * `AlertThresholdOperator` (`CreateAlert/context/types.ts:97-105`) and its
  * dropdown labels (`context/constants.ts:123-137`).
  *
  * Threshold-alert operators only. Anomaly alerts render a different, shorter
@@ -94,7 +94,7 @@ export const ThresholdOperator = {
 } as const;
 
 /**
- * `AlertThresholdMatchType` (`CreateAlertV2/context/types.ts:105-111`) and its
+ * `AlertThresholdMatchType` (`CreateAlert/context/types.ts:105-111`) and its
  * dropdown labels (`context/constants.ts:136-142`).
  *
  * Watch the plural: the enum *key* is `ALL_THE_TIME` but the wire value is

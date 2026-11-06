@@ -13,7 +13,7 @@ import {
 // editor reached through `/alerts/edit` has no `CreateAlertProvider` above it.
 //
 // The rule-definition-to-form mapping itself is asserted in jest against
-// `CreateAlertV2/context/utils`; what stays here is the round trip — that a rule
+// `CreateAlert/context/utils`; what stays here is the round trip — that a rule
 // the API created renders back through that mapper, and that a save persists.
 
 /** Every asserted field differs from the create-form default, so a passing
@@ -285,7 +285,7 @@ test.describe('Alert edit', () => {
 			{ target: SEED.target },
 		);
 
-		// Reading the components suggests this route should crash: `EditAlertV2`
+		// Reading the components suggests this route should crash: `EditAlert`
 		// renders Footer/AlertCondition/NotificationSettings, all of which call
 		// `useCreateAlertState()`, and the only provider lives in `AlertDetails`. It
 		// does not crash, because `/alerts/edit` never renders `pages/EditRules` at

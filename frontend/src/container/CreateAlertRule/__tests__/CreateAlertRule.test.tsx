@@ -23,9 +23,9 @@ jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
 	},
 }));
 
-jest.mock('container/CreateAlertV2', () => ({
+jest.mock('container/CreateAlert', () => ({
 	__esModule: true,
-	default: function MockCreateAlertV2({
+	default: function MockCreateAlert({
 		alertType,
 	}: {
 		alertType: AlertTypes;

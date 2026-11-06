@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { sanitizeDefaultAlertQuery } from 'container/EditAlertV2/utils';
+import { sanitizeDefaultAlertQuery } from 'container/EditAlert/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useTableRowClick } from 'hooks/useTableRowClick';
 import useUrlQuery from 'hooks/useUrlQuery';
