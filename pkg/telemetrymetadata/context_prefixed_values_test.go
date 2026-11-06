@@ -5,14 +5,15 @@ import (
 	"testing"
 
 	cmock "github.com/SigNoz/clickhouse-go-mock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetAllValuesExactNameFirst(t *testing.T) {
@@ -47,4 +48,44 @@ func TestGetAllValuesExactNameFirst(t *testing.T) {
 	assert.Equal(t, []string{"warn", "info"}, values.StringValues)
 	assert.False(t, complete)
 	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestMergeFieldValues(t *testing.T) {
+	testCases := []struct {
+		name             string
+		limit            int
+		values           []*telemetrytypes.TelemetryFieldValues
+		expected         *telemetrytypes.TelemetryFieldValues
+		expectedComplete bool
+	}{
+		{
+			name:             "BoolValuesOutsideLimit",
+			limit:            1,
+			values:           []*telemetrytypes.TelemetryFieldValues{{BoolValues: []bool{true, false}}, {StringValues: []string{"a"}}},
+			expected:         &telemetrytypes.TelemetryFieldValues{StringValues: []string{"a"}, BoolValues: []bool{true, false}},
+			expectedComplete: true,
+		},
+		{
+			name:             "DuplicateAtLimitKeepsComplete",
+			limit:            1,
+			values:           []*telemetrytypes.TelemetryFieldValues{{StringValues: []string{"prod"}}, {StringValues: []string{"prod"}}},
+			expected:         &telemetrytypes.TelemetryFieldValues{StringValues: []string{"prod"}},
+			expectedComplete: true,
+		},
+		{
+			name:             "DroppedValueMarksIncomplete",
+			limit:            1,
+			values:           []*telemetrytypes.TelemetryFieldValues{{StringValues: []string{"prod"}}, {StringValues: []string{"dev"}}},
+			expected:         &telemetrytypes.TelemetryFieldValues{StringValues: []string{"prod"}},
+			expectedComplete: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			merged, complete := mergeFieldValues(testCase.limit, testCase.values...)
+			assert.Equal(t, testCase.expected, merged)
+			assert.Equal(t, testCase.expectedComplete, complete)
+		})
+	}
 }

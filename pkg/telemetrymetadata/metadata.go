@@ -1400,9 +1400,9 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		selectColumn = fmt.Sprintf("if(notEmpty(%s), %s, %s)", memberColumns[i], memberColumns[i], selectColumn)
 	}
 
-	sb := sqlbuilder.Select("DISTINCT " + selectColumn).From(t.relatedMetadataDBName + "." + t.relatedMetadataTblName)
+	sb := sqlbuilder.Select("DISTINCT " + sqlbuilder.Escape(selectColumn)).From(t.relatedMetadataDBName + "." + t.relatedMetadataTblName)
 	// rows without the key read as empty; drop them so they do not count towards the limit
-	sb.Where(fmt.Sprintf("notEmpty(%s)", selectColumn))
+	sb.Where(sqlbuilder.Escape(fmt.Sprintf("notEmpty(%s)", selectColumn)))
 
 	if len(fieldValueSelector.ExistingQuery) != 0 {
 		keySelectors := querybuilder.QueryStringToKeysSelectors(fieldValueSelector.ExistingQuery)
@@ -2111,19 +2111,54 @@ func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context
 	return values, complete, nil
 }
 
-// mergeFieldValues dedupes the values into one result capped at limit, and reports
-// false when the cap dropped any.
+// mergeFieldValues dedupes the values into one result and reports false when the
+// limit dropped any. Bool values stay outside the limit, as in getTagTableValues.
 func mergeFieldValues(limit int, values ...*telemetrytypes.TelemetryFieldValues) (*telemetrytypes.TelemetryFieldValues, bool) {
 	if limit == 0 {
 		limit = 50
 	}
 
 	merged := &telemetrytypes.TelemetryFieldValues{}
-	mapOfValues := make(map[any]bool)
-	mapOfRelatedValues := make(map[any]bool)
+	seen := make(map[any]bool)
+	seenRelated := make(map[any]bool)
+	seenBool := make(map[bool]bool)
+	count := 0
 	complete := true
+	admit := func(seenValues map[any]bool, value any) bool {
+		if seenValues[value] {
+			return false
+		}
+		if count >= limit {
+			complete = false
+			return false
+		}
+		seenValues[value] = true
+		count++
+		return true
+	}
+
 	for _, v := range values {
-		complete = populateAllUnspecifiedValues(merged, mapOfValues, mapOfRelatedValues, v, limit) && complete
+		for _, value := range v.StringValues {
+			if admit(seen, value) {
+				merged.StringValues = append(merged.StringValues, value)
+			}
+		}
+		for _, value := range v.NumberValues {
+			if admit(seen, value) {
+				merged.NumberValues = append(merged.NumberValues, value)
+			}
+		}
+		for _, value := range v.RelatedValues {
+			if admit(seenRelated, value) {
+				merged.RelatedValues = append(merged.RelatedValues, value)
+			}
+		}
+		for _, value := range v.BoolValues {
+			if !seenBool[value] {
+				seenBool[value] = true
+				merged.BoolValues = append(merged.BoolValues, value)
+			}
+		}
 	}
 	return merged, complete
 }

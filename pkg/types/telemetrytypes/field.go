@@ -151,40 +151,6 @@ func (f *TelemetryFieldKey) Normalize() {
 	f.normalizeContext()
 }
 
-func (f *TelemetryFieldKey) normalizeDataType() {
-	// Step 1: Parse data type from the right (after the last ":") if not already specified
-	if f.FieldDataType == FieldDataTypeUnspecified {
-		if colonIdx := strings.LastIndex(f.Name, ":"); colonIdx != -1 {
-			potentialDataType := f.Name[colonIdx+1:]
-			if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
-				f.FieldDataType = dt
-				f.Name = f.Name[:colonIdx]
-			}
-		}
-	}
-}
-
-func (f *TelemetryFieldKey) normalizeContext() {
-	// Step 2: Parse field context from the left if not already specified
-	if f.FieldContext == FieldContextUnspecified {
-		if dotIdx := strings.Index(f.Name, "."); dotIdx != -1 {
-			potentialContext := f.Name[:dotIdx]
-			if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
-				f.Name = f.Name[dotIdx+1:]
-				f.FieldContext = fc
-
-				// Step 2a: Handle special case for log.body.* fields
-				if f.FieldContext == FieldContextLog && strings.HasPrefix(f.Name, BodyJSONStringSearchPrefix) {
-					f.FieldContext = FieldContextBody
-					f.Name = strings.TrimPrefix(f.Name, BodyJSONStringSearchPrefix)
-				}
-
-			}
-		}
-	}
-
-}
-
 // GetFieldKeyFromKeyText returns a TelemetryFieldKey parsed from a key text of the
 // form `fieldContext.fieldName:fieldDataType` (context and :dataType optional). It
 // delegates to Normalize; see Normalize for the parsing rules and special cases.
@@ -420,18 +386,6 @@ func (s *FieldValueSelector) NameMatchSelectors() []*FieldValueSelector {
 	return []*FieldValueSelector{s}
 }
 
-// withName returns a copy looking up name in any context.
-func (s *FieldValueSelector) withName(name string) *FieldValueSelector {
-	keySelector := *s.FieldKeySelector
-	keySelector.Name = name
-	keySelector.FieldContext = FieldContextUnspecified
-
-	selector := *s
-	selector.FieldKeySelector = &keySelector
-	selector.nameAsWritten = ""
-	return &selector
-}
-
 func NewTelemetryFieldKey(name string, fieldContext FieldContext, fieldDataType FieldDataType) *TelemetryFieldKey {
 	return &TelemetryFieldKey{
 		Name:          name,
@@ -462,4 +416,50 @@ type TelemetryFieldKeySkipIndex struct {
 	IndexType       string        `json:"indexType"`
 	IndexExpression string        `json:"indexExpression"`
 	Granularity     int           `json:"granularity"`
+}
+
+func (f *TelemetryFieldKey) normalizeDataType() {
+	// Step 1: Parse data type from the right (after the last ":") if not already specified
+	if f.FieldDataType == FieldDataTypeUnspecified {
+		if colonIdx := strings.LastIndex(f.Name, ":"); colonIdx != -1 {
+			potentialDataType := f.Name[colonIdx+1:]
+			if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
+				f.FieldDataType = dt
+				f.Name = f.Name[:colonIdx]
+			}
+		}
+	}
+}
+
+func (f *TelemetryFieldKey) normalizeContext() {
+	// Step 2: Parse field context from the left if not already specified
+	if f.FieldContext == FieldContextUnspecified {
+		if dotIdx := strings.Index(f.Name, "."); dotIdx != -1 {
+			potentialContext := f.Name[:dotIdx]
+			if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
+				f.Name = f.Name[dotIdx+1:]
+				f.FieldContext = fc
+
+				// Step 2a: Handle special case for log.body.* fields
+				if f.FieldContext == FieldContextLog && strings.HasPrefix(f.Name, BodyJSONStringSearchPrefix) {
+					f.FieldContext = FieldContextBody
+					f.Name = strings.TrimPrefix(f.Name, BodyJSONStringSearchPrefix)
+				}
+
+			}
+		}
+	}
+
+}
+
+// withName returns a copy looking up name in any context.
+func (s *FieldValueSelector) withName(name string) *FieldValueSelector {
+	keySelector := *s.FieldKeySelector
+	keySelector.Name = name
+	keySelector.FieldContext = FieldContextUnspecified
+
+	selector := *s
+	selector.FieldKeySelector = &keySelector
+	selector.nameAsWritten = ""
+	return &selector
 }
