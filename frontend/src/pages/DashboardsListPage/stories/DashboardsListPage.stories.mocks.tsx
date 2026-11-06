@@ -175,6 +175,12 @@ const listRoute = (view: ViewOption): string => {
 	return `${ROUTES.ALL_DASHBOARD}?${params.toString()}`;
 };
 
+export const longQueryRoute = `${ROUTES.ALL_DASHBOARD}?${new URLSearchParams({
+	view: 'all',
+	query:
+		"name CONTAINS 'Kubernetes' OR name CONTAINS 'Checkout' OR name CONTAINS 'Postgres' OR name CONTAINS 'Kafka' OR name CONTAINS 'Redis' OR name CONTAINS 'Nginx'",
+}).toString()}`;
+
 const visibleColumns = (
 	columns: readonly DetailColumn[],
 ): DashboardDynamicColumns => ({

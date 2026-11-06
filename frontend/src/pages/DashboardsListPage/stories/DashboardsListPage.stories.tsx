@@ -4,6 +4,7 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	dashboardsListMocks,
+	longQueryRoute,
 	overflowingRows,
 } from './DashboardsListPage.stories.mocks';
 import {
@@ -18,6 +19,7 @@ import {
 	lockDashboard,
 	migrateDashboard,
 	migrationFails,
+	openCreatedByFilter,
 	openEditTagsDialog,
 	openFirstRowActions,
 	openRenameDialog,
@@ -91,6 +93,16 @@ export const Viewer: Story = {
 /** The rows the user pinned, which the page filters out of the fetched page. */
 export const Pinned: Story = {
 	args: { view: 'pinned' },
+};
+
+/** A query long enough to wrap onto a second line in the query box. */
+export const LongQuery: Story = {
+	parameters: { signoz: { route: longQueryRoute } },
+};
+
+/** The Created-by dropdown, open with one creator picked. */
+export const CreatedByFilterOpen: Story = {
+	play: openCreatedByFilter,
 };
 
 /** The template tab of the New dashboard dialog. */

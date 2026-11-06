@@ -26,6 +26,20 @@ interface PlayContext {
 
 const IMPORTED_SPEC = { layouts: [], panels: {}, variables: [] };
 
+export const openCreatedByFilter = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const filter = await within(canvasElement).findByTestId(
+		'dashboards-filter-created-by',
+		{},
+		{ timeout: TOAST_TIMEOUT },
+	);
+
+	await userEvent.click(filter.querySelector('.ant-select-selector') ?? filter);
+	await userEvent.click(await screen.findByText('Ada (ada@signoz.io)'));
+	await screen.findByRole('checkbox', { checked: true });
+};
+
 export const openTemplateTab = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
