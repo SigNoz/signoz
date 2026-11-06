@@ -1,9 +1,12 @@
 package audittypes
 
 import (
+	"net"
 	"net/http"
+	"strconv"
 	"strings"
 
+	sigsemconv "github.com/SigNoz/signoz-semantic-conventions/semconv/go"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -16,10 +19,9 @@ type AuditAttributes struct {
 	Action         coretypes.Verb           // guaranteed to be present
 	ActionCategory coretypes.ActionCategory // guaranteed to be present
 	Outcome        Outcome                  // guaranteed to be present
-	IdentNProvider authtypes.IdentNProvider
 }
 
-func NewAuditAttributesFromHTTP(statusCode int, action coretypes.Verb, category coretypes.ActionCategory, claims authtypes.Claims) AuditAttributes {
+func NewAuditAttributesFromHTTP(statusCode int, action coretypes.Verb, category coretypes.ActionCategory) AuditAttributes {
 	outcome := OutcomeFailure
 	if statusCode >= 200 && statusCode < 400 {
 		outcome = OutcomeSuccess
@@ -29,15 +31,13 @@ func NewAuditAttributesFromHTTP(statusCode int, action coretypes.Verb, category 
 		Action:         action,
 		ActionCategory: category,
 		Outcome:        outcome,
-		IdentNProvider: claims.IdentNProvider,
 	}
 }
 
 func (attributes AuditAttributes) Put(dest pcommon.Map) {
-	dest.PutStr("signoz.audit.action", attributes.Action.StringValue())
-	dest.PutStr("signoz.audit.action_category", attributes.ActionCategory.StringValue())
-	dest.PutStr("signoz.audit.outcome", attributes.Outcome.StringValue())
-	putStrIfNotEmpty(dest, "signoz.audit.identn_provider", attributes.IdentNProvider.StringValue())
+	dest.PutStr(sigsemconv.SigNozAuditVerbKey, attributes.Action.StringValue())
+	dest.PutStr(sigsemconv.SigNozAuditActionCategoryKey, attributes.ActionCategory.StringValue())
+	dest.PutStr(sigsemconv.SigNozAuditOutcomeKey, attributes.Outcome.StringValue())
 }
 
 // Audit attributes — Principal (Who).
@@ -50,6 +50,9 @@ type PrincipalAttributes struct {
 
 func NewPrincipalAttributesFromClaims(claims authtypes.Claims) PrincipalAttributes {
 	principalID, _ := valuer.NewUUID(claims.UserID)
+	if claims.Principal == authtypes.PrincipalServiceAccount {
+		principalID, _ = valuer.NewUUID(claims.ServiceAccountID)
+	}
 	principalEmail, _ := valuer.NewEmail(claims.Email)
 	principalOrgID, _ := valuer.NewUUID(claims.OrgID)
 
@@ -62,10 +65,12 @@ func NewPrincipalAttributesFromClaims(claims authtypes.Claims) PrincipalAttribut
 }
 
 func (attributes PrincipalAttributes) Put(dest pcommon.Map) {
-	dest.PutStr("signoz.audit.principal.id", attributes.PrincipalID.StringValue())
-	dest.PutStr("signoz.audit.principal.email", attributes.PrincipalEmail.String())
-	dest.PutStr("signoz.audit.principal.type", attributes.PrincipalType.StringValue())
-	dest.PutStr("signoz.audit.principal.org_id", attributes.PrincipalOrgID.StringValue())
+	if !attributes.PrincipalID.IsZero() {
+		dest.PutStr(sigsemconv.SigNozPrincipalIDKey, attributes.PrincipalID.StringValue())
+		putStrIfNotEmpty(dest, sigsemconv.SigNozPrincipalTypeKey, attributes.PrincipalType.StringValue())
+	}
+	putStrIfNotEmpty(dest, sigsemconv.SigNozPrincipalEmailKey, attributes.PrincipalEmail.String())
+	dest.PutStr(sigsemconv.SigNozOrganizationIDKey, attributes.PrincipalOrgID.StringValue())
 }
 
 // Audit attributes — Resource (On What).
@@ -73,11 +78,6 @@ func (attributes PrincipalAttributes) Put(dest pcommon.Map) {
 type ResourceAttributes struct {
 	Resource   coretypes.Resource // guaranteed to be present
 	ResourceID string
-
-	// TargetResource names the counterpart of an attach/detach event (audit
-	// context only). nil when there is no relationship.
-	TargetResource   coretypes.Resource
-	TargetResourceID string
 }
 
 func NewResourceAttributes(resource coretypes.Resource, resourceID string) ResourceAttributes {
@@ -87,55 +87,82 @@ func NewResourceAttributes(resource coretypes.Resource, resourceID string) Resou
 	}
 }
 
-// NewAttachResourceAttributes builds resource attributes that additionally name
-// the target counterpart (used for attach/detach audit events).
-func NewRelatedResourceAttributes(resource coretypes.Resource, resourceID string, targetResource coretypes.Resource, targetResourceID string) ResourceAttributes {
-	return ResourceAttributes{
-		Resource:         resource,
-		ResourceID:       resourceID,
+// Put writes the resource attributes to an OTel Resource's attribute map.
+// These are resource-level attributes (stored in the resource JSON column),
+// not event-level attributes (stored in attributes_string).
+func (attributes ResourceAttributes) Put(orgID valuer.UUID, dest pcommon.Map) {
+	putStrIfNotEmpty(dest, sigsemconv.SigNozResourceKindKey, attributes.Resource.Kind().String())
+	putStrIfNotEmpty(dest, sigsemconv.SigNozResourceIDKey, attributes.ResourceID)
+	if attributes.ResourceID != "" {
+		putStrIfNotEmpty(dest, sigsemconv.SigNozResourceObjectKey, attributes.Resource.Object(orgID, attributes.ResourceID))
+	}
+}
+
+// Audit attributes — Target (To/From What).
+// The counterpart of an attach/detach event, placed on the log record.
+type TargetAttributes struct {
+	// nil when there is no relationship.
+	TargetResource   coretypes.Resource
+	TargetResourceID string
+}
+
+func NewTargetAttributes(targetResource coretypes.Resource, targetResourceID string) TargetAttributes {
+	return TargetAttributes{
 		TargetResource:   targetResource,
 		TargetResourceID: targetResourceID,
 	}
 }
 
-// PutResource writes the resource attributes to an OTel Resource's attribute map.
-// These are resource-level attributes (stored in the resource JSON column),
-// not event-level attributes (stored in attributes_string).
-func (attributes ResourceAttributes) PutResource(orgID valuer.UUID, dest pcommon.Map) {
-	putStrIfNotEmpty(dest, "signoz.audit.resource.kind", attributes.Resource.Kind().String())
-	putStrIfNotEmpty(dest, "signoz.audit.resource.id", attributes.ResourceID)
-	if attributes.ResourceID != "" {
-		putStrIfNotEmpty(dest, "signoz.audit.resource.object", attributes.Resource.Object(orgID, attributes.ResourceID))
+func (attributes TargetAttributes) Put(orgID valuer.UUID, dest pcommon.Map) {
+	if attributes.TargetResource == nil {
+		return
 	}
 
-	if attributes.TargetResource != nil {
-		putStrIfNotEmpty(dest, "signoz.audit.resource.target.kind", attributes.TargetResource.Kind().String())
-		putStrIfNotEmpty(dest, "signoz.audit.resource.target.id", attributes.TargetResourceID)
-		if attributes.TargetResourceID != "" {
-			putStrIfNotEmpty(dest, "signoz.audit.resource.target.object", attributes.TargetResource.Object(orgID, attributes.TargetResourceID))
-		}
+	putStrIfNotEmpty(dest, sigsemconv.SigNozResourceTargetKindKey, attributes.TargetResource.Kind().String())
+	putStrIfNotEmpty(dest, sigsemconv.SigNozResourceTargetIDKey, attributes.TargetResourceID)
+	if attributes.TargetResourceID != "" {
+		putStrIfNotEmpty(dest, sigsemconv.SigNozResourceTargetObjectKey, attributes.TargetResource.Object(orgID, attributes.TargetResourceID))
 	}
+}
+
+// Audit attributes — Workspace.
+type WorkspaceAttributes struct {
+	// The ingestion key the resource is or belongs to.
+	WorkspaceKeyID string
+}
+
+func NewWorkspaceAttributes(resourceAttributes ResourceAttributes, targetAttributes TargetAttributes) WorkspaceAttributes {
+	if resourceAttributes.Resource.Kind() == coretypes.KindIngestionKey {
+		return WorkspaceAttributes{WorkspaceKeyID: resourceAttributes.ResourceID}
+	}
+
+	if resourceAttributes.Resource.Kind() == coretypes.KindIngestionLimit && targetAttributes.TargetResource != nil && targetAttributes.TargetResource.Kind() == coretypes.KindIngestionKey {
+		return WorkspaceAttributes{WorkspaceKeyID: targetAttributes.TargetResourceID}
+	}
+
+	return WorkspaceAttributes{}
+}
+
+func (attributes WorkspaceAttributes) Put(dest pcommon.Map) {
+	putStrIfNotEmpty(dest, sigsemconv.SigNozWorkspaceKeyIDKey, attributes.WorkspaceKeyID)
 }
 
 // Audit attributes — Error (When outcome is failure)
 // Error messages are intentionally excluded to avoid leaking sensitive or
-// PII data into audit logs. The error type and code are sufficient for
-// filtering and alerting; investigators can correlate via trace ID.
+// PII data into audit logs. The error type is sufficient for filtering and
+// alerting; investigators can correlate via trace ID.
 type ErrorAttributes struct {
 	ErrorType string
-	ErrorCode string
 }
 
-func NewErrorAttributes(errorType, errorCode string) ErrorAttributes {
+func NewErrorAttributes(errorType string) ErrorAttributes {
 	return ErrorAttributes{
 		ErrorType: errorType,
-		ErrorCode: errorCode,
 	}
 }
 
 func (attributes ErrorAttributes) Put(dest pcommon.Map) {
-	putStrIfNotEmpty(dest, "signoz.audit.error.type", attributes.ErrorType)
-	putStrIfNotEmpty(dest, "signoz.audit.error.code", attributes.ErrorCode)
+	putStrIfNotEmpty(dest, string(semconv.ExceptionTypeKey), attributes.ErrorType)
 }
 
 // Audit attributes — Transport Context (Where/How).
@@ -148,6 +175,7 @@ type TransportAttributes struct {
 	HTTPStatusCode         int
 	URLPath                string
 	ClientAddress          string
+	ClientPort             int
 	UserAgent              string
 }
 
@@ -157,15 +185,18 @@ func NewTransportAttributesFromHTTP(req *http.Request, route string, statusCode 
 		scheme = "https"
 	}
 
+	clientAddress, clientPort := splitHostPort(req.RemoteAddr)
+
 	return TransportAttributes{
 		NetworkProtocolName:    "http",
-		NetworkProtocolVersion: req.Proto,
+		NetworkProtocolVersion: networkProtocolVersion(req),
 		URLScheme:              scheme,
 		HTTPMethod:             req.Method,
 		HTTPRoute:              route,
 		HTTPStatusCode:         statusCode,
 		URLPath:                req.URL.Path,
-		ClientAddress:          req.RemoteAddr,
+		ClientAddress:          clientAddress,
+		ClientPort:             clientPort,
 		UserAgent:              req.UserAgent(),
 	}
 }
@@ -181,7 +212,34 @@ func (attributes TransportAttributes) Put(dest pcommon.Map) {
 	}
 	putStrIfNotEmpty(dest, string(semconv.URLPathKey), attributes.URLPath)
 	putStrIfNotEmpty(dest, string(semconv.ClientAddressKey), attributes.ClientAddress)
+	if attributes.ClientPort != 0 {
+		dest.PutInt(string(semconv.ClientPortKey), int64(attributes.ClientPort))
+	}
 	putStrIfNotEmpty(dest, string(semconv.UserAgentOriginalKey), attributes.UserAgent)
+}
+
+// networkProtocolVersion drops the HTTP/ prefix, and the .0 of HTTP/2 and later.
+func networkProtocolVersion(req *http.Request) string {
+	if req.ProtoMajor >= 2 && req.ProtoMinor == 0 {
+		return strconv.Itoa(req.ProtoMajor)
+	}
+
+	return strconv.Itoa(req.ProtoMajor) + "." + strconv.Itoa(req.ProtoMinor)
+}
+
+// splitHostPort returns addr unchanged with port 0 when it has no valid port.
+func splitHostPort(addr string) (string, int) {
+	host, portStr, err := net.SplitHostPort(addr)
+	if err != nil {
+		return addr, 0
+	}
+
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return addr, 0
+	}
+
+	return host, port
 }
 
 func putStrIfNotEmpty(attrs pcommon.Map, key, value string) {
@@ -190,7 +248,7 @@ func putStrIfNotEmpty(attrs pcommon.Map, key, value string) {
 	}
 }
 
-func newBody(auditAttributes AuditAttributes, principalAttributes PrincipalAttributes, resourceAttributes ResourceAttributes, errorAttributes ErrorAttributes) string {
+func newBody(auditAttributes AuditAttributes, principalAttributes PrincipalAttributes, resourceAttributes ResourceAttributes, targetAttributes TargetAttributes, errorAttributes ErrorAttributes) string {
 	var b strings.Builder
 
 	// Principal: "email (id)" or "id" or "email" or omitted.
@@ -227,36 +285,25 @@ func newBody(auditAttributes AuditAttributes, principalAttributes PrincipalAttri
 		b.WriteString(")")
 	}
 
-	// Target (attach/detach context): " · target kind (id)" or " · target kind".
-	if resourceAttributes.TargetResource != nil {
-		b.WriteString(" to ")
-		b.WriteString(resourceAttributes.TargetResource.Kind().String())
-		if resourceAttributes.TargetResourceID != "" {
+	// Target (attach/detach context): " to target kind (id)" or " from target kind" for detach.
+	if targetAttributes.TargetResource != nil {
+		if auditAttributes.Action == coretypes.VerbDetach {
+			b.WriteString(" from ")
+		} else {
+			b.WriteString(" to ")
+		}
+		b.WriteString(targetAttributes.TargetResource.Kind().String())
+		if targetAttributes.TargetResourceID != "" {
 			b.WriteString(" (")
-			b.WriteString(resourceAttributes.TargetResourceID)
+			b.WriteString(targetAttributes.TargetResourceID)
 			b.WriteString(")")
 		}
 	}
 
-	// Error suffix (failure only): ": type (code)" or ": type" or ": (code)" or omitted.
-	if auditAttributes.Outcome == OutcomeFailure {
-		errorType := errorAttributes.ErrorType
-		errorCode := errorAttributes.ErrorCode
-		if errorType != "" || errorCode != "" {
-			b.WriteString(": ")
-			if errorType != "" && errorCode != "" {
-				b.WriteString(errorType)
-				b.WriteString(" (")
-				b.WriteString(errorCode)
-				b.WriteString(")")
-			} else if errorType != "" {
-				b.WriteString(errorType)
-			} else {
-				b.WriteString("(")
-				b.WriteString(errorCode)
-				b.WriteString(")")
-			}
-		}
+	// Error suffix (failure only): ": type" or omitted.
+	if auditAttributes.Outcome == OutcomeFailure && errorAttributes.ErrorType != "" {
+		b.WriteString(": ")
+		b.WriteString(errorAttributes.ErrorType)
 	}
 
 	return b.String()

@@ -37,6 +37,12 @@ type AuditEvent struct {
 	// Custom Audit Attributes - Resource
 	ResourceAttributes ResourceAttributes
 
+	// Custom Audit Attributes - Target
+	TargetAttributes TargetAttributes
+
+	// Custom Audit Attributes - Workspace
+	WorkspaceAttributes WorkspaceAttributes
+
 	// Custom Audit Attributes - Error
 	ErrorAttributes ErrorAttributes
 
@@ -56,23 +62,25 @@ func NewAuditEventFromHTTPRequest(
 	actionCategory coretypes.ActionCategory,
 	claims authtypes.Claims,
 	resourceAttributes ResourceAttributes,
+	targetAttributes TargetAttributes,
 	errorType string,
-	errorCode string,
 ) AuditEvent {
-	auditAttributes := NewAuditAttributesFromHTTP(statusCode, action, actionCategory, claims)
+	auditAttributes := NewAuditAttributesFromHTTP(statusCode, action, actionCategory)
 	principalAttributes := NewPrincipalAttributesFromClaims(claims)
-	errorAttributes := NewErrorAttributes(errorType, errorCode)
+	errorAttributes := NewErrorAttributes(errorType)
 	transportAttributes := NewTransportAttributesFromHTTP(req, route, statusCode)
 
 	return AuditEvent{
 		Timestamp:           time.Now(),
 		TraceID:             traceID,
 		SpanID:              spanID,
-		Body:                newBody(auditAttributes, principalAttributes, resourceAttributes, errorAttributes),
-		EventName:           NewEventName(resourceAttributes.Resource.Kind(), auditAttributes.Action),
+		Body:                newBody(auditAttributes, principalAttributes, resourceAttributes, targetAttributes, errorAttributes),
+		EventName:           NewEventName(auditAttributes.Action),
 		AuditAttributes:     auditAttributes,
 		PrincipalAttributes: principalAttributes,
 		ResourceAttributes:  resourceAttributes,
+		TargetAttributes:    targetAttributes,
+		WorkspaceAttributes: NewWorkspaceAttributes(resourceAttributes, targetAttributes),
 		ErrorAttributes:     errorAttributes,
 		TransportAttributes: transportAttributes,
 	}
@@ -102,7 +110,7 @@ func NewPLogsFromAuditEvents(events []AuditEvent, name string, version string, s
 		resourceAttrs.PutStr(string(semconv.ServiceNameKey), name)
 		resourceAttrs.PutStr(string(semconv.ServiceVersionKey), version)
 		head := events[groups[key][0]]
-		head.ResourceAttributes.PutResource(head.PrincipalAttributes.PrincipalOrgID, resourceAttrs)
+		head.ResourceAttributes.Put(head.PrincipalAttributes.PrincipalOrgID, resourceAttrs)
 
 		scopeLogs := resourceLogs.ScopeLogs().AppendEmpty()
 		scopeLogs.Scope().SetName(scope)
@@ -147,6 +155,12 @@ func (event AuditEvent) ToLogRecord(dest plog.LogRecord) {
 
 	// Resource attributes are set at the ResourceLogs level, not per-LogRecord.
 	// See NewPLogsFromAuditEvents.
+
+	// Target attributes
+	event.TargetAttributes.Put(event.PrincipalAttributes.PrincipalOrgID, attrs)
+
+	// Workspace attributes
+	event.WorkspaceAttributes.Put(attrs)
 
 	// Error attributes
 	event.ErrorAttributes.Put(attrs)

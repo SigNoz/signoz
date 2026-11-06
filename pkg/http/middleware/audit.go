@@ -109,10 +109,9 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	statusCode := writer.StatusCode()
 	span := trace.SpanFromContext(req.Context())
 
-	var errorType, errorCode string
+	var errorType string
 	if statusCode >= 400 {
 		errorType = render.ErrorTypeFromStatusCode(statusCode)
-		errorCode = render.ErrorCodeFromBody(writer.BodyBytes())
 	}
 
 	extractorCtx := coretypes.ExtractorContext{Request: req, ResponseBody: writer.BodyBytes()}
@@ -122,33 +121,27 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 			continue
 		}
 
-		resource.ResolveResponse(extractorCtx)
 		verb, category := resource.Verb(), resource.Category()
+		if !audittypes.IsAudited(verb) {
+			continue
+		}
+
+		resource.ResolveResponse(extractorCtx)
 
 		switch typed := resource.(type) {
 		case coretypes.ResolvedResourceWithTargetResource:
 			for _, sourceID := range typed.SourceIDs() {
 				for _, targetID := range typed.TargetIDs() {
-					attributesList := []audittypes.ResourceAttributes{
-						audittypes.NewRelatedResourceAttributes(
-							typed.SourceResource(),
-							sourceID,
-							typed.TargetResource(),
-							targetID,
-						),
+					// A relation is recorded once from each side.
+					sides := []struct {
+						resource audittypes.ResourceAttributes
+						target   audittypes.TargetAttributes
+					}{
+						{audittypes.NewResourceAttributes(typed.SourceResource(), sourceID), audittypes.NewTargetAttributes(typed.TargetResource(), targetID)},
+						{audittypes.NewResourceAttributes(typed.TargetResource(), targetID), audittypes.NewTargetAttributes(typed.SourceResource(), sourceID)},
 					}
 
-					// Sibling peers are symmetric, so mirror the event from the target's side too.
-					if !typed.IsParentChild() {
-						attributesList = append(attributesList, audittypes.NewRelatedResourceAttributes(
-							typed.TargetResource(),
-							targetID,
-							typed.SourceResource(),
-							sourceID,
-						))
-					}
-
-					for _, attributes := range attributesList {
+					for _, side := range sides {
 						middleware.auditor.Audit(req.Context(), audittypes.NewAuditEventFromHTTPRequest(
 							req,
 							routeTemplate,
@@ -158,9 +151,9 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 							verb,
 							category,
 							claims,
-							attributes,
+							side.resource,
+							side.target,
 							errorType,
-							errorCode,
 						))
 					}
 				}
@@ -179,8 +172,8 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 					category,
 					claims,
 					attributes,
+					audittypes.TargetAttributes{},
 					errorType,
-					errorCode,
 				))
 			}
 		}
