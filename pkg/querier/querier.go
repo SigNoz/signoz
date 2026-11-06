@@ -655,29 +655,27 @@ func (q *querier) run(
 		if result == nil || result.Value == nil {
 			return false
 		}
-		switch {
-		case result.Type == qbtypes.RequestTypeScalar:
-			if val, ok := result.Value.(*qbtypes.ScalarData); ok && val != nil {
-				return len(val.Data) != 0
-			}
-		case result.Type == qbtypes.RequestTypeRaw:
-			if val, ok := result.Value.(*qbtypes.RawData); ok && val != nil {
-				return len(val.Rows) != 0
-			}
-		case result.Type.IsBuiltFromTimeSeries():
-			if val, ok := result.Value.(*qbtypes.TimeSeriesData); ok && val != nil {
-				if len(val.Aggregations) != 0 {
-					anyNonEmpty := false
-					for _, aggBucket := range val.Aggregations {
-						if len(aggBucket.Series) != 0 {
-							anyNonEmpty = true
-							break
-						}
+		switch val := result.Value.(type) {
+		case *qbtypes.ScalarData:
+			return len(val.Data) != 0
+		case *qbtypes.RawData:
+			return len(val.Rows) != 0
+		case *qbtypes.TimeSeriesData:
+			if len(val.Aggregations) != 0 {
+				anyNonEmpty := false
+				for _, aggBucket := range val.Aggregations {
+					if len(aggBucket.Series) != 0 {
+						anyNonEmpty = true
+						break
 					}
-					return anyNonEmpty
 				}
-				return false
+				return anyNonEmpty
 			}
+			return false
+		case *qbtypes.DistributionData:
+			return slices.ContainsFunc(val.Aggregations, func(aggregation *qbtypes.DistributionAggregation) bool {
+				return len(aggregation.Distributions) != 0
+			})
 		}
 		return false
 	}
@@ -723,6 +721,8 @@ func (q *querier) run(
 			case *qbtypes.ScalarData:
 				v.QueryName = name
 			case *qbtypes.RawData:
+				v.QueryName = name
+			case *qbtypes.DistributionData:
 				v.QueryName = name
 			}
 			queryResults[i] = result
