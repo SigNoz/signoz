@@ -38,28 +38,39 @@ const durationNano = fieldKey(
 	TelemetrytypesFieldDataTypeDTO.float64,
 );
 
-const aiKeysResponse: GetAIObservabilityFieldsKeys200 = {
+const serviceName = fieldKey(
+	'service.name',
+	TelemetrytypesFieldContextDTO.resource,
+	TelemetrytypesFieldDataTypeDTO.string,
+);
+
+const totalTokens = fieldKey(
+	'total_tokens',
+	TelemetrytypesFieldContextDTO.trace,
+	TelemetrytypesFieldDataTypeDTO.float64,
+);
+
+const aiKeysResponse = (
+	keys: TelemetrytypesTelemetryFieldKeyDTO[],
+): GetAIObservabilityFieldsKeys200 => ({
 	status: 'success',
 	data: {
 		complete: true,
-		keys: {
-			duration_nano: [durationNano],
-			'service.name': [
-				fieldKey(
-					'service.name',
-					TelemetrytypesFieldContextDTO.resource,
-					TelemetrytypesFieldDataTypeDTO.string,
-				),
-			],
-			total_tokens: [
-				fieldKey(
-					'total_tokens',
-					TelemetrytypesFieldContextDTO.trace,
-					TelemetrytypesFieldDataTypeDTO.float64,
-				),
-			],
-		},
+		keys: Object.fromEntries(keys.map((key) => [key.name, [key]])),
 	},
+});
+
+// Mirrors the backend: the trace context returns only aggregates; number drops the float64 ones.
+const aiKeysFor = (
+	params: URLSearchParams,
+): TelemetrytypesTelemetryFieldKeyDTO[] => {
+	if (params.get('fieldContext') === TelemetrytypesFieldContextDTO.trace) {
+		return [totalTokens];
+	}
+	if (params.get('fieldDataType') === TelemetrytypesFieldDataTypeDTO.number) {
+		return [durationNano];
+	}
+	return [durationNano, serviceName, totalTokens];
 };
 
 const keysResponse: GetFieldsKeys200 = {
@@ -88,7 +99,10 @@ beforeEach(() => {
 			`${ENVIRONMENT.baseURL}/api/v1/ai_observability/fields/keys`,
 			(req, res, ctx) => {
 				aiKeysRequests.push(req.url.searchParams);
-				return res(ctx.status(200), ctx.json(aiKeysResponse));
+				return res(
+					ctx.status(200),
+					ctx.json(aiKeysResponse(aiKeysFor(req.url.searchParams))),
+				);
 			},
 		),
 		rest.get(`${ENVIRONMENT.baseURL}/api/v1/fields/keys`, (req, res, ctx) => {
@@ -98,7 +112,7 @@ beforeEach(() => {
 	);
 });
 
-async function typeAggregation(text: string): Promise<void> {
+async function enterAggregation(text: string): Promise<void> {
 	const user = userEvent.setup({ pointerEventsCheck: 0 });
 	render(
 		<QueryBuilderV2Provider>
@@ -112,7 +126,10 @@ async function typeAggregation(text: string): Promise<void> {
 	if (!content) {
 		throw new Error('CodeMirror content element not rendered');
 	}
-	await user.type(content, text);
+	await user.click(content);
+	// Typed keys drop under load: a re-render's dispatch discards DOM input CodeMirror hasn't read yet.
+	await user.paste(text);
+	await user.keyboard('{Control>} {/Control}');
 }
 
 function suggestionLabels(): string[] {
@@ -126,7 +143,7 @@ describe('QueryAggregationSelect field suggestions for an AI query', () => {
 	it(
 		'suggests numeric keys from the AI keys endpoint, with trace aggregates as trace.<name>',
 		async () => {
-			await typeAggregation('avg(');
+			await enterAggregation('avg(');
 
 			await waitFor(
 				() =>
@@ -137,9 +154,20 @@ describe('QueryAggregationSelect field suggestions for an AI query', () => {
 				{ timeout: SUGGESTIONS_TIMEOUT_MS },
 			);
 			expect(keysRequests).toHaveLength(0);
-			expect(aiKeysRequests).toHaveLength(1);
-			expect(aiKeysRequests[0].get('signal')).toBe('traces');
-			expect(aiKeysRequests[0].get('fieldDataType')).toBeNull();
+			expect(
+				aiKeysRequests
+					.map((params) => ({
+						signal: params.get('signal'),
+						fieldDataType: params.get('fieldDataType'),
+						fieldContext: params.get('fieldContext'),
+					}))
+					.sort((a, b) =>
+						String(a.fieldContext).localeCompare(String(b.fieldContext)),
+					),
+			).toStrictEqual([
+				{ signal: 'traces', fieldDataType: 'number', fieldContext: null },
+				{ signal: 'traces', fieldDataType: null, fieldContext: 'trace' },
+			]);
 		},
 		TEST_TIMEOUT_MS,
 	);
@@ -147,7 +175,7 @@ describe('QueryAggregationSelect field suggestions for an AI query', () => {
 	it(
 		'keeps non-numeric keys for count_distinct',
 		async () => {
-			await typeAggregation('count_distinct(');
+			await enterAggregation('count_distinct(');
 
 			await waitFor(
 				() =>
