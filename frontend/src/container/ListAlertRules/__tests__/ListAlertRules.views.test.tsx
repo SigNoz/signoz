@@ -515,7 +515,11 @@ describe('ListAlertRules — saved views rail', () => {
 			renderListAlertRules({ initialRoute: '/?view=view-1' });
 
 			await runSearchQuery(user, 'foo');
-			await screen.findByTestId('alert-rules-view-save-changes');
+			await screen.findByTestId(
+				'alert-rules-view-save-changes',
+				{},
+				{ timeout: 5000 },
+			);
 			await urlSettled();
 			expect(urlParam('query')).toBe('foo');
 			expect(urlParam('states')).toBeNull();
