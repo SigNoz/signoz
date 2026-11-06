@@ -425,7 +425,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       querybuilder.AppendWarnings(preparedWhereClause.Warnings, columnWarnings...),
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 		CostGuard:      b.costGuardFor(ctx, orgID, preparedWhereClause.RequiresCostGuard),
 	}
@@ -595,7 +595,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       querybuilder.AppendWarnings(preparedWhereClause.Warnings, columnWarnings...),
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 		CostGuard:      b.costGuardFor(ctx, orgID, preparedWhereClause.RequiresCostGuard),
 	}
@@ -726,7 +726,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       querybuilder.AppendWarnings(preparedWhereClause.Warnings, columnWarnings...),
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 		CostGuard:      b.costGuardFor(ctx, orgID, preparedWhereClause.RequiresCostGuard),
 	}

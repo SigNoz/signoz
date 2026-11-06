@@ -435,7 +435,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       querybuilder.AppendWarnings(preparedWhereClause.Warnings, columnWarnings...),
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
@@ -720,7 +720,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       querybuilder.AppendWarnings(preparedWhereClause.Warnings, columnWarnings...),
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
@@ -854,7 +854,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       querybuilder.AppendWarnings(preparedWhereClause.Warnings, columnWarnings...),
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 

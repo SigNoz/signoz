@@ -540,7 +540,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	return &qbtypes.Statement{
 		Query:    sql,
 		Args:     args,
-		Warnings: querybuilder.AppendWarnings(nil, columnWarnings...),
+		Warnings: columnWarnings,
 	}, nil
 }
 
@@ -709,7 +709,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	return &qbtypes.Statement{
 		Query:    sql,
 		Args:     args,
-		Warnings: querybuilder.AppendWarnings(nil, columnWarnings...),
+		Warnings: columnWarnings,
 	}, nil
 }
 
@@ -858,7 +858,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 	return &qbtypes.Statement{
 		Query:    sql,
 		Args:     args,
-		Warnings: querybuilder.AppendWarnings(nil, columnWarnings...),
+		Warnings: columnWarnings,
 	}, nil
 }
 
@@ -948,7 +948,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	return &qbtypes.Statement{
 		Query:    sql,
 		Args:     args,
-		Warnings: querybuilder.AppendWarnings(nil, columnWarnings...),
+		Warnings: columnWarnings,
 	}, nil
 }
 

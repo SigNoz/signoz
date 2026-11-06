@@ -17,6 +17,7 @@ from fixtures.querier import (
     RequestType,
     TelemetryFieldKey,
     get_all_warnings,
+    make_preview_query_request,
     make_query_request,
 )
 
@@ -423,14 +424,18 @@ def test_logs_unknown_key_outside_the_filter_warns(
     insert_logs([Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "java"}, body="checkout failed for orgId=acme")])
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = make_query_request(
-        signoz,
-        token,
-        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
-        end_ms=int(now.timestamp() * 1000),
-        request_type=request_type,
-        queries=[BuilderQuery(name="A", signal="logs", **query_args).to_dict()],
-    )
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    queries = [BuilderQuery(name="A", signal="logs", **query_args).to_dict()]
+
+    response = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, request_type=request_type, queries=queries)
 
     assert response.status_code == HTTPStatus.OK, response.text
     assert get_all_warnings(response.json()) == [{"message": message} for message in expected_warnings], response.text
+
+    # the preview reports the same key warnings for the same payload
+    preview = make_preview_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, request_type=request_type, queries=queries)
+
+    assert preview.status_code == HTTPStatus.OK, preview.text
+    preview_warnings = preview.json()["data"]["compositeQuery"]["A"]["warnings"]
+    assert [warning for warning in preview_warnings if "not found in metadata" in warning] == expected_warnings, preview.text

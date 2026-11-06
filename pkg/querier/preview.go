@@ -170,6 +170,13 @@ func (q *querier) QueryRangePreview(
 
 	q.runPreviewTasks(ctx, previewTasks, results)
 
+	// a filter and a column on the same unknown key report the same warning;
+	// QueryRange dedupes before it builds its response too
+	for name, ps := range results {
+		ps.Warnings = orEmpty(dedupeWarnings(ps.Warnings))
+		results[name] = ps
+	}
+
 	return &qbtypes.QueryRangePreviewResponse{
 		CompositeQuery: results,
 	}, nil

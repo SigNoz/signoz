@@ -583,7 +583,7 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	// the caller joins this into another builder, which compiles it again
-	return fmt.Sprintf("(%s) AS filtered_time_series", sqlbuilder.Escape(q)), args, querybuilder.AppendWarnings(preparedWhereClause.Warnings, columnWarnings...), nil
+	return fmt.Sprintf("(%s) AS filtered_time_series", sqlbuilder.Escape(q)), args, append(preparedWhereClause.Warnings, columnWarnings...), nil
 }
 
 func (b *StatementBuilder) buildTemporalAggregationCTE(

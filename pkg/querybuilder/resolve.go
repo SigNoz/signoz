@@ -132,17 +132,6 @@ func ResolveColumn(
 	return column, resolved.Warnings, nil
 }
 
-// AppendWarnings appends each warning dst does not hold yet, so a key in both
-// the filter and a group by warns once.
-func AppendWarnings(dst []string, warnings ...string) []string {
-	for _, warning := range warnings {
-		if !slices.Contains(dst, warning) {
-			dst = append(dst, warning)
-		}
-	}
-	return dst
-}
-
 // intrinsicColumnFirst puts a column every row has first for a bare key.
 // The column comes from the matches when metadata reports it. Otherwise it
 // comes from the storage's own fallback. A metadata gap then degrades to

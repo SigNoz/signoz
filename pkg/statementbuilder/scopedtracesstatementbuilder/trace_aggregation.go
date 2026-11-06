@@ -733,7 +733,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 	return &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       querybuilder.AppendWarnings(msc.warnings, groupWarnings...),
+		Warnings:       append(msc.warnings, groupWarnings...),
 		WarningsDocURL: msc.warnURL,
 	}, nil
 }
