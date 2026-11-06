@@ -1655,7 +1655,7 @@ func (t *telemetryMetaStore) getTagTableValues(ctx context.Context, table string
 		switch fieldValueSelector.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
 			sb.Where(sb.ILike("string_value", "%"+clickhousesql.LikePattern(fieldValueSelector.Value)+"%"))
-		case telemetrytypes.FieldDataTypeNumber:
+		case telemetrytypes.FieldDataTypeNumber, telemetrytypes.FieldDataTypeInt64, telemetrytypes.FieldDataTypeFloat64:
 			sb.Where(sb.IsNotNull("number_value"))
 			sb.Where(sb.ILike("toString(number_value)", "%"+clickhousesql.LikePattern(fieldValueSelector.Value)+"%"))
 		case telemetrytypes.FieldDataTypeUnspecified:
@@ -1742,7 +1742,7 @@ func (t *telemetryMetaStore) getAuditFieldValues(ctx context.Context, fieldValue
 		switch fieldValueSelector.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
 			sb.Where(sb.ILike("string_value", "%"+clickhousesql.LikePattern(fieldValueSelector.Value)+"%"))
-		case telemetrytypes.FieldDataTypeNumber:
+		case telemetrytypes.FieldDataTypeNumber, telemetrytypes.FieldDataTypeInt64, telemetrytypes.FieldDataTypeFloat64:
 			sb.Where(sb.IsNotNull("number_value"))
 			sb.Where(sb.ILike("toString(number_value)", "%"+clickhousesql.LikePattern(fieldValueSelector.Value)+"%"))
 		case telemetrytypes.FieldDataTypeUnspecified:

@@ -63,6 +63,24 @@ def test_fields_values_name_resolution(
     assert response.json()["data"]["complete"] is complete
 
 
+@pytest.mark.parametrize("name", ["latency", "latency:number", "latency:int64", "latency:float64"])
+def test_fields_values_number_search_text(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    name: str,
+) -> None:
+    now = datetime.now(tz=UTC)
+    insert_logs([Logs(timestamp=now, attributes={"latency": 42}), Logs(timestamp=now, attributes={"latency": 7})])
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = get_field_values(signoz, token, {"signal": "logs", "name": name, "searchText": "4"})
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["data"]["values"].get("numberValues", []) == [42]
+
+
 def test_fields_values_metric_attribute_context(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
