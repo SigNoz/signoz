@@ -15,6 +15,7 @@ from fixtures.querier import (
     build_heatmap_query,
     build_linear_bucket_options,
     build_log_bucket_options,
+    build_order_by,
     build_scalar_query,
     get_all_series,
     get_buckets,
@@ -110,7 +111,16 @@ def test_log_heatmap(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int((now + timedelta(seconds=5)).timestamp() * 1000)
-    queries = [build_heatmap_query("A", "logs", "queue_depth", filter_expression="service.name = 'heatmap-log-axis'", bucket_options=build_log_bucket_options(0))]
+    queries = [
+        build_heatmap_query(
+            "A",
+            "logs",
+            "attribute.queue_depth",
+            order=[build_order_by("attribute.queue_depth")],
+            filter_expression="service.name = 'heatmap-log-axis'",
+            bucket_options=build_log_bucket_options(0),
+        )
+    ]
     response = make_query_request(signoz, token, start_ms, end_ms, queries, request_type=RequestType.HEATMAP)
     assert response.status_code == HTTPStatus.OK, response.text
     assert_distribution_sums_heatmap(signoz, token, start_ms, end_ms, queries, response)

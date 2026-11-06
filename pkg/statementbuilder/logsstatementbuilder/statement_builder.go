@@ -459,6 +459,14 @@ func (b *logQueryStatementBuilder) buildHeatmapTimeSeriesQuery(
 	if err != nil {
 		return nil, err
 	}
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end)
+	mayBeAbsent, err := querybuilder.HeatmapFieldMayBeAbsent(ctx, info, b.storage, columnKey(heatmapField), keys)
+	if err != nil {
+		return nil, err
+	}
+	if mayBeAbsent {
+		countQuery = qbtypes.RequireHeatmapField(countQuery, *heatmapField)
+	}
 	return b.buildTimeSeriesOrHeatmapQuery(ctx, orgID, sb, countQuery, start, end, keys, variables, heatmapField)
 }
 

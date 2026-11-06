@@ -1064,7 +1064,7 @@ func validateEventHeatmapQuery(requestType RequestType, functions []Function, ha
 			WithAdditional("Keep the one aggregation whose distribution you want to plot")
 	}
 
-	if _, _, ok := HeatmapAggregationField(expressions[0]); !ok {
+	if _, ok := HeatmapAggregationField(expressions[0]); !ok {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"a logs or traces heatmap counts events by the field named as its aggregation, got %q", expressions[0]).
 			WithAdditional("Use an aggregation such as duration_nano")

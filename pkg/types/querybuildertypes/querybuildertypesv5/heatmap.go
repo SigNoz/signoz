@@ -87,20 +87,18 @@ func (b *BucketOptions) ToHeatmapBucketing() HeatmapBucketing {
 }
 
 // HeatmapAggregationField returns the field a logs or traces heatmap buckets,
-// written as the bare field, along with its key text as written. ok is false
-// for any other aggregation.
-func HeatmapAggregationField(expression string) (telemetrytypes.TelemetryFieldKey, string, bool) {
+// written as the bare field. ok is false for any other aggregation.
+func HeatmapAggregationField(expression string) (telemetrytypes.TelemetryFieldKey, bool) {
 	keyText := strings.TrimSpace(expression)
 	if keyText == "" || strings.ContainsAny(keyText, "() \t\n") {
-		return telemetrytypes.TelemetryFieldKey{}, "", false
+		return telemetrytypes.TelemetryFieldKey{}, false
 	}
-	return telemetrytypes.GetFieldKeyFromKeyText(keyText), keyText, true
+	return telemetrytypes.GetFieldKeyFromKeyText(keyText), true
 }
 
 // HeatmapCountQuery splits a logs or traces heatmap query into the field its
 // aggregation buckets and a copy of query that counts events in its place,
-// which is what every cell holds. The copy keeps only events where the field
-// exists.
+// which is what every cell holds.
 func HeatmapCountQuery[T LogAggregation | TraceAggregation](query QueryBuilderQuery[T]) (*telemetrytypes.TelemetryFieldKey, QueryBuilderQuery[T], error) {
 	if len(query.Aggregations) != 1 {
 		return nil, query, errors.NewInvalidInputf(errors.CodeInvalidInput,
@@ -116,28 +114,38 @@ func HeatmapCountQuery[T LogAggregation | TraceAggregation](query QueryBuilderQu
 		expression = &aggregation.Expression
 	}
 
-	field, keyText, ok := HeatmapAggregationField(*expression)
+	field, ok := HeatmapAggregationField(*expression)
 	if !ok {
 		return nil, query, errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"a logs or traces heatmap counts events by the field named as its aggregation, got %q", *expression)
 	}
 
-	// An order on the aggregation names it by its expression.
+	// An order on the aggregation names it by its expression, which decoding
+	// splits into a context, a name and a data type, and which metadata may
+	// complete, as it does any field.
 	query.Order = slices.Clone(query.Order)
 	for i := range query.Order {
-		if query.Order[i].Key.Name == *expression {
-			query.Order[i].Key.Name = heatmapCountExpression
+		key := query.Order[i].Key.TelemetryFieldKey
+		sameField := key.Name == field.Name &&
+			(field.FieldContext == telemetrytypes.FieldContextUnspecified || key.FieldContext == field.FieldContext) &&
+			(field.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || key.FieldDataType == field.FieldDataType)
+		if key.Name == *expression || sameField {
+			query.Order[i].Key = OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: heatmapCountExpression}}
 		}
 	}
 	*expression = heatmapCountExpression
 
-	exists := keyText + " EXISTS"
+	return &field, query, nil
+}
+
+// RequireHeatmapField keeps only the rows of query that carry field.
+func RequireHeatmapField[T LogAggregation | TraceAggregation](query QueryBuilderQuery[T], field telemetrytypes.TelemetryFieldKey) QueryBuilderQuery[T] {
+	exists := telemetrytypes.TelemetryFieldKeyToText(&field) + " EXISTS"
 	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
 		exists = "(" + query.Filter.Expression + ") AND " + exists
 	}
 	query.Filter = &Filter{Expression: exists}
-
-	return &field, query, nil
+	return query
 }
 
 // This cannot be called in validateBucketCounting cuz metric type is resolved in querier.go.

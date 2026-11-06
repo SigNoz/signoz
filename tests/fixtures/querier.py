@@ -734,6 +734,7 @@ def build_heatmap_query(
     *,
     source: str | None = None,
     group_by: list[dict] | None = None,
+    order: list[dict] | None = None,
     filter_expression: str | None = None,
     bucket_options: dict | None = None,
     step_interval: int = DEFAULT_STEP_INTERVAL,
@@ -751,6 +752,9 @@ def build_heatmap_query(
 
     if group_by:
         spec["groupBy"] = group_by
+
+    if order:
+        spec["order"] = order
 
     if filter_expression:
         spec["filter"] = {"expression": filter_expression}

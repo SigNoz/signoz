@@ -70,6 +70,35 @@ func FormatHeatmapFloat(v float64) string {
 	return strconv.FormatFloat(v, 'g', -1, 64)
 }
 
+// HeatmapFieldMayBeAbsent reports whether some row can lack key. A table
+// column every row carries, such as a span's duration, cannot, and an EXISTS
+// on it would drop its zeros instead.
+func HeatmapFieldMayBeAbsent(
+	ctx context.Context,
+	info qbtypes.QueryInfo,
+	storage qbtypes.Storage,
+	key *telemetrytypes.TelemetryFieldKey,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+) (bool, error) {
+	resolved, err := Resolve(ctx, info, storage, key, qbtypes.FilterOperatorUnknown, nil, keys)
+	if err != nil {
+		return false, err
+	}
+	if len(resolved.Fields) == 0 {
+		return true, nil
+	}
+	for _, field := range resolved.Fields {
+		read, err := LogicalRead(ctx, info, storage, field)
+		if err != nil {
+			return false, err
+		}
+		if read.WhenAbsent != qbtypes.AlwaysPresent {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // HeatmapBucketColumns adds the bucket a row's value falls in to sb's select
 // list, as the (min, max] pair a heatmap statement reports. key is the field
 // the axis is cut from, already adjusted for context and data type.

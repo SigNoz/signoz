@@ -26,7 +26,7 @@ def test_duration_heatmap(
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    durations = [timedelta(milliseconds=5)] * 6 + [timedelta(seconds=1)] * 3 + [timedelta(seconds=30)]
+    durations = [timedelta(0)] + [timedelta(milliseconds=5)] * 6 + [timedelta(seconds=1)] * 3 + [timedelta(seconds=30)]
     insert_traces(
         [
             Traces(
@@ -52,12 +52,13 @@ def test_duration_heatmap(
 
     data = response.json()
     # a doubling per bucket in nanoseconds: 5ms is in (2^22, 2^23], 1s in
-    # (2^29, 2^30] and 30s in (2^34, 2^35], and 2^22 is the rung under 5ms
+    # (2^29, 2^30] and 30s in (2^34, 2^35], and 2^22 is the rung under 5ms; a
+    # 0ns span is counted at 0
     buckets = get_buckets(data, "A")
-    assert buckets == pytest.approx([float(2**power) for power in range(22, 36)])
+    assert buckets == pytest.approx([0.0] + [float(2**power) for power in range(22, 36)])
 
     totals = [sum(column["values"][slot] for column in get_heatmap_columns(data, "A")) for slot in range(len(buckets) + 1)]
-    assert {buckets[slot]: total for slot, total in enumerate(totals) if total} == {2.0**23: 6, 2.0**30: 3, 2.0**35: 1}
+    assert {buckets[slot]: total for slot, total in enumerate(totals) if total} == {0.0: 1, 2.0**23: 6, 2.0**30: 3, 2.0**35: 1}
     assert sum(totals) == len(durations)
 
 
