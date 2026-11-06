@@ -11573,20 +11573,10 @@ components:
           description: Whether the rule is paused. A disabled rule is neither evaluated
             nor notifies. Defaults to false.
           type: boolean
-        evalWindow:
-          description: The lookback window as a Go duration such as 5m. Only read
-            when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec
-            instead.
-          type: string
         evaluation:
           allOf:
           - $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
           description: The evaluation window, as a kind and spec.
-        frequency:
-          description: How often the rule is evaluated, as a Go duration such as 1m.
-            Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set
-            it in evaluation.spec instead.
-          type: string
         labels:
           additionalProperties:
             type: string
@@ -11598,13 +11588,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/RuletypesNotificationSettings'
           description: Grouping, re-notification and routing behaviour.
-        preferredChannels:
-          description: The displayName of each notification channel to notify, for
-            schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries
-            its own channels.
-          items:
-            type: string
-          type: array
         ruleType:
           allOf:
           - $ref: '#/components/schemas/RuletypesRuleType'
@@ -11714,20 +11697,10 @@ components:
           description: Whether the rule is paused. A disabled rule is neither evaluated
             nor notifies. Defaults to false.
           type: boolean
-        evalWindow:
-          description: The lookback window as a Go duration such as 5m. Only read
-            when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec
-            instead.
-          type: string
         evaluation:
           allOf:
           - $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
           description: The evaluation window, as a kind and spec.
-        frequency:
-          description: How often the rule is evaluated, as a Go duration such as 1m.
-            Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set
-            it in evaluation.spec instead.
-          type: string
         id:
           description: The unique identifier of the rule.
           type: string
@@ -11742,13 +11715,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/RuletypesNotificationSettings'
           description: Grouping, re-notification and routing behaviour.
-        preferredChannels:
-          description: The displayName of each notification channel to notify, for
-            schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries
-            its own channels.
-          items:
-            type: string
-          type: array
         ruleType:
           allOf:
           - $ref: '#/components/schemas/RuletypesRuleType'
@@ -11802,28 +11768,10 @@ components:
           description: Whether to fire a nodata alert when the query returns no data.
             Defaults to false.
           type: boolean
-        algorithm:
-          description: 'anomaly_rule only: the anomaly detection algorithm. The supported
-            value is standard.'
-          type: string
         compositeQuery:
           allOf:
           - $ref: '#/components/schemas/RuletypesAlertCompositeQuery'
           description: The queries whose result is compared against the thresholds.
-        matchType:
-          allOf:
-          - $ref: '#/components/schemas/RuletypesMatchType'
-          description: 'schemaVersion v1 only: which points in the window must satisfy
-            op. Accepted as at_least_once, all_the_times, on_average, in_total or
-            last, their aliases avg and sum, or the legacy codes as strings, ''1''
-            to ''5''. Required for v1; v2alpha1 sets matchType on each threshold.'
-        op:
-          allOf:
-          - $ref: '#/components/schemas/RuletypesCompareOperator'
-          description: 'schemaVersion v1 only: how the value is compared with target.
-            Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal
-            or outside_bounds, their symbols, or the legacy codes as strings, ''1''
-            to ''7''. Required for v1; v2alpha1 sets op on each threshold.'
         requireMinPoints:
           description: Whether a series is skipped until it has at least requiredNumPoints
             points in the window. Defaults to false.
@@ -11840,17 +11788,6 @@ components:
         selectedQueryName:
           description: The name of the query whose result is evaluated, such as A
             or F1. Must match a query in compositeQuery.
-          type: string
-        target:
-          description: 'schemaVersion v1 only: the value compared against, in targetUnit.
-            Required for v1; v2alpha1 sets target on each threshold.'
-          format: double
-          nullable: true
-          type: number
-        targetUnit:
-          description: 'schemaVersion v1 only: the unit of target, such as percent
-            or ms. Converted to compositeQuery.unit before comparison when the two
-            differ.'
           type: string
         thresholds:
           allOf:
@@ -25339,56 +25276,6 @@ paths:
       - rules
       x-signoz-stability: alpha
   /api/v2/rules:
-    get:
-      deprecated: true
-      description: 'This endpoint lists all alert rules with their current evaluation
-        state. Deprecated: use ListRulesV3, which supports filtering, sorting and
-        pagination.'
-      operationId: ListRules
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/RuletypesRule'
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: List alert rules
-      tags:
-      - rules
-      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a new alert rule
