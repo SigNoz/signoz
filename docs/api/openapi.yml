@@ -9735,6 +9735,8 @@ components:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5Label'
           type: array
+      required:
+      - counts
       type: object
     Querybuildertypesv5DistributionAggregation:
       properties:
@@ -9763,6 +9765,10 @@ components:
             estimated the way histogram_quantile does by interpolating linearly within
             the bucket each rank falls in. Omitted when nothing was counted or meta.buckets
             is empty.
+      required:
+      - index
+      - alias
+      - distributions
       type: object
     Querybuildertypesv5DistributionData:
       properties:
@@ -9776,6 +9782,9 @@ components:
         queryName:
           description: The name of the query that produced this result.
           type: string
+      required:
+      - queryName
+      - aggregations
       type: object
     Querybuildertypesv5DistributionPercentiles:
       properties:
@@ -9799,6 +9808,12 @@ components:
           description: The 99th percentile.
           format: double
           type: number
+      required:
+      - p50
+      - p75
+      - p90
+      - p95
+      - p99
       type: object
     Querybuildertypesv5ExecStats:
       description: 'Execution cost of the request: rows and bytes scanned and execution

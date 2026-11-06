@@ -11595,7 +11595,7 @@ export interface PromotetypesPostableIndexMaterializedPathsDTO {
 export interface Querybuildertypesv5AggregationMetaDTO {
 	/**
 	 * @type array
-	 * @description The ascending upper bounds of the value buckets, set for heatmap and distribution results; each point then carries one count per bound plus a trailing overflow count in values.
+	 * @description The ascending upper bounds of the value buckets, set for heatmap and distribution results; each point then carries one count per bound plus a trailing overflow count in values. The first bucket starts at -Inf when its bound is at or under zero, else at zero.
 	 */
 	buckets?: number[];
 	/**
@@ -11721,7 +11721,7 @@ export interface Querybuildertypesv5DistributionDTO {
 	 * @type array,null
 	 * @description One count per bound in meta.buckets plus a trailing overflow count, summed over every step of the requested time range.
 	 */
-	counts?: number[] | null;
+	counts: number[] | null;
 	/**
 	 * @type array
 	 * @description The group-by field values that identify this distribution.
@@ -11729,26 +11729,63 @@ export interface Querybuildertypesv5DistributionDTO {
 	labels?: Querybuildertypesv5LabelDTO[];
 }
 
+export interface Querybuildertypesv5DistributionPercentilesDTO {
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 50th percentile.
+	 */
+	p50: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 75th percentile.
+	 */
+	p75: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 90th percentile.
+	 */
+	p90: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 95th percentile.
+	 */
+	p95: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 99th percentile.
+	 */
+	p99: number;
+}
+
 export interface Querybuildertypesv5DistributionAggregationDTO {
 	/**
 	 * @type string
 	 * @description The alias of the aggregation, or the internal name __result_N, with N its index, when no alias was given.
 	 */
-	alias?: string;
+	alias: string;
 	/**
 	 * @type array,null
 	 * @description One distribution per group-by combination.
 	 */
-	distributions?: Querybuildertypesv5DistributionDTO[] | null;
+	distributions: Querybuildertypesv5DistributionDTO[] | null;
 	/**
 	 * @type integer
 	 * @description The zero-based position of the aggregation in the query.
 	 */
-	index?: number;
+	index: number;
 	/**
 	 * @description Display metadata for the aggregation, including the bucket upper bounds the counts are positional against.
 	 */
 	meta?: Querybuildertypesv5AggregationMetaDTO;
+	/**
+	 * @description Percentiles over the counts of every distribution added together, estimated the way histogram_quantile does by interpolating linearly within the bucket each rank falls in. Omitted when nothing was counted or meta.buckets is empty.
+	 */
+	percentiles?: Querybuildertypesv5DistributionPercentilesDTO;
 }
 
 export interface Querybuildertypesv5DistributionDataDTO {
@@ -11756,12 +11793,12 @@ export interface Querybuildertypesv5DistributionDataDTO {
 	 * @type array,null
 	 * @description One entry per aggregation of the query. The order is not guaranteed; match entries to aggregations by index.
 	 */
-	aggregations?: Querybuildertypesv5DistributionAggregationDTO[] | null;
+	aggregations: Querybuildertypesv5DistributionAggregationDTO[] | null;
 	/**
 	 * @type string
 	 * @description The name of the query that produced this result.
 	 */
-	queryName?: string;
+	queryName: string;
 }
 
 /**
