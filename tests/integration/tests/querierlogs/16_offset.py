@@ -22,7 +22,6 @@ from fixtures.querier import (
     [
         # limit=2 selects the top two groups in SQL first; the skipped group must still count toward that page
         pytest.param(2, 1, ["service-a", "service-b"], id="offset_within_limited_page"),
-        pytest.param(None, 1, ["service-a", "service-b", "service-d"], id="offset_without_limit"),
         pytest.param(2, 4, [], id="offset_past_the_end"),
     ],
 )
@@ -31,7 +30,7 @@ def test_logs_time_series_offset_skips_series_in_order(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
-    limit: int | None,
+    limit: int,
     offset: int,
     expected_services: list[str],
 ) -> None:

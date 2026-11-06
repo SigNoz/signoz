@@ -4084,8 +4084,9 @@ components:
         offset:
           description: The number of rows for raw and trace requests, or of ordered
             series or rows for scalar and time_series requests, to skip before the
-            page starts. On raw requests the skip counts from where a cursor resumes,
-            and the skipped rows are still read, so prefer cursor for paging.
+            page starts. Requires limit. On raw requests the skip counts from where
+            a cursor resumes, and the skipped rows are still read, so prefer cursor
+            for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10109,7 +10110,7 @@ components:
           type: string
         offset:
           description: The number of ordered series or rows to skip before the page
-            starts.
+            starts. Requires limit.
           type: integer
         order:
           description: The sort order of the formula result.
@@ -10192,8 +10193,9 @@ components:
         offset:
           description: The number of rows for raw and trace requests, or of ordered
             series or rows for scalar and time_series requests, to skip before the
-            page starts. On raw requests the skip counts from where a cursor resumes,
-            and the skipped rows are still read, so prefer cursor for paging.
+            page starts. Requires limit. On raw requests the skip counts from where
+            a cursor resumes, and the skipped rows are still read, so prefer cursor
+            for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10312,8 +10314,9 @@ components:
         offset:
           description: The number of rows for raw and trace requests, or of ordered
             series or rows for scalar and time_series requests, to skip before the
-            page starts. On raw requests the skip counts from where a cursor resumes,
-            and the skipped rows are still read, so prefer cursor for paging.
+            page starts. Requires limit. On raw requests the skip counts from where
+            a cursor resumes, and the skipped rows are still read, so prefer cursor
+            for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10432,8 +10435,9 @@ components:
         offset:
           description: The number of rows for raw and trace requests, or of ordered
             series or rows for scalar and time_series requests, to skip before the
-            page starts. On raw requests the skip counts from where a cursor resumes,
-            and the skipped rows are still read, so prefer cursor for paging.
+            page starts. Requires limit. On raw requests the skip counts from where
+            a cursor resumes, and the skipped rows are still read, so prefer cursor
+            for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10535,7 +10539,8 @@ components:
           type: string
         offset:
           description: The number of raw or trace rows, or of ordered series or rows
-            for time_series and scalar requests, to skip before the page starts.
+            for time_series and scalar requests, to skip before the page starts. Requires
+            limit.
           type: integer
         order:
           description: The sort order of the matched traces; only span_count and trace_duration

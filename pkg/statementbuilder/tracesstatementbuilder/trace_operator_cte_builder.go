@@ -841,7 +841,9 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 		sb.Limit(b.operator.Limit)
 	}
 
-	querybuilder.AddOffset(sb, b.operator.Limit, b.operator.Offset)
+	if b.operator.Offset > 0 {
+		sb.Offset(b.operator.Offset)
+	}
 
 	combinedArgs := allAggChArgs
 
@@ -924,7 +926,9 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 		sb.Limit(b.operator.Limit)
 	}
 
-	querybuilder.AddOffset(sb, b.operator.Limit, b.operator.Offset)
+	if b.operator.Offset > 0 {
+		sb.Offset(b.operator.Offset)
+	}
 
 	combinedArgs := allAggChArgs
 

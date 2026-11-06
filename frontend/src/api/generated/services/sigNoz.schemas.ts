@@ -5320,7 +5320,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5712,7 +5712,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5892,7 +5892,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5991,7 +5991,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -7066,7 +7066,7 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of ordered series or rows to skip before the page starts.
+	 * @description The number of ordered series or rows to skip before the page starts. Requires limit.
 	 */
 	offset?: number;
 	/**
@@ -7151,7 +7151,7 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of raw or trace rows, or of ordered series or rows for time_series and scalar requests, to skip before the page starts.
+	 * @description The number of raw or trace rows, or of ordered series or rows for time_series and scalar requests, to skip before the page starts. Requires limit.
 	 */
 	offset?: number;
 	/**

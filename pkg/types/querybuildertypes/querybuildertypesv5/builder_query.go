@@ -38,7 +38,7 @@ type QueryBuilderQuery[T any] struct {
 
 	LimitBy *LimitBy `json:"limitBy,omitempty" description:"Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored."`
 
-	Offset int `json:"offset,omitempty" description:"The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging."`
+	Offset int `json:"offset,omitempty" description:"The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging."`
 
 	Cursor string `json:"cursor,omitempty" description:"The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it."`
 

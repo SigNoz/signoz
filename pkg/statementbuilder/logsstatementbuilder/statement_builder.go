@@ -711,7 +711,9 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		sb.Limit(query.Limit)
 	}
 
-	querybuilder.AddOffset(sb, query.Limit, query.Offset)
+	if query.Offset > 0 {
+		sb.Offset(query.Offset)
+	}
 
 	combinedArgs := allAggChArgs
 

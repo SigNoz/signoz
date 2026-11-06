@@ -31,7 +31,6 @@ service_counts = {"service-a": 5, "service-b": 3, "service-c": 7, "service-d": 1
     "limit, offset, expected_services",
     [
         pytest.param(2, 1, ["service-a", "service-b"], id="offset_within_page"),
-        pytest.param(None, 3, ["service-d"], id="offset_without_limit"),
         pytest.param(2, 4, [], id="offset_past_the_end"),
     ],
 )
@@ -40,7 +39,7 @@ def test_logs_scalar_offset_skips_rows_in_order(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
-    limit: int | None,
+    limit: int,
     offset: int,
     expected_services: list[str],
 ) -> None:
@@ -83,7 +82,6 @@ def test_logs_scalar_offset_skips_rows_in_order(
     "limit, offset, expected_services",
     [
         pytest.param(2, 1, ["service-a", "service-b"], id="offset_within_page"),
-        pytest.param(None, 3, ["service-d"], id="offset_without_limit"),
         pytest.param(2, 4, [], id="offset_past_the_end"),
     ],
 )
@@ -92,7 +90,7 @@ def test_traces_scalar_offset_skips_rows_in_order(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    limit: int | None,
+    limit: int,
     offset: int,
     expected_services: list[str],
 ) -> None:
@@ -247,3 +245,20 @@ def test_negative_offset_is_rejected(
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     assert response.json()["error"]["message"] == "invalid query 'A': offset must be non-negative, got -1"
+
+
+def test_offset_without_limit_is_rejected(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_scalar_query_request(
+        signoz,
+        token,
+        datetime.now(tz=UTC).replace(second=0, microsecond=0),
+        [build_scalar_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], offset=1)],
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json()["error"]["message"] == "invalid query 'A': offset requires a limit"

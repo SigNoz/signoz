@@ -725,7 +725,9 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		if query.Limit > 0 {
 			sb.Limit(query.Limit)
 		}
-		querybuilder.AddOffset(sb, query.Limit, query.Offset)
+		if query.Offset > 0 {
+			sb.Offset(query.Offset)
+		}
 	}
 
 	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
