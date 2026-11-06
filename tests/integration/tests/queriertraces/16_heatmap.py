@@ -8,6 +8,7 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
     RequestType,
+    assert_distribution_sums_heatmap,
     build_heatmap_query,
     build_linear_bucket_options,
     build_log_bucket_options,
@@ -42,15 +43,12 @@ def test_duration_heatmap(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_query_request(
-        signoz,
-        token,
-        int((now - timedelta(minutes=5)).timestamp() * 1000),
-        int(now.timestamp() * 1000),
-        [build_heatmap_query("A", "traces", "duration_nano", filter_expression="service.name = 'heatmap-cart'", bucket_options=build_log_bucket_options(0))],
-        request_type=RequestType.HEATMAP,
-    )
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    queries = [build_heatmap_query("A", "traces", "duration_nano", filter_expression="service.name = 'heatmap-cart'", bucket_options=build_log_bucket_options(0))]
+    response = make_query_request(signoz, token, start_ms, end_ms, queries, request_type=RequestType.HEATMAP)
     assert response.status_code == HTTPStatus.OK, response.text
+    assert_distribution_sums_heatmap(signoz, token, start_ms, end_ms, queries, response)
 
     data = response.json()
     # a doubling per bucket in nanoseconds: 5ms is in (2^22, 2^23], 1s in
@@ -99,15 +97,12 @@ def test_span_attribute_heatmap(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_query_request(
-        signoz,
-        token,
-        int((now - timedelta(minutes=5)).timestamp() * 1000),
-        int(now.timestamp() * 1000),
-        [build_heatmap_query("A", "traces", "db.rows_returned", filter_expression="service.name = 'heatmap-orders-db'", bucket_options=build_linear_bucket_options(100, 10))],
-        request_type=RequestType.HEATMAP,
-    )
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    queries = [build_heatmap_query("A", "traces", "db.rows_returned", filter_expression="service.name = 'heatmap-orders-db'", bucket_options=build_linear_bucket_options(100, 10))]
+    response = make_query_request(signoz, token, start_ms, end_ms, queries, request_type=RequestType.HEATMAP)
     assert response.status_code == HTTPStatus.OK, response.text
+    assert_distribution_sums_heatmap(signoz, token, start_ms, end_ms, queries, response)
 
     data = response.json()
     # 100 split into 10 gives (0, 10], (10, 20], ... (90, 100]: 5 is in the

@@ -9,6 +9,7 @@ from fixtures.audit import AuditLog
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
     RequestType,
+    assert_distribution_sums_heatmap,
     build_group_by_field,
     build_heatmap_query,
     build_linear_bucket_options,
@@ -50,25 +51,22 @@ def test_audit_heatmap(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_query_request(
-        signoz,
-        token,
-        int((now - timedelta(minutes=5)).timestamp() * 1000),
-        int((now + timedelta(seconds=5)).timestamp() * 1000),
-        [
-            build_heatmap_query(
-                "A",
-                "logs",
-                "signoz.audit.fields_changed",
-                source="audit",
-                group_by=[build_group_by_field("signoz.audit.action", "string", "attribute")],
-                filter_expression="signoz.audit.resource.kind = 'dashboard'",
-                bucket_options=build_linear_bucket_options(20, 4),
-            )
-        ],
-        request_type=RequestType.HEATMAP,
-    )
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=5)).timestamp() * 1000)
+    queries = [
+        build_heatmap_query(
+            "A",
+            "logs",
+            "signoz.audit.fields_changed",
+            source="audit",
+            group_by=[build_group_by_field("signoz.audit.action", "string", "attribute")],
+            filter_expression="signoz.audit.resource.kind = 'dashboard'",
+            bucket_options=build_linear_bucket_options(20, 4),
+        )
+    ]
+    response = make_query_request(signoz, token, start_ms, end_ms, queries, request_type=RequestType.HEATMAP)
     assert response.status_code == HTTPStatus.OK, response.text
+    assert_distribution_sums_heatmap(signoz, token, start_ms, end_ms, queries, response)
 
     data = response.json()
     # 20 split into 4 gives (0, 5], (5, 10], (10, 15], (15, 20]; the axis stops

@@ -9,6 +9,7 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
     RequestType,
+    assert_distribution_sums_heatmap,
     build_aggregation,
     build_group_by_field,
     build_heatmap_query,
@@ -55,24 +56,21 @@ def test_linear_heatmap_grouped(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_query_request(
-        signoz,
-        token,
-        int((now - timedelta(minutes=5)).timestamp() * 1000),
-        int((now + timedelta(seconds=5)).timestamp() * 1000),
-        [
-            build_heatmap_query(
-                "A",
-                "logs",
-                "response_bytes",
-                group_by=[build_group_by_field("service.name", "string", "resource")],
-                filter_expression="service.name IN ('heatmap-svc-a', 'heatmap-svc-b')",
-                bucket_options=build_linear_bucket_options(1000, 10),
-            )
-        ],
-        request_type=RequestType.HEATMAP,
-    )
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=5)).timestamp() * 1000)
+    queries = [
+        build_heatmap_query(
+            "A",
+            "logs",
+            "response_bytes",
+            group_by=[build_group_by_field("service.name", "string", "resource")],
+            filter_expression="service.name IN ('heatmap-svc-a', 'heatmap-svc-b')",
+            bucket_options=build_linear_bucket_options(1000, 10),
+        )
+    ]
+    response = make_query_request(signoz, token, start_ms, end_ms, queries, request_type=RequestType.HEATMAP)
     assert response.status_code == HTTPStatus.OK, response.text
+    assert_distribution_sums_heatmap(signoz, token, start_ms, end_ms, queries, response)
 
     data = response.json()
     # 1000 split into 10 gives (0, 100], (100, 200], ... (900, 1000], and 5000
@@ -110,15 +108,12 @@ def test_log_heatmap(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_query_request(
-        signoz,
-        token,
-        int((now - timedelta(minutes=5)).timestamp() * 1000),
-        int((now + timedelta(seconds=5)).timestamp() * 1000),
-        [build_heatmap_query("A", "logs", "queue_depth", filter_expression="service.name = 'heatmap-log-axis'", bucket_options=build_log_bucket_options(0))],
-        request_type=RequestType.HEATMAP,
-    )
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=5)).timestamp() * 1000)
+    queries = [build_heatmap_query("A", "logs", "queue_depth", filter_expression="service.name = 'heatmap-log-axis'", bucket_options=build_log_bucket_options(0))]
+    response = make_query_request(signoz, token, start_ms, end_ms, queries, request_type=RequestType.HEATMAP)
     assert response.status_code == HTTPStatus.OK, response.text
+    assert_distribution_sums_heatmap(signoz, token, start_ms, end_ms, queries, response)
 
     data = response.json()
     # a doubling per bucket, with one rung under the lowest bucket reached so
@@ -148,15 +143,12 @@ def test_default_axis(
     )
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = make_query_request(
-        signoz,
-        token,
-        int((now - timedelta(minutes=5)).timestamp() * 1000),
-        int((now + timedelta(seconds=5)).timestamp() * 1000),
-        [build_heatmap_query("A", "logs", "batch_size", filter_expression="service.name = 'heatmap-default-axis'")],
-        request_type=RequestType.HEATMAP,
-    )
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=5)).timestamp() * 1000)
+    queries = [build_heatmap_query("A", "logs", "batch_size", filter_expression="service.name = 'heatmap-default-axis'")]
+    response = make_query_request(signoz, token, start_ms, end_ms, queries, request_type=RequestType.HEATMAP)
     assert response.status_code == HTTPStatus.OK, response.text
+    assert_distribution_sums_heatmap(signoz, token, start_ms, end_ms, queries, response)
 
     data = response.json()
     # no bucketOptions is the finest log axis, 16 buckets per doubling: 1000
