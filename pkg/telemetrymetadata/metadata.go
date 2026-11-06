@@ -1400,7 +1400,9 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 		selectColumn = fmt.Sprintf("if(notEmpty(%s), %s, %s)", memberColumns[i], memberColumns[i], selectColumn)
 	}
 
-	sb := sqlbuilder.Select("DISTINCT " + selectColumn).From(t.relatedMetadataDBName + "." + t.relatedMetadataTblName)
+	sb := sqlbuilder.Select("DISTINCT " + sqlbuilder.Escape(selectColumn)).From(t.relatedMetadataDBName + "." + t.relatedMetadataTblName)
+	// rows without the key read as empty; drop them so they do not count towards the limit
+	sb.Where(sqlbuilder.Escape(fmt.Sprintf("notEmpty(%s)", selectColumn)))
 
 	if len(fieldValueSelector.ExistingQuery) != 0 {
 		keySelectors := querybuilder.QueryStringToKeysSelectors(fieldValueSelector.ExistingQuery)
@@ -1517,7 +1519,24 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, orgID valuer.
 }
 
 func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
-	return t.getRelatedValues(ctx, orgID, fieldValueSelector)
+	selectors := fieldValueSelector.NameMatchSelectors()
+	if len(selectors) == 1 {
+		return t.getRelatedValues(ctx, orgID, fieldValueSelector)
+	}
+
+	all := make([]*telemetrytypes.TelemetryFieldValues, 0, len(selectors))
+	complete := true
+	for _, selector := range selectors {
+		values, selectorComplete, err := t.getRelatedValues(ctx, orgID, selector)
+		if err != nil {
+			return nil, false, err
+		}
+		all = append(all, &telemetrytypes.TelemetryFieldValues{RelatedValues: values})
+		complete = complete && selectorComplete
+	}
+
+	merged, mergeComplete := mergeFieldValues(fieldValueSelector.Limit, all...)
+	return merged.RelatedValues, complete && mergeComplete, nil
 }
 
 func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
@@ -1636,7 +1655,7 @@ func (t *telemetryMetaStore) getTagTableValues(ctx context.Context, table string
 		switch fieldValueSelector.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
 			sb.Where(sb.ILike("string_value", "%"+clickhousesql.LikePattern(fieldValueSelector.Value)+"%"))
-		case telemetrytypes.FieldDataTypeNumber:
+		case telemetrytypes.FieldDataTypeNumber, telemetrytypes.FieldDataTypeInt64, telemetrytypes.FieldDataTypeFloat64:
 			sb.Where(sb.IsNotNull("number_value"))
 			sb.Where(sb.ILike("toString(number_value)", "%"+clickhousesql.LikePattern(fieldValueSelector.Value)+"%"))
 		case telemetrytypes.FieldDataTypeUnspecified:
@@ -1723,7 +1742,7 @@ func (t *telemetryMetaStore) getAuditFieldValues(ctx context.Context, fieldValue
 		switch fieldValueSelector.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
 			sb.Where(sb.ILike("string_value", "%"+clickhousesql.LikePattern(fieldValueSelector.Value)+"%"))
-		case telemetrytypes.FieldDataTypeNumber:
+		case telemetrytypes.FieldDataTypeNumber, telemetrytypes.FieldDataTypeInt64, telemetrytypes.FieldDataTypeFloat64:
 			sb.Where(sb.IsNotNull("number_value"))
 			sb.Where(sb.ILike("toString(number_value)", "%"+clickhousesql.LikePattern(fieldValueSelector.Value)+"%"))
 		case telemetrytypes.FieldDataTypeUnspecified:
@@ -1826,7 +1845,7 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, orgID val
 	}
 
 	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified {
-		sb.Where(sb.E("attr_type", fieldValueSelector.FieldContext.TagType()))
+		sb.Where(sb.E("attr_type", fieldValueSelector.FieldContext.MetricAttrType()))
 	}
 
 	if fieldValueSelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
@@ -2092,6 +2111,58 @@ func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context
 	return values, complete, nil
 }
 
+// mergeFieldValues dedupes the values into one result and reports false when the
+// limit dropped any. Bool values stay outside the limit, as in getTagTableValues.
+func mergeFieldValues(limit int, values ...*telemetrytypes.TelemetryFieldValues) (*telemetrytypes.TelemetryFieldValues, bool) {
+	if limit == 0 {
+		limit = 50
+	}
+
+	merged := &telemetrytypes.TelemetryFieldValues{}
+	seen := make(map[any]bool)
+	seenRelated := make(map[any]bool)
+	seenBool := make(map[bool]bool)
+	count := 0
+	complete := true
+	admit := func(seenValues map[any]bool, value any) bool {
+		if seenValues[value] {
+			return false
+		}
+		if count >= limit {
+			complete = false
+			return false
+		}
+		seenValues[value] = true
+		count++
+		return true
+	}
+
+	for _, v := range values {
+		for _, value := range v.StringValues {
+			if admit(seen, value) {
+				merged.StringValues = append(merged.StringValues, value)
+			}
+		}
+		for _, value := range v.NumberValues {
+			if admit(seen, value) {
+				merged.NumberValues = append(merged.NumberValues, value)
+			}
+		}
+		for _, value := range v.RelatedValues {
+			if admit(seenRelated, value) {
+				merged.RelatedValues = append(merged.RelatedValues, value)
+			}
+		}
+		for _, value := range v.BoolValues {
+			if !seenBool[value] {
+				seenBool[value] = true
+				merged.BoolValues = append(merged.BoolValues, value)
+			}
+		}
+	}
+	return merged, complete
+}
+
 func populateAllUnspecifiedValues(allUnspecifiedValues *telemetrytypes.TelemetryFieldValues, mapOfValues map[any]bool, mapOfRelatedValues map[any]bool, values *telemetrytypes.TelemetryFieldValues, limit int) bool {
 	complete := true
 	totalCount := len(mapOfValues) + len(mapOfRelatedValues)
@@ -2149,6 +2220,27 @@ func populateAllUnspecifiedValues(allUnspecifiedValues *telemetrytypes.Telemetry
 
 // GetAllValues returns all values and whether the result is complete.
 func (t *telemetryMetaStore) GetAllValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+	selectors := fieldValueSelector.NameMatchSelectors()
+	if len(selectors) == 1 {
+		return t.getAllValues(ctx, orgID, fieldValueSelector)
+	}
+
+	all := make([]*telemetrytypes.TelemetryFieldValues, 0, len(selectors))
+	complete := true
+	for _, selector := range selectors {
+		values, selectorComplete, err := t.getAllValues(ctx, orgID, selector)
+		if err != nil {
+			return nil, false, err
+		}
+		all = append(all, values)
+		complete = complete && selectorComplete
+	}
+
+	merged, mergeComplete := mergeFieldValues(fieldValueSelector.Limit, all...)
+	return merged, complete && mergeComplete, nil
+}
+
+func (t *telemetryMetaStore) getAllValues(ctx context.Context, orgID valuer.UUID, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	values := &telemetrytypes.TelemetryFieldValues{}
 	var complete = true
 	var err error
