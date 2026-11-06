@@ -9,7 +9,7 @@ interface Props {
 	isModified: boolean;
 	action?: ReactNode;
 	// Ids: `${testIdPrefix}-list-heading`.
-	testIdPrefix: string;
+	testIdPrefix?: string;
 }
 
 function ListCommandHeader({
@@ -24,7 +24,7 @@ function ListCommandHeader({
 			<div className={styles.headingBlock}>
 				<Typography.Title
 					className={styles.title}
-					testId={`${testIdPrefix}-list-heading`}
+					testId={testIdPrefix && `${testIdPrefix}-list-heading`}
 				>
 					{label}
 				</Typography.Title>
