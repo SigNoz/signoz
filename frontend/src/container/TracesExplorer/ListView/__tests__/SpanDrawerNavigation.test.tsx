@@ -1,3 +1,9 @@
+import { logEventMock } from '__tests__/logEventMock';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	OpenTraceSource,
+	TracesExplorerEvents,
+} from 'container/TracesExplorer/events';
 import { getCurrentLocation } from 'lib/router/navigation';
 import { server } from 'mocks-server/server';
 import { screen, userEvent, waitFor, within } from 'tests/test-utils';
@@ -43,6 +49,12 @@ jest.mock('container/OptionsMenu/useOptionsMenu', () => ({
 		config: { addColumn: { onRemove: jest.fn() } },
 	}),
 }));
+
+const ROW_TEST_ID = `traces-table-row-${listRows[0].data.span_id}`;
+
+// The row click handler sits on each cell, so a click on the <tr> does nothing.
+const getRowCell = (row: HTMLElement): HTMLElement =>
+	within(row).getAllByRole('cell')[0];
 
 describe('Traces ListView - span drawer navigation', () => {
 	beforeEach(() => {
@@ -134,6 +146,63 @@ describe('Traces ListView - span drawer navigation', () => {
 		);
 		expect(getCurrentLocation().pathname).toBe('/traces-explorer');
 		expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument();
+		expect(logEventMock).toHaveBeenCalledWith(
+			TracesExplorerEvents.OpenTraceClicked,
+			{
+				panelType: PANEL_TYPES.LIST,
+				source: OpenTraceSource.RowIcon,
+			},
+		);
+	});
+
+	it('opens the trace page in a new tab from the drawer', async () => {
+		const open = jest.spyOn(window, 'open').mockImplementation(() => null);
+		const user = userEvent.setup();
+		renderListView();
+
+		await user.click(getRowCell(await screen.findByTestId(ROW_TEST_ID)));
+		expect(logEventMock).not.toHaveBeenCalledWith(
+			TracesExplorerEvents.OpenTraceClicked,
+			{ panelType: PANEL_TYPES.LIST, source: OpenTraceSource.Row },
+		);
+		await user.click(await screen.findByTestId('span-drawer-view-full-trace'));
+
+		expect(open).toHaveBeenCalledWith(
+			expect.stringMatching(/\/trace\/0000000000000000344ded1387b08a7e\?/),
+			'_blank',
+		);
+		expect(logEventMock).toHaveBeenCalledWith(
+			TracesExplorerEvents.OpenTraceClicked,
+			{
+				panelType: PANEL_TYPES.LIST,
+				source: OpenTraceSource.SpanDrawer,
+			},
+		);
+	});
+
+	it('opens the trace page in a new tab on a Cmd-click without opening the drawer', async () => {
+		const open = jest.spyOn(window, 'open').mockImplementation(() => null);
+		const user = userEvent.setup();
+		renderListView();
+
+		const cell = getRowCell(await screen.findByTestId(ROW_TEST_ID));
+		await user.keyboard('{Meta>}');
+		await user.click(cell);
+		await user.keyboard('{/Meta}');
+
+		expect(open).toHaveBeenCalledWith(
+			expect.stringMatching(/\/trace\/0000000000000000344ded1387b08a7e\?/),
+			'_blank',
+			'noopener',
+		);
+		expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument();
+		expect(logEventMock).toHaveBeenCalledWith(
+			TracesExplorerEvents.OpenTraceClicked,
+			{
+				panelType: PANEL_TYPES.LIST,
+				source: OpenTraceSource.Row,
+			},
+		);
 	});
 
 	it('shows the row icon only on the hovered copy of a duplicate span', async () => {
