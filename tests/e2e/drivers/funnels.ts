@@ -326,8 +326,7 @@ export function funnelsDriver(page: Page): Funnels {
 			await expect(funnels.stepDeleteAction()).toBeVisible();
 		},
 
-		stepDeleteAction: () =>
-			page.getByTestId('funnel-step-action-delete').filter({ visible: true }),
+		stepDeleteAction: () => page.getByTestId('funnel-step-action-delete'),
 
 		deleteStep: async (index) => {
 			await funnels.openStepActions(index);
