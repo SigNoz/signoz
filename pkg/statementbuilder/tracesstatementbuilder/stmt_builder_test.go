@@ -2110,3 +2110,103 @@ func TestStatementBuilderSemconvSingleSpelling(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'deployment.environment') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT toString(multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL)) AS `__GROUP_BY_KEY_0_deployment.environment.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_deployment.environment.name` ORDER BY __result_0 DESC", q.Query)
 }
+
+func TestStatementBuilderHeatmap(t *testing.T) {
+	testCases := []struct {
+		name        string
+		requestType qbtypes.RequestType
+		query       qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
+		expected    qbtypes.Statement
+	}{
+		{
+			name:        "DurationNano_CollidingAttribute_NoExists",
+			requestType: qbtypes.RequestTypeHeatmap,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.TraceAggregation{{Expression: "duration_nano"}},
+				Filter:       &qbtypes.Filter{Expression: "service.name = 'redis-manual'"},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), ifNull(toFloat64(duration_nano), 0) AS __bucket_value SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value <= 2.3283064365386963e-10, toFloat64(0), __bucket_value > 1.8446744073709552e+19, toFloat64(1.8446744073709552e+19), pow(2, (ceil(log2(__bucket_value) * 16) - 1) / 16)) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value <= 2.3283064365386963e-10, 2.3283064365386963e-10, __bucket_value > 1.8446744073709552e+19, toFloat64('+Inf'), pow(2, ceil(log2(__bucket_value) * 16) / 16)) AS __bucket_max, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY ts, __bucket_min, __bucket_max",
+				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+			},
+		},
+		{
+			name:        "AttributeField_GroupByWithLimit_LinearAxis_RequiresFieldInLimit",
+			requestType: qbtypes.RequestTypeHeatmap,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:        telemetrytypes.SignalTraces,
+				StepInterval:  qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations:  []qbtypes.TraceAggregation{{Expression: "cart.items_count"}},
+				GroupBy:       []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}}},
+				Limit:         5,
+				BucketOptions: &qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLinear, Spec: qbtypes.LinearBucketsSpec{MaxValue: 50, NumBuckets: 5}},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH ifNull(multiIf(`attribute_number_cart$$items_count_exists` = true, toFloat64(`attribute_number_cart$$items_count`), NULL), 0) AS __bucket_value, __limit_cte AS (SELECT toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE `attribute_number_cart$$items_count_exists` = true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL)) AS `__GROUP_BY_KEY_0_service.name`, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value > 50, toFloat64(50), (least(greatest(ceil(__bucket_value * 5 / 50), 1), 5) - 1) * 50 / 5) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value > 50, toFloat64('+Inf'), least(greatest(ceil(__bucket_value * 5 / 50), 1), 5) * 50 / 5) AS __bucket_max, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE `attribute_number_cart$$items_count_exists` = true AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, __bucket_min, __bucket_max",
+				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 5, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+			},
+		},
+		{
+			name:        "QualifiedField_OrderedByAggregation_OrdersByCount",
+			requestType: qbtypes.RequestTypeHeatmap,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.TraceAggregation{{Expression: "attribute.metric.max_count"}},
+				GroupBy:      []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}}},
+				Limit:        3,
+				Order: []qbtypes.OrderBy{{
+					Key:       qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "metric.max_count", FieldContext: telemetrytypes.FieldContextAttribute}},
+					Direction: qbtypes.OrderDirectionDesc,
+				}},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH ifNull(multiIf(mapContains(attributes_number, 'metric.max_count'), toFloat64(attributes_number['metric.max_count']), NULL), 0) AS __bucket_value, __limit_cte AS (SELECT toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE mapContains(attributes_number, 'metric.max_count') AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 desc LIMIT ?) SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL)) AS `__GROUP_BY_KEY_0_service.name`, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value <= 2.3283064365386963e-10, toFloat64(0), __bucket_value > 1.8446744073709552e+19, toFloat64(1.8446744073709552e+19), pow(2, (ceil(log2(__bucket_value) * 16) - 1) / 16)) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value <= 2.3283064365386963e-10, 2.3283064365386963e-10, __bucket_value > 1.8446744073709552e+19, toFloat64('+Inf'), pow(2, ceil(log2(__bucket_value) * 16) / 16)) AS __bucket_max, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE mapContains(attributes_number, 'metric.max_count') AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, __bucket_min, __bucket_max ORDER BY ts desc",
+				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 3, "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+			},
+		},
+		{
+			name:        "Distribution_DurationNano_SameStatementAsHeatmap",
+			requestType: qbtypes.RequestTypeDistribution,
+			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+				Signal:       telemetrytypes.SignalTraces,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.TraceAggregation{{Expression: "duration_nano"}},
+				Filter:       &qbtypes.Filter{Expression: "service.name = 'redis-manual'"},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), ifNull(toFloat64(duration_nano), 0) AS __bucket_value SELECT toStartOfInterval(timestamp, INTERVAL 30 SECOND) AS ts, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value <= 2.3283064365386963e-10, toFloat64(0), __bucket_value > 1.8446744073709552e+19, toFloat64(1.8446744073709552e+19), pow(2, (ceil(log2(__bucket_value) * 16) - 1) / 16)) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value <= 2.3283064365386963e-10, 2.3283064365386963e-10, __bucket_value > 1.8446744073709552e+19, toFloat64('+Inf'), pow(2, ceil(log2(__bucket_value) * 16) / 16)) AS __bucket_max, count() AS __result_0 FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? GROUP BY ts, __bucket_min, __bucket_max",
+				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448)},
+			},
+		},
+	}
+
+	releaseTime := time.Date(2025, 5, 22, 0, 0, 0, 0, time.UTC)
+	fl := flaggertest.New(t)
+	storage := tracestelemetryschema.NewStorage(nil)
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+	statementBuilder := NewTraceQueryStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		mockMetadataStore,
+		storage,
+		aggExprRewriter,
+		nil,
+		fl,
+		false,
+		100000,
+	)
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			statement, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, testCase.requestType, testCase.query, nil)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected.Query, statement.Query)
+			assert.Equal(t, testCase.expected.Args, statement.Args)
+			assert.Equal(t, testCase.expected.Warnings, statement.Warnings)
+		})
+	}
+}
