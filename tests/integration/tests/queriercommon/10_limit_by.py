@@ -13,8 +13,11 @@ from fixtures.querier import (
     build_aggregation,
     build_group_by_field,
     build_metrics_aggregation,
+    build_order_by,
+    build_raw_query,
     build_scalar_query,
     get_error_message,
+    get_rows,
     get_scalar_table_data,
     make_query_request,
     make_scalar_query_request,
@@ -162,11 +165,104 @@ def test_metrics_scalar_limit_by(
     assert_scalar_result_order(get_scalar_table_data(response.json()), expected_rows, "metrics limitBy")
 
 
+# Rows as (key, minutes ago). A raw request over the last 3 hours that pages by
+# cursor reads the newest hour first and the rest next, so a limitBy applied per
+# window would return key a twice and key c twice.
+RAW_LIMIT_BY_ROWS = [("c", 5), ("a", 10), ("a", 20), ("a", 120), ("b", 130), ("c", 140), ("d", 150)]
+
+RAW_LIMIT_BY_CASES = [
+    pytest.param("1", None, ["c@5", "a@10", "b@130", "d@150"], id="newest_per_key"),
+    pytest.param("2", None, ["c@5", "a@10", "a@20", "b@130", "c@140", "d@150"], id="two_newest_per_key"),
+    pytest.param("1", 3, ["c@5", "a@10", "b@130"], id="newest_per_key_then_limit"),
+]
+
+
+def make_raw_limit_by_request(signoz: types.SigNoz, token: str, now: datetime, query: dict) -> list[str]:
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(hours=3)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type="raw",
+        queries=[query],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    # the request runs as one query over the whole range, so there is no cursor to follow
+    assert not response.json()["data"]["data"]["results"][0].get("nextCursor"), response.text
+    return [row["data"]["body" if query["spec"]["signal"] == "logs" else "name"] for row in get_rows(response)]
+
+
+@pytest.mark.parametrize(
+    "order",
+    [
+        pytest.param([build_order_by("timestamp")], id="timestamp"),
+        pytest.param([build_order_by("timestamp"), build_order_by("id")], id="timestamp_id"),
+    ],
+)
+@pytest.mark.parametrize("rows_per_key,limit,expected_rows", RAW_LIMIT_BY_CASES)
+def test_logs_raw_limit_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    order: list[dict],
+    rows_per_key: str,
+    limit: int | None,
+    expected_rows: list[str],
+) -> None:
+    """limitBy keeps the newest logs of each fingerprint over the whole range, then the limit applies."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    insert_logs([Logs(timestamp=now - timedelta(minutes=minutes), resources={"service.name": "service-a"}, attributes={"exception.fingerprint": key}, body=f"{key}@{minutes}") for key, minutes in RAW_LIMIT_BY_ROWS])
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    query = build_raw_query(name="A", signal="logs", order=order, limit=limit, limit_by={"keys": ["exception.fingerprint"], "value": rows_per_key})
+
+    assert make_raw_limit_by_request(signoz, token, now, query) == expected_rows
+
+
+@pytest.mark.parametrize("rows_per_key,limit,expected_rows", RAW_LIMIT_BY_CASES)
+def test_traces_raw_limit_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    rows_per_key: str,
+    limit: int | None,
+    expected_rows: list[str],
+) -> None:
+    """limitBy keeps the newest spans of each operation over the whole range, then the limit applies."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    insert_traces(
+        [
+            Traces(
+                timestamp=now - timedelta(minutes=minutes),
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                resources={"service.name": "service-a"},
+                attributes={"operation": key},
+                name=f"{key}@{minutes}",
+            )
+            for key, minutes in RAW_LIMIT_BY_ROWS
+        ]
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    query = build_raw_query(
+        name="A",
+        signal="traces",
+        order=[build_order_by("timestamp")],
+        limit=limit,
+        select_fields=[{"name": "name"}],
+        limit_by={"keys": ["operation"], "value": rows_per_key},
+    )
+
+    assert make_raw_limit_by_request(signoz, token, now, query) == expected_rows
+
+
 @pytest.mark.parametrize(
     "request_type,limit_by,expected_message",
     [
-        pytest.param("time_series", {"keys": ["service.name"], "value": "1"}, "invalid query 'A': limitBy is supported only for scalar requests", id="time_series"),
-        pytest.param("raw", {"keys": ["service.name"], "value": "1"}, "invalid query 'A': limitBy is supported only for scalar requests", id="raw"),
+        pytest.param("time_series", {"keys": ["service.name"], "value": "1"}, "invalid query 'A': limitBy is supported only for scalar and raw requests", id="time_series"),
         pytest.param("scalar", {"keys": ["operation"], "value": "1"}, "invalid query 'A': limitBy key \"operation\" is not a group-by key", id="key_not_grouped"),
         pytest.param("scalar", {"keys": ["service.name"], "value": "0"}, "invalid query 'A': limitBy value must be a positive integer, got \"0\"", id="zero_value"),
         pytest.param("scalar", {"keys": [], "value": "1"}, "invalid query 'A': limitBy keys cannot be empty", id="no_keys"),

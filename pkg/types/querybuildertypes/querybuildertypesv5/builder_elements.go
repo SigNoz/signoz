@@ -715,7 +715,7 @@ func (f Function) Validate() error {
 }
 
 type LimitBy struct {
-	Keys  []string `json:"keys" description:"The group-by field names that partition the result before the limit is applied."`
+	Keys  []string `json:"keys" description:"The field names that partition the result before the limit is applied. For a scalar request, each one must be a group-by key."`
 	Value string   `json:"value" description:"The number of rows to keep in each partition, a positive integer sent as a string. The query order decides which rows are kept."`
 }
 

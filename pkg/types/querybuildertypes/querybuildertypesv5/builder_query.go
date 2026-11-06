@@ -34,9 +34,9 @@ type QueryBuilderQuery[T any] struct {
 
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" description:"The fields to return for each row in raw requests, in addition to the columns always present: timestamp and id for logs, timestamp, trace_id and span_id for traces. Ignored by aggregating requests."`
 
-	Limit int `json:"limit,omitempty" description:"The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest."`
+	Limit int `json:"limit,omitempty" description:"The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited. A raw request ordered by timestamp, with id next for logs, and without limitBy returns a page of 10000 rows; follow nextCursor for the rest. Any other raw request returns 100 rows; use offset for the rest."`
 
-	LimitBy *LimitBy `json:"limitBy,omitempty" description:"Keeps at most value rows for each combination of the given group-by keys, in the query order, before limit applies. Supported for scalar requests only."`
+	LimitBy *LimitBy `json:"limitBy,omitempty" description:"Keeps at most value rows for each combination of the given keys, in the query order, before limit applies. A scalar request partitions its groups, so each key must be a group-by key. A raw request partitions its rows, so a key can be any field, and the request runs as one query over the whole range with no nextCursor. Time series and heatmap requests reject it."`
 
 	Offset int `json:"offset,omitempty" description:"The number of rows to skip before returning results. Prefer cursor for raw requests."`
 

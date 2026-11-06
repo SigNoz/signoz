@@ -166,6 +166,18 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 		})
 	}
 
+	if query.LimitBy != nil {
+		for _, name := range query.LimitBy.Keys {
+			key := telemetrytypes.GetFieldKeyFromKeyText(name)
+			keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+				Name:          key.Name,
+				Signal:        telemetrytypes.SignalLogs,
+				FieldContext:  key.FieldContext,
+				FieldDataType: key.FieldDataType,
+			})
+		}
+	}
+
 	for idx := range keySelectors {
 		keySelectors[idx].Signal = telemetrytypes.SignalLogs
 		keySelectors[idx].Source = telemetrytypes.SourceAudit
@@ -286,6 +298,21 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 		sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(colExpr), orderBy.Direction.StringValue()))
 	}
 
+	// LIMIT BY runs after ORDER BY and before LIMIT, so the order decides which rows
+	// each key keeps
+	if query.LimitBy != nil {
+		columns := make([]string, len(query.LimitBy.Keys))
+		for i, name := range query.LimitBy.Keys {
+			key := telemetrytypes.GetFieldKeyFromKeyText(name)
+			b.adjustKey(&key, keys)
+			columns[i], err = querybuilder.ResolveColumn(ctx, info, b.storage, &key, telemetrytypes.FieldDataTypeUnspecified, keys)
+			if err != nil {
+				return nil, err
+			}
+		}
+		sb.SQL(sqlbuilder.Escape(fmt.Sprintf("LIMIT %d BY %s", query.LimitBy.Rows(), strings.Join(columns, ", "))))
+	}
+
 	if query.Limit > 0 {
 		sb.Limit(query.Limit)
 	} else {
@@ -374,7 +401,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		cteSB := sqlbuilder.NewSelectBuilder()
-		// limitBy is a scalar setting; a stored alert skips validation and can carry one
+		// time series requests do not apply limitBy; a stored alert skips validation and can carry one
 		cteQuery := query
 		cteQuery.LimitBy = nil
 		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, cteQuery, start, end, keys, true, variables)

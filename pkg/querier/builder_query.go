@@ -229,6 +229,12 @@ func (q *builderQuery[T]) isWindowList() bool {
 		return false
 	}
 
+	// LIMIT n BY must see the whole range in one query; each window would keep n
+	// rows per key again
+	if q.spec.LimitBy != nil {
+		return false
+	}
+
 	// first ORDER BY must be `timestamp`
 	if q.spec.Order[0].Key.Name != "timestamp" {
 		return false

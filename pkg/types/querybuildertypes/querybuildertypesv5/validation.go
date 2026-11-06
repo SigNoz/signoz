@@ -162,7 +162,7 @@ func WithReduceToValidation() ValidationOption {
 }
 
 // WithLimitByValidation accepts a limitBy and checks it. Without this option a
-// limitBy is rejected, because only scalar requests apply it.
+// limitBy is rejected, because only scalar and raw requests apply it.
 func WithLimitByValidation() ValidationOption {
 	return func(cfg *validationConfig) {
 		cfg.withLimitByValidation = true
@@ -254,7 +254,7 @@ func (q *QueryBuilderQuery[T]) validateLimitBy(cfg validationConfig) error {
 	}
 
 	if !cfg.withLimitByValidation {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limitBy is supported only for scalar requests")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limitBy is supported only for scalar and raw requests")
 	}
 
 	if q.LimitBy.Rows() == 0 {
@@ -265,7 +265,12 @@ func (q *QueryBuilderQuery[T]) validateLimitBy(cfg validationConfig) error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limitBy keys cannot be empty")
 	}
 
-	// the partitions are groups of the result, so each key must be a group-by key
+	// a raw list has no groups, so its keys can name any field
+	if cfg.skipGroupByValidation {
+		return nil
+	}
+
+	// the partitions of a scalar result are its groups, so each key must be a group-by key
 	groupByNames := make([]string, len(q.GroupBy))
 	for i, groupBy := range q.GroupBy {
 		groupByNames[i] = groupBy.Name
@@ -1079,7 +1084,9 @@ func GetValidationOptions(requestType RequestType) []ValidationOption {
 		return []ValidationOption{WithSkipSelectFieldValidation(), WithTimestampGroupByValidation()}
 	case RequestTypeScalar:
 		return []ValidationOption{WithSkipSelectFieldValidation(), WithReduceToValidation(), WithLimitByValidation()}
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
+	case RequestTypeRaw:
+		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation(), WithLimitByValidation()}
+	case RequestTypeRawStream, RequestTypeTrace:
 		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
 	default:
 		return []ValidationOption{}

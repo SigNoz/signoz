@@ -334,6 +334,26 @@ func TestStatementBuilderListQuery(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			name:        "list query with limitBy keeps the newest row per key",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Limit:  10,
+				Order: []qbtypes.OrderBy{
+					{
+						Key:       qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp"}},
+						Direction: qbtypes.OrderDirectionDesc,
+					},
+				},
+				LimitBy: &qbtypes.LimitBy{Keys: []string{"service.name", "materialized.key.name"}, Value: "1"},
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY timestamp desc LIMIT 1 BY multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL), multiIf(`attribute_string_materialized$$key$$name_exists` = true, `attribute_string_materialized$$key$$name`, NULL) LIMIT ?",
+				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		{
 			name:        "filter skips entirely but emits LIKE-without-wildcards warning",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
