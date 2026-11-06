@@ -1285,9 +1285,9 @@ func (q *querier) adjustStepInterval(queries []qbtypes.QueryEnvelope, start, end
 				clampStep(qe, traceLogRecommended, traceLogMin, &warnings)
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
 				if qe.GetSource() == telemetrytypes.SourceMeter {
-					clampStep(qe, meterRecommended, meterMin, &warnings)
 					// we don't want to return warnings for meter metrics.
-					warnings = nil
+					var meterWarnings []string
+					clampStep(qe, meterRecommended, meterMin, &meterWarnings)
 				} else {
 					clampStep(qe, metricRecommended, metricMin, &warnings)
 				}

@@ -310,3 +310,47 @@ func TestRunQueryErrorCancelsSiblings(t *testing.T) {
 	require.ErrorContains(t, err, "query A failed")
 	assert.True(t, bCanceled.Load(), "query B should be canceled once query A fails")
 }
+
+func TestAdjustStepIntervalMeterWarnings(t *testing.T) {
+	end := uint64(time.Now().UnixMilli())
+	start := end - uint64(time.Hour.Milliseconds())
+	step := qbtypes.Step{Duration: time.Second}
+
+	logsQuery := func() qbtypes.QueryEnvelope {
+		return qbtypes.QueryEnvelope{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{Name: "A", Signal: telemetrytypes.SignalLogs, StepInterval: step},
+		}
+	}
+	meterQuery := func() qbtypes.QueryEnvelope {
+		return qbtypes.QueryEnvelope{
+			Type: qbtypes.QueryTypeBuilder,
+			Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{Name: "B", Signal: telemetrytypes.SignalMetrics, Source: telemetrytypes.SourceMeter, StepInterval: step},
+		}
+	}
+
+	testCases := []struct {
+		name         string
+		queries      []qbtypes.QueryEnvelope
+		wantWarnings int
+	}{
+		{name: "logs only", queries: []qbtypes.QueryEnvelope{logsQuery()}, wantWarnings: 1},
+		{name: "meter only", queries: []qbtypes.QueryEnvelope{meterQuery()}, wantWarnings: 0},
+		{name: "logs then meter", queries: []qbtypes.QueryEnvelope{logsQuery(), meterQuery()}, wantWarnings: 1},
+		{name: "meter then logs", queries: []qbtypes.QueryEnvelope{meterQuery(), logsQuery()}, wantWarnings: 1},
+	}
+
+	q := &querier{}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			warnings := q.adjustStepInterval(tc.queries, start, end)
+			assert.Len(t, warnings, tc.wantWarnings)
+			for _, w := range warnings {
+				assert.Contains(t, w, "Query A ")
+			}
+			for _, qe := range tc.queries {
+				assert.Greater(t, qe.GetStepInterval().Seconds(), step.Seconds())
+			}
+		})
+	}
+}
