@@ -12,6 +12,7 @@ import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import QBEntityOptions from 'container/QueryBuilder/components/QBEntityOptions/QBEntityOptions';
 import { QueryProps } from 'container/QueryBuilder/type';
 import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearchV2/SpanScopeSelector';
+import { useBuilderQueryType } from 'hooks/queryBuilder/useBuilderQueryType';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Copy, Ellipsis, Trash } from '@signozhq/icons';
@@ -62,7 +63,8 @@ export const QueryV2 = forwardRef(function QueryV2(
 	const { cloneQuery, panelType } = useQueryBuilder();
 
 	const hasQueryFunctions = query?.functions?.length > 0;
-	const { dataSource, builderQueryType } = query;
+	const { dataSource } = query;
+	const builderQueryType = useBuilderQueryType(query);
 
 	const [isCollapsed, setIsCollapsed] = useState(false);
 
