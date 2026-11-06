@@ -632,11 +632,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		// build the scalar “top/bottom-N” query in its own builder.
 		cteSB := sqlbuilder.NewSelectBuilder()
-		// the series skip happens after the query, so the top-N must still include the skipped groups
-		cteQuery := query
-		cteQuery.Limit += query.Offset
-		cteQuery.Offset = 0
-		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, cteQuery, start, end, keys, variables, true, true)
+		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, variables, true, true)
 		if err != nil {
 			return nil, err
 		}

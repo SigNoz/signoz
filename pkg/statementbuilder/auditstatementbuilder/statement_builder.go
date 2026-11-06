@@ -374,11 +374,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 	if query.Limit > 0 && len(query.GroupBy) > 0 {
 		cteSB := sqlbuilder.NewSelectBuilder()
-		// the series skip happens after the query, so the top-N must still include the skipped groups
-		cteQuery := query
-		cteQuery.Limit += query.Offset
-		cteQuery.Offset = 0
-		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, cteQuery, start, end, keys, true, variables)
+		cteStmt, err := b.buildScalarQuery(ctx, orgID, cteSB, query, start, end, keys, true, variables)
 		if err != nil {
 			return nil, err
 		}

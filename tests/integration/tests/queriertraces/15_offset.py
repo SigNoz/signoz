@@ -149,3 +149,76 @@ def test_trace_operator_scalar_offset_skips_rows_in_order(
     result = find_named_result(response.json()["data"]["data"]["results"], "C")
     assert result is not None, "trace_operator result C not found"
     assert result["data"] == [["offset-b", 3], ["offset-c", 2]]
+
+
+def test_traces_time_series_offset_pages_are_disjoint(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    # steady: 2 spans in each of 5 minutes, 10 in all. spike: 6 spans in one minute.
+    # steady has the larger total, spike the larger single-minute count.
+    insert_traces(
+        [
+            Traces(
+                timestamp=now - timedelta(minutes=minute, seconds=i + 1),
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                resources={"service.name": "steady"},
+                name=f"steady span {minute}-{i}",
+            )
+            for minute in range(1, 6)
+            for i in range(2)
+        ]
+        + [
+            Traces(
+                timestamp=now - timedelta(minutes=1, seconds=i + 1),
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                resources={"service.name": "spike"},
+                name=f"spike span {i}",
+            )
+            for i in range(6)
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    pages = []
+    for offset in (0, 1):
+        response = make_query_request(
+            signoz,
+            token,
+            start_ms=int((now - timedelta(minutes=10)).timestamp() * 1000),
+            end_ms=int(now.timestamp() * 1000),
+            request_type=RequestType.TIME_SERIES,
+            queries=[
+                BuilderQuery(
+                    signal="traces",
+                    name="A",
+                    aggregations=[Aggregation("count()")],
+                    group_by=[TelemetryFieldKey("service.name", "string", "resource")],
+                    step_interval=60,
+                    limit=1,
+                    offset=offset,
+                ).to_dict()
+            ],
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        pages.append(
+            [
+                (
+                    next(label["value"] for label in series["labels"] if label["key"]["name"] == "service.name"),
+                    sorted(point["value"] for point in series["values"]),
+                )
+                for series in get_all_series(response.json(), "A")
+            ]
+        )
+
+    # Pages follow the total count over the window: steady (10) first, then spike (6).
+    assert pages == [[("steady", [2, 2, 2, 2, 2])], [("spike", [6])]]

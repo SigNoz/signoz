@@ -182,7 +182,8 @@ func postProcessBuilderQuery[T any](
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 
-	result = q.applySeriesLimit(result, query.Limit, query.Offset, query.Order)
+	// the statement's top-N already skipped offset groups by their whole-window value; only reorder here
+	result = q.applySeriesLimit(result, query.Limit, 0, query.Order)
 
 	// Apply functions
 	if len(query.Functions) > 0 {

@@ -654,10 +654,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		cteFragments = append(cteFragments, fmt.Sprintf("__scoped_traces_total AS (%s)", totalSQL))
 		cteArgs = append(cteArgs, totalArgs)
 
-		// the series skip happens after the query, so the top-N must still include the skipped groups
-		cteQuery := query
-		cteQuery.Limit += query.Offset
-		limitSQL, limitArgs := outerLimitSQL(cteQuery, traceAggs, groupNames, windowSeconds)
+		limitSQL, limitArgs := outerLimitSQL(query, traceAggs, groupNames, windowSeconds)
 		cteFragments = append(cteFragments, fmt.Sprintf("__limit_cte AS (%s)", limitSQL))
 		cteArgs = append(cteArgs, limitArgs)
 
@@ -774,6 +771,9 @@ func outerLimitSQL(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], tr
 		sb.OrderBy("__result_0 DESC")
 	}
 	sb.Limit(query.Limit)
+	if query.Offset > 0 {
+		sb.Offset(query.Offset)
+	}
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
 
