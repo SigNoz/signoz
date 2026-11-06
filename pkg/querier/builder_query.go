@@ -488,7 +488,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		kind = qbtypes.RequestTypeTimeSeries
 	}
 
-	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name, flatJSONColumns(q.spec.Signal, q.spec.Source))
+	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
 	}
