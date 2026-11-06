@@ -121,6 +121,22 @@ export interface AlertList {
 	ruleName(name: string, options?: { exact?: boolean }): Locator;
 }
 
+// ─── Saved views ─────────────────────────────────────────────────────────────
+
+export interface AlertRuleViews {
+	/** A view in the rail, by id: `all`, a builtin's id or a saved view's. */
+	item(id: string): Locator;
+	/** The list heading, which names the active view. */
+	heading(): Locator;
+	saveChanges(): Locator;
+	/** Store the current filters on the active view. */
+	save(): Promise<void>;
+	/** Save the current filters as a new view; resolves to its id. */
+	saveAs(name: string): Promise<string>;
+	rename(id: string, name: string): Promise<void>;
+	remove(id: string): Promise<void>;
+}
+
 // ─── Create / edit form ──────────────────────────────────────────────────────
 
 export interface AlertForm {
@@ -344,6 +360,7 @@ export interface Alerts {
 	shell: AlertsShell;
 	channels: AlertChannels;
 	list: AlertList;
+	views: AlertRuleViews;
 	form: AlertForm;
 	details: AlertDetails;
 	history: AlertHistory;
@@ -434,6 +451,57 @@ export function alertsDriver(page: Page): Alerts {
 		pageSizeOption: (size) =>
 			page.getByRole('option', { name: String(size), exact: true }),
 		ruleName: (name, options) => list.rows().getByText(name, options),
+	};
+
+	const viewWrite = (method: string): Promise<Response> =>
+		page.waitForResponse(
+			(res) =>
+				new URL(res.url()).pathname.startsWith('/api/v2/rule_views') &&
+				res.request().method() === method,
+		);
+
+	const views: AlertRuleViews = {
+		item: (id) => page.getByTestId(`alert-rules-view-${id}`),
+		heading: () => page.getByTestId('alert-rules-list-heading'),
+		saveChanges: () => page.getByTestId('alert-rules-view-save-changes'),
+
+		save: async () => {
+			await Promise.all([viewWrite('PUT'), views.saveChanges().click()]);
+		},
+
+		saveAs: async (name) => {
+			await page.getByTestId('alert-rules-view-save-trigger').click();
+			await page.getByTestId('save-alert-rule-view-name').fill(name);
+			const [created] = await Promise.all([
+				viewWrite('POST'),
+				page.getByTestId('save-alert-rule-view-confirm').click(),
+			]);
+			const body = (await created.json()) as { data: { id: string } };
+			return body.data.id;
+		},
+
+		// The row's actions take pointer events only while it is hovered.
+		rename: async (id, name) => {
+			await views.item(id).hover();
+			await page.getByTestId(`alert-rules-view-rename-${id}`).click();
+			await page.getByTestId('rename-alert-rule-view-name').fill(name);
+			await Promise.all([
+				viewWrite('PUT'),
+				page.getByTestId('rename-alert-rule-view-confirm').click(),
+			]);
+		},
+
+		remove: async (id) => {
+			await views.item(id).hover();
+			await page.getByTestId(`alert-rules-view-delete-${id}`).click();
+			await Promise.all([
+				viewWrite('DELETE'),
+				page
+					.locator('.ant-modal-confirm')
+					.getByRole('button', { name: 'Delete' })
+					.click(),
+			]);
+		},
 	};
 
 	const form: AlertForm = {
@@ -1056,6 +1124,7 @@ export function alertsDriver(page: Page): Alerts {
 		shell,
 		channels,
 		list,
+		views,
 		form,
 		details,
 		history,
