@@ -17,6 +17,7 @@ type FlamegraphSpan struct {
 	Events       []Event           `json:"event" required:"true" nullable:"false"`
 	Attributes   map[string]any    `json:"attributes" required:"true" nullable:"false"`
 	Resource     map[string]string `json:"resource" required:"true" nullable:"false"`
+	Scope        Scope             `json:"scope" required:"true" nullable:"false"`
 	Children     []*FlamegraphSpan `json:"-"` // internal tree use only
 }
 
@@ -66,11 +67,13 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64, selectFields []
 		Events:       s.UnmarshalledEvents(),
 		Attributes:   make(map[string]any),
 		Resource:     make(map[string]string),
+		Scope:        Scope{},
 	}
 	if len(selectFields) == 0 {
 		return span
 	}
 	var attributes map[string]any
+	var scopeFields []string
 	for _, field := range selectFields {
 		switch field.FieldContext {
 		case telemetrytypes.FieldContextResource:
@@ -84,7 +87,12 @@ func NewFlamegraphSpanFromStorable(s *StorableSpan, level int64, selectFields []
 			if v, ok := attributes[field.Name]; ok {
 				span.Attributes[field.Name] = v
 			}
+		case telemetrytypes.FieldContextScope:
+			scopeFields = append(scopeFields, field.Name)
 		}
+	}
+	if len(scopeFields) > 0 {
+		span.Scope = NewSelectedScope(s.Scope.Flatten(), scopeFields)
 	}
 	return span
 }
@@ -96,6 +104,7 @@ func NewMissingParentFlamegraphSpan(node *FlamegraphSpan) *FlamegraphSpan {
 		Timestamp:    node.Timestamp,
 		DurationNano: node.DurationNano,
 		Events:       []Event{},
+		Scope:        Scope{},
 		Children:     []*FlamegraphSpan{node},
 	}
 }

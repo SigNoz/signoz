@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRightFromLine, Search, X } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
@@ -164,8 +164,6 @@ function Filters({
 	const { selectedCategory, categories, handleCategoryChange } =
 		useSpanCategoryFilter(filterProps);
 
-	const history = useHistory();
-
 	const handlePrevNext = useCallback(
 		(index: number, spanId?: string): void => {
 			const searchParams = getUnstableCurrentSearchParams();
@@ -175,9 +173,9 @@ function Filters({
 				searchParams.set('spanId', filteredSpanIds[index]);
 			}
 
-			history.replace({ search: searchParams.toString() });
+			navigate({ search: searchParams.toString() }, { replace: true });
 		},
-		[filteredSpanIds, history],
+		[filteredSpanIds],
 	);
 
 	const isFilterActive = committedExpression.trim().length > 0;
@@ -270,7 +268,11 @@ function Filters({
 
 	const pill = (
 		/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
-		<div className={styles.pill} onClick={onExpand}>
+		<div
+			className={styles.pill}
+			onClick={onExpand}
+			data-testid="waterfall-filter-pill"
+		>
 			<Search size={12} />
 			<span className={styles.pillText}>{expression || 'Search...'}</span>
 			{expression && <span className={styles.pillIndicator} />}
@@ -305,6 +307,7 @@ function Filters({
 		// eslint-disable-next-line jsx-a11y/no-static-element-interactions
 		<div
 			className={cx(styles.root, isExpanded && styles.isExpanded)}
+			data-testid="waterfall-filters"
 			ref={containerRef}
 			onBlur={(e): void => {
 				const relatedTarget = e.relatedTarget as Node | null;
@@ -374,7 +377,7 @@ function Filters({
 						{hasExpression && (
 							<Tooltip title="Clear filter">
 								<Button
-									aria-label="Action"
+									aria-label="Clear filter"
 									variant="ghost"
 									size="sm"
 									icon
@@ -388,7 +391,8 @@ function Filters({
 						)}
 						<Tooltip title="Collapse filters">
 							<Button
-								aria-label="Action"
+								aria-label="Collapse filters"
+								testId="waterfall-filter-collapse"
 								variant="ghost"
 								size="sm"
 								icon

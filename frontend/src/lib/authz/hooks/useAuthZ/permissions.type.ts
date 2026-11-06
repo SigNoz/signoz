@@ -21,7 +21,15 @@ export default {
 			{
 				kind: 'notification-channel',
 				type: 'metaresource',
-				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
+				allowedVerbs: [
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
 			},
 			{
 				kind: 'quick-filter',

@@ -41,11 +41,15 @@ function QueryResult({
 		// Prefer count over loader on refresh so stale results stay visible.
 		content = (
 			<>
-				<Typography.Text className={styles.resultNavCount}>
+				<Typography.Text
+					className={styles.resultNavCount}
+					testId="waterfall-filter-count"
+				>
 					{currentIndex + 1} / {total}
 				</Typography.Text>
 				<Button
-					aria-label="Action"
+					aria-label="Previous match"
+					testId="waterfall-filter-prev"
 					disabledTooltip="This is the first result"
 					variant="ghost"
 					size="sm"
@@ -57,7 +61,8 @@ function QueryResult({
 					<ChevronUp size={14} />
 				</Button>
 				<Button
-					aria-label="Action"
+					aria-label="Next match"
+					testId="waterfall-filter-next"
 					disabledTooltip="This is the last result"
 					variant="ghost"
 					size="sm"
@@ -83,7 +88,10 @@ function QueryResult({
 		);
 	} else if (noData) {
 		content = (
-			<Typography.Text className={styles.filterStatus}>
+			<Typography.Text
+				className={styles.filterStatus}
+				testId="waterfall-filter-no-results"
+			>
 				No results found
 			</Typography.Text>
 		);

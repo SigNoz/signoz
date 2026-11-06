@@ -1,7 +1,9 @@
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	SavedviewtypesSourceDTO,
+	TelemetrytypesFieldContextDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import isEqual from 'lodash-es/isEqual';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { HasUnsavedViewChangesArgs } from '../types';
 import { getSavedViewQuery } from './getSavedViewQuery';
@@ -50,6 +52,7 @@ export function hasUnsavedViewChanges({
 	stagedQuery,
 	panelType,
 	options,
+	sourcePage,
 }: HasUnsavedViewChangesArgs): boolean {
 	if (!stagedQuery) {
 		return false;
@@ -76,10 +79,9 @@ export function hasUnsavedViewChanges({
 		return false;
 	}
 
-	const dataSource = stagedQuery.builder.queryData[0]?.dataSource;
 	const { columns, formatting } = getViewColumnsAndFormatting(
 		view.spec,
-		dataSource,
+		sourcePage,
 	);
 	const toNames = (fields: { name?: string; key?: string }[]): unknown[] =>
 		fields.map((field) => field.name ?? field.key);
@@ -87,7 +89,7 @@ export function hasUnsavedViewChanges({
 		return true;
 	}
 
-	if (dataSource !== DataSource.LOGS || !formatting) {
+	if (sourcePage !== SavedviewtypesSourceDTO.logs || !formatting) {
 		return false;
 	}
 	return (

@@ -1,5 +1,6 @@
 import { ENVIRONMENT } from 'constants/env';
 import ROUTES from 'constants/routes';
+import { getCurrentLocation } from 'lib/router/navigation';
 import { quickFiltersListResponse } from 'mocks-server/__mockdata__/customQuickFilters';
 import {
 	queryRangeForListView,
@@ -25,9 +26,9 @@ import { optionMenuReturn, qbProviderValue } from './testUtils';
 const currentTestUrl =
 	'/traces-explorer/?panelType=list&selectedExplorerView=list';
 
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jest.requireActual('react-router-dom-v5-compat'),
-	useSearchParams: jest.fn(() => {
+jest.mock('lib/router/useAppSearchParams', () => ({
+	...jest.requireActual('lib/router/useAppSearchParams'),
+	useAppSearchParams: jest.fn(() => {
 		const searchParams = new URLSearchParams();
 
 		// Parse the current test URL
@@ -51,29 +52,8 @@ jest.mock('hooks/queryBuilder/useGetPanelTypesQueryParam', () => ({
 	}),
 }));
 
-const historyPush = jest.fn();
-
 const BASE_URL = ENVIRONMENT.baseURL;
 const FILTER_SERVICE_NAME = 'Service Name';
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): {
-		pathname: string;
-		search: string;
-		hash: string;
-		state: any;
-	} => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.TRACES_EXPLORER}/`,
-		search: '',
-		hash: '',
-		state: null,
-	}),
-	useHistory: (): any => ({
-		...jest.requireActual('react-router-dom').useHistory(),
-		push: historyPush,
-	}),
-}));
 
 jest.mock(
 	'components/Uplot/Uplot',
@@ -188,16 +168,17 @@ describe('TracesExplorer -', () => {
 			),
 		);
 
-		const { getByText } = renderWithTracesExplorerRouter(<TracesExplorer />);
+		renderWithTracesExplorerRouter(<TracesExplorer />);
 
 		await screen.findByText(FILTER_SERVICE_NAME);
 
 		await screen.findByText('demo-app');
-		expect(getByText('options_menu.options')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('periscope-btn-options-traces'),
+		).toBeInTheDocument();
 
-		// test if pagination is there
-		expect(getByText('Previous')).toBeInTheDocument();
-		expect(getByText('Next')).toBeInTheDocument();
+		// the list scrolls instead of paging
+		expect(screen.queryByTestId('pagination-page-size')).not.toBeInTheDocument();
 
 		// column interaction is covered in E2E tests as its a complex interaction
 	});
@@ -354,8 +335,6 @@ describe('TracesExplorer -', () => {
 		);
 		fireEvent.click(createAlertBtn);
 
-		expect(historyPush).toHaveBeenCalledWith(
-			expect.stringContaining(`${ROUTES.ALERTS_NEW}`),
-		);
+		expect(getCurrentLocation().pathname).toBe(ROUTES.ALERTS_NEW);
 	});
 });

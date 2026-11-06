@@ -7,6 +7,7 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { FormattingOptions } from '../types';
+import { isAiObservabilityExplorerRoute } from '../utils';
 
 /**
  * Validates if a column is valid for Logs Explorer
@@ -53,6 +54,9 @@ const logsLoaders = {
 		columns: BaseAutocompleteData[];
 		formatting: FormattingOptions;
 	} => {
+		if (isAiObservabilityExplorerRoute()) {
+			return { columns: [], formatting: undefined } as any;
+		}
 		const urlParams = new URLSearchParams(window.location.search);
 		try {
 			const options = JSON.parse(urlParams.get('options') || '{}');

@@ -1,36 +1,34 @@
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import logEvent from 'api/common/logEvent';
 import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import ROUTES from 'constants/routes';
 import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 
+import { TraceDetailsTab } from '../../constants';
+import { TraceDetailEvents } from '../../events';
 import TraceDetailsHeader from '../TraceDetailsHeader';
 import { useTraceSummary } from '../useTraceSummary';
+
+jest.mock('api/common/logEvent');
 
 jest.mock('../useTraceSummary', () => ({
 	useTraceSummary: jest.fn(() => ({ data: undefined, isLoading: false })),
 }));
 
-const mockGoBack = jest.fn();
-const mockPush = jest.fn();
-const mockReplace = jest.fn();
+const mockBack = jest.fn();
+const mockNavigate = jest.fn();
 const mockHasInAppHistory = jest.fn();
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		goBack: (): void => mockGoBack(),
-		push: (path: string): void => mockPush(path),
-		replace: (path: string): void => mockReplace(path),
-		location: { pathname: '/', search: '' },
-		listen: (): (() => void) => (): void => undefined,
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	back: (): void => mockBack(),
+	navigate: (path: string): void => mockNavigate(path),
 	hasInAppHistory: (): boolean => mockHasInAppHistory(),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useParams: (): { id: string } => ({ id: 'trace-123' }),
+jest.mock('lib/router/useAppParams', () => ({
+	useAppParams: (): { id: string } => ({ id: 'trace-123' }),
 }));
 
 jest.mock(
@@ -73,19 +71,19 @@ const SUMMARY = {
 
 describe('TraceDetailsHeader – back button', () => {
 	beforeEach(() => {
-		mockGoBack.mockClear();
-		mockPush.mockClear();
+		mockBack.mockClear();
+		mockNavigate.mockClear();
 		mockHasInAppHistory.mockReset();
 	});
 
-	it('calls history.goBack() when there is in-app SPA history', () => {
+	it('goes back when there is in-app SPA history', () => {
 		mockHasInAppHistory.mockReturnValue(true);
 		render(<TraceDetailsHeader {...baseProps} />);
 
 		fireEvent.click(screen.getByRole('button', { name: /back/i }));
 
-		expect(mockGoBack).toHaveBeenCalledTimes(1);
-		expect(mockPush).not.toHaveBeenCalled();
+		expect(mockBack).toHaveBeenCalledTimes(1);
+		expect(mockNavigate).not.toHaveBeenCalled();
 	});
 
 	it('pushes to the traces explorer route when there is no in-app SPA history', () => {
@@ -94,9 +92,9 @@ describe('TraceDetailsHeader – back button', () => {
 
 		fireEvent.click(screen.getByRole('button', { name: /back/i }));
 
-		expect(mockPush).toHaveBeenCalledTimes(1);
-		expect(mockPush).toHaveBeenCalledWith(ROUTES.TRACES_EXPLORER);
-		expect(mockGoBack).not.toHaveBeenCalled();
+		expect(mockNavigate).toHaveBeenCalledTimes(1);
+		expect(mockNavigate).toHaveBeenCalledWith(ROUTES.TRACES_EXPLORER);
+		expect(mockBack).not.toHaveBeenCalled();
 	});
 
 	it('pushes to the AI observability explorer when opened directly on another tab', async () => {
@@ -110,15 +108,14 @@ describe('TraceDetailsHeader – back button', () => {
 
 		await user.click(screen.getByRole('button', { name: /back/i }));
 
-		expect(mockPush).toHaveBeenCalledTimes(1);
-		expect(mockPush).toHaveBeenCalledWith(ROUTES.AI_OBSERVABILITY_EXPLORER);
-		expect(mockGoBack).not.toHaveBeenCalled();
+		expect(mockNavigate).toHaveBeenCalledTimes(1);
+		expect(mockNavigate).toHaveBeenCalledWith(ROUTES.AI_OBSERVABILITY_EXPLORER);
+		expect(mockBack).not.toHaveBeenCalled();
 	});
 });
 
 describe('TraceDetailsHeader – action cluster', () => {
 	beforeEach(() => {
-		mockReplace.mockClear();
 		jest
 			.mocked(useTraceSummary)
 			.mockReturnValue({ data: SUMMARY, isLoading: false });
@@ -397,6 +394,27 @@ describe('TraceDetailsHeader – tabs', () => {
 		expect(screen.getByText(metadataText)).toBeInTheDocument();
 	});
 
+	it('shows the AI dot on the Thread tab only when the summary has an AI block', () => {
+		renderHeader();
+		expect(
+			screen.queryByTestId('trace-details-tab-thread-ai-dot'),
+		).not.toBeInTheDocument();
+
+		jest.mocked(useTraceSummary).mockReturnValue({
+			data: {
+				...SUMMARY,
+				ai: {
+					tokens: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, reasoning: 0 },
+				},
+			},
+			isLoading: false,
+		});
+		renderHeader();
+		expect(
+			screen.getByTestId('trace-details-tab-thread-ai-dot'),
+		).toBeInTheDocument();
+	});
+
 	it('clears the filter result when switching to the Thread tab', async () => {
 		const user = userEvent.setup({ delay: null });
 		renderHeader();
@@ -423,5 +441,24 @@ describe('TraceDetailsHeader – tabs', () => {
 			'data-open',
 			'false',
 		);
+	});
+
+	it('logs the tab change with the previous and next tab', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderHeader();
+		jest.mocked(logEvent).mockClear();
+
+		await user.click(screen.getByTestId('trace-details-tab-overview'));
+		expect(logEvent).not.toHaveBeenCalled();
+
+		await user.click(screen.getByTestId('trace-details-tab-thread'));
+
+		expect(logEvent).toHaveBeenCalledTimes(1);
+		expect(logEvent).toHaveBeenCalledWith(TraceDetailEvents.DetailsTabChanged, {
+			view: 'v3',
+			traceId: 'trace-123',
+			from: TraceDetailsTab.Overview,
+			to: TraceDetailsTab.Thread,
+		});
 	});
 });

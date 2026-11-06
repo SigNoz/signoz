@@ -1,12 +1,15 @@
-import { useParams } from 'react-router-dom';
+import { MutableRefObject } from 'react';
 import { Callout } from '@signozhq/ui/callout';
-import history, { hasInAppHistory } from 'lib/history';
-import { TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
+import { back, hasInAppHistory } from 'lib/router/navigation';
+import { useAppParams } from 'lib/router/useAppParams';
 
 import { TraceDetailsTab } from '../constants';
+import { useSpanDetailsOpenedEvent } from '../hooks/useSpanDetailsOpenedEvent';
 import { useSpanDetailVariant } from '../hooks/useSpanDetailVariant';
+import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
 import { useTraceDetailsTab } from '../hooks/useTraceDetailsTab';
 import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
+import { useThreadLoadedEvents } from './hooks/useThreadLoadedEvents';
 import { useThreadSpanSelection } from './hooks/useThreadSpanSelection';
 import { useThreadView } from './hooks/useThreadView';
 import { useTraceThread } from './hooks/useTraceThread';
@@ -24,8 +27,17 @@ import styles from './TraceDetailsThread.module.scss';
 
 const INITIAL_LOADER_COUNT = 4;
 
-function TraceDetailsThread(): JSX.Element {
-	const { id: traceId } = useParams<TraceDetailV3URLProps>();
+interface TraceDetailsThreadProps {
+	// Owned by the page so the load event fires once per trace, not per tab visit.
+	dataLoadedFiredForRef: MutableRefObject<string>;
+	threadEmptyFiredForRef: MutableRefObject<string>;
+}
+
+function TraceDetailsThread({
+	dataLoadedFiredForRef,
+	threadEmptyFiredForRef,
+}: TraceDetailsThreadProps): JSX.Element {
+	const { id: traceId } = useAppParams<'id'>();
 	const [, setTab] = useTraceDetailsTab();
 	const [view, setView] = useThreadView();
 	const {
@@ -58,10 +70,32 @@ function TraceDetailsThread(): JSX.Element {
 	const interestedSpanIndex = spans.findIndex(
 		(span) => span.span_id === interestedSpanId,
 	);
+	const hasNoThread =
+		!isLoading &&
+		interestedSpanStatus !== InterestedSpanStatus.NotFound &&
+		(isError || spans.length === 0);
 
 	const selectedSpan = spans.find((span) => span.span_id === selectedSpanId);
 	const [spanDetailVariant, setSpanDetailVariant] = useSpanDetailVariant();
 	const isBottomDocked = spanDetailVariant === SpanDetailVariant.DOCKED;
+
+	const logTraceEvent = useTraceDetailLogEvent('v3', traceId || '');
+	useThreadLoadedEvents({
+		traceId: traceId || '',
+		interestedSpanId,
+		hasSpans: spans.length > 0,
+		hasNoThread,
+		spanPanelVariant: spanDetailVariant,
+		dataLoadedFiredForRef,
+		threadEmptyFiredForRef,
+		logTraceEvent,
+	});
+	useSpanDetailsOpenedEvent({
+		isOpen: panelState.isOpen,
+		spanId: selectedSpan?.span_id,
+		detailsTab: TraceDetailsTab.Thread,
+		logTraceEvent,
+	});
 
 	const spanDetails = panelState.isOpen && selectedSpan && (
 		<ThreadSpanDetails
@@ -71,10 +105,6 @@ function TraceDetailsThread(): JSX.Element {
 			onVariantChange={setSpanDetailVariant}
 		/>
 	);
-	const hasNoThread =
-		!isLoading &&
-		interestedSpanStatus !== InterestedSpanStatus.NotFound &&
-		(isError || spans.length === 0);
 
 	const renderBody = (): JSX.Element => {
 		if (isLoading) {
@@ -93,7 +123,7 @@ function TraceDetailsThread(): JSX.Element {
 					onGoBack={(): void => {
 						// go back to the previous page
 						if (hasInAppHistory()) {
-							history.goBack();
+							back();
 						} else {
 							void setTab(TraceDetailsTab.Overview);
 						}

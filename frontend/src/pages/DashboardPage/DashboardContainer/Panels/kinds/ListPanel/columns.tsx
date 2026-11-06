@@ -9,6 +9,7 @@ import type {
 	FormatTimezoneAdjustedTimestamp,
 	TimestampInput,
 } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
+import { getBodyDisplay } from 'lib/logs/logBody';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { coerceToString } from 'utils/stringUtils';
 
@@ -34,6 +35,10 @@ const DURATION_FIELDS = new Set(['durationNano', 'duration_nano']);
 
 function renderCell(value: unknown): ReactNode {
 	return <Typography.Text>{coerceToString(value)}</Typography.Text>;
+}
+
+function renderBodyCell(value: unknown): ReactNode {
+	return <Typography.Text>{getBodyDisplay(value)}</Typography.Text>;
 }
 
 /**
@@ -178,7 +183,7 @@ export function buildListColumns({
 				dataIndex: name,
 				key: name,
 				ellipsis: true,
-				render: renderCell,
+				render: renderBodyCell,
 			};
 		}
 		return {

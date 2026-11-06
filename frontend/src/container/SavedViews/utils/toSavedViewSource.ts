@@ -3,11 +3,9 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { SavedViewSourcePage } from '../types';
 
-// Explorers and the preferences module are keyed by DataSource (the signal),
-// the api keys views by source page. Same values today, so this is the one
-// place they meet. AI observability views will come with their own source and
-// DataSource cannot tell them apart from traces, so preferences should move to
-// source page at that point and this map goes with it.
+// The AI assistant names a view's source by DataSource (the signal), the api
+// keys views by source page.
+// TODO: remove in a follow-up once callers pass the source page directly.
 const SAVED_VIEW_SOURCE: Record<SavedViewSourcePage, SavedviewtypesSourceDTO> =
 	{
 		[DataSource.LOGS]: SavedviewtypesSourceDTO.logs,
