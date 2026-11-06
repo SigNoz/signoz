@@ -45,9 +45,7 @@ export default function DownloadOptionsMenu({
 		await handleExportRawData({
 			format: exportFormat,
 			rowLimit,
-			clearSelectColumns:
-				dataSource !== DataSource.TRACES &&
-				columnsScope === DownloadColumnsScopes.ALL,
+			clearSelectColumns: columnsScope === DownloadColumnsScopes.ALL,
 			selectedColumns,
 		});
 	}, [
@@ -56,7 +54,6 @@ export default function DownloadOptionsMenu({
 		columnsScope,
 		selectedColumns,
 		handleExportRawData,
-		dataSource,
 	]);
 
 	const popoverContent = useMemo(
@@ -96,7 +93,7 @@ export default function DownloadOptionsMenu({
 					/>
 				</div>
 
-				{dataSource !== DataSource.TRACES && (
+				{panelType !== PANEL_TYPES.TRACE && (
 					<>
 						<div className="horizontal-line" />
 
@@ -134,7 +131,7 @@ export default function DownloadOptionsMenu({
 			columnsScope,
 			isDownloading,
 			handleExport,
-			dataSource,
+			panelType,
 		],
 	);
 
