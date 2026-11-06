@@ -16,16 +16,9 @@ import (
 // else resolves to the wildcard: isOverride without an id is a create, sourceId
 // without isOverride is a sync row, and an empty list has nothing to check.
 func UpdatableRulesResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
-	// encoding/json with the handler's tags, so duplicate or case-variant id
-	// keys resolve to the id that is actually written.
-	var body struct {
-		Rules []*struct {
-			// Normalised through valuer so an uppercase id still matches the
-			// lowercase selector regex of the metaresource type.
-			ID         *valuer.UUID `json:"id"`
-			IsOverride *bool        `json:"isOverride"`
-		} `json:"rules"`
-	}
+	// Decoded with the handler's request type so duplicate or case-variant keys
+	// resolve to the rows actually written; valuer lowercases uppercase ids.
+	var body UpdatableLLMPricingRules
 	if err := json.Unmarshal(ec.RequestBody, &body); err != nil {
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "invalid pricing rules body")
 	}

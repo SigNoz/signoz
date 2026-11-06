@@ -1,3 +1,4 @@
+import json
 from collections.abc import Callable
 from http import HTTPStatus
 
@@ -256,6 +257,29 @@ def test_upsert_scoped_to_granted_rule(
     bodies = {"other_rule": [other], "create": [PROBE_RULE], "sync_row": [sync_row], "own_and_other": [own, other]}
 
     response = upsert_llm_pricing_rules(signoz, get_token(scoped_email, user_password), bodies[shape])
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+    assert "llm-pricing-rule:update" in response.text
+
+
+@pytest.mark.parametrize("second_row", ["create", "sync_row"], ids=["create", "sync_row"])
+def test_upsert_duplicate_rules_array_needs_wildcard(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    second_row: str,
+) -> None:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    own = {**PROBE_RULE, "id": next(r["id"] for r in list_llm_pricing_rules(signoz, admin_token) if r["modelName"] == PROBE_RULE["modelName"])}
+    rows = {
+        "create": {**PROBE_RULE, "modelName": "authz-probe-dup"},
+        "sync_row": {**{k: v for k, v in PROBE_RULE.items() if k != "isOverride"}, "sourceId": "11111111-1111-4111-8111-111111111198"},
+    }
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(LLM_PRICING_RULES_URL),
+        data=f'{{"rules":[{json.dumps(own)}],"rules":[{json.dumps(rows[second_row])}]}}',
+        headers={"Authorization": f"Bearer {get_token(scoped_email, user_password)}", "Content-Type": "application/json"},
+        timeout=10,
+    )
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
     assert "llm-pricing-rule:update" in response.text
 

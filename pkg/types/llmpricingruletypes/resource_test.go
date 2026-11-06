@@ -25,42 +25,52 @@ func TestUpdatableRulesResources(t *testing.T) {
 		},
 		{
 			name: "Edit_ID",
-			body: `{"rules":[{"id":"0b6d1a4e-5c1f-4d2a-9e3b-1f2a3b4c5d6e","isOverride":true}]}`,
+			body: `{"rules":[{"modelPattern":["m*"],"id":"0b6d1a4e-5c1f-4d2a-9e3b-1f2a3b4c5d6e","isOverride":true}]}`,
 			want: []string{"0b6d1a4e-5c1f-4d2a-9e3b-1f2a3b4c5d6e"},
 		},
 		{
 			name: "Create_Wildcard",
-			body: `{"rules":[{"modelName":"gpt","isOverride":true}]}`,
+			body: `{"rules":[{"modelPattern":["m*"],"modelName":"gpt","isOverride":true}]}`,
 			want: []string{"*"},
 		},
 		{
 			name: "SyncRow_Wildcard",
-			body: `{"rules":[{"sourceId":"4e9a0b12-3c4d-4e5f-8a6b-7c8d9e0f1a2b"}]}`,
+			body: `{"rules":[{"modelPattern":["m*"],"sourceId":"4e9a0b12-3c4d-4e5f-8a6b-7c8d9e0f1a2b"}]}`,
 			want: []string{"*"},
 		},
 		{
 			name: "Mixed_DedupedIDsThenWildcardOnce",
-			body: `{"rules":[{"id":"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d","isOverride":true},{"modelName":"new","isOverride":true},{"id":"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d","isOverride":false},{"sourceId":"7bcd3e45-6f7a-4b8c-9d9e-0f1a2b3c4d5e"}]}`,
+			body: `{"rules":[{"modelPattern":["m*"],"id":"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d","isOverride":true},{"modelPattern":["m*"],"modelName":"new","isOverride":true},{"modelPattern":["m*"],"id":"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d","isOverride":false},{"modelPattern":["m*"],"sourceId":"7bcd3e45-6f7a-4b8c-9d9e-0f1a2b3c4d5e"}]}`,
 			want: []string{"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d", "*"},
 		},
 		{
 			name: "UppercaseID_Lowercased",
-			body: `{"rules":[{"id":"8CDE4F56-7A8B-4C9D-8E0F-1A2B3C4D5E6F","isOverride":true}]}`,
+			body: `{"rules":[{"modelPattern":["m*"],"id":"8CDE4F56-7A8B-4C9D-8E0F-1A2B3C4D5E6F","isOverride":true}]}`,
 			want: []string{"8cde4f56-7a8b-4c9d-8e0f-1a2b3c4d5e6f"},
 		},
 		{
 			name: "DuplicateIDKey_LastWins",
-			body: `{"rules":[{"id":"0b6d1a4e-5c1f-4d2a-9e3b-1f2a3b4c5d6e","id":"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d","isOverride":true}]}`,
+			body: `{"rules":[{"modelPattern":["m*"],"id":"0b6d1a4e-5c1f-4d2a-9e3b-1f2a3b4c5d6e","id":"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d","isOverride":true}]}`,
 			want: []string{"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d"},
 		},
 		{
 			name: "CaseVariantIDKey_LastWins",
-			body: `{"rules":[{"id":"0b6d1a4e-5c1f-4d2a-9e3b-1f2a3b4c5d6e","ID":"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d","isOverride":true}]}`,
+			body: `{"rules":[{"modelPattern":["m*"],"id":"0b6d1a4e-5c1f-4d2a-9e3b-1f2a3b4c5d6e","ID":"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d","isOverride":true}]}`,
 			want: []string{"6abc2d34-5e6f-4a7b-8c8d-9e0f1a2b3c4d"},
 		},
 		{
+			name: "DuplicateRulesArray_CreateRow_Wildcard",
+			body: `{"rules":[{"modelPattern":["m*"],"id":"0b6d1a4e-5c1f-4d2a-9e3b-1f2a3b4c5d6e","isOverride":true}],"rules":[{"modelPattern":["n*"],"modelName":"new","isOverride":true}]}`,
+			want: []string{"*"},
+		},
+		{
+			name: "DuplicateRulesArray_SyncRow_Wildcard",
+			body: `{"rules":[{"modelPattern":["m*"],"id":"0b6d1a4e-5c1f-4d2a-9e3b-1f2a3b4c5d6e","isOverride":true}],"rules":[{"modelPattern":["n*"],"sourceId":"4e9a0b12-3c4d-4e5f-8a6b-7c8d9e0f1a2b"}]}`,
+			want: []string{"*"},
+		},
+		{
 			name:    "InvalidID_Rejected",
-			body:    `{"rules":[{"id":"not-a-uuid","isOverride":true}]}`,
+			body:    `{"rules":[{"modelPattern":["m*"],"id":"not-a-uuid","isOverride":true}]}`,
 			wantErr: true,
 		},
 	}
