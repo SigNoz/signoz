@@ -420,8 +420,8 @@ export function savedViewsFor(page: Page): SavedViews {
 			formatMenu()
 				.locator('.menu-items .item')
 				.filter({ has: page.locator('svg') }),
-		logsMaxLines: () => formatMenu().locator('.max-lines-per-row-input input'),
-		logsFontSize: () => formatMenu().locator('.font-value'),
+		logsMaxLines: () => formatMenu().getByTestId('max-lines-per-row'),
+		logsFontSize: () => formatMenu().getByTestId('font-size-select'),
 		explorerTab: (tab) => page.locator(`.${tab}-view-tab`),
 		documentId: () => page.evaluate(() => performance.timeOrigin),
 		queryBar: () =>
