@@ -1,0 +1,88 @@
+.timeInput {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	width: 100%;
+}
+
+.timeLabel {
+	font-size: var(--periscope-font-size-small);
+	color: var(--l3-foreground);
+	min-width: 36px;
+	flex-shrink: 0;
+}
+
+.wrapper {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	padding: 0 var(--spacing-2);
+	height: 28px;
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-2);
+	background: var(--l2-background);
+	cursor: text;
+	gap: var(--spacing-1);
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease;
+
+	&:focus-within {
+		border-color: var(--accent-primary);
+		box-shadow: 0 0 0 2px
+			color-mix(in srgb, var(--accent-primary) 20%, transparent);
+	}
+}
+
+.datePrefix {
+	font-size: var(--periscope-font-size-small);
+	color: var(--l3-foreground);
+	white-space: nowrap;
+	user-select: none;
+	pointer-events: none;
+	flex-shrink: 0;
+	padding-right: var(--spacing-2);
+	margin-right: var(--spacing-1);
+	border-right: 1px solid var(--l2-border);
+}
+
+.segment {
+	width: 2ch;
+	min-width: 18px;
+	border: none;
+	outline: none;
+	background: transparent;
+	text-align: center;
+	font-size: var(--periscope-font-size-small);
+	color: var(--l1-foreground);
+	font-family: inherit;
+	line-height: 1;
+	padding: 0;
+	caret-color: var(--accent-primary);
+
+	&::placeholder {
+		color: var(--l3-foreground);
+		opacity: 1;
+	}
+
+	&:focus {
+		background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+		border-radius: 2px;
+	}
+
+	&::-webkit-outer-spin-button,
+	&::-webkit-inner-spin-button {
+		appearance: none;
+		margin: 0;
+	}
+}
+
+.sep {
+	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-small);
+	line-height: 1;
+	padding: 0 1px;
+	user-select: none;
+	pointer-events: none;
+	flex-shrink: 0;
+}
