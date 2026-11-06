@@ -13,6 +13,11 @@ import {
 	Query,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	getBuilderAt,
+	getBuilderSlotKey,
+	withBuilderAt,
+} from 'lib/query/builderSlot';
 import { v4 as uuidv4 } from 'uuid';
 
 /** Param shape emitted by the AI for every filter-touching action. */
@@ -56,12 +61,11 @@ export function replaceFirstQueryData(
 	query: Query,
 	updated: IBuilderQuery,
 ): Query {
-	const queryData = [...query.builder.queryData];
+	const slot = getBuilderSlotKey(query.queryType);
+	const builder = getBuilderAt(query, slot);
+	const queryData = [...builder.queryData];
 	queryData[0] = updated;
-	return {
-		...query,
-		builder: { ...query.builder, queryData },
-	};
+	return withBuilderAt(query, slot, { ...builder, queryData });
 }
 
 /** Page-state deps required by the runQuery / addFilter actions. */
