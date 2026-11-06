@@ -88,9 +88,10 @@ export const mockSuccess = (rows: unknown[] = listRows): void => {
 
 export const renderListView = (
 	stagedQuery: Query = initialQueriesMap.traces,
+	viewportHeight = 500,
 ): ReturnType<typeof render> =>
 	render(
-		<VirtuosoMockContext.Provider value={{ viewportHeight: 500, itemHeight: 54 }}>
+		<VirtuosoMockContext.Provider value={{ viewportHeight, itemHeight: 54 }}>
 			<ListView
 				isFilterApplied={false}
 				setWarning={jest.fn()}

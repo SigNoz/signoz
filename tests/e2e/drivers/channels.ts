@@ -7,6 +7,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { authToken } from './api';
 
 import { driver, kit, seeded } from './kit';
+import { wheelTo } from './scroll';
 
 // Search and the type filter are both served by the API, so every assertion on
 // the list is also a guard on the query the list sends.
@@ -316,6 +317,7 @@ function channelsDriver(page: Page): Channels {
 			await page.getByRole('option', { name: label, exact: true }).click();
 		},
 		async fillField(testId, value) {
+			await wheelTo(page.getByTestId(testId));
 			await page.getByTestId(testId).fill(value);
 		},
 		async saveAndReturnId() {

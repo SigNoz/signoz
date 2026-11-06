@@ -1,11 +1,5 @@
-import get from 'api/browser/localstorage/get';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
-
-/** Off by default; set `TRACES_SPAN_DRAWER_ENABLED` to `true` in localStorage to try it. */
-export const isSpanDrawerEnabled = (): boolean =>
-	get(LOCALSTORAGE.TRACES_SPAN_DRAWER_ENABLED) === 'true';
 
 type ListSpanEvent = {
 	name: string;

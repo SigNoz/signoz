@@ -509,16 +509,34 @@ component state, is a story with a `play` function rather than a control. Use
 row action, and wait on the state's own text. The page fetches before it renders
 a row, so the finder needs a timeout past the 1s default.
 
+The play is a named function in `stories/__story_mockdata__/<page>.play.ts`,
+collapsed for review with the other AI-owned files, and the story file only names
+it. Branch each check on the args it reads, so every control value the page
+supports passes. A story file that still holds play bodies moves them there the
+first time it is edited.
+
 A *sequence* of those states, such as the steps of a wizard or the pages of a
 questionnaire, is still a control. Declare the steps in the page's mocks and walk
 them from a `play` on the meta, so every story of the page inherits the walk and
 only sets `args`:
 
 ```tsx
-play: async ({ mount, args, canvasElement }): Promise<void> => {
+// stories/__story_mockdata__/<page>.play.ts
+export async function walkToStep({
+	mount,
+	args,
+	canvasElement,
+}: {
+	mount: () => Promise<unknown>;
+	args: { step: WizardStep };
+	canvasElement: HTMLElement;
+}): Promise<void> {
 	await mount();
 	await advanceToStep(canvasElement, args.step);
-},
+}
+
+// <Page>.stories.tsx, on the meta
+play: walkToStep,
 ```
 
 Destructuring `mount` is what makes the panel row work. Storybook replays a play

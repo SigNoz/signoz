@@ -27,7 +27,7 @@ test.describe('Traces explorer, views', () => {
 		expect(noise.failedResponses).toEqual([]);
 	});
 
-	test('TC-02 clicking a list row opens that span in trace details', async ({
+	test('TC-02 a list row opens its span drawer, and View full trace opens that span in trace details', async ({
 		traces,
 		tracesExplorerSeed: seed,
 	}) => {
@@ -35,7 +35,10 @@ test.describe('Traces explorer, views', () => {
 		await traces.filterService(seed.service);
 		await traces.waitForRow(seed.errorSpanId);
 
-		await traces.openRow(seed.errorSpanId, seed.traceId);
+		await traces.openSpanDrawer(seed.errorSpanId);
+		await expect(traces.spanDrawerTraceId()).toHaveText(seed.traceId);
+
+		await traces.openFullTrace(seed.traceId, seed.errorSpanId);
 
 		await expect(traces.traceDetailsRow(seed.errorSpanId)).toBeVisible();
 	});
