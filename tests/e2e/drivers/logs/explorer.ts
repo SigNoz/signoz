@@ -15,6 +15,7 @@ import { logDetailDriver, type LogDetail } from './detail';
 import { liveTailDriver, type LiveTail } from './liveTail';
 import { ROW_SELECTOR } from './rows';
 import { seedOne } from './seed';
+import { wheelTo } from '../scroll';
 
 export const LOGS_EXPLORER_PATH = '/logs/logs-explorer';
 export const LINKED_ROW_CLASS = 'logs-linked-row';
@@ -301,7 +302,7 @@ export function logsExplorerDriver(page: Page): LogsExplorer {
 				keys.forEach((key) => seen.add(key));
 				if (seen.size < expected) {
 					// Virtuoso loads the next page when the last row nears the viewport.
-					await table.rows().last().scrollIntoViewIfNeeded({ timeout: 2_000 });
+					await wheelTo(table.rows().last());
 					await page.mouse.wheel(0, 4_000);
 				}
 				expect(seen.size).toBeGreaterThanOrEqual(expected);
