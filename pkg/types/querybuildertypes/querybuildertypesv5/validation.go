@@ -437,6 +437,10 @@ func (q *QueryBuilderQuery[T]) validateLimitAndPagination(cfg validationConfig) 
 		)
 	}
 
+	if q.Offset > 0 && q.Limit == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset requires a limit")
+	}
+
 	return nil
 }
 
