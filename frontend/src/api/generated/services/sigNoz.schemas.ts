@@ -829,6 +829,37 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind {
 	jira = 'jira',
 }
+export interface AlertmanagertypesChannelJiraCloudAuthDTO {
+	/**
+	 * @type string
+	 * @format password
+	 * @description The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list.
+	 */
+	apiToken: string;
+	/**
+	 * @type string
+	 * @description The Atlassian account email used for basic auth.
+	 */
+	email: string;
+}
+
+export interface AlertmanagertypesChannelJiraSelfHostedAuthDTO {
+	/**
+	 * @type string
+	 * @format password
+	 * @description The Jira personal access token, sent as a Bearer header. A secret; returned by create, update and fetch by ID, never by list.
+	 */
+	pat: string;
+}
+
+export type AlertmanagertypesChannelJiraAuthDTO =
+	| AlertmanagertypesChannelJiraCloudAuthDTO
+	| AlertmanagertypesChannelJiraSelfHostedAuthDTO;
+
+export enum AlertmanagertypesJiraDeploymentDTO {
+	cloud = 'cloud',
+	selfhosted = 'selfhosted',
+}
 /**
  * Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
  */
@@ -844,26 +875,23 @@ export type AlertmanagertypesChannelJiraConfigDTOCustomFields = Alertmanagertype
 
 export interface AlertmanagertypesChannelJiraConfigDTO {
 	/**
-	 * @type string
-	 * @format password
-	 * @description The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list.
+	 * @description The credentials: email and apiToken when deployment is cloud, pat when deployment is selfhosted.
 	 */
-	apiToken: string;
+	auth: AlertmanagertypesChannelJiraAuthDTO;
 	/**
 	 * @type object,null
 	 * @description Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
 	 */
 	customFields?: AlertmanagertypesChannelJiraConfigDTOCustomFields;
 	/**
+	 * @description The Jira edition: cloud for an Atlassian-hosted site, selfhosted for Jira Server or Data Center.
+	 */
+	deployment: AlertmanagertypesJiraDeploymentDTO;
+	/**
 	 * @type string
 	 * @description Alertmanager template for the issue description, rendered as markdown; defaults to the SigNoz Jira default.
 	 */
 	description?: string;
-	/**
-	 * @type string
-	 * @description The Atlassian account email used for basic auth.
-	 */
-	email: string;
 	/**
 	 * @type string
 	 * @description The issue type name, such as Bug.
@@ -906,7 +934,7 @@ export interface AlertmanagertypesChannelJiraConfigDTO {
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
-	 * @description The base URL of the Jira Cloud site, for example https://example.atlassian.net. Only Jira Cloud is supported.
+	 * @description The base URL of the Jira site, for example https://example.atlassian.net or https://jira.example.com.
 	 */
 	site: string;
 	/**
@@ -1717,12 +1745,16 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	 */
 	custom_fields?: AlertmanagertypesJiraReceiverConfigDTOCustomFields;
 	/**
+	 * @description The Jira edition, cloud or selfhosted; defaults to cloud.
+	 */
+	deployment?: AlertmanagertypesJiraDeploymentDTO;
+	/**
 	 * @type string
 	 * @description Alertmanager template for the issue description.
 	 */
 	description?: string;
 	/**
-	 * @description HTTP client settings; basic auth carries the account email and API token.
+	 * @description HTTP client settings; basic auth carries the account email and API token on cloud, authorization carries the Bearer personal access token on self-hosted.
 	 */
 	http_config?: ConfigHTTPClientConfigDTO;
 	/**
@@ -1765,7 +1797,7 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	send_resolved?: boolean;
 	/**
 	 * @type string
-	 * @description The Jira Cloud base URL.
+	 * @description The Jira base URL.
 	 */
 	site?: string;
 	/**
