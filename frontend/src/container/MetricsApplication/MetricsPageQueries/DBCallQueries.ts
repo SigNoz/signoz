@@ -43,7 +43,7 @@ export const databaseCallsRPS = ({
 				key: {
 					key: WidgetKeys.OTelServiceName,
 					dataType: DataTypes.String,
-					type: MetricsType.Resource,
+					type: MetricsType.Tag,
 				},
 				op: OPERATORS.IN,
 				value: [`${servicename}`],
@@ -90,7 +90,7 @@ export const databaseCallsAvgDuration = ({
 			key: {
 				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
-				type: MetricsType.Resource,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [servicename],

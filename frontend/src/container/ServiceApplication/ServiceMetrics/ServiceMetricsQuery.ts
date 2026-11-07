@@ -51,7 +51,7 @@ export const serviceMetricsQuery = (
 			key: {
 				dataType: DataTypes.String,
 				key: WidgetKeys.OTelServiceName,
-				type: MetricsType.Resource,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [topLevelOperation[0].toString()],
@@ -74,7 +74,7 @@ export const serviceMetricsQuery = (
 			key: {
 				dataType: DataTypes.String,
 				key: WidgetKeys.OTelServiceName,
-				type: MetricsType.Resource,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [topLevelOperation[0].toString()],
@@ -107,7 +107,7 @@ export const serviceMetricsQuery = (
 			key: {
 				dataType: DataTypes.String,
 				key: WidgetKeys.OTelServiceName,
-				type: MetricsType.Resource,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [topLevelOperation[0].toString()],
@@ -130,7 +130,7 @@ export const serviceMetricsQuery = (
 			key: {
 				dataType: DataTypes.String,
 				key: WidgetKeys.OTelServiceName,
-				type: MetricsType.Resource,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [topLevelOperation[0].toString()],

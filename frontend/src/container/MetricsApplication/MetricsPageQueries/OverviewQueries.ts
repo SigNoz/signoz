@@ -57,7 +57,7 @@ export const latency = ({
 			key: {
 				key: isSpanMetricEnable ? signozMetricsServiceName : WidgetKeys.ServiceName,
 				dataType: DataTypes.String,
-				type: isSpanMetricEnable ? MetricsType.Resource : MetricsType.Tag,
+				type: MetricsType.Tag,
 			},
 			op: isSpanMetricEnable ? OPERATORS.IN : OPERATORS['='],
 			value: isSpanMetricEnable ? [servicename] : servicename,
@@ -472,7 +472,7 @@ export const operationPerSec = ({
 				key: {
 					key: WidgetKeys.OTelServiceName,
 					dataType: DataTypes.String,
-					type: MetricsType.Resource,
+					type: MetricsType.Tag,
 				},
 				op: OPERATORS.IN,
 				value: [`${servicename}`],
@@ -531,7 +531,7 @@ export const errorPercentage = ({
 			key: {
 				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
-				type: MetricsType.Resource,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [`${servicename}`],
@@ -565,7 +565,7 @@ export const errorPercentage = ({
 			key: {
 				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
-				type: MetricsType.Resource,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [`${servicename}`],

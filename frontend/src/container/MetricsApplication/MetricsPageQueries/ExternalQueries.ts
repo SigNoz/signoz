@@ -50,7 +50,7 @@ export const externalCallErrorPercent = ({
 			key: {
 				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
-				type: MetricsType.Resource,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [servicename],
@@ -73,7 +73,7 @@ export const externalCallErrorPercent = ({
 			key: {
 				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
-				type: MetricsType.Resource,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [servicename],
@@ -136,7 +136,7 @@ export const externalCallDuration = ({
 			key: {
 				dataType: DataTypes.String,
 				key: WidgetKeys.OTelServiceName,
-				type: MetricsType.Resource,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [servicename],
@@ -190,7 +190,7 @@ export const externalCallRpsByAddress = ({
 				key: {
 					dataType: DataTypes.String,
 					key: WidgetKeys.OTelServiceName,
-					type: MetricsType.Resource,
+					type: MetricsType.Tag,
 				},
 				op: OPERATORS.IN,
 				value: [servicename],
@@ -240,7 +240,7 @@ export const externalCallDurationByAddress = ({
 			key: {
 				dataType: DataTypes.String,
 				key: WidgetKeys.OTelServiceName,
-				type: MetricsType.Resource,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [servicename],

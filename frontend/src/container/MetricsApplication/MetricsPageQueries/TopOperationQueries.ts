@@ -46,7 +46,7 @@ export const topOperationQueries = ({
 			key: {
 				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
-				type: MetricsType.Resource,
+				type: MetricsType.Tag,
 			},
 			value: [servicename],
 			op: OPERATORS.IN,
@@ -59,7 +59,7 @@ export const topOperationQueries = ({
 			key: {
 				dataType: DataTypes.String,
 				key: WidgetKeys.OTelServiceName,
-				type: MetricsType.Resource,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [servicename],
