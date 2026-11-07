@@ -526,11 +526,16 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 	// A cursor names one row only when the order ends in the signal's tie-break
 	// column. Logs already order by timestamp then id. A traces order of
 	// timestamp alone gets span_id, 8 random bytes, so spans at one instant differ.
-	rowKeyed := q.spec.Signal == telemetrytypes.SignalLogs || len(q.spec.Order) == 1
-	if q.spec.Signal == telemetrytypes.SignalTraces && rowKeyed {
-		q.spec.Order = append(slices.Clip(q.spec.Order),
-			qbtypes.OrderBy{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: tracestelemetryschema.SpanSpanIDColumn, FieldContext: telemetrytypes.FieldContextSpan}}, Direction: q.spec.Order[0].Direction},
+	// An attribute named span_id is not the column the cursor compares.
+	order := q.spec.Order
+	rowKeyed := q.spec.Signal == telemetrytypes.SignalLogs ||
+		(len(order) == 2 && order[1].Key.Name == tracestelemetryschema.SpanSpanIDColumn && order[1].Direction == order[0].Direction &&
+			(order[1].Key.FieldContext == telemetrytypes.FieldContextUnspecified || order[1].Key.FieldContext == telemetrytypes.FieldContextSpan))
+	if q.spec.Signal == telemetrytypes.SignalTraces && len(order) == 1 {
+		q.spec.Order = append(slices.Clip(order),
+			qbtypes.OrderBy{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: tracestelemetryschema.SpanSpanIDColumn, FieldContext: telemetrytypes.FieldContextSpan}}, Direction: order[0].Direction},
 		)
+		rowKeyed = true
 	}
 
 	fromMS, toMS := q.fromMS, q.toMS

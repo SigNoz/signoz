@@ -919,12 +919,14 @@ def test_traces_list_pagination(
 
 
 @pytest.mark.parametrize("direction", ["desc", "asc"])
+@pytest.mark.parametrize("order", [["timestamp"], ["timestamp", "span_id"]], ids=["timestamp", "timestamp_span_id"])
 def test_traces_list_cursor_pages_every_row_once(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
     direction: str,
+    order: list[str],
 ) -> None:
     """
     Setup:
@@ -934,7 +936,8 @@ def test_traces_list_cursor_pages_every_row_once(
     Tests:
     Paging by nextCursor with limit 2 returns every span once, ordered by
     timestamp then span_id, although page boundaries fall inside the shared
-    millisecond and inside the shared instant.
+    millisecond and inside the shared instant. An order of timestamp alone and
+    an explicit order of timestamp then span_id page the same way.
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     shared = now - timedelta(seconds=5) + timedelta(microseconds=300)
@@ -976,7 +979,7 @@ def test_traces_list_cursor_pages_every_row_once(
                     limit=2,
                     cursor=cursor,
                     filter_expression="service.name = 'cursor-service'",
-                    order=[OrderBy(TelemetryFieldKey("timestamp"), direction)],
+                    order=[OrderBy(TelemetryFieldKey(name), direction) for name in order],
                 ).to_dict()
             ],
         )
