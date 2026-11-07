@@ -425,6 +425,12 @@ func (q *querier) processTimeSeriesFormula(
 		return nil
 	}
 
+	formulaSeries, err = applyFormulaHaving(formula, formulaSeries)
+	if err != nil {
+		q.logger.ErrorContext(ctx, "failed to apply formula having", errors.Attr(err), slog.String("formula", formula.Name))
+		return nil
+	}
+
 	// Create result for formula
 	formulaResult := &qbtypes.TimeSeriesData{
 		QueryName: formula.Name,
@@ -660,6 +666,12 @@ func (q *querier) processScalarFormula(
 		return nil
 	}
 
+	formulaSeries, err = applyFormulaHaving(formula, formulaSeries)
+	if err != nil {
+		q.logger.ErrorContext(ctx, "failed to apply formula having", errors.Attr(err), slog.String("formula", formula.Name))
+		return nil
+	}
+
 	// Apply ordering (and limit) before converting to scalar format.
 	formulaSeries = qbtypes.ApplySeriesLimit(formulaSeries, formula.Order, formula.Limit, formula.Offset)
 
@@ -708,6 +720,35 @@ func (q *querier) processScalarFormula(
 	return &qbtypes.Result{
 		Value: scalarResult,
 	}
+}
+
+// applyFormulaHaving keeps the values the formula having accepts, as SQL HAVING
+// keeps rows for a builder query, so a series with no values left is removed. It
+// runs before functions, order, limit, and offset, as HAVING runs before them in SQL.
+func applyFormulaHaving(formula qbtypes.QueryBuilderFormula, series []*qbtypes.TimeSeries) ([]*qbtypes.TimeSeries, error) {
+	if formula.Having == nil || strings.TrimSpace(formula.Having.Expression) == "" {
+		return series, nil
+	}
+
+	keep, err := querybuilder.CompileFormulaHaving(formula.Name, formula.Having.Expression)
+	if err != nil {
+		return nil, err
+	}
+
+	kept := series[:0]
+	for _, s := range series {
+		values := s.Values[:0]
+		for _, value := range s.Values {
+			if keep(value.Value) {
+				values = append(values, value)
+			}
+		}
+		if len(values) > 0 {
+			s.Values = values
+			kept = append(kept, s)
+		}
+	}
+	return kept, nil
 }
 
 // filterDisabledQueries removes results for disabled queries.

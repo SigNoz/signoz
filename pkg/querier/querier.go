@@ -212,6 +212,14 @@ func (q *querier) buildQueries(
 		}
 
 		switch query.Type {
+		case qbtypes.QueryTypeFormula:
+			// the querier evaluates a formula after its queries run, so a bad
+			// having must fail here, before they run
+			if formula, ok := query.Spec.(qbtypes.QueryBuilderFormula); ok && formula.Having != nil && strings.TrimSpace(formula.Having.Expression) != "" {
+				if _, err := querybuilder.CompileFormulaHaving(formula.Name, formula.Having.Expression); err != nil {
+					return nil, nil, err
+				}
+			}
 		case qbtypes.QueryTypePromQL:
 			promQuery, ok := query.Spec.(qbtypes.PromQuery)
 			if !ok {

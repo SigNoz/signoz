@@ -363,6 +363,7 @@ def build_formula_query(
     order: list[dict] | None = None,
     limit: int | None = None,
     offset: int | None = None,
+    having_expression: str | None = None,
 ) -> dict:
     spec: dict[str, Any] = {
         "name": name,
@@ -379,6 +380,8 @@ def build_formula_query(
         spec["limit"] = limit
     if offset is not None:
         spec["offset"] = offset
+    if having_expression:
+        spec["having"] = {"expression": having_expression}
     return {"type": "builder_formula", "spec": spec}
 
 
