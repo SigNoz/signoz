@@ -3,9 +3,10 @@ package querybuilder
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 func TestCompileFormulaHaving_Matches(t *testing.T) {
