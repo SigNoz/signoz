@@ -160,13 +160,13 @@ type lastSamplePerStep struct {
 	stepMs      int64
 }
 
-func (t *lastSamplePerStep) bucketExpr() string {
-	if t.stepMs <= 0 {
+func (lastPerStep *lastSamplePerStep) bucketExpr() string {
+	if lastPerStep.stepMs <= 0 {
 		// Instant query: a single evaluation at firstEval; one bucket.
 		return ""
 	}
 	return fmt.Sprintf(
 		"if(unix_milli <= %d, 0, intDiv(unix_milli - %d - 1, %d) + 1)",
-		t.firstEvalMs, t.firstEvalMs, t.stepMs,
+		lastPerStep.firstEvalMs, lastPerStep.firstEvalMs, lastPerStep.stepMs,
 	)
 }
