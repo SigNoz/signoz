@@ -3,6 +3,7 @@ import {
 	convertFiltersToExpressionWithExistingQuery,
 } from 'components/QueryBuilderV2/utils';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
+import { EQueryType } from 'types/common/dashboard';
 import {
 	Query,
 	TagFilter,
@@ -554,5 +555,51 @@ describe('clearFilterFromQuery', () => {
 		const active = result.builder.queryData[0];
 		expect(active.filters?.items).toStrictEqual([]);
 		expect(active.filter?.expression).toBe(`http.method = 'GET'`);
+	});
+});
+
+describe('quick filters on an AI query', () => {
+	const builderQuery = buildQuery([], '').builder;
+	const aiQuery = {
+		queryType: EQueryType.AI_QUERY_BUILDER,
+		builder: builderQuery,
+		builder_ai_query: buildQuery(
+			[{ key: KEY, op: 'in', value: ['a'] }],
+			`${KEY} IN ['a']`,
+		).builder,
+	} as unknown as Query;
+
+	it('a checkbox toggle writes into the AI slot and leaves builder alone', () => {
+		const result = applyCheckboxToggle({
+			currentQuery: aiQuery,
+			activeQueryIndex: 0,
+			filter: { attributeKey: { key: KEY, type: 'tag' } } as never,
+			quickFilterSource: QuickFiltersSource.AI_OBSERVABILITY,
+			attributeValues: ['a', 'b', 'c'],
+			value: 'b',
+			checked: true,
+			isOnlyOrAllClicked: false,
+		});
+
+		expect(result.builder).toBe(builderQuery);
+		expect(
+			result.builder_ai_query?.queryData[0].filters?.items.map(
+				(item) => item.value,
+			),
+		).toStrictEqual([['a', 'b']]);
+	});
+
+	it('clearing a filter clears it from the AI slot', () => {
+		const result = clearFilterFromQuery({
+			currentQuery: aiQuery,
+			filterKey: KEY,
+			activeQueryIndex: 0,
+		});
+
+		expect(result.builder).toBe(builderQuery);
+		expect(result.builder_ai_query?.queryData[0].filters?.items).toStrictEqual(
+			[],
+		);
+		expect(result.builder_ai_query?.queryData[0].filter?.expression).toBe('');
 	});
 });
