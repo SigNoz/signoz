@@ -15,6 +15,7 @@ import {
 	openRenameViewPopover,
 	openRowActions,
 	openSaveViewPopover,
+	openStatesFilter,
 	toggleAlert,
 } from './__story_mockdata__/alertRules.play';
 
@@ -177,6 +178,11 @@ export const RowActionsDisabledRule: Story = {
 /** The columns the table can show, including the audit ones it hides by default. */
 export const ColumnPicker: Story = {
 	play: openColumnPicker,
+};
+
+/** The State dropdown, open with one state picked. */
+export const StateFilterOpen: Story = {
+	play: openStatesFilter,
 };
 
 /**

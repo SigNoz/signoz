@@ -135,9 +135,18 @@ describe('ListAlertRules — search', () => {
 
 		await screen.findByText('High CPU Alert');
 
-		await user.click(screen.getByTestId('alert-rules-filter-states'));
-		await user.click(await screen.findByRole('option', { name: 'Firing' }));
-		await user.click(await screen.findByRole('option', { name: 'Disabled' }));
+		await user.click(
+			within(screen.getByTestId('alert-rules-filter-states')).getByRole(
+				'combobox',
+			),
+		);
+		const dropdown = await waitFor(() => {
+			const element = document.querySelector<HTMLElement>('.ant-select-dropdown');
+			expect(element).not.toBeNull();
+			return element as HTMLElement;
+		});
+		await user.click(within(dropdown).getByText('Firing'));
+		await user.click(within(dropdown).getByText('Disabled'));
 
 		await waitFor(() => {
 			expect(lastRequest(requests).getAll('states')).toStrictEqual([
