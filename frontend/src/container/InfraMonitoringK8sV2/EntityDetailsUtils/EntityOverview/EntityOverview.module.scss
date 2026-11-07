@@ -64,7 +64,7 @@
 	gap: var(--spacing-2);
 	flex: 0 1 auto;
 	min-width: 0;
-	max-width: 420px;
+	max-width: 50%;
 	padding: var(--spacing-1) var(--spacing-3);
 	border-radius: 2px;
 	background: var(--l3-background);
@@ -74,9 +74,8 @@
 	cursor: default;
 }
 
-.scopeMore {
+.scopeLock {
 	flex: none;
-	color: var(--l3-foreground);
 }
 
 // The editor beside it is CodeMirror on the copilot theme in dark and
@@ -107,9 +106,7 @@
 
 .scopeExpression {
 	font-family: var(--font-mono, monospace);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	overflow-wrap: anywhere;
 }
 
 .filterInput {
