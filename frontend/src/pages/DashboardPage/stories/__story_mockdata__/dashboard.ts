@@ -356,6 +356,10 @@ const CYCLIC_ENVIRONMENT: DashboardtypesVariableDTO = {
 	},
 };
 
+export const DURATION_CHOICES = ['unset', '6h', '90m', '1s', '0m'] as const;
+
+export type DurationChoice = (typeof DURATION_CHOICES)[number];
+
 export interface PanelQueryShape {
 	requestType: string;
 	metricName?: string;
@@ -388,6 +392,7 @@ export interface DashboardArgs {
 	sectioned: boolean;
 	variables: readonly VariableKind[];
 	locked: boolean;
+	duration?: DurationChoice;
 }
 
 export const dashboardResponse = ({
@@ -395,6 +400,7 @@ export const dashboardResponse = ({
 	sectioned,
 	variables,
 	locked,
+	duration,
 }: DashboardArgs): GetDashboardV2200 => {
 	const kept = PANEL_IDS.slice(0, panels);
 
@@ -432,6 +438,7 @@ export const dashboardResponse = ({
 					description:
 						'Traffic, errors and latency for the checkout path, broken down by service.',
 				},
+				duration: duration === 'unset' ? undefined : duration,
 				layouts,
 				panels: Object.fromEntries(
 					kept.map((id) => [id, PANELS[id]]),
