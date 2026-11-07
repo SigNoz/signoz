@@ -60,7 +60,7 @@ func (r *aggExprRewriter) Rewrite(
 	expr string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-) (string, []any, error) {
+) (string, []any, []string, error) {
 
 	arguments := map[string]string{}
 	wrapped := fmt.Sprintf("SELECT %s", extractArguments(expr, arguments))
@@ -68,20 +68,20 @@ func (r *aggExprRewriter) Rewrite(
 	stmts, err := p.ParseStmts()
 
 	if err != nil {
-		return "", nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to parse aggregation expression %q", expr)
+		return "", nil, nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to parse aggregation expression %q", expr)
 	}
 
 	if len(stmts) == 0 {
-		return "", nil, errors.NewInternalf(errors.CodeInternal, "no statements found for %q", expr)
+		return "", nil, nil, errors.NewInternalf(errors.CodeInternal, "no statements found for %q", expr)
 	}
 
 	sel, ok := stmts[0].(*chparser.SelectQuery)
 	if !ok {
-		return "", nil, errors.NewInternalf(errors.CodeInternal, "expected SelectQuery, got %T", stmts[0])
+		return "", nil, nil, errors.NewInternalf(errors.CodeInternal, "expected SelectQuery, got %T", stmts[0])
 	}
 
 	if len(sel.SelectItems) == 0 {
-		return "", nil, errors.NewInternalf(errors.CodeInternal, "no SELECT items for %q", expr)
+		return "", nil, nil, errors.NewInternalf(errors.CodeInternal, "no SELECT items for %q", expr)
 	}
 
 	visitor := &exprVisitor{
@@ -95,13 +95,13 @@ func (r *aggExprRewriter) Rewrite(
 	}
 	// Rewrite the first select item (our expression)
 	if err := sel.SelectItems[0].Accept(visitor); err != nil {
-		return "", nil, err
+		return "", nil, nil, err
 	}
 
 	if visitor.isRate {
-		return fmt.Sprintf("%s/%d", chparser.Format(sel.SelectItems[0]), rateInterval), visitor.chArgs, nil
+		return fmt.Sprintf("%s/%d", chparser.Format(sel.SelectItems[0]), rateInterval), visitor.chArgs, visitor.warnings, nil
 	}
-	return chparser.Format(sel.SelectItems[0]), visitor.chArgs, nil
+	return chparser.Format(sel.SelectItems[0]), visitor.chArgs, visitor.warnings, nil
 }
 
 // RewriteMulti rewrites a slice of expressions.
@@ -113,24 +113,26 @@ func (r *aggExprRewriter) RewriteMulti(
 	exprs []string,
 	rateInterval uint64,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
-) ([]string, [][]any, error) {
+) ([]string, [][]any, []string, error) {
 	out := make([]string, len(exprs))
 	var errs []error
 	var chArgsList [][]any
+	var warnings []string
 	for i, e := range exprs {
-		w, chArgs, err := r.Rewrite(ctx, orgID, startNs, endNs, e, rateInterval, keys)
+		w, chArgs, exprWarnings, err := r.Rewrite(ctx, orgID, startNs, endNs, e, rateInterval, keys)
 		if err != nil {
 			errs = append(errs, err)
 			out[i] = e
 		} else {
 			out[i] = w
 			chArgsList = append(chArgsList, chArgs)
+			warnings = append(warnings, exprWarnings...)
 		}
 	}
 	if len(errs) > 0 {
-		return out, nil, errors.Join(errs...)
+		return out, nil, nil, errors.Join(errs...)
 	}
-	return out, chArgsList, nil
+	return out, chArgsList, warnings, nil
 }
 
 // exprVisitor walks FunctionExpr nodes and resolves and renders their
@@ -146,6 +148,7 @@ type exprVisitor struct {
 	arguments      map[string]string
 	Modified       bool
 	chArgs         []any
+	warnings       []string
 	isRate         bool
 }
 
@@ -210,6 +213,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		if whereClause.RequiresCostGuard {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "function `search` is not supported inside an aggregation").WithSuggestions("use `search` in the filter")
 		}
+		v.warnings = append(v.warnings, whereClause.Warnings...)
 		// not possible for whereClause to be empty here but still adding a check.
 		if whereClause.IsEmpty() {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid predicate argument for %q: %q", name, origPred)
@@ -235,10 +239,11 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 			if err != nil {
 				return err
 			}
-			expr, err := ResolveColumn(v.ctx, v.query, v.storage, &fieldKey, dataType, v.fieldKeys)
+			expr, warnings, err := ResolveColumn(v.ctx, v.query, v.storage, &fieldKey, dataType, v.fieldKeys)
 			if err != nil {
 				return errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to get table field name for %q", origVal)
 			}
+			v.warnings = append(v.warnings, warnings...)
 			newVal := sqlbuilder.Escape(expr)
 			parsedVal, err := parseFragment(newVal)
 			if err != nil {
@@ -258,10 +263,11 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 			if err != nil {
 				return err
 			}
-			expr, err := ResolveColumn(v.ctx, v.query, v.storage, &fieldKey, dataType, v.fieldKeys)
+			expr, warnings, err := ResolveColumn(v.ctx, v.query, v.storage, &fieldKey, dataType, v.fieldKeys)
 			if err != nil {
 				return err
 			}
+			v.warnings = append(v.warnings, warnings...)
 			newCol := sqlbuilder.Escape(expr)
 			parsed, err := parseFragment(newCol)
 			if err != nil {
