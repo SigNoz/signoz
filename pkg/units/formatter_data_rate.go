@@ -2,6 +2,7 @@ package units
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/dustin/go-humanize"
 )
@@ -17,7 +18,12 @@ func (*dataRateFormatter) Name() string {
 	return "data_rate"
 }
 
-func (f *dataRateFormatter) Format(value float64, unit string) string {
+func (formatter *dataRateFormatter) Format(value float64, unit string) string {
+	// Humanize accepts unsigned bytes, so format the magnitude before restoring the sign.
+	if value < 0 && !math.IsInf(value, -1) {
+		return "-" + formatter.Format(-value, unit)
+	}
+
 	switch unit {
 	case "binBps":
 		return humanize.IBytes(uint64(value)) + "/s"
