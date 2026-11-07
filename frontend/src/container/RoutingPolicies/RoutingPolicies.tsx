@@ -33,11 +33,6 @@ function RoutingPolicies(): JSX.Element {
 		isFetchingRoutingPolicies,
 		isErrorRoutingPolicies,
 		refetchRoutingPolicies,
-		// Channels
-		channels,
-		isLoadingChannels,
-		isErrorChannels,
-		refreshChannels,
 		// Search
 		searchTerm,
 		setSearchTerm,
@@ -169,12 +164,8 @@ function RoutingPolicies(): JSX.Element {
 					routingPolicy={selectedRoutingPolicy}
 					closeModal={handlePolicyDetailsModalClose}
 					mode={policyDetailsModalState.mode}
-					channels={channels}
-					isErrorChannels={isErrorChannels}
-					isLoadingChannels={isLoadingChannels}
 					handlePolicyDetailsModalAction={handlePolicyDetailsModalAction}
 					isPolicyDetailsModalActionLoading={isPolicyDetailsModalActionLoading}
-					refreshChannels={refreshChannels}
 				/>
 			)}
 			{isDeleteModalOpen && (

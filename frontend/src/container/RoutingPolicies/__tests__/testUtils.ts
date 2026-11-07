@@ -1,6 +1,5 @@
 import { ApiRoutingPolicy } from 'api/routingPolicies/getRoutingPolicies';
 import { IAppContext, IUser } from 'providers/App/types';
-import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import { RoutingPolicy, UseRoutingPoliciesReturn } from '../types';
 
@@ -28,15 +27,6 @@ export const MOCK_ROUTING_POLICY_2: RoutingPolicy = {
 	updatedBy: 'user2@signoz.io',
 };
 
-export const MOCK_CHANNEL_1: ChannelOption = {
-	name: 'Channel 1',
-	id: '1',
-};
-export const MOCK_CHANNEL_2: ChannelOption = {
-	name: 'Channel 2',
-	id: '2',
-};
-
 export function getUseRoutingPoliciesMockData(
 	overrides?: Partial<UseRoutingPoliciesReturn>,
 ): UseRoutingPoliciesReturn {
@@ -45,8 +35,6 @@ export function getUseRoutingPoliciesMockData(
 		routingPoliciesData: [MOCK_ROUTING_POLICY_1, MOCK_ROUTING_POLICY_2],
 		isLoadingRoutingPolicies: false,
 		isErrorRoutingPolicies: false,
-		channels: [MOCK_CHANNEL_1, MOCK_CHANNEL_2],
-		isLoadingChannels: false,
 		searchTerm: '',
 		setSearchTerm: jest.fn(),
 		isDeleteModalOpen: false,
@@ -62,8 +50,6 @@ export function getUseRoutingPoliciesMockData(
 		handlePolicyDetailsModalOpen: jest.fn(),
 		handlePolicyDetailsModalAction: jest.fn(),
 		isPolicyDetailsModalActionLoading: false,
-		isErrorChannels: false,
-		refreshChannels: jest.fn(),
 		isFetchingRoutingPolicies: false,
 		refetchRoutingPolicies: jest.fn(),
 		...overrides,
