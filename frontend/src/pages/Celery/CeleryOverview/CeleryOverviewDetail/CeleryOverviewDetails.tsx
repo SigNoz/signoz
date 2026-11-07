@@ -14,6 +14,63 @@ import ValueInfo from './ValueInfo';
 
 import './CeleryOverviewDetails.styles.scss';
 
+// Systems whose spans may rely on framework-specific attributes rather than messaging.system.
+const IMPLICIT_MESSAGING_SYSTEMS = new Set<string>(['celery', 'undefined', '']);
+
+// resolveDestinationTagKey selects the OpenTelemetry destination attribute key
+// matching the active queue provider conventions.
+export function resolveDestinationTagKey(details: RowData): string {
+	const system = String(details.messaging_system ?? '')
+		.trim()
+		.toLowerCase();
+	if (system === 'celery') {
+		return 'messaging.destination';
+	}
+	return 'messaging.destination.name';
+}
+
+// buildFilterForDetailEntry converts a single row field from the overview table
+// into a trace query builder TagFilterItem when the field carries a non-empty value.
+function buildFilterForDetailEntry(
+	details: RowData,
+	entry: [string, string | number],
+): TagFilterItem | undefined {
+	const [key, value] = entry;
+	const textValue = String(value ?? '').trim();
+	if (!textValue) {
+		return undefined;
+	}
+
+	switch (key) {
+		case 'service_name':
+			return getFiltersFromKeyValue('service.name', textValue, 'resource');
+		case 'span_name':
+			return getFiltersFromKeyValue('name', textValue, '');
+		case 'messaging_system':
+			return IMPLICIT_MESSAGING_SYSTEMS.has(textValue.toLowerCase())
+				? undefined
+				: getFiltersFromKeyValue('messaging.system', textValue, 'tag');
+		case 'destination':
+			return getFiltersFromKeyValue(
+				resolveDestinationTagKey(details),
+				textValue,
+				'tag',
+			);
+		case 'kind_string':
+			return getFiltersFromKeyValue('kind_string', textValue, '');
+		default:
+			return undefined;
+	}
+}
+
+// buildOverviewDetailFilters constructs the query builder tag filters used by the
+// right-hand detail drawer across Kafka, Celery, AWS SQS, Google Pub/Sub, Kinesis, and Redis.
+export function buildOverviewDetailFilters(details: RowData): TagFilterItem[] {
+	return Object.entries(details)
+		.map((entry) => buildFilterForDetailEntry(details, entry))
+		.filter((item): item is TagFilterItem => item !== undefined);
+}
+
 export default function CeleryOverviewDetails({
 	details,
 	onClose,
@@ -23,34 +80,10 @@ export default function CeleryOverviewDetails({
 }): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
-	const filters: TagFilterItem[] = useMemo(() => {
-		const keyValues = Object.entries(details).map(([key, value]) => {
-			switch (key) {
-				case 'service_name':
-					return getFiltersFromKeyValue('service.name', value, 'resource');
-				case 'span_name':
-					return getFiltersFromKeyValue('name', value, '');
-				case 'messaging_system':
-					return value === 'celery'
-						? undefined
-						: getFiltersFromKeyValue('messaging.system', value, 'tag');
-				case 'destination':
-					return getFiltersFromKeyValue(
-						details.messaging_system === 'celery'
-							? 'messaging.destination'
-							: 'messaging.destination.name',
-						value,
-						'tag',
-					);
-				case 'kind_string':
-					return getFiltersFromKeyValue('kind_string', value, '');
-				default:
-					return undefined;
-			}
-		});
-
-		return keyValues.filter((item) => item !== undefined) as TagFilterItem[];
-	}, [details]);
+	const filters: TagFilterItem[] = useMemo(
+		() => buildOverviewDetailFilters(details),
+		[details],
+	);
 
 	return (
 		<Drawer
