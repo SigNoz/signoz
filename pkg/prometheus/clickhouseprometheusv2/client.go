@@ -11,6 +11,7 @@ import (
 	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -59,10 +60,15 @@ func (c *client) withContext(ctx context.Context, functionName string) context.C
 	})
 }
 
+var (
+	CodeSeriesBudgetExceeded  = errors.MustNewCode("series_budget_exceeded")
+	CodeSamplesBudgetExceeded = errors.MustNewCode("samples_budget_exceeded")
+)
+
 // budgetSettings caps the result server-side; 'throw' refuses the query
 // instead of silently truncating the result.
 func budgetSettings(maxRows int64) string {
-	return fmt.Sprintf(" SETTINGS max_result_rows = %d, result_overflow_mode = 'throw'", maxRows)
+	return fmt.Sprintf(" SETTINGS max_result_rows = %s, result_overflow_mode = 'throw'", clickhousesql.Literal(maxRows))
 }
 
 // budgetExceeded reports whether err is ClickHouse refusing a query over its
@@ -75,7 +81,7 @@ func budgetExceeded(err error) bool {
 func (c *client) seriesError(err error) error {
 	if budgetExceeded(err) {
 		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
+			CodeSeriesBudgetExceeded,
 			"promql selector matched more than %d series; narrow the label matchers",
 			c.cfg.MaxFetchedSeries,
 		)
@@ -86,7 +92,7 @@ func (c *client) seriesError(err error) error {
 func (c *client) samplesError(err error) error {
 	if budgetExceeded(err) {
 		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
+			CodeSamplesBudgetExceeded,
 			"promql query would fetch more than %d samples; narrow the selector or time range",
 			c.cfg.MaxFetchedSamples,
 		)

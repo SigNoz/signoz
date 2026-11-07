@@ -311,7 +311,9 @@ The engine path enforces fetch budgets in ClickHouse
 `::max_fetched_samples`; 0 disables). The series lookup and the samples
 query carry `max_result_rows` with `result_overflow_mode = 'throw'`, so an
 over-budget query stops in the database instead of streaming into the
-service. The client maps the refusal (`TOO_MANY_ROWS_OR_BYTES`) to a typed
+service. The caps are per statement, not per PromQL query: a query runs one
+samples statement per selector, so a query with N selectors can fetch up to
+N times the samples cap. The client maps the refusal (`TOO_MANY_ROWS_OR_BYTES`) to a typed
 invalid-input error. The error pierces the
 engine's `promql.ErrStorage` wrapper (`prometheus.TypedStorageError`), so
 the APIs report a user error, not an internal one. Transpiled statements

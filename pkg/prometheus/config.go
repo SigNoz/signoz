@@ -18,8 +18,10 @@ type ClickhouseV2Config struct {
 	// the cap.
 	MaxFetchedSeries int `mapstructure:"max_fetched_series"`
 
-	// MaxFetchedSamples caps the samples one engine-path query may fetch;
-	// 0 disables the cap.
+	// MaxFetchedSamples caps the samples one samples statement may fetch;
+	// 0 disables the cap. The cap is per statement: a query runs one
+	// statement per selector, so a query with N selectors can fetch up to
+	// N times this cap.
 	MaxFetchedSamples int64 `mapstructure:"max_fetched_samples"`
 }
 
