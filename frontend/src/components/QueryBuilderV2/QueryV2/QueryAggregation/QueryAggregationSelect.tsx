@@ -1,7 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
 import {
 	autocompletion,
 	closeCompletion,
@@ -24,14 +23,19 @@ import CodeMirror, {
 	ViewUpdate,
 } from '@uiw/react-codemirror';
 import { Button, Popover, Tooltip } from 'antd';
-import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { QueryBuilderKeys } from 'constants/queryBuilder';
+import {
+	TelemetrytypesFieldContextDTO,
+	TelemetrytypesFieldDataTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Info, TriangleAlert } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { FieldDataType } from 'types/api/v5/queryRange';
-import { TracesAggregatorOperator } from 'types/common/queryBuilder';
+import {
+	DATA_SOURCE_TO_SIGNAL,
+	TracesAggregatorOperator,
+} from 'types/common/queryBuilder';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
 
@@ -40,6 +44,12 @@ import './QueryAggregation.styles.scss';
 const chipDecoration = Decoration.mark({
 	class: 'chip-decorator',
 });
+
+const OPERATORS_WITHOUT_DATA_TYPE: string[] = [
+	TracesAggregatorOperator.COUNT,
+	TracesAggregatorOperator.COUNT_DISTINCT,
+	TracesAggregatorOperator.RATE,
+];
 
 const operatorArgMeta: Record<
 	string,
@@ -310,37 +320,40 @@ function QueryAggregationSelect({
 	// Find function context for fetching suggestions
 	const functionContextForFetch = getFunctionContextAtCursor(input, cursorPos);
 
-	const { data: aggregateAttributeData, isLoading: isLoadingFields } = useQuery(
-		[
-			QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
-			functionContextForFetch,
-			queryData.dataSource,
-		],
-		() => {
-			const operatorsWithoutDataType: (string | undefined)[] = [
-				TracesAggregatorOperator.COUNT,
-				TracesAggregatorOperator.COUNT_DISTINCT,
-				TracesAggregatorOperator.RATE,
-			];
-
-			const fieldDataType: FieldDataType | undefined =
-				functionContextForFetch &&
-				operatorsWithoutDataType.includes(functionContextForFetch)
-					? undefined
-					: 'number';
-
-			return getKeySuggestions({
-				signal: queryData.dataSource,
-				searchText: '',
-				fieldDataType,
-			});
-		},
-		{
-			enabled:
-				!!functionContextForFetch &&
-				!!operatorArgMeta[functionContextForFetch]?.acceptsArgs,
-		},
+	const numericKeysOnly = !(
+		functionContextForFetch &&
+		OPERATORS_WITHOUT_DATA_TYPE.includes(functionContextForFetch)
 	);
+	// A number filter drops the float64 trace aggregates, so AI queries fetch them separately.
+	const fetchesTraceAggregates =
+		numericKeysOnly && queryData.builderQueryType === 'builder_ai_query';
+	const fetchesFieldKeys =
+		!!functionContextForFetch &&
+		!!operatorArgMeta[functionContextForFetch]?.acceptsArgs;
+	const keysSignal = DATA_SOURCE_TO_SIGNAL[queryData.dataSource];
+
+	const { data: fieldKeys, isLoading: isLoadingKeys } = useFieldKeysSuggestion(
+		{
+			signal: keysSignal,
+			searchText: '',
+			fieldDataType: numericKeysOnly
+				? TelemetrytypesFieldDataTypeDTO.number
+				: undefined,
+		},
+		queryData.builderQueryType,
+		{ enabled: fetchesFieldKeys },
+	);
+	const { data: traceAggregateKeys, isLoading: isLoadingTraceAggregates } =
+		useFieldKeysSuggestion(
+			{
+				signal: keysSignal,
+				searchText: '',
+				fieldContext: TelemetrytypesFieldContextDTO.trace,
+			},
+			queryData.builderQueryType,
+			{ enabled: fetchesFieldKeys && fetchesTraceAggregates },
+		);
+	const isLoadingFields = isLoadingKeys || isLoadingTraceAggregates;
 
 	// Memoized chipPlugin that highlights valid function calls like count(), max(arg), min(arg)
 	const chipPlugin = useMemo(
@@ -427,48 +440,45 @@ function QueryAggregationSelect({
 		}),
 	);
 
-	// Memoize field suggestions from API (no filtering here)
+	// Memoize field suggestions from API (no search filtering here)
 	const fieldSuggestions = useMemo(
 		() =>
-			Object.keys(aggregateAttributeData?.data.data.keys || {}).flatMap((key) => {
-				const attributeKeys = aggregateAttributeData?.data.data.keys[key];
-				if (!attributeKeys) {
-					return [];
-				}
+			[
+				...(fieldKeys ?? []),
+				...(fetchesTraceAggregates ? (traceAggregateKeys ?? []) : []),
+			].map((key) => ({
+				// The backend reads trace.-prefixed columns as per-trace aggregates.
+				label: key.fieldContext === 'trace' ? `trace.${key.name}` : key.name,
+				type: 'variable',
+				info: key.fieldDataType,
+				apply: (
+					view: EditorView,
+					completion: Completion,
+					from: number,
+					to: number,
+				): void => {
+					const text = view.state.sliceDoc(0, from);
+					const funcName = getFunctionContextAtCursor(text, from);
+					const multiple = funcName ? operatorArgMeta[funcName]?.multiple : false;
 
-				return attributeKeys.map((attributeKey) => ({
-					label: attributeKey.name,
-					type: 'variable',
-					info: attributeKey.fieldDataType,
-					apply: (
-						view: EditorView,
-						completion: Completion,
-						from: number,
-						to: number,
-					): void => {
-						const text = view.state.sliceDoc(0, from);
-						const funcName = getFunctionContextAtCursor(text, from);
-						const multiple = funcName ? operatorArgMeta[funcName]?.multiple : false;
+					// Insert the selected key followed by either a comma or closing parenthesis
+					const insertText = multiple
+						? `${completion.label},`
+						: `${completion.label}) `;
+					const cursorPos = from + insertText.length; // Use insertText.length instead of hardcoded values
 
-						// Insert the selected key followed by either a comma or closing parenthesis
-						const insertText = multiple
-							? `${completion.label},`
-							: `${completion.label}) `;
-						const cursorPos = from + insertText.length; // Use insertText.length instead of hardcoded values
+					view.dispatch({
+						changes: { from, to, insert: insertText },
+						selection: { anchor: cursorPos },
+					});
 
-						view.dispatch({
-							changes: { from, to, insert: insertText },
-							selection: { anchor: cursorPos },
-						});
-
-						// Trigger next suggestions after a small delay
-						setTimeout(() => {
-							safeStartCompletion();
-						}, 50);
-					},
-				}));
-			}) || [],
-		[aggregateAttributeData, safeStartCompletion],
+					// Trigger next suggestions after a small delay
+					setTimeout(() => {
+						safeStartCompletion();
+					}, 50);
+				},
+			})),
+		[fieldKeys, traceAggregateKeys, fetchesTraceAggregates, safeStartCompletion],
 	);
 
 	const aggregatorAutocomplete = useMemo(
