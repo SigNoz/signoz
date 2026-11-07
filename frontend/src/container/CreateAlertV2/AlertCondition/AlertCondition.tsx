@@ -2,7 +2,6 @@ import { ReactNode } from 'react';
 import { Button, Tooltip } from 'antd';
 import classNames from 'classnames';
 import { Activity, ChartLine } from '@signozhq/icons';
-import { useChannelOptions } from 'hooks/notificationChannels/useChannelOptions';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { useCreateAlertState } from '../context';
@@ -25,13 +24,6 @@ import './styles.scss';
 function AlertCondition(): JSX.Element {
 	const { alertType, setAlertType } = useCreateAlertState();
 	useAnomalyFunctionSync();
-
-	const {
-		data: channels,
-		isLoading: isLoadingChannels,
-		isError: isErrorChannels,
-		refetch: refreshChannels,
-	} = useChannelOptions();
 
 	const isAnomalyDetectionEnabled = useIsAnomalyDetectionAvailable();
 
@@ -111,22 +103,8 @@ function AlertCondition(): JSX.Element {
 					))}
 				</div>
 			</div>
-			{alertType !== AlertTypes.ANOMALY_BASED_ALERT && (
-				<AlertThreshold
-					channels={channels}
-					isLoadingChannels={isLoadingChannels}
-					isErrorChannels={isErrorChannels}
-					refreshChannels={refreshChannels}
-				/>
-			)}
-			{alertType === AlertTypes.ANOMALY_BASED_ALERT && (
-				<AnomalyThreshold
-					channels={channels}
-					isLoadingChannels={isLoadingChannels}
-					isErrorChannels={isErrorChannels}
-					refreshChannels={refreshChannels}
-				/>
-			)}
+			{alertType !== AlertTypes.ANOMALY_BASED_ALERT && <AlertThreshold />}
+			{alertType === AlertTypes.ANOMALY_BASED_ALERT && <AnomalyThreshold />}
 			<div className="condensed-advanced-options-container">
 				<AdvancedOptions />
 			</div>

@@ -24,7 +24,7 @@ import {
 import {
 	alertRuleByIdResponse,
 	ALERT_SCHEMAS,
-	notificationChannelsResponse,
+	notificationChannelsPage,
 	CHANNEL_MAX,
 	FIRST_RULE_NAME,
 	type AlertSchema,
@@ -149,7 +149,9 @@ export const alertHistoryMocks = defineStoryMocks({
 
 		rest.get(
 			'http://localhost/api/v2/notification_channels',
-			response.json(() => notificationChannelsResponse(CHANNEL_MAX)),
+			response.json((req) =>
+				notificationChannelsPage(CHANNEL_MAX, req.url.searchParams),
+			),
 		),
 	],
 	config: () => ({

@@ -1,3 +1,8 @@
+import {
+	AlertmanagertypesChannelKindDTO,
+	ListNotificationChannels200,
+} from 'api/generated/services/sigNoz.schemas';
+
 export const editAlertChannelInitialValue = {
 	api_url:
 		'https://discord.com/api/webhooks/dummy_webhook_id/dummy_webhook_token/slack',
@@ -58,6 +63,25 @@ export const notificationChannelsV2 = [
 		updatedAt: '2024-06-28T11:37:14.841184399Z',
 	},
 ];
+
+/** A v2 list page with one channel per display name. */
+export const notificationChannelsListResponse = (
+	displayNames: string[],
+	total = displayNames.length,
+): ListNotificationChannels200 => ({
+	status: 'success',
+	data: {
+		channels: displayNames.map((displayName, index) => ({
+			id: `channel-${index}`,
+			name: displayName.toLowerCase(),
+			displayName,
+			kind: AlertmanagertypesChannelKindDTO.slack,
+			createdAt: '2024-02-03T04:45:19.239344617Z',
+			updatedAt: '2024-06-28T11:37:14.841184399Z',
+		})),
+		total,
+	},
+});
 
 export const notificationChannelV2 = {
 	id: '3',

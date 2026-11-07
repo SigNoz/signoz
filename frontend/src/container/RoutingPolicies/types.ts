@@ -1,6 +1,5 @@
 import type { AlertmanagertypesGettableRoutePolicyDTO } from 'api/generated/services/sigNoz.schemas';
 import type { TableColumnDef } from 'components/TanStackTableView';
-import type { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 export type RoutingPolicy = AlertmanagertypesGettableRoutePolicyDTO;
 
@@ -44,12 +43,8 @@ export interface RoutingPolicyDetailsProps {
 	routingPolicy: RoutingPolicy | null;
 	closeModal: () => void;
 	mode: PolicyDetailsModalMode;
-	channels: ChannelOption[];
-	isErrorChannels: boolean;
-	isLoadingChannels: boolean;
 	handlePolicyDetailsModalAction: HandlePolicyDetailsModalAction;
 	isPolicyDetailsModalActionLoading: boolean;
-	refreshChannels: () => void;
 }
 
 export interface DeleteRoutingPolicyProps {
@@ -67,11 +62,6 @@ export interface UseRoutingPoliciesReturn {
 	isFetchingRoutingPolicies: boolean;
 	isErrorRoutingPolicies: boolean;
 	refetchRoutingPolicies: () => void;
-	// Channels
-	channels: ChannelOption[];
-	isLoadingChannels: boolean;
-	isErrorChannels: boolean;
-	refreshChannels: () => void;
 	// Search
 	searchTerm: string;
 	setSearchTerm: (searchTerm: string) => void;

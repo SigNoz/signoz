@@ -7,7 +7,6 @@ import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolici
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useCreateRoutingPolicy } from 'hooks/routingPolicies/useCreateRoutingPolicy';
 import { useDeleteRoutingPolicy } from 'hooks/routingPolicies/useDeleteRoutingPolicy';
-import { useChannelOptions } from 'hooks/notificationChannels/useChannelOptions';
 import { useGetRoutingPolicies } from 'hooks/routingPolicies/useGetRoutingPolicies';
 import { useUpdateRoutingPolicy } from 'hooks/routingPolicies/useUpdateRoutingPolicy';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -92,18 +91,6 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 				routingPolicy.description?.toLowerCase().includes(searchTerm.toLowerCase()),
 		);
 	}, [routingPolicies, searchTerm]);
-
-	// Channels list
-	const {
-		data: channels,
-		isLoading: isLoadingChannels,
-		isError: isErrorChannels,
-		refetch: refetchChannels,
-	} = useChannelOptions();
-
-	const refreshChannels = (): void => {
-		void refetchChannels();
-	};
 
 	// Handlers
 	const handlePolicyDetailsModalOpen = useCallback(
@@ -243,11 +230,6 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 		isFetchingRoutingPolicies,
 		isErrorRoutingPolicies,
 		refetchRoutingPolicies,
-		// Channels
-		channels,
-		isLoadingChannels,
-		isErrorChannels,
-		refreshChannels,
 		// Search
 		searchTerm,
 		setSearchTerm: handleSearch,
