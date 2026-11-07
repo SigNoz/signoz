@@ -164,6 +164,28 @@ func TestStatementBuilder(t *testing.T) {
 				Args:  []any{"service_account", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
+		// List: the next page of failed actions continues strictly after the cursor row
+		{
+			name:        "ListStartAfterCursorRow",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Source: telemetrytypes.SourceAudit,
+				Filter: &qbtypes.Filter{
+					Expression: "signoz.audit.outcome = 'failure'",
+				},
+				Order: []qbtypes.OrderBy{
+					{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp"}}, Direction: qbtypes.OrderDirectionDesc},
+					{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "id"}}, Direction: qbtypes.OrderDirectionDesc},
+				},
+				Limit:      2,
+				StartAfter: &qbtypes.RawRowKey{TimeUnixNano: 1747983000000000500, ID: "019a-cursor-row"},
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, resource, scope_string FROM signoz_audit.distributed_logs WHERE (`attribute_string_signoz$$audit$$outcome` = ? AND `attribute_string_signoz$$audit$$outcome_exists` = true) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (timestamp < ? OR (timestamp = ? AND id < ?)) ORDER BY timestamp desc, id desc LIMIT ?",
+				Args:  []any{"failure", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), "1747983000000000500", "1747983000000000500", "019a-cursor-row", 2},
+			},
+		},
 		// Scalar: alert — count forbidden errors (outcome + action AND)
 		{
 			name:        "ScalarCountByOutcomeAndAction",

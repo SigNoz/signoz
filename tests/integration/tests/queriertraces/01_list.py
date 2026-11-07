@@ -1,3 +1,4 @@
+import base64
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -915,6 +916,139 @@ def test_traces_list_pagination(
     assert response.status_code == HTTPStatus.OK
     rows = get_rows(response)
     assert [row["data"]["span_id"] for row in rows] == expected_ids
+
+
+@pytest.mark.parametrize("direction", ["desc", "asc"])
+@pytest.mark.parametrize("order", [["timestamp"], ["timestamp", "span_id"]], ids=["timestamp", "timestamp_span_id"])
+def test_traces_list_cursor_pages_every_row_once(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    direction: str,
+    order: list[str],
+) -> None:
+    """
+    Setup:
+    7 spans: one alone in its millisecond at each end, 5 inside one millisecond,
+    3 of them at the same instant.
+
+    Tests:
+    Paging by nextCursor with limit 2 returns every span once, ordered by
+    timestamp then span_id, although page boundaries fall inside the shared
+    millisecond and inside the shared instant. An order of timestamp alone and
+    an explicit order of timestamp then span_id page the same way.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    shared = now - timedelta(seconds=5) + timedelta(microseconds=300)
+    instants = [
+        now - timedelta(seconds=6),
+        shared,
+        shared + timedelta(microseconds=1),
+        shared + timedelta(microseconds=2),
+        shared + timedelta(microseconds=2),
+        shared + timedelta(microseconds=2),
+        now - timedelta(seconds=4),
+    ]
+    spans = [
+        Traces(
+            timestamp=instant,
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            name=f"span-{i}",
+            resources={"service.name": "cursor-service"},
+        )
+        for i, instant in enumerate(instants)
+    ]
+    insert_traces(spans)
+    expected = [span.span_id for span in sorted(spans, key=lambda span: (span.timestamp, span.span_id), reverse=direction == "desc")]
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    seen: list[str] = []
+    cursor = None
+    for _ in range(len(spans) + 1):
+        response = make_query_request(
+            signoz,
+            token,
+            start_ms=int((now - timedelta(minutes=1)).timestamp() * 1000),
+            end_ms=int((now + timedelta(seconds=1)).timestamp() * 1000),
+            request_type=RequestType.RAW,
+            queries=[
+                BuilderQuery(
+                    signal="traces",
+                    limit=2,
+                    cursor=cursor,
+                    filter_expression="service.name = 'cursor-service'",
+                    order=[OrderBy(TelemetryFieldKey(name), direction) for name in order],
+                ).to_dict()
+            ],
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        seen += [row["data"]["span_id"] for row in get_rows(response)]
+        cursor = response.json()["data"]["data"]["results"][0].get("nextCursor")
+        if not cursor:
+            break
+
+    assert seen == expected
+
+
+@pytest.mark.parametrize(
+    "direction,boundary,expected",
+    [
+        pytest.param("desc", 2, [1, 0], id="desc"),
+        pytest.param("asc", 1, [2, 3], id="asc"),
+    ],
+)
+def test_traces_list_millisecond_cursor_still_pages(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    direction: str,
+    boundary: int,
+    expected: list[int],
+) -> None:
+    """
+    Setup:
+    4 spans 10 ms apart.
+
+    Tests:
+    A cursor in the earlier format, the base64 of a millisecond, still continues
+    from that millisecond as it did, so a page a client holds before an upgrade
+    keeps working.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    spans = [
+        Traces(
+            timestamp=now - timedelta(seconds=5) + timedelta(milliseconds=10 * i),
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            name=f"span-{i}",
+            resources={"service.name": "legacy-cursor-service"},
+        )
+        for i in range(4)
+    ]
+    insert_traces(spans)
+    cursor = base64.b64encode(str(int(spans[boundary].timestamp.timestamp() * 1000)).encode()).decode()
+
+    response = make_query_request(
+        signoz,
+        get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD),
+        start_ms=int((now - timedelta(minutes=1)).timestamp() * 1000),
+        end_ms=int((now + timedelta(seconds=1)).timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[
+            BuilderQuery(
+                signal="traces",
+                limit=10,
+                cursor=cursor,
+                filter_expression="service.name = 'legacy-cursor-service'",
+                order=[OrderBy(TelemetryFieldKey("timestamp"), direction)],
+            ).to_dict()
+        ],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert [row["data"]["span_id"] for row in get_rows(response)] == [spans[i].span_id for i in expected]
 
 
 # ============================================================================
