@@ -120,23 +120,25 @@ export function formatTime(seconds: number): string {
 		return '-';
 	}
 
-	const days = seconds / 86400;
+	// Compare the rounded value, so 59.96s reads "1.0m" and not "60.0s".
+	const roundsBelow = (value: number, limit: number): boolean =>
+		Number(value.toFixed(1)) < limit;
 
-	if (days >= 1) {
-		return `${days.toFixed(1)}d`;
-	}
-
-	const hours = seconds / 3600;
-	if (hours >= 1) {
-		return `${hours.toFixed(1)}h`;
+	if (roundsBelow(seconds, 60)) {
+		return `${seconds.toFixed(1)}s`;
 	}
 
 	const minutes = seconds / 60;
-	if (minutes >= 1) {
+	if (roundsBelow(minutes, 60)) {
 		return `${minutes.toFixed(1)}m`;
 	}
 
-	return `${seconds.toFixed(1)}s`;
+	const hours = seconds / 3600;
+	if (roundsBelow(hours, 24)) {
+		return `${hours.toFixed(1)}h`;
+	}
+
+	return `${(seconds / 86400).toFixed(1)}d`;
 }
 
 export const nanoToMilli = (nanoseconds: number): number =>
