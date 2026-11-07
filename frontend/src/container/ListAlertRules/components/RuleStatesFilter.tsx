@@ -1,10 +1,9 @@
-import { useCallback } from 'react';
-import { ComboboxSimple, type ComboboxSimpleItem } from '@signozhq/ui/combobox';
 import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
+import MultiSelectFilter, {
+	type MultiSelectFilterOption,
+} from 'components/ListFilter/FilterZone/MultiSelectFilter';
 
-import styles from './RuleStatesFilter.module.scss';
-
-const STATE_ITEMS: ComboboxSimpleItem[] = [
+const STATE_OPTIONS: MultiSelectFilterOption[] = [
 	{ value: RuletypesAlertStateDTO.firing, label: 'Firing' },
 	{ value: RuletypesAlertStateDTO.pending, label: 'Pending' },
 	{ value: RuletypesAlertStateDTO.recovering, label: 'Recovering' },
@@ -22,26 +21,13 @@ function RuleStatesFilter({
 	states,
 	onChange,
 }: RuleStatesFilterProps): JSX.Element {
-	const handleChange = useCallback(
-		(values: unknown): void => {
-			if (Array.isArray(values)) {
-				onChange(values as string[]);
-			}
-		},
-		[onChange],
-	);
-
 	return (
-		<ComboboxSimple
-			className={styles.statesSelect}
-			multiple
+		<MultiSelectFilter
 			value={states}
-			onChange={handleChange}
-			placeholder="Filter by state"
-			inputPlaceholder="Select one or more"
-			items={STATE_ITEMS}
-			maxDisplayedPills={2}
+			options={STATE_OPTIONS}
+			placeholder="State"
 			testId="alert-rules-filter-states"
+			onChange={onChange}
 		/>
 	);
 }
