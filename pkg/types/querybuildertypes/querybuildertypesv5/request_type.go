@@ -39,7 +39,8 @@ var (
 	RequestTypeRawStream = RequestType{valuer.NewString("raw_stream")}
 	// [][]any, Specialized SQL result set, paginated.
 	RequestTypeTrace = RequestType{valuer.NewString("trace")}
-	// []Bucket (struct{Lower,Upper,Count float64}), example: histogram.
+	// DistributionData: a heatmap summed over its steps, one set of counts per
+	// group against the aggregation's bucket upper bounds, example: histogram.
 	RequestTypeDistribution = RequestType{valuer.NewString("distribution")}
 	// TimeSeriesData carrying one count per histogram bucket at each timestamp,
 	// with the shared bucket upper bounds on the aggregation's meta.
@@ -55,6 +56,14 @@ func (r RequestType) IsAggregation() bool {
 	return r == RequestTypeTimeSeries || r == RequestTypeScalar || r == RequestTypeDistribution || r == RequestTypeHeatmap
 }
 
+func (requestType RequestType) CountsIntoBuckets() bool {
+	return requestType == RequestTypeHeatmap || requestType == RequestTypeDistribution
+}
+
+func (requestType RequestType) IsBuiltFromTimeSeries() bool {
+	return requestType == RequestTypeTimeSeries || requestType.CountsIntoBuckets()
+}
+
 // Enum implements jsonschema.Enum; returns the acceptable values for RequestType.
 func (RequestType) Enum() []any {
 	return []any{
@@ -64,6 +73,6 @@ func (RequestType) Enum() []any {
 		RequestTypeRawStream,
 		RequestTypeTrace,
 		RequestTypeHeatmap,
-		// RequestTypeDistribution,
+		RequestTypeDistribution,
 	}
 }

@@ -394,6 +394,27 @@ describe('TraceDetailsHeader – tabs', () => {
 		expect(screen.getByText(metadataText)).toBeInTheDocument();
 	});
 
+	it('shows the AI dot on the Thread tab only when the summary has an AI block', () => {
+		renderHeader();
+		expect(
+			screen.queryByTestId('trace-details-tab-thread-ai-dot'),
+		).not.toBeInTheDocument();
+
+		jest.mocked(useTraceSummary).mockReturnValue({
+			data: {
+				...SUMMARY,
+				ai: {
+					tokens: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, reasoning: 0 },
+				},
+			},
+			isLoading: false,
+		});
+		renderHeader();
+		expect(
+			screen.getByTestId('trace-details-tab-thread-ai-dot'),
+		).toBeInTheDocument();
+	});
+
 	it('clears the filter result when switching to the Thread tab', async () => {
 		const user = userEvent.setup({ delay: null });
 		renderHeader();

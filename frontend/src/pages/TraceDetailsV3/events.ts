@@ -14,6 +14,7 @@ export enum TraceDetailEvents {
 	SpanPercentileAttributeChanged = 'Trace Detail: Span percentile attribute changed',
 	SpanDetailsOpened = 'Trace Detail: Span details opened',
 	DetailsTabChanged = 'Trace Detail: Details tab changed',
+	ThreadEmptyWithAiSummary = 'Trace Detail: Thread empty with AI summary',
 }
 
 export enum TraceDetailEventKeys {
@@ -48,6 +49,16 @@ export enum TraceDetailEventKeys {
 	Selected = 'selected',
 	// Data loaded / span details opened: which tab the user is on
 	DetailsTab = 'detailsTab',
+	// Thread empty with AI summary (reuses SpanId, DetailsTab, TotalSpansCount, TraceDurationMs, HadErrors)
+	RootServiceName = 'rootServiceName',
+	RootServiceEntryPoint = 'rootServiceEntryPoint',
+	HasMissingSpans = 'hasMissingSpans',
+	InputTokens = 'inputTokens',
+	OutputTokens = 'outputTokens',
+	CacheReadTokens = 'cacheReadTokens',
+	CacheWriteTokens = 'cacheWriteTokens',
+	ReasoningTokens = 'reasoningTokens',
+	TotalCost = 'totalCost',
 }
 
 export type TraceDetailView = 'v2' | 'v3';

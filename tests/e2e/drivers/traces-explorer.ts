@@ -74,8 +74,12 @@ export interface TracesExplorer {
 	/** Re-run the query until `key`'s row renders: the list fetches once. */
 	waitForRow(key: string): Promise<void>;
 	cell(rowKey: string, field: string): Locator;
-	/** Click a list row and wait for its trace-details URL. */
-	openRow(rowKey: string, traceId: string): Promise<void>;
+	/** Click a list row and wait for its span drawer. */
+	openSpanDrawer(rowKey: string): Promise<void>;
+	spanDrawer(): Locator;
+	spanDrawerTraceId(): Locator;
+	/** "View full trace" in the drawer, replayed on this page. */
+	openFullTrace(traceId: string, spanId: string): Promise<void>;
 	/** A waterfall row on the trace-details page. */
 	traceDetailsRow(spanId: string): Locator;
 	timeSeriesGraph(): Locator;
@@ -197,11 +201,27 @@ export function tracesExplorerDriver(page: Page): TracesExplorer {
 
 		cell: (rowKey, field) => explorer.row(rowKey).getByTestId(field).first(),
 
-		openRow: async (rowKey, traceId) => {
+		openSpanDrawer: async (rowKey) => {
 			await explorer.cell(rowKey, 'name').click();
-			await expect(page).toHaveURL(
-				new RegExp(`/trace/${traceId}\\?.*spanId=${rowKey}`),
-			);
+			await expect(explorer.spanDrawer()).toBeVisible();
+		},
+
+		spanDrawer: () => page.getByTestId('span-details-drawer'),
+
+		spanDrawerTraceId: () =>
+			explorer.spanDrawer().getByTestId('span-details-trace-id'),
+
+		openFullTrace: async (traceId, spanId) => {
+			// The button opens trace details in a new tab; replay its URL here so
+			// the driver stays on this page.
+			const [tab] = await Promise.all([
+				page.context().waitForEvent('page'),
+				page.getByTestId('span-drawer-view-full-trace').click(),
+			]);
+			await tab.waitForURL(new RegExp(`/trace/${traceId}\\?.*spanId=${spanId}`));
+			const { pathname, search } = new URL(tab.url());
+			await tab.close();
+			await page.goto(`${pathname}${search}`);
 		},
 
 		traceDetailsRow: (spanId) => page.getByTestId(`cell-0-${spanId}`),
