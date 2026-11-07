@@ -27,12 +27,14 @@ import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/q
 import {
 	currentDashboardDocument,
 	cyclicVariablesDashboardResponse,
+	DURATION_CHOICES,
 	patchDashboardDocument,
 	PANEL_IDS,
 	seedDashboardDocument,
 	STORY_DASHBOARD_ID,
 	VARIABLE_KINDS,
 	type DashboardArgs,
+	type DurationChoice,
 	type VariableKind,
 } from './__story_mockdata__/dashboard';
 import { publicDashboardMeta } from './__story_mockdata__/publicDashboard';
@@ -149,6 +151,13 @@ export const dashboardMocks = defineStoryMocks({
 			options: VARIABLE_KINDS,
 			value: [...VARIABLE_KINDS],
 		}),
+		duration: choiceControl<DurationChoice>('Default time range', {
+			group: LAYOUT,
+			description:
+				"The dashboard's `spec.duration`, which the time picker opens on when the URL carries no time. `unset` leaves the 30 minute default, `90m` is a window the settings list does not offer, `1s` opens as 1m and `0m` is not applied. The JSON editor rejects the last two.",
+			options: DURATION_CHOICES,
+			value: 'unset',
+		}),
 		variableValues: countControl('Variable options', {
 			group: DATA,
 			description: 'Values the query-backed `service` variable resolves to.',
@@ -224,6 +233,7 @@ export const dashboardMocks = defineStoryMocks({
 			sectioned: values.sectioned,
 			variables: values.variables,
 			locked: values.locked,
+			duration: values.duration,
 		};
 
 		return [
@@ -363,6 +373,7 @@ export const dashboardMocks = defineStoryMocks({
 			sectioned: values.sectioned,
 			variables: values.variables,
 			locked: values.locked,
+			duration: values.duration,
 		});
 		// The sync mode persists per dashboard, so one story's pick would open the
 		// next one on it.
@@ -440,9 +451,9 @@ export const clickAction = async (
 	const item = await screen.findByText(label);
 	const menuItem = item.closest('[role="menuitem"]') ?? item;
 
-	await waitFor(() => {
-		expect(menuItem).not.toHaveAttribute('aria-disabled', 'true');
-		expect(menuItem).not.toHaveAttribute('data-disabled');
+	await waitFor(async () => {
+		await expect(menuItem).not.toHaveAttribute('aria-disabled', 'true');
+		await expect(menuItem).not.toHaveAttribute('data-disabled');
 	});
 	await userEvent.click(menuItem);
 };
@@ -545,6 +556,18 @@ export const openSettings = async (
 	}
 
 	return screen.findByRole('tabpanel');
+};
+
+export const clickWhenEnabled = async (testId: string): Promise<void> => {
+	await waitFor(
+		() =>
+			expect(screen.getByTestId(testId)).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
+		PAGE_LOAD,
+	);
+	await userEvent.click(screen.getByTestId(testId));
 };
 
 export const variableRow = (name: string): Promise<HTMLElement> =>

@@ -95,6 +95,54 @@ describe('useJsonEditor', () => {
 		expect(result.current.isDirty).toBe(true);
 	});
 
+	const withDuration = (duration: unknown): string =>
+		JSON.stringify({ ...redacted, spec: { ...redacted.spec, duration } });
+
+	it.each(['1s', '90s', '500ms', '0m', 'abc', 30])(
+		'rejects a spec.duration of %p the time picker cannot open',
+		(duration) => {
+			const { result } = renderHook(() =>
+				useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
+			);
+
+			act(() => result.current.setDraft(withDuration(duration)));
+
+			expect(result.current.validity).toStrictEqual({
+				valid: false,
+				lineCount: 1,
+				errorLine: 1,
+				message:
+					'"spec.duration" must be a whole number of minutes above zero, like 30m, 6h or 1d. The time picker has no seconds.',
+			});
+		},
+	);
+
+	it.each([
+		['spec.duration', '{\n  "spec": {\n    "duration": "1s"\n  }\n}', 3],
+		['image', '{\n  "spec": {},\n  "image": "https://x.io/a.png"\n}', 3],
+	])('points at the line of an invalid %s', (_field, draft, errorLine) => {
+		const { result } = renderHook(() =>
+			useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
+		);
+
+		act(() => result.current.setDraft(draft));
+
+		expect(result.current.validity.errorLine).toBe(errorLine);
+	});
+
+	it.each(['', '30m', '1h30m', '60s', '1y'])(
+		'accepts a spec.duration of %p',
+		(duration) => {
+			const { result } = renderHook(() =>
+				useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),
+			);
+
+			act(() => result.current.setDraft(withDuration(duration)));
+
+			expect(result.current.validity.valid).toBe(true);
+		},
+	);
+
 	it('format() pretty-prints valid JSON and leaves invalid JSON untouched', () => {
 		const { result } = renderHook(() =>
 			useJsonEditor({ dashboard, isOpen: true, onApplied: jest.fn() }),

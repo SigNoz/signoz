@@ -7,7 +7,15 @@ import { screen, userEvent, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { dashboardMocks, openSettings } from '../DashboardPage.stories.mocks';
+import {
+	clickWhenEnabled,
+	dashboardMocks,
+	openSettings,
+} from '../DashboardPage.stories.mocks';
+import {
+	openDefaultTimeRange,
+	showDefaultTimeRange,
+} from '../__story_mockdata__/dashboard.play';
 
 import DashboardPage from '../../DashboardPage';
 
@@ -79,6 +87,23 @@ export const OverviewTooltipSync: Story = {
 };
 
 /**
+ * The Default time range select open: the 30 minute default first, then the
+ * time picker's presets.
+ */
+export const OverviewDefaultTimeRangeOpen: Story = {
+	play: openDefaultTimeRange,
+};
+
+/**
+ * A dashboard stored with `1s`, which no option matches: the select shows it
+ * as an extra entry saying the dashboard opens on 1m instead.
+ */
+export const OverviewDefaultTimeRangeOffList: Story = {
+	args: { duration: '1s' },
+	play: showDefaultTimeRange,
+};
+
+/**
  * The Overview tab's own tooltip: Cross-Panel Sync explains what syncing does
  * and links out to the docs.
  */
@@ -136,7 +161,7 @@ export const PublishedToast: Story = {
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement, args }) => {
 		await openSettings(canvasElement, 'Publish');
-		await userEvent.click(await screen.findByTestId('public-dashboard-publish'));
+		await clickWhenEnabled('public-dashboard-publish');
 		if (args.publicWrite === 'success') {
 			await screen.findByText('Dashboard published successfully');
 		}
@@ -147,7 +172,7 @@ export const PublishedToast: Story = {
 export const PublicUpdatedToast: Story = {
 	play: async ({ canvasElement, args }) => {
 		await openSettings(canvasElement, 'Publish');
-		await userEvent.click(await screen.findByTestId('public-dashboard-update'));
+		await clickWhenEnabled('public-dashboard-update');
 		if (args.publicWrite === 'success') {
 			await screen.findByText('Public dashboard updated successfully');
 		}
@@ -158,9 +183,7 @@ export const PublicUpdatedToast: Story = {
 export const UnpublishedToast: Story = {
 	play: async ({ canvasElement, args }) => {
 		await openSettings(canvasElement, 'Publish');
-		await userEvent.click(
-			await screen.findByTestId('public-dashboard-unpublish'),
-		);
+		await clickWhenEnabled('public-dashboard-unpublish');
 		if (args.publicWrite === 'success') {
 			await screen.findByText('Dashboard unpublished successfully');
 		}

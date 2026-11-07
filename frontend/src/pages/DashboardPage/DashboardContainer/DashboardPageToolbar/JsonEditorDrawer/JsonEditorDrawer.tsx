@@ -107,9 +107,13 @@ function JsonEditorDrawer({
 	} else if (!readOnly && !validity.valid) {
 		applyDisabledReason = 'Fix the JSON errors first';
 	}
-	const validationText = validity.valid
-		? `Valid JSON · ${validity.lineCount} lines`
-		: `Line ${validity.errorLine ?? '?'} · ${validity.message ?? 'Invalid JSON'}`;
+	const errorText = validity.message ?? 'Invalid JSON';
+	let validationText = `Valid JSON · ${validity.lineCount} lines`;
+	if (!validity.valid) {
+		validationText = validity.errorLine
+			? `Line ${validity.errorLine} · ${errorText}`
+			: errorText;
+	}
 	const plural = (n: number): string => (n === 1 ? '' : 's');
 	const danglingWarning =
 		danglingPanelIds.length > 0
@@ -135,15 +139,17 @@ function JsonEditorDrawer({
 			footer={
 				<div className={styles.footer}>
 					<div className={styles.footerStatus}>
-						<Typography.Text
-							className={cx(styles.validation, {
-								[styles.validationValid]: validity.valid,
-								[styles.validationInvalid]: !validity.valid,
-							})}
-							data-testid="json-editor-validation"
-						>
-							{validationText}
-						</Typography.Text>
+						<Tooltip title={validity.valid ? undefined : validationText}>
+							<Typography.Text
+								className={cx(styles.validation, {
+									[styles.validationValid]: validity.valid,
+									[styles.validationInvalid]: !validity.valid,
+								})}
+								data-testid="json-editor-validation"
+							>
+								{validationText}
+							</Typography.Text>
+						</Tooltip>
 						{danglingWarning && (
 							<Tooltip title={danglingPanelIds.join(', ')}>
 								<span
