@@ -253,12 +253,9 @@ export function carryOverListFilters(
 	return extractQueryPairs(expression)
 		.filter((pair) => supported.has(pair.key))
 		.map((pair) => {
-			const start = pair.position.negationStart ?? pair.position.keyStart;
-			const lastValue = pair.valuesPosition?.[pair.valuesPosition.length - 1];
-			const end =
-				lastValue?.end ?? pair.position.valueEnd ?? pair.position.operatorEnd;
+			const end = pair.position.valueEnd ?? pair.position.operatorEnd;
 
-			return expression.slice(start, end + 1).trim();
+			return expression.slice(pair.position.keyStart, end + 1).trim();
 		})
 		.filter(Boolean)
 		.join(' AND ');
