@@ -401,9 +401,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v2/traces/fields", am.ViewAccess(aH.traceFields)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/features", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/health", am.OpenAccess(aH.getHealth)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/version", aH.getVersion).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/features", aH.getFeatureFlags).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/health", aH.getHealth).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/listErrors", am.ViewAccess(aH.listErrors)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/countErrors", am.ViewAccess(aH.countErrors)).Methods(http.MethodPost)
@@ -418,7 +418,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetSourceFilters)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.Signoz.Handlers.QuickFilter.UpdateQuickFilters)).Methods(http.MethodPut)
 
-	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/register", aH.registerUser).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/span_percentile", am.ViewAccess(aH.Signoz.Handlers.SpanPercentile.GetSpanPercentileDetails)).Methods(http.MethodPost)
 

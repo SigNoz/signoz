@@ -38,7 +38,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user/me", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.GetMyUserDeprecated), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/user/me", handler.New(provider.userHandler.GetMyUserDeprecated, handler.OpenAPIDef{
 		ID:                  "GetMyUserDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "Get my user",
@@ -55,7 +55,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/me", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.GetMyUser), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/me", handler.New(provider.userHandler.GetMyUser, handler.OpenAPIDef{
 		ID:                  "GetMyUser",
 		Tags:                []string{"users"},
 		Summary:             "Get my user v2",
@@ -115,7 +115,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/me", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.UpdateMyUser), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/me", handler.New(provider.userHandler.UpdateMyUser, handler.OpenAPIDef{
 		ID:                  "UpdateMyUserV2",
 		Tags:                []string{"users"},
 		Summary:             "Update my user v2",
@@ -281,7 +281,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/reset_password_tokens/verify", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.VerifyResetPasswordToken), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/reset_password_tokens/verify", handler.New(provider.userHandler.VerifyResetPasswordToken, handler.OpenAPIDef{
 		ID:                  "VerifyResetPasswordToken",
 		Tags:                []string{"users"},
 		Summary:             "Verify a reset password token",
@@ -294,11 +294,11 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	}, handler.AllowAnonymous())).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/me/factor_password", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.ChangePassword), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/me/factor_password", handler.New(provider.userHandler.ChangePassword, handler.OpenAPIDef{
 		ID:                  "UpdateMyPassword",
 		Tags:                []string{"users"},
 		Summary:             "Updates my password",
@@ -315,7 +315,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/factor_password/forgot", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.ForgotPassword), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/factor_password/forgot", handler.New(provider.userHandler.ForgotPassword, handler.OpenAPIDef{
 		ID:                  "ForgotPassword",
 		Tags:                []string{"users"},
 		Summary:             "Forgot password",
@@ -328,11 +328,11 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnprocessableEntity},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	}, handler.AllowAnonymous())).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/factor_password/reset", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.ResetPassword), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/factor_password/reset", handler.New(provider.userHandler.ResetPassword, handler.OpenAPIDef{
 		ID:                  "ResetPassword",
 		Tags:                []string{"users"},
 		Summary:             "Reset password",
@@ -345,7 +345,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	}, handler.AllowAnonymous())).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 

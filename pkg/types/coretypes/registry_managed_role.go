@@ -59,14 +59,14 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorAPIKey}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorAPIKey}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorAPIKey}, WildCardSelectorString)},
-		// factor-password — admin can issue and inspect reset tokens; users change their own password via OpenAccess
+		// factor-password — admin can issue and inspect reset tokens; users change their own password through /api/v2/users/me/factor_password, which has no role check
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorPassword}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorPassword}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorPassword}, WildCardSelectorString)},
 		// license — admin only.
 		// Uniform LCRUD shape served by /api/v4/licenses: create = Activate,
 		// update = Refresh, read = Get (includes the key), list, delete (non-cloud
-		// licenses only). GET /api/v4/licenses/active is OpenAccess, so the read
+		// licenses only). GET /api/v4/licenses/active has no role check, so the read
 		// grant is not enforced there.
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},

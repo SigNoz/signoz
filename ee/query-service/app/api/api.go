@@ -65,10 +65,10 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	// note: add ee override methods first
 
 	// routes available only in ee version
-	router.HandleFunc("/api/v1/features", am.OpenAccess(ah.getFeatureFlags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/features", ah.getFeatureFlags).Methods(http.MethodGet)
 
 	// base overrides
-	router.HandleFunc("/api/v1/version", am.OpenAccess(ah.getVersion)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/version", ah.getVersion).Methods(http.MethodGet)
 
 	// v4
 	router.HandleFunc("/api/v4/query_range", am.ViewAccess(ah.queryRangeV4)).Methods(http.MethodPost)

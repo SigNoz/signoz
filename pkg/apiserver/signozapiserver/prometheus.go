@@ -70,6 +70,10 @@ func (h *prometheusOpenAPIHandler) ServeOpenAPI(opCtx openapi.OperationContext) 
 	}
 }
 
+func (h *prometheusOpenAPIHandler) AllowsAnonymous() bool {
+	return false
+}
+
 func (h *prometheusOpenAPIHandler) ResourceDefs() []handler.ResourceDef {
 	return []handler.ResourceDef{handler.TelemetryResourceDef{
 		Verb:      coretypes.VerbRead,

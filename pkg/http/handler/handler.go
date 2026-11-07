@@ -16,28 +16,17 @@ type Handler interface {
 	http.Handler
 	ServeOpenAPI(openapi.OperationContext)
 	ResourceDefs() []ResourceDef
+	AllowsAnonymous() bool
 }
 
 type handler struct {
 	handlerFunc  http.HandlerFunc
 	openAPIDef   OpenAPIDef
 	resourceDefs []ResourceDef
+	anonymous    bool
 }
 
 func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Handler {
-	// Remove duplicate error status codes
-	openAPIDef.ErrorStatusCodes = slices.DeleteFunc(openAPIDef.ErrorStatusCodes, func(statusCode int) bool {
-		return statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden || statusCode == http.StatusInternalServerError
-	})
-
-	// Add internal server error
-	openAPIDef.ErrorStatusCodes = append(openAPIDef.ErrorStatusCodes, http.StatusInternalServerError)
-
-	// Add unauthorized and forbidden status codes
-	if len(openAPIDef.SecuritySchemes) > 0 {
-		openAPIDef.ErrorStatusCodes = append(openAPIDef.ErrorStatusCodes, http.StatusUnauthorized, http.StatusForbidden)
-	}
-
 	handler := &handler{
 		handlerFunc: handlerFunc,
 		openAPIDef:  openAPIDef,
@@ -45,6 +34,22 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Ha
 
 	for _, opt := range opts {
 		opt(handler)
+	}
+
+	// Add internal server error, unauthorized and forbidden status codes
+	statusCodes := []int{http.StatusInternalServerError}
+	if !handler.anonymous {
+		statusCodes = append(statusCodes, http.StatusUnauthorized)
+	}
+
+	if len(handler.openAPIDef.SecuritySchemes) > 0 {
+		statusCodes = append(statusCodes, http.StatusForbidden)
+	}
+
+	for _, statusCode := range statusCodes {
+		if !slices.Contains(handler.openAPIDef.ErrorStatusCodes, statusCode) {
+			handler.openAPIDef.ErrorStatusCodes = append(handler.openAPIDef.ErrorStatusCodes, statusCode)
+		}
 	}
 
 	return handler
@@ -134,4 +139,8 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 
 func (handler *handler) ResourceDefs() []ResourceDef {
 	return handler.resourceDefs
+}
+
+func (handler *handler) AllowsAnonymous() bool {
+	return handler.anonymous
 }

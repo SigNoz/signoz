@@ -22,6 +22,8 @@ func (bespokeOpenAPIHandler) ServeOpenAPI(opCtx openapi.OperationContext) {
 
 func (bespokeOpenAPIHandler) ResourceDefs() []ResourceDef { return nil }
 
+func (bespokeOpenAPIHandler) AllowsAnonymous() bool { return false }
+
 func TestAttachStabilities(t *testing.T) {
 	router := mux.NewRouter()
 	router.Handle("/development", New(func(http.ResponseWriter, *http.Request) {}, OpenAPIDef{ID: "Development", SuccessStatusCode: http.StatusOK, Stability: StabilityDevelopment})).Methods(http.MethodGet)
@@ -70,6 +72,29 @@ func TestAttachStabilities(t *testing.T) {
 		t.Run(testCase.subtestName, func(t *testing.T) {
 			operation := reflector.Spec.Paths.MapOfPathItemValues[testCase.path].MapOfOperationValues[testCase.method]
 			assert.Equal(t, testCase.expectedExtensionValue, operation.MapOfAnything["x-signoz-stability"])
+		})
+	}
+}
+
+func TestNewErrorStatusCodes(t *testing.T) {
+	testCases := []struct {
+		name     string
+		def      OpenAPIDef
+		opts     []Option
+		expected []int
+	}{
+		{name: "Protected_NoSecuritySchemes_AddsUnauthorized", def: OpenAPIDef{}, expected: []int{http.StatusInternalServerError, http.StatusUnauthorized}},
+		{name: "Protected_SecuritySchemes_AddsUnauthorizedAndForbidden", def: OpenAPIDef{SecuritySchemes: []OpenAPISecurityScheme{{Name: "tokenizer"}}}, expected: []int{http.StatusInternalServerError, http.StatusUnauthorized, http.StatusForbidden}},
+		{name: "Protected_DeclaredCodes_NoDuplicates", def: OpenAPIDef{ErrorStatusCodes: []int{http.StatusUnauthorized, http.StatusInternalServerError}}, expected: []int{http.StatusUnauthorized, http.StatusInternalServerError}},
+		{name: "Anonymous_NoUnauthorized", def: OpenAPIDef{ErrorStatusCodes: []int{http.StatusBadRequest}}, opts: []Option{AllowAnonymous()}, expected: []int{http.StatusBadRequest, http.StatusInternalServerError}},
+		{name: "Anonymous_DeclaredUnauthorized_Kept", def: OpenAPIDef{ErrorStatusCodes: []int{http.StatusBadRequest, http.StatusUnauthorized}}, opts: []Option{AllowAnonymous()}, expected: []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			built := New(func(http.ResponseWriter, *http.Request) {}, testCase.def, testCase.opts...).(*handler)
+			assert.Equal(t, testCase.expected, built.openAPIDef.ErrorStatusCodes)
+			assert.Equal(t, len(testCase.opts) > 0, built.AllowsAnonymous())
 		})
 	}
 }

@@ -324,6 +324,7 @@ func newProvider(
 	router.Use(middleware.NewRecovery(settings.Logger()).Wrap)
 	router.Use(middleware.NewOtel("apiserver", providerSettings.MeterProvider, providerSettings.TracerProvider).Wrap)
 	router.Use(middleware.NewIdentN(identNResolver, sharder, settings.Logger()).Wrap)
+	router.Use(middleware.NewAuthN(settings.Logger()).Wrap)
 	router.Use(middleware.NewTimeout(settings.Logger(),
 		config.Timeout.ExcludedRoutes,
 		config.Timeout.Default,

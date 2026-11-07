@@ -208,7 +208,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/services", handler.New(
-		provider.authzMiddleware.OpenAccess(provider.cloudIntegrationHandler.ListServicesMetadata),
+		provider.cloudIntegrationHandler.ListServicesMetadata,
 		handler.OpenAPIDef{
 			ID:                  "ListServicesMetadata",
 			Tags:                []string{"cloudintegration"},
@@ -255,7 +255,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/services/{service_id}", handler.New(
-		provider.authzMiddleware.OpenAccess(provider.cloudIntegrationHandler.GetService),
+		provider.cloudIntegrationHandler.GetService,
 		handler.OpenAPIDef{
 			ID:                  "GetService",
 			Tags:                []string{"cloudintegration"},
