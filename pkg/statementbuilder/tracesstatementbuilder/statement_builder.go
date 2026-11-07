@@ -362,8 +362,9 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 ) (*qbtypes.Statement, error) {
 
 	var (
-		cteFragments []string
-		cteArgs      [][]any
+		cteFragments   []string
+		cteArgs        [][]any
+		columnWarnings []string
 	)
 
 	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
@@ -382,10 +383,11 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
 	for i, field := range query.SelectFields {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, &field, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", expr, selectColumnAlias(i, field.Name))))
 	}
 
@@ -419,10 +421,11 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 
 	// Add order by
 	for _, orderBy := range query.Order {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 		sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(expr), orderBy.Direction.StringValue()))
 	}
 
@@ -445,7 +448,7 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       preparedWhereClause.Warnings,
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
@@ -582,8 +585,9 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 ) (*qbtypes.Statement, error) {
 
 	var (
-		cteFragments []string
-		cteArgs      [][]any
+		cteFragments   []string
+		cteArgs        [][]any
+		columnWarnings []string
 	)
 
 	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
@@ -609,10 +613,11 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
 	for i, gb := range query.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 		fieldAlias := groupByColumnAlias(i, gb.Name)
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
 		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
@@ -621,7 +626,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	// Aggregations
 	allAggChArgs := make([]any, 0)
 	for i, agg := range query.Aggregations {
-		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
+		rewritten, chArgs, aggWarnings, err := b.aggExprRewriter.Rewrite(
 			ctx, orgID, start, end, agg.Expression,
 			uint64(query.StepInterval.Seconds()),
 			keys,
@@ -629,6 +634,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		if err != nil {
 			return nil, err
 		}
+		columnWarnings = append(columnWarnings, aggWarnings...)
 		allAggChArgs = append(allAggChArgs, chArgs...)
 		sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, i))
 	}
@@ -727,7 +733,7 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       preparedWhereClause.Warnings,
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
@@ -748,8 +754,9 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 ) (*qbtypes.Statement, error) {
 
 	var (
-		cteFragments []string
-		cteArgs      [][]any
+		cteFragments   []string
+		cteArgs        [][]any
+		columnWarnings []string
 	)
 
 	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
@@ -773,10 +780,11 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalTraces, nil, start, end)
 	for i, gb := range query.GroupBy {
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 		fieldAlias := groupByColumnAlias(i, gb.Name)
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
 		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
@@ -789,7 +797,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	if len(query.Aggregations) > 0 {
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
-			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
+			rewritten, chArgs, aggWarnings, err := b.aggExprRewriter.Rewrite(
 				ctx, orgID, start, end, aggExpr.Expression,
 				rateInterval,
 				keys,
@@ -797,6 +805,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 			if err != nil {
 				return nil, err
 			}
+			columnWarnings = append(columnWarnings, aggWarnings...)
 			allAggChArgs = append(allAggChArgs, chArgs...)
 			sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, idx))
 		}
@@ -862,7 +871,7 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       preparedWhereClause.Warnings,
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 

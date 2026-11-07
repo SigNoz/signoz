@@ -320,7 +320,8 @@ func (b *StatementBuilder) buildReducedTimeSeriesCTE(
 	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.TimeseriesV4ReducedLocalTableName))
 	sb.Select("fingerprint")
 	for i, g := range query.GroupBy {
-		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		// buildTimeSeriesCTE resolves the same keys and reports their warnings
+		col, _, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -544,10 +545,15 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, tsTable))
 
 	sb.Select("fingerprint")
+	var columnWarnings []string
 	for i, g := range query.GroupBy {
-		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		col, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, nil, err
+		}
+		// the histogram rewrite adds le itself, so its warning is not the caller's
+		if query.Aggregations[0].Type != metrictypes.HistogramType || !isHistogramBucket(g) {
+			columnWarnings = append(columnWarnings, keyWarnings...)
 		}
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", col, GroupByColumnAlias(i, g.Name))))
 	}
@@ -577,7 +583,7 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	// the caller joins this into another builder, which compiles it again
-	return fmt.Sprintf("(%s) AS filtered_time_series", sqlbuilder.Escape(q)), args, preparedWhereClause.Warnings, nil
+	return fmt.Sprintf("(%s) AS filtered_time_series", sqlbuilder.Escape(q)), args, append(preparedWhereClause.Warnings, columnWarnings...), nil
 }
 
 func (b *StatementBuilder) buildTemporalAggregationCTE(
