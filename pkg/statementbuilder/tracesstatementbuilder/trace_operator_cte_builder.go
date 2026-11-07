@@ -852,6 +852,10 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 		sb.Limit(b.operator.Limit)
 	}
 
+	if b.operator.Offset > 0 {
+		sb.Offset(b.operator.Offset)
+	}
+
 	combinedArgs := allAggChArgs
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
@@ -935,6 +939,10 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 
 	if b.operator.Limit > 0 {
 		sb.Limit(b.operator.Limit)
+	}
+
+	if b.operator.Offset > 0 {
+		sb.Offset(b.operator.Offset)
 	}
 
 	combinedArgs := allAggChArgs

@@ -14,25 +14,23 @@ import logEvent from 'api/common/logEvent';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
 import TracesTable from 'container/TracesExplorer/TracesTable/TracesTable';
 import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import { useKeepRowsForSameQuery } from 'container/TracesExplorer/TracesTable/useKeepRowsForSameQuery';
+import { useTracesTablePagination } from 'container/TracesExplorer/TracesTable/useTracesTablePagination';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Pagination } from 'hooks/queryPagination';
-import useUrlQueryData from 'hooks/useUrlQueryData';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import DOCLINKS from 'utils/docLinks';
 
-import TraceExplorerControls from '../Controls';
-import { columns, PER_PAGE_OPTIONS } from './configs';
+import { columns } from './configs';
 
 import styles from './TracesView.module.scss';
 
@@ -59,9 +57,7 @@ function TracesView({
 		minTime,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
-	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
-		QueryParams.pagination,
-	);
+	const pagination = useTracesTablePagination();
 
 	const transformedQuery = useMemo(
 		() => getListViewQuery(stagedQuery || initialQueriesMap.traces),
@@ -76,7 +72,7 @@ function TracesView({
 			minTime,
 			stagedQuery,
 			panelType,
-			paginationQueryData,
+			pagination.request,
 		],
 		[
 			globalSelectedTime,
@@ -84,7 +80,7 @@ function TracesView({
 			minTime,
 			stagedQuery,
 			panelType,
-			paginationQueryData,
+			pagination.request,
 		],
 	);
 
@@ -92,25 +88,27 @@ function TracesView({
 		queryKeyRef.current = queryKey;
 	}
 
-	const { data, isLoading, isFetching, isError, error } = useGetQueryRange(
-		{
-			query: transformedQuery,
-			graphType: panelType || PANEL_TYPES.TRACE,
-			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: globalSelectedTime,
-			params: {
-				dataSource: 'traces',
+	const { data, isLoading, isFetching, isError, error, isPreviousData } =
+		useGetQueryRange(
+			{
+				query: transformedQuery,
+				graphType: panelType || PANEL_TYPES.TRACE,
+				selectedTime: 'GLOBAL_TIME',
+				globalSelectedInterval: globalSelectedTime,
+				params: {
+					dataSource: 'traces',
+				},
+				tableParams: {
+					pagination: pagination.request,
+				},
 			},
-			tableParams: {
-				pagination: paginationQueryData,
+			ENTITY_VERSION_V5,
+			{
+				queryKey,
+				keepPreviousData: true,
+				enabled: !!stagedQuery && panelType === PANEL_TYPES.TRACE,
 			},
-		},
-		ENTITY_VERSION_V5,
-		{
-			queryKey,
-			enabled: !!stagedQuery && panelType === PANEL_TYPES.TRACE,
-		},
-	);
+		);
 
 	useEffect(() => {
 		if (data?.payload) {
@@ -119,7 +117,10 @@ function TracesView({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data?.payload, data?.warning]);
 
-	const responseData = data?.payload?.data?.newResult?.data?.result[0]?.list;
+	const keepRows = useKeepRowsForSameQuery(isPreviousData);
+	const responseData = keepRows
+		? data?.payload?.data?.newResult?.data?.result[0]?.list
+		: undefined;
 
 	const rows = useMemo<TracesTableRow[]>(
 		() =>
@@ -157,17 +158,11 @@ function TracesView({
 					</Typography.Link>
 				</Typography>
 
-				<div className="trace-explorer-controls">
+				<div className={styles.controls}>
 					{headerActions}
 					<DownloadOptionsMenu
 						dataSource={DataSource.TRACES}
 						panelType={PANEL_TYPES.TRACE}
-					/>
-
-					<TraceExplorerControls
-						isLoading={isLoading}
-						totalCount={rows.length}
-						perPageOptions={PER_PAGE_OPTIONS}
 					/>
 				</div>
 			</div>
@@ -184,6 +179,7 @@ function TracesView({
 				isError={isError}
 				error={error}
 				isFilterApplied={isFilterApplied}
+				pagination={pagination}
 			/>
 		</div>
 	);

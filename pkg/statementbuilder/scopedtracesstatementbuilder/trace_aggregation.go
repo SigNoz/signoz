@@ -724,6 +724,9 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		if query.Limit > 0 {
 			sb.Limit(query.Limit)
 		}
+		if query.Offset > 0 {
+			sb.Offset(query.Offset)
+		}
 	}
 
 	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -770,6 +773,9 @@ func outerLimitSQL(query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], tr
 		sb.OrderBy("__result_0 DESC")
 	}
 	sb.Limit(query.Limit)
+	if query.Offset > 0 {
+		sb.Offset(query.Offset)
+	}
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
 

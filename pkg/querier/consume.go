@@ -82,7 +82,7 @@ func labelValue(val any) string {
 // * Time-series - *qbtypes.TimeSeriesData
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
-// * Distribution- *qbtypes.DistributionData.
+// * Heatmap and distribution - *qbtypes.TimeSeriesData with one count per bucket at each point.
 func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
 	var (
 		payload any
@@ -94,7 +94,7 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 		payload, err = readAsTimeSeries(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeScalar:
 		payload, err = readAsScalar(rows, queryName)
-	case qbtypes.RequestTypeHeatmap:
+	case qbtypes.RequestTypeHeatmap, qbtypes.RequestTypeDistribution:
 		payload, err = readAsHeatmap(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
 		payload, err = readAsRaw(rows, queryName)

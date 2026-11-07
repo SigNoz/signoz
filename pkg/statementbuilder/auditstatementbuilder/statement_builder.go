@@ -545,6 +545,10 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 		sb.Limit(query.Limit)
 	}
 
+	if query.Offset > 0 {
+		sb.Offset(query.Offset)
+	}
+
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 	mainSQL, mainArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
