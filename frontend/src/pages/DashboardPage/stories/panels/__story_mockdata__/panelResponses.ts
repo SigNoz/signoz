@@ -26,13 +26,14 @@ import {
 	HEATMAP_BUCKETS,
 	HEATMAP_COLUMNS,
 	HOLE,
+	LONG_TAIL_SLICES,
 	MAX_SERIES,
 	NUMBER_VALUE,
 	QUERY_NAME,
 	SERVICES,
 	TABLE_SECOND_COLUMN,
 } from './constants';
-import type { Gaps, PanelRequest, PanelResponseArgs } from './types';
+import type { Gaps, PanelRequest, PanelResponseArgs, PieSlices } from './types';
 
 export const serviceAt = (index: number): string =>
 	index < SERVICES.length
@@ -41,6 +42,14 @@ export const serviceAt = (index: number): string =>
 
 export const TABLE_VALUES = (count: number): number[] =>
 	Array.from({ length: count }, (_unused, index) => 3800 - index * 480);
+
+/** The pie's slice values: `even` steps down per series, `long-tail` falls off like a power law. */
+export const PIE_VALUES = (slices: PieSlices, count: number): number[] =>
+	slices === 'even'
+		? TABLE_VALUES(count)
+		: Array.from({ length: LONG_TAIL_SLICES }, (_unused, index) =>
+				Math.round(42000 / (index + 1) ** 1.35),
+			);
 
 const TABLE_SECOND_VALUES = (count: number): number[] =>
 	Array.from({ length: count }, (_unused, index) => 2000 + index * 600);
@@ -192,6 +201,7 @@ export const panelQueryResponse = ({
 	listRows,
 	listJsonBody,
 	gaps,
+	pieSlices,
 	window,
 	offset,
 	limit,
@@ -209,7 +219,10 @@ export const panelQueryResponse = ({
 			return queryRangeV5ScalarTableResponse({
 				groupBy: ['service.name'],
 				aggregations: [QUERY_NAME],
-				rows: TABLE_VALUES(series).map((value, index) => [serviceAt(index), value]),
+				rows: PIE_VALUES(pieSlices, series).map((value, index) => [
+					serviceAt(index),
+					value,
+				]),
 				warning,
 			});
 		case 'Table': {

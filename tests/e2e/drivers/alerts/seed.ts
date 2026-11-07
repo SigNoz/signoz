@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto';
 import type { Page } from '@playwright/test';
 
 import { apiDriver } from '../api';
+import type { RuletypesPostableRuleViewDTO } from '../schemas';
 import { postToSeeder, type TelemetryPath } from '../telemetry';
 
 import { SEED_B_SEVERITIES } from './constants';
@@ -51,6 +52,8 @@ export interface AlertSeeder {
 	rules(options: AlertRulesSeedOptions): Promise<string[]>;
 	deleteRule(id: string): Promise<void>;
 	deleteRules(ids: string[]): Promise<void>;
+	view(view: RuletypesPostableRuleViewDTO): Promise<string>;
+	deleteView(id: string): Promise<void>;
 	/**
 	 * Freeze a rule's history. Rows are written on *state change* only, so the
 	 * firing wave lands once — but once the eval window rolls past the seeded
@@ -222,6 +225,10 @@ export function alertSeeder(page: Page): AlertSeeder {
 				await seeder.deleteRule(id);
 			}
 		},
+
+		view: (view) => api.create('/api/v2/rule_views', view),
+
+		deleteView: (id) => api.tryDel(`/api/v2/rule_views/${id}`),
 
 		setDisabled: async (id, disabled) => {
 			await api.patch(`/api/v2/rules/${id}`, { disabled });
