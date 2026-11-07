@@ -55,7 +55,7 @@ func (capture *captureQuerier) Select(ctx context.Context, _ bool, hints *storag
 
 	start, end := capture.window(hints)
 
-	samplesQuery, args, err := buildSamplesQuery(start, end, metricNamesFromMatchers(matchers), matchers, capture.lastSamplePerStepFor(ctx, hints))
+	samplesQuery, args, err := buildSamplesQuery(start, end, metricNamesFromMatchers(matchers), matchers, capture.lastSamplePerStepFor(ctx, hints), capture.client.cfg.MaxFetchedSamples)
 	if err != nil {
 		return storage.ErrSeriesSet(err)
 	}

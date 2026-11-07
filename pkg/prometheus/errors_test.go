@@ -3,17 +3,18 @@ package prometheus
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 // expandWrap mirrors the engine's "expanding series: %w" wrapper: a plain
 // message-carrying layer with a single Unwrap.
 type expandWrap struct{ inner error }
 
-func (w expandWrap) Error() string { return "expanding series: " + w.inner.Error() }
-func (w expandWrap) Unwrap() error { return w.inner }
+func (wrapper expandWrap) Error() string { return "expanding series: " + wrapper.inner.Error() }
+func (wrapper expandWrap) Unwrap() error { return wrapper.inner }
 
 func TestTypedStorageError(t *testing.T) {
 	budget := errors.NewInvalidInputf(errors.CodeInvalidInput, "too many series")

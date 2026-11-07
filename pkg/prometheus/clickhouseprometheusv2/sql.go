@@ -3,6 +3,8 @@ package clickhouseprometheusv2
 import (
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/huandu/go-sqlbuilder"
@@ -40,7 +42,7 @@ func buildSeriesQuery(start, end int64, matchers []*labels.Matcher) (string, []a
 // matched series when the selector had no __name__ equality) narrows the
 // primary-key scan. A non-nil lastPerStep groups to the last sample per
 // step bucket.
-func buildSamplesQuery(start, end int64, metricNames []string, matchers []*labels.Matcher, lastPerStep *lastSamplePerStep) (string, []any, error) {
+func buildSamplesQuery(start, end int64, metricNames []string, matchers []*labels.Matcher, lastPerStep *lastSamplePerStep, maxFetchedSamples int64) (string, []any, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	if lastPerStep != nil {
 		// Aliases must not shadow source columns: ClickHouse resolves aliases
@@ -84,7 +86,16 @@ func buildSamplesQuery(start, end int64, metricNames []string, matchers []*label
 	}
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	if maxFetchedSamples > 0 {
+		query += budgetSettings(maxFetchedSamples)
+	}
 	return query, args, nil
+}
+
+// budgetSettings caps the result server-side; 'throw' refuses the query
+// instead of silently truncating the result.
+func budgetSettings(maxRows int64) string {
+	return fmt.Sprintf(" SETTINGS max_result_rows = %s, result_overflow_mode = 'throw'", clickhousesql.Literal(maxRows))
 }
 
 // applySeriesConditions adds the WHERE conditions of a series table scan:

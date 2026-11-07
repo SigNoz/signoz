@@ -3,7 +3,6 @@ package clickhouseprometheusv2
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"math"
 	"slices"
@@ -11,7 +10,6 @@ import (
 	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
 
-	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -21,6 +19,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/prometheus/prometheus/model/labels"
 	promValue "github.com/prometheus/prometheus/model/value"
+)
+
+var (
+	CodeSeriesBudgetExceeded  = errors.MustNewCode("series_budget_exceeded")
+	CodeSamplesBudgetExceeded = errors.MustNewCode("samples_budget_exceeded")
 )
 
 // seriesLookup holds a series lookup's result: matched fingerprints with
@@ -58,17 +61,6 @@ func (client *client) withContext(ctx context.Context, functionName string) cont
 		instrumentationtypes.CodeNamespace:    "clickhouse-prometheus-v2",
 		instrumentationtypes.CodeFunctionName: functionName,
 	})
-}
-
-var (
-	CodeSeriesBudgetExceeded  = errors.MustNewCode("series_budget_exceeded")
-	CodeSamplesBudgetExceeded = errors.MustNewCode("samples_budget_exceeded")
-)
-
-// budgetSettings caps the result server-side; 'throw' refuses the query
-// instead of silently truncating the result.
-func budgetSettings(maxRows int64) string {
-	return fmt.Sprintf(" SETTINGS max_result_rows = %s, result_overflow_mode = 'throw'", clickhousesql.Literal(maxRows))
 }
 
 // budgetExceeded reports whether err is ClickHouse refusing a query over its
@@ -170,9 +162,6 @@ func unmarshalLabels(s string) (labels.Labels, error) {
 // the engine as-is over the same dirty data.
 func (client *client) selectSamples(ctx context.Context, query string, args []any, lookup *seriesLookup) ([]*series, error) {
 	ctx = client.withContext(ctx, "selectSamples")
-	if client.cfg.MaxFetchedSamples > 0 {
-		query += budgetSettings(client.cfg.MaxFetchedSamples)
-	}
 	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, client.samplesError(err)

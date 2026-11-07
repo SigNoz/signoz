@@ -141,7 +141,7 @@ func (querier *querier) lastSamplePerStepFor(ctx context.Context, hints *storage
 // fetchSamples runs the samples query for the matched series (see
 // buildSamplesQuery).
 func (querier *querier) fetchSamples(ctx context.Context, start, end int64, matchers []*labels.Matcher, lookup *seriesLookup, lastPerStep *lastSamplePerStep) ([]*series, error) {
-	query, args, err := buildSamplesQuery(start, end, lookup.metricNames, matchers, lastPerStep)
+	query, args, err := buildSamplesQuery(start, end, lookup.metricNames, matchers, lastPerStep, querier.client.cfg.MaxFetchedSamples)
 	if err != nil {
 		return nil, err
 	}

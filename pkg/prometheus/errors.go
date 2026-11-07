@@ -1,8 +1,9 @@
 package prometheus
 
 import (
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/prometheus/promql"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 // TypedStorageError walks an engine execution error chain looking for a
