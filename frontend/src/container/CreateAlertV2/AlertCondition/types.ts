@@ -1,5 +1,4 @@
 import type { DefaultOptionType } from 'antd/es/select';
-import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import {
 	NotificationSettingsAction,
@@ -21,11 +20,7 @@ export interface ThresholdItemProps {
 	updateThreshold: UpdateThreshold;
 	removeThreshold: (thresholdId: string) => void;
 	showRemoveButton: boolean;
-	channels: ChannelOption[];
-	isLoadingChannels: boolean;
 	units: DefaultOptionType[];
-	isErrorChannels: boolean;
-	refreshChannels: () => void;
 	isAnomaly?: boolean;
 }
 
@@ -33,13 +28,6 @@ export interface ThresholdList {
 	addThreshold: (overrides?: Partial<Threshold>) => void;
 	removeThreshold: (thresholdId: string) => void;
 	updateThreshold: UpdateThreshold;
-}
-
-export interface AnomalyAndThresholdProps {
-	channels: ChannelOption[];
-	isLoadingChannels: boolean;
-	isErrorChannels: boolean;
-	refreshChannels: () => void;
 }
 
 export interface RoutingPolicyBannerProps {

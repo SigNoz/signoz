@@ -12,7 +12,7 @@ import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import {
 	alertRuleByIdResponse,
 	ALERT_SCHEMAS,
-	notificationChannelsResponse,
+	notificationChannelsPage,
 	CHANNEL_MAX,
 	RULE_KINDS,
 	RULE_STATE_CHOICES,
@@ -127,7 +127,9 @@ export const alertOverviewMocks = defineStoryMocks({
 
 		rest.get(
 			'http://localhost/api/v2/notification_channels',
-			response.json(() => notificationChannelsResponse(values.channels)),
+			response.json((req) =>
+				notificationChannelsPage(values.channels, req.url.searchParams),
+			),
 		),
 
 		rest.post(

@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { TestRouter } from 'tests/router';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import { CreateAlertProvider } from '../../context';
 import {
@@ -10,17 +9,6 @@ import {
 	THRESHOLD_OPERATOR_OPTIONS,
 } from '../../context/constants';
 import AlertThreshold from '../AlertThreshold';
-
-const mockChannels: ChannelOption[] = [];
-const mockRefreshChannels = jest.fn();
-const mockIsLoadingChannels = false;
-const mockIsErrorChannels = false;
-const mockProps = {
-	channels: mockChannels,
-	isLoadingChannels: mockIsLoadingChannels,
-	isErrorChannels: mockIsErrorChannels,
-	refreshChannels: mockRefreshChannels,
-};
 
 jest.mock('uplot', () => {
 	const paths = {
@@ -88,20 +76,6 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-// Mock getAllChannels API
-jest.mock('hooks/notificationChannels/useChannelOptions', () => ({
-	__esModule: true,
-	useChannelOptions: jest.fn(() => ({
-		data: [
-			{ id: '1', name: 'Email Channel' },
-			{ id: '2', name: 'Slack Channel' },
-		] as ChannelOption[],
-		isLoading: false,
-		isError: false,
-		refetch: jest.fn(),
-	})),
-}));
-
 // Mock alert format categories
 jest.mock('constants/formats/alertFormatCategories', () => ({
 	getCategoryByOptionId: jest.fn(() => ({ name: 'bytes' })),
@@ -136,7 +110,7 @@ const renderAlertThreshold = (): ReturnType<typeof render> => {
 		<TestRouter>
 			<QueryClientProvider client={queryClient}>
 				<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
-					<AlertThreshold {...mockProps} />
+					<AlertThreshold />
 				</CreateAlertProvider>
 			</QueryClientProvider>
 		</TestRouter>,
@@ -276,13 +250,6 @@ describe('AlertThreshold', () => {
 		// Try to remove (should not work)
 		const thresholdItems = screen.getAllByTestId(/threshold-item-/);
 		expect(thresholdItems).toHaveLength(1);
-	});
-
-	it('handles loading state for channels', () => {
-		renderAlertThreshold();
-
-		// Component should render even while channels are loading
-		expect(screen.getByText('Send a notification when')).toBeInTheDocument();
 	});
 
 	it('renders with correct initial state', () => {

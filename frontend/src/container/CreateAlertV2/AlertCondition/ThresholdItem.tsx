@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { Input } from '@signozhq/ui/input';
 import { Button, Select, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { Spinner } from '@signozhq/ui/spinner';
 import { CircleX, Trash } from '@signozhq/icons';
+import { useChannelSearch } from 'hooks/notificationChannels/useChannelSearch';
 import { useAppContext } from 'providers/App/App';
 
 import { useCreateAlertState } from '../context';
@@ -16,16 +18,21 @@ function ThresholdItem({
 	updateThreshold,
 	removeThreshold,
 	showRemoveButton,
-	channels,
 	units,
-	isErrorChannels,
-	refreshChannels,
-	isLoadingChannels,
 	isAnomaly = false,
 }: ThresholdItemProps): JSX.Element {
 	const { user } = useAppContext();
 	const { thresholdState, notificationSettings } = useCreateAlertState();
 	const [showRecoveryThreshold, setShowRecoveryThreshold] = useState(false);
+	const {
+		options: channelOptions,
+		searchTerm: channelSearchTerm,
+		setSearchTerm: setChannelSearchTerm,
+		isSearching: isSearchingChannels,
+		isError: isErrorChannels,
+		refetch: refreshChannels,
+		loadMoreOnScroll: loadMoreChannelsOnScroll,
+	} = useChannelSearch();
 
 	const yAxisUnitSelect = useMemo(() => {
 		let component = (
@@ -140,29 +147,38 @@ function ThresholdItem({
 								}
 								data-testid="threshold-notification-channel-select"
 								style={{ width: 350 }}
-								options={channels.map((channel) => ({
-									value: channel.name,
-									label: channel.name,
+								options={channelOptions.map((option) => ({
+									...option,
 									'data-testid': `threshold-notification-channel-option-${threshold.label}`,
 								}))}
 								mode="multiple"
 								placeholder="Select notification channels"
 								showSearch
+								searchValue={channelSearchTerm}
+								onSearch={setChannelSearchTerm}
+								onSelect={(): void => setChannelSearchTerm('')}
+								onDropdownVisibleChange={(open): void => {
+									if (!open) {
+										setChannelSearchTerm('');
+									}
+								}}
+								onPopupScroll={loadMoreChannelsOnScroll}
+								filterOption={false}
 								maxTagCount={2}
 								maxTagPlaceholder={(omittedValues): string =>
 									`+${omittedValues.length} more`
 								}
 								maxTagTextLength={10}
-								filterOption={(input, option): boolean =>
-									option?.label?.toLowerCase().includes(input.toLowerCase()) || false
-								}
 								status={isErrorChannels ? 'error' : undefined}
-								disabled={isLoadingChannels}
 								notFoundContent={
-									<NotificationChannelsNotFoundContent
-										user={user}
-										refreshChannels={refreshChannels}
-									/>
+									isSearchingChannels ? (
+										<Spinner testId="threshold-notification-channel-spinner" />
+									) : (
+										<NotificationChannelsNotFoundContent
+											user={user}
+											refreshChannels={refreshChannels}
+										/>
+									)
 								}
 							/>
 						</>
