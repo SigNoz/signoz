@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { useDashboardVariableNames } from 'pages/DashboardPage/DashboardContainer/hooks/useDashboardVariableNames';
 
 import type { VariableItem } from './types';
@@ -20,13 +21,16 @@ const GLOBAL_TIMESTAMP_VARIABLES: VariableItem[] = [
  */
 export function useContextLinkVariables(): VariableItem[] {
 	const { currentQuery } = useQueryBuilder();
+	const activeQueryData = currentQuery
+		? getActiveBuilder(currentQuery).queryData
+		: undefined;
 
 	const dashboardVariableNames = useDashboardVariableNames();
 
 	// `_`-prefixed to match V1 and avoid colliding with dashboard-variable names.
 	const fieldVariableNames = useMemo(() => {
 		const names = new Set<string>();
-		(currentQuery?.builder?.queryData ?? []).forEach((query) => {
+		(activeQueryData ?? []).forEach((query) => {
 			(query.groupBy ?? []).forEach((field) => {
 				if (field.key) {
 					names.add(`_${field.key}`);
@@ -34,7 +38,7 @@ export function useContextLinkVariables(): VariableItem[] {
 			});
 		});
 		return Array.from(names);
-	}, [currentQuery?.builder?.queryData]);
+	}, [activeQueryData]);
 
 	return useMemo(
 		() => [

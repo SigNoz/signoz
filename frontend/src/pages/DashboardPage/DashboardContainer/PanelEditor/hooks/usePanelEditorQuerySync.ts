@@ -9,6 +9,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { getIsQueryModified } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { isEqual } from 'lodash-es';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -111,9 +112,10 @@ export function usePanelEditorQuerySync({
 
 	// Re-commit on a query-type/datasource switch so the preview refetches. Skip
 	// mount: the initial query is synced into the draft by the staged-query effect below.
+	const activeQueryData = getActiveBuilder(currentQuery).queryData;
 	const dataSources = useMemo(
-		() => (currentQuery.builder?.queryData ?? []).map((q) => q.dataSource),
-		[currentQuery.builder],
+		() => (activeQueryData ?? []).map((q) => q.dataSource),
+		[activeQueryData],
 	);
 	const dataSourceSignature = dataSources.join(',');
 	const prevDataSourcesRef = useRef(dataSources);
