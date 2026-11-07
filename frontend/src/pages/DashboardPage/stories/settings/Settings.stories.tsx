@@ -12,6 +12,10 @@ import {
 	dashboardMocks,
 	openSettings,
 } from '../DashboardPage.stories.mocks';
+import {
+	openDefaultTimeRange,
+	showDefaultTimeRange,
+} from '../__story_mockdata__/dashboard.play';
 
 import DashboardPage from '../../DashboardPage';
 
@@ -80,6 +84,23 @@ export const OverviewTooltipSync: Story = {
 		await userEvent.click(await screen.findByRole('radio', { name: 'Tooltip' }));
 		await screen.findByText('Synced Tooltip Series');
 	},
+};
+
+/**
+ * The Default time range select open: the 30 minute default first, then the
+ * time picker's presets.
+ */
+export const OverviewDefaultTimeRangeOpen: Story = {
+	play: openDefaultTimeRange,
+};
+
+/**
+ * A dashboard stored with `1s`, which no option matches: the select shows it
+ * as an extra entry saying the dashboard opens on 1m instead.
+ */
+export const OverviewDefaultTimeRangeOffList: Story = {
+	args: { duration: '1s' },
+	play: showDefaultTimeRange,
 };
 
 /**
