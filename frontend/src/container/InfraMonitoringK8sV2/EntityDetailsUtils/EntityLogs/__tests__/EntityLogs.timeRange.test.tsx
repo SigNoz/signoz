@@ -73,7 +73,6 @@ describe('EntityLogs time range wiring', () => {
 						)}`}
 					>
 						<EntityLogs
-							eventEntity="test"
 							queryKey="test"
 							category={InfraMonitoringEntity.PODS}
 							initialExpression={expression}

@@ -3,6 +3,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Tabs, type TabsItemProps } from '@signozhq/ui/tabs';
 import { Bookmark, ChartColumnBig, List, ScrollText } from '@signozhq/icons';
 import { Skeleton } from 'antd';
+import cx from 'classnames';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
 import { DetailsPanelState } from 'components/DetailsPanel/types';
@@ -49,6 +50,7 @@ import OpenInLogsExplorer from './SpanLogs/OpenInLogsExplorer';
 import SpanLogs from './SpanLogs/SpanLogs';
 import { useSpanContextLogs } from './SpanLogs/useSpanContextLogs';
 import SpanAIMessages from './SpanAIMessages/SpanAIMessages';
+import SpanDrawerHeader from './SpanDrawerHeader';
 import SpanSummary from './SpanSummary';
 
 import styles from './SpanDetailsPanel.module.scss';
@@ -58,8 +60,12 @@ interface SpanDetailsPanelProps {
 	selectedSpan: SpanV3 | undefined;
 	variant?: SpanDetailVariant;
 	onVariantChange?: (variant: SpanDetailVariant) => void;
+	/** Page-specific actions, shown before the dock mode switcher. */
+	headerActions?: HeaderAction[];
 	traceStartTime?: number;
 	traceEndTime?: number;
+	/** The trace bounds are still being fetched; logs wait for them. */
+	isTraceBoundsLoading?: boolean;
 }
 
 // At/above this panel width the summary moves inside the Overview tab (bottom
@@ -73,10 +79,12 @@ function SpanDetailsContent({
 	selectedSpan,
 	traceStartTime,
 	traceEndTime,
+	isTraceBoundsLoading = false,
 }: {
 	selectedSpan: SpanV3;
 	traceStartTime?: number;
 	traceEndTime?: number;
+	isTraceBoundsLoading?: boolean;
 }): JSX.Element {
 	const [bodyRef, { width: bodyWidth }] = useMeasure<HTMLDivElement>();
 	const spanAttributeActions = useSpanAttributeActions();
@@ -168,6 +176,31 @@ function SpanDetailsContent({
 	// 	[spanAttributeActions, setCopy],
 	// );
 
+	// Without trace bounds the panel speaks only for the span: its own logs
+	// window, and no trace-wide logs check.
+	const hasTraceBounds = !!traceStartTime && !!traceEndTime;
+	const logsTimeRange = useMemo(
+		() =>
+			traceStartTime && traceEndTime
+				? {
+						startTime: traceStartTime - FIVE_MINUTES_IN_MS,
+						endTime: traceEndTime + FIVE_MINUTES_IN_MS,
+					}
+				: {
+						startTime: selectedSpan.timestamp - FIVE_MINUTES_IN_MS,
+						// query_range rejects a fractional end.
+						endTime:
+							Math.ceil(selectedSpan.timestamp + selectedSpan.duration_nano / 1e6) +
+							FIVE_MINUTES_IN_MS,
+					},
+		[
+			traceStartTime,
+			traceEndTime,
+			selectedSpan.timestamp,
+			selectedSpan.duration_nano,
+		],
+	);
+
 	const {
 		logs,
 		isLoading: isLogsLoading,
@@ -178,11 +211,9 @@ function SpanDetailsContent({
 	} = useSpanContextLogs({
 		traceId: selectedSpan.trace_id,
 		spanId: selectedSpan.span_id,
-		timeRange: {
-			startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
-			endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
-		},
-		isDrawerOpen: true,
+		timeRange: logsTimeRange,
+		checkTraceLogs: hasTraceBounds,
+		enabled: !isTraceBoundsLoading,
 	});
 
 	const infraMetadata = useMemo(() => {
@@ -201,8 +232,7 @@ function SpanDetailsContent({
 	}, [selectedSpan]);
 
 	const handleExplorerPageRedirect = useCallback((): void => {
-		const startTimeMs = (traceStartTime || 0) - FIVE_MINUTES_IN_MS;
-		const endTimeMs = (traceEndTime || 0) + FIVE_MINUTES_IN_MS;
+		const { startTime: startTimeMs, endTime: endTimeMs } = logsTimeRange;
 
 		const traceIdFilter = {
 			op: 'AND',
@@ -244,14 +274,15 @@ function SpanDetailsContent({
 		searchParams.set(QueryParams.endTime, endTimeMs.toString());
 
 		openInNewTab(`${ROUTES.LOGS_EXPLORER}?${searchParams.toString()}`);
-	}, [selectedSpan.trace_id, traceStartTime, traceEndTime]);
+	}, [selectedSpan.trace_id, logsTimeRange]);
 
 	const emptyLogsStateConfig = useMemo(
 		() => ({
 			...getEmptyLogsListConfig(() => {}),
+			...(!hasTraceBounds && { title: 'No logs found for this span.' }),
 			showClearFiltersButton: false,
 		}),
-		[],
+		[hasTraceBounds],
 	);
 
 	// const keyAttributes = useMemo(() => {
@@ -321,11 +352,7 @@ function SpanDetailsContent({
 					</Badge>
 				) : undefined,
 			children: (
-				<Events
-					span={selectedSpan}
-					startTime={traceStartTime || 0}
-					isSearchVisible
-				/>
+				<Events span={selectedSpan} startTime={traceStartTime} isSearchVisible />
 			),
 		},
 		{
@@ -336,10 +363,7 @@ function SpanDetailsContent({
 				<SpanLogs
 					traceId={selectedSpan.trace_id}
 					spanId={selectedSpan.span_id}
-					timeRange={{
-						startTime: (traceStartTime || 0) - FIVE_MINUTES_IN_MS,
-						endTime: (traceEndTime || 0) + FIVE_MINUTES_IN_MS,
-					}}
+					timeRange={logsTimeRange}
 					logs={logs}
 					isLoading={isLogsLoading}
 					isError={isLogsError}
@@ -394,7 +418,10 @@ function SpanDetailsContent({
 			    with the panel's bottom edge — always visible, never scrolls. */}
 			{activeTab === 'logs' && (
 				<div className={styles.logsFooter}>
-					<OpenInLogsExplorer onClick={handleExplorerPageRedirect} />
+					<OpenInLogsExplorer
+						onClick={handleExplorerPageRedirect}
+						disabled={isTraceBoundsLoading}
+					/>
 				</div>
 			)}
 		</>
@@ -406,11 +433,14 @@ function SpanDetailsPanel({
 	selectedSpan,
 	variant = SpanDetailVariant.DIALOG,
 	onVariantChange,
+	headerActions: pageHeaderActions,
 	traceStartTime,
 	traceEndTime,
+	isTraceBoundsLoading,
 }: SpanDetailsPanelProps): JSX.Element {
 	const headerActions = useMemo((): HeaderAction[] => {
 		const actions: HeaderAction[] = [
+			...(pageHeaderActions ?? []),
 			// TODO: Add back when driven through separate config for different pages
 			// {
 			// 	key: 'view-full-trace',
@@ -440,7 +470,7 @@ function SpanDetailsPanel({
 		}
 
 		return actions;
-	}, [variant, onVariantChange]);
+	}, [pageHeaderActions, variant, onVariantChange]);
 
 	const PANEL_WIDTH = SPAN_DETAILS_PANEL_MIN_WIDTH;
 	const PANEL_MARGIN_RIGHT = 20;
@@ -449,19 +479,28 @@ function SpanDetailsPanel({
 
 	const content = (
 		<>
-			<DetailsHeader
-				title="Span details"
-				onClose={panelState.close}
-				actions={headerActions}
-				className={
-					variant === SpanDetailVariant.DIALOG ? 'floating-panel__drag-handle' : ''
-				}
-			/>
+			{variant === SpanDetailVariant.DRAWER ? (
+				<SpanDrawerHeader
+					title="Span details"
+					onClose={panelState.close}
+					actions={headerActions}
+				/>
+			) : (
+				<DetailsHeader
+					title="Span details"
+					onClose={panelState.close}
+					actions={headerActions}
+					className={
+						variant === SpanDetailVariant.DIALOG ? 'floating-panel__drag-handle' : ''
+					}
+				/>
+			)}
 			{selectedSpan ? (
 				<SpanDetailsContent
 					selectedSpan={selectedSpan}
 					traceStartTime={traceStartTime}
 					traceEndTime={traceEndTime}
+					isTraceBoundsLoading={isTraceBoundsLoading}
 				/>
 			) : (
 				<div className={styles.panelBody}>
@@ -483,7 +522,8 @@ function SpanDetailsPanel({
 			<DetailsPanelDrawer
 				isOpen={panelState.isOpen}
 				onClose={panelState.close}
-				className={styles.panel}
+				className={cx(styles.panel, styles.drawerPanel)}
+				testId="span-details-drawer"
 			>
 				{content}
 			</DetailsPanelDrawer>

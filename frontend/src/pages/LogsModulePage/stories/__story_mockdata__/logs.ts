@@ -27,7 +27,11 @@ import type { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import type { IGetAttributeSuggestionsSuccessResponse } from 'types/api/queryBuilder/getAttributeSuggestions';
 import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import type { MetricRangePayloadV5, TimeSeries } from 'types/api/v5/queryRange';
+import type {
+	MetricRangePayloadV5,
+	TelemetryFieldKey,
+	TimeSeries,
+} from 'types/api/v5/queryRange';
 import type { ListItem } from 'types/api/widgets/getQuery';
 
 import { dashboardsForUserResponse } from '@/storybook/msw/__story_mockdata__/dashboards';
@@ -138,6 +142,19 @@ const jsonBodyFor = (
 	http: { method: 'POST', route: '/api/v1/checkout', status_code: 200 },
 });
 
+/**
+ * Every fourth JSON-body log is what the collector makes of a plain line on a
+ * `use_json_body` tenant: an object holding only `message`.
+ */
+const jsonBodyAt = (
+	severity: LogSeverity,
+	service: string,
+	index: number,
+): ILogBody =>
+	index % 4 === 3
+		? { message: MESSAGES[severity] }
+		: jsonBodyFor(severity, service, index);
+
 export interface LogsResponseOptions {
 	/** `use_json_body`: the body arrives as an object instead of a line. */
 	jsonBody?: boolean;
@@ -169,7 +186,7 @@ export const logRows = (
 			data: {
 				id: `01JBQ${hex(index, 8).toUpperCase()}`,
 				body: jsonBody
-					? jsonBodyFor(severity, service, index)
+					? jsonBodyAt(severity, service, index)
 					: `${timestamp} ${severity} ${service} ${MESSAGES[severity]}`,
 				severity_text: severity,
 				severity_number: SEVERITY_NUMBERS[severity],
@@ -456,13 +473,35 @@ export const filterSuggestionsResponse = (
  * this is what decides the format, and the columns have to be in it or the list
  * loses `body` and `timestamp`.
  */
-export const logsListOptions = (
-	options: Pick<OptionsQuery, 'format' | 'maxLines' | 'fontSize'>,
-): OptionsQuery => ({
-	selectColumns: defaultLogsSelectedColumns,
+export const logsListOptions = ({
+	bodyColumns = false,
+	...options
+}: Pick<OptionsQuery, 'format' | 'maxLines' | 'fontSize'> & {
+	bodyColumns?: boolean;
+}): OptionsQuery => ({
+	selectColumns: bodyColumns
+		? [...defaultLogsSelectedColumns, ...BODY_FIELD_COLUMNS]
+		: defaultLogsSelectedColumns,
 	version: 1,
 	...options,
 });
+
+/**
+ * Keys of the JSON body picked as columns: a nested object, an array and a
+ * leaf, which is what tells a list format apart on how it renders a non-string
+ * field value.
+ */
+const BODY_FIELD_COLUMNS: TelemetryFieldKey[] = [
+	'order',
+	'order.coupons',
+	'http.status_code',
+].map((name) => ({
+	name,
+	signal: 'logs',
+	fieldContext: 'log',
+	fieldDataType: '',
+	isIndexed: false,
+}));
 
 const DASHBOARD_NAMES = [
 	'Logs overview',
