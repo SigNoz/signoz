@@ -27,7 +27,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           FORCE: ${{ contains(github.event.pull_request.labels.*.name, 'safe-to-e2e') }}
         run: |
-          CHANGED_FILES=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename | select(startswith("tests/integration/") | not)')
+          CHANGED_FILES=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename | select((startswith("tests/integration/") or startswith("frontend/src/api/generated/")) | not)')
           PATTERN='^(frontend/|tests/|\.github/workflows/e2eci\.yaml$|cmd/enterprise/Dockerfile\.with-web\.integration$)'
 
           if [ "$FORCE" = "true" ]; then
@@ -47,7 +47,7 @@ jobs:
       - name: node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: "22"
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -105,7 +105,7 @@ jobs:
       - name: node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: "22"
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
