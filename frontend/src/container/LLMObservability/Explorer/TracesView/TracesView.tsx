@@ -12,12 +12,7 @@ import { QueryKey } from 'react-query';
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
-import type { ColumnSizingState } from '@tanstack/react-table';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	setColumnSizing,
-	useColumnSizing,
-} from 'components/TanStackTableView/useColumnStore';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -90,22 +85,6 @@ function TracesView({
 			config?.addColumn?.onReorder(cols.map((column) => column.id));
 		},
 		[config],
-	);
-
-	// The column store keeps widths only; the picked columns live in the slice.
-	const columnSizing = useColumnSizing(
-		LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS,
-	);
-	const handleColumnSizingChange = useCallback<
-		Dispatch<SetStateAction<ColumnSizingState>>
-	>(
-		(updater) => {
-			setColumnSizing(
-				LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS,
-				typeof updater === 'function' ? updater(columnSizing) : updater,
-			);
-		},
-		[columnSizing],
 	);
 
 	const {
@@ -243,10 +222,9 @@ function TracesView({
 			<TracesTable
 				data={rows}
 				columns={tableColumns}
+				columnStorageKey={LOCALSTORAGE.AI_OBSERVABILITY_TRACE_VIEW_COLUMNS}
 				onColumnOrderChange={handleColumnOrderChange}
 				onColumnRemove={config?.addColumn?.onRemove}
-				columnSizing={columnSizing}
-				onColumnSizingChange={handleColumnSizingChange}
 				panelType="TRACE"
 				getRowHref={getTraceLink}
 				isLoading={isLoading}

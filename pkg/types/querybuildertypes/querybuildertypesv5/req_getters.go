@@ -180,6 +180,8 @@ func (q *QueryEnvelope) GetOffset() int {
 		return spec.Offset
 	case QueryBuilderQuery[MetricAggregation]:
 		return spec.Offset
+	case QueryBuilderFormula:
+		return spec.Offset
 	}
 	return 0
 }

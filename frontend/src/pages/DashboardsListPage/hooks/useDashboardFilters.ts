@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { type Options, parseAsString, useQueryState } from 'nuqs';
 
-import { isQueryEmpty } from '../utils/filterQuery';
+import { isQueryEmpty } from 'components/ListFilter/dsl/filterQuery';
 
 const opts: Options = { history: 'push' };
 

@@ -428,10 +428,10 @@ func (q *builderQuery[T]) narrowWindowByTraceID(ctx context.Context, fromMS, toM
 // emptyResultFor returns an empty result payload appropriate for the given kind.
 func emptyResultFor(kind qbtypes.RequestType, queryName string) *qbtypes.Result {
 	var value any
-	switch kind {
-	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
+	switch {
+	case kind.IsBuiltFromTimeSeries():
 		value = &qbtypes.TimeSeriesData{QueryName: queryName}
-	case qbtypes.RequestTypeScalar:
+	case kind == qbtypes.RequestTypeScalar:
 		value = &qbtypes.ScalarData{QueryName: queryName}
 	default:
 		value = &qbtypes.RawData{QueryName: queryName}
@@ -484,7 +484,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	kind := q.kind
 	// all metric queries are time series then reduced if required, except
 	// heatmaps, whose statement returns a row per bucket rather than per point
-	if q.spec.Signal == telemetrytypes.SignalMetrics && kind != qbtypes.RequestTypeHeatmap {
+	if q.spec.Signal == telemetrytypes.SignalMetrics && !kind.CountsIntoBuckets() {
 		kind = qbtypes.RequestTypeTimeSeries
 	}
 

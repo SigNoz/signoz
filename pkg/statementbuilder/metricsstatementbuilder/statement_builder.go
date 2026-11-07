@@ -264,7 +264,7 @@ func rewriteQueryForHistogramCTE(requestType qbtypes.RequestType, query qbtypes.
 	})
 
 	query.Aggregations = slices.Clone(query.Aggregations)
-	if query.Aggregations[0].SpaceAggregation.IsPercentile() && requestType != qbtypes.RequestTypeHeatmap {
+	if query.Aggregations[0].SpaceAggregation.IsPercentile() && !requestType.CountsIntoBuckets() {
 		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationRate
 	} else {
 		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
@@ -818,7 +818,7 @@ func (b *StatementBuilder) BuildFinalSelect(
 		args = append(args, a...)
 	}
 
-	if requestType == qbtypes.RequestTypeHeatmap {
+	if requestType.CountsIntoBuckets() {
 		return buildHeatmapFinalSelect(combined, args, query)
 	}
 	return buildAggregationFinalSelect(combined, args, query)
