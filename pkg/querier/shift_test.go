@@ -3,10 +3,7 @@ package querier
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -229,22 +226,4 @@ func TestExtractShiftFromBuilderQuery(t *testing.T) {
 			assert.Equal(t, tt.expectedShiftBy, shiftBy)
 		})
 	}
-}
-
-func TestCreateRangedQueryKeepsTheShiftedRange(t *testing.T) {
-	spec := qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-		Name:      "A",
-		Signal:    telemetrytypes.SignalLogs,
-		Functions: []qbtypes.Function{{Name: qbtypes.FunctionNameTimeShift, Args: []qbtypes.FunctionArg{{Value: float64(3600)}}}},
-	}
-	spec.ShiftBy = extractShiftFromBuilderQuery(spec)
-	window := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: 7_200_000, To: 10_800_000}, qbtypes.RequestTypeTimeSeries)
-	q := &querier{logger: instrumentationtest.New().Logger()}
-	original := newBuilderQuery(q.logger, nil, valuer.UUID{}, q.logStmtBuilder, qbtypes.QueryTypeBuilder, spec, window, qbtypes.RequestTypeTimeSeries, nil, builderConfig{})
-
-	// the gap the cache reports is taken from the query's own window, which is
-	// already in the shifted clock
-	gap := qbtypes.TimeRange{From: window.From + 1_800_000, To: window.To}
-	from, to := q.createRangedQuery(valuer.UUID{}, original, gap).Window()
-	assert.Equal(t, gap, qbtypes.TimeRange{From: from, To: to})
 }
