@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
+	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -147,9 +149,9 @@ func (q *builderQuery[T]) Fingerprint() string {
 	if q.spec.Filter != nil && q.spec.Filter.Expression != "" {
 		parts = append(parts, fmt.Sprintf("filter=%s", q.spec.Filter.Expression))
 
-		for name, item := range q.variables {
+		for _, name := range slices.Sorted(maps.Keys(q.variables)) {
 			if strings.Contains(q.spec.Filter.Expression, "$"+name) {
-				parts = append(parts, fmt.Sprintf("%s=%s", name, fmt.Sprint(item.Value)))
+				parts = append(parts, fmt.Sprintf("%s=%s", name, fmt.Sprint(q.variables[name].Value)))
 			}
 		}
 	}
