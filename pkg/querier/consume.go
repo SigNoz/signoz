@@ -7,9 +7,7 @@ import (
 	"reflect"
 	"regexp"
 	"slices"
-	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
@@ -138,7 +136,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 
 		var (
 			ts            int64
-			lblVals       = make([]string, 0, lblValsCapacity)
 			lblObjs       = make([]*qbtypes.Label, 0, lblValsCapacity)
 			aggValues     = map[int]float64{} // all __result_N in this row
 			fallbackValue float64             // value when NO __result_N columns exist
@@ -165,7 +162,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 					fallbackSeen = true
 				} else {
 					// numeric label
-					lblVals = append(lblVals, fmt.Sprint(val))
 					lblObjs = append(lblObjs, &qbtypes.Label{
 						Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 						Value: val,
@@ -187,7 +183,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 						fallbackSeen = true
 					} else {
 						// numeric label
-						lblVals = append(lblVals, fmt.Sprint(val))
 						lblObjs = append(lblObjs, &qbtypes.Label{
 							Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 							Value: val,
@@ -196,7 +191,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				}
 
 			case *string:
-				lblVals = append(lblVals, *v)
 				lblObjs = append(lblObjs, &qbtypes.Label{
 					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 					Value: *v,
@@ -208,7 +202,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 					var empty string
 					val = &empty
 				}
-				lblVals = append(lblVals, *val)
 				lblObjs = append(lblObjs, &qbtypes.Label{
 					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 					Value: *val,
@@ -216,7 +209,6 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 
 			case *telemetrystoretypes.JSONValue, *chcol.Variant:
 				val := labelValue(derefValue(ptr))
-				lblVals = append(lblVals, val)
 				lblObjs = append(lblObjs, &qbtypes.Label{
 					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 					Value: val,
@@ -236,8 +228,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			continue // nothing useful
 		}
 
-		sort.Strings(lblVals)
-		labelsKey := strings.Join(lblVals, ",")
+		labelsKey := qbtypes.GetUniqueSeriesKey(lblObjs)
 
 		// one point per aggregation in this row
 		for aggIdx, val := range aggValues {
@@ -341,7 +332,6 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 			ts      int64
 			bounds  bucketBounds
 			count   float64
-			lblVals []string
 			lblObjs []*qbtypes.Label
 		)
 
@@ -369,7 +359,6 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 				if value == nil {
 					value = ""
 				}
-				lblVals = append(lblVals, fmt.Sprint(value))
 				lblObjs = append(lblObjs, &qbtypes.Label{
 					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 					Value: value,
@@ -380,8 +369,7 @@ func readAsHeatmap(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbtype
 		if ts == 0 || !isValidBucketBounds(bounds) || math.IsNaN(count) || math.IsInf(count, 0) {
 			continue
 		}
-		sort.Strings(lblVals)
-		labelsKey := strings.Join(lblVals, ",")
+		labelsKey := qbtypes.GetUniqueSeriesKey(lblObjs)
 
 		if err := accumulator.addCell(labelsKey, lblObjs, ts, bounds, count); err != nil {
 			return nil, err
