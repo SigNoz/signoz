@@ -28,7 +28,9 @@ def test_time_shift_partial_hit_matches_no_cache(
     """
     Setup:
     svc-a: 4 logs and svc-b: 2 logs in every minute of the hour before the
-    requested window, so a timeShift(3600) query reads them.
+    requested window, so a timeShift(3600) query reads them. The hour before
+    that holds 9 and 7 logs per minute, so a gap read one shift too far back
+    returns points with those counts instead of nothing.
 
     Tests:
     A timeShift query whose first 30 minutes are cached returns the same
@@ -50,6 +52,17 @@ def test_time_shift_partial_hit_matches_no_cache(
             )
             for minute in range(60)
             for service, count in (("svc-a", 4), ("svc-b", 2))
+            for i in range(count)
+        ]
+        + [
+            Logs(
+                timestamp=now - 180 * MINUTE + minute * MINUTE + timedelta(seconds=1 + i),
+                resources={"service.name": service},
+                attributes={"run": run},
+                body=f"{service} earlier {minute} {i}",
+            )
+            for minute in range(60)
+            for service, count in (("svc-a", 9), ("svc-b", 7))
             for i in range(count)
         ]
     )
