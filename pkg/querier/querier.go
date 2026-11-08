@@ -922,32 +922,25 @@ func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, 
 		copy(argsCopy, qt.args)
 		return newchSQLQuery(q.logger, q.telemetryStore, queryCopy, argsCopy, timeRange, qt.kind, qt.vars)
 
+	// A builder query's window was moved into the shifted clock when it was
+	// built, so a range taken from that window must not be shifted again.
 	case *builderQuery[qbtypes.TraceAggregation]:
-		specCopy := qt.spec.Copy()
-		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
-		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
 		// reuse the original query's statement builder and type so an AI query
 		// keeps its AI builder and cache key
-		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, qt.builderConfig)
+		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, qt.queryType, qt.spec.Copy(), timeRange, qt.kind, qt.variables, qt.builderConfig)
 
 	case *builderQuery[qbtypes.LogAggregation]:
-		specCopy := qt.spec.Copy()
-		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
-		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
 		shiftStmtBuilder := q.logStmtBuilder
 		if qt.spec.Source == telemetrytypes.SourceAudit {
 			shiftStmtBuilder = q.auditStmtBuilder
 		}
-		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, shiftStmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, q.builderConfig)
+		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, shiftStmtBuilder, qt.queryType, qt.spec.Copy(), timeRange, qt.kind, qt.variables, q.builderConfig)
 
 	case *builderQuery[qbtypes.MetricAggregation]:
-		specCopy := qt.spec.Copy()
-		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
-		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
 		if qt.spec.Source == telemetrytypes.SourceMeter {
-			return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, q.meterStmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, builderConfig{})
+			return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, q.meterStmtBuilder, qt.queryType, qt.spec.Copy(), timeRange, qt.kind, qt.variables, builderConfig{})
 		}
-		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, q.metricStmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, builderConfig{})
+		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, q.metricStmtBuilder, qt.queryType, qt.spec.Copy(), timeRange, qt.kind, qt.variables, builderConfig{})
 	case *traceOperatorQuery:
 		specCopy := qt.spec.Copy()
 		return &traceOperatorQuery{
