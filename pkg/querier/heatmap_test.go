@@ -71,7 +71,7 @@ func TestTrimResultToFluxBoundaryKeepsTheHeatmapAxis(t *testing.T) {
 		},
 	}
 
-	trimmed := cache.trimResultToFluxBoundary(result, 1710000060000)
+	trimmed := cache.trimResultToFluxBoundary(result, 0, 1710000060000)
 
 	tsData, ok := trimmed.Value.(*qbtypes.TimeSeriesData)
 	require.True(t, ok)

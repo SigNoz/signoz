@@ -60,7 +60,7 @@ func (bc *bucketCache) GetMissRanges(
 ) (cached *qbtypes.Result, missing []*qbtypes.TimeRange) {
 
 	// Get query window
-	startMs, endMs := q.Window()
+	startMs, endMs := cacheWindow(q, uint64(step.Milliseconds()))
 
 	bc.logger.DebugContext(ctx, "getting miss ranges", slog.String("fingerprint", q.Fingerprint()), slog.Uint64("start", startMs), slog.Uint64("end", endMs))
 
@@ -127,7 +127,7 @@ func (bc *bucketCache) GetMissRanges(
 // Put stores fresh query results in the cache.
 func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result) {
 	// Get query window
-	startMs, endMs := q.Window()
+	startMs, endMs := cacheWindow(q, uint64(step.Milliseconds()))
 
 	// Calculate the flux boundary - data after this point should not be cached
 	currentMs := uint64(time.Now().UnixMilli())
@@ -152,7 +152,8 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	}
 
 	// Trim the result to exclude data within flux interval
-	trimmedResult := bc.trimResultToFluxBoundary(fresh, cachableEndMs)
+	requestStartMs, _ := q.Window()
+	trimmedResult := bc.trimResultToFluxBoundary(fresh, requestStartMs, cachableEndMs)
 	if trimmedResult == nil {
 		// Result type is not cacheable (raw or scalar)
 		return
@@ -220,6 +221,30 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 			bc.logger.ErrorContext(ctx, "error setting cached data", errors.Attr(err))
 		}
 	}
+}
+
+// lookbackSteps is how many steps before its window a query's statement
+// reads. runningDiff drops its first point, so the metrics statement reads
+// one step before the window to give the first interval a difference.
+func lookbackSteps(q qbtypes.Query) int {
+	bq, ok := q.(*builderQuery[qbtypes.MetricAggregation])
+	if !ok {
+		return 0
+	}
+	for _, fn := range bq.spec.Functions {
+		if fn.Name == qbtypes.FunctionNameRunningDiff {
+			return 1
+		}
+	}
+	return 0
+}
+
+// cacheWindow is the query window widened by its lookback, so a hit carries
+// the steps the statement reads before the window.
+func cacheWindow(q qbtypes.Query, stepMs uint64) (uint64, uint64) {
+	startMs, endMs := q.Window()
+	lookbackMs := uint64(lookbackSteps(q)) * stepMs
+	return startMs - min(lookbackMs, startMs), endMs
 }
 
 // generateCacheKey names the cache entry holding one grid cell of a query.
@@ -760,7 +785,7 @@ func (bc *bucketCache) deduplicateWarnings(warnings []string) []string {
 }
 
 // trimResultToFluxBoundary trims the result to exclude data points beyond the flux boundary.
-func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoundary uint64) *qbtypes.Result {
+func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, requestStartMs, fluxBoundary uint64) *qbtypes.Result {
 	trimmedResult := &qbtypes.Result{
 		Type:     result.Type,
 		Stats:    result.Stats,
@@ -790,8 +815,10 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 
 					// Filter values to exclude those beyond flux boundary and partial values
 					for _, value := range series.Values {
-						// Skip partial values - they cannot be cached
-						if value.Partial {
+						// Skip partial values - they cannot be cached. A lookback
+						// step before the request window is flagged partial
+						// against that window but is a whole step, so it stays.
+						if value.Partial && uint64(value.Timestamp) >= requestStartMs {
 							continue
 						}
 						if uint64(value.Timestamp) <= fluxBoundary {
