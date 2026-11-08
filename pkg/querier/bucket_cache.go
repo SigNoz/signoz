@@ -151,8 +151,10 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 			slog.Uint64("cachable_end", cachableEndMs))
 	}
 
+	stepMs := uint64(step.Milliseconds())
+
 	// Trim the result to exclude data within flux interval
-	trimmedResult := bc.trimResultToFluxBoundary(fresh, cachableEndMs)
+	trimmedResult := bc.trimResultToFluxBoundary(fresh, q, cachableEndMs, stepMs)
 	if trimmedResult == nil {
 		// Result type is not cacheable (raw or scalar)
 		return
@@ -160,7 +162,6 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 
 	// Adjust start and end times to only cache complete intervals
 	cachableStartMs := startMs
-	stepMs := uint64(step.Milliseconds())
 
 	// If we have a step interval, adjust boundaries to only cache complete intervals
 	if stepMs > 0 {
@@ -760,11 +761,19 @@ func (bc *bucketCache) deduplicateWarnings(warnings []string) []string {
 }
 
 // trimResultToFluxBoundary trims the result to exclude data points beyond the flux boundary.
-func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoundary uint64) *qbtypes.Result {
+func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, q qbtypes.Query, fluxBoundary uint64, stepMs uint64) *qbtypes.Result {
 	trimmedResult := &qbtypes.Result{
 		Type:     result.Type,
 		Stats:    result.Stats,
 		Warnings: result.Warnings,
+	}
+
+	// A promql value at T is the query evaluated at T, so it is complete once
+	// T is at the boundary. Every other value at T aggregates [T, T+step) and
+	// is still filling until the whole step is behind the boundary.
+	lastCachableTimestampMs := fluxBoundary
+	if _, isPromQL := q.(*promqlQuery); !isPromQL && stepMs > 0 && fluxBoundary > stepMs {
+		lastCachableTimestampMs = fluxBoundary - stepMs
 	}
 
 	switch {
@@ -794,7 +803,7 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 						if value.Partial {
 							continue
 						}
-						if uint64(value.Timestamp) <= fluxBoundary {
+						if uint64(value.Timestamp) <= lastCachableTimestampMs {
 							trimmedSeries.Values = append(trimmedSeries.Values, value)
 						}
 					}
