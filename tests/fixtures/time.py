@@ -1,4 +1,5 @@
 import datetime
+import time
 from typing import Any
 
 import isodate
@@ -19,3 +20,8 @@ def parse_duration(duration: Any) -> datetime.timedelta:
     if isinstance(duration, datetime.timedelta):
         return duration
     return datetime.timedelta(seconds=duration)
+
+
+def wait_until_second_of_minute(low: int, high: int) -> None:
+    while not low <= datetime.datetime.now(tz=datetime.UTC).second <= high:
+        time.sleep(1)
