@@ -1,3 +1,10 @@
+// The mask of the error modal blurs the page and a dialog opened under it, and the
+// dialog's own backdrop would otherwise dim the error modal that sits above the page.
+body:has(.error-modal__wrap:not([style*='display: none'])) {
+	--dialog-backdrop-color: transparent;
+	--alert-dialog-backdrop-color: transparent;
+}
+
 .error-modal {
 	&__trigger {
 		width: fit-content;

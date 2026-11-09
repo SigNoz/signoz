@@ -847,6 +847,11 @@ body.bottom-strip-on {
 	// design libraries.
 	--dropdown-z-index: 1050;
 
+	// antd modals (ErrorModal, z-index 1000) blur everything under their mask,
+	// so a dialog has to sit above them to stay crisp.
+	--dialog-z-index: 1001;
+	--alert-dialog-z-index: 1001;
+
 	--internal-ant-border-color-focus: #3a52a8;
 	--internal-ant-border-color-hover: #6e8de8;
 }
