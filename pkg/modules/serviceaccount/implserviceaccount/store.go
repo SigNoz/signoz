@@ -243,6 +243,21 @@ func (store *store) DeleteServiceAccountRole(ctx context.Context, serviceAccount
 	return nil
 }
 
+func (store *store) DeleteServiceAccountRolesByServiceAccountID(ctx context.Context, serviceAccountID valuer.UUID) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(serviceaccounttypes.ServiceAccountRole)).
+		Where("service_account_id = ?", serviceAccountID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (store *store) CreateFactorAPIKey(ctx context.Context, storable *serviceaccounttypes.FactorAPIKey) error {
 	_, err := store.
 		sqlstore.

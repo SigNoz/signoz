@@ -20,6 +20,7 @@ export enum QueryBuilderField {
 	// Builder level
 	Formula = 'formula',
 	AdditionalQueries = 'additional_queries',
+	TraceOperator = 'trace_operator',
 }
 
 /** Per-query builder fields that can be kept equal across a panel's queries. */

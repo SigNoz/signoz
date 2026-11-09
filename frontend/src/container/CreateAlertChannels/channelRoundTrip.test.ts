@@ -23,7 +23,6 @@ const SPECS: Record<string, Record<string, unknown>> = {
 		url: 'https://example.com/hook',
 		username: 'u',
 		password: 'p',
-		bearerToken: 't',
 		sendResolved: true,
 	},
 	email: {
@@ -69,11 +68,11 @@ const SPECS: Record<string, Record<string, unknown>> = {
 		sendResolved: true,
 	},
 	jira: {
+		deployment: 'cloud',
 		site: 'https://acme.atlassian.net',
 		project: 'OPS',
 		issueType: 'Task',
-		email: 'a@b.c',
-		apiToken: 'tok',
+		auth: { email: 'a@b.c', apiToken: 'tok' },
 		summary: 's',
 		description: 'd',
 		priority: 'High',
@@ -99,6 +98,16 @@ const SPECS: Record<string, Record<string, unknown>> = {
 		title: 't',
 		description: 'd',
 		metadata: { team: 'ops' },
+		sendResolved: true,
+	},
+	telegram: {
+		apiUrl: 'https://api.telegram.org',
+		botToken: '123456789:AA-token',
+		chatId: -1001234567890,
+		messageThreadId: 42,
+		title: 't',
+		message: 'm',
+		disableNotifications: true,
 		sendResolved: true,
 	},
 };

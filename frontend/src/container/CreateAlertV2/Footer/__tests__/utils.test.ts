@@ -9,8 +9,10 @@ import {
 } from 'container/CreateAlertV2/context/constants';
 import {
 	AdvancedOptionsState,
+	AlertThresholdOperator,
 	EvaluationWindowState,
 	NotificationSettingsState,
+	Seasonality,
 } from 'container/CreateAlertV2/context/types';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -18,6 +20,7 @@ import { EQueryType } from 'types/common/dashboard';
 
 import { BuildCreateAlertRulePayloadArgs } from '../types';
 import {
+	buildCreateAlertRulePayload,
 	buildCreateThresholdAlertRulePayload,
 	getAlertOnAbsentProps,
 	getEnforceMinimumDatapointsProps,
@@ -94,6 +97,33 @@ describe('Footer utils', () => {
 			expect(validateCreateAlertState(currentArgs)).toBe(
 				'Please select at least one channel for each threshold or enable routing policies',
 			);
+		});
+
+		it.each([
+			['', 'Please enter a deviation greater than 0'],
+			[0, 'Please enter a deviation greater than 0'],
+			[-2, 'Please enter a deviation greater than 0'],
+			['2.5', null],
+		])('when the anomaly deviation is %p', (thresholdValue, expected) => {
+			const currentArgs: BuildCreateAlertRulePayloadArgs = {
+				...args,
+				alertType: AlertTypes.ANOMALY_BASED_ALERT,
+				basicAlertState: { ...args.basicAlertState, name: 'test name' },
+				thresholdState: {
+					...args.thresholdState,
+					thresholds: [
+						{
+							...args.thresholdState.thresholds[0],
+							thresholdValue: thresholdValue as number,
+						},
+					],
+				},
+				notificationSettings: {
+					...args.notificationSettings,
+					routingPolicies: true,
+				},
+			};
+			expect(validateCreateAlertState(currentArgs)).toBe(expected);
 		});
 
 		it('when threshold channels are not provided but routing policies are enabled', () => {
@@ -572,5 +602,94 @@ describe('Footer utils', () => {
 				expect(props.condition.thresholds?.spec[0].matchType).toBe(matchType);
 			},
 		);
+	});
+
+	describe('buildCreateAlertRulePayload', () => {
+		const mockCreateAlertContextState = createMockAlertContextState();
+		const thresholdState = mockCreateAlertContextState.thresholdState;
+		const anomalyArgs: BuildCreateAlertRulePayloadArgs = {
+			basicAlertState: mockCreateAlertContextState.alertState,
+			thresholdState: {
+				...thresholdState,
+				seasonality: Seasonality.DAILY,
+				thresholds: [
+					{ ...thresholdState.thresholds[0], thresholdValue: 3, unit: 'ms' },
+				],
+			},
+			advancedOptions: mockCreateAlertContextState.advancedOptions,
+			evaluationWindow: {
+				...mockCreateAlertContextState.evaluationWindow,
+				windowType: 'rolling',
+				timeframe: '1h0m0s',
+			},
+			notificationSettings: mockCreateAlertContextState.notificationSettings,
+			query: initialQueriesMap.metrics,
+			alertType: AlertTypes.ANOMALY_BASED_ALERT,
+		};
+
+		it('builds a v2alpha1 anomaly rule with a rolling window', () => {
+			const props = buildCreateAlertRulePayload(anomalyArgs);
+			expect(props.ruleType).toBe('anomaly_rule');
+			expect(props.alertType).toBe(AlertTypes.METRICS_BASED_ALERT);
+			expect(props.schemaVersion).toBe('v2alpha1');
+			expect(props.condition.algorithm).toBe('standard');
+			expect(props.condition.seasonality).toBe('daily');
+			expect(props.condition.thresholds?.spec[0]).toMatchObject({
+				target: 3,
+				targetUnit: '',
+			});
+			expect(props.evaluation).toStrictEqual({
+				kind: 'rolling',
+				spec: { evalWindow: '1h0m0s', frequency: '1m' },
+			});
+		});
+
+		it.each([
+			[AlertThresholdOperator.IS_BELOW, -3],
+			['2', -3],
+			[AlertThresholdOperator.IS_ABOVE, 3],
+			[AlertThresholdOperator.ABOVE_BELOW, 3],
+		])('signs the z-score target for operator %s', (operator, target) => {
+			const props = buildCreateAlertRulePayload({
+				...anomalyArgs,
+				thresholdState: { ...anomalyArgs.thresholdState, operator },
+			});
+			expect(props.condition.thresholds?.spec[0].target).toBe(target);
+			expect(props.condition.thresholds?.spec[0].op).toBe(operator);
+		});
+
+		it('signs every anomaly severity the same way', () => {
+			const props = buildCreateAlertRulePayload({
+				...anomalyArgs,
+				thresholdState: {
+					...anomalyArgs.thresholdState,
+					operator: AlertThresholdOperator.IS_BELOW,
+					thresholds: [
+						{ ...anomalyArgs.thresholdState.thresholds[0], thresholdValue: 3 },
+						{
+							...anomalyArgs.thresholdState.thresholds[0],
+							id: 'warning',
+							label: 'warning',
+							thresholdValue: 2,
+						},
+					],
+				},
+			});
+			expect(
+				props.condition.thresholds?.spec.map(({ name, target }) => [name, target]),
+			).toStrictEqual([
+				['critical', -3],
+				['warning', -2],
+			]);
+		});
+
+		it('builds a threshold rule for other alert types', () => {
+			const props = buildCreateAlertRulePayload({
+				...anomalyArgs,
+				alertType: AlertTypes.METRICS_BASED_ALERT,
+			});
+			expect(props.ruleType).toBe('threshold_rule');
+			expect(props.condition.seasonality).toBeUndefined();
+		});
 	});
 });

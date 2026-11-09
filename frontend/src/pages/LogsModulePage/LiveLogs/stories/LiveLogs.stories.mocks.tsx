@@ -4,12 +4,14 @@
  */
 
 import setLocalStorage from 'api/browser/localstorage/set';
+import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { FontSize, type LogViewMode } from 'container/OptionsMenu/types';
 import { rest } from 'msw';
+import { defaultFeatureFlags } from 'tests/fixtures/appContextMock';
 import type {
 	BaseBuilderQuery,
 	QueryRangeRequestV5,
@@ -19,10 +21,11 @@ import {
 	choiceControl,
 	countControl,
 	multiChoiceControl,
+	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
-import { logsSavedViewsResponse } from '../../SavedViews/stories/__story_mockdata__/savedViews';
+import { logsSavedViewsResponse } from '../../stories/__story_mockdata__/savedViews';
 import {
 	attributeValuesResponse,
 	dashboardsResponse,
@@ -94,6 +97,12 @@ export const liveLogsMocks = defineStoryMocks({
 			options: LIST_FORMATS,
 			value: 'table',
 		}),
+		jsonBody: toggleControl('JSON body', {
+			group: LIST,
+			description:
+				'`use_json_body`: the streamed lines carry the body as an object, every fourth one holding only `message`, which the list shows as its text.',
+			value: false,
+		}),
 	},
 	handlers: (values, response) => [
 		// The frequency chart above the list stays empty here: it only queries
@@ -117,7 +126,14 @@ export const liveLogsMocks = defineStoryMocks({
 				// `Authorization` header, so without these the browser refuses the
 				// response the same way it would refuse the backend's.
 				ctx.set('Access-Control-Allow-Origin', '*'),
-				ctx.body(liveLogsStream(values.liveLogs, values.severities, Date.now())),
+				ctx.body(
+					liveLogsStream(
+						values.liveLogs,
+						values.severities,
+						Date.now(),
+						values.jsonBody,
+					),
+				),
 			),
 		),
 
@@ -138,7 +154,9 @@ export const liveLogsMocks = defineStoryMocks({
 				const timeWindow = { start: body.start, end: body.end };
 
 				if (body.requestType === 'raw') {
-					return logRowsResponse(values.liveLogs, values.severities, body.end);
+					return logRowsResponse(values.liveLogs, values.severities, body.end, {
+						jsonBody: values.jsonBody,
+					});
 				}
 
 				const spec = body.compositeQuery?.queries?.[0]?.spec as
@@ -187,7 +205,7 @@ export const liveLogsMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v1/explorer/views',
+			'http://localhost/api/v2/saved_views',
 			response.json(() => logsSavedViewsResponse(4)),
 		),
 
@@ -196,9 +214,23 @@ export const liveLogsMocks = defineStoryMocks({
 			response.json(dashboardsResponse),
 		),
 	],
-	config: () => ({
+	config: ({ jsonBody }) => ({
 		route: liveRoute(),
 		reduxState: timeRangeState(),
+		appContext: jsonBody
+			? {
+					featureFlags: [
+						...defaultFeatureFlags,
+						{
+							name: FeatureKeys.USE_JSON_BODY,
+							active: true,
+							usage: 0,
+							usage_limit: -1,
+							route: '',
+						},
+					],
+				}
+			: {},
 	}),
 	effect: ({ format }) => {
 		setLocalStorage(LOCALSTORAGE.SHOW_LOGS_QUICK_FILTERS, 'true');

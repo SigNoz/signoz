@@ -18,6 +18,8 @@ import {
 import type {
 	MetricRangePayloadV5,
 	QueryRangeRequestV5,
+	TimeSeries,
+	TimeSeriesValue,
 } from 'types/api/v5/queryRange';
 
 import {
@@ -52,23 +54,97 @@ export const alertPreviewSeries = async (
 		return queryRangeV5EmptyResponse(queryName);
 	}
 
-	return queryRangeV5TimeSeriesResponse([
-		{
-			queryName,
-			series: Array.from({ length: count }, (_unused, index) => ({
-				labels: [
-					{ key: { name: 'host.name' }, value: HOSTS[index % HOSTS.length] },
+	const series = Array.from({ length: count }, (_unused, index) => ({
+		labels: [{ key: { name: 'host.name' }, value: HOSTS[index % HOSTS.length] }],
+		values: timeSeriesPoints({
+			start: body.start,
+			end: body.end,
+			base: 55 + index * 6,
+			amplitude: 12,
+			seed: index * 3,
+		}),
+	}));
+	const response = queryRangeV5TimeSeriesResponse([{ queryName, series }]);
+
+	const zScore = requestedZScore(body);
+	if (zScore === undefined) {
+		return response;
+	}
+
+	// The anomaly engine answers with the forecast, its band and the z-score per
+	// point next to the observed series, which is what the anomaly chart draws.
+	const forecast = series.map((observed, index) => ({
+		labels: observed.labels,
+		values: timeSeriesPoints({
+			start: body.start,
+			end: body.end,
+			base: 55 + index * 6,
+			amplitude: 9,
+			seed: index * 3 + 1,
+		}),
+	}));
+	const shifted = (by: number): TimeSeries[] =>
+		forecast.map(({ labels, values }) => ({
+			labels,
+			values: values.map((point) => ({ ...point, value: point.value + by })),
+		}));
+	const anomalyScores = series.map(({ labels, values }, index) => ({
+		labels,
+		values: values.map((point, pointIndex): TimeSeriesValue => ({
+			...point,
+			value:
+				(point.value - forecast[index].values[pointIndex].value) / ANOMALY_SPREAD,
+		})),
+	}));
+
+	return {
+		data: {
+			...response.data,
+			data: {
+				results: [
+					{
+						queryName,
+						aggregations: [
+							{
+								index: 0,
+								alias: '',
+								meta: {},
+								series,
+								predictedSeries: forecast,
+								upperBoundSeries: shifted(zScore * ANOMALY_SPREAD),
+								lowerBoundSeries: shifted(-zScore * ANOMALY_SPREAD),
+								anomalyScores,
+							},
+						],
+					},
 				],
-				values: timeSeriesPoints({
-					start: body.start,
-					end: body.end,
-					base: 55 + index * 6,
-					amplitude: 12,
-					seed: index * 3,
-				}),
-			})),
+			},
 		},
-	]);
+	};
+};
+
+const ANOMALY_SPREAD = 4;
+
+// The engine sizes the band from the `anomaly` function's `z_score_threshold`.
+const requestedZScore = (body: QueryRangeRequestV5): number | undefined => {
+	const anomaly = body.compositeQuery?.queries
+		?.flatMap(
+			(query) =>
+				(
+					query.spec as {
+						functions?: {
+							name: string;
+							args?: { name?: string; value?: unknown }[];
+						}[];
+					}
+				).functions ?? [],
+		)
+		.find(({ name }) => name === 'anomaly');
+	if (!anomaly) {
+		return undefined;
+	}
+	const zScore = anomaly.args?.find(({ name }) => name === 'z_score_threshold');
+	return Number(zScore?.value ?? 3);
 };
 
 const METRIC_SEEDS: MetricsexplorertypesListMetricDTO[] = [

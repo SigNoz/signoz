@@ -25,7 +25,7 @@ import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import { colorToRgb } from 'lib/uPlotLib/utils/generateColor';
 import {
 	ChevronDown,
@@ -353,7 +353,7 @@ const SpanOverview = memo(function SpanOverview({
 			<span className={styles.rowActions}>
 				<Tooltip title="Copy Span Link">
 					<Button
-						aria-label="Action"
+						aria-label="Copy span link"
 						variant="ghost"
 						size="sm"
 						icon
@@ -365,7 +365,8 @@ const SpanOverview = memo(function SpanOverview({
 				</Tooltip>
 				<Tooltip title="Add to Trace Funnel">
 					<Button
-						aria-label="Action"
+						aria-label="Add to Trace Funnel"
+						testId="span-add-to-funnel-btn"
 						variant="ghost"
 						size="sm"
 						icon
@@ -676,19 +677,19 @@ function Success(props: ISuccessProps): JSX.Element {
 		setSelectedSpanToAddToFunnel(span);
 	}, []);
 
-	const urlQuery = useUrlQuery();
 	const { safeNavigate } = useSafeNavigate();
 
 	const handleSpanClick = useCallback(
 		(span: SpanV3): void => {
 			setSelectedSpan(span);
+			const params = getUnstableCurrentSearchParams();
 			if (span?.span_id) {
-				urlQuery.set('spanId', span?.span_id);
+				params.set('spanId', span?.span_id);
 			}
 
-			safeNavigate({ search: urlQuery.toString() }, { replace: true });
+			safeNavigate({ search: params.toString() }, { replace: true });
 		},
-		[setSelectedSpan, urlQuery, safeNavigate],
+		[setSelectedSpan, safeNavigate],
 	);
 
 	// Left side columns using TanStack React Table (extensible for future columns)

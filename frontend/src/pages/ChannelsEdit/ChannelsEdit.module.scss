@@ -2,12 +2,9 @@
 	padding: var(--spacing-6);
 }
 
-.content {
-	padding: 0 var(--spacing-6) var(--spacing-6);
-}
-
-.crumbName {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-1);
+.page {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: var(--spacing-4) var(--spacing-6) 0;
 }

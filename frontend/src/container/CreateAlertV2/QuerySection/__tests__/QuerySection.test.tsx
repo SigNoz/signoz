@@ -1,7 +1,6 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryParams } from 'constants/query';
@@ -11,6 +10,7 @@ import {
 } from 'constants/queryBuilder';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -61,10 +61,12 @@ jest.mock(
 			alertType,
 			panelType,
 			setQueryCategory,
+			isAnomalyDetection,
 		}: any): JSX.Element {
 			return (
 				<div data-testid="query-section-component">
 					<div data-testid="query-category">{queryCategory}</div>
+					<div data-testid="is-anomaly-detection">{String(isAnomalyDetection)}</div>
 					<div data-testid="alert-type">{alertType}</div>
 					<div data-testid="panel-type">{panelType}</div>
 					<button
@@ -127,15 +129,15 @@ const queryClient = new QueryClient({
 		},
 	},
 });
-const renderQuerySection = (): ReturnType<typeof render> =>
+const renderQuerySection = (search = ''): ReturnType<typeof render> =>
 	render(
 		<Provider store={store}>
 			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
+				<TestRouter initialRoute={`/alerts/new${search}`}>
 					<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
 						<QuerySection />
 					</CreateAlertProvider>
-				</MemoryRouter>
+				</TestRouter>
 			</QueryClientProvider>
 		</Provider>,
 	);
@@ -199,6 +201,27 @@ describe('QuerySection', () => {
 
 		const metricsTab = screen.getByText(METRICS_TEXT).closest('button');
 		expect(metricsTab).toHaveClass(ACTIVE_TAB_CLASS);
+	});
+
+	it('keeps Metrics active and restricts query types for anomaly alerts', () => {
+		renderQuerySection(`?${QueryParams.ruleType}=anomaly_rule`);
+
+		expect(screen.getByText(METRICS_TEXT).closest('button')).toHaveClass(
+			ACTIVE_TAB_CLASS,
+		);
+		expect(screen.getByTestId('is-anomaly-detection')).toHaveTextContent('true');
+	});
+
+	it('stays on the anomaly alert when its active Metrics tab is clicked', async () => {
+		const user = userEvent.setup();
+		renderQuerySection(`?${QueryParams.ruleType}=anomaly_rule`);
+
+		await user.click(screen.getByText(METRICS_TEXT));
+
+		expect(
+			mockUseQueryBuilder.redirectWithQueryBuilderData,
+		).not.toHaveBeenCalled();
+		expect(screen.getByTestId('is-anomaly-detection')).toHaveTextContent('true');
 	});
 
 	it('handles alert type change when clicking on different tabs', async () => {
@@ -404,11 +427,11 @@ describe('QuerySection', () => {
 		render(
 			<Provider store={store}>
 				<QueryClientProvider client={queryClient}>
-					<MemoryRouter>
+					<TestRouter>
 						<CreateAlertProvider initialAlertType={AlertTypes.LOGS_BASED_ALERT}>
 							<QuerySection />
 						</CreateAlertProvider>
-					</MemoryRouter>
+					</TestRouter>
 				</QueryClientProvider>
 			</Provider>,
 		);
@@ -458,11 +481,11 @@ describe('QuerySection', () => {
 		render(
 			<Provider store={store}>
 				<QueryClientProvider client={queryClient}>
-					<MemoryRouter>
+					<TestRouter>
 						<CreateAlertProvider initialAlertType={AlertTypes.TRACES_BASED_ALERT}>
 							<QuerySection />
 						</CreateAlertProvider>
-					</MemoryRouter>
+					</TestRouter>
 				</QueryClientProvider>
 			</Provider>,
 		);

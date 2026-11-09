@@ -3,9 +3,11 @@ package implrulestatehistory
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/contextlinks"
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -18,9 +20,10 @@ import (
 // explorer with the context that produced it.
 type relatedLinkBuilder struct {
 	alertType  ruletypes.AlertType
+	signal     telemetrytypes.Signal
 	evaluation ruletypes.Evaluation
-	filterExpr string
-	groupBy    []qbtypes.GroupByKey
+	condition  *ruletypes.RuleCondition
+	logger     *slog.Logger
 }
 
 // relatedLinkBuilderForRule returns nil when the rule cannot be loaded or is
@@ -49,7 +52,7 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 		return nil
 	}
 
-	builder := &relatedLinkBuilder{alertType: rule.AlertType}
+	builder := &relatedLinkBuilder{alertType: rule.AlertType, signal: signal, condition: rule.RuleCondition, logger: m.logger.With(slog.String("rule.id", ruleID))}
 	if rule.Evaluation != nil {
 		if evaluation, err := rule.Evaluation.GetEvaluation(); err == nil {
 			builder.evaluation = evaluation
@@ -62,10 +65,6 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 		}
 		builder.evaluation = ruletypes.RollingWindow{EvalWindow: evalWindow}
 	}
-
-	// links are still built from the labels alone when the rule has no builder
-	// query for the signal (e.g. ClickHouse SQL alerts)
-	builder.filterExpr, builder.groupBy, _ = contextlinks.BuilderQueryForSignal(rule.RuleCondition.CompositeQuery.Queries, signal)
 
 	return builder
 }
@@ -83,13 +82,19 @@ func (b *relatedLinkBuilder) queryWindow(unixMilli int64) (time.Time, time.Time)
 
 // links returns the explorer query params for the given entry labels and time
 // range.
-func (b *relatedLinkBuilder) links(labels rulestatehistorytypes.LabelsString, start, end time.Time) rulestatehistorytypes.RelatedLinks {
+func (b *relatedLinkBuilder) links(ctx context.Context, labels rulestatehistorytypes.LabelsString, start, end time.Time) rulestatehistorytypes.RelatedLinks {
 	lbls := map[string]string{}
 	if err := json.Unmarshal([]byte(labels), &lbls); err != nil {
 		return rulestatehistorytypes.RelatedLinks{}
 	}
 
-	whereClause := contextlinks.PrepareFilterExpression(lbls, b.filterExpr, b.groupBy)
+	// links are still built from the labels alone when the rule has no builder
+	// query for the signal (e.g. ClickHouse SQL alerts)
+	whereClause, _, err := contextlinks.PrepareRuleFilterExpression(b.condition, b.signal, lbls)
+	if err != nil {
+		b.logger.ErrorContext(ctx, "failed to prepare the filter for related links", errors.Attr(err))
+		return rulestatehistorytypes.RelatedLinks{}
+	}
 
 	switch b.alertType {
 	case ruletypes.AlertTypeLogs:

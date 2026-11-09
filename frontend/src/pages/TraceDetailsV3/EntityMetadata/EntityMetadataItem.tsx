@@ -16,7 +16,8 @@ function EntityMetadataItem({
 	children,
 }: EntityMetadataItemProps): JSX.Element {
 	return (
-		<Tooltip title={tooltip}>
+		// Below the row: above it the tooltip covers the Overview / Thread tabs.
+		<Tooltip title={tooltip} side="bottom">
 			<span className={styles.item}>
 				{icon}
 				<Typography.Text as="span">{children}</Typography.Text>

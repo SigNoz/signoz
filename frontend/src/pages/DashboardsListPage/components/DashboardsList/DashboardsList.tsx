@@ -18,7 +18,8 @@ import {
 	useAccumulatedTags,
 } from '../../hooks/useAccumulatedTags';
 import { useActiveView } from '../../hooks/useActiveView';
-import { useCreatorOptions } from '../../hooks/useCreatorOptions';
+import { useDashboardViewCtx } from '../../hooks/useDashboardViewCtx';
+import { useCreatorOptions } from 'components/ListFilter/useCreatorOptions';
 import { useDashboardFilters } from '../../hooks/useDashboardFilters';
 import {
 	usePage,
@@ -27,16 +28,19 @@ import {
 } from '../../hooks/useDashboardsListQueryParams';
 import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
 import { useDashboardsListVisibleColumnsStore } from '../../store/useVisibleColumnsStore';
-import { BuiltinViewId } from '../../types';
-import type { SuggestionSource } from '../../utils/dslSuggestions';
+import { DEFAULT_DASHBOARD_VIEW, findBuiltinView } from '../../list.config';
+import type { SuggestionSource } from 'components/ListFilter/dsl/types';
 import type { DashboardListItem } from '../../utils/helpers';
-import { applyClientView } from '../../utils/views';
-import FilterZone from '../FilterZone/FilterZone';
+import DashboardsFilterZone from '../DashboardsFilterZone/DashboardsFilterZone';
 import NewDashboardModal from '../NewDashboardModal/NewDashboardModal';
-import StatusBar from '../StatusBar/StatusBar';
-import ViewsRail from '../ViewsRail/ViewsRail';
-import CommandHeader from './CommandHeader';
+import type { ReactElement } from 'react';
+import ListCommandHeader from 'components/ListViews/ListCommandHeader/ListCommandHeader';
+import ListStatusBar from 'components/ListViews/ListStatusBar/ListStatusBar';
+import type { ViewSaveMode } from 'components/ListViews/types';
+import ViewsRail from 'components/ListViews/ViewsRail/ViewsRail';
 import DashboardsResults from './DashboardsResults';
+import NewDashboardButton from './NewDashboardButton';
+import ViewsRailGuard from './ViewsRailGuard';
 import WorkspaceEmptyState from './WorkspaceEmptyState';
 
 import styles from './DashboardsList.module.scss';
@@ -58,6 +62,8 @@ function DashboardsList(): JSX.Element {
 	const [sortOrder, setSortOrder] = useSortOrder();
 	const [page, setPage] = usePage();
 
+	const viewCtx = useDashboardViewCtx();
+
 	const {
 		activeViewId,
 		builtinViews,
@@ -75,7 +81,7 @@ function DashboardsList(): JSX.Element {
 	} = useActiveView({
 		query,
 		setQuery,
-		userEmail: user.email,
+		ctx: viewCtx,
 		sortColumn,
 		sortOrder,
 		setSortColumn,
@@ -85,7 +91,6 @@ function DashboardsList(): JSX.Element {
 
 	const railCollapsed = useDashboardViewsStore((s) => s.railCollapsed);
 	const setRailCollapsed = useDashboardViewsStore((s) => s.setRailCollapsed);
-	const recent = useDashboardViewsStore((s) => s.recent);
 
 	// Any filter change resets to the first page so the user isn't stranded on a
 	// now-out-of-range offset.
@@ -125,6 +130,21 @@ function DashboardsList(): JSX.Element {
 		void logEvent(DashboardListEvents.RailToggled, { collapsed: !railCollapsed });
 		setRailCollapsed(!railCollapsed);
 	}, [setRailCollapsed, railCollapsed]);
+	const guardViewsRail = useCallback(
+		(content: ReactElement): ReactElement => (
+			<ViewsRailGuard>{content}</ViewsRailGuard>
+		),
+		[],
+	);
+	const logViewSaved = useCallback((mode: ViewSaveMode): void => {
+		void logEvent(DashboardListEvents.ViewSaved, { mode });
+	}, []);
+	const logViewRenamed = useCallback((): void => {
+		void logEvent(DashboardListEvents.ViewRenamed, {});
+	}, []);
+	const logViewDeleted = useCallback((): void => {
+		void logEvent(DashboardListEvents.ViewDeleted, {});
+	}, []);
 
 	const listParams = useMemo(
 		() => ({
@@ -161,13 +181,10 @@ function DashboardsList(): JSX.Element {
 
 	// Favorites / recently-viewed constrain the fetched rows by a client-side id
 	// set; all other views are already constrained server-side.
-	const dashboards = useMemo<DashboardListItem[]>(
-		() =>
-			clientView
-				? applyClientView(rawDashboards, activeViewId, recent)
-				: rawDashboards,
-		[clientView, rawDashboards, activeViewId, recent],
-	);
+	const dashboards = useMemo<DashboardListItem[]>(() => {
+		const clientFilter = findBuiltinView(activeViewId)?.clientFilter;
+		return clientFilter ? clientFilter(rawDashboards, viewCtx) : rawDashboards;
+	}, [rawDashboards, activeViewId, viewCtx]);
 	const total = clientView ? dashboards.length : (response?.data?.total ?? 0);
 
 	// Step back a page when a delete empties the current one, instead of showing nothing.
@@ -207,17 +224,17 @@ function DashboardsList(): JSX.Element {
 	// Autocomplete data source: reserved keys from the response, tag keys/values
 	// accumulated across pages, and creator emails for `created_by` values.
 	const source = useMemo<SuggestionSource>(() => {
-		const tagValuesByKey: Record<string, string[]> = {};
-		const tagKeys = new Set<string>();
+		const valuesByKey: Record<string, string[]> = {};
+		const dynamicKeys = new Set<string>();
 		availableTags.forEach((t) => {
-			tagKeys.add(t.key);
+			dynamicKeys.add(t.key);
 			const lower = t.key.toLowerCase();
-			(tagValuesByKey[lower] ??= []).push(t.value);
+			(valuesByKey[lower] ??= []).push(t.value);
 		});
 		return {
 			reservedKeys: response?.data?.reservedKeywords,
-			tagKeys: Array.from(tagKeys),
-			tagValuesByKey,
+			dynamicKeys: Array.from(dynamicKeys),
+			valuesByKey,
 			creatorEmails: creatorOptions.map((o) => o.email),
 			currentUserEmail: user.email,
 		};
@@ -229,7 +246,7 @@ function DashboardsList(): JSX.Element {
 	);
 
 	const openCreate = useCallback((): void => {
-		logEvent('Dashboard List: New dashboard clicked', {});
+		void logEvent('Dashboard List: New dashboard clicked', {});
 		setIsCreateOpen(true);
 	}, []);
 
@@ -257,7 +274,9 @@ function DashboardsList(): JSX.Element {
 	const visitLoggedRef = useRef(false);
 	useEffect(() => {
 		if (!visitLoggedRef.current && !isLoading && response !== undefined) {
-			logEvent('Dashboard List V2: Page visited', { number: dashboards.length });
+			void logEvent('Dashboard List V2: Page visited', {
+				number: dashboards.length,
+			});
 			visitLoggedRef.current = true;
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -274,7 +293,7 @@ function DashboardsList(): JSX.Element {
 		canList &&
 		!error &&
 		dashboards.length === 0 &&
-		activeViewId === BuiltinViewId.All &&
+		activeViewId === DEFAULT_DASHBOARD_VIEW &&
 		filtersEmpty &&
 		page === 1;
 
@@ -296,6 +315,12 @@ function DashboardsList(): JSX.Element {
 				onReset={handleResetView}
 				onDelete={handleRemoveView}
 				onRename={renameView}
+				testIdPrefix="dashboards"
+				deleteDescription="This removes the saved view. Your dashboards are not affected."
+				guard={guardViewsRail}
+				onViewSaved={logViewSaved}
+				onViewRenamed={logViewRenamed}
+				onViewDeleted={logViewDeleted}
 			/>
 			<div className={styles.main}>
 				<div className={styles.mainScroll}>
@@ -304,13 +329,13 @@ function DashboardsList(): JSX.Element {
 					) : (
 						<>
 							<div className={styles.headerZone}>
-								<CommandHeader
+								<ListCommandHeader
 									label={activeLabel}
 									count={total}
 									isModified={isModified}
-									onCreate={openCreate}
+									action={<NewDashboardButton onClick={openCreate} />}
 								/>
-								<FilterZone
+								<DashboardsFilterZone
 									query={query}
 									creatorOptions={creatorOptions}
 									source={source}
@@ -329,7 +354,7 @@ function DashboardsList(): JSX.Element {
 										hasError={!!error}
 										isCloudUser={!!isCloudUser}
 										onRetry={(): void => {
-											refetch();
+											void refetch();
 										}}
 										errorHttpStatus={errorHttpStatus}
 										errorMessage={errorMessage}
@@ -354,11 +379,13 @@ function DashboardsList(): JSX.Element {
 						</>
 					)}
 				</div>
-				<StatusBar
+				<ListStatusBar
 					collapsed={railCollapsed}
 					onToggleCollapse={toggleRail}
 					count={dashboards.length}
 					total={total}
+					noun="dashboards"
+					testId="dashboards-rail-toggle"
 				/>
 			</div>
 

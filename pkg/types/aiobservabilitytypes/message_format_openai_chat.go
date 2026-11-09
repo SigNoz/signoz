@@ -4,8 +4,9 @@ import (
 	"strings"
 )
 
-// Format: OpenAI Chat Completions, a request {messages}, a response {choices}, or a bare message list.
-// Written by: bifrost, openrouter requests, the raw OpenAI calls OpenInference records.
+// Format: OpenAI Chat Completions, a request {messages}, a response {choices}, a bare message list, or a
+// single message.
+// Written by: bifrost, openrouter requests, the raw OpenAI calls OpenInference records, the Langfuse SDK.
 // Handled: string and block content, tool_calls nested or flattened, tool messages, refusal,
 // reasoning_content, finish reasons.
 // Not yet: streaming delta chunks, legacy completions choices[].text, audio output.
@@ -84,6 +85,19 @@ func (f *formatting) openAIChatMessage(m map[string]any) OutputMessage {
 	}
 	if call, ok := m["function_call"].(map[string]any); ok {
 		msg.Parts = append(msg.Parts, part(ToolCallRequestPart{Type: PartTypeToolCall, Name: stringOf(call["name"]), Arguments: decode(call["arguments"])}))
+	}
+	return msg
+}
+
+// openAIChatSingle converts a message recorded outside a list: the first choice's message the Langfuse
+// OpenAI wrapper writes as the output, or the additional_kwargs of a LangChain AIMessage, {tool_calls}
+// without a role, which the Langfuse LangChain handler writes for a tool-calling turn:
+// https://github.com/langfuse/langfuse-python/blob/18baf80450dd5f9c1f85916eb2d1b3c72d2052e1/langfuse/openai.py#L446
+// https://github.com/langfuse/langfuse-python/blob/18baf80450dd5f9c1f85916eb2d1b3c72d2052e1/langfuse/langchain/CallbackHandler.py#L1558
+func (f *formatting) openAIChatSingle(m map[string]any) OutputMessage {
+	msg := f.openAIChatMessage(m)
+	if msg.Role.IsZero() {
+		msg.Role = RoleAssistant
 	}
 	return msg
 }

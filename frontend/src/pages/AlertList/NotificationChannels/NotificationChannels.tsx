@@ -7,10 +7,11 @@ import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
-import TanStackTable from 'components/TanStackTableView';
+import TanStackTable, { ColumnSelector } from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import TextToolTip from 'components/TextToolTip';
+import { ChannelKind } from 'container/CreateAlertChannels/types';
 import { useUrlSearchState } from 'hooks/useUrlSearchState';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { useNotificationChannelCollectionPermissions } from 'hooks/notificationChannels/useNotificationChannelCollectionPermissions';
@@ -25,7 +26,9 @@ import { useTimezone } from 'providers/Timezone';
 
 import ChannelActionsMenu from './components/ChannelActionsMenu/ChannelActionsMenu';
 import ChannelJsonDialog from './components/ChannelJsonDialog/ChannelJsonDialog';
+import ChannelsEmptyState from './components/ChannelsEmptyState/ChannelsEmptyState';
 import {
+	CHANNEL_KIND_LABEL,
 	KIND_FILTER_ALL,
 	KIND_FILTER_OPTIONS,
 	KIND_KEY,
@@ -156,6 +159,10 @@ function NotificationChannels(): JSX.Element {
 	);
 
 	const hasActiveFilters = searchText.length > 0 || kind !== KIND_FILTER_ALL;
+	// With a kind picked, creating one of that kind is the likely next step, so
+	// the button offers it rather than making the type be chosen again.
+	const filteredKind =
+		kind !== KIND_FILTER_ALL ? (kind as ChannelKind) : undefined;
 	const isEmpty = !isFetching && channels.length === 0;
 
 	const handleClearFilters = useCallback((): void => {
@@ -169,27 +176,38 @@ function NotificationChannels(): JSX.Element {
 				<div className={styles.commandHeader}>
 					<div className={styles.headingBlock}>
 						<Typography.Title className={styles.title}>
-							All notification channels
+							{filteredKind
+								? `All ${CHANNEL_KIND_LABEL[filteredKind]} channels`
+								: 'All notification channels'}
 						</Typography.Title>
 						<span className={styles.countPill}>{total}</span>
 					</div>
 					<div className={styles.grow} />
+					{!isEmpty && (
+						<ColumnSelector
+							columns={columnsWithActions}
+							storageKey="notification-channels-columns"
+							testId="channels-columns"
+						/>
+					)}
+					<AuthZButton
+						checks={CREATE_CHECKS}
+						variant="solid"
+						color="primary"
+						size="sm"
+						prefix={<Plus size={14} />}
+						onClick={(): void => formView.openCreate(filteredKind)}
+						testId="channels-create"
+					>
+						{filteredKind
+							? `New ${CHANNEL_KIND_LABEL[filteredKind]} Channel`
+							: 'New Channel'}
+					</AuthZButton>
 					<TextToolTip
 						text="More details on how to configure notification channels"
 						url="https://signoz.io/docs/setup-alerts-notification/"
 						urlText="Learn More"
 					/>
-					<AuthZButton
-						checks={CREATE_CHECKS}
-						variant="solid"
-						color="primary"
-						size="md"
-						prefix={<Plus size={14} />}
-						onClick={formView.openCreate}
-						testId="channels-create"
-					>
-						New channel
-					</AuthZButton>
 				</div>
 
 				<div className={styles.filtersRow}>
@@ -215,12 +233,8 @@ function NotificationChannels(): JSX.Element {
 			</header>
 
 			<div ref={containerRef} className={styles.tableContainer}>
-				{/* Fails closed, unlike the guard's default: the fetch is gated on the
-				    same check, so falling open would render an empty table shell with
-				    no reason given. The header and filters stay, as on dashboards. */}
 				<AuthZGuardContent
 					checks={LIST_CHECKS}
-					onFailRenderContent={false}
 					fallback={({ deniedPermissions }): JSX.Element => (
 						<PermissionDeniedCallout
 							deniedPermissions={deniedPermissions}
@@ -244,6 +258,10 @@ function NotificationChannels(): JSX.Element {
 							subtitle="No notification channels match your search. Try adjusting your search criteria."
 							onClear={handleClearFilters}
 							clearButtonText="Clear Search"
+						/>
+					) : isEmpty ? (
+						<ChannelsEmptyState
+							onCreate={(): void => formView.openCreate(filteredKind)}
 						/>
 					) : (
 						<TanStackTable<Channel>

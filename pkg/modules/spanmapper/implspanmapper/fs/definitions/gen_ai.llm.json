@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "definition": {
     "name": "gen_ai.llm",
     "condition": {
@@ -134,6 +134,12 @@
         "fieldContext": "attribute",
         "config": {
           "sources": [
+            {
+              "key": "langfuse.observation.type",
+              "context": "attribute",
+              "operation": "copy",
+              "priority": 40
+            },
             {
               "key": "openinference.span.kind",
               "context": "attribute",
@@ -357,6 +363,12 @@
         "config": {
           "sources": [
             {
+              "key": "langfuse.observation.input",
+              "context": "attribute",
+              "operation": "move",
+              "priority": 40
+            },
+            {
               "key": "gen_ai.prompt",
               "context": "attribute",
               "operation": "move",
@@ -382,6 +394,12 @@
         "fieldContext": "attribute",
         "config": {
           "sources": [
+            {
+              "key": "langfuse.observation.output",
+              "context": "attribute",
+              "operation": "move",
+              "priority": 40
+            },
             {
               "key": "gen_ai.completion",
               "context": "attribute",

@@ -42,7 +42,9 @@ function Slack(): JSX.Element {
 				>
 					<Input {...register('channel')} data-testid="slack-channel-textbox" />
 				</FormField>
+			</FormCard>
 
+			<FormCard title={t('section_message')}>
 				<FormField label={t('field_slack_title')} error={errors.title?.message}>
 					<Controller
 						control={control}
@@ -82,7 +84,12 @@ function Slack(): JSX.Element {
 						)}
 					/>
 				</FormField>
+			</FormCard>
 
+			<FormCard
+				title={t('section_advanced')}
+				description={t('description_slack_advanced')}
+			>
 				<FormField
 					label={t('field_slack_color')}
 					help={t('help_slack_color')}

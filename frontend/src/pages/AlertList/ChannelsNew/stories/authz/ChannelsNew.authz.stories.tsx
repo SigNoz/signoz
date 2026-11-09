@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, within } from 'storybook/test';
+import { expect, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -81,12 +81,13 @@ export const CheckFailed: Story = {
 	// point of the story, not a regression.
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }) => {
-		const save = await within(canvasElement).findByTestId(
-			'save-channel-button',
-			undefined,
-			PAGE_LOAD,
+		const canvas = within(canvasElement);
+
+		await userEvent.type(
+			await canvas.findByTestId('channel-name-textbox', undefined, PAGE_LOAD),
+			'check-failed',
 		);
 
-		await expectDisabled(save, false);
+		await expectDisabled(canvas.getByTestId('save-channel-button'), false);
 	},
 };

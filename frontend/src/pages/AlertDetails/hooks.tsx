@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useMutation, useQueryClient, useQuery } from 'react-query';
-import { generatePath } from 'react-router-dom';
 import { TablePaginationConfig, TableProps } from 'antd';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { patchRulePartial } from 'api/alerts/patchRulePartial';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
-	createRule,
+	cloneRuleByID,
 	deleteRuleByID,
 	getGetRuleByIDQueryKey,
 	getGetRuleHistoryTimelineQueryOptions,
@@ -17,7 +16,6 @@ import {
 	useGetRuleHistoryOverallStatus,
 	useGetRuleHistoryStats,
 	useGetRuleHistoryTopContributors,
-	useListRules,
 } from 'api/generated/services/rules';
 import {
 	Querybuildertypesv5OrderDirectionDTO,
@@ -31,26 +29,21 @@ import {
 	type RuletypesPostableRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
-import { TabRoutes } from 'components/RouteTab/types';
 import { QueryParams } from 'constants/query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
-import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import {
 	computeCursorForPage,
 	useTimelineTableOrder,
 	useTimelineTablePage,
 } from 'container/AlertHistory/Timeline/Table/useTimelineTableCursor';
-import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
+import { TimelineFilter } from 'container/AlertHistory/types';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
-import GetMinMax from 'lib/getMinMax';
-import history from 'lib/history';
-import { History, Table } from '@signozhq/icons';
-import EditRules from 'pages/EditRules';
-import BetaTag from 'periscope/components/BetaTag/BetaTag';
+import GetMinMax, { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
+import { navigate } from 'lib/router/navigation';
 import { useAlertRule } from 'providers/Alert';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { toPostableRuleDTOFromAlertDef } from 'types/api/alerts/convert';
@@ -64,6 +57,7 @@ export const useAlertHistoryQueryParams = (): {
 	startTime: number;
 	endTime: number;
 	hasStartAndEndParams: boolean;
+	relativeTime: string | null;
 	params: URLSearchParams;
 } => {
 	const params = useUrlQuery();
@@ -73,8 +67,9 @@ export const useAlertHistoryQueryParams = (): {
 	const relativeTimeParam = params.get(QueryParams.relativeTime);
 
 	const relativeTime =
-		(relativeTimeParam === 'null' ? null : relativeTimeParam) ||
-		DEFAULT_TIME_RANGE;
+		relativeTimeParam && isValidShortHandDateTimeFormat(relativeTimeParam)
+			? relativeTimeParam
+			: DEFAULT_TIME_RANGE;
 
 	const intStartTime = parseInt(startTime || '0', 10);
 	const intEndTime = parseInt(endTime || '0', 10);
@@ -94,62 +89,9 @@ export const useAlertHistoryQueryParams = (): {
 		startTime: Math.floor(nanoToMilli(minTime)),
 		endTime: Math.floor(nanoToMilli(maxTime)),
 		hasStartAndEndParams,
+		relativeTime: hasStartAndEndParams ? null : relativeTime,
 		params,
 	};
-};
-export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
-	const urlQuery = useUrlQuery();
-
-	const getRouteUrl = (tab: AlertDetailsTab): string => {
-		let route = '';
-		let params = urlQuery.toString();
-		const ruleIdKey = QueryParams.ruleId;
-		const relativeTimeKey = QueryParams.relativeTime;
-
-		switch (tab) {
-			case AlertDetailsTab.OVERVIEW:
-				route = ROUTES.ALERT_OVERVIEW;
-				break;
-			case AlertDetailsTab.HISTORY:
-				params = `${ruleIdKey}=${urlQuery.get(
-					ruleIdKey,
-				)}&${relativeTimeKey}=${urlQuery.get(relativeTimeKey)}`;
-				route = ROUTES.ALERT_HISTORY;
-				break;
-			default:
-				return '';
-		}
-
-		return `${generatePath(route)}?${params}`;
-	};
-
-	const routes = [
-		{
-			Component: EditRules,
-			name: (
-				<div className="tab-item" data-testid="alert-details-tab-overview">
-					<Table size={14} />
-					Overview
-				</div>
-			),
-			route: getRouteUrl(AlertDetailsTab.OVERVIEW),
-			key: ROUTES.ALERT_OVERVIEW,
-		},
-		{
-			Component: AlertHistory,
-			name: (
-				<div className="tab-item" data-testid="alert-details-tab-history">
-					<History size={14} />
-					History
-					<BetaTag />
-				</div>
-			),
-			route: getRouteUrl(AlertDetailsTab.HISTORY),
-			key: ROUTES.ALERT_HISTORY,
-		},
-	];
-
-	return { routes };
 };
 type Props = {
 	ruleId: string | null;
@@ -357,12 +299,7 @@ export const useTimelineTable = ({
 	nextCursor?: string;
 }): {
 	paginationConfig: TablePaginationConfig;
-	onChangeHandler: (
-		pagination: TablePaginationConfig,
-		sorter: any,
-		filters: any,
-		extra: any,
-	) => void;
+	onChangeHandler: TableProps<AlertRuleTimelineTableResponse>['onChange'];
 	handleNextPage: () => void;
 	handlePrevPage: () => void;
 	hasNextPage: boolean;
@@ -449,8 +386,11 @@ export const useAlertRuleStatusToggle = ({
 		{
 			onSuccess: (data) => {
 				setAlertRuleState(data.data.state);
-				invalidateGetRuleByID(queryClient, { id: ruleId });
-				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
+				void invalidateGetRuleByID(queryClient, { id: ruleId });
+				void queryClient.refetchQueries([
+					REACT_QUERY_KEY.ALERT_RULE_DETAILS,
+					ruleId,
+				]);
 				notifications.success({
 					message: `Alert has been ${
 						data.data.state === 'disabled' ? 'disabled' : 'enabled'
@@ -458,8 +398,11 @@ export const useAlertRuleStatusToggle = ({
 				});
 			},
 			onError: (error) => {
-				invalidateGetRuleByID(queryClient, { id: ruleId });
-				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
+				void invalidateGetRuleByID(queryClient, { id: ruleId });
+				void queryClient.refetchQueries([
+					REACT_QUERY_KEY.ALERT_RULE_DETAILS,
+					ruleId,
+				]);
 				showErrorModal(
 					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
 				);
@@ -478,39 +421,32 @@ export const useAlertRuleStatusToggle = ({
 	return { handleAlertStateToggle };
 };
 
-export const useAlertRuleDuplicate = ({
-	alertDetails,
+export const useAlertRuleClone = ({
+	ruleId,
 }: {
-	alertDetails: AlertDef;
+	ruleId: string;
 }): {
-	handleAlertDuplicate: () => void;
+	handleAlertClone: () => void;
 } => {
 	const { notifications } = useNotifications();
+	const queryClient = useQueryClient();
 
 	const params = useUrlQuery();
 
-	const { refetch } = useListRules({
-		query: { cacheTime: 0 },
-	});
 	const { showErrorModal } = useErrorModal();
-	const { mutate: duplicateAlert } = useMutation(
-		[REACT_QUERY_KEY.DUPLICATE_ALERT_RULE],
-		(args: { data: AlertDef }) =>
-			createRule(toPostableRuleDTOFromAlertDef(args.data)),
+	const { mutate: cloneAlert } = useMutation(
+		[REACT_QUERY_KEY.CLONE_ALERT_RULE],
+		() => cloneRuleByID({ id: ruleId }),
 		{
-			onSuccess: async () => {
+			onSuccess: async (response) => {
 				notifications.success({
 					message: `Success`,
 				});
 
-				const { data: allAlertsData } = await refetch();
+				await invalidateListRules(queryClient);
 
-				const rules = allAlertsData?.data;
-				if (rules && rules.length > 0) {
-					const clonedAlert = rules[rules.length - 1];
-					params.set(QueryParams.ruleId, String(clonedAlert.id));
-					history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
-				}
+				params.set(QueryParams.ruleId, response.data.id);
+				navigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 			},
 			onError: (error) =>
 				showErrorModal(
@@ -519,15 +455,13 @@ export const useAlertRuleDuplicate = ({
 		},
 	);
 
-	const handleAlertDuplicate = (): void => {
-		const args = {
-			data: { ...alertDetails, alert: alertDetails.alert?.concat(' - Copy') },
-		};
-		duplicateAlert(args);
+	const handleAlertClone = (): void => {
+		cloneAlert();
 	};
 
-	return { handleAlertDuplicate };
+	return { handleAlertClone };
 };
+
 export const useAlertRuleUpdate = ({
 	alertDetails,
 	setAlertRuleName,
@@ -601,7 +535,7 @@ export const useAlertRuleDelete = ({
 					message: `Success`,
 				});
 
-				history.push(ROUTES.LIST_ALL_ALERT);
+				navigate(ROUTES.LIST_ALL_ALERT);
 			},
 			onError: (error) =>
 				showErrorModal(

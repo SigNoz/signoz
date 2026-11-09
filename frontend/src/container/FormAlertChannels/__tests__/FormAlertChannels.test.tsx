@@ -24,6 +24,7 @@ describe('FormAlertChannels', () => {
 				onTypeChangeHandler={jest.fn()}
 				onSaveHandler={jest.fn()}
 				onTestHandler={jest.fn()}
+				onDiscardHandler={jest.fn()}
 				testingState={false}
 				savingState={false}
 				editing

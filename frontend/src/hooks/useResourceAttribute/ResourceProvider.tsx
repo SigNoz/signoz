@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -25,7 +25,7 @@ type ResourceStep = 'Idle' | 'TagKey' | 'Operator' | 'TagValue';
 type ResourceEvent = 'NEXT' | 'onBlur' | 'RESET';
 
 function ResourceProvider({ children }: Props): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const [loading, setLoading] = useState(true);
 	const [selectedQuery, setSelectedQueries] = useState<string[]>([]);
 	const [staging, setStaging] = useState<string[]>([]);

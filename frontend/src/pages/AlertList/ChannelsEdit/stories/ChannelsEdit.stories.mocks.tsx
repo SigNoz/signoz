@@ -13,9 +13,13 @@ import {
 	CHANNEL_ACTION_OUTCOMES,
 	channelActionError,
 	CHANNEL_TYPES,
+	JIRA_DEPLOYMENTS,
+	type JiraDeploymentChoice,
 	notificationChannelResponse,
 	type ChannelActionOutcome,
 	type ChannelType,
+	WEBHOOK_AUTHS,
+	type WebhookAuthChoice,
 } from '../../stories/__story_mockdata__/alerts';
 
 const STORY_CHANNEL_ID = '1';
@@ -38,6 +42,20 @@ export const channelsEditMocks = defineStoryMocks({
 			options: CHANNEL_TYPES,
 			value: 'slack',
 		}),
+		webhookAuth: choiceControl<WebhookAuthChoice>('Webhook credentials', {
+			group: CHANNEL,
+			description:
+				'What the saved webhook authenticates with, which picks the auth option the form opens on. Only read when the channel type is webhook.',
+			options: WEBHOOK_AUTHS,
+			value: 'basic',
+		}),
+		jiraDeployment: choiceControl<JiraDeploymentChoice>('Jira deployment', {
+			group: CHANNEL,
+			description:
+				'Whether the saved Jira channel points at Jira Cloud (email + API token) or a self-hosted Jira (personal access token). Only read when the channel type is jira.',
+			options: JIRA_DEPLOYMENTS,
+			value: 'cloud',
+		}),
 		saveOutcome: choiceControl<ChannelActionOutcome>('Saving the channel', {
 			group: ACTIONS,
 			options: CHANNEL_ACTION_OUTCOMES,
@@ -53,7 +71,12 @@ export const channelsEditMocks = defineStoryMocks({
 		rest.get(
 			'http://localhost/api/v2/notification_channels/:id',
 			response.json((req) =>
-				notificationChannelResponse(String(req.params.id), values.channelType),
+				notificationChannelResponse(
+					String(req.params.id),
+					values.channelType,
+					values.webhookAuth,
+					values.jiraDeployment,
+				),
 			),
 		),
 

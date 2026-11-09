@@ -465,7 +465,7 @@ func TestStatementBuilder(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	storage := tracestelemetryschema.NewStorage()
+	storage := tracestelemetryschema.NewStorage(nil)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
@@ -581,7 +581,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string, attributes FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY multiIf(mapContains(attributes_string, 'user.id'), attributes_string['user.id'], NULL) desc LIMIT ?",
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string, attributes, scope FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY multiIf(mapContains(attributes_string, 'user.id'), attributes_string['user.id'], NULL) desc LIMIT ?",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -756,15 +756,16 @@ func TestStatementBuilderListQuery(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, name AS `__SELECT_KEY_3_name`, resource_string_service$$name AS `__SELECT_KEY_4_serviceName`, duration_nano AS `__SELECT_KEY_5_durationNano`, http_method AS `__SELECT_KEY_6_httpMethod`, multiIf(mapContains(attributes_string, 'non-existent.key'), attributes_string['non-existent.key'], mapContains(attributes_number, 'non-existent.key'), toString(attributes_number['non-existent.key']), mapContains(attributes_bool, 'non-existent.key'), toString(attributes_bool['non-existent.key']), NULL) AS `__SELECT_KEY_7_non-existent.key` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+				Query:    "WITH __resource_filter AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, name AS `__SELECT_KEY_3_name`, resource_string_service$$name AS `__SELECT_KEY_4_serviceName`, duration_nano AS `__SELECT_KEY_5_durationNano`, http_method AS `__SELECT_KEY_6_httpMethod`, multiIf(mapContains(attributes_string, 'non-existent.key'), attributes_string['non-existent.key'], mapContains(attributes_number, 'non-existent.key'), toString(attributes_number['non-existent.key']), mapContains(attributes_bool, 'non-existent.key'), toString(attributes_bool['non-existent.key']), NULL) AS `__SELECT_KEY_7_non-existent.key` FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+				Warnings: []string{querybuilder.NewKeyNotFoundWarning("non-existent.key")},
 			},
 			expectedErr: nil,
 		},
 	}
 
 	fl := flaggertest.New(t)
-	storage := tracestelemetryschema.NewStorage()
+	storage := tracestelemetryschema.NewStorage(nil)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
@@ -837,7 +838,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				Limit:        10,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string, attributes FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string, attributes, scope FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -879,7 +880,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				}},
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string, attributes FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp asc LIMIT ?",
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string, attributes, scope FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp asc LIMIT ?",
 				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -906,7 +907,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string, attributes FROM signoz_traces.distributed_signoz_index_v3 WHERE (scope.version::String = ? AND scope.version::String <> '') AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, trace_state AS `__SELECT_KEY_3_trace_state`, parent_span_id AS `__SELECT_KEY_4_parent_span_id`, flags AS `__SELECT_KEY_5_flags`, name AS `__SELECT_KEY_6_name`, kind AS `__SELECT_KEY_7_kind`, kind_string AS `__SELECT_KEY_8_kind_string`, duration_nano AS `__SELECT_KEY_9_duration_nano`, status_code AS `__SELECT_KEY_10_status_code`, status_message AS `__SELECT_KEY_11_status_message`, status_code_string AS `__SELECT_KEY_12_status_code_string`, events AS `__SELECT_KEY_13_events`, links AS `__SELECT_KEY_14_links`, response_status_code AS `__SELECT_KEY_15_response_status_code`, external_http_url AS `__SELECT_KEY_16_external_http_url`, http_url AS `__SELECT_KEY_17_http_url`, external_http_method AS `__SELECT_KEY_18_external_http_method`, http_method AS `__SELECT_KEY_19_http_method`, http_host AS `__SELECT_KEY_20_http_host`, db_name AS `__SELECT_KEY_21_db_name`, db_operation AS `__SELECT_KEY_22_db_operation`, has_error AS `__SELECT_KEY_23_has_error`, is_remote AS `__SELECT_KEY_24_is_remote`, attributes_string, attributes_number, attributes_bool, resources_string, attributes, scope FROM signoz_traces.distributed_signoz_index_v3 WHERE (scope.version::String = ? AND scope.version::String <> '') AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"1.0.0", "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 		},
@@ -926,8 +927,9 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.version::String <> '', scope.version::String, NULL) AS `__SELECT_KEY_3_scope.version` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+				Query:    "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.version::String <> '', scope.version::String, NULL) AS `__SELECT_KEY_3_scope.version` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+				Warnings: []string{querybuilder.NewKeyNotFoundWarning("scope.version")},
 			},
 		},
 		{
@@ -1017,8 +1019,9 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				Limit: 10,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.name::String <> '', scope.name::String, NULL) AS `__SELECT_KEY_3_scope.name` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+				Query:    "SELECT timestamp AS `__SELECT_KEY_0_timestamp`, trace_id AS `__SELECT_KEY_1_trace_id`, span_id AS `__SELECT_KEY_2_span_id`, multiIf(scope.name::String <> '', scope.name::String, NULL) AS `__SELECT_KEY_3_scope.name` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:     []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
+				Warnings: []string{querybuilder.NewKeyNotFoundWarning("scope.name")},
 			},
 		},
 	}
@@ -1026,7 +1029,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			fl := flaggertest.New(t)
-			storage := tracestelemetryschema.NewStorage()
+			storage := tracestelemetryschema.NewStorage(nil)
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			mockMetadataStore.KeysMap = c.keysMap
 			if mockMetadataStore.KeysMap == nil {
@@ -1099,7 +1102,7 @@ func TestStatementBuilderGroupByResourceEvolution(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	storage := tracestelemetryschema.NewStorage()
+	storage := tracestelemetryschema.NewStorage(nil)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
@@ -1264,7 +1267,7 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 	}
 
 	fl := flaggertest.New(t)
-	storage := tracestelemetryschema.NewStorage()
+	storage := tracestelemetryschema.NewStorage(nil)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
@@ -1900,7 +1903,7 @@ func newSkipResourceFingerprintBuilder(
 	t.Helper()
 
 	fl := flaggertest.New(t)
-	storage := tracestelemetryschema.NewStorage()
+	storage := tracestelemetryschema.NewStorage(nil)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
@@ -1926,7 +1929,7 @@ func TestStatementBuilderGroupByUnseenKey(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 
 	fl := flaggertest.New(t)
-	storage := tracestelemetryschema.NewStorage()
+	storage := tracestelemetryschema.NewStorage(nil)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
@@ -1966,7 +1969,7 @@ func TestStatementBuilderAggregationUnseenKey(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 
 	fl := flaggertest.New(t)
-	storage := tracestelemetryschema.NewStorage()
+	storage := tracestelemetryschema.NewStorage(nil)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
@@ -2039,7 +2042,7 @@ func TestStatementBuilderSemconvFamilies(t *testing.T) {
 			fl := flaggertest.WithBooleanFlags(t, map[string]bool{
 				flagger.FeatureResolveSemconvFamilies.String(): c.flag,
 			})
-			storage := tracestelemetryschema.NewStorage()
+			storage := tracestelemetryschema.NewStorage(nil)
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
@@ -2071,7 +2074,7 @@ func TestStatementBuilderSemconvSingleSpelling(t *testing.T) {
 	fl := flaggertest.WithBooleanFlags(t, map[string]bool{
 		flagger.FeatureResolveSemconvFamilies.String(): true,
 	})
-	storage := tracestelemetryschema.NewStorage()
+	storage := tracestelemetryschema.NewStorage(nil)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = map[string][]*telemetrytypes.TelemetryFieldKey{
 		"deployment.environment": {{

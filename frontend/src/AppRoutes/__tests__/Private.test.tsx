@@ -303,10 +303,10 @@ describe('PrivateRoute', () => {
 		it.each([
 			['/logs-save-views', ROUTES.LOGS_EXPLORER],
 			['/traces-save-views', ROUTES.TRACES_EXPLORER],
-			[ROUTES.LOGS_SAVE_VIEWS, ROUTES.LOGS_EXPLORER],
-			[ROUTES.TRACES_SAVE_VIEWS, ROUTES.TRACES_EXPLORER],
-			[ROUTES.METRICS_EXPLORER_VIEWS, ROUTES.METRICS_EXPLORER_EXPLORER],
-			[ROUTES.METER_EXPLORER_VIEWS, ROUTES.METER_EXPLORER],
+			['/logs/saved-views', ROUTES.LOGS_EXPLORER],
+			['/traces/saved-views', ROUTES.TRACES_EXPLORER],
+			['/metrics-explorer/views', ROUTES.METRICS_EXPLORER_EXPLORER],
+			['/meter/explorer/views', ROUTES.METER_EXPLORER],
 		])('should redirect the old views route %s to %s', (from, to) => {
 			renderPrivateRoute({ initialRoute: from });
 

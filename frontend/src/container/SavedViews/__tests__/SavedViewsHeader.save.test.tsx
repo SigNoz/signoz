@@ -1,10 +1,14 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import { DataSource } from 'types/common/queryBuilder';
 
 import SavedViewsHeader from '../SavedViewsHeader';
@@ -19,7 +23,7 @@ import {
 	urlParam,
 	viewUrl,
 } from './savedViewsTestUtils';
-import { mockSavedViewsApi } from './savedViewsApiMock';
+import { API, mockSavedViewsApi } from './savedViewsApiMock';
 
 jest.mock('@signozhq/ui/sonner', () => ({
 	...jest.requireActual('@signozhq/ui/sonner'),
@@ -30,13 +34,37 @@ const PATH = ROUTES.TRACES_EXPLORER;
 
 function renderHeader(
 	url: string,
+	isViewsOpen = false,
 ): ReturnType<typeof renderWithExplorerProviders> {
 	return renderWithExplorerProviders(
 		<SavedViewsHeader
 			source={SavedviewtypesSourceDTO.traces}
 			onOpenViews={jest.fn()}
+			isViewsOpen={isViewsOpen}
+			onToggleViews={jest.fn()}
 		/>,
 		url,
+	);
+}
+
+// Edits the current query without running it, so it is not the staged one.
+function EditCurrentQuery(): JSX.Element {
+	const { currentQuery, handleSetQueryData } = useQueryBuilder();
+	return (
+		<Button
+			size="md"
+			variant="solid"
+			color="primary"
+			testId="edit-current-query"
+			onClick={(): void =>
+				handleSetQueryData(0, {
+					...currentQuery.builder.queryData[0],
+					filter: { expression: 'unstaged = true' },
+				})
+			}
+		>
+			Edit query
+		</Button>
 	);
 }
 
@@ -45,8 +73,9 @@ const isModalOpen = (): boolean => !!screen.queryByTestId('save-view-modal');
 
 async function openDirtyView(
 	view: ReturnType<typeof makeView>,
+	isViewsOpen = false,
 ): Promise<ReturnType<typeof renderWithExplorerProviders>> {
-	const rendered = renderHeader(viewUrl(PATH, view));
+	const rendered = renderHeader(viewUrl(PATH, view), isViewsOpen);
 	await waitFor(() =>
 		expect(screen.getByTestId('saved-views-name')).toHaveTextContent(
 			view.spec.displayName,
@@ -156,6 +185,76 @@ describe('SavedViewsHeader saving', () => {
 			expect(toast.success).not.toHaveBeenCalled();
 		});
 
+		it('does not create a view from a blank name submitted with Enter', async () => {
+			const requests = mockSavedViewsApi([]);
+			renderHeader(explorerUrl(PATH, {}));
+
+			await clickCreate();
+			await userEvent.type(screen.getByTestId('save-view-name'), '   {enter}');
+			await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
+
+			expect(requests.created).toHaveLength(0);
+			expect(isModalOpen()).toBe(true);
+		});
+
+		it('ignores Enter while the view is being saved', async () => {
+			let creates = 0;
+			mockSavedViewsApi([]);
+			server.use(
+				rest.post(API, (_req, res, ctx) => {
+					creates += 1;
+					return res(
+						ctx.delay(400),
+						ctx.status(201),
+						ctx.json({ status: 'success', data: { id: 'view-new' } }),
+					);
+				}),
+			);
+			renderHeader(explorerUrl(PATH, {}));
+
+			await clickCreate();
+			await submitName('Slow checkout');
+			await waitFor(() => expect(creates).toBe(1));
+			await userEvent.type(screen.getByTestId('save-view-name'), '{enter}');
+
+			await waitFor(() => expect(isModalOpen()).toBe(false));
+			expect(creates).toBe(1);
+		});
+
+		it('saves the query that was run, not edits made since', async () => {
+			const requests = mockSavedViewsApi([], { createdId: 'view-new' });
+			const { history } = renderWithExplorerProviders(
+				<>
+					<SavedViewsHeader
+						source={SavedviewtypesSourceDTO.traces}
+						onOpenViews={jest.fn()}
+					/>
+					<EditCurrentQuery />
+				</>,
+				explorerUrl(PATH, {}),
+			);
+
+			await userEvent.click(screen.getByTestId('edit-current-query'));
+			await clickCreate();
+			await submitName('Slow checkout');
+
+			await waitFor(() => expect(requests.created).toHaveLength(1));
+			const body = requests.created[0] as {
+				spec: { queries: { spec: { filter?: { expression?: string } } }[] };
+			};
+			expect(body.spec.queries[0].spec.filter?.expression ?? '').not.toContain(
+				'unstaged',
+			);
+			await waitFor(() =>
+				expect(urlParam(history, QueryParams.viewKey)).toBe(
+					JSON.stringify('view-new'),
+				),
+			);
+			expect(
+				decodeURIComponent(urlParam(history, QueryParams.compositeQuery) ?? ''),
+			).not.toContain('unstaged');
+		});
+
 		it('cancel closes the modal without saving', async () => {
 			const requests = mockSavedViewsApi([]);
 			renderHeader(explorerUrl(PATH, {}));
@@ -225,5 +324,68 @@ describe('SavedViewsHeader saving', () => {
 			),
 		);
 		expect(requests.created).toHaveLength(0);
+	});
+
+	it('update that fails reports the error and never says the view was updated', async () => {
+		const errors = makeView({ id: 'view-1', displayName: 'Errors' });
+		const requests = mockSavedViewsApi([errors], { updateStatus: 500 });
+		await openDirtyView(errors);
+
+		await chooseFromSaveMenu('Update selected view');
+
+		await waitFor(() => expect(toast.error).toHaveBeenCalled());
+		await act(() => new Promise((resolve) => setTimeout(resolve, 100)));
+		expect(requests.updated).toHaveLength(1);
+		expect(toast.success).not.toHaveBeenCalled();
+	});
+
+	it('update keeps the color of the open view', async () => {
+		const base = makeView({ id: 'view-1', displayName: 'Errors' });
+		const colored = {
+			...base,
+			spec: { ...base.spec, display: { color: '#e5484d' } },
+		};
+		const requests = mockSavedViewsApi([colored]);
+		await openDirtyView(colored);
+
+		await chooseFromSaveMenu('Update selected view');
+
+		await waitFor(() => expect(requests.updated).toHaveLength(1));
+		const { body } = requests.updated[0] as {
+			body: { spec: { display?: { color?: string } } };
+		};
+		expect(body.spec.display?.color).toBe('#e5484d');
+	});
+
+	describe('view name toggle with unsaved changes', () => {
+		const errors = makeView({ id: 'view-1', displayName: 'Errors' });
+
+		it('stops opening the views from the name once the view changes', async () => {
+			mockSavedViewsApi([errors]);
+			const { history } = renderHeader(viewUrl(PATH, errors));
+			await screen.findByTestId('saved-views-name-toggle');
+
+			act(() => {
+				history.push(
+					explorerUrl(PATH, {
+						query: queryWith(DataSource.TRACES, 'has_error = false'),
+						panelType: PANEL_TYPES.LIST,
+						viewKey: errors.id,
+					}),
+				);
+			});
+			await screen.findByTestId('saved-views-discard');
+
+			expect(
+				screen.queryByTestId('saved-views-name-toggle'),
+			).not.toBeInTheDocument();
+		});
+
+		it('still closes open views from the name', async () => {
+			mockSavedViewsApi([errors]);
+			await openDirtyView(errors, true);
+
+			expect(screen.getByTestId('saved-views-name-toggle')).toBeInTheDocument();
+		});
 	});
 });

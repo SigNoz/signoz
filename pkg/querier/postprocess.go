@@ -16,7 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -98,6 +97,15 @@ func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, res
 
 	// Filter out disabled queries
 	typedResults = q.filterDisabledQueries(typedResults, req)
+
+	// Summed only once the bucket axis is final.
+	if req.RequestType == qbtypes.RequestTypeDistribution {
+		for _, result := range typedResults {
+			if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
+				result.Value = tsData.ToDistributionData()
+			}
+		}
+	}
 
 	// Apply table formatting for UI if requested
 	if req.FormatOptions != nil && req.FormatOptions.FormatTableResultForUI && req.RequestType == qbtypes.RequestTypeScalar {
@@ -183,7 +191,8 @@ func postProcessBuilderQuery[T any](
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 
-	result = q.applySeriesLimit(result, query.Limit, query.Order)
+	// the statement's top-N already skipped offset groups by their whole-window value; only reorder here
+	result = q.applySeriesLimit(result, query.Limit, 0, query.Order)
 
 	// Apply functions
 	if len(query.Functions) > 0 {
@@ -226,13 +235,17 @@ func postProcessMetricQuery(
 		}
 	}
 
-	if req.RequestType == qbtypes.RequestTypeHeatmap && config.HeatmapBucketing != nil {
+	if req.RequestType.CountsIntoBuckets() && config.HeatmapBucketing != nil {
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			resolveHeatmapBucketAxis(tsData, *config.HeatmapBucketing)
 		}
 	}
 
-	result = q.applySeriesLimit(result, query.Limit, query.Order)
+	reducesToScalar := req.RequestType == qbtypes.RequestTypeScalar && config.ReduceTo != qbtypes.ReduceToUnknown
+
+	if !reducesToScalar {
+		result = q.applySeriesLimit(result, query.Limit, query.Offset, query.Order)
+	}
 
 	if len(query.Functions) > 0 {
 		step := query.StepInterval.Milliseconds()
@@ -241,9 +254,11 @@ func postProcessMetricQuery(
 	}
 
 	// Apply reduce to for scalar request type
-	if req.RequestType == qbtypes.RequestTypeScalar {
-		if len(query.Aggregations) > 0 && query.Aggregations[0].ReduceTo != qbtypes.ReduceToUnknown {
-			result = q.applyMetricReduceTo(result, query.Aggregations[0].ReduceTo)
+	if reducesToScalar {
+		result = q.applyMetricReduceTo(result, config.ReduceTo)
+		result = q.applySeriesLimit(result, query.Limit, query.Offset, query.Order)
+		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
+			result.Value = convertTimeSeriesDataToScalar(tsData, tsData.QueryName)
 		}
 	}
 
@@ -258,7 +273,7 @@ func postProcessTraceOperator(
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
 
-	result = q.applySeriesLimit(result, query.Limit, query.Order)
+	result = q.applySeriesLimit(result, query.Limit, query.Offset, query.Order)
 
 	// Apply functions if any
 	if len(query.Functions) > 0 {
@@ -287,14 +302,11 @@ func (q *querier) applyMetricReduceTo(result *qbtypes.Result, reduceOp qbtypes.R
 		}
 	}
 
-	scalarData := convertTimeSeriesDataToScalar(tsData, tsData.QueryName)
-	result.Value = scalarData
-
 	return result
 }
 
 // applySeriesLimit limits the number of series in the result.
-func (q *querier) applySeriesLimit(result *qbtypes.Result, limit int, orderBy []qbtypes.OrderBy) *qbtypes.Result {
+func (q *querier) applySeriesLimit(result *qbtypes.Result, limit, offset int, orderBy []qbtypes.OrderBy) *qbtypes.Result {
 	tsData, ok := result.Value.(*qbtypes.TimeSeriesData)
 	if !ok {
 		return result
@@ -303,7 +315,7 @@ func (q *querier) applySeriesLimit(result *qbtypes.Result, limit int, orderBy []
 	if tsData != nil {
 		for _, agg := range tsData.Aggregations {
 			// Use the ApplySeriesLimit function from querybuildertypes
-			agg.Series = qbtypes.ApplySeriesLimit(agg.Series, orderBy, limit)
+			agg.Series = qbtypes.ApplySeriesLimit(agg.Series, orderBy, limit, offset)
 		}
 	}
 
@@ -355,10 +367,10 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 		case qbtypes.RequestTypeTimeSeries:
 			result := q.processTimeSeriesFormula(ctx, results, formula, req)
 			if result != nil {
-				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
+				result = q.applySeriesLimit(result, formula.Limit, formula.Offset, formula.Order)
 				results[name] = result
 			}
-		case qbtypes.RequestTypeHeatmap:
+		case qbtypes.RequestTypeHeatmap, qbtypes.RequestTypeDistribution:
 			// The queries a formula reads were run as time series, so what
 			// arrives here is one value per group per timestamp.
 			result := q.processTimeSeriesFormula(ctx, results, formula, req)
@@ -368,7 +380,7 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 					bucketFormulaOutputAsHeatmap(tsData, bucketing)
 					resolveHeatmapBucketAxis(tsData, bucketing)
 				}
-				result = q.applySeriesLimit(result, formula.Limit, formula.Order)
+				result = q.applySeriesLimit(result, formula.Limit, formula.Offset, formula.Order)
 				results[name] = result
 			}
 		case qbtypes.RequestTypeScalar:
@@ -497,6 +509,9 @@ func bucketFormulaOutputAsHeatmap(tsData *qbtypes.TimeSeriesData, bucketing qbty
 // to stay identical to them: a formula heatmap and a metric heatmap that
 // disagreed here would put their counts in different buckets.
 func calculateLinearValueUpperBound(bucketing qbtypes.HeatmapBucketing, value float64) float64 {
+	if value <= 0 {
+		return 0
+	}
 	if value > bucketing.MaxValue {
 		return math.Inf(1)
 	}
@@ -646,7 +661,7 @@ func (q *querier) processScalarFormula(
 	}
 
 	// Apply ordering (and limit) before converting to scalar format.
-	formulaSeries = qbtypes.ApplySeriesLimit(formulaSeries, formula.Order, formula.Limit)
+	formulaSeries = qbtypes.ApplySeriesLimit(formulaSeries, formula.Order, formula.Limit, formula.Offset)
 
 	// Convert back to scalar format
 	scalarResult := &qbtypes.ScalarData{
@@ -1202,7 +1217,7 @@ func (q *querier) postProcessLogBody(ctx context.Context, orgID valuer.UUID, res
 // carried one. Anything that is not a decoded document — the legacy string body, a NULL cell —
 // is legal under these names and left alone.
 func stripEmptyBodyMessage(val any) {
-	bodyMap, ok := val.(telemetrystoretypes.JSONValue)
+	bodyMap, ok := val.(map[string]any)
 	if !ok {
 		return
 	}

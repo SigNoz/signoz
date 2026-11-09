@@ -31,6 +31,8 @@ import { toAPIError } from 'utils/errorUtils';
 export interface ChannelFormStateResult {
 	form: UseFormReturn<ChannelFormValues>;
 	type: ChannelKind;
+	/** False until something is edited, which is what gates saving. */
+	isDirty: boolean;
 	onTypeChange: (value: string) => void;
 	onSave: () => void;
 	onTest: () => void;
@@ -84,10 +86,29 @@ export function useChannelFormState({
 
 			setTypeState(nextType);
 
-			Object.entries(ChannelInitialConfig[nextType]).forEach(([field, value]) => {
+			const nextDefaults = ChannelInitialConfig[nextType];
+
+			// the previous type's templates would otherwise be sent as the new
+			// type's values; sendResolved is a general setting and is kept.
+			// '' not undefined: a field mounting on undefined falls back to the
+			// draft's defaults, and blanks are dropped on save anyway
+			Object.keys(ChannelInitialConfig[type])
+				.filter((field) => field !== 'sendResolved' && !(field in nextDefaults))
+				.forEach((field) => {
+					form.setValue(
+						field as keyof ChannelFormValues,
+						'' as ChannelFormValues[keyof ChannelFormValues],
+						{ shouldDirty: true },
+					);
+				});
+
+			// shouldDirty, because the type lives outside the form: without it
+			// picking a different type leaves the form pristine and unsavable.
+			Object.entries(nextDefaults).forEach(([field, value]) => {
 				form.setValue(
 					field as keyof ChannelFormValues,
 					value as ChannelFormValues[keyof ChannelFormValues],
+					{ shouldDirty: true },
 				);
 			});
 		},
@@ -177,6 +198,7 @@ export function useChannelFormState({
 	return {
 		form,
 		type,
+		isDirty: form.formState.isDirty,
 		onTypeChange,
 		onSave: form.handleSubmit(submitSave),
 		onTest: form.handleSubmit(submitTest),

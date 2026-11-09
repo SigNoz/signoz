@@ -4,8 +4,8 @@
  */
 
 import { rest } from 'msw';
-import { generatePath } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
@@ -61,7 +61,7 @@ const PANEL_OPTIONS = [...PANEL_IDS, NEW_PANEL_ID] as const;
 type PanelOption = (typeof PANEL_OPTIONS)[number];
 
 const editorRoute = (panel: PanelOption, kind: NewPanelKind): string => {
-	const path = generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
+	const path = buildRoutePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
 		dashboardId: STORY_DASHBOARD_ID,
 		panelId: panel,
 	});

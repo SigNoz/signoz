@@ -10,7 +10,7 @@ const FIND = { timeout: 5000 };
 interface PrefillCase {
 	kind: string;
 	spec: Record<string, unknown>;
-	fields: [string, string][];
+	fields: [string, string | number][];
 }
 
 const CASES: PrefillCase[] = [
@@ -45,14 +45,17 @@ const CASES: PrefillCase[] = [
 			url: 'https://example.com/hook',
 			username: 'hook-user',
 			password: 'hook-pass',
-			bearerToken: 'hook-token',
 		},
 		fields: [
 			['webhook-url-textbox', 'https://example.com/hook'],
 			['webhook-username-textbox', 'hook-user'],
 			['webhook-password-textbox', 'hook-pass'],
-			['webhook-bearer-token-textbox', 'hook-token'],
 		],
+	},
+	{
+		kind: 'webhook',
+		spec: { url: 'https://example.com/hook', bearerToken: 'hook-token' },
+		fields: [['webhook-bearer-token-textbox', 'hook-token']],
 	},
 	{
 		kind: 'email',
@@ -124,11 +127,11 @@ const CASES: PrefillCase[] = [
 	{
 		kind: 'jira',
 		spec: {
+			deployment: 'cloud',
 			site: 'https://acme.atlassian.net',
 			project: 'OPS',
 			issueType: 'Task',
-			email: 'someone@acme.io',
-			apiToken: 'jira-token',
+			auth: { email: 'someone@acme.io', apiToken: 'jira-token' },
 			summary: 'jira summary',
 			description: 'jira description',
 			priority: 'High',
@@ -150,6 +153,20 @@ const CASES: PrefillCase[] = [
 			['jira-reopen-transition-textbox', 'Reopen'],
 			['jira-wont-fix-resolution-textbox', "Won't Fix"],
 			['jira-reopen-duration-textbox', '72h'],
+		],
+	},
+	{
+		kind: 'jira',
+		spec: {
+			deployment: 'selfhosted',
+			site: 'https://jira.acme.com',
+			project: 'OPS',
+			issueType: 'Task',
+			auth: { pat: 'jira-pat' },
+		},
+		fields: [
+			['jira-site-textbox', 'https://jira.acme.com'],
+			['jira-pat-textbox', 'jira-pat'],
 		],
 	},
 	{
@@ -184,6 +201,25 @@ const CASES: PrefillCase[] = [
 			['incidentio-token-textbox', 'incident-token'],
 			['incidentio-title-textarea', 'incident title'],
 			['incidentio-description-textarea', 'incident description'],
+		],
+	},
+	{
+		kind: 'telegram',
+		spec: {
+			botToken: '123456789:AA-token',
+			chatId: -1001234567890,
+			messageThreadId: 42,
+			title: 'telegram title',
+			message: 'telegram message',
+			apiUrl: 'https://api.telegram.org',
+		},
+		fields: [
+			['telegram-bot-token-textbox', '123456789:AA-token'],
+			['telegram-chat-id-textbox', -1001234567890],
+			['telegram-message-thread-id-textbox', 42],
+			['telegram-title-textarea', 'telegram title'],
+			['telegram-message-textarea', 'telegram message'],
+			['telegram-api-url-textbox', 'https://api.telegram.org'],
 		],
 	},
 ];

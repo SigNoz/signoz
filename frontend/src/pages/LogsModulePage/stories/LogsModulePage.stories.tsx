@@ -76,8 +76,8 @@ const openFirstLog = async (canvasElement: HTMLElement): Promise<void> => {
 
 /**
  * The explorer on its list view: quick filters down the left, the frequency
- * chart over a page of log lines across every severity, and the org's saved
- * views in the view picker.
+ * chart over a page of log lines across every severity, and the saved views
+ * header above the filters.
  */
 export const Default: Story = {};
 
@@ -122,6 +122,28 @@ export const FiltersHidden: Story = {
  */
 export const JsonBody: Story = {
 	args: { jsonBody: true },
+};
+
+/**
+ * Keys of the JSON body as columns in the Column format: the nested `order`
+ * object and the `order.coupons` array render as JSON, `http.status_code` as
+ * its number.
+ */
+export const JsonBodyFieldsColumn: Story = {
+	args: { jsonBody: true, bodyColumns: true },
+};
+
+/**
+ * The same body keys in the Default format: each selected field under the
+ * body line, object and array values as JSON with no add-to-query on them.
+ */
+export const JsonBodyFieldsDefault: Story = {
+	args: { jsonBody: true, bodyColumns: true, format: 'list' },
+};
+
+/** The same body keys joined into the raw line ahead of the body. */
+export const JsonBodyFieldsRaw: Story = {
+	args: { jsonBody: true, bodyColumns: true, format: 'raw' },
 };
 
 /** One log opened up: its own fields, then the resource that sent it. */

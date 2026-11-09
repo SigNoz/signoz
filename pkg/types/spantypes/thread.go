@@ -177,10 +177,9 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 	resources := make(map[string]string, len(storable.ResourcesString))
 	maps.Copy(resources, storable.ResourcesString)
 	timeUnixNano := uint64(storable.StartTime.UnixNano())
-	attributes := threadAttributes(storable)
-	// Spans from before the JSON rollout have no document and are not decoded: the legacy maps
-	// hold an object split into one key per field.
-	formatted := aiobservabilitytypes.FormatMessages(storable.AttributesJSON)
+	attributes := storable.Attributes()
+	// Spans from before the JSON rollout have an empty document and format to nothing.
+	formatted := aiobservabilitytypes.FormatMessages(storable.AttributesJSON.Nest())
 	return &ThreadSpan{
 		SpanID:            storable.SpanID,
 		TraceID:           traceID,
@@ -201,15 +200,4 @@ func newThreadSpan(traceID string, storable *StorableSpan) *ThreadSpan {
 		FormatterWarnings: formatted.Warnings,
 		timeUnixNano:      timeUnixNano,
 	}
-}
-
-// threadAttributes flattens the JSON column into dotted keys, as the querier does for list
-// responses, and falls back to the legacy maps for spans written before the JSON rollout.
-func threadAttributes(storable *StorableSpan) map[string]any {
-	if len(storable.AttributesJSON) == 0 {
-		return storable.Attributes()
-	}
-	attributes := make(map[string]any, len(storable.AttributesJSON))
-	storable.AttributesJSON.FlattenInto("", attributes)
-	return attributes
 }

@@ -88,6 +88,73 @@ def create_alert_rule_with_channel(
     return _create_alert_rule_with_channel
 
 
+@pytest.fixture(name="create_route_policy", scope="function")
+def create_route_policy(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> Callable[[dict], str]:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    policy_ids = []
+
+    def _create_route_policy(policy: dict) -> str:
+        response = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v1/route_policies"),
+            json=policy,
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.CREATED, f"Failed to create route policy, api returned {response.status_code} with response: {response.text}"
+        policy_id = response.json()["data"]["id"]
+        policy_ids.append(policy_id)
+        return policy_id
+
+    yield _create_route_policy
+
+    for policy_id in policy_ids:
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v1/route_policies/{policy_id}"),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        if response.status_code != HTTPStatus.NO_CONTENT:
+            logger.error("Failed to delete route policy: %s", {"policy_id": policy_id, "status": response.status_code, "response": response.text})
+
+
+@pytest.fixture(name="create_downtime_schedule", scope="function")
+def create_downtime_schedule(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> Callable[[dict], str]:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    schedules = {}
+
+    def _create_downtime_schedule(schedule: dict) -> str:
+        response = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v1/downtime_schedules"),
+            json=schedule,
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.CREATED, f"Failed to create downtime schedule, api returned {response.status_code} with response: {response.text}"
+        schedule_id = response.json()["data"]["id"]
+        schedules[schedule_id] = schedule
+        return schedule_id
+
+    yield _create_downtime_schedule
+
+    for schedule_id, schedule in schedules.items():
+        # a schedule still referencing rules cannot be deleted
+        requests.put(
+            signoz.self.host_configs["8080"].get(f"/api/v1/downtime_schedules/{schedule_id}"),
+            json={**schedule, "alertIds": []},
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        response = requests.delete(
+            signoz.self.host_configs["8080"].get(f"/api/v1/downtime_schedules/{schedule_id}"),
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=5,
+        )
+        if response.status_code != HTTPStatus.NO_CONTENT:
+            logger.error("Failed to delete downtime schedule: %s", {"schedule_id": schedule_id, "status": response.status_code, "response": response.text})
+
+
 def delete_all_rules(signoz: types.SigNoz, token: str) -> None:
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/rules"),

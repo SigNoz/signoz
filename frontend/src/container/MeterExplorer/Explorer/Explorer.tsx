@@ -7,41 +7,25 @@ import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
-import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
-import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
-import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { v4 as uuid } from 'uuid';
 
 import { MeterExplorerEventKeys, MeterExplorerEvents } from '../events';
 import TimeSeries from './TimeSeries';
-import { splitQueryIntoOneChartPerQuery } from './utils';
 
 import './Explorer.styles.scss';
 
 function Explorer(): JSX.Element {
 	const quickFilterFieldApis = useSignalFieldApis();
-	const {
-		handleRunQuery,
-		stagedQuery,
-		updateAllQueriesOperators,
-		currentQuery,
-	} = useQueryBuilder();
-	const { safeNavigate } = useSafeNavigate();
-	const isSavedViewEnabled = useSavedViewEnabled();
-	const getExportToDashboardLink = useGetExportToDashboardLink();
+	const { handleRunQuery, updateAllQueriesOperators } = useQueryBuilder();
 	const queryClient = useQueryClient();
 	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
 	const [isCancelled, setIsCancelled] = useState(false);
@@ -70,50 +54,7 @@ function Explorer(): JSX.Element {
 		[updateAllQueriesOperators],
 	);
 
-	const exportDefaultQuery = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				currentQuery || initialQueryMeterWithType,
-				PANEL_TYPES.BAR,
-				DataSource.METRICS,
-				'meter' as 'meter' | '',
-			),
-		[currentQuery, updateAllQueriesOperators],
-	);
-
 	useShareBuilderUrl({ defaultValue: defaultQuery });
-
-	const handleExport = useCallback(
-		(
-			dashboard: ExportDashboard | null,
-			_isNewDashboard?: boolean,
-			queryToExport?: Query,
-		): void => {
-			if (!dashboard) {
-				return;
-			}
-
-			const widgetId = uuid();
-
-			const dashboardEditView = getExportToDashboardLink({
-				query: queryToExport || exportDefaultQuery,
-				panelType: PANEL_TYPES.BAR,
-				dashboardId: dashboard.id,
-				widgetId,
-			});
-
-			if (dashboardEditView) {
-				safeNavigate(dashboardEditView);
-			}
-		},
-		[exportDefaultQuery, safeNavigate, getExportToDashboardLink],
-	);
-
-	const splitedQueries = useMemo(
-		() =>
-			splitQueryIntoOneChartPerQuery(stagedQuery || initialQueryMeterWithType),
-		[stagedQuery],
-	);
 
 	useEffect(() => {
 		logEvent(MeterExplorerEvents.TabChanged, {
@@ -130,8 +71,7 @@ function Explorer(): JSX.Element {
 				savedViewProps={{ source: SavedviewtypesSourceDTO.meter }}
 				quickFilterProps={{
 					className: 'qf-meter-explorer',
-					source: QuickFiltersSource.METER_EXPLORER,
-					signal: SignalType.METER_EXPLORER,
+					quickFilterSource: QuickFiltersSource.METER_EXPLORER,
 					showFilterCollapse: true,
 					showQueryName: false,
 					useFieldApis: quickFilterFieldApis,
@@ -179,17 +119,6 @@ function Explorer(): JSX.Element {
 							/>
 						</div>
 					</div>
-					{!isSavedViewEnabled && (
-						<ExplorerOptionWrapper
-							disabled={!stagedQuery}
-							query={exportDefaultQuery}
-							sourcepage={DataSource.METRICS}
-							signalSource="meter"
-							onExport={handleExport}
-							isOneChartPerQuery={false}
-							splitedQueries={splitedQueries}
-						/>
-					)}
 				</div>
 			</QuickFiltersLayout>
 		</Sentry.ErrorBoundary>

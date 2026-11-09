@@ -1,14 +1,9 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Formula } from 'container/QueryBuilder/components/Formula';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { getBuilderVariant } from 'lib/query/queryMode';
-import {
-	BuilderVariant,
-	IBuilderTraceOperator,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderField } from './queryBuilderFields.types';
@@ -64,20 +59,8 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		[config],
 	);
 
-	const isAIQuery =
-		getBuilderVariant(currentQuery.builder) === BuilderVariant.AI;
-
 	useEffect(() => {
 		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
-			// AI queries are traces-only; BAR must not force metrics on them.
-			if (isAIQuery) {
-				handleSetConfig(newPanelType, DataSource.TRACES);
-				return;
-			}
-			if (newPanelType === PANEL_TYPES.BAR) {
-				handleSetConfig(PANEL_TYPES.BAR, DataSource.METRICS);
-				return;
-			}
 			handleSetConfig(newPanelType, currentDataSource);
 		}
 	}, [
@@ -86,7 +69,6 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		initialDataSource,
 		currentDataSource,
 		newPanelType,
-		isAIQuery,
 	]);
 
 	useEffect(() => {
@@ -124,9 +106,17 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		[resolvedConfig],
 	);
 
+	const traceOperatorField = useMemo(
+		() =>
+			resolveQueryBuilderField(QueryBuilderField.TraceOperator, resolvedConfig),
+		[resolvedConfig],
+	);
+
+	const canShowTraceOperator = showTraceOperator && !traceOperatorField.hidden;
+
 	const isMultiQueryAllowed = useMemo(
-		() => !additionalQueries.hidden && (!isRawQuery || showTraceOperator),
-		[additionalQueries.hidden, showTraceOperator, isRawQuery],
+		() => !additionalQueries.hidden && (!isRawQuery || canShowTraceOperator),
+		[additionalQueries.hidden, canShowTraceOperator, isRawQuery],
 	);
 
 	const queryDataSources = useMemo(
@@ -164,13 +154,14 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	);
 
 	const hasTraceOperator = useMemo(
-		() => showTraceOperator && hasAtLeastOneTraceQuery && Boolean(traceOperator),
-		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
+		() =>
+			canShowTraceOperator && hasAtLeastOneTraceQuery && Boolean(traceOperator),
+		[canShowTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
 	);
 
 	const showQueryList = useMemo(
-		() => (!showOnlyWhereClause && !isRawQuery) || showTraceOperator,
-		[isRawQuery, showOnlyWhereClause, showTraceOperator],
+		() => (!showOnlyWhereClause && !isRawQuery) || canShowTraceOperator,
+		[isRawQuery, showOnlyWhereClause, canShowTraceOperator],
 	);
 
 	const showFormula = useMemo(() => {
@@ -186,8 +177,8 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	}, [formula.hidden, isRawQuery, currentDataSource]);
 
 	const showAddTraceOperator = useMemo(
-		() => showTraceOperator && !traceOperator && hasAtLeastOneTraceQuery,
-		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
+		() => canShowTraceOperator && !traceOperator && hasAtLeastOneTraceQuery,
+		[canShowTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
 	);
 
 	// Nothing left to add means no footer at all, rather than an empty bar under the
@@ -196,13 +187,13 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		() =>
 			(!additionalQueries.hidden || showFormula || showAddTraceOperator) &&
 			((!showOnlyWhereClause && !isRawQuery) ||
-				(currentDataSource === DataSource.TRACES && showTraceOperator)),
+				(currentDataSource === DataSource.TRACES && canShowTraceOperator)),
 		[
 			additionalQueries.hidden,
 			showFormula,
 			showAddTraceOperator,
 			isRawQuery,
-			showTraceOperator,
+			canShowTraceOperator,
 			showOnlyWhereClause,
 			currentDataSource,
 		],
@@ -240,7 +231,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							fieldsConfig={fieldsConfig}
 							allowedDataSources={queryDataSources}
 							isMultiQueryAllowed={isMultiQueryAllowed}
-							showTraceOperator={showTraceOperator}
+							showTraceOperator={canShowTraceOperator}
 							hasTraceOperator={hasTraceOperator}
 							version={version}
 							isAvailableToDisable={false}
@@ -265,7 +256,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								version={version}
 								isMultiQueryAllowed={isMultiQueryAllowed}
 								isAvailableToDisable={false}
-								showTraceOperator={showTraceOperator}
+								showTraceOperator={canShowTraceOperator}
 								hasTraceOperator={hasTraceOperator}
 								queryVariant={config?.queryVariant || 'dropdown'}
 								showOnlyWhereClause={showOnlyWhereClause}

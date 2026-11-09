@@ -20,6 +20,13 @@ var (
 	ErrCodeUnknownIdentifier = errors.MustNewCode("unknown_identifier")
 	ErrCodeIllegalArgument   = errors.MustNewCode("illegal_argument")
 
+	ErrCodeDistributedSubqueryDenied = errors.MustNewCode("distributed_subquery_denied")
+	ErrCodeDecimalOverflow           = errors.MustNewCode("decimal_overflow")
+	ErrCodeNoCommonType              = errors.MustNewCode("no_common_type")
+	ErrCodeNotAnAggregate            = errors.MustNewCode("not_an_aggregate")
+	ErrCodeIllegalAggregation        = errors.MustNewCode("illegal_aggregation")
+	ErrCodeInvalidRegexp             = errors.MustNewCode("invalid_regexp")
+
 	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
 	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
 	ErrCodeExecutionFailed = errors.MustNewCode("execution_failed")
@@ -72,6 +79,38 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 	chproto.ErrTooLessArgumentsForFunction: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "too few arguments to function: %s", ex.Message)
 	},
+	chproto.ErrBadGet: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "parameter of the wrong type: %s", ex.Message).
+			WithSuggestions("write numeric function parameters in the type the function expects, for example 1.0 rather than 1 where it takes a Float64")
+	},
+	chproto.ErrDistributedInJoinSubqueryDenied: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeDistributedSubqueryDenied, "IN or JOIN subquery over a distributed table is not allowed: %s", ex.Message).
+			WithSuggestions("use GLOBAL IN or GLOBAL JOIN for the subquery")
+	},
+	chproto.ErrDecimalOverflow: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeDecimalOverflow, "decimal overflow: %s", ex.Message).
+			WithSuggestions("cast the Decimal values to Float64, or to a wider Decimal such as Decimal128, before the arithmetic")
+	},
+	chproto.ErrNoCommonType: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeNoCommonType, "values have no common type: %s", ex.Message).
+			WithSuggestions("cast the values to one type, for example with toInt64 or toFloat64, so that the branches of if or multiIf, the elements of an array, or the columns of a UNION share it; count() returns UInt64, which has no common type with Int64")
+	},
+	chproto.ErrNotAnAggregate: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeNotAnAggregate, "column is neither in GROUP BY nor inside an aggregate function: %s", ex.Message).
+			WithSuggestions("add the column to GROUP BY, or wrap it in an aggregate function such as any()")
+	},
+	chproto.ErrIllegalAggregation: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalAggregation, "aggregate function in a place that does not allow one: %s", ex.Message).
+			WithSuggestions("give an aggregate an alias that is not a column name, because ClickHouse reads the alias in WHERE; move a condition on an aggregate from WHERE to HAVING; compute a nested aggregate in a subquery")
+	},
+	chproto.ErrSizesOfArraysDontMatch: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "arrays of different sizes: %s", ex.Message).
+			WithSuggestions("pass arrays of the same length to a function that takes several arrays, such as arrayMap or arrayZip")
+	},
+	chproto.ErrCannotCompileRegexp: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeInvalidRegexp, "regular expression does not compile: %s", ex.Message).
+			WithSuggestions("write the pattern in RE2 syntax, which has no lookaround or backreferences, and escape a backslash that is meant literally")
+	},
 }
 
 type provider struct {
@@ -97,8 +136,10 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	options.MaxIdleConns = config.Connection.MaxIdleConns
 	options.MaxOpenConns = config.Connection.MaxOpenConns
 	options.DialTimeout = config.Connection.DialTimeout
-	// This is to avoid the driver decoding issues with JSON columns
-	options.Settings["output_format_native_write_json_as_string"] = 1
+	// Read JSON columns natively: the driver mis-decodes JSON(max_dynamic_paths=0) columns without
+	// the flattened serialization, and reading them as a string collapses a key stored at both a
+	// scalar and an object path.
+	options.Settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
 
 	chConn, err := clickhouse.Open(options)
 	if err != nil {

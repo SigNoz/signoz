@@ -25,7 +25,6 @@ const meta = {
 	title: 'Foundations/Bottom Strip',
 	tags: ['play'],
 	component: EmptyPage,
-	args: { bottomStrip: true },
 	parameters: { signoz: { route: ROUTES.HOME, layout: 'app' } },
 } satisfies Meta<GlobalMockArgs>;
 

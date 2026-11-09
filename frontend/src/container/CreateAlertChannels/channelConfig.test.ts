@@ -2,7 +2,12 @@ import { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/s
 
 import { toChannelConfig, toPostableChannel } from './channelConfig';
 import { toChannelFormState } from './channelFormValues';
-import { ChannelFormValues, ChannelKind } from './types';
+import {
+	ChannelFormValues,
+	ChannelKind,
+	JiraDeployment,
+	WebhookAuth,
+} from './types';
 
 const slackValues: ChannelFormValues = {
 	name: 'prod alerts',
@@ -54,6 +59,22 @@ describe('toChannelConfig', () => {
 			kind: 'webhook',
 			spec: { url: 'https://example.com/hook', sendResolved: false },
 		});
+	});
+
+	it.each([
+		[WebhookAuth.none, {}],
+		[WebhookAuth.basic, { username: 'u', password: 'p' }],
+		[WebhookAuth.bearer, { bearerToken: 't' }],
+	])('sends only the %s webhook credentials', (webhookAuth, credentials) => {
+		expect(
+			toChannelConfig(ChannelKind.webhook, {
+				url: 'https://example.com/hook',
+				webhookAuth,
+				username: 'u',
+				password: 'p',
+				bearerToken: 't',
+			}).spec,
+		).toStrictEqual({ url: 'https://example.com/hook', ...credentials });
 	});
 
 	it('drops an attachment list the user emptied instead of sending []', () => {
@@ -129,11 +150,11 @@ describe('jira reopen duration', () => {
 	])('sends %s as %s, the only spelling the api accepts back', (typed, sent) => {
 		expect(
 			toChannelConfig(ChannelKind.jira, {
+				deployment: JiraDeployment.cloud,
 				site: 'https://acme.atlassian.net',
 				project: 'OPS',
 				issueType: 'Task',
-				email: 'a@b.c',
-				apiToken: 'tok',
+				auth: { email: 'a@b.c', apiToken: 'tok' },
 				reopenDuration: typed,
 			}).spec,
 		).toMatchObject({ reopenDuration: sent });
@@ -143,5 +164,55 @@ describe('jira reopen duration', () => {
 		expect(
 			toChannelConfig(ChannelKind.jira, { reopenDuration: 'tomorrow' }).spec,
 		).toMatchObject({ reopenDuration: 'tomorrow' });
+	});
+});
+
+describe('jira deployment', () => {
+	const base = {
+		site: 'https://jira.acme.com',
+		project: 'OPS',
+		issueType: 'Task',
+	};
+
+	it('sends cloud with email and api token under auth, never the pat', () => {
+		expect(
+			toChannelConfig(ChannelKind.jira, {
+				...base,
+				deployment: JiraDeployment.cloud,
+				auth: { email: 'a@b.c', apiToken: 'tok', pat: 'stale-pat' },
+			}).spec,
+		).toStrictEqual({
+			...base,
+			deployment: 'cloud',
+			auth: { email: 'a@b.c', apiToken: 'tok' },
+		});
+	});
+
+	it('sends selfhosted with the pat under auth, never email or api token', () => {
+		expect(
+			toChannelConfig(ChannelKind.jira, {
+				...base,
+				deployment: JiraDeployment.selfhosted,
+				auth: { email: 'stale@b.c', apiToken: 'stale', pat: 'pat-1' },
+			}).spec,
+		).toStrictEqual({
+			...base,
+			deployment: 'selfhosted',
+			auth: { pat: 'pat-1' },
+		});
+	});
+
+	it('drops blank credentials inside auth', () => {
+		expect(
+			toChannelConfig(ChannelKind.jira, {
+				...base,
+				deployment: JiraDeployment.cloud,
+				auth: { email: 'a@b.c', apiToken: '' },
+			}).spec,
+		).toStrictEqual({
+			...base,
+			deployment: 'cloud',
+			auth: { email: 'a@b.c' },
+		});
 	});
 });
