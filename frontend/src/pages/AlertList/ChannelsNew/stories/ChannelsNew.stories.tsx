@@ -329,12 +329,15 @@ export const JiraSelfHosted: Story = {
 			canvas.getByTestId('jira-deployment-radio-item-selfhosted'),
 		);
 		await userEvent.type(
-			canvas.getByTestId('jira-site-textbox'),
+			canvas.getByTestId('jira-site-textbox-field'),
 			'https://jira.acme.internal',
 		);
-		await userEvent.type(canvas.getByTestId('jira-pat-textbox'), 'pat');
-		await userEvent.type(canvas.getByTestId('jira-project-textbox'), 'OPS');
-		await userEvent.type(canvas.getByTestId('jira-issue-type-textbox'), 'Task');
+		await userEvent.type(canvas.getByTestId('jira-pat-textbox-field'), 'pat');
+		await userEvent.type(canvas.getByTestId('jira-project-textbox-field'), 'OPS');
+		await userEvent.type(
+			canvas.getByTestId('jira-issue-type-textbox-field'),
+			'Task',
+		);
 
 		await sendTest(canvasElement);
 	},

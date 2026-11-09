@@ -62,6 +62,19 @@ export const OpenWithNestedSelect: Story = {
 		await userEvent.keyboard('{Escape}');
 		await waitFor(() => expect(trigger).toHaveFocus());
 		await userEvent.click(trigger);
+		const dialog = await screen.findByRole('dialog', {
+			name: 'Create saved view',
+		});
+
+		// The list is sized from the trigger, which the zoom-in keeps scaled until it ends.
+		await waitFor(() => {
+			expect(dialog.className).not.toMatch(/ant-zoom-(appear|enter)/);
+			expect(
+				dialog
+					.getAnimations({ subtree: true })
+					.filter((a) => a.playState === 'running'),
+			).toHaveLength(0);
+		});
 		await userEvent.click(
 			await screen.findByRole('combobox', { name: 'View scope' }),
 		);

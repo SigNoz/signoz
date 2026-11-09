@@ -113,7 +113,7 @@ export const ModelCostSavedToast: Story = {
 	play: async (context): Promise<void> => {
 		await ModelCostDrawer.play?.(context);
 		await userEvent.type(
-			await screen.findByTestId('drawer-pattern-input'),
+			await screen.findByTestId('drawer-pattern-input-field'),
 			'gpt-4o-2026{Enter}',
 		);
 		await userEvent.click(await screen.findByTestId('drawer-save-btn'));

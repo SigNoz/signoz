@@ -203,7 +203,7 @@ export const JiraSelfHosted: Story = {
 		await expectEditableForm({ canvasElement, args });
 		const canvas = within(canvasElement);
 		await expect(
-			await canvas.findByTestId('jira-pat-textbox', undefined, {
+			await canvas.findByTestId('jira-pat-textbox-field', undefined, {
 				timeout: 15_000,
 			}),
 		).toHaveValue('story-jira-pat');
