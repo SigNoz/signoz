@@ -37,6 +37,11 @@ type ClickhouseConfig struct {
 
 	// QuerySettings is the query settings for clickhouse.
 	QuerySettings QuerySettings `mapstructure:"settings"`
+
+	// HTTPDSN is the HTTP endpoint for queries that run with a ClickHouse settings profile
+	// (NewContextWithProfile), since the native protocol cannot pick a profile per query. Empty
+	// disables profiles.
+	HTTPDSN string `mapstructure:"http_dsn"`
 }
 
 type QuerySettings struct {
