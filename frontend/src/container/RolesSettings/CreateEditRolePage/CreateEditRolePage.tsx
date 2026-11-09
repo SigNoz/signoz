@@ -4,7 +4,7 @@ import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAppNavigate } from 'lib/router/useAppNavigate';
 import { matchRoute } from 'lib/router/matchRoute';
 import { Button } from '@signozhq/ui/button';
-import { ConfirmDialog } from '@signozhq/ui/dialog';
+import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
@@ -300,17 +300,12 @@ function CreateEditRolePageContent(): JSX.Element {
 				</>
 			</AuthZGuardContent>
 
-			<ConfirmDialog
+			<AlertDialog
 				open={isBlocked}
-				onOpenChange={(next): void => {
-					if (!next) {
-						cancelNavigation();
-					}
-				}}
 				title="Discard unsaved changes?"
 				titleIcon={<SolidAlertTriangle size={14} color="#fdd600" />}
 				confirmText="Discard"
-				confirmColor="danger"
+				color="danger"
 				cancelText="Keep editing"
 				onConfirm={confirmNavigation}
 				onCancel={cancelNavigation}
@@ -321,7 +316,7 @@ function CreateEditRolePageContent(): JSX.Element {
 						? 'This new role will not be created.'
 						: 'Your unsaved changes will be lost.'}
 				</Typography>
-			</ConfirmDialog>
+			</AlertDialog>
 		</div>
 	);
 }

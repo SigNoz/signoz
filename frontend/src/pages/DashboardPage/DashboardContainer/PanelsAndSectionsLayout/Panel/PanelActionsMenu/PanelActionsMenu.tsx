@@ -73,7 +73,6 @@ function PanelActionsMenu({
 				open={deleteConfirm.open}
 				title="Delete panel?"
 				description="This panel will be removed from the dashboard. This action cannot be undone."
-				isLoading={deleteConfirm.isPending}
 				onConfirm={deleteConfirm.confirm}
 				onClose={deleteConfirm.cancel}
 			/>

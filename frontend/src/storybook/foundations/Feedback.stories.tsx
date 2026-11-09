@@ -146,14 +146,14 @@ export const Confirmation: Story = {
 		);
 
 		await userEvent.click(trigger);
-		await screen.findByRole('dialog', { name: 'Delete environment' });
+		await screen.findByRole('alertdialog', { name: 'Delete environment' });
 
 		await userEvent.keyboard('{Escape}');
 		// Escape can close the dialog before the assertion runs, which
 		// `waitForElementToBeRemoved` treats as an error rather than a pass.
 		await waitFor(() =>
 			expect(
-				screen.queryByRole('dialog', { name: 'Delete environment' }),
+				screen.queryByRole('alertdialog', { name: 'Delete environment' }),
 			).not.toBeInTheDocument(),
 		);
 	},
@@ -166,7 +166,7 @@ export const ToastOverConfirmation: Story = {
 		await userEvent.click(
 			within(canvasElement).getByTestId('open-feedback-confirmation'),
 		);
-		await screen.findByRole('dialog', { name: 'Delete environment' });
+		await screen.findByRole('alertdialog', { name: 'Delete environment' });
 		await userEvent.click(
 			await screen.findByRole('button', { name: 'Show error notification' }),
 		);

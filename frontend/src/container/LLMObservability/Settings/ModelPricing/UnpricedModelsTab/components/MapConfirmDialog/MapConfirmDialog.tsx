@@ -1,5 +1,5 @@
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowRight, Check, Link2, X } from '@signozhq/icons';
 import { startCase } from 'lodash-es';
@@ -50,7 +50,7 @@ function MapConfirmDialog({
 	];
 
 	const footer = (
-		<div className={styles.footer}>
+		<>
 			<Button
 				size="md"
 				variant="outlined"
@@ -74,21 +74,17 @@ function MapConfirmDialog({
 			>
 				Map model
 			</Button>
-		</div>
+		</>
 	);
 
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onCancel();
-				}
-			}}
+			onClose={onCancel}
 			width="base"
 			title="Map to billing model"
 			titleIcon={<Link2 size={16} />}
-			footer={footer}
+			footerSuffix={footer}
 			testId="unpriced-map-confirm-dialog"
 		>
 			<div className={styles.body}>
@@ -120,7 +116,7 @@ function MapConfirmDialog({
 					))}
 				</div>
 			</div>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

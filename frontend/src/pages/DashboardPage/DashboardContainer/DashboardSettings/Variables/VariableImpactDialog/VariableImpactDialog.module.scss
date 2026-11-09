@@ -2,8 +2,6 @@
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	max-height: 60vh;
-	overflow-y: auto;
 }
 
 .intro {
@@ -72,10 +70,4 @@
 
 .disabled {
 	opacity: 0.6;
-}
-
-.footer {
-	display: flex;
-	justify-content: flex-end;
-	gap: 8px;
 }

@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import cx from 'classnames';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from '@signozhq/icons';
@@ -90,6 +90,7 @@ export default function MessageFeedback({
 	// users can describe what was wrong.
 	const [isNegativeDialogOpen, setIsNegativeDialogOpen] = useState(false);
 	const [negativeComment, setNegativeComment] = useState('');
+	const negativeCommentRef = useRef<HTMLTextAreaElement>(null);
 
 	const [relativeTime, setRelativeTime] = useState(() =>
 		formatRelativeTime(message.createdAt),
@@ -238,14 +239,15 @@ export default function MessageFeedback({
 				</span>
 			</div>
 
-			<DialogWrapper
+			<Dialog
 				open={isNegativeDialogOpen}
-				onOpenChange={setIsNegativeDialogOpen}
+				onClose={(): void => setIsNegativeDialogOpen(false)}
 				title="What went wrong?"
-				subTitle="Your feedback helps us improve the assistant. Comments are optional."
+				description="Your feedback helps us improve the assistant. Comments are optional."
 				width="base"
-				footer={
-					<div className={styles.feedbackDialogFooter}>
+				initialFocus={negativeCommentRef}
+				footerSuffix={
+					<>
 						<Button
 							size="md"
 							variant="solid"
@@ -262,19 +264,19 @@ export default function MessageFeedback({
 						>
 							Send feedback
 						</Button>
-					</div>
+					</>
 				}
 			>
 				<textarea
+					ref={negativeCommentRef}
 					className={styles.feedbackTextarea}
 					placeholder="Tell us what was unhelpful, inaccurate, or unsafe…"
 					value={negativeComment}
 					onChange={(e): void => setNegativeComment(e.target.value)}
 					rows={5}
-					autoFocus
 					maxLength={2000}
 				/>
-			</DialogWrapper>
+			</Dialog>
 		</>
 	);
 }

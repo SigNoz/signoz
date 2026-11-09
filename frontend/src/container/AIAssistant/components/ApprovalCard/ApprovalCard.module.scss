@@ -80,8 +80,8 @@
 	display: flex;
 	gap: 8px;
 
-	// Fixed-height dialog (70vh) — let the diff fill the body and the
-	// JSON panes scroll internally rather than pushing the dialog taller.
+	// Fixed-height modal body — let the diff fill it and the JSON panes
+	// scroll internally rather than pushing the dialog taller.
 	&.expanded {
 		flex: 1;
 		min-height: 0;
@@ -238,9 +238,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	flex: 1;
+	height: 60vh;
 	min-height: 0;
-	padding: 16px;
 	overflow: hidden;
 }
 

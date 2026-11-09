@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Trash2, TriangleAlert } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { ConfirmDialog } from '@signozhq/ui/dialog';
+import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import { Toaster, toast } from '@signozhq/ui/toast';
 
 import MessageTip from '@/components/MessageTip';
@@ -141,21 +141,16 @@ function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 					>
 						Delete environment
 					</Button>
-					<ConfirmDialog
+					<AlertDialog
 						cancelText="Cancel"
-						confirmColor="danger"
+						color="danger"
 						confirmIcon={<Trash2 size={14} />}
 						confirmText="Delete environment"
-						disableOutsideClick
 						open={isConfirmationOpen}
 						title={confirmationTitle}
 						titleIcon={<TriangleAlert size={14} />}
 						onCancel={(): void => setIsConfirmationOpen(false)}
-						onConfirm={(): boolean => {
-							setIsConfirmationOpen(false);
-							return true;
-						}}
-						onOpenChange={setIsConfirmationOpen}
+						onConfirm={(): void => setIsConfirmationOpen(false)}
 					>
 						This removes the environment and its saved views. This action cannot be
 						undone.
@@ -169,7 +164,7 @@ function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 								Show error notification
 							</Button>
 						)}
-					</ConfirmDialog>
+					</AlertDialog>
 				</>
 			)}
 			<Toaster position="top-right" />

@@ -533,7 +533,7 @@ describe('PermissionEditor', () => {
 
 			await user.click(await within(createToggle).findByText('All'));
 
-			const dialog = await screen.findByRole('dialog');
+			const dialog = await screen.findByRole('alertdialog');
 			await user.click(
 				within(dialog).getByRole('button', { name: /change scope/i }),
 			);
@@ -562,7 +562,7 @@ describe('PermissionEditor', () => {
 
 			await user.click(await within(createToggle).findByText('None'));
 
-			const dialog = await screen.findByRole('dialog');
+			const dialog = await screen.findByRole('alertdialog');
 			await user.click(within(dialog).getByRole('button', { name: /cancel/i }));
 
 			await expect(

@@ -8,7 +8,7 @@ import {
 	X,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
@@ -165,7 +165,13 @@ function CancelSubscriptionBanner(): JSX.Element {
 	);
 
 	const fallbackFooter = (
-		<Button size="md" variant="solid" color="secondary" onClick={handleClose}>
+		<Button
+			size="md"
+			variant="solid"
+			color="secondary"
+			onClick={handleClose}
+			testId="cancel-subscription-fallback-close-btn"
+		>
 			Close
 		</Button>
 	);
@@ -195,13 +201,12 @@ function CancelSubscriptionBanner(): JSX.Element {
 					Cancel Subscription
 				</AuthZButton>
 			</div>
-			<DialogWrapper
+			<Dialog
 				open={dialogView !== null}
-				onOpenChange={handleClose}
+				onClose={handleClose}
 				title="Cancel your subscription?"
 				width="narrow"
-				showCloseButton={false}
-				footer={dialogView === 'confirm' ? confirmFooter : fallbackFooter}
+				footerSuffix={dialogView === 'confirm' ? confirmFooter : fallbackFooter}
 			>
 				{dialogView === 'confirm' && (
 					<div className={styles.dialogBody}>
@@ -259,7 +264,7 @@ function CancelSubscriptionBanner(): JSX.Element {
 						</div>
 					</div>
 				)}
-			</DialogWrapper>
+			</Dialog>
 		</>
 	);
 }

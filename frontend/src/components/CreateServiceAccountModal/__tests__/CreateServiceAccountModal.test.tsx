@@ -23,7 +23,6 @@ jest.mock('providers/ErrorModalProvider', () => ({
 	...jest.requireActual('providers/ErrorModalProvider'),
 	useErrorModal: jest.fn(() => ({
 		showErrorModal,
-		isErrorModalVisible: false,
 	})),
 }));
 

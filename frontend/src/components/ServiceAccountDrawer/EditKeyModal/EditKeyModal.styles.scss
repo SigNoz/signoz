@@ -1,13 +1,8 @@
 .edit-key-modal {
-	[data-slot='dialog-description'] {
-		padding: 0;
-	}
-
 	&__form {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-8);
-		padding: var(--padding-4);
 	}
 
 	&__field {
@@ -118,20 +113,6 @@
 		color: var(--foreground);
 		letter-spacing: 0.48px;
 		text-transform: uppercase;
-	}
-
-	&__footer {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: var(--padding-4);
-		border-top: 1px solid var(--secondary);
-	}
-
-	&__footer-right {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-4);
 	}
 
 	&__footer-danger {

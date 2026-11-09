@@ -1,5 +1,5 @@
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowUpRight, Copy, RotateCw } from '@signozhq/icons';
 import { useCopyToClipboard } from 'react-use';
@@ -65,17 +65,13 @@ function LegacyDashboardDialog({
 	};
 
 	return (
-		<DialogWrapper
+		<Dialog
 			title="This dashboard isn't available in the new experience"
 			open={open}
-			width="narrow"
-			onOpenChange={(next): void => {
-				if (!next) {
-					onClose();
-				}
-			}}
-			footer={
-				<div className={styles.footer}>
+			width="base"
+			onClose={(): void => onClose()}
+			footerSuffix={
+				<>
 					<Button
 						variant="ghost"
 						color="secondary"
@@ -122,7 +118,7 @@ function LegacyDashboardDialog({
 					>
 						Retry migration
 					</AuthZButton>
-				</div>
+				</>
 			}
 		>
 			<div className={styles.body}>
@@ -158,7 +154,7 @@ function LegacyDashboardDialog({
 					</div>
 				</div>
 			</div>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

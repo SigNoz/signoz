@@ -181,7 +181,6 @@ function ModelCostTabPanel(): JSX.Element {
 				<DeleteConfirmDialog
 					open
 					modelName={deletion.pendingDelete.modelName}
-					isDeleting={deletion.isDeleting}
 					onConfirm={deletion.confirmDelete}
 					onCancel={deletion.cancelDelete}
 				/>

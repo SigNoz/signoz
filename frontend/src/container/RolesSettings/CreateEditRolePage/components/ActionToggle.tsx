@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ConfirmDialog } from '@signozhq/ui/dialog';
+import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import { Divider } from '@signozhq/ui/divider';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
@@ -150,15 +150,11 @@ function ActionToggle({
 				)}
 			</div>
 
-			<ConfirmDialog
+			<AlertDialog
 				open={confirmDialogOpen}
-				onOpenChange={(next): void => {
-					if (!next) {
-						handleCancelScopeChange();
-					}
-				}}
 				title="Change permission scope?"
 				confirmText="Change scope"
+				color="danger"
 				cancelText="Cancel"
 				onConfirm={handleConfirmScopeChange}
 				onCancel={handleCancelScopeChange}
@@ -171,7 +167,7 @@ function ActionToggle({
 					Don&apos;t worry, this doesn&apos;t update this role yet, it only confirms
 					that you want to clear the items.
 				</Typography>
-			</ConfirmDialog>
+			</AlertDialog>
 		</>
 	);
 }

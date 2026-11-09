@@ -163,14 +163,6 @@
 }
 
 .reset-link-dialog {
-	background: var(--l2-background);
-	border: 1px solid var(--l1-border);
-
-	[data-slot='dialog-header'] {
-		border-color: var(--l1-border);
-		color: var(--l1-foreground);
-	}
-
 	&__content {
 		display: flex;
 		flex-direction: column;

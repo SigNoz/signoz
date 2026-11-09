@@ -58,30 +58,6 @@ jest.mock('@signozhq/ui/drawer', () => ({
 		) : null,
 }));
 
-jest.mock('@signozhq/ui/dialog', () => ({
-	...jest.requireActual('@signozhq/ui/dialog'),
-	DialogWrapper: ({
-		children,
-		footer,
-		open,
-		title,
-	}: {
-		children?: ReactNode;
-		footer?: ReactNode;
-		open: boolean;
-		title?: string;
-	}): JSX.Element | null =>
-		open ? (
-			<div role="dialog" aria-label={title}>
-				{children}
-				{footer}
-			</div>
-		) : null,
-	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
-		<div>{children}</div>
-	),
-}));
-
 jest.mock('@signozhq/ui/toast', () => ({
 	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
@@ -209,7 +185,7 @@ describe('EditMemberDrawer', () => {
 			isLoading: false,
 		});
 		(useDeleteUser as jest.Mock).mockReturnValue({
-			mutate: mockDeleteMutate,
+			mutateAsync: mockDeleteMutate,
 			isLoading: false,
 		});
 		// Token query: valid token for invited members
@@ -373,7 +349,7 @@ describe('EditMemberDrawer', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		(useDeleteUser as jest.Mock).mockImplementation((options) => ({
-			mutate: mockDeleteMutate.mockImplementation(() => {
+			mutateAsync: mockDeleteMutate.mockImplementation(() => {
 				options?.mutation?.onSuccess?.();
 			}),
 			isLoading: false,
@@ -453,7 +429,7 @@ describe('EditMemberDrawer', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		(useDeleteUser as jest.Mock).mockImplementation((options) => ({
-			mutate: mockDeleteMutate.mockImplementation(() => {
+			mutateAsync: mockDeleteMutate.mockImplementation(() => {
 				options?.mutation?.onSuccess?.();
 			}),
 			isLoading: false,
@@ -567,7 +543,7 @@ describe('EditMemberDrawer', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
-				mutate: mockDeleteMutate.mockImplementation(() => {
+				mutateAsync: mockDeleteMutate.mockImplementation(() => {
 					options?.mutation?.onError?.({});
 				}),
 				isLoading: false,
@@ -598,7 +574,7 @@ describe('EditMemberDrawer', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
-				mutate: mockDeleteMutate.mockImplementation(() => {
+				mutateAsync: mockDeleteMutate.mockImplementation(() => {
 					options?.mutation?.onError?.({});
 				}),
 				isLoading: false,

@@ -1,5 +1,4 @@
-import { DialogWrapper } from '@signozhq/ui/dialog';
-import { useCallback } from 'react';
+import { Dialog } from '@signozhq/ui/dialog';
 
 import { useAuthZDevStore } from '../useAuthZDevStore';
 import { useAuthZQueryInvalidation } from '../useAuthZQueryInvalidation';
@@ -38,23 +37,19 @@ export function AuthZDevModal(): JSX.Element | null {
 		overrideCount,
 	} = useAuthZDevModalData(observed, overrides);
 
-	const handleOpenChange = useCallback(
-		(open: boolean): void => {
-			if (!open) {
-				closeModal();
-			}
-		},
-		[closeModal],
-	);
-
 	return (
-		<DialogWrapper
+		<Dialog
 			open={isModalOpen}
-			onOpenChange={handleOpenChange}
+			onClose={closeModal}
 			title="AuthZ DevTools"
-			subTitle="Force permission results locally without touching the backend."
-			className={styles.modal}
+			description="Force permission results locally without touching the backend."
 			width="wide"
+			footerSuffix={
+				<AuthZDevModalFooter
+					orderedPermissionsCount={orderedPermissions.length}
+					observedListLength={observedList.length}
+				/>
+			}
 		>
 			<div className={styles.content}>
 				<AuthZDevModalHeader
@@ -79,11 +74,7 @@ export function AuthZDevModal(): JSX.Element | null {
 					overrides={overrides}
 					onSetOverride={setOverride}
 				/>
-				<AuthZDevModalFooter
-					orderedPermissionsCount={orderedPermissions.length}
-					observedListLength={observedList.length}
-				/>
 			</div>
-		</DialogWrapper>
+		</Dialog>
 	);
 }

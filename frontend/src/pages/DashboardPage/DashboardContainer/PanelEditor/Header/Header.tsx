@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { SolidAlertTriangle, X } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -125,17 +125,13 @@ function Header({
 				</AuthZTooltip>
 			</div>
 
-			<DialogWrapper
+			<Dialog
 				open={discard.open}
-				onOpenChange={(next: boolean): void => {
-					if (!next) {
-						discard.cancel();
-					}
-				}}
+				onClose={discard.cancel}
 				title="Discard changes?"
 				titleIcon={<SolidAlertTriangle size={14} color="#fdd600" />}
 				testId="panel-editor-v2-discard-modal"
-				footer={
+				footerSuffix={
 					<>
 						<Button
 							size="md"
@@ -162,7 +158,7 @@ function Header({
 				}
 			>
 				<Typography>Your unsaved edits to this panel will be lost.</Typography>
-			</DialogWrapper>
+			</Dialog>
 		</div>
 	);
 }

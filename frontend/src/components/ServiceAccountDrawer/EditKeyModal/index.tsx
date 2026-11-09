@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -24,7 +24,7 @@ import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 
 import { RevokeKeyFooter } from '../RevokeKeyModal';
-import EditKeyForm from './EditKeyForm';
+import EditKeyForm, { EditKeyFooter, EditKeyFooterPrefix } from './EditKeyForm';
 import type { FormValues } from './types';
 import { DEFAULT_FORM_VALUES, ExpiryMode } from './types';
 
@@ -45,7 +45,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 	const open = !!editKeyId && !!selectedAccountId;
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-	const { showErrorModal, isErrorModalVisible } = useErrorModal();
+	const { showErrorModal } = useErrorModal();
 	const [isRevokeConfirmOpen, setIsRevokeConfirmOpen] = useState(false);
 
 	const {
@@ -154,15 +154,13 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 	}
 
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					if (isRevokeConfirmOpen) {
-						setIsRevokeConfirmOpen(false);
-					} else {
-						handleClose();
-					}
+			onClose={(): void => {
+				if (isRevokeConfirmOpen) {
+					setIsRevokeConfirmOpen(false);
+				} else {
+					handleClose();
 				}
 			}}
 			title={
@@ -171,13 +169,17 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 					: 'Edit Key Details'
 			}
 			width={isRevokeConfirmOpen ? 'narrow' : 'base'}
-			className={
-				isRevokeConfirmOpen ? 'alert-dialog sa-delete-dialog' : 'edit-key-modal'
-			}
-			showCloseButton={!isRevokeConfirmOpen}
-			disableOutsideClick={isErrorModalVisible}
 			testId="edit-key-modal"
-			footer={
+			footerPrefix={
+				isRevokeConfirmOpen ? undefined : (
+					<EditKeyFooterPrefix
+						keyId={keyItem?.id ?? undefined}
+						accountId={selectedAccountId ?? undefined}
+						onRevokeClick={(): void => setIsRevokeConfirmOpen(true)}
+					/>
+				)
+			}
+			footerSuffix={
 				isRevokeConfirmOpen ? (
 					<RevokeKeyFooter
 						isRevoking={isRevoking}
@@ -186,7 +188,15 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 						accountId={selectedAccountId ?? undefined}
 						keyId={keyItem?.id ?? undefined}
 					/>
-				) : undefined
+				) : (
+					<EditKeyFooter
+						keyId={keyItem?.id ?? undefined}
+						accountId={selectedAccountId ?? undefined}
+						isSaving={isSaving}
+						isDirty={isDirty}
+						onClose={handleClose}
+					/>
+				)
 			}
 		>
 			{isRevokeConfirmOpen ? (
@@ -200,18 +210,13 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 					control={control}
 					expiryMode={expiryMode}
 					keyItem={keyItem}
-					isSaving={isSaving}
-					isDirty={isDirty}
 					onSubmit={onSubmit}
-					onClose={handleClose}
-					onRevokeClick={(): void => setIsRevokeConfirmOpen(true)}
 					formatTimezoneAdjustedTimestamp={formatTimezoneAdjustedTimestamp}
 					canUpdate={canUpdate}
 					isUpdateDenied={isUpdateDenied}
-					accountId={selectedAccountId ?? ''}
 				/>
 			)}
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

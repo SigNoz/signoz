@@ -10,20 +10,24 @@ import {
 	APIKeyCreatePermission,
 	buildSAAttachPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { disabledDate } from '../utils';
 import type { FormValues } from './types';
 import { ExpiryMode, FORM_ID } from './types';
 
+function buildCreateChecks(accountId?: string): BrandedPermission[] {
+	return accountId
+		? [APIKeyCreatePermission, buildSAAttachPermission(accountId)]
+		: [];
+}
+
 export interface KeyFormPhaseProps {
 	register: UseFormRegister<FormValues>;
 	control: Control<FormValues>;
 	expiryMode: ExpiryMode;
-	isSubmitting: boolean;
-	isValid: boolean;
 	onSubmit: () => void;
-	onClose: () => void;
 	accountId?: string;
 }
 
@@ -31,117 +35,124 @@ function KeyFormPhase({
 	register,
 	control,
 	expiryMode,
-	isSubmitting,
-	isValid,
 	onSubmit,
-	onClose,
 	accountId,
 }: KeyFormPhaseProps): JSX.Element {
-	const checks = accountId
-		? [APIKeyCreatePermission, buildSAAttachPermission(accountId)]
-		: [];
+	const checks = buildCreateChecks(accountId);
 
 	return (
-		<>
-			<form id={FORM_ID} className="add-key-modal__form" onSubmit={onSubmit}>
-				<AuthZGuardContent checks={checks}>
-					<>
+		<form id={FORM_ID} className="add-key-modal__form" onSubmit={onSubmit}>
+			<AuthZGuardContent checks={checks}>
+				<>
+					<div className="add-key-modal__field">
+						<label className="add-key-modal__label" htmlFor="key-name">
+							Name <span style={{ color: 'var(--destructive)' }}>*</span>
+						</label>
+						<Input
+							id="key-name"
+							placeholder="Enter key name e.g.: Service Owner"
+							testId="add-key-name-input"
+							{...register('keyName', {
+								required: true,
+								validate: (v) => !!v.trim(),
+							})}
+						/>
+					</div>
+
+					<div className="add-key-modal__field">
+						<span className="add-key-modal__label">Expiration</span>
+						<Controller
+							name="expiryMode"
+							control={control}
+							render={({ field }): JSX.Element => (
+								<ToggleGroup
+									variant="outlined"
+									color="secondary"
+									type="single"
+									value={field.value}
+									onChange={(val: string): void => {
+										if (val) {
+											field.onChange(val);
+										}
+									}}
+									size="sm"
+									width="60%"
+									items={[
+										{ value: ExpiryMode.NONE, label: 'No Expiration' },
+										{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
+									]}
+								/>
+							)}
+						/>
+					</div>
+
+					{expiryMode === ExpiryMode.DATE && (
 						<div className="add-key-modal__field">
-							<label className="add-key-modal__label" htmlFor="key-name">
-								Name <span style={{ color: 'var(--destructive)' }}>*</span>
+							<label className="add-key-modal__label" htmlFor="expiry-date">
+								Expiration Date
 							</label>
-							<Input
-								id="key-name"
-								placeholder="Enter key name e.g.: Service Owner"
-								testId="add-key-name-input"
-								{...register('keyName', {
-									required: true,
-									validate: (v) => !!v.trim(),
-								})}
-							/>
-						</div>
-
-						<div className="add-key-modal__field">
-							<span className="add-key-modal__label">Expiration</span>
-							<Controller
-								name="expiryMode"
-								control={control}
-								render={({ field }): JSX.Element => (
-									<ToggleGroup
-										variant="outlined"
-										color="secondary"
-										type="single"
-										value={field.value}
-										onChange={(val: string): void => {
-											if (val) {
-												field.onChange(val);
-											}
-										}}
-										size="sm"
-										width="60%"
-										items={[
-											{ value: ExpiryMode.NONE, label: 'No Expiration' },
-											{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
-										]}
-									/>
-								)}
-							/>
-						</div>
-
-						{expiryMode === ExpiryMode.DATE && (
-							<div className="add-key-modal__field">
-								<label className="add-key-modal__label" htmlFor="expiry-date">
-									Expiration Date
-								</label>
-								<div className="add-key-modal__datepicker">
-									<Controller
-										name="expiryDate"
-										control={control}
-										render={({ field }): JSX.Element => (
-											<DatePicker
-												id="expiry-date"
-												value={field.value}
-												onChange={field.onChange}
-												popupClassName="add-key-modal-datepicker-popup"
-												getPopupContainer={popupContainer}
-												disabledDate={disabledDate}
-											/>
-										)}
-									/>
-								</div>
+							<div className="add-key-modal__datepicker">
+								<Controller
+									name="expiryDate"
+									control={control}
+									render={({ field }): JSX.Element => (
+										<DatePicker
+											id="expiry-date"
+											value={field.value}
+											onChange={field.onChange}
+											popupClassName="add-key-modal-datepicker-popup"
+											getPopupContainer={popupContainer}
+											disabledDate={disabledDate}
+										/>
+									)}
+								/>
 							</div>
-						)}
-					</>
-				</AuthZGuardContent>
-			</form>
+						</div>
+					)}
+				</>
+			</AuthZGuardContent>
+		</form>
+	);
+}
 
-			<div className="add-key-modal__footer">
-				<div className="add-key-modal__footer-right">
-					<Button
-						size="md"
-						variant="solid"
-						color="secondary"
-						onClick={onClose}
-						testId="add-key-cancel-btn"
-					>
-						Cancel
-					</Button>
-					<AuthZButton
-						size="md"
-						checks={checks}
-						authZEnabled={!!accountId}
-						type="submit"
-						form={FORM_ID}
-						variant="solid"
-						color="primary"
-						loading={isSubmitting}
-						disabled={!isValid}
-						testId="add-key-submit-btn"
-					>
-						Create Key
-					</AuthZButton>
-				</div>
-			</div>
+export interface KeyFormFooterProps {
+	isSubmitting: boolean;
+	isValid: boolean;
+	onClose: () => void;
+	accountId?: string;
+}
+
+export function KeyFormFooter({
+	isSubmitting,
+	isValid,
+	onClose,
+	accountId,
+}: KeyFormFooterProps): JSX.Element {
+	return (
+		<>
+			<Button
+				size="md"
+				variant="solid"
+				color="secondary"
+				onClick={onClose}
+				testId="add-key-cancel-btn"
+			>
+				Cancel
+			</Button>
+			<AuthZButton
+				size="md"
+				checks={buildCreateChecks(accountId)}
+				authZEnabled={!!accountId}
+				type="submit"
+				form={FORM_ID}
+				variant="solid"
+				color="primary"
+				loading={isSubmitting}
+				disabled={!isValid}
+				testId="add-key-submit-btn"
+			>
+				Create Key
+			</AuthZButton>
 		</>
 	);
 }

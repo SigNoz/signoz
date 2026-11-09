@@ -210,7 +210,7 @@ function EditMemberDrawer({
 	const { mutateAsync: updateMyUser } = useUpdateMyUserV2();
 	const { mutateAsync: updateUser } = useUpdateUser();
 
-	const { mutate: deleteUser, isLoading: isDeleting } = useDeleteUser({
+	const { mutateAsync: deleteUser, isLoading: isDeleting } = useDeleteUser({
 		mutation: {
 			onSuccess: (): void => {
 				toast.success(
@@ -378,11 +378,15 @@ function EditMemberDrawer({
 		onComplete,
 	]);
 
-	const handleDelete = useCallback((): void => {
+	const handleDelete = useCallback(async (): Promise<void> => {
 		if (!member) {
 			return;
 		}
-		deleteUser({ pathParams: { id: member.id } });
+		try {
+			await deleteUser({ pathParams: { id: member.id } });
+		} catch {
+			// `onError` already shows the error modal, and the confirmation stays open.
+		}
 	}, [member, deleteUser]);
 
 	const handleGenerateResetLink = useCallback(async (): Promise<void> => {

@@ -1,18 +1,10 @@
-import {
-	Dialog,
-	DialogCloseButton,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from '@signozhq/ui/dialog';
-import { Typography } from '@signozhq/ui/typography';
+import { Dialog } from '@signozhq/ui/dialog';
 import { ConfigProvider } from 'antd';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { useRef } from 'react';
 
 import ViewPanelModalContent from './ViewPanelModalContent';
-import ViewPanelModalTitle from './ViewPanelModalTitle';
-import styles from './ViewPanelModal.module.scss';
+import { useViewPanelTitle } from './useViewPanelTitle';
 
 interface ViewPanelModalProps {
 	/**
@@ -31,47 +23,26 @@ function ViewPanelModal({
 	open,
 	onClose,
 }: ViewPanelModalProps): JSX.Element {
-	// Render antd popups into the dialog (not document.body) so they stay inside the
-	// modal's interactive, focus-trapped layer instead of being blocked by Radix.
+	// Render antd popups into the dialog panel (not document.body) so they stay inside
+	// the modal's interactive, focus-trapped layer instead of being blocked by it.
 	const contentRef = useRef<HTMLDivElement>(null);
+	const title = useViewPanelTitle(panel);
 
 	return (
 		<Dialog
+			ref={contentRef}
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onClose();
-				}
-			}}
+			onClose={(): void => onClose()}
+			title={title}
+			width="full"
 		>
-			<DialogContent
-				ref={contentRef}
-				position="center"
-				width="extra-wide"
-				className={styles.dialog}
-			>
-				<DialogHeader>
-					<DialogTitle>
-						{panel ? (
-							<ViewPanelModalTitle panel={panel} />
-						) : (
-							<Typography.Text className={styles.title}>View mode</Typography.Text>
-						)}
-					</DialogTitle>
-				</DialogHeader>
-				<DialogCloseButton />
-				{open && panel && panelId && (
-					<ConfigProvider
-						getPopupContainer={(): HTMLElement => contentRef.current ?? document.body}
-					>
-						<ViewPanelModalContent
-							panel={panel}
-							panelId={panelId}
-							onClose={onClose}
-						/>
-					</ConfigProvider>
-				)}
-			</DialogContent>
+			{open && panel && panelId && (
+				<ConfigProvider
+					getPopupContainer={(): HTMLElement => contentRef.current ?? document.body}
+				>
+					<ViewPanelModalContent panel={panel} panelId={panelId} onClose={onClose} />
+				</ConfigProvider>
+			)}
 		</Dialog>
 	);
 }

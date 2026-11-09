@@ -165,8 +165,8 @@ export const TooltipsInJsonDrawer: Story = {
 };
 
 /**
- * A panel expanded into view mode, whose header carries the full panel name its
- * title truncates, over the dashboard's own tooltips behind the dialog.
+ * A panel expanded into view mode, whose header carries the full panel name, over
+ * the dashboard's own tooltips behind the dialog.
  *
  * The document is answered by the story, so the Panels, Sections, Variables and
  * Locked controls do not reach it.

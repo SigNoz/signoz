@@ -310,7 +310,7 @@ export function dashboardsDriver(page: Page): Dashboards {
 		headerAddPanel: () => page.getByTestId('add-panel-header'),
 		zoomOut: () => page.getByTestId('zoom-out-btn'),
 		variable: (name) => page.getByTestId(`variable-${name}`),
-		confirmDelete: () => page.getByTestId('confirm-delete'),
+		confirmDelete: () => page.getByTestId('confirm-delete-confirm'),
 		text: (text) => page.getByText(text),
 	};
 

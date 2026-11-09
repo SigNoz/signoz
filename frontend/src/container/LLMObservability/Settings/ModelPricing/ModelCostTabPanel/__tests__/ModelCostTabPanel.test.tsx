@@ -209,7 +209,7 @@ describe('ModelCostTabPanel (integration)', () => {
 		await openRowMenu(user, 'rule-openai');
 		await user.click(await screen.findByText('Delete'));
 
-		await user.click(await screen.findByTestId('drawer-delete-confirm-btn'));
+		await user.click(await screen.findByTestId('drawer-delete-dialog-confirm'));
 
 		await waitFor(() => expect(deletedId).toBe('rule-openai'));
 		await waitFor(() =>

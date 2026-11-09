@@ -1,5 +1,5 @@
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 
 interface CloseSetupConfirmProps {
@@ -20,12 +20,12 @@ function CloseSetupConfirm({
 	onConfirm,
 }: CloseSetupConfirmProps): JSX.Element {
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
-			onOpenChange={onOpenChange}
+			onClose={(): void => onOpenChange(false)}
 			title={`Close ${providerName} agent setup?`}
 			testId={`${testIdPrefix}-close-setup-confirm`}
-			footer={
+			footerSuffix={
 				<>
 					<Button
 						size="md"
@@ -52,7 +52,7 @@ function CloseSetupConfirm({
 				The agent has not connected yet. If you close now, you will have to start
 				the installation process again with a new setup command.
 			</Typography>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

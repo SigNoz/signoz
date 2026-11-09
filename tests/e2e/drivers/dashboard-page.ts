@@ -76,7 +76,7 @@ export function toolbarAt(page: Page): Toolbar {
 }
 
 export interface DashboardPage {
-	/** The confirm dialog's Cancel, which carries no testid. */
+	/** The delete confirm's Cancel. */
 	cancelDelete(): Locator;
 	breadcrumb(): Locator;
 	/** The breadcrumb's link back to the list. */
@@ -175,7 +175,7 @@ function sectionHandle(page: Page, title: string): SectionHandle {
 		async delete() {
 			await section.openMenu();
 			await menuItem(SectionAction.delete).click();
-			await page.getByTestId('confirm-delete').click();
+			await page.getByTestId('confirm-delete-confirm').click();
 			await expect(root()).toHaveCount(0);
 		},
 	};
@@ -192,8 +192,7 @@ function dashboardPageDriver(page: Page): DashboardPage {
 		page.getByRole('dialog').filter({ hasText: 'Dashboard JSON' });
 
 	const dashboardPage: DashboardPage = {
-		cancelDelete: () =>
-			page.getByRole('dialog').getByRole('button', { name: 'Cancel' }),
+		cancelDelete: () => page.getByTestId('confirm-delete-cancel'),
 		breadcrumb,
 		breadcrumbHome: () =>
 			breadcrumb().getByRole('link', { name: 'Dashboard', exact: true }),

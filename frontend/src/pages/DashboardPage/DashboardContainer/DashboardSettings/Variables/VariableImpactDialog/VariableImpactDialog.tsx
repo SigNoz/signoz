@@ -1,6 +1,6 @@
 import { Check, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 // eslint-disable-next-line signoz/no-antd-components -- multiline TextArea + Checkbox have no @signozhq/ui equivalent yet
 import { Checkbox, Input as AntdInput } from 'antd';
@@ -69,7 +69,7 @@ function VariableImpactDialog({
 	const confirmLabel = isRename ? 'Rename' : isDelete ? 'Delete' : 'Apply';
 
 	const footer = (
-		<div className={styles.footer}>
+		<>
 			<Button
 				size="md"
 				variant="solid"
@@ -91,17 +91,13 @@ function VariableImpactDialog({
 			>
 				{confirmLabel}
 			</Button>
-		</div>
+		</>
 	);
 
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onClose();
-				}
-			}}
+			onClose={(): void => onClose()}
 			title={
 				// eslint-disable-next-line no-nested-ternary
 				isRename
@@ -111,11 +107,7 @@ function VariableImpactDialog({
 						: `Apply $${variableName} to panels`
 			}
 			width="wide"
-			showCloseButton={false}
-			// Lift above the settings drawer (z ~1000); overlay off (it would only half-dim).
-			style={{ zIndex: 1100 }}
-			showOverlay={false}
-			footer={footer}
+			footerSuffix={footer}
 		>
 			<div className={styles.body}>
 				<Typography.Text className={styles.intro}>{intro}</Typography.Text>
@@ -175,7 +167,7 @@ function VariableImpactDialog({
 					})}
 				</div>
 			</div>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

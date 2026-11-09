@@ -151,13 +151,7 @@ describe('AddKeyModal', () => {
 
 		await screen.findByText('snz_abc123xyz456secret');
 
-		const copyBtn = screen
-			.getAllByRole('button')
-			.find((btn) => btn.querySelector('svg'));
-		if (!copyBtn) {
-			throw new Error('Copy button not found');
-		}
-		await user.click(copyBtn);
+		await user.click(screen.getByRole('button', { name: 'Copy key' }));
 
 		await waitFor(() => {
 			expect(mockCopyToClipboard).toHaveBeenCalledWith('snz_abc123xyz456secret');

@@ -133,7 +133,9 @@ export const ModelCostDeletedToast: Story = {
 	play: async (context): Promise<void> => {
 		await ModelCostActionsMenu.play?.(context);
 		await userEvent.click(await screen.findByText('Delete'));
-		await userEvent.click(await screen.findByTestId('drawer-delete-confirm-btn'));
+		await userEvent.click(
+			await screen.findByTestId('drawer-delete-dialog-confirm'),
+		);
 		if (context.args.ruleDelete === 'success') {
 			await waitFor(() =>
 				expect(screen.getByText(/model cost .*deleted/i)).toBeVisible(),

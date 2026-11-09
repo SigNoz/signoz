@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
@@ -91,13 +91,13 @@ function ContextLinkDialog({
 	};
 
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
-			onOpenChange={onOpenChange}
+			onClose={(): void => onOpenChange(false)}
 			title={initialLink ? 'Edit context link' : 'Add a context link'}
 			width="wide"
 			testId="context-link-dialog"
-			footer={
+			footerSuffix={
 				<>
 					<Button
 						size="md"
@@ -259,7 +259,7 @@ function ContextLinkDialog({
 					</Typography.Text>
 				</div>
 			</div>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

@@ -1,7 +1,7 @@
 import { Wand } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
 import { Select } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
@@ -55,6 +55,7 @@ function TelemetrySelectorWizard({
 			size="sm"
 			testId={`telemetry-wizard-trigger-${testId}`}
 			prefix={<Wand size={14} />}
+			onClick={(): void => handleOpenChange(true)}
 		>
 			Wizard
 		</Button>
@@ -85,110 +86,112 @@ function TelemetrySelectorWizard({
 	);
 
 	return (
-		<DialogWrapper
-			open={open}
-			onOpenChange={handleOpenChange}
-			title="Selector Wizard"
-			width="wide"
-			testId={`telemetry-wizard-dialog-${testId}`}
-			trigger={trigger}
-			footer={footer}
-		>
-			<div className={styles.wizardBody}>
-				<div className={styles.wizardField}>
-					<Typography as="label" weight="medium">
-						Query Type
-					</Typography>
-					<Select
-						placeholder="Select a query type"
-						value={queryType}
-						onChange={handleQueryTypeChange}
-						items={QUERY_TYPES.filter((queryTypeOption) =>
-							isQueryTypeAvailable(queryTypeOption, resource),
-						).map((queryTypeOption) => ({
-							type: 'item' as const,
-							value: queryTypeOption.id,
-							label: queryTypeOption.label,
-							testId: `wizard-query-type-option-${queryTypeOption.id}-${testId}`,
-						}))}
-						testId={`wizard-query-type-select-${testId}`}
-					/>
-				</div>
-
-				{supportsKeyScoping && (
+		<>
+			{trigger}
+			<Dialog
+				open={open}
+				onClose={(): void => handleOpenChange(false)}
+				title="Selector Wizard"
+				width="wide"
+				testId={`telemetry-wizard-dialog-${testId}`}
+				footerSuffix={footer}
+			>
+				<div className={styles.wizardBody}>
 					<div className={styles.wizardField}>
 						<Typography as="label" weight="medium">
-							Key
+							Query Type
 						</Typography>
 						<Select
-							placeholder="Select a key"
-							value={grantKey}
-							onChange={handleKeyChange}
-							items={SUPPORTED_GRANT_KEYS.map((supportedKey) => ({
+							placeholder="Select a query type"
+							value={queryType}
+							onChange={handleQueryTypeChange}
+							items={QUERY_TYPES.filter((queryTypeOption) =>
+								isQueryTypeAvailable(queryTypeOption, resource),
+							).map((queryTypeOption) => ({
 								type: 'item' as const,
-								value: supportedKey,
-								label: supportedKey,
-								testId: `wizard-key-option-${supportedKey}-${testId}`,
+								value: queryTypeOption.id,
+								label: queryTypeOption.label,
+								testId: `wizard-query-type-option-${queryTypeOption.id}-${testId}`,
 							}))}
-							testId={`wizard-key-select-${testId}`}
+							testId={`wizard-query-type-select-${testId}`}
 						/>
 					</div>
-				)}
 
-				<div className={styles.wizardField}>
-					<Typography as="label" weight="medium">
-						Value
-					</Typography>
-					<div className={styles.wizardValueRow}>
-						<div className={styles.wizardValueInput}>
-							<Input
-								placeholder={
-									supportsKeyScoping
-										? 'Value or leave empty to allow every query'
-										: ANY_RESOURCE_VALUE
-								}
-								value={value}
-								disabled={!supportsKeyScoping}
-								disabledTooltip="This query type does not support key scoping"
-								onChange={handleValueChange}
-								onKeyDown={handleInputKeyDown}
-								testId={`wizard-value-input-${testId}`}
+					{supportsKeyScoping && (
+						<div className={styles.wizardField}>
+							<Typography as="label" weight="medium">
+								Key
+							</Typography>
+							<Select
+								placeholder="Select a key"
+								value={grantKey}
+								onChange={handleKeyChange}
+								items={SUPPORTED_GRANT_KEYS.map((supportedKey) => ({
+									type: 'item' as const,
+									value: supportedKey,
+									label: supportedKey,
+									testId: `wizard-key-option-${supportedKey}-${testId}`,
+								}))}
+								testId={`wizard-key-select-${testId}`}
 							/>
 						</div>
-						<Checkbox
-							color="primary"
-							id={`wizard-any-resource-${testId}`}
-							value={isAnyResource}
-							disabled={!supportsKeyScoping}
-							disabledTooltip="This query type does not support key scoping"
-							onChange={(checked): void => handleAnyResourceChange(checked === true)}
-							testId={`wizard-any-resource-checkbox-${testId}`}
+					)}
+
+					<div className={styles.wizardField}>
+						<Typography as="label" weight="medium">
+							Value
+						</Typography>
+						<div className={styles.wizardValueRow}>
+							<div className={styles.wizardValueInput}>
+								<Input
+									placeholder={
+										supportsKeyScoping
+											? 'Value or leave empty to allow every query'
+											: ANY_RESOURCE_VALUE
+									}
+									value={value}
+									disabled={!supportsKeyScoping}
+									disabledTooltip="This query type does not support key scoping"
+									onChange={handleValueChange}
+									onKeyDown={handleInputKeyDown}
+									testId={`wizard-value-input-${testId}`}
+								/>
+							</div>
+							<Checkbox
+								color="primary"
+								id={`wizard-any-resource-${testId}`}
+								value={isAnyResource}
+								disabled={!supportsKeyScoping}
+								disabledTooltip="This query type does not support key scoping"
+								onChange={(checked): void => handleAnyResourceChange(checked === true)}
+								testId={`wizard-any-resource-checkbox-${testId}`}
+							>
+								Any value
+							</Checkbox>
+						</div>
+					</div>
+
+					<div className={styles.wizardField}>
+						<Typography as="label" weight="medium">
+							Selector
+						</Typography>
+						<Input
+							value={selector}
+							onChange={handleSelectorChange}
+							onKeyDown={handleInputKeyDown}
+							testId={`wizard-selector-input-${testId}`}
+						/>
+						<Typography.Text
+							size="small"
+							color={validation.isError ? 'danger' : 'muted'}
+							testId={`wizard-selector-hint-${testId}`}
 						>
-							Any value
-						</Checkbox>
+							{validation.message}
+						</Typography.Text>
 					</div>
 				</div>
-
-				<div className={styles.wizardField}>
-					<Typography as="label" weight="medium">
-						Selector
-					</Typography>
-					<Input
-						value={selector}
-						onChange={handleSelectorChange}
-						onKeyDown={handleInputKeyDown}
-						testId={`wizard-selector-input-${testId}`}
-					/>
-					<Typography.Text
-						size="small"
-						color={validation.isError ? 'danger' : 'muted'}
-						testId={`wizard-selector-hint-${testId}`}
-					>
-						{validation.message}
-					</Typography.Text>
-				</div>
-			</div>
-		</DialogWrapper>
+			</Dialog>
+		</>
 	);
 }
 

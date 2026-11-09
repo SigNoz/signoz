@@ -1,13 +1,6 @@
-.modal {
-	/* No bottom padding: the footer draws its own top border edge-to-edge. */
-	--dialog-description-padding: var(--spacing-4) var(--spacing-4) 0px
-		var(--spacing-4);
-}
-
 .content {
 	display: flex;
 	flex-direction: column;
-	max-height: calc(78vh - 80px);
 }
 
 .header {
@@ -77,12 +70,10 @@
 
 .footer {
 	display: flex;
-	flex-shrink: 0;
+	flex: 1 1 auto;
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--spacing-4);
-	padding: var(--spacing-4) 0;
-	border-top: 1px solid var(--l2-border);
 }
 
 .hint {

@@ -25,15 +25,10 @@ export interface EditKeyFormProps {
 	control: Control<FormValues>;
 	expiryMode: ExpiryMode;
 	keyItem: ServiceaccounttypesGettableFactorAPIKeyDTO | null;
-	isSaving: boolean;
-	isDirty: boolean;
 	onSubmit: () => void;
-	onClose: () => void;
-	onRevokeClick: () => void;
 	formatTimezoneAdjustedTimestamp: (ts: string, format: string) => string;
 	canUpdate?: boolean;
 	isUpdateDenied?: boolean;
-	accountId?: string;
 }
 
 function EditKeyForm({
@@ -41,172 +36,196 @@ function EditKeyForm({
 	control,
 	expiryMode,
 	keyItem,
-	isSaving,
-	isDirty,
 	onSubmit,
-	onClose,
-	onRevokeClick,
 	formatTimezoneAdjustedTimestamp,
 	canUpdate = true,
 	isUpdateDenied = false,
-	accountId = '',
 }: EditKeyFormProps): JSX.Element {
 	return (
-		<>
-			<form id={FORM_ID} className="edit-key-modal__form" onSubmit={onSubmit}>
-				<div className="edit-key-modal__field">
-					<label className="edit-key-modal__label" htmlFor="edit-key-name">
-						Name
-					</label>
-					{!canUpdate ? (
-						<AuthZTooltip
-							checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
-							enabled={!!keyItem?.id}
-							withPortal={false}
-						>
-							<div className="edit-key-modal__key-display">
-								<span className="edit-key-modal__id-text">{keyItem?.name || '—'}</span>
-								<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
-							</div>
-						</AuthZTooltip>
-					) : (
-						<Input
-							id="edit-key-name"
-							placeholder="Enter key name"
-							{...register('name')}
-						/>
-					)}
-				</div>
-
-				<div className="edit-key-modal__field">
-					<label className="edit-key-modal__label" htmlFor="edit-key-id">
-						ID
-					</label>
-					<div id="edit-key-id" className="edit-key-modal__key-display">
-						<span className="edit-key-modal__id-text">{keyItem?.id || '—'}</span>
-						<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
-					</div>
-				</div>
-
-				<div className="edit-key-modal__field">
-					<label className="edit-key-modal__label" htmlFor="edit-key-display">
-						Key
-					</label>
-					<div id="edit-key-display" className="edit-key-modal__key-display">
-						<span className="edit-key-modal__key-text">********************</span>
-						<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
-					</div>
-				</div>
-
-				<div className="edit-key-modal__field">
-					<span className="edit-key-modal__label">Expiration</span>
-					<Controller
-						name="expiryMode"
-						control={control}
-						render={({ field }): JSX.Element => (
-							<ToggleGroup
-								variant="outlined"
-								color="secondary"
-								type="single"
-								value={field.value}
-								onChange={(val: string): void => {
-									if (val && canUpdate) {
-										field.onChange(val);
-									}
-								}}
-								size="sm"
-								disabled={!canUpdate}
-								disabledTooltip={
-									isUpdateDenied
-										? 'You do not have permission to update this key'
-										: undefined
-								}
-								width="60%"
-								items={[
-									{ value: ExpiryMode.NONE, label: 'No Expiration' },
-									{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
-								]}
-							/>
-						)}
-					/>
-				</div>
-
-				{expiryMode === ExpiryMode.DATE && (
-					<div className="edit-key-modal__field">
-						<label className="edit-key-modal__label" htmlFor="edit-key-datepicker">
-							Expiration Date
-						</label>
-						<div className="edit-key-modal__datepicker">
-							<Controller
-								name="expiresAt"
-								control={control}
-								render={({ field }): JSX.Element => (
-									<DatePicker
-										value={field.value}
-										id="edit-key-datepicker"
-										onChange={field.onChange}
-										popupClassName="edit-key-modal-datepicker-popup"
-										getPopupContainer={popupContainer}
-										disabledDate={disabledDate}
-										disabled={!canUpdate}
-									/>
-								)}
-							/>
-						</div>
-					</div>
-				)}
-
-				<div className="edit-key-modal__meta">
-					<span className="edit-key-modal__meta-label">Last Observed At</span>
-					<Badge textTransform="none" variant="solid" color="secondary">
-						{formatLastObservedAt(
-							keyItem?.lastObservedAt ?? null,
-							formatTimezoneAdjustedTimestamp,
-						)}
-					</Badge>
-				</div>
-			</form>
-
-			<div className="edit-key-modal__footer">
-				<AuthZButton
-					size="md"
-					checks={[
-						buildAPIKeyDeletePermission(keyItem?.id ?? ''),
-						buildSADetachPermission(accountId ?? ''),
-					]}
-					authZEnabled={!!accountId && !!keyItem?.id}
-					variant="link"
-					color="danger"
-					onClick={onRevokeClick}
-					prefix={<Trash2 size={12} />}
-				>
-					Revoke Key
-				</AuthZButton>
-				<div className="edit-key-modal__footer-right">
-					<Button
-						size="md"
-						variant="solid"
-						color="secondary"
-						onClick={onClose}
-						prefix={<X size={12} />}
-					>
-						Cancel
-					</Button>
-					<AuthZButton
-						size="md"
+		<form id={FORM_ID} className="edit-key-modal__form" onSubmit={onSubmit}>
+			<div className="edit-key-modal__field">
+				<label className="edit-key-modal__label" htmlFor="edit-key-name">
+					Name
+				</label>
+				{!canUpdate ? (
+					<AuthZTooltip
 						checks={[buildAPIKeyUpdatePermission(keyItem?.id ?? '')]}
-						authZEnabled={!!accountId && !!keyItem?.id}
-						type="submit"
-						form={FORM_ID}
-						variant="solid"
-						color="primary"
-						loading={isSaving}
-						disabled={!isDirty}
+						enabled={!!keyItem?.id}
+						withPortal={false}
 					>
-						Save Changes
-					</AuthZButton>
+						<div className="edit-key-modal__key-display">
+							<span className="edit-key-modal__id-text">{keyItem?.name || '—'}</span>
+							<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
+						</div>
+					</AuthZTooltip>
+				) : (
+					<Input
+						id="edit-key-name"
+						placeholder="Enter key name"
+						{...register('name')}
+					/>
+				)}
+			</div>
+
+			<div className="edit-key-modal__field">
+				<label className="edit-key-modal__label" htmlFor="edit-key-id">
+					ID
+				</label>
+				<div id="edit-key-id" className="edit-key-modal__key-display">
+					<span className="edit-key-modal__id-text">{keyItem?.id || '—'}</span>
+					<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
 				</div>
 			</div>
+
+			<div className="edit-key-modal__field">
+				<label className="edit-key-modal__label" htmlFor="edit-key-display">
+					Key
+				</label>
+				<div id="edit-key-display" className="edit-key-modal__key-display">
+					<span className="edit-key-modal__key-text">********************</span>
+					<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
+				</div>
+			</div>
+
+			<div className="edit-key-modal__field">
+				<span className="edit-key-modal__label">Expiration</span>
+				<Controller
+					name="expiryMode"
+					control={control}
+					render={({ field }): JSX.Element => (
+						<ToggleGroup
+							variant="outlined"
+							color="secondary"
+							type="single"
+							value={field.value}
+							onChange={(val: string): void => {
+								if (val && canUpdate) {
+									field.onChange(val);
+								}
+							}}
+							size="sm"
+							disabled={!canUpdate}
+							disabledTooltip={
+								isUpdateDenied
+									? 'You do not have permission to update this key'
+									: undefined
+							}
+							width="60%"
+							items={[
+								{ value: ExpiryMode.NONE, label: 'No Expiration' },
+								{ value: ExpiryMode.DATE, label: 'Set Expiration Date' },
+							]}
+						/>
+					)}
+				/>
+			</div>
+
+			{expiryMode === ExpiryMode.DATE && (
+				<div className="edit-key-modal__field">
+					<label className="edit-key-modal__label" htmlFor="edit-key-datepicker">
+						Expiration Date
+					</label>
+					<div className="edit-key-modal__datepicker">
+						<Controller
+							name="expiresAt"
+							control={control}
+							render={({ field }): JSX.Element => (
+								<DatePicker
+									value={field.value}
+									id="edit-key-datepicker"
+									onChange={field.onChange}
+									popupClassName="edit-key-modal-datepicker-popup"
+									getPopupContainer={popupContainer}
+									disabledDate={disabledDate}
+									disabled={!canUpdate}
+								/>
+							)}
+						/>
+					</div>
+				</div>
+			)}
+
+			<div className="edit-key-modal__meta">
+				<span className="edit-key-modal__meta-label">Last Observed At</span>
+				<Badge textTransform="none" variant="solid" color="secondary">
+					{formatLastObservedAt(
+						keyItem?.lastObservedAt ?? null,
+						formatTimezoneAdjustedTimestamp,
+					)}
+				</Badge>
+			</div>
+		</form>
+	);
+}
+
+export interface EditKeyFooterPrefixProps {
+	keyId?: string;
+	accountId?: string;
+	onRevokeClick: () => void;
+}
+
+export function EditKeyFooterPrefix({
+	keyId,
+	accountId,
+	onRevokeClick,
+}: EditKeyFooterPrefixProps): JSX.Element {
+	return (
+		<AuthZButton
+			size="md"
+			checks={[
+				buildAPIKeyDeletePermission(keyId ?? ''),
+				buildSADetachPermission(accountId ?? ''),
+			]}
+			authZEnabled={!!accountId && !!keyId}
+			variant="link"
+			color="danger"
+			onClick={onRevokeClick}
+			prefix={<Trash2 size={12} />}
+		>
+			Revoke Key
+		</AuthZButton>
+	);
+}
+
+export interface EditKeyFooterProps {
+	keyId?: string;
+	accountId?: string;
+	isSaving: boolean;
+	isDirty: boolean;
+	onClose: () => void;
+}
+
+export function EditKeyFooter({
+	keyId,
+	accountId,
+	isSaving,
+	isDirty,
+	onClose,
+}: EditKeyFooterProps): JSX.Element {
+	return (
+		<>
+			<Button
+				size="md"
+				variant="solid"
+				color="secondary"
+				onClick={onClose}
+				prefix={<X size={12} />}
+			>
+				Cancel
+			</Button>
+			<AuthZButton
+				size="md"
+				checks={[buildAPIKeyUpdatePermission(keyId ?? '')]}
+				authZEnabled={!!accountId && !!keyId}
+				type="submit"
+				form={FORM_ID}
+				variant="solid"
+				color="primary"
+				loading={isSaving}
+				disabled={!isDirty}
+			>
+				Save Changes
+			</AuthZButton>
 		</>
 	);
 }

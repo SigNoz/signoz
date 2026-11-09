@@ -41,14 +41,8 @@ function SavedViewsList({
 	const saveNewView = useSaveNewView(createView);
 	const { createdByMe, createdByOthers, isLoading, isError, refetch } =
 		useSavedViewsList(source, search);
-	const {
-		copyViewLink,
-		copyViewId,
-		renameView,
-		deleteView,
-		isRenaming,
-		isDeleting,
-	} = useSavedViewRowActions(source);
+	const { copyViewLink, copyViewId, renameView, deleteView, isRenaming } =
+		useSavedViewRowActions(source);
 	const [pendingAction, setPendingAction] =
 		useState<PendingSavedViewAction | null>(null);
 	const hoverCard = useSavedViewHoverCard();
@@ -103,7 +97,7 @@ function SavedViewsList({
 		return (
 			<div className={styles.loading} data-testid="saved-views-list-loading">
 				{Array.from({ length: SAVED_VIEWS_LIST_LOADING_ROWS }, (_, index) => (
-					<Skeleton.Input key={index} active size="small" block />
+					<Skeleton.Input key={index} size="sm" />
 				))}
 			</div>
 		);
@@ -188,11 +182,8 @@ function SavedViewsList({
 			)}
 			{pendingAction?.key === 'delete' && (
 				<DeleteSavedViewDialog
-					isDeleting={isDeleting}
 					onCancel={closePendingAction}
-					onConfirm={(): void => {
-						void handleDelete();
-					}}
+					onConfirm={handleDelete}
 				/>
 			)}
 		</div>

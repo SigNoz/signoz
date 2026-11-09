@@ -2,7 +2,7 @@ import { useState } from 'react';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Maximize2 } from '@signozhq/icons';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
@@ -73,18 +73,14 @@ function JsonEditor({
 			</div>
 			<div className={styles.editor}>{renderEditor(height)}</div>
 
-			<DialogWrapper
+			<Dialog
 				title={readOnly ? 'Preview JSON' : 'Edit JSON'}
 				open={expanded}
 				width="extra-wide"
-				onOpenChange={(next): void => {
-					if (!next) {
-						setExpanded(false);
-					}
-				}}
+				onClose={(): void => setExpanded(false)}
 			>
 				<div className={styles.editorExpanded}>{renderEditor('70vh')}</div>
-			</DialogWrapper>
+			</Dialog>
 		</div>
 	);
 }

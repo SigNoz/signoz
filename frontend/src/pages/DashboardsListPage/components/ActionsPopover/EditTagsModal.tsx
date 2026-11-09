@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import {
@@ -16,7 +16,6 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
 import { keyValueStringsToTags } from '../../utils/helpers';
-import styles from './ActionsPopover.module.scss';
 
 interface Props {
 	open: boolean;
@@ -96,17 +95,13 @@ function EditTagsModal({
 	const title = currentTags.length > 0 ? 'Edit tags' : 'Add tags';
 
 	return (
-		<DialogWrapper
+		<Dialog
 			title={title}
 			open={open}
 			width="narrow"
-			onOpenChange={(next): void => {
-				if (!next) {
-					onClose();
-				}
-			}}
-			footer={
-				<div className={styles.renameFooter}>
+			onClose={onClose}
+			footerSuffix={
+				<>
 					<Button
 						variant="ghost"
 						color="secondary"
@@ -126,7 +121,7 @@ function EditTagsModal({
 					>
 						Save
 					</Button>
-				</div>
+				</>
 			}
 		>
 			<TagKeyValueInput
@@ -135,7 +130,7 @@ function EditTagsModal({
 				placeholder="key:value (press Enter)"
 				testId="edit-dashboard-tags"
 			/>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

@@ -97,7 +97,9 @@ describe('LLMObservabilityAttributeMapping', () => {
 		expect(screen.getByTestId('group-enabled-group-1')).not.toBeChecked();
 
 		await user.click(screen.getByTestId('discard-changes-btn'));
-		const confirmBtn = await screen.findByTestId('discard-changes-confirm-btn');
+		const confirmBtn = await screen.findByTestId(
+			'discard-changes-dialog-confirm',
+		);
 		expect(screen.getByTestId('group-enabled-group-1')).not.toBeChecked();
 
 		await user.click(confirmBtn);
@@ -140,11 +142,11 @@ describe('LLMObservabilityAttributeMapping', () => {
 		await user.click(toggle);
 
 		await user.click(screen.getByTestId('discard-changes-btn'));
-		await user.click(await screen.findByTestId('discard-changes-cancel-btn'));
+		await user.click(await screen.findByTestId('discard-changes-dialog-cancel'));
 
 		await waitFor(() =>
 			expect(
-				screen.queryByTestId('discard-changes-confirm-btn'),
+				screen.queryByTestId('discard-changes-dialog-confirm'),
 			).not.toBeInTheDocument(),
 		);
 		expect(screen.getByTestId('group-enabled-group-1')).not.toBeChecked();

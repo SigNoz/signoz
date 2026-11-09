@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import { useCreateExportDashboard } from 'hooks/dashboard/useCreateExportDashboard';
 import {
@@ -80,17 +80,13 @@ function ExportPanelContainer({
 	const isExportDisabled = isAllDashboardsLoading || !selectedDashboard;
 
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onClose();
-				}
-			}}
+			onClose={onClose}
 			title="Add to dashboard"
 			testId="export-panel-dialog"
-			footer={
-				<div className={styles.footer}>
+			footerSuffix={
+				<>
 					<Button
 						variant="outlined"
 						color="secondary"
@@ -116,7 +112,7 @@ function ExportPanelContainer({
 					>
 						Add to dashboard
 					</Button>
-				</div>
+				</>
 			}
 		>
 			<div className={styles.body}>
@@ -152,7 +148,7 @@ function ExportPanelContainer({
 					</Button>
 				</div>
 			</div>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

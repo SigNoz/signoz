@@ -253,7 +253,9 @@ describe('CancelSubscriptionBanner', () => {
 		await user.type(screen.getByTestId('cancel-confirm-input-field'), 'cancel');
 		await user.click(screen.getByTestId('cancel-subscription-confirm-btn'));
 
-		await user.click(screen.getByRole('button', { name: /close/i }));
+		await user.click(
+			screen.getByTestId('cancel-subscription-fallback-close-btn'),
+		);
 		await waitFor(() =>
 			expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
 		);

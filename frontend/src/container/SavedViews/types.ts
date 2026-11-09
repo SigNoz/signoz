@@ -170,9 +170,8 @@ export interface SavedViewsRowMenuProps {
 }
 
 export interface DeleteSavedViewDialogProps {
-	isDeleting: boolean;
 	onCancel: () => void;
-	onConfirm: () => void;
+	onConfirm: () => Promise<void>;
 }
 
 export interface UseSavedViewRowActionsResult {

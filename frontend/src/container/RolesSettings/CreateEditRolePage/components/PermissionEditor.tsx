@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { SolidAlertTriangle } from '@signozhq/icons';
 import { ButtonGroup } from '@signozhq/ui/button-group';
-import { ConfirmDialog } from '@signozhq/ui/dialog';
+import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
@@ -126,11 +126,10 @@ function PermissionEditor({
 		[mode, onModeChange, onJsonValidityChange],
 	);
 
-	const handleDiscardConfirm = useCallback(async (): Promise<boolean> => {
+	const handleDiscardConfirm = useCallback((): void => {
 		onJsonValidityChange?.(false);
 		onModeChange('interactive');
 		setShowDiscardConfirm(false);
-		return true;
 	}, [onModeChange, onJsonValidityChange]);
 
 	const handleDiscardCancel = useCallback((): void => {
@@ -230,17 +229,12 @@ function PermissionEditor({
 				)}
 			</div>
 
-			<ConfirmDialog
+			<AlertDialog
 				open={showDiscardConfirm}
-				onOpenChange={(next): void => {
-					if (!next) {
-						handleDiscardCancel();
-					}
-				}}
 				title="Discard JSON changes?"
 				titleIcon={<SolidAlertTriangle size={14} color="#fdd600" />}
 				confirmText="Discard"
-				confirmColor="danger"
+				color="danger"
 				cancelText="Stay in JSON"
 				onConfirm={handleDiscardConfirm}
 				onCancel={handleDiscardCancel}
@@ -249,7 +243,7 @@ function PermissionEditor({
 					The JSON contains errors and cannot be parsed. Switching to Interactive
 					mode will discard your changes.
 				</Typography>
-			</ConfirmDialog>
+			</AlertDialog>
 		</div>
 	);
 }

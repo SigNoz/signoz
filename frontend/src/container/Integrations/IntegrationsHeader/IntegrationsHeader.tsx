@@ -1,7 +1,7 @@
 import { ChangeEvent, KeyboardEvent, useState } from 'react';
 import { navigate } from 'lib/router/navigation';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/toast';
 import { Flex } from 'antd';
@@ -110,11 +110,27 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 					Request Integration
 				</Button>
 
-				<DialogWrapper
-					className="request-integration-dialog"
+				<Dialog
 					title="Request New Integration"
 					open={isRequestIntegrationDialogOpen}
-					onOpenChange={setIsRequestIntegrationDialogOpen}
+					onClose={(): void => setIsRequestIntegrationDialogOpen(false)}
+					footerSuffix={
+						<Button
+							disabledTooltip="Enter an integration name first"
+							size="md"
+							variant="solid"
+							color="primary"
+							prefix={<Check size={14} />}
+							onClick={handleRequestIntegrationSubmit}
+							loading={isSubmittingRequestForIntegration}
+							disabled={
+								!requestedIntegrationName ||
+								requestedIntegrationName?.trim().length === 0
+							}
+						>
+							Submit
+						</Button>
+					}
 				>
 					<div className="request-integration-form">
 						<div className="request-integration-form-title">
@@ -135,25 +151,7 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 							disabledTooltip={undefined}
 						/>
 					</div>
-
-					<div className="request-integration-form-footer">
-						<Button
-							disabledTooltip="Enter an integration name first"
-							size="md"
-							variant="solid"
-							color="primary"
-							prefix={<Check size={14} />}
-							onClick={handleRequestIntegrationSubmit}
-							loading={isSubmittingRequestForIntegration}
-							disabled={
-								!requestedIntegrationName ||
-								requestedIntegrationName?.trim().length === 0
-							}
-						>
-							Submit
-						</Button>
-					</div>
-				</DialogWrapper>
+				</Dialog>
 
 				{isGetStartedWithCloudAllowed && (
 					<Button
