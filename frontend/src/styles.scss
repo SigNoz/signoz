@@ -44,6 +44,11 @@ body {
 	font-feature-settings: 'ss01' 1;
 }
 
+// Whole-pixel advances shrink the 13px medium space to 3px and close word gaps in button labels.
+button {
+	text-rendering: geometricPrecision;
+}
+
 .translate-safe {
 	display: contents;
 }
