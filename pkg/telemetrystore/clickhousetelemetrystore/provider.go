@@ -27,7 +27,6 @@ var (
 	ErrCodeIllegalAggregation        = errors.MustNewCode("illegal_aggregation")
 	ErrCodeInvalidRegexp             = errors.MustNewCode("invalid_regexp")
 	ErrCodeSettingNotAllowed         = errors.MustNewCode("setting_not_allowed")
-	ErrCodeProfileUnavailable        = errors.MustNewCode("profile_unavailable")
 
 	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
 	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
@@ -224,10 +223,7 @@ func (p *provider) Stats() driver.Stats {
 }
 
 func (p *provider) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
-	conn, err := p.connFor(ctx)
-	if err != nil {
-		return nil, err
-	}
+	conn := p.connFor(ctx)
 
 	event := telemetrystore.NewQueryEvent(query, args)
 
@@ -248,10 +244,7 @@ func (p *provider) Query(ctx context.Context, query string, args ...interface{})
 }
 
 func (p *provider) QueryRow(ctx context.Context, query string, args ...interface{}) driver.Row {
-	conn, err := p.connFor(ctx)
-	if err != nil {
-		return &errRow{err: err}
-	}
+	conn := p.connFor(ctx)
 
 	event := telemetrystore.NewQueryEvent(query, args)
 
@@ -270,15 +263,12 @@ func (p *provider) QueryRow(ctx context.Context, query string, args ...interface
 }
 
 func (p *provider) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
-	conn, err := p.connFor(ctx)
-	if err != nil {
-		return err
-	}
+	conn := p.connFor(ctx)
 
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err = conn.Select(ctx, dest, query, args...)
+	err := conn.Select(ctx, dest, query, args...)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -287,15 +277,12 @@ func (p *provider) Select(ctx context.Context, dest interface{}, query string, a
 }
 
 func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) error {
-	conn, err := p.connFor(ctx)
-	if err != nil {
-		return err
-	}
+	conn := p.connFor(ctx)
 
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err = conn.Exec(ctx, query, args...)
+	err := conn.Exec(ctx, query, args...)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -304,15 +291,12 @@ func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) 
 }
 
 func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
-	conn, err := p.connFor(ctx)
-	if err != nil {
-		return err
-	}
+	conn := p.connFor(ctx)
 
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err = conn.Exec(clickhouse.Context(ctx, clickhouse.WithAsync(wait)), query, args...)
+	err := conn.Exec(clickhouse.Context(ctx, clickhouse.WithAsync(wait)), query, args...)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -321,10 +305,7 @@ func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, arg
 }
 
 func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
-	conn, err := p.connFor(ctx)
-	if err != nil {
-		return nil, err
-	}
+	conn := p.connFor(ctx)
 
 	event := telemetrystore.NewQueryEvent(query, nil)
 
@@ -364,16 +345,12 @@ func open(dsn string, connection telemetrystore.ConnectionConfig) (clickhouse.Co
 	return clickhouse.Open(options)
 }
 
-func (p *provider) connFor(ctx context.Context) (clickhouse.Conn, error) {
-	profile := telemetrystore.ProfileFromContext(ctx)
-	if profile == "" {
-		return p.clickHouseConn, nil
+// connFor falls back to the default connection, which has no profile, when the profile of ctx is not configured.
+func (p *provider) connFor(ctx context.Context) clickhouse.Conn {
+	if conn, ok := p.profileConns[telemetrystore.ProfileFromContext(ctx)]; ok {
+		return conn
 	}
-	conn, ok := p.profileConns[profile]
-	if !ok {
-		return nil, errors.NewInternalf(ErrCodeProfileUnavailable, "the ClickHouse settings profile %q is not in telemetrystore.clickhouse.profiles", profile)
-	}
-	return conn, nil
+	return p.clickHouseConn
 }
 
 func castError(err error) error {

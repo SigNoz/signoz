@@ -27,30 +27,21 @@ type fakeConn struct {
 
 func TestProviderConnFor(t *testing.T) {
 	defaultConn, profileConn := &fakeConn{}, &fakeConn{}
-	profileCtx := telemetrystore.NewContextWithProfile(context.Background(), "query_range")
+	p := &provider{clickHouseConn: defaultConn, profileConns: map[string]clickhouse.Conn{"query_range": profileConn}}
 
 	testCases := []struct {
-		name     string
-		provider *provider
-		ctx      context.Context
-		want     clickhouse.Conn
-		wantCode errors.Code
+		name string
+		ctx  context.Context
+		want clickhouse.Conn
 	}{
-		{name: "NoProfile_DefaultConn", provider: &provider{clickHouseConn: defaultConn, profileConns: map[string]clickhouse.Conn{"query_range": profileConn}}, ctx: context.Background(), want: defaultConn},
-		{name: "Profile_ProfileConn", provider: &provider{clickHouseConn: defaultConn, profileConns: map[string]clickhouse.Conn{"query_range": profileConn}}, ctx: profileCtx, want: profileConn},
-		{name: "UnknownProfile_Error", provider: &provider{clickHouseConn: defaultConn}, ctx: profileCtx, wantCode: ErrCodeProfileUnavailable},
+		{name: "NoProfile_DefaultConn", ctx: context.Background(), want: defaultConn},
+		{name: "Profile_ProfileConn", ctx: telemetrystore.NewContextWithProfile(context.Background(), "query_range"), want: profileConn},
+		{name: "UnknownProfile_DefaultConn", ctx: telemetrystore.NewContextWithProfile(context.Background(), "unknown"), want: defaultConn},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			conn, err := testCase.provider.connFor(testCase.ctx)
-			if testCase.wantCode != (errors.Code{}) {
-				require.Error(t, err)
-				assert.True(t, errors.Asc(err, testCase.wantCode), "got %v", err)
-				return
-			}
-			require.NoError(t, err)
-			assert.Same(t, testCase.want, conn)
+			assert.Same(t, testCase.want, p.connFor(testCase.ctx))
 		})
 	}
 }

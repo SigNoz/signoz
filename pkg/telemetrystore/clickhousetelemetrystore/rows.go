@@ -117,20 +117,3 @@ func (c *batchColumnWithCastError) Append(v any) error {
 func (c *batchColumnWithCastError) AppendRow(v any) error {
 	return castError(c.BatchColumn.AppendRow(v))
 }
-
-// errRow is a driver.Row for a query that could not run.
-type errRow struct {
-	err error
-}
-
-func (r *errRow) Err() error {
-	return r.err
-}
-
-func (r *errRow) Scan(...any) error {
-	return r.err
-}
-
-func (r *errRow) ScanStruct(any) error {
-	return r.err
-}
