@@ -23,8 +23,10 @@ describe('TriggeredAlerts — group by', () => {
 
 		await user.click(screen.getByTestId('triggered-alerts-groupby-combobox'));
 
-		const serviceOption = await screen.findByText('service');
-		await user.click(serviceOption);
+		await user.type(
+			await screen.findByTestId('triggered-alerts-groupby-combobox-search'),
+			'service{Enter}',
+		);
 		await user.keyboard('{Escape}');
 
 		await waitFor(() => expect(screen.getByText('Group')).toBeInTheDocument());
@@ -45,8 +47,10 @@ describe('TriggeredAlerts — group by', () => {
 		);
 
 		await user.click(screen.getByTestId('triggered-alerts-groupby-combobox'));
-		const serviceOption = await screen.findByText('service');
-		await user.click(serviceOption);
+		await user.type(
+			await screen.findByTestId('triggered-alerts-groupby-combobox-search'),
+			'service{Enter}',
+		);
 		await user.keyboard('{Escape}');
 
 		await waitFor(() =>
