@@ -196,7 +196,7 @@ describe('SavedViewsPanel row menu', () => {
 		views[1] = stored;
 
 		await chooseFromRowMenu('Slow spans', 'Edit details');
-		const name = screen.getByTestId('save-view-name');
+		const name = screen.getByTestId('save-view-name-field');
 		await userEvent.clear(name);
 		await userEvent.type(name, 'Slow checkout spans');
 		await userEvent.click(screen.getByTestId('save-view-submit'));
@@ -217,7 +217,7 @@ describe('SavedViewsPanel row menu', () => {
 		renderPanelWithHeader();
 
 		await chooseFromRowMenu('Slow spans', 'Edit details');
-		const name = screen.getByTestId('save-view-name');
+		const name = screen.getByTestId('save-view-name-field');
 		await userEvent.clear(name);
 		await userEvent.type(name, 'Slow checkout spans');
 		await userEvent.click(screen.getByTestId('save-view-submit'));
@@ -238,11 +238,11 @@ describe('SavedViewsPanel row menu', () => {
 		renderPanelWithHeader();
 
 		await chooseFromRowMenu('Slow spans', 'Edit details');
-		const name = screen.getByTestId('save-view-name');
+		const name = screen.getByTestId('save-view-name-field');
 		await userEvent.type(name, ' 2');
 		await userEvent.click(screen.getByTestId('save-view-submit'));
 
-		await waitFor(() => expect(toast.error).toHaveBeenCalled());
+		await waitFor(() => expect(toast.danger).toHaveBeenCalled());
 		expect(requests.updated).toHaveLength(0);
 	});
 
@@ -251,7 +251,7 @@ describe('SavedViewsPanel row menu', () => {
 		renderPanelWithHeader();
 
 		await chooseFromRowMenu('Slow spans', 'Edit details');
-		const name = screen.getByTestId('save-view-name');
+		const name = screen.getByTestId('save-view-name-field');
 		await userEvent.type(name, ' 2{enter}');
 		await userEvent.type(name, '{enter}');
 

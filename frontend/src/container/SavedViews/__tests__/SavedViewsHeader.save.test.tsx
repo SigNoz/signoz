@@ -192,7 +192,10 @@ describe('SavedViewsHeader saving', () => {
 			renderHeader(explorerUrl(PATH, {}));
 
 			await clickCreate();
-			await userEvent.type(screen.getByTestId('save-view-name-field'), '   {enter}');
+			await userEvent.type(
+				screen.getByTestId('save-view-name-field'),
+				'   {enter}',
+			);
 			await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
 
 			expect(requests.created).toHaveLength(0);
