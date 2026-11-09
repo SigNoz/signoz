@@ -24,6 +24,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 
 import {
+	DISTRIBUTION_CLAMP,
 	HEATMAP_FIXED_COUNTS,
 	TABLE_SECOND_COLUMN,
 	TABLE_VALUE_COLUMN,
@@ -141,7 +142,7 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 						formatting,
 						legend,
 						axes: {
-							x: { scale: args.distributionXScale },
+							x: args.distributionXRange === 'clamped' ? DISTRIBUTION_CLAMP : {},
 							y: {
 								scale:
 									args.yScale === 'log'

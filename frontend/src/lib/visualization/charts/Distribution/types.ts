@@ -17,17 +17,6 @@ export interface DistributionBarClick {
 	coordinates: { x: number; y: number };
 }
 
-export enum DistributionXScale {
-	/** Linear for bounds spanning under two decades or linear bucketing, else the
-	 *  heatmap's auto: log, floor-log for a zero bound, symlog for negatives. */
-	Auto = 'auto',
-	Linear = 'linear',
-	Log = 'log',
-	Symlog = 'symlog',
-	/** Every bucket equally wide; ticks still name the bounds. */
-	Ordinal = 'ordinal',
-}
-
 export enum DistributionYScale {
 	Linear = 'linear',
 	Log = 'log',

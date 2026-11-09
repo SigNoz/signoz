@@ -1,6 +1,5 @@
 import {
 	DashboardtypesAreaFillModeDTO,
-	DashboardtypesDistributionXScaleDTO,
 	DashboardtypesDistributionYScaleDTO,
 	DashboardtypesHeatmapColorModeDTO,
 	DashboardtypesHeatmapColorScaleDTO,
@@ -17,16 +16,12 @@ import {
 	HeatmapColorPalette,
 	HeatmapColorScale,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
-import {
-	DistributionXScale,
-	DistributionYScale,
-} from 'lib/visualization/charts/Distribution/types';
+import { DistributionYScale } from 'lib/visualization/charts/Distribution/types';
 
 import {
 	resolveAreaFillMode,
 	resolveDistributionPercentiles,
 	resolveDistributionStackMode,
-	resolveDistributionXScale,
 	resolveDistributionYScale,
 	resolveHeatmapAxisScale,
 	resolveHeatmapColors,
@@ -214,39 +209,6 @@ describe('resolveDistributionStackMode', () => {
 		expect(resolveDistributionStackMode(DashboardtypesStackModeDTO.percent)).toBe(
 			StackMode.Percent,
 		);
-	});
-});
-
-describe('resolveDistributionXScale', () => {
-	it('maps each scale, ordinal included', () => {
-		expect(
-			resolveDistributionXScale(DashboardtypesDistributionXScaleDTO.ordinal),
-		).toBe(DistributionXScale.Ordinal);
-		expect(
-			resolveDistributionXScale(DashboardtypesDistributionXScaleDTO.symlog),
-		).toBe(DistributionXScale.Symlog);
-		expect(resolveDistributionXScale(undefined)).toBe(DistributionXScale.Auto);
-	});
-
-	it('keeps auto linear over linear bucketing, and only under auto', () => {
-		expect(
-			resolveDistributionXScale(
-				DashboardtypesDistributionXScaleDTO.auto,
-				Querybuildertypesv5BucketOptionsLinearDTOKind.linear,
-			),
-		).toBe(DistributionXScale.Linear);
-		expect(
-			resolveDistributionXScale(
-				DashboardtypesDistributionXScaleDTO.log,
-				Querybuildertypesv5BucketOptionsLinearDTOKind.linear,
-			),
-		).toBe(DistributionXScale.Log);
-		expect(
-			resolveDistributionXScale(
-				undefined,
-				Querybuildertypesv5BucketOptionsLogDTOKind.log,
-			),
-		).toBe(DistributionXScale.Auto);
 	});
 });
 

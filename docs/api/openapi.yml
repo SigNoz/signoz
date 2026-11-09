@@ -4556,7 +4556,7 @@ components:
         axes:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesDistributionAxes'
-          description: The X (bucket) and Y (count) axis scales.
+          description: The X (bucket) axis range and Y (count) axis scale.
         chartAppearance:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesDistributionChartAppearance'
@@ -4594,22 +4594,17 @@ components:
       type: object
     DashboardtypesDistributionXAxis:
       properties:
-        scale:
-          allOf:
-          - $ref: '#/components/schemas/DashboardtypesDistributionXScale'
-          description: 'How bucket bounds are spaced: auto (default), linear, log,
-            symlog, or ordinal (equal widths labelled by range).'
-      required:
-      - scale
+        max:
+          description: Buckets wholly above this value are hidden. Null shows them
+            all.
+          nullable: true
+          type: number
+        min:
+          description: Buckets wholly below this value are hidden. Null shows them
+            all.
+          nullable: true
+          type: number
       type: object
-    DashboardtypesDistributionXScale:
-      enum:
-      - auto
-      - linear
-      - log
-      - symlog
-      - ordinal
-      type: string
     DashboardtypesDistributionYAxis:
       properties:
         scale:

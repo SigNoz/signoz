@@ -24,7 +24,7 @@
             },
             "axes": {
               "x": {
-                "scale": "ordinal"
+                "min": 10
               },
               "y": {
                 "scale": "log"

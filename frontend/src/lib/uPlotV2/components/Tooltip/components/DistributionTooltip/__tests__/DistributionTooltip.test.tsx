@@ -4,14 +4,13 @@ import {
 	resolveDistributionXAxis,
 } from 'lib/visualization/charts/Distribution/layout';
 import { computeDistributionPercentiles } from 'lib/visualization/charts/Distribution/percentiles';
-import { DistributionXScale } from 'lib/visualization/charts/Distribution/types';
 import { render, screen } from 'tests/test-utils';
 import type uPlot from 'uplot';
 
 import DistributionTooltip from '../DistributionTooltip';
 
-// Buckets: ≤ 10, (10, 20], (20, 40], > 40, on a linear axis.
-const xAxis = resolveDistributionXAxis([10, 20, 40], DistributionXScale.Linear);
+// Buckets ≤ 10, (10, 20], (20, 40], > 40 in slots [0, 1] … [3, 4].
+const xAxis = resolveDistributionXAxis([10, 20, 40]);
 const counts = [
 	[1, 4, 2, 0],
 	[0, 6, 1, 1],
@@ -25,7 +24,7 @@ const layout = resolveDistributionBars({
 	isLogY: false,
 });
 
-/** Pixels are values: the cursor at (15, 2) is over the first group in (10, 20]. */
+/** Pixels are values: the cursor at (1.5, 2) is over the first group in (10, 20]. */
 function plotAt(left: number, top: number): uPlot {
 	return {
 		cursor: { left, top },
@@ -58,7 +57,7 @@ function renderTooltip(uPlotInstance: uPlot): void {
 
 describe('DistributionTooltip', () => {
 	it('names the bucket under the cursor and its total', () => {
-		renderTooltip(plotAt(15, 2));
+		renderTooltip(plotAt(1.5, 2));
 
 		expect(screen.getByTestId('distribution-tooltip-range')).toHaveTextContent(
 			'(10 ms, 20 ms]',
@@ -69,7 +68,7 @@ describe('DistributionTooltip', () => {
 	});
 
 	it('lists each group, the hovered one highlighted', () => {
-		renderTooltip(plotAt(15, 2));
+		renderTooltip(plotAt(1.5, 2));
 
 		const rows = screen.getAllByTestId('distribution-tooltip-row');
 		expect(rows).toHaveLength(2);
@@ -79,7 +78,7 @@ describe('DistributionTooltip', () => {
 	});
 
 	it('lists the percentile estimates', () => {
-		renderTooltip(plotAt(15, 2));
+		renderTooltip(plotAt(1.5, 2));
 
 		expect(
 			screen.getByTestId('distribution-tooltip-percentiles'),

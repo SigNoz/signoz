@@ -1,7 +1,6 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import {
-	DashboardtypesDistributionXScaleDTO as DistributionXScale,
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
 	DashboardtypesLegendPositionDTO as LegendPosition,
 	DashboardtypesLineStyleDTO as LineStyleDTO,
@@ -140,12 +139,12 @@ export const DistributionPercent: Story = {
 	play,
 };
 
-/** Every bucket equally wide, whatever its range, counts on a log axis. */
-export const DistributionOrdinalLog: Story = {
+/** Buckets outside 10–1000 hidden, counts on a log axis. */
+export const DistributionClampedLog: Story = {
 	args: {
 		kind: 'Distribution',
 		stack: StackMode.normal,
-		distributionXScale: DistributionXScale.ordinal,
+		distributionXRange: 'clamped',
 		yScale: 'log',
 	},
 	play,

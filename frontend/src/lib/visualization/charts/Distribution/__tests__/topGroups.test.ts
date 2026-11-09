@@ -8,14 +8,10 @@ import {
 	OTHER_GROUP_LABEL,
 	resolveMaxDrawnGroups,
 } from '../topGroups';
-import { DistributionXScale } from '../types';
 
 describe('resolveMaxDrawnGroups', () => {
 	// Four equal buckets plus underflow and overflow: six slots of one unit each.
-	const xAxis = resolveDistributionXAxis(
-		[1, 2, 3, 4, 5],
-		DistributionXScale.Ordinal,
-	);
+	const xAxis = resolveDistributionXAxis([1, 2, 3, 4, 5]);
 
 	it('caps stacked and percent at the fixed limit', () => {
 		expect(

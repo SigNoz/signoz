@@ -2,7 +2,6 @@ import { rangeUtil } from '@grafana/data';
 import {
 	type DashboardtypesAreaFillModeDTO,
 	type DashboardtypesDistributionPercentilesDTO,
-	type DashboardtypesDistributionXScaleDTO,
 	type DashboardtypesDistributionYScaleDTO,
 	DashboardtypesHeatmapYScaleDTO,
 	DashboardtypesLegendPositionDTO,
@@ -21,14 +20,10 @@ import {
 	HeatmapAxisScale,
 	type HeatmapColorOptions,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
-import {
-	DistributionXScale,
-	DistributionYScale,
-} from 'lib/visualization/charts/Distribution/types';
+import { DistributionYScale } from 'lib/visualization/charts/Distribution/types';
 
 import {
 	AREA_FILL_MODE_MAP,
-	DISTRIBUTION_X_SCALE_MAP,
 	DISTRIBUTION_Y_SCALE_MAP,
 	HEATMAP_COLOR_MODE_MAP,
 	HEATMAP_COLOR_SCALE_MAP,
@@ -132,27 +127,6 @@ export function resolveDistributionPercentiles(
 		return [];
 	}
 	return percentiles?.values ?? DEFAULT_DISTRIBUTION_PERCENTILES;
-}
-
-/**
- * Bucket-axis spacing of a distribution; missing/unknown is `auto`. As on the
- * heatmap, `auto` over linear bucketing keeps evenly spaced bounds evenly spaced.
- */
-export function resolveDistributionXScale(
-	scale: DashboardtypesDistributionXScaleDTO | undefined,
-	bucketKind?: Querybuildertypesv5BucketOptionsDTO['kind'],
-): DistributionXScale {
-	const configured =
-		scale && scale in DISTRIBUTION_X_SCALE_MAP
-			? DISTRIBUTION_X_SCALE_MAP[scale]
-			: DistributionXScale.Auto;
-
-	if (configured !== DistributionXScale.Auto) {
-		return configured;
-	}
-	return bucketKind === Querybuildertypesv5BucketOptionsLinearDTOKind.linear
-		? DistributionXScale.Linear
-		: DistributionXScale.Auto;
 }
 
 export function resolveDistributionYScale(

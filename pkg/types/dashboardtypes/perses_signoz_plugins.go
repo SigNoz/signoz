@@ -352,7 +352,7 @@ func (c HeatmapColors) validate() error {
 type DistributionPanelSpec struct {
 	Visualization   BasicVisualization          `json:"visualization" description:"The time range the bucket counts are summed over."`
 	Formatting      PanelFormatting             `json:"formatting" description:"Unit and decimal precision of the bucket bounds; counts take no unit."`
-	Axes            DistributionAxes            `json:"axes" description:"The X (bucket) and Y (count) axis scales."`
+	Axes            DistributionAxes            `json:"axes" description:"The X (bucket) axis range and Y (count) axis scale."`
 	Legend          Legend                      `json:"legend" description:"Legend placement and series colors."`
 	ChartAppearance DistributionChartAppearance `json:"chartAppearance" description:"Stacking and percentile markers."`
 }
@@ -375,6 +375,9 @@ func (s *DistributionPanelSpec) UnmarshalJSON(data []byte) error {
 }
 
 func (s *DistributionPanelSpec) validate() error {
+	if err := s.Axes.X.validate(); err != nil {
+		return err
+	}
 	return s.ChartAppearance.Percentiles.validate()
 }
 
@@ -383,8 +386,17 @@ type DistributionAxes struct {
 	Y DistributionYAxis `json:"y" description:"The count axis."`
 }
 
+// DistributionXAxis draws every bucket equally wide, whatever its bounds.
 type DistributionXAxis struct {
-	Scale DistributionXScale `json:"scale" required:"true" description:"How bucket bounds are spaced: auto (default), linear, log, symlog, or ordinal (equal widths labelled by range)."`
+	Min *float64 `json:"min" description:"Buckets wholly below this value are hidden. Null shows them all."`
+	Max *float64 `json:"max" description:"Buckets wholly above this value are hidden. Null shows them all."`
+}
+
+func (a DistributionXAxis) validate() error {
+	if a.Min != nil && a.Max != nil && *a.Min > *a.Max {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "axes.x.min %v is greater than axes.x.max %v", *a.Min, *a.Max)
+	}
+	return nil
 }
 
 type DistributionYAxis struct {
@@ -1531,46 +1543,6 @@ func (s *HeatmapYScale) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid heatmap y scale %q: must be `auto`, `linear`, `log`, or `symlog`", v)
-	}
-}
-
-type DistributionXScale struct{ valuer.String }
-
-var (
-	DistributionXScaleAuto    = DistributionXScale{valuer.NewString("auto")} // default
-	DistributionXScaleLinear  = DistributionXScale{valuer.NewString("linear")}
-	DistributionXScaleLog     = DistributionXScale{valuer.NewString("log")}
-	DistributionXScaleSymlog  = DistributionXScale{valuer.NewString("symlog")}
-	DistributionXScaleOrdinal = DistributionXScale{valuer.NewString("ordinal")}
-)
-
-func (DistributionXScale) Enum() []any {
-	return []any{DistributionXScaleAuto, DistributionXScaleLinear, DistributionXScaleLog, DistributionXScaleSymlog, DistributionXScaleOrdinal}
-}
-
-func (s DistributionXScale) ValueOrDefault() string {
-	if s.IsZero() {
-		return DistributionXScaleAuto.StringValue()
-	}
-	return s.StringValue()
-}
-
-func (s DistributionXScale) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.ValueOrDefault())
-}
-
-func (s *DistributionXScale) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid distribution x scale: must be a string, one of `auto`, `linear`, `log`, `symlog`, or `ordinal`")
-	}
-	scale := DistributionXScale{valuer.NewString(v)}
-	switch scale {
-	case DistributionXScaleAuto, DistributionXScaleLinear, DistributionXScaleLog, DistributionXScaleSymlog, DistributionXScaleOrdinal:
-		*s = scale
-		return nil
-	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid distribution x scale %q: must be `auto`, `linear`, `log`, `symlog`, or `ordinal`", v)
 	}
 }
 

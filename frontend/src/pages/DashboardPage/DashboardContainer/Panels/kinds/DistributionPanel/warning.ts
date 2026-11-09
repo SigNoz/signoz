@@ -1,4 +1,3 @@
-import { DashboardtypesDistributionXScaleDTO } from 'api/generated/services/sigNoz.schemas';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import type { PanelStatusDetail } from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelStatus/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
@@ -11,8 +10,8 @@ import { prepareDistributionData } from './prepareData';
 export const OVERFLOW_WARNING_SHARE = 0.1;
 
 /**
- * Problems with the bounds themselves, over every group regardless of the legend:
- * too much landing in overflow, or a log axis asked to place negative bounds.
+ * Bounds that stop short, over every group regardless of the legend: too much
+ * landing in overflow.
  */
 export function getDistributionDataWarning(
 	panel: PanelOfKind<'signoz/DistributionPanel'>,
@@ -37,31 +36,13 @@ export function getDistributionDataWarning(
 		overflow += counts[buckets.length] ?? 0;
 	});
 
-	const messages: string[] = [];
 	const overflowShare = total > 0 ? overflow / total : 0;
-	if (overflowShare > OVERFLOW_WARNING_SHARE) {
-		const bound = getToolTipValue(String(lastBound), spec.formatting?.unit);
-		messages.push(
-			`${Math.round(overflowShare * 100)}% of observations are above ${bound}. The bucket bounds may be too low.`,
-		);
-	}
-	if (
-		spec.axes?.x?.scale === DashboardtypesDistributionXScaleDTO.log &&
-		buckets.some((bound) => bound < 0)
-	) {
-		messages.push(
-			"A log axis can't place negative bucket bounds. Use symlog or auto instead.",
-		);
-	}
-
-	if (messages.length === 0) {
+	if (overflowShare <= OVERFLOW_WARNING_SHARE) {
 		return null;
 	}
+	const bound = getToolTipValue(String(lastBound), spec.formatting?.unit);
 	return {
-		message:
-			messages.length === 1
-				? messages[0]
-				: 'The bucket bounds may not fit the data.',
-		messages: messages.length === 1 ? [] : messages,
+		message: `${Math.round(overflowShare * 100)}% of observations are above ${bound}. The bucket bounds may be too low.`,
+		messages: [],
 	};
 }

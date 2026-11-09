@@ -29,7 +29,6 @@ import type { StackMode } from 'lib/uPlotV2/config/types';
 import type {
 	DistributionBarClick,
 	DistributionSeries,
-	DistributionXScale,
 	DistributionYScale,
 } from 'lib/visualization/charts/Distribution/types';
 
@@ -188,8 +187,10 @@ export interface DistributionChartProps {
 	width: number;
 	height: number;
 	isDarkMode: boolean;
-	/** Default auto. */
-	xScale?: DistributionXScale;
+	/** Buckets wholly below it are hidden. */
+	xMin?: number;
+	/** Buckets wholly above it are hidden; unset crops trailing empty buckets. */
+	xMax?: number;
 	/** Default linear. Ignored under `percent`, whose axis is a share. */
 	yScale?: DistributionYScale;
 	/** Default normal. `none` draws the groups side by side. */

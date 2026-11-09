@@ -15,14 +15,12 @@ import {
 	resolveDecimalPrecision,
 	resolveDistributionPercentiles,
 	resolveDistributionStackMode,
-	resolveDistributionXScale,
 	resolveDistributionYScale,
 	resolveLegendPosition,
 } from '../../utils/chartAppearance/resolvers';
 import { enrichDistributionClick } from '../../utils/drilldown/enrichDistributionClick';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
 import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
-import { resolveRequestedBucketKind } from '../HeatmapPanel/prepareData';
 
 import { prepareDistributionData } from './prepareData';
 
@@ -51,15 +49,6 @@ function DistributionPanelRenderer({
 				legendMap: data.legendMap ?? {},
 			}),
 		[data.response, data.legendMap],
-	);
-
-	const xScale = useMemo(
-		() =>
-			resolveDistributionXScale(
-				spec.axes?.x?.scale,
-				resolveRequestedBucketKind(data.requestPayload),
-			),
-		[spec.axes?.x?.scale, data.requestPayload],
 	);
 
 	const percentiles = useMemo(
@@ -123,7 +112,8 @@ function DistributionPanelRenderer({
 						id={panelId}
 						buckets={buckets}
 						series={series}
-						xScale={xScale}
+						xMin={spec.axes?.x?.min ?? undefined}
+						xMax={spec.axes?.x?.max ?? undefined}
 						yScale={resolveDistributionYScale(spec.axes?.y?.scale)}
 						stack={resolveDistributionStackMode(spec.chartAppearance?.stack)}
 						xAxisUnit={spec.formatting?.unit}

@@ -2,11 +2,10 @@ import { StackMode } from 'lib/uPlotV2/config/types';
 import type uPlot from 'uplot';
 
 import { resolveDistributionBars, resolveDistributionXAxis } from '../layout';
-import { DistributionXScale } from '../types';
 import { buildDistributionConfig } from '../utils';
 
-// Buckets: ≤ 10, (10, 20], (20, 40], > 40. Only (10, 20] is occupied.
-const xAxis = resolveDistributionXAxis([10, 20, 40], DistributionXScale.Linear);
+// Buckets ≤ 10, (10, 20], (20, 40], > 40 in slots [0, 1] … [3, 4]. Only (10, 20] is occupied.
+const xAxis = resolveDistributionXAxis([10, 20, 40]);
 const counts = [
 	[0, 4, 0, 0],
 	[0, 6, 0, 0],
@@ -55,7 +54,7 @@ function plotAt(
 describe('buildDistributionConfig setCursor', () => {
 	// TooltipPlugin only shows a tooltip for a focused series.
 	it('focuses the group under the cursor, 1-based as uPlot counts series', () => {
-		const { u, setSeries, redraw } = plotAt(15, 8);
+		const { u, setSeries, redraw } = plotAt(1.5, 8);
 
 		setCursorHook()(u);
 
@@ -64,7 +63,7 @@ describe('buildDistributionConfig setCursor', () => {
 	});
 
 	it('still focuses a group above the stack of an occupied bucket', () => {
-		const { u, setSeries } = plotAt(15, 50);
+		const { u, setSeries } = plotAt(1.5, 50);
 
 		setCursorHook()(u);
 
@@ -73,10 +72,10 @@ describe('buildDistributionConfig setCursor', () => {
 
 	it('focuses nothing over an empty bucket', () => {
 		const hook = setCursorHook();
-		const { u, setSeries } = plotAt(15, 8);
+		const { u, setSeries } = plotAt(1.5, 8);
 		hook(u);
 
-		u.cursor.left = 30;
+		u.cursor.left = 2.5;
 		u.cursor.top = 1;
 		hook(u);
 

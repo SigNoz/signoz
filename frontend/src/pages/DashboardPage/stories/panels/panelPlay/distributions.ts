@@ -1,5 +1,4 @@
 import {
-	DashboardtypesDistributionXScaleDTO as DistributionXScale,
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
 	DashboardtypesStackModeDTO as StackMode,
 } from 'api/generated/services/sigNoz.schemas';
@@ -128,19 +127,14 @@ export const expectDistribution = async (
 		await expect(drawn.series.length - 1).toBeLessThanOrEqual(MAX_STACKED_GROUPS);
 	}
 
-	const xMax = drawn.scales.x.max ?? 0;
-	const lastBound = DISTRIBUTION_BUCKETS[DISTRIBUTION_BUCKETS.length - 1];
-	switch (args.distributionXScale) {
-		case DistributionXScale.ordinal:
-			// One slot a bucket: the bounds plus underflow and overflow.
-			await expect(xMax).toBe(DISTRIBUTION_BUCKETS.length + 1);
-			break;
-		case DistributionXScale.linear:
-			await expect(xMax).toBeGreaterThan(lastBound);
-			break;
-		default:
-			// The exponential bounds put auto on log10 of them, as log and symlog are.
-			await expect(xMax).toBeLessThan(10);
+	// One slot a bucket. Clamped to 10–1000: (10, 25] is slot 2, (500, 1000] slot 7.
+	if (args.distributionXRange === 'clamped') {
+		await expect(drawn.scales.x.min).toBe(2);
+		await expect(drawn.scales.x.max).toBe(8);
+	} else {
+		await expect(drawn.scales.x.max ?? 0).toBeLessThanOrEqual(
+			DISTRIBUTION_BUCKETS.length + 1,
+		);
 	}
 
 	if (args.stack === StackMode.percent) {

@@ -1,6 +1,7 @@
 import { StackMode } from 'lib/uPlotV2/config/types';
 
 import {
+	clampDistributionXAxis,
 	cropDistributionXAxis,
 	LOG_Y_BASE,
 	resolveDistributionBars,
@@ -8,7 +9,6 @@ import {
 	sumVisibleCounts,
 	thinLabelledSplits,
 } from '../layout';
-import { DistributionXScale } from '../types';
 
 function widths(edges: number[]): number[] {
 	return edges.slice(1).map((edge, index) => edge - edges[index]);
@@ -16,10 +16,7 @@ function widths(edges: number[]): number[] {
 
 describe('resolveDistributionXAxis', () => {
 	it('lays N bounds out as N + 1 buckets, overflow last', () => {
-		const axis = resolveDistributionXAxis(
-			[10, 20, 30],
-			DistributionXScale.Linear,
-		);
+		const axis = resolveDistributionXAxis([10, 20, 30]);
 
 		expect(axis.rows).toHaveLength(4);
 		expect(axis.rows[0].isUnderflow).toBe(true);
@@ -27,30 +24,8 @@ describe('resolveDistributionXAxis', () => {
 		expect(axis.edges).toHaveLength(5);
 	});
 
-	it('keeps auto linear when the bounds span under two decades', () => {
-		const auto = resolveDistributionXAxis(
-			[100, 200, 400],
-			DistributionXScale.Auto,
-		);
-		const linear = resolveDistributionXAxis(
-			[100, 200, 400],
-			DistributionXScale.Linear,
-		);
-
-		expect(auto.edges).toStrictEqual(linear.edges);
-	});
-
-	it('turns auto log once the bounds span two decades', () => {
-		const axis = resolveDistributionXAxis([1, 10, 100], DistributionXScale.Auto);
-
-		expect(axis.splits).toStrictEqual([0, 1, 2]);
-	});
-
-	it('gives every bucket the same width on ordinal, ticks on the bounds', () => {
-		const axis = resolveDistributionXAxis(
-			[0, 5, 10, 25, 1000],
-			DistributionXScale.Ordinal,
-		);
+	it('gives every bucket the same width, ticks on the bounds', () => {
+		const axis = resolveDistributionXAxis([0, 5, 10, 25, 1000]);
 
 		expect(widths(axis.edges)).toStrictEqual([1, 1, 1, 1, 1, 1]);
 		expect(axis.splits).toStrictEqual([1, 2, 3, 4, 5]);
@@ -61,15 +36,47 @@ describe('resolveDistributionXAxis', () => {
 
 describe('cropDistributionXAxis', () => {
 	it('stops one bucket past the last occupied one', () => {
-		const axis = resolveDistributionXAxis(
-			[1, 2, 3, 4],
-			DistributionXScale.Ordinal,
-		);
+		const axis = resolveDistributionXAxis([1, 2, 3, 4]);
 
 		const cropped = cropDistributionXAxis(axis, [1, 5, 0, 0, 0]);
 
 		expect(cropped.max).toBe(3);
 		expect(cropped.overflowSplit).toBeNull();
+	});
+});
+
+describe('clampDistributionXAxis', () => {
+	// Buckets ≤ 10, (10, 20], (20, 40], (40, 80], > 80 in slots [0, 1] … [4, 5].
+	const axis = resolveDistributionXAxis([10, 20, 40, 80]);
+
+	it('keeps every bucket without a range', () => {
+		expect(clampDistributionXAxis(axis)).toStrictEqual(axis);
+	});
+
+	it('hides buckets wholly outside the range, keeping straddling ones whole', () => {
+		const clamped = clampDistributionXAxis(axis, 20, 50);
+
+		expect([clamped.min, clamped.max]).toStrictEqual([2, 4]);
+		expect(clamped.overflowSplit).toBeNull();
+	});
+
+	it('keeps the overflow tick while the overflow bucket shows', () => {
+		const clamped = clampDistributionXAxis(axis, 15);
+
+		expect([clamped.min, clamped.max]).toStrictEqual([1, 5]);
+		expect(clamped.overflowSplit).toBe(5);
+	});
+
+	it('keeps one bucket when the range misses them all', () => {
+		const clamped = clampDistributionXAxis(axis, 1000);
+
+		expect([clamped.min, clamped.max]).toStrictEqual([4, 5]);
+	});
+
+	it('narrows an already cropped axis, never widening it', () => {
+		const cropped = cropDistributionXAxis(axis, [1, 5, 0, 0, 0]);
+
+		expect(clampDistributionXAxis(cropped, 15).max).toBe(cropped.max);
 	});
 });
 
@@ -90,7 +97,7 @@ describe('sumVisibleCounts', () => {
 });
 
 describe('resolveDistributionBars', () => {
-	const xAxis = resolveDistributionXAxis([1, 2], DistributionXScale.Ordinal);
+	const xAxis = resolveDistributionXAxis([1, 2]);
 	const counts = [
 		[4, 6, 0],
 		[1, 3, 2],

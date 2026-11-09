@@ -4,7 +4,6 @@
  */
 
 import {
-	DashboardtypesDistributionXScaleDTO as DistributionXScale,
 	DashboardtypesHeatmapPaletteDTO as HeatmapPalette,
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
 	DashboardtypesLegendPositionDTO as LegendPosition,
@@ -130,7 +129,9 @@ export const DISTRIBUTION_BUCKETS = [
 	5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000,
 ];
 
-export const DISTRIBUTION_X_SCALES = Object.values(DistributionXScale);
+/** `clamped` hides buckets outside 10–1000. */
+export const DISTRIBUTION_X_RANGES = ['all', 'clamped'] as const;
+export const DISTRIBUTION_CLAMP = { min: 10, max: 1000 };
 
 /** `high` puts a quarter of each group past the last bound, over the warning's 10%. */
 export const DISTRIBUTION_OVERFLOWS = ['low', 'high'] as const;

@@ -678,7 +678,8 @@ func TestValidateDistributionDashboard(t *testing.T) {
 
 	require.IsType(t, &DistributionPanelSpec{}, spec.Panels["p1"].Spec.Plugin.Spec)
 	panelSpec := spec.Panels["p1"].Spec.Plugin.Spec.(*DistributionPanelSpec)
-	assert.Equal(t, "ordinal", panelSpec.Axes.X.Scale.ValueOrDefault())
+	assert.Equal(t, 10.0, *panelSpec.Axes.X.Min)
+	assert.Nil(t, panelSpec.Axes.X.Max)
 	assert.Equal(t, "log", panelSpec.Axes.Y.Scale.ValueOrDefault())
 	assert.Equal(t, "none", panelSpec.ChartAppearance.Stack.ValueOrDefault())
 	assert.True(t, panelSpec.ChartAppearance.Percentiles.Enabled)
@@ -713,7 +714,8 @@ func TestDistributionPanelSpecDefaults(t *testing.T) {
 			require.NoError(t, json.Unmarshal([]byte(`{"kind": "signoz/DistributionPanel", "spec": `+testCase.spec+`}`), &plugin))
 
 			spec := plugin.Spec.(*DistributionPanelSpec)
-			assert.Equal(t, "auto", spec.Axes.X.Scale.ValueOrDefault())
+			assert.Nil(t, spec.Axes.X.Min)
+			assert.Nil(t, spec.Axes.X.Max)
 			assert.Equal(t, "linear", spec.Axes.Y.Scale.ValueOrDefault())
 			assert.Equal(t, "normal", spec.ChartAppearance.Stack.ValueOrDefault())
 			assert.True(t, spec.ChartAppearance.Percentiles.Enabled)
@@ -733,9 +735,9 @@ func TestDistributionPanelSpecRejections(t *testing.T) {
 		expectedMessage string
 	}{
 		{
-			name:            "XScale_Unknown",
-			spec:            `{"axes": {"x": {"scale": "sqrt"}}}`,
-			expectedMessage: "invalid distribution x scale",
+			name:            "XMin_AboveMax",
+			spec:            `{"axes": {"x": {"min": 20, "max": 10}}}`,
+			expectedMessage: "axes.x.min 20 is greater than axes.x.max 10",
 		},
 		{
 			name:            "YScale_Unknown",

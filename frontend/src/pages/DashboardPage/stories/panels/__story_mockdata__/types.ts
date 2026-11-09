@@ -4,7 +4,6 @@
  */
 
 import type {
-	DashboardtypesDistributionXScaleDTO as DistributionXScale,
 	DashboardtypesHeatmapPaletteDTO as HeatmapPalette,
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
 	DashboardtypesLegendPositionDTO as LegendPosition,
@@ -18,6 +17,7 @@ import type { PanelWindow } from '../../__story_mockdata__/panelData';
 import type {
 	BUCKET_WIDTHS,
 	DISTRIBUTION_OVERFLOWS,
+	DISTRIBUTION_X_RANGES,
 	GAPS,
 	HEATMAP_COUNT_RANGES,
 	PANEL_KINDS,
@@ -50,6 +50,8 @@ export type SpanGaps = (typeof SPAN_GAPS)[number];
 export type PieSlices = (typeof PIE_SLICES)[number];
 export type DistributionOverflow = (typeof DISTRIBUTION_OVERFLOWS)[number];
 
+export type DistributionXRange = (typeof DISTRIBUTION_X_RANGES)[number];
+
 /** The controls that shape the dashboard document. */
 export interface PanelArgs {
 	kind: PanelKind;
@@ -69,7 +71,7 @@ export interface PanelArgs {
 	showPoints: boolean;
 	spanGaps: SpanGaps;
 	columnUnits: boolean;
-	distributionXScale: DistributionXScale;
+	distributionXRange: DistributionXRange;
 	percentiles: boolean;
 }
 

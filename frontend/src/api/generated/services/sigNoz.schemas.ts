@@ -6955,18 +6955,17 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpecDTOKind {
 	'signoz/DistributionPanel' = 'signoz/DistributionPanel',
 }
-export enum DashboardtypesDistributionXScaleDTO {
-	auto = 'auto',
-	linear = 'linear',
-	log = 'log',
-	symlog = 'symlog',
-	ordinal = 'ordinal',
-}
 export interface DashboardtypesDistributionXAxisDTO {
 	/**
-	 * @description How bucket bounds are spaced: auto (default), linear, log, symlog, or ordinal (equal widths labelled by range).
+	 * @type number,null
+	 * @description Buckets wholly above this value are hidden. Null shows them all.
 	 */
-	scale: DashboardtypesDistributionXScaleDTO;
+	max?: number | null;
+	/**
+	 * @type number,null
+	 * @description Buckets wholly below this value are hidden. Null shows them all.
+	 */
+	min?: number | null;
 }
 
 export enum DashboardtypesDistributionYScaleDTO {
@@ -7017,7 +7016,7 @@ export interface DashboardtypesDistributionChartAppearanceDTO {
 
 export interface DashboardtypesDistributionPanelSpecDTO {
 	/**
-	 * @description The X (bucket) and Y (count) axis scales.
+	 * @description The X (bucket) axis range and Y (count) axis scale.
 	 */
 	axes?: DashboardtypesDistributionAxesDTO;
 	/**

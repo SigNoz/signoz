@@ -5,54 +5,26 @@ import {
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import { HeatmapAxisScale } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 
-import {
-	DistributionBarRect,
-	DistributionXAxis,
-	DistributionXScale,
-} from './types';
-
-/** Below this span of positive bounds, auto keeps the axis linear. */
-const MIN_LOG_DECADES = 2;
+import { DistributionBarRect, DistributionXAxis } from './types';
 
 /** Bottom of a log count axis: a bar has to start somewhere above zero. */
 export const LOG_Y_BASE = 1;
 
-const SCALE_TO_HEATMAP: Record<
-	Exclude<DistributionXScale, DistributionXScale.Ordinal>,
-	HeatmapAxisScale
-> = {
-	[DistributionXScale.Auto]: HeatmapAxisScale.Auto,
-	[DistributionXScale.Linear]: HeatmapAxisScale.Linear,
-	[DistributionXScale.Log]: HeatmapAxisScale.Log,
-	[DistributionXScale.Symlog]: HeatmapAxisScale.Symlog,
-};
-
-function spansDecades(bounds: number[], decades: number): boolean {
-	const positive = bounds.filter((bound) => bound > 0);
-	if (positive.length < 2) {
-		return false;
-	}
-	const ratio = Math.max(...positive) / Math.min(...positive);
-	return Math.log10(ratio) >= decades;
-}
-
-function resolveAutoScale(bounds: number[]): HeatmapAxisScale {
-	const hasNegative = bounds.some((bound) => bound < 0);
-	if (!hasNegative && !spansDecades(bounds, MIN_LOG_DECADES)) {
-		return HeatmapAxisScale.Linear;
-	}
-	return HeatmapAxisScale.Auto;
-}
-
-/** Row `i` spans `[i, i + 1]`; within it, value interpolates across the row's bounds. */
-function toOrdinalAxis(axis: DistributionXAxis): DistributionXAxis {
-	const { rows } = axis;
+/**
+ * N bounds give N + 1 buckets: `≤ first`, the finite ones, and `> last`. Every bucket
+ * is equally wide: bucket `i` spans `[i, i + 1]`, and ticks still name the bounds.
+ */
+export function resolveDistributionXAxis(buckets: number[]): DistributionXAxis {
+	const { rows, overflowSplit } = resolveHeatmapYAxis(
+		buckets,
+		HeatmapAxisScale.Linear,
+	);
 	const edges = rows.map((_, index) => index).concat(rows.length);
 	return {
 		rows,
 		edges,
 		splits: rows.slice(0, -1).map((_, index) => index + 1),
-		overflowSplit: axis.overflowSplit === null ? null : rows.length,
+		overflowSplit: overflowSplit === null ? null : rows.length,
 		toBucketValue: (axisValue: number): number => {
 			const index = Math.min(rows.length - 1, Math.max(0, Math.floor(axisValue)));
 			const row = rows[index];
@@ -61,21 +33,6 @@ function toOrdinalAxis(axis: DistributionXAxis): DistributionXAxis {
 		min: 0,
 		max: rows.length,
 	};
-}
-
-/** N bounds give N + 1 buckets: `≤ first`, the finite ones, and `> last`. */
-export function resolveDistributionXAxis(
-	buckets: number[],
-	scale: DistributionXScale,
-): DistributionXAxis {
-	if (scale === DistributionXScale.Ordinal) {
-		return toOrdinalAxis(resolveHeatmapYAxis(buckets, HeatmapAxisScale.Linear));
-	}
-	const heatmapScale =
-		scale === DistributionXScale.Auto
-			? resolveAutoScale(buckets)
-			: SCALE_TO_HEATMAP[scale];
-	return resolveHeatmapYAxis(buckets, heatmapScale);
 }
 
 /** Sum of each bucket across the visible series. */
@@ -105,6 +62,32 @@ export function cropDistributionXAxis(
 		axis,
 		totals.map((total) => [total]),
 	);
+}
+
+/**
+ * Narrows the axis window to the buckets overlapping `[min, max]`, never below one.
+ * A bucket straddling a bound stays whole: cutting it would misstate its count.
+ */
+export function clampDistributionXAxis(
+	axis: DistributionXAxis,
+	min?: number,
+	max?: number,
+): DistributionXAxis {
+	const { rows, edges } = axis;
+	let first = edges.indexOf(axis.min);
+	let last = edges.indexOf(axis.max) - 1;
+	while (min !== undefined && first < last && rows[first].upper <= min) {
+		first += 1;
+	}
+	while (max !== undefined && last > first && rows[last].lower >= max) {
+		last -= 1;
+	}
+	return {
+		...axis,
+		overflowSplit: rows[last].isOverflow ? axis.overflowSplit : null,
+		min: edges[first],
+		max: edges[last + 1],
+	};
 }
 
 export interface DistributionBarsLayout {

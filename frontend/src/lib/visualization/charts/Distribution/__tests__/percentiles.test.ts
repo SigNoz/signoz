@@ -8,10 +8,9 @@ import {
 	layoutMarkerLabels,
 	resolveHoveredSeries,
 } from '../percentiles';
-import { DistributionXScale } from '../types';
 
-// Buckets: ≤ 10, (10, 20], (20, 40], > 40.
-const xAxis = resolveDistributionXAxis([10, 20, 40], DistributionXScale.Linear);
+// Buckets ≤ 10, (10, 20], (20, 40], > 40 in slots [0, 1] … [3, 4].
+const xAxis = resolveDistributionXAxis([10, 20, 40]);
 
 describe('computeDistributionPercentiles', () => {
 	it('interpolates inside the bucket holding the rank, as histogram_quantile does', () => {
@@ -32,7 +31,7 @@ describe('computeDistributionPercentiles', () => {
 			percentiles: [50],
 		});
 
-		expect(p50.axisValue).toBe(15);
+		expect(p50.axisValue).toBe(1.5);
 	});
 
 	it('starts the lowest bucket at zero', () => {
@@ -52,7 +51,7 @@ describe('computeDistributionPercentiles', () => {
 			percentiles: [99],
 		});
 
-		expect(p99).toMatchObject({ value: 40, axisValue: 40, isOverflow: true });
+		expect(p99).toMatchObject({ value: 40, axisValue: 3, isOverflow: true });
 	});
 
 	it('marks nothing when every count is zero', () => {
@@ -103,13 +102,13 @@ describe('resolveHoveredSeries', () => {
 	});
 
 	it('names the series whose bar is under the point', () => {
-		expect(resolveHoveredSeries(layout, 15, 2)).toBe(0);
-		expect(resolveHoveredSeries(layout, 15, 8)).toBe(1);
+		expect(resolveHoveredSeries(layout, 1.5, 2)).toBe(0);
+		expect(resolveHoveredSeries(layout, 1.5, 8)).toBe(1);
 	});
 
 	it('is null above the stack or in an empty bucket', () => {
-		expect(resolveHoveredSeries(layout, 15, 11)).toBeNull();
-		expect(resolveHoveredSeries(layout, 30, 1)).toBeNull();
+		expect(resolveHoveredSeries(layout, 1.5, 11)).toBeNull();
+		expect(resolveHoveredSeries(layout, 2.5, 1)).toBeNull();
 	});
 });
 

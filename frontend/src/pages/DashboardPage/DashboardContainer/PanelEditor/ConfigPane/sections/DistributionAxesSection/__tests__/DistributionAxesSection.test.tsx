@@ -1,18 +1,15 @@
-import {
-	DashboardtypesDistributionXScaleDTO,
-	DashboardtypesDistributionYScaleDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { DashboardtypesDistributionYScaleDTO } from 'api/generated/services/sigNoz.schemas';
+import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 
 import DistributionAxesSection from '../DistributionAxesSection';
 
 describe('DistributionAxesSection', () => {
-	it('opens on the defaults the chart draws: auto buckets, linear counts', () => {
+	it('opens on the defaults the chart draws: every bucket, linear counts', () => {
 		render(<DistributionAxesSection value={undefined} onChange={jest.fn()} />);
 
 		expect(
 			screen.getByText(
-				'Log for buckets spanning two or more orders of magnitude, otherwise linear.',
+				'Hides buckets outside the range. Leave empty to show them all.',
 			),
 		).toBeInTheDocument();
 		expect(
@@ -20,21 +17,39 @@ describe('DistributionAxesSection', () => {
 		).toBeInTheDocument();
 	});
 
-	it('writes the x scale without dropping the y scale', async () => {
+	it('writes the x min without dropping the max or the y scale', () => {
 		const onChange = jest.fn();
 		render(
 			<DistributionAxesSection
-				value={{ y: { scale: DashboardtypesDistributionYScaleDTO.log } }}
+				value={{
+					x: { max: 100 },
+					y: { scale: DashboardtypesDistributionYScaleDTO.log },
+				}}
 				onChange={onChange}
 			/>,
 		);
 
-		await userEvent.click(screen.getByText('Equal'));
+		fireEvent.change(screen.getByTestId('panel-editor-v2-distribution-x-min'), {
+			target: { value: '10' },
+		});
 
 		expect(onChange).toHaveBeenCalledWith({
-			x: { scale: DashboardtypesDistributionXScaleDTO.ordinal },
+			x: { min: 10, max: 100 },
 			y: { scale: DashboardtypesDistributionYScaleDTO.log },
 		});
+	});
+
+	it('flags a min above the max', () => {
+		render(
+			<DistributionAxesSection
+				value={{ x: { min: 100, max: 10 } }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByText("Min can't be greater than max."),
+		).toBeInTheDocument();
 	});
 
 	it('writes the y scale', async () => {

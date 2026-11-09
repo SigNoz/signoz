@@ -181,10 +181,15 @@ function drawOverflowBoundary(
 	xAxis: DistributionXAxis,
 	isDarkMode: boolean,
 ): void {
-	if (xAxis.overflowSplit === null || xAxis.edges.length < 3) {
+	const boundary = xAxis.edges[xAxis.edges.length - 2];
+	if (
+		xAxis.overflowSplit === null ||
+		xAxis.edges.length < 3 ||
+		boundary <= xAxis.min
+	) {
 		return;
 	}
-	const x = u.valToPos(xAxis.edges[xAxis.edges.length - 2], 'x', true);
+	const x = u.valToPos(boundary, 'x', true);
 	const { ctx, bbox } = u;
 	ctx.save();
 	ctx.strokeStyle = isDarkMode ? themeColors.white : themeColors.black;
@@ -281,7 +286,9 @@ export function buildDistributionConfig({
 		// Thinned by each label's own width: bound labels run from `5 s` to
 		// `16.67 mins`, so no fixed spacing keeps them apart.
 		splits: (self, axisIdx): number[] => {
-			const visible = axisSplits.filter((split) => split <= xAxis.max);
+			const visible = axisSplits.filter(
+				(split) => split >= xAxis.min && split <= xAxis.max,
+			);
 			const font = self.axes[axisIdx]?.font?.[0];
 			if (font) {
 				self.ctx.font = font;
@@ -360,7 +367,14 @@ export function buildDistributionConfig({
 
 	builder.addHook('draw', (u: uPlot): void => {
 		drawOverflowBoundary(u, xAxis, isDarkMode);
-		drawPercentileMarkers(u, markers, formatBound, isDarkMode);
+		drawPercentileMarkers(
+			u,
+			markers.filter(
+				({ axisValue }) => axisValue >= xAxis.min && axisValue <= xAxis.max,
+			),
+			formatBound,
+			isDarkMode,
+		);
 	});
 
 	// Registered as a hook, not a plugin, so it runs before TooltipPlugin's: the tooltip

@@ -15,6 +15,7 @@ import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility
 import type { LegendLayout } from 'lib/visualization/layout/ChartLayout/ChartLayout';
 
 import {
+	clampDistributionXAxis,
 	cropDistributionXAxis,
 	resolveDistributionBars,
 	resolveDistributionXAxis,
@@ -29,7 +30,7 @@ import {
 	resolveClickedGroup,
 	resolveMaxDrawnGroups,
 } from './topGroups';
-import { DistributionXScale, DistributionYScale } from './types';
+import { DistributionYScale } from './types';
 
 import styles from './Distribution.module.scss';
 import {
@@ -53,7 +54,8 @@ export default function Distribution({
 	width,
 	height,
 	isDarkMode,
-	xScale = DistributionXScale.Auto,
+	xMin,
+	xMax,
 	yScale = DistributionYScale.Linear,
 	stack = StackMode.Normal,
 	xAxisUnit,
@@ -88,13 +90,16 @@ export default function Distribution({
 	);
 
 	const { xAxis, totals } = useMemo(() => {
-		const full = resolveDistributionXAxis(buckets, xScale);
+		const full = resolveDistributionXAxis(buckets);
 		const visibleTotals = sumVisibleCounts(counts, visible, full.rows.length);
+		// An explicit max may reach past the last occupied bucket; only auto-crop without one.
+		const fitted =
+			xMax === undefined ? cropDistributionXAxis(full, visibleTotals) : full;
 		return {
-			xAxis: cropDistributionXAxis(full, visibleTotals),
+			xAxis: clampDistributionXAxis(fitted, xMin, xMax),
 			totals: visibleTotals,
 		};
-	}, [buckets, xScale, counts, visible]);
+	}, [buckets, xMin, xMax, counts, visible]);
 
 	// Over the visible groups combined, so a legend toggle moves them without a refetch.
 	const markers = useMemo(

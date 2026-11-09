@@ -7,7 +7,6 @@ import { rest } from 'msw';
 import ROUTES from 'constants/routes';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import {
-	DashboardtypesDistributionXScaleDTO as DistributionXScale,
 	DashboardtypesHeatmapPaletteDTO as HeatmapPalette,
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
 	DashboardtypesLegendPositionDTO as LegendPosition,
@@ -29,7 +28,7 @@ import { publicDashboardMeta } from '../__story_mockdata__/publicDashboard';
 import {
 	BUCKET_WIDTHS,
 	DISTRIBUTION_OVERFLOWS,
-	DISTRIBUTION_X_SCALES,
+	DISTRIBUTION_X_RANGES,
 	GAPS,
 	HEATMAP_COUNT_RANGES,
 	HEATMAP_FIXED_COUNTS,
@@ -62,6 +61,7 @@ import {
 import type {
 	BucketWidth,
 	DistributionOverflow,
+	DistributionXRange,
 	Gaps,
 	HeatmapCountRange,
 	PanelArgs,
@@ -137,14 +137,14 @@ export const panelsMocks = defineStoryMocks({
 			options: HEATMAP_COUNT_RANGES,
 			value: 'auto',
 		}),
-		distributionXScale: choiceControl<DistributionXScale>(
-			'Distribution x scale',
+		distributionXRange: choiceControl<DistributionXRange>(
+			'Distribution x range',
 			{
 				group: PANEL,
 				description:
-					'Spacing of the bucket axis. The bounds are exponential, so `auto` lays them out on log; `ordinal` makes every bucket equally wide.',
-				options: DISTRIBUTION_X_SCALES,
-				value: DistributionXScale.auto,
+					'Bucket axis range: `all` shows every bucket, `clamped` hides those outside 10–1000.',
+				options: DISTRIBUTION_X_RANGES,
+				value: 'all',
 			},
 		),
 		percentiles: toggleControl('Distribution percentiles', {

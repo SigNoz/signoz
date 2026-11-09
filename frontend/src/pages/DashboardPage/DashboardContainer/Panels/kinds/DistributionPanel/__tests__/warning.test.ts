@@ -1,4 +1,3 @@
-import { DashboardtypesDistributionXScaleDTO } from 'api/generated/services/sigNoz.schemas';
 import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
@@ -52,28 +51,6 @@ describe('getDistributionDataWarning', () => {
 		expect(
 			getDistributionDataWarning(panelWith(), dataWith([1, 10], [[40, 50, 10]])),
 		).toBeNull();
-	});
-
-	it('warns when an explicit log axis meets negative bounds', () => {
-		const warning = getDistributionDataWarning(
-			panelWith({
-				axes: { x: { scale: DashboardtypesDistributionXScaleDTO.log } },
-			}),
-			dataWith([-5, 5], [[1, 1, 0]]),
-		);
-
-		expect(warning?.message).toMatch(/log axis can't place negative/);
-	});
-
-	it('lists both under one summary when both apply', () => {
-		const warning = getDistributionDataWarning(
-			panelWith({
-				axes: { x: { scale: DashboardtypesDistributionXScaleDTO.log } },
-			}),
-			dataWith([-5, 5], [[1, 1, 8]]),
-		);
-
-		expect(warning?.messages).toHaveLength(2);
 	});
 
 	it('says nothing without bounds', () => {
