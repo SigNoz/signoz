@@ -417,8 +417,10 @@ describe('TanStackTableView Integration', () => {
 			await user.click(comboboxTrigger);
 
 			// Select a different page size option
-			const option20 = await screen.findByRole('option', { name: '20' });
-			await user.click(option20);
+			await user.type(
+				await screen.findByTestId('pagination-page-size-search'),
+				'20{Enter}',
+			);
 
 			await waitFor(() => {
 				expect(onLimitChange).toHaveBeenCalledWith(20);
@@ -482,8 +484,10 @@ describe('TanStackTableView Integration', () => {
 			) as HTMLElement;
 			await user.click(comboboxTrigger);
 
-			const option20 = await screen.findByRole('option', { name: '20' });
-			await user.click(option20);
+			await user.type(
+				await screen.findByTestId('pagination-page-size-search'),
+				'20{Enter}',
+			);
 
 			// Verify page reset to 1 (nuqs removes default values from URL)
 			await waitFor(() => {
