@@ -63,14 +63,20 @@ export default function ScatterTooltip({
 						borderColor: hoveredPoint.color,
 					}}
 				/>
-				<Typography.Text
-					as="span"
-					className={Styles.title}
-					title={hoveredPoint.label}
-					testId="scatter-tooltip-title"
-				>
-					{hoveredPoint.label}
-				</Typography.Text>
+				<div className={Styles.title}>
+					<Typography
+						variant="code"
+						size="small"
+						weight="bold"
+						color="main"
+						as="span"
+						display="block"
+						textOverflow="ellipsis"
+						testId="scatter-tooltip-title"
+					>
+						{hoveredPoint.label}
+					</Typography>
+				</div>
 				{isPinned && (
 					<Button
 						variant="ghost"
@@ -93,12 +99,33 @@ export default function ScatterTooltip({
 						className={Styles.row}
 						data-testid="scatter-tooltip-row"
 					>
-						<Typography.Text as="span" className={Styles.rowLabel}>
-							{row.label}
-						</Typography.Text>
-						<Typography.Text as="span" className={Styles.rowValue}>
+						<div className={Styles.rowLabel}>
+							<Typography
+								variant="code"
+								size="small"
+								weight="regular"
+								color="inherit"
+								as="span"
+								display="block"
+								textOverflow="ellipsis"
+								tabularNumbers
+							>
+								{row.label}
+							</Typography>
+						</div>
+						<Typography
+							variant="code"
+							size="small"
+							weight="regular"
+							color="inherit"
+							as="span"
+							display="block"
+							maxWidth="60%"
+							textOverflow="ellipsis"
+							tabularNumbers
+						>
 							{row.value}
-						</Typography.Text>
+						</Typography>
 					</div>
 				))}
 			</div>
@@ -113,20 +140,33 @@ export default function ScatterTooltip({
 								className={cx(Styles.row, Styles.rowMuted)}
 								data-testid="scatter-tooltip-label"
 							>
-								<Typography.Text
+								<div className={Styles.rowLabel}>
+									<Typography
+										variant="code"
+										size="small"
+										weight="regular"
+										color="inherit"
+										as="span"
+										display="block"
+										textOverflow="ellipsis"
+										tabularNumbers
+									>
+										{label.key}
+									</Typography>
+								</div>
+								<Typography
+									variant="code"
+									size="small"
+									weight="regular"
+									color="inherit"
 									as="span"
-									className={Styles.rowLabel}
-									title={label.key}
-								>
-									{label.key}
-								</Typography.Text>
-								<Typography.Text
-									as="span"
-									className={Styles.rowValue}
-									title={label.value}
+									display="block"
+									maxWidth="60%"
+									textOverflow="ellipsis"
+									tabularNumbers
 								>
 									{label.value}
-								</Typography.Text>
+								</Typography>
 							</div>
 						))}
 					</div>

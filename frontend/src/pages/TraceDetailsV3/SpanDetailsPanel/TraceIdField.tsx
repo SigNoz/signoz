@@ -12,9 +12,17 @@ export function TraceIdField({ span }: TraceIdFieldProps): JSX.Element {
 	return (
 		<div className={styles.traceId}>
 			<span className={styles.value} title={span.trace_id}>
-				<Typography.Text testId="span-details-trace-id">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="visible"
+					testId="span-details-trace-id"
+				>
 					{span.trace_id}
-				</Typography.Text>
+				</Typography>
 			</span>
 			<CopyButton
 				value={span.trace_id}

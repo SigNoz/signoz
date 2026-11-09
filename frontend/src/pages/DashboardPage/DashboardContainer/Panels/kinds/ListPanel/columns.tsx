@@ -49,7 +49,18 @@ function renderCell(value: unknown): ReactNode {
 }
 
 function renderBodyCell(value: unknown): ReactNode {
-	return <Typography.Text>{getBodyDisplay(value)}</Typography.Text>;
+	return (
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
+			{getBodyDisplay(value)}
+		</Typography>
+	);
 }
 
 /**

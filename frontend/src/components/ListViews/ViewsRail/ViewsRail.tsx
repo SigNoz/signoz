@@ -93,11 +93,28 @@ function ViewsRail({
 		(id: string, label: string): void => {
 			confirmDelete({
 				title: (
-					<Typography.Title level={5}>
+					<Typography
+						variant="paragraph"
+						size="medium"
+						weight="bold"
+						color="inherit"
+						as="h5"
+						marginY={4}
+						textOverflow="wrap"
+					>
 						Delete the{' '}
-						<Typography.Text className={styles.deleteName}>{label}</Typography.Text>{' '}
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="medium"
+							color="danger"
+							as="span"
+							textOverflow="wrap"
+						>
+							{label}
+						</Typography>{' '}
 						view?
-					</Typography.Title>
+					</Typography>
 				),
 				content: deleteDescription,
 				// Return the delete promise so the modal's Delete button stays loading
@@ -202,9 +219,18 @@ function ViewsRail({
 					<>
 						<div className={cx(styles.groupLabel, styles.groupLabelSpaced)}>
 							{customSectionLabel}
-							<Typography.Text className={styles.groupCount}>
-								{customViews.length}
-							</Typography.Text>
+							<span className={styles.groupCount}>
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="tertiary"
+									as="span"
+									textOverflow="wrap"
+								>
+									{customViews.length}
+								</Typography>
+							</span>
 						</div>
 						{customViewsLoading ? (
 							<div className={styles.empty}>Loading views…</div>

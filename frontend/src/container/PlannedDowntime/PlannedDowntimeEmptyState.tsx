@@ -19,13 +19,28 @@ function PlannedDowntimeEmptyState({
 	return (
 		<div className={styles.emptyState} data-testid="planned-downtime-empty-state">
 			<CalendarClock className={styles.emptyIcon} size={16} />
-			<Typography.Text className={styles.emptyTitle}>
+			<Typography
+				variant="paragraph"
+				size="medium"
+				weight="medium"
+				color="main"
+				as="span"
+				textOverflow="wrap"
+			>
 				No planned downtime yet
-			</Typography.Text>
-			<Typography.Text className={styles.emptySubtitle}>
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="p"
+				maxWidth={420}
+				textOverflow="wrap"
+			>
 				A planned downtime silences alert rules for a window you schedule, once or
 				on repeat, so maintenance does not page anyone.
-			</Typography.Text>
+			</Typography>
 			{canCreate && (
 				<Button
 					variant="solid"

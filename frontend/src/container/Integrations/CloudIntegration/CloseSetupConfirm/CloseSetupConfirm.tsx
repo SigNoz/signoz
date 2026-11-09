@@ -48,7 +48,14 @@ function CloseSetupConfirm({
 				</>
 			}
 		>
-			<Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				The agent has not connected yet. If you close now, you will have to start
 				the installation process again with a new setup command.
 			</Typography>

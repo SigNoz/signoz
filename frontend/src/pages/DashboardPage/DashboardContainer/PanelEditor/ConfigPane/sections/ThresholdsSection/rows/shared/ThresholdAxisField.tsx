@@ -25,7 +25,16 @@ function ThresholdAxisField({
 }: ThresholdAxisFieldProps): JSX.Element {
 	return (
 		<div className={styles.field}>
-			<Typography.Text className={styles.fieldLabel}>Axis</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
+				Axis
+			</Typography>
 			<ConfigTiles
 				compact
 				testId={testId}
