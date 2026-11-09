@@ -26,15 +26,8 @@ def test_flux_boundary_interval_is_refreshed_with_late_data(
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
-    Setup:
-    svc-a: 2 logs in every minute of the ten minutes before the minute T that
-    contains the flux boundary (now - 5m), and 3 logs early in T. After the
-    first request, 4 more logs arrive late in T, after the boundary, as an
-    export that lags by a few minutes does.
-
-    Tests:
-    T is still filling, so it must not be served from cache. The second
-    request reports the new count for T, as the request with noCache does.
+    The minute that holds the flux boundary is still filling, so its cached
+    count must not outlive the logs that arrive after the first request.
     """
     # the boundary must fall after the early logs (second 4) and before the
     # late ones (second 50)
