@@ -1,10 +1,14 @@
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import userEvent from '@testing-library/user-event';
 import ROUTES from 'constants/routes';
-import { alertRulesFixture } from 'mocks-server/__mockdata__/alert_rules';
+import {
+	alertRulesFixture,
+	listRulesV3Response,
+} from 'mocks-server/__mockdata__/alert_rules';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { screen } from 'tests/test-utils';
+import { getCurrentNuqsSearchParams } from 'tests/nuqs-helpers';
+import { screen, waitFor } from 'tests/test-utils';
 
 import { renderListAlertRules } from './_helpers';
 
@@ -17,8 +21,11 @@ describe('ListAlertRules — empty states', () => {
 		const user = userEvent.setup({ delay: null });
 
 		server.use(
-			rest.get('http://localhost/api/v2/rules', (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ data: [], status: 'success' })),
+			rest.get('http://localhost/api/v3/rules', (req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json(listRulesV3Response([], req.url.searchParams)),
+				),
 			),
 		);
 
@@ -42,14 +49,14 @@ describe('ListAlertRules — empty states', () => {
 
 		let callCount = 0;
 		server.use(
-			rest.get('http://localhost/api/v2/rules', (_, res, ctx) => {
+			rest.get('http://localhost/api/v3/rules', (req, res, ctx) => {
 				callCount += 1;
 				if (callCount === 1) {
 					return res(ctx.status(500), ctx.json({ status: 'error' }));
 				}
 				return res(
 					ctx.status(200),
-					ctx.json({ data: alertRulesFixture, status: 'success' }),
+					ctx.json(listRulesV3Response(alertRulesFixture, req.url.searchParams)),
 				);
 			}),
 		);
@@ -64,18 +71,29 @@ describe('ListAlertRules — empty states', () => {
 		expect(rule).toBeInTheDocument();
 	});
 
-	it('renders NoResultsEmptyState when search yields no match; Clear Search resets', async () => {
+	it('renders NoResultsEmptyState when the query matches nothing; Clear Search resets it', async () => {
 		const user = userEvent.setup({ delay: null });
 
-		renderListAlertRules();
+		server.use(
+			rest.get('http://localhost/api/v3/rules', (req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json(
+						listRulesV3Response(
+							req.url.searchParams.has('query') ? [] : alertRulesFixture,
+							req.url.searchParams,
+						),
+					),
+				),
+			),
+		);
 
-		await screen.findByText('High CPU Alert');
-
-		const searchInput = screen.getByTestId('list-alerts-search-input');
-		await user.clear(searchInput);
-		await user.type(searchInput, 'totally-not-found');
+		renderListAlertRules({
+			initialRoute: `/?query=${encodeURIComponent("name = 'missing'")}`,
+		});
 
 		await screen.findByTestId('no-results-empty-state');
+		expect(screen.queryByText('No Alert rules yet.')).not.toBeInTheDocument();
 		expect(screen.getByTestId('no-results-title')).toHaveTextContent(
 			'No matching alert rules',
 		);
@@ -85,7 +103,28 @@ describe('ListAlertRules — empty states', () => {
 
 		await user.click(screen.getByTestId('no-results-clear-button'));
 
-		const rule = await screen.findByText('High CPU Alert');
-		expect(rule).toBeInTheDocument();
+		await expect(
+			screen.findByText('High CPU Alert'),
+		).resolves.toBeInTheDocument();
+		await waitFor(() => {
+			expect(getCurrentNuqsSearchParams().has('query')).toBe(false);
+		});
+	});
+
+	it('renders NoResultsEmptyState when the states filter matches nothing; Clear Search resets it', async () => {
+		const user = userEvent.setup({ delay: null });
+
+		renderListAlertRules({ initialRoute: '/?states=nodata' });
+
+		await screen.findByTestId('no-results-empty-state');
+
+		await user.click(screen.getByTestId('no-results-clear-button'));
+
+		await expect(
+			screen.findByText('High CPU Alert'),
+		).resolves.toBeInTheDocument();
+		await waitFor(() => {
+			expect(getCurrentNuqsSearchParams().has('states')).toBe(false);
+		});
 	});
 });

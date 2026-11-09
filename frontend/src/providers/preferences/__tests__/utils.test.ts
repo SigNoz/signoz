@@ -36,6 +36,12 @@ describe('hasPreferences', () => {
 		).toBe(true);
 		expect(
 			hasPreferences(SavedviewtypesSourceDTO.ai_observability, PANEL_TYPES.LIST),
+		).toBe(true);
+		expect(
+			hasPreferences(
+				SavedviewtypesSourceDTO.ai_observability,
+				PANEL_TYPES.TIME_SERIES,
+			),
 		).toBe(false);
 	});
 

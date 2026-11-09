@@ -102,8 +102,10 @@ export interface AlertList {
 	rowFor(name: string): Locator;
 	/** The STATE cell of `ruleId`'s row — `OK`, `Disabled`, `Firing`. */
 	stateCell(ruleId: string): Locator;
+	/** The DSL search box's editable content (a CodeMirror editor). */
 	search(): Locator;
-	searchFor(text: string): Promise<void>;
+	/** Replace the DSL draft and run it, as Run query does. */
+	runSearch(query: string): Promise<void>;
 	openRowActions(name: string): Promise<void>;
 	openFirstRowActions(): Promise<void>;
 	menuItem(label: string | RegExp): Locator;
@@ -115,8 +117,24 @@ export interface AlertList {
 	nextPageButton(): Locator;
 	pageSizeSelect(): Locator;
 	pageSizeOption(size: number): Locator;
-	/** A rule's name anywhere on the page, such as a clone's `<name> - Copy`. */
+	/** A rule's name in the list rows, such as a clone's `<name> - Copy`. */
 	ruleName(name: string, options?: { exact?: boolean }): Locator;
+}
+
+// ─── Saved views ─────────────────────────────────────────────────────────────
+
+export interface AlertRuleViews {
+	/** A view in the rail, by id: `all`, a builtin's id or a saved view's. */
+	item(id: string): Locator;
+	/** The list heading, which names the active view. */
+	heading(): Locator;
+	saveChanges(): Locator;
+	/** Store the current filters on the active view. */
+	save(): Promise<void>;
+	/** Save the current filters as a new view; resolves to its id. */
+	saveAs(name: string): Promise<string>;
+	rename(id: string, name: string): Promise<void>;
+	remove(id: string): Promise<void>;
 }
 
 // ─── Create / edit form ──────────────────────────────────────────────────────
@@ -342,6 +360,7 @@ export interface Alerts {
 	shell: AlertsShell;
 	channels: AlertChannels;
 	list: AlertList;
+	views: AlertRuleViews;
 	form: AlertForm;
 	details: AlertDetails;
 	history: AlertHistory;
@@ -364,7 +383,8 @@ export function alertsDriver(page: Page): Alerts {
 		tab: (name) => page.getByRole('tab', { name }),
 		configSidebar: () => page.getByTestId('alert-configuration-sidebar'),
 		configSidebarItem: (key) => page.getByTestId(`configuration-sidebar-${key}`),
-		rulesHeading: () => page.getByRole('heading', { name: 'Alert Rules' }),
+		rulesHeading: () =>
+			page.getByRole('heading', { name: 'Alert Rules', exact: true }),
 		triggeredSearch: () => page.getByTestId('triggered-alerts-search-input'),
 		breadcrumb: () => page.locator('.ant-breadcrumb'),
 		crumb: (text) => shell.breadcrumb().getByText(text),
@@ -400,11 +420,18 @@ export function alertsDriver(page: Page): Alerts {
 		rows: () => page.locator('tbody tr'),
 		rowFor: (name) => page.locator('tbody tr', { hasText: name }).first(),
 		stateCell: (ruleId) => page.getByTestId(`alert-row-${ruleId}-state`),
-		search: () => page.getByTestId('list-alerts-search-input'),
+		search: () =>
+			page.getByTestId('alert-rules-list-search').locator('.cm-content'),
 
-		searchFor: async (text) => {
-			await list.search().fill(text);
-			await expect(page).toHaveURL(new RegExp(`search=${text}`));
+		runSearch: async (query) => {
+			await list.search().click();
+			await page.keyboard.press('ControlOrMeta+A');
+			await page.keyboard.insertText(query);
+			await expect(list.search()).toHaveText(query);
+			await page.getByTestId('alert-rules-list-search-submit').click();
+			await page.waitForURL(
+				(url) => (url.searchParams.get('query') ?? '') === query.trim(),
+			);
 		},
 
 		openRowActions: async (name) => {
@@ -423,7 +450,58 @@ export function alertsDriver(page: Page): Alerts {
 		pageSizeSelect: () => page.getByTestId('pagination-page-size'),
 		pageSizeOption: (size) =>
 			page.getByRole('option', { name: String(size), exact: true }),
-		ruleName: (name, options) => page.getByText(name, options),
+		ruleName: (name, options) => list.rows().getByText(name, options),
+	};
+
+	const viewWrite = (method: string): Promise<Response> =>
+		page.waitForResponse(
+			(res) =>
+				new URL(res.url()).pathname.startsWith('/api/v2/rule_views') &&
+				res.request().method() === method,
+		);
+
+	const views: AlertRuleViews = {
+		item: (id) => page.getByTestId(`alert-rules-view-${id}`),
+		heading: () => page.getByTestId('alert-rules-list-heading'),
+		saveChanges: () => page.getByTestId('alert-rules-view-save-changes'),
+
+		save: async () => {
+			await Promise.all([viewWrite('PUT'), views.saveChanges().click()]);
+		},
+
+		saveAs: async (name) => {
+			await page.getByTestId('alert-rules-view-save-trigger').click();
+			await page.getByTestId('save-alert-rule-view-name').fill(name);
+			const [created] = await Promise.all([
+				viewWrite('POST'),
+				page.getByTestId('save-alert-rule-view-confirm').click(),
+			]);
+			const body = (await created.json()) as { data: { id: string } };
+			return body.data.id;
+		},
+
+		// The row's actions take pointer events only while it is hovered.
+		rename: async (id, name) => {
+			await views.item(id).hover();
+			await page.getByTestId(`alert-rules-view-rename-${id}`).click();
+			await page.getByTestId('rename-alert-rule-view-name').fill(name);
+			await Promise.all([
+				viewWrite('PUT'),
+				page.getByTestId('rename-alert-rule-view-confirm').click(),
+			]);
+		},
+
+		remove: async (id) => {
+			await views.item(id).hover();
+			await page.getByTestId(`alert-rules-view-delete-${id}`).click();
+			await Promise.all([
+				viewWrite('DELETE'),
+				page
+					.locator('.ant-modal-confirm')
+					.getByRole('button', { name: 'Delete' })
+					.click(),
+			]);
+		},
 	};
 
 	const form: AlertForm = {
@@ -1046,6 +1124,7 @@ export function alertsDriver(page: Page): Alerts {
 		shell,
 		channels,
 		list,
+		views,
 		form,
 		details,
 		history,

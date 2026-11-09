@@ -552,25 +552,46 @@ components:
       required:
       - apiKey
       type: object
-    AlertmanagertypesChannelJiraConfig:
+    AlertmanagertypesChannelJiraAuth:
+      oneOf:
+      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraCloudAuth'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraSelfHostedAuth'
+      type: object
+    AlertmanagertypesChannelJiraCloudAuth:
       properties:
         apiToken:
           description: The Atlassian API token paired with email. A secret; returned
             by create, update and fetch by ID, never by list.
           format: password
           type: string
+        email:
+          description: The Atlassian account email used for basic auth.
+          type: string
+      required:
+      - email
+      - apiToken
+      type: object
+    AlertmanagertypesChannelJiraConfig:
+      properties:
+        auth:
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelJiraAuth'
+          description: 'The credentials: email and apiToken when deployment is cloud,
+            pat when deployment is selfhosted.'
         customFields:
           additionalProperties: {}
           description: Extra issue fields keyed by Jira field ID. Stored, but not
             currently included in the issue Jira receives.
           nullable: true
           type: object
+        deployment:
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesJiraDeployment'
+          description: 'The Jira edition: cloud for an Atlassian-hosted site, selfhosted
+            for Jira Server or Data Center.'
         description:
           description: Alertmanager template for the issue description, rendered as
             markdown; defaults to the SigNoz Jira default.
-          type: string
-        email:
-          description: The Atlassian account email used for basic auth.
           type: string
         issueType:
           description: The issue type name, such as Bug.
@@ -604,8 +625,8 @@ components:
           nullable: true
           type: boolean
         site:
-          description: The base URL of the Jira Cloud site, for example https://example.atlassian.net.
-            Only Jira Cloud is supported.
+          description: The base URL of the Jira site, for example https://example.atlassian.net
+            or https://jira.example.com.
           type: string
         summary:
           description: Alertmanager template for the issue summary; defaults to the
@@ -615,11 +636,21 @@ components:
           description: The resolution name that stops an issue from being reopened.
           type: string
       required:
+      - deployment
       - site
       - project
       - issueType
-      - email
-      - apiToken
+      - auth
+      type: object
+    AlertmanagertypesChannelJiraSelfHostedAuth:
+      properties:
+        pat:
+          description: The Jira personal access token, sent as a Bearer header. A
+            secret; returned by create, update and fetch by ID, never by list.
+          format: password
+          type: string
+      required:
+      - pat
       type: object
     AlertmanagertypesChannelKind:
       enum:
@@ -1155,6 +1186,11 @@ components:
           description: Comma-separated tags attached to the alert.
           type: string
       type: object
+    AlertmanagertypesJiraDeployment:
+      enum:
+      - cloud
+      - selfhosted
+      type: string
     AlertmanagertypesJiraReceiverConfig:
       properties:
         custom_fields:
@@ -1162,6 +1198,10 @@ components:
           description: Extra issue fields keyed by Jira field ID. Stored, but not
             currently included in the issue Jira receives.
           type: object
+        deployment:
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesJiraDeployment'
+          description: The Jira edition, cloud or selfhosted; defaults to cloud.
         description:
           description: Alertmanager template for the issue description.
           type: string
@@ -1169,7 +1209,8 @@ components:
           allOf:
           - $ref: '#/components/schemas/ConfigHTTPClientConfig'
           description: HTTP client settings; basic auth carries the account email
-            and API token.
+            and API token on cloud, authorization carries the Bearer personal access
+            token on self-hosted.
         issue_type:
           description: The issue type name.
           type: string
@@ -1199,7 +1240,7 @@ components:
         send_resolved:
           type: boolean
         site:
-          description: The Jira Cloud base URL.
+          description: The Jira base URL.
           type: string
         summary:
           description: Alertmanager template for the issue summary.
@@ -4027,7 +4068,9 @@ components:
             the query they draw.
         cursor:
           description: The opaque nextCursor value from a previous raw result, used
-            to fetch the next page.
+            to fetch the next page. Honored only by raw requests whose order starts
+            with timestamp, for logs followed by id in the same direction; every other
+            request ignores it.
           type: string
         disabled:
           description: When true, the result is excluded from the response; the query
@@ -4064,10 +4107,11 @@ components:
             are replaced by group-by label values.
           type: string
         limit:
-          description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. When
-            0, aggregations are unlimited while raw requests ordered by timestamp
-            return a page of 10000 rows; follow nextCursor for the rest.
+          description: The maximum number of rows for raw and trace requests, or of
+            series or rows for grouped scalar and time_series requests, keeping the
+            top entries by order. When 0, scalar and time_series requests are unlimited,
+            raw requests ordered by timestamp return a page of 10000 rows to continue
+            with nextCursor, and other raw and trace requests return 100 rows.
           type: integer
         limitBy:
           allOf:
@@ -4079,8 +4123,11 @@ components:
             operators and selectedQueryName refer to it.
           type: string
         offset:
-          description: The number of rows to skip before returning results. Prefer
-            cursor for raw requests.
+          description: The number of rows for raw and trace requests, or of ordered
+            series or rows for scalar and time_series requests, to skip before the
+            page starts. Requires limit. On raw requests the skip counts from where
+            a cursor resumes, and the skipped rows are still read, so prefer cursor
+            for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -9562,9 +9609,10 @@ components:
     Querybuildertypesv5AggregationMeta:
       properties:
         buckets:
-          description: The ascending upper bounds of the value bands, set only for
-            heatmap results; each point then carries one count per bound plus a trailing
-            overflow count in values.
+          description: The ascending upper bounds of the value buckets, set for heatmap
+            and distribution results; each point then carries one count per bound
+            plus a trailing overflow count in values. The first bucket starts at -Inf
+            when its bound is at or under zero, else at zero.
           items:
             format: double
             type: number
@@ -9718,6 +9766,101 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
           nullable: true
           type: array
+      type: object
+    Querybuildertypesv5Distribution:
+      properties:
+        counts:
+          description: One count per bound in meta.buckets plus a trailing overflow
+            count, summed over every step of the requested time range.
+          items:
+            format: double
+            type: number
+          nullable: true
+          type: array
+        labels:
+          description: The group-by field values that identify this distribution.
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Label'
+          type: array
+      required:
+      - counts
+      type: object
+    Querybuildertypesv5DistributionAggregation:
+      properties:
+        alias:
+          description: The alias of the aggregation, or the internal name __result_N,
+            with N its index, when no alias was given.
+          type: string
+        distributions:
+          description: One distribution per group-by combination.
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Distribution'
+          nullable: true
+          type: array
+        index:
+          description: The zero-based position of the aggregation in the query.
+          type: integer
+        meta:
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5AggregationMeta'
+          description: Display metadata for the aggregation, including the bucket
+            upper bounds the counts are positional against.
+        percentiles:
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5DistributionPercentiles'
+          description: Percentiles over the counts of every distribution added together,
+            estimated the way histogram_quantile does by interpolating linearly within
+            the bucket each rank falls in. Omitted when nothing was counted or meta.buckets
+            is empty.
+      required:
+      - index
+      - alias
+      - distributions
+      type: object
+    Querybuildertypesv5DistributionData:
+      properties:
+        aggregations:
+          description: One entry per aggregation of the query. The order is not guaranteed;
+            match entries to aggregations by index.
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5DistributionAggregation'
+          nullable: true
+          type: array
+        queryName:
+          description: The name of the query that produced this result.
+          type: string
+      required:
+      - queryName
+      - aggregations
+      type: object
+    Querybuildertypesv5DistributionPercentiles:
+      properties:
+        p50:
+          description: The 50th percentile.
+          format: double
+          type: number
+        p75:
+          description: The 75th percentile.
+          format: double
+          type: number
+        p90:
+          description: The 90th percentile.
+          format: double
+          type: number
+        p95:
+          description: The 95th percentile.
+          format: double
+          type: number
+        p99:
+          description: The 99th percentile.
+          format: double
+          type: number
+      required:
+      - p50
+      - p75
+      - p90
+      - p95
+      - p99
       type: object
     Querybuildertypesv5ExecStats:
       description: 'Execution cost of the request: rows and bytes scanned and execution
@@ -10102,6 +10245,10 @@ components:
           description: The unique name of the formula, such as F1, used by selectedQueryName
             and by panels. Referencing a formula from another formula is not reliable.
           type: string
+        offset:
+          description: The number of ordered series or rows to skip before the page
+            starts. Requires limit.
+          type: integer
         order:
           description: The sort order of the formula result.
           items:
@@ -10127,7 +10274,9 @@ components:
             the query they draw.
         cursor:
           description: The opaque nextCursor value from a previous raw result, used
-            to fetch the next page.
+            to fetch the next page. Honored only by raw requests whose order starts
+            with timestamp, for logs followed by id in the same direction; every other
+            request ignores it.
           type: string
         disabled:
           description: When true, the result is excluded from the response; the query
@@ -10163,10 +10312,11 @@ components:
             are replaced by group-by label values.
           type: string
         limit:
-          description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. When
-            0, aggregations are unlimited while raw requests ordered by timestamp
-            return a page of 10000 rows; follow nextCursor for the rest.
+          description: The maximum number of rows for raw and trace requests, or of
+            series or rows for grouped scalar and time_series requests, keeping the
+            top entries by order. When 0, scalar and time_series requests are unlimited,
+            raw requests ordered by timestamp return a page of 10000 rows to continue
+            with nextCursor, and other raw and trace requests return 100 rows.
           type: integer
         limitBy:
           allOf:
@@ -10178,8 +10328,11 @@ components:
             operators and selectedQueryName refer to it.
           type: string
         offset:
-          description: The number of rows to skip before returning results. Prefer
-            cursor for raw requests.
+          description: The number of rows for raw and trace requests, or of ordered
+            series or rows for scalar and time_series requests, to skip before the
+            page starts. Requires limit. On raw requests the skip counts from where
+            a cursor resumes, and the skipped rows are still read, so prefer cursor
+            for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10241,7 +10394,9 @@ components:
             the query they draw.
         cursor:
           description: The opaque nextCursor value from a previous raw result, used
-            to fetch the next page.
+            to fetch the next page. Honored only by raw requests whose order starts
+            with timestamp, for logs followed by id in the same direction; every other
+            request ignores it.
           type: string
         disabled:
           description: When true, the result is excluded from the response; the query
@@ -10278,10 +10433,11 @@ components:
             are replaced by group-by label values.
           type: string
         limit:
-          description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. When
-            0, aggregations are unlimited while raw requests ordered by timestamp
-            return a page of 10000 rows; follow nextCursor for the rest.
+          description: The maximum number of rows for raw and trace requests, or of
+            series or rows for grouped scalar and time_series requests, keeping the
+            top entries by order. When 0, scalar and time_series requests are unlimited,
+            raw requests ordered by timestamp return a page of 10000 rows to continue
+            with nextCursor, and other raw and trace requests return 100 rows.
           type: integer
         limitBy:
           allOf:
@@ -10293,8 +10449,11 @@ components:
             operators and selectedQueryName refer to it.
           type: string
         offset:
-          description: The number of rows to skip before returning results. Prefer
-            cursor for raw requests.
+          description: The number of rows for raw and trace requests, or of ordered
+            series or rows for scalar and time_series requests, to skip before the
+            page starts. Requires limit. On raw requests the skip counts from where
+            a cursor resumes, and the skipped rows are still read, so prefer cursor
+            for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10356,7 +10515,9 @@ components:
             the query they draw.
         cursor:
           description: The opaque nextCursor value from a previous raw result, used
-            to fetch the next page.
+            to fetch the next page. Honored only by raw requests whose order starts
+            with timestamp, for logs followed by id in the same direction; every other
+            request ignores it.
           type: string
         disabled:
           description: When true, the result is excluded from the response; the query
@@ -10393,10 +10554,11 @@ components:
             are replaced by group-by label values.
           type: string
         limit:
-          description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. When
-            0, aggregations are unlimited while raw requests ordered by timestamp
-            return a page of 10000 rows; follow nextCursor for the rest.
+          description: The maximum number of rows for raw and trace requests, or of
+            series or rows for grouped scalar and time_series requests, keeping the
+            top entries by order. When 0, scalar and time_series requests are unlimited,
+            raw requests ordered by timestamp return a page of 10000 rows to continue
+            with nextCursor, and other raw and trace requests return 100 rows.
           type: integer
         limitBy:
           allOf:
@@ -10408,8 +10570,11 @@ components:
             operators and selectedQueryName refer to it.
           type: string
         offset:
-          description: The number of rows to skip before returning results. Prefer
-            cursor for raw requests.
+          description: The number of rows for raw and trace requests, or of ordered
+            series or rows for scalar and time_series requests, to skip before the
+            page starts. Requires limit. On raw requests the skip counts from where
+            a cursor resumes, and the skipped rows are still read, so prefer cursor
+            for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10510,8 +10675,9 @@ components:
           description: The unique name of the trace operator query.
           type: string
         offset:
-          description: The number of raw results to skip before returning. Aggregation
-            requests ignore it.
+          description: The number of raw or trace rows, or of ordered series or rows
+            for time_series and scalar requests, to skip before the page starts. Requires
+            limit.
           type: integer
         order:
           description: The sort order of the matched traces; only span_count and trace_duration
@@ -10542,10 +10708,12 @@ components:
       - $ref: '#/components/schemas/Querybuildertypesv5TimeSeriesData'
       - $ref: '#/components/schemas/Querybuildertypesv5ScalarData'
       - $ref: '#/components/schemas/Querybuildertypesv5RawData'
+      - $ref: '#/components/schemas/Querybuildertypesv5DistributionData'
       properties:
         results:
           description: 'One result per enabled query, typed by the request type: TimeSeriesData
-            for time_series, ScalarData for scalar and RawData for raw requests.'
+            for time_series and heatmap, ScalarData for scalar, RawData for raw and
+            DistributionData for distribution requests.'
           items: {}
           nullable: true
           type: array
@@ -10735,8 +10903,9 @@ components:
       type: object
     Querybuildertypesv5QueryRangeResponse:
       description: 'Response from the v5 query range endpoint. The data.results array
-        contains typed results depending on the requestType: TimeSeriesData for time_series,
-        ScalarData for scalar, or RawData for raw requests.'
+        contains typed results depending on the requestType: TimeSeriesData for time_series
+        and heatmap, ScalarData for scalar, RawData for raw, or DistributionData for
+        distribution requests.'
       properties:
         data:
           allOf:
@@ -10833,6 +11002,7 @@ components:
       - raw_stream
       - trace
       - heatmap
+      - distribution
       type: string
     Querybuildertypesv5ScalarData:
       properties:
@@ -10944,8 +11114,8 @@ components:
           format: double
           type: number
         values:
-          description: The per-band counts for heatmap results, in the order of meta.buckets
-            plus a trailing overflow count.
+          description: The per-bucket counts for heatmap results, in the order of
+            meta.buckets plus a trailing overflow count.
           items:
             format: double
             type: number
@@ -24050,14 +24220,16 @@ paths:
               jira:
                 description: Creates one Jira Cloud issue per alert group and reopens
                   it if the alert fires again within `reopenDuration`. Authenticates
-                  with an Atlassian account email and API token.
+                  with an Atlassian account email and API token under `auth`.
                 summary: Jira Cloud issues
                 value:
                   config:
                     kind: jira
                     spec:
-                      apiToken: XXXXXXXXXXXXXXXXXXXXXXXX
-                      email: oncall@example.com
+                      auth:
+                        apiToken: XXXXXXXXXXXXXXXXXXXXXXXX
+                        email: oncall@example.com
+                      deployment: cloud
                       issueType: Bug
                       labels:
                       - signoz
@@ -24067,6 +24239,23 @@ paths:
                       site: https://example.atlassian.net
                   displayName: Jira platform
                   name: jira-platform
+              jira-selfhosted:
+                description: Creates issues on a Jira Data Center or Server site.
+                  Authenticates with a personal access token under `auth`, sent as
+                  a Bearer header.
+                summary: Self-hosted Jira issues
+                value:
+                  config:
+                    kind: jira
+                    spec:
+                      auth:
+                        pat: XXXXXXXXXXXXXXXXXXXXXXXX
+                      deployment: selfhosted
+                      issueType: Bug
+                      project: OPS
+                      site: https://jira.example.com
+                  displayName: Jira Data Center
+                  name: jira-datacenter
               jsmops:
                 description: Creates JSM Ops alerts through an integration API key.
                   JSM Ops speaks the Opsgenie alert API, so `priority` takes P1 to

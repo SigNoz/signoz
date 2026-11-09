@@ -64,8 +64,17 @@ export function antdDriver(page: Page): Antd {
 		 */
 		pickByName: async (select, name) => {
 			const before = await antd.selectedTags(select).count();
-			await select.click();
-			await expect(select).toHaveClass(/ant-select-open/);
+			// A re-render of the surrounding form (e.g. after a query edit) can close
+			// the select as the click opens it; re-click only while it is still closed.
+			await expect(async () => {
+				const isOpen = await select.evaluate((node) =>
+					node.classList.contains('ant-select-open'),
+				);
+				if (!isOpen) {
+					await select.click();
+				}
+				await expect(select).toHaveClass(/ant-select-open/, { timeout: 2_000 });
+			}).toPass({ timeout: 15_000 });
 
 			// `fill` rather than `keyboard.type`: every keystroke re-runs antd's
 			// filter, so typing a ~30 character name costs seconds per pick, while

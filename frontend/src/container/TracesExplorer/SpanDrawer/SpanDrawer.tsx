@@ -4,7 +4,12 @@ import { ButtonGroup } from '@signozhq/ui/button-group';
 import { ChevronDown, ChevronUp, CornerUpRight } from '@signozhq/icons';
 import { useGetTraceSummary } from 'api/generated/services/tracedetail';
 import { HeaderAction } from 'components/DetailsPanel';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { UseRowNavigationResult } from 'components/TanStackTableView/useRowNavigation';
+import {
+	logOpenTraceClicked,
+	OpenTraceSource,
+} from 'container/TracesExplorer/events';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
 import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { SpanDetailVariant } from 'pages/TraceDetailsV3/SpanDetailsPanel/constants';
@@ -48,7 +53,10 @@ function SpanDrawer({
 						color="secondary"
 						size="md"
 						prefix={<CornerUpRight />}
-						onClick={(): void => openInNewTab(getTraceLink(row))}
+						onClick={(): void => {
+							logOpenTraceClicked(PANEL_TYPES.LIST, OpenTraceSource.SpanDrawer);
+							openInNewTab(getTraceLink(row));
+						}}
 						testId="span-drawer-view-full-trace"
 					>
 						View full trace
