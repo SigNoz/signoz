@@ -14,6 +14,7 @@ import {
 	GCP_CREDENTIALS_URL,
 	pendingAgentAccountResponse,
 } from '../../../__tests__/mockData';
+import { selectRegion } from '../../../__tests__/regionTestUtils';
 
 export const DEPLOYMENT_PROJECT_ID = 'my-deployment-project-123';
 
@@ -58,8 +59,7 @@ export const fillAgentForm = async (
 		screen.getByTestId('gcp-deployment-project-id-input-field'),
 		DEPLOYMENT_PROJECT_ID,
 	);
-	await user.click(screen.getByTestId('gcp-deployment-region-select'));
-	await user.click(await screen.findByText('Mumbai (asia-south1)'));
+	await selectRegion(user, 'Mumbai');
 };
 
 export interface AgentSetupApiMock {
