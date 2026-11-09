@@ -2,6 +2,7 @@ package clickhousetelemetrystore
 
 import (
 	"context"
+	"log/slog"
 
 	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -347,9 +348,14 @@ func open(dsn string, connection telemetrystore.ConnectionConfig) (clickhouse.Co
 
 // connFor falls back to the default connection, which has no profile, when the profile of ctx is not configured.
 func (p *provider) connFor(ctx context.Context) clickhouse.Conn {
-	if conn, ok := p.profileConns[telemetrystore.ProfileFromContext(ctx)]; ok {
+	profile := telemetrystore.ProfileFromContext(ctx)
+	if profile == "" {
+		return p.clickHouseConn
+	}
+	if conn, ok := p.profileConns[profile]; ok {
 		return conn
 	}
+	p.settings.Logger().WarnContext(ctx, "clickhouse settings profile is not configured, running the query without it", slog.String("profile", profile))
 	return p.clickHouseConn
 }
 
