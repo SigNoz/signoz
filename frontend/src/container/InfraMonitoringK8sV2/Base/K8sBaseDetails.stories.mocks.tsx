@@ -1,6 +1,6 @@
 import { rest } from 'msw';
 
-import { toggleControl } from '@/storybook/controls/controls';
+import { countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
 export const POD_UID = '63edbad0-398e-48e5-baba-f7ded7c73f1b';
@@ -46,9 +46,10 @@ const list = (records: unknown[]): Record<string, unknown> => ({
 
 export const drawerMocks = defineStoryMocks({
 	controls: {
-		openedFromANode: toggleControl('Opened from a node', {
+		earlierSteps: countControl('Earlier steps in the trail', {
 			group: 'Drawer',
-			value: true,
+			value: 1,
+			max: 4,
 		}),
 	},
 	handlers: () => [

@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { ArrowLeft } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 import { Drawer } from '@signozhq/ui/drawer';
 import { toast } from '@signozhq/ui/toast';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
@@ -144,10 +142,8 @@ export default function K8sBaseDetails<T>({
 		}
 	}, [selectedItem, markDrawerOpened, markDrawerClosed]);
 
-	const previousEntry = useDrawerHistoryStore(
-		(store) => store.entries[store.entries.length - 1] ?? null,
-	);
-	const popDrawerHistory = useDrawerHistoryStore((store) => store.pop);
+	const historyEntries = useDrawerHistoryStore((store) => store.entries);
+	const trimDrawerHistory = useDrawerHistoryStore((store) => store.trimTo);
 	const primeDetails = usePrimeEntityDetails();
 	const resetHistory = useDrawerHistoryStore((store) => store.reset);
 
@@ -156,17 +152,29 @@ export default function K8sBaseDetails<T>({
 		setSelectedItemParams(null);
 	}, [resetHistory, setSelectedItemParams]);
 
-	// Steps back through resources opened from an overview tab
-	const handleBack = useCallback((): void => {
-		const previous = popDrawerHistory();
+	const trail = useMemo(
+		() =>
+			historyEntries.map((entry) => ({
+				title: entry.label,
+				icon: <CategoryIcon category={entry.category} />,
+			})),
+		[historyEntries],
+	);
 
-		if (!previous) {
-			return;
-		}
+	const handleTrailSelect = useCallback(
+		(index: number): void => {
+			const target = historyEntries[index];
 
-		primeDetails(previous);
-		setSelectedItemParams(previous.params);
-	}, [popDrawerHistory, primeDetails, setSelectedItemParams]);
+			if (!target) {
+				return;
+			}
+
+			trimDrawerHistory(index);
+			primeDetails(target);
+			setSelectedItemParams(target.params);
+		},
+		[historyEntries, trimDrawerHistory, primeDetails, setSelectedItemParams],
+	);
 
 	const handleCopyId = useCallback((): void => {
 		toast.success(
@@ -188,12 +196,6 @@ export default function K8sBaseDetails<T>({
 		};
 	}, [entity, entityName, category]);
 
-	// Names the resource it returns to, so a drill several levels deep stays clear
-	const backTarget = previousEntry
-		? `Back to ${K8S_CATEGORY_SINGULAR_LABELS[previousEntry.category]}`
-		: '';
-	const backLabel = previousEntry ? `${backTarget}: ${previousEntry.label}` : '';
-
 	const drawerTitle =
 		entityName ||
 		((isEntityError || hasResponseError) && 'Failed to load entity details') ||
@@ -210,21 +212,9 @@ export default function K8sBaseDetails<T>({
 			width="entity"
 			title={drawerTitle}
 			loading={isEntityLoading || !selectedItem}
-			headerPrefix={
-				previousEntry ? (
-					<Button
-						variant="ghost"
-						size="sm"
-						color="secondary"
-						onClick={handleBack}
-						testId="drawer-back-button"
-						aria-label={backLabel}
-						prefix={<ArrowLeft size={14} />}
-					>
-						{backTarget}
-					</Button>
-				) : undefined
-			}
+			crumb={{ icon: <CategoryIcon category={category} /> }}
+			trail={trail}
+			onTrailSelect={handleTrailSelect}
 			titlePrefix={
 				<span className={styles.entityKind} data-testid="drawer-entity-kind">
 					<CategoryIcon category={category} />
