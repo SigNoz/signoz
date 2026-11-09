@@ -41,6 +41,8 @@ export const SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS = 1000;
 // Long enough for the pointer to cross from the row into the card.
 export const SAVED_VIEW_HOVER_CARD_CLOSE_DELAY_MS = 150;
 
+export const SAVED_VIEW_HOVER_CARD_WIDTH = 324;
+
 export const SAVED_VIEW_UPDATED_AT_FORMAT = 'HH:mm:ss — MMM D, YYYY';
 
 export const SAVE_VIEW_MODAL_TITLE: Record<SaveViewModalMode, string> = {
