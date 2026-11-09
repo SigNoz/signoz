@@ -343,10 +343,24 @@ export const connectAzureAccount = async (
 	);
 };
 
+/**
+ * The popup mounts, search row included, a few frames before it opens, and its
+ * positioner ignores the pointer until then.
+ */
+const openGcpCombobox = async (testId: string): Promise<void> => {
+	const trigger = screen.getByTestId(testId);
+
+	await userEvent.click(trigger);
+	await waitFor(
+		() => expect(trigger).toHaveAttribute('data-popup-open'),
+		untilLoaded,
+	);
+};
+
 const selectGcpRegion = async (label: string): Promise<void> => {
-	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
+	await openGcpCombobox('gcp-deployment-region-select');
 	await userEvent.type(
-		await screen.findByTestId('gcp-deployment-region-select-search'),
+		screen.getByTestId('gcp-deployment-region-select-search'),
 		`${label}{Enter}`,
 	);
 };
@@ -355,7 +369,7 @@ const addGcpProjectId = async (
 	testId: string,
 	projectId: string,
 ): Promise<void> => {
-	await userEvent.click(screen.getByTestId(testId));
+	await openGcpCombobox(testId);
 	await userEvent.type(
 		await screen.findByPlaceholderText('Type a project ID and press Enter'),
 		`${projectId}{Enter}`,
