@@ -72,6 +72,10 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
+	if profile := telemetrystore.ProfileFromContext(ctx); profile != "" {
+		settings["profile"] = profile
+	}
+
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
 	return ctx
 }
