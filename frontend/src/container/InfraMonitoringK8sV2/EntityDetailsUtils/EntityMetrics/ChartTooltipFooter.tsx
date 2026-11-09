@@ -5,6 +5,8 @@ import logEvent from 'api/common/logEvent';
 import { Events } from 'constants/events';
 import { DEFAULT_PIN_TOOLTIP_KEY } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
+import footerStyles from 'lib/visualization/panels/components/TooltipFooter.module.scss';
+
 import styles from './ChartTooltipFooter.module.scss';
 import { Typography } from '@signozhq/ui/typography';
 
@@ -36,9 +38,9 @@ export default function ChartTooltipFooter({
 				{isPinned ? (
 					<Typography.Text className={styles.hint} size="small">
 						<span>Press</span>
-						<Kbd active>{pinKey.toUpperCase()}</Kbd>
+						<Kbd value={pinKey} testId="entity-chart-tooltip-pin-key" />
 						<span>or</span>
-						<Kbd active>Esc</Kbd>
+						<Kbd value="Escape" testId="entity-chart-tooltip-escape-key" />
 						<span>to unpin</span>
 					</Typography.Text>
 				) : (
@@ -49,15 +51,15 @@ export default function ChartTooltipFooter({
 								size="small"
 								data-active="false"
 							>
-								<Kbd>
+								<span className={footerStyles.pointerKey} aria-hidden="true">
 									<MousePointerClick size={12} />
-								</Kbd>
+								</span>
 								<span>Click and drag to zoom into a time range</span>
 							</Typography.Text>
 						)}
 						<Typography.Text className={styles.hint} size="small" data-active="false">
 							<span>Press</span>
-							<Kbd>{pinKey.toUpperCase()}</Kbd>
+							<Kbd value={pinKey} testId="entity-chart-tooltip-pin-key" />
 							<span>to pin the tooltip</span>
 						</Typography.Text>
 					</div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { UrlUpdateEvent } from 'nuqs/adapters/testing';
 
@@ -175,6 +175,21 @@ describe('TanStackTableView Integration', () => {
 					.pop();
 				expect(lastPage).toBe('2');
 			});
+		});
+
+		it('does not render the page bar when every row fits on one page', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: { total: 5, defaultPage: 1, defaultLimit: 10 },
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			expect(screen.queryByTestId('pagination')).not.toBeInTheDocument();
+			expect(screen.getByTestId('pagination-page-size')).toBeInTheDocument();
 		});
 
 		it('does not render pagination in infinite scroll mode', async () => {
@@ -436,8 +451,8 @@ describe('TanStackTableView Integration', () => {
 				queryParams: { page: '3' },
 			});
 
-			const nav = await screen.findByRole('navigation');
-			const page3Button = within(nav).getByRole('button', { name: '3' });
+			await screen.findByTestId('pagination');
+			const page3Button = screen.getByTestId('pagination-page-3');
 
 			// Page 3 should be active (from URL), not reset to defaultPage 1
 			expect(page3Button).toHaveAttribute('aria-current', 'page');

@@ -16,7 +16,7 @@ export function AuthZDevModalFooter({
 		<div className={styles.footer}>
 			<div className={styles.hint}>
 				<span className={styles.hintGroup}>
-					<Kbd>Esc</Kbd>
+					<Kbd value="Escape" testId="authz-dev-modal-escape-key" />
 					<Typography.Text as="span" size="small" color="muted">
 						close
 					</Typography.Text>

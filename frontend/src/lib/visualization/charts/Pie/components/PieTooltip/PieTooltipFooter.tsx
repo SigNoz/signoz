@@ -33,16 +33,16 @@ export default function PieTooltipFooter({
 			<div className={footerStyles.hintList}>
 				{clickHint && (
 					<div className={footerStyles.hint} data-active="false">
-						<Kbd>
+						<span className={footerStyles.pointerKey} aria-hidden="true">
 							<MousePointerClick size={12} />
-						</Kbd>
+						</span>
 						<span>{clickHint}</span>
 					</div>
 				)}
 				{isPinned && (
 					<div className={footerStyles.hint} data-active="false">
 						<span>Press</span>
-						<Kbd>Esc</Kbd>
+						<Kbd value="Escape" testId="pie-tooltip-escape-key" />
 						<span>to unpin</span>
 					</div>
 				)}

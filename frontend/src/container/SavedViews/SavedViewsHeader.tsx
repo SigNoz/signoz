@@ -132,12 +132,9 @@ function SavedViewsHeader({
 					/>
 				)}
 				{isLoading ? (
-					<Skeleton.Input
-						active
-						size="small"
-						className={styles.skeleton}
-						testId="saved-views-loading"
-					/>
+					<div className={styles.skeleton}>
+						<Skeleton.Input size="sm" testId="saved-views-loading" />
+					</div>
 				) : (
 					<SavedViewsNameToggle
 						isOpen={isViewsOpen}

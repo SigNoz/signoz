@@ -437,7 +437,7 @@ export function alertsDriver(page: Page): Alerts {
 		newAlertButton: () => page.getByTestId('list-alerts-new-alert-button'),
 		columnHeader: (name) => page.getByRole('columnheader', { name }),
 		sortButton: (name) => page.getByRole('button', { name }),
-		nextPageButton: () => page.getByLabel('Go to next page'),
+		nextPageButton: () => page.getByTestId('pagination-next'),
 		pageSizeSelect: () => page.getByTestId('pagination-page-size'),
 		pageSizeOption: (size) =>
 			page.getByRole('option', { name: String(size), exact: true }),

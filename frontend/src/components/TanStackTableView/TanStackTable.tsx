@@ -664,15 +664,19 @@ function TanStackTableInner<TData, TItemKey = string>(
 								{pagination.totalCountLabel ? ` ${pagination.totalCountLabel}` : ''}
 							</span>
 						)}
-						<Pagination
-							current={page}
-							pageSize={limit}
-							total={effectiveTotalCount}
-							onPageChange={(p): void => {
-								setPage(p);
-								pagination.onPageChange?.(p);
-							}}
-						/>
+						{effectiveTotalCount > limit && (
+							<Pagination
+								testId={testId ? `${testId}-pagination` : 'pagination'}
+								current={page}
+								pageSize={limit}
+								total={effectiveTotalCount}
+								showTotal={false}
+								onPageChange={(p): void => {
+									setPage(p);
+									pagination.onPageChange?.(p);
+								}}
+							/>
+						)}
 						{pagination.showPageSize !== false && (
 							<div className={viewStyles.paginationPageSize}>
 								<Combobox

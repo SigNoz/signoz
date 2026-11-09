@@ -6,13 +6,10 @@
 	object-fit: contain;
 }
 
-// Cap the dashboard-name segment so a long title ellipsizes on one line instead
-// of stretching the breadcrumb row.
-.title {
-	display: inline-block;
-	max-width: 480px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	vertical-align: middle;
+// Cap each crumb so a long dashboard name ellipsizes on one line instead of
+// stretching the breadcrumb row.
+.breadcrumbs {
+	--breadcrumb-item-max-width: 480px;
+
+	min-width: 0;
 }

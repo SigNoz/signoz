@@ -118,9 +118,10 @@
 	gap: 12px;
 	margin-top: 12px;
 
-	ul {
-		padding: 0;
-	}
+	--pagination-inline-size: auto;
+	--pagination-padding-block: 0;
+	--pagination-padding-inline-start: 0;
+	--pagination-padding-inline-end: 0;
 }
 
 .paginationPageSize {

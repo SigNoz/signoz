@@ -10,9 +10,8 @@ interface ThreadPageLoaderProps {
 function ThreadPageLoader({ testId }: ThreadPageLoaderProps): JSX.Element {
 	return (
 		<div className={styles.pageLoader} data-testid={testId}>
-			<Skeleton active title={{ width: 48 }} paragraph={{ rows: 1 }} />
+			<Skeleton title={{ width: 48 }} paragraph={{ rows: 1 }} />
 			<Skeleton
-				active
 				title={{ width: 112 }}
 				paragraph={{ rows: 3, width: ['100%', '100%', 160] }}
 			/>

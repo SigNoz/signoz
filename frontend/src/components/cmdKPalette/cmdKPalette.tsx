@@ -26,6 +26,7 @@ import {
 	createShortcutActions,
 } from '../../constants/shortcutActions';
 import { useCmdK } from '../../providers/cmdKProvider';
+import { toKbdKeys } from './utils';
 
 import './cmdKPalette.scss';
 
@@ -139,10 +140,7 @@ export function CmdKPalette({
 		label: action.name,
 		prefix: action.icon,
 		searchMetadata: action.keywords,
-		shortcut:
-			action.shortcut && action.shortcut.length > 0
-				? action.shortcut.join(' • ')
-				: undefined,
+		shortcut: toKbdKeys(action.shortcut),
 		onClick: (): void => {
 			// the palette closes itself after a pick, also when this throws
 			try {

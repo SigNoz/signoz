@@ -18,6 +18,10 @@ $light-theme: 'lightMode';
 		background: var(--card);
 	}
 
+	.#{$ant-card-override}-meta-avatar {
+		--avatar-md-size: 48px;
+	}
+
 	.#{$ant-card-override}-meta-title {
 		margin-bottom: 2px !important;
 	}
