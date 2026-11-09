@@ -35,7 +35,16 @@ function FormField({
 		<div className={styles.field}>
 			{!!label && (
 				<label className={styles.label} htmlFor={htmlFor}>
-					<Typography.Text size="sm">{label}</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{label}
+					</Typography>
 					{!!required && (
 						<span aria-hidden="true" className={styles.required}>
 							*
@@ -50,9 +59,16 @@ function FormField({
 			)}
 			{children}
 			{!!error && (
-				<Typography.Text size="sm" color="danger">
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="danger"
+					as="span"
+					textOverflow="wrap"
+				>
 					{error}
-				</Typography.Text>
+				</Typography>
 			)}
 		</div>
 	);

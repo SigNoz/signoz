@@ -33,9 +33,16 @@ function BuilderUnitsFilter({
 
 	return (
 		<Space className="builder-units-filter">
-			<Typography.Text className="builder-units-filter-label">
+			<Typography
+				/* TODO(typography): font-size differs by parent (12px under .meterTimeSeriesContainer) */ variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				Y-axis unit
-			</Typography.Text>
+			</Typography>
 			<Select
 				getPopupContainer={getPopupContainer}
 				style={selectStyles}

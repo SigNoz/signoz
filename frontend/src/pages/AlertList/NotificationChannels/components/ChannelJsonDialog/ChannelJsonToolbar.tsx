@@ -23,9 +23,16 @@ function ChannelJsonToolbar({
 	return (
 		<div className={styles.toolbar}>
 			{kindHasSecrets && (
-				<Typography.Text color="muted" size="sm">
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					{showSecrets ? 'Credentials are visible.' : 'Credentials are hidden.'}
-				</Typography.Text>
+				</Typography>
 			)}
 			<span className={styles.spacer} />
 			{kindHasSecrets && (

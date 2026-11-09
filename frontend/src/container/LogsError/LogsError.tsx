@@ -22,13 +22,27 @@ export default function LogsError(): JSX.Element {
 		<div className="logs-error-container">
 			<div className="logs-error-content">
 				<img src={awwSnapUrl} alt="error-emoji" className="error-state-svg" />
-				<Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					<span className="aww-snap">Aw snap :/ </span> Something went wrong. Please
 					try again or contact support.
-				</Typography.Text>
+				</Typography>
 
 				<div className="contact-support" onClick={handleContactSupport}>
-					<Typography.Link className="text">Contact Support </Typography.Link>
+					<Typography.Link
+						/* TODO(typography): a link with no href renders plain text: a click that does not navigate is a Button with variant="link" */ variant="paragraph"
+						size="base"
+						weight="medium"
+						textOverflow="wrap"
+					>
+						Contact Support{' '}
+					</Typography.Link>
 
 					<ArrowRight size={14} />
 				</div>

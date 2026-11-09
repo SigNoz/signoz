@@ -20,9 +20,18 @@ export function ScheduleList({
 			<div className="schedule-preview" data-testid="schedule-preview">
 				<div className="schedule-preview-header">
 					<Calendar size={16} />
-					<Typography.Text className="schedule-preview-title">
-						Schedule Preview
-					</Typography.Text>
+					<span className="schedule-preview-title">
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="medium"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Schedule Preview
+						</Typography>
+					</span>
 				</div>
 				<div className="schedule-preview-list">
 					{schedule.map((date) => (
@@ -63,9 +72,16 @@ export function ScheduleList({
 	return (
 		<div className="no-schedule" data-testid="no-schedule">
 			<Info size={32} />
-			<Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				Please fill the relevant information to generate a schedule
-			</Typography.Text>
+			</Typography>
 		</div>
 	);
 }

@@ -27,21 +27,48 @@ export const getLogPanelColumnsList = (
 				render: (value: ReactNode): JSX.Element => {
 					if (name === 'timestamp') {
 						return (
-							<Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
 								{formatTimezoneAdjustedTimestamp(value as string)}
-							</Typography.Text>
+							</Typography>
 						);
 					}
 
 					if (name === 'body') {
 						return (
-							<Typography.Text truncate={1} data-testid={name}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="p"
+								textOverflow="ellipsis"
+								data-testid={name}
+							>
 								{value}
-							</Typography.Text>
+							</Typography>
 						);
 					}
 
-					return <Typography.Text data-testid={name}>{value}</Typography.Text>;
+					return (
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+							data-testid={name}
+						>
+							{value}
+						</Typography>
+					);
 				},
 				responsive: ['md'],
 			};

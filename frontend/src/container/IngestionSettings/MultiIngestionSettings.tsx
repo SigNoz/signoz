@@ -989,16 +989,32 @@ function MultiIngestionSettings(): JSX.Element {
 							<div className="title-with-action">
 								<div className="ingestion-key-data">
 									<div className="ingestion-key-title">
-										<Typography.Text>{APIKey?.name}</Typography.Text>
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="inherit"
+											as="span"
+											textOverflow="wrap"
+										>
+											{APIKey?.name}
+										</Typography>
 									</div>
 
 									<div className="ingestion-key-value">
-										<Typography.Text>
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="inherit"
+											as="span"
+											textOverflow="wrap"
+										>
 											{APIKey?.value?.slice(0, 2)}********
 											{APIKey?.value
 												?.substring(APIKey?.value?.length ? APIKey.value.length - 2 : 0)
 												?.trim()}
-										</Typography.Text>
+										</Typography>
 
 										<Copy className="copy-key-btn" size={12} onClick={onCopyKey} />
 									</div>
@@ -1032,14 +1048,32 @@ function MultiIngestionSettings(): JSX.Element {
 								<Row>
 									<Col span={6}> ID </Col>
 									<Col span={12}>
-										<Typography.Text>{APIKey?.id}</Typography.Text>
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="inherit"
+											as="span"
+											textOverflow="wrap"
+										>
+											{APIKey?.id}
+										</Typography>
 									</Col>
 								</Row>
 
 								<Row>
 									<Col span={6}> Created on </Col>
 									<Col span={12}>
-										<Typography.Text>{createdOn}</Typography.Text>
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="inherit"
+											as="span"
+											textOverflow="wrap"
+										>
+											{createdOn}
+										</Typography>
 									</Col>
 								</Row>
 
@@ -1047,7 +1081,16 @@ function MultiIngestionSettings(): JSX.Element {
 									<Row>
 										<Col span={6}> Updated on </Col>
 										<Col span={12}>
-											<Typography.Text>{updatedOn}</Typography.Text>
+											<Typography
+												variant="paragraph"
+												size="base"
+												weight="regular"
+												color="inherit"
+												as="span"
+												textOverflow="wrap"
+											>
+												{updatedOn}
+											</Typography>
 										</Col>
 									</Row>
 								)}
@@ -1593,7 +1636,16 @@ function MultiIngestionSettings(): JSX.Element {
 													<CalendarClock size={14} /> Expires on <Minus size={12} />
 												</>
 											)}
-											<Typography.Text>{expiresOn}</Typography.Text>
+											<Typography
+												variant="paragraph"
+												size="base"
+												weight="regular"
+												color="inherit"
+												as="span"
+												textOverflow="wrap"
+											>
+												{expiresOn}
+											</Typography>
 										</>
 									);
 								})()}
@@ -1629,11 +1681,29 @@ function MultiIngestionSettings(): JSX.Element {
 		<div className="ingestion-key-container">
 			<div className="ingestion-key-content">
 				<header>
-					<Typography.Title level={4} className="title">
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="main"
+						as="h4"
+						display="flex"
+						gap={4}
+						width="72%"
+						marginY={4}
+						textOverflow="wrap"
+					>
 						{' '}
 						Ingestion Keys{' '}
-					</Typography.Title>
-					<Typography.Text color="muted">
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						Create and manage ingestion keys for the SigNoz Cloud{' '}
 						<a
 							href="https://signoz.io/docs/ingestion/signoz-cloud/keys/"
@@ -1643,7 +1713,7 @@ function MultiIngestionSettings(): JSX.Element {
 						>
 							Learn more <ArrowUpRight size={14} />
 						</a>
-					</Typography.Text>
+					</Typography>
 				</header>
 
 				{!isLoadingGlobalConfig && (
@@ -1667,13 +1737,27 @@ function MultiIngestionSettings(): JSX.Element {
 									arrow={false}
 									title={
 										<div className="ingestion-url-error-content">
-											<Typography.Text className="ingestion-url-error-code">
+											<Typography
+												variant="paragraph"
+												size="small"
+												weight="medium"
+												color="warning"
+												as="span"
+												textOverflow="wrap"
+											>
 												{globalConfigApiError?.getErrorCode()}
-											</Typography.Text>
+											</Typography>
 
-											<Typography.Text className="ingestion-url-error-message">
+											<Typography
+												variant="paragraph"
+												size="small"
+												weight="regular"
+												color="secondary"
+												as="span"
+												textOverflow="wrap"
+											>
 												{globalConfigApiError?.getErrorMessage()}
-											</Typography.Text>
+											</Typography>
 										</div>
 									}
 									placement="topLeft"
@@ -1764,11 +1848,18 @@ function MultiIngestionSettings(): JSX.Element {
 					</Button>,
 				]}
 			>
-				<Typography.Text className="delete-text">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{t('delete_confirm_message', {
 						keyName: activeAPIKey?.name,
 					})}
-				</Typography.Text>
+				</Typography>
 			</Modal>
 
 			{/* Delete Limit Modal */}
@@ -1804,12 +1895,19 @@ function MultiIngestionSettings(): JSX.Element {
 					</Button>,
 				]}
 			>
-				<Typography.Text className="delete-text">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{t('delete_limit_confirm_message', {
 						limit_name: activeSignal?.signal,
 						keyName: activeAPIKey?.name,
 					})}
-				</Typography.Text>
+				</Typography>
 			</Modal>
 
 			{/* Edit Modal */}

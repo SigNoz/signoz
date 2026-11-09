@@ -86,12 +86,28 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 					<div className="reset-password-header-icon">
 						<KeyRound size={32} />
 					</div>
-					<Typography.Title level={4} className="reset-password-header-title">
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="main"
+						as="h4"
+						textOverflow="wrap"
+					>
 						Reset Your Password
-					</Typography.Title>
-					<Typography.Text color="muted">
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						align="center"
+						textOverflow="wrap"
+					>
 						Monitor your applications. Find what is causing issues.
-					</Typography.Text>
+					</Typography>
 					{version && (
 						<div className="reset-password-version-badge">SigNoz {version}</div>
 					)}

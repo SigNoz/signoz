@@ -433,9 +433,25 @@ export function NotificationChannelsNotFoundContent({
 	return (
 		<Flex justify="space-between">
 			<Flex gap={4} align="center">
-				<Typography.Text>No channels yet.</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					No channels yet.
+				</Typography>
 				{user?.role === USER_ROLES.ADMIN ? (
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						Create one
 						<Button
 							style={{ padding: '0 4px' }}
@@ -446,9 +462,18 @@ export function NotificationChannelsNotFoundContent({
 						>
 							here.
 						</Button>
-					</Typography.Text>
+					</Typography>
 				) : (
-					<Typography.Text>Please ask your admin to create one.</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Please ask your admin to create one.
+					</Typography>
 				)}
 			</Flex>
 			<Button type="text" onClick={refreshChannels}>
@@ -465,9 +490,16 @@ export function RoutingPolicyBanner({
 	const { safeNavigate } = useSafeNavigate();
 	return (
 		<div className="routing-policies-info-banner">
-			<Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				Use <strong>Routing Policies</strong> for dynamic routing
-			</Typography.Text>
+			</Typography>
 			<div className="routing-policies-info-banner-right">
 				<Switch
 					color="primary"

@@ -225,9 +225,16 @@ function GraphView({
 							});
 						}}
 					/>
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{viewType === 'graph' ? 'Graph View' : 'Table View'}
-					</Typography.Text>
+					</Typography>
 				</div>
 			</div>
 			<div className="graph-view-container">

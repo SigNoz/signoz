@@ -58,13 +58,17 @@ function AnomalyThreshold({
 			<div className="alert-condition-sentences">
 				{/* Sentence 1 */}
 				<div className="alert-condition-sentence">
-					<Typography.Text
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						textOverflow="wrap"
 						data-testid="notification-text"
-						className="sentence-text"
-						color="muted"
 					>
 						Send a notification when
-					</Typography.Text>
+					</Typography>
 					<Select
 						value={thresholdState.selectedQuery}
 						data-testid="query-select"
@@ -77,13 +81,17 @@ function AnomalyThreshold({
 						}}
 						options={queryNames}
 					/>
-					<Typography.Text
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						textOverflow="wrap"
 						data-testid="threshold-text"
-						className="sentence-text"
-						color="muted"
 					>
 						is
-					</Typography.Text>
+					</Typography>
 					<Select
 						value={
 							(normalizeOperator(thresholdState.operator) ??
@@ -99,13 +107,17 @@ function AnomalyThreshold({
 						}}
 						options={ANOMALY_THRESHOLD_OPERATOR_OPTIONS}
 					/>
-					<Typography.Text
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						textOverflow="wrap"
 						data-testid="predicted-data-text"
-						className="sentence-text"
-						color="muted"
 					>
 						the prediction
-					</Typography.Text>
+					</Typography>
 					<Select
 						value={
 							(normalizeMatchType(thresholdState.matchType) ??
@@ -121,23 +133,33 @@ function AnomalyThreshold({
 						}}
 						options={ANOMALY_THRESHOLD_MATCH_TYPE_OPTIONS}
 					/>
-					<Typography.Text
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						display="flex"
+						gap={4}
+						textOverflow="wrap"
 						data-testid="evaluation-window-text"
-						className="sentence-text"
-						color="muted"
 					>
 						during the <EvaluationSettings rollingOnly />
-					</Typography.Text>
+					</Typography>
 				</div>
 				<div className="alert-condition-sentence">
 					{/* Sentence 2 */}
-					<Typography.Text
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						textOverflow="wrap"
 						data-testid="using-the-text"
-						className="sentence-text"
-						color="muted"
 					>
 						using the
-					</Typography.Text>
+					</Typography>
 					<Select
 						value={thresholdState.algorithm}
 						data-testid="algorithm-select"
@@ -150,13 +172,17 @@ function AnomalyThreshold({
 						}}
 						options={ANOMALY_ALGORITHM_OPTIONS}
 					/>
-					<Typography.Text
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						textOverflow="wrap"
 						data-testid="algorithm-with-text"
-						className="sentence-text"
-						color="muted"
 					>
 						algorithm with
-					</Typography.Text>
+					</Typography>
 					<Select
 						value={thresholdState.seasonality}
 						data-testid="seasonality-select"
@@ -169,13 +195,17 @@ function AnomalyThreshold({
 						}}
 						options={ANOMALY_SEASONALITY_OPTIONS}
 					/>
-					<Typography.Text
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						textOverflow="wrap"
 						data-testid="seasonality-text"
-						className="sentence-text"
-						color="muted"
 					>
 						seasonality
-					</Typography.Text>
+					</Typography>
 				</div>
 			</div>
 			{/* Sentence 3 */}

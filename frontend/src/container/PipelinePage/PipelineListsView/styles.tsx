@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button, Table, TableProps } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import { themeColors } from 'constants/theme';
 import { StyledCSS } from 'types/styledComponents';
 import styled from 'styled-components';
@@ -85,13 +84,6 @@ export const LastActionColumn = styled.div`
 	justify-content: center;
 	gap: 1.25rem;
 	align-items: center;
-`;
-
-export const ModalTitle = styled(Typography.Title)`
-	font-style: normal;
-	font-weight: 600;
-	font-size: 1.125rem;
-	line-height: 1.5rem;
 `;
 
 export const ModalButtonWrapper = styled.div`

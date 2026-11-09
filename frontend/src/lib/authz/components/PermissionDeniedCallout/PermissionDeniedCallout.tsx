@@ -33,7 +33,14 @@ function PermissionDeniedCallout({
 	return (
 		<div className={cx(styles.callout, className)}>
 			<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
-				<Typography.Text className={styles.permission}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					<code className={styles.permissionCode}>user/{user.id}</code> is not
 					authorized to perform{' '}
 					{formattedPermissions.map((perm, idx) => (
@@ -42,7 +49,7 @@ function PermissionDeniedCallout({
 							{idx < formattedPermissions.length - 1 && ', '}
 						</span>
 					))}
-				</Typography.Text>
+				</Typography>
 			</Callout>
 		</div>
 	);

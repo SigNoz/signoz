@@ -54,21 +54,28 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 	return (
 		<>
 			<FormCard title={t('section_connection')}>
-				<Typography.Text
-					color="muted"
-					size="sm"
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="p"
+					marginBottom={8}
+					textOverflow="wrap"
 					testId="incidentio-tip"
-					style={{ display: 'block', marginBottom: 16 }}
 				>
 					{t('incidentio_tip')}{' '}
 					<Typography.Link
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						textOverflow="wrap"
 						href="https://signoz.io/docs/alerts-management/notification-channel/incidentio/"
 						target="_blank"
-						rel="noopener noreferrer"
 					>
 						{t('incidentio_tip_link')}
 					</Typography.Link>
-				</Typography.Text>
+				</Typography>
 
 				<FormField
 					label={t('field_incidentio_url')}

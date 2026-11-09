@@ -117,9 +117,16 @@ function AddedFields({
 			<div className={styles.sectionHeader}>
 				<span>ADDED FIELDS</span>
 				{maxFields !== undefined && (
-					<Typography.Text size="sm" weight="medium" color="muted">
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="medium"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						Max Allowed: {maxFields}
-					</Typography.Text>
+					</Typography>
 				)}
 			</div>
 			<div className={styles.addedList}>

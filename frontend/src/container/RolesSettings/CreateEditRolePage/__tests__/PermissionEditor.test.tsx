@@ -384,7 +384,7 @@ describe('PermissionEditor', () => {
 			).toBeInTheDocument();
 		});
 
-		it('exposes the full item value as a title so truncated badges stay readable', async () => {
+		it('cuts long badge values with an ellipsis so the full value shows on hover', async () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
 			await expandResourceCard('factor-api-key');
@@ -402,8 +402,8 @@ describe('PermissionEditor', () => {
 
 			const badge = await screen.findByTestId('item-badge-factor-api-key-read-0');
 			expect(
-				within(badge).getByTitle('a-very-long-api-key-identifier-000001'),
-			).toBeInTheDocument();
+				within(badge).getByText('a-very-long-api-key-identifier-000001'),
+			).toHaveAttribute('data-text-overflow', 'ellipsis');
 		});
 
 		it('moves focus to the previous badge when closed with the keyboard', async () => {

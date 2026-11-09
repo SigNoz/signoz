@@ -31,17 +31,33 @@ function AdvancedOptionItem({
 	return (
 		<div className="advanced-option-item" data-testid={dataTestId}>
 			<div className="advanced-option-item-left-content">
-				<Typography.Text className="advanced-option-item-title">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="secondary"
+					as="p"
+					display="flex"
+					gap={4}
+					textOverflow="wrap"
+				>
 					{title}
 					{tooltipText && (
 						<Tooltip title={tooltipText}>
 							<Info data-testid="tooltip-icon" size={16} />
 						</Tooltip>
 					)}
-				</Typography.Text>
-				<Typography.Text className="advanced-option-item-description">
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					{description}
-				</Typography.Text>
+				</Typography>
 			</div>
 			<div className="advanced-option-item-right-content">
 				<div

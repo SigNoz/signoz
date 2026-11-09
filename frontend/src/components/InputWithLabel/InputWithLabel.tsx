@@ -49,7 +49,20 @@ function InputWithLabel({
 				labelAfter,
 			})}
 		>
-			{!labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
+			{!labelAfter && (
+				<div className="label">
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="p"
+						textOverflow="ellipsis"
+					>
+						{label}
+					</Typography>
+				</div>
+			)}
 			<div
 				className={cx('input', {
 					'input__has-label-after': !labelAfter,
@@ -67,7 +80,20 @@ function InputWithLabel({
 					testId={`input-${label}`}
 				/>
 			</div>
-			{labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
+			{labelAfter && (
+				<div className="label">
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="p"
+						textOverflow="ellipsis"
+					>
+						{label}
+					</Typography>
+				</div>
+			)}
 			{onClose && (
 				<Button
 					className="periscope-btn ghost close-btn"

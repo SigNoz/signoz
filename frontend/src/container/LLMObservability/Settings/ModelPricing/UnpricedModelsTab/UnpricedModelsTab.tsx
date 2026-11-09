@@ -90,9 +90,18 @@ function UnpricedModelsTab(): JSX.Element {
 
 			{isError && (
 				<div className={styles.error}>
-					<Typography.Text as="p" size="small" color="danger" role="alert">
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="danger"
+						as="p"
+						display="inline"
+						textOverflow="wrap"
+						role="alert"
+					>
 						Failed to load unpriced models. Please try again.
-					</Typography.Text>
+					</Typography>
 				</div>
 			)}
 

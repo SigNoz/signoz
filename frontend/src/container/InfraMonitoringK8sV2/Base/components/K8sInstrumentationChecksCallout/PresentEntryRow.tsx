@@ -29,25 +29,57 @@ export function PresentEntryRow({
 	return (
 		<div className={styles.entryRow}>
 			<CircleCheck size={14} className={styles.presentIcon} />
-			<Typography.Text size="base" weight="medium">
-				{typeLabel}
-			</Typography.Text>
-			<Typography.Text size="base" color="muted">
-				-
-			</Typography.Text>
-			<Typography.Text
+			<Typography
+				variant="paragraph"
 				size="base"
-				weight="semibold"
-				className={styles.entryRowMetric}
+				weight="medium"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{typeLabel}
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
+				-
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="bold"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
 			>
 				{items?.join(', ')}
-			</Typography.Text>
-			<Typography.Text size="base" color="muted">
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				-
-			</Typography.Text>
-			<Typography.Text size="base" italic color="muted">
+			</Typography>
+			<Typography
+				// TODO(typography): italic has no equivalent
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				{entry.associatedComponent.name}
-			</Typography.Text>
+			</Typography>
 			<Divider />
 		</div>
 	);

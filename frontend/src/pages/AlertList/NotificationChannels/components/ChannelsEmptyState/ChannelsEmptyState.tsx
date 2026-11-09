@@ -18,13 +18,29 @@ function ChannelsEmptyState({
 	return (
 		<div className={styles.emptyState} data-testid="channels-empty-state">
 			<Bell className={styles.icon} size={16} />
-			<Typography.Text className={styles.title}>
+			<Typography
+				variant="paragraph"
+				size="medium"
+				weight="medium"
+				color="main"
+				as="span"
+				textOverflow="wrap"
+			>
 				No notification channels yet
-			</Typography.Text>
-			<Typography.Text className={styles.subtitle}>
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				display="inline-block"
+				maxWidth={420}
+				textOverflow="wrap"
+			>
 				A channel is where an alert ends up. Create one and your alert rules and
 				routing policies can point at it.
-			</Typography.Text>
+			</Typography>
 			<div className={styles.actions}>
 				<AuthZButton
 					checks={CREATE_CHECKS}

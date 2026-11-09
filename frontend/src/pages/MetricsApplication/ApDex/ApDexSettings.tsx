@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
+import { Typography } from '@signozhq/ui/typography';
 import { Card } from 'antd';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
@@ -19,7 +20,6 @@ import {
 	Button,
 	SaveAndCancelContainer,
 	SaveButton,
-	Typography,
 } from '../styles';
 import { onSaveApDexSettings } from '../utils';
 import { ApDexSettingsProps } from './types';
@@ -53,9 +53,11 @@ function ApDexSettings({
 
 	if (isLoading) {
 		return (
-			<Typography.Text style={{ color: themeColors.white }}>
-				<Spinner height="5vh" tip="Loading..." />
-			</Typography.Text>
+			<Spinner
+				height="5vh"
+				tip="Loading..."
+				style={{ color: themeColors.white }}
+			/>
 		);
 	}
 
@@ -84,7 +86,16 @@ function ApDexSettings({
 			]}
 		>
 			<AppDexThresholdContainer>
-				<Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="p"
+					width="24rem"
+					marginY={4}
+					textOverflow="wrap"
+				>
 					Apdex threshold (in seconds){' '}
 					<TextToolTip
 						text={apDexToolTipText}

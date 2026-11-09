@@ -69,12 +69,26 @@ function VolumeControlChart({ enabled }: VolumeControlChartProps): JSX.Element {
 	return (
 		<div className={styles.chart} data-testid="volume-control-chart">
 			<div className={styles.chartHeader}>
-				<Typography.Text className={styles.chartTitle} size={'small'}>
+				<Typography
+					variant="uppercase"
+					size="small"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					Sample volume · ingested vs retained
-				</Typography.Text>
-				<Typography.Text size="small" color="muted">
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Last 6 hours
-				</Typography.Text>
+				</Typography>
 			</div>
 			<div className={styles.chartBody} ref={graphRef}>
 				{isLoading && (
@@ -90,9 +104,16 @@ function VolumeControlChart({ enabled }: VolumeControlChartProps): JSX.Element {
 						className={styles.chartStatus}
 						data-testid="volume-control-chart-error"
 					>
-						<Typography.Text size="small" color="danger">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="danger"
+							as="span"
+							textOverflow="wrap"
+						>
 							Failed to load chart
-						</Typography.Text>
+						</Typography>
 					</div>
 				)}
 				{!isLoading && !isError && dimensions.width > 0 && (

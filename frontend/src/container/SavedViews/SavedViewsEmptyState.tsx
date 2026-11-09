@@ -19,19 +19,42 @@ function SavedViewsEmptyState({
 	if (isSearching) {
 		return (
 			<div className={styles.state} data-testid="saved-views-list-no-results">
-				<Typography.Text className={styles.stateText}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					No views match your search
-				</Typography.Text>
+				</Typography>
 			</div>
 		);
 	}
 
 	return (
 		<div className={styles.state} data-testid="saved-views-list-empty">
-			<Typography.Text className={styles.stateTitle}>No views yet</Typography.Text>
-			<Typography.Text className={styles.stateText}>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="medium"
+				color="main"
+				as="span"
+				textOverflow="wrap"
+			>
+				No views yet
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				Save the current view to open it later.
-			</Typography.Text>
+			</Typography>
 			<AuthZButton
 				checks={[SavedViewCreatePermission]}
 				variant="outlined"

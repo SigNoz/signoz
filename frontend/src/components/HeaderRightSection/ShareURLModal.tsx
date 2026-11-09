@@ -141,9 +141,16 @@ function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 			{(shareURLWithTime || isRouteToBeSharedWithTime) && (
 				<>
 					<div className="absolute-relative-time-toggler-container">
-						<Typography.Text className="absolute-relative-time-toggler-label">
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="medium"
+							color="main"
+							as="span"
+							textOverflow="wrap"
+						>
 							Enable absolute time
-						</Typography.Text>
+						</Typography>
 
 						<div className="absolute-relative-time-toggler">
 							{!isValidateRelativeTime && (
@@ -172,9 +179,16 @@ function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 
 			{extraOption && (
 				<div className="absolute-relative-time-toggler-container">
-					<Typography.Text className="absolute-relative-time-toggler-label">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="medium"
+						color="main"
+						as="span"
+						textOverflow="wrap"
+					>
 						{extraOption.label}
-					</Typography.Text>
+					</Typography>
 					<div className="absolute-relative-time-toggler">
 						<Switch
 							color="primary"
@@ -189,12 +203,26 @@ function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 			<div className="share-link">
 				<div className="url-share-container">
 					<div className="url-share-container-header">
-						<Typography.Text className="url-share-title">
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="medium"
+							color="main"
+							as="span"
+							textOverflow="wrap"
+						>
 							Share page link
-						</Typography.Text>
-						<Typography.Text className="url-share-sub-title">
+						</Typography>
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="tertiary"
+							as="span"
+							textOverflow="wrap"
+						>
 							Share the current page link with your team member
-						</Typography.Text>
+						</Typography>
 					</div>
 
 					<Button

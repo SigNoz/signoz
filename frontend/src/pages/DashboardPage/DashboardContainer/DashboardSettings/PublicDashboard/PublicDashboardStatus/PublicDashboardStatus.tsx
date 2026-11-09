@@ -25,18 +25,35 @@ function PublicDashboardStatus({
 			</span>
 
 			<div className={styles.statusBody}>
-				<Typography.Text className={styles.statusTitle}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="bold"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
 					{isPublic ? 'This dashboard is live' : 'This dashboard is private'}
-				</Typography.Text>
-				<Typography.Text
+				</Typography>
+				<span
 					className={cx(styles.statusSubtitle, {
 						[styles.statusSubtitleLive]: isPublic,
 					})}
 				>
-					{isPublic
-						? 'Anyone with the link can view it — no account needed.'
-						: 'Publish it to share a read-only view with anyone who has the link.'}
-				</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						display="block"
+						textOverflow="wrap"
+					>
+						{isPublic
+							? 'Anyone with the link can view it — no account needed.'
+							: 'Publish it to share a read-only view with anyone who has the link.'}
+					</Typography>
+				</span>
 			</div>
 
 			<Badge

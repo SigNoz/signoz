@@ -51,21 +51,53 @@ export default function QueryBuilderSearchDropdown(
 					<div className="suggested-filters">Suggested Filters</div>
 				) : !currentFilterItem?.op ? (
 					<div className="operator-for">
-						<Typography.Text className="operator-for-text">
+						<Typography
+							variant="uppercase"
+							size="small"
+							weight="bold"
+							color="tertiary"
+							as="span"
+							textOverflow="wrap"
+						>
 							Operator for{' '}
-						</Typography.Text>
-						<Typography.Text className="operator-for-value">
-							{currentFilterItem?.key?.key}
-						</Typography.Text>
+						</Typography>
+						<div className="operator-for-value">
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="p"
+								textOverflow="wrap"
+							>
+								{currentFilterItem?.key?.key}
+							</Typography>
+						</div>
 					</div>
 				) : (
 					<div className="value-for">
-						<Typography.Text className="value-for-text">
+						<Typography
+							variant="uppercase"
+							size="small"
+							weight="bold"
+							color="tertiary"
+							as="span"
+							textOverflow="wrap"
+						>
 							Value(s) for{' '}
-						</Typography.Text>
-						<Typography.Text className="value-for-value">
-							{currentFilterItem?.key?.key} {currentFilterItem?.op}
-						</Typography.Text>
+						</Typography>
+						<div className="value-for-value">
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="p"
+								textOverflow="wrap"
+							>
+								{currentFilterItem?.key?.key} {currentFilterItem?.op}
+							</Typography>
+						</div>
 					</div>
 				)}
 				{menu}

@@ -84,9 +84,20 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 		<div className="configure-product-ingestion-section-content">
 			{isError && (
 				<div className="ingestion-endpoint-section-error-container">
-					<Typography.Text className="ingestion-endpoint-section-error-text error">
-						<TriangleAlert size={14} /> {error.message || 'Something went wrong'}
-					</Typography.Text>
+					<div className="ingestion-endpoint-section-error-text error">
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							display="flex"
+							gap={4}
+							textOverflow="wrap"
+						>
+							<TriangleAlert size={14} /> {error.message || 'Something went wrong'}
+						</Typography>
+					</div>
 
 					<div className="ingestion-setup-details-links">
 						<Info size={14} />
@@ -109,9 +120,16 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 			{(isIngestionKeysLoading || !isError) && (
 				<>
 					<div className="ingestion-key-details-section">
-						<Typography.Text className="ingestion-key-details-section-text">
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							You can use this key to send your telemetry data to SigNoz.
-						</Typography.Text>
+						</Typography>
 
 						<div className="ingestion-key-details-section-key">
 							{isIngestionKeysLoading || isLoadingGlobalConfig ? (
@@ -125,31 +143,49 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 								<div className="ingestion-key-region-details-section">
 									{!isLoadingGlobalConfig && (
 										<div className="ingestion-region-container">
-											<Typography.Text className="ingestion-region-label">
+											<Typography
+												variant="paragraph"
+												size="base"
+												weight="regular"
+												color="inherit"
+												as="span"
+												textOverflow="wrap"
+											>
 												Ingestion URL
-											</Typography.Text>
+											</Typography>
 
 											{!isErrorGlobalConfig && (
-												<Typography.Text className="ingestion-region-value-copy">
-													{globalConfig?.data?.ingestion_url}
+												<div className="ingestion-region-value-copy">
+													<Typography
+														variant="paragraph"
+														size="base"
+														weight="regular"
+														color="inherit"
+														as="span"
+														display="flex"
+														gap={4}
+														textOverflow="wrap"
+													>
+														{globalConfig?.data?.ingestion_url}
 
-													<Copy
-														size={14}
-														className="copy-btn"
-														onClick={(): void => {
-															logEvent(
-																`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_URL_COPIED}`,
-																{},
-															);
+														<Copy
+															size={14}
+															className="copy-btn"
+															onClick={(): void => {
+																logEvent(
+																	`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_URL_COPIED}`,
+																	{},
+																);
 
-															const ingestionURL = globalConfig?.data?.ingestion_url;
+																const ingestionURL = globalConfig?.data?.ingestion_url;
 
-															if (ingestionURL) {
-																handleCopyKey(ingestionURL);
-															}
-														}}
-													/>
-												</Typography.Text>
+																if (ingestionURL) {
+																	handleCopyKey(ingestionURL);
+																}
+															}}
+														/>
+													</Typography>
+												</div>
 											)}
 
 											{isErrorGlobalConfig && (
@@ -158,13 +194,27 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 													arrow={false}
 													title={
 														<div className="ingestion-url-error-content">
-															<Typography.Text className="ingestion-url-error-code">
+															<Typography
+																variant="paragraph"
+																size="small"
+																weight="medium"
+																color="warning"
+																as="span"
+																textOverflow="wrap"
+															>
 																{globalConfigApiError?.getErrorCode()}
-															</Typography.Text>
+															</Typography>
 
-															<Typography.Text className="ingestion-url-error-message">
+															<Typography
+																variant="paragraph"
+																size="small"
+																weight="regular"
+																color="secondary"
+																as="span"
+																textOverflow="wrap"
+															>
 																{globalConfigApiError?.getErrorMessage()}
-															</Typography.Text>
+															</Typography>
 														</div>
 													}
 													placement="topLeft"
@@ -176,27 +226,47 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 									)}
 
 									<div className="ingestion-key-container">
-										<Typography.Text className="ingestion-key-label">
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="inherit"
+											as="span"
+											display="flex"
+											gap={4}
+											textOverflow="wrap"
+										>
 											<Key size={14} /> Ingestion Key
-										</Typography.Text>
+										</Typography>
 
-										<Typography.Text className="ingestion-key-value-copy">
-											{maskKey(firstIngestionKey?.value || '')}
+										<div className="ingestion-key-value-copy">
+											<Typography
+												variant="paragraph"
+												size="base"
+												weight="regular"
+												color="inherit"
+												as="span"
+												display="flex"
+												gap={4}
+												textOverflow="wrap"
+											>
+												{maskKey(firstIngestionKey?.value || '')}
 
-											<Copy
-												size={14}
-												className="copy-btn"
-												onClick={(): void => {
-													logEvent(
-														`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_KEY_COPIED}`,
-														{},
-													);
-													if (firstIngestionKey?.value) {
-														handleCopyKey(firstIngestionKey.value);
-													}
-												}}
-											/>
-										</Typography.Text>
+												<Copy
+													size={14}
+													className="copy-btn"
+													onClick={(): void => {
+														logEvent(
+															`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.INGESTION_KEY_COPIED}`,
+															{},
+														);
+														if (firstIngestionKey?.value) {
+															handleCopyKey(firstIngestionKey.value);
+														}
+													}}
+												/>
+											</Typography>
+										</div>
 									</div>
 								</div>
 							)}

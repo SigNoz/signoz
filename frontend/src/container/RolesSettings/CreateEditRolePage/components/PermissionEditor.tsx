@@ -148,11 +148,12 @@ function PermissionEditor({
 		<div className={styles.permissionEditor} data-testid="permission-editor">
 			<div className={styles.permissionEditorHeader}>
 				<Typography
-					as="span"
+					variant="uppercase"
 					size="small"
 					weight="medium"
-					color="muted"
-					className={styles.permissionEditorTitle}
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
 				>
 					Transaction Groups
 				</Typography>
@@ -239,7 +240,14 @@ function PermissionEditor({
 				onConfirm={handleDiscardConfirm}
 				onCancel={handleDiscardCancel}
 			>
-				<Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					The JSON contains errors and cannot be parsed. Switching to Interactive
 					mode will discard your changes.
 				</Typography>

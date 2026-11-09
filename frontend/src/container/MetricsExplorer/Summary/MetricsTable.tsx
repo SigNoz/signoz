@@ -59,9 +59,18 @@ function MetricsTable({
 	return (
 		<div className="metrics-table-container">
 			<div className="metrics-table-title" data-testid="metrics-table-title">
-				<Typography.Title level={4} className="metrics-table-title">
+				<Typography
+					variant="label"
+					size="large"
+					weight="bold"
+					color="inherit"
+					as="h4"
+					marginTop={4}
+					marginBottom={8}
+					textOverflow="wrap"
+				>
 					List View
-				</Typography.Title>
+				</Typography>
 				<Tooltip
 					title="The table displays all metrics in the selected time range. Each row represents a unique metric, and its metric name, and metadata like description, type, unit, and samples/timeseries cardinality observed in the selected time range."
 					placement="right"
@@ -96,9 +105,16 @@ function MetricsTable({
 									alt="thinking-emoji"
 									className="empty-state-svg"
 								/>
-								<Typography.Text className="no-metrics-message">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
 									This query had no results. Edit your query and try again!
-								</Typography.Text>
+								</Typography>
 							</div>
 						),
 					}}

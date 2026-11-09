@@ -118,12 +118,37 @@ function EvaluationWindowDetails({
 	if (isCurrentHour) {
 		return (
 			<div className="evaluation-window-details">
-				<Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{getCumulativeWindowDescription(evaluationWindow.timeframe)}
-				</Typography.Text>
-				<Typography.Text>{displayText}</Typography.Text>
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{displayText}
+				</Typography>
 				<div className="select-group">
-					<Typography.Text>STARTING AT MINUTE</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						STARTING AT MINUTE
+					</Typography>
 					<Select
 						options={currentHourOptions}
 						value={evaluationWindow.startingAt.number || null}
@@ -139,19 +164,53 @@ function EvaluationWindowDetails({
 	if (isCurrentDay) {
 		return (
 			<div className="evaluation-window-details">
-				<Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{getCumulativeWindowDescription(evaluationWindow.timeframe)}
-				</Typography.Text>
-				<Typography.Text>{displayText}</Typography.Text>
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{displayText}
+				</Typography>
 				<div className="select-group time-select-group">
-					<Typography.Text>STARTING AT</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						STARTING AT
+					</Typography>
 					<TimeInput
 						value={evaluationWindow.startingAt.time}
 						onChange={handleTimeChange}
 					/>
 				</div>
 				<div className="select-group">
-					<Typography.Text>SELECT TIMEZONE</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						SELECT TIMEZONE
+					</Typography>
 					<Select
 						options={TIMEZONE_DATA}
 						value={evaluationWindow.startingAt.timezone || null}
@@ -167,12 +226,37 @@ function EvaluationWindowDetails({
 	if (isCurrentMonth) {
 		return (
 			<div className="evaluation-window-details">
-				<Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{getCumulativeWindowDescription(evaluationWindow.timeframe)}
-				</Typography.Text>
-				<Typography.Text>{displayText}</Typography.Text>
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{displayText}
+				</Typography>
 				<div className="select-group">
-					<Typography.Text>STARTING ON DAY</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						STARTING ON DAY
+					</Typography>
 					<Select
 						options={currentMonthOptions}
 						value={evaluationWindow.startingAt.number || null}
@@ -182,14 +266,32 @@ function EvaluationWindowDetails({
 					/>
 				</div>
 				<div className="select-group time-select-group">
-					<Typography.Text>STARTING AT</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						STARTING AT
+					</Typography>
 					<TimeInput
 						value={evaluationWindow.startingAt.time}
 						onChange={handleTimeChange}
 					/>
 				</div>
 				<div className="select-group">
-					<Typography.Text>SELECT TIMEZONE</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						SELECT TIMEZONE
+					</Typography>
 					<Select
 						options={TIMEZONE_DATA}
 						value={evaluationWindow.startingAt.timezone || null}
@@ -204,13 +306,47 @@ function EvaluationWindowDetails({
 
 	return (
 		<div className="evaluation-window-details">
-			<Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				{getRollingWindowDescription(evaluationWindow.timeframe)}
-			</Typography.Text>
-			<Typography.Text>Specify custom duration</Typography.Text>
-			<Typography.Text>{displayText}</Typography.Text>
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				Specify custom duration
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{displayText}
+			</Typography>
 			<div className="select-group">
-				<Typography.Text>VALUE</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					VALUE
+				</Typography>
 				<Input
 					name="value"
 					type="number"
@@ -221,7 +357,16 @@ function EvaluationWindowDetails({
 				/>
 			</div>
 			<div className="select-group time-select-group">
-				<Typography.Text>UNIT</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					UNIT
+				</Typography>
 				<Select
 					options={ADVANCED_OPTIONS_TIME_UNIT_OPTIONS}
 					value={evaluationWindow.startingAt.unit || null}

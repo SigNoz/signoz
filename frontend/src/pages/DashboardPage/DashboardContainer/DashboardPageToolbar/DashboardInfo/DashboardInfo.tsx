@@ -14,7 +14,6 @@ import { toast } from '@signozhq/ui/toast';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import cx from 'classnames';
 import { isEmpty } from 'lodash-es';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
@@ -106,6 +105,22 @@ function DashboardInfo({
 		}
 	};
 
+	const titleText = (
+		<Typography
+			variant="label"
+			size="large"
+			weight="medium"
+			color="main"
+			as="span"
+			display="block"
+			minWidth={0}
+			textOverflow="ellipsis"
+			data-testid="dashboard-title"
+		>
+			{title}
+		</Typography>
+	);
+
 	// Clicking outside the editor commits, matching the input's Enter behaviour.
 	// Guard against blurs that move focus to the Save/Cancel buttons within it.
 	const onEditorBlur = (event: FocusEvent<HTMLDivElement>): void => {
@@ -169,17 +184,19 @@ function DashboardInfo({
 				</div>
 			) : (
 				<>
-					<Tooltip title={title}>
-						<Typography.Text
-							className={cx(styles.dashboardTitle, {
-								[styles.dashboardTitleHover]: canEdit,
-							})}
-							data-testid="dashboard-title"
-							onClick={canEdit ? onStartEdit : undefined}
+					{canEdit ? (
+						<Button
+							type="button"
+							variant="link"
+							color="secondary"
+							size="sm"
+							onClick={onStartEdit}
 						>
-							{title}
-						</Typography.Text>
-					</Tooltip>
+							{titleText}
+						</Button>
+					) : (
+						titleText
+					)}
 					<CopyButton
 						value={dashboardId}
 						ariaLabel="Copy dashboard ID"

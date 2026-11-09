@@ -233,7 +233,16 @@ function Hosts(): JSX.Element {
 							<OverlayScrollbar>
 								<>
 									<div className={styles.quickFiltersContainerHeader}>
-										<Typography.Text>Filters</Typography.Text>
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="inherit"
+											as="span"
+											textOverflow="wrap"
+										>
+											Filters
+										</Typography>
 										<Tooltip title="Collapse Filters">
 											<ArrowUpToLine
 												style={{ rotate: '270deg', cursor: 'pointer' }}

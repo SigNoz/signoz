@@ -114,13 +114,30 @@ function SignUp(): JSX.Element {
 					<div className="signup-header-icon">
 						<img src={tvUrl} alt="TV" width="32" height="32" />
 					</div>
-					<Typography.Title level={4} className="signup-header-title">
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="main"
+						as="h4"
+						textOverflow="wrap"
+					>
 						Create your account
-					</Typography.Title>
-					<Typography.Text color="muted" className="signup-header-subtitle">
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						align="center"
+						maxWidth={360}
+						textOverflow="wrap"
+					>
 						You&apos;re almost in. Create a password to start monitoring your
 						applications with SigNoz.
-					</Typography.Text>
+					</Typography>
 				</div>
 
 				<FormContainer onFinish={handleSubmit} form={form} className="signup-form">

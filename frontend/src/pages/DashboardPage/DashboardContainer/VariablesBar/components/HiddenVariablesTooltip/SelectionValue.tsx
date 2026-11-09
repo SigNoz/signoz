@@ -18,26 +18,48 @@ function SelectionValue({ selection }: SelectionValueProps): JSX.Element {
 
 	if (display.kind !== 'values') {
 		return (
-			<Typography.Text size="sm" className={styles.value}>
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="medium"
+				color="inherit"
+				as="p"
+				textOverflow="wrap"
+			>
 				{display.kind === 'all' ? 'ALL' : '—'}
-			</Typography.Text>
+			</Typography>
 		);
 	}
 
 	if (display.values.length === 1) {
 		return (
-			<Typography.Text size="sm" className={styles.value}>
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="medium"
+				color="inherit"
+				as="p"
+				textOverflow="wrap"
+			>
 				{display.values[0]}
-			</Typography.Text>
+			</Typography>
 		);
 	}
 
 	return (
 		<ul className={styles.values}>
 			{display.values.map((value) => (
-				<Typography.Text asChild size="sm" className={styles.valueItem} key={value}>
+				<Typography
+					/* TODO(typography): asChild has no equivalent */ key={value}
+					variant="paragraph"
+					size="small"
+					weight="medium"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					<li>{value}</li>
-				</Typography.Text>
+				</Typography>
 			))}
 		</ul>
 	);

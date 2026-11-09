@@ -3,6 +3,7 @@ import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Table } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
@@ -21,7 +22,7 @@ import {
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { openInNewTab } from 'utils/navigation';
+import { withBasePath } from 'utils/basePath';
 
 import {
 	convertToMilliseconds,
@@ -90,25 +91,34 @@ export function getColumns(
 								const shouldShowMore = remainingCount > 0 && idx === visibleCount - 1;
 								return (
 									<div key={item} className="traceid-style">
-										<Typography.Text
-											key={item}
-											className="traceid-text"
-											onClick={(): void => {
-												openInNewTab(buildRoutePath(ROUTES.TRACE_DETAIL, { id: item }));
-												logEvent(`MQ Kafka: Drop Rate - traceid navigation`, {
-													item,
-												});
-											}}
-										>
-											{item}
-										</Typography.Text>
+										<span className="traceid-text">
+											<Typography.Link
+												variant="paragraph"
+												size="base"
+												weight="regular"
+												textOverflow="wrap"
+												href={withBasePath(
+													buildRoutePath(ROUTES.TRACE_DETAIL, { id: item }),
+												)}
+												target="_blank"
+												onClick={(): void => {
+													void logEvent(`MQ Kafka: Drop Rate - traceid navigation`, {
+														item,
+													});
+												}}
+											>
+												{item}
+											</Typography.Link>
+										</span>
 										{shouldShowMore && (
-											<Typography.Text
+											<Button
+												variant="link"
+												color="secondary"
+												size="sm"
 												onClick={(): void => handleShowMore(index)}
-												className="remaing-count"
 											>
 												+ {remainingCount} more
-											</Typography.Text>
+											</Button>
 										)}
 									</div>
 								);
@@ -121,11 +131,13 @@ export function getColumns(
 			if (column === 'consumer_service' || column === 'producer_service') {
 				return (
 					<Typography.Link
-						onClick={(e): void => {
-							e.preventDefault();
-							e.stopPropagation();
-							openInNewTab(`/services/${encodeURIComponent(text)}`);
-						}}
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						textOverflow="wrap"
+						href={withBasePath(`/services/${encodeURIComponent(text)}`)}
+						target="_blank"
+						onClick={(e): void => e.stopPropagation()}
 					>
 						{text}
 					</Typography.Link>
@@ -134,16 +146,45 @@ export function getColumns(
 
 			if (column === 'breach_percentage' && text) {
 				if (!isNumber(text)) {
-					return <Typography.Text>{text.toString()}</Typography.Text>;
+					return (
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{text.toString()}
+						</Typography>
+					);
 				}
 				return (
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{(typeof text === 'string' ? parseFloat(text) : text).toFixed(2)} %
-					</Typography.Text>
+					</Typography>
 				);
 			}
 
-			return <Typography.Text>{text}</Typography.Text>;
+			return (
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{text}
+				</Typography>
+			);
 		},
 	}));
 
@@ -152,10 +193,27 @@ export function getColumns(
 
 const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 	<>
-		<Typography.Text className="numbers">
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
 			{range[0]} &#8212; {range[1]}
-		</Typography.Text>
-		<Typography.Text className="total"> of {total}</Typography.Text>
+		</Typography>
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
+			{' '}
+			of {total}
+		</Typography>
 	</>
 );
 

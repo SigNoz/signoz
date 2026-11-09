@@ -101,9 +101,16 @@ function RoutingPolicies(): JSX.Element {
 			<header className={styles.headerBand}>
 				<div className={styles.commandHeader}>
 					<div className={styles.headingBlock}>
-						<Typography.Title className={styles.title}>
+						<Typography
+							variant="label"
+							size="large"
+							weight="medium"
+							color="main"
+							as="h1"
+							textOverflow="ellipsis"
+						>
 							All routing policies
-						</Typography.Title>
+						</Typography>
 						<span className={styles.countPill}>{routingPoliciesData.length}</span>
 					</div>
 					<div className={styles.grow} />

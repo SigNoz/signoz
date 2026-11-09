@@ -33,7 +33,16 @@ function LicenseSectionContent(): JSX.Element | null {
 				<div className="license-section-content-item-title-action">
 					<span>License key</span>
 					<span style={{ display: 'flex', alignItems: 'center' }}>
-						<Typography.Text code>{getMaskedKey(licenseKey)}</Typography.Text>
+						<Typography
+							/* TODO(typography): code: the 0.x code box (background, border, padding) is gone */ variant="code"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="code"
+							textOverflow="wrap"
+						>
+							{getMaskedKey(licenseKey)}
+						</Typography>
 						<Button
 							size="sm"
 							variant="outlined"

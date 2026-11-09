@@ -27,9 +27,16 @@ function RowEntry({
 	return (
 		<div className={styles.entry}>
 			<div className={styles.entryTop}>
-				<Typography.Text size="sm" className={styles.entryIndex}>
+				<Typography
+					variant="uppercase"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					{noun} {index + 1}
-				</Typography.Text>
+				</Typography>
 				<Button
 					variant="ghost"
 					color="secondary"

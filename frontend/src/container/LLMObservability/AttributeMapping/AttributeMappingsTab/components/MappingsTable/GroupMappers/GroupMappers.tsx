@@ -83,9 +83,16 @@ function GroupMappers({
 			>
 				<span className={styles.stateContent}>
 					<TriangleAlert size={14} color="var(--danger-background)" />
-					<Typography.Text as="span" size="base">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						Failed to load mappings. Please try again.
-					</Typography.Text>
+					</Typography>
 				</span>
 			</td>
 		</motion.tr>
@@ -104,9 +111,16 @@ function GroupMappers({
 			>
 				<span className={styles.stateContent}>
 					<ArrowLeftRight size={14} />
-					<Typography.Text as="span" size="base" color="muted">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						No mappings in this group yet.
-					</Typography.Text>
+					</Typography>
 				</span>
 			</td>
 		</motion.tr>

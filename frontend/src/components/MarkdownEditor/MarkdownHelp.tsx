@@ -31,9 +31,18 @@ function MarkdownHelp(): JSX.Element {
 			}
 		>
 			<div className={styles.helpContent}>
-				<Typography.Text className={styles.helpTitle}>
-					Markdown syntax
-				</Typography.Text>
+				<div className={styles.helpTitle}>
+					<Typography
+						variant="uppercase"
+						size="small"
+						weight="bold"
+						color="tertiary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Markdown syntax
+					</Typography>
+				</div>
 				<dl className={styles.helpList}>
 					{MARKDOWN_HELP_ITEMS.map((item) => (
 						<div key={item.syntax} className={styles.helpRow}>

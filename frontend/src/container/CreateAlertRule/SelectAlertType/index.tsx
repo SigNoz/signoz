@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Row } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
@@ -75,7 +76,10 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 						data-testid={`alert-type-card-${option.selection}`}
 					>
 						{option.description}{' '}
-						<Typography.Link
+						<Button
+							variant="link"
+							color="primary"
+							size="md"
 							onClick={(e): void => {
 								e.preventDefault();
 								e.stopPropagation();
@@ -83,7 +87,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 							}}
 						>
 							Click here to see how to create a sample alert.
-						</Typography.Link>{' '}
+						</Button>{' '}
 					</AlertTypeCard>
 				))}
 			</>
@@ -93,14 +97,18 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 
 	return (
 		<SelectTypeContainer>
-			<Typography.Title
-				level={4}
-				style={{
-					padding: '0 8px',
-				}}
+			<Typography
+				variant="label"
+				size="large"
+				weight="bold"
+				color="inherit"
+				as="h4"
+				marginY={4}
+				paddingX={4}
+				textOverflow="wrap"
 			>
 				{t('choose_alert_type')}
-			</Typography.Title>
+			</Typography>
 			<Row>{renderOptions}</Row>
 		</SelectTypeContainer>
 	);

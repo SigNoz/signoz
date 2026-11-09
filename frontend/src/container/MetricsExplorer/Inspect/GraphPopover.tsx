@@ -53,14 +53,39 @@ function GraphPopover({
 		>
 			<Card className="inspect-graph-popover-content" size="small">
 				<div className="inspect-graph-popover-row">
-					<Typography.Text color="muted">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						{formatTimestampToFullDateTime(closestTimestamp)}
-					</Typography.Text>
-					<Typography.Text>{Number(closestValue).toFixed(2)}</Typography.Text>
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{Number(closestValue).toFixed(2)}
+					</Typography>
 				</div>
 				<div className="inspect-graph-popover-button-row">
 					<Button size="small" type="primary" onClick={openInExpandedView}>
-						<Typography.Text>View details</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							View details
+						</Typography>
 						<ArrowRight size={10} />
 					</Button>
 				</div>

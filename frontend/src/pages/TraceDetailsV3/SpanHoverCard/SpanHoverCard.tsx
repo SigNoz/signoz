@@ -56,18 +56,29 @@ export function SpanTooltipContent({
 	return (
 		<div className={styles.content}>
 			<div className={styles.header}>
-				<Typography.Text
-					className={styles.title}
-					size="small"
-					weight="normal"
-					style={{ color }}
-				>
-					{spanName}
-				</Typography.Text>
+				<span className={styles.title} style={{ color }}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{spanName}
+					</Typography>
+				</span>
 				{ai?.usage && (
-					<Typography.Text size="small" weight="normal">
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						Usage Breakdown
-					</Typography.Text>
+					</Typography>
 				)}
 			</div>
 			{ai?.usage && <SpanUsageBreakdown usage={ai.usage} />}

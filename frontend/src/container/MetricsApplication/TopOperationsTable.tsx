@@ -10,7 +10,7 @@ import {
 	Tooltip,
 } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
-import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import Download from 'container/Download/Download';
@@ -116,7 +116,10 @@ function TopOperationsTable({
 		},
 		render: (text: string): JSX.Element => (
 			<Tooltip placement="topLeft" title={text}>
-				<Typography.Link
+				<Button
+					variant="link"
+					color="primary"
+					size="md"
 					testId="top-operation-link"
 					onClick={(e): void => {
 						e.stopPropagation();
@@ -130,7 +133,7 @@ function TopOperationsTable({
 					}}
 				>
 					{text}
-				</Typography.Link>
+				</Button>
 			</Tooltip>
 		),
 	});

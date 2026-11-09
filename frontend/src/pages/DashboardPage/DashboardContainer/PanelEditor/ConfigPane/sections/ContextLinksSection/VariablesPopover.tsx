@@ -89,12 +89,28 @@ function VariablesPopover({
 									}}
 								>
 									<div className={styles.row}>
-										<Typography.Text
-											className={styles.name}
-										>{`{{${v.name}}}`}</Typography.Text>
-										<Typography.Text className={styles.source}>
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="inherit"
+											as="span"
+											display="inline-block"
+											minWidth={0}
+											textOverflow="ellipsis"
+										>{`{{${v.name}}}`}</Typography>
+										<Typography
+											variant="paragraph"
+											size="small"
+											weight="regular"
+											color="tertiary"
+											as="span"
+											display="inline-block"
+											minWidth={0}
+											textOverflow="ellipsis"
+										>
 											{v.source}
-										</Typography.Text>
+										</Typography>
 									</div>
 								</Button>
 							</span>

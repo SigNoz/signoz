@@ -88,30 +88,66 @@ function MapConfirmDialog({
 			testId="unpriced-map-confirm-dialog"
 		>
 			<div className={styles.body}>
-				<Typography.Text as="p" size="small" color="muted">
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="p"
+					display="inline"
+					textOverflow="wrap"
+				>
 					Spans from this model will be priced using the selected billing model.
-				</Typography.Text>
+				</Typography>
 
 				<div className={styles.mapping}>
-					<Typography.Text
-						weight="semibold"
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="bold"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
 						testId={`unpriced-map-confirm-item-${model.modelName}`}
 					>
 						{model.modelName}
-					</Typography.Text>
+					</Typography>
 					<ArrowRight size={14} className={styles.arrow} />
-					<Typography.Text weight="semibold">{getCanonicalId(rule)}</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="bold"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{getCanonicalId(rule)}
+					</Typography>
 				</div>
 
 				<div className={styles.pricing}>
 					{pricingRows.map((row) => (
 						<div className={styles.pricingRow} key={row.key}>
-							<Typography.Text as="span" size="small" color="muted">
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								{row.label}
-							</Typography.Text>
-							<Typography.Text as="span" size="small" weight="semibold">
+							</Typography>
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="bold"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
 								{formatPricePerMillion(row.value)}
-							</Typography.Text>
+							</Typography>
 						</div>
 					))}
 				</div>

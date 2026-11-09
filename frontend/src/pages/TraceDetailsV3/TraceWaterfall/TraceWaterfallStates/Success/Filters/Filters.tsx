@@ -243,7 +243,16 @@ function Filters({
 			className={styles.highlightErrorsToggle}
 			data-testid="highlight-errors-toggle"
 		>
-			<Typography.Text>Highlight errors</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				Highlight errors
+			</Typography>
 			<Switch
 				textPlacement="right"
 				color="danger"
@@ -285,7 +294,16 @@ function Filters({
 				expression ? (
 					<div className={styles.pillPopover}>
 						<div className={styles.pillPopoverHeader}>
-							<Typography.Text>Search query</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								Search query
+							</Typography>
 							<CopyButton value={expression} size={12} />
 						</div>
 						<div className={styles.pillPopoverExpression}>{expression}</div>

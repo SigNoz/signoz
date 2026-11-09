@@ -57,10 +57,18 @@ function ServiceTraceTable({
 		<div className="service-traces-table-container" data-testid="services-table">
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
-					<Typography.Title level={5} color="warning" style={{ marginTop: 0 }}>
+					<Typography
+						variant="paragraph"
+						size="medium"
+						weight="bold"
+						color="warning"
+						as="h5"
+						marginBottom={4}
+						textOverflow="wrap"
+					>
 						<SolidAlertTriangle size="md" /> {getText('rps_over_100')}
 						<a href="mailto:cloud-support@signoz.io">email</a>
-					</Typography.Title>
+					</Typography>
 				</Flex>
 			)}
 

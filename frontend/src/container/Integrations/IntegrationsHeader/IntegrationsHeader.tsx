@@ -73,7 +73,14 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 
 	return (
 		<div className="integrations-header">
-			<Typography variant="title" size="large" weight="medium" className="title">
+			<Typography
+				variant="label"
+				size="large"
+				weight="medium"
+				color="main"
+				as="h1"
+				textOverflow="wrap"
+			>
 				Integrations
 			</Typography>
 			<Flex
@@ -81,14 +88,16 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 				align="center"
 				className="integrations-header__subrow"
 			>
-				<Typography.Text
-					size="lg"
-					color="muted"
-					display="block"
-					className="subtitle"
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="p"
+					textOverflow="wrap"
 				>
 					Manage integrations for this workspace.
-				</Typography.Text>
+				</Typography>
 			</Flex>
 
 			<div className="integrations-search-request-container">

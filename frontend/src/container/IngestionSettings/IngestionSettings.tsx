@@ -20,7 +20,19 @@ export default function IngestionSettings(): JSX.Element {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
-			render: (text): JSX.Element => <Typography.Text> {text} </Typography.Text>,
+			render: (text): JSX.Element => (
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{' '}
+					{text}{' '}
+				</Typography>
+			),
 		},
 		{
 			title: '',
@@ -31,9 +43,16 @@ export default function IngestionSettings(): JSX.Element {
 					{isFetching ? (
 						<Skeleton.Input active style={{ height: 20 }} />
 					) : (
-						<Typography.Text copyable={!isFetching && text !== ''}>
+						<Typography
+							/* TODO(typography): copyable={!isFetching && text !== ''} has no equivalent */ variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							{text}
-						</Typography.Text>
+						</Typography>
 					)}
 				</div>
 			),
@@ -67,9 +86,12 @@ export default function IngestionSettings(): JSX.Element {
 	return (
 		<div className="ingestion-settings-container">
 			<Typography
-				style={{
-					margin: '16px 0px',
-				}}
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
 			>
 				You can use the following ingestion credentials to start sending your
 				telemetry data to SigNoz

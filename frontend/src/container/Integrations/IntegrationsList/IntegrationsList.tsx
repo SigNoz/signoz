@@ -55,9 +55,16 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 			<div className="error-container">
 				<div className="error-content">
 					<img src={awwSnapIconUrl} alt="error-emoji" className="error-state-svg" />
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						Something went wrong :/ Please retry or contact support.
-					</Typography.Text>
+					</Typography>
 					<div className="error-btns">
 						<Button
 							type="primary"
@@ -71,7 +78,14 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 							className="contact-support"
 							onClick={(): void => handleContactSupport(isCloudUserVal)}
 						>
-							<Typography.Link className="text">Contact Support </Typography.Link>
+							<Typography.Link
+								/* TODO(typography): a link with no href renders plain text: a click that does not navigate is a Button with variant="link" */ variant="paragraph"
+								size="base"
+								weight="medium"
+								textOverflow="wrap"
+							>
+								Contact Support{' '}
+							</Typography.Link>
 
 							<MoveUpRight size={14} color={Color.BG_ROBIN_400} />
 						</div>

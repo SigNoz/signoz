@@ -68,16 +68,32 @@ function ExtraPricingBuckets({
 		<div className={cx(styles.extraBucketsSection, styles.drawerSection)}>
 			<div className={styles.extraBucketsSectionHead}>
 				<span className={styles.fieldLabel}>Extra Pricing Buckets</span>
-				<Typography.Text as="span" size="small" color="muted">
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Optional
-				</Typography.Text>
+				</Typography>
 			</div>
 
 			{addedBuckets.map((bucket) => (
 				<div className={styles.bucketRow} key={bucket.key}>
-					<Typography.Text as="span" className={styles.bucketRowName}>
-						{bucket.label}
-					</Typography.Text>
+					<span className={styles.bucketRowName}>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{bucket.label}
+						</Typography>
+					</span>
 					<Input
 						type="number"
 						min={0}
@@ -94,9 +110,16 @@ function ExtraPricingBuckets({
 						testId={`drawer-${bucket.testId}-cost`}
 					/>
 					<Tooltip title="Pricing per 1M tokens" placement="left">
-						<Typography.Text size="xs" color="muted">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							1M
-						</Typography.Text>
+						</Typography>
 					</Tooltip>
 
 					{!isReadOnly && (

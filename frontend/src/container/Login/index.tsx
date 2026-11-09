@@ -307,17 +307,31 @@ function Login(): JSX.Element {
 					<div className="login-form-emoji">
 						<img src={tvUrl} alt="TV" width="32" height="32" />
 					</div>
-					<Typography.Title level={4} align="center" className="login-form-title">
-						Sign in to your workspace
-					</Typography.Title>
-					<Typography.Text
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="main"
+						as="h4"
 						align="center"
-						color="muted"
-						className="login-form-description"
+						textOverflow="wrap"
+					>
+						Sign in to your workspace
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						align="center"
+						maxWidth={317}
+						textOverflow="wrap"
 					>
 						Sign in to monitor, trace, and troubleshoot your applications
 						effortlessly.
-					</Typography.Text>
+					</Typography>
 				</div>
 
 				<div className="login-form-card">
@@ -362,15 +376,17 @@ function Login(): JSX.Element {
 						<ParentContainer>
 							<div className="password-label-container">
 								<Label htmlFor="Password">Password</Label>
-								<Typography.Link
-									className="forgot-password-link"
+								<Button
+									/* TODO(typography): not lifted from className: ".forgot-password-link:hover" { color: var(--text-neutral-dark-300) }; the className colored the link tertiary, Typography.Link always draws in the link color */ variant="link"
+									color="primary"
+									size="md"
 									onClick={(event): void => {
 										event.preventDefault();
 										handleForgotPasswordClick();
 									}}
 								>
 									Forgot password?
-								</Typography.Link>
+								</Button>
 							</div>
 							<FormContainer.Item name="password">
 								<Input.Password

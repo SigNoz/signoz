@@ -148,20 +148,52 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 	return (
 		<div className="error-details-container">
-			<Typography.Title level={4} testId="error-details-type">
+			<Typography
+				variant="label"
+				size="large"
+				weight="bold"
+				color="inherit"
+				as="h4"
+				marginY={4}
+				textOverflow="wrap"
+				testId="error-details-type"
+			>
 				{errorDetail.exceptionType}
-			</Typography.Title>
-			<Typography.Text testId="error-details-message">
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+				testId="error-details-message"
+			>
 				{errorDetail.exceptionMessage}
-			</Typography.Text>
+			</Typography>
 			<Divider />
 
 			<EventContainer>
 				<div>
-					<Typography testId="error-details-event-id">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+						testId="error-details-event-id"
+					>
 						Event {errorDetail.errorId}
 					</Typography>
-					<Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{formatTimezoneAdjustedTimestamp(
 							errorDetail.timestamp,
 							DATE_TIME_FORMATS.UTC_FULL,
@@ -201,7 +233,16 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			</EventContainer>
 
 			<DashedContainer>
-				<Typography>{t('see_trace_graph')}</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{t('see_trace_graph')}
+				</Typography>
 				<Button
 					data-testid="error-details-view-trace"
 					onClick={onClickTraceHandler}
@@ -211,7 +252,17 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				</Button>
 			</DashedContainer>
 
-			<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
+			<Typography
+				variant="label"
+				size="large"
+				weight="bold"
+				color="inherit"
+				as="h4"
+				marginY={4}
+				textOverflow="wrap"
+			>
+				{t('stack_trace')}
+			</Typography>
 			<div className="error-container" data-testid="error-details-stacktrace">
 				<Editor value={stackTraceValue} readOnly />
 			</div>

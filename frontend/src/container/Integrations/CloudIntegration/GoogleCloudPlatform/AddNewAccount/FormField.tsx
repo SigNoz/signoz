@@ -37,14 +37,19 @@ function FormField({
 			/>
 			{children}
 			{error && (
-				<Typography.Text
-					as="span"
-					size="small"
-					role="alert"
-					className={styles.fieldError}
-				>
-					{error.message}
-				</Typography.Text>
+				<span className={styles.fieldError}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+						role="alert"
+					>
+						{error.message}
+					</Typography>
+				</span>
 			)}
 		</div>
 	);

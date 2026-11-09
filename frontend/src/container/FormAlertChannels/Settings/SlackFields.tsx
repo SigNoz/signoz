@@ -70,9 +70,16 @@ function SlackFields(): JSX.Element {
 										onChange={(checked): void => field.onChange(checked === true)}
 										testId={`slack-field-short-${index}`}
 									>
-										<Typography.Text size="sm">
+										<Typography
+											variant="paragraph"
+											size="small"
+											weight="regular"
+											color="inherit"
+											as="span"
+											textOverflow="wrap"
+										>
 											{t('field_slack_field_short')}
-										</Typography.Text>
+										</Typography>
 									</Checkbox>
 								)}
 							/>

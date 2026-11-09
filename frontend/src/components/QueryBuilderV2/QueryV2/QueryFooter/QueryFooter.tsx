@@ -43,15 +43,20 @@ function TraceOperatorSection({
 				title={
 					<div style={{ textAlign: 'center' }}>
 						Add Trace Matching
-						<Typography.Link
-							href="https://signoz.io/docs/querying/multi-query-analysis/#trace-matching"
-							target="_blank"
-							style={{ textDecoration: 'underline' }}
-						>
-							{' '}
-							<br />
-							Learn more
-						</Typography.Link>
+						<span style={{ textDecoration: 'underline' }}>
+							<Typography.Link
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								textOverflow="wrap"
+								href="https://signoz.io/docs/querying/multi-query-analysis/#trace-matching"
+								target="_blank"
+							>
+								{' '}
+								<br />
+								Learn more
+							</Typography.Link>
+						</span>
 					</div>
 				}
 			>
@@ -126,15 +131,20 @@ export default function QueryFooter({
 								addFormulaDisabledReason ?? (
 									<div style={{ textAlign: 'center' }}>
 										Add New Formula
-										<Typography.Link
-											href="https://signoz.io/docs/querying/multi-query-analysis/#advanced-comparisons"
-											target="_blank"
-											style={{ textDecoration: 'underline' }}
-										>
-											{' '}
-											<br />
-											Learn more
-										</Typography.Link>
+										<span style={{ textDecoration: 'underline' }}>
+											<Typography.Link
+												variant="paragraph"
+												size="base"
+												weight="regular"
+												textOverflow="wrap"
+												href="https://signoz.io/docs/querying/multi-query-analysis/#advanced-comparisons"
+												target="_blank"
+											>
+												{' '}
+												<br />
+												Learn more
+											</Typography.Link>
+										</span>
 									</div>
 								)
 							}

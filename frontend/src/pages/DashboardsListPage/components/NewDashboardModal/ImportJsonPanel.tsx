@@ -100,16 +100,30 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 
 	return (
 		<div className={styles.panel}>
-			<Typography.Text className={styles.importHeader}>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				{t('import_json')}
-			</Typography.Text>
+			</Typography>
 
 			<JsonEditor value={editorValue} onChange={setEditorValue} height="280px" />
 
 			{(isCreateError || isUploadError) && (
 				<div className={styles.jsonError}>
 					<CircleAlert size="md" color={red[7]} />
-					<Typography className={styles.errorText}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="danger"
+						as="span"
+						textOverflow="wrap"
+					>
 						{isUploadError ? t('error_upload_json') : t('error_loading_json')}
 					</Typography>
 				</div>

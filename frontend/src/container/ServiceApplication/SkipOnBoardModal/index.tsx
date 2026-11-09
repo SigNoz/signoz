@@ -25,8 +25,24 @@ function SkipOnBoardingModal({ onContinueClick }: Props): JSX.Element {
 					title="youtube_video"
 				/>
 				<div>
-					<Typography>No instrumentation data.</Typography>
-					<Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						No instrumentation data.
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						Please instrument your application as mentioned&nbsp;
 						<a
 							href="https://signoz.io/docs/instrumentation/overview"

@@ -26,7 +26,16 @@ function MetricNameSearch({
 			data-testid="metric-name-search"
 			className="inspect-metrics-input-group metric-name-search"
 		>
-			<Typography.Text>From</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				From
+			</Typography>
 			<MetricNameSelector
 				defaultValue={searchText ?? ''}
 				query={initialQueriesMap[DataSource.METRICS].builder.queryData[0]}

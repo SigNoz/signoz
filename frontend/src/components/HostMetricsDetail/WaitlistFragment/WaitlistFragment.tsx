@@ -52,9 +52,16 @@ export default function WaitlistFragment({
 
 	return (
 		<div className="wait-list-container">
-			<Typography.Text className="wait-list-text">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				{t('waitlist_message')}
-			</Typography.Text>
+			</Typography>
 
 			<Button
 				className="periscope-btn join-waitlist-btn"

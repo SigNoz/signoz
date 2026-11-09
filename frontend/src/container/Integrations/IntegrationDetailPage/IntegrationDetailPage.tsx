@@ -85,9 +85,16 @@ function IntegrationDetailPage(): JSX.Element {
 				<div className="error-container">
 					<div className="error-content">
 						<img src={awwSnapUrl} alt="error-emoji" className="error-state-svg" />
-						<Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							Something went wrong :/ Please retry or contact support.
-						</Typography.Text>
+						</Typography>
 						<div className="error-btns">
 							<Button
 								size="md"

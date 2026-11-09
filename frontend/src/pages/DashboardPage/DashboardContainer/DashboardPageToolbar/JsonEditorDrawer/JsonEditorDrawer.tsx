@@ -135,15 +135,25 @@ function JsonEditorDrawer({
 			footer={
 				<div className={styles.footer}>
 					<div className={styles.footerStatus}>
-						<Typography.Text
+						<span
 							className={cx(styles.validation, {
 								[styles.validationValid]: validity.valid,
 								[styles.validationInvalid]: !validity.valid,
 							})}
-							data-testid="json-editor-validation"
 						>
-							{validationText}
-						</Typography.Text>
+							<Typography
+								variant="code"
+								size="small"
+								weight="regular"
+								color="inherit"
+								as="span"
+								display="block"
+								textOverflow="ellipsis"
+								data-testid="json-editor-validation"
+							>
+								{validationText}
+							</Typography>
+						</span>
 						{danglingWarning && (
 							<Tooltip title={danglingPanelIds.join(', ')}>
 								<span
@@ -151,9 +161,17 @@ function JsonEditorDrawer({
 									data-testid="json-editor-dangling-warning"
 								>
 									<TriangleAlert size={12} className={styles.warningIcon} />
-									<Typography.Text className={styles.warningText}>
+									<Typography
+										variant="paragraph"
+										size="small"
+										weight="regular"
+										color="warning"
+										as="span"
+										display="inline-block"
+										textOverflow="ellipsis"
+									>
 										{danglingWarning}
-									</Typography.Text>
+									</Typography>
 								</span>
 							</Tooltip>
 						)}
@@ -164,9 +182,17 @@ function JsonEditorDrawer({
 									data-testid="json-editor-missing-ref-warning"
 								>
 									<TriangleAlert size={12} className={styles.warningIcon} />
-									<Typography.Text className={styles.warningText}>
+									<Typography
+										variant="paragraph"
+										size="small"
+										weight="regular"
+										color="warning"
+										as="span"
+										display="inline-block"
+										textOverflow="ellipsis"
+									>
 										{missingRefWarning}
-									</Typography.Text>
+									</Typography>
 								</span>
 							</Tooltip>
 						)}

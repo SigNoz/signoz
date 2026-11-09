@@ -7,10 +7,30 @@ function TabLabel({ routeKey, label }: TableLabel): JSX.Element {
 	const { pathname } = useAppLocation();
 
 	if (pathname === routeKey) {
-		return <Typography.Link>{label}</Typography.Link>;
+		return (
+			<Typography.Link
+				/* TODO(typography): a link with no href renders plain text: a click that does not navigate is a Button with variant="link" */ variant="paragraph"
+				size="base"
+				weight="regular"
+				textOverflow="wrap"
+			>
+				{label}
+			</Typography.Link>
+		);
 	}
 
-	return <Typography>{label}</Typography>;
+	return (
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
+			{label}
+		</Typography>
+	);
 }
 
 export default TabLabel;

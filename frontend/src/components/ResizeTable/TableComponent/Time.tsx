@@ -9,7 +9,18 @@ function Time({ CreatedOrUpdateTime }: DateProps): JSX.Element {
 		time,
 		DATE_TIME_FORMATS.UTC_US,
 	);
-	return <Typography>{timeString}</Typography>;
+	return (
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
+			{timeString}
+		</Typography>
+	);
 }
 
 type DateProps = {

@@ -219,7 +219,16 @@ function AllAttributes({
 								}}
 							>
 								<Button type="text" data-testid={`attribute-key-${field.label}`}>
-									<Typography.Text>{field.label}</Typography.Text>
+									<Typography
+										variant="paragraph"
+										size="base"
+										weight="regular"
+										color="inherit"
+										as="span"
+										textOverflow="wrap"
+									>
+										{field.label}
+									</Typography>
 								</Button>
 							</Popover>
 							{isCopied && (
@@ -227,9 +236,16 @@ function AllAttributes({
 									<Check size={12} />
 								</span>
 							)}
-							<Typography.Text className="all-attributes-contribution">
+							<Typography
+								variant="code"
+								size="base"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								{field.contribution}
-							</Typography.Text>
+							</Typography>
 						</div>
 					);
 				},
@@ -267,7 +283,16 @@ function AllAttributes({
 				label: (
 					<div className="metrics-accordion-header">
 						<div className="all-attributes-header-title">
-							<Typography.Text>All Attributes</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								All Attributes
+							</Typography>
 							<Tooltip title="Showing attributes for the selected time range">
 								<Info size={14} />
 							</Tooltip>

@@ -24,10 +24,17 @@ function UnsavedChangesFooter({
 		<div className={styles.overviewSettingsFooter}>
 			<div className={styles.unsaved}>
 				<div className={styles.unsavedDot} />
-				<Typography.Text className={styles.unsavedChanges}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="primary"
+					as="span"
+					textOverflow="wrap"
+				>
 					{count} unsaved change
 					{count > 1 && 's'}
-				</Typography.Text>
+				</Typography>
 			</div>
 			<div className={styles.footerActionButtons}>
 				<Button

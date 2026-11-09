@@ -29,15 +29,36 @@ function StripKeyValue({
 					{prefix}
 				</span>
 			)}
-			<Typography.Text as="span" className={styles.label}>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				{label}
-			</Typography.Text>
-			<Typography.Text as="span" className={styles.colon}>
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				:
-			</Typography.Text>
-			<Typography.Text as="span" className={styles.value}>
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				{value}
-			</Typography.Text>
+			</Typography>
 		</span>
 	);
 }

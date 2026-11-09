@@ -301,7 +301,16 @@ function Metadata({
 						data-testid="metadata-cancel-button"
 					>
 						<X size={14} />
-						<Typography.Text>Cancel</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Cancel
+						</Typography>
 					</Button>
 					<Button
 						className="action-button"
@@ -314,7 +323,16 @@ function Metadata({
 						data-testid="metadata-save-button"
 					>
 						<Save size={14} />
-						<Typography.Text>Save</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Save
+						</Typography>
 					</Button>
 				</div>
 			);
@@ -335,7 +353,16 @@ function Metadata({
 					data-testid="metadata-edit-button"
 				>
 					<PenLine size={14} />
-					<Typography.Text>Edit</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Edit
+					</Typography>
 				</Button>
 			</div>
 		);
@@ -353,7 +380,16 @@ function Metadata({
 			{
 				label: (
 					<div className="metrics-accordion-header metrics-metadata-header">
-						<Typography.Text>Metadata</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Metadata
+						</Typography>
 						{actionButton}
 					</div>
 				),

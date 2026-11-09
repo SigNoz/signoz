@@ -24,7 +24,18 @@ export function AllAttributesEmptyText({
 			</div>
 		);
 	}
-	return <Typography.Text>No attributes found</Typography.Text>;
+	return (
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
+			No attributes found
+		</Typography>
+	);
 }
 
 export function AllAttributesValue({
@@ -119,9 +130,17 @@ export function AllAttributesValue({
 						const isCopied = copiedValue === attribute;
 						return (
 							<div key={attribute} className="all-values-item">
-								<Typography.Text truncate={1} className="all-values-item-text">
+								<Typography
+									variant="code"
+									size="small"
+									weight="regular"
+									color="inherit"
+									as="p"
+									minWidth={0}
+									textOverflow="ellipsis"
+								>
 									{attribute}
-								</Typography.Text>
+								</Typography>
 								<div className="all-values-item-actions">
 									<Tooltip title={isCopied ? 'Copied!' : 'Copy value'}>
 										<Button
@@ -150,9 +169,19 @@ export function AllAttributesValue({
 						);
 					})}
 				{allValuesOpen && filteredAllValues.length === 0 && (
-					<Typography.Text color="muted" className="all-values-empty">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						align="center"
+						padding={4}
+						textOverflow="wrap"
+					>
 						No values found
-					</Typography.Text>
+					</Typography>
 				)}
 			</div>
 		</div>
@@ -178,7 +207,16 @@ export function AllAttributesValue({
 							}}
 						>
 							<Button type="text">
-								<Typography.Text>{attribute}</Typography.Text>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
+									{attribute}
+								</Typography>
 							</Button>
 						</Popover>
 						{isCopied && (

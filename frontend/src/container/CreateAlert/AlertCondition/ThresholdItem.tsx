@@ -106,17 +106,40 @@ function ThresholdItem({
 						testId="threshold-name-input"
 					/>
 					{isAnomaly ? (
-						<Typography.Text className="sentence-text" color="muted">
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="secondary"
+							as="p"
+							textOverflow="wrap"
+						>
 							at
-						</Typography.Text>
+						</Typography>
 					) : (
 						<>
-							<Typography.Text className="sentence-text" color="muted">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="secondary"
+								as="p"
+								textOverflow="wrap"
+							>
 								on value
-							</Typography.Text>
-							<Typography.Text className="sentence-text highlighted-text">
-								{getOperatorSymbol()}
-							</Typography.Text>
+							</Typography>
+							<span className="sentence-text highlighted-text">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="bold"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
+									{getOperatorSymbol()}
+								</Typography>
+							</span>
 						</>
 					)}
 					<Input
@@ -130,17 +153,31 @@ function ThresholdItem({
 						testId="threshold-value-input"
 					/>
 					{isAnomaly ? (
-						<Typography.Text className="sentence-text" color="muted">
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="secondary"
+							as="p"
+							textOverflow="wrap"
+						>
 							deviations
-						</Typography.Text>
+						</Typography>
 					) : (
 						yAxisUnitSelect
 					)}
 					{!notificationSettings.routingPolicies && (
 						<>
-							<Typography.Text className="sentence-text" color="muted">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="secondary"
+								as="p"
+								textOverflow="wrap"
+							>
 								send to
-							</Typography.Text>
+							</Typography>
 							<Select
 								value={threshold.channels}
 								onChange={(value): void =>
@@ -177,9 +214,16 @@ function ThresholdItem({
 					)}
 					{showRecoveryThreshold && (
 						<>
-							<Typography.Text className="sentence-text" color="muted">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="secondary"
+								as="p"
+								textOverflow="wrap"
+							>
 								recover on
-							</Typography.Text>
+							</Typography>
 							<Input
 								placeholder="Enter recovery threshold value"
 								value={threshold.recoveryThresholdValue ?? ''}

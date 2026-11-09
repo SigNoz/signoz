@@ -16,9 +16,16 @@ function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 			{dataType && newField && logType ? (
 				<>
 					<Tooltip title={newField} side="left">
-						<Typography.Text truncate={1} className="label">
+						<Typography
+							variant="code"
+							size="base"
+							weight="regular"
+							color="primary"
+							as="p"
+							textOverflow="ellipsis"
+						>
 							{newField}{' '}
-						</Typography.Text>
+						</Typography>
 					</Tooltip>
 
 					<div className="tags">

@@ -36,13 +36,17 @@ export function getUnpricedModelsColumns({
 			enableMove: false,
 			enableRemove: false,
 			cell: ({ row }): JSX.Element => (
-				<Typography.Text
-					weight="semibold"
-					truncate={1}
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="bold"
+					color="inherit"
+					as="p"
+					textOverflow="ellipsis"
 					testId={`unpriced-model-name-${row.modelName}`}
 				>
 					{row.modelName}
-				</Typography.Text>
+				</Typography>
 			),
 		},
 		{

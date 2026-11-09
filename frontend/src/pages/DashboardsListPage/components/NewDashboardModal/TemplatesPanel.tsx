@@ -52,14 +52,26 @@ function TemplatesPanel(): JSX.Element {
 			<span className={styles.templatesIcon}>
 				<LayoutDashboard size={20} />
 			</span>
-			<Typography variant="title" size="lg" weight="semibold">
+			<Typography
+				variant="label"
+				size="large"
+				weight="bold"
+				color="inherit"
+				as="h1"
+				marginY={4}
+				textOverflow="wrap"
+			>
 				Dashboard templates
 			</Typography>
 			<Typography
-				variant="text"
-				size="sm"
-				color="muted"
-				className={styles.templatesDesc}
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="secondary"
+				as="span"
+				display="inline-block"
+				maxWidth={360}
+				textOverflow="wrap"
 			>
 				Browse our library of ready-made dashboards, or request a new one and
 				we&apos;ll build it for you.
@@ -78,10 +90,12 @@ function TemplatesPanel(): JSX.Element {
 			{isCloudUser && (
 				<div className={styles.requestForm}>
 					<Typography
-						variant="text"
-						size="sm"
-						weight="semibold"
-						className={styles.requestHeader}
+						variant="paragraph"
+						size="small"
+						weight="bold"
+						color="main"
+						as="span"
+						textOverflow="wrap"
 					>
 						Request a new template
 					</Typography>

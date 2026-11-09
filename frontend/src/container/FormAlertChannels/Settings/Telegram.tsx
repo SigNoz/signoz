@@ -41,21 +41,28 @@ function TelegramSettings(): JSX.Element {
 	return (
 		<>
 			<FormCard title={t('section_connection')}>
-				<Typography.Text
-					color="muted"
-					size="sm"
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="p"
+					marginBottom={8}
+					textOverflow="wrap"
 					testId="telegram-tip"
-					style={{ display: 'block', marginBottom: 16 }}
 				>
 					{t('telegram_tip')}{' '}
 					<Typography.Link
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						textOverflow="wrap"
 						href="https://core.telegram.org/bots#how-do-i-create-a-bot"
 						target="_blank"
-						rel="noopener noreferrer"
 					>
 						{t('telegram_tip_link')}
 					</Typography.Link>
-				</Typography.Text>
+				</Typography>
 
 				<FormField
 					label={t('field_telegram_bot_token')}

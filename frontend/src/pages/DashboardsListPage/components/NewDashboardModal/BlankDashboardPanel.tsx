@@ -87,9 +87,26 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 		<div className={styles.panel}>
 			<div className={styles.form}>
 				<div className={styles.field}>
-					<Typography.Text className={styles.label}>
-						Title <Typography.Text className={styles.required}>*</Typography.Text>
-					</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Title{' '}
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="danger"
+							as="span"
+							textOverflow="wrap"
+						>
+							*
+						</Typography>
+					</Typography>
 					<div className={styles.titleRow}>
 						<DashboardImagePicker
 							image={image}
@@ -117,7 +134,16 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 				</div>
 
 				<div className={styles.field}>
-					<Typography.Text className={styles.label}>Description</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Description
+					</Typography>
 					{/* eslint-disable-next-line signoz/no-antd-components -- no @signozhq TextArea yet */}
 					<AntInput.TextArea
 						value={description}
@@ -129,16 +155,32 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 				</div>
 
 				<div className={styles.field}>
-					<Typography.Text className={styles.label}>Tags</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Tags
+					</Typography>
 					<TagKeyValueInput
 						tags={tags}
 						onTagsChange={setTags}
 						placeholder="team:jarvis (press Enter)"
 						testId="create-dashboard-tags"
 					/>
-					<Typography.Text className={styles.hint}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="tertiary"
+						as="span"
+						textOverflow="wrap"
+					>
 						Use key:value (e.g. team:jarvis) and press Enter to add.
-					</Typography.Text>
+					</Typography>
 				</div>
 			</div>
 

@@ -175,15 +175,17 @@ function DomainDetails({
 						<Divider orientation="vertical" />
 
 						{domainData?.domainName && (
-							<Typography.Text
-								size="lg"
+							<Typography
+								variant="code"
+								size="base"
 								weight="medium"
-								color="muted"
-								className="title"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
 								testId="domain-details-title"
 							>
 								{domainData.domainName}
-							</Typography.Text>
+							</Typography>
 						)}
 					</div>
 					<div className="domain-details-drawer-header-right-container">

@@ -22,9 +22,16 @@ function SetupGuideCallout({
 			icon={<KeyRound />}
 			testId="gcp-setup-guide-callout"
 		>
-			<Typography.Text as="span" size="base">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				{description}
-			</Typography.Text>
+			</Typography>
 			<a
 				className={styles.guideLink}
 				href={docsUrl}

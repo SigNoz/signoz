@@ -180,7 +180,16 @@ function UserInfo(): JSX.Element {
 					</Button>,
 				]}
 			>
-				<Typography.Text>Name</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					Name
+				</Typography>
 				<div className="update-name-input">
 					<Input
 						placeholder="e.g. John Doe"
@@ -220,7 +229,16 @@ function UserInfo(): JSX.Element {
 			>
 				<div className="reset-password-container">
 					<div className="current-password-input">
-						<Typography.Text>Current password</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Current password
+						</Typography>
 						<Input.Password
 							data-testid="current-password-textbox"
 							disabled={isLoading}
@@ -241,7 +259,16 @@ function UserInfo(): JSX.Element {
 					</div>
 
 					<div className="new-password-input">
-						<Typography.Text>New password</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							New password
+						</Typography>
 						<Input.Password
 							data-testid="new-password-textbox"
 							disabled={isLoading}

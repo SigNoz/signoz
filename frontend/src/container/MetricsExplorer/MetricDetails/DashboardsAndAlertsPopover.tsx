@@ -3,6 +3,7 @@ import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { Color } from '@signozhq/design-tokens';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Skeleton } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	useGetMetricAlerts,
@@ -69,17 +70,19 @@ function DashboardsAndAlertsPopover({
 				type: 'item',
 				value: alert.alertId,
 				label: (
-					<Typography.Link
+					<Button
+						variant="link"
+						color="primary"
+						size="md"
 						key={alert.alertId}
 						onClick={(): void => {
 							openInNewTab(
 								`${ROUTES.ALERT_OVERVIEW}?${QueryParams.ruleId}=${alert.alertId}`,
 							);
 						}}
-						className="dashboards-popover-content-item"
 					>
 						{alert.alertName || alert.alertId}
-					</Typography.Link>
+					</Button>
 				),
 			}));
 		}
@@ -92,7 +95,10 @@ function DashboardsAndAlertsPopover({
 				type: 'item',
 				value: dashboard.dashboardId,
 				label: (
-					<Typography.Link
+					<Button
+						variant="link"
+						color="primary"
+						size="md"
 						key={dashboard.dashboardId}
 						onClick={(): void => {
 							openInNewTab(
@@ -101,10 +107,9 @@ function DashboardsAndAlertsPopover({
 								}),
 							);
 						}}
-						className="dashboards-popover-content-item"
 					>
 						{dashboard.dashboardName || dashboard.dashboardId}
-					</Typography.Link>
+					</Button>
 				),
 			}));
 		}
@@ -142,9 +147,16 @@ function DashboardsAndAlertsPopover({
 						style={{ backgroundColor: `${Color.BG_SIENNA_500}33` }}
 					>
 						<Grid2X2 size={12} color={Color.BG_SIENNA_500} />
-						<Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							{pluralize(dashboards.length, 'dashboard')}
-						</Typography.Text>
+						</Typography>
 					</div>
 				</Dropdown>
 			)}
@@ -161,9 +173,16 @@ function DashboardsAndAlertsPopover({
 						style={{ backgroundColor: `${Color.BG_SAKURA_500}33` }}
 					>
 						<Bell size={12} color={Color.BG_SAKURA_500} />
-						<Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							{pluralize(alerts.length, 'alert rule')}
-						</Typography.Text>
+						</Typography>
 					</div>
 				</Dropdown>
 			)}

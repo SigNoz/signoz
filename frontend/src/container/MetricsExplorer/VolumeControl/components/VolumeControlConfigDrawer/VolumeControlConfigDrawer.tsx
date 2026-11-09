@@ -41,9 +41,16 @@ function VolumeControlConfigDrawer({
 	} = useVolumeControlConfig({ metricName, existingRule, open, onClose });
 
 	const footerStatus = (
-		<Typography.Text size="small" color="muted">
+		<Typography
+			variant="paragraph"
+			size="small"
+			weight="regular"
+			color="secondary"
+			as="span"
+			textOverflow="wrap"
+		>
 			Changes take effect about 5 minutes after saving.
-		</Typography.Text>
+		</Typography>
 	);
 
 	const footerActions = (
@@ -96,14 +103,18 @@ function VolumeControlConfigDrawer({
 		>
 			<div className={styles.body} data-testid="volume-control-config-drawer">
 				<div className={styles.adminRow}>
-					<Typography.Text
-						size="xs"
-						weight="semibold"
-						color="warning"
-						className={styles.adminOnlyTag}
-					>
-						Admin only
-					</Typography.Text>
+					<span className={styles.adminOnlyTag}>
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="bold"
+							color="warning"
+							as="span"
+							textOverflow="wrap"
+						>
+							Admin only
+						</Typography>
+					</span>
 				</div>
 				<ModeSelector mode={mode} onChange={setMode} />
 				{mode !== 'all' && (

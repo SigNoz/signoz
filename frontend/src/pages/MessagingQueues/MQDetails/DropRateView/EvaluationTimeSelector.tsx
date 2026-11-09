@@ -91,9 +91,16 @@ function EvaluationTimeSelector({
 
 	return (
 		<div className="evaluation-time-selector">
-			<Typography.Text className="eval-title">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="medium"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				Evaluation Interval:
-			</Typography.Text>
+			</Typography>
 			<Select
 				style={{ width: 220 }}
 				placeholder="Select time interval (ms)"

@@ -64,7 +64,16 @@ function PanelTypeSelector({
 					<Option key={item.name} value={item.name}>
 						<div className="view-panel-select-option">
 							<div className="icon">{item.icon}</div>
-							<Typography.Text className="display">{item.display}</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								{item.display}
+							</Typography>
 						</div>
 					</Option>
 				))}

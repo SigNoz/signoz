@@ -73,7 +73,16 @@ function QueryVariableFields({
 	return (
 		<div className={styles.queryContainer}>
 			<div className={styles.labelContainer}>
-				<Typography.Text className={styles.label}>Query</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="p"
+					textOverflow="wrap"
+				>
+					Query
+				</Typography>
 			</div>
 			<div className={styles.editorWrap}>
 				<Editor

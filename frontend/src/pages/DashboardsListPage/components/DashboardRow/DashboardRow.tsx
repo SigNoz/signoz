@@ -110,12 +110,19 @@ function DashboardRow({
 	const titleLink = (
 		<div className={styles.titleLink} onClick={onClickHandler}>
 			<img src={image} alt="dashboard-image" className={styles.icon} />
-			<Typography.Text
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="medium"
+				color="main"
+				as="span"
+				display="inline-block"
+				textOverflow="ellipsis"
+				maxLines={3}
 				data-testid={`dashboard-title-${index}`}
-				className={styles.title}
 			>
 				{name}
-			</Typography.Text>
+			</Typography>
 		</div>
 	);
 
@@ -197,38 +204,95 @@ function DashboardRow({
 				<div className={styles.details}>
 					<div className={styles.createdAt}>
 						<CalendarClock size={14} />
-						<Typography.Text>{formattedCreatedAt}</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{formattedCreatedAt}
+						</Typography>
 					</div>
 
 					{createdBy && (
 						<div className={styles.createdBy}>
 							<div className={styles.avatar}>
-								<Typography.Text className={styles.avatarText}>
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									{createdBy.substring(0, 1).toUpperCase()}
-								</Typography.Text>
+								</Typography>
 							</div>
-							<Typography.Text className={styles.byLabel}>{createdBy}</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
+								{createdBy}
+							</Typography>
 						</div>
 					)}
 
 					{showUpdatedAt && (
 						<div className={styles.createdAt}>
 							<CalendarClock size={14} />
-							<Typography.Text>{lastUpdatedLabel(updatedAt)}</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								{lastUpdatedLabel(updatedAt)}
+							</Typography>
 						</div>
 					)}
 
 					{updatedBy && showUpdatedBy && (
 						<div className={styles.updatedBy}>
-							<Typography.Text className={styles.byLabel}>
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								Last Updated By -
-							</Typography.Text>
+							</Typography>
 							<div className={styles.avatar}>
-								<Typography.Text className={styles.avatarText}>
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									{updatedBy.substring(0, 1).toUpperCase()}
-								</Typography.Text>
+								</Typography>
 							</div>
-							<Typography.Text className={styles.byLabel}>{updatedBy}</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
+								{updatedBy}
+							</Typography>
 						</div>
 					)}
 				</div>

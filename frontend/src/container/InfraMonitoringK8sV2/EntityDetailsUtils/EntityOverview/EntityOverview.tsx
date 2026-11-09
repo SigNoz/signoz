@@ -216,9 +216,16 @@ function EntityOverviewContent({
 				targetCategory={targetCategory}
 				header={
 					<div className={styles.resourcePicker}>
-						<Typography.Text color="muted" size="small">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							Showing
-						</Typography.Text>
+						</Typography>
 
 						<Select
 							aria-label="Showing resource"
@@ -297,9 +304,16 @@ export default function EntityOverview(
 	if (!targetCategory) {
 		return (
 			<div className={styles.noRelations}>
-				<Typography.Text color="muted">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					{`Nothing related to this ${K8S_CATEGORY_SINGULAR_LABELS[category]} was reported in this time range.`}
-				</Typography.Text>
+				</Typography>
 			</div>
 		);
 	}

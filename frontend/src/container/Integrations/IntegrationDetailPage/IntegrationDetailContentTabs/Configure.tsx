@@ -55,9 +55,18 @@ function Configure(props: ConfigurationProps): JSX.Element {
 						})}
 						onClick={(): void => handleMenuClick(index, config)}
 					>
-						<Typography.Text className="configure-text">
-							{config.title}
-						</Typography.Text>
+						<span className="configure-text">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								{config.title}
+							</Typography>
+						</span>
 					</Button>
 				))}
 			</div>

@@ -53,11 +53,29 @@ function PanelMessage({
 			<div className={cx(styles.icon, { [styles.iconDanger]: tone === 'danger' })}>
 				{icon}
 			</div>
-			<Typography.Text className={styles.title}>{title}</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="medium"
+				color="main"
+				as="span"
+				textOverflow="wrap"
+			>
+				{title}
+			</Typography>
 			{description && (
-				<Typography.Text className={styles.description}>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					display="inline-block"
+					maxWidth={280}
+					textOverflow="wrap"
+				>
 					{description}
-				</Typography.Text>
+				</Typography>
 			)}
 			{actions.length > 0 && (
 				<div className={styles.actions}>

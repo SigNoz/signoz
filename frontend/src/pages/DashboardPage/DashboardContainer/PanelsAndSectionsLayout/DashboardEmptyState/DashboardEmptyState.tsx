@@ -30,12 +30,26 @@ function DashboardEmptyState({
 			<div className={styles.content}>
 				<div className={styles.heading}>
 					<img src={dashboardEmojiUrl} alt="" className={styles.emoji} />
-					<Typography.Text className={styles.welcome}>
+					<Typography
+						variant="paragraph"
+						size="medium"
+						weight="medium"
+						color="main"
+						as="span"
+						textOverflow="wrap"
+					>
 						Welcome to your new dashboard
-					</Typography.Text>
-					<Typography.Text className={styles.welcomeInfo}>
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="tertiary"
+						as="span"
+						textOverflow="wrap"
+					>
 						Follow the steps to populate it with data and share with your teammates
-					</Typography.Text>
+					</Typography>
 				</div>
 
 				<div className={styles.steps}>
@@ -43,12 +57,26 @@ function DashboardEmptyState({
 						<div className={styles.stepText}>
 							<Configure size={14} className={styles.stepIcon} />
 							<div className={styles.stepCopy}>
-								<Typography.Text className={styles.stepTitle}>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="medium"
+									color="main"
+									as="span"
+									textOverflow="wrap"
+								>
 									Configure your new dashboard
-								</Typography.Text>
-								<Typography.Text className={styles.stepInfo}>
+								</Typography>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="tertiary"
+									as="span"
+									textOverflow="wrap"
+								>
 									Give it a name, add description, tags and variables
-								</Typography.Text>
+								</Typography>
 							</div>
 						</div>
 						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
@@ -72,12 +100,26 @@ function DashboardEmptyState({
 						<div className={styles.stepText}>
 							<img src={landscapeUrl} alt="" className={styles.stepIcon} />
 							<div className={styles.stepCopy}>
-								<Typography.Text className={styles.stepTitle}>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="medium"
+									color="main"
+									as="span"
+									textOverflow="wrap"
+								>
 									Add panels
-								</Typography.Text>
-								<Typography.Text className={styles.stepInfo}>
+								</Typography>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="tertiary"
+									as="span"
+									textOverflow="wrap"
+								>
 									Add panels to visualize your data
-								</Typography.Text>
+								</Typography>
 							</div>
 						</div>
 						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>

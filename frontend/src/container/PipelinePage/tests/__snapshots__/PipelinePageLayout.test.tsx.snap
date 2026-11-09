@@ -74,10 +74,15 @@ exports[`PipelinePage container test should render PipelinePageLayout section 1`
               title="learn_more"
             />
             <div>
-              <p
-                class="_typography_i5nbo_1"
+              <span
+                class="_typography_dq2v1_1"
+                data-color="inherit"
+                data-display="inline"
+                data-size="base"
                 data-slot="typography"
-                data-variant="text"
+                data-text-overflow="wrap"
+                data-variant="paragraph"
+                data-weight="regular"
               >
                 learn_more 
                 <a
@@ -87,7 +92,7 @@ exports[`PipelinePage container test should render PipelinePageLayout section 1`
                 >
                   here
                 </a>
-              </p>
+              </span>
             </div>
           </div>
         </div>

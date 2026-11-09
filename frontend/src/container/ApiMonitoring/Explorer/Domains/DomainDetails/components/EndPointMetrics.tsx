@@ -38,115 +38,139 @@ function EndPointMetrics({
 		<div className="domain-detail-drawer__endpoint">
 			<div className="domain-details-grid">
 				<div className="labels-row">
-					<Typography.Text
-						size="sm"
+					<Typography
+						variant="uppercase"
+						size="small"
 						weight="medium"
-						color="muted"
-						className="domain-details-metadata-label"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
 					>
 						Rate
-					</Typography.Text>
-					<Typography.Text
-						size="sm"
+					</Typography>
+					<Typography
+						variant="uppercase"
+						size="small"
 						weight="medium"
-						color="muted"
-						className="domain-details-metadata-label"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
 					>
 						AVERAGE LATENCY
-					</Typography.Text>
-					<Typography.Text
-						size="sm"
+					</Typography>
+					<Typography
+						variant="uppercase"
+						size="small"
 						weight="medium"
-						color="muted"
-						className="domain-details-metadata-label"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
 					>
 						ERROR %
-					</Typography.Text>
-					<Typography.Text
-						size="sm"
+					</Typography>
+					<Typography
+						variant="uppercase"
+						size="small"
 						weight="medium"
-						color="muted"
-						className="domain-details-metadata-label"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
 					>
 						LAST USED
-					</Typography.Text>
+					</Typography>
 				</div>
 
 				<div className="values-row">
-					<Typography.Text
-						size="small"
-						weight="medium"
-						color="muted"
-						className="domain-details-metadata-value"
-					>
-						{isLoading || isRefetching ? (
-							<Skeleton.Button active size="small" />
-						) : (
-							<Tooltip title={metricsData?.rate}>
-								<span className="round-metric-tag">
-									{metricsData?.rate !== '-' ? `${metricsData?.rate} ops/sec` : '-'}
-								</span>
-							</Tooltip>
-						)}
-					</Typography.Text>
-					<Typography.Text
-						size="small"
-						weight="medium"
-						color="muted"
-						className="domain-details-metadata-value"
-					>
-						{isLoading || isRefetching ? (
-							<Skeleton.Button active size="small" />
-						) : (
-							<Tooltip title={metricsData?.latency}>
-								{metricsData?.latency !== '-' ? `${metricsData?.latency}ms` : '-'}
-							</Tooltip>
-						)}
-					</Typography.Text>
-					<Typography.Text
-						size="small"
-						weight="medium"
-						color="muted"
-						className="domain-details-metadata-value error-rate"
-					>
-						{isLoading || isRefetching ? (
-							<Skeleton.Button active size="small" />
-						) : (
-							<Tooltip title={metricsData?.errorRate}>
-								{metricsData?.errorRate !== '-' ? (
-									<div className="progress-bar">
-										<Progress
-											percent={Number(Number(metricsData?.errorRate ?? 0).toFixed(2))}
-											showInfo
-											color={
-												Number(metricsData?.errorRate ?? 0) >= 90
-													? 'highlight-danger'
-													: Number(metricsData?.errorRate ?? 0) >= 60
-														? 'warning'
-														: 'success'
-											}
-										/>
-									</div>
-								) : (
-									'-'
-								)}
-							</Tooltip>
-						)}
-					</Typography.Text>
-					<Typography.Text
-						size="small"
-						weight="medium"
-						color="muted"
-						className="domain-details-metadata-value"
-					>
-						{isLoading || isRefetching ? (
-							<Skeleton.Button active size="small" />
-						) : (
-							<Tooltip title={metricsData?.lastUsed}>
-								{getDisplayValue(metricsData?.lastUsed)}
-							</Tooltip>
-						)}
-					</Typography.Text>
+					<div className="domain-details-metadata-value">
+						<Typography
+							variant="code"
+							size="small"
+							weight="medium"
+							color="secondary"
+							as="span"
+							textOverflow="visible"
+						>
+							{isLoading || isRefetching ? (
+								<Skeleton.Button active size="small" />
+							) : (
+								<Tooltip title={metricsData?.rate}>
+									<span className="round-metric-tag">
+										{metricsData?.rate !== '-' ? `${metricsData?.rate} ops/sec` : '-'}
+									</span>
+								</Tooltip>
+							)}
+						</Typography>
+					</div>
+					<div className="domain-details-metadata-value">
+						<Typography
+							variant="code"
+							size="small"
+							weight="medium"
+							color="secondary"
+							as="span"
+							textOverflow="visible"
+						>
+							{isLoading || isRefetching ? (
+								<Skeleton.Button active size="small" />
+							) : (
+								<Tooltip title={metricsData?.latency}>
+									{metricsData?.latency !== '-' ? `${metricsData?.latency}ms` : '-'}
+								</Tooltip>
+							)}
+						</Typography>
+					</div>
+					<div className="domain-details-metadata-value error-rate">
+						<Typography
+							variant="code"
+							size="small"
+							weight="medium"
+							color="secondary"
+							as="span"
+							textOverflow="visible"
+						>
+							{isLoading || isRefetching ? (
+								<Skeleton.Button active size="small" />
+							) : (
+								<Tooltip title={metricsData?.errorRate}>
+									{metricsData?.errorRate !== '-' ? (
+										<div className="progress-bar">
+											<Progress
+												percent={Number(Number(metricsData?.errorRate ?? 0).toFixed(2))}
+												showInfo
+												color={
+													Number(metricsData?.errorRate ?? 0) >= 90
+														? 'highlight-danger'
+														: Number(metricsData?.errorRate ?? 0) >= 60
+															? 'warning'
+															: 'success'
+												}
+											/>
+										</div>
+									) : (
+										'-'
+									)}
+								</Tooltip>
+							)}
+						</Typography>
+					</div>
+					<div className="domain-details-metadata-value">
+						<Typography
+							variant="code"
+							size="small"
+							weight="medium"
+							color="secondary"
+							as="span"
+							textOverflow="visible"
+						>
+							{isLoading || isRefetching ? (
+								<Skeleton.Button active size="small" />
+							) : (
+								<Tooltip title={metricsData?.lastUsed}>
+									{getDisplayValue(metricsData?.lastUsed)}
+								</Tooltip>
+							)}
+						</Typography>
+					</div>
 				</div>
 			</div>
 		</div>

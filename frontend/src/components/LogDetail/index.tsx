@@ -406,21 +406,29 @@ function LogDetailInner({
 					{selectedView === VIEW_TYPES.OVERVIEW && (
 						<div className="log-detail-drawer__footer-hint">
 							<div className="log-detail-drawer__footer-hint-content">
-								<Typography.Text
-									color="muted"
-									className="log-detail-drawer__footer-hint-text"
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
 								>
 									Use
-								</Typography.Text>
+								</Typography>
 								<ArrowUp size={14} className="log-detail-drawer__footer-hint-icon" />
 								<span>/</span>
 								<ArrowDown size={14} className="log-detail-drawer__footer-hint-icon" />
-								<Typography.Text
-									color="muted"
-									className="log-detail-drawer__footer-hint-text"
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
 								>
 									to view previous/next log
-								</Typography.Text>
+								</Typography>
 							</div>
 						</div>
 					)}

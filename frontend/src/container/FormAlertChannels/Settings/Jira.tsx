@@ -136,37 +136,51 @@ function JiraSettings(): JSX.Element {
 				</FormField>
 
 				{selfHosted ? (
-					<Typography.Text
-						color="muted"
-						size="sm"
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="p"
+						marginBottom={8}
+						textOverflow="wrap"
 						testId="jira-selfhosted-tip"
-						style={{ display: 'block', marginBottom: 16 }}
 					>
 						{t('jira_selfhosted_tip')}{' '}
 						<Typography.Link
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							textOverflow="wrap"
 							href="https://signoz.io/docs/alerts-management/notification-channel/jira/#self-hosted-jira"
 							target="_blank"
-							rel="noopener noreferrer"
 						>
 							{t('jira_selfhosted_tip_link')}
 						</Typography.Link>
-					</Typography.Text>
+					</Typography>
 				) : (
-					<Typography.Text
-						color="muted"
-						size="sm"
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="p"
+						marginBottom={8}
+						textOverflow="wrap"
 						testId="jira-service-account-tip"
-						style={{ display: 'block', marginBottom: 16 }}
 					>
 						{t('jira_service_account_tip')}{' '}
 						<Typography.Link
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							textOverflow="wrap"
 							href="https://signoz.io/docs/alerts-management/notification-channel/jira/#use-a-service-account-recommended"
 							target="_blank"
-							rel="noopener noreferrer"
 						>
 							{t('jira_service_account_tip_link')}
 						</Typography.Link>
-					</Typography.Text>
+					</Typography>
 				)}
 
 				<FormField

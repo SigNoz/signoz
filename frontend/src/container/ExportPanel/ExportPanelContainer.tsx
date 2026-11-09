@@ -117,9 +117,16 @@ function ExportPanelContainer({
 		>
 			<div className={styles.body}>
 				<div className={styles.field}>
-					<Typography.Text className={styles.label}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						Select a dashboard
-					</Typography.Text>
+					</Typography>
 					<ExportDashboardSelect
 						dashboards={dashboards}
 						value={selectedDashboard?.id ?? null}
@@ -132,9 +139,16 @@ function ExportPanelContainer({
 				</div>
 
 				<div className={styles.newDashboard}>
-					<Typography.Text className={styles.hint}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						Or create a new dashboard with this panel
-					</Typography.Text>
+					</Typography>
 					<Button
 						variant="outlined"
 						color="secondary"

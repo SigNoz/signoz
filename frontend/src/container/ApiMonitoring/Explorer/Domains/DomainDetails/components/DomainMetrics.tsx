@@ -87,123 +87,147 @@ function DomainMetrics({
 		<div className="domain-detail-drawer__endpoint" data-testid="domain-metrics">
 			<div className="domain-details-grid">
 				<div className="labels-row">
-					<Typography.Text
-						size="sm"
+					<Typography
+						variant="uppercase"
+						size="small"
 						weight="medium"
-						color="muted"
-						className="domain-details-metadata-label"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
 					>
 						EXTERNAL API
-					</Typography.Text>
-					<Typography.Text
-						size="sm"
+					</Typography>
+					<Typography
+						variant="uppercase"
+						size="small"
 						weight="medium"
-						color="muted"
-						className="domain-details-metadata-label"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
 					>
 						AVERAGE LATENCY
-					</Typography.Text>
-					<Typography.Text
-						size="sm"
+					</Typography>
+					<Typography
+						variant="uppercase"
+						size="small"
 						weight="medium"
-						color="muted"
-						className="domain-details-metadata-label"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
 					>
 						ERROR %
-					</Typography.Text>
-					<Typography.Text
-						size="sm"
+					</Typography>
+					<Typography
+						variant="uppercase"
+						size="small"
 						weight="medium"
-						color="muted"
-						className="domain-details-metadata-label"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
 					>
 						LAST USED
-					</Typography.Text>
+					</Typography>
 				</div>
 
 				<div className="values-row" data-testid="domain-metrics-values">
-					<Typography.Text
-						size="small"
-						weight="medium"
-						color="muted"
-						className="domain-details-metadata-value"
-					>
-						{isLoading || isRefetching ? (
-							<Skeleton.Button active size="small" />
-						) : (
-							<Tooltip title={formattedDomainMetricsData.endpointCount}>
-								<span className="round-metric-tag">
-									{formattedDomainMetricsData.endpointCount}
-								</span>
-							</Tooltip>
-						)}
-					</Typography.Text>
+					<div className="domain-details-metadata-value">
+						<Typography
+							variant="code"
+							size="small"
+							weight="medium"
+							color="secondary"
+							as="span"
+							textOverflow="visible"
+						>
+							{isLoading || isRefetching ? (
+								<Skeleton.Button active size="small" />
+							) : (
+								<Tooltip title={formattedDomainMetricsData.endpointCount}>
+									<span className="round-metric-tag">
+										{formattedDomainMetricsData.endpointCount}
+									</span>
+								</Tooltip>
+							)}
+						</Typography>
+					</div>
 					{/* // update the tooltip as well */}
-					<Typography.Text
-						size="small"
-						weight="medium"
-						color="muted"
-						className="domain-details-metadata-value"
-					>
-						{isLoading || isRefetching ? (
-							<Skeleton.Button active size="small" />
-						) : (
-							<Tooltip title={formattedDomainMetricsData.latency}>
-								<span className="round-metric-tag">
-									{formattedDomainMetricsData.latency !== '-'
-										? `${(Number(formattedDomainMetricsData.latency) / 1000).toFixed(3)}s`
-										: '-'}
-								</span>
-							</Tooltip>
-						)}
-					</Typography.Text>
+					<div className="domain-details-metadata-value">
+						<Typography
+							variant="code"
+							size="small"
+							weight="medium"
+							color="secondary"
+							as="span"
+							textOverflow="visible"
+						>
+							{isLoading || isRefetching ? (
+								<Skeleton.Button active size="small" />
+							) : (
+								<Tooltip title={formattedDomainMetricsData.latency}>
+									<span className="round-metric-tag">
+										{formattedDomainMetricsData.latency !== '-'
+											? `${(Number(formattedDomainMetricsData.latency) / 1000).toFixed(3)}s`
+											: '-'}
+									</span>
+								</Tooltip>
+							)}
+						</Typography>
+					</div>
 					{/* // update the tooltip as well */}
-					<Typography.Text
-						size="small"
-						weight="medium"
-						color="muted"
-						className="domain-details-metadata-value error-rate"
-					>
-						{isLoading || isRefetching ? (
-							<Skeleton.Button active size="small" />
-						) : (
-							<Tooltip title={formattedDomainMetricsData.errorRate}>
-								{formattedDomainMetricsData.errorRate !== '-' ? (
-									<div className="progress-bar">
-										<Progress
-											percent={Number(
-												Number(formattedDomainMetricsData.errorRate).toFixed(2),
-											)}
-											showInfo
-											color={
-												Number(formattedDomainMetricsData.errorRate) >= 90
-													? 'highlight-danger'
-													: Number(formattedDomainMetricsData.errorRate) >= 60
-														? 'warning'
-														: 'success'
-											}
-										/>
-									</div>
-								) : (
-									'-'
-								)}
-							</Tooltip>
-						)}
-					</Typography.Text>
-					<Typography.Text
-						size="small"
-						weight="medium"
-						color="muted"
-						className="domain-details-metadata-value"
-					>
-						{isLoading || isRefetching ? (
-							<Skeleton.Button active size="small" />
-						) : (
-							<Tooltip title={formattedDomainMetricsData.lastUsed}>
-								{formattedDomainMetricsData.lastUsed}
-							</Tooltip>
-						)}
-					</Typography.Text>
+					<div className="domain-details-metadata-value error-rate">
+						<Typography
+							variant="code"
+							size="small"
+							weight="medium"
+							color="secondary"
+							as="span"
+							textOverflow="visible"
+						>
+							{isLoading || isRefetching ? (
+								<Skeleton.Button active size="small" />
+							) : (
+								<Tooltip title={formattedDomainMetricsData.errorRate}>
+									{formattedDomainMetricsData.errorRate !== '-' ? (
+										<div className="progress-bar">
+											<Progress
+												percent={Number(
+													Number(formattedDomainMetricsData.errorRate).toFixed(2),
+												)}
+												showInfo
+												color={
+													Number(formattedDomainMetricsData.errorRate) >= 90
+														? 'highlight-danger'
+														: Number(formattedDomainMetricsData.errorRate) >= 60
+															? 'warning'
+															: 'success'
+												}
+											/>
+										</div>
+									) : (
+										'-'
+									)}
+								</Tooltip>
+							)}
+						</Typography>
+					</div>
+					<div className="domain-details-metadata-value">
+						<Typography
+							variant="code"
+							size="small"
+							weight="medium"
+							color="secondary"
+							as="span"
+							textOverflow="visible"
+						>
+							{isLoading || isRefetching ? (
+								<Skeleton.Button active size="small" />
+							) : (
+								<Tooltip title={formattedDomainMetricsData.lastUsed}>
+									{formattedDomainMetricsData.lastUsed}
+								</Tooltip>
+							)}
+						</Typography>
+					</div>
 				</div>
 			</div>
 		</div>

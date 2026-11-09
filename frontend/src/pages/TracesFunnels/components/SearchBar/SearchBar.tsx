@@ -32,14 +32,21 @@ function SearchBar({
 				trigger="click"
 				content={
 					<div className="sort-popover-content">
-						<Typography.Text
-							size="sm"
-							weight="semibold"
-							color="muted"
-							className="sort-popover-content__heading"
+						<Typography
+							variant="uppercase"
+							size="small"
+							weight="bold"
+							color="secondary"
+							as="span"
+							display="inline-block"
+							paddingTop={6}
+							paddingRight={8}
+							paddingBottom={3}
+							paddingLeft={7}
+							textOverflow="wrap"
 						>
 							Sort By
-						</Typography.Text>
+						</Typography>
 						<Button
 							type="text"
 							className="sort-popover-content__button"

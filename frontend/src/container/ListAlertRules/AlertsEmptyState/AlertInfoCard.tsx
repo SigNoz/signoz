@@ -26,12 +26,26 @@ function AlertInfoCard({
 			}}
 		>
 			<div className={styles.alertCardText}>
-				<Typography.Text className={styles.alertCardTextHeader}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
 					{header}
-				</Typography.Text>
-				<Typography.Text className={styles.alertCardTextSubheader}>
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					{subheader}
-				</Typography.Text>
+				</Typography>
 			</div>
 			<ArrowRight size="md" />
 		</div>

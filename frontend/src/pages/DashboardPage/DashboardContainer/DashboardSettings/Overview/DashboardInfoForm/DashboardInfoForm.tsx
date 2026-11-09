@@ -35,7 +35,16 @@ function DashboardInfoForm({
 		<div className={settingsStyles.settingsCard}>
 			<div className={styles.formSpace}>
 				<div className={styles.infoItemContainer}>
-					<Typography className={styles.infoTitle}>Dashboard Name</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Dashboard Name
+					</Typography>
 					<section className={styles.nameIconInput}>
 						<DashboardImagePicker
 							image={image}
@@ -55,7 +64,16 @@ function DashboardInfoForm({
 				</div>
 
 				<div className={styles.infoItemContainer}>
-					<Typography className={styles.infoTitle}>Description</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Description
+					</Typography>
 					<AntdInput.TextArea
 						data-testid="dashboard-desc"
 						rows={6}
@@ -66,7 +84,16 @@ function DashboardInfoForm({
 				</div>
 
 				<div className={styles.infoItemContainer}>
-					<Typography className={styles.infoTitle}>Tags</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Tags
+					</Typography>
 					<TagKeyValueInput tags={tags} onTagsChange={onTagsChange} />
 				</div>
 			</div>

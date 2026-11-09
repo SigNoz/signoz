@@ -66,21 +66,28 @@ function JsmOpsSettings(): JSX.Element {
 	return (
 		<>
 			<FormCard title={t('section_connection')}>
-				<Typography.Text
-					color="muted"
-					size="sm"
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="p"
+					marginBottom={8}
+					textOverflow="wrap"
 					testId="jsmops-tip"
-					style={{ display: 'block', marginBottom: 16 }}
 				>
 					{t('jsmops_tip')}{' '}
 					<Typography.Link
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						textOverflow="wrap"
 						href="https://signoz.io/docs/alerts-management/notification-channel/jsm-ops/"
 						target="_blank"
-						rel="noopener noreferrer"
 					>
 						{t('jsmops_tip_link')}
 					</Typography.Link>
-				</Typography.Text>
+				</Typography>
 
 				<FormField
 					label={t('field_jsmops_api_key')}

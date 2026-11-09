@@ -39,9 +39,16 @@ function PublicDashboardSettingsForm({
 			</div>
 
 			<div className={styles.fieldGroup}>
-				<Typography.Text className={styles.fieldLabel}>
+				<Typography
+					variant="label"
+					size="small"
+					weight="medium"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Default time range
-				</Typography.Text>
+				</Typography>
 				<Select
 					testId="public-dashboard-default-time-range"
 					placeholder="Select default time range"

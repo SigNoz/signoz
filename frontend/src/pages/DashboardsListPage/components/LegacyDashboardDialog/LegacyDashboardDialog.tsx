@@ -122,24 +122,47 @@ function LegacyDashboardDialog({
 			}
 		>
 			<div className={styles.body}>
-				<Typography.Text className={styles.description}>
-					<strong>{dashboardName || 'This dashboard'}</strong> hasn&apos;t been
-					migrated to the new dashboard experience yet, so it can&apos;t be opened
-					here.{' '}
-					{canEdit
-						? "Retrying the migration often works once we've handled the case that blocked it. If it still fails, share the dashboard ID below with support."
-						: "Share the dashboard ID below with support and we'll help you move it over."}
-				</Typography.Text>
+				<span className={styles.description}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						<strong>{dashboardName || 'This dashboard'}</strong> hasn&apos;t been
+						migrated to the new dashboard experience yet, so it can&apos;t be opened
+						here.{' '}
+						{canEdit
+							? "Retrying the migration often works once we've handled the case that blocked it. If it still fails, share the dashboard ID below with support."
+							: "Share the dashboard ID below with support and we'll help you move it over."}
+					</Typography>
+				</span>
 
 				<div className={styles.idField}>
-					<Typography.Text className={styles.idLabel}>Dashboard ID</Typography.Text>
+					<Typography
+						variant="uppercase"
+						size="small"
+						weight="medium"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Dashboard ID
+					</Typography>
 					<div className={styles.idRow}>
-						<Typography.Text
-							className={styles.idValue}
+						<Typography
+							variant="code"
+							size="small"
+							weight="regular"
+							color="main"
+							as="span"
+							textOverflow="wrap"
 							data-testid="legacy-dashboard-id"
 						>
 							{dashboardId}
-						</Typography.Text>
+						</Typography>
 						<Button
 							variant="ghost"
 							color="secondary"

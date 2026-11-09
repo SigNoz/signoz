@@ -156,7 +156,15 @@ function TagKeyValueInput({
 				</div>
 			</div>
 			{error && (
-				<Typography className={styles.error} data-testid={`${testId}-error`}>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="danger"
+					as="span"
+					textOverflow="wrap"
+					data-testid={`${testId}-error`}
+				>
 					{error}
 				</Typography>
 			)}

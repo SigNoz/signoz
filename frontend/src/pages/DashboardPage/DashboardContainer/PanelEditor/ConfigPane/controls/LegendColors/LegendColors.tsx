@@ -39,9 +39,16 @@ function LegendColors({
 
 	if (series.length === 0) {
 		return (
-			<Typography.Text className={styles.empty}>
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				Run the query to set a color for each series.
-			</Typography.Text>
+			</Typography>
 		);
 	}
 
@@ -57,9 +64,16 @@ function LegendColors({
 				onChange={(e): void => setQuery(e.target.value)}
 			/>
 			{filtered.length === 0 ? (
-				<Typography.Text className={styles.empty}>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					No series match “{query}”.
-				</Typography.Text>
+				</Typography>
 			) : (
 				<Virtuoso
 					className={styles.list}

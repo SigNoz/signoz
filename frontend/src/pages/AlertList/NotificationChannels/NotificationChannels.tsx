@@ -174,11 +174,19 @@ function NotificationChannels(): JSX.Element {
 			<header className={styles.headerBand}>
 				<div className={styles.commandHeader}>
 					<div className={styles.headingBlock}>
-						<Typography.Title className={styles.title}>
+						<Typography
+							variant="label"
+							size="large"
+							weight="medium"
+							color="main"
+							as="h1"
+							marginY={4}
+							textOverflow="ellipsis"
+						>
 							{filteredKind
 								? `All ${CHANNEL_KIND_LABEL[filteredKind]} channels`
 								: 'All notification channels'}
-						</Typography.Title>
+						</Typography>
 						<span className={styles.countPill}>{total}</span>
 					</div>
 					<div className={styles.grow} />

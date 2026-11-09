@@ -36,7 +36,16 @@ function AdvancedOptions(): JSX.Element {
 									value={advancedOptions.sendNotificationIfDataIsMissing.toleranceLimit}
 									testId="send-notification-if-data-is-missing-input"
 								/>
-								<Typography.Text>Minutes</Typography.Text>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
+									Minutes
+								</Typography>
 							</div>
 						}
 						onToggle={(): void =>
@@ -69,7 +78,16 @@ function AdvancedOptions(): JSX.Element {
 									value={advancedOptions.enforceMinimumDatapoints.minimumDatapoints}
 									testId="enforce-minimum-datapoints-input"
 								/>
-								<Typography.Text>Datapoints</Typography.Text>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
+									Datapoints
+								</Typography>
 							</div>
 						}
 						onToggle={(): void =>

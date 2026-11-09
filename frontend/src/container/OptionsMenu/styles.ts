@@ -1,5 +1,4 @@
 import { Card, Space } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
 export const OptionsContainer = styled(Card)`
@@ -13,8 +12,4 @@ export const OptionsContainer = styled(Card)`
 export const OptionsContentWrapper = styled(Space)`
 	min-width: 11rem;
 	padding: 0.25rem 0.5rem;
-`;
-
-export const FieldTitle = styled(Typography.Text)`
-	font-size: 0.75rem;
 `;

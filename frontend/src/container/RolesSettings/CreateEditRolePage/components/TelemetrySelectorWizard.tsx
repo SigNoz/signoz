@@ -98,7 +98,14 @@ function TelemetrySelectorWizard({
 			>
 				<div className={styles.wizardBody}>
 					<div className={styles.wizardField}>
-						<Typography as="label" weight="medium">
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="medium"
+							color="inherit"
+							as="label"
+							textOverflow="wrap"
+						>
 							Query Type
 						</Typography>
 						<Select
@@ -119,7 +126,14 @@ function TelemetrySelectorWizard({
 
 					{supportsKeyScoping && (
 						<div className={styles.wizardField}>
-							<Typography as="label" weight="medium">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="medium"
+								color="inherit"
+								as="label"
+								textOverflow="wrap"
+							>
 								Key
 							</Typography>
 							<Select
@@ -138,7 +152,14 @@ function TelemetrySelectorWizard({
 					)}
 
 					<div className={styles.wizardField}>
-						<Typography as="label" weight="medium">
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="medium"
+							color="inherit"
+							as="label"
+							textOverflow="wrap"
+						>
 							Value
 						</Typography>
 						<div className={styles.wizardValueRow}>
@@ -172,7 +193,14 @@ function TelemetrySelectorWizard({
 					</div>
 
 					<div className={styles.wizardField}>
-						<Typography as="label" weight="medium">
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="medium"
+							color="inherit"
+							as="label"
+							textOverflow="wrap"
+						>
 							Selector
 						</Typography>
 						<Input
@@ -181,13 +209,17 @@ function TelemetrySelectorWizard({
 							onKeyDown={handleInputKeyDown}
 							testId={`wizard-selector-input-${testId}`}
 						/>
-						<Typography.Text
+						<Typography
+							variant="paragraph"
 							size="small"
-							color={validation.isError ? 'danger' : 'muted'}
+							weight="regular"
+							color={validation.isError ? 'danger' : 'secondary'}
+							as="span"
+							textOverflow="wrap"
 							testId={`wizard-selector-hint-${testId}`}
 						>
 							{validation.message}
-						</Typography.Text>
+						</Typography>
 					</div>
 				</div>
 			</Dialog>

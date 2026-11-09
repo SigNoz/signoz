@@ -76,7 +76,16 @@ function SaveViewModal({
 		>
 			<form id={FORM_ID} className={styles.field} onSubmit={handleSubmit}>
 				<label htmlFor={NAME_INPUT_ID}>
-					<Typography.Text className={styles.label}>Enter view name</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="main"
+						as="span"
+						textOverflow="wrap"
+					>
+						Enter view name
+					</Typography>
 				</label>
 				<Input
 					ref={nameInputRef}

@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
 import { toast } from '@signozhq/ui/toast';
 import { Button, Tooltip } from 'antd';
+import { Button as SignozButton } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	invalidateGetMetricMetadata,
@@ -227,16 +228,32 @@ function TimeSeries({
 						/>
 						{showSaveUnitButton && (
 							<div className="save-unit-container">
-								<Typography.Text>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
 									Set the selected unit as the metric unit?
-								</Typography.Text>
+								</Typography>
 								<Button
 									type="primary"
 									size="small"
 									disabled={isUpdatingMetricMetadata}
 									onClick={handleSaveUnit}
 								>
-									<Typography.Text>Yes</Typography.Text>
+									<Typography
+										variant="paragraph"
+										size="base"
+										weight="regular"
+										color="inherit"
+										as="span"
+										textOverflow="wrap"
+									>
+										Yes
+									</Typography>
 								</Button>
 							</div>
 						)}
@@ -288,15 +305,25 @@ function TimeSeries({
 									<Tooltip
 										className="no-unit-warning"
 										title={
-											<Typography.Text>
+											<Typography
+												variant="paragraph"
+												size="base"
+												weight="regular"
+												color="inherit"
+												as="span"
+												textOverflow="wrap"
+											>
 												No unit is set for this metric. You can assign one from the{' '}
-												<Typography.Link
+												<SignozButton
+													variant="link"
+													color="primary"
+													size="md"
 													onClick={(): void => handleOpenMetricDetails(metricName)}
 												>
 													metric details
-												</Typography.Link>{' '}
+												</SignozButton>{' '}
 												page.
-											</Typography.Text>
+											</Typography>
 										}
 									>
 										<TriangleAlert

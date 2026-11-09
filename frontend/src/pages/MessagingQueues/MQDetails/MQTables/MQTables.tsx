@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { Skeleton, Table } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import {
@@ -76,7 +77,10 @@ export function getColumns(
 			: (text: string): ColumnTypeRender<Record<string, unknown>> => ({
 					children:
 						column.name === 'service_name' ? (
-							<Typography.Link
+							<Button
+								variant="link"
+								color="primary"
+								size="md"
 								onClick={(e): void => {
 									e.preventDefault();
 									e.stopPropagation();
@@ -89,9 +93,18 @@ export function getColumns(
 								}}
 							>
 								{text}
-							</Typography.Link>
+							</Button>
 						) : (
-							<Typography.Text>{text}</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								{text}
+							</Typography>
 						),
 				}),
 	}));
@@ -117,10 +130,27 @@ export function getTableData(
 
 const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 	<>
-		<Typography.Text className="numbers">
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
 			{range[0]} &#8212; {range[1]}
-		</Typography.Text>
-		<Typography.Text className="total"> of {total}</Typography.Text>
+		</Typography>
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
+			{' '}
+			of {total}
+		</Typography>
 	</>
 );
 
@@ -309,16 +339,32 @@ function MessagingQueuesTable({
 		<div className="mq-tables-container">
 			{!validConfigPresent ? (
 				<div className="no-data-style">
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{selectedView === MessagingQueuesViewType.consumerLag.value
 							? 'Click on a co-ordinate above to see the details'
 							: 'Click on a row above to see the details'}
-					</Typography.Text>
+					</Typography>
 					<Skeleton />
 				</div>
 			) : isError ? (
 				<div className="no-data-style">
-					<Typography.Text>{error?.message || SOMETHING_WENT_WRONG}</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{error?.message || SOMETHING_WENT_WRONG}
+					</Typography>
 				</div>
 			) : (
 				<>

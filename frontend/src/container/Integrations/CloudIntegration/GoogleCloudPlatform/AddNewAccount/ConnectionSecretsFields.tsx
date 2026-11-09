@@ -78,15 +78,29 @@ function ConnectionSecretsFields({
 	return (
 		<div className={styles.drawerSurface}>
 			<div className={styles.drawerSurfaceHead}>
-				<Typography.Text weight="bold" size="base">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="bold"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					Deployment details &amp; ingestion secrets
-				</Typography.Text>
+				</Typography>
 				{!hasMissingValue && (
 					<div className={styles.headLabel}>
 						<Lock size={12} />
-						<Typography.Text as="span" size="small" className={styles.headLabel}>
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							Auto-filled by SigNoz
-						</Typography.Text>
+						</Typography>
 					</div>
 				)}
 			</div>
@@ -116,15 +130,24 @@ function ConnectionSecretsFields({
 										tooltip={field.tooltip}
 									/>
 									<div className={styles.readonlyField}>
-										<Typography.Text
-											as="span"
-											id={field.testId}
+										<span
 											className={cx(styles.readonlyValue, styles.mono)}
 											title={providedValue}
-											testId={field.testId}
 										>
-											{providedValue}
-										</Typography.Text>
+											<Typography
+												/* TODO(typography): not lifted from className: composes: mono from './shared.module.scss' */ variant="paragraph"
+												size="base"
+												weight="regular"
+												color="secondary"
+												as="span"
+												display="block"
+												textOverflow="ellipsis"
+												id={field.testId}
+												testId={field.testId}
+											>
+												{providedValue}
+											</Typography>
+										</span>
 										<CopyButton
 											value={providedValue}
 											size={12}

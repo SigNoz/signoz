@@ -68,20 +68,30 @@ function InviteMembers({
 			<div className={styles.table}>
 				{showHeader && (
 					<div className={styles.header}>
-						<Typography.Text
-							size="base"
-							weight="semibold"
-							className={styles.headerCellEmail}
-						>
-							Email address
-						</Typography.Text>
-						<Typography.Text
-							size="base"
-							weight="semibold"
-							className={styles.headerCellRole}
-						>
-							Roles
-						</Typography.Text>
+						<span className={styles.headerCellEmail}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="bold"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								Email address
+							</Typography>
+						</span>
+						<span className={styles.headerCellRole}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="bold"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								Roles
+							</Typography>
+						</span>
 						<div className={styles.headerCellAction} />
 					</div>
 				)}
@@ -100,9 +110,16 @@ function InviteMembers({
 									testId={`invite-email-${row.id}`}
 								/>
 								{emailValidity[row.id] === false && row.email.trim() !== '' && (
-									<Typography.Text size="small" className={styles.errorText}>
+									<Typography
+										variant="paragraph"
+										size="small"
+										weight="regular"
+										color="danger"
+										as="span"
+										textOverflow="wrap"
+									>
 										Invalid email address
-									</Typography.Text>
+									</Typography>
 								)}
 							</div>
 
@@ -174,19 +191,40 @@ function InviteMembers({
 					>
 						<div className={styles.results}>
 							{hasSuccesses && (
-								<Typography.Text size="small">
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
 									{successResults.length} invite(s) sent successfully.
-								</Typography.Text>
+								</Typography>
 							)}
-							<Typography.Text size="small">
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
 								{failedResults.length} invite(s) failed:
-							</Typography.Text>
+							</Typography>
 							<ul className={styles.resultsList}>
 								{failedResults.map((result) => (
 									<li key={result.email}>
-										<Typography.Text size="small">
+										<Typography
+											variant="paragraph"
+											size="small"
+											weight="regular"
+											color="inherit"
+											as="span"
+											textOverflow="wrap"
+										>
 											{result.email}: {result.error}
-										</Typography.Text>
+										</Typography>
 									</li>
 								))}
 							</ul>
@@ -203,9 +241,16 @@ function InviteMembers({
 						icon={<SolidCheckCircle2 />}
 						testId="invite-success"
 					>
-						<Typography.Text size="small">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							{successResults.length} invite(s) sent successfully!
-						</Typography.Text>
+						</Typography>
 					</Callout>
 				</div>
 			)}

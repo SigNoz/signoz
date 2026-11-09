@@ -18,12 +18,27 @@ function AgentSetupCommand({
 	return (
 		<div className={styles.commands} data-testid={testId}>
 			<div className={styles.commandsHead}>
-				<Typography.Text weight="bold" size="base">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="bold"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					Deploy the SigNoz agent
-				</Typography.Text>
-				<Typography.Text as="p" size="small" color="muted">
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="p"
+					display="inline"
+					textOverflow="wrap"
+				>
 					{description}
-				</Typography.Text>
+				</Typography>
 			</div>
 			<CodeBlock language="bash" code={command} className={styles.command} />
 		</div>

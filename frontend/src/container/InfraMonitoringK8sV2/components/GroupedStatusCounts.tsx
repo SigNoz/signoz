@@ -41,9 +41,16 @@ function buildTooltipContent(
 	if (!item.breakdown || item.breakdown.length === 0) {
 		return (
 			<div onClick={onClickHandle}>
-				<Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{item.label}: {item.value}
-				</Typography.Text>
+				</Typography>
 			</div>
 		);
 	}
@@ -52,20 +59,47 @@ function buildTooltipContent(
 	if (nonZeroBreakdown.length === 0) {
 		return (
 			<div className={styles.tooltipContent} onClick={onClickHandle}>
-				<Typography.Text className={styles.tooltipHeader}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="bold"
+					color="inherit"
+					as="span"
+					display="inline-block"
+					marginBottom={1}
+					textOverflow="wrap"
+				>
 					{item.label}
-				</Typography.Text>
+				</Typography>
 
-				<Typography.Text>No errors</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					No errors
+				</Typography>
 			</div>
 		);
 	}
 
 	return (
 		<div className={styles.tooltipContent} onClick={onClickHandle}>
-			<Typography.Text className={styles.tooltipHeader}>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="bold"
+				color="inherit"
+				as="span"
+				display="inline-block"
+				marginBottom={1}
+				textOverflow="wrap"
+			>
 				{item.label}
-			</Typography.Text>
+			</Typography>
 			{nonZeroBreakdown.map((b) =>
 				onSelectStatuses && b.statuses?.length ? (
 					<button
@@ -79,17 +113,51 @@ function buildTooltipContent(
 							onSelectStatuses(b.statuses as string[]);
 						}}
 					>
-						<Typography.Text>{b.label}</Typography.Text>
-						<Typography.Text className={styles.tooltipValue}>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{b.label}
+						</Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+							tabularNumbers
+						>
 							{b.value}
-						</Typography.Text>
+						</Typography>
 					</button>
 				) : (
 					<div key={b.label} className={styles.tooltipRow}>
-						<Typography.Text>{b.label}</Typography.Text>
-						<Typography.Text className={styles.tooltipValue}>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{b.label}
+						</Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+							tabularNumbers
+						>
 							{b.value}
-						</Typography.Text>
+						</Typography>
 					</div>
 				),
 			)}

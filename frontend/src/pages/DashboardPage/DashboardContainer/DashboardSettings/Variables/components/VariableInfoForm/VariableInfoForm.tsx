@@ -5,7 +5,6 @@ import { Input as AntdInput } from 'antd';
 
 import styles from './VariableInfoForm.module.scss';
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../../../constants';
-import variableFormStyles from '../../VariableForm/VariableForm.module.scss';
 
 interface VariableInfoFormProps {
 	title: string;
@@ -25,7 +24,16 @@ function VariableInfoForm({
 	return (
 		<>
 			<div className={styles.infoItemContainer}>
-				<Typography className={styles.infoTitle}>Name</Typography>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
+					Name
+				</Typography>
 
 				<Input
 					testId="variable-name"
@@ -36,15 +44,31 @@ function VariableInfoForm({
 				/>
 
 				{visibleNameError ? (
-					<Typography.Text className={variableFormStyles.errorText}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="warning"
+						as="span"
+						textOverflow="wrap"
+					>
 						<sup>*</sup>&nbsp;
 						{visibleNameError}
-					</Typography.Text>
+					</Typography>
 				) : null}
 			</div>
 
 			<div className={styles.infoItemContainer}>
-				<Typography className={styles.infoTitle}>Description</Typography>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
+					Description
+				</Typography>
 				<AntdInput.TextArea
 					className={styles.descriptionTextArea}
 					value={description}

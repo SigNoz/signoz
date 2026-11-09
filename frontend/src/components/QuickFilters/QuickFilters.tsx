@@ -185,9 +185,19 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	// Helpers to reduce cognitive complexity in main render
 	const renderLeftActions = (): JSX.Element => (
 		<section className="left-actions">
-			<Typography.Text className="text">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="main"
+				as="span"
+				display="inline-block"
+				minWidth={70}
+				paddingLeft={4}
+				textOverflow="visible"
+			>
 				{displayedQueryName ? 'Filters for' : 'Filters'}
-			</Typography.Text>
+			</Typography>
 			{queryOptions.length > 1 &&
 			!isAIObservabilityRowView &&
 			(!isListView || shouldShowDropdownInListView) ? (
@@ -284,7 +294,16 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		<>
 			{quickFilterSource === QuickFiltersSource.API_MONITORING && (
 				<div className="api-quick-filters-header">
-					<Typography.Text>Show IP addresses</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Show IP addresses
+					</Typography>
 					<Switch
 						color="primary"
 						textPlacement="right"
@@ -329,7 +348,16 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				{filterConfig.length === 0 && (
 					<div className="no-filters-container">
 						<Frown size={16} />
-						<Typography.Text>No filters found</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							No filters found
+						</Typography>
 					</div>
 				)}
 			</section>

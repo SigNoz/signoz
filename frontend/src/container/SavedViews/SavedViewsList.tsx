@@ -106,9 +106,16 @@ function SavedViewsList({
 	if (isError) {
 		return (
 			<div className={styles.state} data-testid="saved-views-list-error">
-				<Typography.Text className={styles.stateText}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Could not load views
-				</Typography.Text>
+				</Typography>
 				<Button
 					variant="outlined"
 					color="secondary"

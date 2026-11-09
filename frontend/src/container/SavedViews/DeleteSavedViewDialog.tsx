@@ -21,9 +21,16 @@ function DeleteSavedViewDialog({
 			onCancel={onCancel}
 			testId="delete-saved-view"
 		>
-			<Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				Deleting this view is irreversible and cannot be undone.
-			</Typography.Text>
+			</Typography>
 		</AlertDialog>
 	);
 }

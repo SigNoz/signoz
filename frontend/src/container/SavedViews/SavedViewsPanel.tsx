@@ -38,7 +38,16 @@ function SavedViewsPanel({
 				<div className={styles.header} data-testid="saved-views-panel-header">
 					<div className={styles.title}>
 						<TowerControl size={16} />
-						<Typography.Text className={styles.titleText}>All views</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							All views
+						</Typography>
 					</div>
 					<SavedViewsIconButton
 						title="Close"

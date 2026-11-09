@@ -110,7 +110,16 @@ function VariableImpactDialog({
 			footerSuffix={footer}
 		>
 			<div className={styles.body}>
-				<Typography.Text className={styles.intro}>{intro}</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
+					{intro}
+				</Typography>
 				<div className={styles.rows}>
 					{rows.map((row) => {
 						// Only warn on delete: an apply result is meant to reference the variable.
@@ -135,9 +144,16 @@ function VariableImpactDialog({
 									<span className={styles.kindTag}>{KIND_LABEL[row.kind]}</span>
 								</div>
 								<div className={styles.field}>
-									<Typography.Text className={styles.fieldLabel}>
+									<Typography
+										variant="uppercase"
+										size="small"
+										weight="regular"
+										color="secondary"
+										as="span"
+										textOverflow="wrap"
+									>
 										Current
-									</Typography.Text>
+									</Typography>
 									<AntdInput.TextArea
 										className={styles.textArea}
 										value={row.currentText}
@@ -147,7 +163,16 @@ function VariableImpactDialog({
 									/>
 								</div>
 								<div className={styles.field}>
-									<Typography.Text className={styles.fieldLabel}>Result</Typography.Text>
+									<Typography
+										variant="uppercase"
+										size="small"
+										weight="regular"
+										color="secondary"
+										as="span"
+										textOverflow="wrap"
+									>
+										Result
+									</Typography>
 									<AntdInput.TextArea
 										className={cx(styles.textArea, !row.included && styles.disabled)}
 										value={row.resultingText}
@@ -157,9 +182,16 @@ function VariableImpactDialog({
 										data-testid={`variable-impact-result-${row.id}`}
 									/>
 									{stillReferences ? (
-										<Typography.Text size={'small'} color="warning">
+										<Typography
+											variant="paragraph"
+											size="small"
+											weight="regular"
+											color="warning"
+											as="span"
+											textOverflow="wrap"
+										>
 											Still references ${variableName}
-										</Typography.Text>
+										</Typography>
 									) : null}
 								</div>
 							</div>

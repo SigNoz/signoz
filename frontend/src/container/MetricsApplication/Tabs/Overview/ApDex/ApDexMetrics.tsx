@@ -53,7 +53,16 @@ function ApDexMetrics({
 				},
 				title: (
 					<Space>
-						<Typography>{GraphTitle.APDEX}</Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{GraphTitle.APDEX}
+						</Typography>
 						<TextToolTip
 							text={apDexToolTipText}
 							url={apDexToolTipUrl}

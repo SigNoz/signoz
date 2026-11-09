@@ -29,32 +29,67 @@ export function MissingEntryRow({
 	return (
 		<div className={styles.entryRow}>
 			<TriangleAlert size={14} className={styles.missingIcon} />
-			<Typography.Text size="base" weight="medium">
-				{typeLabel}
-			</Typography.Text>
-			<Typography.Text size="base" color="muted">
-				-
-			</Typography.Text>
-			<Typography.Text
+			<Typography
+				variant="paragraph"
 				size="base"
-				weight="semibold"
-				className={styles.entryRowMetric}
+				weight="medium"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{typeLabel}
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
+				-
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="bold"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
 			>
 				{items?.join(', ')}
-			</Typography.Text>
-			<Typography.Text size="base" color="muted">
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				-
-			</Typography.Text>
-			<Typography.Text size="base" italic color="muted">
+			</Typography>
+			<Typography
+				/* TODO(typography): italic has no equivalent */ variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				{entry.associatedComponent.name}
-			</Typography.Text>
+			</Typography>
 			{entry.documentationLink && (
 				<Typography.Link
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					display="inline-flex"
+					gap={4}
+					marginLeft={2}
+					textOverflow="wrap"
 					href={entry.documentationLink}
 					target="_blank"
-					rel="noopener noreferrer"
-					size="base"
-					className={styles.learnMoreLink}
 				>
 					Learn here
 					<ExternalLink size={12} />

@@ -371,20 +371,31 @@ export default function BillingContainer(): JSX.Element {
 		: [SubscriptionCreatePermission];
 
 	const subscriptionPastDueMessage = (): JSX.Element => (
-		<Typography>
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
 			{`We were not able to process payments for your account. Please update your card details `}
 			<AuthZTooltip checks={billingActionPermissions}>
-				<Typography.Link
-					onClick={handleBilling}
-					style={{ cursor: 'pointer', color: 'var(--bg-cherry-500)' }}
-				>
+				<Button variant="link" color="primary" size="md" onClick={handleBilling}>
 					{t('here')}
-				</Typography.Link>
+				</Button>
 			</AuthZTooltip>
 			{` if your payment information has changed. Email us at `}
-			<Typography.Text as="span" color="muted">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				cloud-support@signoz.io
-			</Typography.Text>
+			</Typography>
 			{` otherwise. Be sure to provide this information immediately to avoid interruption to your service.`}
 		</Typography>
 	);
@@ -429,12 +440,26 @@ export default function BillingContainer(): JSX.Element {
 	return (
 		<div className={styles.billingContainer}>
 			<Flex vertical gap={4} className={styles.pageHeader}>
-				<Typography.Text className={styles.pageHeaderTitle}>
+				<Typography
+					variant="paragraph"
+					size="medium"
+					weight="medium"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
 					{t('billing')}
-				</Typography.Text>
-				<Typography.Text className={styles.pageHeaderSubtitle}>
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					{t('manage_billing_and_costs')}
-				</Typography.Text>
+				</Typography>
 			</Flex>
 
 			<Card bordered={false} className={styles.pageInfo}>
@@ -476,12 +501,16 @@ export default function BillingContainer(): JSX.Element {
 				</Flex>
 
 				{trialInfo?.onTrial && trialInfo?.trialConvertedToSubscription && (
-					<Typography.Text
-						truncate={1}
-						style={{ fontWeight: '300', color: 'var(--bg-forest-500)', fontSize: 12 }}
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="success"
+						as="p"
+						textOverflow="ellipsis"
 					>
 						{t('card_details_recieved_and_billing_info')}
-					</Typography.Text>
+					</Typography>
 				)}
 
 				{!isLoading && !isFetchingBillingData && !showGracePeriodMessage
@@ -613,15 +642,45 @@ export default function BillingContainer(): JSX.Element {
 						gutter={[16, 16]}
 					>
 						<Col span={20} className={styles.planBenefits}>
-							<Typography.Text className={styles.planBenefit}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="p"
+								display="flex"
+								gap={8}
+								marginY={8}
+								textOverflow="wrap"
+							>
 								<CircleCheck size="md" />
 								{t('upgrade_now_text')}
-							</Typography.Text>
-							<Typography.Text className={styles.planBenefit}>
+							</Typography>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="p"
+								display="flex"
+								gap={8}
+								marginY={8}
+								textOverflow="wrap"
+							>
 								<CircleCheck size="md" />
 								{t('Your billing will start only after the trial period')}
-							</Typography.Text>
-							<Typography.Text className={styles.planBenefit}>
+							</Typography>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="p"
+								display="flex"
+								gap={8}
+								marginY={8}
+								textOverflow="wrap"
+							>
 								<CircleCheck size="md" />
 								<span>
 									{t('checkout_plans')} &nbsp;
@@ -636,7 +695,7 @@ export default function BillingContainer(): JSX.Element {
 										{t('here')}
 									</a>
 								</span>
-							</Typography.Text>
+							</Typography>
 						</Col>
 						<Col span={4} style={{ display: 'flex', justifyContent: 'flex-end' }}>
 							<AuthZButton

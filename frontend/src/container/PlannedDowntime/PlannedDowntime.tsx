@@ -217,9 +217,16 @@ export function PlannedDowntime(): JSX.Element {
 			<header className={styles.headerBand}>
 				<div className={styles.commandHeader}>
 					<div className={styles.headingBlock}>
-						<Typography.Title className={styles.title}>
+						<Typography
+							variant="label"
+							size="large"
+							weight="medium"
+							color="main"
+							as="h1"
+							textOverflow="ellipsis"
+						>
 							All planned downtimes
-						</Typography.Title>
+						</Typography>
 						<span className={styles.countPill}>{totalDowntimes}</span>
 					</div>
 					<div className={styles.grow} />

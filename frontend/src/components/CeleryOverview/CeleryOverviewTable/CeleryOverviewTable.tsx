@@ -40,10 +40,27 @@ const INITIAL_PAGE_SIZE = 20;
 
 const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 	<>
-		<Typography.Text className="numbers">
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
 			{range[0]} &#8212; {range[1]}
-		</Typography.Text>
-		<Typography.Text className="total"> of {total}</Typography.Text>
+		</Typography>
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
+			{' '}
+			of {total}
+		</Typography>
 	</>
 );
 
@@ -519,7 +536,18 @@ export default function CeleryOverviewTable({
 					),
 				}}
 				locale={{
-					emptyText: isLoading ? null : <Typography.Text>No data</Typography.Text>,
+					emptyText: isLoading ? null : (
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							No data
+						</Typography>
+					),
 				}}
 				scroll={{ x: 'max-content' }}
 				showSorterTooltip

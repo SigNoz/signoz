@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Form, Modal } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	ActionMode,
 	ActionType,
@@ -9,7 +10,7 @@ import {
 } from 'types/api/pipeline/def';
 import { v4 } from 'uuid';
 
-import { ModalButtonWrapper, ModalTitle } from '../styles';
+import { ModalButtonWrapper } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
 import { DEFAULT_PROCESSOR_TYPE, processorFields } from './config';
 import TypeSelect from './FormFields/TypeSelect';
@@ -155,7 +156,19 @@ function AddNewProcessor({
 
 	return (
 		<Modal
-			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
+			title={
+				<Typography
+					variant="label"
+					size="large"
+					weight="bold"
+					color="inherit"
+					as="h4"
+					marginY={4}
+					textOverflow="wrap"
+				>
+					{modalTitle}
+				</Typography>
+			}
 			centered
 			open={isOpen}
 			width={800}

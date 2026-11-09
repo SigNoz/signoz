@@ -54,17 +54,38 @@ function ErrorState({
 
 			{isClientError ? (
 				<>
-					<Typography.Text className={styles.errorText}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="medium"
+						color="main"
+						as="span"
+						textOverflow="wrap"
+					>
 						Invalid query
-					</Typography.Text>
-					<Typography.Text className={styles.errorDetail}>
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						{cleanedDetail || INVALID_QUERY_FALLBACK}
-					</Typography.Text>
+					</Typography>
 				</>
 			) : (
-				<Typography.Text className={styles.errorText}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
 					{GENERIC_MESSAGE}
-				</Typography.Text>
+				</Typography>
 			)}
 
 			<section className={styles.actionButtons}>

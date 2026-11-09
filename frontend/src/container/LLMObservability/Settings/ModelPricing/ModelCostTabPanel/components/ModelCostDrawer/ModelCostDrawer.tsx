@@ -138,9 +138,18 @@ function ModelCostDrawer({
 									testId="drawer-model-id-input"
 								/>
 								{fieldState.error && (
-									<Typography.Text as="p" size="small" color="danger" role="alert">
+									<Typography
+										variant="paragraph"
+										size="small"
+										weight="regular"
+										color="danger"
+										as="p"
+										display="inline"
+										textOverflow="wrap"
+										role="alert"
+									>
 										{fieldState.error.message}
-									</Typography.Text>
+									</Typography>
 								)}
 							</>
 						)}
@@ -172,9 +181,17 @@ function ModelCostDrawer({
 									testId="drawer-provider-select"
 								/>
 								{fieldState.error && (
-									<Typography.Text size="small" color="danger" role="alert">
+									<Typography
+										variant="paragraph"
+										size="small"
+										weight="regular"
+										color="danger"
+										as="span"
+										textOverflow="wrap"
+										role="alert"
+									>
 										{fieldState.error.message}
-									</Typography.Text>
+									</Typography>
 								)}
 							</>
 						)}
@@ -228,18 +245,36 @@ function ModelCostDrawer({
 								onChange={(patch): void => field.onChange({ ...field.value, ...patch })}
 							/>
 							{fieldState.error && (
-								<Typography.Text as="p" size="small" color="danger" role="alert">
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="danger"
+									as="p"
+									display="inline"
+									textOverflow="wrap"
+									role="alert"
+								>
 									{fieldState.error.message}
-								</Typography.Text>
+								</Typography>
 							)}
 						</>
 					)}
 				/>
 
 				{saveError && (
-					<Typography.Text as="p" size="small" color="danger" role="alert">
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="danger"
+						as="p"
+						display="inline"
+						textOverflow="wrap"
+						role="alert"
+					>
 						{saveError}
-					</Typography.Text>
+					</Typography>
 				)}
 			</div>
 		</Drawer>

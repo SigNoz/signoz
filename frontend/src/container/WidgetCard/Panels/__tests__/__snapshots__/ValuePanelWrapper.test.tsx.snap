@@ -34,10 +34,15 @@ exports[`Value panel wrappper tests should render tooltip when there are conflic
   <div
     class="c0"
   >
-    <p
-      class="_typography_i5nbo_1"
+    <span
+      class="_typography_f64oy_1"
+      data-color="inherit"
+      data-display="inline"
+      data-size="base"
       data-slot="typography"
-      data-variant="text"
+      data-text-overflow="wrap"
+      data-variant="paragraph"
+      data-weight="regular"
     />
   </div>
   <div
@@ -49,24 +54,20 @@ exports[`Value panel wrappper tests should render tooltip when there are conflic
       <div
         class="value-text-container"
       >
-        <p
-          class="_typography_i5nbo_1 value-graph-text"
-          data-slot="typography"
+        <span
+          class="value-graph-text"
           data-testid="value-graph-text"
-          data-variant="text"
           style="color: Blue; font-size: 16px;"
         >
           295.43
-        </p>
-        <p
-          class="_typography_i5nbo_1 value-graph-unit"
-          data-slot="typography"
+        </span>
+        <span
+          class="value-graph-unit"
           data-testid="value-graph-suffix-unit"
-          data-variant="text"
           style="color: Blue; font-size: calc(16px * 0.7);"
         >
           ms
-        </p>
+        </span>
       </div>
       <div
         class="value-graph-textconflict"

@@ -54,9 +54,17 @@ function WorkspaceAccessRestricted(): JSX.Element {
 							<Row justify="center" align="middle">
 								<Col>
 									<Space direction="vertical" align="center">
-										<Typography.Title
-											level={4}
-											className="workspace-access-restricted__details"
+										<Typography
+											variant="paragraph"
+											size="medium"
+											weight="regular"
+											color="secondary"
+											as="h4"
+											align="center"
+											width="80%"
+											marginY={4}
+											marginX="auto"
+											textOverflow="wrap"
 										>
 											{activeLicense.state === LicenseState.TERMINATED && (
 												<>
@@ -101,7 +109,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 													.
 												</>
 											)}
-										</Typography.Title>
+										</Typography>
 
 										<Button
 											type="default"

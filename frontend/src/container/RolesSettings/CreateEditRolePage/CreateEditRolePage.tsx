@@ -120,9 +120,17 @@ function CreateEditRolePageContent(): JSX.Element {
 						>
 							<ArrowLeft size={16} />
 						</Button>
-						<Typography.Title level={3}>
+						<Typography
+							variant="label"
+							size="large"
+							weight="bold"
+							color="inherit"
+							as="h3"
+							marginY={4}
+							textOverflow="wrap"
+						>
 							{isCreateMode ? 'Create Role' : 'Edit Role'}
-						</Typography.Title>
+						</Typography>
 					</div>
 				</div>
 
@@ -186,14 +194,31 @@ function CreateEditRolePageContent(): JSX.Element {
 					>
 						<ArrowLeft size={16} />
 					</Button>
-					<Typography.Title level={3}>{title}</Typography.Title>
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="inherit"
+						as="h3"
+						marginY={4}
+						textOverflow="wrap"
+					>
+						{title}
+					</Typography>
 				</div>
 
 				<div className={styles.createEditRolePageActions}>
 					{hasUnsavedChanges && (
 						<div className={styles.unsavedIndicator}>
 							<span className={styles.unsavedDot} />
-							<Typography as="span" size="base" className={styles.unsavedText}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="primary"
+								as="span"
+								textOverflow="wrap"
+							>
 								Unsaved changes
 							</Typography>
 						</div>
@@ -311,7 +336,14 @@ function CreateEditRolePageContent(): JSX.Element {
 				onCancel={cancelNavigation}
 				testId="discard-changes-dialog"
 			>
-				<Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{isCreateMode
 						? 'This new role will not be created.'
 						: 'Your unsaved changes will be lost.'}

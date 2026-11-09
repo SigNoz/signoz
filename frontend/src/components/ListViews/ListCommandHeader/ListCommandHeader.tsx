@@ -22,12 +22,18 @@ function ListCommandHeader({
 	return (
 		<div className={styles.commandHeader}>
 			<div className={styles.headingBlock}>
-				<Typography.Title
-					className={styles.title}
+				<Typography
+					variant="label"
+					size="large"
+					weight="medium"
+					color="main"
+					as="h1"
+					marginY={4}
+					textOverflow="ellipsis"
 					testId={testIdPrefix && `${testIdPrefix}-list-heading`}
 				>
 					{label}
-				</Typography.Title>
+				</Typography>
 				{isModified && <span className={styles.dirtyDot} title="Unsaved changes" />}
 				<span className={styles.countPill}>{count}</span>
 			</div>

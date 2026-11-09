@@ -60,7 +60,18 @@ function ViewNamePopover({
 			<Popover side="bottom" align="start" handle={popover} aria-label={title}>
 				<div className={styles.savePopover}>
 					<div className={styles.saveTitle}>{title}</div>
-					<Typography.Text className={styles.saveLabel}>Name</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="tertiary"
+						as="span"
+						display="inline-block"
+						marginTop={1}
+						textOverflow="wrap"
+					>
+						Name
+					</Typography>
 					<Input
 						value={name}
 						autoFocus

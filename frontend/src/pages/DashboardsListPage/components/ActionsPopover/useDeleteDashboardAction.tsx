@@ -15,8 +15,6 @@ import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
-import styles from './ActionsPopover.module.scss';
-
 interface DeleteDashboardAction {
 	openConfirm: () => void;
 	deleteChecks: BrandedPermission[];
@@ -65,14 +63,29 @@ export function useDeleteDashboardAction({
 	const openConfirm = useCallback((): void => {
 		confirmDelete({
 			title: (
-				<Typography.Title level={5}>
+				<Typography
+					variant="paragraph"
+					size="medium"
+					weight="bold"
+					color="inherit"
+					as="h5"
+					marginY={4}
+					textOverflow="wrap"
+				>
 					Are you sure you want to delete the
-					<Typography.Text className={styles.deleteName}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="medium"
+						color="danger"
+						as="span"
+						textOverflow="wrap"
+					>
 						{' '}
 						{dashboardName}{' '}
-					</Typography.Text>
+					</Typography>
 					dashboard?
-				</Typography.Title>
+				</Typography>
 			),
 			// Keeps the Delete button loading until the mutation settles, then closes.
 			onConfirm: () =>

@@ -3,7 +3,6 @@ import {
 	Col as ColComponent,
 	Row as RowComponent,
 } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
 export const Card = styled(CardComponent)`
@@ -41,10 +40,4 @@ export const ColErrorContainer = styled(ColComponent)`
 export const GraphContainer = styled.div`
 	min-height: calc(40vh - 40px);
 	height: 100%;
-`;
-
-export const GraphTitle = styled(Typography)`
-	&&& {
-		text-align: center;
-	}
 `;

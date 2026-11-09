@@ -22,10 +22,27 @@ function Overview(): JSX.Element {
 		if (isError || !dashboard) {
 			return (
 				<div className={styles.errorState}>
-					<Typography.Title>Failed to load dashboard</Typography.Title>
-					<Typography.Text>
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="inherit"
+						as="h1"
+						marginY={4}
+						textOverflow="wrap"
+					>
+						Failed to load dashboard
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{error?.response?.data?.error?.message ?? error?.message}
-					</Typography.Text>
+					</Typography>
 				</div>
 			);
 		}

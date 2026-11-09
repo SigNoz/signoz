@@ -311,7 +311,16 @@ export function K8sExpandedRow<
 			data-testid="expanded-table-container"
 		>
 			{isError && (
-				<Typography>{data?.error?.toString() || 'Something went wrong'}</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{data?.error?.toString() || 'Something went wrong'}
+				</Typography>
 			)}
 
 			<div data-testid="expanded-table">

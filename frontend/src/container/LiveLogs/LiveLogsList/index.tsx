@@ -179,7 +179,16 @@ function LiveLogsList({
 				<div className="loading-live-logs-content">
 					<img className="loading-gif" src={loadingPlaneUrl} alt="wait-icon" />
 
-					<Typography>Fetching live logs...</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Fetching live logs...
+					</Typography>
 				</div>
 			</div>
 		),

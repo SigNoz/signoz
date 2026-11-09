@@ -171,7 +171,16 @@ function PanelEditorQueryBuilder({
 					data-testid={`query-type-tab-${queryType}`}
 				>
 					{queryTypeComponents[queryType].icon}
-					<Typography>{queryTypeComponents[queryType].label}</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{queryTypeComponents[queryType].label}
+					</Typography>
 				</div>
 			),
 			children: queryTypeComponents[queryType].component,

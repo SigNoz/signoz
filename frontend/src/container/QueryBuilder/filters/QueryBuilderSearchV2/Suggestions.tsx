@@ -38,6 +38,11 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 
 	const { tagValue } = getTagToken(searchValue);
 
+	const labelTextStyle =
+		option === DropdownState.OPERATOR
+			? ({ variant: 'code', weight: 'medium' } as const)
+			: ({ variant: 'paragraph', weight: 'regular' } as const);
+
 	return (
 		<div className="option">
 			{!isEmpty(optionType) && isObject(value) ? (
@@ -49,15 +54,44 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 							) : (
 								<div className="dot" />
 							)}
-							<Typography.Text className="value" color="muted" truncate={1}>
-								{label}
-							</Typography.Text>
+							<div className="value">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="p"
+									textOverflow="ellipsis"
+								>
+									{label}
+								</Typography>
+							</div>
 						</section>
 						<section className="right-section">
-							<Typography.Text className="data-type">{value.dataType}</Typography.Text>
+							<div className="data-type">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="p"
+									textOverflow="visible"
+								>
+									{value.dataType}
+								</Typography>
+							</div>
 							<section className={cx('type-tag', value.type)}>
 								<div className="dot" />
-								<Typography.Text size="small">{value.type}</Typography.Text>
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
+									{value.type}
+								</Typography>
 							</section>
 						</section>
 					</div>
@@ -67,17 +101,32 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 					<div className="container-without-tag">
 						<section className="left">
 							<div className="dot" />
-							<Typography.Text
-								className={cx('value', option)}
-								color="muted"
-								truncate={1}
-							>
-								{`${label}`}
-							</Typography.Text>
+							<div className={cx('value', option)}>
+								<Typography
+									{...labelTextStyle}
+									size="base"
+									color="secondary"
+									as="p"
+									textOverflow="ellipsis"
+								>
+									{`${label}`}
+								</Typography>
+							</div>
 						</section>
 						<section className="right">
 							{dataType && (
-								<Typography.Text className="data-type">{dataType}</Typography.Text>
+								<div className="data-type">
+									<Typography
+										variant="paragraph"
+										size="base"
+										weight="regular"
+										color="inherit"
+										as="p"
+										textOverflow="visible"
+									>
+										{dataType}
+									</Typography>
+								</div>
 							)}
 							{tagValue.includes(label) && <Check size={14} />}
 						</section>

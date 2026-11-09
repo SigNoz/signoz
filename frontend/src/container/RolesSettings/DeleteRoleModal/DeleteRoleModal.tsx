@@ -33,7 +33,14 @@ function DeleteRoleModal({
 			onCancel={onCancel}
 			testId="delete-role-modal"
 		>
-			<Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				Are you sure you want to delete the role <strong>{roleName}</strong>? This
 				action cannot be undone.
 			</Typography>

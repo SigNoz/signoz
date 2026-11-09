@@ -77,15 +77,20 @@ function LogDetailsHeader({
 		<div className={styles.header} data-log-detail-ignore="true">
 			<div className={styles.leftSection}>
 				<Divider orientation="vertical" height={16} spacing={0} />
-				<Typography.Text
-					className={styles.timestamp}
+				<Typography
+					variant="code"
+					size="base"
+					weight="regular"
+					color="main"
+					as="span"
+					textOverflow="wrap"
 					data-testid="log-details-header-timestamp"
 				>
 					{formatTimezoneAdjustedTimestamp(
 						displayTimestamp,
 						DATE_TIME_FORMATS.DASH_DATETIME,
 					)}
-				</Typography.Text>
+				</Typography>
 			</div>
 
 			<div className={styles.actions}>

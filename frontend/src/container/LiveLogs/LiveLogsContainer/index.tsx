@@ -231,7 +231,16 @@ function LiveLogsContainer({
 			<div className="live-logs-content">
 				<div className="live-logs-settings-panel">
 					<div className="live-logs-frequency-chart-view-controller">
-						<Typography>Frequency chart</Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Frequency chart
+						</Typography>
 						<Switch
 							color="primary"
 							textPlacement="right"

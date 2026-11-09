@@ -341,10 +341,27 @@ export const useTimelineTable = ({
 		pageSize: TIMELINE_TABLE_PAGE_SIZE,
 		showTotal: (total, [start, end]) => (
 			<span>
-				<Typography.Text size="small">
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{start} &#8212; {end}
-				</Typography.Text>
-				<Typography.Text size="small"> of {total}</Typography.Text>
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{' '}
+					of {total}
+				</Typography>
 			</span>
 		),
 		current: page,

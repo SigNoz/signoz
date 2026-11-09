@@ -136,12 +136,26 @@ function IntegrationDetailHeader(
 							<Skeleton.Input active className="skeleton-item" />
 						) : (
 							<>
-								<Typography.Text size="lg" weight="medium" className="heading">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="medium"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
 									{title}
-								</Typography.Text>
-								<Typography.Text size="small" color="muted" className="description">
+								</Typography>
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									{description}
-								</Typography.Text>
+								</Typography>
 							</>
 						)}
 					</div>
@@ -249,24 +263,46 @@ function IntegrationDetailHeader(
 					connectionState === ConnectionStates.NoDataSinceLong ? (
 						<>
 							<div className="data-info">
-								<Typography.Text className="last-data">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									Last recieved from
-								</Typography.Text>
+								</Typography>
 								<div className="connection-line" />
 								<Tooltip
 									title={latestData.last_received_from}
 									key={latestData.last_received_from}
 									placement="right"
 								>
-									<Typography.Text className="last-value" truncate={1}>
+									<Typography
+										variant="code"
+										size="small"
+										weight="regular"
+										color="main"
+										as="p"
+										maxWidth={320}
+										textOverflow="ellipsis"
+									>
 										{latestData.last_received_from}
-									</Typography.Text>
+									</Typography>
 								</Tooltip>
 							</div>
 							<div className="data-info">
-								<Typography.Text className="last-data">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									Last recieved at
-								</Typography.Text>
+								</Typography>
 								<div className="connection-line" />
 								<Tooltip
 									title={
@@ -285,13 +321,21 @@ function IntegrationDetailHeader(
 									}
 									placement="right"
 								>
-									<Typography.Text className="last-value" truncate={1}>
+									<Typography
+										variant="code"
+										size="small"
+										weight="regular"
+										color="main"
+										as="p"
+										maxWidth={320}
+										textOverflow="ellipsis"
+									>
 										{latestData.last_received_ts_ms
 											? dayjs(latestData.last_received_ts_ms).format(
 													DATE_TIME_FORMATS.MONTH_DATETIME_SHORT,
 												)
 											: ''}
-									</Typography.Text>
+									</Typography>
 								</Tooltip>
 							</div>
 						</>

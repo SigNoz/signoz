@@ -115,9 +115,16 @@ function VariableForm({
 								{listFields}
 								<div className={styles.row}>
 									<div className={styles.labelContainer}>
-										<Typography.Text className={styles.label}>
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="secondary"
+											as="p"
+											textOverflow="wrap"
+										>
 											Apply to panels
-										</Typography.Text>
+										</Typography>
 									</div>
 									<CustomMultiSelect
 										placeholder="Select panels"
@@ -175,9 +182,16 @@ function VariableForm({
 							<div className={styles.typeContent}>
 								<div className={cx(styles.row, styles.textboxSection)}>
 									<div className={styles.labelContainer}>
-										<Typography.Text className={styles.label}>
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="secondary"
+											as="p"
+											textOverflow="wrap"
+										>
 											Default Value
-										</Typography.Text>
+										</Typography>
 									</div>
 									<div className={styles.defaultInput}>
 										<Input
@@ -194,9 +208,16 @@ function VariableForm({
 				/>
 
 				{cycleError ? (
-					<Typography.Text className={styles.errorText}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="warning"
+						as="span"
+						textOverflow="wrap"
+					>
 						{cycleError}
-					</Typography.Text>
+					</Typography>
 				) : null}
 
 				<div className={styles.actionButtons}>

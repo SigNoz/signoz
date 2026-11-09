@@ -78,7 +78,16 @@ function Header({
 					<X size={14} />
 				</Button>
 				<Divider orientation="vertical" />
-				<Typography.Text>Configure panel</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					Configure panel
+				</Typography>
 				{isDirty && (
 					<Badge
 						variant="solid"
@@ -157,7 +166,16 @@ function Header({
 					</>
 				}
 			>
-				<Typography>Your unsaved edits to this panel will be lost.</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					Your unsaved edits to this panel will be lost.
+				</Typography>
 			</Dialog>
 		</div>
 	);

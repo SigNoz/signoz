@@ -30,7 +30,16 @@ function PricingFields({
 					<span className={styles.managedLabel} data-testid="drawer-readonly-label">
 						<Lock size={12} />
 
-						<Typography.Text color="muted">Read-only</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
+							Read-only
+						</Typography>
 					</span>
 				)}
 			</div>

@@ -19,11 +19,32 @@ function PublicDashboardUrl({
 }: PublicDashboardUrlProps): JSX.Element {
 	return (
 		<div className={styles.fieldGroup}>
-			<Typography.Text className={styles.fieldLabel}>Public link</Typography.Text>
+			<Typography
+				variant="label"
+				size="small"
+				weight="medium"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
+				Public link
+			</Typography>
 
 			{isPublic ? (
 				<div className={styles.linkField}>
-					<Typography.Text className={styles.linkUrl}>{url}</Typography.Text>
+					<span className={styles.linkUrl}>
+						<Typography
+							variant="code"
+							size="base"
+							weight="regular"
+							color="secondary"
+							as="span"
+							display="block"
+							textOverflow="ellipsis"
+						>
+							{url}
+						</Typography>
+					</span>
 					<span className={styles.linkDivider} />
 					<Button
 						color="secondary"
@@ -51,9 +72,16 @@ function PublicDashboardUrl({
 			) : (
 				<div className={styles.linkPlaceholder}>
 					<Link2 size={15} className={styles.linkPlaceholderIcon} />
-					<Typography.Text className={styles.linkPlaceholderText}>
+					<Typography
+						variant="label"
+						size="base"
+						weight="regular"
+						color="tertiary"
+						as="span"
+						textOverflow="wrap"
+					>
 						Your shareable link will appear here once published
-					</Typography.Text>
+					</Typography>
 				</div>
 			)}
 		</div>

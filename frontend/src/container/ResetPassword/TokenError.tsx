@@ -54,10 +54,28 @@ function TokenError({ error }: TokenErrorProps): JSX.Element {
 					<div className="reset-password-header-icon reset-password-header-icon--error">
 						<CircleAlert size={32} />
 					</div>
-					<Typography.Title level={4} className="reset-password-header-title">
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="main"
+						as="h4"
+						textOverflow="wrap"
+					>
 						{title}
-					</Typography.Title>
-					<Typography.Text color="muted">{subtitle}</Typography.Text>
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						align="center"
+						textOverflow="wrap"
+					>
+						{subtitle}
+					</Typography>
 				</div>
 				{error && <AuthError error={error} />}
 				<div className="reset-password-back-action">
