@@ -26,15 +26,8 @@ def test_limited_group_by_partial_hit_matches_no_cache(
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
-    Setup:
-    Four services over 40 minutes. svc-a and svc-b dominate the first 20
-    minutes, svc-c and svc-d the next 20. Over the whole window the top two
-    are svc-a and svc-c.
-
-    Tests:
-    A top-2 time series whose first half is cached returns the same two
-    series with points for the whole window as the request with noCache.
-    The limit ranks over the requested window, not over each cached piece.
+    The two halves have different winners, so a limit applied per cached
+    piece returns the union of both instead of the window's top two.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     # the cache outlives the run, so a fixed filter would serve the previous
@@ -91,14 +84,8 @@ def test_limited_group_by_shrunk_window_matches_no_cache(
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
-    Setup:
-    svc-a dominates the first five minutes with 20 logs a minute against 1,
-    svc-b the next five with 10 against 1. Over ten minutes svc-a wins.
-
-    Tests:
-    After the ten minutes are cached with limit=1, a request for the second
-    half returns svc-b, as the request with noCache does. The cache must not
-    serve the winner of the window that filled it.
+    svc-a wins the full window and svc-b wins its second half, so a cache
+    that keeps the window's winner serves the wrong series for the half.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     # the cache outlives the run, so a fixed filter would serve the previous
