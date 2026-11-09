@@ -26,7 +26,7 @@ type fakeConn struct {
 }
 
 func TestProviderConnFor(t *testing.T) {
-	nativeConn, httpConn := &fakeConn{}, &fakeConn{}
+	defaultConn, profileConn := &fakeConn{}, &fakeConn{}
 	profileCtx := telemetrystore.NewContextWithProfile(context.Background(), "query_range")
 
 	testCases := []struct {
@@ -36,9 +36,9 @@ func TestProviderConnFor(t *testing.T) {
 		want     clickhouse.Conn
 		wantCode errors.Code
 	}{
-		{name: "NoProfile_Native", provider: &provider{clickHouseConn: nativeConn, httpConn: httpConn}, ctx: context.Background(), want: nativeConn},
-		{name: "Profile_HTTP", provider: &provider{clickHouseConn: nativeConn, httpConn: httpConn}, ctx: profileCtx, want: httpConn},
-		{name: "ProfileWithoutHTTPDSN_Error", provider: &provider{clickHouseConn: nativeConn}, ctx: profileCtx, wantCode: ErrCodeProfileUnavailable},
+		{name: "NoProfile_DefaultConn", provider: &provider{clickHouseConn: defaultConn, profileConns: map[string]clickhouse.Conn{"query_range": profileConn}}, ctx: context.Background(), want: defaultConn},
+		{name: "Profile_ProfileConn", provider: &provider{clickHouseConn: defaultConn, profileConns: map[string]clickhouse.Conn{"query_range": profileConn}}, ctx: profileCtx, want: profileConn},
+		{name: "UnknownProfile_Error", provider: &provider{clickHouseConn: defaultConn}, ctx: profileCtx, wantCode: ErrCodeProfileUnavailable},
 	}
 
 	for _, testCase := range testCases {

@@ -123,10 +123,9 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 type provider struct {
 	settings       factory.ScopedProviderSettings
 	clickHouseConn clickhouse.Conn
-	// httpConn runs the queries that use a settings profile; nil when http_dsn is not set.
-	httpConn clickhouse.Conn
-	cluster  string
-	hooks    []telemetrystore.TelemetryStoreHook
+	profileConns   map[string]clickhouse.Conn
+	cluster        string
+	hooks          []telemetrystore.TelemetryStoreHook
 }
 
 func NewFactory(hookFactories ...factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]) factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config] {
@@ -143,9 +142,9 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-	var httpConn clickhouse.Conn
-	if config.Clickhouse.HTTPDSN != "" {
-		httpConn, err = open(config.Clickhouse.HTTPDSN, config.Connection)
+	profileConns := make(map[string]clickhouse.Conn, len(config.Clickhouse.Profiles))
+	for name, profile := range config.Clickhouse.Profiles {
+		profileConns[name], err = open(profile.DSN, config.Connection)
 		if err != nil {
 			return nil, err
 		}
@@ -180,7 +179,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	p := &provider{
 		settings:       settings,
 		clickHouseConn: chConn,
-		httpConn:       httpConn,
+		profileConns:   profileConns,
 		cluster:        config.Clickhouse.Cluster,
 		hooks:          hooks,
 	}
@@ -208,8 +207,8 @@ func (p *provider) Cluster() string {
 }
 
 func (p *provider) Close() error {
-	if p.httpConn != nil {
-		if err := p.httpConn.Close(); err != nil {
+	for _, conn := range p.profileConns {
+		if err := conn.Close(); err != nil {
 			return err
 		}
 	}
@@ -365,16 +364,16 @@ func open(dsn string, connection telemetrystore.ConnectionConfig) (clickhouse.Co
 	return clickhouse.Open(options)
 }
 
-// connFor returns the connection for the queries of ctx: the HTTP one when they use a settings profile.
 func (p *provider) connFor(ctx context.Context) (clickhouse.Conn, error) {
 	profile := telemetrystore.ProfileFromContext(ctx)
 	if profile == "" {
 		return p.clickHouseConn, nil
 	}
-	if p.httpConn == nil {
-		return nil, errors.NewInternalf(ErrCodeProfileUnavailable, "the ClickHouse settings profile %q needs telemetrystore.clickhouse.http_dsn", profile)
+	conn, ok := p.profileConns[profile]
+	if !ok {
+		return nil, errors.NewInternalf(ErrCodeProfileUnavailable, "the ClickHouse settings profile %q is not in telemetrystore.clickhouse.profiles", profile)
 	}
-	return p.httpConn, nil
+	return conn, nil
 }
 
 func castError(err error) error {
