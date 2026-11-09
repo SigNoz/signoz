@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { screen, userEvent, within } from 'storybook/test';
 import { Drawer } from '@signozhq/ui/drawer';
 import { GlobalTimeProvider } from 'store/globalTime';
 
@@ -42,6 +43,7 @@ const meta = {
 				open
 				title="app-demo-loadgenerator-579fbdd749-q5kgd"
 				width="entity"
+				testId="drawer-wrapper"
 				onClose={(): void => undefined}
 			>
 				<div className={drawerStyles.body}>
@@ -65,5 +67,10 @@ export const Default: Story = {
 		entity: { podUID: POD_UID },
 		entityName: POD_ATTRIBUTES['k8s.pod.name'],
 		queryKeyPrefix: 'pod',
+	},
+	play: async () => {
+		const timeSelection = await screen.findByTestId('drawer-time-selection');
+		await userEvent.click(await within(timeSelection).findByRole('textbox'));
+		await screen.findByText('RELATIVE TIMES');
 	},
 };
