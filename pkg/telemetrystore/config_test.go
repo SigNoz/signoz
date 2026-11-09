@@ -89,3 +89,11 @@ func TestNewWithEnvProviderWithQuerySettings(t *testing.T) {
 
 	assert.Equal(t, expected.Clickhouse.QuerySettings, actual.Clickhouse.QuerySettings)
 }
+
+func TestConfigValidateProfiles(t *testing.T) {
+	config := Config{Clickhouse: ClickhouseConfig{Profiles: map[string]ProfileConfig{"query_range": {DSN: "tcp://localhost:9000"}}}}
+	assert.NoError(t, config.Validate())
+
+	config.Clickhouse.Profiles["empty"] = ProfileConfig{}
+	assert.Error(t, config.Validate())
+}
