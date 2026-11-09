@@ -116,6 +116,7 @@ function MapperFormDrawer({
 	return (
 		<Drawer
 			type="task"
+			stack="overlay"
 			open={isOpen}
 			onClose={onClose}
 			title={isEdit ? 'Edit mapping' : 'New custom mapping'}

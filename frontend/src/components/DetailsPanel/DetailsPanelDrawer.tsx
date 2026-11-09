@@ -25,6 +25,7 @@ function DetailsPanelDrawer({
 	return (
 		<Drawer
 			type="inspector"
+			stack="overlay"
 			open={isOpen}
 			onClose={onClose}
 			title={title}

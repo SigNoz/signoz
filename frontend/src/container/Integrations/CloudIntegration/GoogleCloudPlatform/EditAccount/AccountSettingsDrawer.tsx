@@ -65,6 +65,7 @@ function AccountSettingsDrawer({
 	return (
 		<Drawer
 			type="task"
+			stack="overlay"
 			open
 			onClose={handleClose}
 			title="Account Settings"

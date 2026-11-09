@@ -269,6 +269,7 @@ function K8sOptionsSidePanel<TData>({
 	return (
 		<Drawer
 			type="task"
+			stack="overlay"
 			open={open}
 			onClose={onClose}
 			title="Options"

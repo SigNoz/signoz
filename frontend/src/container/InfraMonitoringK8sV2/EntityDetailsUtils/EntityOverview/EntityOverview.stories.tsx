@@ -38,6 +38,7 @@ const meta = {
 		(Story): JSX.Element => (
 			<Drawer
 				type="task"
+				stack="overlay"
 				open
 				title="app-demo-loadgenerator-579fbdd749-q5kgd"
 				width="entity"

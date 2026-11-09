@@ -94,6 +94,7 @@ function VolumeControlConfigDrawer({
 	return (
 		<Drawer
 			type="task"
+			stack="overlay"
 			open={open}
 			onClose={onClose}
 			title={`Manage attributes · ${metricName}`}

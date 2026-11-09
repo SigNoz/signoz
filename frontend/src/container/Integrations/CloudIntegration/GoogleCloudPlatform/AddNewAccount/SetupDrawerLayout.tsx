@@ -19,6 +19,7 @@ function SetupDrawerLayout({
 	return (
 		<Drawer
 			type="task"
+			stack="overlay"
 			open
 			onClose={onClose}
 			title="Connect Google Cloud Platform"

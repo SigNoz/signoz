@@ -98,6 +98,7 @@ function PanelTypeSwitcher({
 			)}
 			<Drawer
 				type="task"
+				stack="overlay"
 				open={isOpen}
 				onClose={(): void => setIsOpen(false)}
 				title="Change panel type"

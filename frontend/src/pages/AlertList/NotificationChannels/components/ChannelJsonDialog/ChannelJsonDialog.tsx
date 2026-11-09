@@ -68,6 +68,7 @@ function ChannelJsonDialog({
 	return (
 		<Drawer
 			type="task"
+			stack="overlay"
 			open
 			onClose={onClose}
 			title={`${channelName} / JSON`}

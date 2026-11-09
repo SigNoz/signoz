@@ -31,6 +31,7 @@ function GroupFormDrawer({
 	return (
 		<Drawer
 			type="task"
+			stack="overlay"
 			open={isOpen}
 			onClose={onClose}
 			title={isEdit ? 'Edit group' : 'New group'}

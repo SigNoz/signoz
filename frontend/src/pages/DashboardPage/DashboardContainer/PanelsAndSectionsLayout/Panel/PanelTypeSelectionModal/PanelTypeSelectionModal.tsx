@@ -94,6 +94,7 @@ function PanelTypeSelectionModal({
 	return (
 		<Drawer
 			type="task"
+			stack="overlay"
 			open={open}
 			onClose={handleClose}
 			title="New panel"

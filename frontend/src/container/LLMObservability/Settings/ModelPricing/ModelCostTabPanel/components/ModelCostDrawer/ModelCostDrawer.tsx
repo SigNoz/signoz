@@ -99,6 +99,7 @@ function ModelCostDrawer({
 	return (
 		<Drawer
 			type="task"
+			stack="overlay"
 			open={isOpen}
 			onClose={onClose}
 			width="base"

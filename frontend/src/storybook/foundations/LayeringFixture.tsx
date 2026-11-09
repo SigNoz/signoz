@@ -65,6 +65,7 @@ function LayeringFixture({ host }: LayeringFixtureProps): JSX.Element {
 				</Button>
 				<Drawer
 					type="task"
+					stack="overlay"
 					open={isHostOpen}
 					title="Layering drawer"
 					onClose={(): void => setIsHostOpen(false)}

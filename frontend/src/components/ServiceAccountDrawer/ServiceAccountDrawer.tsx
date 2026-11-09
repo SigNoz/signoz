@@ -546,6 +546,7 @@ function ServiceAccountDrawer({
 	return (
 		<Drawer
 			type="task"
+			stack="overlay"
 			open={open}
 			onClose={handleClose}
 			title="Service Account Details"

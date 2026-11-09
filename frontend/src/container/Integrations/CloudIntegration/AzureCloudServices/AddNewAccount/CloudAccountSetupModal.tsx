@@ -118,6 +118,7 @@ function CloudAccountSetupModal({
 		<>
 			<Drawer
 				type="task"
+				stack="overlay"
 				open
 				onClose={requestClose}
 				title="Add Azure Account"

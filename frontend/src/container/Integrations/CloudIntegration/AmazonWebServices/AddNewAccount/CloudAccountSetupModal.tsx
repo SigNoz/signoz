@@ -157,6 +157,7 @@ function CloudAccountSetupModal({
 		<>
 			<Drawer
 				type="task"
+				stack="overlay"
 				open
 				onClose={requestClose}
 				title={modalConfig.title}
