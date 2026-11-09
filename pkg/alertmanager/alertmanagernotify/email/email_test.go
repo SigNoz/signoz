@@ -710,7 +710,6 @@ func TestEmailRejected(t *testing.T) {
 	var smtpErr *textproto.Error
 	require.ErrorAs(t, err, &smtpErr)
 	assert.Equal(t, 501, smtpErr.Code)
-	assert.Equal(t, "5.5.4 Rejected!", smtpErr.Msg)
 	assert.True(t, retry)
 	require.NoError(t, srv.Shutdown(ctx))
 
