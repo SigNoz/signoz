@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Trash2, TriangleAlert } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { AlertDialog } from '@signozhq/ui/alert-dialog';
-import { Toaster, toast } from '@signozhq/ui/toast';
+import { toast } from '@signozhq/ui/toast';
 
 import MessageTip from '@/components/MessageTip';
 
@@ -167,7 +167,6 @@ function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 					</AlertDialog>
 				</>
 			)}
-			<Toaster position="top-right" />
 		</>
 	);
 }
