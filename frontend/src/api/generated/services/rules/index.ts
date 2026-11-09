@@ -428,7 +428,7 @@ export const useUpdateRuleView = <
 	return useMutation(getUpdateRuleViewMutationOptions(options));
 };
 /**
- * This endpoint lists all alert rules with their current evaluation state. Deprecated: use ListRulesV3, which supports filtering, sorting and pagination.
+ * This endpoint lists all alert rules with their current evaluation state. Deprecated: use GET /api/v3/rules instead, which supports filtering, sorting and pagination.
  * @deprecated
  * @summary List alert rules
  */

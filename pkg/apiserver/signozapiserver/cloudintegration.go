@@ -336,7 +336,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			ID:                  "AgentCheckInDeprecated",
 			Tags:                []string{"cloudintegration"},
 			Summary:             "Agent check-in",
-			Description:         "[Deprecated] This endpoint is called by the deployed agent to check in",
+			Description:         "This endpoint is called by the deployed agent to check in. Deprecated: use POST /api/v1/cloud_integrations/{cloud_provider}/accounts/check_in instead. Send cloudIntegrationId and providerAccountId instead of account_id and cloud_account_id.",
 			Request:             new(citypes.PostableAgentCheckIn),
 			RequestContentType:  "application/json",
 			Response:            new(citypes.GettableAgentCheckIn),

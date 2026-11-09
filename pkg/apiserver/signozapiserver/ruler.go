@@ -18,7 +18,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		ID:                  "ListRules",
 		Tags:                []string{"rules"},
 		Summary:             "List alert rules",
-		Description:         "This endpoint lists all alert rules with their current evaluation state. Deprecated: use ListRulesV3, which supports filtering, sorting and pagination.",
+		Description:         "This endpoint lists all alert rules with their current evaluation state. Deprecated: use GET /api/v3/rules instead, which supports filtering, sorting and pagination.",
 		Response:            make([]*ruletypes.Rule, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,

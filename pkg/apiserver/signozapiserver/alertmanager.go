@@ -119,7 +119,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		ID:                  "TestChannelDeprecated",
 		Tags:                []string{"channels"},
 		Summary:             "Test notification channel (deprecated)",
-		Description:         "Deprecated: use /api/v1/channels/test instead",
+		Description:         "Deprecated: use POST /api/v1/channels/test instead.",
 		Request:             new(alertmanagertypes.Receiver),
 		RequestContentType:  "application/json",
 		Response:            nil,

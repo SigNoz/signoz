@@ -72,7 +72,7 @@ const withQueryKey = <T extends object, K>(
 };
 
 /**
- * [Deprecated] This endpoint is called by the deployed agent to check in
+ * This endpoint is called by the deployed agent to check in. Deprecated: use POST /api/v1/cloud_integrations/{cloud_provider}/accounts/check_in instead. Send cloudIntegrationId and providerAccountId instead of account_id and cloud_account_id.
  * @deprecated
  * @summary Agent check-in
  */
