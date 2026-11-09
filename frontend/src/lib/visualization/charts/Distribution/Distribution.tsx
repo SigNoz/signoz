@@ -9,6 +9,7 @@ import type { LegendItem } from 'lib/uPlotV2/config/types';
 import type { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { StackMode } from 'lib/uPlotV2/config/types';
 import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
+import { resolveRowIndex } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import { resolveBoundaryPrecision } from 'lib/visualization/charts/Heatmap/utils';
 import { DistributionChartProps } from 'lib/visualization/charts/types';
 import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
@@ -23,7 +24,7 @@ import {
 } from './layout';
 import {
 	computeDistributionPercentiles,
-	resolveHoveredSeries,
+	resolveNearestSeries,
 } from './percentiles';
 import {
 	groupIntoOther,
@@ -214,7 +215,6 @@ export default function Distribution({
 				colors={drawn.colors}
 				counts={drawn.counts}
 				visible={drawnVisible}
-				stack={stack}
 				markers={markers}
 				formatBound={formatBound}
 				renderTooltipFooter={renderTooltipFooter}
@@ -225,7 +225,6 @@ export default function Distribution({
 			layout,
 			drawn,
 			drawnVisible,
-			stack,
 			markers,
 			formatBound,
 			renderTooltipFooter,
@@ -242,9 +241,12 @@ export default function Distribution({
 			absoluteMouseX,
 			absoluteMouseY,
 		}: ChartClickData): void => {
+			const bucket = resolveRowIndex(xAxis.edges, xValue);
 			const clicked = resolveClickedGroup(
 				drawn,
-				resolveHoveredSeries(layout, xValue, yValue),
+				bucket === null
+					? null
+					: resolveNearestSeries(layout, bucket, xValue, yValue),
 				series,
 			);
 			if (clicked) {
@@ -254,7 +256,7 @@ export default function Distribution({
 				});
 			}
 		},
-		[layout, drawn, series],
+		[xAxis, layout, drawn, series],
 	);
 
 	const data = useMemo(

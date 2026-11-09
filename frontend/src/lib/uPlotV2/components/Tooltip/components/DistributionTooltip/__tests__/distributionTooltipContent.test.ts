@@ -1,5 +1,3 @@
-import { StackMode } from 'lib/uPlotV2/config/types';
-
 import {
 	buildDistributionTooltipRows,
 	formatBucketRange,
@@ -52,7 +50,6 @@ describe('buildDistributionTooltipRows', () => {
 	it("gives each visible group's count, share and cumulative share", () => {
 		const rows = buildDistributionTooltipRows({
 			...args,
-			stack: StackMode.Normal,
 		});
 
 		expect(rows).toStrictEqual([
@@ -75,18 +72,8 @@ describe('buildDistributionTooltipRows', () => {
 		]);
 	});
 
-	it('shows only the hovered group side by side', () => {
-		const rows = buildDistributionTooltipRows({ ...args, stack: StackMode.None });
-
-		expect(rows.map(({ label }) => label)).toStrictEqual(['cart']);
-	});
-
-	it('shows every visible group side by side when none is hovered', () => {
-		const rows = buildDistributionTooltipRows({
-			...args,
-			hoveredSeries: null,
-			stack: StackMode.None,
-		});
+	it('lists every visible group, whatever the stacking', () => {
+		const rows = buildDistributionTooltipRows(args);
 
 		expect(rows.map(({ label }) => label)).toStrictEqual(['cart', 'checkout']);
 	});

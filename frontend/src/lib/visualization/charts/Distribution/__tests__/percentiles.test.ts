@@ -6,7 +6,7 @@ import {
 	formatPercentileMarker,
 	formatPercentileName,
 	layoutMarkerLabels,
-	resolveHoveredSeries,
+	resolveNearestSeries,
 } from '../percentiles';
 
 // Buckets ≤ 10, (10, 20], (20, 40], > 40 in slots [0, 1] … [3, 4].
@@ -89,26 +89,43 @@ describe('formatPercentileMarker', () => {
 	});
 });
 
-describe('resolveHoveredSeries', () => {
-	const layout = resolveDistributionBars({
+describe('resolveNearestSeries', () => {
+	const counts = [
+		[0, 4, 0, 0],
+		[0, 6, 0, 0],
+	];
+	const stacked = resolveDistributionBars({
 		xAxis,
-		counts: [
-			[0, 4, 0, 0],
-			[0, 6, 0, 0],
-		],
+		counts,
 		visible: [true, true],
 		stack: StackMode.Normal,
 		isLogY: false,
 	});
 
-	it('names the series whose bar is under the point', () => {
-		expect(resolveHoveredSeries(layout, 1.5, 2)).toBe(0);
-		expect(resolveHoveredSeries(layout, 1.5, 8)).toBe(1);
+	it('names the group whose bar is under the point', () => {
+		expect(resolveNearestSeries(stacked, 1, 1.5, 2)).toBe(0);
+		expect(resolveNearestSeries(stacked, 1, 1.5, 8)).toBe(1);
 	});
 
-	it('is null above the stack or in an empty bucket', () => {
-		expect(resolveHoveredSeries(layout, 1.5, 11)).toBeNull();
-		expect(resolveHoveredSeries(layout, 2.5, 1)).toBeNull();
+	it('takes the vertically nearest group off the bars, as a bar chart does', () => {
+		expect(resolveNearestSeries(stacked, 1, 1.5, 50)).toBe(1);
+	});
+
+	it('is null over an empty bucket', () => {
+		expect(resolveNearestSeries(stacked, 2, 2.5, 1)).toBeNull();
+	});
+
+	it('picks the sub-bar under the cursor side by side', () => {
+		const sideBySide = resolveDistributionBars({
+			xAxis,
+			counts,
+			visible: [true, true],
+			stack: StackMode.None,
+			isLogY: false,
+		});
+
+		expect(resolveNearestSeries(sideBySide, 1, 1.25, 50)).toBe(0);
+		expect(resolveNearestSeries(sideBySide, 1, 1.75, 1)).toBe(1);
 	});
 });
 

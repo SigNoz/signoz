@@ -62,21 +62,35 @@ describe('buildDistributionConfig setCursor', () => {
 		expect(redraw).toHaveBeenCalledWith(true, false);
 	});
 
-	it('still focuses a group above the stack of an occupied bucket', () => {
-		const { u, setSeries } = plotAt(1.5, 50);
+	it('focuses the nearest group above the stack, dimming the rest', () => {
+		const { u, setSeries, redraw } = plotAt(1.5, 50);
 
 		setCursorHook()(u);
 
-		expect(setSeries).toHaveBeenCalledWith(1, { focus: true });
+		expect(setSeries).toHaveBeenCalledWith(2, { focus: true });
+		expect(redraw).toHaveBeenCalledWith(true, false);
 	});
 
-	it('focuses nothing over an empty bucket', () => {
+	it('keeps a tooltip over an empty bucket without dimming any group', () => {
+		const hook = setCursorHook();
+		const { u, setSeries, redraw } = plotAt(1.5, 8);
+		hook(u);
+		redraw.mockClear();
+
+		u.cursor.left = 2.5;
+		u.cursor.top = 1;
+		hook(u);
+
+		expect(setSeries).toHaveBeenLastCalledWith(1, { focus: true });
+		expect(redraw).toHaveBeenCalledWith(true, false);
+	});
+
+	it('focuses nothing off the plot', () => {
 		const hook = setCursorHook();
 		const { u, setSeries } = plotAt(1.5, 8);
 		hook(u);
 
-		u.cursor.left = 2.5;
-		u.cursor.top = 1;
+		u.cursor.left = -1;
 		hook(u);
 
 		expect(setSeries).toHaveBeenLastCalledWith(null, { focus: true });

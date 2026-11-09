@@ -3,7 +3,7 @@ import cx from 'classnames';
 import { resolveRowIndex } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import {
 	formatPercentileName,
-	resolveHoveredSeries,
+	resolveNearestSeries,
 } from 'lib/visualization/charts/Distribution/percentiles';
 
 import TooltipPinnedBadge from '../TooltipPinnedBadge/TooltipPinnedBadge';
@@ -28,7 +28,6 @@ export default function DistributionTooltip({
 	colors,
 	counts,
 	visible,
-	stack,
 	markers,
 	formatBound,
 	isPinned,
@@ -49,7 +48,12 @@ export default function DistributionTooltip({
 		}
 		return {
 			bucket,
-			series: resolveHoveredSeries(layout, x, uPlotInstance.posToVal(top, 'y')),
+			series: resolveNearestSeries(
+				layout,
+				bucket,
+				x,
+				uPlotInstance.posToVal(top, 'y'),
+			),
 		};
 	}, [left, top, uPlotInstance, xAxis, layout]);
 
@@ -63,10 +67,9 @@ export default function DistributionTooltip({
 						visible,
 						bucket: hover.bucket,
 						hoveredSeries: hover.series,
-						stack,
 					})
 				: [],
-		[hover, labels, colors, counts, visible, stack],
+		[hover, labels, colors, counts, visible],
 	);
 
 	if (!hover) {

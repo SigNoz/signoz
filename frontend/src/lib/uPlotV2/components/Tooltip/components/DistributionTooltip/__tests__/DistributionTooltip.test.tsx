@@ -44,7 +44,6 @@ function renderTooltip(uPlotInstance: uPlot): void {
 			colors={['#f00', '#0f0']}
 			counts={counts}
 			visible={visible}
-			stack={StackMode.Normal}
 			markers={computeDistributionPercentiles({
 				xAxis,
 				totals: [1, 10, 3, 1],

@@ -24,8 +24,7 @@ import {
 	DistributionPercentile,
 	formatPercentileMarker,
 	layoutMarkerLabels,
-	resolveFocusedSeries,
-	resolveHoveredSeries,
+	resolveNearestSeries,
 } from './percentiles';
 import { DistributionXAxis } from './types';
 
@@ -220,6 +219,9 @@ export interface BuildDistributionConfigArgs {
 	decimalPrecision?: PrecisionOption;
 }
 
+/** Focused over an empty bucket, which has no nearest group to name. */
+const FIRST_SERIES = 0;
+
 export function buildDistributionConfig({
 	id,
 	xAxis,
@@ -383,12 +385,13 @@ export function buildDistributionConfig({
 		const { left = -1, top = -1 } = u.cursor;
 		const isOnPlot = left >= 0 && top >= 0;
 		const x = isOnPlot ? u.posToVal(left, 'x') : Number.NaN;
-		const hovered = isOnPlot
-			? resolveHoveredSeries(layout, x, u.posToVal(top, 'y'))
-			: null;
-		const focused = isOnPlot
-			? resolveFocusedSeries(layout, hovered, resolveRowIndex(xAxis.edges, x))
-			: null;
+		const bucket = isOnPlot ? resolveRowIndex(xAxis.edges, x) : null;
+		const hovered =
+			bucket === null
+				? null
+				: resolveNearestSeries(layout, bucket, x, u.posToVal(top, 'y'));
+		// An empty bucket still gets a tooltip, as a bar chart's zero column does.
+		const focused = bucket === null || hovered !== null ? hovered : FIRST_SERIES;
 
 		if (focused !== hover.focused) {
 			hover.focused = focused;

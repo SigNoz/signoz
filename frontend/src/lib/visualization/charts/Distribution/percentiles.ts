@@ -81,43 +81,32 @@ export function formatPercentileMarker(
 		: `~${name}`;
 }
 
-/** The series whose bar is under `(x, y)` in scale space, or `null`. */
-export function resolveHoveredSeries(
+/**
+ * The group nearest `(x, y)` vertically in `bucket`, as uPlot focuses bar series;
+ * side by side, only the sub-bar under `x` competes. `null` over an empty bucket.
+ */
+export function resolveNearestSeries(
 	layout: DistributionBarsLayout,
+	bucket: number,
 	x: number,
 	y: number,
 ): number | null {
-	for (let series = 0; series < layout.rects.length; series += 1) {
-		const hit = layout.rects[series].some(
-			(rect) => x >= rect.x0 && x < rect.x1 && y >= rect.y0 && y <= rect.y1,
-		);
-		if (hit) {
-			return series;
-		}
-	}
-	return null;
-}
-
-/**
- * The series the tooltip follows at `(x, y)`: the one under the cursor, else the
- * first with a bar in that bucket, so the tooltip shows anywhere over an occupied
- * bucket. `null` over an empty one.
- */
-export function resolveFocusedSeries(
-	layout: DistributionBarsLayout,
-	hovered: number | null,
-	bucket: number | null,
-): number | null {
-	if (hovered !== null) {
-		return hovered;
-	}
-	if (bucket === null) {
-		return null;
-	}
-	const series = layout.rects.findIndex((rects) =>
-		rects.some((rect) => rect.bucketIndex === bucket),
+	const candidates = layout.rects.flatMap((rects, series) =>
+		rects
+			.filter((rect) => rect.bucketIndex === bucket)
+			.map((rect) => ({ rect, series })),
 	);
-	return series === -1 ? null : series;
+	const underX = candidates.filter(({ rect }) => x >= rect.x0 && x < rect.x1);
+	let nearest: number | null = null;
+	let nearestDistance = Number.POSITIVE_INFINITY;
+	(underX.length > 0 ? underX : candidates).forEach(({ rect, series }) => {
+		const distance = Math.max(rect.y0 - y, y - rect.y1, 0);
+		if (distance < nearestDistance) {
+			nearest = series;
+			nearestDistance = distance;
+		}
+	});
+	return nearest;
 }
 
 /**

@@ -1,4 +1,3 @@
-import type { StackMode } from 'lib/uPlotV2/config/types';
 import type { HeatmapRow } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import type { DistributionBarsLayout } from 'lib/visualization/charts/Distribution/layout';
 import type { DistributionPercentile } from 'lib/visualization/charts/Distribution/percentiles';
@@ -33,7 +32,6 @@ export interface DistributionTooltipProps extends Pick<
 	/** `counts[series][bucket]`. */
 	counts: number[][];
 	visible: boolean[];
-	stack: StackMode;
 	markers: DistributionPercentile[];
 	formatBound: (value: number) => string;
 	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;

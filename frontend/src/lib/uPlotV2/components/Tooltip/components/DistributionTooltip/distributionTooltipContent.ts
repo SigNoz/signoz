@@ -1,5 +1,3 @@
-import { StackMode } from 'lib/uPlotV2/config/types';
-
 import { DistributionBucket, DistributionTooltipRow } from './types';
 
 /** `(250 ms, 500 ms]`; the open-ended buckets name their one real bound. */
@@ -24,10 +22,7 @@ export function formatPercent(share: number): string {
 	return `${Math.round(share * 100)}%`;
 }
 
-/**
- * One row per visible group with its count in `bucket`. Side by side shows only the
- * hovered group, since the cursor is over one of the sub-bars, not the bucket.
- */
+/** One row per visible group with its count in `bucket`. */
 export function buildDistributionTooltipRows({
 	labels,
 	colors,
@@ -35,7 +30,6 @@ export function buildDistributionTooltipRows({
 	visible,
 	bucket,
 	hoveredSeries,
-	stack,
 }: {
 	labels: string[];
 	colors: string[];
@@ -43,12 +37,9 @@ export function buildDistributionTooltipRows({
 	visible: boolean[];
 	bucket: number;
 	hoveredSeries: number | null;
-	stack: StackMode;
 }): DistributionTooltipRow[] {
-	const onlyHovered = stack === StackMode.None && hoveredSeries !== null;
-
 	return labels.flatMap((label, series) => {
-		if (!visible[series] || (onlyHovered && series !== hoveredSeries)) {
+		if (!visible[series]) {
 			return [];
 		}
 		const seriesCounts = counts[series] ?? [];
