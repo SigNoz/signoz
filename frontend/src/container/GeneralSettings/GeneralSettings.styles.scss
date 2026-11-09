@@ -92,33 +92,23 @@
 	display: flex;
 	align-items: flex-start;
 
+	--input-border-radius: 2px 0 0 2px;
+	--input-border: var(--l1-border);
+	--input-background: transparent;
+	--input-foreground: var(--l1-foreground);
+	--input-font-size: var(--label-small-400-font-size);
+	--input-line-height: 16px;
+	--input-disabled-opacity: 0.8;
+
 	// todo: https://github.com/SigNoz/components/issues/116
 	input[type='number'] {
-		display: flex;
-		width: 120px;
-		height: 32px;
-		align-items: center;
-		gap: var(--spacing-2);
-		border-radius: 2px 0 0 2px;
-		border: 1px solid var(--l1-border);
-		background: transparent;
-		text-align: left;
 		-moz-appearance: textfield;
 		appearance: textfield;
-		color: var(--l1-foreground);
-		font-size: var(--label-small-400-font-size);
-		line-height: 16px;
-		box-shadow: none;
 
 		&::-webkit-outer-spin-button,
 		&::-webkit-inner-spin-button {
 			-webkit-appearance: none;
 			margin: 0;
-		}
-
-		&:disabled {
-			opacity: 0.8;
-			cursor: not-allowed;
 		}
 	}
 

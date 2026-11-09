@@ -33,10 +33,6 @@ $item-spacing: 8px;
 		@include flex-center;
 		gap: 6px;
 		width: -webkit-fill-available;
-
-		// The search row draws its own padding; the inline Input hugs the text.
-		--input-height: auto;
-		--input-padding: 0;
 	}
 
 	&__esc-key {

@@ -17,6 +17,10 @@
 		align-items: center;
 		gap: 8px;
 		margin-top: 16px;
+
+		> [data-slot='input'] {
+			flex: 1;
+		}
 	}
 }
 

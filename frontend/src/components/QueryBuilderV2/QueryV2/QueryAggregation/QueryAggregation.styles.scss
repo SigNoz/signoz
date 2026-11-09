@@ -256,7 +256,6 @@
 			.query-aggregation-interval-input-container {
 				.query-aggregation-interval-input {
 					input {
-						min-height: 36px;
 						max-width: 120px;
 						&::placeholder {
 							color: var(--query-builder-v2-color, var(--l2-foreground));

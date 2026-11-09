@@ -43,6 +43,7 @@
 
 		// Square corners: the input sits mid-group between label and close button.
 		--input-border-radius: 0px;
+		--input-height: 36px;
 		--input-border: var(--input-with-label-border-color, var(--l2-border));
 		--input-background: var(
 			--input-with-label-background-color,
