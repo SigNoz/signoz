@@ -210,19 +210,19 @@ describe('ChannelForm save', () => {
 				screen.getByTestId('jira-deployment-radio-item-cloud'),
 			).toHaveAttribute('aria-checked', 'true');
 
-			await user.type(screen.getByTestId('channel-name-textbox'), 'jira alerts');
-			await user.type(screen.getByTestId('jira-email-textbox'), 'ops@acme.io');
+			await user.type(screen.getByTestId('channel-name-textbox-field'), 'jira alerts');
+			await user.type(screen.getByTestId('jira-email-textbox-field'), 'ops@acme.io');
 
 			await user.click(
 				screen.getByTestId('jira-deployment-radio-item-selfhosted'),
 			);
-			expect(screen.queryByTestId('jira-email-textbox')).not.toBeInTheDocument();
+			expect(screen.queryByTestId('jira-email-textbox-field')).not.toBeInTheDocument();
 			await user.type(
-				screen.getByTestId('jira-site-textbox'),
+				screen.getByTestId('jira-site-textbox-field'),
 				'https://jira.acme.com',
 			);
-			await user.type(screen.getByTestId('jira-pat-textbox'), 'pat-1');
-			await user.type(screen.getByTestId('jira-project-textbox'), 'OPS');
+			await user.type(screen.getByTestId('jira-pat-textbox-field'), 'pat-1');
+			await user.type(screen.getByTestId('jira-project-textbox-field'), 'OPS');
 
 			const save = screen.getByTestId('save-channel-button');
 			await waitFor(

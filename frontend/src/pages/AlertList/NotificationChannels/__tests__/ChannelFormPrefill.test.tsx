@@ -165,8 +165,8 @@ const CASES: PrefillCase[] = [
 			auth: { pat: 'jira-pat' },
 		},
 		fields: [
-			['jira-site-textbox', 'https://jira.acme.com'],
-			['jira-pat-textbox', 'jira-pat'],
+			['jira-site-textbox-field', 'https://jira.acme.com'],
+			['jira-pat-textbox-field', 'jira-pat'],
 		],
 	},
 	{

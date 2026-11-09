@@ -63,7 +63,7 @@ describe('ViewsRail', () => {
 	it('filters views by name and says when none match', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderRail();
-		const search = screen.getByTestId(`${PREFIX}-view-search`);
+		const search = screen.getByTestId(`${PREFIX}-view-search-field`);
 
 		await user.type(search, 'prod');
 
