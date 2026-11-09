@@ -42,8 +42,8 @@ func TestConditionBuilder(t *testing.T) {
 			},
 			op:           qbtypes.FilterOperatorNotEqual,
 			value:        "redis",
-			expected:     "simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND labels NOT LIKE ?",
-			expectedArgs: []any{"redis", `%k8s.namespace.name":"redis%`},
+			expected:     "simpleJSONExtractString(labels, 'k8s.namespace.name') <> ?",
+			expectedArgs: []any{"redis"},
 		},
 		{
 			name: "string_like",
@@ -120,8 +120,8 @@ func TestConditionBuilder(t *testing.T) {
 			},
 			op:           qbtypes.FilterOperatorNotIn,
 			value:        []any{"watch", "redis"},
-			expected:     "(simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND simpleJSONExtractString(labels, 'k8s.namespace.name') <> ?) AND (labels NOT LIKE ? AND labels NOT LIKE ?)",
-			expectedArgs: []any{"watch", "redis", "%k8s.namespace.name\":\"watch%", "%k8s.namespace.name\":\"redis%"},
+			expected:     "simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND simpleJSONExtractString(labels, 'k8s.namespace.name') <> ?",
+			expectedArgs: []any{"watch", "redis"},
 		},
 		{
 			name: "string_exists",
@@ -219,3 +219,66 @@ func TestConditionBuilder(t *testing.T) {
 		})
 	}
 }
+
+// TestNotEqualAndNotInOmitNegatedValueHints guards against regression for issue #13490.
+// Negated value index hints (labels NOT LIKE '%key":"val%') without closing quotes match
+// values with the operand as a prefix (e.g. service.name != 'redis' matching 'redis-cache'),
+// causing valid rows to be dropped. For single-member attributes, != and NOT IN must only
+// produce exact string inequality comparisons.
+func TestNotEqualAndNotInOmitNegatedValueHints_Issue13490(t *testing.T) {
+	storage := newStorage()
+	key := &telemetrytypes.TelemetryFieldKey{
+		Name:         "service.name",
+		FieldContext: telemetrytypes.FieldContextResource,
+	}
+	fieldKeys := map[string][]*telemetrytypes.TelemetryFieldKey{
+		"service.name": {key},
+	}
+
+	t.Run("not_equal_omits_negated_like_hint", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		conds, _, err := querybuilder.Conditions(
+			context.Background(),
+			qbtypes.QueryInfo{},
+			storage,
+			key,
+			qbtypes.FilterOperatorNotEqual,
+			"redis",
+			fieldKeys,
+			false,
+			sb,
+		)
+		require.NoError(t, err)
+		require.Len(t, conds, 1)
+		sb.Where(conds...)
+		sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+		assert.Equal(t, "WHERE simpleJSONExtractString(labels, 'service.name') <> ?", sql)
+		assert.Equal(t, []any{"redis"}, args)
+		assert.NotContains(t, sql, "NOT LIKE")
+	})
+
+	t.Run("not_in_omits_negated_like_hints", func(t *testing.T) {
+		sb := sqlbuilder.NewSelectBuilder()
+		conds, _, err := querybuilder.Conditions(
+			context.Background(),
+			qbtypes.QueryInfo{},
+			storage,
+			key,
+			qbtypes.FilterOperatorNotIn,
+			[]any{"redis", "postgres"},
+			fieldKeys,
+			false,
+			sb,
+		)
+		require.NoError(t, err)
+		require.Len(t, conds, 1)
+		sb.Where(conds...)
+		sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+		assert.Equal(t, "WHERE (simpleJSONExtractString(labels, 'service.name') <> ? AND simpleJSONExtractString(labels, 'service.name') <> ?)", sql)
+		assert.Equal(t, []any{"redis", "postgres"}, args)
+		assert.NotContains(t, sql, "NOT LIKE")
+	})
+}
+
