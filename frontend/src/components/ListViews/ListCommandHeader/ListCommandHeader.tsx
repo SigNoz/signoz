@@ -8,6 +8,8 @@ interface Props {
 	count: number;
 	isModified: boolean;
 	action?: ReactNode;
+	// Ids: `${testIdPrefix}-list-heading`.
+	testIdPrefix?: string;
 }
 
 function ListCommandHeader({
@@ -15,11 +17,17 @@ function ListCommandHeader({
 	count,
 	isModified,
 	action,
+	testIdPrefix,
 }: Props): JSX.Element {
 	return (
 		<div className={styles.commandHeader}>
 			<div className={styles.headingBlock}>
-				<Typography.Title className={styles.title}>{label}</Typography.Title>
+				<Typography.Title
+					className={styles.title}
+					testId={testIdPrefix && `${testIdPrefix}-list-heading`}
+				>
+					{label}
+				</Typography.Title>
 				{isModified && <span className={styles.dirtyDot} title="Unsaved changes" />}
 				<span className={styles.countPill}>{count}</span>
 			</div>
