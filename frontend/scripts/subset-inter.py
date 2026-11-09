@@ -11,7 +11,8 @@ import zipfile
 from pathlib import Path
 
 from fontTools import subset
-from fontTools.ttLib import TTFont
+from fontTools.ttLib import TTFont, newTable
+from fontTools.ttLib.tables import ttProgram
 from fontTools.varLib import instancer
 
 RELEASE_URL = "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip"
@@ -63,6 +64,27 @@ def read_release(path: str | None) -> zipfile.ZipFile:
     return zipfile.ZipFile(io.BytesIO(data))
 
 
+def mark_unhinted(font: TTFont) -> None:
+    """Adds the `gasp` and `prep` tables Google Fonts gives an unhinted font.
+
+    Without them FreeType autohints the font wherever the platform hints text
+    (Linux, headless Chromium), which rounds glyph advances differently and
+    closes the gaps between words.
+    """
+    gasp = newTable("gasp")
+    gasp.version = 1
+    gasp.gaspRange = {0xFFFF: 0x000F}
+    font["gasp"] = gasp
+
+    program = ttProgram.Program()
+    program.fromAssembly(
+        ["PUSHW[]", "511", "SCANCTRL[]", "PUSHB[]", "4", "SCANTYPE[]"]
+    )
+    prep = newTable("prep")
+    prep.program = program
+    font["prep"] = prep
+
+
 def write_subset(font: TTFont, codepoints: set[int], path: Path) -> None:
     options = subset.Options()
     options.layout_features = ["*"]
@@ -73,6 +95,7 @@ def write_subset(font: TTFont, codepoints: set[int], path: Path) -> None:
     subsetter = subset.Subsetter(options=options)
     subsetter.populate(unicodes=codepoints)
     subsetter.subset(font)
+    mark_unhinted(font)
     font.flavor = "woff2"
     font.save(path)
 
