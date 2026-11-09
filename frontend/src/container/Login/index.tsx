@@ -377,8 +377,8 @@ function Login(): JSX.Element {
 							<div className="password-label-container">
 								<Label htmlFor="Password">Password</Label>
 								<Button
-									/* TODO(typography): not lifted from className: ".forgot-password-link:hover" { color: var(--text-neutral-dark-300) }; the className colored the link tertiary, Typography.Link always draws in the link color */ variant="link"
-									color="primary"
+									variant="link"
+									color="secondary"
 									size="md"
 									onClick={(event): void => {
 										event.preventDefault();

@@ -223,6 +223,7 @@ export function PlannedDowntime(): JSX.Element {
 							weight="medium"
 							color="main"
 							as="h1"
+							marginY={4}
 							textOverflow="ellipsis"
 						>
 							All planned downtimes

@@ -135,6 +135,12 @@
 }
 
 .password-label-container {
+	--button-height: auto;
+	--button-font-weight: 400;
+	--button-icon-size: 13px;
+	--button-secondary-link-color: var(--text-neutral-dark-200);
+	--button-secondary-link-hover-color: var(--text-neutral-dark-300);
+
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -143,19 +149,6 @@
 
 	> label {
 		margin-bottom: 0;
-	}
-}
-
-.forgot-password-link {
-	font-family: Inter, sans-serif;
-	font-size: 13px;
-	font-weight: 400;
-	line-height: 1;
-	letter-spacing: -0.065px;
-	color: var(--text-neutral-dark-200) !important;
-
-	&:hover {
-		color: var(--text-neutral-dark-300) !important;
 	}
 }
 

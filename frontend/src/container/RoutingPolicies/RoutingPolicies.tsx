@@ -107,6 +107,7 @@ function RoutingPolicies(): JSX.Element {
 							weight="medium"
 							color="main"
 							as="h1"
+							marginY={4}
 							textOverflow="ellipsis"
 						>
 							All routing policies

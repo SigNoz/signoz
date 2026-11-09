@@ -2,14 +2,12 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Row } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
-import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { useIsAnomalyDetectionAvailable } from 'container/CreateAlert/useIsAnomalyDetectionAvailable';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { isModifierKeyPressed } from 'utils/app';
-import { openInNewTab } from 'utils/navigation';
 
 import { getOptionList } from './config';
 import { AlertTypeCard, SelectTypeContainer } from './styles';
@@ -22,7 +20,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 
 	const optionList = getOptionList(t, isAnomalyDetectionEnabled);
 
-	function handleRedirection(option: AlertTypes): void {
+	function getSampleAlertUrl(option: AlertTypes): string {
 		let url = '';
 		switch (option) {
 			case AlertTypes.ANOMALY_BASED_ALERT:
@@ -48,13 +46,15 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 				break;
 		}
 
+		return url;
+	}
+
+	function handleSampleAlertClick(option: AlertTypes): void {
 		logEvent('Alert: Sample alert link clicked', {
 			dataSource: ALERTS_DATA_SOURCE_MAP[option],
-			link: url,
+			link: getSampleAlertUrl(option),
 			page: 'New alert data source selection page',
 		});
-
-		openInNewTab(url);
 	}
 	const renderOptions = useMemo(
 		() => (
@@ -76,18 +76,20 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 						data-testid={`alert-type-card-${option.selection}`}
 					>
 						{option.description}{' '}
-						<Button
-							variant="link"
-							color="primary"
-							size="md"
+						<Typography.Link
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							textOverflow="wrap"
+							href={getSampleAlertUrl(option.selection)}
+							target="_blank"
 							onClick={(e): void => {
-								e.preventDefault();
 								e.stopPropagation();
-								handleRedirection(option.selection);
+								handleSampleAlertClick(option.selection);
 							}}
 						>
 							Click here to see how to create a sample alert.
-						</Button>{' '}
+						</Typography.Link>{' '}
 					</AlertTypeCard>
 				))}
 			</>

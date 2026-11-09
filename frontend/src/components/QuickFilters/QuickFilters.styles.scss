@@ -13,6 +13,11 @@
 		position: relative;
 		align-self: stretch;
 		clip-path: inset(0 -100vw 0 0);
+
+		// Room for the header, the added filters, one empty row and the footer.
+		&.settings-open {
+			min-height: 340px;
+		}
 	}
 }
 

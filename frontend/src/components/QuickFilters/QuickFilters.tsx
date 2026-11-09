@@ -401,7 +401,11 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					filtersContent
 				)}
 			</div>
-			<div className="quick-filters-settings-container">
+			<div
+				className={classNames('quick-filters-settings-container', {
+					'settings-open': isSettingsOpen,
+				})}
+			>
 				<div
 					className={classNames(
 						'quick-filters-settings',

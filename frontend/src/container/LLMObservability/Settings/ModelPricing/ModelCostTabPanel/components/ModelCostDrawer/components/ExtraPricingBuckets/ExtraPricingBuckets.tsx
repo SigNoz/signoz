@@ -116,7 +116,7 @@ function ExtraPricingBuckets({
 							weight="regular"
 							color="secondary"
 							as="span"
-							textOverflow="wrap"
+							textOverflow="visible"
 						>
 							1M
 						</Typography>
