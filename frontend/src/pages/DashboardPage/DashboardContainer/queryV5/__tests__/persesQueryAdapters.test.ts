@@ -361,6 +361,24 @@ describe('persesQueryAdapters', () => {
 			expect(spec.limit).toBeUndefined();
 		});
 
+		it('drops the pageSize-promoted limit for an AI List query', () => {
+			const aiBuilder = initialQueryAIWithType.builder;
+			const withPageSize: Query = {
+				...initialQueryAIWithType,
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				builder: { ...aiBuilder, queryData: [] },
+				builder_ai_query: {
+					...aiBuilder,
+					queryData: [{ ...aiBuilder.queryData[0], limit: null, pageSize: 10 }],
+				},
+			};
+
+			const result = toPerses(withPageSize, PANEL_TYPES.LIST);
+
+			const spec = result[0].spec.plugin.spec as { limit?: number };
+			expect(spec.limit).toBeUndefined();
+		});
+
 		it('keeps an explicit user limit on a List query (V1 parity: static, unpaged cap)', () => {
 			const withLimit: Query = {
 				...initialQueriesMap[DataSource.LOGS],
