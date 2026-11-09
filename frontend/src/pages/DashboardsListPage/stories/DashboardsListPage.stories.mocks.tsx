@@ -10,7 +10,11 @@ import {
 	type RestRequest,
 } from 'msw';
 import logEvent from 'api/common/logEvent';
-import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesListOrderDTO,
+	DashboardtypesListSortDTO,
+	type GetDashboardV2200,
+} from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import {
 	expect,
@@ -29,19 +33,22 @@ import {
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
+import {
+	orgUsersResponse,
+	STORY_USER_EMAIL,
+} from './__story_mockdata__/orgUsers';
+
 import { dashboardResponse } from '../../DashboardPage/stories/__story_mockdata__/dashboard';
 import {
 	dashboardIdAt,
 	dashboardViewsResponse,
 	dashboardsListResponse,
-	orgUsersResponse,
 	PIN_WRITES,
 	recentDashboardIds,
 	ROW_MARKERS,
 	savedView,
 	seedPinnedDashboards,
 	setDashboardPinned,
-	STORY_USER_EMAIL,
 	TEMPLATE_REQUESTS,
 	TOOLTIP_TAGS,
 	WRITE_STATES,
@@ -55,21 +62,24 @@ import {
 	type DashboardDynamicColumns,
 	useDashboardsListVisibleColumnsStore,
 } from '../store/useVisibleColumnsStore';
-import { BuiltinViewId } from '../types';
-import { builtinViewQuery } from '../utils/views';
+import {
+	DEFAULT_DASHBOARD_VIEW,
+	type DashboardViewId,
+	findBuiltinView,
+} from '../list.config';
 
 const LIST = 'Dashboards · list';
 const VIEWS = 'Dashboards · views';
 const WRITES = 'Dashboards · writes';
 
 const VIEWS_OPTIONS = [
-	BuiltinViewId.All,
-	BuiltinViewId.Mine,
-	BuiltinViewId.Pinned,
-	BuiltinViewId.Recent,
-	BuiltinViewId.Locked,
+	'all',
+	'mine',
+	'pinned',
+	'recent',
+	'locked',
 	'saved',
-] as const;
+] as const satisfies readonly (DashboardViewId | 'saved')[];
 
 type ViewOption = (typeof VIEWS_OPTIONS)[number];
 
@@ -143,7 +153,18 @@ const listRoute = (view: ViewOption): string => {
 	const { id, query } =
 		view === 'saved'
 			? savedView(0)
-			: { id: view, query: builtinViewQuery(view, STORY_USER_EMAIL) ?? '' };
+			: {
+					id: view,
+					query:
+						findBuiltinView(view)?.filter(
+							{
+								query: '',
+								sort: DashboardtypesListSortDTO.updated_at,
+								order: DashboardtypesListOrderDTO.desc,
+							},
+							{ userEmail: STORY_USER_EMAIL, recent: [] },
+						).query ?? '',
+				};
 
 	const params = new URLSearchParams({ view: id });
 
@@ -153,6 +174,12 @@ const listRoute = (view: ViewOption): string => {
 
 	return `${ROUTES.ALL_DASHBOARD}?${params.toString()}`;
 };
+
+export const longQueryRoute = `${ROUTES.ALL_DASHBOARD}?${new URLSearchParams({
+	view: 'all',
+	query:
+		"name CONTAINS 'Kubernetes' OR name CONTAINS 'Checkout' OR name CONTAINS 'Postgres' OR name CONTAINS 'Kafka' OR name CONTAINS 'Redis' OR name CONTAINS 'Nginx'",
+}).toString()}`;
 
 const visibleColumns = (
 	columns: readonly DetailColumn[],
@@ -278,7 +305,7 @@ export const dashboardsListMocks = defineStoryMocks({
 			description:
 				'The rail entry the page opens on. Pinned and Recently viewed constrain the fetched rows client-side; the rest apply a query.',
 			options: VIEWS_OPTIONS,
-			value: BuiltinViewId.All,
+			value: DEFAULT_DASHBOARD_VIEW,
 		}),
 		savedViews: countControl('Saved views', {
 			group: VIEWS,
@@ -565,9 +592,9 @@ export const retryMigration = async (
 	const retry = await screen.findByTestId('legacy-dashboard-retry-migration');
 
 	await waitFor(
-		() => {
-			expect(retry).toBeEnabled();
-			expect(retry).not.toHaveAttribute('aria-disabled', 'true');
+		async () => {
+			await expect(retry).toBeEnabled();
+			await expect(retry).not.toHaveAttribute('aria-disabled', 'true');
 		},
 		{ timeout: TOAST_TIMEOUT },
 	);

@@ -24,6 +24,11 @@ MINUTE_MS = 60_000
 
 METRIC_NAME = "test_heatmap_rejections"
 QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
+request_types = pytest.mark.parametrize(
+    "request_type",
+    [RequestType.HEATMAP, RequestType.DISTRIBUTION],
+    ids=["heatmap", "distribution"],
+)
 
 
 @pytest.mark.parametrize(
@@ -46,7 +51,7 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
         pytest.param(
             QUERY,
             {"format_options": {"formatTableResultForUI": False, "fillGaps": True}},
-            "fillGaps is not supported for heatmap requests",
+            "fillGaps is not supported for {request_type} requests",
             id="fill_gaps",
         ),
         pytest.param(
@@ -55,7 +60,7 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
                 build_builder_query("B", METRIC_NAME, "min", "min"),
             ],
             {},
-            "a heatmap renders one distribution, but 2 queries are enabled",
+            "{request_type} requests take one enabled query, but 2 are enabled",
             id="two_enabled_queries",
         ),
         pytest.param(
@@ -65,13 +70,13 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
                 build_formula_query("F1", "B"),
             ],
             {},
-            "a heatmap renders one distribution, but 2 queries are enabled",
+            "{request_type} requests take one enabled query, but 2 are enabled",
             id="a_formula_beside_an_enabled_query",
         ),
         pytest.param(
             [build_builder_query("A", METRIC_NAME, "max", "max", disabled=True)],
             {},
-            "a heatmap needs one enabled query, but every query is disabled",
+            "a {request_type} needs one enabled query, but every query is disabled",
             id="only_a_disabled_query",
         ),
         # an empty body is refused while resources are extracted from it, before
@@ -85,7 +90,7 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
         pytest.param(
             [build_builder_query("A", METRIC_NAME, "max", "max", functions=[build_function("absolute")])],
             {},
-            "functions are not supported for heatmap requests",
+            "functions are not supported for {request_type} requests",
             id="functions_on_the_query",
         ),
         pytest.param(
@@ -94,7 +99,7 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
                 build_formula_query("F1", "A"),
             ],
             {},
-            "functions are not supported for heatmap requests",
+            "functions are not supported for {request_type} requests",
             id="functions_on_a_disabled_formula_input",
         ),
         pytest.param(
@@ -103,7 +108,7 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
                 build_formula_query("F1", "A", functions=[build_function("absolute")]),
             ],
             {},
-            "functions are not supported for heatmap requests",
+            "functions are not supported for {request_type} requests",
             id="functions_on_the_formula",
         ),
         pytest.param(
@@ -120,7 +125,7 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
                 }
             ],
             {},
-            "having is not supported for heatmap requests",
+            "having is not supported for {request_type} requests",
             id="having_on_the_query",
         ),
         pytest.param(
@@ -190,13 +195,15 @@ QUERY = [build_builder_query("A", METRIC_NAME, "max", "max")]
         ),
     ],
 )
-def test_heatmap_request_is_rejected(
+@request_types
+def test_request_is_rejected(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     queries: list[dict],
     request_options: dict,
     expected_message: str,
+    request_type: str,
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -207,11 +214,11 @@ def test_heatmap_request_is_rejected(
         int((now - timedelta(minutes=30)).timestamp() * 1000),
         int(now.timestamp() * 1000),
         queries,
-        request_type=RequestType.HEATMAP,
+        request_type=request_type,
         **request_options,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert expected_message in get_error_message(response.json())
+    assert expected_message.format(request_type=request_type) in get_error_message(response.json()), get_error_message(response.json())
 
 
 @pytest.mark.parametrize(
@@ -237,7 +244,7 @@ def test_bucket_options_outside_a_heatmap(
         request_type=request_type,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "bucketOptions are only supported for heatmap requests" in get_error_message(response.json())
+    assert "bucketOptions are only supported for heatmap and distribution requests" in get_error_message(response.json()), get_error_message(response.json())
 
 
 @pytest.mark.parametrize(
@@ -256,11 +263,13 @@ def test_bucket_options_outside_a_heatmap(
         ),
     ],
 )
+@request_types
 def test_clickhouse_missing_bucket_columns_are_rejected(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     columns: list[str],
+    request_type: str,
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start = now - timedelta(minutes=2)
@@ -282,16 +291,18 @@ def test_clickhouse_missing_bucket_columns_are_rejected(
                 },
             }
         ],
-        request_type=RequestType.HEATMAP,
+        request_type=request_type,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert 'a heatmap needs a "__bucket_min" and a "__bucket_max" column' in get_error_message(response.json())
+    assert 'a heatmap needs a "__bucket_min" and a "__bucket_max" column' in get_error_message(response.json()), get_error_message(response.json())
 
 
+@request_types
 def test_clickhouse_one_bucket_cut_two_ways_is_rejected(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    request_type: str,
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start = now - timedelta(minutes=2)
@@ -313,7 +324,7 @@ def test_clickhouse_one_bucket_cut_two_ways_is_rejected(
                 },
             }
         ],
-        request_type=RequestType.HEATMAP,
+        request_type=request_type,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
@@ -326,10 +337,12 @@ def test_clickhouse_one_bucket_cut_two_ways_is_rejected(
     )
 
 
+@request_types
 def test_clickhouse_one_bucket_cut_two_ways_across_groups_is_rejected(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    request_type: str,
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start = now - timedelta(minutes=2)
@@ -351,7 +364,7 @@ def test_clickhouse_one_bucket_cut_two_ways_across_groups_is_rejected(
                 },
             }
         ],
-        request_type=RequestType.HEATMAP,
+        request_type=request_type,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
@@ -364,11 +377,13 @@ def test_clickhouse_one_bucket_cut_two_ways_across_groups_is_rejected(
     )
 
 
+@request_types
 def test_promql_returning_no_le_is_rejected(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
+    request_type: str,
 ) -> None:
     metric = f"promql_heatmap_gauge_{uuid4().hex[:8]}"
     end_ms = (int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000) // MINUTE_MS) * MINUTE_MS
@@ -397,17 +412,19 @@ def test_promql_returning_no_le_is_rejected(
         start_ms,
         end_ms,
         [{"type": "promql", "spec": {"name": "A", "query": metric, "step": 60}}],
-        request_type=RequestType.HEATMAP,
+        request_type=request_type,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "no `le` labels to build a bucket axis from" in get_error_message(response.json())
+    assert "no `le` labels to build a bucket axis from" in get_error_message(response.json()), get_error_message(response.json())
 
 
+@request_types
 def test_histogram_rejects_bucket_options(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
+    request_type: str,
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
@@ -429,7 +446,7 @@ def test_histogram_rejects_bucket_options(
         start_ms,
         end_ms,
         [build_builder_query("A", metric_name, "increase", "p50", bucket_options=build_log_bucket_options(2))],
-        request_type=RequestType.HEATMAP,
+        request_type=request_type,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
-    assert "bucketOptions are not supported for histogram metrics" in get_error_message(response.json())
+    assert "bucketOptions are not supported for histogram metrics" in get_error_message(response.json()), get_error_message(response.json())
