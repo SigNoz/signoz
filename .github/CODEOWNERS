@@ -217,6 +217,11 @@ go.mod @therealpandey
 /frontend/src/container/FormAlertChannels/ @SigNoz/pulse-frontend
 /frontend/src/hooks/notificationChannels/ @SigNoz/pulse-frontend
 
+## List filter + views (dashboards and alerts lists)
+/frontend/src/components/ListFilter/ @SigNoz/pulse-frontend
+/frontend/src/components/ListViews/ @SigNoz/pulse-frontend
+/frontend/src/hooks/listViews/ @SigNoz/pulse-frontend
+
 ## OpenAPI Schema - Generated
 /frontend/src/api/generated/services/ @therealpandey @vikrantgupta25 @srikanthccv
 /docs/api/openapi.yml @therealpandey @vikrantgupta25 @srikanthccv
