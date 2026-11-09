@@ -7,6 +7,8 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
+import { MattermostInitialConfig } from 'container/CreateAlertChannels/defaults';
+
 import ChannelForm from '../components/ChannelForm/ChannelForm';
 
 const FIND = { timeout: 5000 };
@@ -114,6 +116,66 @@ describe('ChannelForm save', () => {
 			const spec = (body as { config: { spec: Record<string, unknown> } }).config
 				.spec;
 			expect(spec).not.toHaveProperty('message');
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
+		'sends the mattermost webhook with the mattermost template, not the slack one',
+		async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				rest.post(
+					'http://localhost/api/v2/notification_channels',
+					async (req, res, ctx) => {
+						body = await req.json();
+						return res(ctx.status(201), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
+			await user.click(
+				await screen.findByRole('option', { name: /^Mattermost$/ }),
+			);
+
+			await user.type(
+				screen.getByTestId('channel-name-textbox'),
+				'mattermost alerts',
+			);
+			await user.type(
+				screen.getByTestId('webhook-url-textbox'),
+				'https://mattermost.example.com/hooks/abc',
+			);
+			await user.type(screen.getByTestId('mattermost-channel-textbox'), 'alerts');
+
+			// the form opens on slack; its text must not carry over
+			expect(screen.getByTestId('mattermost-text-textarea')).toHaveValue(
+				MattermostInitialConfig.text,
+			);
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await waitFor(() => expect(body).toBeDefined(), FIND);
+			expect(body).toMatchObject({
+				config: {
+					kind: 'mattermost',
+					spec: {
+						webhookUrl: 'https://mattermost.example.com/hooks/abc',
+						channel: 'alerts',
+						text: MattermostInitialConfig.text,
+						sendResolved: true,
+					},
+				},
+			});
 		},
 		TEST_TIMEOUT,
 	);

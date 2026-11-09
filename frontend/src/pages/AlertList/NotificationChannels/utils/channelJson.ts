@@ -18,6 +18,7 @@ const SECRET_FIELDS_BY_KIND: Record<string, readonly string[]> = {
 	jsmops: ['apiKey'],
 	incidentio: ['token'],
 	telegram: ['botToken'],
+	mattermost: ['webhookUrl'],
 };
 
 export function channelToJson(

@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/incidentio"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/jira"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/jsmops"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/mattermost"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/msteamsv2"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/opsgenie"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/pagerduty"
@@ -34,6 +35,7 @@ var customNotifierIntegrations = []string{
 	jsmops.Integration,
 	incidentio.Integration,
 	telegram.Integration,
+	mattermost.Integration,
 }
 
 func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger, templater alertmanagertypes.Templater) ([]notify.Integration, error) {
@@ -107,6 +109,11 @@ func NewReceiverIntegrations(nc *alertmanagertypes.Receiver, tmpl *template.Temp
 	for i, c := range nc.TelegramConfigs {
 		add(telegram.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
 			return telegram.New(c, tmpl, l, templater)
+		})
+	}
+	for i, c := range nc.MattermostConfigs {
+		add(mattermost.Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
+			return mattermost.New(c, tmpl, l, templater)
 		})
 	}
 

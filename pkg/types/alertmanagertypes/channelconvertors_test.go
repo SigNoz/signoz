@@ -165,6 +165,28 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 			},
 		},
 		{
+			description: "mattermost",
+			kind:        ChannelKindMattermost,
+			spec: &ChannelMattermostConfig{
+				SendResolved: &sendResolved,
+				WebhookURL:   "https://mattermost.example.com/hooks/abc",
+				Channel:      "alerts",
+				Username:     "signoz",
+				IconURL:      "https://signoz.io/img/icon.png",
+				IconEmoji:    ":bell:",
+				Text:         valuer.MustNewUnsetOrNonEmptyString("mattermost text"),
+			},
+			expectedRoundTrip: &ChannelMattermostConfig{
+				SendResolved: &sendResolved,
+				WebhookURL:   "https://mattermost.example.com/hooks/abc",
+				Channel:      "alerts",
+				Username:     "signoz",
+				IconURL:      "https://signoz.io/img/icon.png",
+				IconEmoji:    ":bell:",
+				Text:         valuer.MustNewUnsetOrNonEmptyString("mattermost text"),
+			},
+		},
+		{
 			description: "googlechat",
 			kind:        ChannelKindGoogleChat,
 			spec: &ChannelGoogleChatConfig{

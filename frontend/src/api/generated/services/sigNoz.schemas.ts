@@ -1137,6 +1137,64 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 	spec: AlertmanagertypesChannelTelegramConfigDTO;
 }
 
+/**
+ * The channel provider kind this variant accepts.
+ */
+export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMattermostConfigDTOKind {
+	mattermost = 'mattermost',
+}
+export interface AlertmanagertypesChannelMattermostConfigDTO {
+	/**
+	 * @type string
+	 * @description The channel to post to, such as town-square or @username; empty uses the webhook default. Only honoured when the webhook is not locked to a channel.
+	 */
+	channel?: string;
+	/**
+	 * @type string
+	 * @description Overrides the profile picture with an emoji, such as :bell:; requires icon overrides to be enabled on the Mattermost server.
+	 */
+	iconEmoji?: string;
+	/**
+	 * @type string
+	 * @description Overrides the profile picture of the post; requires icon overrides to be enabled on the Mattermost server.
+	 */
+	iconUrl?: string;
+	/**
+	 * @type boolean,null
+	 * @description Also notify when the alert resolves. Defaults to true.
+	 */
+	sendResolved?: boolean | null;
+	/**
+	 * @type string
+	 * @description Alertmanager template for the Markdown message; rendered once per alert as the body of its card; defaults to the summary, description, labels and related links.
+	 */
+	text?: string;
+	/**
+	 * @type string
+	 * @description Overrides the posting username; requires username overrides to be enabled on the Mattermost server.
+	 */
+	username?: string;
+	/**
+	 * @type string
+	 * @format password
+	 * @description The Mattermost incoming webhook URL. A secret; returned by create, update and fetch by ID, never by list.
+	 */
+	webhookUrl: string;
+}
+
+export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMattermostConfigDTO {
+	/**
+	 * @enum mattermost
+	 * @type string
+	 * @description The channel provider kind this variant accepts.
+	 */
+	kind: AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMattermostConfigDTOKind;
+	/**
+	 * @description The provider-specific configuration for this kind.
+	 */
+	spec: AlertmanagertypesChannelMattermostConfigDTO;
+}
+
 export type AlertmanagertypesChannelConfigDTO =
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelSlackConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelEmailConfigDTO
@@ -1148,7 +1206,8 @@ export type AlertmanagertypesChannelConfigDTO =
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJSMOpsConfigDTO
 	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelIncidentIOConfigDTO
-	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTO;
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelTelegramConfigDTO
+	| AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelMattermostConfigDTO;
 
 export enum AlertmanagertypesChannelDefectDTO {
 	none = 'none',
@@ -1169,6 +1228,7 @@ export enum AlertmanagertypesChannelKindDTO {
 	jsmops = 'jsmops',
 	incidentio = 'incidentio',
 	telegram = 'telegram',
+	mattermost = 'mattermost',
 }
 export enum AlertmanagertypesChannelListOrderDTO {
 	asc = 'asc',

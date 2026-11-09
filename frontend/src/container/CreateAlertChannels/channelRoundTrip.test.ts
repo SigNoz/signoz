@@ -110,6 +110,15 @@ const SPECS: Record<string, Record<string, unknown>> = {
 		disableNotifications: true,
 		sendResolved: true,
 	},
+	mattermost: {
+		webhookUrl: 'https://mattermost.example.com/hooks/abc',
+		channel: 'alerts',
+		username: 'signoz',
+		iconUrl: 'https://signoz.io/icon.png',
+		iconEmoji: ':bell:',
+		text: 'm',
+		sendResolved: true,
+	},
 };
 
 describe('load then save round trip', () => {
