@@ -136,6 +136,9 @@ func (q *QueryRangeResponse) PrepareJSONSchema(schema *jsonschema.Schema) error 
 type TimeSeriesData struct {
 	QueryName    string               `json:"queryName" description:"The name of the query that produced this result."`
 	Aggregations []*AggregationBucket `json:"aggregations" description:"One bucket per aggregation of the query. The order is not guaranteed; match buckets to aggregations by index."`
+
+	// zeroFill is applied only when encoding; in-memory series stay sparse.
+	zeroFill *zeroFill
 }
 
 // FilterToTimeRange copies the aggregation and series structure keeping only
@@ -562,17 +565,6 @@ func sanitizeValue(v any) any {
 	}
 }
 
-func (q QueryRangeResponse) MarshalJSON() ([]byte, error) {
-	type Alias QueryRangeResponse
-	return json.Marshal(&struct {
-		*Alias
-		Data any `json:"data"`
-	}{
-		Alias: (*Alias)(&q),
-		Data:  sanitizeValue(q.Data),
-	})
-}
-
 func (s ScalarData) MarshalJSON() ([]byte, error) {
 	type Alias ScalarData
 	sanitizedData := make([][]any, len(s.Data))
@@ -612,36 +604,6 @@ func (r RawRow) MarshalJSON() ([]byte, error) {
 		Alias:     (*Alias)(&r),
 		Data:      sanitizedData,
 		Timestamp: timestamp,
-	})
-}
-
-func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
-	type Alias TimeSeriesValue
-
-	var sanitizedValues any
-	if t.Values != nil {
-		sanitizedValues = sanitizeValue(t.Values)
-		// If original was empty slice, ensure we return empty slice not nil
-		if len(t.Values) == 0 {
-			sanitizedValues = []any{}
-		}
-	}
-
-	// a heatmap point's counts are spread across Values, so there is no one
-	// number Value could carry
-	var sanitizedValue any
-	if t.Values == nil {
-		sanitizedValue = sanitizeValue(t.Value)
-	}
-
-	return json.Marshal(&struct {
-		*Alias
-		Value  any `json:"value,omitempty"`
-		Values any `json:"values,omitempty"`
-	}{
-		Alias:  (*Alias)(&t),
-		Value:  sanitizedValue,
-		Values: sanitizedValues,
 	})
 }
 

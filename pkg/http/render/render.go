@@ -6,6 +6,8 @@ import (
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	jsonv2 "github.com/go-json-experiment/json"
+	jsonv1 "github.com/go-json-experiment/json/v1"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
 )
@@ -29,6 +31,11 @@ type ErrorResponse struct {
 }
 
 func Success(rw http.ResponseWriter, httpCode int, data interface{}) {
+	if _, ok := data.(jsonv2.MarshalerTo); ok {
+		successStream(rw, httpCode, data)
+		return
+	}
+
 	body, err := json.Marshal(&SuccessResponse{Status: StatusSuccess.s, Data: data})
 	if err != nil {
 		Error(rw, err)
@@ -133,4 +140,33 @@ func Error(rw http.ResponseWriter, cause error) {
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(httpCode)
 	_, _ = rw.Write(body)
+}
+
+// successStream writes the body as it is encoded. It can still render an error if encoding fails
+// before the first write; after that the status is sent and a failure leaves the body truncated.
+func successStream(rw http.ResponseWriter, httpCode int, data any) {
+	if httpCode == 0 {
+		httpCode = http.StatusOK
+	}
+
+	w := &successStreamWriter{rw: rw, httpCode: httpCode}
+	if err := jsonv2.MarshalWrite(w, &SuccessResponse{Status: StatusSuccess.s, Data: data}, jsonv1.DefaultOptionsV1()); err != nil && !w.started {
+		Error(rw, err)
+	}
+}
+
+// successStreamWriter sends the headers on the first write.
+type successStreamWriter struct {
+	rw       http.ResponseWriter
+	httpCode int
+	started  bool
+}
+
+func (w *successStreamWriter) Write(p []byte) (int, error) {
+	if !w.started {
+		w.started = true
+		w.rw.Header().Set("Content-Type", "application/json")
+		w.rw.WriteHeader(w.httpCode)
+	}
+	return w.rw.Write(p)
 }
