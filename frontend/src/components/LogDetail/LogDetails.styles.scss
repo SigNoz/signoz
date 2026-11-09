@@ -1,79 +1,17 @@
-.log-detail-drawer {
-	border-left: 1px solid var(--l1-border);
-	background: var(--l2-background);
-	box-shadow: -4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+[data-testid='log-detail-drawer'] {
+	--drawer-extra-wide-max-inline-size: 60vw;
+	--drawer-body-padding: 0 var(--spacing-8);
+	// OverlayScrollbar owns the scroll. A native scrollbar here changes the
+	// body width when it toggles and shifts the header grid.
+	--drawer-body-overflow-y: hidden;
+}
 
-	.log-detail-drawer__title {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
+.log-detail-drawer-query-container {
+	margin-bottom: 16px;
+}
 
-		.log-detail-drawer__title-left {
-			display: flex;
-			align-items: center;
-			gap: 8px;
-		}
-
-		.log-detail-drawer__title-right {
-			display: flex;
-			align-items: center;
-			.ant-btn {
-				display: flex;
-				align-items: center;
-			}
-		}
-	}
-
-	.ant-drawer-header {
-		padding: 8px 16px;
-		border-bottom: none;
-
-		align-items: stretch;
-
-		border-bottom: 1px solid var(--l1-border);
-		background: var(--l2-background);
-	}
-
-	.ant-drawer-close {
-		margin-inline-end: 0px;
-	}
-
-	.ant-drawer-body {
-		display: flex;
-		flex-direction: column;
-		padding: 0 16px;
-		// OverlayScrollbar owns the scroll. A native scrollbar here changes the
-		// body width when it toggles and shifts the header grid.
-		overflow: hidden;
-	}
-
-	.title {
-		color: var(--l2-foreground);
-		font-family: Inter;
-		font-size: var(--paragraph-base-400-font-size);
-		font-style: normal;
-		font-weight: var(--paragraph-base-400-font-weight);
-		line-height: 20px; /* 142.857% */
-		letter-spacing: -0.07px;
-	}
-
-	.radio-button {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding-top: var(--padding-1);
-		border: 1px solid var(--l1-border);
-		background: var(--l3-background);
-		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
-	}
-
-	&-query-container {
-		margin-bottom: 16px;
-	}
-
-	.log-detail-drawer__content {
-		min-height: 100%;
-	}
+.log-detail-drawer__content {
+	min-height: 100%;
 
 	.log-detail-drawer__log {
 		width: 100%;
@@ -117,7 +55,11 @@
 		}
 
 		.log-overflow-shadow {
-			background: linear-gradient(270deg, var(--card) 10.4%, transparent 100%);
+			background: linear-gradient(
+				270deg,
+				var(--drawer-background) 10.4%,
+				transparent 100%
+			);
 
 			width: 196px;
 			position: absolute;
@@ -144,16 +86,6 @@
 		align-items: center;
 		margin: 16px 0;
 
-		.action-btn {
-			border-radius: 2px;
-			border: 1px solid var(--l1-border);
-			background: var(--l3-background);
-			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
-
 		.log-detail-drawer__actions {
 			display: flex;
 			gap: 4px;
@@ -168,18 +100,6 @@
 		font-size: var(--label-small-400-font-size);
 	}
 
-	.search-input {
-		margin-top: var(--margin-2);
-		border: 1px solid var(--l1-border);
-		height: 46px;
-		padding: var(--padding-1) var(--padding-2);
-		box-shadow: none;
-		border-radius: 0;
-	}
-
-	.ant-drawer-close {
-		padding: 0px;
-	}
 	.log-detail-drawer__footer-hint {
 		position: sticky;
 		bottom: 0;
@@ -188,7 +108,7 @@
 		padding: 8px 16px;
 		text-align: left;
 		color: var(--l3-foreground);
-		background: var(--l2-background);
+		background: var(--drawer-background);
 		z-index: 10;
 
 		.log-detail-drawer__footer-hint-content {
@@ -202,18 +122,5 @@
 			vertical-align: middle;
 			color: var(--l3-foreground);
 		}
-
-		.log-detail-drawer__footer-hint-text {
-			font-size: 13px;
-			margin: 0;
-		}
-	}
-	.log-arrows {
-		display: flex;
-		box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.1);
-		border-radius: 6px;
-		padding: 2px 6px;
-		align-items: center;
-		margin-left: 8px;
 	}
 }

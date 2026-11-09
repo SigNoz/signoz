@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
-import { Drawer, Tooltip } from 'antd';
+import { Drawer } from '@signozhq/ui/drawer';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
+import { Tooltip } from 'antd';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import LogStateIndicator from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -20,8 +20,8 @@ import {
 import useInitialQuery from 'container/LogsExplorerContext/useInitialQuery';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { FontSize } from 'container/OptionsMenu/types';
+import { useArrowKeyNavigation } from 'container/TracesExplorer/SpanDrawer/useArrowKeyNavigation';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getBodyMessage } from 'lib/logs/logBody';
 import { cloneDeep } from 'lodash-es';
 import {
@@ -31,15 +31,16 @@ import {
 	Histogram,
 	Table,
 	TextSelect,
-	X,
 } from '@signozhq/icons';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
-import LogDetailsHeader from './LogDetailsHeader/LogDetailsHeader';
+import LogActions from './LogDetailsHeader/LogActions';
+import LogNavigation from './LogDetailsHeader/LogNavigation';
 import { useLogNavigation } from './LogDetailsHeader/useLogNavigation';
+import { useLogTimestamp } from './LogDetailsHeader/useLogTimestamp';
 import LogHighlights from './LogHighlights/LogHighlights';
 
 import './LogDetails.styles.scss';
@@ -55,7 +56,6 @@ function LogDetailInner({
 	onNavigateLog,
 	onScrollToLog,
 	handleOpenInExplorer,
-	getContainer,
 	onApplyLogFilter,
 }: LogDetailInnerProps): JSX.Element {
 	const initialContextQuery = useInitialQuery(log);
@@ -78,7 +78,6 @@ function LogDetailInner({
 			// Don't close if clicking on drawer content, overlays, or portal elements
 			if (
 				target.closest('[data-log-detail-ignore="true"]') ||
-				target.closest('.log-detail-drawer') ||
 				target.closest('.cm-tooltip-autocomplete') ||
 				target.closest('.drawer-popover') ||
 				target.closest('.query-status-popover') ||
@@ -89,7 +88,7 @@ function LogDetailInner({
 			}
 
 			// Close the drawer for any other outside click
-			onClose?.(e as any);
+			onClose();
 		};
 
 		document.addEventListener('mousedown', handleClickOutside);
@@ -107,30 +106,13 @@ function LogDetailInner({
 			onScrollToLog,
 		});
 
-	// Keyboard navigation - handle up/down arrow keys. Only listen in the OVERVIEW
-	// tab so we don't hijack arrow keys from the JSON editor / context view.
-	useEffect(() => {
-		if (selectedView !== VIEW_TYPES.OVERVIEW) {
-			return undefined;
-		}
-
-		const handleKeyDown = (e: KeyboardEvent): void => {
-			if (e.key === 'ArrowUp') {
-				e.preventDefault();
-				e.stopPropagation();
-				goToPrev();
-			} else if (e.key === 'ArrowDown') {
-				e.preventDefault();
-				e.stopPropagation();
-				goToNext();
-			}
-		};
-
-		document.addEventListener('keydown', handleKeyDown);
-		return (): void => {
-			document.removeEventListener('keydown', handleKeyDown);
-		};
-	}, [selectedView, goToPrev, goToNext]);
+	// Only listen in the OVERVIEW tab so we don't hijack arrow keys from the
+	// JSON editor / context view.
+	useArrowKeyNavigation({
+		enabled: selectedView === VIEW_TYPES.OVERVIEW,
+		onPrev: goToPrev,
+		onNext: goToNext,
+	});
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
@@ -146,8 +128,6 @@ function LogDetailInner({
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
 
-	const isDarkMode = useIsDarkMode();
-
 	const handleModeChange = (value: string): void => {
 		setSelectedView(value as VIEWS);
 		setIsEdit(false);
@@ -159,13 +139,7 @@ function LogDetailInner({
 		setIsEdit(!isEdit);
 	};
 
-	const drawerCloseHandler = (
-		e: React.MouseEvent | React.KeyboardEvent,
-	): void => {
-		if (onClose) {
-			onClose(e);
-		}
-	};
+	const title = useLogTimestamp(log);
 
 	const logBody = useMemo(() => getBodyMessage(log?.body), [log?.body]);
 
@@ -246,38 +220,32 @@ function LogDetailInner({
 
 	return (
 		<Drawer
-			width="60%"
-			mask={false}
-			maskClosable={false}
-			getContainer={getContainer}
-			title={
-				<LogDetailsHeader
-					log={log}
+			type="inspector"
+			stack="overlay"
+			open
+			onClose={onClose}
+			title={title}
+			width="extra-wide"
+			closePosition="start"
+			headerPrefix={
+				<LogNavigation
 					onNavigatePrev={goToPrev}
 					onNavigateNext={goToNext}
 					isPrevDisabled={isPrevDisabled}
 					isNextDisabled={isNextDisabled}
+				/>
+			}
+			headerSuffix={
+				<LogActions
+					log={log}
 					showOpenInExplorer={!!handleOpenInExplorer}
 					onOpenInExplorer={handleOpenInExplorer}
 				/>
 			}
-			placement="right"
-			onClose={drawerCloseHandler}
-			open={log !== null}
-			style={{
-				overscrollBehavior: 'contain',
-				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
-			}}
-			className="log-detail-drawer"
-			destroyOnClose
-			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
+			testId="log-detail-drawer"
 		>
 			<OverlayScrollbar style={{ height: '100%' }}>
-				<div
-					className="log-detail-drawer__content"
-					data-log-detail-ignore="true"
-					data-testid="log-detail-drawer"
-				>
+				<div className="log-detail-drawer__content">
 					<div className="log-detail-drawer__log">
 						<LogStateIndicator
 							severityText={log.severity_text}

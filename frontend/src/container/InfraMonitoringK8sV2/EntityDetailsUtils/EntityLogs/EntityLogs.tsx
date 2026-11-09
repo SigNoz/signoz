@@ -61,7 +61,6 @@ function EntityLogsContent({
 }: Omit<Props, 'initialExpression'>): JSX.Element {
 	const { timeRange } = useEntityDetailsTime();
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
-	const logDetailContainerRef = useRef<HTMLDivElement>(null);
 
 	const { safeNavigate } = useSafeNavigate();
 
@@ -295,7 +294,6 @@ function EntityLogsContent({
 						{renderContent}
 					</div>
 				)}
-				<div ref={logDetailContainerRef} data-log-detail-ignore="true" />
 				{selectedTab && activeLog && (
 					<LogDetail
 						log={activeLog}
@@ -306,9 +304,6 @@ function EntityLogsContent({
 						onApplyLogFilter={onApplyLogFilter}
 						onScrollToLog={handleScrollToLog}
 						handleOpenInExplorer={(e) => handleOpenInExplorer(e, activeLog)}
-						getContainer={(): HTMLElement =>
-							logDetailContainerRef.current || document.body
-						}
 					/>
 				)}
 			</div>
