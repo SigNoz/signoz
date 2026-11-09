@@ -1,5 +1,6 @@
 import { toast } from '@signozhq/ui/sonner';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import {
@@ -9,6 +10,7 @@ import {
 	waitFor,
 	within,
 } from 'tests/test-utils';
+import { DataSource } from 'types/common/queryBuilder';
 
 import SavedViewsPanel from '../SavedViewsPanel';
 import { mockSavedViewsApi } from './savedViewsApiMock';
@@ -216,6 +218,75 @@ describe('SavedViewsPanel list', () => {
 
 			await userEvent.clear(search);
 			expect(rowNames('saved-views-created-by-me')).toStrictEqual(['Errors']);
+		});
+	});
+
+	it('lists only the views of its own source', async () => {
+		mockSavedViewsApi([
+			mine,
+			makeView({
+				id: 'view-9',
+				displayName: 'Noisy logs',
+				source: SavedviewtypesSourceDTO.logs,
+			}),
+		]);
+		renderPanel();
+
+		await screen.findByTestId('saved-views-list');
+		expect(rowNames('saved-views-created-by-me')).toStrictEqual(['Errors']);
+	});
+
+	describe('last used view', () => {
+		const lastUsedViews = (): unknown =>
+			JSON.parse(localStorage.getItem(LOCALSTORAGE.LAST_USED_SAVED_VIEWS) ?? '{}');
+		const logsEntry = { logs: { key: 'logs-view', value: 'Noisy logs' } };
+
+		it('is remembered under the panel source, keeping the other sources', async () => {
+			localStorage.setItem(
+				LOCALSTORAGE.LAST_USED_SAVED_VIEWS,
+				JSON.stringify(logsEntry),
+			);
+			mockSavedViewsApi([mine, alsoMine]);
+			renderPanel();
+			await screen.findByTestId('saved-views-list');
+			await waitFor(() => expectUsable(rowName('Slow spans')));
+
+			await userEvent.click(rowName('Slow spans'));
+
+			await waitFor(() =>
+				expect(lastUsedViews()).toStrictEqual({
+					...logsEntry,
+					traces: { key: alsoMine.id, value: 'Slow spans' },
+				}),
+			);
+		});
+
+		it('is filed under the source of the panel it was opened from', async () => {
+			const logsView = makeView({
+				id: 'view-9',
+				displayName: 'Noisy logs',
+				source: SavedviewtypesSourceDTO.logs,
+				dataSource: DataSource.LOGS,
+			});
+			mockSavedViewsApi([logsView]);
+			renderWithExplorerProviders(
+				<SavedViewsPanel
+					source={SavedviewtypesSourceDTO.logs}
+					onClose={jest.fn()}
+				/>,
+				explorerUrl(ROUTES.LOGS_EXPLORER, {}),
+				DataSource.LOGS,
+			);
+			await screen.findByTestId('saved-views-list');
+			await waitFor(() => expectUsable(rowName('Noisy logs')));
+
+			await userEvent.click(rowName('Noisy logs'));
+
+			await waitFor(() =>
+				expect(lastUsedViews()).toStrictEqual({
+					logs: { key: logsView.id, value: 'Noisy logs' },
+				}),
+			);
 		});
 	});
 

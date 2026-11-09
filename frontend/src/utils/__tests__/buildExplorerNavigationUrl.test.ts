@@ -21,6 +21,20 @@ describe('buildExplorerNavigationUrl', () => {
 		expect(url).toContain(`${QueryParams.viewKey}=`);
 	});
 
+	it('encodes the composite query for a reader that decodes it, even with a percent sign', () => {
+		const query = {
+			queryType: 'builder',
+			filter: { expression: "body LIKE '%timeout%'" },
+		} as never;
+
+		const url = buildExplorerNavigationUrl(ROUTES.LOGS_EXPLORER, query, {});
+
+		const param = new URL(url, window.location.origin).searchParams.get(
+			QueryParams.compositeQuery,
+		) as string;
+		expect(JSON.parse(decodeURIComponent(param))).toStrictEqual(query);
+	});
+
 	it('JSON-encodes panelTypes so the explorer opens the right view', () => {
 		const url = buildExplorerNavigationUrl(
 			ROUTES.LOGS_EXPLORER,
