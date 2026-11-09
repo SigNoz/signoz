@@ -44,7 +44,7 @@ export const TABLE_PREFERENCES_KEY =
 
 export const DRAWER = {
 	wrapper: 'drawer-wrapper',
-	close: 'close-drawer-button',
+	close: 'drawer-wrapper-close',
 	copyId: 'copy-id-button',
 	tabBar: 'drawer-tab-bar',
 	timeSelection: 'drawer-time-selection',

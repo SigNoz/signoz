@@ -80,7 +80,7 @@ describe('K8sBaseDetails - back navigation', () => {
 		logEventMock.mockClear();
 	});
 
-	it('closes rather than going back when opened from the list', async () => {
+	it('offers no back control when opened from the list', async () => {
 		act(() => {
 			renderDrawer();
 		});
@@ -90,10 +90,10 @@ describe('K8sBaseDetails - back navigation', () => {
 		});
 
 		expect(screen.queryByTestId('drawer-back-button')).not.toBeInTheDocument();
-		expect(screen.getByTestId('close-drawer-button')).toBeInTheDocument();
+		expect(screen.getByTestId('drawer-wrapper-close')).toBeInTheDocument();
 	});
 
-	it('replaces the close control while there is somewhere to go back to', async () => {
+	it('shows back beside the close control while there is somewhere to go back to', async () => {
 		useDrawerHistoryStore.getState().push(NODE_ENTRY);
 
 		act(() => {
@@ -105,7 +105,7 @@ describe('K8sBaseDetails - back navigation', () => {
 		// The destination is text rather than a tooltip, which a click would dismiss
 		expect(backButton).toHaveTextContent('Back to Node');
 		expect(backButton).toHaveAccessibleName('Back to Node: node-1');
-		expect(screen.queryByTestId('close-drawer-button')).not.toBeInTheDocument();
+		expect(screen.getByTestId('drawer-wrapper-close')).toBeInTheDocument();
 	});
 
 	it('returns to the resource this one was opened from', async () => {
