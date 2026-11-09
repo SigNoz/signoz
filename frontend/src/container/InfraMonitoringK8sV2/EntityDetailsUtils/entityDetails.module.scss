@@ -1,3 +1,8 @@
+// The entity tables need more than the 880px of the entity preset.
+:global([data-testid='drawer-wrapper']) {
+	--drawer-entity-max-inline-size: 70vw;
+}
+
 .body {
 	display: flex;
 	flex-direction: column;

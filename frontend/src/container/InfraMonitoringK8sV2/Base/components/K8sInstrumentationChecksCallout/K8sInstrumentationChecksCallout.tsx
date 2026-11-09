@@ -1,6 +1,8 @@
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
+import cx from 'classnames';
 import {
+	ChevronDown,
 	RefreshCw,
 	SolidAlertTriangle,
 	SolidInfoCircle,
@@ -89,8 +91,18 @@ export function K8sInstrumentationChecksCallout({
 				size="md"
 				icon={hasMissingItems ? <SolidAlertTriangle /> : <SolidInfoCircle />}
 			>
-				<div className={styles.header}>
-					<button type="button" onClick={handleExpandToggle}>
+				<div
+					className={cx(
+						styles.header,
+						hasMissingItems ? styles.warning : styles.info,
+					)}
+				>
+					<button
+						type="button"
+						className={styles.toggle}
+						aria-expanded={isExpanded}
+						onClick={handleExpandToggle}
+					>
 						Instrumentation checks
 					</button>
 					<Button
@@ -104,6 +116,15 @@ export function K8sInstrumentationChecksCallout({
 					>
 						Recheck
 					</Button>
+					<button
+						type="button"
+						tabIndex={-1}
+						aria-hidden="true"
+						className={cx(styles.chevron, isExpanded && styles.chevronOpen)}
+						onClick={handleExpandToggle}
+					>
+						<ChevronDown />
+					</button>
 				</div>
 				{isExpanded && (
 					<div className={styles.container}>
