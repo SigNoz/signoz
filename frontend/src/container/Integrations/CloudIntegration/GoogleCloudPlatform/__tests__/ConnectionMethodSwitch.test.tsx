@@ -87,7 +87,7 @@ describe('GCP setup drawer connection method switch', () => {
 		expect(drawer).toHaveAttribute('data-width', 'extra-wide');
 
 		await user.type(
-			screen.getByTestId('gcp-deployment-project-id-input'),
+			screen.getByTestId('gcp-deployment-project-id-input-field'),
 			'my-deployment-project-123',
 		);
 		await user.click(screen.getByTestId('gcp-deployment-region-select'));

@@ -1,7 +1,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button } from '@signozhq/ui/button';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -25,9 +25,9 @@ import {
 } from './savedViewsTestUtils';
 import { API, mockSavedViewsApi } from './savedViewsApiMock';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 const PATH = ROUTES.TRACES_EXPLORER;
@@ -117,7 +117,7 @@ async function clickCreate(): Promise<void> {
 }
 
 async function submitName(name: string): Promise<void> {
-	await userEvent.type(screen.getByTestId('save-view-name'), name);
+	await userEvent.type(screen.getByTestId('save-view-name-field'), name);
 	await userEvent.click(screen.getByTestId('save-view-submit'));
 }
 
@@ -177,10 +177,12 @@ describe('SavedViewsHeader saving', () => {
 			await clickCreate();
 			await submitName('Slow checkout');
 
-			await waitFor(() => expect(toast.error).toHaveBeenCalled());
+			await waitFor(() => expect(toast.danger).toHaveBeenCalled());
 			expect(requests.created).toHaveLength(1);
 			expect(isModalOpen()).toBe(true);
-			expect(screen.getByTestId('save-view-name')).toHaveValue('Slow checkout');
+			expect(screen.getByTestId('save-view-name-field')).toHaveValue(
+				'Slow checkout',
+			);
 			expect(urlParam(history, QueryParams.viewKey)).toBeNull();
 			expect(toast.success).not.toHaveBeenCalled();
 		});
@@ -190,7 +192,7 @@ describe('SavedViewsHeader saving', () => {
 			renderHeader(explorerUrl(PATH, {}));
 
 			await clickCreate();
-			await userEvent.type(screen.getByTestId('save-view-name'), '   {enter}');
+			await userEvent.type(screen.getByTestId('save-view-name-field'), '   {enter}');
 			await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
 
 			expect(requests.created).toHaveLength(0);
@@ -215,7 +217,7 @@ describe('SavedViewsHeader saving', () => {
 			await clickCreate();
 			await submitName('Slow checkout');
 			await waitFor(() => expect(creates).toBe(1));
-			await userEvent.type(screen.getByTestId('save-view-name'), '{enter}');
+			await userEvent.type(screen.getByTestId('save-view-name-field'), '{enter}');
 
 			await waitFor(() => expect(isModalOpen()).toBe(false));
 			expect(creates).toBe(1);
@@ -260,7 +262,7 @@ describe('SavedViewsHeader saving', () => {
 			renderHeader(explorerUrl(PATH, {}));
 
 			await clickCreate();
-			await userEvent.type(screen.getByTestId('save-view-name'), 'Draft');
+			await userEvent.type(screen.getByTestId('save-view-name-field'), 'Draft');
 			await userEvent.click(screen.getByTestId('save-view-cancel'));
 
 			await waitFor(() => expect(isModalOpen()).toBe(false));
@@ -333,7 +335,7 @@ describe('SavedViewsHeader saving', () => {
 
 		await chooseFromSaveMenu('Update selected view');
 
-		await waitFor(() => expect(toast.error).toHaveBeenCalled());
+		await waitFor(() => expect(toast.danger).toHaveBeenCalled());
 		await act(() => new Promise((resolve) => setTimeout(resolve, 100)));
 		expect(requests.updated).toHaveLength(1);
 		expect(toast.success).not.toHaveBeenCalled();

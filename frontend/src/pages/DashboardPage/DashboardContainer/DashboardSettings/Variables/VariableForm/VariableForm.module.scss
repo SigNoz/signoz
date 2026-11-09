@@ -52,6 +52,13 @@
 	gap: 20px;
 	margin-top: 40px;
 	margin-bottom: 0;
+
+	--badge-height: var(--spacing-7);
+	--badge-font-size: 11px;
+	--badge-line-height: 12px;
+	--badge-padding: 0px var(--spacing-2);
+	--tabs-trigger-secondary-icon-width: 14px;
+	--tabs-trigger-secondary-icon-height: 14px;
 }
 
 /* Picker row (label left, tabs right); the bottom divider separates type from

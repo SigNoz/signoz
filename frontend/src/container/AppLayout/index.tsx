@@ -843,9 +843,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
 				)}
 
-				<Toaster
-					offset={{ bottom: 'calc(var(--bottom-strip-height, 0px) + 24px)' }}
-				/>
+				<Toaster />
 			</Layout>
 		</TooltipProvider>
 	);

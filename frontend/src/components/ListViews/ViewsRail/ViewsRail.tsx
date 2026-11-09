@@ -1,9 +1,4 @@
-import {
-	type ChangeEvent,
-	type ReactElement,
-	useCallback,
-	useState,
-} from 'react';
+import { type ChangeEvent, type ReactElement, useCallback, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
@@ -72,7 +67,6 @@ function ViewsRail({
 	onViewRenamed,
 	onViewDeleted,
 }: Props): JSX.Element {
-	const [saveOpen, setSaveOpen] = useState(false);
 	const [query, setQuery] = useState('');
 	const { contextHolder, confirmDelete } = useDeleteConfirm();
 
@@ -149,14 +143,12 @@ function ViewsRail({
 			<div className={styles.header}>
 				<h4 className={styles.headerTitle}>Views</h4>
 				<ViewNamePopover
-					open={saveOpen}
-					onOpenChange={setSaveOpen}
 					onSubmit={handleSaveAsView}
 					title="Save as view"
 					confirmLabel="Save view"
 					testIdPrefix={saveTestIdPrefix}
 					tooltip="Save current filters as a view"
-					trigger={
+					trigger={(open): JSX.Element => (
 						<Button
 							aria-label="Save current filters as a view"
 							variant="ghost"
@@ -164,10 +156,11 @@ function ViewsRail({
 							size="sm"
 							icon
 							testId={`${testIdPrefix}-view-save-trigger`}
+							onClick={(e): void => open(e.currentTarget)}
 						>
 							<Plus size={14} />
 						</Button>
-					}
+					)}
 				/>
 			</div>
 
@@ -245,8 +238,9 @@ function ViewsRail({
 				<ViewsRailDirtyPanel
 					isCustomActive={isCustomActive}
 					testIdPrefix={testIdPrefix}
+					saveTestIdPrefix={saveTestIdPrefix}
 					onSaveChanges={handleSaveViewChanges}
-					onSaveAs={(): void => setSaveOpen(true)}
+					onSaveAs={handleSaveAsView}
 					onReset={onReset}
 				/>
 			)}

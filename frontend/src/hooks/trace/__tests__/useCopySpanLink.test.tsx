@@ -15,7 +15,7 @@ jest.mock('react-use', () => ({
 	useCopyToClipboard: (): [unknown, jest.Mock] => [null, mockCopy],
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
+jest.mock('@signozhq/ui/toast', () => ({
 	toast: { success: jest.fn() },
 }));
 

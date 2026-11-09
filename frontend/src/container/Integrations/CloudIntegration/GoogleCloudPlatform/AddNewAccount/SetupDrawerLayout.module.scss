@@ -20,15 +20,6 @@
 		min-height: 0;
 		overflow-y: auto;
 	}
-
-	// The region menu renders in place (no portal), so it needs its own surface
-	// to sit above the fields below it.
-	[data-slot='combobox-content'] {
-		z-index: 5;
-		background: var(--l1-background);
-		border: 1px solid var(--l2-border);
-		border-radius: var(--radius-2);
-	}
 }
 
 .footerSlot {

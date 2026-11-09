@@ -20,10 +20,14 @@ describe('ChannelForm', () => {
 	it('prefills the channel it was opened on', async () => {
 		render(<ChannelForm channelId="3" onDone={jest.fn()} />);
 
-		const name = await screen.findByTestId('channel-name-textbox', {}, FIND);
+		const name = await screen.findByTestId(
+			'channel-name-textbox-field',
+			{},
+			FIND,
+		);
 		expect(name).toHaveValue('Dummy-Channel');
 
-		expect(screen.getByTestId('webhook-url-textbox')).toHaveValue(
+		expect(screen.getByTestId('webhook-url-textbox-field')).toHaveValue(
 			'https://hooks.slack.com/services/dummy',
 		);
 	}, 20000);

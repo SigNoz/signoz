@@ -79,7 +79,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 					<Input
 						{...register('url')}
 						aria-required
-						data-testid="incidentio-url-textbox"
+						testId="incidentio-url-textbox"
 					/>
 				</FormField>
 
@@ -93,7 +93,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 						{...register('token')}
 						aria-required
 						type="password"
-						data-testid="incidentio-token-textbox"
+						testId="incidentio-token-textbox"
 					/>
 				</FormField>
 
@@ -163,7 +163,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 											),
 										)
 									}
-									data-testid={`incidentio-metadata-key-${index}`}
+									testId={`incidentio-metadata-key-${index}`}
 								/>
 							</FormField>
 
@@ -178,7 +178,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 											),
 										)
 									}
-									data-testid={`incidentio-metadata-value-${index}`}
+									testId={`incidentio-metadata-value-${index}`}
 								/>
 							</FormField>
 						</RowEntry>

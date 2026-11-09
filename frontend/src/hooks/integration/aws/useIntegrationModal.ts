@@ -177,7 +177,8 @@ export function useIntegrationModal({
 						const command = response.data.connectionArtifact.aws?.cliCommand;
 						if (!command) {
 							setModalState(ModalStateEnum.ERROR);
-							toast.error('Failed to generate the AWS setup command', {
+							toast.danger('Failed to generate the AWS setup command', {
+								action: { label: 'Dismiss' },
 								position: 'bottom-right',
 							});
 							return;

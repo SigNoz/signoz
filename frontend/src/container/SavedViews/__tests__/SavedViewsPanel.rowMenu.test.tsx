@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -30,9 +30,9 @@ jest.mock('react-use', () => ({
 	useCopyToClipboard: (): [unknown, jest.Mock] => [null, mockCopy],
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 const PATH = ROUTES.TRACES_EXPLORER;
@@ -167,7 +167,7 @@ describe('SavedViewsPanel row menu', () => {
 		renderPanelWithHeader();
 
 		await chooseFromRowMenu('Slow spans', 'Edit details');
-		const name = screen.getByTestId('save-view-name');
+		const name = screen.getByTestId('save-view-name-field');
 		expect(name).toHaveValue('Slow spans');
 		await userEvent.clear(name);
 		await userEvent.type(name, 'Slow checkout spans');
@@ -270,7 +270,7 @@ describe('SavedViewsPanel row menu', () => {
 		await waitFor(() => expect(chip()).toHaveTextContent('Errors'));
 
 		await chooseFromRowMenu('Errors', 'Edit details');
-		const name = screen.getByTestId('save-view-name');
+		const name = screen.getByTestId('save-view-name-field');
 		await userEvent.clear(name);
 		await userEvent.type(name, 'All errors');
 		await userEvent.click(screen.getByTestId('save-view-submit'));

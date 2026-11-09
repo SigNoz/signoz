@@ -128,11 +128,11 @@ export const TelemetryKeyScoped: Story = {
 			),
 		);
 		await userEvent.type(
-			screen.getByTestId('wizard-value-input-logs-read'),
+			screen.getByTestId('wizard-value-input-logs-read-field'),
 			'checkout',
 		);
 		await expect(
-			screen.getByTestId('wizard-selector-input-logs-read'),
+			screen.getByTestId('wizard-selector-input-logs-read-field'),
 		).toHaveValue('builder_query/resource.service.name/checkout');
 	},
 };

@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Tooltip } from 'antd';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
-import { InputNumber } from '@signozhq/ui/input-number';
+import { Input } from '@signozhq/ui/input';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { ChevronUp, Info } from '@signozhq/icons';
 import {
@@ -111,19 +111,17 @@ function BucketOptions({
 	);
 
 	const handleMaxValueChange = useCallback(
-		(value: number | string | null): void => {
-			const next = value === null || value === '' ? null : Number(value);
-			setMaxValue(next);
-			emitLinear(next, numBuckets);
+		(value: number | null): void => {
+			setMaxValue(value);
+			emitLinear(value, numBuckets);
 		},
 		[emitLinear, numBuckets],
 	);
 
 	const handleNumBucketsChange = useCallback(
-		(value: number | string | null): void => {
-			const next = value === null || value === '' ? null : Number(value);
-			setNumBuckets(next);
-			emitLinear(maxValue, next);
+		(value: number | null): void => {
+			setNumBuckets(value);
+			emitLinear(maxValue, value);
 		},
 		[emitLinear, maxValue],
 	);
@@ -207,29 +205,29 @@ function BucketOptions({
 
 				{kind === Querybuildertypesv5BucketsKindDTO.linear && (
 					<>
-						<div className={styles.field}>
+						<div className={cx(styles.field, styles.numberField)}>
 							<span className={styles.label}>Max value</span>
-							<InputNumber
-								className={styles.numberInput}
+							<Input.Number
 								min={0}
 								value={maxValue}
 								onChange={handleMaxValueChange}
 								placeholder="Required"
-								status={maxValue !== null && maxValue <= 0 ? 'error' : undefined}
-								data-testid="bucket-options-max-value"
+								status={maxValue !== null && maxValue <= 0 ? 'danger' : undefined}
+								width={104}
+								testId="bucket-options-max-value"
 							/>
 						</div>
-						<div className={styles.field}>
+						<div className={cx(styles.field, styles.numberField)}>
 							<span className={styles.label}>Buckets</span>
-							<InputNumber
-								className={styles.numberInput}
+							<Input.Number
 								min={1}
 								max={MAX_NUM_BUCKETS}
-								precision={0}
+								format={{ maximumFractionDigits: 0 }}
 								value={numBuckets}
 								onChange={handleNumBucketsChange}
 								placeholder={`Default ${DEFAULT_NUM_BUCKETS}`}
-								data-testid="bucket-options-num-buckets"
+								width={104}
+								testId="bucket-options-num-buckets"
 							/>
 						</div>
 					</>

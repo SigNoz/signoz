@@ -9,7 +9,7 @@ import {
 	Trash2,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import ROUTES from 'constants/routes';
 import { useNotificationChannelPermissions } from 'hooks/notificationChannels/useNotificationChannelPermissions';
 import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';

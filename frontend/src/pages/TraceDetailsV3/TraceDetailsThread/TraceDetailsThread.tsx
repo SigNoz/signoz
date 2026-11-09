@@ -1,4 +1,5 @@
 import { MutableRefObject } from 'react';
+import { SolidInfoCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import { back, hasInAppHistory } from 'lib/router/navigation';
 import { useAppParams } from 'lib/router/useAppParams';
@@ -138,13 +139,17 @@ function TraceDetailsThread({
 		return (
 			<>
 				{interestedSpanStatus === InterestedSpanStatus.NoIOMessages && (
-					<Callout
-						type="info"
-						size="small"
-						className={styles.notice}
-						title="The requested span has no input or output messages. Showing the rest of the thread."
-						testId="thread-anchor-no-messages"
-					/>
+					<div className={styles.notice}>
+						<Callout
+							color="info"
+							size="sm"
+							icon={<SolidInfoCircle />}
+							testId="thread-anchor-no-messages"
+						>
+							The requested span has no input or output messages. Showing the rest of
+							the thread.
+						</Callout>
+					</div>
 				)}
 				<ThreadSpanList
 					key={interestedSpanId}

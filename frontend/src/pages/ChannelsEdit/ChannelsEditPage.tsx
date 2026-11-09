@@ -1,5 +1,5 @@
 import { Spinner } from '@signozhq/ui/spinner';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { useGetNotificationChannel } from 'api/generated/services/channels';
 import BackHeader from 'components/BackHeader/BackHeader';
 import ROUTES from 'constants/routes';

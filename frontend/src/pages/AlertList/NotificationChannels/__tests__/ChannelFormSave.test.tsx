@@ -42,11 +42,11 @@ describe('ChannelForm save', () => {
 
 			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			await user.type(
-				await screen.findByTestId('channel-name-textbox', {}, FIND),
+				await screen.findByTestId('channel-name-textbox-field', {}, FIND),
 				'prod alerts',
 			);
 			await user.type(
-				screen.getByTestId('webhook-url-textbox'),
+				screen.getByTestId('webhook-url-textbox-field'),
 				'https://hooks.slack.com/services/T/B/X',
 			);
 			const save = screen.getByTestId('save-channel-button');
@@ -93,11 +93,17 @@ describe('ChannelForm save', () => {
 			await user.click(await screen.findByRole('option', { name: /^Telegram$/ }));
 
 			await user.type(
-				screen.getByTestId('channel-name-textbox'),
+				screen.getByTestId('channel-name-textbox-field'),
 				'telegram alerts',
 			);
-			await user.type(screen.getByTestId('telegram-bot-token-textbox'), '123:abc');
-			await user.type(screen.getByTestId('telegram-chat-id-textbox'), '-100123');
+			await user.type(
+				screen.getByTestId('telegram-bot-token-textbox-field'),
+				'123:abc',
+			);
+			await user.type(
+				screen.getByTestId('telegram-chat-id-textbox-field'),
+				'-100123',
+			);
 
 			// the box is empty on screen, and an empty box must not become an empty
 			// string in the request: that would overwrite the backend's default
@@ -138,21 +144,27 @@ describe('ChannelForm save', () => {
 			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
 			await user.click(await screen.findByRole('option', { name: /^Webhook$/ }));
 
-			await user.type(screen.getByTestId('channel-name-textbox'), 'hook alerts');
 			await user.type(
-				screen.getByTestId('webhook-url-textbox'),
+				screen.getByTestId('channel-name-textbox-field'),
+				'hook alerts',
+			);
+			await user.type(
+				screen.getByTestId('webhook-url-textbox-field'),
 				'https://example.com/hook',
 			);
 
 			await user.click(screen.getByTestId('webhook-auth-radio-item-basic'));
-			await user.type(screen.getByTestId('webhook-username-textbox'), 'hook-user');
+			await user.type(
+				screen.getByTestId('webhook-username-textbox-field'),
+				'hook-user',
+			);
 
 			await user.click(screen.getByTestId('webhook-auth-radio-item-bearer'));
 			expect(
-				screen.queryByTestId('webhook-username-textbox'),
+				screen.queryByTestId('webhook-username-textbox-field'),
 			).not.toBeInTheDocument();
 			await user.type(
-				screen.getByTestId('webhook-bearer-token-textbox'),
+				screen.getByTestId('webhook-bearer-token-textbox-field'),
 				'hook-token',
 			);
 
@@ -254,15 +266,15 @@ describe('ChannelForm save', () => {
 
 			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			await user.type(
-				await screen.findByTestId('channel-name-textbox', {}, FIND),
+				await screen.findByTestId('channel-name-textbox-field', {}, FIND),
 				'slack alerts',
 			);
 			await user.type(
-				screen.getByTestId('webhook-url-textbox'),
+				screen.getByTestId('webhook-url-textbox-field'),
 				'https://hooks.slack.com/services/T/B/X',
 			);
 			await user.click(screen.getByTestId('slack-field-add'));
-			await user.type(screen.getByTestId('slack-field-title-0'), 'env');
+			await user.type(screen.getByTestId('slack-field-title-0-field'), 'env');
 
 			const save = screen.getByTestId('save-channel-button');
 			await waitFor(
@@ -295,15 +307,18 @@ describe('ChannelForm save', () => {
 			render(<ChannelForm channelId="3" onDone={onDone} />);
 
 			const channelName = await screen.findByTestId(
-				'channel-name-textbox',
+				'channel-name-textbox-field',
 				{},
 				FIND,
 			);
 			expect(channelName).toBeDisabled();
 
 			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
-			await user.clear(screen.getByTestId('slack-channel-textbox'));
-			await user.type(screen.getByTestId('slack-channel-textbox'), '#changed');
+			await user.clear(screen.getByTestId('slack-channel-textbox-field'));
+			await user.type(
+				screen.getByTestId('slack-channel-textbox-field'),
+				'#changed',
+			);
 			const save = screen.getByTestId('save-channel-button');
 			await waitFor(
 				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
@@ -363,14 +378,14 @@ describe('ChannelForm save', () => {
 			render(<ChannelForm channelId="3" onDone={onDone} />);
 
 			const token = await screen.findByTestId(
-				'webhook-bearer-token-textbox',
+				'webhook-bearer-token-textbox-field',
 				{},
 				FIND,
 			);
 			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 			await user.clear(token);
 			await user.type(
-				screen.getByTestId('webhook-bearer-token-textbox'),
+				screen.getByTestId('webhook-bearer-token-textbox-field'),
 				'new-token',
 			);
 
@@ -399,11 +414,12 @@ describe('ChannelForm save', () => {
 
 			render(<ChannelForm channelId="3" onDone={jest.fn()} />);
 
-			await screen.findByTestId('channel-name-textbox', {}, FIND);
+			await screen.findByTestId('channel-name-textbox-field', {}, FIND);
 
 			// the whole form goes disabled once the denial lands
 			await waitFor(
-				() => expect(screen.getByTestId('slack-channel-textbox')).toBeDisabled(),
+				() =>
+					expect(screen.getByTestId('slack-channel-textbox-field')).toBeDisabled(),
 				FIND,
 			);
 
@@ -435,7 +451,11 @@ describe('ChannelForm save', () => {
 
 			render(<ChannelForm channelId="3" onDone={jest.fn()} />);
 
-			const channel = await screen.findByTestId('slack-channel-textbox', {}, FIND);
+			const channel = await screen.findByTestId(
+				'slack-channel-textbox-field',
+				{},
+				FIND,
+			);
 			await waitFor(() => expect(channel).toBeEnabled(), FIND);
 
 			// Save is off until something changes, so one edit is what tells a
@@ -478,7 +498,10 @@ describe('ChannelForm save', () => {
 			expect(save).toHaveAttribute('aria-disabled', 'true');
 
 			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
-			await user.type(screen.getByTestId('slack-channel-textbox'), '-edited');
+			await user.type(
+				screen.getByTestId('slack-channel-textbox-field'),
+				'-edited',
+			);
 
 			await waitFor(
 				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
@@ -504,7 +527,10 @@ describe('ChannelForm save', () => {
 			await user.click(discard);
 			expect(onDone).toHaveBeenCalledTimes(1);
 
-			await user.type(screen.getByTestId('slack-channel-textbox'), '-edited');
+			await user.type(
+				screen.getByTestId('slack-channel-textbox-field'),
+				'-edited',
+			);
 			await user.click(discard);
 
 			// the test harness stubs `t`, so the modal renders the keys themselves
@@ -543,7 +569,9 @@ describe('ChannelForm save', () => {
 			await expect(
 				screen.findByTestId('channel-load-error', {}, FIND),
 			).resolves.toBeInTheDocument();
-			expect(screen.queryByTestId('channel-name-textbox')).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('channel-name-textbox-field'),
+			).not.toBeInTheDocument();
 		},
 		TEST_TIMEOUT,
 	);
@@ -571,11 +599,17 @@ describe('ChannelForm save', () => {
 			expect(screen.getByTestId('telegram-title-textarea')).toHaveValue('');
 
 			await user.type(
-				screen.getByTestId('channel-name-textbox'),
+				screen.getByTestId('channel-name-textbox-field'),
 				'telegram alerts',
 			);
-			await user.type(screen.getByTestId('telegram-bot-token-textbox'), '123:abc');
-			await user.type(screen.getByTestId('telegram-chat-id-textbox'), '-100123');
+			await user.type(
+				screen.getByTestId('telegram-bot-token-textbox-field'),
+				'123:abc',
+			);
+			await user.type(
+				screen.getByTestId('telegram-chat-id-textbox-field'),
+				'-100123',
+			);
 
 			const save = screen.getByTestId('save-channel-button');
 			await waitFor(
@@ -605,7 +639,9 @@ describe('ChannelForm save', () => {
 			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
 			await user.click(await screen.findByRole('option', { name: /^Pagerduty$/ }));
 
-			expect(screen.getByTestId('pager-client-url-textarea')).toHaveValue('');
+			expect(screen.getByTestId('pager-client-url-textarea-field')).toHaveValue(
+				'',
+			);
 		},
 		TEST_TIMEOUT,
 	);

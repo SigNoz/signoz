@@ -145,7 +145,8 @@ export function useIntegrationModal({
 						const command = response.data.connectionArtifact.azure?.cliCommand;
 						if (!command) {
 							setModalState(ModalStateEnum.ERROR);
-							toast.error('Failed to generate the Azure setup command', {
+							toast.danger('Failed to generate the Azure setup command', {
+								action: { label: 'Dismiss' },
 								position: 'bottom-right',
 							});
 							return;

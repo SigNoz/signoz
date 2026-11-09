@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Typography } from '@signozhq/ui/typography';
+import cx from 'classnames';
 import { FieldError } from 'react-hook-form';
 
 import FieldLabel from './FieldLabel';
@@ -12,6 +13,7 @@ interface FormFieldProps {
 	tooltip: string;
 	required?: boolean;
 	error?: FieldError;
+	className?: string;
 	children: ReactNode;
 }
 
@@ -22,10 +24,11 @@ function FormField({
 	tooltip,
 	required,
 	error,
+	className,
 	children,
 }: FormFieldProps): JSX.Element {
 	return (
-		<div className={styles.drawerSection}>
+		<div className={cx(styles.drawerSection, className)}>
 			<FieldLabel
 				htmlFor={htmlFor}
 				label={label}
@@ -50,6 +53,7 @@ function FormField({
 FormField.defaultProps = {
 	required: false,
 	error: undefined,
+	className: undefined,
 };
 
 export default FormField;

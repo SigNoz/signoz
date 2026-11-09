@@ -1,4 +1,8 @@
-import { LoaderCircle } from '@signozhq/icons';
+import {
+	LoaderCircle,
+	SolidAlertCircle,
+	SolidInfoCircle,
+} from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
@@ -79,24 +83,27 @@ function AgentSetup({
 					/>
 					{modalState === ModalStateEnum.WAITING && (
 						<Callout
-							type="info"
-							showIcon={false}
-							title={
-								<div className={styles.waitingMessage}>
-									<LoaderCircle size={14} className="animate-spin" />
-									Waiting for GCP account connection, retrying in 10 secs...
-								</div>
-							}
+							color="info"
+							size="sm"
+							icon={<SolidInfoCircle />}
 							testId="gcp-agent-waiting"
-						/>
+						>
+							<div className={styles.waitingMessage}>
+								<LoaderCircle size={14} className="animate-spin" />
+								Waiting for GCP account connection, retrying in 10 secs...
+							</div>
+						</Callout>
 					)}
 					{modalState === ModalStateEnum.ERROR && (
 						<Callout
-							type="error"
-							showIcon
-							title="We couldn't establish a connection to your GCP account. Please try again"
+							color="danger"
+							size="sm"
+							icon={<SolidAlertCircle />}
 							testId="gcp-agent-connection-error"
-						/>
+						>
+							We couldn&apos;t establish a connection to your GCP account. Please try
+							again
+						</Callout>
 					)}
 				</>
 			) : (

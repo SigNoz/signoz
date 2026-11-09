@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Skeleton } from '@signozhq/ui/skeleton';
 import { Typography } from '@signozhq/ui/typography';
@@ -51,7 +51,6 @@ function SavedViewsList({
 	} = useSavedViewRowActions(source);
 	const [pendingAction, setPendingAction] =
 		useState<PendingSavedViewAction | null>(null);
-	const listRef = useRef<HTMLDivElement>(null);
 	const hoverCard = useSavedViewHoverCard();
 	const {
 		onRowEnter: onHoverCardRowEnter,
@@ -65,15 +64,7 @@ function SavedViewsList({
 
 	const rowHover = useMemo<SavedViewsListRowHoverProps>(
 		() => ({
-			onRowEnter: (viewId, row): void => {
-				const listTop = listRef.current?.getBoundingClientRect().top ?? 0;
-				const rowRect = row.getBoundingClientRect();
-				onHoverCardRowEnter({
-					viewId,
-					anchorTop: rowRect.top - listTop,
-					anchorHeight: rowRect.height,
-				});
-			},
+			onRowEnter: onHoverCardRowEnter,
 			onRowLeave: onHoverCardRowLeave,
 			onMenuOpen: closeHoverCard,
 		}),
@@ -151,7 +142,6 @@ function SavedViewsList({
 
 	return (
 		<div
-			ref={listRef}
 			className={styles.list}
 			onScrollCapture={closeHoverCard}
 			data-testid="saved-views-list"
@@ -181,10 +171,9 @@ function SavedViewsList({
 				/>
 			)}
 			<SavedViewHoverCard
-				target={hoverCard.target}
+				handle={hoverCard.handle}
 				onCardEnter={hoverCard.onCardEnter}
 				onCardLeave={hoverCard.onCardLeave}
-				onClose={closeHoverCard}
 			/>
 			{pendingAction?.key === 'editDetails' && (
 				<SaveViewModal

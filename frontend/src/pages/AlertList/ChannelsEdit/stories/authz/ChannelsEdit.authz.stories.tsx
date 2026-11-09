@@ -85,7 +85,11 @@ export const NoCreate: Story = {
 		// Save is also off until the form is edited, so the edit comes first and
 		// what is left is the permission.
 		await userEvent.type(
-			await canvas.findByTestId('slack-channel-textbox', undefined, PAGE_LOAD),
+			await canvas.findByTestId(
+				'slack-channel-textbox-field',
+				undefined,
+				PAGE_LOAD,
+			),
 			'-edited',
 		);
 		await expectDisabled(
@@ -135,12 +139,14 @@ export const TelegramReadOnly: Story = {
 
 		await expectDisabled(
 			await canvas.findByTestId(
-				'telegram-bot-token-textbox',
+				'telegram-bot-token-textbox-field',
 				undefined,
 				PAGE_LOAD,
 			),
 		);
-		await expectDisabled(await canvas.findByTestId('telegram-chat-id-textbox'));
+		await expectDisabled(
+			await canvas.findByTestId('telegram-chat-id-textbox-field'),
+		);
 		await expectDisabled(await canvas.findByTestId('telegram-message-textarea'));
 
 		const toggle = await canvas.findByTestId(
@@ -203,7 +209,11 @@ export const CheckFailed: Story = {
 		const canvas = within(canvasElement);
 
 		await userEvent.type(
-			await canvas.findByTestId('slack-channel-textbox', undefined, PAGE_LOAD),
+			await canvas.findByTestId(
+				'slack-channel-textbox-field',
+				undefined,
+				PAGE_LOAD,
+			),
 			'-edited',
 		);
 

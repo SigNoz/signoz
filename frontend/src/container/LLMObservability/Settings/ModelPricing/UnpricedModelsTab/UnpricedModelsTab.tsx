@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
+import { SolidAlertTriangle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import { Typography } from '@signozhq/ui/typography';
 import { useListUnmappedLLMModels } from 'api/generated/services/llmpricingrules';
@@ -80,10 +81,12 @@ function UnpricedModelsTab(): JSX.Element {
 
 	return (
 		<div className={styles.unpricedModelsTab}>
-			<Callout type="warning" size="small" showIcon className={styles.banner}>
-				Models detected in traces without pricing. Map each to a billing model or
-				create pricing so estimated cost can be computed.
-			</Callout>
+			<div className={styles.banner}>
+				<Callout color="warning" size="sm" icon={<SolidAlertTriangle />}>
+					Models detected in traces without pricing. Map each to a billing model or
+					create pricing so estimated cost can be computed.
+				</Callout>
+			</div>
 
 			{isError && (
 				<div className={styles.error}>

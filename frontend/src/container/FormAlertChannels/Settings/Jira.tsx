@@ -36,7 +36,7 @@ function JiraSettings(): JSX.Element {
 				<Input
 					{...register('priority')}
 					placeholder={t('placeholder_jira_priority')}
-					data-testid="jira-priority-textbox"
+					testId="jira-priority-textbox"
 				/>
 			</FormField>
 
@@ -61,7 +61,7 @@ function JiraSettings(): JSX.Element {
 				<Input
 					{...register('resolveTransition')}
 					placeholder={t('placeholder_jira_resolve_transition')}
-					data-testid="jira-resolve-transition-textbox"
+					testId="jira-resolve-transition-textbox"
 				/>
 			</FormField>
 
@@ -73,7 +73,7 @@ function JiraSettings(): JSX.Element {
 				<Input
 					{...register('reopenTransition')}
 					placeholder={t('placeholder_jira_reopen_transition')}
-					data-testid="jira-reopen-transition-textbox"
+					testId="jira-reopen-transition-textbox"
 				/>
 			</FormField>
 
@@ -85,7 +85,7 @@ function JiraSettings(): JSX.Element {
 				<Input
 					{...register('wontFixResolution')}
 					placeholder={t('placeholder_jira_wont_fix_resolution')}
-					data-testid="jira-wont-fix-resolution-textbox"
+					testId="jira-wont-fix-resolution-textbox"
 				/>
 			</FormField>
 
@@ -98,7 +98,7 @@ function JiraSettings(): JSX.Element {
 				<Input
 					{...register('reopenDuration')}
 					placeholder={t('placeholder_jira_reopen_duration')}
-					data-testid="jira-reopen-duration-textbox"
+					testId="jira-reopen-duration-textbox"
 				/>
 			</FormField>
 		</>
@@ -185,7 +185,7 @@ function JiraSettings(): JSX.Element {
 								? 'https://jira.your-company.com'
 								: 'https://your-domain.atlassian.net'
 						}
-						data-testid="jira-site-textbox"
+						testId="jira-site-textbox"
 					/>
 				</FormField>
 
@@ -200,7 +200,7 @@ function JiraSettings(): JSX.Element {
 							{...register('auth.pat')}
 							aria-required
 							type="password"
-							data-testid="jira-pat-textbox"
+							testId="jira-pat-textbox"
 						/>
 					</FormField>
 				) : (
@@ -214,7 +214,7 @@ function JiraSettings(): JSX.Element {
 							<Input
 								{...register('auth.email')}
 								aria-required
-								data-testid="jira-email-textbox"
+								testId="jira-email-textbox"
 							/>
 						</FormField>
 
@@ -228,7 +228,7 @@ function JiraSettings(): JSX.Element {
 								{...register('auth.apiToken')}
 								aria-required
 								type="password"
-								data-testid="jira-api-token-textbox"
+								testId="jira-api-token-textbox"
 							/>
 						</FormField>
 					</>
@@ -243,7 +243,7 @@ function JiraSettings(): JSX.Element {
 						{...register('project')}
 						aria-required
 						placeholder="e.g. OPS"
-						data-testid="jira-project-textbox"
+						testId="jira-project-textbox"
 					/>
 				</FormField>
 
@@ -256,7 +256,7 @@ function JiraSettings(): JSX.Element {
 					<Input
 						{...register('issueType')}
 						aria-required
-						data-testid="jira-issue-type-textbox"
+						testId="jira-issue-type-textbox"
 					/>
 				</FormField>
 

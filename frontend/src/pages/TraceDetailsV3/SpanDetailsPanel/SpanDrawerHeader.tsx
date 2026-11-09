@@ -29,7 +29,7 @@ function SpanDrawerHeader({
 			>
 				<X />
 			</Button>
-			<Divider type="vertical" className={styles.divider} />
+			<Divider orientation="vertical" height={16} spacing="0 var(--spacing-4)" />
 			<span className={styles.title}>{title}</span>
 			<div className={styles.actions}>
 				{actions.map((action) => (

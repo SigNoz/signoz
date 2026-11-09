@@ -181,8 +181,8 @@ describe('QueryAddOns', () => {
 	});
 
 	it.each([
-		[QueryBuilderField.Limit, 'input-Limit', 'placeholder'],
-		[QueryBuilderField.Legend, 'input-Legend format', 'placeholder'],
+		[QueryBuilderField.Limit, 'input-Limit-field', 'placeholder'],
+		[QueryBuilderField.Legend, 'input-Legend format-field', 'placeholder'],
 		[QueryBuilderField.GroupBy, 'groupby', 'data-placeholder'],
 		[QueryBuilderField.Having, 'having-change', 'data-placeholder'],
 		[QueryBuilderField.OrderBy, 'orderby', 'data-placeholder'],
@@ -223,7 +223,7 @@ describe('QueryAddOns', () => {
 
 		fireEvent.click(screen.getByTestId('query-add-on-limit'));
 
-		expect(screen.getByTestId('input-Limit')).toHaveAttribute(
+		expect(screen.getByTestId('input-Limit-field')).toHaveAttribute(
 			'placeholder',
 			'Enter limit',
 		);
@@ -579,7 +579,7 @@ describe('QueryAddOns', () => {
 			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
 
 			await user.click(screen.getByRole('button', { name: 'Linear' }));
-			await user.type(screen.getByTestId('bucket-options-max-value'), '500');
+			await user.type(screen.getByTestId('bucket-options-max-value-field'), '500');
 
 			await waitFor(() => {
 				expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith(

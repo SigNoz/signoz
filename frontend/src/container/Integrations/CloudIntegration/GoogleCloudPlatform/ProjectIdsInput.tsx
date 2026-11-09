@@ -1,14 +1,11 @@
-import { ComboboxSimple } from '@signozhq/ui/combobox';
-import cx from 'classnames';
-
-import styles from './ProjectIdsInput.module.scss';
+import { Combobox } from '@signozhq/ui/combobox';
+import type { ComboboxItemType } from '@signozhq/ui/combobox';
 
 interface ProjectIdsInputProps {
 	id: string;
 	testId: string;
 	value: string[];
 	onChange: (projectIds: string[]) => void;
-	className?: string;
 }
 
 /** Free-form list of GCP project IDs: type an ID and press Enter to add it. */
@@ -17,27 +14,27 @@ function ProjectIdsInput({
 	testId,
 	value,
 	onChange,
-	className,
 }: ProjectIdsInputProps): JSX.Element {
+	const items: ComboboxItemType[] = value.map((projectId) => ({
+		type: 'item',
+		value: projectId,
+		label: projectId,
+	}));
+
 	return (
-		<ComboboxSimple
+		<Combobox
 			id={id}
 			testId={testId}
-			className={cx(styles.projectIds, className)}
 			multiple
 			allowCreate
+			items={items}
 			value={value}
-			onChange={(next): void => onChange(Array.isArray(next) ? next : [])}
+			onChange={onChange}
 			placeholder="Add project IDs…"
-			inputPlaceholder="Type a project ID and press Enter"
-			emptyPlaceholder="Type a project ID to add it"
-			withPortal={false}
+			searchInputProps={{ placeholder: 'Type a project ID and press Enter' }}
+			noContent="Type a project ID to add it"
 		/>
 	);
 }
-
-ProjectIdsInput.defaultProps = {
-	className: undefined,
-};
 
 export default ProjectIdsInput;
