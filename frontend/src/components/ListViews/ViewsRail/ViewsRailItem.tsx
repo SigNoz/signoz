@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { PenLine, Trash2 } from '@signozhq/icons';
@@ -34,6 +35,8 @@ function ViewsRailItem({
 	onRename,
 	onDelete,
 }: Props): JSX.Element {
+	const [renaming, setRenaming] = useState(false);
+
 	return (
 		<div className={cx(styles.row, { [styles.rowActive]: active })}>
 			<Button
@@ -55,13 +58,15 @@ function ViewsRailItem({
 			{onRename && onDelete && (
 				<div className={styles.itemActions}>
 					<ViewNamePopover
+						open={renaming}
+						onOpenChange={setRenaming}
 						onSubmit={(name): void => onRename(id, name)}
 						title="Rename view"
 						confirmLabel="Rename"
 						initialName={label}
 						testIdPrefix={renameTestIdPrefix}
 						tooltip="Rename view"
-						trigger={(open): JSX.Element => (
+						trigger={
 							<Button
 								variant="ghost"
 								color="secondary"
@@ -69,14 +74,11 @@ function ViewsRailItem({
 								icon
 								aria-label="Rename view"
 								testId={`${testIdPrefix}-view-rename-${id}`}
-								onClick={(e): void => {
-									e.stopPropagation();
-									open(e.currentTarget);
-								}}
+								onClick={(e): void => e.stopPropagation()}
 							>
 								<PenLine size={12} />
 							</Button>
-						)}
+						}
 					/>
 					<Tooltip title="Delete view">
 						<Button

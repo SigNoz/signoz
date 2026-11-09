@@ -1,6 +1,6 @@
 import { Download } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { Popover, usePopoverHandle } from '@signozhq/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
 import { RadioGroup } from '@signozhq/ui/radio-group';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
@@ -36,10 +36,6 @@ export default function ExportMenu({
 }: ExportMenuProps): JSX.Element {
 	const [exportFormat, setExportFormat] = useState<string>(ExportFormat.Csv);
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
-	// Driven by a handle rather than `trigger`: the button carries a Tooltip, and a Tooltip
-	// routes every prop it does not recognise to its own popup, so a popover's press handlers
-	// would never reach the button underneath.
-	const menu = usePopoverHandle(setIsPopoverOpen);
 
 	const { isExporting, handleExport: handleClientExport } = useClientExport({
 		data,
@@ -49,62 +45,53 @@ export default function ExportMenu({
 	});
 
 	const handleExport = useCallback((): void => {
-		menu.close();
+		setIsPopoverOpen(false);
 		handleClientExport({ format: exportFormat as ExportFormat });
-	}, [menu, exportFormat, handleClientExport]);
+	}, [exportFormat, handleClientExport]);
 
 	return (
-		<>
+		<Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
 			<Tooltip title="Download">
-				<Button
-					variant="ghost"
-					color="secondary"
-					size="sm"
-					icon
-					aria-label="Download"
-					aria-haspopup="dialog"
-					aria-expanded={isPopoverOpen}
-					testId={`export-menu-${dataSource}`}
-					loading={isExporting}
-					onClick={(event): void => menu.showAt(event.currentTarget)}
-				>
-					<Download size={14} />
-				</Button>
-			</Tooltip>
-			<Popover
-				side="bottom"
-				align="end"
-				width={240}
-				handle={menu}
-				aria-label="Export format"
-			>
-				<div className="export-menu-popover">
-					<div className="export-format">
-						<Typography.Text className="title">FORMAT</Typography.Text>
-						<RadioGroup
-							color="primary"
-							value={exportFormat}
-							onChange={setExportFormat}
-							items={[
-								{ value: ExportFormat.Csv, label: 'csv' },
-								{ value: ExportFormat.Jsonl, label: 'jsonl' },
-							]}
-						/>
-					</div>
-
+				<PopoverTrigger asChild>
 					<Button
-						size="md"
-						variant="solid"
-						color="primary"
-						width="100%"
-						onClick={handleExport}
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						icon
+						aria-label="Download"
+						testId={`export-menu-${dataSource}`}
 						loading={isExporting}
-						prefix={<Download size={16} />}
 					>
-						Export
+						<Download size={14} />
 					</Button>
+				</PopoverTrigger>
+			</Tooltip>
+			<PopoverContent align="end" className="export-menu-popover">
+				<div className="export-format">
+					<Typography.Text className="title">FORMAT</Typography.Text>
+					<RadioGroup
+						color="primary"
+						value={exportFormat}
+						onChange={setExportFormat}
+						items={[
+							{ value: ExportFormat.Csv, label: 'csv' },
+							{ value: ExportFormat.Jsonl, label: 'jsonl' },
+						]}
+					/>
 				</div>
-			</Popover>
-		</>
+
+				<Button
+					size="md"
+					variant="solid"
+					color="primary"
+					width="100%"
+					onClick={handleExport}
+					loading={isExporting}
+					prefix={<Download size={16} />}
+				>
+					Export
+				</Button>
+			</PopoverContent>
+		</Popover>
 	);
 }

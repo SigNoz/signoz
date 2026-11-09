@@ -1,7 +1,6 @@
 .popoverContent {
 	min-width: 180px;
-	// The popover shell carries no padding of its own, so the content owns it.
-	padding: var(--spacing-8);
+	padding: 8px;
 }
 
 .title {

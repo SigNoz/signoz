@@ -1,9 +1,9 @@
-// Driven by a handle, not a trigger: the thing that opens this is the input taking focus, and a
-// trigger press would steal that focus and dismiss the popup on every keystroke. The handle
-// anchors the suggestions to the input's row while the caret stays where the user put it.
+// Uses Popover (not DropdownMenu): DropdownMenuTrigger preventDefaults pointerdown,
+// which steals input focus and dismisses on every keystroke. PopoverAnchor is a passive
+// positioning element that leaves the wrapped input fully interactive.
 import { ReactNode, useRef, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { Popover, usePopoverHandle } from '@signozhq/ui/popover';
+import { Popover, PopoverAnchor, PopoverContent } from '@signozhq/ui/popover';
 import { Typography } from '@signozhq/ui/typography';
 
 import type { VariableItem } from './types';
@@ -32,40 +32,53 @@ function VariablesPopover({
 	onVariableSelect,
 	children,
 }: VariablesPopoverProps): JSX.Element {
+	const [isOpen, setIsOpen] = useState(false);
 	const [cursorPosition, setCursorPosition] = useState<number | null>(null);
 	const anchorRef = useRef<HTMLDivElement>(null);
-	const suggestions = usePopoverHandle();
 
-	const setIsOpen = (open: boolean): void => {
+	const handleOpenChange = (open: boolean): void => {
+		// Accept "close" events (outside-click, Esc) but ignore opens — opening is driven
+		// by the input's onFocus in the consumer.
 		if (!open) {
-			suggestions.close();
-			return;
+			setIsOpen(false);
 		}
-		if (anchorRef.current) {
-			suggestions.showAt(anchorRef.current);
+	};
+
+	// Keep the popover open while the pointer/focus is inside the anchored input.
+	const keepOpenIfInsideAnchor = (event: {
+		target: EventTarget | null;
+	}): void => {
+		const target = event.target as Node | null;
+		if (
+			target &&
+			anchorRef.current?.contains(target) &&
+			'preventDefault' in event
+		) {
+			(event as Event).preventDefault();
 		}
 	};
 
 	return (
 		<div className={styles.container}>
-			<div className={styles.anchor} ref={anchorRef}>
-				{children({ setIsOpen, setCursorPosition })}
-			</div>
-			<Popover
-				side="bottom"
-				align="start"
-				handle={suggestions}
-				// The caret belongs to the input the suggestions are for, on the way in and out.
-				initialFocus={false}
-				finalFocus={false}
-				// Matches the field it belongs to. Both, because the default max width would
-				// otherwise clamp a wide field's suggestions to 25rem.
-				width="var(--anchor-width)"
-				maxWidth="var(--anchor-width)"
-				maxHeight={300}
-				aria-label="Insert a variable"
-			>
-				<div className={styles.content}>
+			<Popover open={isOpen} onOpenChange={handleOpenChange} modal={false}>
+				<PopoverAnchor asChild>
+					<div className={styles.anchor} ref={anchorRef}>
+						{children({ setIsOpen, setCursorPosition })}
+					</div>
+				</PopoverAnchor>
+				<PopoverContent
+					align="start"
+					sideOffset={4}
+					// Render inside the anchor (not a body portal): the editor lives in a modal
+					// DialogWrapper, and radix's modal sets pointer-events:none on everything
+					// portalled outside it, which would make the suggestions unclickable.
+					withPortal={false}
+					className={styles.content}
+					onOpenAutoFocus={(e): void => e.preventDefault()}
+					onCloseAutoFocus={(e): void => e.preventDefault()}
+					onInteractOutside={keepOpenIfInsideAnchor}
+					onFocusOutside={keepOpenIfInsideAnchor}
+				>
 					{variables.length === 0 ? (
 						<div className={styles.empty}>No variables available</div>
 					) : (
@@ -85,7 +98,7 @@ function VariablesPopover({
 									testId={`context-link-variable-${v.name}`}
 									onClick={(): void => {
 										onVariableSelect(`{{${v.name}}}`, cursorPosition ?? undefined);
-										suggestions.close();
+										setIsOpen(false);
 									}}
 								>
 									<div className={styles.row}>
@@ -100,7 +113,7 @@ function VariablesPopover({
 							</span>
 						))
 					)}
-				</div>
+				</PopoverContent>
 			</Popover>
 		</div>
 	);

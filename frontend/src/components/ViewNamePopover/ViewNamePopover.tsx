@@ -1,7 +1,7 @@
-import { type ChangeEvent, type ReactNode, useState } from 'react';
+import { type ChangeEvent, type ReactNode, useEffect, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { Popover, usePopoverHandle } from '@signozhq/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 
@@ -10,9 +10,10 @@ import styles from './ViewNamePopover.module.scss';
 export const VIEW_NAME_MAX_LENGTH = 64;
 
 interface Props {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
 	onSubmit: (name: string) => void;
-	/** Called with the opener; wire it to the trigger's `onClick` with the clicked element. */
-	trigger: (open: (anchor: HTMLElement) => void) => ReactNode;
+	trigger: ReactNode;
 	tooltip: string;
 	title: string;
 	confirmLabel: string;
@@ -22,11 +23,9 @@ interface Props {
 
 // Name-input popover shared by "save as view" and "rename view"; enforces the
 // view-name length cap in one place.
-//
-// Handle-driven rather than `trigger`: the trigger carries a Tooltip, and a Tooltip routes every
-// prop it does not recognise to its own popup, so a popover's press handlers would never reach
-// the button underneath.
 function ViewNamePopover({
+	open,
+	onOpenChange,
 	onSubmit,
 	trigger,
 	tooltip,
@@ -36,11 +35,12 @@ function ViewNamePopover({
 	testIdPrefix = 'view-name',
 }: Props): JSX.Element {
 	const [name, setName] = useState(initialName);
-	const popover = usePopoverHandle((open) => {
+
+	useEffect(() => {
 		if (open) {
 			setName(initialName);
 		}
-	});
+	}, [open, initialName]);
 
 	const trimmed = name.trim();
 	const canSave = trimmed.length > 0 && trimmed.length <= VIEW_NAME_MAX_LENGTH;
@@ -48,16 +48,16 @@ function ViewNamePopover({
 	const handleSave = (): void => {
 		if (canSave) {
 			onSubmit(trimmed);
-			popover.close();
+			onOpenChange(false);
 		}
 	};
 
 	return (
-		<>
+		<Popover open={open} onOpenChange={onOpenChange}>
 			<Tooltip title={tooltip}>
-				{trigger((anchor) => popover.showAt(anchor))}
+				<PopoverTrigger asChild>{trigger}</PopoverTrigger>
 			</Tooltip>
-			<Popover side="bottom" align="start" handle={popover} aria-label={title}>
+			<PopoverContent align="start">
 				<div className={styles.savePopover}>
 					<div className={styles.saveTitle}>{title}</div>
 					<Typography.Text className={styles.saveLabel}>Name</Typography.Text>
@@ -81,7 +81,7 @@ function ViewNamePopover({
 							variant="ghost"
 							color="secondary"
 							size="sm"
-							onClick={(): void => popover.close()}
+							onClick={(): void => onOpenChange(false)}
 						>
 							Cancel
 						</Button>
@@ -102,8 +102,8 @@ function ViewNamePopover({
 						</Button>
 					</div>
 				</div>
-			</Popover>
-		</>
+			</PopoverContent>
+		</Popover>
 	);
 }
 
