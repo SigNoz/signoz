@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 )
 
@@ -27,7 +29,7 @@ type fakeConn struct {
 
 func TestProviderConnFor(t *testing.T) {
 	defaultConn, profileConn := &fakeConn{}, &fakeConn{}
-	p := &provider{clickHouseConn: defaultConn, profileConns: map[string]clickhouse.Conn{"query_range": profileConn}}
+	p := &provider{settings: factory.NewScopedProviderSettings(factorytest.NewSettings(), "test"), clickHouseConn: defaultConn, profileConns: map[string]clickhouse.Conn{"query_range": profileConn}}
 
 	testCases := []struct {
 		name string
