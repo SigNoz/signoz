@@ -290,32 +290,3 @@
 		}
 	}
 }
-
-.custom-domain-toast {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 16px;
-	padding: 0 16px;
-	height: 40px;
-	width: min(942px, calc(100vw - 32px));
-	border-radius: 4px;
-	background: var(--primary-background);
-	color: var(--bg-base-white);
-
-	.custom-domain-toast-message {
-		font-size: var(--paragraph-base-400-font-size);
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		flex: 1;
-	}
-
-	.custom-domain-toast-actions {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-4);
-		flex-shrink: 0;
-		--button-variant-ghost-color: var(--bg-base-white);
-	}
-}

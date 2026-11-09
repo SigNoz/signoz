@@ -193,13 +193,27 @@ describe('CustomDomainSettings', () => {
 		const toastElement = mockToastInfo.mock.calls[0][0] as JSX.Element;
 		const { container } = render(toastElement);
 		expect(container).toHaveTextContent(/myteam\.test\.cloud/i);
-		expect(mockToastInfo.mock.calls[0][1]).toStrictEqual(
+		const options = mockToastInfo.mock.calls[0][1] as {
+			action: { label: string; onClick: () => void };
+		};
+		expect(options).toStrictEqual(
 			expect.objectContaining({
 				id: 'domain-update:https://myteam.test.cloud',
+				description: 'This may take a few minutes.',
 				timeout: 5000,
 				position: 'bottom-right',
 			}),
 		);
+
+		const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+		expect(options.action.label).toBe('Visit new URL');
+		options.action.onClick();
+		expect(openSpy).toHaveBeenCalledWith(
+			'https://myteam.test.cloud',
+			'_blank',
+			'noopener,noreferrer',
+		);
+		openSpy.mockRestore();
 	});
 
 	describe('Workspace Name rendering', () => {
