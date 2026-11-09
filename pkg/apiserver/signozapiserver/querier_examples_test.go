@@ -4,18 +4,20 @@ import (
 	"encoding/json"
 	"testing"
 
-	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 func TestQueryRangeFunctionExamplesAreValidRequests(t *testing.T) {
-	for _, ex := range queryRangeFunctionExamples() {
-		t.Run(ex.Name, func(t *testing.T) {
-			raw, err := json.Marshal(ex.Value)
+	for _, example := range queryRangeFunctionExamples() {
+		t.Run(example.Name, func(t *testing.T) {
+			raw, err := json.Marshal(example.Value)
 			require.NoError(t, err)
 			var req qbtypes.QueryRangeRequest
 			require.NoError(t, json.Unmarshal(raw, &req))
-			require.NoError(t, req.Validate())
+			assert.NoError(t, req.Validate())
 		})
 	}
 }

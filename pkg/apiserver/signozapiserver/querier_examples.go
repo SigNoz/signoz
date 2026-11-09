@@ -133,7 +133,7 @@ func queryRangeFunctionExamples() []handler.OpenAPIExample {
 		timeSeriesExample(
 			"function_median_despiked_request_rate",
 			"median5: request rate without one-step spikes",
-			"median3, median5 and median7 replace each point with the median of the surrounding 3, 5 or 7 points. A spike that lasts one step vanishes, a shift that lasts longer than half the window stays. They take no arguments. Use them when the raw series is noisy and the chart is for a trend, not for catching the spike.",
+			"median3, median5 and median7 replace each point with the median of the surrounding 3, 5 or 7 points. A spike that lasts one step vanishes, a shift that lasts longer than half the window stays. The first and last half window, 2 points each for median5, have no full window and keep their values, so the newest spike stays visible; a series shorter than the window is returned unchanged. They take no arguments. Use them when the raw series is noisy and the chart is for a trend, not for catching the spike.",
 			builderQueryEnvelope(map[string]any{
 				"name":   "A",
 				"signal": "metrics",
@@ -148,7 +148,7 @@ func queryRangeFunctionExamples() []handler.OpenAPIExample {
 		timeSeriesExample(
 			"function_cumulativesum_errors_so_far",
 			"cumulativeSum: 5xx responses since the start of the window",
-			"cumulativeSum replaces each point with the sum of every point up to it, so a per-step count becomes a running total that starts at zero at the window start. It takes no arguments. The total resets with the window, so a longer time range gives a larger final value; it is a view of the window, not a counter.",
+			"cumulativeSum replaces each point with the sum of every point up to and including it, so a per-step count becomes a running total whose first point is the first count. It takes no arguments. The total resets with the window, so a longer time range gives a larger final value; it is a view of the window, not a counter.",
 			builderQueryEnvelope(map[string]any{
 				"name":         "A",
 				"signal":       "traces",
