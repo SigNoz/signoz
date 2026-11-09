@@ -178,7 +178,7 @@ func queryRangeFunctionExamples() []handler.OpenAPIExample {
 		timeSeriesExample(
 			"function_anomaly_request_rate",
 			"anomaly: request rate scored against its daily pattern",
-			"anomaly is the one function with named arguments. seasonality says which past periods predict the current value: hourly, daily or weekly, daily when absent. z_score_threshold is how many standard deviations from the prediction count as an anomaly, 3 when absent. The response carries, next to the values, a predicted series, an upper and a lower bound series and an anomaly score series. The scoring runs in the enterprise build; the community build returns the series unchanged.",
+			"anomaly is the one function with named arguments. seasonality says which past periods predict the current value: hourly, daily or weekly, daily when absent. z_score_threshold is how many standard deviations from the prediction count as an anomaly. It has no default: a request without it gets bounds of zero width, so send it. 3 is the value the UI sends. The response carries, next to the values, a predicted series, an upper and a lower bound series and an anomaly score series. The scoring runs in the enterprise build; the community build returns the series unchanged.",
 			builderQueryEnvelope(map[string]any{
 				"name":   "A",
 				"signal": "metrics",
