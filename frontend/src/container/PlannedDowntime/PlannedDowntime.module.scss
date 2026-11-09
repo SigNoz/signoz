@@ -33,8 +33,8 @@
 .title {
 	margin: 0;
 	color: var(--l1-foreground);
-	font-size: var(--font-size-lg);
-	font-weight: var(--font-weight-medium);
+	font-size: var(--label-large-500-font-size);
+	font-weight: var(--label-large-500-font-weight);
 	line-height: 28px;
 	letter-spacing: -0.09px;
 	overflow: hidden;
@@ -48,7 +48,7 @@
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
 	color: var(--l2-foreground);
-	font-size: var(--font-size-xs);
+	font-size: var(--label-small-400-font-size);
 	font-variant-numeric: tabular-nums;
 }
 
@@ -117,7 +117,7 @@
 }
 
 .expression {
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-base-400-font-family);
 	font-size: 13px;
 }
 

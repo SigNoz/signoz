@@ -8,13 +8,13 @@
 }
 
 .saveTitle {
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-semibold);
+	font-size: var(--label-base-600-font-size);
+	font-weight: var(--label-base-600-font-weight);
 	color: var(--l1-foreground);
 }
 
 .saveLabel {
-	font-size: var(--font-size-xs);
+	font-size: var(--label-small-400-font-size);
 	color: var(--l3-foreground);
 	margin-top: 2px;
 }

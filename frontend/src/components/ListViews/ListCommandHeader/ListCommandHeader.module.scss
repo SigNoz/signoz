@@ -29,15 +29,15 @@
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
 	color: var(--l2-foreground);
-	font-size: var(--font-size-xs);
+	font-size: var(--label-small-400-font-size);
 	font-variant-numeric: tabular-nums;
 }
 
 .title {
 	color: var(--l1-foreground);
-	font-size: var(--font-size-lg);
+	font-size: var(--label-large-500-font-size);
 	font-style: normal;
-	font-weight: var(--font-weight-medium);
+	font-weight: var(--label-large-500-font-weight);
 	line-height: 28px;
 	letter-spacing: -0.09px;
 	overflow: hidden;
