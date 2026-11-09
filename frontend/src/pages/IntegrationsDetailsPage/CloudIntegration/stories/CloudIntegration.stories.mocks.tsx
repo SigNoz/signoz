@@ -343,6 +343,14 @@ export const connectAzureAccount = async (
 	);
 };
 
+const selectGcpRegion = async (label: string): Promise<void> => {
+	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
+	await userEvent.type(
+		await screen.findByTestId('gcp-deployment-region-select-search'),
+		`${label}{Enter}`,
+	);
+};
+
 const addGcpProjectId = async (
 	testId: string,
 	projectId: string,
@@ -359,15 +367,18 @@ export const connectGcpAccount = async (
 ): Promise<void> => {
 	await openConnectFlow(canvasElement);
 	await userEvent.type(
-		await screen.findByTestId('gcp-account-name-input', undefined, untilLoaded),
+		await screen.findByTestId(
+			'gcp-account-name-input-field',
+			undefined,
+			untilLoaded,
+		),
 		'acme-org',
 	);
 	await userEvent.type(
-		screen.getByTestId('gcp-deployment-project-id-input'),
+		screen.getByTestId('gcp-deployment-project-id-input-field'),
 		'acme-deploy-123',
 	);
-	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
-	await userEvent.click(await screen.findByText('Mumbai (asia-south1)'));
+	await selectGcpRegion('Mumbai');
 	await addGcpProjectId('gcp-project-ids-select', 'project-a');
 	await userEvent.click(screen.getByTestId('gcp-connect-account-btn'));
 };
@@ -391,11 +402,10 @@ export const generateGcpAgentCommand = async (
 ): Promise<void> => {
 	await openGcpAgentSetup(canvasElement);
 	await userEvent.type(
-		screen.getByTestId('gcp-deployment-project-id-input'),
+		screen.getByTestId('gcp-deployment-project-id-input-field'),
 		'signoz-prod-4471',
 	);
-	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
-	await userEvent.click(await screen.findByText('Council Bluffs (us-central1)'));
+	await selectGcpRegion('Council Bluffs');
 	await userEvent.click(screen.getByTestId('gcp-generate-command-btn'));
 };
 

@@ -719,7 +719,7 @@ export const requestTemplate = async (
 	);
 	await userEvent.click(await screen.findByText('From a template'));
 	await userEvent.type(
-		await screen.findByTestId('request-dashboard-name'),
+		await screen.findByTestId('request-dashboard-name-field'),
 		'Redis overview',
 	);
 	await userEvent.click(await screen.findByTestId('request-dashboard-submit'));

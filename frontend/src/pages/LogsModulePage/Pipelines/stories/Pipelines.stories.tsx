@@ -121,9 +121,7 @@ export const AddSeverityParserProcessor: Story = {
 	play: async (context): Promise<void> => {
 		await AddProcessor.play?.(context);
 		await userEvent.click(await screen.findByText('Grok'));
-		await userEvent.click(
-			await screen.findByRole('option', { name: 'Severity Parser' }),
-		);
+		await userEvent.click(await screen.findByTitle('Severity Parser'));
 		await screen.findByText('Parse Severity Value From');
 	},
 };

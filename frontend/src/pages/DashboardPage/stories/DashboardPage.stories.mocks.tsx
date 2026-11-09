@@ -602,12 +602,10 @@ export const openVariableEditor = async (
  */
 export const findPreviewValue = async (value: string): Promise<HTMLElement> => {
 	const label = await screen.findByText('Preview of Values');
+	// The label text sits in a wrapper beside the values, so the row is two levels up.
+	const section = label.parentElement?.parentElement as HTMLElement;
 
-	return within(label.parentElement as HTMLElement).findByText(
-		value,
-		undefined,
-		PAGE_LOAD,
-	);
+	return within(section).findByText(value, undefined, PAGE_LOAD);
 };
 
 export const pickVariableType = async (type: VariableType): Promise<void> => {

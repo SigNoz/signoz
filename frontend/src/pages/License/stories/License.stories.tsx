@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { userEvent, within } from 'storybook/test';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -48,5 +48,9 @@ export const KeyRejected: Story = {
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement }): Promise<void> => {
 		await applyKey(canvasElement);
+		// Hovering holds the notification past its 4.5s timer, which the capture outlasts.
+		await userEvent.hover(
+			await screen.findByText('That key is not valid for this deployment.'),
+		);
 	},
 };

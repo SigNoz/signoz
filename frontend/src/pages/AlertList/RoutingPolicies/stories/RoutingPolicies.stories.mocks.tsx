@@ -142,7 +142,9 @@ export const fillNewPolicy = async (): Promise<void> => {
 		await screen.findByPlaceholderText(/e\.g\. service\.name/),
 		'severity = "critical"',
 	);
-	await userEvent.click(await screen.findByRole('combobox'));
+	const dialog = await screen.findByRole('dialog');
+
+	await userEvent.click(await within(dialog).findByRole('combobox'));
 	const options = await screen.findAllByTitle('ops-slack');
 	await userEvent.click(options[options.length - 1]);
 	await userEvent.keyboard('{Escape}');
