@@ -8,7 +8,7 @@ import {
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { Form, Select, Spin } from 'antd';
 import { AZURE_REGIONS } from 'container/Integrations/constants';
 import {
@@ -77,8 +77,8 @@ function CloudAccountSetupModal({
 		return null;
 	}, [modalState]);
 
-	const footer = (
-		<div className="cloud-account-setup-modal__footer">
+	const footerActions = (
+		<>
 			<Button
 				size="md"
 				variant="outlined"
@@ -111,26 +111,20 @@ function CloudAccountSetupModal({
 					Check Again
 				</Button>
 			)}
-		</div>
+		</>
 	);
 
 	return (
 		<>
-			<DrawerWrapper
-				open={true}
-				className="cloud-account-setup-modal"
-				onOpenChange={(open): void => {
-					if (!open) {
-						requestClose();
-					}
-				}}
-				direction="right"
-				showCloseButton
+			<Drawer
+				type="task"
+				open
+				onClose={requestClose}
 				title="Add Azure Account"
 				width="wide"
-				footer={footer}
+				footerSuffix={footerActions}
 			>
-				<div className="cloud-account-setup-modal__content">
+				<div className="cloud-account-setup-modal">
 					<div className="cloud-account-setup-prerequisites">
 						<div className="cloud-account-setup-prerequisites__title">
 							Prerequisites
@@ -297,7 +291,7 @@ function CloudAccountSetupModal({
 						</div>
 					</Form>
 				</div>
-			</DrawerWrapper>
+			</Drawer>
 			<CloseSetupConfirm
 				providerName="Azure"
 				testIdPrefix="azure"

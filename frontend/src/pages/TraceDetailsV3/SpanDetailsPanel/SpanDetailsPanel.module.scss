@@ -122,3 +122,7 @@
 		background: var(--l2-background) !important;
 	}
 }
+
+:global([data-testid='span-details-drawer']) {
+	--drawer-body-padding: 0;
+}

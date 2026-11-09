@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 
 import styles from './SetupDrawerLayout.module.scss';
 
@@ -17,23 +17,17 @@ function SetupDrawerLayout({
 	const [footerSlot, setFooterSlot] = useState<HTMLDivElement | null>(null);
 
 	return (
-		<DrawerWrapper
-			open={true}
-			className={styles.setupDrawer}
-			onOpenChange={(open): void => {
-				if (!open) {
-					onClose();
-				}
-			}}
-			direction="right"
-			showCloseButton
+		<Drawer
+			type="task"
+			open
+			onClose={onClose}
 			title="Connect Google Cloud Platform"
 			width="extra-wide"
-			footer={<div ref={setFooterSlot} className={styles.footerSlot} />}
+			footerSuffix={<div ref={setFooterSlot} className={styles.footerSlot} />}
 			testId="gcp-setup-drawer"
 		>
-			{children(footerSlot)}
-		</DrawerWrapper>
+			<div className={styles.body}>{children(footerSlot)}</div>
+		</Drawer>
 	);
 }
 

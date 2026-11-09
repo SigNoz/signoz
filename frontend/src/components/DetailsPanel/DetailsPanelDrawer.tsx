@@ -1,56 +1,48 @@
-import { Drawer, DrawerContent } from '@signozhq/ui/drawer';
-import cx from 'classnames';
-import { AnimatePresence } from 'motion/react';
-
-import styles from './DetailsPanelDrawer.module.scss';
+import { ReactNode } from 'react';
+import { Drawer } from '@signozhq/ui/drawer';
 
 interface DetailsPanelDrawerProps {
 	isOpen: boolean;
 	onClose: () => void;
-	children: React.ReactNode;
-	className?: string;
+	title: string;
+	children: ReactNode;
+	headerPrefix?: ReactNode;
+	headerSuffix?: ReactNode;
+	loading?: boolean;
 	testId?: string;
 }
 
 function DetailsPanelDrawer({
 	isOpen,
 	onClose,
+	title,
 	children,
-	className,
+	headerPrefix,
+	headerSuffix,
+	loading,
 	testId,
 }: DetailsPanelDrawerProps): JSX.Element {
 	return (
 		<Drawer
+			type="inspector"
 			open={isOpen}
-			onOpenChange={(open): void => {
-				if (!open) {
-					onClose();
-				}
-			}}
-			modal={false}
+			onClose={onClose}
+			title={title}
+			width="extra-wide"
+			headerPrefix={headerPrefix}
+			headerSuffix={headerSuffix}
+			loading={loading}
+			testId={testId}
 		>
-			<AnimatePresence>
-				{isOpen && (
-					<DrawerContent
-						forceMount
-						direction="right"
-						width="extra-wide"
-						showOverlay={false}
-						// Outside presses are left to the page, which knows what counts as inside.
-						onInteractOutside={(e): void => e.preventDefault()}
-						className={cx(styles.drawer, className)}
-						testId={testId}
-					>
-						<div className={styles.body}>{children}</div>
-					</DrawerContent>
-				)}
-			</AnimatePresence>
+			{children}
 		</Drawer>
 	);
 }
 
 DetailsPanelDrawer.defaultProps = {
-	className: undefined,
+	headerPrefix: undefined,
+	headerSuffix: undefined,
+	loading: false,
 	testId: undefined,
 };
 

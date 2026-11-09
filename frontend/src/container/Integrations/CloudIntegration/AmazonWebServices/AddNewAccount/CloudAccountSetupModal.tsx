@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { useIntegrationModal } from 'hooks/integration/aws/useIntegrationModal';
 
 import {
@@ -44,7 +44,7 @@ function CloudAccountSetupModal({
 
 	const renderContent = useCallback(() => {
 		return (
-			<div className="cloud-account-setup-modal__content">
+			<div className="cloud-account-setup-modal">
 				<RegionForm
 					form={form}
 					modalState={modalState}
@@ -76,8 +76,8 @@ function CloudAccountSetupModal({
 		setIncludeAllRegions,
 	]);
 
-	const footer = (
-		<div className="cloud-account-setup-modal__footer">
+	const footerActions = (
+		<>
 			<Button
 				size="md"
 				variant="outlined"
@@ -112,7 +112,7 @@ function CloudAccountSetupModal({
 					Check Again
 				</Button>
 			)}
-		</div>
+		</>
 	);
 
 	const getSelectedRegionsCount = useCallback(
@@ -153,26 +153,18 @@ function CloudAccountSetupModal({
 
 	const modalConfig = getModalConfig();
 
-	const handleDrawerOpenChange = (open: boolean): void => {
-		if (!open) {
-			requestClose();
-		}
-	};
-
 	return (
 		<>
-			<DrawerWrapper
-				open={true}
-				className="cloud-account-setup-modal"
-				onOpenChange={handleDrawerOpenChange}
-				direction="right"
-				showCloseButton
+			<Drawer
+				type="task"
+				open
+				onClose={requestClose}
 				title={modalConfig.title}
 				width="wide"
-				footer={footer}
+				footerSuffix={footerActions}
 			>
 				{renderContent()}
-			</DrawerWrapper>
+			</Drawer>
 			<CloseSetupConfirm
 				providerName="AWS"
 				testIdPrefix="aws"

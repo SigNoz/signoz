@@ -1,25 +1,7 @@
-.setupDrawer {
-	// Bounded flex column so the header/footer stay put and only the body
-	// scrolls when content overflows.
+.body {
 	display: flex;
 	flex-direction: column;
-	overflow: hidden;
-
-	[data-slot='drawer-header'],
-	[data-slot='drawer-footer'] {
-		flex-shrink: 0;
-	}
-
-	// The drawer body renders inside [data-slot='drawer-description'] — this is
-	// the only region allowed to scroll.
-	[data-slot='drawer-description'] {
-		display: flex;
-		flex: 1 1 auto;
-		flex-direction: column;
-		gap: var(--spacing-10);
-		min-height: 0;
-		overflow-y: auto;
-	}
+	gap: var(--spacing-10);
 }
 
 .footerSlot {

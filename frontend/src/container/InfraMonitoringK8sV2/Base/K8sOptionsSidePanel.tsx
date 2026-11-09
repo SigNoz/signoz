@@ -1,6 +1,6 @@
 import { ChangeEvent, ReactNode, useCallback, useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
 import { Check, Minus, Plus } from '@signozhq/icons';
@@ -236,22 +236,16 @@ function K8sOptionsSidePanel<TData>({
 	);
 
 	return (
-		<DrawerWrapper
+		<Drawer
+			type="task"
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onClose();
-				}
-			}}
+			onClose={onClose}
 			title="Options"
-			direction="right"
 			width="narrow"
-			showCloseButton
-			showOverlay={false}
-			className={styles.drawer}
+			testId="k8s-options-side-panel"
 		>
 			{drawerContent}
-		</DrawerWrapper>
+		</Drawer>
 	);
 }
 

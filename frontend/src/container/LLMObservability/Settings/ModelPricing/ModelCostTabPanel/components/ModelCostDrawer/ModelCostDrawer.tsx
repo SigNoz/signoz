@@ -1,5 +1,5 @@
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { Select } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
@@ -68,8 +68,8 @@ function ModelCostDrawer({
 		drawerTitle = 'Edit model cost';
 	}
 
-	const footer = (
-		<div className={styles.footer}>
+	const footerActions = (
+		<>
 			<Button
 				size="md"
 				variant="outlined"
@@ -93,53 +93,139 @@ function ModelCostDrawer({
 					Save
 				</Button>
 			)}
-		</div>
+		</>
 	);
 
 	return (
-		<DrawerWrapper
+		<Drawer
+			type="task"
 			open={isOpen}
-			onOpenChange={(open): void => {
-				if (!open) {
-					onClose();
-				}
-			}}
-			direction="right"
+			onClose={onClose}
 			width="base"
-			className={styles.modelCostDrawer}
-			footer={footer}
 			title={drawerTitle}
-			drawerHeaderProps={{ className: styles.title }}
+			testId="model-cost-drawer"
+			footerSuffix={footerActions}
 		>
-			<div className={styles.drawerSection}>
-				<label htmlFor="billing-model-id" className={styles.fieldLabel}>
-					Billing Model ID{' '}
-					<span className={styles.required} aria-hidden="true">
-						*
-					</span>
-				</label>
+			<div className={styles.body}>
+				<div className={styles.drawerSection}>
+					<label htmlFor="billing-model-id" className={styles.fieldLabel}>
+						Billing Model ID{' '}
+						<span className={styles.required} aria-hidden="true">
+							*
+						</span>
+					</label>
+					<Controller
+						name="modelName"
+						control={control}
+						rules={{
+							validate: (value): true | string => validateModelName(value, mode),
+						}}
+						render={({ field, fieldState }): JSX.Element => (
+							<>
+								<Input
+									id="billing-model-id"
+									placeholder="e.g. openai:gpt-4o"
+									required
+									value={field.value}
+									disabled={mode === 'edit' || metadataReadOnly}
+									disabledTooltip={
+										canManage && mode === 'edit'
+											? 'The model ID cannot be changed after creation'
+											: undefined
+									}
+									aria-invalid={!!fieldState.error}
+									onChange={(e): void => field.onChange(e.target.value)}
+									testId="drawer-model-id-input"
+								/>
+								{fieldState.error && (
+									<Typography.Text as="p" size="small" color="danger" role="alert">
+										{fieldState.error.message}
+									</Typography.Text>
+								)}
+							</>
+						)}
+					/>
+				</div>
+
+				<div className={styles.drawerSection}>
+					<label htmlFor="provider-select" className={styles.fieldLabel}>
+						Provider
+					</label>
+					<Controller
+						name="provider"
+						control={control}
+						rules={{ validate: validateProvider }}
+						render={({ field, fieldState }): JSX.Element => (
+							<>
+								<Select
+									id="provider-select"
+									value={field.value}
+									onChange={(value: string): void => field.onChange(value)}
+									items={PROVIDER_OPTIONS}
+									placeholder="Select a provider"
+									disabled={mode === 'edit' || metadataReadOnly}
+									disabledTooltip={
+										canManage && mode === 'edit'
+											? 'The provider cannot be changed after creation'
+											: undefined
+									}
+									testId="drawer-provider-select"
+								/>
+								{fieldState.error && (
+									<Typography.Text size="small" color="danger" role="alert">
+										{fieldState.error.message}
+									</Typography.Text>
+								)}
+							</>
+						)}
+					/>
+				</div>
+
 				<Controller
-					name="modelName"
+					name="patterns"
+					control={control}
+					render={({ field }): JSX.Element => (
+						<PatternEditor
+							patterns={field.value}
+							isReadOnly={metadataReadOnly}
+							onChange={field.onChange}
+						/>
+					)}
+				/>
+
+				{/* Source is auto vs. override — a choice only a manager can make, so
+			    there's nothing to show a read-only viewer. */}
+				{canManage && (
+					<Controller
+						name="isOverride"
+						control={control}
+						// Pricing requirements depend on this toggle, so re-validate pricing
+						// whenever the source changes (clears/sets the pricing error).
+						rules={{ deps: ['pricing'] }}
+						render={({ field }): JSX.Element => (
+							<SourceSelector
+								isOverride={field.value}
+								isReadOnly={metadataReadOnly}
+								disableAuto={mode === 'add' || !initialDraft.sourceId}
+								onChange={field.onChange}
+							/>
+						)}
+					/>
+				)}
+
+				<Controller
+					name="pricing"
 					control={control}
 					rules={{
-						validate: (value): true | string => validateModelName(value, mode),
+						validate: (value, values): true | string =>
+							validatePricing(value, values.isOverride),
 					}}
 					render={({ field, fieldState }): JSX.Element => (
 						<>
-							<Input
-								id="billing-model-id"
-								placeholder="e.g. openai:gpt-4o"
-								required
-								value={field.value}
-								disabled={mode === 'edit' || metadataReadOnly}
-								disabledTooltip={
-									canManage && mode === 'edit'
-										? 'The model ID cannot be changed after creation'
-										: undefined
-								}
-								aria-invalid={!!fieldState.error}
-								onChange={(e): void => field.onChange(e.target.value)}
-								testId="drawer-model-id-input"
+							<PricingFields
+								pricing={field.value}
+								isReadOnly={pricingReadOnly}
+								onChange={(patch): void => field.onChange({ ...field.value, ...patch })}
 							/>
 							{fieldState.error && (
 								<Typography.Text as="p" size="small" color="danger" role="alert">
@@ -149,103 +235,14 @@ function ModelCostDrawer({
 						</>
 					)}
 				/>
-			</div>
 
-			<div className={styles.drawerSection}>
-				<label htmlFor="provider-select" className={styles.fieldLabel}>
-					Provider
-				</label>
-				<Controller
-					name="provider"
-					control={control}
-					rules={{ validate: validateProvider }}
-					render={({ field, fieldState }): JSX.Element => (
-						<>
-							<Select
-								id="provider-select"
-								value={field.value}
-								onChange={(value: string): void => field.onChange(value)}
-								items={PROVIDER_OPTIONS}
-								placeholder="Select a provider"
-								disabled={mode === 'edit' || metadataReadOnly}
-								disabledTooltip={
-									canManage && mode === 'edit'
-										? 'The provider cannot be changed after creation'
-										: undefined
-								}
-								testId="drawer-provider-select"
-							/>
-							{fieldState.error && (
-								<Typography.Text size="small" color="danger" role="alert">
-									{fieldState.error.message}
-								</Typography.Text>
-							)}
-						</>
-					)}
-				/>
-			</div>
-
-			<Controller
-				name="patterns"
-				control={control}
-				render={({ field }): JSX.Element => (
-					<PatternEditor
-						patterns={field.value}
-						isReadOnly={metadataReadOnly}
-						onChange={field.onChange}
-					/>
+				{saveError && (
+					<Typography.Text as="p" size="small" color="danger" role="alert">
+						{saveError}
+					</Typography.Text>
 				)}
-			/>
-
-			{/* Source is auto vs. override — a choice only a manager can make, so
-			    there's nothing to show a read-only viewer. */}
-			{canManage && (
-				<Controller
-					name="isOverride"
-					control={control}
-					// Pricing requirements depend on this toggle, so re-validate pricing
-					// whenever the source changes (clears/sets the pricing error).
-					rules={{ deps: ['pricing'] }}
-					render={({ field }): JSX.Element => (
-						<SourceSelector
-							isOverride={field.value}
-							isReadOnly={metadataReadOnly}
-							disableAuto={mode === 'add' || !initialDraft.sourceId}
-							onChange={field.onChange}
-						/>
-					)}
-				/>
-			)}
-
-			<Controller
-				name="pricing"
-				control={control}
-				rules={{
-					validate: (value, values): true | string =>
-						validatePricing(value, values.isOverride),
-				}}
-				render={({ field, fieldState }): JSX.Element => (
-					<>
-						<PricingFields
-							pricing={field.value}
-							isReadOnly={pricingReadOnly}
-							onChange={(patch): void => field.onChange({ ...field.value, ...patch })}
-						/>
-						{fieldState.error && (
-							<Typography.Text as="p" size="small" color="danger" role="alert">
-								{fieldState.error.message}
-							</Typography.Text>
-						)}
-					</>
-				)}
-			/>
-
-			{saveError && (
-				<Typography.Text as="p" size="small" color="danger" role="alert">
-					{saveError}
-				</Typography.Text>
-			)}
-		</DrawerWrapper>
+			</div>
+		</Drawer>
 	);
 }
 

@@ -38,17 +38,3 @@
 	color: var(--callout-error-title);
 	font-size: var(--periscope-font-size-base);
 }
-
-.footer {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	width: 100%;
-	gap: var(--spacing-4);
-}
-
-.footerActions {
-	display: flex;
-	gap: var(--spacing-4);
-	margin-left: auto;
-}

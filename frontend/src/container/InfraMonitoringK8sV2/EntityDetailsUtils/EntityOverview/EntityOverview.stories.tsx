@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { GlobalTimeProvider } from 'store/globalTime';
 
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -36,17 +36,19 @@ const meta = {
 	...storyMocks(overviewMocks, { route }),
 	decorators: [
 		(Story): JSX.Element => (
-			<DrawerWrapper
+			<Drawer
+				type="task"
 				open
-				direction="right"
 				title="app-demo-loadgenerator-579fbdd749-q5kgd"
-				onOpenChange={(): void => undefined}
-				className={drawerStyles.entityDetailDrawer}
+				width="entity"
+				onClose={(): void => undefined}
 			>
-				<GlobalTimeProvider>
-					<Story />
-				</GlobalTimeProvider>
-			</DrawerWrapper>
+				<div className={drawerStyles.body}>
+					<GlobalTimeProvider>
+						<Story />
+					</GlobalTimeProvider>
+				</div>
+			</Drawer>
 		),
 	],
 } satisfies Meta<OverviewArgs>;

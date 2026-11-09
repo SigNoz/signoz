@@ -1,4 +1,4 @@
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { Button } from 'antd';
 import { useState } from 'react';
 
@@ -63,11 +63,11 @@ function LayeringFixture({ host }: LayeringFixtureProps): JSX.Element {
 				>
 					Open drawer
 				</Button>
-				<DrawerWrapper
-					direction="right"
+				<Drawer
+					type="task"
 					open={isHostOpen}
 					title="Layering drawer"
-					onOpenChange={setIsHostOpen}
+					onClose={(): void => setIsHostOpen(false)}
 				>
 					<div
 						className={styles.overlayContent}
@@ -85,7 +85,7 @@ function LayeringFixture({ host }: LayeringFixtureProps): JSX.Element {
 							onChange={(value): void => setEnvironment(String(value))}
 						/>
 					</div>
-				</DrawerWrapper>
+				</Drawer>
 			</div>
 		);
 	}

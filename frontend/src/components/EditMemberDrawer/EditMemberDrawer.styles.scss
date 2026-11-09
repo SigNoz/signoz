@@ -102,23 +102,10 @@
 		text-transform: uppercase;
 	}
 
-	&__footer {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		width: 100%;
-	}
-
 	&__footer-left {
 		display: flex;
 		align-items: center;
 		gap: var(--spacing-4);
-	}
-
-	&__footer-right {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-6);
 	}
 
 	&__footer-divider {

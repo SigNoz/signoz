@@ -1,43 +1,4 @@
 .cloud-account-setup-modal {
-	background: var(--l1-background);
-	color: var(--l1-foreground);
-
-	[data-slot='drawer-title'] {
-		color: var(--l1-foreground);
-	}
-
-	> div {
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-	}
-
-	&__footer {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		width: 100%;
-	}
-
-	&__content {
-		flex: 1;
-		overflow-y: auto;
-		min-height: 0;
-		scrollbar-width: thin;
-		padding-right: 16px;
-
-		&::-webkit-scrollbar-thumb {
-			background: var(--l1-border);
-		}
-
-		&::-webkit-scrollbar-track {
-			background: var(--l1-background);
-		}
-
-		scrollbar-width: thin;
-		scrollbar-color: var(--l3-background) var(--l1-background);
-	}
-
 	.cloud-account-setup-prerequisites {
 		display: flex;
 		flex-direction: column;

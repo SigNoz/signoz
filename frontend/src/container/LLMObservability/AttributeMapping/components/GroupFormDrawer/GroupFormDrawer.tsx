@@ -1,5 +1,5 @@
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
 
@@ -29,19 +29,16 @@ function GroupFormDrawer({
 	const isValid = isGroupDraftValid(draft);
 
 	return (
-		<DrawerWrapper
+		<Drawer
+			type="task"
 			open={isOpen}
-			onOpenChange={(open): void => {
-				if (!open) {
-					onClose();
-				}
-			}}
+			onClose={onClose}
 			title={isEdit ? 'Edit group' : 'New group'}
-			subTitle="A group gates which spans its mappings run on"
+			description="A group gates which spans its mappings run on"
 			width="wide"
 			testId="group-form-drawer"
-			footer={
-				<div className={styles.groupFormFooter}>
+			footerSuffix={
+				<>
 					<Button
 						size="md"
 						variant="ghost"
@@ -62,7 +59,7 @@ function GroupFormDrawer({
 					>
 						{isEdit ? 'Save group' : 'Create group'}
 					</Button>
-				</div>
+				</>
 			}
 		>
 			<div className={styles.groupForm}>
@@ -115,7 +112,7 @@ function GroupFormDrawer({
 					Leave both empty to run this group on every span.
 				</span>
 			</div>
-		</DrawerWrapper>
+		</Drawer>
 	);
 }
 

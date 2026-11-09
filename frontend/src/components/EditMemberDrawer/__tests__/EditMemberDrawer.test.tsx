@@ -41,19 +41,22 @@ jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
 
 jest.mock('@signozhq/ui/drawer', () => ({
 	...jest.requireActual('@signozhq/ui/drawer'),
-	DrawerWrapper: ({
+	Drawer: ({
 		children,
-		footer,
+		footerPrefix,
+		footerSuffix,
 		open,
 	}: {
 		children?: ReactNode;
-		footer?: ReactNode;
+		footerPrefix?: ReactNode;
+		footerSuffix?: ReactNode;
 		open: boolean;
 	}): JSX.Element | null =>
 		open ? (
 			<div>
 				{children}
-				{footer}
+				{footerPrefix}
+				{footerSuffix}
 			</div>
 		) : null,
 }));

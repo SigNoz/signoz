@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Tabs, type TabsItemProps } from '@signozhq/ui/tabs';
 import { Bookmark, ChartColumnBig, List, ScrollText } from '@signozhq/icons';
@@ -50,7 +50,6 @@ import OpenInLogsExplorer from './SpanLogs/OpenInLogsExplorer';
 import SpanLogs from './SpanLogs/SpanLogs';
 import { useSpanContextLogs } from './SpanLogs/useSpanContextLogs';
 import SpanAIMessages from './SpanAIMessages/SpanAIMessages';
-import SpanDrawerHeader from './SpanDrawerHeader';
 import SpanSummary from './SpanSummary';
 
 import styles from './SpanDetailsPanel.module.scss';
@@ -477,32 +476,26 @@ function SpanDetailsPanel({
 	const PANEL_MARGIN_TOP = 50;
 	const PANEL_MARGIN_BOTTOM = 25;
 
+	const spanContent = selectedSpan ? (
+		<SpanDetailsContent
+			selectedSpan={selectedSpan}
+			traceStartTime={traceStartTime}
+			traceEndTime={traceEndTime}
+			isTraceBoundsLoading={isTraceBoundsLoading}
+		/>
+	) : null;
+
 	const content = (
 		<>
-			{variant === SpanDetailVariant.DRAWER ? (
-				<SpanDrawerHeader
-					title="Span details"
-					onClose={panelState.close}
-					actions={headerActions}
-				/>
-			) : (
-				<DetailsHeader
-					title="Span details"
-					onClose={panelState.close}
-					actions={headerActions}
-					className={
-						variant === SpanDetailVariant.DIALOG ? 'floating-panel__drag-handle' : ''
-					}
-				/>
-			)}
-			{selectedSpan ? (
-				<SpanDetailsContent
-					selectedSpan={selectedSpan}
-					traceStartTime={traceStartTime}
-					traceEndTime={traceEndTime}
-					isTraceBoundsLoading={isTraceBoundsLoading}
-				/>
-			) : (
+			<DetailsHeader
+				title="Span details"
+				onClose={panelState.close}
+				actions={headerActions}
+				className={
+					variant === SpanDetailVariant.DIALOG ? 'floating-panel__drag-handle' : ''
+				}
+			/>
+			{spanContent ?? (
 				<div className={styles.panelBody}>
 					<Skeleton active paragraph={{ rows: 6 }} title={{ width: '60%' }} />
 				</div>
@@ -518,14 +511,26 @@ function SpanDetailsPanel({
 	}
 
 	if (variant === SpanDetailVariant.DRAWER) {
+		const navAction = headerActions.find((action) => action.key === 'nav');
+		const suffixActions = headerActions.filter((action) => action.key !== 'nav');
+
 		return (
 			<DetailsPanelDrawer
 				isOpen={panelState.isOpen}
 				onClose={panelState.close}
-				className={cx(styles.panel, styles.drawerPanel)}
+				title="Span details"
+				headerPrefix={navAction?.component}
+				headerSuffix={
+					suffixActions.length > 0
+						? suffixActions.map((action) => (
+								<Fragment key={action.key}>{action.component}</Fragment>
+							))
+						: undefined
+				}
+				loading={!selectedSpan}
 				testId="span-details-drawer"
 			>
-				{content}
+				<div className={cx(styles.panel, styles.drawerPanel)}>{spanContent}</div>
 			</DetailsPanelDrawer>
 		);
 	}

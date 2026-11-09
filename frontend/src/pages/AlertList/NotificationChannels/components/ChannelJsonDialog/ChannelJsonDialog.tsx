@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import MEditor from '@monaco-editor/react';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { useGetNotificationChannel } from 'api/generated/services/channels';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import Spinner from 'components/Spinner';
@@ -66,13 +66,10 @@ function ChannelJsonDialog({
 	const kindHasSecrets = channel ? hasSecrets(channel.config.kind) : false;
 
 	return (
-		<DrawerWrapper
+		<Drawer
+			type="task"
 			open
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onClose();
-				}
-			}}
+			onClose={onClose}
 			title={`${channelName} / JSON`}
 			width="wide"
 			testId="channel-json-dialog"
@@ -108,7 +105,7 @@ function ChannelJsonDialog({
 					</div>
 				</div>
 			)}
-		</DrawerWrapper>
+		</Drawer>
 	);
 }
 
