@@ -1,5 +1,6 @@
 [data-run-query-btn] {
 	--button-min-width: 150px;
+	--button-flex-shrink: 0;
 }
 .cmd-hint {
 	display: inline-flex;

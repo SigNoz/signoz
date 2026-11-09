@@ -283,7 +283,6 @@ function AddSpanToFunnelModal({
 								key="create"
 								variant="outlined"
 								color="secondary"
-								width="153px"
 								onClick={handleCreateNewClick}
 								prefix={<Plus size={14} />}
 							>
