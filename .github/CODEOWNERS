@@ -209,6 +209,10 @@ go.mod @therealpandey
 /frontend/src/types/api/alerts/ @SigNoz/pulse-frontend
 /frontend/src/providers/Alert.tsx @SigNoz/pulse-frontend
 /frontend/src/constants/alerts.ts @SigNoz/pulse-frontend
+/frontend/src/container/PlannedDowntime/ @SigNoz/pulse-frontend
+/frontend/src/hooks/alerts/ @SigNoz/pulse-frontend
+/frontend/src/container/Home/AlertRules/ @SigNoz/pulse-frontend
+/frontend/src/container/Home/__tests__/AlertRules.test.tsx @SigNoz/pulse-frontend
 
 ## Notification Channels
 /frontend/src/pages/ChannelsEdit/ @SigNoz/pulse-frontend
