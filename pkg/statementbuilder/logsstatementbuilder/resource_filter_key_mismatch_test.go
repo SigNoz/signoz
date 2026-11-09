@@ -22,25 +22,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// keysVanishAfterFirstLookup drops some keys from every lookup after the first,
-// as when the key tables are emptied while a statement is being built.
-type keysVanishAfterFirstLookup struct {
-	*telemetrytypestest.MockMetadataStore
-	vanished []string
-	calls    int
-}
-
-func (s *keysVanishAfterFirstLookup) GetKeysMulti(ctx context.Context, orgID valuer.UUID, selectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
-	keys, complete, err := s.MockMetadataStore.GetKeysMulti(ctx, orgID, selectors)
-	s.calls++
-	if s.calls > 1 {
-		for _, name := range s.vanished {
-			delete(keys, name)
-		}
-	}
-	return keys, complete, err
-}
-
 func TestStatementBuilderKeepsResourceConditionsWhenKeysVanishMidBuild(t *testing.T) {
 	cases := map[string][]string{
 		"all resource keys vanish":  {"service.name", "deployment.environment"},
@@ -70,7 +51,7 @@ func TestStatementBuilderKeepsResourceConditionsWhenKeysVanishMidBuild(t *testin
 					FieldContext:  telemetrytypes.FieldContextResource,
 					FieldDataType: telemetrytypes.FieldDataTypeString,
 				}}
-				store := &keysVanishAfterFirstLookup{MockMetadataStore: mock, vanished: vanished}
+				store := &telemetrytypestest.KeysVanishAfterFirstLookup{MockMetadataStore: mock, Vanished: vanished}
 				storage := logstelemetryschema.NewStorage()
 				aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
 				statementBuilder := NewLogQueryStatementBuilder(

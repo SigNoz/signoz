@@ -14,8 +14,8 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-// resourceFilterStatementBuilder builds resource fingerprint filter CTEs.
-type resourceFilterStatementBuilder[T any] struct {
+// StatementBuilder builds resource fingerprint filter CTEs.
+type StatementBuilder[T any] struct {
 	logger        *slog.Logger
 	dbName        string
 	tableName     string
@@ -30,8 +30,8 @@ type resourceFilterStatementBuilder[T any] struct {
 
 // Ensure interface compliance at compile time.
 var (
-	_ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*resourceFilterStatementBuilder[qbtypes.TraceAggregation])(nil)
-	_ qbtypes.StatementBuilder[qbtypes.LogAggregation]   = (*resourceFilterStatementBuilder[qbtypes.LogAggregation])(nil)
+	_ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*StatementBuilder[qbtypes.TraceAggregation])(nil)
+	_ qbtypes.StatementBuilder[qbtypes.LogAggregation]   = (*StatementBuilder[qbtypes.LogAggregation])(nil)
 )
 
 func New[T any](
@@ -43,9 +43,9 @@ func New[T any](
 	metadataStore telemetrytypes.MetadataStore,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	fl flagger.Flagger,
-) *resourceFilterStatementBuilder[T] {
+) *StatementBuilder[T] {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/statementbuilder/resourcefilter")
-	return &resourceFilterStatementBuilder[T]{
+	return &StatementBuilder[T]{
 		logger:         set.Logger(),
 		dbName:         dbName,
 		tableName:      tableName,
@@ -58,7 +58,7 @@ func New[T any](
 	}
 }
 
-func (b *resourceFilterStatementBuilder[T]) getKeySelectors(query qbtypes.QueryBuilderQuery[T]) []*telemetrytypes.FieldKeySelector {
+func (b *StatementBuilder[T]) getKeySelectors(query qbtypes.QueryBuilderQuery[T]) []*telemetrytypes.FieldKeySelector {
 	var keySelectors []*telemetrytypes.FieldKeySelector
 
 	if query.Filter != nil && query.Filter.Expression != "" {
@@ -82,7 +82,7 @@ func (b *resourceFilterStatementBuilder[T]) getKeySelectors(query qbtypes.QueryB
 }
 
 // Build builds a SQL query based on the given parameters.
-func (b *resourceFilterStatementBuilder[T]) Build(
+func (b *StatementBuilder[T]) Build(
 	ctx context.Context,
 	orgID valuer.UUID,
 	start uint64,
@@ -102,7 +102,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 // BuildWithKeys builds the statement from keys the caller has already resolved.
 // A caller that also compiles the filter itself passes its own keys, so that both
 // statements treat the same filter keys as resource keys.
-func (b *resourceFilterStatementBuilder[T]) BuildWithKeys(
+func (b *StatementBuilder[T]) BuildWithKeys(
 	ctx context.Context,
 	orgID valuer.UUID,
 	start uint64,
@@ -136,7 +136,7 @@ func (b *resourceFilterStatementBuilder[T]) BuildWithKeys(
 
 // BuildCount returns a statement that counts the distinct fingerprints matching
 // the resource filter. Returns (nil, nil) when the filter is a no-op.
-func (b *resourceFilterStatementBuilder[T]) BuildCount(
+func (b *StatementBuilder[T]) BuildCount(
 	ctx context.Context,
 	orgID valuer.UUID,
 	start uint64,
@@ -158,7 +158,7 @@ func (b *resourceFilterStatementBuilder[T]) BuildCount(
 // addConditions adds both filter and time conditions to the query.
 // Returns true (isNoOp) when the filter expression evaluated to no resource conditions,
 // meaning the CTE would select all fingerprints and should be skipped entirely.
-func (b *resourceFilterStatementBuilder[T]) addConditions(
+func (b *StatementBuilder[T]) addConditions(
 	ctx context.Context,
 	orgID valuer.UUID,
 	sb *sqlbuilder.SelectBuilder,
@@ -205,7 +205,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 }
 
 // addTimeFilter adds time-based filtering conditions.
-func (b *resourceFilterStatementBuilder[T]) addTimeFilter(sb *sqlbuilder.SelectBuilder, start, end uint64) {
+func (b *StatementBuilder[T]) addTimeFilter(sb *sqlbuilder.SelectBuilder, start, end uint64) {
 	// Convert nanoseconds to seconds and adjust start bucket
 	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
 	var endBucket uint64

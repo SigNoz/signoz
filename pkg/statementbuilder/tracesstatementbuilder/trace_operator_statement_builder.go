@@ -22,7 +22,7 @@ type traceOperatorStatementBuilder struct {
 	metadataStore             telemetrytypes.MetadataStore
 	storage                   qbtypes.Storage
 	traceStmtBuilder          qbtypes.StatementBuilder[qbtypes.TraceAggregation]
-	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
+	resourceFilterStmtBuilder *resourcefilter.StatementBuilder[qbtypes.TraceAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
 	fl                        flagger.Flagger
 }

@@ -21,25 +21,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// keysVanishAfterFirstLookup drops some keys from every lookup after the first,
-// as when the key tables are emptied while a statement is being built.
-type keysVanishAfterFirstLookup struct {
-	*telemetrytypestest.MockMetadataStore
-	vanished []string
-	calls    int
-}
-
-func (s *keysVanishAfterFirstLookup) GetKeysMulti(ctx context.Context, orgID valuer.UUID, selectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
-	keys, complete, err := s.MockMetadataStore.GetKeysMulti(ctx, orgID, selectors)
-	s.calls++
-	if s.calls > 1 {
-		for _, name := range s.vanished {
-			delete(keys, name)
-		}
-	}
-	return keys, complete, err
-}
-
 func TestStatementBuilderKeepsResourceConditionsWhenKeysVanishMidBuild(t *testing.T) {
 	cases := map[string][]string{
 		"all resource keys vanish":  {"service.name", "deployment.environment"},
@@ -63,7 +44,7 @@ func TestStatementBuilderKeepsResourceConditionsWhenKeysVanishMidBuild(t *testin
 				storage := tracestelemetryschema.NewStorage(nil)
 				mock := telemetrytypestest.NewMockMetadataStore()
 				mock.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
-				store := &keysVanishAfterFirstLookup{MockMetadataStore: mock, vanished: vanished}
+				store := &telemetrytypestest.KeysVanishAfterFirstLookup{MockMetadataStore: mock, Vanished: vanished}
 				aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
 				statementBuilder := NewTraceQueryStatementBuilder(
 					instrumentationtest.New().ToProviderSettings(),
@@ -86,5 +67,46 @@ func TestStatementBuilderKeepsResourceConditionsWhenKeysVanishMidBuild(t *testin
 				}
 			})
 		}
+	}
+}
+
+func TestTraceOperatorKeepsResourceConditionsWhenKeysVanishMidBuild(t *testing.T) {
+	cases := map[string][]string{
+		"all resource keys vanish":  {"service.name", "deployment.environment"},
+		"one resource key vanishes": {"deployment.environment"},
+	}
+	for name, vanished := range cases {
+		t.Run(name, func(t *testing.T) {
+			fl := flaggertest.New(t)
+			storage := tracestelemetryschema.NewStorage(nil)
+			mock := telemetrytypestest.NewMockMetadataStore()
+			mock.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC))
+			store := &telemetrytypestest.KeysVanishAfterFirstLookup{MockMetadataStore: mock, Vanished: vanished}
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
+			traceStmtBuilder := NewTraceQueryStatementBuilder(
+				instrumentationtest.New().ToProviderSettings(),
+				store, storage, aggExprRewriter, nil, fl, false, 100000,
+			)
+			statementBuilder := NewTraceOperatorStatementBuilder(
+				instrumentationtest.New().ToProviderSettings(),
+				store, storage, traceStmtBuilder, aggExprRewriter, fl,
+			)
+
+			operator := qbtypes.QueryBuilderTraceOperator{Expression: "A", Limit: 10}
+			require.NoError(t, operator.ParseExpression())
+			q, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, qbtypes.RequestTypeRaw, operator,
+				&qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Name:   "A",
+						Signal: telemetrytypes.SignalTraces,
+						Filter: &qbtypes.Filter{Expression: "service.name = 'redis' AND deployment.environment = 'prod' AND has_error = true"},
+					},
+				}}},
+			)
+			require.NoError(t, err)
+			require.True(t, slices.Contains(q.Args, any("redis")), q.Query)
+			require.True(t, slices.Contains(q.Args, any("prod")), q.Query)
+		})
 	}
 }

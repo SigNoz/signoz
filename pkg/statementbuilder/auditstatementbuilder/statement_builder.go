@@ -24,7 +24,7 @@ type auditQueryStatementBuilder struct {
 	logger                    *slog.Logger
 	metadataStore             telemetrytypes.MetadataStore
 	storage                   qbtypes.Storage
-	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation]
+	resourceFilterStmtBuilder *resourcefilter.StatementBuilder[qbtypes.LogAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
 	fullTextColumn            *telemetrytypes.TelemetryFieldKey
 	fl                        flagger.Flagger
@@ -234,7 +234,7 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 		columnWarnings []string
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables); err != nil {
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, keys, variables); err != nil {
 		return nil, err
 	} else if frag != "" {
 		cteFragments = append(cteFragments, frag)
@@ -329,7 +329,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 		columnWarnings []string
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables); err != nil {
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, keys, variables); err != nil {
 		return nil, err
 	} else if frag != "" {
 		cteFragments = append(cteFragments, frag)
@@ -472,7 +472,7 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 		columnWarnings []string
 	)
 
-	if frag, args, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables); err != nil {
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, keys, variables); err != nil {
 		return nil, err
 	} else if frag != "" && !skipResourceCTE {
 		cteFragments = append(cteFragments, frag)
@@ -630,9 +630,10 @@ func (b *auditQueryStatementBuilder) maybeAttachResourceFilter(
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (cteSQL string, cteArgs []any, err error) {
-	stmt, err := b.resourceFilterStmtBuilder.Build(ctx, orgID, start, end, qbtypes.RequestTypeRaw, query, variables)
+	stmt, err := b.resourceFilterStmtBuilder.BuildWithKeys(ctx, orgID, start, end, query, variables, keys)
 	if err != nil {
 		return "", nil, err
 	}

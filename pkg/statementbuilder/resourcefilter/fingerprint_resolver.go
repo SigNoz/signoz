@@ -12,7 +12,7 @@ import (
 )
 
 type ResourceFingerprintResolver[T any] struct {
-	stmtBuilder    *resourceFilterStatementBuilder[T]
+	stmtBuilder    *StatementBuilder[T]
 	telemetryStore telemetrystore.TelemetryStore
 	threshold      uint64
 }
