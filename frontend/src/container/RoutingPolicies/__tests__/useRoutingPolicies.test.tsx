@@ -13,8 +13,6 @@ import { UseRoutingPoliciesReturn } from '../types';
 import useRoutingPolicies from '../useRoutingPolicies';
 import {
 	convertRoutingPolicyToApiResponse,
-	MOCK_CHANNEL_1,
-	MOCK_CHANNEL_2,
 	MOCK_ROUTING_POLICY_1,
 	MOCK_ROUTING_POLICY_2,
 } from './testUtils';
@@ -71,15 +69,6 @@ jest.mock('hooks/routingPolicies/useDeleteRoutingPolicy', () => ({
 	useDeleteRoutingPolicy: (): any => ({
 		mutate: mockDeleteRoutingPolicy,
 		isLoading: false,
-	}),
-}));
-jest.mock('hooks/notificationChannels/useChannelOptions', () => ({
-	__esModule: true,
-	useChannelOptions: (): any => ({
-		data: [MOCK_CHANNEL_1, MOCK_CHANNEL_2],
-		isLoading: false,
-		isError: false,
-		refetch: jest.fn(),
 	}),
 }));
 

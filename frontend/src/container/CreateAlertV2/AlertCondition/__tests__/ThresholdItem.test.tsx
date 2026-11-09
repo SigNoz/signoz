@@ -1,9 +1,17 @@
-import { fireEvent, render, screen } from '@testing-library/react';
 import type { DefaultOptionType } from 'antd/es/select';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
+import { notificationChannelsListResponse } from 'mocks-server/__mockdata__/alerts';
+import { rest, server } from 'mocks-server/server';
 import * as appHooks from 'providers/App/App';
-import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 
 import * as context from '../../context';
 import ThresholdItem from '../ThresholdItem';
@@ -38,9 +46,6 @@ const TEST_CONSTANTS = {
 	WARNING_LABEL: 'WARNING',
 	INFO_LABEL: 'INFO',
 	CHANNEL_1: 'channel-1',
-	CHANNEL_2: 'channel-2',
-	CHANNEL_3: 'channel-3',
-	EMAIL_CHANNEL_NAME: 'Email Channel',
 	EMAIL_CHANNEL_TRUNCATED: 'Email Chan...',
 	ENTER_THRESHOLD_NAME: 'Enter threshold name',
 	ENTER_THRESHOLD_VALUE: 'Enter threshold value',
@@ -57,14 +62,8 @@ const mockThreshold = {
 	color: '#ff0000',
 };
 
-const mockChannels: ChannelOption[] = [
-	{
-		id: TEST_CONSTANTS.CHANNEL_1,
-		name: TEST_CONSTANTS.EMAIL_CHANNEL_NAME,
-	} as any,
-	{ id: TEST_CONSTANTS.CHANNEL_2, name: 'Slack Channel' } as any,
-	{ id: TEST_CONSTANTS.CHANNEL_3, name: 'PagerDuty Channel' } as any,
-];
+const CHANNELS_URL = 'http://localhost/api/v2/notification_channels';
+const CHANNEL_SELECT = 'threshold-notification-channel-select';
 
 const mockUnits: DefaultOptionType[] = [
 	{ label: 'Bytes', value: 'bytes' },
@@ -77,11 +76,7 @@ const defaultProps: ThresholdItemProps = {
 	updateThreshold: jest.fn(),
 	removeThreshold: jest.fn(),
 	showRemoveButton: false,
-	channels: mockChannels,
-	isLoadingChannels: false,
 	units: mockUnits,
-	isErrorChannels: false,
-	refreshChannels: jest.fn(),
 };
 
 const renderThresholdItem = (
@@ -105,12 +100,6 @@ const verifySelectorWidth = (
 // 	const recoveryButton = screen.getByRole('button', { name: '' });
 // 	fireEvent.click(recoveryButton);
 // };
-
-const verifyComponentRendersWithLoading = (): void => {
-	expect(
-		screen.getByPlaceholderText(TEST_CONSTANTS.ENTER_THRESHOLD_NAME),
-	).toBeInTheDocument();
-};
 
 const verifyUnitSelectorDisabled = (): void => {
 	const unitSelectors = screen.getAllByRole('combobox');
@@ -348,9 +337,106 @@ describe('ThresholdItem', () => {
 		verifySelectorWidth(0, '150px');
 	});
 
-	it('handles loading channels state', () => {
-		renderThresholdItem({ isLoadingChannels: true });
-		verifyComponentRendersWithLoading();
+	it('searches channels on the server as the user types', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const requests: Record<string, string>[] = [];
+		server.use(
+			rest.get(CHANNELS_URL, (req, res, ctx) => {
+				requests.push(Object.fromEntries(req.url.searchParams));
+				return res(
+					ctx.json(
+						notificationChannelsListResponse(
+							req.url.searchParams.get('query')
+								? ['Oncall PagerDuty']
+								: ['Dummy-Channel', 'Oncall PagerDuty'],
+						),
+					),
+				);
+			}),
+		);
+		renderThresholdItem();
+
+		const input = within(screen.getByTestId(CHANNEL_SELECT)).getByRole(
+			'combobox',
+		);
+		await user.click(input);
+		await screen.findByTitle('Dummy-Channel');
+		await user.type(input, 'pager');
+
+		await expect(
+			screen.findByTitle('Oncall PagerDuty'),
+		).resolves.toBeInTheDocument();
+		expect(screen.queryByTitle('Dummy-Channel')).not.toBeInTheDocument();
+		expect(requests).toStrictEqual([
+			expect.not.objectContaining({ query: expect.anything() }),
+			expect.objectContaining({ query: 'pager', limit: '100', offset: '0' }),
+		]);
+	});
+
+	it('shows a spinner, not the empty state, while a search is in flight', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		server.use(
+			rest.get(CHANNELS_URL, (req, res, ctx) =>
+				req.url.searchParams.get('query')
+					? res(ctx.delay(5_000), ctx.json(notificationChannelsListResponse([])))
+					: res(ctx.json(notificationChannelsListResponse([]))),
+			),
+		);
+		renderThresholdItem();
+
+		const input = within(screen.getByTestId(CHANNEL_SELECT)).getByRole(
+			'combobox',
+		);
+		await user.click(input);
+		await expect(
+			screen.findByText('No channels yet.'),
+		).resolves.toBeInTheDocument();
+		await user.type(input, 'pager');
+
+		expect(
+			screen.getByTestId('threshold-notification-channel-spinner'),
+		).toBeInTheDocument();
+		expect(screen.queryByText('No channels yet.')).not.toBeInTheDocument();
+	});
+
+	it('loads the next page when the list is scrolled to the bottom', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const offsets: string[] = [];
+		server.use(
+			rest.get(CHANNELS_URL, (req, res, ctx) => {
+				const offset = Number(req.url.searchParams.get('offset'));
+				offsets.push(String(offset));
+				const names = Array.from(
+					{ length: offset === 0 ? 100 : 20 },
+					(_, index) => `channel-${offset + index}`,
+				);
+				return res(ctx.json(notificationChannelsListResponse(names, 120)));
+			}),
+		);
+		renderThresholdItem();
+
+		await user.click(
+			within(screen.getByTestId(CHANNEL_SELECT)).getByRole('combobox'),
+		);
+		await screen.findByTitle('channel-0');
+		fireEvent.scroll(
+			document.querySelector('.rc-virtual-list-holder') as HTMLElement,
+		);
+
+		await waitFor(() => expect(offsets).toStrictEqual(['0', '100']));
+	});
+
+	it('keeps the name of a saved channel the results do not include', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderThresholdItem({
+			threshold: { ...mockThreshold, channels: ['old-pager'] },
+		});
+		const select = screen.getByTestId(CHANNEL_SELECT);
+
+		await user.click(within(select).getByRole('combobox'));
+		await screen.findByTitle('Dummy-Channel');
+
+		expect(within(select).getByTitle('old-pager')).toHaveTextContent('old-pager');
 	});
 
 	it.skip('renders recovery threshold with correct initial value', () => {

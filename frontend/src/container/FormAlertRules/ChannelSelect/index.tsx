@@ -2,10 +2,10 @@ import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from '@signozhq/icons';
 import { Select, Spin } from 'antd';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useChannelSearch } from 'hooks/notificationChannels/useChannelSearch';
 import { useNotificationChannelCollectionPermissions } from 'hooks/notificationChannels/useNotificationChannelCollectionPermissions';
 import { useNotifications } from 'hooks/useNotifications';
-import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
-import APIError from 'types/api/error';
 
 import { StyledCreateChannelOption, StyledSelect } from './styles';
 
@@ -13,11 +13,6 @@ export interface ChannelSelectProps {
 	disabled?: boolean;
 	currentValue?: string[];
 	onSelectChannels: (s: string[]) => void;
-	onDropdownOpen: () => void;
-	isLoading: boolean;
-	channels: ChannelOption[];
-	hasError: boolean;
-	error: APIError;
 	handleCreateNewChannels: () => void;
 }
 
@@ -25,17 +20,22 @@ function ChannelSelect({
 	disabled,
 	currentValue,
 	onSelectChannels,
-	onDropdownOpen,
-	channels,
-	isLoading,
-	hasError,
-	error,
 	handleCreateNewChannels,
 }: ChannelSelectProps): JSX.Element | null {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 
 	const { notifications } = useNotifications();
+	const {
+		options,
+		searchTerm,
+		setSearchTerm,
+		isSearching,
+		isError: hasError,
+		error,
+		refetch,
+		loadMoreOnScroll,
+	} = useChannelSearch();
 
 	const handleChange = (value: string[]): void => {
 		if (value.includes('add-new-channel')) {
@@ -46,9 +46,10 @@ function ChannelSelect({
 	};
 
 	if (hasError) {
+		const apiError = convertToApiError(error);
 		notifications.error({
-			message: error?.getErrorCode?.() || 'Error',
-			description: error?.getErrorMessage?.() || 'Something went wrong',
+			message: apiError?.getErrorCode?.() || 'Error',
+			description: apiError?.getErrorMessage?.() || 'Something went wrong',
 		});
 	}
 
@@ -58,7 +59,7 @@ function ChannelSelect({
 	const renderOptions = (): ReactNode[] => {
 		const children: ReactNode[] = [];
 
-		if (!isLoading && addNewChannelPermission) {
+		if (!isSearching && addNewChannelPermission) {
 			children.push(
 				<Select.Option key="add-new-channel" value="add-new-channel">
 					<StyledCreateChannelOption>
@@ -69,14 +70,10 @@ function ChannelSelect({
 			);
 		}
 
-		if (isLoading || channels.length === 0) {
-			return children;
-		}
-
-		channels.forEach((o) => {
+		options.forEach((o) => {
 			children.push(
-				<Select.Option key={o.id} value={o.name}>
-					{o.name}
+				<Select.Option key={o.value} value={o.value}>
+					{o.label}
 				</Select.Option>,
 			);
 		});
@@ -93,10 +90,17 @@ function ChannelSelect({
 			placeholder={t('placeholder_channel_select')}
 			data-testid="alert-channel-select"
 			value={currentValue}
-			notFoundContent={isLoading && <Spin size="small" />}
+			searchValue={searchTerm}
+			onSearch={setSearchTerm}
+			onSelect={(): void => setSearchTerm('')}
+			filterOption={false}
+			onPopupScroll={loadMoreOnScroll}
+			notFoundContent={isSearching && <Spin size="small" />}
 			onDropdownVisibleChange={(open): void => {
 				if (open) {
-					onDropdownOpen();
+					refetch();
+				} else {
+					setSearchTerm('');
 				}
 			}}
 			onChange={(value): void => {

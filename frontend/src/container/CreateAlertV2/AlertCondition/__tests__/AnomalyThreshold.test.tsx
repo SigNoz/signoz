@@ -1,6 +1,5 @@
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
 import { render, screen, userEvent, within } from 'tests/test-utils';
-import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import * as context from '../../context';
 import { AlertThresholdMatchType } from '../../context/types';
@@ -49,17 +48,8 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-const channels: ChannelOption[] = [{ id: '1', name: 'slack-alerts' }];
-
 const renderAnomalyThreshold = (): ReturnType<typeof render> =>
-	render(
-		<AnomalyThreshold
-			channels={channels}
-			isLoadingChannels={false}
-			isErrorChannels={false}
-			refreshChannels={jest.fn()}
-		/>,
-	);
+	render(<AnomalyThreshold />);
 
 describe('AnomalyThreshold', () => {
 	beforeEach(() => {
@@ -144,10 +134,10 @@ describe('AnomalyThreshold', () => {
 
 	it('picks channels by name when routing policies are off', async () => {
 		renderAnomalyThreshold();
-		await pickOption('threshold-notification-channel-select', 'slack-alerts');
+		await pickOption('threshold-notification-channel-select', 'Dummy-Channel');
 		expect(mockSetThresholdState).toHaveBeenCalledWith({
 			type: 'SET_THRESHOLDS',
-			payload: [expect.objectContaining({ channels: ['slack-alerts'] })],
+			payload: [expect.objectContaining({ channels: ['Dummy-Channel'] })],
 		});
 	});
 

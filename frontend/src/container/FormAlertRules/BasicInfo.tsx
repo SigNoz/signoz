@@ -6,11 +6,10 @@ import { Switch } from '@signozhq/ui/switch';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import ROUTES from 'constants/routes';
-import { useChannelOptions } from 'hooks/notificationChannels/useChannelOptions';
+import { useChannelSearch } from 'hooks/notificationChannels/useChannelSearch';
 import { useNotificationChannelCollectionPermissions } from 'hooks/notificationChannels/useNotificationChannelCollectionPermissions';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef, Labels } from 'types/api/alerts/def';
-import APIError from 'types/api/error';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 import { openInNewTab } from 'utils/navigation';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -43,13 +42,7 @@ function BasicInfo({
 }: BasicInfoProps): JSX.Element {
 	const { t } = useTranslation('alerts');
 
-	const {
-		isLoading,
-		data: channels,
-		error,
-		isError,
-		refetch,
-	} = useChannelOptions();
+	const { isLoading, total: channelCount } = useChannelSearch();
 
 	const { canCreate: addNewChannelPermission } =
 		useNotificationChannelCollectionPermissions();
@@ -75,7 +68,7 @@ function BasicInfo({
 		});
 	};
 
-	const noChannels = channels.length === 0;
+	const noChannels = !channelCount;
 	const handleCreateNewChannels = useCallback(() => {
 		logEvent('Alert: Create notification channel button clicked', {
 			dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
@@ -88,18 +81,14 @@ function BasicInfo({
 
 	useEffect(() => {
 		if (!isLoading && isNewRule && !hasLoggedEvent.current) {
-			logEvent('Alert: New alert creation page visited', {
+			void logEvent('Alert: New alert creation page visited', {
 				dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
-				numberOfChannels: channels.length,
+				numberOfChannels: channelCount ?? 0,
 			});
 			hasLoggedEvent.current = true;
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isLoading]);
-
-	const refetchChannels = async (): Promise<void> => {
-		await refetch();
-	};
 
 	return (
 		<>
@@ -220,14 +209,9 @@ function BasicInfo({
 							]}
 						>
 							<ChannelSelect
-								onDropdownOpen={refetchChannels}
 								disabled={shouldBroadCastToAllChannels}
 								currentValue={alertDef.preferredChannels}
 								handleCreateNewChannels={handleCreateNewChannels}
-								channels={channels}
-								isLoading={isLoading}
-								hasError={isError}
-								error={error as APIError}
 								onSelectChannels={(preferredChannels): void => {
 									setAlertDef({
 										...alertDef,

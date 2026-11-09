@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import { Button, Flex, Form, Input, Modal, Select } from 'antd';
+import { Spinner } from '@signozhq/ui/spinner';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';
 import { Check, Loader, X } from '@signozhq/icons';
+import { useChannelSearch } from 'hooks/notificationChannels/useChannelSearch';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 import { openInNewTab } from 'utils/navigation';
@@ -17,16 +19,21 @@ import {
 function RoutingPolicyDetails({
 	closeModal,
 	mode,
-	channels,
-	isErrorChannels,
-	isLoadingChannels,
 	routingPolicy,
 	handlePolicyDetailsModalAction,
 	isPolicyDetailsModalActionLoading,
-	refreshChannels,
 }: RoutingPolicyDetailsProps): JSX.Element {
 	const [form] = Form.useForm();
 	const { user } = useAppContext();
+	const {
+		options: channelOptions,
+		searchTerm: channelSearchTerm,
+		setSearchTerm: setChannelSearchTerm,
+		isSearching: isSearchingChannels,
+		isError: isErrorChannels,
+		refetch: refreshChannels,
+		loadMoreOnScroll: loadMoreChannelsOnScroll,
+	} = useChannelSearch();
 
 	const initialFormState = useMemo(() => {
 		if (mode === 'edit') {
@@ -163,24 +170,34 @@ function RoutingPolicyDetails({
 							]}
 						>
 							<Select
-								options={channels.map((channel) => ({
-									value: channel.name,
-									label: channel.name,
-								}))}
+								options={channelOptions}
 								mode="multiple"
 								placeholder="Select notification channels"
+								data-testid="routing-policy-channel-select"
 								showSearch
+								searchValue={channelSearchTerm}
+								onSearch={setChannelSearchTerm}
+								onSelect={(): void => setChannelSearchTerm('')}
+								onDropdownVisibleChange={(open): void => {
+									if (!open) {
+										setChannelSearchTerm('');
+									}
+								}}
+								onPopupScroll={loadMoreChannelsOnScroll}
+								filterOption={false}
 								maxTagCount={3}
 								maxTagPlaceholder={(omittedValues): string =>
 									`+${omittedValues.length} more`
 								}
 								maxTagTextLength={10}
-								filterOption={(input, option): boolean =>
-									option?.label?.toLowerCase().includes(input.toLowerCase()) || false
-								}
 								status={isErrorChannels ? 'error' : undefined}
-								disabled={isLoadingChannels}
-								notFoundContent={notificationChannelsNotFoundContent}
+								notFoundContent={
+									isSearchingChannels ? (
+										<Spinner testId="routing-policy-channel-spinner" />
+									) : (
+										notificationChannelsNotFoundContent
+									)
+								}
 							/>
 						</Form.Item>
 					</div>

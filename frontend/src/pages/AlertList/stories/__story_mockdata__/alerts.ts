@@ -781,23 +781,6 @@ const buildListedChannel = (
 	};
 };
 
-/** The v2 list, which is what the redesigned channels list reads. */
-export const notificationChannelsResponse = (
-	count: number,
-): {
-	status: string;
-	data: {
-		channels: AlertmanagertypesListedNotificationChannelDTO[];
-		total: number;
-	};
-} => {
-	const channels = Array.from({ length: count }, (_unused, index) =>
-		buildListedChannel(index),
-	);
-
-	return { status: 'success', data: { channels, total: channels.length } };
-};
-
 /**
  * The v2 list as the API answers it: search, kind and paging are applied on the
  * server, so the story has to narrow the rows rather than hand back all of them.

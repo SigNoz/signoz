@@ -19,7 +19,6 @@ import {
 import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
 import { normalizeMatchType, normalizeOperator } from '../utils';
 import ThresholdItem from './ThresholdItem';
-import { AnomalyAndThresholdProps } from './types';
 import { useThresholdList } from './useThresholdList';
 import {
 	getCategoryByOptionId,
@@ -32,12 +31,7 @@ import {
 import './styles.scss';
 import '../EvaluationSettings/styles.scss';
 
-function AlertThreshold({
-	channels,
-	isLoadingChannels,
-	isErrorChannels,
-	refreshChannels,
-}: AnomalyAndThresholdProps): JSX.Element {
+function AlertThreshold(): JSX.Element {
 	const {
 		alertState,
 		thresholdState,
@@ -248,11 +242,7 @@ function AlertThreshold({
 						updateThreshold={updateThreshold}
 						removeThreshold={removeThreshold}
 						showRemoveButton={index !== 0 && thresholdState.thresholds.length > 1}
-						channels={channels}
-						isLoadingChannels={isLoadingChannels}
 						units={categorySelectOptions}
-						isErrorChannels={isErrorChannels}
-						refreshChannels={refreshChannels}
 					/>
 				))}
 				<Button
