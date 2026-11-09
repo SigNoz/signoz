@@ -36,4 +36,49 @@ describe('useArrowKeyNavigation', () => {
 
 		expect(onNext).not.toHaveBeenCalled();
 	});
+
+	it('ignores a key pressed inside a menu', () => {
+		const onNext = jest.fn() as jest.MockedFunction<() => void>;
+		renderHook(() =>
+			useArrowKeyNavigation({ enabled: true, onPrev: jest.fn(), onNext }),
+		);
+		const menu = document.createElement('div');
+		menu.setAttribute('role', 'menu');
+		const item = document.createElement('div');
+		item.setAttribute('role', 'menuitem');
+		menu.appendChild(item);
+		document.body.appendChild(menu);
+
+		item.dispatchEvent(
+			new KeyboardEvent('keydown', {
+				key: 'ArrowDown',
+				bubbles: true,
+				cancelable: true,
+			}),
+		);
+
+		expect(onNext).not.toHaveBeenCalled();
+		menu.remove();
+	});
+
+	it('steps even when an ancestor stops the key from bubbling', () => {
+		const onNext = jest.fn() as jest.MockedFunction<() => void>;
+		renderHook(() =>
+			useArrowKeyNavigation({ enabled: true, onPrev: jest.fn(), onNext }),
+		);
+		const panel = document.createElement('div');
+		panel.addEventListener('keydown', (e) => e.stopPropagation());
+		document.body.appendChild(panel);
+
+		panel.dispatchEvent(
+			new KeyboardEvent('keydown', {
+				key: 'ArrowDown',
+				bubbles: true,
+				cancelable: true,
+			}),
+		);
+
+		expect(onNext).toHaveBeenCalledTimes(1);
+		panel.remove();
+	});
 });
