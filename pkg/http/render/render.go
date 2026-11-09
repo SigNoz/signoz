@@ -5,11 +5,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	jsonv2 "github.com/go-json-experiment/json"
 	jsonv1 "github.com/go-json-experiment/json/v1"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 const (
@@ -149,8 +150,8 @@ func successStream(rw http.ResponseWriter, httpCode int, data any) {
 		httpCode = http.StatusOK
 	}
 
-	w := &successStreamWriter{rw: rw, httpCode: httpCode}
-	if err := jsonv2.MarshalWrite(w, &SuccessResponse{Status: StatusSuccess.s, Data: data}, jsonv1.DefaultOptionsV1()); err != nil && !w.started {
+	writer := &successStreamWriter{rw: rw, httpCode: httpCode}
+	if err := jsonv2.MarshalWrite(writer, &SuccessResponse{Status: StatusSuccess.s, Data: data}, jsonv1.DefaultOptionsV1()); err != nil && !writer.started {
 		Error(rw, err)
 	}
 }
@@ -162,11 +163,11 @@ type successStreamWriter struct {
 	started  bool
 }
 
-func (w *successStreamWriter) Write(p []byte) (int, error) {
-	if !w.started {
-		w.started = true
-		w.rw.Header().Set("Content-Type", "application/json")
-		w.rw.WriteHeader(w.httpCode)
+func (writer *successStreamWriter) Write(p []byte) (int, error) {
+	if !writer.started {
+		writer.started = true
+		writer.rw.Header().Set("Content-Type", "application/json")
+		writer.rw.WriteHeader(writer.httpCode)
 	}
-	return w.rw.Write(p)
+	return writer.rw.Write(p)
 }

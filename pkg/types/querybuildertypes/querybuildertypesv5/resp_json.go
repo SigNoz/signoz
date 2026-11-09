@@ -33,22 +33,25 @@ func (t TimeSeriesData) MarshalJSON() ([]byte, error) {
 }
 
 func (t TimeSeriesData) MarshalJSONTo(enc *jsontext.Encoder) error {
-	w := tokenWriter{enc: enc}
-	w.token(jsontext.BeginObject)
-	w.token(jsontext.String("queryName"))
-	w.token(jsontext.String(t.QueryName))
-	w.token(jsontext.String("aggregations"))
+	writer := tokenWriter{enc: enc}
+	writer.token(jsontext.BeginObject)
+	writer.token(jsontext.String("queryName"))
+	writer.token(jsontext.String(t.QueryName))
+	writer.token(jsontext.String("aggregations"))
 	if t.Aggregations == nil {
-		w.token(jsontext.Null)
+		writer.token(jsontext.Null)
 	} else {
-		w.token(jsontext.BeginArray)
+		writer.token(jsontext.BeginArray)
 		for _, bucket := range t.Aggregations {
-			w.aggregationBucket(bucket, t.zeroFill)
+			if writer.err != nil {
+				return writer.err
+			}
+			writer.aggregationBucket(bucket, t.zeroFill)
 		}
-		w.token(jsontext.EndArray)
+		writer.token(jsontext.EndArray)
 	}
-	w.token(jsontext.EndObject)
-	return w.err
+	writer.token(jsontext.EndObject)
+	return writer.err
 }
 
 func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
@@ -56,29 +59,29 @@ func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
 }
 
 func (t TimeSeriesValue) MarshalJSONTo(enc *jsontext.Encoder) error {
-	w := tokenWriter{enc: enc}
-	w.token(jsontext.BeginObject)
-	w.token(jsontext.String("timestamp"))
-	w.token(jsontext.Int(t.Timestamp))
+	writer := tokenWriter{enc: enc}
+	writer.token(jsontext.BeginObject)
+	writer.token(jsontext.String("timestamp"))
+	writer.token(jsontext.Int(t.Timestamp))
 	if t.Partial {
-		w.token(jsontext.String("partial"))
-		w.token(jsontext.True)
+		writer.token(jsontext.String("partial"))
+		writer.token(jsontext.True)
 	}
 	// a heatmap point's counts are spread across Values, so there is no one
 	// number Value could carry
 	if t.Values == nil {
-		w.token(jsontext.String("value"))
-		w.token(sanitizedFloatToken(t.Value))
+		writer.token(jsontext.String("value"))
+		writer.token(sanitizedFloatToken(t.Value))
 	} else {
-		w.token(jsontext.String("values"))
-		w.token(jsontext.BeginArray)
+		writer.token(jsontext.String("values"))
+		writer.token(jsontext.BeginArray)
 		for _, v := range t.Values {
-			w.token(sanitizedFloatToken(v))
+			writer.token(sanitizedFloatToken(v))
 		}
-		w.token(jsontext.EndArray)
+		writer.token(jsontext.EndArray)
 	}
-	w.token(jsontext.EndObject)
-	return w.err
+	writer.token(jsontext.EndObject)
+	return writer.err
 }
 
 type zeroFill struct {
@@ -93,117 +96,126 @@ type tokenWriter struct {
 	err error
 }
 
-func (w *tokenWriter) token(t jsontext.Token) {
-	if w.err == nil {
-		w.err = w.enc.WriteToken(t)
+func (writer *tokenWriter) token(t jsontext.Token) {
+	if writer.err == nil {
+		writer.err = writer.enc.WriteToken(t)
 	}
 }
 
-func (w *tokenWriter) value(v any) {
-	if w.err == nil {
-		w.err = jsonv2.MarshalEncode(w.enc, v)
+func (writer *tokenWriter) value(v any) {
+	if writer.err == nil {
+		writer.err = jsonv2.MarshalEncode(writer.enc, v)
 	}
 }
 
-func (w *tokenWriter) aggregationBucket(a *AggregationBucket, fill *zeroFill) {
+func (writer *tokenWriter) aggregationBucket(a *AggregationBucket, fill *zeroFill) {
 	if a == nil {
-		w.token(jsontext.Null)
+		writer.token(jsontext.Null)
 		return
 	}
 
-	w.token(jsontext.BeginObject)
-	w.token(jsontext.String("index"))
-	w.token(jsontext.Int(int64(a.Index)))
-	w.token(jsontext.String("alias"))
-	w.token(jsontext.String(a.Alias))
-	w.token(jsontext.String("meta"))
-	w.value(a.Meta)
-	w.token(jsontext.String("series"))
-	w.seriesList(a.Series, fill)
-	w.optionalSeriesList("predictedSeries", a.PredictedSeries)
-	w.optionalSeriesList("upperBoundSeries", a.UpperBoundSeries)
-	w.optionalSeriesList("lowerBoundSeries", a.LowerBoundSeries)
-	w.optionalSeriesList("anomalyScores", a.AnomalyScores)
-	w.token(jsontext.EndObject)
+	writer.token(jsontext.BeginObject)
+	writer.token(jsontext.String("index"))
+	writer.token(jsontext.Int(int64(a.Index)))
+	writer.token(jsontext.String("alias"))
+	writer.token(jsontext.String(a.Alias))
+	writer.token(jsontext.String("meta"))
+	writer.value(a.Meta)
+	writer.token(jsontext.String("series"))
+	writer.seriesList(a.Series, fill)
+	writer.optionalSeriesList("predictedSeries", a.PredictedSeries)
+	writer.optionalSeriesList("upperBoundSeries", a.UpperBoundSeries)
+	writer.optionalSeriesList("lowerBoundSeries", a.LowerBoundSeries)
+	writer.optionalSeriesList("anomalyScores", a.AnomalyScores)
+	writer.token(jsontext.EndObject)
 }
 
-func (w *tokenWriter) optionalSeriesList(name string, series []*TimeSeries) {
+func (writer *tokenWriter) optionalSeriesList(name string, series []*TimeSeries) {
 	if len(series) == 0 {
 		return
 	}
-	w.token(jsontext.String(name))
-	w.seriesList(series, nil)
+	writer.token(jsontext.String(name))
+	writer.seriesList(series, nil)
 }
 
-func (w *tokenWriter) seriesList(series []*TimeSeries, fill *zeroFill) {
+func (writer *tokenWriter) seriesList(series []*TimeSeries, fill *zeroFill) {
 	if series == nil {
-		w.token(jsontext.Null)
+		writer.token(jsontext.Null)
 		return
 	}
 
-	w.token(jsontext.BeginArray)
+	writer.token(jsontext.BeginArray)
 	for _, s := range series {
-		w.series(s, fill)
+		if writer.err != nil {
+			return
+		}
+		writer.series(s, fill)
 	}
-	w.token(jsontext.EndArray)
+	writer.token(jsontext.EndArray)
 }
 
-func (w *tokenWriter) series(s *TimeSeries, fill *zeroFill) {
+func (writer *tokenWriter) series(s *TimeSeries, fill *zeroFill) {
+	if writer.err != nil {
+		return
+	}
 	if s == nil {
-		w.token(jsontext.Null)
+		writer.token(jsontext.Null)
 		return
 	}
 
-	w.token(jsontext.BeginObject)
+	writer.token(jsontext.BeginObject)
 	if len(s.Labels) > 0 {
-		w.token(jsontext.String("labels"))
-		w.value(s.Labels)
+		writer.token(jsontext.String("labels"))
+		writer.value(s.Labels)
 	}
-	w.token(jsontext.String("values"))
+	writer.token(jsontext.String("values"))
 	switch {
 	case fill != nil:
-		w.zeroFilledValues(s.Values, fill)
+		writer.zeroFilledValues(s.Values, fill)
 	case s.Values == nil:
-		w.token(jsontext.Null)
+		writer.token(jsontext.Null)
 	default:
-		w.token(jsontext.BeginArray)
+		writer.token(jsontext.BeginArray)
 		for _, v := range s.Values {
-			w.point(v)
+			if writer.err != nil {
+				return
+			}
+			writer.point(v)
 		}
-		w.token(jsontext.EndArray)
+		writer.token(jsontext.EndArray)
 	}
-	w.token(jsontext.EndObject)
+	writer.token(jsontext.EndObject)
 }
 
-func (w *tokenWriter) zeroFilledValues(values []*TimeSeriesValue, fill *zeroFill) {
+func (writer *tokenWriter) zeroFilledValues(values []*TimeSeriesValue, fill *zeroFill) {
 	byTimestamp := make(map[int64]*TimeSeriesValue, len(values))
 	for _, v := range values {
 		byTimestamp[v.Timestamp] = v
 	}
 
-	w.token(jsontext.BeginArray)
-	for ts := fill.start - fill.start%fill.step; ts <= fill.end; ts += fill.step {
+	writer.token(jsontext.BeginArray)
+	for ts := fill.start - fill.start%fill.step; ts <= fill.end && writer.err == nil; ts += fill.step {
 		if v, ok := byTimestamp[ts]; ok {
-			w.point(v)
+			writer.point(v)
 			continue
 		}
-		w.token(jsontext.BeginObject)
-		w.token(jsontext.String("timestamp"))
-		w.token(jsontext.Int(ts))
-		w.token(jsontext.String("value"))
-		w.token(jsontext.Int(0))
-		w.token(jsontext.EndObject)
+		writer.token(jsontext.BeginObject)
+		writer.token(jsontext.String("timestamp"))
+		writer.token(jsontext.Int(ts))
+		writer.token(jsontext.String("value"))
+		writer.token(jsontext.Int(0))
+		writer.token(jsontext.EndObject)
 	}
-	w.token(jsontext.EndArray)
+	writer.token(jsontext.EndArray)
 }
 
-func (w *tokenWriter) point(v *TimeSeriesValue) {
+func (writer *tokenWriter) point(v *TimeSeriesValue) {
 	if v == nil {
-		w.token(jsontext.Null)
+		writer.token(jsontext.Null)
 		return
 	}
-	if w.err == nil {
-		w.err = v.MarshalJSONTo(w.enc)
+	if writer.err == nil {
+		writer.err = v.MarshalJSONTo(writer.enc)
 	}
 }
 
