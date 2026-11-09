@@ -153,23 +153,15 @@ go.mod @therealpandey
 
 /frontend/src/hooks/dashboard/ @SigNoz/pulse-frontend
 /frontend/src/providers/Dashboard/ @SigNoz/pulse-frontend
-/frontend/src/hooks/dashboards/ @SigNoz/pulse-frontend
-/frontend/src/hooks/dynamicVariables/ @SigNoz/pulse-frontend
 
 ## Dashboard Types
 
 /frontend/src/types/api/dashboard/ @SigNoz/pulse-frontend
 /frontend/src/types/api/widgets/ @SigNoz/pulse-frontend
-/frontend/src/types/api/dynamicVariables/ @SigNoz/pulse-frontend
 
 ## Widget Card
 
 /frontend/src/container/WidgetCard/ @SigNoz/pulse-frontend
-/frontend/src/components/ValueGraph/ @SigNoz/pulse-frontend
-/frontend/src/components/TimePreferenceDropDown/ @SigNoz/pulse-frontend
-/frontend/src/hooks/useChartMutable.ts @SigNoz/pulse-frontend
-/frontend/src/lib/getChartData.ts @SigNoz/pulse-frontend
-/frontend/src/lib/covertIntoEpoc.ts @SigNoz/pulse-frontend
 
 ## Public Dashboard Page
 
@@ -182,10 +174,6 @@ go.mod @therealpandey
 /frontend/src/lib/dashboard/ @SigNoz/pulse-frontend
 /frontend/src/lib/dashboardVariables/ @SigNoz/pulse-frontend
 /frontend/src/components/NewSelect/ @SigNoz/pulse-frontend
-/frontend/src/components/TagBadge/ @SigNoz/pulse-frontend
-/frontend/src/components/TagKeyValueInput/ @SigNoz/pulse-frontend
-/frontend/src/components/QueryTypeTag/ @SigNoz/pulse-frontend
-/frontend/src/utils/getSortedSeriesData.ts @SigNoz/pulse-frontend
 
 ## Dashboard Pages
 
@@ -208,8 +196,6 @@ go.mod @therealpandey
 /frontend/src/container/CreateAlertRule/ @SigNoz/pulse-frontend
 /frontend/src/container/CreateAlertV2/ @SigNoz/pulse-frontend
 /frontend/src/container/EditAlertV2/ @SigNoz/pulse-frontend
-/frontend/src/container/CreateAlert/ @SigNoz/pulse-frontend
-/frontend/src/container/EditAlert/ @SigNoz/pulse-frontend
 /frontend/src/container/FormAlertRules/ @SigNoz/pulse-frontend
 /frontend/src/container/ListAlertRules/ @SigNoz/pulse-frontend
 /frontend/src/container/TriggeredAlerts/ @SigNoz/pulse-frontend
@@ -223,9 +209,6 @@ go.mod @therealpandey
 /frontend/src/types/api/alerts/ @SigNoz/pulse-frontend
 /frontend/src/providers/Alert.tsx @SigNoz/pulse-frontend
 /frontend/src/constants/alerts.ts @SigNoz/pulse-frontend
-/frontend/src/container/PlannedDowntime/ @SigNoz/pulse-frontend
-/frontend/src/components/PlotTag/ @SigNoz/pulse-frontend
-/frontend/src/hooks/alerts/ @SigNoz/pulse-frontend
 
 ## Notification Channels
 /frontend/src/pages/ChannelsEdit/ @SigNoz/pulse-frontend
@@ -238,7 +221,6 @@ go.mod @therealpandey
 /frontend/src/components/ListFilter/ @SigNoz/pulse-frontend
 /frontend/src/components/ListViews/ @SigNoz/pulse-frontend
 /frontend/src/hooks/listViews/ @SigNoz/pulse-frontend
-/frontend/src/components/ViewNamePopover/ @SigNoz/pulse-frontend
 
 ## OpenAPI Schema - Generated
 /frontend/src/api/generated/services/ @therealpandey @vikrantgupta25 @srikanthccv
