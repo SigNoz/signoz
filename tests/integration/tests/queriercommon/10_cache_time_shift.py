@@ -26,17 +26,8 @@ def test_time_shift_partial_hit_matches_no_cache(
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
-    Setup:
-    svc-a: 4 logs and svc-b: 2 logs in every minute of the hour before the
-    requested window, so a timeShift(3600) query reads them. The hour before
-    that holds 9 and 7 logs per minute, so a gap read one shift too far back
-    returns points with those counts instead of nothing.
-
-    Tests:
-    A timeShift query whose first 30 minutes are cached returns the same
-    points for the next 20 minutes as the request with noCache. The missing
-    range is already in the shifted clock, so the gap query must not shift
-    it again.
+    The hour before the shifted one holds different counts, so a gap read
+    one shift too far back returns wrong points instead of nothing.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     # the cache outlives the run, so a fixed filter would serve the previous
