@@ -342,7 +342,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		columnWarnings []string
 	)
 
-	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
+	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -449,7 +449,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		columnWarnings []string
 	)
 
-	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
+	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -621,7 +621,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		columnWarnings []string
 	)
 
-	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
+	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, keys, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -826,11 +826,12 @@ func (b *logQueryStatementBuilder) maybeAttachResourceFilter(
 	sb *sqlbuilder.SelectBuilder,
 	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (cteSQL string, cteArgs []any, skipResourceFilter bool, err error) {
 
 	if b.skipResourceFingerprintEnabled {
-		decision, err := b.resourceFilterResolver.Resolve(ctx, orgID, query, start, end, variables)
+		decision, err := b.resourceFilterResolver.Resolve(ctx, orgID, query, start, end, variables, keys)
 		if err != nil {
 			return "", nil, true, err
 		}
@@ -842,9 +843,7 @@ func (b *logQueryStatementBuilder) maybeAttachResourceFilter(
 		}
 	}
 
-	stmt, err := b.resourceFilterResolver.StatementBuilder().Build(
-		ctx, orgID, start, end, qbtypes.RequestTypeRaw, query, variables,
-	)
+	stmt, err := b.resourceFilterResolver.Build(ctx, orgID, query, start, end, variables, keys)
 	if err != nil {
 		return "", nil, true, err
 	}

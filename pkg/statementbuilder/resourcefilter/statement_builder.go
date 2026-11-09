@@ -91,15 +91,29 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	query qbtypes.QueryBuilderQuery[T],
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
-	q := sqlbuilder.NewSelectBuilder()
-	q.Select("fingerprint")
-	q.From(fmt.Sprintf("%s.%s", b.dbName, b.tableName))
-
 	keySelectors := querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.flagger, b.getKeySelectors(query))
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
 		return nil, err
 	}
+	return b.BuildWithKeys(ctx, orgID, start, end, query, variables, keys)
+}
+
+// BuildWithKeys builds the statement from keys the caller has already resolved.
+// A caller that also compiles the filter itself passes its own keys, so that both
+// statements treat the same filter keys as resource keys.
+func (b *resourceFilterStatementBuilder[T]) BuildWithKeys(
+	ctx context.Context,
+	orgID valuer.UUID,
+	start uint64,
+	end uint64,
+	query qbtypes.QueryBuilderQuery[T],
+	variables map[string]qbtypes.VariableItem,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+) (*qbtypes.Statement, error) {
+	q := sqlbuilder.NewSelectBuilder()
+	q.Select("fingerprint")
+	q.From(fmt.Sprintf("%s.%s", b.dbName, b.tableName))
 
 	isNoOp, err := b.addConditions(ctx, orgID, q, start, end, query, keys, variables)
 	if err != nil {
@@ -129,8 +143,9 @@ func (b *resourceFilterStatementBuilder[T]) BuildCount(
 	end uint64,
 	query qbtypes.QueryBuilderQuery[T],
 	variables map[string]qbtypes.VariableItem,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (*qbtypes.Statement, error) {
-	inner, err := b.Build(ctx, orgID, start, end, qbtypes.RequestTypeRaw, query, variables)
+	inner, err := b.BuildWithKeys(ctx, orgID, start, end, query, variables, keys)
 	if err != nil || inner == nil {
 		return nil, err
 	}
