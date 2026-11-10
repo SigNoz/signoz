@@ -115,7 +115,7 @@ function RoutingPolicies(): JSX.Element {
 							All routing policies
 						</Typography>
 						{isFetching ? (
-							<Skeleton.Input size="sm" width={32} />
+							<Skeleton.Input size="sm" width={24} />
 						) : (
 							<Badge variant="solid" color="secondary">
 								{routingPoliciesData.length}

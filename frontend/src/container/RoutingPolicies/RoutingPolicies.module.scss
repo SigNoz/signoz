@@ -25,6 +25,8 @@
 }
 
 .headingBlock {
+	/* The Badge height, so the count does not jump when it loads. */
+	--skeleton-input-sm-height: var(--spacing-10);
 	--typography-line-height: 30px;
 
 	display: flex;

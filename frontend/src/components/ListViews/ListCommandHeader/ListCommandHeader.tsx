@@ -40,7 +40,7 @@ function ListCommandHeader({
 				</Typography>
 				{isModified && <span className={styles.dirtyDot} title="Unsaved changes" />}
 				{isCountLoading ? (
-					<Skeleton.Input size="sm" width={32} />
+					<Skeleton.Input size="sm" width={24} />
 				) : (
 					<Badge variant="solid" color="secondary">
 						{count}
