@@ -6,6 +6,7 @@ import { useListRules } from 'api/generated/services/rules';
 import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { toEditAlertQuery } from 'container/EditAlertV2/utils';
 import { AppLink } from 'lib/router/AppLink';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
@@ -132,8 +133,9 @@ export default function AlertRules({
 			ruleState: record.state,
 		});
 
-		const compositeQuery = mapQueryDataFromApi(
-			toCompositeMetricQuery(record.condition.compositeQuery),
+		const compositeQuery = toEditAlertQuery(
+			mapQueryDataFromApi(toCompositeMetricQuery(record.condition.compositeQuery)),
+			record.alertType,
 		);
 		params.set(
 			QueryParams.compositeQuery,
@@ -159,6 +161,7 @@ export default function AlertRules({
 						tabIndex={0}
 						className="alert-rule-item home-data-item"
 						key={rule.id}
+						data-testid={`home-alert-rule-${rule.id}`}
 						onClick={onEditHandler(rule)}
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter') {

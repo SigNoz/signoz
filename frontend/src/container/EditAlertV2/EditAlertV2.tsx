@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 
@@ -10,6 +9,7 @@ import Footer from '../CreateAlertV2/Footer';
 import NotificationSettings from '../CreateAlertV2/NotificationSettings';
 import QuerySection from '../CreateAlertV2/QuerySection';
 import { Spinner } from '../CreateAlertV2/utils';
+import { getEditAlertQuery } from './utils';
 
 import '../CreateAlertV2/CreateAlertV2.styles.scss';
 
@@ -24,9 +24,10 @@ function EditAlertV2({
 }: EditAlertV2Props): JSX.Element {
 	const currentQueryToRedirect = useMemo(() => {
 		const basicAlertDef = buildInitialAlertDef(alertType);
-		return mapQueryDataFromApi(
+		return getEditAlertQuery(
 			initialAlert?.condition.compositeQuery ||
 				basicAlertDef.condition.compositeQuery,
+			alertType,
 		);
 	}, [initialAlert, alertType]);
 
