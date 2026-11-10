@@ -74,8 +74,8 @@ importers:
         specifier: 5.3.0
         version: 5.3.0
       '@signozhq/design-tokens':
-        specifier: 2.3.0
-        version: 2.3.0
+        specifier: 2.6.0
+        version: 2.6.0
       '@signozhq/icons':
         specifier: 0.4.0
         version: 0.4.0
@@ -3451,8 +3451,8 @@ packages:
   '@sideway/pinpoint@2.0.0':
     resolution: {integrity: sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==}
 
-  '@signozhq/design-tokens@2.3.0':
-    resolution: {integrity: sha512-gVTPc2uJwBsTF9VMzPghgsnv6eioK8oxzES1CLDxedxpcfwbWltuzxVPwhPuoC54E2vItDVZhR9RFI/JZ50ldw==}
+  '@signozhq/design-tokens@2.6.0':
+    resolution: {integrity: sha512-7+lBxC3N4r1A2M8awhop7mtYMMd5yOg4BKfRAN3hnle4lclZHlxm7b3gdplfNN10JA1mcwRSQvWrjQPmA/euqw==}
 
   '@signozhq/icons@0.4.0':
     resolution: {integrity: sha512-QctNvNPlQlsefFdIVmSy/P/7a1IcQ3IryKP0KPMqtoqew3q89FGUmFa5IfEJ7Z3CHhtG1zaXwBKqP72QkLyA3g==}
@@ -12846,7 +12846,7 @@ snapshots:
 
   '@sideway/pinpoint@2.0.0': {}
 
-  '@signozhq/design-tokens@2.3.0': {}
+  '@signozhq/design-tokens@2.6.0': {}
 
   '@signozhq/icons@0.4.0': {}
 

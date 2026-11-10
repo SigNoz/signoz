@@ -1,7 +1,7 @@
 @use './periscope.scss';
-// Inter from rsms/inter: the Google Fonts build drops ss01, ss02, zero and case.
-@use './assets/fonts/inter/faces';
 
+// Inter from rsms/inter: the Google Fonts build drops ss01, ss02, zero and case.
+@import '@signozhq/design-tokens/dist/fonts/inter.css';
 @import '@signozhq/design-tokens/dist/style.css';
 @import 'overlayscrollbars/overlayscrollbars.css';
 
