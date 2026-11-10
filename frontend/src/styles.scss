@@ -842,8 +842,8 @@ body.bottom-strip-on {
 	// design libraries.
 	--dropdown-z-index: 1050;
 
-	// antd modals (ErrorModal, z-index 1000) blur everything under their mask,
-	// so a dialog has to sit above them to stay crisp.
+	// Above antd modals and drawers (z-index 1000) and fixed page chrome, where
+	// main's cmd-K rules put dialogs. ErrorModal sets its own z-index above this.
 	--dialog-z-index: 1001;
 	--alert-dialog-z-index: 1001;
 

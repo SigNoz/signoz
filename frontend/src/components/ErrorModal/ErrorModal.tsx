@@ -18,6 +18,10 @@ type Props = {
 	open?: boolean;
 };
 
+// Above every `@signozhq/ui` dialog (`--dialog-z-index: 1001`, plus one per
+// nested layer), so the error shows over the dialog whose action failed.
+const ERROR_MODAL_Z_INDEX = 2000;
+
 const classNames = {
 	body: 'error-modal__body',
 	mask: 'error-modal__mask',
@@ -95,6 +99,7 @@ function ErrorModal({
 				closeIcon={false}
 				classNames={classNames}
 				wrapClassName="error-modal__wrap"
+				zIndex={ERROR_MODAL_Z_INDEX}
 			>
 				<ErrorContent error={error} />
 			</Modal>
