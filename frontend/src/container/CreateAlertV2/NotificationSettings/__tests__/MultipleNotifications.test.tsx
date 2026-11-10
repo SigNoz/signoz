@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent } from 'tests/test-utils';
 import { ALL_SELECTED_VALUE } from 'container/CreateAlertV2/constants';
 import * as createAlertContext from 'container/CreateAlertV2/context';
 import {
@@ -7,6 +6,9 @@ import {
 	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from 'container/CreateAlertV2/context/constants';
 import { createMockAlertContextState } from 'container/CreateAlertV2/EvaluationSettings/__tests__/testUtils';
+import { initialQueryAIWithType } from 'constants/queryBuilder';
+import { getActiveBuilder } from 'lib/query/builderSlot';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import MultipleNotifications from '../MultipleNotifications';
 
@@ -140,6 +142,35 @@ describe('MultipleNotifications', () => {
 		).toBeInTheDocument();
 		const select = screen.getByRole(COMBOBOX_ROLE);
 		expect(select).toHaveAttribute(ARIA_DISABLED_ATTR, FALSE);
+	});
+
+	it('should list the group by fields of an AI query', async () => {
+		const aiBuilder = getActiveBuilder(initialQueryAIWithType);
+		const aiQuery: Query = {
+			...initialQueryAIWithType,
+			builder_ai_query: {
+				...aiBuilder,
+				queryData: [
+					{
+						...aiBuilder.queryData[0],
+						queryName: TEST_QUERY,
+						groupBy: [{ key: 'gen_ai.request.model', type: 'tag' }],
+					},
+				],
+			},
+		};
+		useQueryBuilder.mockReturnValue({ currentQuery: aiQuery });
+
+		render(<MultipleNotifications />);
+
+		const select = screen.getByRole(COMBOBOX_ROLE);
+		expect(select).toHaveAttribute(ARIA_DISABLED_ATTR, FALSE);
+		await userEvent.click(select);
+		expect(
+			screen
+				.getAllByTestId('multiple-notifications-select-option')
+				.map((option) => option.textContent),
+		).toStrictEqual(['All', 'gen_ai.request.model']);
 	});
 
 	it('should render unique group by options from all queries', async () => {

@@ -1,9 +1,21 @@
+import {
+	initialFormulaBuilderFormValues,
+	initialQueriesMap,
+	initialQueryAIWithType,
+} from 'constants/queryBuilder';
+import { getActiveBuilder } from 'lib/query/builderSlot';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
+import { EQueryType } from 'types/common/dashboard';
 
 import { INITIAL_CRITICAL_THRESHOLD } from '../../context/constants';
 import { Threshold } from '../../context/types';
 
-import { getSmallestDeviation, syncAnomalyFunction } from '../utils';
+import {
+	getQueryNames,
+	getSmallestDeviation,
+	syncAnomalyFunction,
+} from '../utils';
 
 const timeShift: QueryFunction = { name: 'timeShift', args: [{ value: 3600 }] };
 const anomaly = (
@@ -54,5 +66,48 @@ describe('getSmallestDeviation', () => {
 				({ ...INITIAL_CRITICAL_THRESHOLD, thresholdValue }) as Threshold,
 		);
 		expect(getSmallestDeviation(thresholds)).toBe(expected);
+	});
+});
+
+const tracesQuery = initialQueriesMap.traces;
+const formula = { ...initialFormulaBuilderFormValues, queryName: 'F1' };
+
+describe('getQueryNames', () => {
+	it('lists the Query Builder queries and formulas', () => {
+		const query: Query = {
+			...tracesQuery,
+			builder: { ...tracesQuery.builder, queryFormulas: [formula] },
+		};
+
+		expect(getQueryNames(query)).toStrictEqual([
+			{ label: 'A', value: 'A' },
+			{ label: 'F1', value: 'F1' },
+		]);
+	});
+
+	it('lists the AI queries and formulas from the AI slot', () => {
+		const query: Query = {
+			...tracesQuery,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder: { ...tracesQuery.builder, queryData: [] },
+			builder_ai_query: {
+				...getActiveBuilder(initialQueryAIWithType),
+				queryFormulas: [formula],
+			},
+		};
+
+		expect(getQueryNames(query)).toStrictEqual([
+			{ label: 'A', value: 'A' },
+			{ label: 'F1', value: 'F1' },
+		]);
+	});
+
+	it('lists nothing for an AI query whose AI slot is missing', () => {
+		const query: Query = {
+			...tracesQuery,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+		};
+
+		expect(getQueryNames(query)).toStrictEqual([]);
 	});
 });

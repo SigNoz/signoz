@@ -41,6 +41,8 @@ function toAlertTypeDTO(
 			return RuletypesAlertTypeDTO.TRACES_BASED_ALERT;
 		case AlertTypes.EXCEPTIONS_BASED_ALERT:
 			return RuletypesAlertTypeDTO.EXCEPTIONS_BASED_ALERT;
+		case AlertTypes.AI_TRACES_BASED_ALERT:
+			return RuletypesAlertTypeDTO.AI_TRACES_BASED_ALERT;
 		default:
 			return undefined;
 	}

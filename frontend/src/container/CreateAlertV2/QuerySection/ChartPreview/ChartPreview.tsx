@@ -11,6 +11,7 @@ import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
 import PlotTag from 'components/PlotTag/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
+import { isBuilderQueryType } from 'lib/query/builderSlot';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
@@ -120,8 +121,7 @@ function ChartPreview({
 
 	return (
 		<div className="chart-preview-container">
-			{currentQuery.queryType === EQueryType.QUERY_BUILDER &&
-				renderQBChartPreview()}
+			{isBuilderQueryType(currentQuery.queryType) && renderQBChartPreview()}
 			{currentQuery.queryType === EQueryType.PROM &&
 				renderPromAndChQueryChartPreview()}
 			{currentQuery.queryType === EQueryType.CLICKHOUSE &&

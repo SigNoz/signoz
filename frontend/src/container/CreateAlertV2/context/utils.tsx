@@ -2,6 +2,7 @@ import { UTC_TIMEZONE } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { QueryParams } from 'constants/query';
 import {
+	aiTraceAlertDefaults,
 	alertDefaults,
 	anamolyAlertDefaults,
 	exceptionAlertDefaults,
@@ -11,6 +12,7 @@ import {
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { CumulativeWindowTimeframes } from '../EvaluationSettings/types';
@@ -68,6 +70,9 @@ export const alertCreationReducer = (
 };
 
 export function getInitialAlertType(currentQuery: Query): AlertTypes {
+	if (currentQuery.queryType === EQueryType.AI_QUERY_BUILDER) {
+		return AlertTypes.AI_TRACES_BASED_ALERT;
+	}
 	const dataSource =
 		currentQuery.builder.queryData?.[0]?.dataSource || DataSource.METRICS;
 	switch (dataSource) {
@@ -92,6 +97,8 @@ export function buildInitialAlertDef(alertType: AlertTypes): AlertDef {
 			return exceptionAlertDefaults;
 		case AlertTypes.ANOMALY_BASED_ALERT:
 			return anamolyAlertDefaults;
+		case AlertTypes.AI_TRACES_BASED_ALERT:
+			return aiTraceAlertDefaults;
 		case AlertTypes.METRICS_BASED_ALERT:
 			return alertDefaults;
 		default:

@@ -2,6 +2,7 @@ import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
+import { toWireQuery } from 'lib/query/builderSlot';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	BasicThreshold,
@@ -224,8 +225,9 @@ export function buildCreateThresholdAlertRulePayload(
 		evaluationWindow,
 		advancedOptions,
 		notificationSettings,
-		query,
+		query: authoredQuery,
 	} = args;
+	const query = toWireQuery(authoredQuery);
 
 	const compositeQuery = compositeQueryToQueryEnvelope({
 		builderQueries: {
