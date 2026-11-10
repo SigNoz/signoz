@@ -178,6 +178,7 @@ function OverviewTab({
 					<RolesSelect
 						id="sa-roles"
 						mode="multiple"
+						testId="sa-roles-select"
 						roles={availableRoles}
 						loading={rolesLoading}
 						isError={rolesError}

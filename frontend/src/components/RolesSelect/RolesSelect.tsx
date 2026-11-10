@@ -1,19 +1,11 @@
-import { CircleAlert, RefreshCw } from '@signozhq/icons';
-import { Select } from 'antd';
-import { Checkbox } from '@signozhq/ui/checkbox';
+import { useMemo } from 'react';
+import { Combobox, type ComboboxOptionItemType } from '@signozhq/ui/combobox';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useListRoles } from 'api/generated/services/role';
 import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
-import cx from 'classnames';
 import APIError from 'types/api/error';
-import { popupContainer } from 'utils/selectPopupContainer';
 
-import './RolesSelect.styles.scss';
-
-export interface RoleOption {
-	label: string;
-	value: string;
-}
+import RolesSelectError from './RolesSelectError';
 
 export function useRoles(): {
 	roles: AuthtypesGettableRoleDTO[];
@@ -35,57 +27,24 @@ export function useRoles(): {
 export function getRoleOptions(
 	roles: AuthtypesGettableRoleDTO[],
 	valueField: 'id' | 'name',
-): RoleOption[] {
+): ComboboxOptionItemType[] {
 	return roles.map((role) => ({
+		type: 'item',
 		label: role.name ?? '',
 		value: role[valueField] ?? '',
 	}));
 }
 
-function ErrorContent({
-	error,
-	onRefetch,
-}: {
-	error?: APIError;
-	onRefetch?: () => void;
-}): JSX.Element {
-	const errorMessage = error?.message || 'Failed to load roles';
-
-	return (
-		<div className="roles-select-error">
-			<span className="roles-select-error__msg">
-				<CircleAlert size={12} />
-				{errorMessage}
-			</span>
-			{onRefetch && (
-				<button
-					type="button"
-					onClick={(e): void => {
-						e.stopPropagation();
-						onRefetch();
-					}}
-					className="roles-select-error__retry-btn"
-					title="Retry"
-				>
-					<RefreshCw size={12} />
-				</button>
-			)}
-		</div>
-	);
-}
-
 interface BaseProps {
 	id?: string;
 	placeholder?: string;
-	className?: string;
-	getPopupContainer?: (trigger: HTMLElement) => HTMLElement;
 	roles?: AuthtypesGettableRoleDTO[];
 	loading?: boolean;
 	isError?: boolean;
 	error?: APIError;
 	onRefetch?: () => void;
-	disabled?: boolean;
 	valueField?: 'id' | 'name';
+	testId?: string;
 }
 
 interface SingleProps extends BaseProps {
@@ -116,69 +75,67 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 		query: { enabled: externalRoles === undefined },
 	});
 
-	const roles = externalRoles ?? data?.data ?? [];
-	const options = getRoleOptions(roles, props.valueField || 'id');
+	const roles = externalRoles ?? data?.data;
+	const valueField = props.valueField || 'id';
+	const items = useMemo(
+		() => getRoleOptions(roles ?? [], valueField),
+		[roles, valueField],
+	);
 
 	const {
-		mode,
 		id,
 		placeholder = 'Select role',
-		className,
-		getPopupContainer = popupContainer,
 		loading = internalLoading,
 		isError = internalError,
 		error = convertToApiError(internalErrorObj),
 		onRefetch = externalRoles === undefined ? internalRefetch : undefined,
-		disabled,
+		testId,
 	} = props;
 
-	const notFoundContent = isError ? (
-		<ErrorContent error={error} onRefetch={onRefetch} />
-	) : undefined;
+	// A selected value missing from `items` still lists as a row, which hides
+	// `noContent`, so the failure is reported in the footer while it can be retried.
+	const errorFooter =
+		isError && onRefetch
+			? {
+					label: <RolesSelectError error={error} canRetry />,
+					onClick: onRefetch,
+					testId: 'roles-select-retry',
+				}
+			: undefined;
 
-	if (mode === 'multiple') {
-		const { value = [], onChange } = props as MultipleProps;
+	const sharedProps = {
+		id,
+		items,
+		placeholder,
+		loading,
+		testId,
+		searchInputProps: { placeholder: 'Search roles' },
+		footerAction: errorFooter,
+		noContent:
+			isError && !onRefetch ? (
+				<RolesSelectError error={error} canRetry={false} />
+			) : (
+				'No roles found'
+			),
+	};
+
+	if (props.mode === 'multiple') {
 		return (
-			<Select
-				id={id}
-				mode="multiple"
-				value={value}
-				onChange={onChange}
-				placeholder={placeholder}
-				className={cx('roles-select', className)}
-				loading={loading}
-				notFoundContent={notFoundContent}
-				options={options}
-				optionFilterProp="label"
-				optionRender={(option): JSX.Element => (
-					<div style={{ pointerEvents: 'none' }}>
-						<Checkbox color="primary" value={value.includes(option.value as string)}>
-							{option.label}
-						</Checkbox>
-					</div>
-				)}
-				getPopupContainer={getPopupContainer}
-				disabled={disabled}
+			<Combobox
+				{...sharedProps}
+				multiple
+				value={props.value ?? []}
+				onChange={props.onChange}
 			/>
 		);
 	}
 
-	const { value, onChange, allowClear = true } = props as SingleProps;
 	return (
-		<Select
-			id={id}
-			showSearch
-			value={value || undefined}
-			onChange={onChange}
-			placeholder={placeholder}
-			allowClear={allowClear}
-			className={cx('roles-single-select', className)}
-			loading={loading}
-			notFoundContent={notFoundContent}
-			options={options}
-			optionFilterProp="label"
-			getPopupContainer={getPopupContainer}
-			disabled={disabled}
+		<Combobox
+			{...sharedProps}
+			value={props.value || undefined}
+			onChange={props.onChange}
+			allowClear={props.allowClear ?? true}
 		/>
 	);
 }

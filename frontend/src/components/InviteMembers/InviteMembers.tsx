@@ -130,6 +130,7 @@ function InviteMembers({
 									onChange={(roleIds): void => updateRole(row.id, roleIds)}
 									placeholder="Select roles"
 									id={`invite-role-${row.id}`}
+									testId={`invite-role-${row.id}`}
 								/>
 							</div>
 

@@ -108,15 +108,6 @@
 		gap: 6px;
 	}
 
-	&__select {
-		width: 100%;
-
-		.ant-select-selection-search {
-			inset-inline-start: var(--padding-2) !important;
-			inset-inline-end: var(--padding-2) !important;
-		}
-	}
-
 	&__group-mappings {
 		display: flex;
 		flex-direction: column;

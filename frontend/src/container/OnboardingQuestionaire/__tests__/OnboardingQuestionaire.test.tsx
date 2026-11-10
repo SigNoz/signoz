@@ -1,3 +1,4 @@
+import { pickRole } from 'components/InviteMembers/__tests__/roleSelectUtils';
 import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';
 import { rest, server } from 'mocks-server/server';
@@ -519,8 +520,7 @@ describe('OnboardingQuestionaire Component', () => {
 				screen.getAllByPlaceholderText('e.g. john@signoz.io')[0],
 				'alice@signoz.io',
 			);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await pickRole(user, 0, 'role-viewer');
 			await user.click(screen.getByTestId('send-invites-button'));
 
 			await waitFor(

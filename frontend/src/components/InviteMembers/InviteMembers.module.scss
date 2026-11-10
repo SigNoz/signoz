@@ -69,17 +69,6 @@
 	gap: var(--spacing-2);
 	flex: 0 0 160px;
 	width: 160px;
-
-	:global(.roles-single-select) {
-		width: 100%;
-
-		:global(.ant-select-selector) {
-			background-color: var(
-				--invite-members-field-background,
-				var(--l2-background)
-			) !important;
-		}
-	}
 }
 
 .cellAction {

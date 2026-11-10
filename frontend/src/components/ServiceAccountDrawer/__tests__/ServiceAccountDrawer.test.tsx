@@ -161,8 +161,11 @@ describe('ServiceAccountDrawer', () => {
 		await screen.findByDisplayValue('CI Bot');
 
 		// Add signoz-viewer while keeping signoz-admin selected
-		await user.click(screen.getByLabelText('Roles'));
-		await user.click(await screen.findByTitle('signoz-viewer'));
+		await user.click(screen.getByTestId('sa-roles-select'));
+		await user.type(
+			await screen.findByTestId('sa-roles-select-search'),
+			`${managedRoles[2].name}{Enter}`,
+		);
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
 		await waitFor(() =>
@@ -205,11 +208,11 @@ describe('ServiceAccountDrawer', () => {
 		await screen.findByDisplayValue('CI Bot');
 
 		// Remove the signoz-admin tag from the multi-select
-		const adminTag = await screen.findByTitle('signoz-admin');
-		const removeBtn = adminTag.querySelector(
-			'.ant-select-selection-item-remove',
-		) as Element;
-		await user.click(removeBtn);
+		await user.click(
+			await screen.findByTestId(
+				`sa-roles-select-chip-${managedRoles[0].id}-remove`,
+			),
+		);
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
 		await waitFor(() =>
@@ -402,8 +405,11 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		await screen.findByDisplayValue('CI Bot');
 
 		// Add the signoz-viewer role (which is not currently assigned)
-		await user.click(screen.getByLabelText('Roles'));
-		await user.click(await screen.findByTitle('signoz-viewer'));
+		await user.click(screen.getByTestId('sa-roles-select'));
+		await user.type(
+			await screen.findByTestId('sa-roles-select-search'),
+			`${managedRoles[2].name}{Enter}`,
+		);
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
 		await waitFor(() =>
@@ -440,8 +446,11 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 
 		await screen.findByDisplayValue('CI Bot');
 
-		await user.click(screen.getByLabelText('Roles'));
-		await user.click(await screen.findByTitle('signoz-viewer'));
+		await user.click(screen.getByTestId('sa-roles-select'));
+		await user.type(
+			await screen.findByTestId('sa-roles-select-search'),
+			`${managedRoles[2].name}{Enter}`,
+		);
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
 		await waitFor(() =>

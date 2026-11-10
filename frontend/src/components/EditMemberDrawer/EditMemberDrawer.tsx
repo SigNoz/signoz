@@ -544,6 +544,7 @@ function EditMemberDrawer({
 					<RolesSelect
 						id="member-role"
 						mode="multiple"
+						testId="member-roles-select"
 						roles={availableRoles}
 						loading={rolesLoading}
 						isError={rolesError}

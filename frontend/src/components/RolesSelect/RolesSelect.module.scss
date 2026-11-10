@@ -1,0 +1,18 @@
+.error {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-3);
+	color: var(--destructive);
+}
+
+.errorMessage {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+}
+
+.retry {
+	color: var(--l2-foreground);
+}

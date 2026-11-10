@@ -302,8 +302,11 @@ describe('EditMemberDrawer', () => {
 		renderDrawer({ onComplete });
 
 		// signoz-admin is already selected; add signoz-editor on top
-		await user.click(screen.getByLabelText('Roles'));
-		await user.click(await screen.findByTitle('signoz-editor'));
+		await user.click(screen.getByTestId('member-roles-select'));
+		await user.type(
+			await screen.findByTestId('member-roles-select-search'),
+			`${managedRoles[1].name}{Enter}`,
+		);
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
 		await waitFor(() =>
@@ -327,11 +330,11 @@ describe('EditMemberDrawer', () => {
 		renderDrawer({ onComplete });
 
 		// signoz-admin appears as a selected tag — click its remove button to deselect
-		const adminTag = await screen.findByTitle('signoz-admin');
-		const removeBtn = adminTag.querySelector(
-			'.ant-select-selection-item-remove',
-		) as Element;
-		await user.click(removeBtn);
+		await user.click(
+			await screen.findByTestId(
+				`member-roles-select-chip-${managedRoles[0].id}-remove`,
+			),
+		);
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
 		await waitFor(() =>
