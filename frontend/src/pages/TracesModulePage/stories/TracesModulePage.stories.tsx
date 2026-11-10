@@ -10,8 +10,10 @@ import {
 	loadNextListPage,
 	openAddToDashboard,
 	openColumnHeaderMenu,
+	openCreateFunnel,
 	openPageSize,
 	openQuickFiltersSettings,
+	openRenameFunnel,
 	showCreateFunnelNameError,
 	showRootSpansNextPage,
 	suggestBooleanValues,
@@ -114,6 +116,18 @@ export const CreateFunnelNameError: Story = {
 	// The deliberate 400 is the state under test.
 	parameters: { allowConsoleErrors: true },
 	play: showCreateFunnelNameError,
+};
+
+/** The name field for a funnel that does not exist yet. */
+export const CreateFunnel: Story = {
+	args: { tab: 'funnels' },
+	play: openCreateFunnel,
+};
+
+/** The rename field for a funnel already on the list. */
+export const RenameFunnel: Story = {
+	args: { tab: 'funnels' },
+	play: openRenameFunnel,
 };
 
 /**

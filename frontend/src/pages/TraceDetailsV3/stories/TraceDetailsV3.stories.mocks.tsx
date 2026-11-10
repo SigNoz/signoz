@@ -33,6 +33,7 @@ import {
 	timeSeriesPoints,
 } from '@/storybook/msw/__story_mockdata__/queryRange';
 
+import { traceFunnelsResponse } from '../../TracesModulePage/stories/__story_mockdata__/traces';
 import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
 import {
 	focusSpanIndex,
@@ -266,6 +267,11 @@ export const traceDetailsMocks = defineStoryMocks({
 
 					return traceAggregationsResponse(body.aggregations ?? [], trace);
 				}),
+			),
+
+			rest.get(
+				'http://localhost/api/v1/trace-funnels/list',
+				response.json(() => traceFunnelsResponse(3)),
 			),
 
 			rest.post(

@@ -39,6 +39,34 @@ export const NothingPriced: Story = {
 	args: { rules: 0 },
 };
 
+/** Models seen in spans that no rule prices yet. */
+export const UnpricedModels: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'tab',
+				{ name: /unpriced models/i },
+				{ timeout: 15000 },
+			),
+		);
+		await screen.findByRole('tab', { name: /unpriced models/i, selected: true });
+	},
+};
+
+/** Creating a rule: the blank drawer, with the provider select enabled. */
+export const ModelCostDrawerCreate: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: /add model cost/i },
+				{ timeout: 15000 },
+			),
+		);
+		await screen.findByTestId('drawer-provider-select');
+	},
+};
+
 /**
  * The first pricing rule's menu, open over the table: edit the rule or drop it.
  */
