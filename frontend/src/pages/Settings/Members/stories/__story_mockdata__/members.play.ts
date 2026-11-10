@@ -5,16 +5,17 @@
 
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
+import { getToastText } from '@/storybook/play/toastText';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	closeRoles,
+	findInviteRoleTriggers,
 	membersMocks,
 	openInviteForm,
-	openInviteRoleDropdown,
 	openMember,
 	openResetLink,
-	pickOpenRole,
+	roleItemTestId,
 	sendInvites,
 	untilLoaded,
 } from '../Members.stories.mocks';
@@ -99,7 +100,7 @@ export const openDeleteMemberConfirm = async ({
 	await userEvent.click(
 		await screen.findByRole('button', { name: 'Delete Member' }),
 	);
-	await screen.findByRole('dialog', { name: 'Delete Member' });
+	await screen.findByRole('alertdialog', { name: 'Delete Member' });
 };
 
 export const openRevokeInviteConfirm = async ({
@@ -109,16 +110,21 @@ export const openRevokeInviteConfirm = async ({
 	await userEvent.click(
 		await screen.findByRole('button', { name: 'Revoke Invite' }),
 	);
-	await screen.findByRole('dialog', { name: 'Revoke Invite' });
+	await screen.findByRole('alertdialog', { name: 'Revoke Invite' });
 };
 
 export const openAssignRoles = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	await openMember(canvasElement, /jon snow/i);
-	// The dropdown opens off the inner combobox, not the wrapper the click lands on first.
-	await userEvent.click(await screen.findByRole('combobox'));
-	await screen.findByText('oncall-responder', undefined, untilLoaded);
+	await userEvent.click(
+		await screen.findByTestId('member-roles-select', undefined, untilLoaded),
+	);
+	await screen.findByTestId(
+		roleItemTestId('member-roles-select', 'oncall-responder'),
+		undefined,
+		untilLoaded,
+	);
 };
 
 export const openInviteMembers = async ({
@@ -131,27 +137,37 @@ export const openInviteRoles = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	await openInviteForm(canvasElement);
-	await openInviteRoleDropdown(0);
-	await screen.findAllByText('viewer', undefined, untilLoaded);
+	const [trigger] = await findInviteRoleTriggers();
+
+	await userEvent.click(trigger);
+	await screen.findByTestId(
+		roleItemTestId(trigger.dataset.testid ?? '', 'viewer'),
+		undefined,
+		untilLoaded,
+	);
 };
 
 export const selectInviteRoles = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	await openInviteForm(canvasElement);
-	await openInviteRoleDropdown(0);
+	const [trigger] = await findInviteRoleTriggers();
+	const triggerTestId = trigger.dataset.testid ?? '';
+
+	await userEvent.click(trigger);
 	for (const role of ['viewer', 'editor', 'oncall-responder']) {
-		await pickOpenRole(role);
+		await userEvent.click(
+			await screen.findByTestId(
+				roleItemTestId(triggerTestId, role),
+				undefined,
+				untilLoaded,
+			),
+		);
 	}
 	await closeRoles();
-	// The open list titles its options too, so the check is scoped to the selected tags.
-	await waitFor(
-		() =>
-			expect(
-				document.querySelector(
-					'.ant-select-selection-item[title="oncall-responder"]',
-				),
-			).toBeVisible(),
+	await screen.findByTestId(
+		`${triggerTestId}-chip-role-oncall-responder`,
+		undefined,
 		untilLoaded,
 	);
 };
@@ -219,7 +235,7 @@ export const deleteMember = async ({
 	await userEvent.click(
 		await screen.findByRole('button', { name: 'Delete Member' }),
 	);
-	const dialog = await screen.findByRole('dialog', {
+	const dialog = await screen.findByRole('alertdialog', {
 		name: 'Delete Member',
 	});
 
@@ -241,7 +257,7 @@ export const revokeInvite = async ({
 	await userEvent.click(
 		await screen.findByRole('button', { name: 'Revoke Invite' }),
 	);
-	const dialog = await screen.findByRole('dialog', {
+	const dialog = await screen.findByRole('alertdialog', {
 		name: 'Revoke Invite',
 	});
 
@@ -286,7 +302,7 @@ export const failResetLink = async ({
 	if (args.resetLink === 'no-token') {
 		await waitFor(() =>
 			expect(
-				screen.getByText(/failed to generate password reset link/i),
+				getToastText(/failed to generate password reset link/i),
 			).toBeVisible(),
 		);
 	}

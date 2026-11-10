@@ -35,6 +35,9 @@ import {
 	rolesListResponse,
 } from '../../stories/__story_mockdata__/roles';
 
+/** The table fetches before it renders a row, which outlasts the 1s default. */
+export const untilLoaded = { timeout: 15_000 };
+
 const LIST = 'Service accounts · list';
 const KEYS = 'Service accounts · keys';
 const DRAWER = 'Service accounts · drawer';
