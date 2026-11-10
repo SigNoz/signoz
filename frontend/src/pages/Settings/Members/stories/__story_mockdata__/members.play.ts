@@ -9,10 +9,13 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	clickWhenEnabled,
+	closeRoles,
 	MEMBERS_PAGE_SIZE,
 	membersMocks,
+	openInviteRoleDropdown,
 	openMember,
 	openResetLink,
+	pickOpenRole,
 	sendInvites,
 	untilLoaded,
 } from '../Members.stories.mocks';
@@ -160,6 +163,33 @@ export const openInviteForm = async ({
 	);
 	// The form opens with a row per seat, each carrying its own email field.
 	await screen.findAllByTestId(/^invite-email-/, undefined, untilLoaded);
+};
+
+export const openInviteRoles = async (context: PlayContext): Promise<void> => {
+	await openInviteForm(context);
+	await openInviteRoleDropdown(0);
+	await screen.findAllByText('viewer', undefined, untilLoaded);
+};
+
+export const selectInviteRoles = async (
+	context: PlayContext,
+): Promise<void> => {
+	await openInviteForm(context);
+	await openInviteRoleDropdown(0);
+	for (const role of ['viewer', 'editor', 'oncall-responder']) {
+		await pickOpenRole(role);
+	}
+	await closeRoles();
+	// The open list titles its options too, so the check is scoped to the selected tags.
+	await waitFor(
+		() =>
+			expect(
+				document.querySelector(
+					'.ant-select-selection-item[title="oncall-responder"]',
+				),
+			).toBeVisible(),
+		untilLoaded,
+	);
 };
 
 export const sendInvitesToast = async ({
