@@ -205,14 +205,25 @@ func (at *templater) buildNotificationTemplateData(
 		alertDataSlice = append(alertDataSlice, ad)
 	}
 
-	// count the number of firing and resolved alerts
-	var firing, resolved int
+	// count the number of firing, recovering and resolved alerts
+	var firing, recovering, resolved int
 	for _, ad := range alertDataSlice {
-		if ad.Alert.IsFiring {
+		switch {
+		case ad.Alert.IsFiring:
 			firing++
-		} else if ad.Alert.IsResolved {
+		case ad.Alert.IsRecovering:
+			recovering++
+		case ad.Alert.IsResolved:
 			resolved++
 		}
+	}
+
+	// firing wins over recovering, which wins over resolved
+	status := string(model.AlertResolved)
+	if firing > 0 {
+		status = string(model.AlertFiring)
+	} else if recovering > 0 {
+		status = ruletypes.StateRecovering.StringValue()
 	}
 
 	// build the group labels
@@ -224,10 +235,11 @@ func (at *templater) buildNotificationTemplateData(
 	// build the notification template data
 	return &alertmanagertypes.NotificationTemplateData{
 		Alert: alertmanagertypes.NotificationAlert{
-			Receiver:      receiver,
-			Status:        string(types.Alerts(alerts...).Status()),
-			TotalFiring:   firing,
-			TotalResolved: resolved,
+			Receiver:        receiver,
+			Status:          status,
+			TotalFiring:     firing,
+			TotalRecovering: recovering,
+			TotalResolved:   resolved,
 		},
 		Rule:              buildRuleInfo(commonLabels, rawCommonAnnotations),
 		GroupLabels:       gl,
@@ -252,19 +264,27 @@ func buildAlertData(a *types.Alert, receiver string) alertmanagertypes.AlertData
 		annotations[string(k)] = string(v)
 	}
 
+	// The alertmanager only knows firing and resolved; the rule manager flags a
+	// firing alert whose value is between the threshold and the recovery
+	// threshold.
+	status := string(a.Status())
+	if a.Status() == model.AlertFiring && annotations[ruletypes.AnnotationIsRecovering] == "true" {
+		status = ruletypes.StateRecovering.StringValue()
+	}
+
 	return alertmanagertypes.AlertData{
 		Alert: alertmanagertypes.AlertInfo{
-			Status:        string(a.Status()),
+			Status:        status,
 			Receiver:      receiver,
 			Value:         annotations[ruletypes.AnnotationValue],
 			StartsAt:      a.StartsAt,
 			EndsAt:        a.EndsAt,
 			GeneratorURL:  a.GeneratorURL,
 			Fingerprint:   a.Fingerprint().String(),
-			IsFiring:      a.Status() == model.AlertFiring,
-			IsResolved:    a.Status() == model.AlertResolved,
+			IsFiring:      status == string(model.AlertFiring),
+			IsResolved:    status == string(model.AlertResolved),
 			IsMissingData: labels[ruletypes.LabelNoData] == "true",
-			IsRecovering:  labels[ruletypes.LabelIsRecovering] == "true",
+			IsRecovering:  status == ruletypes.StateRecovering.StringValue(),
 		},
 		Rule:   buildRuleInfo(labels, annotations),
 		Log:    alertmanagertypes.LinkInfo{URL: annotations[ruletypes.AnnotationRelatedLogs]},

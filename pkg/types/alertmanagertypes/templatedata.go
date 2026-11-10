@@ -137,8 +137,9 @@ type NotificationTemplateData struct {
 // NotificationAlert holds the aggregate alert fields available to title
 // templates (counts, overall status, receiver).
 type NotificationAlert struct {
-	Receiver      string `json:"receiver"      mapstructure:"receiver"`
-	Status        string `json:"status"        mapstructure:"status"`
-	TotalFiring   int    `json:"totalFiring"   mapstructure:"total_firing"`
-	TotalResolved int    `json:"totalResolved" mapstructure:"total_resolved"`
+	Receiver        string `json:"receiver"        mapstructure:"receiver"`
+	Status          string `json:"status"          mapstructure:"status"`
+	TotalFiring     int    `json:"totalFiring"     mapstructure:"total_firing"`
+	TotalRecovering int    `json:"totalRecovering" mapstructure:"total_recovering"`
+	TotalResolved   int    `json:"totalResolved"   mapstructure:"total_resolved"`
 }

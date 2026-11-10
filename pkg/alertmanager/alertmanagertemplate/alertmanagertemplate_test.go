@@ -248,6 +248,70 @@ Description: Request rate exceeded 10k/s`},
 			wantIsDefaultBody: true,
 		},
 		{
+			name: "value annotation feeds alert.value and is hidden from annotations",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighErrors"},
+					map[string]string{"summary": "errors are high", ruletypes.AnnotationValue: "523"},
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "$rule.name",
+				BodyTemplate:  "Value: $alert.value, annotations: {{ len $annotations }}",
+			},
+			wantTitle: "HighErrors",
+			wantBody:  []string{"Value: 523, annotations: 1"},
+		},
+		{
+			name: "recovering annotation sets status, flags and counts with firing winning the title",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighErrors", "team": "core"},
+					map[string]string{ruletypes.AnnotationIsRecovering: "true"},
+					true,
+				),
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighErrors", "team": "edge"},
+					nil,
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "$alert.status: $alert.total_firing firing, $alert.total_recovering recovering, $alert.total_resolved resolved",
+				BodyTemplate:  "$labels.team: $alert.status firing=$alert.is_firing recovering=$alert.is_recovering resolved=$alert.is_resolved, annotations: {{ len $annotations }}",
+			},
+			wantTitle: "firing: 1 firing, 1 recovering, 0 resolved",
+			wantBody: []string{
+				"core: recovering firing=false recovering=true resolved=false, annotations: 0",
+				"edge: firing firing=true recovering=false resolved=false, annotations: 0",
+			},
+		},
+		{
+			name: "recovering wins the title over resolved and a resolved alert ignores a stale recovering flag",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighErrors", "team": "core"},
+					map[string]string{ruletypes.AnnotationIsRecovering: "true"},
+					true,
+				),
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighErrors", "team": "edge"},
+					map[string]string{ruletypes.AnnotationIsRecovering: "true"},
+					false,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "$alert.status: $alert.total_firing firing, $alert.total_recovering recovering, $alert.total_resolved resolved",
+				BodyTemplate:  "$labels.team: $alert.status recovering=$alert.is_recovering",
+			},
+			wantTitle: "recovering: 0 firing, 1 recovering, 1 resolved",
+			wantBody: []string{
+				"core: recovering recovering=true",
+				"edge: resolved recovering=false",
+			},
+		},
+		{
 			name: "using non-existing function in template",
 			alerts: []*types.Alert{
 				createAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil, true),

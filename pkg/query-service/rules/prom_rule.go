@@ -177,9 +177,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		}
 		r.logger.DebugContext(ctx, "alerting for series", slog.Any("series", result))
 
+		value := valueFormatter.Format(result.V, r.Unit())
 		threshold := valueFormatter.Format(result.Target, result.TargetUnit)
 
-		tmplData := ruletypes.AlertTemplateData(l, valueFormatter.Format(result.V, r.Unit()), threshold)
+		tmplData := ruletypes.AlertTemplateData(l, value, threshold)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
@@ -211,7 +212,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		lb.Set(ruletypes.AlertRuleIDLabel, r.ID())
 		lb.Set(ruletypes.RuleSourceLabel, r.GeneratorURL())
 
-		annotations := r.ExpandAnnotations(expand)
+		annotations := r.AlertAnnotations(expand, result, value)
 		if result.IsMissing {
 			lb.Set(ruletypes.AlertNameLabel, "[No data] "+r.Name())
 			lb.Set(ruletypes.NoDataLabel, "true")

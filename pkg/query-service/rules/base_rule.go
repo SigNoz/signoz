@@ -272,6 +272,21 @@ func (r *BaseRule) ExpandAnnotations(expand func(string) string) ruletypes.Label
 	return annotations
 }
 
+// AlertAnnotations returns the expanded rule annotations plus the private ones
+// the notifier reads into template fields. value is smpl.V formatted in the
+// rule's unit.
+func (r *BaseRule) AlertAnnotations(expand func(string) string, smpl ruletypes.Sample, value string) ruletypes.Labels {
+	annotations := r.ExpandAnnotations(expand)
+	if !smpl.IsMissing {
+		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationValue, Value: value})
+	}
+	if smpl.IsRecovering {
+		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationIsRecovering, Value: "true"})
+	}
+
+	return annotations
+}
+
 func (r *BaseRule) ExternalURL(path string, params url.Values) string {
 	u := r.externalURL.JoinPath(path)
 	if len(params) > 0 {

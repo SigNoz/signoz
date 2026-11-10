@@ -229,10 +229,11 @@ func TestPreProcessTemplateAndData(t *testing.T) {
 			},
 			expectedData: map[string]any{
 				"alert": map[string]any{
-					"receiver":       "pagerduty",
-					"status":         "firing",
-					"total_firing":   3,
-					"total_resolved": 0,
+					"receiver":         "pagerduty",
+					"status":           "firing",
+					"total_firing":     3,
+					"total_recovering": 0,
+					"total_resolved":   0,
 				},
 				"severity":            "critical",
 				"http.request.method": "GET",

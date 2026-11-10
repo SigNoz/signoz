@@ -59,7 +59,7 @@ type Email struct {
 
 // layoutData is the value passed to the email.signoz.html layout
 // template. It embeds NotificationTemplateData so templates can reference
-// `.Alert.Status`, `.Alert.TotalFiring`, `.Alert.TotalResolved`,
+// `.Alert.Status`, `.Alert.TotalFiring`, `.Alert.TotalRecovering`, `.Alert.TotalResolved`,
 // `.NotificationTemplateData.ExternalURL`, etc. alongside the rendered
 // Title and per-alert Bodies.
 type layoutData struct {
