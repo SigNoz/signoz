@@ -1,13 +1,13 @@
 package coretypes
 
 import (
-	sigsemconv "github.com/SigNoz/signoz-semantic-conventions/semconv/go"
+	"github.com/SigNoz/signoz-semantic-conventions/gen/go/sigsemconv"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
-	ActionCategoryAccessControl       = ActionCategory{valuer.NewString(sigsemconv.SigNozAuditActionCategoryAccessControl)}
-	ActionCategoryConfigurationChange = ActionCategory{valuer.NewString(sigsemconv.SigNozAuditActionCategoryConfigurationChanges)}
+	ActionCategoryAccessControl       = ActionCategory{valuer.NewString(sigsemconv.SigNozAuditActionCategoryAccessControl.Value.AsString())}
+	ActionCategoryConfigurationChange = ActionCategory{valuer.NewString(sigsemconv.SigNozAuditActionCategoryConfigurationChanges.Value.AsString())}
 	ActionCategoryDataAccess          = ActionCategory{valuer.NewString("data_access")}
 	ActionCategorySystemEvent         = ActionCategory{valuer.NewString("system_event")}
 )

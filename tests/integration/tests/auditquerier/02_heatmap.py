@@ -32,9 +32,9 @@ def test_audit_heatmap(
         [
             AuditLog(
                 timestamp=now - timedelta(seconds=index + 1),
-                resources={"service.name": "signoz", "signoz.audit.resource.kind": "dashboard"},
-                attributes={"signoz.audit.action": action, "signoz.audit.fields_changed": fields_changed},
-                event_name=f"dashboard.{action}",
+                resources={"service.name": "signoz", "signoz.resource.kind": "dashboard"},
+                attributes={"signoz.audit.verb": action, "signoz.audit.fields_changed": fields_changed},
+                event_name=f"signoz.audit.{action}",
             )
             for action, values in changed_by_action.items()
             for index, fields_changed in enumerate(values)
@@ -43,9 +43,9 @@ def test_audit_heatmap(
         + [
             AuditLog(
                 timestamp=now - timedelta(seconds=5),
-                resources={"service.name": "signoz", "signoz.audit.resource.kind": "dashboard"},
-                attributes={"signoz.audit.action": "update"},
-                event_name="dashboard.update",
+                resources={"service.name": "signoz", "signoz.resource.kind": "dashboard"},
+                attributes={"signoz.audit.verb": "update"},
+                event_name="signoz.audit.update",
             )
         ]
     )
@@ -59,8 +59,8 @@ def test_audit_heatmap(
             "logs",
             "signoz.audit.fields_changed",
             source="audit",
-            group_by=[build_group_by_field("signoz.audit.action", "string", "attribute")],
-            filter_expression="signoz.audit.resource.kind = 'dashboard'",
+            group_by=[build_group_by_field("signoz.audit.verb", "string", "attribute")],
+            filter_expression="signoz.resource.kind = 'dashboard'",
             bucket_options=build_linear_bucket_options(20, 4),
         )
     ]
@@ -75,7 +75,7 @@ def test_audit_heatmap(
     buckets = get_buckets(data, "A")
     assert buckets == pytest.approx([0.0, 5.0, 10.0])
 
-    series_by_action = index_series_by_label(get_all_series(data, "A"), "signoz.audit.action")
+    series_by_action = index_series_by_label(get_all_series(data, "A"), "signoz.audit.verb")
     totals_by_action = {action: [sum(column["values"][slot] for column in series["values"]) for slot in range(len(buckets) + 1)] for action, series in series_by_action.items()}
     assert totals_by_action == {
         "update": [0, 1, 1, 0],

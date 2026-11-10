@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -389,4 +390,122 @@ func TestNewPLogsFromAuditEvents_TargetPerRecord(t *testing.T) {
 	}
 
 	assert.Equal(t, []any{"r-001", "r-002"}, targetIDs)
+}
+
+func TestNewPLogsFromAuditEvents_Attributes(t *testing.T) {
+	testCases := []struct {
+		name                       string
+		method                     string
+		path                       string
+		route                      string
+		statusCode                 int
+		action                     coretypes.Verb
+		category                   coretypes.ActionCategory
+		claims                     authtypes.Claims
+		resourceAttributes         ResourceAttributes
+		targetAttributes           TargetAttributes
+		errorType                  string
+		expectedEventName          string
+		expectedResourceAttributes map[string]any
+		expectedRecordAttributes   map[string]any
+	}{
+		{
+			name:               "Success_DashboardCreated",
+			method:             http.MethodPost,
+			path:               "/api/v1/dashboards",
+			route:              "/api/v1/dashboards",
+			statusCode:         http.StatusCreated,
+			action:             coretypes.VerbCreate,
+			category:           coretypes.ActionCategoryConfigurationChange,
+			claims:             authtypes.Claims{UserID: "019a1234-abcd-7000-8000-567800000001", Email: "alice@acme.com", OrgID: "019a0000-0000-7000-8000-000000000001", Principal: authtypes.PrincipalUser},
+			resourceAttributes: NewResourceAttributes(testDashboardResource, "019b5678-0000-7000-8000-000000009012"),
+			expectedEventName:  "signoz.audit.create",
+			expectedResourceAttributes: map[string]any{
+				"service.name":           "signoz",
+				"service.version":        "0.90.0",
+				"signoz.resource.kind":   "dashboard",
+				"signoz.resource.id":     "019b5678-0000-7000-8000-000000009012",
+				"signoz.resource.object": testDashboardResource.Object(valuer.MustNewUUID("019a0000-0000-7000-8000-000000000001"), "019b5678-0000-7000-8000-000000009012"),
+			},
+			expectedRecordAttributes: map[string]any{
+				"signoz.audit.verb":            "create",
+				"signoz.audit.action_category": "configuration_changes",
+				"signoz.audit.outcome":         "success",
+				"signoz.principal.id":          "019a1234-abcd-7000-8000-567800000001",
+				"signoz.principal.email":       "alice@acme.com",
+				"signoz.principal.type":        "user",
+				"signoz.organization.id":       "019a0000-0000-7000-8000-000000000001",
+				"network.protocol.name":        "http",
+				"network.protocol.version":     "1.1",
+				"url.scheme":                   "http",
+				"url.path":                     "/api/v1/dashboards",
+				"http.request.method":          "POST",
+				"http.route":                   "/api/v1/dashboards",
+				"http.response.status_code":    int64(201),
+				"client.address":               "192.0.2.1",
+				"client.port":                  int64(1234),
+			},
+		},
+		{
+			name:               "Failure_ForbiddenRoleAttachedToUser",
+			method:             http.MethodPost,
+			path:               "/api/v1/users/019c1111-0000-7000-8000-000000000020/roles",
+			route:              "/api/v1/users/{id}/roles",
+			statusCode:         http.StatusForbidden,
+			action:             coretypes.VerbAttach,
+			category:           coretypes.ActionCategoryAccessControl,
+			claims:             authtypes.Claims{ServiceAccountID: "019aaaaa-bbbb-7000-8000-cccc00000002", OrgID: "019a0000-0000-7000-8000-000000000002", Principal: authtypes.PrincipalServiceAccount},
+			resourceAttributes: NewResourceAttributes(coretypes.ResourceUser, "019c1111-0000-7000-8000-000000000020"),
+			targetAttributes:   NewTargetAttributes(coretypes.ResourceRole, "019d2222-0000-7000-8000-000000000030"),
+			errorType:          "forbidden",
+			expectedEventName:  "signoz.audit.attach",
+			expectedResourceAttributes: map[string]any{
+				"service.name":           "signoz",
+				"service.version":        "0.90.0",
+				"signoz.resource.kind":   "user",
+				"signoz.resource.id":     "019c1111-0000-7000-8000-000000000020",
+				"signoz.resource.object": coretypes.ResourceUser.Object(valuer.MustNewUUID("019a0000-0000-7000-8000-000000000002"), "019c1111-0000-7000-8000-000000000020"),
+			},
+			expectedRecordAttributes: map[string]any{
+				"signoz.audit.verb":             "attach",
+				"signoz.audit.action_category":  "access_control",
+				"signoz.audit.outcome":          "failure",
+				"signoz.principal.id":           "019aaaaa-bbbb-7000-8000-cccc00000002",
+				"signoz.principal.type":         "service_account",
+				"signoz.organization.id":        "019a0000-0000-7000-8000-000000000002",
+				"signoz.resource.target.kind":   "role",
+				"signoz.resource.target.id":     "019d2222-0000-7000-8000-000000000030",
+				"signoz.resource.target.object": coretypes.ResourceRole.Object(valuer.MustNewUUID("019a0000-0000-7000-8000-000000000002"), "019d2222-0000-7000-8000-000000000030"),
+				"exception.type":                "forbidden",
+				"network.protocol.name":         "http",
+				"network.protocol.version":      "1.1",
+				"url.scheme":                    "http",
+				"url.path":                      "/api/v1/users/019c1111-0000-7000-8000-000000000020/roles",
+				"http.request.method":           "POST",
+				"http.route":                    "/api/v1/users/{id}/roles",
+				"http.response.status_code":     int64(403),
+				"client.address":                "192.0.2.1",
+				"client.port":                   int64(1234),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			event := NewAuditEventFromHTTPRequest(httptest.NewRequest(testCase.method, testCase.path, nil), testCase.route, testCase.statusCode, oteltrace.TraceID{}, oteltrace.SpanID{}, testCase.action, testCase.category, testCase.claims, testCase.resourceAttributes, testCase.targetAttributes, testCase.errorType)
+
+			logs := NewPLogsFromAuditEvents([]AuditEvent{event}, "signoz", "0.90.0", "signoz.audit")
+			require.Equal(t, 1, logs.ResourceLogs().Len())
+
+			resourceLogs := logs.ResourceLogs().At(0)
+			assert.Equal(t, testCase.expectedResourceAttributes, resourceLogs.Resource().Attributes().AsRaw())
+
+			require.Equal(t, 1, resourceLogs.ScopeLogs().Len())
+			require.Equal(t, 1, resourceLogs.ScopeLogs().At(0).LogRecords().Len())
+
+			record := resourceLogs.ScopeLogs().At(0).LogRecords().At(0)
+			assert.Equal(t, testCase.expectedEventName, record.EventName())
+			assert.Equal(t, testCase.expectedRecordAttributes, record.Attributes().AsRaw())
+		})
+	}
 }

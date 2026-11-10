@@ -1,7 +1,7 @@
 package audittypes
 
 import (
-	sigsemconv "github.com/SigNoz/signoz-semantic-conventions/semconv/go"
+	"github.com/SigNoz/signoz-semantic-conventions/gen/go/sigsemconv"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.opentelemetry.io/collector/pdata/plog"
 )
@@ -14,8 +14,8 @@ type Outcome struct {
 }
 
 var (
-	OutcomeSuccess = Outcome{valuer.NewString(sigsemconv.SigNozAuditOutcomeSuccess), plog.SeverityNumberInfo, "INFO"}
-	OutcomeFailure = Outcome{valuer.NewString(sigsemconv.SigNozAuditOutcomeFailure), plog.SeverityNumberError, "ERROR"}
+	OutcomeSuccess = Outcome{valuer.NewString(sigsemconv.SigNozAuditOutcomeSuccess.Value.AsString()), plog.SeverityNumberInfo, "INFO"}
+	OutcomeFailure = Outcome{valuer.NewString(sigsemconv.SigNozAuditOutcomeFailure.Value.AsString()), plog.SeverityNumberError, "ERROR"}
 )
 
 func (Outcome) Enum() []any {

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	sigsemconv "github.com/SigNoz/signoz-semantic-conventions/semconv/go"
+	"github.com/SigNoz/signoz-semantic-conventions/gen/go/sigsemconv"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -35,9 +35,9 @@ func NewAuditAttributesFromHTTP(statusCode int, action coretypes.Verb, category 
 }
 
 func (attributes AuditAttributes) Put(dest pcommon.Map) {
-	dest.PutStr(sigsemconv.SigNozAuditVerbKey, attributes.Action.StringValue())
-	dest.PutStr(sigsemconv.SigNozAuditActionCategoryKey, attributes.ActionCategory.StringValue())
-	dest.PutStr(sigsemconv.SigNozAuditOutcomeKey, attributes.Outcome.StringValue())
+	dest.PutStr(string(sigsemconv.SigNozAuditVerbKey), attributes.Action.StringValue())
+	dest.PutStr(string(sigsemconv.SigNozAuditActionCategoryKey), attributes.ActionCategory.StringValue())
+	dest.PutStr(string(sigsemconv.SigNozAuditOutcomeKey), attributes.Outcome.StringValue())
 }
 
 // Audit attributes — Principal (Who).
@@ -66,11 +66,11 @@ func NewPrincipalAttributesFromClaims(claims authtypes.Claims) PrincipalAttribut
 
 func (attributes PrincipalAttributes) Put(dest pcommon.Map) {
 	if !attributes.PrincipalID.IsZero() {
-		dest.PutStr(sigsemconv.SigNozPrincipalIDKey, attributes.PrincipalID.StringValue())
-		putStrIfNotEmpty(dest, sigsemconv.SigNozPrincipalTypeKey, attributes.PrincipalType.StringValue())
+		dest.PutStr(string(sigsemconv.SigNozPrincipalIDKey), attributes.PrincipalID.StringValue())
+		putStrIfNotEmpty(dest, string(sigsemconv.SigNozPrincipalTypeKey), attributes.PrincipalType.StringValue())
 	}
-	putStrIfNotEmpty(dest, sigsemconv.SigNozPrincipalEmailKey, attributes.PrincipalEmail.String())
-	dest.PutStr(sigsemconv.SigNozOrganizationIDKey, attributes.PrincipalOrgID.StringValue())
+	putStrIfNotEmpty(dest, string(sigsemconv.SigNozPrincipalEmailKey), attributes.PrincipalEmail.String())
+	dest.PutStr(string(sigsemconv.SigNozOrganizationIDKey), attributes.PrincipalOrgID.StringValue())
 }
 
 // Audit attributes — Resource (On What).
@@ -91,10 +91,10 @@ func NewResourceAttributes(resource coretypes.Resource, resourceID string) Resou
 // These are resource-level attributes (stored in the resource JSON column),
 // not event-level attributes (stored in attributes_string).
 func (attributes ResourceAttributes) Put(orgID valuer.UUID, dest pcommon.Map) {
-	putStrIfNotEmpty(dest, sigsemconv.SigNozResourceKindKey, attributes.Resource.Kind().String())
-	putStrIfNotEmpty(dest, sigsemconv.SigNozResourceIDKey, attributes.ResourceID)
+	putStrIfNotEmpty(dest, string(sigsemconv.SigNozResourceKindKey), attributes.Resource.Kind().String())
+	putStrIfNotEmpty(dest, string(sigsemconv.SigNozResourceIDKey), attributes.ResourceID)
 	if attributes.ResourceID != "" {
-		putStrIfNotEmpty(dest, sigsemconv.SigNozResourceObjectKey, attributes.Resource.Object(orgID, attributes.ResourceID))
+		putStrIfNotEmpty(dest, string(sigsemconv.SigNozResourceObjectKey), attributes.Resource.Object(orgID, attributes.ResourceID))
 	}
 }
 
@@ -118,10 +118,10 @@ func (attributes TargetAttributes) Put(orgID valuer.UUID, dest pcommon.Map) {
 		return
 	}
 
-	putStrIfNotEmpty(dest, sigsemconv.SigNozResourceTargetKindKey, attributes.TargetResource.Kind().String())
-	putStrIfNotEmpty(dest, sigsemconv.SigNozResourceTargetIDKey, attributes.TargetResourceID)
+	putStrIfNotEmpty(dest, string(sigsemconv.SigNozResourceTargetKindKey), attributes.TargetResource.Kind().String())
+	putStrIfNotEmpty(dest, string(sigsemconv.SigNozResourceTargetIDKey), attributes.TargetResourceID)
 	if attributes.TargetResourceID != "" {
-		putStrIfNotEmpty(dest, sigsemconv.SigNozResourceTargetObjectKey, attributes.TargetResource.Object(orgID, attributes.TargetResourceID))
+		putStrIfNotEmpty(dest, string(sigsemconv.SigNozResourceTargetObjectKey), attributes.TargetResource.Object(orgID, attributes.TargetResourceID))
 	}
 }
 
@@ -144,7 +144,7 @@ func NewWorkspaceAttributes(resourceAttributes ResourceAttributes, targetAttribu
 }
 
 func (attributes WorkspaceAttributes) Put(dest pcommon.Map) {
-	putStrIfNotEmpty(dest, sigsemconv.SigNozWorkspaceKeyIDKey, attributes.WorkspaceKeyID)
+	putStrIfNotEmpty(dest, string(sigsemconv.SigNozWorkspaceKeyIDKey), attributes.WorkspaceKeyID)
 }
 
 // Audit attributes — Error (When outcome is failure)

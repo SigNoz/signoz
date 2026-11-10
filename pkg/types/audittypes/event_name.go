@@ -1,7 +1,7 @@
 package audittypes
 
 import (
-	sigsemconv "github.com/SigNoz/signoz-semantic-conventions/semconv/go"
+	"github.com/SigNoz/signoz-semantic-conventions/gen/go/sigsemconv"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
