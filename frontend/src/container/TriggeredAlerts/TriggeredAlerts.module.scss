@@ -30,6 +30,11 @@
 	--combobox-trigger-height: 2rem;
 }
 
+.searchInput {
+	width: 100%;
+	min-width: 250px;
+}
+
 .filterSelect {
 	min-width: 400px;
 	flex: 1;

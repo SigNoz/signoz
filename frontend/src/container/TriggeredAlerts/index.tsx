@@ -173,14 +173,15 @@ function TriggeredAlerts(): JSX.Element {
 	return (
 		<div className={styles.container}>
 			<div className={styles.filtersRow}>
-				<Input
-					width={250}
-					placeholder="Search alerts by name"
-					value={searchText}
-					onChange={handleSearchChange}
-					suffix={<Search size={14} className={styles.searchIcon} />}
-					testId="triggered-alerts-search-input"
-				/>
+				<div className={styles.searchInput}>
+					<Input
+						placeholder="Search alerts by name"
+						value={searchText}
+						onChange={handleSearchChange}
+						suffix={<Search size={14} className={styles.searchIcon} />}
+						testId="triggered-alerts-search-input"
+					/>
+				</div>
 				<div className={styles.filterSelect}>
 					<Combobox
 						multiple
