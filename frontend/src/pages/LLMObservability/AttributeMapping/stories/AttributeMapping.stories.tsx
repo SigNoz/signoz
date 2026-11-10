@@ -7,6 +7,7 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import LLMObservabilityPage from '../../index';
 import {
 	attributeMappingMocks,
+	groupMappers,
 	wideConditionGroup,
 } from './AttributeMapping.stories.mocks';
 
@@ -76,6 +77,29 @@ export const GroupFormDrawer: Story = {
 		await GroupActionsMenu.play?.(context);
 		await userEvent.click(await screen.findByText('Edit'));
 		await screen.findByText('Edit group');
+	},
+};
+
+/** The drawer that adds a mapping to the first group. */
+export const AddMappingDrawer: Story = {
+	parameters: { msw: { handlers: [groupMappers] } },
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		const [firstGroup] = await canvas.findAllByTestId(
+			/^group-expand-/,
+			{},
+			{ timeout: 15000 },
+		);
+
+		await userEvent.click(firstGroup);
+		await userEvent.click(
+			await canvas.findByRole(
+				'button',
+				{ name: /add mapping/i },
+				{ timeout: 15000 },
+			),
+		);
+		await screen.findByText('New custom mapping');
 	},
 };
 

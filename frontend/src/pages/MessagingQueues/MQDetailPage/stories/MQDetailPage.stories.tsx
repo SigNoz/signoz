@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { MessagingQueuesViewTypeOptions } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -96,6 +96,21 @@ export const ProducerLatencyConsumers: Story = {
 /** Producer/consumer pairs whose spans breached the evaluation interval. */
 export const DropRate: Story = {
 	args: { view: MessagingQueuesViewTypeOptions.DropRate },
+};
+
+/** The custom-interval input inside the evaluation-time dropdown. */
+export const DropRateIntervalOpen: Story = {
+	args: { view: MessagingQueuesViewTypeOptions.DropRate },
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByText('10ms', undefined, untilLoaded),
+		);
+		await screen.findByPlaceholderText(
+			'Enter custom time (ms)',
+			undefined,
+			untilLoaded,
+		);
+	},
 };
 
 /** The broker, producer, consumer and JVM metrics kafka itself reports. */

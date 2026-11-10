@@ -82,6 +82,43 @@ export const Funnels: Story = {
 	args: { tab: 'funnels' },
 };
 
+/** The name field for a funnel that does not exist yet. */
+export const CreateFunnel: Story = {
+	args: { tab: 'funnels' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: /new funnel/i },
+				untilLoaded,
+			),
+		);
+		await screen.findByRole('dialog', { name: /create new funnel/i });
+	},
+};
+
+/** The rename field for a funnel already on the list. */
+export const RenameFunnel: Story = {
+	args: { tab: 'funnels' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const action = await waitFor(() => {
+			const found = canvasElement.querySelector<HTMLElement>(
+				'.funnel-item__action-icon',
+			);
+
+			if (!found) {
+				throw new Error('Funnel row actions are not rendered');
+			}
+
+			return found;
+		}, untilLoaded);
+
+		await userEvent.click(action);
+		await userEvent.click(await screen.findByRole('button', { name: 'Rename' }));
+		await screen.findByRole('dialog', { name: /rename funnel/i });
+	},
+};
+
 /**
  * A fresh workspace: nothing ingested in the window and no quick filters
  * configured yet, so the table and the filter panel both show their empty

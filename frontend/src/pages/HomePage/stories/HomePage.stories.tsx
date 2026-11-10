@@ -97,3 +97,20 @@ export const NavSettingsMenu: Story = {
 		await screen.findByRole('menu');
 	},
 };
+
+/** Impersonation mode: the warning banner above the page content. */
+export const NoAuthBanner: Story = {
+	args: { banner: 'no-auth' },
+	play: async (): Promise<void> => {
+		await screen.findByTestId('no-auth-banner', undefined, { timeout: 10000 });
+	},
+};
+
+/** The command palette, opened with the same shortcut the shell listens for. */
+export const CommandPalette: Story = {
+	play: async (): Promise<void> => {
+		await userEvent.keyboard('{Meta>}k{/Meta}');
+		await screen.findByPlaceholderText('Search…', undefined, { timeout: 10000 });
+		await screen.findByText('Go to Home');
+	},
+};

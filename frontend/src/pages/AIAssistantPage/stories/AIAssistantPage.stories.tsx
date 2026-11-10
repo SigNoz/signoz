@@ -139,6 +139,35 @@ export const AwaitingClarification: Story = {
 	args: { agent: 'awaiting-clarification', contents: BRIEF },
 };
 
+/** The severity select open, including the free-text option the form's Select renders. */
+export const ClarificationSelectOpen: Story = {
+	args: { agent: 'awaiting-clarification', contents: BRIEF },
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		// Open from the keyboard, and retry: the message list remounts its items
+		// while it measures the thread, which can close the popup again. The
+		// "Other" checkbox in the Notify field carries the same text, so assert
+		// on the popup's option role.
+		await waitFor(async () => {
+			const severityLabel = canvas.getByText('Severity');
+			const field = severityLabel.closest('div');
+
+			if (!field) {
+				throw new Error('Severity field is not in the clarification form');
+			}
+
+			within(field).getByRole('combobox').focus();
+			await userEvent.keyboard('{Enter}');
+			await screen.findByRole(
+				'option',
+				{ name: 'Other (type your own)' },
+				{ timeout: 1_000 },
+			);
+		}, untilLoaded);
+	},
+};
+
 /** Reopening the page on a thread that has not come back yet. */
 export const LoadingThread: Story = {
 	args: { dataState: 'loading' },
@@ -228,6 +257,23 @@ export const NegativeFeedback: Story = {
 
 			return bars[bars.length - 1];
 		}, /what went wrong/i);
+	},
+};
+
+/** Renaming a thread: the title input the row swaps in. */
+export const ConversationRename: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await clickUntil(async () => {
+			const [actions] = await within(canvasElement).findAllByLabelText(
+				/conversation actions/i,
+				undefined,
+				untilLoaded,
+			);
+
+			return actions;
+		}, /^Rename$/);
+		await userEvent.click(screen.getByText('Rename'));
+		await within(canvasElement).findByDisplayValue(/checkout p99 regression/i);
 	},
 };
 
