@@ -233,6 +233,29 @@ describe('ChartPreview', () => {
 		);
 	});
 
+	it('renders the chart preview when query type is AI_QUERY_BUILDER', () => {
+		useQueryBuilder.mockReturnValue({
+			...mockUseQueryBuilder,
+			currentQuery: {
+				...mockUseQueryBuilder.currentQuery,
+				queryType: EQueryType.AI_QUERY_BUILDER,
+			},
+			stagedQuery: {
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				unit: REQUESTS_PER_SEC,
+			},
+		});
+
+		renderChartPreview();
+
+		expect(
+			screen.getByTestId(CHART_PREVIEW_COMPONENT_TEST_ID),
+		).toBeInTheDocument();
+		expect(screen.getByTestId(QUERY_TYPE_TEST_ID)).toHaveTextContent(
+			EQueryType.AI_QUERY_BUILDER,
+		);
+	});
+
 	it('uses default panel type when panelType is not provided', () => {
 		useQueryBuilder.mockReturnValue({
 			...mockUseQueryBuilder,

@@ -3,6 +3,7 @@ import { Select, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Info } from '@signozhq/icons';
+import { EQueryType } from 'types/common/dashboard';
 
 import { ALL_SELECTED_VALUE } from '../constants';
 import { useCreateAlertState } from '../context';
@@ -19,13 +20,14 @@ function MultipleNotifications(): JSX.Element {
 	);
 
 	const spaceAggregationOptions = useMemo(() => {
-		const allGroupBys = currentQuery.builder.queryData?.reduce<string[]>(
-			(acc, query) => {
-				const groupByKeys = query.groupBy?.map((groupBy) => groupBy.key) || [];
-				return [...acc, ...groupByKeys];
-			},
-			[],
-		);
+		const queryData =
+			currentQuery.queryType === EQueryType.AI_QUERY_BUILDER
+				? currentQuery.builder_ai_query?.queryData
+				: currentQuery.builder.queryData;
+		const allGroupBys = queryData?.reduce<string[]>((acc, query) => {
+			const groupByKeys = query.groupBy?.map((groupBy) => groupBy.key) || [];
+			return [...acc, ...groupByKeys];
+		}, []);
 		const uniqueGroupBys = [...new Set(allGroupBys)];
 		const options = uniqueGroupBys.map((key) => ({
 			label: key,
@@ -44,7 +46,7 @@ function MultipleNotifications(): JSX.Element {
 			];
 		}
 		return options;
-	}, [currentQuery.builder.queryData, isAllOptionSelected]);
+	}, [currentQuery, isAllOptionSelected]);
 
 	const isMultipleNotificationsEnabled = spaceAggregationOptions.length > 0;
 
