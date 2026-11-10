@@ -954,7 +954,7 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 	},
 };
 
-const channelSpec = (
+export const channelSpec = (
 	type: ChannelType,
 	webhookAuth: WebhookAuthChoice,
 	jiraDeployment: JiraDeploymentChoice,
