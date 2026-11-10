@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/go-json-experiment/json/jsontext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -209,4 +210,27 @@ func TestErrorRetryAfterHeader(t *testing.T) {
 			}
 		})
 	}
+}
+
+type streamedData []int
+
+func (data streamedData) MarshalJSONTo(enc *jsontext.Encoder) error {
+	if err := enc.WriteToken(jsontext.BeginArray); err != nil {
+		return err
+	}
+	for _, v := range data {
+		if err := enc.WriteToken(jsontext.Int(int64(v))); err != nil {
+			return err
+		}
+	}
+	return enc.WriteToken(jsontext.EndArray)
+}
+
+func TestSuccess_Stream(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	Success(recorder, http.StatusAccepted, streamedData{1, 2, 3})
+
+	assert.Equal(t, http.StatusAccepted, recorder.Code)
+	assert.Equal(t, "application/json", recorder.Header().Get("Content-Type"))
+	assert.Equal(t, `{"status":"success","data":[1,2,3]}`, recorder.Body.String())
 }

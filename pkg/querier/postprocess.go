@@ -146,8 +146,6 @@ func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, res
 			if err != nil {
 				return nil, err
 			}
-			funcs := []qbtypes.Function{{Name: qbtypes.FunctionNameFillZero}}
-			funcs = q.prepareFillZeroArgsWithStep(funcs, req, stepInterval)
 			// empty time series if it doesn't exist
 			tsData, ok := typedResults[name].Value.(*qbtypes.TimeSeriesData)
 			if !ok {
@@ -170,7 +168,9 @@ func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, res
 				}
 			}
 
-			typedResults[name] = q.applyFunctions(typedResults[name], funcs)
+			startMs := querybuilder.ToNanoSecs(req.Start) / 1_000_000
+			endMs := querybuilder.ToNanoSecs(req.End) / 1_000_000
+			tsData.SetZeroFill(int64(startMs), int64(endMs), stepInterval)
 		}
 	}
 
