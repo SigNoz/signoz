@@ -1,11 +1,17 @@
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesComparisonOperatorDTO,
+	type DashboardtypesPanelDTO,
+	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpecDTOKind,
+} from 'api/generated/services/sigNoz.schemas';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { ReduceOperators } from 'types/common/queryBuilder';
 
 import { buildCreateAlertUrl } from '../buildCreateAlertUrl';
 
@@ -142,5 +148,78 @@ describe('buildCreateAlertUrl', () => {
 		const thresholds = JSON.parse(params.get(QueryParams.thresholds) as string);
 		expect(thresholds).toHaveLength(1);
 		expect(thresholds[0].thresholdValue).toBe(90);
+	});
+
+	describe('for an AI panel', () => {
+		const aiBuilder = getActiveBuilder(initialQueryAIWithType);
+		const aiQuery: Query = {
+			...translatedQuery,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder_ai_query: {
+				...aiBuilder,
+				queryData: [
+					{
+						...aiBuilder.queryData[0],
+						queryName: 'A',
+						reduceTo: ReduceOperators.SUM,
+					},
+				],
+			},
+		};
+
+		it('keeps the query in the AI slot', () => {
+			mockFromPerses.mockReturnValue({ ...aiQuery });
+			const params = parse(buildCreateAlertUrl(makePanel()));
+
+			const decoded = JSON.parse(
+				decodeURIComponent(params.get(QueryParams.compositeQuery) as string),
+			);
+			expect(decoded.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+			expect(decoded.builder.queryData).toHaveLength(0);
+			expect(decoded.builder_ai_query.queryData[0].queryName).toBe('A');
+		});
+
+		it('seeds the alert condition from the AI query Reduce To', () => {
+			mockFromPerses.mockReturnValue({ ...aiQuery });
+			const panel = makePanel();
+			const numberPanel: DashboardtypesPanelDTO = {
+				...panel,
+				spec: {
+					...panel.spec,
+					display: { name: 'Tokens' },
+					plugin: {
+						kind:
+							DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpecDTOKind[
+								'signoz/NumberPanel'
+							],
+						spec: {
+							thresholds: [
+								{
+									color: '#F1575F',
+									value: 90,
+									operator: DashboardtypesComparisonOperatorDTO.above,
+								},
+							],
+						},
+					},
+				},
+			};
+
+			const params = parse(buildCreateAlertUrl(numberPanel));
+
+			expect(params.get(QueryParams.matchType)).toBe('in_total');
+		});
+	});
+
+	it.each([
+		['a non-AI panel', undefined],
+		['an AI panel', EQueryType.AI_QUERY_BUILDER],
+	])('leaves the alert type to the alert page for %s', (_, queryType) => {
+		if (queryType) {
+			mockFromPerses.mockReturnValue({ ...translatedQuery, queryType });
+		}
+		const params = parse(buildCreateAlertUrl(makePanel()));
+
+		expect(params.get(QueryParams.alertType)).toBeNull();
 	});
 });
