@@ -30,7 +30,11 @@ const asOptionalNumber = (value: unknown): number | undefined => {
 	return Number.isNaN(parsed) ? undefined : parsed;
 };
 
-function TelegramSettings(): JSX.Element {
+interface TelegramSettingsProps {
+	readOnly: boolean;
+}
+
+function TelegramSettings({ readOnly }: TelegramSettingsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -121,6 +125,7 @@ function TelegramSettings(): JSX.Element {
 								data-testid="telegram-title-textarea"
 								value={(field.value as string) ?? ''}
 								onChange={field.onChange}
+								disabled={readOnly}
 							/>
 						)}
 					/>
@@ -140,6 +145,7 @@ function TelegramSettings(): JSX.Element {
 								data-testid="telegram-message-textarea"
 								value={(field.value as string) ?? ''}
 								onChange={field.onChange}
+								disabled={readOnly}
 							/>
 						)}
 					/>
@@ -169,6 +175,8 @@ function TelegramSettings(): JSX.Element {
 								testId="telegram-disable-notifications-switch"
 								value={!!field.value}
 								onChange={field.onChange}
+								disabled={readOnly}
+								disabledTooltip={undefined}
 							/>
 						)}
 					/>

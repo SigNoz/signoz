@@ -16,7 +16,11 @@ import styles from './Jira.module.scss';
 
 const { TextArea } = AntdInput;
 
-function JiraSettings(): JSX.Element {
+interface JiraSettingsProps {
+	readOnly: boolean;
+}
+
+function JiraSettings({ readOnly }: JiraSettingsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -46,6 +50,7 @@ function JiraSettings(): JSX.Element {
 				error={errors.labels?.message}
 			>
 				<Select
+					disabled={readOnly}
 					mode="tags"
 					open={false}
 					placeholder={t('placeholder_jira_labels')}
@@ -118,6 +123,8 @@ function JiraSettings(): JSX.Element {
 									aria-label={t('field_jira_deployment')}
 									value={deployment}
 									onChange={field.onChange}
+									disabled={readOnly}
+									disabledTooltip={undefined}
 									testId="jira-deployment-radio"
 									items={[
 										{
@@ -284,6 +291,7 @@ function JiraSettings(): JSX.Element {
 						name="summary"
 						render={({ field }): JSX.Element => (
 							<TextArea
+								disabled={readOnly}
 								rows={2}
 								data-testid="jira-summary-textarea"
 								value={(field.value as string) ?? ''}
@@ -305,6 +313,7 @@ function JiraSettings(): JSX.Element {
 						name="description"
 						render={({ field }): JSX.Element => (
 							<TextArea
+								disabled={readOnly}
 								rows={6}
 								data-testid="jira-description-textarea"
 								value={(field.value as string) ?? ''}

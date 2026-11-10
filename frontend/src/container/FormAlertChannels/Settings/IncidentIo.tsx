@@ -20,7 +20,10 @@ interface MetadataRow {
 	value: string;
 }
 
-function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
+function IncidentIOSettings({
+	initialMetadata,
+	readOnly,
+}: IncidentIOProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -114,6 +117,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 						name="title"
 						render={({ field }): JSX.Element => (
 							<TextArea
+								disabled={readOnly}
 								rows={2}
 								data-testid="incidentio-title-textarea"
 								value={(field.value as string) ?? ''}
@@ -133,6 +137,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 						name="description"
 						render={({ field }): JSX.Element => (
 							<TextArea
+								disabled={readOnly}
 								rows={6}
 								data-testid="incidentio-description-textarea"
 								value={(field.value as string) ?? ''}
@@ -152,6 +157,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 							// eslint-disable-next-line react/no-array-index-key
 							key={index}
 							index={index}
+							readOnly={readOnly}
 							noun={t('entry_incidentio_metadata')}
 							removeLabel={t('button_incidentio_remove_metadata')}
 							removeTestId={`incidentio-metadata-remove-${index}`}
@@ -162,6 +168,8 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 							<FormField label={t('label_incidentio_metadata_key')}>
 								<Input
 									placeholder={t('placeholder_incidentio_metadata_key')}
+									disabled={readOnly}
+									disabledTooltip={undefined}
 									value={row.key}
 									onChange={(event): void =>
 										syncMetadata(
@@ -177,6 +185,8 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 							<FormField label={t('label_incidentio_metadata_value')}>
 								<Input
 									placeholder={t('placeholder_incidentio_metadata_value')}
+									disabled={readOnly}
+									disabledTooltip={undefined}
 									value={row.value}
 									onChange={(event): void =>
 										syncMetadata(
@@ -197,6 +207,8 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 							color="secondary"
 							size="sm"
 							prefix={<Plus size={14} />}
+							disabled={readOnly}
+							disabledTooltip={undefined}
 							onClick={(): void =>
 								syncMetadata([...metadataRows, { key: '', value: '' }])
 							}
@@ -213,6 +225,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 
 interface IncidentIOProps {
 	initialMetadata?: Record<string, string>;
+	readOnly: boolean;
 }
 
 IncidentIOSettings.defaultProps = {

@@ -11,7 +11,11 @@ import SlackFields from './SlackFields';
 
 const { TextArea } = AntdInput;
 
-function Slack(): JSX.Element {
+interface SlackProps {
+	readOnly: boolean;
+}
+
+function Slack({ readOnly }: SlackProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -55,6 +59,7 @@ function Slack(): JSX.Element {
 								rows={4}
 								value={(field.value as string) ?? ''}
 								onChange={field.onChange}
+								disabled={readOnly}
 							/>
 						)}
 					/>
@@ -80,6 +85,7 @@ function Slack(): JSX.Element {
 								data-testid="description-textarea"
 								value={(field.value as string) ?? ''}
 								onChange={field.onChange}
+								disabled={readOnly}
 							/>
 						)}
 					/>
@@ -122,9 +128,9 @@ function Slack(): JSX.Element {
 					<Input {...register('footer')} testId="slack-footer-textbox" />
 				</FormField>
 
-				<SlackFields />
+				<SlackFields readOnly={readOnly} />
 
-				<SlackActions />
+				<SlackActions readOnly={readOnly} />
 			</FormCard>
 		</>
 	);

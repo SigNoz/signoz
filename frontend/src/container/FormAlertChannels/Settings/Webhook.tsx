@@ -13,7 +13,11 @@ import FormField from '../FormField';
 
 import styles from './Webhook.module.scss';
 
-function WebhookSettings(): JSX.Element {
+interface WebhookSettingsProps {
+	readOnly: boolean;
+}
+
+function WebhookSettings({ readOnly }: WebhookSettingsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -48,6 +52,8 @@ function WebhookSettings(): JSX.Element {
 									aria-label={t('field_webhook_auth')}
 									value={auth}
 									onChange={field.onChange}
+									disabled={readOnly}
+									disabledTooltip={undefined}
 									testId="webhook-auth-radio"
 									items={[
 										{

@@ -13,6 +13,7 @@ interface RowEntryProps {
 	removeLabel: string;
 	removeTestId: string;
 	onRemove: () => void;
+	readOnly: boolean;
 	children: ReactNode;
 }
 
@@ -22,6 +23,7 @@ function RowEntry({
 	removeLabel,
 	removeTestId,
 	onRemove,
+	readOnly,
 	children,
 }: RowEntryProps): JSX.Element {
 	return (
@@ -44,6 +46,8 @@ function RowEntry({
 					icon
 					aria-label={removeLabel}
 					onClick={onRemove}
+					disabled={readOnly}
+					disabledTooltip={undefined}
 					testId={removeTestId}
 				>
 					<Minus size={14} />

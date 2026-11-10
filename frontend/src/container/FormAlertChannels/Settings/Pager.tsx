@@ -10,7 +10,11 @@ import PagerDetails from './PagerDetails';
 
 const { TextArea } = AntdInput;
 
-function PagerForm(): JSX.Element {
+interface PagerFormProps {
+	readOnly: boolean;
+}
+
+function PagerForm({ readOnly }: PagerFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -48,6 +52,7 @@ function PagerForm(): JSX.Element {
 								data-testid="pager-description-textarea"
 								value={(field.value as string) ?? ''}
 								onChange={field.onChange}
+								disabled={readOnly}
 							/>
 						)}
 					/>
@@ -61,7 +66,7 @@ function PagerForm(): JSX.Element {
 					<Input {...register('severity')} testId="pager-severity-textbox" />
 				</FormField>
 
-				<PagerDetails />
+				<PagerDetails readOnly={readOnly} />
 
 				<FormField
 					help={t('help_pager_component')}

@@ -72,25 +72,25 @@ function FormAlertChannels({
 	const renderSettings = (): ReactElement | null => {
 		switch (type) {
 			case ChannelKind.slack:
-				return <SlackSettings />;
+				return <SlackSettings readOnly={readOnly} />;
 			case ChannelKind.webhook:
-				return <WebhookSettings />;
+				return <WebhookSettings readOnly={readOnly} />;
 			case ChannelKind.pagerduty:
-				return <PagerSettings />;
+				return <PagerSettings readOnly={readOnly} />;
 			case ChannelKind.msteams:
-				return <MsTeamsSettings />;
+				return <MsTeamsSettings readOnly={readOnly} />;
 			case ChannelKind.googlechat:
-				return <GoogleChatSettings />;
+				return <GoogleChatSettings readOnly={readOnly} />;
 			case ChannelKind.jira:
-				return <JiraSettings />;
+				return <JiraSettings readOnly={readOnly} />;
 			case ChannelKind.jsmops:
-				return <JsmOpsSettings />;
+				return <JsmOpsSettings readOnly={readOnly} />;
 			case ChannelKind.incidentio:
-				return <IncidentIOSettings />;
+				return <IncidentIOSettings readOnly={readOnly} />;
 			case ChannelKind.opsgenie:
-				return <OpsgenieSettings />;
+				return <OpsgenieSettings readOnly={readOnly} />;
 			case ChannelKind.telegram:
-				return <TelegramSettings />;
+				return <TelegramSettings readOnly={readOnly} />;
 			case ChannelKind.email:
 				return <EmailSettings />;
 			default:
@@ -101,9 +101,7 @@ function FormAlertChannels({
 	return (
 		<FormProvider {...form}>
 			<form className={styles.form}>
-				{/* useForm's `disabled` reaches registered fields; the fieldset still
-				    turns off the rest, such as the antd textareas. */}
-				<fieldset className={styles.fields} disabled={readOnly}>
+				<div className={styles.fields} data-testid="channel-form-fields">
 					<div className={styles.cards}>
 						<FormCard title={t('section_general')}>
 							<FormField
@@ -137,7 +135,7 @@ function FormAlertChannels({
 											testId="field-send-resolved-checkbox"
 											value={!!field.value}
 											onChange={field.onChange}
-											disabled={field.disabled}
+											disabled={readOnly}
 											disabledTooltip={undefined}
 										/>
 									)}
@@ -166,7 +164,7 @@ function FormAlertChannels({
 
 						{renderSettings()}
 					</div>
-				</fieldset>
+				</div>
 
 				<div className={styles.actions}>
 					<Button

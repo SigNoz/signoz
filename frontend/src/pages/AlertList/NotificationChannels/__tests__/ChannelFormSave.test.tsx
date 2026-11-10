@@ -435,6 +435,11 @@ describe('ChannelForm save', () => {
 			expect(screen.getByTestId('slack-channel-textbox-field')).toHaveAttribute(
 				'disabled',
 			);
+			// read-only arrives after mount, which the Controller's field.disabled misses
+			expect(screen.getByTestId('field-send-resolved-checkbox')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 
 			const save = screen.getByTestId('save-channel-button');
 			await waitFor(
