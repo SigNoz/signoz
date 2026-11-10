@@ -63,6 +63,28 @@ export const DetailsDrawerLogsTab: StoryObj<PodsArgs> = {
 	play: openDrawerLogsTab,
 };
 
+/** A log opened from the pod's logs tab, over the details drawer. */
+export const DetailsDrawerLogDetails: StoryObj<PodsArgs> = {
+	args: { drawer: true },
+	play: async () => {
+		const drawer = within(
+			await screen.findByRole('dialog', {}, { timeout: 10000 }),
+		);
+
+		await userEvent.click(
+			await drawer.findByText('Logs', {}, { timeout: 10000 }),
+		);
+		const [line] = await drawer.findAllByText(
+			/handled request in/,
+			{},
+			{ timeout: 10000 },
+		);
+
+		await userEvent.click(line);
+		await screen.findByTestId('log-detail-drawer', {}, { timeout: 10000 });
+	},
+};
+
 /** The copy button beside the pod name in the drawer, which toasts the copy. */
 export const PodNameCopiedToast: StoryObj<PodsArgs> = {
 	args: { drawer: true },
