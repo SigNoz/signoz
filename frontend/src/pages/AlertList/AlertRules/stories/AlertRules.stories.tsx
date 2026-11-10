@@ -14,7 +14,7 @@ import {
 	openDeleteViewConfirm,
 	openDisabledRuleActions,
 	openQuerySuggestions,
-	openRenameViewPopover,
+	openRenameViewDialog,
 	openRowActions,
 	openSaveViewDialog,
 	openStatesFilter,
@@ -125,9 +125,9 @@ export const SaveViewDialog: Story = {
 	play: openSaveViewDialog,
 };
 
-/** A saved view's rename popover, opened from its row. */
-export const RenameViewPopover: Story = {
-	play: openRenameViewPopover,
+/** A saved view's rename dialog, opened from its row. */
+export const RenameViewDialog: Story = {
+	play: openRenameViewDialog,
 };
 
 /** Deleting a saved view asks first, because every teammate loses it too. */

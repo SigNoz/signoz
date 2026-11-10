@@ -14,9 +14,9 @@ import cx from 'classnames';
 import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
 
 import type { BuiltinListView, ViewSaveMode } from '../types';
-import SaveViewDialog from './SaveViewDialog';
 import ViewsRailDirtyPanel from './ViewsRailDirtyPanel';
 import ViewsRailItem from './ViewsRailItem';
+import ViewNameDialog from './ViewNameDialog';
 
 import styles from './ViewsRail.module.scss';
 
@@ -75,6 +75,10 @@ function ViewsRail({
 }: Props): JSX.Element {
 	const [query, setQuery] = useState('');
 	const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+	const [renameTarget, setRenameTarget] = useState<{
+		id: string;
+		label: string;
+	} | null>(null);
 	const { contextHolder, confirmDelete } = useDeleteConfirm();
 
 	const q = query.trim().toLowerCase();
@@ -130,13 +134,19 @@ function ViewsRail({
 		[confirmDelete, deleteDescription, onDelete, onViewDeleted],
 	);
 
-	const handleRename = useCallback(
-		(id: string, name: string): void => {
-			onViewRenamed?.();
-			onRename(id, name);
-		},
-		[onRename, onViewRenamed],
+	const openRenameDialog = useCallback(
+		(id: string, label: string): void => setRenameTarget({ id, label }),
+		[],
 	);
+	const closeRenameDialog = (): void => setRenameTarget(null);
+
+	const handleRename = (name: string): void => {
+		if (!renameTarget) {
+			return;
+		}
+		onViewRenamed?.();
+		onRename(renameTarget.id, name);
+	};
 
 	const handleSaveAsView = (name: string): void => {
 		onViewSaved?.('new');
@@ -160,7 +170,6 @@ function ViewsRail({
 			active={v.id === activeViewId}
 			isModified={isModified}
 			testIdPrefix={testIdPrefix}
-			renameTestIdPrefix={renameTestIdPrefix}
 			onSelect={onSelect}
 		/>
 	);
@@ -246,9 +255,8 @@ function ViewsRail({
 									active={v.id === activeViewId}
 									isModified={isModified}
 									testIdPrefix={testIdPrefix}
-									renameTestIdPrefix={renameTestIdPrefix}
 									onSelect={onSelect}
-									onRename={handleRename}
+									onRename={openRenameDialog}
 									onDelete={onConfirmDelete}
 								/>
 							))
@@ -272,11 +280,24 @@ function ViewsRail({
 					onReset={onReset}
 				/>
 			)}
-			<SaveViewDialog
+			<ViewNameDialog
 				open={isSaveDialogOpen}
 				onClose={closeSaveDialog}
 				onSubmit={handleSaveAsView}
+				title="Save as view"
+				description="Save the current filters as a view you can return to."
+				confirmLabel="Save view"
 				testIdPrefix={saveTestIdPrefix}
+			/>
+			<ViewNameDialog
+				open={renameTarget !== null}
+				onClose={closeRenameDialog}
+				onSubmit={handleRename}
+				title="Rename view"
+				description="The view keeps its filters under the new name."
+				confirmLabel="Rename"
+				initialName={renameTarget?.label}
+				testIdPrefix={renameTestIdPrefix}
 			/>
 			{contextHolder}
 		</>

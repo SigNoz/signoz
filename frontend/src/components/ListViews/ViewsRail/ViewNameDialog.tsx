@@ -10,7 +10,8 @@ import { Button } from '@signozhq/ui/button';
 import { Dialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import { VIEW_NAME_MAX_LENGTH } from 'components/ViewNamePopover/ViewNamePopover';
+
+import { VIEW_NAME_MAX_LENGTH } from '../constants';
 
 import styles from './ViewsRail.module.scss';
 
@@ -18,25 +19,34 @@ interface Props {
 	open: boolean;
 	onClose: () => void;
 	onSubmit: (name: string) => void;
+	title: string;
+	description: string;
+	confirmLabel: string;
+	/** Name the input holds each time the dialog opens. */
+	initialName?: string;
 	testIdPrefix: string;
 }
 
-function SaveViewDialog({
+function ViewNameDialog({
 	open,
 	onClose,
 	onSubmit,
+	title,
+	description,
+	confirmLabel,
+	initialName = '',
 	testIdPrefix,
 }: Props): JSX.Element {
-	const [name, setName] = useState('');
+	const [name, setName] = useState(initialName);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const formId = useId();
 	const inputId = useId();
 
 	useEffect(() => {
 		if (open) {
-			setName('');
+			setName(initialName);
 		}
-	}, [open]);
+	}, [open, initialName]);
 
 	const trimmed = name.trim();
 	const canSave = trimmed.length > 0 && trimmed.length <= VIEW_NAME_MAX_LENGTH;
@@ -53,8 +63,8 @@ function SaveViewDialog({
 		<Dialog
 			open={open}
 			onClose={onClose}
-			title="Save as view"
-			description="Save the current filters as a view you can return to."
+			title={title}
+			description={description}
 			width="narrow"
 			initialFocus={inputRef}
 			testId={`${testIdPrefix}-dialog`}
@@ -83,7 +93,7 @@ function SaveViewDialog({
 						}
 						testId={`${testIdPrefix}-confirm`}
 					>
-						Save view
+						{confirmLabel}
 					</Button>
 				</>
 			}
@@ -118,4 +128,4 @@ function SaveViewDialog({
 	);
 }
 
-export default SaveViewDialog;
+export default ViewNameDialog;

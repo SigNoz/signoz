@@ -182,6 +182,48 @@ describe('ViewsRail', () => {
 		expect(props.onSave).not.toHaveBeenCalled();
 	});
 
+	it('renames a custom view from a dialog filled with its name', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const onViewRenamed = jest.fn();
+		const props = renderRail({ onViewRenamed });
+
+		await user.click(screen.getByTestId(`${PREFIX}-view-rename-view-2`));
+		await expect(
+			screen.findByTestId('rename-view-dialog'),
+		).resolves.toHaveAttribute('aria-modal', 'true');
+		const input = screen.getByTestId('rename-view-name-field');
+		expect(input).toHaveValue('Staging things');
+
+		await user.clear(input);
+		await user.type(input, '  QA things  {enter}');
+
+		expect(onViewRenamed).toHaveBeenCalledTimes(1);
+		expect(props.onRename).toHaveBeenCalledWith('view-2', 'QA things');
+		expect(props.onSelect).not.toHaveBeenCalled();
+		await waitFor(() =>
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+		);
+	});
+
+	it('refills the rename dialog with the name of the view it opens for', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const props = renderRail();
+
+		await user.click(screen.getByTestId(`${PREFIX}-view-rename-view-1`));
+		await user.type(await screen.findByTestId('rename-view-name-field'), ' v2');
+		await user.click(screen.getByTestId('rename-view-cancel'));
+		await waitFor(() =>
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+		);
+
+		await user.click(screen.getByTestId(`${PREFIX}-view-rename-view-2`));
+
+		await expect(
+			screen.findByTestId('rename-view-name-field'),
+		).resolves.toHaveValue('Staging things');
+		expect(props.onRename).not.toHaveBeenCalled();
+	});
+
 	it('wraps its body in the guard it is given', () => {
 		renderRail({
 			guard: (content): JSX.Element => (

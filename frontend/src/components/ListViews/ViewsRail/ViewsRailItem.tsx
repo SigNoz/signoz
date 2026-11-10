@@ -2,7 +2,6 @@ import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { PenLine, Trash2 } from '@signozhq/icons';
 import cx from 'classnames';
-import ViewNamePopover from 'components/ViewNamePopover/ViewNamePopover';
 
 import type { ListViewIcon } from '../types';
 
@@ -15,10 +14,9 @@ interface Props {
 	active: boolean;
 	isModified: boolean;
 	testIdPrefix: string;
-	renameTestIdPrefix: string;
 	onSelect: (id: string) => void;
-	/** Present only for custom (editable) views. */
-	onRename?: (id: string, name: string) => void;
+	/** Present only for custom (editable) views. Opens the rename dialog. */
+	onRename?: (id: string, label: string) => void;
 	onDelete?: (id: string, label: string) => void;
 }
 
@@ -29,7 +27,6 @@ function ViewsRailItem({
 	active,
 	isModified,
 	testIdPrefix,
-	renameTestIdPrefix,
 	onSelect,
 	onRename,
 	onDelete,
@@ -54,30 +51,22 @@ function ViewsRailItem({
 			</Button>
 			{onRename && onDelete && (
 				<div className={styles.itemActions}>
-					<ViewNamePopover
-						onSubmit={(name): void => onRename(id, name)}
-						title="Rename view"
-						confirmLabel="Rename"
-						initialName={label}
-						testIdPrefix={renameTestIdPrefix}
-						tooltip="Rename view"
-						trigger={(open): JSX.Element => (
-							<Button
-								variant="ghost"
-								color="secondary"
-								size="sm"
-								icon
-								aria-label="Rename view"
-								testId={`${testIdPrefix}-view-rename-${id}`}
-								onClick={(e): void => {
-									e.stopPropagation();
-									open(e.currentTarget);
-								}}
-							>
-								<PenLine size={12} />
-							</Button>
-						)}
-					/>
+					<Tooltip title="Rename view">
+						<Button
+							variant="ghost"
+							color="secondary"
+							size="sm"
+							icon
+							aria-label="Rename view"
+							testId={`${testIdPrefix}-view-rename-${id}`}
+							onClick={(e): void => {
+								e.stopPropagation();
+								onRename(id, label);
+							}}
+						>
+							<PenLine size={12} />
+						</Button>
+					</Tooltip>
 					<Tooltip title="Delete view">
 						<Button
 							variant="ghost"

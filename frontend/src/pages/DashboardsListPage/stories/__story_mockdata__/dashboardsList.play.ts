@@ -165,6 +165,20 @@ export const openSaveViewDialog = async ({
 	await screen.findByText('Save as view');
 };
 
+export const openRenameViewDialog = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const [rename] = await within(canvasElement).findAllByRole(
+		'button',
+		{ name: 'Rename view' },
+		{ timeout: TOAST_TIMEOUT },
+	);
+
+	// The actions only take pointer events while the row is hovered by CSS.
+	await userEvent.click(rename, { pointerEventsCheck: 0 });
+	await screen.findByRole('dialog', { name: 'Rename view' });
+};
+
 export const renameDashboard = async ({
 	canvasElement,
 	args,
