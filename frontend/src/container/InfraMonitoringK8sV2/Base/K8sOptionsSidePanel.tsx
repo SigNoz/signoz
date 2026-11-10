@@ -272,6 +272,7 @@ function K8sOptionsSidePanel<TData>({
 			stack="overlay"
 			open={open}
 			onClose={onClose}
+			closePosition="start"
 			title="Options"
 			width="narrow"
 			testId="k8s-options-side-panel"

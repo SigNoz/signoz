@@ -208,6 +208,7 @@ export default function K8sBaseDetails<T>({
 			stack="overlay"
 			open={!!selectedItem}
 			onClose={handleClose}
+			closePosition="start"
 			testId="drawer-wrapper"
 			width="entity"
 			title={drawerTitle}

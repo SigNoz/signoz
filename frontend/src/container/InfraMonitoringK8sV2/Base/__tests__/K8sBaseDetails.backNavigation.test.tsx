@@ -134,6 +134,19 @@ describe('K8sBaseDetails - trail', () => {
 		expect(screen.getByTestId('drawer-wrapper-close')).toBeInTheDocument();
 	});
 
+	it('puts the close button at the start of the header', async () => {
+		act(() => {
+			renderDrawer();
+		});
+
+		const close = await screen.findByTestId('drawer-wrapper-close');
+
+		expect(close.closest('[data-slot="drawer-header"]')).toHaveAttribute(
+			'data-close-position',
+			'start',
+		);
+	});
+
 	it('lists the resources this one was opened from, root first, ending on itself', async () => {
 		useDrawerHistoryStore.getState().push(CLUSTER_ENTRY);
 		useDrawerHistoryStore.getState().push(NODE_ENTRY);
