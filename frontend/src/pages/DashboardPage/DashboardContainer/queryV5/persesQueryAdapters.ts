@@ -26,6 +26,11 @@ import {
 	isAIBuilderEnvelope,
 	isBuilderEnvelope,
 } from 'lib/query/builderEnvelope';
+import {
+	getBuilderAt,
+	getBuilderSlotKey,
+	withBuilderAt,
+} from 'lib/query/builderSlot';
 import { toQueryEnvelopes } from './buildQueryRangeRequest';
 
 /**
@@ -54,17 +59,18 @@ const toGeneratedEnvelopes = (
  * `pageSize` into the V5 `limit`, which usePanelQuery would read as a user cap and hide the
  * pager. Dropped here, `limit` reflects only a real user limit and List panels page by default.
  */
-const withoutExplorerPaging = (query: Query): Query => ({
-	...query,
-	builder: {
-		...query.builder,
-		queryData: query.builder.queryData.map((data) => ({
+const withoutExplorerPaging = (query: Query): Query => {
+	const slot = getBuilderSlotKey(query.queryType);
+	const builder = getBuilderAt(query, slot);
+	return withBuilderAt(query, slot, {
+		...builder,
+		queryData: builder.queryData.map((data) => ({
 			...data,
 			pageSize: undefined,
 			offset: undefined,
 		})),
-	},
-});
+	});
+};
 
 export function deriveQueryType(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
@@ -84,6 +90,9 @@ export function deriveQueryType(
 		)
 	) {
 		return EQueryType.CLICKHOUSE;
+	}
+	if (envelopes.some(isAIBuilderEnvelope)) {
+		return EQueryType.AI_QUERY_BUILDER;
 	}
 	return EQueryType.QUERY_BUILDER;
 }

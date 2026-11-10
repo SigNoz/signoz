@@ -39,9 +39,9 @@ jest.mock('hooks/useUrlQuery', () => ({
 	default: (): URLSearchParams => new URLSearchParams(),
 }));
 jest.mock(
-	'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelKindAndQueryModeSwitch',
+	'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelKindChange',
 	() => ({
-		usePanelKindAndQueryModeSwitch: (): unknown => ({
+		usePanelKindChange: (): unknown => ({
 			onChangePanelKind: jest.fn(),
 		}),
 	}),
