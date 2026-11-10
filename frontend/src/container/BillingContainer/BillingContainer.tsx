@@ -516,7 +516,7 @@ export default function BillingContainer(): JSX.Element {
 				{!isLoading && !isFetchingBillingData && !showGracePeriodMessage
 					? headerText && (
 							<div style={{ marginTop: 12 }}>
-								<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+								<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
 									{headerText}
 								</Callout>
 							</div>
@@ -533,7 +533,7 @@ export default function BillingContainer(): JSX.Element {
 				trialInfo?.gracePeriodEnd &&
 				showGracePeriodMessage ? (
 					<div style={{ marginTop: 12 }}>
-						<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+						<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
 							{`Your data is safe with us until ${getFormattedDate(
 								trialInfo?.gracePeriodEnd || Date.now(),
 							)}. Please upgrade plan now to retain your data.`}
@@ -589,7 +589,7 @@ export default function BillingContainer(): JSX.Element {
 					</div>
 					{!isLoading && !isFetchingBillingData && (
 						<div className={styles.billingUpdateNote}>
-							<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+							<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
 								Billing metrics are updated once every 24 hours.
 							</Callout>
 						</div>

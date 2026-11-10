@@ -141,7 +141,7 @@ function TraceDetailsThread({
 				{interestedSpanStatus === InterestedSpanStatus.NoIOMessages && (
 					<div className={styles.notice}>
 						<Callout
-							color="info"
+							color="primary"
 							size="sm"
 							icon={<SolidInfoCircle />}
 							testId="thread-anchor-no-messages"

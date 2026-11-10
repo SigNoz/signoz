@@ -83,7 +83,7 @@ function AgentSetup({
 					/>
 					{modalState === ModalStateEnum.WAITING && (
 						<Callout
-							color="info"
+							color="primary"
 							size="sm"
 							icon={<SolidInfoCircle />}
 							testId="gcp-agent-waiting"

@@ -17,7 +17,7 @@ function SetupGuideCallout({
 }: SetupGuideCalloutProps): JSX.Element {
 	return (
 		<Callout
-			color="info"
+			color="primary"
 			size="sm"
 			icon={<KeyRound />}
 			testId="gcp-setup-guide-callout"

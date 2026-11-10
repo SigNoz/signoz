@@ -200,7 +200,7 @@ function SignUp(): JSX.Element {
 					</div>
 
 					<div className="signup-info-callout">
-						<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+						<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
 							This will create an admin account. If you are not an admin, please ask
 							your admin for an invite link
 						</Callout>

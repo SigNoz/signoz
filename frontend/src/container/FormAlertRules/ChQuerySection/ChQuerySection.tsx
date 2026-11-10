@@ -33,7 +33,7 @@ function ChQuerySection({ alertType }: ChQuerySectionProps): JSX.Element {
 		<>
 			{docLink && (
 				<div className="info-banner-wrapper">
-					<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+					<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
 						<span>
 							<a href={docLink} target="_blank" rel="noopener">
 								Learn to write faster, optimized queries

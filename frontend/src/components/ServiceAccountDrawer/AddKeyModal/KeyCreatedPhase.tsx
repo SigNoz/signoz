@@ -46,7 +46,7 @@ function KeyCreatedPhase({
 			</div>
 
 			<div className="add-key-modal__callout-wrapper">
-				<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+				<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
 					Store the key securely. This is the only time it will be displayed.
 				</Callout>
 			</div>

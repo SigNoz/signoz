@@ -17,7 +17,7 @@ function AlertMessage({
 		case ModalStateEnum.WAITING:
 			return (
 				<Callout
-					color="info"
+					color="primary"
 					size="sm"
 					icon={<SolidInfoCircle />}
 					testId="cloud-connect-waiting"

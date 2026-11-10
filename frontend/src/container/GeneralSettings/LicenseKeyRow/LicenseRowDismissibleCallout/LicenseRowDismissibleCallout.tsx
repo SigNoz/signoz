@@ -43,7 +43,7 @@ function LicenseRowDismissibleCallout(): JSX.Element | null {
 	return !isCalloutDismissed ? (
 		<div className="license-key-callout">
 			<Callout.Closeable
-				color="info"
+				color="primary"
 				size="sm"
 				icon={<SolidInfoCircle />}
 				closed={false}

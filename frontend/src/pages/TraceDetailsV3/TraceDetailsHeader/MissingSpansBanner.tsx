@@ -20,7 +20,7 @@ function MissingSpansBanner(): JSX.Element | null {
 	return (
 		<div className={styles.container}>
 			<Callout.Closeable
-				color="info"
+				color="primary"
 				size="sm"
 				icon={<SolidInfoCircle />}
 				closed={false}

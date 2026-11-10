@@ -50,7 +50,7 @@ function CloudAccountSetupModal({
 		if (modalState === ModalStateEnum.WAITING) {
 			return (
 				<div className="cloud-account-setup-form__alert">
-					<Callout color="info" size="sm" icon={<SolidInfoCircle />}>
+					<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
 						<div className="cloud-account-setup-form__alert-message">
 							<Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />
 							Waiting for Azure account connection, retrying in{' '}

@@ -87,14 +87,14 @@ export function K8sInstrumentationChecksCallout({
 	return (
 		<div className={styles.checkContainer}>
 			<Callout
-				color={hasMissingItems ? 'warning' : 'info'}
+				color={hasMissingItems ? 'warning' : 'primary'}
 				size="md"
 				icon={hasMissingItems ? <SolidAlertTriangle /> : <SolidInfoCircle />}
 			>
 				<div
 					className={cx(
 						styles.header,
-						hasMissingItems ? styles.warning : styles.info,
+						hasMissingItems ? styles.warning : styles.primary,
 					)}
 				>
 					<button
