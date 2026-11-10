@@ -3,8 +3,12 @@ import { useTimezone } from 'providers/Timezone';
 import { ILog } from 'types/api/logs/log';
 import { normalizeTimeToMs } from 'utils/timeUtils';
 
-export function useLogTimestamp(log: ILog): string {
+export function useLogTimestamp(log: ILog | null): string {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
+	if (!log) {
+		return '';
+	}
 
 	const rawTimestamp = log.date ?? log.timestamp;
 	const displayTimestamp = Number.isNaN(Number(rawTimestamp))

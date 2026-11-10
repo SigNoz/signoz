@@ -379,17 +379,15 @@ function LogsExplorerList({
 						{renderContent}
 					</InfinityWrapperStyled>
 
-					{selectedTab && activeLog && (
-						<LogDetail
-							selectedTab={selectedTab}
-							log={activeLog}
-							onClose={handleCloseLogDetail}
-							handleChangeSelectedView={handleChangeSelectedView}
-							logs={logs}
-							onNavigateLog={handleSetActiveLog}
-							onScrollToLog={handleScrollToLog}
-						/>
-					)}
+					<LogDetail
+						selectedTab={selectedTab}
+						log={activeLog}
+						onClose={handleCloseLogDetail}
+						handleChangeSelectedView={handleChangeSelectedView}
+						logs={logs}
+						onNavigateLog={handleSetActiveLog}
+						onScrollToLog={handleScrollToLog}
+					/>
 				</>
 			)}
 		</div>

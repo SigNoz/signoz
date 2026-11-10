@@ -7,7 +7,7 @@ import { VIEWS } from './constants';
 
 export type LogDetailProps = {
 	log: ILog | null;
-	selectedTab: VIEWS;
+	selectedTab?: VIEWS;
 	handleChangeSelectedView?: ChangeViewFunctionType;
 	isListViewPanel?: boolean;
 	listViewPanelSelectedFields?: IField[] | null;
@@ -19,6 +19,15 @@ export type LogDetailProps = {
 	onClose: () => void;
 };
 
-export type LogDetailInnerProps = LogDetailProps & {
-	log: NonNullable<LogDetailProps['log']>;
+export type LogDetailBodyProps = Pick<
+	LogDetailProps,
+	| 'selectedTab'
+	| 'isListViewPanel'
+	| 'handleChangeSelectedView'
+	| 'onApplyLogFilter'
+	| 'onClose'
+> & {
+	log: ILog;
+	onPrev: () => void;
+	onNext: () => void;
 };

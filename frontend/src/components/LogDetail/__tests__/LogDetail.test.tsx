@@ -307,3 +307,42 @@ describe('LogDetail drawer — header', () => {
 		expect(onNavigateLog).toHaveBeenLastCalledWith(logs[1]);
 	});
 });
+
+describe('LogDetail drawer — open and close transitions', () => {
+	const props = { selectedTab: VIEW_TYPES.OVERVIEW, onClose: jest.fn() };
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+		delete (Element.prototype as Partial<Element>).getAnimations;
+	});
+
+	it('starts the enter transition when a log arrives after mount', () => {
+		// Base UI clears data-starting-style on the next frame.
+		jest.spyOn(window, 'requestAnimationFrame').mockReturnValue(0);
+		const { rerender } = render(<LogDetail log={null} {...props} />);
+		expect(screen.queryByTestId('log-detail-drawer')).not.toBeInTheDocument();
+
+		rerender(<LogDetail log={mockLog} {...props} />);
+
+		expect(screen.getByTestId('log-detail-drawer')).toHaveAttribute(
+			'data-starting-style',
+		);
+	});
+
+	it('keeps the last log on screen while the drawer closes', () => {
+		// jsdom has no getAnimations, so Base UI unmounts without waiting for the exit transition.
+		Element.prototype.getAnimations = (): Animation[] => [
+			{ finished: new Promise<Animation>(() => {}) } as Animation,
+		];
+		const { rerender } = render(<LogDetail log={mockLog} {...props} />);
+
+		rerender(<LogDetail log={null} {...props} />);
+
+		expect(screen.getByTestId('log-detail-drawer')).toHaveAttribute(
+			'data-ending-style',
+		);
+		expect(screen.getByTestId('log-detail-body')).toHaveTextContent(
+			'test log body',
+		);
+	});
+});

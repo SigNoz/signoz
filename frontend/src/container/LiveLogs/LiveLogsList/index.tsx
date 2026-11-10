@@ -265,17 +265,15 @@ function LiveLogsList({
 				</InfinityWrapperStyled>
 			)}
 
-			{activeLog && selectedTab && (
-				<LogDetail
-					selectedTab={selectedTab}
-					log={activeLog}
-					onClose={handleCloseLogDetail}
-					handleChangeSelectedView={handleChangeSelectedView}
-					logs={formattedLogs}
-					onNavigateLog={handleSetActiveLog}
-					onScrollToLog={handleScrollToLog}
-				/>
-			)}
+			<LogDetail
+				selectedTab={selectedTab}
+				log={activeLog}
+				onClose={handleCloseLogDetail}
+				handleChangeSelectedView={handleChangeSelectedView}
+				logs={formattedLogs}
+				onNavigateLog={handleSetActiveLog}
+				onScrollToLog={handleScrollToLog}
+			/>
 		</div>
 	);
 }

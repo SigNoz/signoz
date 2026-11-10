@@ -294,18 +294,20 @@ function EntityLogsContent({
 						{renderContent}
 					</div>
 				)}
-				{selectedTab && activeLog && (
-					<LogDetail
-						log={activeLog}
-						onClose={handleCloseLogDetail}
-						logs={logs}
-						onNavigateLog={handleSetActiveLog}
-						selectedTab={selectedTab}
-						onApplyLogFilter={onApplyLogFilter}
-						onScrollToLog={handleScrollToLog}
-						handleOpenInExplorer={(e) => handleOpenInExplorer(e, activeLog)}
-					/>
-				)}
+				<LogDetail
+					log={activeLog}
+					onClose={handleCloseLogDetail}
+					logs={logs}
+					onNavigateLog={handleSetActiveLog}
+					selectedTab={selectedTab}
+					onApplyLogFilter={onApplyLogFilter}
+					onScrollToLog={handleScrollToLog}
+					handleOpenInExplorer={(e): void => {
+						if (activeLog) {
+							handleOpenInExplorer(e, activeLog);
+						}
+					}}
+				/>
 			</div>
 		</div>
 	);

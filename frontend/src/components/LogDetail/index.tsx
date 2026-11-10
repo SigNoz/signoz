@@ -1,228 +1,44 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button } from '@signozhq/ui/button';
 import { Drawer } from '@signozhq/ui/drawer';
-import { ToggleGroup } from '@signozhq/ui/toggle-group';
-import { Typography } from '@signozhq/ui/typography';
-import { Tooltip } from 'antd';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import LogStateIndicator from 'components/Logs/LogStateIndicator/LogStateIndicator';
-import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
-import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
-import { LOCALSTORAGE } from 'constants/localStorage';
-import ContextView from 'container/LogDetailedView/ContextView/ContextView';
-import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
-import Overview from 'container/LogDetailedView/Overview';
-import {
-	getSanitizedLogBody,
-	removeEscapeCharacters,
-} from 'container/LogDetailedView/utils';
-import useInitialQuery from 'container/LogsExplorerContext/useInitialQuery';
-import { useOptionsMenu } from 'container/OptionsMenu';
-import { FontSize } from 'container/OptionsMenu/types';
-import { useArrowKeyNavigation } from 'container/TracesExplorer/SpanDrawer/useArrowKeyNavigation';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { getBodyMessage } from 'lib/logs/logBody';
-import { cloneDeep } from 'lodash-es';
-import {
-	ArrowDown,
-	ArrowUp,
-	Filter,
-	Histogram,
-	Table,
-	TextSelect,
-} from '@signozhq/icons';
-import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
-import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
-import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
+import { LogDetailProps } from './LogDetail.interfaces';
+import LogDetailBody from './LogDetailBody';
 import LogActions from './LogDetailsHeader/LogActions';
 import LogNavigation from './LogDetailsHeader/LogNavigation';
 import { useLogNavigation } from './LogDetailsHeader/useLogNavigation';
 import { useLogTimestamp } from './LogDetailsHeader/useLogTimestamp';
-import LogHighlights from './LogHighlights/LogHighlights';
+import { useShownLog } from './useShownLog';
 
 import './LogDetails.styles.scss';
 
-/* eslint-disable-next-line sonarjs/cognitive-complexity */
-function LogDetailInner({
+function LogDetail({
 	log,
 	onClose,
 	selectedTab,
-	isListViewPanel = false,
+	isListViewPanel,
 	handleChangeSelectedView,
 	logs,
 	onNavigateLog,
 	onScrollToLog,
 	handleOpenInExplorer,
 	onApplyLogFilter,
-}: LogDetailInnerProps): JSX.Element {
-	const initialContextQuery = useInitialQuery(log);
-	const [contextQuery, setContextQuery] = useState<Query | undefined>(
-		initialContextQuery,
-	);
-	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
-
-	const [isFilterVisible, setIsFilterVisible] = useState<boolean>(false);
-
-	const [filters, setFilters] = useState<TagFilter | null>(null);
-	const [isEdit, setIsEdit] = useState<boolean>(false);
-	const { stagedQuery } = useQueryBuilder();
-
-	// Handle clicks outside to close drawer, except on explicitly ignored regions
-	useEffect(() => {
-		const handleClickOutside = (e: MouseEvent): void => {
-			const target = e.target as HTMLElement;
-
-			// Don't close if clicking on drawer content, overlays, or portal elements
-			if (
-				target.closest('[data-log-detail-ignore="true"]') ||
-				target.closest('.cm-tooltip-autocomplete') ||
-				target.closest('.drawer-popover') ||
-				target.closest('.query-status-popover') ||
-				target.closest('[data-radix-popper-content-wrapper]') ||
-				target.closest('[data-base-ui-portal]')
-			) {
-				return;
-			}
-
-			// Close the drawer for any other outside click
-			onClose();
-		};
-
-		document.addEventListener('mousedown', handleClickOutside);
-
-		return (): void => {
-			document.removeEventListener('mousedown', handleClickOutside);
-		};
-	}, [onClose]);
+}: LogDetailProps): JSX.Element {
+	const shownLog = useShownLog(log);
 
 	const { goToPrev, goToNext, isPrevDisabled, isNextDisabled } =
 		useLogNavigation({
 			logs,
-			activeLogId: log.id,
+			activeLogId: shownLog?.id ?? '',
 			onNavigateLog,
 			onScrollToLog,
 		});
 
-	// Only listen in the OVERVIEW tab so we don't hijack arrow keys from the
-	// JSON editor / context view.
-	useArrowKeyNavigation({
-		enabled: selectedView === VIEW_TYPES.OVERVIEW,
-		onPrev: goToPrev,
-		onNext: goToNext,
-	});
-
-	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
-			return null;
-		}
-
-		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
-	}, [stagedQuery]);
-
-	const { options } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		sourcePage: SavedviewtypesSourceDTO.logs,
-		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
-	});
-
-	const handleModeChange = (value: string): void => {
-		setSelectedView(value as VIEWS);
-		setIsEdit(false);
-		setIsFilterVisible(false);
-	};
-
-	const handleFilterVisible = (): void => {
-		setIsFilterVisible(!isFilterVisible);
-		setIsEdit(!isEdit);
-	};
-
-	const title = useLogTimestamp(log);
-
-	const logBody = useMemo(() => getBodyMessage(log?.body), [log?.body]);
-
-	const htmlBody = useMemo(
-		() => ({
-			__html: getSanitizedLogBody(logBody || '', { shouldEscapeHtml: true }),
-		}),
-		[logBody],
-	);
-
-	const handleQueryExpressionChange = useCallback(
-		(value: string, queryIndex: number) => {
-			// update the query at the given index
-			setContextQuery((prev) => {
-				if (!prev) {
-					return prev;
-				}
-
-				return {
-					...prev,
-					builder: {
-						...prev.builder,
-						queryData: prev.builder.queryData.map((query, idx) =>
-							idx === queryIndex
-								? {
-										...query,
-										filter: {
-											...query.filter,
-											expression: value,
-										},
-									}
-								: query,
-						),
-					},
-				};
-			});
-		},
-		[],
-	);
-
-	const handleRunQuery = (expression: string): void => {
-		let updatedContextQuery = cloneDeep(contextQuery);
-
-		if (!updatedContextQuery || !updatedContextQuery.builder) {
-			return;
-		}
-
-		const newFilters: TagFilter = {
-			items: expression ? convertExpressionToFilters(expression) : [],
-			op: 'AND',
-		};
-
-		updatedContextQuery = {
-			...updatedContextQuery,
-			builder: {
-				...updatedContextQuery?.builder,
-				queryData: updatedContextQuery?.builder.queryData.map((queryData) => ({
-					...queryData,
-					filter: {
-						...queryData.filter,
-						expression,
-					},
-					filters: {
-						...queryData.filters,
-						...newFilters,
-						op: queryData.filters?.op ?? 'AND',
-					},
-				})),
-			},
-		};
-
-		setContextQuery(updatedContextQuery);
-
-		if (newFilters) {
-			setFilters(newFilters);
-		}
-	};
+	const title = useLogTimestamp(shownLog);
 
 	return (
 		<Drawer
 			type="inspector"
 			stack="overlay"
-			open
+			open={log !== null}
 			onClose={onClose}
 			title={title}
 			width="extra-wide"
@@ -236,183 +52,30 @@ function LogDetailInner({
 				/>
 			}
 			headerSuffix={
-				<LogActions
-					log={log}
-					showOpenInExplorer={!!handleOpenInExplorer}
-					onOpenInExplorer={handleOpenInExplorer}
-				/>
+				shownLog && (
+					<LogActions
+						log={shownLog}
+						showOpenInExplorer={!!handleOpenInExplorer}
+						onOpenInExplorer={handleOpenInExplorer}
+					/>
+				)
 			}
 			testId="log-detail-drawer"
 		>
-			<OverlayScrollbar style={{ height: '100%' }}>
-				<div className="log-detail-drawer__content">
-					<div className="log-detail-drawer__log">
-						<LogStateIndicator
-							severityText={log.severity_text}
-							severityNumber={log.severity_number}
-							fontSize={options?.fontSize ?? FontSize.MEDIUM}
-						/>
-						<Tooltip
-							title={removeEscapeCharacters(logBody)}
-							placement="left"
-							mouseLeaveDelay={0}
-						>
-							<div
-								className="log-body"
-								data-testid="log-detail-body"
-								dangerouslySetInnerHTML={htmlBody}
-							/>
-						</Tooltip>
-
-						<div className="log-overflow-shadow">&nbsp;</div>
-					</div>
-
-					<LogHighlights log={log} />
-
-					<div className="log-detail-drawer__section-divider" />
-
-					<div className="tabs-and-search">
-						<ToggleGroup
-							variant="outlined"
-							color="secondary"
-							size="sm"
-							type="single"
-							testId="log-detail-views-tabs"
-							onChange={handleModeChange}
-							value={selectedView}
-							items={[
-								{
-									value: VIEW_TYPES.OVERVIEW,
-									label: (
-										<div className="view-title">
-											<Table size={14} />
-											Overview
-										</div>
-									),
-								},
-								{
-									value: VIEW_TYPES.CONTEXT,
-									label: (
-										<div className="view-title">
-											<TextSelect size={14} />
-											Context
-										</div>
-									),
-								},
-								{
-									value: VIEW_TYPES.INFRAMETRICS,
-									label: (
-										<div className="view-title">
-											<Histogram size="md" />
-											Metrics
-										</div>
-									),
-								},
-							]}
-						/>
-
-						<div className="log-detail-drawer__actions">
-							{selectedView === VIEW_TYPES.CONTEXT && (
-								<Tooltip
-									title="Show Filters"
-									placement="topLeft"
-									aria-label="Show Filters"
-									mouseLeaveDelay={0}
-								>
-									<Button
-										variant="link"
-										color="secondary"
-										size="sm"
-										icon
-										aria-label="Show Filters"
-										onClick={handleFilterVisible}
-									>
-										<Filter size="lg" />
-									</Button>
-								</Tooltip>
-							)}
-						</div>
-					</div>
-					{isFilterVisible && contextQuery?.builder.queryData[0] && (
-						<div className="log-detail-drawer-query-container">
-							<QuerySearch
-								onChange={(value): void => handleQueryExpressionChange(value, 0)}
-								dataSource={DataSource.LOGS}
-								queryData={contextQuery?.builder.queryData[0]}
-								onRun={handleRunQuery}
-							/>
-						</div>
-					)}
-
-					{selectedView === VIEW_TYPES.OVERVIEW && (
-						<Overview
-							logData={log}
-							isListViewPanel={isListViewPanel}
-							handleChangeSelectedView={handleChangeSelectedView}
-							onApplyLogFilter={onApplyLogFilter}
-						/>
-					)}
-					{selectedView === VIEW_TYPES.CONTEXT && (
-						<ContextView
-							log={log}
-							filters={filters}
-							contextQuery={contextQuery}
-							isEdit={isEdit}
-						/>
-					)}
-					{selectedView === VIEW_TYPES.INFRAMETRICS && (
-						<InfraMetrics
-							clusterName={log.resources_string?.[RESOURCE_KEYS.CLUSTER_NAME] || ''}
-							podName={log.resources_string?.[RESOURCE_KEYS.POD_NAME] || ''}
-							nodeName={log.resources_string?.[RESOURCE_KEYS.NODE_NAME] || ''}
-							hostName={log.resources_string?.[RESOURCE_KEYS.HOST_NAME] || ''}
-							timestamp={log.timestamp.toString()}
-							dataSource={DataSource.LOGS}
-						/>
-					)}
-
-					{selectedView === VIEW_TYPES.OVERVIEW && (
-						<div className="log-detail-drawer__footer-hint">
-							<div className="log-detail-drawer__footer-hint-content">
-								<Typography
-									variant="paragraph"
-									size="base"
-									weight="regular"
-									color="secondary"
-									as="span"
-									textOverflow="wrap"
-								>
-									Use
-								</Typography>
-								<ArrowUp size={14} className="log-detail-drawer__footer-hint-icon" />
-								<span>/</span>
-								<ArrowDown size={14} className="log-detail-drawer__footer-hint-icon" />
-								<Typography
-									variant="paragraph"
-									size="base"
-									weight="regular"
-									color="secondary"
-									as="span"
-									textOverflow="wrap"
-								>
-									to view previous/next log
-								</Typography>
-							</div>
-						</div>
-					)}
-				</div>
-			</OverlayScrollbar>
+			{shownLog && (
+				<LogDetailBody
+					log={shownLog}
+					onClose={onClose}
+					selectedTab={selectedTab}
+					isListViewPanel={isListViewPanel}
+					handleChangeSelectedView={handleChangeSelectedView}
+					onApplyLogFilter={onApplyLogFilter}
+					onPrev={goToPrev}
+					onNext={goToNext}
+				/>
+			)}
 		</Drawer>
 	);
-}
-
-function LogDetail(props: LogDetailProps): JSX.Element {
-	const { log } = props;
-	if (!log) {
-		return <></>;
-	}
-
-	return <LogDetailInner {...(props as LogDetailInnerProps)} />;
 }
 
 export default LogDetail;
