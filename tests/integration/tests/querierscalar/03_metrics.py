@@ -48,7 +48,7 @@ def build_metrics_query(
     gb = [querier.build_group_by_field(f, "string", "attribute") for f in group_by] if group_by else None
     order = [querier.build_order_by(name, direction) for name, direction in order_by] if order_by else None
 
-    return querier.build_scalar_query(
+    return querier.build_aggregation_query(
         name=name,
         signal="metrics",
         aggregations=aggs,

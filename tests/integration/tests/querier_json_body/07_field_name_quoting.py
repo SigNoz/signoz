@@ -8,7 +8,7 @@ import pytest
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
-from fixtures.querier import build_aggregation, build_raw_query, build_scalar_query, get_rows, get_scalar_table_data, make_query_request
+from fixtures.querier import build_aggregation, build_aggregation_query, build_raw_query, get_rows, get_scalar_table_data, make_query_request
 
 SERVICE = "quoting-json-svc"
 
@@ -55,7 +55,7 @@ def test_body_json_group_by_and_select_hostile_key(
         token,
         start_ms,
         end_ms,
-        [build_scalar_query("A", "logs", [build_aggregation("count()")], group_by=[field], order=[{"key": {"name": key}, "direction": "asc"}], filter_expression=f"service.name = '{SERVICE}'")],
+        [build_aggregation_query("A", "logs", [build_aggregation("count()")], group_by=[field], order=[{"key": {"name": key}, "direction": "asc"}], filter_expression=f"service.name = '{SERVICE}'")],
         request_type="scalar",
     )
     assert response.status_code == HTTPStatus.OK, response.text

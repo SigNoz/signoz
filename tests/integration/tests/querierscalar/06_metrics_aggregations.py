@@ -8,9 +8,9 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
 from fixtures.querier import (
+    build_aggregation_query,
     build_group_by_field,
     build_metrics_aggregation,
-    build_scalar_query,
     get_scalar_table_data,
     make_scalar_query_request,
 )
@@ -52,7 +52,7 @@ def test_metrics_scalar_space_aggregations(
     insert_metrics([Metrics(metric_name="test.metric", labels={"service.name": service}, timestamp=now - timedelta(seconds=1), temporality="Unspecified", type_="Gauge", is_monotonic=False, value=value) for service, value in METRIC_VALUES.items()])
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_scalar_query(
+    query = build_aggregation_query(
         name="A",
         signal="metrics",
         aggregations=[build_metrics_aggregation("test.metric", "latest", space_aggregation, "unspecified", reduce_to="last")],
@@ -93,7 +93,7 @@ def test_metrics_scalar_having(
     insert_metrics([Metrics(metric_name="test.metric", labels={"service.name": service}, timestamp=now - timedelta(seconds=1), temporality="Unspecified", type_="Gauge", is_monotonic=False, value=value) for service, value in METRIC_VALUES.items()])
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_scalar_query(
+    query = build_aggregation_query(
         name="A",
         signal="metrics",
         aggregations=[build_metrics_aggregation("test.metric", "latest", "sum", "unspecified", reduce_to="last")],

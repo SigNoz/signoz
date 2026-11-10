@@ -118,7 +118,7 @@ INVALID_REGEXP = "write the pattern in RE2 syntax, which has no lookaround or ba
             id="regexp_in_sql",
         ),
         pytest.param(
-            querier.build_scalar_query("A", "logs", [querier.build_aggregation("count()")], filter_expression="body REGEXP '(?=a)'"),
+            querier.build_aggregation_query("A", "logs", [querier.build_aggregation("count()")], filter_expression="body REGEXP '(?=a)'"),
             "invalid_regexp",
             INVALID_REGEXP,
             id="regexp_in_filter",

@@ -8,7 +8,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
-from fixtures.querier import get_all_series, make_query_request
+from fixtures.querier import RequestType, get_all_series, make_query_request
 
 MINUTE_MS = 60_000
 QUERY_TIMEOUT = 30
@@ -73,7 +73,7 @@ def test_or_arms_merge_under_subquery_name_drop(
 
     # query_range over the same grid must agree point for point.
     spec = {"name": "A", "query": query, "step": 300, "skipStepAlignment": True}
-    response = make_query_request(signoz, token, start_ms, end_ms, [{"type": "promql", "spec": spec}])
+    response = make_query_request(signoz, token, start_ms, end_ms, [{"type": "promql", "spec": spec}], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK, response.text[:300]
     series = get_all_series(response.json(), "A")
     assert len(series) == 1, f"both or arms must merge into one series: {series}"

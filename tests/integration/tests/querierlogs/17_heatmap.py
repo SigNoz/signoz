@@ -11,12 +11,12 @@ from fixtures.querier import (
     RequestType,
     assert_distribution_sums_heatmap,
     build_aggregation,
+    build_aggregation_query,
     build_group_by_field,
     build_heatmap_query,
     build_linear_bucket_options,
     build_log_bucket_options,
     build_order_by,
-    build_scalar_query,
     get_all_series,
     get_buckets,
     get_error_message,
@@ -200,7 +200,7 @@ def test_heatmap_rejections(
         token,
         int((now - timedelta(minutes=5)).timestamp() * 1000),
         int(now.timestamp() * 1000),
-        [build_scalar_query("A", "logs", aggregations)],
+        [build_aggregation_query("A", "logs", aggregations)],
         request_type=RequestType.HEATMAP,
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text

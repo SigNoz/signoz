@@ -52,7 +52,7 @@ def test_metrics_filter_bool_label(
             token,
             now,
             [
-                querier.build_scalar_query(
+                querier.build_aggregation_query(
                     name="A",
                     signal="metrics",
                     aggregations=[querier.build_metrics_aggregation(METRIC, "latest", "sum", "unspecified", reduce_to="last")],

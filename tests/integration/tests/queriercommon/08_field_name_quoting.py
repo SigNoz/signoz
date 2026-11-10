@@ -9,10 +9,11 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.metrics import Metrics
 from fixtures.querier import (
+    RequestType,
     build_aggregation,
+    build_aggregation_query,
     build_builder_query,
     build_raw_query,
-    build_scalar_query,
     get_all_series,
     get_rows,
     get_scalar_table_data,
@@ -66,7 +67,7 @@ def test_logs_group_by_order_by_and_select_hostile_attribute(
         token,
         start_ms,
         end_ms,
-        [build_scalar_query("A", "logs", [build_aggregation("count()")], group_by=[field], filter_expression=f"service.name = '{SERVICE}'")],
+        [build_aggregation_query("A", "logs", [build_aggregation("count()")], group_by=[field], filter_expression=f"service.name = '{SERVICE}'")],
         request_type="scalar",
     )
     assert response.status_code == HTTPStatus.OK, response.text
@@ -78,7 +79,7 @@ def test_logs_group_by_order_by_and_select_hostile_attribute(
         token,
         start_ms,
         end_ms,
-        [build_scalar_query("A", "logs", [build_aggregation("count()")], group_by=[field], order=[{"key": {"name": key}, "direction": "asc"}], filter_expression=f"service.name = '{SERVICE}'")],
+        [build_aggregation_query("A", "logs", [build_aggregation("count()")], group_by=[field], order=[{"key": {"name": key}, "direction": "asc"}], filter_expression=f"service.name = '{SERVICE}'")],
         request_type="scalar",
     )
     assert response.status_code == HTTPStatus.OK, response.text
@@ -170,7 +171,7 @@ def test_logs_aggregation_with_dollar_in_key(
             token,
             start_ms,
             end_ms,
-            [build_scalar_query("A", "logs", [build_aggregation(expression)], filter_expression=f"service.name = '{SERVICE}'")],
+            [build_aggregation_query("A", "logs", [build_aggregation(expression)], filter_expression=f"service.name = '{SERVICE}'")],
             request_type="scalar",
         )
         assert response.status_code == HTTPStatus.OK, f"{expression}: {response.text}"
@@ -201,7 +202,7 @@ def test_logs_group_by_hostile_resource_attribute(
         token,
         int((now - timedelta(minutes=2)).timestamp() * 1000),
         int((now + timedelta(seconds=1)).timestamp() * 1000),
-        [build_scalar_query("A", "logs", [build_aggregation("count()")], group_by=[{"name": key, "fieldContext": "resource", "fieldDataType": "string"}], filter_expression=f"service.name = '{SERVICE}'")],
+        [build_aggregation_query("A", "logs", [build_aggregation("count()")], group_by=[{"name": key, "fieldContext": "resource", "fieldDataType": "string"}], filter_expression=f"service.name = '{SERVICE}'")],
         request_type="scalar",
     )
     assert response.status_code == HTTPStatus.OK, response.text
@@ -236,7 +237,7 @@ def test_traces_group_by_and_select_hostile_attribute(
         token,
         start_ms,
         end_ms,
-        [build_scalar_query("A", "traces", [build_aggregation("count()")], group_by=[field], filter_expression=f"service.name = '{SERVICE}'")],
+        [build_aggregation_query("A", "traces", [build_aggregation("count()")], group_by=[field], filter_expression=f"service.name = '{SERVICE}'")],
         request_type="scalar",
     )
     assert response.status_code == HTTPStatus.OK, response.text
@@ -274,6 +275,7 @@ def test_metrics_group_by_hostile_label(
         int((now - timedelta(minutes=5)).timestamp() * 1000),
         int((now + timedelta(minutes=1)).timestamp() * 1000),
         [build_builder_query("A", metric, "avg", "avg", group_by=[label])],
+        request_type=RequestType.TIME_SERIES,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     labels = {tuple(sorted((entry["key"]["name"], entry["value"]) for entry in item.get("labels", []))) for item in get_all_series(response.json(), "A")}

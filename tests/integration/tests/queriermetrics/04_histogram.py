@@ -9,6 +9,7 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
 from fixtures.metrics import Metrics
 from fixtures.querier import (
+    RequestType,
     build_builder_query,
     get_all_series,
     get_series_values,
@@ -75,7 +76,7 @@ def test_histogram_count_for_one_endpoint(
         filter_expression='endpoint = "/health"',
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
@@ -142,7 +143,7 @@ def test_histogram_count_for_one_service(
         filter_expression='service = "api"',
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
@@ -212,7 +213,7 @@ def test_histogram_count_for_delta_service(
         filter_expression='service = "web"',
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
@@ -271,7 +272,7 @@ def test_histogram_count_for_all_services(
         ## no services filter, this tests for multitemporality handling as well
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
@@ -308,7 +309,7 @@ def test_histogram_count_no_param(
         "count",
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
@@ -394,7 +395,7 @@ def test_histogram_percentile_for_all_services(
         space_agg,
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
@@ -445,7 +446,7 @@ def test_histogram_percentile_for_cumulative_service(
         filter_expression='service = "api"',
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
@@ -500,6 +501,7 @@ def test_histogram_percentile_with_a_gap_in_one_bucket(
         start_ms,
         end_ms,
         [build_builder_query("A", metric_name, "doesnotreallymatter", "p50")],
+        request_type=RequestType.TIME_SERIES,
     )
     assert response.status_code == HTTPStatus.OK, response.text
 
@@ -548,7 +550,7 @@ def test_histogram_percentile_for_delta_service(
         filter_expression='service = "web"',
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
@@ -590,6 +592,7 @@ def test_histogram_percentile_explicit_le_group_by(
             build_builder_query("A", metric_name, "doesnotreallymatter", "p95", group_by=["le", "service"]),
             build_builder_query("B", metric_name, "doesnotreallymatter", "p95", group_by=["service"]),
         ],
+        request_type=RequestType.TIME_SERIES,
     )
     assert response.status_code == HTTPStatus.OK, response.text
 

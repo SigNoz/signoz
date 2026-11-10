@@ -7,10 +7,10 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
     build_aggregation,
+    build_aggregation_query,
     build_group_by_field,
     build_order_by,
     build_raw_query,
-    build_scalar_query,
     get_rows,
     get_scalar_table_data,
     make_query_request,
@@ -136,7 +136,7 @@ def test_non_body_filter_groupby_aggregation(
                 step_interval=60,
             )
         else:
-            query = build_scalar_query(
+            query = build_aggregation_query(
                 name=case["name"],
                 signal="logs",
                 aggregations=[build_aggregation(case["aggregation"])],
@@ -233,7 +233,7 @@ def test_non_body_orderby(
                 step_interval=60,
             )
         else:
-            query = build_scalar_query(
+            query = build_aggregation_query(
                 name=case["name"],
                 signal="logs",
                 aggregations=[build_aggregation(case["aggregation"])],

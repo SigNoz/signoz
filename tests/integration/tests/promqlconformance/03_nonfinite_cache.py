@@ -6,7 +6,7 @@ from uuid import uuid4
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
-from fixtures.querier import get_all_series, make_query_request
+from fixtures.querier import RequestType, get_all_series, make_query_request
 
 HOUR_MS = 3_600_000
 SAMPLE_INTERVAL_MS = 60_000
@@ -40,7 +40,7 @@ def test_promql_ratio_with_zero_denominator_is_dropped_and_cached(
 
     def run() -> tuple[dict[str, dict[int, object]], int]:
         query = {"type": "promql", "spec": {"name": "A", "query": promql}}
-        response = make_query_request(signoz, token, start_ms, end_ms, [query], no_cache=False)
+        response = make_query_request(signoz, token, start_ms, end_ms, [query], no_cache=False, request_type=RequestType.TIME_SERIES)
         assert response.status_code == HTTPStatus.OK, response.text[:300]
         body = response.json()
         out: dict[str, dict[int, object]] = {}

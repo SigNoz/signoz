@@ -8,6 +8,7 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.meter import MeterSample, make_meter_samples
 from fixtures.querier import (
+    RequestType,
     build_builder_query,
     get_series_values,
     make_query_request,
@@ -49,7 +50,7 @@ def test_query_range_cost_meter(
         temporality="delta",
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()

@@ -9,10 +9,10 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
     build_aggregation,
+    build_aggregation_query,
     build_formula_query,
     build_group_by_field,
     build_order_by,
-    build_scalar_query,
     find_named_result,
     get_all_series,
     get_error_message,
@@ -101,7 +101,7 @@ def test_logs_formula_orderby_and_limit(
         end_ms=int(now.timestamp() * 1000),
         request_type="scalar",
         queries=[
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="logs",
                 aggregations=[build_aggregation("count()")],
@@ -109,7 +109,7 @@ def test_logs_formula_orderby_and_limit(
                 filter_expression="severity_text = 'ERROR'",
                 disabled=True,
             ),
-            build_scalar_query(
+            build_aggregation_query(
                 name="B",
                 signal="logs",
                 aggregations=[build_aggregation("count()")],
@@ -240,8 +240,8 @@ def test_logs_formula_having_time_series_matches_query_having(
         end_ms=int(now.timestamp() * 1000),
         request_type="time_series",
         queries=[
-            build_scalar_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], group_by=group_by, disabled=True),
-            build_scalar_query(name="B", signal="logs", aggregations=[build_aggregation("count()")], group_by=group_by, having_expression=query_having),
+            build_aggregation_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], group_by=group_by, disabled=True),
+            build_aggregation_query(name="B", signal="logs", aggregations=[build_aggregation("count()")], group_by=group_by, having_expression=query_having),
             build_formula_query("F1", "A", having_expression=formula_having),
         ],
     )
@@ -290,8 +290,8 @@ def test_logs_formula_having_scalar_matches_query_having(
         end_ms=int(now.timestamp() * 1000),
         request_type="scalar",
         queries=[
-            build_scalar_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], group_by=group_by, disabled=True),
-            build_scalar_query(name="B", signal="logs", aggregations=[build_aggregation("count()")], group_by=group_by, having_expression=query_having),
+            build_aggregation_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], group_by=group_by, disabled=True),
+            build_aggregation_query(name="B", signal="logs", aggregations=[build_aggregation("count()")], group_by=group_by, having_expression=query_having),
             build_formula_query("F1", "A", having_expression=formula_having),
         ],
     )
@@ -325,7 +325,7 @@ def test_logs_formula_having_invalid_reference(
         end_ms=int(now.timestamp() * 1000),
         request_type="time_series",
         queries=[
-            build_scalar_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], disabled=True),
+            build_aggregation_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], disabled=True),
             build_formula_query("F1", "A", having_expression="count() > 0"),
         ],
     )

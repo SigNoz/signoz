@@ -12,7 +12,7 @@ from fixtures.querier import (
     assert_grouped_series,
     build_aggregation,
     build_group_by_field,
-    build_traces_scalar_query,
+    build_traces_aggregation_query,
     get_all_warnings,
     get_preview_sql,
     get_rows,
@@ -90,7 +90,7 @@ def test_traces_attributes_json_evolution(
         end_ms=int((before_1 + timedelta(minutes=1)).timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_traces_scalar_query(
+            build_traces_aggregation_query(
                 aggregations=[build_aggregation("count()")],
                 group_by=[build_group_by_field("http.route", field_context="attribute")],
             )
@@ -114,7 +114,7 @@ def test_traces_attributes_json_evolution(
         end_ms=int((after_2 + timedelta(minutes=1)).timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_traces_scalar_query(
+            build_traces_aggregation_query(
                 aggregations=[build_aggregation("count()")],
                 group_by=[build_group_by_field("http.route", field_context="attribute")],
             )
@@ -138,7 +138,7 @@ def test_traces_attributes_json_evolution(
         end_ms=int((after_2 + timedelta(minutes=1)).timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_traces_scalar_query(
+            build_traces_aggregation_query(
                 aggregations=[build_aggregation("count()")],
                 group_by=[build_group_by_field("http.route", field_context="attribute")],
             )
@@ -212,7 +212,7 @@ def test_traces_attributes_json_typed_filters(
             end_ms=end_ms,
             request_type=RequestType.TIME_SERIES,
             queries=[
-                build_traces_scalar_query(
+                build_traces_aggregation_query(
                     aggregations=[build_aggregation("count()")],
                     group_by=[build_group_by_field("http.route", field_context="attribute")],
                     filter_expression=filter_expression,
@@ -291,7 +291,7 @@ def test_traces_attributes_json_collision_and_map_parity(
         end_ms=end_ms,
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_traces_scalar_query(
+            build_traces_aggregation_query(
                 aggregations=[build_aggregation("count()")],
                 group_by=[build_group_by_field("app.status", field_context="attribute")],
                 filter_expression="app.status EXISTS",
@@ -325,7 +325,7 @@ def test_traces_attributes_json_collision_and_map_parity(
             end_ms=end_ms,
             request_type=RequestType.TIME_SERIES,
             queries=[
-                build_traces_scalar_query(
+                build_traces_aggregation_query(
                     aggregations=[build_aggregation("count()")],
                     group_by=[build_group_by_field("http.route", field_context="attribute")],
                     filter_expression=filter_expression,
@@ -382,7 +382,7 @@ def test_traces_attributes_json_number_reads(
             end_ms=end_ms,
             request_type=RequestType.TIME_SERIES,
             queries=[
-                build_traces_scalar_query(
+                build_traces_aggregation_query(
                     aggregations=[build_aggregation("count()")],
                     group_by=[build_group_by_field("http.route", field_context="attribute")],
                     filter_expression=filter_expression,
@@ -513,7 +513,7 @@ def test_traces_attributes_json_unreported_key(
     insert_traces(spans)
 
     queries = [
-        build_traces_scalar_query(
+        build_traces_aggregation_query(
             aggregations=[build_aggregation("count()")],
             filter_expression="unreported.key = 'value'",
         )
@@ -523,11 +523,11 @@ def test_traces_attributes_json_unreported_key(
     start_ms = int((before - timedelta(minutes=1)).timestamp() * 1000)
     end_ms = int((before + timedelta(minutes=1)).timestamp() * 1000)
 
-    sql = get_preview_sql(make_preview_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries), "A")
+    sql = get_preview_sql(make_preview_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries, request_type=RequestType.TIME_SERIES), "A")
     assert "attributes_string['unreported.key']" in sql
     assert "attributes.`unreported.key`" not in sql
 
-    response = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries)
+    response = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries, request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
     series = response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"]
     assert [value["value"] for value in series[0]["values"]] == [1]
@@ -537,11 +537,11 @@ def test_traces_attributes_json_unreported_key(
     start_ms = int((after - timedelta(minutes=1)).timestamp() * 1000)
     end_ms = int((after + timedelta(minutes=1)).timestamp() * 1000)
 
-    sql = get_preview_sql(make_preview_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries), "A")
+    sql = get_preview_sql(make_preview_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries, request_type=RequestType.TIME_SERIES), "A")
     assert "attributes.`unreported.key`" in sql
     assert "attributes_string" not in sql
 
-    response = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries)
+    response = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries, request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
     series = response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"]
     assert [value["value"] for value in series[0]["values"]] == [1]

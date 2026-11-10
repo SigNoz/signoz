@@ -10,11 +10,11 @@ from fixtures.metadata import AttributesMetadata, get_field_keys, get_field_valu
 from fixtures.querier import (
     RequestType,
     build_aggregation,
+    build_aggregation_query,
     build_group_by_field,
     build_order_by,
     build_raw_query,
-    build_scalar_query,
-    build_traces_scalar_query,
+    build_traces_aggregation_query,
     get_all_warnings,
     get_column_data_from_response,
     get_scalar_columns,
@@ -178,7 +178,7 @@ def test_group_by_merges_and_echoes_requested_spelling(
         end_ms=int((family_fleet + timedelta(minutes=1)).timestamp() * 1000),
         request_type=RequestType.SCALAR,
         queries=[
-            build_traces_scalar_query(
+            build_traces_aggregation_query(
                 [build_aggregation("count_distinct(name)")],
                 filter_expression=f"service.name LIKE '{PREFIX}%'",
                 group_by=[build_group_by_field(requested_key, "string", "resource")],
@@ -214,7 +214,7 @@ def test_log_group_by_merges_and_echoes_requested_spelling(
         end_ms=int((family_fleet + timedelta(minutes=1)).timestamp() * 1000),
         request_type=RequestType.SCALAR,
         queries=[
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="logs",
                 aggregations=[build_aggregation("count_distinct(body)")],
@@ -245,7 +245,7 @@ def test_time_series_group_by_merges_family(
         end_ms=int((family_fleet + timedelta(minutes=1)).timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_traces_scalar_query(
+            build_traces_aggregation_query(
                 [build_aggregation("count_distinct(name)")],
                 filter_expression=f"service.name LIKE '{PREFIX}%'",
                 group_by=[build_group_by_field(CURRENT_KEY, "string", "resource")],

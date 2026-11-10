@@ -10,7 +10,7 @@ from fixtures.querier import (
     RequestType,
     build_aggregation,
     build_group_by_field,
-    build_traces_scalar_query,
+    build_traces_aggregation_query,
     index_series_by_label,
     make_query_request,
 )
@@ -71,7 +71,7 @@ def test_traces_aggregate_min_max(
         end_ms=int((now + timedelta(seconds=5)).timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_traces_scalar_query(
+            build_traces_aggregation_query(
                 aggregations=[
                     build_aggregation("max(duration_nano)", "maxDuration"),
                     build_aggregation("min(duration_nano)", "minDuration"),

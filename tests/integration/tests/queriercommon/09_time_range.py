@@ -12,6 +12,7 @@ from fixtures.querier import (
     Aggregation,
     BuilderQuery,
     MetricAggregation,
+    RequestType,
     get_all_warnings,
     get_error_message,
     get_series_values,
@@ -47,6 +48,7 @@ def test_time_range_rejected(
         start_ms=start_ms,
         end_ms=end_ms,
         queries=[BuilderQuery(signal="logs", aggregations=[Aggregation(expression="count()")], step_interval=60).to_dict()],
+        request_type=RequestType.TIME_SERIES,
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
@@ -79,6 +81,7 @@ def test_two_year_logs_timeseries_step_clamped(
             ).to_dict()
         ],
         format_options={"formatTableResultForUI": False, "fillGaps": True},
+        request_type=RequestType.TIME_SERIES,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -117,6 +120,7 @@ def test_two_year_traces_timeseries_step_clamped(
             ).to_dict()
         ],
         format_options={"formatTableResultForUI": False, "fillGaps": True},
+        request_type=RequestType.TIME_SERIES,
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -155,6 +159,7 @@ def test_two_year_metrics_timeseries_step_clamped(
             ).to_dict()
         ],
         format_options={"formatTableResultForUI": False, "fillGaps": True},
+        request_type=RequestType.TIME_SERIES,
     )
 
     assert response.status_code == HTTPStatus.OK

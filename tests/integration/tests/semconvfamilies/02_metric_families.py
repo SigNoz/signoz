@@ -9,9 +9,9 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
 from fixtures.querier import (
     RequestType,
+    build_aggregation_query,
     build_group_by_field,
     build_metrics_aggregation,
-    build_scalar_query,
     get_scalar_columns,
     get_scalar_table_data,
     make_query_request,
@@ -40,7 +40,7 @@ def test_metric_label_filter_merges_stored_spellings(
         end_ms=int(metric_family_fleet.timestamp() * 1000),
         request_type=RequestType.SCALAR,
         queries=[
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="metrics",
                 aggregations=[build_metrics_aggregation(LABEL_METRIC, "latest", "sum", "unspecified", reduce_to="last")],
@@ -69,7 +69,7 @@ def test_metric_label_group_by_merges_stored_spellings(
         end_ms=int(metric_family_fleet.timestamp() * 1000),
         request_type=RequestType.SCALAR,
         queries=[
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="metrics",
                 aggregations=[build_metrics_aggregation(LABEL_METRIC, "latest", "sum", "unspecified", reduce_to="last")],
@@ -113,7 +113,7 @@ def test_span_metric_label_filter_reads_resource_layout(
         end_ms=int(metric_family_fleet.timestamp() * 1000),
         request_type=RequestType.SCALAR,
         queries=[
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="metrics",
                 aggregations=[build_metrics_aggregation(SPAN_METRIC, "latest", "sum", "unspecified", reduce_to="last")],
@@ -142,7 +142,7 @@ def test_metric_name_family_unions_storage_names(
         end_ms=int(metric_family_fleet.timestamp() * 1000),
         request_type=RequestType.SCALAR,
         queries=[
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="metrics",
                 aggregations=[build_metrics_aggregation(requested, "latest", "sum", "unspecified", reduce_to="last")],
@@ -177,7 +177,7 @@ def test_metric_name_union_double_counts_dual_emission(
         end_ms=int(now.timestamp() * 1000),
         request_type=RequestType.SCALAR,
         queries=[
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="metrics",
                 aggregations=[build_metrics_aggregation(CURRENT_NAME_METRIC, "latest", "sum", "unspecified", reduce_to="last")],
@@ -203,7 +203,7 @@ def test_metric_family_stays_literal_with_flag_off(
         end_ms=int(metric_family_fleet.timestamp() * 1000),
         request_type=RequestType.SCALAR,
         queries=[
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="metrics",
                 aggregations=[build_metrics_aggregation(LABEL_METRIC, "latest", "sum", "unspecified", reduce_to="last")],
@@ -223,7 +223,7 @@ def test_metric_family_stays_literal_with_flag_off(
         end_ms=int(metric_family_fleet.timestamp() * 1000),
         request_type=RequestType.SCALAR,
         queries=[
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="metrics",
                 aggregations=[build_metrics_aggregation(OLD_NAME_METRIC, "latest", "sum", "unspecified", reduce_to="last")],

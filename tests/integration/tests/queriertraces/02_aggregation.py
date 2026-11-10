@@ -18,7 +18,7 @@ from fixtures.querier import (
     build_aggregation,
     build_group_by_field,
     build_order_by,
-    build_traces_scalar_query,
+    build_traces_aggregation_query,
     get_all_series,
     get_scalar_table_data,
     index_series_by_label,
@@ -208,7 +208,7 @@ def test_traces_aggregate_functions(
         build_aggregation("rate_sum(duration_nano)", "rate_sum_d"),
         build_aggregation("avg(latency_ms)", "avg_lat"),
     ]
-    query = build_traces_scalar_query(
+    query = build_traces_aggregation_query(
         aggregations=aggregations,
         group_by=[build_group_by_field("service.name", "string", "resource")],
         order=[build_order_by("count()", "desc")],
@@ -284,7 +284,7 @@ def test_traces_aggregate_calculated_range_countif(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_traces_scalar_query(
+    query = build_traces_aggregation_query(
         aggregations=[build_aggregation("countIf(response_status_code >= 400 AND response_status_code < 500)")],
     )
     response = make_scalar_query_request(signoz, token, now, [query])
@@ -342,7 +342,7 @@ def test_traces_aggregate_having(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_traces_scalar_query(
+    query = build_traces_aggregation_query(
         aggregations=[build_aggregation("count()")],
         group_by=[build_group_by_field("service.name", "string", "resource")],
         order=[build_order_by("count()", "desc")],
@@ -418,7 +418,7 @@ def test_traces_aggregate_time_series_limit(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_traces_scalar_query(
+    query = build_traces_aggregation_query(
         aggregations=[build_aggregation("count()")],
         group_by=[build_group_by_field("service.name", "string", "resource")],
         order=[build_order_by("count()", direction)],
@@ -495,7 +495,7 @@ def test_traces_aggregate_unknown_key(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_traces_scalar_query(aggregations=[build_aggregation(expression)])
+    query = build_traces_aggregation_query(aggregations=[build_aggregation(expression)])
     response = make_scalar_query_request(signoz, token, now, [query])
 
     assert response.status_code == HTTPStatus.OK, response.text

@@ -8,9 +8,9 @@ from fixtures.logs import Logs
 from fixtures.querier import (
     assert_scalar_result_order,
     build_aggregation,
+    build_aggregation_query,
     build_group_by_field,
     build_order_by,
-    build_scalar_query,
     get_scalar_table_data,
     make_scalar_query_request,
 )
@@ -41,7 +41,7 @@ def test_logs_scalar_group_by_having(
     insert_logs(logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_scalar_query(
+    query = build_aggregation_query(
         name="A",
         signal="logs",
         aggregations=[build_aggregation("count()")],

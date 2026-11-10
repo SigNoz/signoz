@@ -195,6 +195,7 @@ def test_metrics_negative_operators_include_keyless_series(
                 filter_expression=expression,
             )
         ],
+        request_type=RequestType.TIME_SERIES,
     )
     assert response.status_code == HTTPStatus.OK, response.text
 

@@ -8,6 +8,7 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import ExpHistogramMetrics
 from fixtures.querier import (
+    RequestType,
     build_builder_query,
     get_all_series,
     get_all_warnings,
@@ -74,7 +75,7 @@ def test_exp_histogram_percentile_delta_grouped(
         group_by=["service.name"],
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK, response.text
 
     data = response.json()
@@ -123,7 +124,7 @@ def test_exp_histogram_percentile_delta_merges_across_series(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     query = build_builder_query("A", metric_name, "", "p95", temporality="delta")
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK, response.text
 
     data = response.json()
@@ -164,7 +165,7 @@ def test_exp_histogram_percentile_cumulative_is_rejected(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     query = build_builder_query("A", metric_name, "", "p95", temporality="cumulative")
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
 
     # the request is well formed; it is the stored metric that cannot be read, so
     # this is reported as unsupported rather than as bad input

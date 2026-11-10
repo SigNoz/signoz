@@ -7,7 +7,7 @@ import pytest
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
-from fixtures.querier import build_builder_query, get_series_values, make_query_request
+from fixtures.querier import RequestType, build_builder_query, get_series_values, make_query_request
 
 
 # A delta, non-monotonic Sum queried without an explicit type must be treated as
@@ -53,7 +53,7 @@ def test_delta_nonmonotonic_sum_is_treated_as_sum(
     # No type and no temporality: the server resolves both from the seeded series.
     query = build_builder_query("A", metric_name, time_aggregation, "sum")
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK, response.text
 
     values = get_series_values(response.json(), "A")
