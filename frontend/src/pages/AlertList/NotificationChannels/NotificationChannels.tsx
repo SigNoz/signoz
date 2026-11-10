@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Search } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
 import { Input } from '@signozhq/ui/input';
 import { Select } from '@signozhq/ui/select';
+import { Skeleton } from '@signozhq/ui/skeleton';
 import { Typography } from '@signozhq/ui/typography';
-import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
@@ -187,7 +188,13 @@ function NotificationChannels(): JSX.Element {
 								? `All ${CHANNEL_KIND_LABEL[filteredKind]} channels`
 								: 'All notification channels'}
 						</Typography>
-						<span className={styles.countPill}>{total}</span>
+						{isFetching ? (
+							<Skeleton.Input size="sm" width={32} />
+						) : (
+							<Badge variant="solid" color="secondary">
+								{total}
+							</Badge>
+						)}
 					</div>
 					<div className={styles.grow} />
 					{!isEmpty && (

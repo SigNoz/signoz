@@ -1,7 +1,9 @@
 import { ChangeEvent, useCallback, useMemo } from 'react';
 import { Plus, Search } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { Skeleton } from '@signozhq/ui/skeleton';
 import { Typography } from '@signozhq/ui/typography';
 import { ColumnSelector } from 'components/TanStackTableView';
 import TextToolTip from 'components/TextToolTip';
@@ -112,7 +114,13 @@ function RoutingPolicies(): JSX.Element {
 						>
 							All routing policies
 						</Typography>
-						<span className={styles.countPill}>{routingPoliciesData.length}</span>
+						{isFetching ? (
+							<Skeleton.Input size="sm" width={32} />
+						) : (
+							<Badge variant="solid" color="secondary">
+								{routingPoliciesData.length}
+							</Badge>
+						)}
 					</div>
 					<div className={styles.grow} />
 					{!isEmpty && (

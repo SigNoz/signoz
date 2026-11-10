@@ -8,8 +8,10 @@ import React, {
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { navigate } from 'lib/router/navigation';
 import { Plus, Search } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { Skeleton } from '@signozhq/ui/skeleton';
 import { Typography } from '@signozhq/ui/typography';
 import { Form } from 'antd';
 import {
@@ -223,12 +225,17 @@ export function PlannedDowntime(): JSX.Element {
 							weight="medium"
 							color="main"
 							as="h1"
-							marginY={4}
 							textOverflow="ellipsis"
 						>
 							All planned downtimes
 						</Typography>
-						<span className={styles.countPill}>{totalDowntimes}</span>
+						{isFetching ? (
+							<Skeleton.Input size="sm" width={32} />
+						) : (
+							<Badge variant="solid" color="secondary">
+								{totalDowntimes}
+							</Badge>
+						)}
 					</div>
 					<div className={styles.grow} />
 					{!isEmpty && (

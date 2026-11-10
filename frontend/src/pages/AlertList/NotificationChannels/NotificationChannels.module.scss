@@ -25,6 +25,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-4);
+	min-height: 34px;
 }
 
 .headingBlock {
@@ -44,16 +45,6 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
-
-.countPill {
-	padding: 2px 9px;
-	border-radius: 999px;
-	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
-	color: var(--l2-foreground);
-	font-size: var(--label-small-400-font-size);
-	font-variant-numeric: tabular-nums;
 }
 
 .grow {
