@@ -64,7 +64,11 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 						title={option.title}
 						extra={
 							option.isBeta ? (
-								<Badge variant="solid" color="primary">
+								<Badge
+									variant="solid"
+									color="primary"
+									testId={`alert-type-beta-${option.selection}`}
+								>
 									Beta
 								</Badge>
 							) : undefined
@@ -75,15 +79,18 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 						data-testid={`alert-type-card-${option.selection}`}
 					>
 						{option.description}{' '}
-						<Typography.Link
-							onClick={(e): void => {
-								e.preventDefault();
-								e.stopPropagation();
-								handleRedirection(option.selection);
-							}}
-						>
-							Click here to see how to create a sample alert.
-						</Typography.Link>{' '}
+						{!option.hideSampleAlertLink && (
+							<Typography.Link
+								onClick={(e): void => {
+									e.preventDefault();
+									e.stopPropagation();
+									handleRedirection(option.selection);
+								}}
+								data-testid={`alert-type-sample-link-${option.selection}`}
+							>
+								Click here to see how to create a sample alert.
+							</Typography.Link>
+						)}{' '}
 					</AlertTypeCard>
 				))}
 			</>
