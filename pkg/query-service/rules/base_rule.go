@@ -647,9 +647,14 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 //
 // Returns a pointer to the missing data alert if conditions are met, nil otherwise.
 func (r *BaseRule) HandleMissingDataAlert(ctx context.Context, ts time.Time, hasData bool) *ruletypes.Sample {
-	// Track the last timestamp with data points for missing data alerts
+	// Track the last timestamp with data points for missing data alerts.
+	// When the query returns data there is nothing absent, so never raise a
+	// missing-data alert. Returning here also avoids a zero AbsentFor turning
+	// the grace-period check below into ts.Before(ts), which is always false
+	// and would otherwise emit a missing-data sample even though hasData is true.
 	if hasData {
 		r.lastTimestampWithDatapoints = ts
+		return nil
 	}
 
 	if !r.ruleCondition.AlertOnAbsent || ts.Before(r.lastTimestampWithDatapoints.Add(time.Duration(r.ruleCondition.AbsentFor)*time.Minute)) {
