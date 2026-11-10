@@ -10,6 +10,11 @@ import {
 import { OPERATORS } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { cloneDeep, isArray } from 'lodash-es';
+import {
+	getBuilderAt,
+	getBuilderSlotKey,
+	withBuilderAt,
+} from 'lib/query/builderSlot';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
@@ -157,8 +162,9 @@ export function applyCheckboxToggle({
 	previousState?: CheckedState;
 	sectionType?: SectionType;
 }): Query {
-	const activeItems =
-		currentQuery.builder.queryData?.[activeQueryIndex]?.filters?.items;
+	const slot = getBuilderSlotKey(currentQuery.queryType);
+	const builder = getBuilderAt(currentQuery, slot);
+	const activeItems = builder.queryData?.[activeQueryIndex]?.filters?.items;
 
 	const isSomeFilterPresentForCurrentAttribute = !!activeItems?.some((item) =>
 		isKeyMatch(item.key?.key, filter.attributeKey.key),
@@ -173,7 +179,7 @@ export function applyCheckboxToggle({
 	const isMultipleValuesTrueForTheKey =
 		Object.values(currentFilterState).filter((val) => val).length > 1;
 
-	const query = cloneDeep(currentQuery.builder.queryData?.[activeQueryIndex]);
+	const query = cloneDeep(builder.queryData?.[activeQueryIndex]);
 
 	// if only or all are clicked we do not need to worry about anything just override whatever we have
 	// by either adding a new IN operator value clause in case of ONLY or remove everything we have for ALL.
@@ -430,18 +436,15 @@ export function applyCheckboxToggle({
 		query.filters = synced.filters;
 	}
 
-	return {
-		...currentQuery,
-		builder: {
-			...currentQuery.builder,
-			queryData: [
-				...currentQuery.builder.queryData.map((q, idx) => {
-					if (idx === activeQueryIndex) {
-						return query;
-					}
-					return q;
-				}),
-			],
-		},
-	};
+	return withBuilderAt(currentQuery, slot, {
+		...builder,
+		queryData: [
+			...builder.queryData.map((q, idx) => {
+				if (idx === activeQueryIndex) {
+					return query;
+				}
+				return q;
+			}),
+		],
+	});
 }

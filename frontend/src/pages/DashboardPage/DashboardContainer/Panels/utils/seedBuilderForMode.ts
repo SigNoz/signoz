@@ -4,6 +4,7 @@ import {
 	initialQueryAIWithType,
 	type PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import {
@@ -27,11 +28,13 @@ export function seedBuilderForMode({
 	updateAllQueriesOperators,
 }: SeedBuilderForModeArgs): Query['builder'] {
 	if (mode === EQueryType.AI_QUERY_BUILDER) {
-		return updateAllQueriesOperators(
-			initialQueryAIWithType,
-			panelType,
-			DataSource.TRACES,
-		).builder;
+		return getActiveBuilder(
+			updateAllQueriesOperators(
+				initialQueryAIWithType,
+				panelType,
+				DataSource.TRACES,
+			),
+		);
 	}
 	const dataSource = (defaultSignal ??
 		TelemetrytypesSignalDTO.metrics) as unknown as DataSource;

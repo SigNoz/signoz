@@ -9,6 +9,12 @@ import {
 import { getMs } from 'utils/timeUtils';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import {
+	getActiveBuilder,
+	getBuilderAt,
+	getBuilderSlotKey,
+	withBuilderAt,
+} from 'lib/query/builderSlot';
 import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
 import {
 	AllTraceFilterKeys,
@@ -57,7 +63,8 @@ function Duration({
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const syncSelectedFilters = useMemo((): FilterType => {
 		const filters =
-			compositeQuery?.builder.queryData?.[activeQueryIndex]?.filters;
+			compositeQuery &&
+			getActiveBuilder(compositeQuery).queryData?.[activeQueryIndex]?.filters;
 		if (!filters) {
 			return {} as FilterType;
 		}
@@ -183,49 +190,51 @@ function Duration({
 	};
 
 	const removeFilterItemIds = (query: Query): Query => {
-		const clonedQuery = cloneDeep(query);
-		clonedQuery.builder.queryData = clonedQuery.builder.queryData.map((data) => ({
-			...data,
-			filters: {
-				...data.filters,
-				items:
-					data.filters?.items?.map((item) => ({
-						...item,
-						id: '',
-					})) || [],
-				op: data.filters?.op || 'AND',
-			},
-		}));
-		return clonedQuery;
+		const slot = getBuilderSlotKey(query.queryType);
+		const builder = getBuilderAt(query, slot);
+		return withBuilderAt(cloneDeep(query), slot, {
+			...builder,
+			queryData: builder.queryData.map((data) => ({
+				...data,
+				filters: {
+					...data.filters,
+					items:
+						data.filters?.items?.map((item) => ({
+							...item,
+							id: '',
+						})) || [],
+					op: data.filters?.op || 'AND',
+				},
+			})),
+		});
 	};
 
 	const handleRun = useCallback(
 		(props?: HandleRunProps): void => {
-			const preparedQuery: Query = {
-				...currentQuery,
-				builder: {
-					...currentQuery.builder,
-					queryData: currentQuery.builder.queryData.map((item, idx) => {
-						if (idx !== activeQueryIndex) {
-							return item;
-						}
-						return {
-							...item,
-							filters: {
-								...item.filters,
-								items: props?.resetAll
-									? []
-									: (unionTagFilterItems(item.filters?.items || [], preparePostData())
-											.map((item) =>
-												item.key?.key === props?.clearByType ? undefined : item,
-											)
-											.filter((i) => i) as TagFilterItem[]),
-								op: item.filters?.op || 'AND',
-							},
-						};
-					}),
-				},
-			};
+			const slot = getBuilderSlotKey(currentQuery.queryType);
+			const builder = getBuilderAt(currentQuery, slot);
+			const preparedQuery: Query = withBuilderAt(currentQuery, slot, {
+				...builder,
+				queryData: builder.queryData.map((item, idx) => {
+					if (idx !== activeQueryIndex) {
+						return item;
+					}
+					return {
+						...item,
+						filters: {
+							...item.filters,
+							items: props?.resetAll
+								? []
+								: (unionTagFilterItems(item.filters?.items || [], preparePostData())
+										.map((item) =>
+											item.key?.key === props?.clearByType ? undefined : item,
+										)
+										.filter((i) => i) as TagFilterItem[]),
+							op: item.filters?.op || 'AND',
+						},
+					};
+				}),
+			});
 
 			const currentQueryWithoutIds = removeFilterItemIds(currentQuery);
 			const preparedQueryWithoutIds = removeFilterItemIds(preparedQuery);

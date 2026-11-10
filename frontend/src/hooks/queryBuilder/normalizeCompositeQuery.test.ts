@@ -9,6 +9,7 @@ import {
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -40,8 +41,9 @@ function firstBuilderQuery(
 	queryData: unknown[],
 	pathname: string,
 ): IBuilderQuery {
-	return normalizeCompositeQuery(withBuilderQueries(query, queryData), pathname)
-		.query.builder.queryData[0];
+	return getActiveBuilder(
+		normalizeCompositeQuery(withBuilderQueries(query, queryData), pathname).query,
+	).queryData[0];
 }
 
 function without(builderQuery: object, key: keyof IBuilderQuery): object {
@@ -58,9 +60,11 @@ describe('normalizeCompositeQuery', () => {
 			queryType: EQueryType.CLICKHOUSE,
 			extra: 'kept',
 		};
-		const aiQuery = withBuilderQueries(initialQueriesMap.traces, [
-			{ ...tracesQuery, builderQueryType: EQueryType.AI_QUERY_BUILDER },
-		]);
+		const aiQuery: Query = {
+			...initialQueriesMap.traces,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder_ai_query: initialQueriesMap.traces.builder,
+		};
 
 		[NOT_AN_EXPLORER, ROUTES.LOGS_EXPLORER].forEach((pathname) =>
 			expect(
@@ -80,6 +84,33 @@ describe('normalizeCompositeQuery', () => {
 		expect(
 			normalizeCompositeQuery(aiQuery, ROUTES.AI_OBSERVABILITY_EXPLORER).changed,
 		).toBe(false);
+	});
+
+	it('moves the AI queries of an older link into the AI slot', () => {
+		const aiQueryData = [
+			{ ...tracesQuery, builderQueryType: EQueryType.AI_QUERY_BUILDER },
+		];
+		const { query, changed } = normalizeCompositeQuery(
+			withBuilderQueries(initialQueriesMap.traces, aiQueryData),
+			ROUTES.AI_OBSERVABILITY_EXPLORER,
+		);
+
+		expect(changed).toBe(true);
+		expect(query.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+		expect(query.builder_ai_query?.queryData).toStrictEqual([tracesQuery]);
+		expect(query.builder).toStrictEqual(initialQueryState.builder);
+	});
+
+	it('drops the AI slot outside the AI explorer', () => {
+		const { query } = normalizeCompositeQuery(
+			{
+				...initialQueriesMap.traces,
+				builder_ai_query: initialQueriesMap.traces.builder,
+			},
+			ROUTES.TRACES_EXPLORER,
+		);
+
+		expect(query.builder_ai_query).toBeUndefined();
 	});
 
 	it('adds missing blocks and a stable id without changing its inputs', () => {
@@ -239,10 +270,7 @@ describe('normalizeCompositeQuery', () => {
 		).toBe(TelemetrytypesSourceDTO.meter);
 		expect(
 			firstBuilderQuery(traces, [{ ...tracesQuery, ...llmFilter }], ai),
-		).toMatchObject({
-			builderQueryType: EQueryType.AI_QUERY_BUILDER,
-			...llmFilter,
-		});
+		).toStrictEqual({ ...tracesQuery, ...llmFilter });
 		expect(
 			firstBuilderQuery(
 				traces,
@@ -256,17 +284,13 @@ describe('normalizeCompositeQuery', () => {
 				],
 				ai,
 			),
-		).toMatchObject({
-			builderQueryType: EQueryType.AI_QUERY_BUILDER,
-			queryName: 'B',
-			filter: { expression: '' },
-		});
+		).toStrictEqual({ ...tracesQuery, queryName: 'B', ...llmFilter });
 		expect(
 			firstBuilderQuery(traces, [{ ...logsQuery, queryName: 'C' }], ai),
 		).toMatchObject({
-			builderQueryType: EQueryType.AI_QUERY_BUILDER,
 			dataSource: DataSource.TRACES,
 			queryName: 'C',
+			filter: { expression: '' },
 		});
 	});
 

@@ -34,7 +34,6 @@ import {
 	PartialPanelTypes,
 } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useNormalizedCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
-import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
@@ -231,7 +230,7 @@ export function QueryBuilderProvider({
 			const aiBuilder =
 				query.builder_ai_query ??
 				(query.queryType === EQueryType.AI_QUERY_BUILDER
-					? initialQueryAIWithType.builder
+					? initialQueryAIWithType.builder_ai_query
 					: undefined);
 
 			const promql: IPromQLQuery[] =
