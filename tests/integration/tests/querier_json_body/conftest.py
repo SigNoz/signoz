@@ -55,3 +55,34 @@ def signoz_json_body(
             "SIGNOZ_FLAGGER_CONFIG_BOOLEAN_USE__JSON__BODY": True,
         },
     )
+
+
+@pytest.fixture(name="signoz_search_scan_budget", scope="package")
+def signoz_search_scan_budget(
+    network: Network,
+    migrator: types.Operation,  # pylint: disable=unused-argument
+    zeus: types.TestContainerDocker,
+    gateway: types.TestContainerDocker,
+    sqlstore: types.TestContainerSQL,
+    clickhouse: types.TestContainerClickhouse,
+    request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
+) -> types.SigNoz:
+    """The querierlogs budget instance over body_v2: same 50000 rows, but on
+    search_max_scan_rows_json_body. search_max_scan_rows keeps its 60M default, so only the
+    body_v2 budget can trip here. Shares the default instance's sqlstore + clickhouse, so
+    the same admin token and seeded logs work against it."""
+    return create_signoz(
+        network=network,
+        zeus=zeus,
+        gateway=gateway,
+        sqlstore=sqlstore,
+        clickhouse=clickhouse,
+        request=request,
+        pytestconfig=pytestconfig,
+        cache_key="signoz-json-body-search-scan-budget-50k",
+        env_overrides={
+            "SIGNOZ_FLAGGER_CONFIG_BOOLEAN_USE__JSON__BODY": True,
+            "SIGNOZ_QUERIER_SEARCH__MAX__SCAN__ROWS__JSON__BODY": 50000,
+        },
+    )

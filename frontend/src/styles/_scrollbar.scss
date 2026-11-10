@@ -13,10 +13,10 @@
 	}
 
 	&::-webkit-scrollbar-thumb {
-		background: var(--l3-background);
+		background: var(--scrollbar-thumb, var(--l3-background));
 		border-radius: 0.5rem;
 	}
 	&::-webkit-scrollbar-thumb:hover {
-		background: var(--l3-background-hover);
+		background: var(--scrollbar-thumb-hover, var(--l3-background-hover));
 	}
 }

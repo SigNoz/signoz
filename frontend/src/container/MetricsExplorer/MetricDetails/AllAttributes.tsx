@@ -6,7 +6,7 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricAttributes } from 'api/generated/services/metrics';
 import { ResizeTable } from 'components/ResizeTable';
-import { DataType } from 'container/LogDetailedView/TableView';
+import { DataType } from 'container/LogDetailedView/LogDetailedView.types';
 import {
 	Check,
 	Copy,
@@ -33,6 +33,7 @@ function AllAttributes({
 	metricName,
 	metricType,
 	isMonotonic,
+	temporality,
 	minTime,
 	maxTime,
 }: AllAttributesProps): JSX.Element {
@@ -71,13 +72,12 @@ function AllAttributes({
 				groupBy,
 				limit,
 				isMonotonic,
+				temporality,
 			);
 			handleExplorerTabChange(
 				PANEL_TYPES.TIME_SERIES,
 				{
 					query: compositeQuery,
-					name: metricName,
-					id: metricName,
 				},
 				ROUTES.METRICS_EXPLORER_EXPLORER,
 				true,
@@ -89,7 +89,7 @@ function AllAttributes({
 				[MetricsExplorerEventKeys.AttributeKey]: groupBy,
 			});
 		},
-		[metricName, metricType, isMonotonic, handleExplorerTabChange],
+		[metricName, metricType, isMonotonic, temporality, handleExplorerTabChange],
 	);
 
 	const goToMetricsExploreWithAppliedAttribute = useCallback(
@@ -101,13 +101,12 @@ function AllAttributes({
 				undefined,
 				undefined,
 				isMonotonic,
+				temporality,
 			);
 			handleExplorerTabChange(
 				PANEL_TYPES.TIME_SERIES,
 				{
 					query: compositeQuery,
-					name: metricName,
-					id: metricName,
 				},
 				ROUTES.METRICS_EXPLORER_EXPLORER,
 				true,
@@ -120,7 +119,7 @@ function AllAttributes({
 				[MetricsExplorerEventKeys.AttributeValue]: value,
 			});
 		},
-		[metricName, metricType, isMonotonic, handleExplorerTabChange],
+		[metricName, metricType, isMonotonic, temporality, handleExplorerTabChange],
 	);
 
 	const handleKeyMenuItemClick = useCallback(
@@ -219,7 +218,7 @@ function AllAttributes({
 									}
 								}}
 							>
-								<Button type="text">
+								<Button type="text" data-testid={`attribute-key-${field.label}`}>
 									<Typography.Text>{field.label}</Typography.Text>
 								</Button>
 							</Popover>
@@ -274,6 +273,7 @@ function AllAttributes({
 							</Tooltip>
 						</div>
 						<Input
+							data-testid="all-attributes-search"
 							className="all-attributes-search-input"
 							placeholder="Search"
 							value={searchString}
@@ -292,6 +292,7 @@ function AllAttributes({
 				key: 'all-attributes',
 				children: (
 					<ResizeTable
+						data-testid="all-attributes-table"
 						columns={columns}
 						loading={isLoadingAttributes}
 						tableLayout="fixed"

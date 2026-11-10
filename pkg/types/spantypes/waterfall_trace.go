@@ -10,7 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 )
 
-type TraceSummary struct {
+type TraceBounds struct {
 	TraceID  string    `ch:"trace_id"`
 	Start    time.Time `ch:"start"`
 	End      time.Time `ch:"end"`
@@ -40,6 +40,8 @@ type GettableWaterfallTrace struct {
 	HasMissingSpans       bool             `json:"hasMissingSpans"`
 	UncollapsedSpans      []string         `json:"uncollapsedSpans"`
 	HasMore               bool             `json:"hasMore"`
+	// FormattedSpans counts the spans in Spans carrying formatted gen_ai messages.
+	FormattedSpans int `json:"-"`
 }
 
 // NewWaterfallTrace constructs a WaterfallTrace from processed span data.
@@ -226,8 +228,12 @@ func NewGettableWaterfallTrace(
 	}
 
 	// convert start timestamp to millis because client is expecting it in millis
+	formattedSpans := 0
 	for _, span := range selectedSpans {
 		span.TimeUnix = span.TimeUnix / 1_000_000
+		if len(span.FormattedInput) > 0 || len(span.FormattedOutput) > 0 {
+			formattedSpans++
+		}
 	}
 
 	return &GettableWaterfallTrace{
@@ -241,6 +247,7 @@ func NewGettableWaterfallTrace(
 		RootServiceEntryPoint: rootServiceEntryPoint,
 		HasMissingSpans:       traceData.HasMissingSpans,
 		HasMore:               !selectAllSpans,
+		FormattedSpans:        formattedSpans,
 	}
 }
 

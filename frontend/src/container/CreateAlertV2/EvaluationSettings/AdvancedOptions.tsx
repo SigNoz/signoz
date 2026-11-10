@@ -34,6 +34,7 @@ function AdvancedOptions(): JSX.Element {
 										})
 									}
 									value={advancedOptions.sendNotificationIfDataIsMissing.toleranceLimit}
+									testId="send-notification-if-data-is-missing-input"
 								/>
 								<Typography.Text>Minutes</Typography.Text>
 							</div>
@@ -66,6 +67,7 @@ function AdvancedOptions(): JSX.Element {
 										})
 									}
 									value={advancedOptions.enforceMinimumDatapoints.minimumDatapoints}
+									testId="enforce-minimum-datapoints-input"
 								/>
 								<Typography.Text>Datapoints</Typography.Text>
 							</div>

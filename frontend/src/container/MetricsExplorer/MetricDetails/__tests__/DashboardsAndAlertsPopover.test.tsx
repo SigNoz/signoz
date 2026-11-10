@@ -23,7 +23,7 @@ const useGetMetricAlertsMock = jest.spyOn(
 );
 const useGetMetricDashboardsMock = jest.spyOn(
 	metricsExplorerHooks,
-	'useGetMetricDashboards',
+	'useGetMetricDashboardsV2',
 );
 
 describe('DashboardsAndAlertsPopover', () => {
@@ -98,7 +98,9 @@ describe('DashboardsAndAlertsPopover', () => {
 		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
 
 		await userEvent.click(screen.getByText(`1 dashboard`));
-		expect(screen.getByText(MOCK_DASHBOARD_1.dashboardId)).toBeInTheDocument();
+		await expect(
+			screen.findByText(MOCK_DASHBOARD_1.dashboardId),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('renders popover with alert id if name is not available', async () => {
@@ -113,7 +115,9 @@ describe('DashboardsAndAlertsPopover', () => {
 		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
 
 		await userEvent.click(screen.getByText(`1 alert rule`));
-		expect(screen.getByText(MOCK_ALERT_1.alertId)).toBeInTheDocument();
+		await expect(
+			screen.findByText(MOCK_ALERT_1.alertId),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('navigates to the dashboard when the dashboard is clicked', async () => {
@@ -122,7 +126,9 @@ describe('DashboardsAndAlertsPopover', () => {
 		// Click on 2 dashboards button
 		await userEvent.click(screen.getByText(`2 dashboards`));
 		// Popover showing list of 2 dashboards should be visible
-		expect(screen.getByText(MOCK_DASHBOARD_1.dashboardName)).toBeInTheDocument();
+		await expect(
+			screen.findByText(MOCK_DASHBOARD_1.dashboardName),
+		).resolves.toBeInTheDocument();
 		expect(screen.getByText(MOCK_DASHBOARD_2.dashboardName)).toBeInTheDocument();
 
 		// Click on the first dashboard
@@ -141,7 +147,9 @@ describe('DashboardsAndAlertsPopover', () => {
 		// Click on 2 alert rules button
 		await userEvent.click(screen.getByText(`2 alert rules`));
 		// Popover showing list of 2 alert rules should be visible
-		expect(screen.getByText(MOCK_ALERT_1.alertName)).toBeInTheDocument();
+		await expect(
+			screen.findByText(MOCK_ALERT_1.alertName),
+		).resolves.toBeInTheDocument();
 		expect(screen.getByText(MOCK_ALERT_2.alertName)).toBeInTheDocument();
 
 		// Click on the first alert rule
@@ -153,11 +161,15 @@ describe('DashboardsAndAlertsPopover', () => {
 		);
 	});
 
-	it('renders unique dashboards even when there are duplicates', async () => {
+	it('collapses multiple panels of the same dashboard into one entry', async () => {
 		useGetMetricDashboardsMock.mockReturnValue(
 			getMockDashboardsData({
 				data: {
-					dashboards: [MOCK_DASHBOARD_1, MOCK_DASHBOARD_2, MOCK_DASHBOARD_1],
+					dashboards: [
+						MOCK_DASHBOARD_1,
+						MOCK_DASHBOARD_2,
+						{ ...MOCK_DASHBOARD_1, panelId: '3', panelName: 'Panel 3' },
+					],
 				},
 			}),
 		);
@@ -167,7 +179,9 @@ describe('DashboardsAndAlertsPopover', () => {
 		expect(screen.getByText('2 dashboards')).toBeInTheDocument();
 
 		await userEvent.click(screen.getByText('2 dashboards'));
-		expect(screen.getByText(MOCK_DASHBOARD_1.dashboardName)).toBeInTheDocument();
+		await expect(
+			screen.findByText(MOCK_DASHBOARD_1.dashboardName),
+		).resolves.toBeInTheDocument();
 		expect(screen.getByText(MOCK_DASHBOARD_2.dashboardName)).toBeInTheDocument();
 	});
 });

@@ -109,9 +109,6 @@ def keeper(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerDocker:
-    """
-    Package-scoped fixture for ClickHouse Keeper TestContainer.
-    """
     return create_clickhouse_keeper(
         tmpfs=tmpfs,
         network=network,

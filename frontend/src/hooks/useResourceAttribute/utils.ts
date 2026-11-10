@@ -12,12 +12,13 @@ import {
 	IOption,
 	IResourceAttribute,
 	IResourceAttributeProps,
+	OperatorValues,
+	Tags,
 } from 'hooks/useResourceAttribute/types';
 import { decode } from 'js-base64';
-import history from 'lib/history';
+import { getCurrentLocation } from 'lib/router/navigation';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { OperatorValues, Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
 
 import { whilelistedKeys } from './config';
@@ -144,19 +145,11 @@ export const OperatorSchema: IOption[] = OperatorConversions.map(
 	}),
 );
 
-export const getResourceDeploymentKeys = (
-	dotMetricsEnabled: boolean,
-): string => {
-	if (dotMetricsEnabled) {
-		return 'resource_deployment.environment';
-	}
-	return 'resource_deployment_environment';
-};
+export const getResourceDeploymentKeys = (): string =>
+	'resource_deployment.environment';
 
-export const GetTagKeys = async (
-	dotMetricsEnabled: boolean,
-): Promise<IOption[]> => {
-	const resourceDeploymentKey = getResourceDeploymentKeys(dotMetricsEnabled);
+export const GetTagKeys = async (): Promise<IOption[]> => {
+	const resourceDeploymentKey = getResourceDeploymentKeys();
 	const { payload } = await getResourceAttributesTagKeys({
 		metricName: 'signoz_calls_total',
 		match: 'resource_',
@@ -176,12 +169,10 @@ export const GetTagKeys = async (
 		}));
 };
 
-export const getEnvironmentTagKeys = async (
-	dotMetricsEnabled: boolean,
-): Promise<IOption[]> => {
+export const getEnvironmentTagKeys = async (): Promise<IOption[]> => {
 	const { payload } = await getResourceAttributesTagKeys({
 		metricName: 'signoz_calls_total',
-		match: getResourceDeploymentKeys(dotMetricsEnabled),
+		match: getResourceDeploymentKeys(),
 	});
 	if (!payload || !payload?.data) {
 		return [];
@@ -194,11 +185,9 @@ export const getEnvironmentTagKeys = async (
 	}));
 };
 
-export const getEnvironmentTagValues = async (
-	dotMetricsEnabled: boolean,
-): Promise<IOption[]> => {
+export const getEnvironmentTagValues = async (): Promise<IOption[]> => {
 	const { payload } = await getResourceAttributesTagValues({
-		tagKey: getResourceDeploymentKeys(dotMetricsEnabled),
+		tagKey: getResourceDeploymentKeys(),
 		metricName: 'signoz_calls_total',
 	});
 
@@ -264,7 +253,7 @@ export const updateQuery = (
 
 export function getResourceAttributeQueriesFromURL(): IResourceAttribute[] {
 	const resourceAttributeQuery = new URLSearchParams(
-		history.location.search,
+		getCurrentLocation().search,
 	).get('resourceAttribute');
 
 	try {
@@ -293,3 +282,8 @@ export const mappingWithRoutesAndKeys = (
 	}
 	return filters;
 };
+
+export const filterServiceMapSupportedQueries = (
+	queries: IResourceAttribute[],
+): IResourceAttribute[] =>
+	queries.filter((query) => whilelistedKeys.includes(query.tagKey));

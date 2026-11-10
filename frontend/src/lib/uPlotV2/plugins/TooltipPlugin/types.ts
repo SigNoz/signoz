@@ -67,6 +67,7 @@ export interface TooltipPluginProps {
 	pinnedTooltipElement?: (clickData: ChartClickData) => ReactNode;
 	maxWidth?: number;
 	maxHeight?: number;
+	portalRoot?: HTMLElement | null;
 }
 
 export interface ChartClickData {

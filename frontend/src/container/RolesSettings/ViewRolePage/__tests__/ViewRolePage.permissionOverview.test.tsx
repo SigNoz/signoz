@@ -18,8 +18,9 @@ import {
 } from './testUtils';
 
 async function waitForPageReady(): Promise<void> {
+	// Wait for content to render (after authz check passes)
 	await expect(
-		screen.findByTestId('view-role-page'),
+		screen.findByTestId('permission-view-mode'),
 	).resolves.toBeInTheDocument();
 }
 
@@ -715,7 +716,7 @@ describe('ViewRolePage - JSON Viewer Copy Button', () => {
 		await user.click(jsonToggle);
 
 		const copyButton = screen.getByTestId('read-only-json-viewer-copy-button');
-		expect(copyButton).not.toBeDisabled();
+		expect(copyButton).not.toHaveAttribute('aria-disabled', 'true');
 		await user.click(copyButton);
 	});
 });

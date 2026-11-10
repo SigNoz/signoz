@@ -1,5 +1,3 @@
-"""Integration tests for v2 infra-monitoring statefulsets endpoint."""
-
 import json
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -10,6 +8,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
+from fixtures.inframonitoring import expected_status_counts
 from fixtures.metrics import Metrics
 from fixtures.querier import compare_values, get_all_warnings
 
@@ -327,6 +326,77 @@ def test_statefulsets_base_filter_drops_non_statefulset_pods(
     assert rec["statefulSetName"] == "ns-ss"
     # No empty-name group leaking through.
     assert all(r["statefulSetName"] != "" for r in data["records"])
+
+    # filterByPodStatus: ns-ss (ns-ss-p1 Running + ns-ss-p1-clbo CrashLoopBackOff)
+    # is kept when >=1 pod matches; counts reflect only the filtered status; an
+    # absent status yields an empty page. Metric aggregation stays undistorted.
+    unfiltered_cpu = rec["statefulSetCPU"]
+
+    running = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["running"]},
+        },
+        timeout=5,
+    )
+    assert running.status_code == HTTPStatus.OK, running.text
+    rdata = running.json()["data"]
+    assert rdata["total"] == 1
+    rrec = rdata["records"][0]
+    assert rrec["statefulSetName"] == "ns-ss"
+    assert rrec["podCountsByStatus"] == expected_status_counts(running=1)
+    assert compare_values(rrec["statefulSetCPU"], unfiltered_cpu, 1e-6), "filterByPodStatus distorted statefulSetCPU"
+
+    clbo = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["CrashLoopBackOff"]},
+        },
+        timeout=5,
+    )
+    assert clbo.status_code == HTTPStatus.OK, clbo.text
+    cdata = clbo.json()["data"]
+    assert cdata["total"] == 1
+    assert cdata["records"][0]["podCountsByStatus"] == expected_status_counts(crashLoopBackOff=1)
+
+    # Multi-select is OR: both requested buckets populated (union), others zeroed.
+    multi = requests.post(
+        signoz.self.host_configs["8080"].get(ENDPOINT),
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(now.timestamp() * 1000),
+            "limit": 50,
+            "filter": {"filterByPodStatus": ["running", "CrashLoopBackOff"]},
+        },
+        timeout=5,
+    )
+    assert multi.status_code == HTTPStatus.OK, multi.text
+    assert multi.json()["data"]["records"][0]["podCountsByStatus"] == expected_status_counts(running=1, crashLoopBackOff=1)
+
+    # A set fully absent from the group -> empty page (single and multi-select).
+    for fbps in (["pending"], ["pending", "oomKilled"]):
+        absent = requests.post(
+            signoz.self.host_configs["8080"].get(ENDPOINT),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "start": int((now - timedelta(minutes=5)).timestamp() * 1000),
+                "end": int(now.timestamp() * 1000),
+                "limit": 50,
+                "filter": {"filterByPodStatus": fbps},
+            },
+            timeout=5,
+        )
+        assert absent.status_code == HTTPStatus.OK, absent.text
+        assert absent.json()["data"]["total"] == 0, f"group must be dropped by filterByPodStatus={fbps!r}"
 
 
 # Float record fields compared with tolerance; everything else compared with ==.
@@ -656,6 +726,11 @@ def test_statefulsets_orderby(  # pylint: disable=too-many-arguments,too-many-po
             },
             "is only allowed when groupBy is empty",
             id="orderby_ssname_with_groupby",
+        ),
+        pytest.param(
+            {"filter": {"filterByPodStatus": ["Bogus"]}},
+            "invalid filter by pod status",
+            id="filter_by_pod_status_invalid",
         ),
     ],
 )

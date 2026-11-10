@@ -1,47 +1,19 @@
-import { Suspense } from 'react';
-import Loadable from 'components/Loadable';
 import { TabRoutes } from 'components/RouteTab/types';
-import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
-import InfraMonitoringHosts from 'container/InfraMonitoringHosts';
-import InfraMonitoringK8s from 'container/InfraMonitoringK8s';
-import { useIsInfraMonitoringV2 } from 'hooks/useIsInfraMonitoringV2';
+import InfraMonitoringHostsV2 from 'container/InfraMonitoringHostsV2';
+import InfraMonitoringK8sV2 from 'container/InfraMonitoringK8sV2';
+import {
+	DEFAULT_K8S_CATEGORY,
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
+} from 'container/InfraMonitoringK8sV2/constants';
 import { Inbox } from '@signozhq/icons';
 
-const InfraMonitoringHostsV2 = Loadable(
-	() => import('container/InfraMonitoringHostsV2'),
-);
-
-const InfraMonitoringK8sV2 = Loadable(
-	() => import('container/InfraMonitoringK8sV2'),
-);
-
 function HostsContainer(): JSX.Element {
-	const isInfraMonitoringV2 = useIsInfraMonitoringV2();
-
-	if (isInfraMonitoringV2) {
-		return (
-			<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-				<InfraMonitoringHostsV2 />
-			</Suspense>
-		);
-	}
-
-	return <InfraMonitoringHosts />;
+	return <InfraMonitoringHostsV2 />;
 }
 
 function KubernetesContainer(): JSX.Element {
-	const isInfraMonitoringV2 = useIsInfraMonitoringV2();
-
-	if (isInfraMonitoringV2) {
-		return (
-			<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-				<InfraMonitoringK8sV2 />
-			</Suspense>
-		);
-	}
-
-	return <InfraMonitoringK8s />;
+	return <InfraMonitoringK8sV2 />;
 }
 
 export const Hosts: TabRoutes = {
@@ -62,6 +34,6 @@ export const Kubernetes: TabRoutes = {
 			<Inbox size={16} /> Kubernetes
 		</div>
 	),
-	route: ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES,
+	route: `${ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES}?${INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY}=${DEFAULT_K8S_CATEGORY}`,
 	key: ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES,
 };

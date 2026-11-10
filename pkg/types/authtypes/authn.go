@@ -16,7 +16,7 @@ var (
 )
 
 var (
-	AuthNProviderGoogleAuth    = AuthNProvider{valuer.NewString("google_auth")}
+	AuthNProviderGoogle        = AuthNProvider{valuer.NewString("google")}
 	AuthNProviderSAML          = AuthNProvider{valuer.NewString("saml")}
 	AuthNProviderEmailPassword = AuthNProvider{valuer.NewString("email_password")}
 	AuthNProviderOIDC          = AuthNProvider{valuer.NewString("oidc")}
@@ -158,7 +158,7 @@ func (typ *Identity) ToClaims() Claims {
 
 func (AuthNProvider) Enum() []any {
 	return []any{
-		AuthNProviderGoogleAuth,
+		AuthNProviderGoogle,
 		AuthNProviderSAML,
 		AuthNProviderEmailPassword,
 		AuthNProviderOIDC,

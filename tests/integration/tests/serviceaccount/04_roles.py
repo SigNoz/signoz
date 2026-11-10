@@ -44,7 +44,7 @@ def test_assign_role_to_service_account(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    """POST /{id}/roles adds a role alongside existing ones."""
+    """POST /service_account_roles adds a role alongside existing ones."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # create service account with viewer role
@@ -53,12 +53,13 @@ def test_assign_role_to_service_account(
     # assign editor role (additive — viewer stays)
     editor_role_id = find_role_by_name(signoz, token, "signoz-editor")
     assign_resp = requests.post(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
-        json={"id": editor_role_id},
+        signoz.self.host_configs["8080"].get("/api/v1/service_account_roles"),
+        json={"serviceAccountId": service_account_id, "roleId": editor_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    assert assign_resp.status_code == HTTPStatus.NO_CONTENT, assign_resp.text
+    assert assign_resp.status_code == HTTPStatus.CREATED, assign_resp.text
+    assert assign_resp.json()["data"]["id"]
 
     # verify both viewer and editor roles are present
     roles_resp = requests.get(
@@ -75,12 +76,12 @@ def test_assign_role_to_service_account(
     # assign admin role — all three should be present
     admin_role_id = find_role_by_name(signoz, token, "signoz-admin")
     assign_resp = requests.post(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
-        json={"id": admin_role_id},
+        signoz.self.host_configs["8080"].get("/api/v1/service_account_roles"),
+        json={"serviceAccountId": service_account_id, "roleId": admin_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    assert assign_resp.status_code == HTTPStatus.NO_CONTENT, assign_resp.text
+    assert assign_resp.status_code == HTTPStatus.CREATED, assign_resp.text
 
     roles_resp = requests.get(
         signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
@@ -100,7 +101,7 @@ def test_assign_role_idempotent(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    """POST same role twice succeeds (replace with same role is idempotent)."""
+    """POST same role twice returns the same assignment (idempotent)."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     service_account_id = create_service_account(signoz, token, "sa-role-idempotent", role="signoz-viewer")
 
@@ -108,12 +109,12 @@ def test_assign_role_idempotent(
 
     # assign the same role again
     resp = requests.post(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
-        json={"id": viewer_role_id},
+        signoz.self.host_configs["8080"].get("/api/v1/service_account_roles"),
+        json={"serviceAccountId": service_account_id, "roleId": viewer_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    assert resp.status_code == HTTPStatus.NO_CONTENT, resp.text
+    assert resp.status_code == HTTPStatus.CREATED, resp.text
 
     # verify only one instance of the role
     roles_resp = requests.get(
@@ -147,12 +148,12 @@ def test_assign_role_expands_access(
     # assign admin role (additive — viewer stays)
     admin_role_id = find_role_by_name(signoz, token, "signoz-admin")
     assign_resp = requests.post(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
-        json={"id": admin_role_id},
+        signoz.self.host_configs["8080"].get("/api/v1/service_account_roles"),
+        json={"serviceAccountId": service_account_id, "roleId": admin_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    assert assign_resp.status_code == HTTPStatus.NO_CONTENT, assign_resp.text
+    assert assign_resp.status_code == HTTPStatus.CREATED, assign_resp.text
 
     # SA should now have admin access
     resp = requests.get(
@@ -180,24 +181,32 @@ def test_remove_role_from_service_account(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    """DELETE /{id}/roles/{rid} revokes one role while keeping others."""
+    """DELETE /service_account_roles/{id} revokes one role while keeping others."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     service_account_id = create_service_account(signoz, token, "sa-remove-role", role="signoz-editor")
 
     # add admin role (now has editor + admin)
     admin_role_id = find_role_by_name(signoz, token, "signoz-admin")
     assign_resp = requests.post(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
-        json={"id": admin_role_id},
+        signoz.self.host_configs["8080"].get("/api/v1/service_account_roles"),
+        json={"serviceAccountId": service_account_id, "roleId": admin_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    assert assign_resp.status_code == HTTPStatus.NO_CONTENT, assign_resp.text
+    assert assign_resp.status_code == HTTPStatus.CREATED, assign_resp.text
+
+    # find the editor assignment entry id from the service account detail
+    detail_resp = requests.get(
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert detail_resp.status_code == HTTPStatus.OK, detail_resp.text
+    editor_entry_id = next(entry["id"] for entry in detail_resp.json()["data"]["serviceAccountRoles"] if entry["role"]["name"] == "signoz-editor")
 
     # remove editor role
-    editor_role_id = find_role_by_name(signoz, token, "signoz-editor")
     resp = requests.delete(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles/{editor_role_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/service_account_roles/{editor_entry_id}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -232,10 +241,18 @@ def test_remove_role_verify_access_lost(
     )
     assert resp.status_code == HTTPStatus.OK, resp.text
 
+    # find the admin assignment entry id from the service account detail
+    detail_resp = requests.get(
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert detail_resp.status_code == HTTPStatus.OK, detail_resp.text
+    admin_entry_id = next(entry["id"] for entry in detail_resp.json()["data"]["serviceAccountRoles"] if entry["role"]["name"] == "signoz-admin")
+
     # remove admin role
-    admin_role_id = find_role_by_name(signoz, token, "signoz-admin")
     del_resp = requests.delete(
-        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles/{admin_role_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/service_account_roles/{admin_entry_id}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )

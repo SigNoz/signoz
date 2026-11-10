@@ -2,17 +2,22 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 // The prefill flow only depends on the context-picker data hooks resolving to
 // empty lists (so the empty state renders) — mock them to skip real fetches.
-jest.mock('hooks/dashboard/useGetAllDashboard', () => ({
-	useGetAllDashboard: (): unknown => ({
-		data: [],
+jest.mock('api/generated/services/dashboard', () => ({
+	useListDashboardsForUserV2: (): unknown => ({
+		data: undefined,
 		isLoading: false,
 		isError: false,
 	}),
+	getListDashboardsForUserV2QueryKey: (): string[] => ['dashboards'],
 }));
 
 jest.mock('api/generated/services/rules', () => ({
-	useListRules: (): unknown => ({ data: [], isLoading: false, isError: false }),
-	getListRulesQueryKey: (): string[] => ['rules'],
+	useListRulesV3: (): unknown => ({
+		data: undefined,
+		isLoading: false,
+		isError: false,
+	}),
+	getListRulesV3QueryKey: (): string[] => ['rules'],
 }));
 
 jest.mock('hooks/useQueryService', () => ({
@@ -45,16 +50,11 @@ jest.mock('../../../hooks/useAIAssistantAnalyticsContext', () => ({
 }));
 
 // eslint-disable-next-line import/first
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 // eslint-disable-next-line import/first
 import ChatInput from '../ChatInput';
 
 function renderChatInput(): void {
-	render(
-		<TooltipProvider>
-			<ChatInput onSend={jest.fn()} />
-		</TooltipProvider>,
-	);
+	render(<ChatInput onSend={jest.fn()} />);
 }
 
 function getComposer(): HTMLTextAreaElement {

@@ -82,6 +82,7 @@ func (handler *handler) GetFieldsValues(rw http.ResponseWriter, req *http.Reques
 
 	values := &telemetrytypes.TelemetryFieldValues{
 		StringValues:  allValues.StringValues,
+		BoolValues:    allValues.BoolValues,
 		NumberValues:  allValues.NumberValues,
 		RelatedValues: relatedValues,
 	}

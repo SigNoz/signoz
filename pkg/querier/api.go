@@ -22,6 +22,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/variables"
 )
 
+type Handler interface {
+	QueryRange(rw http.ResponseWriter, req *http.Request)
+	QueryRangePreview(rw http.ResponseWriter, req *http.Request)
+	QueryRawStream(rw http.ResponseWriter, req *http.Request)
+	ReplaceVariables(rw http.ResponseWriter, req *http.Request)
+}
+
 type handler struct {
 	set       factory.ProviderSettings
 	analytics analytics.Analytics
@@ -133,7 +140,9 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 	}
 	// create the v5 request param
 	queryRangeRequest := qbtypes.QueryRangeRequest{
-		Start:       start,
+		// Coerce the window to epoch milliseconds up front (End may be 0 for the
+		// open-ended stream, which ToMilliSecs leaves untouched).
+		Start:       qbtypes.ToMilliSecs(start),
 		RequestType: qbtypes.RequestTypeRawStream,
 		CompositeQuery: qbtypes.CompositeQuery{
 			Queries: []qbtypes.QueryEnvelope{
@@ -242,7 +251,7 @@ func (handler *handler) ReplaceVariables(rw http.ResponseWriter, req *http.Reque
 	errs := []error{}
 
 	for idx, item := range queryRangeRequest.CompositeQuery.Queries {
-		if item.Type == qbtypes.QueryTypeBuilder {
+		if item.Type == qbtypes.QueryTypeBuilder || item.Type == qbtypes.QueryTypeBuilderAI {
 			switch spec := item.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
 				if spec.Filter != nil && spec.Filter.Expression != "" {

@@ -1,17 +1,16 @@
-import { Fragment, useEffect, useMemo } from 'react';
+import { Fragment, useEffect, useMemo, useRef } from 'react';
 import {
 	BarChart,
 	ChevronsLeftRight,
 	Compass,
 	DraftingCompass,
+	LayoutGrid,
 	ScrollText,
 } from '@signozhq/icons';
-import { ToggleGroupSimple } from '@signozhq/ui/toggle-group';
-import { Typography } from '@signozhq/ui/typography';
-import { Button, Tooltip } from 'antd';
-import logEvent from 'api/common/logEvent';
+import { Button } from '@signozhq/ui/button';
+import { ToggleGroup } from '@signozhq/ui/toggle-group';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -31,6 +30,7 @@ import EntityEvents from '../EntityDetailsUtils/EntityEvents';
 import EntityLogs from '../EntityDetailsUtils/EntityLogs';
 import { K8S_ENTITY_LOGS_EXPRESSION_KEY } from '../EntityDetailsUtils/EntityLogs/hooks';
 import EntityMetrics from '../EntityDetailsUtils/EntityMetrics';
+import EntityOverview from '../EntityDetailsUtils/EntityOverview/EntityOverview';
 import EntityTraces from '../EntityDetailsUtils/EntityTraces';
 import { K8S_ENTITY_TRACES_EXPRESSION_KEY } from '../EntityDetailsUtils/EntityTraces/hooks';
 import {
@@ -41,13 +41,18 @@ import {
 } from '../hooks';
 
 import { EntityCountsSection } from './components/EntityCountsSection/EntityCountsSection';
+import { EntityMetadataItem } from './components/EntityMetadataItem/EntityMetadataItem';
 import { K8sBaseDetailsContentProps } from './types';
+import { getDrawerDurationMs } from './useDrawerLifecycleStore';
+
+import styles from '../EntityDetailsUtils/entityDetails.module.scss';
+import { logInfraDrawerTabViewedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
+import { logInfraExplorerNavigatedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function K8sBaseDetailsContent<T>({
 	entity,
 	category,
-	eventCategory,
 	metadataConfig,
 	countsConfig,
 	getCountsFilterExpression,
@@ -61,12 +66,16 @@ export default function K8sBaseDetailsContent<T>({
 	customTabs,
 	logsAndTracesInitialExpression,
 	eventsInitialExpression,
+	entityAttributes,
+	entityName,
 }: K8sBaseDetailsContentProps<T>): JSX.Element {
 	const { timeRange, selectedInterval, handleTimeChange } =
 		useEntityDetailsTime();
 
 	const tabVisibility = useMemo(
 		() => ({
+			// Declared per category, since only a kubernetes resource relates to others
+			showOverview: false,
 			showMetrics: true,
 			showLogs: true,
 			showTraces: true,
@@ -80,6 +89,9 @@ export default function K8sBaseDetailsContent<T>({
 
 	const validTabs = useMemo(() => {
 		const tabs: string[] = [];
+		if (tabVisibility.showOverview) {
+			tabs.push(VIEW_TYPES.OVERVIEW);
+		}
 		if (tabVisibility.showMetrics) {
 			tabs.push(VIEW_TYPES.METRICS);
 		}
@@ -98,14 +110,43 @@ export default function K8sBaseDetailsContent<T>({
 		return tabs;
 	}, [tabVisibility, customTabs]);
 
-	useEffect(() => {
-		if (!hideDetailViewTabs && !validTabs.includes(selectedView)) {
-			const firstValid = validTabs[0] || VIEW_TYPES.METRICS;
-			void setSelectedView(firstValid);
-		}
-	}, [hideDetailViewTabs, selectedView, validTabs, setSelectedView]);
+	const defaultView = validTabs[0] || VIEW_TYPES.METRICS;
 
-	const effectiveView = hideDetailViewTabs ? VIEW_TYPES.METRICS : selectedView;
+	useEffect(() => {
+		if (
+			!hideDetailViewTabs &&
+			selectedView &&
+			!validTabs.includes(selectedView)
+		) {
+			void setSelectedView(defaultView);
+		}
+	}, [
+		hideDetailViewTabs,
+		selectedView,
+		validTabs,
+		defaultView,
+		setSelectedView,
+	]);
+
+	// An absent view param lands on the first tab the category offers
+	const effectiveView = hideDetailViewTabs
+		? VIEW_TYPES.METRICS
+		: (selectedView ?? defaultView);
+
+	// Wait until the view is a valid tab so we don't log a pending value before
+	// the validation effect above corrects an out-of-scope query param
+	const loggedDefaultTabFor = useRef<string | null>(null);
+	useEffect(() => {
+		const visitKey = `${category}:${selectedItem}`;
+		if (
+			loggedDefaultTabFor.current === visitKey ||
+			!validTabs.includes(effectiveView)
+		) {
+			return;
+		}
+		loggedDefaultTabFor.current = visitKey;
+		logInfraDrawerTabViewedEvent(category, effectiveView, true);
+	}, [validTabs, effectiveView, category, selectedItem]);
 
 	const [, setLogFiltersParam] = useInfraMonitoringLogFilters();
 	const [, setTracesFiltersParam] = useInfraMonitoringTracesFilters();
@@ -127,12 +168,7 @@ export default function K8sBaseDetailsContent<T>({
 		void setLogFiltersParam(null);
 		void setTracesFiltersParam(null);
 		void setEventsFiltersParam(null);
-		void logEvent(InfraMonitoringEvents.TabChanged, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.DetailedPage,
-			category: eventCategory,
-			view: value,
-		});
+		logInfraDrawerTabViewedEvent(category, value, false);
 	};
 
 	const handleExplorePagesRedirect = (): void => {
@@ -147,14 +183,17 @@ export default function K8sBaseDetailsContent<T>({
 			urlQuery.set(QueryParams.endTime, (timeRange.endTime * 1000).toString());
 		}
 
-		void logEvent(InfraMonitoringEvents.ExploreClicked, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.DetailedPage,
-			category: eventCategory,
-			view: selectedView,
+		logInfraExplorerNavigatedEvent({
+			entityType: category,
+			destination:
+				effectiveView === VIEW_TYPES.LOGS ? 'logs_explorer' : 'traces_explorer',
+			source: 'tab_cta_button',
+			tab: effectiveView,
+			sourceKey: null,
+			drawerDurationMsAtNavigation: getDrawerDurationMs(),
 		});
 
-		if (selectedView === VIEW_TYPES.LOGS) {
+		if (effectiveView === VIEW_TYPES.LOGS) {
 			const fullExpression = combineInitialAndUserExpression(
 				logsAndTracesInitialExpression,
 				userLogsExpression || '',
@@ -179,7 +218,7 @@ export default function K8sBaseDetailsContent<T>({
 			urlQuery.set('compositeQuery', JSON.stringify(compositeQuery));
 
 			openInNewTab(`${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`);
-		} else if (selectedView === VIEW_TYPES.TRACES) {
+		} else if (effectiveView === VIEW_TYPES.TRACES) {
 			const fullExpression = combineInitialAndUserExpression(
 				logsAndTracesInitialExpression,
 				userTracesExpression || '',
@@ -209,38 +248,20 @@ export default function K8sBaseDetailsContent<T>({
 
 	return (
 		<>
-			<div className="entity-detail-drawer__entity">
-				<div className="entity-details-grid">
-					<div className="labels-row">
-						{metadataConfig.map((config) => (
-							<Typography.Text
-								key={config.label}
-								color="muted"
-								className="entity-details-metadata-label"
-							>
-								{config.label}
-							</Typography.Text>
-						))}
-					</div>
+			<div className={styles.entityDetailsEntity}>
+				<div className={styles.entityDetailsGrid}>
+					{metadataConfig.map((config) => {
+						const value = config.getValue(entity);
 
-					<div className="values-row">
-						{metadataConfig.map((config) => {
-							const value = config.getValue(entity);
-							const displayValue = String(value);
-							return (
-								<Typography.Text
-									key={config.label}
-									className="entity-details-metadata-value"
-								>
-									{config.render ? (
-										config.render(value, entity)
-									) : (
-										<Tooltip title={displayValue}>{displayValue}</Tooltip>
-									)}
-								</Typography.Text>
-							);
-						})}
-					</div>
+						return (
+							<EntityMetadataItem
+								key={config.label}
+								label={config.label}
+								value={String(value)}
+								renderedValue={config.render?.(value, entity)}
+							/>
+						);
+					})}
 				</div>
 
 				{countsConfig &&
@@ -253,24 +274,42 @@ export default function K8sBaseDetailsContent<T>({
 							selectedItem={selectedItem}
 							filterExpression={getCountsFilterExpression(entity)}
 							closeDrawer={handleClose}
+							entityType={category}
+							activeTab={effectiveView}
 						/>
 					)}
 			</div>
 
 			{!hideDetailViewTabs && (
-				<div className="views-tabs-container">
-					<ToggleGroupSimple
+				<div className={styles.viewsTabsContainer}>
+					<ToggleGroup
+						variant="outlined"
+						color="secondary"
+						size="sm"
 						type="single"
-						className="views-tabs"
 						onChange={handleTabChange}
-						value={selectedView}
+						value={effectiveView}
+						testId="drawer-tab-bar"
 						items={[
+							...(tabVisibility.showOverview
+								? [
+										{
+											value: VIEW_TYPES.OVERVIEW,
+											label: (
+												<div className={styles.viewTitle}>
+													<LayoutGrid size={14} />
+													Overview
+												</div>
+											),
+										},
+									]
+								: []),
 							...(tabVisibility.showMetrics
 								? [
 										{
 											value: VIEW_TYPES.METRICS,
 											label: (
-												<div className="view-title">
+												<div className={styles.viewTitle}>
 													<BarChart size={14} />
 													Metrics
 												</div>
@@ -283,7 +322,7 @@ export default function K8sBaseDetailsContent<T>({
 										{
 											value: VIEW_TYPES.LOGS,
 											label: (
-												<div className="view-title">
+												<div className={styles.viewTitle}>
 													<ScrollText size={14} />
 													Logs
 												</div>
@@ -296,7 +335,7 @@ export default function K8sBaseDetailsContent<T>({
 										{
 											value: VIEW_TYPES.TRACES,
 											label: (
-												<div className="view-title">
+												<div className={styles.viewTitle}>
 													<DraftingCompass size={14} />
 													Traces
 												</div>
@@ -309,7 +348,7 @@ export default function K8sBaseDetailsContent<T>({
 										{
 											value: VIEW_TYPES.EVENTS,
 											label: (
-												<div className="view-title">
+												<div className={styles.viewTitle}>
 													<ChevronsLeftRight size={14} />
 													Events
 												</div>
@@ -320,7 +359,7 @@ export default function K8sBaseDetailsContent<T>({
 							...(customTabs?.map((tab) => ({
 								value: tab.key,
 								label: (
-									<div className="view-title">
+									<div className={styles.viewTitle}>
 										{tab.icon}
 										{tab.label}
 									</div>
@@ -329,40 +368,60 @@ export default function K8sBaseDetailsContent<T>({
 						]}
 					/>
 
-					{selectedView === VIEW_TYPES.LOGS && (
-						<Tooltip title="Go to Logs Explorer" placement="left">
+					{effectiveView === VIEW_TYPES.LOGS && (
+						<Tooltip title="Go to Logs Explorer" side="left">
 							<Button
-								icon={<Compass size={18} />}
-								className="compass-button"
+								aria-label="Action"
+								variant="ghost"
+								size="sm"
+								icon
+								color="secondary"
+								testId="open-logs-explorer"
 								onClick={handleExplorePagesRedirect}
-							/>
+							>
+								<Compass size={18} />
+							</Button>
 						</Tooltip>
 					)}
-					{selectedView === VIEW_TYPES.TRACES && (
-						<Tooltip title="Go to Traces Explorer" placement="left">
+					{effectiveView === VIEW_TYPES.TRACES && (
+						<Tooltip title="Go to Traces Explorer" side="left">
 							<Button
-								icon={<Compass size={18} />}
-								className="compass-button"
+								aria-label="Action"
+								variant="ghost"
+								size="sm"
+								icon
+								color="secondary"
+								testId="open-traces-explorer"
 								onClick={handleExplorePagesRedirect}
-							/>
+							>
+								<Compass size={18} />
+							</Button>
 						</Tooltip>
 					)}
 				</div>
 			)}
 
+			{effectiveView === VIEW_TYPES.OVERVIEW && tabVisibility.showOverview && (
+				<EntityOverview
+					category={category}
+					attributes={entityAttributes}
+					entity={entity}
+					entityName={entityName}
+					queryKeyPrefix={queryKeyPrefix}
+				/>
+			)}
 			{effectiveView === VIEW_TYPES.METRICS && (
 				<EntityMetrics<T>
 					entity={entity}
-					eventEntity={eventCategory}
 					entityWidgetInfo={entityWidgetInfo}
 					getEntityQueryPayload={getEntityQueryPayload}
 					category={category}
 					queryKey={`${queryKeyPrefix}Metrics`}
+					view={VIEW_TYPES.METRICS}
 				/>
 			)}
 			{effectiveView === VIEW_TYPES.LOGS && (
 				<EntityLogs
-					eventEntity={eventCategory}
 					queryKey={`${queryKeyPrefix}Logs`}
 					category={category}
 					initialExpression={logsAndTracesInitialExpression}
@@ -370,7 +429,6 @@ export default function K8sBaseDetailsContent<T>({
 			)}
 			{effectiveView === VIEW_TYPES.TRACES && (
 				<EntityTraces
-					eventEntity={eventCategory}
 					queryKey={`${queryKeyPrefix}Traces`}
 					category={category}
 					initialExpression={logsAndTracesInitialExpression}
@@ -378,14 +436,13 @@ export default function K8sBaseDetailsContent<T>({
 			)}
 			{effectiveView === VIEW_TYPES.EVENTS && tabVisibility.showEvents && (
 				<EntityEvents
-					eventEntity={eventCategory}
 					queryKey={`${queryKeyPrefix}Events`}
 					initialExpression={eventsInitialExpression}
 					category={category}
 				/>
 			)}
 			{customTabs?.map((tab) =>
-				selectedView === tab.key ? (
+				effectiveView === tab.key ? (
 					<Fragment key={tab.key}>
 						{tab.render({
 							entity,

@@ -271,10 +271,11 @@ function VolumeControlTab(): JSX.Element {
 									rule: MetricreductionruletypesGettableReductionRuleDTO,
 								): JSX.Element => (
 									<Button
+										size="md"
 										variant="ghost"
 										color="secondary"
 										onClick={(): void => setSelectedRule(rule)}
-										data-testid={`volume-control-manage-${rule.metricName}`}
+										testId={`volume-control-manage-${rule.metricName}`}
 									>
 										Manage
 									</Button>

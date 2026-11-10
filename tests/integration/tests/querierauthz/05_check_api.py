@@ -21,7 +21,7 @@ def test_setup(
 ) -> None:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     create_role(admin_token, keywild_role, [transaction_group("read", "telemetryresource", "logs", ["builder_query/signoz.workspace.key.id/*"])])
-    user_id = create_active_user(signoz, admin_token, email=keywild_email, role="VIEWER", password=user_password)
+    user_id = create_active_user(signoz, admin_token, email=keywild_email, role="signoz-viewer", password=user_password)
     change_user_role(signoz, admin_token, user_id, "signoz-viewer", keywild_role)
 
 

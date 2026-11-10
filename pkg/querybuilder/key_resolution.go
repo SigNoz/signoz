@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -21,52 +22,89 @@ const (
 	hasTokenFunctionDocURL       = "https://signoz.io/docs/userguide/functions-reference/#hastoken-function"
 )
 
-// ResolveKeys picks which matching field keys a filter term builds conditions for.
-// With 0 or 1 match it returns the input unchanged and no warning. When a name is
-// ambiguous it returns a warning; a resource+attribute mix defaults to the resource
-// keys (the common intent), noted in the warning.
-func ResolveKeys(field *telemetrytypes.TelemetryFieldKey, fieldKeysForName []*telemetrytypes.TelemetryFieldKey) ([]*telemetrytypes.TelemetryFieldKey, string) {
-	if len(fieldKeysForName) <= 1 {
-		return fieldKeysForName, ""
+// ResolveLogicalFields picks which logical fields a filter term builds conditions
+// for. With 0 or 1 field it returns the input unchanged and no warning. When a
+// name is ambiguous (several logical fields — a family is one field and never
+// ambiguous with itself) it returns a warning; a resource + other-context mix
+// (attribute, body, scope, …) defaults to the resource fields (the common
+// intent), noted in the warning.
+func ResolveLogicalFields(field *telemetrytypes.TelemetryFieldKey, logicalFields []*telemetrytypes.LogicalField) ([]*telemetrytypes.LogicalField, string) {
+	if len(logicalFields) <= 1 {
+		return logicalFields, ""
 	}
 
 	warning := fmt.Sprintf(
 		"Key `%s` is ambiguous, found %d different combinations of field context / data type: %v.",
 		field.Name,
-		len(fieldKeysForName),
-		fieldKeysForName,
+		len(logicalFields),
+		logicalFields,
 	)
 
-	hasResource, hasAttribute := false, false
-	for _, item := range fieldKeysForName {
-		switch item.FieldContext {
-		case telemetrytypes.FieldContextResource:
+	hasResource, hasOther := false, false
+	for _, item := range logicalFields {
+		if item.FieldContext == telemetrytypes.FieldContextResource {
 			hasResource = true
-		case telemetrytypes.FieldContextAttribute:
-			hasAttribute = true
+		} else {
+			hasOther = true
 		}
 	}
 
-	// when there is both resource and attribute context, default to resource only
-	if hasResource && hasAttribute {
-		filteredKeys := make([]*telemetrytypes.TelemetryFieldKey, 0, len(fieldKeysForName))
-		for _, item := range fieldKeysForName {
+	// with resource and any other context, default to resource only
+	if hasResource && hasOther {
+		filtered := make([]*telemetrytypes.LogicalField, 0, len(logicalFields))
+		for _, item := range logicalFields {
 			if item.FieldContext == telemetrytypes.FieldContextResource {
-				filteredKeys = append(filteredKeys, item)
+				filtered = append(filtered, item)
 			}
 		}
-		fieldKeysForName = filteredKeys
-		warning += " " + "Using `resource` context by default. To query attributes explicitly, " +
-			fmt.Sprintf("use the fully qualified name (e.g., 'attribute.%s')", field.Name)
+		logicalFields = filtered
+		warning += " " + "Using `resource` context by default. To query another context explicitly, " +
+			fmt.Sprintf("use the fully qualified name (e.g., 'attribute.%s' or 'body.%s')", field.Name, field.Name)
 	}
 
-	return fieldKeysForName, warning
+	return logicalFields, warning
 }
 
-// NewKeyNotFoundError builds the error a condition builder returns when a filter term
-// references a key it has no matching field key for.
-func NewKeyNotFoundError(name string) error {
-	return errors.NewInvalidInputf(errors.CodeInvalidInput, "key `%s` not found", name).WithUrl(KeyNotFoundDocURL)
+// ColumnDataType is the field data type a table column reads as. A storage
+// stamps it on the column key its Fallback returns. The intrinsic-column
+// step can then drop a same-named metadata key of a contradicting type. A
+// time column has no field data type and matches none.
+func ColumnDataType(column *schema.Column) telemetrytypes.FieldDataType {
+	switch column.Type.GetType() {
+	case schema.ColumnTypeEnumBool:
+		return telemetrytypes.FieldDataTypeBool
+	case schema.ColumnTypeEnumInt8, schema.ColumnTypeEnumInt16, schema.ColumnTypeEnumInt32, schema.ColumnTypeEnumInt64,
+		schema.ColumnTypeEnumUInt8, schema.ColumnTypeEnumUInt16, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt64,
+		schema.ColumnTypeEnumFloat32, schema.ColumnTypeEnumFloat64:
+		return telemetrytypes.FieldDataTypeNumber
+	case schema.ColumnTypeEnumString, schema.ColumnTypeEnumFixedString:
+		return telemetrytypes.FieldDataTypeString
+	case schema.ColumnTypeEnumLowCardinality:
+		if lc, ok := column.Type.(schema.LowCardinalityColumnType); ok && lc.ElementType.GetType() == schema.ColumnTypeEnumString {
+			return telemetrytypes.FieldDataTypeString
+		}
+	}
+	return telemetrytypes.FieldDataTypeUnspecified
+}
+
+// WrapAsLogicalFields wraps physical keys (candidate or synthesized) as
+// single-member logical fields addressed by the requested spelling.
+func WrapAsLogicalFields(requestedName string, keys []*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.LogicalField {
+	fields := make([]*telemetrytypes.LogicalField, 0, len(keys))
+	for _, key := range keys {
+		fields = append(fields, telemetrytypes.SingleLogicalField(requestedName, key))
+	}
+	return fields
+}
+
+// NewKeyNotFoundError builds the error for a key that neither metadata nor
+// the storage can serve, with the closest known names as suggestions.
+func NewKeyNotFoundError(name string, known []string) error {
+	err := errors.NewInvalidInputf(errors.CodeInvalidInput, "key `%s` not found", name).WithUrl(KeyNotFoundDocURL)
+	if len(known) == 0 {
+		return err
+	}
+	return err.WithSuggestions(errors.NewSuggestionsOnLevenshteinDistance(name, errors.NounKeys, known)...)
 }
 
 // NewKeyNotFoundWarning is the warning surfaced when a referenced key is absent from
@@ -84,15 +122,20 @@ func SynthesizeKeys(field *telemetrytypes.TelemetryFieldKey, value any) []*telem
 		fieldContext = telemetrytypes.FieldContextAttribute
 	}
 	fieldDataType := field.FieldDataType
-	// Resource values are strings; pin the type so operand coercion applies.
-	if fieldContext == telemetrytypes.FieldContextResource &&
+	// Resource and scope values are strings; pin the type so operand coercion applies.
+	if (fieldContext == telemetrytypes.FieldContextResource || fieldContext == telemetrytypes.FieldContextScope) &&
 		fieldDataType == telemetrytypes.FieldDataTypeUnspecified {
 		fieldDataType = telemetrytypes.FieldDataTypeString
 	}
 
-	// A set data type needs only one synthesized key.
+	// A set data type needs only one synthesized key. It keeps the request
+	// key's physical data (evolutions, materialization, JSON plan): a key the
+	// caller decorated reads through those even when metadata is silent.
 	if fieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-		return []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(field.Name, fieldContext, fieldDataType)}
+		key := *field
+		key.FieldContext = fieldContext
+		key.FieldDataType = fieldDataType
+		return []*telemetrytypes.TelemetryFieldKey{&key}
 	}
 
 	dataTypes := inferDataTypesFromOperand(value)
@@ -161,14 +204,16 @@ func inferDataTypesFromList(values []any) []telemetrytypes.FieldDataType {
 	return out
 }
 
-// NewFunctionUnsupportedError returns the error for a has/hasAny/hasAll/hasToken operator
-// on a builder that doesn't support it (logs body only), or nil for other operators.
+// NewFunctionUnsupportedError returns the error for a has/hasAny/hasAll/hasToken/search
+// operator on a builder that doesn't support it (logs only), or nil for other operators.
 func NewFunctionUnsupportedError(operator qbtypes.FilterOperator) error {
 	switch operator {
 	case qbtypes.FilterOperatorHasToken:
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "function `hasToken` only supports body field as first parameter").WithUrl(hasTokenFunctionDocURL)
 	case qbtypes.FilterOperatorHas, qbtypes.FilterOperatorHasAny, qbtypes.FilterOperatorHasAll:
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "function `%s` supports only body JSON search", operator.FunctionName()).WithUrl(functionBodyJSONSearchDocURL)
+	case qbtypes.FilterOperatorSearch:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "function `search` is only supported for logs")
 	default:
 		return nil
 	}

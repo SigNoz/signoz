@@ -11,6 +11,7 @@ import {
 	Mapper,
 } from 'container/LLMObservability/AttributeMapping/types';
 import { AttributeMappingEditor } from 'container/LLMObservability/AttributeMapping/hooks/useAttributeMappingEditor';
+import { useCanManageAttributeMapping } from 'container/LLMObservability/AttributeMapping/hooks/useCanManageAttributeMapping';
 import { COLUMN_COUNT } from '../constants';
 import MapperRow from '../MapperRow/MapperRow';
 import MapperRowSkeleton from '../MapperRow/MapperRowSkeleton';
@@ -39,6 +40,7 @@ function GroupMappers({
 	onEditMapper,
 }: GroupMappersProps): JSX.Element {
 	const { hydrateGroupMappers, removeMapper, toggleMapper } = editor;
+	const canManage = useCanManageAttributeMapping();
 
 	const hasServerId = group.serverId !== null;
 	const { data, isLoading, isError } = useListSpanMappers(
@@ -144,16 +146,20 @@ function GroupMappers({
 		/>
 	));
 
-	// The add-mapping row trails every non-error state (including loading/empty).
+	// The add-mapping row trails every non-error state (including loading/empty),
+	// but only for users who can manage mappings — non-admins get a read-only view.
 	let rows: JSX.Element[];
 	if (isErrorMappers) {
 		rows = [errorRow];
 	} else if (isLoadingMappers && mapperCount === 0) {
-		rows = [...skeletonRows, addMapperRow];
+		rows = [...skeletonRows];
 	} else if (mapperCount === 0) {
-		rows = [emptyRow, addMapperRow];
+		rows = [emptyRow];
 	} else {
-		rows = [...mapperRows, addMapperRow];
+		rows = [...mapperRows];
+	}
+	if (canManage && !isErrorMappers) {
+		rows.push(addMapperRow);
 	}
 
 	return (

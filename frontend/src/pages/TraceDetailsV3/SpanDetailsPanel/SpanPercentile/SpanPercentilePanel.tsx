@@ -42,7 +42,7 @@ function SpanPercentilePanel({
 		selectedTimeRange,
 		setSelectedTimeRange,
 		showResourceAttributesSelector,
-		setShowResourceAttributesSelector,
+		toggleResourceAttributesSelector,
 		resourceAttributesSearchQuery,
 		setResourceAttributesSearchQuery,
 		spanResourceAttributes,
@@ -60,6 +60,7 @@ function SpanPercentilePanel({
 		<div className={styles.root}>
 			<div className={styles.header}>
 				<Button
+					size="md"
 					variant="link"
 					color="secondary"
 					onClick={toggleOpen}
@@ -69,16 +70,15 @@ function SpanPercentilePanel({
 				</Button>
 
 				<Button
+					aria-label="Toggle resource attributes"
 					variant="link"
 					color="secondary"
-					size="icon"
-					onClick={(): void =>
-						setShowResourceAttributesSelector(!showResourceAttributesSelector)
-					}
-					prefix={
-						showResourceAttributesSelector ? <Check size={16} /> : <Plus size={16} />
-					}
-				/>
+					size="sm"
+					icon
+					onClick={toggleResourceAttributesSelector}
+				>
+					{showResourceAttributesSelector ? <Check size={16} /> : <Plus size={16} />}
+				</Button>
 			</div>
 
 			{showResourceAttributesSelector && (
@@ -106,6 +106,8 @@ function SpanPercentilePanel({
 							.map((attr) => (
 								<div className={styles.resourceSelectorItem} key={attr.key}>
 									<Checkbox
+										color="primary"
+										disabledTooltip="This attribute is always included"
 										value={attr.isSelected}
 										onChange={(checked): void => {
 											handleResourceAttributeChange(

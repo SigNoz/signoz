@@ -7,7 +7,6 @@ import {
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
-import { InfraMonitoringEvents } from 'constants/events';
 
 import { K8sEntityConfig } from '../Base/entity.config.types';
 import { K8sBaseFilters, K8sDetailsFilters } from '../Base/types';
@@ -42,7 +41,10 @@ async function fetchListData(
 	try {
 		const response = await listJobs(
 			{
-				filter: { expression: filters.filter.expression },
+				filter: {
+					expression: filters.filter.expression,
+					filterByPodStatus: filters.filter.filterByPodStatus,
+				},
 				groupBy: filters.groupBy?.map((g) => ({ name: g.name })),
 				offset: filters.offset,
 				limit: filters.limit ?? 10,
@@ -122,7 +124,6 @@ export const jobEntityConfig: K8sEntityConfig<
 > = {
 	list: {
 		entity: InfraMonitoringEntity.JOBS,
-		eventCategory: InfraMonitoringEvents.Job,
 		tableColumns: k8sJobsColumnsConfig,
 		fetchListData,
 		getRowKey: getK8sJobRowKey,
@@ -131,7 +132,7 @@ export const jobEntityConfig: K8sEntityConfig<
 	},
 	details: {
 		category: InfraMonitoringEntity.JOBS,
-		eventCategory: InfraMonitoringEvents.Job,
+		tabsConfig: { showOverview: true },
 		queryKeyPrefix: 'job',
 		getSelectedItemExpression: k8sJobGetSelectedItemExpression,
 		fetchEntityData,

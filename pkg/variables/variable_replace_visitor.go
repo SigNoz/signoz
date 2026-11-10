@@ -412,10 +412,15 @@ func (v *variableReplacementVisitor) VisitFunctionCall(ctx *grammar.FunctionCall
 }
 
 func (v *variableReplacementVisitor) VisitSearchCall(ctx *grammar.SearchCallContext) any {
-	if ctx.FunctionParamList() == nil {
+	if ctx.ValueList() == nil {
 		return "search()"
 	}
-	return "search(" + v.Visit(ctx.FunctionParamList()).(string) + ")"
+	// VisitValueList already parenthesizes the args and propagates the __all__ marker.
+	result := v.Visit(ctx.ValueList()).(string)
+	if result == specialSkipMarker {
+		return specialSkipMarker
+	}
+	return "search" + result
 }
 
 func (v *variableReplacementVisitor) VisitFunctionParamList(ctx *grammar.FunctionParamListContext) any {

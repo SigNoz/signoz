@@ -1,0 +1,32 @@
+.root {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-4);
+	padding: var(--spacing-16);
+	text-align: center;
+}
+
+.icon {
+	color: var(--l2-foreground);
+}
+
+.title {
+	font-size: var(--periscope-font-size-medium);
+	font-weight: var(--font-weight-medium);
+	color: var(--l1-foreground);
+}
+
+.description {
+	max-width: 420px;
+	font-size: var(--periscope-font-size-base);
+	color: var(--l2-foreground);
+}
+
+.actions {
+	display: flex;
+	gap: var(--spacing-4);
+	margin-top: var(--spacing-4);
+}

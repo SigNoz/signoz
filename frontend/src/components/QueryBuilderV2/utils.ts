@@ -8,7 +8,7 @@ import {
 	OPERATORS,
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
-import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import FilterQueryParser, {
 	AndExpressionContext,
@@ -526,6 +526,34 @@ export const convertFiltersToExpressionWithExistingQuery = (
 };
 
 /**
+ * Canonical name for a comparison's operator, limited to the equality and
+ * membership forms. Every other shape (LIKE, BETWEEN, EXISTS, CONTAINS, REGEXP,
+ * the ordering operators) returns undefined, so an operator-restricted removal
+ * leaves it in place.
+ *
+ * The ANTLR4 runtime returns null for an absent token or rule despite the
+ * non-nullable TypeScript signatures.
+ */
+const getComparisonOperator = (ctx: ComparisonContext): string | undefined => {
+	if ((ctx.inClause() as unknown) !== null) {
+		return 'in';
+	}
+	if ((ctx.notInClause() as unknown) !== null) {
+		return 'not in';
+	}
+	if ((ctx.EQUALS() as unknown) !== null) {
+		return '=';
+	}
+	if (
+		(ctx.NOT_EQUALS() as unknown) !== null ||
+		(ctx.NEQ() as unknown) !== null
+	) {
+		return '!=';
+	}
+	return undefined;
+};
+
+/**
  * Removes clauses for specified keys from a filter query expression.
  *
  * Uses an ANTLR parse-tree traversal over the existing FilterQuery grammar so that
@@ -542,12 +570,16 @@ export const convertFiltersToExpressionWithExistingQuery = (
  *   - `true`: removes only the first clause whose value contains any `$`.
  *   - `string` (e.g. `"$service.name"`): removes only the clause whose value exactly
  *     matches that string — preferred when the specific variable reference is known.
+ * @param operatorsToRemove - When given, restricts removal to clauses whose operator
+ *   is in this set (`=`, `!=`, `in`, `not in`); every other clause on the key is kept.
+ *   Omit to remove a matching key's clauses whatever their operator.
  * @returns The rewritten expression, or an empty string if all clauses were removed.
  */
 export const removeKeysFromExpression = (
 	expression: string,
 	keysToRemove: string[],
 	removeOnlyVariableExpressions: string | boolean = false,
+	operatorsToRemove?: string[],
 ): string => {
 	if (!keysToRemove || keysToRemove.length === 0) {
 		return expression;
@@ -557,6 +589,9 @@ export const removeKeysFromExpression = (
 	}
 
 	const keysSet = new Set(keysToRemove.map((k) => k.trim().toLowerCase()));
+	const operatorsSet = operatorsToRemove
+		? new Set(operatorsToRemove.map((op) => op.trim().toLowerCase()))
+		: null;
 	// Tracks keys for which a variable expression has already been removed.
 	// Having multiple $-value clauses for the same key is invalid; we remove at most one.
 	const removedVariableKeys = new Set<string>();
@@ -656,6 +691,13 @@ export const removeKeysFromExpression = (
 
 		if (!keysSet.has(keyText)) {
 			return src(ctx);
+		}
+
+		if (operatorsSet) {
+			const operator = getComparisonOperator(ctx);
+			if (!operator || !operatorsSet.has(operator)) {
+				return src(ctx);
+			}
 		}
 
 		if (removeOnlyVariableExpressions) {
@@ -798,6 +840,16 @@ export const appendAndClause = (
 	return hasTopLevelOr ? `(${base}) AND ${clause}` : `${base} AND ${clause}`;
 };
 
+/** Strips everything but digits, so a limit input can't hold a sign or decimal. */
+export const sanitizeLimit = (value: string): string =>
+	value.replace(/\D/g, '');
+
+/** A query or formula limit: a positive integer, otherwise none. */
+export const parseLimit = (value: string): number | null => {
+	const limit = Number(value);
+	return Number.isInteger(limit) && limit > 0 ? limit : null;
+};
+
 /**
  * Convert old having format to new having format
  * @param having - Array of old having objects with columnName, op, and value
@@ -829,7 +881,14 @@ export const convertHavingToExpression = (
 				formattedValue = String(value);
 			}
 
-			return `${columnName} ${op} ${formattedValue}`;
+			// The old having filter upper-cased the function (`COUNT()`); v5 only
+			// resolves the aggregation's own lower-case expression.
+			const reference = columnName.replace(
+				/^\s*([A-Za-z_]\w*)\(/,
+				(_, fn: string) => `${fn.toLowerCase()}(`,
+			);
+
+			return `${reference} ${op} ${formattedValue}`;
 		})
 		.filter((expression) => expression !== ''); // Remove empty expressions
 

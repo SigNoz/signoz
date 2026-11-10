@@ -49,6 +49,7 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		metadataStore,
 		nil,                // prometheus
 		nil,                // traceStmtBuilder
+		nil,                // aiTraceStmtBuilder
 		nil,                // logStmtBuilder
 		nil,                // auditStmtBuilder
 		nil,                // metricStmtBuilder
@@ -119,17 +120,18 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		providerSettings,
 		telemetryStore,
 		metadataStore,
-		nil,                      // prometheus
-		nil,                      // traceStmtBuilder
-		nil,                      // logStmtBuilder
-		nil,                      // auditStmtBuilder
-		&mockMetricStmtBuilder{}, // metricStmtBuilder
-		nil,                      // meterStmtBuilder
-		nil,                      // traceOperatorStmtBuilder
-		nil,                      // bucketCache
-		flaggertest.New(t),       // flagger
-		0,                        // logTraceIDWindowPadding
-		0,                        // maxConcurrentQueries
+		nil, // prometheus
+		nil, // traceStmtBuilder
+		nil, // aiTraceStmtBuilder
+		nil, // logStmtBuilder
+		nil, // auditStmtBuilder
+		&mockMetricStmtBuilder{},
+		nil,                // meterStmtBuilder
+		nil,                // traceOperatorStmtBuilder
+		nil,                // bucketCache
+		flaggertest.New(t), // flagger
+		0,                  // logTraceIDWindowPadding
+		0,                  // maxConcurrentQueries
 	)
 
 	req := &qbtypes.QueryRangeRequest{
@@ -185,6 +187,7 @@ func TestRunExecutesQueriesConcurrently(t *testing.T) {
 
 	q := &querier{
 		logger:               instrumentationtest.New().Logger(),
+		fl:                   flaggertest.New(t),
 		maxConcurrentQueries: numQueries,
 	}
 
@@ -232,6 +235,7 @@ func TestRunRespectsMaxConcurrentQueries(t *testing.T) {
 
 	q := &querier{
 		logger:               instrumentationtest.New().Logger(),
+		fl:                   flaggertest.New(t),
 		maxConcurrentQueries: limit,
 	}
 
@@ -269,6 +273,7 @@ func TestRunRespectsMaxConcurrentQueries(t *testing.T) {
 func TestRunQueryErrorCancelsSiblings(t *testing.T) {
 	q := &querier{
 		logger:               instrumentationtest.New().Logger(),
+		fl:                   flaggertest.New(t),
 		maxConcurrentQueries: 4,
 	}
 

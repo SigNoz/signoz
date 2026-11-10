@@ -6,6 +6,7 @@ import cx from 'classnames';
 import { motion } from 'motion/react';
 
 import { DraftMapper } from 'container/LLMObservability/AttributeMapping/types';
+import { useCanManageAttributeMapping } from 'container/LLMObservability/AttributeMapping/hooks/useCanManageAttributeMapping';
 import MapperActionsMenu from '../MapperActionsMenu/MapperActionsMenu';
 import styles from './MapperRow.module.scss';
 
@@ -30,6 +31,7 @@ function MapperRow({
 	onRemove,
 	onToggle,
 }: MapperRowProps): JSX.Element {
+	const canManage = useCanManageAttributeMapping();
 	const sources = mapper.sources ?? [];
 	const visibleSources = sources.slice(0, MAX_VISIBLE_SOURCES);
 	const remainingSources = sources.length - visibleSources.length;
@@ -56,13 +58,13 @@ function MapperRow({
 					{mapper.name}
 				</Typography.Text>
 				<Badge
+					textTransform="none"
 					color={
 						mapper.fieldContext === SpantypesFieldContextDTO.resource
-							? 'amber'
-							: 'robin'
+							? 'warning'
+							: 'primary'
 					}
-					variant="outline"
-					className={styles.targetContextBadge}
+					variant="outlined"
 				>
 					{mapper.fieldContext}
 				</Badge>
@@ -82,9 +84,9 @@ function MapperRow({
 					>
 						{visibleSources.map((source) => (
 							<Badge
-								variant="outline"
-								color="vanilla"
-								className={styles.sourceChip}
+								textTransform="none"
+								variant="outlined"
+								color="secondary"
 								key={`${source.context}:${source.key}`}
 							>
 								<span className={styles.sourceChipText} title={source.key}>
@@ -101,14 +103,18 @@ function MapperRow({
 				)}
 			</td>
 			<td className={cx(styles.cell, styles.actionsCell)}>
-				<div className={styles.rowActions}>
-					<Switch
-						value={mapper.enabled}
-						onChange={(checked): void => onToggle(mapper.localId, checked)}
-						testId={`mapper-enabled-${mapper.localId}`}
-					/>
-					<MapperActionsMenu mapper={mapper} onEdit={onEdit} onRemove={onRemove} />
-				</div>
+				{canManage && (
+					<div className={styles.rowActions}>
+						<Switch
+							color="primary"
+							textPlacement="right"
+							value={mapper.enabled}
+							onChange={(checked): void => onToggle(mapper.localId, checked)}
+							testId={`mapper-enabled-${mapper.localId}`}
+						/>
+						<MapperActionsMenu mapper={mapper} onEdit={onEdit} onRemove={onRemove} />
+					</div>
+				)}
 			</td>
 		</motion.tr>
 	);

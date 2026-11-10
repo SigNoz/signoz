@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
-import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { ArrowLeft, SolidAlertTriangle } from '@signozhq/icons';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppNavigate } from 'lib/router/useAppNavigate';
+import { matchRoute } from 'lib/router/matchRoute';
 import { Button } from '@signozhq/ui/button';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
@@ -26,6 +28,7 @@ import { useCreateEditRolePageActions } from './useCreateEditRolePageActions';
 
 import styles from './CreateEditRolePage.module.scss';
 import { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 
 function authzCheckFn(
 	_props: object,
@@ -33,28 +36,19 @@ function authzCheckFn(
 ): BrandedPermission[] {
 	const match = router.matchPath<{ roleId: string }>(ROUTES.ROLE_DETAILS);
 	const roleId = match?.roleId ?? 'new';
-	const roleName = router.searchParams.get('name') ?? '';
 	const isCreateMode = roleId === 'new';
 
 	if (isCreateMode) {
 		return [RoleCreatePermission];
 	}
-	if (roleName) {
-		return [
-			buildRoleReadPermission(roleName),
-			buildRoleUpdatePermission(roleName),
-		];
-	}
 	return [];
 }
 
 function CreateEditRolePageContent(): JSX.Element {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const navigate = useAppNavigate();
+	const { pathname } = useAppLocation();
 	const urlQuery = useUrlQuery();
-	const match = matchPath<{ roleId: string }>(pathname, {
-		path: ROUTES.ROLE_DETAILS,
-	});
+	const match = matchRoute<'roleId'>(pathname, ROUTES.ROLE_DETAILS);
 	const roleId = match?.params?.roleId ?? 'new';
 	const roleName = urlQuery.get('name') ?? '';
 	const [hasJsonError, setHasJsonError] = useState(false);
@@ -91,16 +85,16 @@ function CreateEditRolePageContent(): JSX.Element {
 		if (success) {
 			allowNextNavigation();
 			if (isCreateMode) {
-				history.push(ROUTES.ROLES_SETTINGS);
+				navigate(ROUTES.ROLES_SETTINGS);
 			} else {
 				const viewUrl = `${ROUTES.ROLE_DETAILS.replace(':roleId', roleId)}?name=${encodeURIComponent(roleName)}`;
-				history.push(viewUrl);
+				navigate(viewUrl);
 			}
 		}
 	}, [
 		handleSave,
 		allowNextNavigation,
-		history,
+		navigate,
 		hasJsonError,
 		isCreateMode,
 		roleId,
@@ -116,11 +110,13 @@ function CreateEditRolePageContent(): JSX.Element {
 				<div className={styles.createEditRolePageHeader}>
 					<div className={styles.createEditRolePageHeaderLeft}>
 						<Button
+							size="md"
 							variant="ghost"
 							color="secondary"
 							onClick={handleCancel}
-							data-testid="cancel-button"
-							className={styles.backButton}
+							testId="cancel-button"
+							icon
+							aria-label="Back"
 						>
 							<ArrowLeft size={16} />
 						</Button>
@@ -149,7 +145,7 @@ function CreateEditRolePageContent(): JSX.Element {
 		);
 	}
 
-	if ((isLoading && !isCreateMode) || isFeatureGateLoading) {
+	if (isFeatureGateLoading) {
 		return (
 			<div className={styles.createEditRolePage}>
 				<Skeleton active paragraph={{ rows: 8 }} />
@@ -157,32 +153,18 @@ function CreateEditRolePageContent(): JSX.Element {
 		);
 	}
 
-	if (loadError) {
-		return (
-			<div
-				className={styles.createEditRolePage}
-				data-testid="create-edit-role-page"
-			>
-				<div className={styles.createEditRolePageHeader}>
-					<div className={styles.createEditRolePageHeaderLeft}>
-						<Button
-							variant="ghost"
-							color="secondary"
-							onClick={handleCancel}
-							disabled={isSaving}
-							data-testid="cancel-button"
-							className={styles.backButton}
-						>
-							<ArrowLeft size={16} />
-						</Button>
-						<Typography.Title level={3}>Failed to load role</Typography.Title>
-					</div>
-				</div>
+	const title = isCreateMode
+		? 'Create Role'
+		: `Role - ${
+				formData.name || (isLoading ? 'Loading role...' : 'Failed to load role')
+			}`;
 
-				<ErrorInPlace error={loadError} data-testid="role-load-error-banner" />
-			</div>
-		);
-	}
+	const canCheckRolePermissions = !isCreateMode && !!roleName;
+
+	const saveChecks = isCreateMode
+		? [RoleCreatePermission]
+		: [buildRoleReadPermission(roleName), buildRoleUpdatePermission(roleName)];
+	const isSaveCheckEnabled = isCreateMode || canCheckRolePermissions;
 
 	return (
 		<div
@@ -192,20 +174,19 @@ function CreateEditRolePageContent(): JSX.Element {
 			<div className={styles.createEditRolePageHeader}>
 				<div className={styles.createEditRolePageHeaderLeft}>
 					<Button
+						size="md"
 						variant="ghost"
 						color="secondary"
 						onClick={handleCancel}
 						disabled={isSaving}
-						data-testid="cancel-button"
-						className={styles.backButton}
+						disabledTooltip="Wait for the save to finish"
+						testId="cancel-button"
+						icon
+						aria-label="Back"
 					>
 						<ArrowLeft size={16} />
 					</Button>
-					<Typography.Title level={3}>
-						{isCreateMode
-							? 'Create Role'
-							: `Role - ${formData.name || 'Loading role...'}`}
-					</Typography.Title>
+					<Typography.Title level={3}>{title}</Typography.Title>
 				</div>
 
 				<div className={styles.createEditRolePageActions}>
@@ -218,11 +199,9 @@ function CreateEditRolePageContent(): JSX.Element {
 						</div>
 					)}
 					<AuthZButton
-						checks={
-							isCreateMode
-								? [RoleCreatePermission]
-								: [buildRoleUpdatePermission(roleName)]
-						}
+						size="md"
+						checks={saveChecks}
+						authZEnabled={isSaveCheckEnabled}
 						variant="solid"
 						color="primary"
 						onClick={handleSaveAndNavigate}
@@ -235,61 +214,91 @@ function CreateEditRolePageContent(): JSX.Element {
 				</div>
 			</div>
 
-			{saveError && (
-				<ErrorInPlace
-					error={saveError}
-					height="auto"
-					data-testid="save-error-banner"
-					padding={0}
-					bordered={true}
-					className={styles.errorInPlaceContainer}
-				/>
-			)}
-
-			<div className={styles.createEditRolePageContent}>
-				<div className={styles.createEditRolePageForm}>
-					<div className={styles.formRow}>
-						{isCreateMode ? (
-							<div className={styles.formField}>
-								<label htmlFor="role-name" className={styles.formLabel}>
-									Name
-								</label>
-								<Input
-									id="role-name"
-									value={formData.name}
-									onChange={(e): void => handleFormChange('name', e.target.value)}
-									placeholder="my-custom-role"
-									data-testid="role-name-input"
-								/>
-							</div>
-						) : null}
-						<div className={styles.formField}>
-							<label htmlFor="role-description" className={styles.formLabel}>
-								Description
-							</label>
-							<Input
-								id="role-description"
-								value={formData.description}
-								onChange={(e): void => handleFormChange('description', e.target.value)}
-								placeholder="Custom role for the support team"
-								data-testid="role-description-input"
-							/>
-						</div>
+			<AuthZGuardContent
+				checks={canCheckRolePermissions ? [buildRoleReadPermission(roleName)] : []}
+				fallbackOnLoading={
+					<div className={styles.createEditRolePage}>
+						<Skeleton active paragraph={{ rows: 8 }} />
 					</div>
-				</div>
+				}
+			>
+				<>
+					{isLoading && (
+						<div className={styles.createEditRolePage}>
+							<Skeleton active paragraph={{ rows: 8 }} />
+						</div>
+					)}
 
-				<div className={styles.createEditRolePageDivider} />
+					{loadError && (
+						<ErrorInPlace
+							error={loadError}
+							height="auto"
+							data-testid="role-load-error-banner"
+							padding={0}
+							bordered={true}
+							className={styles.errorInPlaceContainer}
+						/>
+					)}
 
-				<PermissionEditor
-					resources={resources}
-					mode={editorMode}
-					onModeChange={setEditorMode}
-					onResourceChange={setResources}
-					onJsonValidityChange={setHasJsonError}
-					isLoading={isLoading}
-					validationErrors={validationErrors}
-				/>
-			</div>
+					{saveError && (
+						<ErrorInPlace
+							error={saveError}
+							height="auto"
+							data-testid="save-error-banner"
+							padding={0}
+							bordered={true}
+							className={styles.errorInPlaceContainer}
+						/>
+					)}
+
+					<div className={styles.createEditRolePageContent}>
+						<div className={styles.createEditRolePageForm}>
+							<div className={styles.formRow}>
+								{isCreateMode ? (
+									<div className={styles.formField}>
+										<label htmlFor="role-name" className={styles.formLabel}>
+											Name
+										</label>
+										<Input
+											id="role-name"
+											value={formData.name}
+											onChange={(e): void => handleFormChange('name', e.target.value)}
+											placeholder="my-custom-role"
+											data-testid="role-name-input"
+										/>
+									</div>
+								) : null}
+								<div className={styles.formField}>
+									<label htmlFor="role-description" className={styles.formLabel}>
+										Description
+									</label>
+									<Input
+										id="role-description"
+										value={formData.description}
+										onChange={(e): void =>
+											handleFormChange('description', e.target.value)
+										}
+										placeholder="Custom role for the support team"
+										data-testid="role-description-input"
+									/>
+								</div>
+							</div>
+						</div>
+
+						<div className={styles.createEditRolePageDivider} />
+
+						<PermissionEditor
+							resources={resources}
+							mode={editorMode}
+							onModeChange={setEditorMode}
+							onResourceChange={setResources}
+							onJsonValidityChange={setHasJsonError}
+							isLoading={isLoading}
+							validationErrors={validationErrors}
+						/>
+					</div>
+				</>
+			</AuthZGuardContent>
 
 			<ConfirmDialog
 				open={isBlocked}
@@ -301,11 +310,11 @@ function CreateEditRolePageContent(): JSX.Element {
 				title="Discard unsaved changes?"
 				titleIcon={<SolidAlertTriangle size={14} color="#fdd600" />}
 				confirmText="Discard"
-				confirmColor="destructive"
+				confirmColor="danger"
 				cancelText="Keep editing"
 				onConfirm={confirmNavigation}
 				onCancel={cancelNavigation}
-				data-testid="discard-changes-dialog"
+				testId="discard-changes-dialog"
 			>
 				<Typography>
 					{isCreateMode

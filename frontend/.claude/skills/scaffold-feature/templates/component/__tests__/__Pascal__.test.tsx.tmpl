@@ -1,0 +1,11 @@
+import { render, screen } from 'tests/test-utils';
+
+import __Pascal__ from '../__Pascal__';
+
+describe('__Pascal__', () => {
+	it('renders', () => {
+		render(<__Pascal__ />);
+
+		expect(screen.getByTestId('__kebab__')).toBeInTheDocument();
+	});
+});

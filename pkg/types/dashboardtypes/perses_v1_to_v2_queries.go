@@ -174,11 +174,12 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 		queries := d.readObjects(builder, "queryData")
 		assignQueryDataNames(queries)
 		for _, q := range queries {
-			normalizePreV5QueryData(q, widgetType)
+			normalizePreV5QueryData(q, widgetType, panelKind)
 			normalizePreV5SelectColumns(q)
 			normalizePreV5GroupBy(q)
 			normalizePreV5PageSize(q, rowLimitPanel)
 			normalizeQueryLimit(q)
+			normalizeQueryOffset(q)
 			if needsAggregation {
 				ensureDefaultAggregation(q)
 			}
@@ -197,7 +198,8 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 		formulas := d.readObjects(builder, "queryFormulas")
 		assignMissingFormulaNames(formulas)
 		for _, f := range formulas {
-			normalizePreV5QueryData(f, widgetType)
+			normalizePreV5QueryData(f, widgetType, panelKind)
+			normalizeQueryLimit(f)
 			name := d.readString(f, "queryName")
 			env := qb.WrapInV5Envelope(name, f, string(qb.QueryTypeFormula.StringValue()))
 			backfillFormulaFields(env, f)
@@ -216,9 +218,11 @@ func (d *v1Decoder) collectV1QueryEnvelopes(widget map[string]any, panelKind Pan
 			if expression == "" {
 				continue
 			}
-			normalizePreV5QueryData(op, widgetType)
+			normalizePreV5QueryData(op, widgetType, panelKind)
 			normalizePreV5GroupBy(op)
 			normalizeOrderByKeys(op)
+			normalizeQueryLimit(op)
+			normalizeQueryOffset(op)
 			name := d.readString(op, "queryName")
 			out = append(out, traceOperatorEnvelope(name, expression, op))
 		}

@@ -88,6 +88,7 @@ function TanStackCustomTableRow<TData, TItemKey = string>({
 			{...props}
 			className={rowClassName}
 			style={rowStyle}
+			data-testid={context?.getRowTestId?.(rowData)}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={clearHovered}
 		>
@@ -151,6 +152,12 @@ function areTableRowPropsEqual<TData, TItemKey = string>(
 		const prevClass = prev.context?.getRowClassName?.(prevData) ?? '';
 		const nextClass = next.context?.getRowClassName?.(nextData) ?? '';
 		if (prevClass !== nextClass) {
+			return false;
+		}
+
+		const prevTestId = prev.context?.getRowTestId?.(prevData) ?? '';
+		const nextTestId = next.context?.getRowTestId?.(nextData) ?? '';
+		if (prevTestId !== nextTestId) {
 			return false;
 		}
 

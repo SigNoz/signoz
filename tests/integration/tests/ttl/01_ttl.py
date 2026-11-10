@@ -1,11 +1,3 @@
-"""
-Summary:
-This test file contains integration tests for Time-To-Live (TTL) and custom retention policies
-in SigNoz's query service. It verifies the correct behavior of TTL settings for traces, metrics,
-and logs, including support for cold storage, custom retention conditions, error handling for
-invalid configurations, and retrieval of TTL settings.
-"""
-
 import time
 from collections.abc import Callable
 from http import HTTPStatus
@@ -94,7 +86,6 @@ def test_set_ttl_traces_success(
     get_token: Callable[[str, str], str],
     remove_traces_ttl_and_storage_settings,  # pylint: disable=unused-argument
 ):
-    """Test setting TTL for traces with new ttlConfig structure."""
 
     test_duration_hours = 3601  # 3601 hours
 
@@ -139,7 +130,6 @@ def test_set_ttl_traces_with_cold_storage(
     get_token: Callable[[str, str], str],
     remove_traces_ttl_and_storage_settings,  # pylint: disable=unused-argument
 ):
-    """Test setting TTL for traces with cold storage configuration."""
 
     test_duration_hours = 91 * 24  # 91 days in hours
     test_cold_duration_hours = 32 * 24  # 32 days in hours
@@ -200,7 +190,6 @@ def test_set_ttl_metrics_success(
     get_token: Callable[[str, str], str],
     remove_metrics_ttl_and_storage_settings,  # pylint: disable=unused-argument
 ):
-    """Test setting TTL for metrics using the new setTTLMetrics method."""
 
     test_duration_hours = 92 * 24  # 92 days in hours
 
@@ -249,7 +238,6 @@ def test_set_ttl_metrics_with_cold_storage(
     get_token: Callable[[str, str], str],
     remove_metrics_ttl_and_storage_settings,  # pylint: disable=unused-argument
 ):
-    """Test setting TTL for metrics with cold storage configuration."""
 
     test_duration_hours = 91 * 24  # 91 days in hours
     test_cold_duration_hours = 21 * 24  # 21 days in hours
@@ -314,7 +302,6 @@ def test_set_ttl_metrics_with_cold_storage(
 
 
 def test_set_ttl_invalid_type(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
-    """Test setting TTL with invalid type returns error."""
     payload = {
         "type": "invalid_type",
         "duration": f"{90 * 24}h",
@@ -340,7 +327,6 @@ def test_set_custom_retention_ttl_basic(
     insert_logs,
     remove_logs_ttl_settings,  # pylint: disable=unused-argument
 ):
-    """Test setting custom retention TTL with basic configuration."""
 
     test_retention_days = 103  # 103 days
 
@@ -399,7 +385,6 @@ def test_set_custom_retention_ttl_basic_with_cold_storage(
     insert_logs,
     remove_logs_ttl_settings,  # pylint: disable=unused-argument
 ):
-    """Test setting custom retention TTL with basic configuration."""
 
     test_retention_days = 104  # 104 days
     test_retention_days_cold = 27  # 27 days
@@ -466,7 +451,6 @@ def test_set_custom_retention_ttl_basic_fallback(
     ttl_legacy_logs_v2_table_setup,  # pylint: disable=unused-argument
     ttl_legacy_logs_v2_resource_table_setup,  # pylint: disable=unused-argument,
 ):
-    """Test setting TTL for logs using the new setTTLLogs method."""
 
     test_retention_days = 101  # 101 days
     test_retention_days_cold = 17  # 17 days
@@ -569,7 +553,6 @@ def test_set_custom_retention_ttl_with_conditions(
     insert_logs,
     remove_logs_ttl_settings,  # pylint: disable=unused-argument
 ):
-    """Test setting custom retention TTL with filter conditions."""
 
     test_retention_days = 30  # 30 days
     test_retention_days_condition = 60  # 60 days
@@ -677,7 +660,6 @@ def test_set_custom_retention_ttl_with_invalid_cold_storage(
     insert_logs,
     remove_logs_ttl_settings,  # pylint: disable=unused-argument
 ):
-    """Test setting custom retention TTL with cold storage configuration."""
     payload = {
         "type": "logs",
         "defaultTTLDays": 60,
@@ -714,7 +696,6 @@ def test_set_custom_retention_ttl_with_invalid_cold_storage(
 
 
 def test_set_custom_retention_ttl_duplicate_conditions(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
-    """Test that duplicate TTL conditions are rejected."""
     payload = {
         "type": "logs",
         "defaultTTLDays": 30,
@@ -784,7 +765,6 @@ def test_set_custom_retention_ttl_invalid_condition(signoz: types.SigNoz, get_to
 
 
 def test_get_custom_retention_ttl(signoz: types.SigNoz, get_token: Callable[[str, str], str], insert_logs):
-    """Test getting custom retention TTL configuration."""
     # First set a custom retention TTL
     set_payload = {
         "type": "logs",
@@ -844,7 +824,6 @@ def test_set_ttl_logs_success(
     ttl_legacy_logs_v2_table_setup,  # pylint: disable=unused-argument
     ttl_legacy_logs_v2_resource_table_setup,  # pylint: disable=unused-argument
 ):
-    """Test setting TTL for logs using the new setTTLLogs method."""
 
     test_retention_days = 150  # 150 days
     payload = {
@@ -881,7 +860,6 @@ def test_set_ttl_logs_success(
 
 
 def test_get_ttl_traces_success(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
-    """Test getting TTL for traces."""
     # First set a TTL configuration for traces
 
     test_retention_days = 33  # 33 days
@@ -929,7 +907,6 @@ def test_large_ttl_conditions_list(
     insert_logs,
     remove_logs_ttl_settings,  # pylint: disable=unused-argument
 ):
-    """Test custom retention TTL with many conditions."""
     # Create a list of many TTL conditions to test performance and limits
     conditions = []
     for i in range(10):  # Test with 10 conditions

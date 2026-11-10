@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { Button, Skeleton } from 'antd';
+import { AppLink } from 'lib/router/AppLink';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import { useListDashboardsForUserV2 } from 'api/generated/services/dashboard';
@@ -9,8 +9,6 @@ import {
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
-import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
-import { useIsDashboardV2 } from 'hooks/useIsDashboardV2';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
@@ -22,7 +20,7 @@ import dialsUrl from '@/assets/Icons/dials.svg';
 
 import { getItemIcon } from '../constants';
 
-// The five most-recent dashboards, normalised across the v1 and v2 list APIs.
+// The five most-recent dashboards from the V2 list API.
 interface RecentDashboard {
 	id: string;
 	title: string;
@@ -38,52 +36,27 @@ export default function Dashboards({
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { user } = useAppContext();
-	const isDashboardV2 = useIsDashboardV2();
-
-	// Fetch the recent dashboards from whichever API the `use_dashboard_v2` flag
-	// selects; the inactive one stays disabled so it never fires.
-	const {
-		data: v1List,
-		isLoading: v1Loading,
-		isError: v1Error,
-	} = useGetAllDashboard({ enabled: !isDashboardV2 });
 
 	const {
-		data: v2List,
-		isLoading: v2Loading,
-		isError: v2Error,
-	} = useListDashboardsForUserV2(
-		{
-			sort: DashboardtypesListSortDTO.updated_at,
-			order: DashboardtypesListOrderDTO.desc,
-			limit: 5,
-			offset: 0,
-		},
-		{ query: { enabled: isDashboardV2 } },
-	);
+		data: dashboardsList,
+		isLoading: isDashboardListLoading,
+		isError: isDashboardListError,
+	} = useListDashboardsForUserV2({
+		sort: DashboardtypesListSortDTO.updated_at,
+		order: DashboardtypesListOrderDTO.desc,
+		limit: 5,
+		offset: 0,
+	});
 
-	const isDashboardListLoading = isDashboardV2 ? v2Loading : v1Loading;
-	const isDashboardListError = isDashboardV2 ? v2Error : v1Error;
-
-	const sortedDashboards = useMemo<RecentDashboard[]>(() => {
-		if (isDashboardV2) {
-			return (v2List?.data?.dashboards ?? []).map((d) => ({
+	const sortedDashboards = useMemo<RecentDashboard[]>(
+		() =>
+			(dashboardsList?.data?.dashboards ?? []).map((d) => ({
 				id: d.id,
 				title: d.spec?.display?.name ?? d.name,
 				tags: (d.tags ?? []).map((t) => (t.value ? `${t.key}:${t.value}` : t.key)),
-			}));
-		}
-		return [...(v1List?.data ?? [])]
-			.sort(
-				(a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-			)
-			.slice(0, 5)
-			.map((d) => ({
-				id: d.id,
-				title: d.data.title,
-				tags: d.data.tags ?? [],
-			}));
-	}, [isDashboardV2, v1List, v2List]);
+			})),
+		[dashboardsList],
+	);
 
 	useEffect(() => {
 		if (sortedDashboards.length > 0 && !loadingUserPreferences) {
@@ -106,7 +79,7 @@ export default function Dashboards({
 
 				{user?.role !== USER_ROLES.VIEWER && (
 					<div className="empty-actions-container">
-						<Link to={ROUTES.ALL_DASHBOARD}>
+						<AppLink to={ROUTES.ALL_DASHBOARD}>
 							<Button
 								type="default"
 								className="periscope-btn secondary"
@@ -117,7 +90,7 @@ export default function Dashboards({
 							>
 								New Dashboard
 							</Button>
-						</Link>
+						</AppLink>
 
 						<Button
 							type="link"
@@ -186,7 +159,12 @@ export default function Dashboards({
 
 							<div className="alert-rule-item-description home-data-item-tag">
 								{dashboard.tags.map((tag) => (
-									<Badge color="sienna" variant="outline" key={tag}>
+									<Badge
+										textTransform="none"
+										color="archive"
+										variant="outlined"
+										key={tag}
+									>
 										{tag}
 									</Badge>
 								))}
@@ -224,7 +202,12 @@ export default function Dashboards({
 		<Card className="dashboards-list-card home-data-card">
 			{dashboardsExist && (
 				<Card.Header>
-					<div className="dashboards-header home-data-card-header">Dashboards</div>
+					<div
+						className="dashboards-header home-data-card-header"
+						data-testid="home-section-dashboards"
+					>
+						Dashboards
+					</div>
 				</Card.Header>
 			)}
 			<Card.Content>
@@ -234,7 +217,7 @@ export default function Dashboards({
 			{dashboardsExist && (
 				<Card.Footer>
 					<div className="dashboards-footer home-data-card-footer">
-						<Link to={ROUTES.ALL_DASHBOARD}>
+						<AppLink to={ROUTES.ALL_DASHBOARD}>
 							<Button
 								type="link"
 								className="periscope-btn link learn-more-link"
@@ -244,7 +227,7 @@ export default function Dashboards({
 							>
 								All Dashboards <ArrowRight size={12} />
 							</Button>
-						</Link>
+						</AppLink>
 					</div>
 				</Card.Footer>
 			)}

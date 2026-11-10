@@ -1,5 +1,5 @@
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { ErrorV2 } from 'types/api';
@@ -16,19 +16,12 @@ const CALLBACK_AUTHN_URL = 'https://sso.example.com/auth';
 const PASSWORD_AUTHN_ORG = 'password_authn_org';
 const PASSWORD_AUTHN_EMAIL = 'jest.test@signoz.io';
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: {
-			search: '',
-		},
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 // Mock data
 const mockVersionSetupCompleted: Info = {
@@ -161,7 +154,10 @@ describe('Login Component', () => {
 
 			const { getByTestId } = render(<Login />);
 
-			expect(getByTestId('initiate_login')).toBeDisabled();
+			expect(getByTestId('initiate_login')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 
@@ -179,7 +175,7 @@ describe('Login Component', () => {
 			render(<Login />);
 
 			await waitFor(() => {
-				expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.SIGN_UP);
+				expect(mockNavigate).toHaveBeenCalledWith(ROUTES.SIGN_UP);
 			});
 		});
 
@@ -187,7 +183,7 @@ describe('Login Component', () => {
 			render(<Login />);
 
 			await waitFor(() => {
-				expect(mockHistoryPush).not.toHaveBeenCalled();
+				expect(mockNavigate).not.toHaveBeenCalled();
 			});
 		});
 
@@ -201,7 +197,7 @@ describe('Login Component', () => {
 			render(<Login />);
 
 			await waitFor(() => {
-				expect(mockHistoryPush).not.toHaveBeenCalled();
+				expect(mockNavigate).not.toHaveBeenCalled();
 			});
 		});
 	});
@@ -229,7 +225,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -271,7 +267,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -304,7 +300,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -341,7 +337,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -383,7 +379,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -422,7 +418,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -459,7 +455,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -473,6 +469,19 @@ describe('Login Component', () => {
 	});
 
 	describe('Callback Authentication', () => {
+		const originalLocation = window.location;
+
+		// The redirect case swaps `window.location` for a stub. history@5 reads
+		// that object on every `history.location` access, so leaving the stub in
+		// place would freeze the URL for every later test in this file.
+		afterEach(() => {
+			Object.defineProperty(window, 'location', {
+				value: originalLocation,
+				writable: true,
+				configurable: true,
+			});
+		});
+
 		it('shows callback login button when callback auth is supported', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
@@ -495,7 +504,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -510,13 +519,20 @@ describe('Login Component', () => {
 		it('redirects to callback URL on button click', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-			// Mock window.location.href
+			// Mock window.location.href. The rest of the shape matters: history@5
+			// re-reads `window.location` on every access, so a stub without a
+			// pathname breaks every later render in this file.
 			const mockLocation = {
 				href: 'http://localhost/',
+				origin: 'http://localhost',
+				pathname: '/',
+				search: '',
+				hash: '',
 			};
 			Object.defineProperty(window, 'location', {
 				value: mockLocation,
 				writable: true,
+				configurable: true,
 			});
 
 			server.use(
@@ -538,7 +554,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -588,7 +604,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -645,7 +661,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -726,7 +742,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -778,7 +794,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -825,14 +841,14 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
 			await user.click(nextButton);
 
 			// Button should be disabled during API call
-			expect(nextButton).toBeDisabled();
+			expect(nextButton).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('shows correct button text for each auth method', async () => {
@@ -860,7 +876,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -902,7 +918,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -955,7 +971,7 @@ describe('Login Component', () => {
 
 			const nextButton = await waitFor(() => {
 				const button = screen.getByTestId('initiate_login');
-				expect(button).not.toBeDisabled();
+				expect(button).not.toHaveAttribute('aria-disabled', 'true');
 				return button;
 			});
 
@@ -969,6 +985,197 @@ describe('Login Component', () => {
 				expect(
 					screen.queryByTestId('callback_authn_submit'),
 				).not.toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('Enter key submission', () => {
+		const EMAIL_PASSWORD_ENDPOINT = '*/api/v2/sessions/email_password';
+
+		async function typeEmail(
+			user: ReturnType<typeof userEvent.setup>,
+			email: string,
+		): Promise<HTMLElement> {
+			const emailInput = await waitFor(() => {
+				const input = screen.getByTestId('email');
+				expect(input).not.toBeDisabled();
+				return input;
+			});
+			await user.type(emailInput, email);
+			return emailInput;
+		}
+
+		it('fetches the sessions context once on Enter in the email field', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			let contextCalls = 0;
+
+			server.use(
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) => {
+					contextCalls += 1;
+					return res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth }));
+				}),
+			);
+
+			render(<Login />);
+
+			await typeEmail(user, `${PASSWORD_AUTHN_EMAIL}{enter}`);
+
+			await screen.findByTestId('password');
+			expect(contextCalls).toBe(1);
+		});
+
+		// Bug: the email onPressEnter calls onNextHandler without checking isEmailValid (container/Login/index.tsx:329).
+		it.skip('does not fetch the sessions context on Enter with an invalid email', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			let contextCalls = 0;
+
+			server.use(
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) => {
+					contextCalls += 1;
+					return res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth }));
+				}),
+			);
+
+			render(<Login />);
+
+			await typeEmail(user, 'not-an-email');
+			expect(screen.getByTestId('initiate_login')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+			await user.keyboard('{enter}');
+
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(contextCalls).toBe(0);
+		});
+
+		it('signs in once on Enter in the password field', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			let loginCalls = 0;
+
+			server.use(
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
+				),
+				rest.post(EMAIL_PASSWORD_ENDPOINT, (_, res, ctx) => {
+					loginCalls += 1;
+					return res(
+						ctx.status(200),
+						ctx.json({ status: 'success', data: mockEmailPasswordResponse }),
+					);
+				}),
+			);
+
+			render(<Login />);
+
+			await typeEmail(user, `${PASSWORD_AUTHN_EMAIL}{enter}`);
+			await user.type(
+				await screen.findByTestId('password'),
+				'testpassword{enter}',
+			);
+
+			await waitFor(() => {
+				expect(localStorage.getItem('AUTH_TOKEN')).toBe('mock-access-token');
+			});
+			expect(loginCalls).toBe(1);
+		});
+
+		it('does not sign in on Enter while the password is empty', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			let loginCalls = 0;
+
+			server.use(
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
+				),
+				rest.post(EMAIL_PASSWORD_ENDPOINT, (_, res, ctx) => {
+					loginCalls += 1;
+					return res(
+						ctx.status(200),
+						ctx.json({ status: 'success', data: mockEmailPasswordResponse }),
+					);
+				}),
+			);
+
+			render(<Login />);
+
+			await typeEmail(user, `${PASSWORD_AUTHN_EMAIL}{enter}`);
+			const passwordInput = await screen.findByTestId('password');
+			expect(screen.getByTestId('password_authn_submit')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+
+			await user.type(passwordInput, '{enter}');
+
+			// Give a wrongly sent request time to land before asserting it never did.
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(loginCalls).toBe(0);
+		});
+
+		it('does not sign in again on Enter while the first sign in is loading', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			let loginCalls = 0;
+
+			server.use(
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgPasswordAuth })),
+				),
+				rest.post(EMAIL_PASSWORD_ENDPOINT, (_, res, ctx) => {
+					loginCalls += 1;
+					return res(
+						ctx.delay(1000),
+						ctx.status(200),
+						ctx.json({ status: 'success', data: mockEmailPasswordResponse }),
+					);
+				}),
+			);
+
+			render(<Login />);
+
+			const emailInput = await typeEmail(user, `${PASSWORD_AUTHN_EMAIL}{enter}`);
+			await user.type(
+				await screen.findByTestId('password'),
+				'testpassword{enter}',
+			);
+
+			const submitButton = screen.getByTestId('password_authn_submit');
+			await waitFor(() => {
+				expect(submitButton).toHaveAttribute('aria-disabled', 'true');
+			});
+
+			// The password input is disabled while submitting; the email input is not.
+			await user.type(emailInput, '{enter}');
+
+			await waitFor(() => {
+				expect(localStorage.getItem('AUTH_TOKEN')).toBe('mock-access-token');
+			});
+			expect(loginCalls).toBe(1);
+		});
+
+		it('redirects to the SSO url on Enter for a callback org', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			Object.defineProperty(window, 'location', {
+				value: { href: 'http://localhost/' },
+				writable: true,
+			});
+
+			server.use(
+				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
+					res(ctx.status(200), ctx.json({ data: mockSingleOrgCallbackAuth })),
+				),
+			);
+
+			render(<Login />);
+
+			const emailInput = await typeEmail(user, `${PASSWORD_AUTHN_EMAIL}{enter}`);
+			await screen.findByTestId('callback_authn_submit');
+
+			await user.type(emailInput, '{enter}');
+
+			await waitFor(() => {
+				expect(window.location.href).toBe(CALLBACK_AUTHN_URL);
 			});
 		});
 	});

@@ -18,11 +18,11 @@ import {
 const createEmptyRow = (): InviteMemberRow => ({
 	id: uuid(),
 	email: '',
-	roleId: '',
+	roleIds: [],
 });
 
 const isRowTouched = (row: InviteMemberRow): boolean =>
-	row.email.trim() !== '' || row.roleId !== '';
+	row.email.trim() !== '' || row.roleIds.length > 0;
 
 export function useInviteMembers(
 	options: UseInviteMembersOptions = {},
@@ -78,7 +78,7 @@ export function useInviteMembers(
 
 		touched.forEach((row) => {
 			const emailValid = EMAIL_REGEX.test(row.email);
-			const roleValid = row.roleId !== '';
+			const roleValid = row.roleIds.length > 0;
 
 			if (!emailValid || !row.email) {
 				isValid = false;
@@ -139,12 +139,12 @@ export function useInviteMembers(
 	);
 
 	const updateRole = useCallback(
-		(id: string, roleId: string | undefined): void => {
+		(id: string, roleIds: string[]): void => {
 			setRows((prev) => {
 				const updated = cloneDeep(prev);
 				const row = updated.find((r) => r.id === id);
 				if (row) {
-					row.roleId = roleId ?? '';
+					row.roleIds = roleIds;
 				}
 				return updated;
 			});
@@ -187,7 +187,7 @@ export function useInviteMembers(
 				await createUser({
 					email: row.email.trim(),
 					frontendBaseUrl: getBaseUrl(),
-					userRoles: [{ id: row.roleId }],
+					userRoles: row.roleIds.map((id) => ({ id })),
 				});
 				results.push({ email: row.email, success: true });
 			} catch (err) {

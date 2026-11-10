@@ -29,12 +29,16 @@ type Defaults = {
 	cleanupOnUnmount?: boolean;
 };
 
+export type SetPageOptions = {
+	history?: 'push' | 'replace';
+};
+
 export type TableParamsResult = {
 	page: number;
 	limit: number;
 	orderBy: SortState | null;
 	expanded: ExpandedState;
-	setPage: (p: number) => void;
+	setPage: (p: number, options?: SetPageOptions) => void;
 	setLimit: (l: number) => void;
 	setOrderBy: (s: SortState | null) => void;
 	setExpanded: (updaterOrValue: Updater<ExpandedState>) => void;
@@ -249,6 +253,17 @@ export function useTableParams(
 		[],
 	);
 
+	const setUrlPageWithOptions = useCallback(
+		(page: number, options?: SetPageOptions): void => {
+			void setUrlPage(page, options);
+		},
+		[setUrlPage],
+	);
+
+	const setLocalPageValue = useCallback((page: number): void => {
+		setLocalPage(page);
+	}, []);
+
 	const orderByUrlMemoKey = `${urlOrderBy?.columnName}${urlOrderBy?.order}`;
 	const prevOrderByRef = useRef<string | null>(null);
 
@@ -303,7 +318,7 @@ export function useTableParams(
 		limit: useUrlForLimit ? urlLimit : localLimit,
 		orderBy: (useUrlForOrderBy ? urlOrderBy : localOrderBy) as SortState | null,
 		expanded: useUrlForExpanded ? urlExpanded : localExpanded,
-		setPage: useUrlForPage ? setUrlPage : setLocalPage,
+		setPage: useUrlForPage ? setUrlPageWithOptions : setLocalPageValue,
 		setLimit: useUrlForLimit ? setUrlLimit : setLocalLimitWithPersist,
 		setOrderBy: useUrlForOrderBy ? setUrlOrderBy : setLocalOrderBy,
 		setExpanded: useUrlForExpanded ? setUrlExpanded : handleSetLocalExpanded,

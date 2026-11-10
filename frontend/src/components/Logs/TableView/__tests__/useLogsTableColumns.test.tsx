@@ -1,19 +1,27 @@
-import { renderHook } from '@testing-library/react';
 import { FontSize } from 'container/OptionsMenu/types';
+import { render, renderHook, screen } from 'tests/test-utils';
 import { IField } from 'types/api/logs/fields';
+import { ILog } from 'types/api/logs/log';
 
 import { useLogsTableColumns } from '../useLogsTableColumns';
 
 jest.mock('providers/Timezone', () => ({
+	__esModule: true,
+	...jest.requireActual('providers/Timezone'),
 	useTimezone: (): { formatTimezoneAdjustedTimestamp: jest.Mock } => ({
 		formatTimezoneAdjustedTimestamp: jest.fn(() => 'TS'),
 	}),
 }));
 
-const field = (name: string, type = ''): IField => ({
+jest.mock('providers/App/App', () => ({
+	...jest.requireActual('providers/App/App'),
+	useAppContext: (): { featureFlags: [] } => ({ featureFlags: [] }),
+}));
+
+const field = (name: string, type = '', dataType = ''): IField => ({
 	name,
 	type,
-	dataType: 'string',
+	dataType,
 });
 
 describe('useLogsTableColumns — selectColumns-order respected', () => {
@@ -47,13 +55,13 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 		);
 
 		// body/timestamp appear where the caller placed them, keyed by their
-		// composite IDs ('log.*'); contextless user fields collapse to bare name.
+		// composite IDs ('log:*'); contextless user fields collapse to bare name.
 		expect(result.current.map((c) => c.id)).toStrictEqual([
 			'state-indicator',
 			'service.name',
-			'log.body',
+			'log:body',
 			'request.id',
-			'log.timestamp',
+			'log:timestamp',
 		]);
 	});
 
@@ -66,14 +74,14 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 		);
 
 		const byId = new Map(result.current.map((c) => [c.id, c]));
-		// Attribute variant is its own column, not a duplicate 'log.body'.
+		// Attribute variant is its own column, not a duplicate 'log:body'.
 		expect(result.current.map((c) => c.id)).toStrictEqual([
 			'state-indicator',
-			'log.body',
-			'attribute.body',
+			'log:body',
+			'attribute:body',
 		]);
-		expect(byId.get('log.body')?.enableRemove).toBe(false);
-		expect(byId.get('attribute.body')?.enableRemove).toBe(true);
+		expect(byId.get('log:body')?.enableRemove).toBe(false);
+		expect(byId.get('attribute:body')?.enableRemove).toBe(true);
 	});
 
 	it('applies the same distinct-column treatment to timestamp variants', () => {
@@ -87,11 +95,11 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 		const byId = new Map(result.current.map((c) => [c.id, c]));
 		expect(result.current.map((c) => c.id)).toStrictEqual([
 			'state-indicator',
-			'log.timestamp',
-			'attribute.timestamp',
+			'log:timestamp',
+			'attribute:timestamp',
 		]);
-		expect(byId.get('log.timestamp')?.enableRemove).toBe(false);
-		expect(byId.get('attribute.timestamp')?.enableRemove).toBe(true);
+		expect(byId.get('log:timestamp')?.enableRemove).toBe(false);
+		expect(byId.get('attribute:timestamp')?.enableRemove).toBe(true);
 	});
 
 	it('skips the synthetic "id" field name', () => {
@@ -123,13 +131,31 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 
 		const byId = new Map(result.current.map((c) => [c.id, c]));
 		// body + timestamp are locked from the table-X removal pathway.
-		expect(byId.get('log.body')?.canBeHidden).toBe(false);
-		expect(byId.get('log.body')?.enableRemove).toBe(false);
-		expect(byId.get('log.timestamp')?.canBeHidden).toBe(false);
-		expect(byId.get('log.timestamp')?.enableRemove).toBe(false);
+		expect(byId.get('log:body')?.canBeHidden).toBe(false);
+		expect(byId.get('log:body')?.enableRemove).toBe(false);
+		expect(byId.get('log:timestamp')?.canBeHidden).toBe(false);
+		expect(byId.get('log:timestamp')?.enableRemove).toBe(false);
 		// User-added fields stay removable. User field has type='' so composite
 		// collapses to bare name.
 		expect(byId.get('user_field')?.enableRemove).toBe(true);
+	});
+
+	it('disambiguates same-name/same-context fields by dataType (3-part id)', () => {
+		const { result } = renderHook(() =>
+			useLogsTableColumns({
+				fields: [
+					field('http.status_code', 'attribute', 'int64'),
+					field('http.status_code', 'attribute', 'string'),
+				],
+				fontSize: FontSize.SMALL,
+			}),
+		);
+
+		expect(result.current.map((c) => c.id)).toStrictEqual([
+			'state-indicator',
+			'attribute:http.status_code:int64',
+			'attribute:http.status_code:string',
+		]);
 	});
 
 	it('renders only the stateIndicator when fields is empty', () => {
@@ -141,5 +167,38 @@ describe('useLogsTableColumns — selectColumns-order respected', () => {
 		);
 
 		expect(result.current.map((c) => c.id)).toStrictEqual(['state-indicator']);
+	});
+});
+
+describe('useLogsTableColumns — cell values', () => {
+	const asLog = (partial: Partial<ILog>): ILog => partial as unknown as ILog;
+
+	it('shows an empty body cell for a row without a body', () => {
+		const { result } = renderHook(() =>
+			useLogsTableColumns({
+				fields: [field('body', 'log')],
+				fontSize: FontSize.SMALL,
+			}),
+		);
+		const bodyCol = result.current.find((c) => c.id === 'log:body');
+
+		expect(bodyCol?.accessorFn?.(asLog({}))).toBe('');
+	});
+
+	it('renders an object-valued field as JSON, not [object Object]', () => {
+		const { result } = renderHook(() =>
+			useLogsTableColumns({
+				fields: [field('order')],
+				fontSize: FontSize.SMALL,
+			}),
+		);
+		const orderCol = result.current.find((c) => c.id === 'order');
+		const Cell = orderCol?.cell as (props: { value: unknown }) => JSX.Element;
+
+		render(<Cell value={{ id: 8412, coupons: ['WELCOME10'] }} />);
+
+		expect(
+			screen.getByText('{"id":8412,"coupons":["WELCOME10"]}'),
+		).toBeInTheDocument();
 	});
 });

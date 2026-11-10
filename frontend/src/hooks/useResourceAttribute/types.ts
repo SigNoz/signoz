@@ -30,3 +30,27 @@ export interface IResourceAttributeProps {
 	optionsData: OptionsData;
 	handleEnvironmentChange: (environments: string[]) => void;
 }
+
+export type OperatorValues =
+	| 'NotIn'
+	| 'In'
+	| 'Equals'
+	| 'NotEquals'
+	| 'Contains'
+	| 'NotContains'
+	| 'GreaterThan'
+	| 'Exists'
+	| 'NotExists'
+	| 'LessThan'
+	| 'GreaterThanEquals'
+	| 'LessThanEquals'
+	| 'StartsWith'
+	| 'NotStartsWith';
+
+export interface Tags {
+	Key: string;
+	Operator: OperatorValues;
+	StringValues: string[];
+	NumberValues: number[];
+	BoolValues: boolean[];
+}

@@ -1,11 +1,10 @@
 import { ComponentType, ReactElement, createElement, useMemo } from 'react';
-import {
-	matchPath as reactRouterMatchPath,
-	useLocation,
-	useParams,
-} from 'react-router-dom';
 import type { AuthZGuardProps } from 'lib/authz/components/AuthZGuard/AuthZGuard';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { matchRoute } from 'lib/router/matchRoute';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppParams } from 'lib/router/useAppParams';
 
 export type RouterContext = {
 	/**
@@ -45,20 +44,32 @@ export type WithAuthZOptions<P> = {
 	checks:
 		| BrandedPermission[]
 		| ((props: P, router: RouterContext) => BrandedPermission[]);
+	/**
+	 * Extra permissions to fetch in the same batch as `checks`, without gating on
+	 * them. `useAuthZ` coalesces everything requested in the same tick into one
+	 * request and caches per permission, so a component below the guard that
+	 * needs these resolves from cache instead of firing a second round trip and
+	 * flipping its controls once it lands.
+	 *
+	 * Never affects whether the content renders — a denial here is ignored.
+	 */
+	preloadChecks?:
+		| BrandedPermission[]
+		| ((props: P, router: RouterContext) => BrandedPermission[]);
 	fallback?: AuthZGuardProps['fallback'];
 	fallbackOnLoading?: AuthZGuardProps['fallbackOnLoading'];
 	failOpenOnError?: AuthZGuardProps['onFailRenderContent'];
 };
 
 function useStableParams(): Record<string, string | undefined> {
-	const params = useParams();
+	const params = useAppParams();
 	const paramsJson = JSON.stringify(params);
 	return useMemo(() => JSON.parse(paramsJson), [paramsJson]);
 }
 
 function useRouterContext(): RouterContext {
 	const params = useStableParams();
-	const { pathname, search } = useLocation();
+	const { pathname, search } = useAppLocation();
 	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
 
 	return useMemo(
@@ -69,11 +80,8 @@ function useRouterContext(): RouterContext {
 			matchPath: <Params extends Record<string, string>>(
 				pattern: string,
 			): Params | null => {
-				const match = reactRouterMatchPath<Params>(pathname, {
-					path: pattern,
-					exact: false,
-				});
-				return match?.params ?? null;
+				const match = matchRoute(pathname, pattern, { exact: false });
+				return (match?.params as Params) ?? null;
 			},
 		}),
 		[params, pathname, searchParams],
@@ -86,12 +94,21 @@ export function createAuthZHOC<P extends object>(
 	Component: ComponentType<P>,
 	opts: WithAuthZOptions<P>,
 ): ComponentType<P> {
-	const { checks, ...guardProps } = opts;
+	const { checks, preloadChecks, ...guardProps } = opts;
 
 	function Wrapped(props: P): ReactElement | null {
 		const router = useRouterContext();
 		const resolvedChecks =
 			typeof checks === 'function' ? checks(props, router) : checks;
+		const resolvedPreload =
+			typeof preloadChecks === 'function'
+				? preloadChecks(props, router)
+				: preloadChecks;
+
+		// Requested here rather than through the guard: `useAuthZ` coalesces
+		// everything asked for in the same tick into one request, so this rides
+		// along with the guard's own checks without being able to gate rendering.
+		useAuthZ(resolvedPreload ?? [], { enabled: !!resolvedPreload?.length });
 
 		return (
 			<Guard checks={resolvedChecks} {...guardProps}>

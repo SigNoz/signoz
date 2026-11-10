@@ -103,7 +103,7 @@ func (migration *addTelemetryTuples) Up(ctx context.Context, db *bun.DB) error {
 					INSERT INTO changelog (store, object_type, object_id, relation, _user, operation, ulid, inserted_at)
 					VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 					ON CONFLICT (store, ulid, object_type) DO NOTHING`,
-					storeID, tuple.objectType, objectID, tuple.relation, user, "TUPLE_OPERATION_WRITE", tupleID, now,
+					storeID, tuple.objectType, objectID, tuple.relation, user, 0, tupleID, now,
 				)
 				if err != nil {
 					return err

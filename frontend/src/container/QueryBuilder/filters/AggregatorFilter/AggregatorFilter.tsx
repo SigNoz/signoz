@@ -24,8 +24,8 @@ import { DataSource } from 'types/common/queryBuilder';
 import { ExtendedSelectOption } from 'types/common/select';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
-import { selectStyle } from '../QueryBuilderSearch/config';
-import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
+import { selectStyle } from '../QueryBuilderSearchV2/config';
+import OptionRenderer from '../OptionRenderer/OptionRenderer';
 // ** Types
 import { AgregatorFilterProps } from './AggregatorFilter.intefaces';
 

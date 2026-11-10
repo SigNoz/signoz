@@ -2,17 +2,22 @@ import { rest } from 'msw';
 
 import commonEnTranslation from '../../public/locales/en/common.json';
 import enTranslation from '../../public/locales/en/translation.json';
-import { allAlertChannels } from './__mockdata__/alerts';
-import { alertRulesFixture } from './__mockdata__/alert_rules';
+import {
+	notificationChannelsV2,
+	notificationChannelV2,
+} from './__mockdata__/alerts';
+import {
+	alertRulesFixture,
+	listRulesV3Response,
+	ruleViewsFixture,
+} from './__mockdata__/alert_rules';
 import { triggeredAlertsFixture } from './__mockdata__/triggered_alerts';
 import { billingSuccessResponse } from './__mockdata__/billing';
 import {
 	dashboardSuccessResponse,
 	getDashboardById,
 } from './__mockdata__/dashboards';
-import { explorerView } from './__mockdata__/explorer_views';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
-import { membersResponse } from './__mockdata__/members';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
 import { serviceSuccessResponse } from './__mockdata__/services';
 import { topLevelOperationSuccessResponse } from './__mockdata__/top_level_operations';
@@ -40,9 +45,6 @@ export const handlers = [
 			res(ctx.status(200), ctx.json(topLevelOperationSuccessResponse)),
 	),
 
-	rest.get('http://localhost/api/v1/user', (req, res, ctx) =>
-		res(ctx.status(200), ctx.json({ status: '200', data: membersResponse })),
-	),
 	rest.get(
 		'http://localhost/api/v3/autocomplete/attribute_keys',
 		(req, res, ctx) => {
@@ -139,32 +141,11 @@ export const handlers = [
 			return res(ctx.status(500));
 		},
 	),
-	rest.get('http://localhost/api/v1/loginPrecheck', (req, res, ctx) => {
-		const email = req.url.searchParams.get('email');
-		if (email === 'failEmail@signoz.io') {
-			return res(ctx.status(500));
-		}
-
-		return res(
-			ctx.status(200),
-			ctx.json({
-				status: 'success',
-				data: {
-					sso: true,
-					ssoUrl: '',
-					canSelfRegister: false,
-					isUser: true,
-					ssoError: '',
-				},
-			}),
-		);
-	}),
-
 	rest.get('http://localhost/api/v2/licenses', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(licensesSuccessResponse)),
 	),
 
-	rest.get('http://localhost/api/v1/billing', (req, res, ctx) =>
+	rest.get('http://localhost/api/v1/subscriptions', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(billingSuccessResponse)),
 	),
 
@@ -185,23 +166,6 @@ export const handlers = [
 		),
 	),
 
-	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
-		res(
-			ctx.status(200),
-			ctx.json({
-				status: 'success',
-				data: 'invite sent successfully',
-			}),
-		),
-	),
-	rest.put('http://localhost/api/v1/user/:id', (_, res, ctx) =>
-		res(
-			ctx.status(200),
-			ctx.json({
-				data: 'user updated successfully',
-			}),
-		),
-	),
 	rest.get(
 		'http://localhost/api/v3/autocomplete/aggregate_attributes',
 		(req, res, ctx) =>
@@ -212,20 +176,6 @@ export const handlers = [
 					data: { attributeKeys: null },
 				}),
 			),
-	),
-
-	rest.get('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
-		res(ctx.status(200), ctx.json(explorerView)),
-	),
-
-	rest.post('http://localhost/api/v1/explorer/views', (req, res, ctx) =>
-		res(
-			ctx.status(200),
-			ctx.json({
-				status: 'success',
-				data: '7731ece1-3fa3-4ed4-8b1c-58b4c28723b2',
-			}),
-		),
 	),
 
 	rest.post('http://localhost/api/v1/event', (req, res, ctx) =>
@@ -244,8 +194,31 @@ export const handlers = [
 		(req, res, ctx) => res(ctx.status(200), ctx.json(traceDetailResponse)),
 	),
 
-	rest.get('http://localhost/api/v1/channels', (_, res, ctx) =>
-		res(ctx.status(200), ctx.json({ data: allAlertChannels, status: 'success' })),
+	rest.get('http://localhost/api/v2/notification_channels', (req, res, ctx) => {
+		const query = req.url.searchParams.get('query')?.toLowerCase() ?? '';
+		const kind = req.url.searchParams.get('kind');
+		const channels = notificationChannelsV2.filter(
+			(channel) =>
+				(!query || channel.displayName.toLowerCase().includes(query)) &&
+				(!kind || channel.kind === kind),
+		);
+		return res(
+			ctx.status(200),
+			ctx.json({
+				data: { channels, total: channels.length },
+				status: 'success',
+			}),
+		);
+	}),
+	rest.get('http://localhost/api/v2/notification_channels/:id', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({ data: notificationChannelV2, status: 'success' }),
+		),
+	),
+	rest.delete(
+		'http://localhost/api/v2/notification_channels/:id',
+		(_, res, ctx) => res(ctx.status(204)),
 	),
 	rest.get('http://localhost/api/v1/alerts', (_, res, ctx) =>
 		res(
@@ -258,6 +231,47 @@ export const handlers = [
 			ctx.status(200),
 			ctx.json({ data: alertRulesFixture, status: 'success' }),
 		),
+	),
+	rest.get('http://localhost/api/v3/rules', (req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json(listRulesV3Response(alertRulesFixture, req.url.searchParams)),
+		),
+	),
+	rest.get('http://localhost/api/v2/rule_views', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({ data: { views: ruleViewsFixture }, status: 'success' }),
+		),
+	),
+	rest.post('http://localhost/api/v2/rule_views', async (req, res, ctx) => {
+		const body = (await req.json()) as Pick<
+			(typeof ruleViewsFixture)[number],
+			'name' | 'data'
+		>;
+		return res(
+			ctx.status(201),
+			ctx.json({
+				data: { ...ruleViewsFixture[0], ...body, id: 'new-view-id' },
+				status: 'success',
+			}),
+		);
+	}),
+	rest.put('http://localhost/api/v2/rule_views/:id', async (req, res, ctx) => {
+		const body = (await req.json()) as Pick<
+			(typeof ruleViewsFixture)[number],
+			'name' | 'data'
+		>;
+		return res(
+			ctx.status(200),
+			ctx.json({
+				data: { ...ruleViewsFixture[0], ...body, id: req.params.id },
+				status: 'success',
+			}),
+		);
+	}),
+	rest.delete('http://localhost/api/v2/rule_views/:id', (_, res, ctx) =>
+		res(ctx.status(204)),
 	),
 	rest.post('http://localhost/api/v2/rules', async (req, res, ctx) => {
 		const body = (await req.json()) as { alert?: string };
@@ -278,15 +292,6 @@ export const handlers = [
 	),
 	rest.delete('http://localhost/api/v2/rules/:id', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json({ status: 'success' })),
-	),
-	rest.delete('http://localhost/api/v1/channels/:id', (_, res, ctx) =>
-		res(
-			ctx.status(200),
-			ctx.json({
-				status: 'success',
-				data: 'notification channel successfully deleted',
-			}),
-		),
 	),
 	rest.get('http://localhost/locales/en/translation.json', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(enTranslation)),

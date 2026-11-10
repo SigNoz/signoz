@@ -1,4 +1,6 @@
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { PREFERENCE_SOURCE_PAGES } from 'providers/preferences/constants';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { FontSize, OptionsQuery } from './types';
@@ -11,6 +13,15 @@ export const defaultOptionsQuery: OptionsQuery = {
 	maxLines: 1,
 	format: 'raw',
 	fontSize: FontSize.SMALL,
+};
+
+export const SOURCE_PAGE_SIGNAL: Record<
+	(typeof PREFERENCE_SOURCE_PAGES)[number],
+	DataSource
+> = {
+	[SavedviewtypesSourceDTO.logs]: DataSource.LOGS,
+	[SavedviewtypesSourceDTO.traces]: DataSource.TRACES,
+	[SavedviewtypesSourceDTO.ai_observability]: DataSource.TRACES,
 };
 
 export const EXCLUDED_COLUMNS: Record<DataSource, string[]> = {
@@ -56,7 +67,7 @@ export function dedupeColumnsByCompositeKey(
 	const seen = new Set<string>();
 	let hasDuplicate = false;
 	const deduped = columns.filter((c) => {
-		const key = buildCompositeKey(c.name, c.fieldContext);
+		const key = buildCompositeKey(c.name, c.fieldContext, c.fieldDataType);
 		if (seen.has(key)) {
 			hasDuplicate = true;
 			return false;

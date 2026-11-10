@@ -10,7 +10,7 @@ from wiremock.client import (
 )
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license, create_active_user
 from fixtures.gateway import (
     TEST_KEY_ID,
     common_gateway_headers,
@@ -43,21 +43,13 @@ def test_create_editor_user(
     """Invite and register an editor user for gateway API tests."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    invite_response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": GATEWAY_APIS_EDITOR_EMAIL, "role": "EDITOR"},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
+    create_active_user(
+        signoz,
+        admin_token,
+        email=GATEWAY_APIS_EDITOR_EMAIL,
+        role="signoz-editor",
+        password=GATEWAY_APIS_EDITOR_PASSWORD,
     )
-    assert invite_response.status_code == HTTPStatus.CREATED
-    reset_token = invite_response.json()["data"]["token"]
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": GATEWAY_APIS_EDITOR_PASSWORD, "token": reset_token},
-        timeout=5,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
 
 
 # ---------------------------------------------------------------------------
@@ -183,6 +175,61 @@ def test_get_ingestion_keys(
     assert data["keys"][0]["id"] == TEST_KEY_ID
     assert data["keys"][0]["name"] == "my-test-key"
     assert data["_pagination"]["total"] == 1
+
+
+def test_get_ingestion_key_by_id(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
+    get_token: Callable[[str, str], str],
+) -> None:
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
+
+    gateway_url = f"/v1/workspaces/me/keys/{TEST_KEY_ID}"
+
+    make_http_mocks(
+        signoz.gateway,
+        [
+            Mapping(
+                request=MappingRequest(
+                    method=HttpMethods.GET,
+                    url=gateway_url,
+                    headers=common_gateway_headers(),
+                ),
+                response=MappingResponse(
+                    status=200,
+                    json_body={
+                        "status": "success",
+                        "data": {
+                            "id": TEST_KEY_ID,
+                            "name": "my-test-key",
+                            "value": "secret",
+                            "expires_at": "2030-01-01T00:00:00Z",
+                            "tags": ["env:test"],
+                            "created_at": "2024-01-01T00:00:00Z",
+                            "updated_at": "2024-01-01T00:00:00Z",
+                            "workspace_id": "ws-1",
+                        },
+                    },
+                ),
+                persistent=False,
+            ),
+        ],
+    )
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}"),
+        headers={"Authorization": f"Bearer {editor_token}"},
+        timeout=10,
+    )
+
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
+
+    data = response.json()["data"]
+    assert data["id"] == TEST_KEY_ID
+    assert data["name"] == "my-test-key"
+    assert data["workspace_id"] == "ws-1"
+    assert data["tags"] == ["env:test"]
 
 
 def test_get_ingestion_keys_custom_pagination(

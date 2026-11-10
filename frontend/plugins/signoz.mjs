@@ -13,6 +13,10 @@ import noAntdComponents from './rules/no-antd-components.mjs';
 import noSignozhqUiBarrel from './rules/no-signozhq-ui-barrel.mjs';
 import noCssModuleBracketAccess from './rules/no-css-module-bracket-access.mjs';
 import noDashboardFetchOutsideRoot from './rules/no-dashboard-fetch-outside-root.mjs';
+import noConditionalTextNodesWithSiblings from './rules/no-conditional-text-nodes-with-siblings.mjs';
+import noReturnTextNodes from './rules/no-return-text-nodes.mjs';
+import noMswInStoryFile from './rules/no-msw-in-story-file.mjs';
+import noDirectReactRouterImport from './rules/no-direct-react-router-import.mjs';
 
 export default {
 	meta: {
@@ -27,5 +31,9 @@ export default {
 		'no-signozhq-ui-barrel': noSignozhqUiBarrel,
 		'no-css-module-bracket-access': noCssModuleBracketAccess,
 		'no-dashboard-fetch-outside-root': noDashboardFetchOutsideRoot,
+		'no-conditional-text-nodes-with-siblings': noConditionalTextNodesWithSiblings,
+		'no-return-text-nodes': noReturnTextNodes,
+		'no-msw-in-story-file': noMswInStoryFile,
+		'no-direct-react-router-import': noDirectReactRouterImport,
 	},
 };

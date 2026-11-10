@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
-import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { navigate } from 'lib/router/navigation';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Drawer } from 'antd';
 import ROUTES from 'constants/routes';
 import { Maximize2, Plus, X } from '@signozhq/icons';
@@ -12,8 +12,6 @@ import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
 
 export default function AIAssistantDrawer(): JSX.Element {
-	const history = useHistory();
-
 	const isDrawerOpen = useAIAssistantStore((s) => s.isDrawerOpen);
 	const activeConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
@@ -28,10 +26,10 @@ export default function AIAssistantDrawer(): JSX.Element {
 			return;
 		}
 		closeDrawer();
-		history.push(
+		navigate(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
 		);
-	}, [activeConversationId, closeDrawer, history]);
+	}, [activeConversationId, closeDrawer]);
 
 	const handleNewConversation = useCallback(() => {
 		startNewConversation();
@@ -53,22 +51,25 @@ export default function AIAssistantDrawer(): JSX.Element {
 					</div>
 
 					<div>
-						<TooltipSimple title="New conversation">
+						<Tooltip title="New conversation">
 							<Button
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
 								onClick={handleNewConversation}
 								aria-label="New conversation"
 							>
 								<Plus size={16} />
 							</Button>
-						</TooltipSimple>
+						</Tooltip>
 
-						<TooltipSimple title="Open full screen">
+						<Tooltip title="Open full screen">
 							<Button
+								disabledTooltip="Start a conversation first"
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
 								onClick={handleExpand}
 								disabled={!activeConversationId}
@@ -76,19 +77,20 @@ export default function AIAssistantDrawer(): JSX.Element {
 							>
 								<Maximize2 size={16} />
 							</Button>
-						</TooltipSimple>
+						</Tooltip>
 
-						<TooltipSimple title="Close">
+						<Tooltip title="Close">
 							<Button
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
 								onClick={closeDrawer}
 								aria-label="Close drawer"
 							>
 								<X size={16} />
 							</Button>
-						</TooltipSimple>
+						</Tooltip>
 					</div>
 				</div>
 			}

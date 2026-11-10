@@ -1,10 +1,12 @@
 import { Typography } from '@signozhq/ui/typography';
 
+import { ConditionKey } from 'container/LLMObservability/AttributeMapping/types';
+
 import styles from './ConditionsTooltip.module.scss';
 
 interface ConditionsTooltipProps {
-	attributes: string[];
-	resource: string[];
+	attributes: ConditionKey[];
+	resource: ConditionKey[];
 }
 
 function ConditionsTooltip({
@@ -33,8 +35,8 @@ function ConditionsTooltip({
 					</Typography.Text>
 					<div className={styles.keyList}>
 						{attributes.map((key) => (
-							<code key={key} className={styles.key}>
-								{key}
+							<code key={`${key.origin}-${key.value}`} className={styles.key}>
+								{key.value}
 							</code>
 						))}
 					</div>
@@ -47,8 +49,8 @@ function ConditionsTooltip({
 					</Typography.Text>
 					<div className={styles.keyList}>
 						{resource.map((key) => (
-							<code key={key} className={styles.key}>
-								{key}
+							<code key={`${key.origin}-${key.value}`} className={styles.key}>
+								{key.value}
 							</code>
 						))}
 					</div>

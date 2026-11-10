@@ -21,15 +21,12 @@ interface MockQueryResult {
 }
 
 // Mocks
-jest.mock(
-	'container/DashboardContainer/visualization/charts/BarChart/BarChart',
-	() => ({
-		__esModule: true,
-		default: jest
-			.fn()
-			.mockImplementation(() => <div data-testid="bar-chart-mock" />),
-	}),
-);
+jest.mock('lib/visualization/charts/BarChart/BarChart', () => ({
+	__esModule: true,
+	default: jest
+		.fn()
+		.mockImplementation(() => <div data-testid="bar-chart-mock" />),
+}));
 
 jest.mock('components/CeleryTask/useGetGraphCustomSeries', () => ({
 	useGetGraphCustomSeries: (): { getCustomSeries: jest.Mock } => ({
@@ -43,7 +40,7 @@ jest.mock('components/CeleryTask/useNavigateToExplorer', () => ({
 	}),
 }));
 
-jest.mock('container/GridCardLayout/useGraphClickToShowButton', () => ({
+jest.mock('container/WidgetCard/hooks/useGraphClickToShowButton', () => ({
 	useGraphClickToShowButton: (): {
 		componentClick: boolean;
 		htmlRef: HTMLElement | null;
@@ -53,7 +50,7 @@ jest.mock('container/GridCardLayout/useGraphClickToShowButton', () => ({
 	}),
 }));
 
-jest.mock('container/GridCardLayout/useNavigateToExplorerPages', () => ({
+jest.mock('container/WidgetCard/hooks/useNavigateToExplorerPages', () => ({
 	__esModule: true,
 	default: (): { navigateToExplorerPages: jest.Mock } => ({
 		navigateToExplorerPages: jest.fn(),

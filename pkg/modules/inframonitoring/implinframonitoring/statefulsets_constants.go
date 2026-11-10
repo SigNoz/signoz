@@ -35,8 +35,7 @@ var statefulSetsTableMetricNamesList = []string{
 	"k8s.statefulset.current_pods",
 }
 
-// Carried forward from v1 statefulSetAttrsToEnrich
-// (pkg/query-service/app/inframetrics/statefulsets.go:29-33).
+// Carried forward from v1 statefulSetAttrsToEnrich (removed).
 var statefulSetAttrKeysForMetadata = []string{
 	"k8s.statefulset.name",
 	"k8s.namespace.name",

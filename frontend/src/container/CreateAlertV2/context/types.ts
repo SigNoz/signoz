@@ -99,6 +99,8 @@ export enum AlertThresholdOperator {
 	IS_BELOW = 'below',
 	IS_EQUAL_TO = 'equal',
 	IS_NOT_EQUAL_TO = 'not_equal',
+	IS_ABOVE_OR_EQUAL_TO = 'above_or_equal',
+	IS_BELOW_OR_EQUAL_TO = 'below_or_equal',
 	ABOVE_BELOW = 'outside_bounds',
 }
 
@@ -117,21 +119,9 @@ export interface AlertThresholdState {
 	// canonical enum value.
 	operator: AlertThresholdOperator | string;
 	matchType: AlertThresholdMatchType | string;
-	evaluationWindow: string;
 	algorithm: string;
 	seasonality: string;
 	thresholds: Threshold[];
-}
-
-export enum TimeDuration {
-	ONE_MINUTE = '1m0s',
-	FIVE_MINUTES = '5m0s',
-	TEN_MINUTES = '10m0s',
-	FIFTEEN_MINUTES = '15m0s',
-	ONE_HOUR = '1h0m0s',
-	THREE_HOURS = '3h0m0s',
-	FOUR_HOURS = '4h0m0s',
-	TWENTY_FOUR_HOURS = '24h0m0s',
 }
 
 export enum Algorithm {
@@ -148,7 +138,6 @@ export type AlertThresholdAction =
 	| { type: 'SET_SELECTED_QUERY'; payload: string }
 	| { type: 'SET_OPERATOR'; payload: AlertThresholdOperator }
 	| { type: 'SET_MATCH_TYPE'; payload: AlertThresholdMatchType }
-	| { type: 'SET_EVALUATION_WINDOW'; payload: string }
 	| { type: 'SET_ALGORITHM'; payload: string }
 	| { type: 'SET_SEASONALITY'; payload: string }
 	| { type: 'SET_THRESHOLDS'; payload: Threshold[] }

@@ -3,11 +3,11 @@ import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import cx from 'classnames';
-import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
-import QuickFilters from 'components/QuickFilters/QuickFilters';
-import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
+import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -50,9 +50,13 @@ function LogsExplorer(): JSX.Element {
 	// Get panel type from URL
 	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(
-		() => panelTypeToExplorerView[panelTypesFromUrl],
-	);
+	const selectedView = panelTypeToExplorerView[panelTypesFromUrl];
+
+	useEffect(() => {
+		if (selectedView !== ExplorerViews.LIST) {
+			setShowLiveLogs(false);
+		}
+	}, [selectedView]);
 
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
@@ -73,6 +77,8 @@ function LogsExplorer(): JSX.Element {
 	} = useQueryBuilder();
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+
+	const quickFilterFieldApis = useSignalFieldApis();
 
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
@@ -113,15 +119,10 @@ function LogsExplorer(): JSX.Element {
 			);
 
 			handleSetConfig(nextPanelType, DataSource.LOGS);
-			setSelectedView(view);
-
-			if (view !== ExplorerViews.LIST) {
-				setShowLiveLogs(false);
-			}
 
 			handleExplorerTabChange(nextPanelType, querySearchParameters);
 		},
-		[handleSetConfig, handleExplorerTabChange, setSelectedView],
+		[handleSetConfig, handleExplorerTabChange],
 	);
 
 	// ─── AI Assistant page actions (only when license feature is on) ───────────
@@ -222,20 +223,18 @@ function LogsExplorer(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<EventSourceProvider>
-				<div
-					className={cx('logs-module-page', showFilters ? 'filter-visible' : '')}
+				<QuickFiltersLayout
+					className="logs-module-page"
+					showFilters={showFilters}
+					onToggleFilters={handleFilterVisibilityChange}
+					savedViewProps={{ source: SavedviewtypesSourceDTO.logs }}
+					quickFilterProps={{
+						className: 'qf-logs-explorer',
+						quickFilterSource: QuickFiltersSource.LOGS_EXPLORER,
+						useFieldApis: quickFilterFieldApis,
+					}}
 				>
-					{showFilters && (
-						<section className={cx('log-quick-filter-left-section')}>
-							<QuickFilters
-								className="qf-logs-explorer"
-								signal={SignalType.LOGS}
-								source={QuickFiltersSource.LOGS_EXPLORER}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-							/>
-						</section>
-					)}
-					<section className={cx('log-module-right-section')}>
+					<section className="log-module-right-section">
 						<Toolbar
 							showAutoRefresh={false}
 							leftActions={
@@ -268,9 +267,7 @@ function LogsExplorer(): JSX.Element {
 
 						<div className="log-explorer-query-container">
 							<div>
-								<ExplorerCard sourcepage={DataSource.LOGS}>
-									<LogExplorerQuerySection selectedView={selectedView} />
-								</ExplorerCard>
+								<LogExplorerQuerySection selectedView={selectedView} />
 							</div>
 							<div className="logs-explorer-views">
 								{isCancelled ? (
@@ -288,7 +285,7 @@ function LogsExplorer(): JSX.Element {
 							</div>
 						</div>
 					</section>
-				</div>
+				</QuickFiltersLayout>
 			</EventSourceProvider>
 		</Sentry.ErrorBoundary>
 	);

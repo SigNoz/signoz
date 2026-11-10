@@ -71,6 +71,7 @@ func (name Kind) Enum() []any {
 		KindFactorAPIKey,
 		KindLicense,
 		KindSubscription,
+		KindDeploymentHost,
 		KindLogs,
 		KindTraces,
 		KindMetrics,
@@ -78,6 +79,7 @@ func (name Kind) Enum() []any {
 		KindMeterMetrics,
 		KindLogsField,
 		KindTracesField,
+		KindMetricsField,
 	}
 }
 

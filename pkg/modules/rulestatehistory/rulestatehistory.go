@@ -23,7 +23,8 @@ type Module interface {
 	GetHistoryStats(context.Context, string, rulestatehistorytypes.Query) (rulestatehistorytypes.GettableRuleStateHistoryStats, error)
 
 	// GetHistoryTimeline returns a time-ordered list of rule state history entries and a total count
-	// for the given query, suitable for paginated timeline views.
+	// for the given query, suitable for paginated timeline views. For logs/traces rules, each entry
+	// carries a related logs/traces explorer link scoped to the entry's labels and evaluation window.
 	GetHistoryTimeline(context.Context, valuer.UUID, string, rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistory, uint64, error)
 
 	// GetHistoryFilterKeys returns the available filter keys for rule state history queries.
@@ -33,6 +34,8 @@ type Module interface {
 	GetHistoryFilterValues(context.Context, valuer.UUID, string, string, rulestatehistorytypes.Query, string, int64) (*telemetrytypes.GettableFieldValues, error)
 
 	// GetHistoryContributors returns the top contributors to trigger alert, for the given query.
+	// For logs/traces rules, each contributor carries a related logs/traces explorer link scoped
+	// to the contributor's labels and the queried range.
 	GetHistoryContributors(context.Context, valuer.UUID, string, rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistoryContributor, error)
 
 	// GetHistoryOverallStatus returns the overall status windows for rule state history,

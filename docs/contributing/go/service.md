@@ -70,16 +70,16 @@ The instrumentation SDK (`pkg/instrumentation/sdk.go`) is idle while running but
 ```go
 // pkg/instrumentation/sdk.go
 
-func (i *SDK) Start(ctx context.Context) error {
-    <-i.startCh
+func (sdk *SDK) Start(ctx context.Context) error {
+    <-sdk.startCh
     return nil
 }
 
-func (i *SDK) Stop(ctx context.Context) error {
-    close(i.startCh)
+func (sdk *SDK) Stop(ctx context.Context) error {
+    close(sdk.startCh)
     return errors.Join(
-        i.sdk.Shutdown(ctx),
-        i.meterProviderShutdownFunc(ctx),
+        sdk.sdk.Shutdown(ctx),
+        sdk.meterProviderShutdownFunc(ctx),
     )
 }
 ```
@@ -191,14 +191,14 @@ A standalone service only has the `factory.Service` lifecycle i.e it does not se
         // ... dependencies ...
     ) user.Service {
         return &service{
-            settings: factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/pkg/modules/user"),
+            settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user"),
             // ... dependencies ...
             stopC:    make(chan struct{}),
         }
     }
 
-    func (s *service) Start(ctx context.Context) error { ... }
-    func (s *service) Stop(ctx context.Context) error { ... }
+    func (service *service) Start(ctx context.Context) error { ... }
+    func (service *service) Stop(ctx context.Context) error { ... }
     ```
 
 ### Provider that is also a service

@@ -1,3 +1,12 @@
+import anselmEickhoffUrl from '@/assets/Images/users/anselm.jpg';
+import danielSchellUrl from '@/assets/Images/users/daniel.webp';
+import dhruvGargUrl from '@/assets/Images/users/dhruv-garg.webp';
+import goFrendiGunawanUrl from '@/assets/Images/users/go-frendi.webp';
+import pranayNarangUrl from '@/assets/Images/users/pranay-narang.webp';
+import sheheryarSewaniUrl from '@/assets/Images/users/shey.webp';
+import subomiOluwalanaUrl from '@/assets/Images/users/subomi-oluwalana.webp';
+import vivekBhaktaUrl from '@/assets/Images/users/vivek-bhakta.webp';
+
 export const infoData = [
 	{
 		id: 'infoBlock-1',
@@ -43,7 +52,7 @@ export const enterpriseGradeValuesData = [
 export const customerStoriesData = [
 	{
 		key: 'story-subomi-oluwalana',
-		avatar: 'https://signoz.io/img/users/subomi-oluwalana.webp',
+		avatar: subomiOluwalanaUrl,
 		personName: 'Subomi Oluwalana',
 		role: 'Founder & CEO at Convoy',
 		customerName: 'Convoy',
@@ -54,7 +63,7 @@ export const customerStoriesData = [
 	},
 	{
 		key: 'story-dhruv-garg',
-		avatar: 'https://signoz.io/img/users/dhruv-garg.webp',
+		avatar: dhruvGargUrl,
 		personName: 'Dhruv Garg',
 		role: 'Tech Lead at Nudge',
 		customerName: 'Nudge',
@@ -65,7 +74,7 @@ export const customerStoriesData = [
 	},
 	{
 		key: 'story-vivek-bhakta',
-		avatar: 'https://signoz.io/img/users/vivek-bhakta.webp',
+		avatar: vivekBhaktaUrl,
 		personName: 'Vivek Bhakta',
 		role: 'CTO at Wombo AI',
 		customerName: 'Wombo AI',
@@ -75,7 +84,7 @@ export const customerStoriesData = [
 	},
 	{
 		key: 'story-pranay-narang',
-		avatar: 'https://signoz.io/img/users/pranay-narang.webp',
+		avatar: pranayNarangUrl,
 		personName: 'Pranay Narang',
 		role: 'Engineering at Azodha',
 		customerName: 'Azodha',
@@ -85,7 +94,7 @@ export const customerStoriesData = [
 	},
 	{
 		key: 'story-Sheheryar-Sewani',
-		avatar: 'https://signoz.io/img/users/shey.webp',
+		avatar: sheheryarSewaniUrl,
 		personName: 'Sheheryar Sewani',
 		role: 'Seasoned Rails Dev & Founder',
 		customerName: '',
@@ -96,7 +105,7 @@ export const customerStoriesData = [
 	},
 	{
 		key: 'story-daniel-schell',
-		avatar: 'https://signoz.io/img/users/daniel.webp',
+		avatar: danielSchellUrl,
 		personName: 'Daniel Schell',
 		role: 'Founder & CTO at Airlockdigital',
 		customerName: 'Airlockdigital',
@@ -106,7 +115,7 @@ export const customerStoriesData = [
 	},
 	{
 		key: 'c-story-6',
-		avatar: 'https://signoz.io/img/users/go-frendi.webp',
+		avatar: goFrendiGunawanUrl,
 		personName: 'Go Frendi Gunawan',
 		role: 'Data Engineer at Ctlyst.id',
 		customerName: 'Ctlyst.id',
@@ -116,7 +125,7 @@ export const customerStoriesData = [
 	},
 	{
 		key: 'story-anselm-eickhoff',
-		avatar: 'https://signoz.io/img/users/anselm.jpg',
+		avatar: anselmEickhoffUrl,
 		personName: 'Anselm Eickhoff',
 		role: 'Software Architect',
 		customerName: '',

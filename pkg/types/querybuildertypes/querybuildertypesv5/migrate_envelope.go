@@ -44,6 +44,13 @@ func WrapInV5Envelope(name string, queryMap map[string]any, queryType string) ma
 		}
 	}
 
+	// Carry the query source (e.g. "meter"): a metrics-shaped query against a non-default
+	// data source, stored separately from dataSource. Only set when present so a query
+	// without one stays source-unspecified.
+	if source, ok := queryMap["source"].(string); ok && source != "" {
+		v5Query["source"] = source
+	}
+
 	if stepInterval, ok := queryMap["stepInterval"]; ok {
 		v5Query["stepInterval"] = stepInterval
 	}

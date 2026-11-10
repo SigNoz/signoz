@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/perses/spec/go/dashboard"
 	"github.com/perses/spec/go/dashboard/variable"
@@ -237,6 +238,24 @@ func TestConvertV1PanelsSkipsUnknownType(t *testing.T) {
 	require.NoError(t, d.errIfHasMalformedFields())
 }
 
+// TestConvertV1PanelsKeepsFirstOfDuplicateIDs verifies that when two widgets share
+// an id, the first is kept and later ones dropped — matching v1's widgets.find()
+// lookup, which returns the first match.
+func TestConvertV1PanelsKeepsFirstOfDuplicateIDs(t *testing.T) {
+	widgets := []any{
+		map[string]any{"id": "dup", "panelTypes": "graph", "title": "First", "query": singleLogsBuilderQuery()},
+		map[string]any{"id": "dup", "panelTypes": "graph", "title": "Second", "query": singleLogsBuilderQuery()},
+	}
+
+	d := &v1Decoder{}
+	panels := d.convertV1Panels(widgets)
+	require.NoError(t, d.errIfHasMalformedFields())
+
+	require.Len(t, panels, 1)
+	require.Contains(t, panels, "dup")
+	assert.Equal(t, "First", panels["dup"].Spec.Display.Name)
+}
+
 func TestConvertGraphWidgetToTimeSeriesPanel(t *testing.T) {
 	widget := map[string]any{
 		"id":                 "widget-1",
@@ -429,6 +448,11 @@ func TestResolveV1Image(t *testing.T) {
 		assert.Equal(t, passthrough, resolveV1Image(passthrough))
 	}
 
+	// A percent-encoded inline SVG icon is preserved by re-encoding it to base64
+	// (the form v2 accepts) rather than being dropped to the default.
+	svgResolved := resolveV1Image("data:image/svg+xml,%3Csvg%2F%3E")
+	assert.Equal(t, "data:image/svg+xml;base64,PHN2Zy8+", svgResolved)
+
 	// A value that v2 would reject (a URL, a corrupt data URI) falls back to the
 	// default eight-ball icon rather than failing the dashboard migration.
 	for _, invalid := range []string{
@@ -437,6 +461,66 @@ func TestResolveV1Image(t *testing.T) {
 		"just-some-string",
 	} {
 		assert.Equal(t, "/assets/Icons/eight-ball", resolveV1Image(invalid))
+	}
+}
+
+func TestReencodeInlineSVGImage(t *testing.T) {
+	testCases := []struct {
+		scenario      string
+		image         string
+		wantRewritten bool
+		want          string
+	}{
+		{
+			scenario:      "percent-encoded inline svg",
+			image:         "data:image/svg+xml,%3Csvg%2F%3E",
+			wantRewritten: true,
+			want:          "data:image/svg+xml;base64,PHN2Zy8+",
+		},
+		{
+			scenario:      "percent-encoded inline svg with charset param",
+			image:         "data:image/svg+xml;charset=utf-8,%3Csvg%2F%3E",
+			wantRewritten: true,
+			want:          "data:image/svg+xml;base64,PHN2Zy8+",
+		},
+		{
+			scenario:      "already base64 svg is left unchanged",
+			image:         "data:image/svg+xml;base64,PHN2Zy8+",
+			wantRewritten: false,
+			want:          "data:image/svg+xml;base64,PHN2Zy8+",
+		},
+		{
+			scenario:      "non-svg data uri is left unchanged",
+			image:         "data:image/png,%89PNG",
+			wantRewritten: false,
+			want:          "data:image/png,%89PNG",
+		},
+		{
+			scenario:      "an icon path is left unchanged",
+			image:         "/assets/Icons/eight-ball",
+			wantRewritten: false,
+			want:          "/assets/Icons/eight-ball",
+		},
+		{
+			scenario:      "a longer media type merely sharing the svg prefix is left unchanged",
+			image:         "data:image/svg+xmlish,%3Csvg%2F%3E",
+			wantRewritten: false,
+			want:          "data:image/svg+xmlish,%3Csvg%2F%3E",
+		},
+		{
+			scenario:      "empty is left unchanged",
+			image:         "",
+			wantRewritten: false,
+			want:          "",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			got, rewritten := ReencodeInlineSVGImage(testCase.image)
+			assert.Equal(t, testCase.wantRewritten, rewritten)
+			assert.Equal(t, testCase.want, got)
+		})
 	}
 }
 
@@ -457,6 +541,144 @@ func TestConvertV1ToV2ReplacesInvalidImage(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, dashboard)
 	assert.Equal(t, "/assets/Icons/eight-ball", dashboard.Image)
+}
+
+func TestFoldReduceToIntoMetricAggregations(t *testing.T) {
+	// A metric query's top-level reduceTo lands on its aggregation (where v5 wants it).
+	query := map[string]any{
+		"dataSource":   "metrics",
+		"reduceTo":     "sum",
+		"aggregations": []any{map[string]any{"metricName": "m", "spaceAggregation": "sum"}},
+	}
+	foldReduceToIntoMetricAggregations(query)
+	assert.Equal(t, "sum", query["aggregations"].([]any)[0].(map[string]any)["reduceTo"])
+
+	// An aggregation that already carries a reduceTo is not overwritten.
+	query = map[string]any{
+		"dataSource":   "metrics",
+		"reduceTo":     "sum",
+		"aggregations": []any{map[string]any{"metricName": "m", "reduceTo": "avg"}},
+	}
+	foldReduceToIntoMetricAggregations(query)
+	assert.Equal(t, "avg", query["aggregations"].([]any)[0].(map[string]any)["reduceTo"])
+}
+
+func TestEnsureMetricReduceTo(t *testing.T) {
+	testCases := []struct {
+		scenario         string
+		panelKind        PanelPluginKind
+		queryData        map[string]any
+		expectedReduceTo any
+	}{
+		{
+			scenario:  "counter queried as a rate reduces to sum",
+			panelKind: PanelKindNumber,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "rate", "spaceAggregation": "sum"}},
+			},
+			expectedReduceTo: "sum",
+		},
+		{
+			scenario:  "counter queried as an increase reduces to sum",
+			panelKind: PanelKindTable,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "increase", "spaceAggregation": "sum"}},
+			},
+			expectedReduceTo: "sum",
+		},
+		{
+			scenario:  "percentile space aggregation marks a histogram and reduces to avg",
+			panelKind: PanelKindNumber,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "rate", "spaceAggregation": "p95"}},
+			},
+			expectedReduceTo: "avg",
+		},
+		{
+			scenario:  "gauge reduces to last",
+			panelKind: PanelKindPieChart,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "avg", "spaceAggregation": "avg"}},
+			},
+			expectedReduceTo: "last",
+		},
+		{
+			scenario:  "a reduceTo the author already chose survives",
+			panelKind: PanelKindNumber,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "rate", "spaceAggregation": "sum", "reduceTo": "median"}},
+			},
+			expectedReduceTo: "median",
+		},
+		{
+			scenario:  "a reduceTo outside the enum is replaced",
+			panelKind: PanelKindNumber,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "avg", "spaceAggregation": "sum", "reduceTo": "not-an-operator"}},
+			},
+			expectedReduceTo: "last",
+		},
+		{
+			scenario:  "a time series panel needs no reduceTo",
+			panelKind: PanelKindTimeSeries,
+			queryData: map[string]any{
+				"dataSource":   "metrics",
+				"aggregations": []any{map[string]any{"metricName": "m", "timeAggregation": "rate", "spaceAggregation": "sum"}},
+			},
+			expectedReduceTo: nil,
+		},
+		{
+			scenario:  "reduceTo is metrics-only, so a logs query is untouched",
+			panelKind: PanelKindNumber,
+			queryData: map[string]any{
+				"dataSource":   "logs",
+				"aggregations": []any{map[string]any{"expression": "count()"}},
+			},
+			expectedReduceTo: nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.scenario, func(t *testing.T) {
+			ensureMetricReduceTo(testCase.queryData, testCase.panelKind)
+
+			aggs, ok := testCase.queryData["aggregations"].([]any)
+			require.True(t, ok)
+			require.Len(t, aggs, 1)
+			agg, ok := aggs[0].(map[string]any)
+			require.True(t, ok)
+
+			assert.Equal(t, testCase.expectedReduceTo, agg["reduceTo"])
+		})
+	}
+}
+
+func TestMapV1SelectFieldsPicksBySignal(t *testing.T) {
+	d := &v1Decoder{}
+	// A list widget carrying both arrays; the query's signal must decide which wins.
+	widget := func(dataSource string) map[string]any {
+		return map[string]any{
+			"query": map[string]any{
+				"builder": map[string]any{"queryData": []any{map[string]any{"dataSource": dataSource}}},
+			},
+			"selectedLogFields":    []any{map[string]any{"name": "log_field"}},
+			"selectedTracesFields": []any{map[string]any{"name": "trace_field"}},
+		}
+	}
+
+	logs := d.mapV1SelectFields(widget("logs"))
+	require.Len(t, logs, 1)
+	assert.Equal(t, "log_field", logs[0].Name)
+
+	traces := d.mapV1SelectFields(widget("traces"))
+	require.Len(t, traces, 1)
+	assert.Equal(t, "trace_field", traces[0].Name)
 }
 
 func TestConvertV1ToV2RejectsAlreadyV2(t *testing.T) {
@@ -1535,6 +1757,82 @@ func TestConvertV1WidgetQueryRewritesValueOrderKeyAfterDefaultAggregation(t *tes
 	assert.Equal(t, "count()", spec.Order[0].Key.Name, "#SIGNOZ_VALUE resolves to the injected default aggregation")
 }
 
+// A metric query ordering by a value alias the v5 validator rejects (here the raw
+// metric name, never enumerated anywhere) is rewritten to the canonical aggregation
+// key, while a genuine group-by order key is left alone. Guards the allowlist
+// approach: validity is derived from the query, not a hardcoded set of bad keys.
+func TestConvertV1WidgetQueryRewritesUnknownMetricValueOrderKey(t *testing.T) {
+	widget := map[string]any{
+		"id":         "m-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":    "A",
+						"expression":   "A",
+						"dataSource":   "metrics",
+						"aggregations": []any{map[string]any{"metricName": "http_requests_total", "spaceAggregation": "sum"}},
+						"groupBy":      []any{map[string]any{"key": "service.name", "dataType": "string", "type": "resource"}},
+						"orderBy": []any{
+							map[string]any{"columnName": "http_requests_total", "order": "desc"},
+							map[string]any{"columnName": "service.name", "order": "asc"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
+	require.True(t, ok, "metrics query should dispatch to MetricAggregation, got %T", wrapper.Spec)
+
+	require.Len(t, spec.Order, 2)
+	assert.Equal(t, "sum(http_requests_total)", spec.Order[0].Key.Name, "unknown value alias rewritten to the aggregation key")
+	assert.Equal(t, "service.name", spec.Order[1].Key.Name, "valid group-by order key left alone")
+}
+
+// A v1 meter query is dataSource "metrics" with a separate source "meter". The signal
+// maps to metrics, and the meter source must survive onto the v5 spec — otherwise the
+// panel migrates as a plain metrics query and reads the wrong data.
+func TestConvertV1WidgetQueryCarriesMeterSource(t *testing.T) {
+	widget := map[string]any{
+		"id":         "meter-1",
+		"panelTypes": "graph",
+		"query": map[string]any{
+			"queryType": "builder",
+			"builder": map[string]any{
+				"queryData": []any{
+					map[string]any{
+						"queryName":    "A",
+						"expression":   "A",
+						"dataSource":   "metrics",
+						"source":       "meter",
+						"aggregations": []any{map[string]any{"metricName": "signoz.meter.log.size", "spaceAggregation": "sum"}},
+					},
+				},
+			},
+		},
+	}
+
+	queries := (&v1Decoder{}).convertV1WidgetQuery(widget, PanelKindTimeSeries)
+	require.Len(t, queries, 1)
+
+	wrapper, ok := queries[0].Spec.Plugin.Spec.(*BuilderQuerySpec)
+	require.True(t, ok)
+	spec, ok := wrapper.Spec.(qb.QueryBuilderQuery[qb.MetricAggregation])
+	require.True(t, ok, "meter query should dispatch to MetricAggregation, got %T", wrapper.Spec)
+
+	assert.Equal(t, telemetrytypes.SignalMetrics, spec.Signal, "signal maps from dataSource")
+	assert.Equal(t, telemetrytypes.SourceMeter, spec.Source, "meter source carried onto the v5 spec")
+}
+
 func TestConvertV1WidgetQueryInjectsCountForNoopOnAggregationPanel(t *testing.T) {
 	// A logs query with the list-style "noop" operator placed on an aggregation
 	// panel (graph). createAggregationsShapeSafe drops noop, leaving no aggregation;
@@ -1881,6 +2179,26 @@ func TestConvertV1LayoutsClampsXBounds(t *testing.T) {
 	assert.Equal(t, 6, grid.Items[1].X) // x+w=16>12 shifted left to 12-6
 }
 
+func TestConvertV1LayoutsClampsOverwideWidth(t *testing.T) {
+	// A widget wider than the 12-col grid (e.g. carried over from a 24-col v1 grid)
+	// can't be shifted to fit, so its width is clamped so x+width = grid width —
+	// otherwise it overflows and v2 validation rejects it.
+	data := StorableDashboardData{
+		"widgets": []any{map[string]any{"id": "wide", "panelTypes": "graph", "query": singleLogsBuilderQuery()}},
+		"layout":  []any{map[string]any{"i": "wide", "x": float64(0), "y": float64(0), "w": float64(24), "h": float64(6)}},
+	}
+
+	d := &v1Decoder{}
+	layouts := d.convertV1Layouts(data, d.convertV1Panels(data["widgets"]))
+	require.NoError(t, d.errIfHasMalformedFields())
+	require.Len(t, layouts, 1)
+	grid, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
+	require.True(t, ok)
+	require.Len(t, grid.Items, 1)
+	assert.Equal(t, 0, grid.Items[0].X)
+	assert.Equal(t, 12, grid.Items[0].Width) // w=24 clamped to 12 so x+width = 12
+}
+
 // TestConvertV1LayoutsToleratesNonObjectPanelMap covers templates that store
 // panelMap as {rowID: []widgetID} instead of the canonical {rowID: {widgets,
 // collapsed}}. The frontend reads such an entry as "not collapsed" (it accesses
@@ -1946,6 +2264,33 @@ func TestConvertV1LayoutsDropsEntryForUnrenderableWidget(t *testing.T) {
 	spec, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
 	require.True(t, ok)
 	require.Len(t, spec.Items, 1, "e-1 has no panel → its layout entry is dropped, not emitted as a dangling ref")
+	assert.Equal(t, "#/spec/panels/p-1", spec.Items[0].Content.Ref)
+}
+
+func TestRetainPlacedWidgetsDropsZeroWidth(t *testing.T) {
+	// z-1 is placed with zero width, which the v1 UI doesn't render. It must be
+	// dropped entirely: no panel, and no dangling layout entry.
+	data := StorableDashboardData{
+		"widgets": []any{
+			map[string]any{"id": "p-1", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
+			map[string]any{"id": "z-1", "panelTypes": "graph", "query": singleLogsBuilderQuery()},
+		},
+		"layout": []any{
+			map[string]any{"i": "p-1", "x": float64(0), "y": float64(0), "w": float64(6), "h": float64(6)},
+			map[string]any{"i": "z-1", "x": float64(6), "y": float64(0), "w": float64(0), "h": float64(6)},
+		},
+	}
+
+	d := &v1Decoder{}
+	panels := d.convertV1Panels(retainPlacedWidgets(data))
+	require.Contains(t, panels, "p-1")
+	require.NotContains(t, panels, "z-1", "a zero-width widget is not retained → no panel")
+
+	layouts := d.convertV1Layouts(data, panels)
+	require.Len(t, layouts, 1)
+	spec, ok := layouts[0].Spec.(*dashboard.GridLayoutSpec)
+	require.True(t, ok)
+	require.Len(t, spec.Items, 1, "the zero-width widget's layout entry is dropped too")
 	assert.Equal(t, "#/spec/panels/p-1", spec.Items[0].Content.Ref)
 }
 

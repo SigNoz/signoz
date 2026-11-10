@@ -2,9 +2,8 @@ import { AlertThresholdMatchType, AlertThresholdOperator } from './types';
 
 // Mirrors the backend's CompareOperator.Normalize() in
 // pkg/types/ruletypes/compare.go. Maps any accepted alias to the enum value
-// the dropdown understands. Returns undefined for aliases the UI does not
-// expose (e.g. above_or_equal, below_or_equal) so callers can keep the raw
-// value on screen instead of silently rewriting it.
+// the dropdown understands. Returns undefined for unknown values so callers
+// can keep the raw value on screen instead of silently rewriting it.
 export function normalizeOperator(
 	raw: string | undefined,
 ): AlertThresholdOperator | undefined {
@@ -27,6 +26,16 @@ export function normalizeOperator(
 		case 'not_eq':
 		case '!=':
 			return AlertThresholdOperator.IS_NOT_EQUAL_TO;
+		case '5':
+		case 'above_or_equal':
+		case 'above_or_eq':
+		case '>=':
+			return AlertThresholdOperator.IS_ABOVE_OR_EQUAL_TO;
+		case '6':
+		case 'below_or_equal':
+		case 'below_or_eq':
+		case '<=':
+			return AlertThresholdOperator.IS_BELOW_OR_EQUAL_TO;
 		case '7':
 		case 'outside_bounds':
 			return AlertThresholdOperator.ABOVE_BELOW;

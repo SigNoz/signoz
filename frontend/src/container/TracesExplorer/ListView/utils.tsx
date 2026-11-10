@@ -1,17 +1,20 @@
-import { Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import type { TableColumnsType as ColumnsType } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
-import { formUrlParams } from 'container/TraceDetail/utils';
+import { getMs } from 'utils/timeUtils';
+import { formUrlParams } from 'utils/traceUtils';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { ILog } from 'types/api/logs/log';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 export function BlockLink({
@@ -25,13 +28,13 @@ export function BlockLink({
 }): any {
 	// Display block to make the whole cell clickable
 	return (
-		<Link
+		<AppLink
 			to={to}
 			style={{ display: 'block' }}
 			target={openInNewTab ? '_blank' : '_self'}
 		>
 			{children}
-		</Link>
+		</AppLink>
 	);
 }
 
@@ -41,12 +44,29 @@ export const transformDataWithDate = (
 	data[0]?.list?.map(({ data, timestamp }) => ({ ...data, date: timestamp })) ||
 	[];
 
-export const getTraceLink = (record: RowData): string =>
-	`${ROUTES.TRACE}/${record.traceID || record.trace_id}${formUrlParams({
-		spanId: record.spanID || record.span_id,
-		levelUp: 0,
-		levelDown: 0,
-	})}`;
+export const getTraceLink = (record: Record<string, unknown>): string => {
+	function readId(value: unknown): string {
+		if (typeof value === 'string' || typeof value === 'number') {
+			return String(value);
+		}
+		return '';
+	}
+
+	const traceId = readId(record.traceID) || readId(record.trace_id);
+	const spanId = readId(record.spanID) || readId(record.span_id);
+
+	if (!traceId) {
+		return '';
+	}
+
+	return `${buildRoutePath(ROUTES.TRACE_DETAIL, { id: traceId })}${formUrlParams(
+		{
+			spanId,
+			levelUp: 0,
+			levelDown: 0,
+		},
+	)}`;
+};
 
 export const getListColumns = (
 	selectedColumns: TelemetryFieldKey[],
@@ -107,7 +127,12 @@ export const getListColumns = (
 					) {
 						return (
 							<BlockLink to={getTraceLink(item)} openInNewTab={false}>
-								<Badge data-testid={name} color="sakura" variant="outline">
+								<Badge
+									textTransform="none"
+									testId={name}
+									color="highlight-danger"
+									variant="outlined"
+								>
 									{value}
 								</Badge>
 							</BlockLink>
@@ -135,4 +160,42 @@ export const getListColumns = (
 		}) || [];
 
 	return [...initialColumns, ...columns];
+};
+
+// Reshapes the query-range list payload into table rows. `id` mirrors span_id so
+// TanStack sees genuine row changes on orderBy toggles instead of falling back to
+// positional ids; `timestamp` is lifted from the wrapping ListItem.
+export const transformSpanRows = (data: QueryDataV3[]): TracesTableRow[] => {
+	const list = data[0]?.list;
+	if (!list) {
+		return [];
+	}
+	return list.map((item) => {
+		const row = item.data as Record<string, unknown>;
+		return {
+			...row,
+			timestamp: item.timestamp,
+			id: row.span_id,
+		};
+	}) as TracesTableRow[];
+};
+
+export const getListLimit = (query: Query): number | null =>
+	query.builder.queryTraceOperator?.[0]?.limit ??
+	query.builder.queryData[0]?.limit ??
+	null;
+
+/** Offset of the next page, or undefined once a short page or the limit ends the list. */
+export const getNextPageOffset = (
+	pageLengths: number[],
+	pageSize: number,
+	limit: number | null,
+): number | undefined => {
+	const loaded = pageLengths.reduce((sum, length) => sum + length, 0);
+	const lastLength = pageLengths[pageLengths.length - 1] ?? 0;
+
+	if (lastLength < pageSize || (limit && loaded >= limit)) {
+		return undefined;
+	}
+	return loaded;
 };

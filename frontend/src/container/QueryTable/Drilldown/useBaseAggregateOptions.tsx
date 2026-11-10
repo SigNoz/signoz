@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Link, Loader } from '@signozhq/icons';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import useUpdatedQuery from 'container/GridCardLayout/useResolveQuery';
-import { processContextLinks } from 'container/NewWidget/RightContainer/ContextLinks/utils';
+import useUpdatedQuery from 'container/WidgetCard/hooks/useResolveQuery';
+import { processContextLinks } from 'utils/contextLinks/utils';
 import useContextVariables from 'hooks/dashboard/useContextVariables';
+import { useNotifications } from 'hooks/useNotifications';
 import ContextMenu from 'periscope/components/ContextMenu';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
-import { ContextLinksData } from 'types/api/dashboard/getAll';
+import { ContextLinksData } from 'types/api/widgets/widget';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { openInNewTab } from 'utils/navigation';
 
@@ -49,24 +48,24 @@ const useBaseAggregateOptions = ({
 	const [resolvedQuery, setResolvedQuery] = useState<Query>(query);
 	const { getUpdatedQuery, isLoading: isResolveQueryLoading } =
 		useUpdatedQuery();
-	const { dashboardData } = useDashboardStore();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (!aggregateData) {
 			return;
 		}
-		const resolveQuery = async (): Promise<void> => {
-			const updatedQuery = await getUpdatedQuery({
-				widgetConfig: {
-					query,
-					panelTypes: panelType || PANEL_TYPES.TIME_SERIES,
-					timePreferance: 'GLOBAL_TIME',
-				},
-				dashboardData,
+		getUpdatedQuery({
+			widgetConfig: {
+				query,
+				panelTypes: panelType || PANEL_TYPES.TIME_SERIES,
+				timePreferance: 'GLOBAL_TIME',
+			},
+		})
+			.then(setResolvedQuery)
+			.catch(() => {
+				setResolvedQuery(query);
+				notifications.error({ message: 'Unable to resolve variables' });
 			});
-			setResolvedQuery(updatedQuery);
-		};
-		resolveQuery();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [query, aggregateData, panelType]);
 
@@ -114,15 +113,6 @@ const useBaseAggregateOptions = ({
 		callback: onClose,
 	});
 
-	const { pathname } = useLocation();
-
-	const showDashboardVariablesOption = useMemo(() => {
-		const fieldVariablesExist = Object.keys(fieldVariables).length > 0;
-		// Check if current route is exactly dashboard route (/dashboard/:dashboardId)
-		const dashboardPattern = /^\/dashboard\/[^/]+$/;
-		return fieldVariablesExist && dashboardPattern.test(pathname);
-	}, [pathname, fieldVariables]);
-
 	const baseAggregateOptionsConfig = useMemo(() => {
 		if (!aggregateData) {
 			console.warn('aggregateData is null in baseAggregateOptionsConfig');
@@ -139,7 +129,6 @@ const useBaseAggregateOptions = ({
 		const baseContextConfig = getBaseContextConfig({
 			handleBaseDrilldown,
 			setSubMenu,
-			showDashboardVariablesOption,
 			showBreakoutOption: true,
 		}).filter((item) => !item.hidden);
 
@@ -203,7 +192,6 @@ const useBaseAggregateOptions = ({
 		getContextLinksItems,
 		isResolveQueryLoading,
 		resolvedQuery,
-		showDashboardVariablesOption,
 		setSubMenu,
 	]);
 

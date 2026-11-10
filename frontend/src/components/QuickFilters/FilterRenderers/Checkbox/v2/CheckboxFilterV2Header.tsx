@@ -1,25 +1,41 @@
+import { useState } from 'react';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import { ChevronDown, ChevronRight, Undo2 } from '@signozhq/icons';
+
+import { SectionActionButton } from '../../shared/SectionActionButton/SectionActionButton';
 
 import styles from './CheckboxFilterV2Header.module.scss';
 
 interface CheckboxFilterHeaderProps {
 	title: string;
 	isOpen: boolean;
-	showClearAll: boolean;
+	canReset: boolean;
 	onToggleOpen: () => void;
 	onClear: () => void;
-	isSomeFilterPresentForCurrentAttribute: boolean;
 }
 
 export function CheckboxFilterV2Header({
 	title,
 	isOpen,
-	showClearAll,
+	canReset,
 	onToggleOpen,
 	onClear,
-	isSomeFilterPresentForCurrentAttribute,
 }: CheckboxFilterHeaderProps): JSX.Element {
+	const [isTitleTruncated, setIsTitleTruncated] = useState(false);
+
+	const measureTitle = (el: HTMLElement | null): void => {
+		if (el) {
+			setIsTitleTruncated(el.scrollWidth > el.clientWidth);
+		}
+	};
+
+	const titleText = (
+		<Typography.Text ref={measureTitle} className={styles.title}>
+			{title}
+		</Typography.Text>
+	);
+
 	return (
 		<section
 			role="button"
@@ -40,23 +56,18 @@ export function CheckboxFilterV2Header({
 				) : (
 					<ChevronRight size={13} cursor="pointer" />
 				)}
-				<Typography.Text className={styles.title}>{title}</Typography.Text>
+				<Tooltip title={isTitleTruncated ? title : undefined}>{titleText}</Tooltip>
 			</section>
-			<section className={styles.rightAction}>
-				{isOpen && showClearAll && isSomeFilterPresentForCurrentAttribute && (
-					<Typography.Text
-						className={styles.clearAll}
-						onClick={(e): void => {
-							e.stopPropagation();
-							e.preventDefault();
-							onClear();
-						}}
-						data-testid="checkbox-filter-clear-all"
-					>
-						Clear
-					</Typography.Text>
-				)}
-			</section>
+			{isOpen && canReset && (
+				<section className={styles.rightAction}>
+					<SectionActionButton
+						icon={<Undo2 size={14} />}
+						tooltip="Reset"
+						onClick={onClear}
+						testId="checkbox-filter-clear-all"
+					/>
+				</section>
+			)}
 		</section>
 	);
 }

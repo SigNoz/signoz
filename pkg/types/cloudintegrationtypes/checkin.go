@@ -12,7 +12,8 @@ type AgentCheckInRequest struct {
 	ProviderAccountID  string      `json:"providerAccountId" required:"false"`
 	CloudIntegrationID valuer.UUID `json:"cloudIntegrationId" required:"false"`
 
-	Data map[string]any `json:"data" required:"true" nullable:"true"`
+	Data          map[string]any `json:"data" required:"true" nullable:"true"`
+	SyncedVersion *int64         `json:"syncedVersion" required:"false" nullable:"true"`
 }
 
 type PostableAgentCheckIn struct {
@@ -28,6 +29,7 @@ type AgentCheckInResponse struct {
 	ProviderAccountID  string                     `json:"providerAccountId" required:"true"`
 	IntegrationConfig  *ProviderIntegrationConfig `json:"integrationConfig" required:"true"`
 	RemovedAt          *time.Time                 `json:"removedAt" required:"true" nullable:"true"`
+	SyncState          *SyncState                 `json:"syncState" required:"true" nullable:"true"`
 }
 
 type GettableAgentCheckIn struct {
@@ -73,12 +75,13 @@ func NewGettableAgentCheckIn(provider CloudProviderType, resp *AgentCheckInRespo
 	return gettable
 }
 
-func NewAgentCheckInResponse(providerAccountID, cloudIntegrationID string, integrationConfig *ProviderIntegrationConfig, removedAt *time.Time) *AgentCheckInResponse {
+func NewAgentCheckInResponse(providerAccountID, cloudIntegrationID string, integrationConfig *ProviderIntegrationConfig, removedAt *time.Time, syncState *SyncState) *AgentCheckInResponse {
 	return &AgentCheckInResponse{
 		CloudIntegrationID: cloudIntegrationID,
 		ProviderAccountID:  providerAccountID,
 		IntegrationConfig:  integrationConfig,
 		RemovedAt:          removedAt,
+		SyncState:          syncState,
 	}
 }
 

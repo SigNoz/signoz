@@ -7,14 +7,14 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import getMinAgo from './getStartAndEndTime/getMinAgo';
 
-const validCustomTimeRegex = /^(\d+)([mhdw])$/;
+const validCustomTimeRegex = /^(\d+)(months?|[mhdw])$/;
 
 export const isValidShortHandDateTimeFormat = (time: string): boolean =>
 	validCustomTimeRegex.test(time);
 
 const extractTimeAndUnit = (time: string): { time: number; unit: string } => {
 	// Match the pattern
-	const match = /^(\d+)([mhdw])$/.exec(time);
+	const match = validCustomTimeRegex.exec(time);
 
 	if (match) {
 		return { time: parseInt(match[1], 10), unit: match[2] };
@@ -39,13 +39,16 @@ export const getMinTimeForRelativeTimes = (
 			return getMinAgo({ minutes: 24 * 60 * time }).getTime();
 		case 'w':
 			return getMinAgo({ minutes: 24 * 60 * 7 * time }).getTime();
+		case 'month':
+		case 'months':
+			return getMinAgo({ minutes: 24 * 60 * 30 * time }).getTime();
 		default:
 			return getMinAgo({ minutes: 1 }).getTime();
 	}
 };
 
 const GetMinMax = (
-	interval: Time | string,
+	interval: string,
 	dateTimeRange?: [number, number],
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): GetMinMaxPayload => {

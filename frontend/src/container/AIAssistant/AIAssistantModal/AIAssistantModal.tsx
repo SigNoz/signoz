@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Minus, Plus, X } from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
@@ -31,8 +32,7 @@ import styles from './AIAssistantModal.module.scss';
  */
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function AIAssistantModal(): JSX.Element | null {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const [showHistory, setShowHistory] = useState(false);
 
 	const isOpen = useAIAssistantStore((s) => s.isModalOpen);
@@ -94,11 +94,11 @@ export default function AIAssistantModal(): JSX.Element | null {
 		// Router state tells AIAssistantPage to skip its mount-time Opened fire:
 		// the assistant was already open in the modal, so this is a surface
 		// switch, not a new open.
-		history.push(
+		navigate(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
-			{ fromInApp: true },
+			{ state: { fromInApp: true } },
 		);
-	}, [activeConversationId, closeModal, history]);
+	}, [activeConversationId, closeModal]);
 
 	const handleNew = useCallback(() => {
 		void logEvent(AIAssistantEvents.NewChatClicked, {
@@ -159,62 +159,73 @@ export default function AIAssistantModal(): JSX.Element | null {
 						</div>
 
 						<div className={styles.actions}>
-							<TooltipSimple title={showHistory ? 'Back to chat' : 'Conversations'}>
+							<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
 								<Button
 									variant="ghost"
-									size="icon"
+									size="sm"
+									icon
 									color="secondary"
 									onClick={(): void => setShowHistory((v) => !v)}
 									aria-label="Toggle conversations"
-									className={showHistory ? styles.toggleBtnActive : ''}
-									prefix={<History size={14} />}
-								/>
-							</TooltipSimple>
+									aria-pressed={showHistory}
+								>
+									<History size={14} />
+								</Button>
+							</Tooltip>
 
-							<TooltipSimple title="New conversation">
+							<Tooltip title="New conversation">
 								<Button
 									variant="ghost"
-									size="icon"
+									size="sm"
+									icon
 									color="secondary"
 									onClick={handleNew}
 									aria-label="New conversation"
-									prefix={<Plus size={14} />}
-								/>
-							</TooltipSimple>
+								>
+									<Plus size={14} />
+								</Button>
+							</Tooltip>
 
-							<TooltipSimple title="Open full screen">
+							<Tooltip title="Open full screen">
 								<Button
+									disabledTooltip="Start a conversation first"
 									variant="ghost"
-									size="icon"
+									size="sm"
+									icon
 									color="secondary"
 									onClick={handleExpand}
 									disabled={!activeConversationId}
 									aria-label="Open full screen"
-									prefix={<Maximize2 size={14} />}
-								/>
-							</TooltipSimple>
+								>
+									<Maximize2 size={14} />
+								</Button>
+							</Tooltip>
 
-							<TooltipSimple title="Minimize to side panel">
+							<Tooltip title="Minimize to side panel">
 								<Button
 									variant="ghost"
-									size="icon"
+									size="sm"
+									icon
 									color="secondary"
 									onClick={handleMinimize}
 									aria-label="Minimize to side panel"
-									prefix={<Minus size={14} />}
-								/>
-							</TooltipSimple>
+								>
+									<Minus size={14} />
+								</Button>
+							</Tooltip>
 
-							<TooltipSimple title="Close">
+							<Tooltip title="Close">
 								<Button
 									variant="ghost"
-									size="icon"
+									size="sm"
+									icon
 									color="secondary"
 									onClick={closeModal}
 									aria-label="Close"
-									prefix={<X size={14} />}
-								/>
-							</TooltipSimple>
+								>
+									<X size={14} />
+								</Button>
+							</Tooltip>
 						</div>
 					</div>
 

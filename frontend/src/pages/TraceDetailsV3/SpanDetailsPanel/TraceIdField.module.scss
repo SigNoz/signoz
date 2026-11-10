@@ -1,18 +1,21 @@
 .traceId {
-	color: var(--accent-primary);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	display: block;
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-1);
+	min-width: 0;
+
+	// Sized to the icon, so the copy button sits flush against the id.
+	--button-padding: 2px;
+	--button-height: auto;
+	--button-width: auto;
 }
 
-.traceIdCopy {
+// A block, since overflow and text-overflow do not apply to the inline span
+// Typography.Text renders.
+.value {
 	display: block;
-	max-width: 100%;
+	min-width: 0;
+	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	white-space: nowrap;
-	padding: 0;
-	height: auto;
-	justify-content: flex-start;
 }

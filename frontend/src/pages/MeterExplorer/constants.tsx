@@ -3,7 +3,6 @@ import ROUTES from 'constants/routes';
 import BreakDownPage from 'container/MeterExplorer/Breakdown/BreakDown';
 import ExplorerPage from 'container/MeterExplorer/Explorer';
 import { Compass, TowerControl } from '@signozhq/icons';
-import SaveView from 'pages/SaveView';
 
 export const Explorer: TabRoutes = {
 	Component: (): JSX.Element => <ExplorerPage />,
@@ -14,17 +13,6 @@ export const Explorer: TabRoutes = {
 	),
 	route: ROUTES.METER_EXPLORER,
 	key: ROUTES.METER_EXPLORER,
-};
-
-export const Views: TabRoutes = {
-	Component: SaveView,
-	name: (
-		<div className="tab-item">
-			<TowerControl size={16} /> Views
-		</div>
-	),
-	route: ROUTES.METER_EXPLORER_VIEWS,
-	key: ROUTES.METER_EXPLORER_VIEWS,
 };
 
 export const Meter: TabRoutes = {

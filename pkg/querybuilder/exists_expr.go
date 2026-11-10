@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -43,18 +44,23 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 		if len(evolutionsEntries) > 0 && evolutionsEntries[0] != nil {
 			columnName = evolutionsEntries[0].ColumnName
 		}
-		rawPath := fmt.Sprintf("%s.`%s`", columnName, key.Name)
+		rawPath := fmt.Sprintf("%s.%s", columnName, clickhousesql.Identifier(key.Name))
 		if exists {
 			return rawPath + " IS NOT NULL", nil
 		}
 		return rawPath + " IS NULL", nil
 	case schema.ColumnTypeEnumString,
-		schema.ColumnTypeEnumFixedString,
-		schema.ColumnTypeEnumDateTime64:
+		schema.ColumnTypeEnumFixedString:
 		if exists {
 			return comparison("<>", "''"), nil
 		}
 		return comparison("=", "''"), nil
+	case schema.ColumnTypeEnumDateTime64:
+		zero := fmt.Sprintf("toDateTime64(0, %d)", column.Type.(schema.DateTime64ColumnType).Precision)
+		if exists {
+			return comparison("<>", zero), nil
+		}
+		return comparison("=", zero), nil
 	case schema.ColumnTypeEnumLowCardinality:
 		switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
 		case schema.ColumnTypeEnumString:
@@ -75,6 +81,11 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 			return comparison("<>", "0"), nil
 		}
 		return comparison("=", "0"), nil
+	case schema.ColumnTypeEnumArray:
+		if exists {
+			return fmt.Sprintf("notEmpty(%s)", fieldExpression), nil
+		}
+		return fmt.Sprintf("empty(%s)", fieldExpression), nil
 	case schema.ColumnTypeEnumMap:
 		keyType := column.Type.(schema.MapColumnType).KeyType
 		if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
@@ -83,10 +94,10 @@ func ExistsExpression(columns []*schema.Column, key *telemetrytypes.TelemetryFie
 
 		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
 		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
-			leftOperand := fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name)
 			if key.Materialized {
-				leftOperand = telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)
+				return telemetrytypes.FieldKeyToMaterializedExistsCondition(key, exists), nil
 			}
+			leftOperand := fmt.Sprintf("mapContains(%s, %s)", column.Name, clickhousesql.StringLiteral(key.Name))
 			if exists {
 				return leftOperand, nil
 			}

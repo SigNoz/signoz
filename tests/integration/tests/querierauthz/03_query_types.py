@@ -38,15 +38,15 @@ def test_setup(
             transaction_group("read", "telemetryresource", "meter-metrics", ["clickhouse_sql/*"]),
         ],
     )
-    chsql_user = create_active_user(signoz, admin_token, email=chsql_email, role="VIEWER", password=user_password)
+    chsql_user = create_active_user(signoz, admin_token, email=chsql_email, role="signoz-viewer", password=user_password)
     change_user_role(signoz, admin_token, chsql_user, "signoz-viewer", chsql_role)
 
     create_role(admin_token, key_a_role, [transaction_group("read", "telemetryresource", "traces", ["builder_query/signoz.workspace.key.id/key-a"])])
-    key_a_user = create_active_user(signoz, admin_token, email=key_a_email, role="VIEWER", password=user_password)
+    key_a_user = create_active_user(signoz, admin_token, email=key_a_email, role="signoz-viewer", password=user_password)
     change_user_role(signoz, admin_token, key_a_user, "signoz-viewer", key_a_role)
 
     # A plain managed viewer (signoz-viewer) — for the meter-metrics/audit-logs policy checks.
-    create_active_user(signoz, admin_token, email=viewer_email, role="VIEWER", password=user_password)
+    create_active_user(signoz, admin_token, email=viewer_email, role="signoz-viewer", password=user_password)
 
 
 def test_clickhouse_sql_requires_chsql_grant(

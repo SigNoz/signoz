@@ -183,7 +183,7 @@
 			font-family: 'Space Mono', monospace !important;
 
 			border: none;
-			height: 36px;
+			min-height: 36px;
 			.ant-select-selection-search-input {
 				min-width: max-content !important;
 				max-width: 100% !important;
@@ -191,7 +191,7 @@
 		}
 
 		.ant-select-selector {
-			height: 36px;
+			min-height: 36px;
 			border-color: var(--input-with-label-border-color, var(--l2-border));
 			background: var(--input-with-label-background-color, var(--l2-background));
 			border-radius: 0;

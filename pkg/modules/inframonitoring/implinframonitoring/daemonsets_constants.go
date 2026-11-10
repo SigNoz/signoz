@@ -37,8 +37,7 @@ var daemonSetsTableMetricNamesList = []string{
 	"k8s.daemonset.misscheduled_nodes",
 }
 
-// Carried forward from v1 daemonSetAttrsToEnrich
-// (pkg/query-service/app/inframetrics/daemonsets.go:29-33).
+// Carried forward from v1 daemonSetAttrsToEnrich (removed).
 var daemonSetAttrKeysForMetadata = []string{
 	"k8s.daemonset.name",
 	"k8s.namespace.name",

@@ -1,10 +1,11 @@
-import { Route, Switch } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import * as roleApi from 'api/generated/services/role';
+import ROUTES from 'constants/routes';
 import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { render, screen, waitFor } from 'tests/test-utils';
+import { getCurrentLocation } from 'lib/router/navigation';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
 import ViewRolePage from '../ViewRolePage';
@@ -45,12 +46,12 @@ describe('ViewRolePage - Error State', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
-		await waitFor(() => {
-			expect(document.querySelector('.error-in-place')).toBeInTheDocument();
-		});
+		await expect(
+			screen.findByTestId('role-error-banner'),
+		).resolves.toBeInTheDocument();
 	});
 
-	it('displays error state with title when API fails without role data', async () => {
+	it('displays error state when API fails without role data', async () => {
 		jest.spyOn(roleApi, 'useGetRole').mockReturnValue({
 			data: undefined,
 			isLoading: false,
@@ -62,12 +63,10 @@ describe('ViewRolePage - Error State', () => {
 			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 		});
 
+		// Error shows in content area after authz check passes
 		await expect(
-			screen.findByText('Failed to load role'),
+			screen.findByTestId('role-error-banner'),
 		).resolves.toBeInTheDocument();
-		await waitFor(() => {
-			expect(document.querySelector('.error-in-place')).toBeInTheDocument();
-		});
 	});
 
 	it('shows back button on error state', async () => {
@@ -97,24 +96,15 @@ describe('ViewRolePage - Error State', () => {
 			error: new Error('Failed to fetch role'),
 		} as ReturnType<typeof roleApi.useGetRole>);
 
-		render(
-			<Switch>
-				<Route path="/settings/roles/:roleId">
-					<ViewRolePage />
-				</Route>
-				<Route path="/settings/roles">
-					<div data-testid="roles-list-target" />
-				</Route>
-			</Switch>,
-			undefined,
-			{ initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME) },
-		);
+		render(<ViewRolePage />, undefined, {
+			initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
+		});
 
 		const cancelButton = await screen.findByTestId('cancel-button');
 		await user.click(cancelButton);
 
-		await expect(
-			screen.findByTestId('roles-list-target'),
-		).resolves.toBeInTheDocument();
+		await waitFor(() => {
+			expect(getCurrentLocation().pathname).toBe(ROUTES.ROLES_SETTINGS);
+		});
 	});
 });

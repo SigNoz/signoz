@@ -2,11 +2,13 @@ package telemetrymetadata
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
+	"github.com/SigNoz/signoz/pkg/types/promotetypes"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,8 +27,8 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 			expectedSQL: "SELECT name, type_full, expr, granularity FROM clusterAllReplicas('test-cluster', system.data_skipping_indices) " +
 				"WHERE database = ? AND table = ? AND (LOWER(expr) LIKE LOWER(?) OR LOWER(expr) LIKE LOWER(?))",
 			expectedArgs: []any{
-				telemetrylogs.DBName,
-				telemetrylogs.LogsV2LocalTableName,
+				logstelemetryschema.DBName,
+				logstelemetryschema.LogsV2LocalTableName,
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyV2ColumnPrefix)),
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix)),
 			},
@@ -38,8 +40,8 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 			expectedSQL: "SELECT name, type_full, expr, granularity FROM clusterAllReplicas('test-cluster', system.data_skipping_indices) " +
 				"WHERE database = ? AND table = ? AND (LOWER(expr) LIKE LOWER(?) OR LOWER(expr) LIKE LOWER(?)) AND (LOWER(replaceAll(expr, '`', '')) LIKE LOWER(?) OR LOWER(replaceAll(expr, '`', '')) LIKE LOWER(?))",
 			expectedArgs: []any{
-				telemetrylogs.DBName,
-				telemetrylogs.LogsV2LocalTableName,
+				logstelemetryschema.DBName,
+				logstelemetryschema.LogsV2LocalTableName,
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyV2ColumnPrefix)),
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix)),
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains("foo")),
@@ -50,10 +52,139 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			query, args := buildListLogsJSONIndexesQuery(tc.cluster, tc.filters...)
+			query, args := buildListJSONIndexesQuery(tc.cluster, logsBodyIndexLookup, tc.filters...)
 
 			require.Equal(t, tc.expectedSQL, query)
 			require.Equal(t, tc.expectedArgs, args)
+		})
+	}
+}
+
+func TestUnfoldJSONSubColumnIndexExpr(t *testing.T) {
+	testCases := []struct {
+		name       string
+		expr       string
+		wantColumn string
+		wantType   string
+		wantErr    bool
+	}{
+		{
+			name:       "LogsFoldedLower",
+			expr:       "lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String')))",
+			wantColumn: "body_v2.user.name",
+			wantType:   "String",
+		},
+		{
+			name:       "LogsAssumeNotNullOnly",
+			expr:       "assumeNotNull(dynamicElement(body_v2.request.duration, 'Float64'))",
+			wantColumn: "body_v2.request.duration",
+			wantType:   "Float64",
+		},
+		{
+			name:       "TracesCastDottedKey",
+			expr:       "CAST(attributes.`http.method`, 'String')",
+			wantColumn: "attributes.`http.method`",
+			wantType:   "String",
+		},
+		{
+			name:       "TracesCastPlainKey",
+			expr:       "CAST(attributes_promoted.status, 'Int64')",
+			wantColumn: "attributes_promoted.status",
+			wantType:   "Int64",
+		},
+		{
+			name:       "TracesNumber",
+			expr:       "toFloat64OrNull(CAST(attributes.`http.status_code`, 'String'))",
+			wantColumn: "attributes.`http.status_code`",
+			wantType:   "Float64",
+		},
+		{
+			name:       "TracesNumber_BacktickedParentheses",
+			expr:       "toFloat64OrNull(CAST(attributes.`latency(ms)`, 'String'))",
+			wantColumn: "attributes.`latency(ms)`",
+			wantType:   "Float64",
+		},
+		{
+			name:    "TracesNumber_NotAStringCast",
+			expr:    "toFloat64OrNull(CAST(attributes.a, 'Int64'))",
+			wantErr: true,
+		},
+		{
+			name:    "UnrecognizedForm",
+			expr:    "toString(attributes.status)",
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			columnExpr, columnType, err := unfoldJSONSubColumnIndexExpr(tc.expr)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.wantColumn, columnExpr)
+			require.Equal(t, tc.wantType, columnType)
+		})
+	}
+}
+
+// ClickHouse stores a generated col.`path`::Type trace index expression as
+// CAST(col.`path`, 'Type'), dropping quoting an identifier does not need; the
+// listing must parse that stored form back into the original path.
+func TestUnfoldJSONSubColumnIndexExprTracesRoundTrip(t *testing.T) {
+	testCases := []struct {
+		name         string
+		column       string
+		path         string
+		jsonDataType string
+		wantExpr     string
+		storedExpr   string
+	}{
+		{
+			name:         "DottedKey_BackticksPreservedInStorage",
+			column:       "attributes",
+			path:         "http.method",
+			jsonDataType: "String",
+			wantExpr:     "attributes.`http.method`::String",
+			storedExpr:   "CAST(attributes.`http.method`, 'String')",
+		},
+		{
+			name:         "PlainKey_UnquotedInStorage",
+			column:       "attributes_promoted",
+			path:         "status",
+			jsonDataType: "String",
+			wantExpr:     "attributes_promoted.`status`::String",
+			storedExpr:   "CAST(attributes_promoted.status, 'String')",
+		},
+		{
+			name:         "DottedNumber_BackticksPreservedInStorage",
+			column:       "attributes",
+			path:         "http.status_code",
+			jsonDataType: "Float64",
+			wantExpr:     "toFloat64OrNull(attributes.`http.status_code`::String)",
+			storedExpr:   "toFloat64OrNull(CAST(attributes.`http.status_code`, 'String'))",
+		},
+		{
+			name:         "PlainNumber_UnquotedInStorage",
+			column:       "attributes_promoted",
+			path:         "latency",
+			jsonDataType: "Float64",
+			wantExpr:     "toFloat64OrNull(attributes_promoted.`latency`::String)",
+			storedExpr:   "toFloat64OrNull(CAST(attributes_promoted.latency, 'String'))",
+		},
+	}
+
+	target := promotetypes.NewTracesAttributesTarget()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.wantExpr, target.IndexExpression(tc.column, tc.path, tc.jsonDataType))
+
+			columnExpr, columnType, err := unfoldJSONSubColumnIndexExpr(tc.storedExpr)
+			require.NoError(t, err)
+			require.Equal(t, tc.column+"."+tc.path, strings.ReplaceAll(columnExpr, "`", ""))
+			require.Equal(t, tc.jsonDataType, columnType)
 		})
 	}
 }

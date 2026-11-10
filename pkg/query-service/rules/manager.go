@@ -333,7 +333,7 @@ func (m *Manager) validateChannels(ctx context.Context, orgID string, rule *rule
 
 	known := make(map[string]struct{}, len(orgChannels))
 	for _, ch := range orgChannels {
-		known[ch.Name] = struct{}{}
+		known[ch.DisplayName] = struct{}{}
 	}
 
 	var unknown []string
@@ -544,19 +544,32 @@ func (m *Manager) deleteTask(taskName string) {
 }
 
 // CreateRule stores rule def into db and also
-// starts an executor for the rule
+// starts an executor for the rule, unless the rule is disabled
 func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.GettableRule, error) {
+	parsedRule := ruletypes.PostableRule{}
+	if err := json.Unmarshal([]byte(ruleStr), &parsedRule); err != nil {
+		return nil, err
+	}
+
+	return m.createRule(ctx, parsedRule, ruleStr)
+}
+
+func (m *Manager) CreatePostableRule(ctx context.Context, rule *ruletypes.PostableRule) (*ruletypes.GettableRule, error) {
+	data, err := json.Marshal(rule)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.createRule(ctx, *rule, string(data))
+}
+
+func (m *Manager) createRule(ctx context.Context, parsedRule ruletypes.PostableRule, data string) (*ruletypes.GettableRule, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		return nil, err
-	}
-	parsedRule := ruletypes.PostableRule{}
-	err = json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
 		return nil, err
 	}
@@ -579,7 +592,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 			CreatedBy: claims.Email,
 			UpdatedBy: claims.Email,
 		},
-		Data:  ruleStr,
+		Data:  data,
 		OrgID: claims.OrgID,
 	}
 
@@ -611,7 +624,7 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		}
 
 		taskName := prepareTaskName(id.StringValue())
-		if err = m.addTask(ctx, orgID, &parsedRule, taskName); err != nil {
+		if err = m.syncRuleStateWithTask(ctx, orgID, taskName, &parsedRule); err != nil {
 			return err
 		}
 
@@ -851,6 +864,8 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 	// initiate response object
 	resp := make([]*ruletypes.GettableRule, 0)
 
+	stateByRuleID := m.snapshotRuleStates()
+
 	for _, s := range storedRules {
 
 		ruleResponse := ruletypes.GettableRule{}
@@ -863,11 +878,11 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 		ruleResponse.Id = s.ID.StringValue()
 
 		// fetch state of rule from memory
-		if rm, ok := m.rules[ruleResponse.Id]; !ok {
+		if state, ok := stateByRuleID[ruleResponse.Id]; !ok {
 			ruleResponse.State = ruletypes.StateDisabled
 			ruleResponse.Disabled = true
 		} else {
-			ruleResponse.State = rm.State()
+			ruleResponse.State = state
 		}
 		ruleResponse.CreatedAt = s.CreatedAt
 		ruleResponse.CreatedBy = &s.CreatedBy
@@ -877,6 +892,71 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 	}
 
 	return &ruletypes.GettableRules{Rules: resp}, nil
+}
+
+// ListRules' total counts what is pageable after corrupt-row drops and the states filter.
+func (m *Manager) ListRules(ctx context.Context, params *ruletypes.ListRulesParams) (*ruletypes.ListableRules, error) {
+	// validated here too, not just in the handler: non-API callers reach the manager directly
+	if err := params.Validate(); err != nil {
+		return nil, err
+	}
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	states, err := params.GetAlertStates()
+	if err != nil {
+		return nil, err
+	}
+	stateFilter := make(map[ruletypes.AlertState]struct{}, len(states))
+	for _, state := range states {
+		stateFilter[state] = struct{}{}
+	}
+
+	compiled, err := CompileListFilter(params.Query, m.sqlstore.Formatter())
+	if err != nil {
+		return nil, err
+	}
+
+	storedRules, err := m.ruleStore.GetStoredRulesMatching(ctx, claims.OrgID, compiled.SQL, compiled.Args)
+	if err != nil {
+		return nil, err
+	}
+
+	stateByRuleID := m.snapshotRuleStates()
+
+	listableRules, errByRuleID := ruletypes.NewListableRulesFromStorableRules(storedRules, stateByRuleID, stateFilter)
+	for ruleID, err := range errByRuleID {
+		m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", slog.String("rule.id", ruleID), errors.Attr(err))
+	}
+
+	total := int64(len(listableRules))
+	ruletypes.SortListableRules(listableRules, params.Sort, params.Order)
+
+	start := min(params.Offset, len(listableRules))
+	end := min(start+params.Limit, len(listableRules))
+	currentPageRules := listableRules[start:end]
+
+	rawLabels, err := m.ruleStore.GetStoredRuleLabels(ctx, claims.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	labelPairs := ruletypes.NewLabelPairsFromRawJSON(rawLabels, ruletypes.MaxListLabelPairs)
+
+	return ruletypes.NewListableRules(currentPageRules, total, labelPairs), nil
+}
+
+func (m *Manager) snapshotRuleStates() map[string]ruletypes.AlertState {
+	m.mtx.RLock()
+	defer m.mtx.RUnlock()
+
+	states := make(map[string]ruletypes.AlertState, len(m.rules))
+	for id, rule := range m.rules {
+		states[id] = rule.State()
+	}
+	return states
 }
 
 func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.GettableRule, error) {
@@ -1039,7 +1119,7 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 		parsedRule.NotificationSettings.GroupBy = append(parsedRule.NotificationSettings.GroupBy, ruletypes.LabelThresholdName)
 	}
 	config := parsedRule.NotificationSettings.GetAlertManagerNotificationConfig()
-	err = m.alertmanager.SetNotificationConfig(ctx, orgID, parsedRule.AlertName, &config)
+	err = m.alertmanager.SetNotificationConfig(ctx, orgID, parsedRule.AlertName.StringValue(), &config)
 	if err != nil {
 		return 0, err
 	}

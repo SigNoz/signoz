@@ -1,38 +1,33 @@
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
-import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
+import AppPageProviders from 'app/AppPageProviders';
+import AppShell from 'app/AppShell';
 import AppLoading from 'components/AppLoading/AppLoading';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
 import NotFound from 'components/NotFound';
 import { ShiftHoldOverlayController } from 'components/ShiftOverlay/ShiftHoldOverlayController';
 import Spinner from 'components/Spinner';
-import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import Hex from 'crypto-js/enc-hex';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
-import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
+import { ChatSupportState, useChatSupport } from 'hooks/useChatSupport';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { NotificationProvider } from 'hooks/useNotifications';
-import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { StatusCodes } from 'http-status-codes';
+import { IS_PROD } from 'lib/env';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
-import { CmdKProvider } from 'providers/cmdKProvider';
-import { ErrorModalProvider } from 'providers/ErrorModalProvider';
-import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
 
@@ -43,9 +38,23 @@ import defaultRoutes, {
 	LIST_LICENSES,
 	SUPPORT_ROUTE,
 } from './routes';
+import {
+	hasNoAppFrames,
+	isExternalIntegrationError,
+	SENTRY_IGNORE_ERRORS,
+} from './sentryFilters';
+
+const appRouter = (children: ReactNode): ReactNode => (
+	<Router history={history}>
+		<CompatRouter>{children}</CompatRouter>
+	</Router>
+);
+
+const appLayout = (children: ReactNode): ReactNode => (
+	<AppLayout>{children}</AppLayout>
+);
 
 function App(): JSX.Element {
-	const themeConfig = useThemeConfig();
 	const {
 		user,
 		isFetchingUser,
@@ -55,7 +64,6 @@ function App(): JSX.Element {
 		isFetchingActiveLicense,
 		activeLicenseFetchError,
 		userFetchError,
-		featureFlagsFetchError,
 		isLoggedIn: isLoggedInState,
 		featureFlags,
 		org,
@@ -63,6 +71,7 @@ function App(): JSX.Element {
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const chatSupport = useChatSupport();
 
 	const { hostname } = window.location;
 	const [pathname, setPathname] = useState(history.location.pathname);
@@ -250,81 +259,34 @@ function App(): JSX.Element {
 	}, [isDarkMode]);
 
 	useEffect(() => {
-		if (
-			pathname === ROUTES.ONBOARDING ||
-			pathname.startsWith('/public/dashboard/') ||
-			pathname === '/ai-assistant' ||
-			pathname.startsWith('/ai-assistant/')
-		) {
-			window.Pylon?.('hideChatBubble');
-		} else {
-			window.Pylon?.('showChatBubble');
-		}
+		// The bottom strip carries Support, so the floating bubble goes entirely.
+		window.Pylon?.('hideChatBubble');
 	}, [pathname]);
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
+	// Identity for the Pylon widget. Whether this user gets Pylon at all is
+	// `useChatSupport`'s call — this only fills in who they are.
 	useEffect(() => {
-		// feature flag shouldn't be loading and featureFlags or fetchError any one of this should be true indicating that req is complete
-		// licenses should also be present. there is no check for licenses for loading and error as that is mandatory if not present then routing
-		// to something went wrong which would ideally need a reload.
-		if (
-			!isFetchingFeatureFlags &&
-			(featureFlags || featureFlagsFetchError) &&
-			activeLicense &&
-			trialInfo
-		) {
-			let isChatSupportEnabled = false;
-			let isPremiumSupportEnabled = false;
-			if (featureFlags && featureFlags.length > 0) {
-				isChatSupportEnabled =
-					featureFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)
-						?.active || false;
-
-				isPremiumSupportEnabled =
-					featureFlags.find((flag) => flag.name === FeatureKeys.PREMIUM_SUPPORT)
-						?.active || false;
-			}
-			const showAddCreditCardModal =
-				!isPremiumSupportEnabled && !trialInfo?.trialConvertedToSubscription;
-
-			if (
-				isLoggedInState &&
-				isChatSupportEnabled &&
-				!showAddCreditCardModal &&
-				(isCloudUser || isEnterpriseSelfHostedUser) &&
-				window.signozBootData?.settings?.pylon?.enabled
-			) {
-				const email = user.email || '';
-				const secret = window.signozBootData?.settings?.pylon?.identitySecret || '';
-				let emailHash = '';
-
-				if (email && secret) {
-					emailHash = HmacSHA256(email, Hex.parse(secret)).toString(Hex);
-				}
-
-				window.pylon = {
-					chat_settings: {
-						app_id: window.signozBootData?.settings?.pylon?.appId,
-						email: user.email,
-						name: user.displayName || user.email,
-						email_hash: emailHash,
-					},
-				};
-			}
+		if (chatSupport !== ChatSupportState.Pylon) {
+			return;
 		}
-	}, [
-		isLoggedInState,
-		user,
-		pathname,
-		trialInfo?.trialConvertedToSubscription,
-		featureFlags,
-		isFetchingFeatureFlags,
-		featureFlagsFetchError,
-		activeLicense,
-		trialInfo,
-		isCloudUser,
-		isEnterpriseSelfHostedUser,
-	]);
+
+		const email = user.email || '';
+		const secret = window.signozBootData?.settings?.pylon?.identitySecret || '';
+		let emailHash = '';
+
+		if (email && secret) {
+			emailHash = HmacSHA256(email, Hex.parse(secret)).toString(Hex);
+		}
+
+		window.pylon = {
+			chat_settings: {
+				app_id: window.signozBootData?.settings?.pylon?.appId,
+				email: user.email,
+				name: user.displayName || user.email,
+				email_hash: emailHash,
+			},
+		};
+	}, [chatSupport, user]);
 
 	useEffect(() => {
 		if (!isFetchingUser && isCloudUser && user && user.email) {
@@ -354,6 +316,7 @@ function App(): JSX.Element {
 					tunnel: window.signozBootData.settings.sentry.tunnel,
 					environment: process.env.ENVIRONMENT,
 					release: process.env.VERSION,
+					ignoreErrors: SENTRY_IGNORE_ERRORS,
 					integrations: [
 						// Kept for the `transaction` tag used in routing, even though
 						// tracing is disabled. Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
@@ -366,9 +329,34 @@ function App(): JSX.Element {
 					tracesSampleRate: 0, // Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
 					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
 					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
-					beforeSend(event) {
+					beforeSend(event, hint) {
+						const error = hint?.originalException as
+							| { name?: string; code?: string | number }
+							| undefined;
+
+						// Ignore benign aborted/cancelled requests (axios + fetch).
+						if (error?.code === 'ERR_CANCELED' || error?.code === 'ECONNABORTED') {
+							return null;
+						}
+						if (error?.name === 'AbortError') {
+							return null;
+						}
+						// Ignore benign Monaco cancellation errors (name 'Canceled').
+						if (error?.name === 'Canceled') {
+							return null;
+						}
+
 						// Drop the event if its level is 'warning' or 'info'
 						if (event.level === 'warning' || event.level === 'info') {
+							return null;
+						}
+
+						if (isExternalIntegrationError(event)) {
+							return null;
+						}
+
+						// Dev serves source from /src/, so every frame would look foreign there.
+						if (IS_PROD && hasNoAppFrames(event)) {
 							return null;
 						}
 
@@ -425,48 +413,36 @@ function App(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<ConfigProvider theme={themeConfig}>
-				<Router history={history}>
-					<CompatRouter>
-						<CmdKProvider>
-							<NotificationProvider>
-								<ErrorModalProvider>
-									{isLoggedInState && <CmdKPalette userRole={user.role} />}
-									{isLoggedInState && (
-										<ShiftHoldOverlayController userRole={user.role} />
-									)}
-									<PrivateRoute>
-										<ResourceProvider>
-											<QueryBuilderProvider>
-												<KeyboardHotkeysProvider>
-													<AppLayout>
-														<PreferenceContextProvider>
-															<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																<Switch>
-																	{routes.map(({ path, component, exact }) => (
-																		<Route
-																			key={`${path}`}
-																			exact={exact}
-																			path={path}
-																			component={component}
-																		/>
-																	))}
-																	<Route exact path="/" component={Home} />
-																	<Route path="*" component={NotFound} />
-																</Switch>
-															</Suspense>
-														</PreferenceContextProvider>
-													</AppLayout>
-												</KeyboardHotkeysProvider>
-											</QueryBuilderProvider>
-										</ResourceProvider>
-									</PrivateRoute>
-								</ErrorModalProvider>
-							</NotificationProvider>
-						</CmdKProvider>
-					</CompatRouter>
-				</Router>
-			</ConfigProvider>
+			<AppShell
+				router={appRouter}
+				overlays={
+					isLoggedInState && (
+						<>
+							<CmdKPalette userRole={user.role} />
+							<ShiftHoldOverlayController userRole={user.role} />
+						</>
+					)
+				}
+			>
+				<PrivateRoute>
+					<AppPageProviders layout={appLayout}>
+						<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+							<Switch>
+								{routes.map(({ path, component, exact }) => (
+									<Route
+										key={`${path}`}
+										exact={exact}
+										path={path}
+										component={component}
+									/>
+								))}
+								<Route exact path="/" component={Home} />
+								<Route path="*" component={NotFound} />
+							</Switch>
+						</Suspense>
+					</AppPageProviders>
+				</PrivateRoute>
+			</AppShell>
 		</Sentry.ErrorBoundary>
 	);
 }

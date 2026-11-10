@@ -37,53 +37,31 @@
 	align-items: center;
 	justify-items: end;
 
+	--button-height: 21px;
+	--button-padding: var(--spacing-5);
+
 	// Stack badge / only / toggle in a single cell so the crossfade overlaps
 	// instead of laying them side-by-side mid-transition.
 	> * {
 		grid-area: 1 / 1;
 	}
-}
 
-.badge {
-	opacity: 1;
-	transition:
-		opacity 0.16s ease,
-		display 0.16s allow-discrete;
-}
-
-.onlyButton {
-	display: none;
-	align-items: center;
-	justify-content: center;
-	opacity: 0;
-	transform: translateX(4px);
-	transition:
-		opacity 0.16s ease,
-		transform 0.16s ease,
-		display 0.16s allow-discrete;
-	--button-height: 21px;
-	--button-padding: var(--spacing-5);
-
-	&:hover {
-		background-color: unset;
+	> [data-action='badge'] {
+		opacity: 1;
+		transition:
+			opacity 0.16s ease,
+			display 0.16s allow-discrete;
 	}
-}
 
-.toggleButton {
-	display: none;
-	align-items: center;
-	justify-content: center;
-	opacity: 0;
-	transform: translateX(4px);
-	transition:
-		opacity 0.16s ease,
-		transform 0.16s ease,
-		display 0.16s allow-discrete;
-	--button-height: 21px;
-	--button-padding: var(--spacing-5);
-
-	&:hover {
-		background-color: unset;
+	> [data-action='only'],
+	> [data-action='toggle'] {
+		display: none;
+		opacity: 0;
+		transform: translateX(4px);
+		transition:
+			opacity 0.16s ease,
+			transform 0.16s ease,
+			display 0.16s allow-discrete;
 	}
 }
 
@@ -94,19 +72,15 @@
 		color: var(--l3-foreground);
 	}
 
-	.onlyButton {
-		cursor: not-allowed;
-		color: var(--l3-foreground);
-	}
-
-	.toggleButton {
+	[data-action='only'],
+	[data-action='toggle'] {
 		cursor: not-allowed;
 		color: var(--l3-foreground);
 	}
 }
 
 .valueButton:hover {
-	.onlyButton {
+	[data-action='only'] {
 		display: flex;
 		opacity: 1;
 		transform: translateX(0);
@@ -117,14 +91,14 @@
 		}
 	}
 
-	.badge {
+	[data-action='badge'] {
 		display: none;
 		opacity: 0;
 	}
 }
 
 .checkbox:hover ~ .valueButton {
-	.toggleButton {
+	[data-action='toggle'] {
 		display: flex;
 		opacity: 1;
 		transform: translateX(0);
@@ -135,16 +109,14 @@
 		}
 	}
 
-	.badge {
+	[data-action='badge'] {
 		display: none;
 		opacity: 0;
 	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.badge,
-	.onlyButton,
-	.toggleButton {
+	.actions > * {
 		transition: none;
 	}
 }

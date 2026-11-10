@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { navigate } from 'lib/router/navigation';
 import { Alert } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import getLocalStorageApi from 'api/browser/localstorage/get';
@@ -9,8 +10,8 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import GridCard from 'container/GridCardLayout/GridCard';
-import { Card, CardContainer } from 'container/GridCardLayout/styles';
+import GridCard from 'container/WidgetCard/Card';
+import { Card, CardContainer } from 'container/WidgetCard/styles';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -18,7 +19,7 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
@@ -71,8 +72,7 @@ const sections: MetricSection[] = [
 function Section(section: MetricSection): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { title, graphs } = section;
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 
@@ -84,17 +84,20 @@ function Section(section: MetricSection): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, history, pathname, urlQuery],
+		[dispatch, pathname, urlQuery],
 	);
 
 	return (
-		<div className="meter-column-graph">
+		<div
+			className="meter-column-graph"
+			data-testid={`meter-breakdown-section-${title.toLowerCase()}`}
+		>
 			<CardContainer className="row-card" isDarkMode={isDarkMode}>
 				<Typography.Text className="section-title">{title}</Typography.Text>
 			</CardContainer>

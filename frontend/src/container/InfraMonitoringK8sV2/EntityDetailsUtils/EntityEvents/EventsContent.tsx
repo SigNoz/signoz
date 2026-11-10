@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
-import { DataType } from 'container/LogDetailedView/TableView';
+import { DataType } from 'container/LogDetailedView/LogDetailedView.types';
 
 import styles from './EventsContent.module.scss';
 

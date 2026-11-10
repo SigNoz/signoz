@@ -1,0 +1,25 @@
+// Tripled on purpose: the markdown reset (`.content.content *`) weighs (0,2,0),
+// and a doubled class only ties it — leaving the winner to stylesheet order,
+// which reverted `position: relative` and let the copy button anchor to the
+// panel instead of the block. (0,3,0) wins regardless of order.
+.codeBlock.codeBlock.codeBlock {
+	position: relative;
+}
+
+// The wrapper is a reset-exempt island (see MarkdownContent.module.scss), so
+// plain classes style it; the button inside keeps its design-system look.
+.copyButton {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	border-radius: 3px;
+	background: var(--l3-background);
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+// GitHub-style reveal: hover anywhere on the block, or keyboard focus.
+.codeBlock.codeBlock.codeBlock:hover .copyButton,
+.codeBlock.codeBlock.codeBlock:focus-within .copyButton {
+	opacity: 1;
+}

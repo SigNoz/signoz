@@ -6,7 +6,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
-import { K8sDetailsMetadataConfig } from '../Base/K8sBaseDetails';
+import { K8sDetailsMetadataConfig } from '../Base/types';
 import {
 	getPodUtilizationByPodQueryPayloads,
 	INFRA_MONITORING_ATTR_KEYS,
@@ -76,23 +76,31 @@ export const deploymentWidgetInfo = [
 		yAxisUnit: '',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/deployments/#cpu-usage-request-limits',
+		description:
+			'Total CPU usage of the Deployment pods against their aggregate CPU requests and limits.',
 	},
 	{
 		title: 'Memory usage, request, limits',
 		yAxisUnit: 'bytes',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/deployments/#memory-usage-request-limits',
+		description:
+			'Total memory usage of the Deployment pods against their aggregate memory requests and limits.',
 	},
 	{
 		title: 'Network IO',
 		yAxisUnit: 'binBps',
 		docPath: '/infrastructure-monitoring/kubernetes/deployments/#network-io',
+		description:
+			'Transmit and receive throughput per interface across all pods of the Deployment.',
 	},
 	{
 		title: 'Network error count',
 		yAxisUnit: '',
 		docPath:
 			'/infrastructure-monitoring/kubernetes/deployments/#network-error-count',
+		description:
+			'Per-pod-interface network error counts by direction and interface, reported by the kubelet.',
 	},
 ];
 

@@ -53,12 +53,6 @@ var (
 		types.RoleEditor: SigNozEditorRoleName,
 		types.RoleViewer: SigNozViewerRoleName,
 	}
-
-	SigNozManagedRoleToExistingLegacyRole = map[string]types.Role{
-		SigNozAdminRoleName:  types.RoleAdmin,
-		SigNozEditorRoleName: types.RoleEditor,
-		SigNozViewerRoleName: types.RoleViewer,
-	}
 )
 
 type Role struct {

@@ -200,5 +200,4 @@ export const mockQueryBuilderContextValue = {
 	updateQueriesData: (): Query => initialQueriesMap.logs,
 	initQueryBuilderData: noop,
 	handleOnUnitsChange: noop,
-	isStagedQueryUpdated: (): boolean => false,
 };

@@ -15,7 +15,6 @@ import {
 	ListMinus,
 	ScrollText,
 	Settings,
-	TowerControl,
 	Workflow,
 } from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
@@ -138,16 +137,6 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
 			perform: (): void => navigate(ROUTES.LOGS_PIPELINES),
 		},
-		{
-			id: 'logs',
-			name: 'Go to Logs Views',
-			shortcut: [GlobalShortcutsName.NavigateToLogsViews],
-			keywords: 'logs views',
-			section: 'Logs',
-			icon: <TowerControl size={14} />,
-			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
-			perform: (): void => navigate(ROUTES.LOGS_SAVE_VIEWS),
-		},
 
 		// metrics
 		{
@@ -169,16 +158,6 @@ export function createShortcutActions(deps: ActionDeps): CmdAction[] {
 			icon: <Compass size={14} />,
 			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
 			perform: (): void => navigate(ROUTES.METRICS_EXPLORER_EXPLORER),
-		},
-		{
-			id: 'metrics-views',
-			name: 'Go to Metrics Views',
-			shortcut: [GlobalShortcutsName.NavigateToMetricsViews],
-			keywords: 'metrics views',
-			section: 'Metrics',
-			icon: <TowerControl size={14} />,
-			roles: ['ADMIN', 'EDITOR', 'VIEWER'],
-			perform: (): void => navigate(ROUTES.METRICS_EXPLORER_VIEWS),
 		},
 
 		// Traces

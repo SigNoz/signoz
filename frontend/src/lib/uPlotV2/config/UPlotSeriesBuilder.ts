@@ -3,6 +3,8 @@ import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { calculateWidthBasedOnStepInterval } from 'lib/uPlotV2/utils';
 import uPlot, { Series } from 'uplot';
 
+import { resolveFillOpacity, toAlphaHex } from '../utils/fillOpacity';
+import { reportBarRect } from '../utils/barRect';
 import { generateGradientFill } from '../utils/generateGradientFill';
 import { isolatedPointFilter } from '../utils/seriesPointsFilter';
 import {
@@ -58,7 +60,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 	}: {
 		resolvedLineColor: string;
 	}): Partial<Series> {
-		const { lineWidth, lineStyle, lineCap, fillColor, fillMode } = this.props;
+		const { lineWidth, lineStyle, lineCap, fillColor, fillMode, fillOpacity } =
+			this.props;
 		const lineConfig: Partial<Series> = {
 			stroke: resolvedLineColor,
 			width: lineWidth ?? DEFAULT_LINE_WIDTH,
@@ -85,12 +88,20 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			lineConfig.fill = finalFillColor;
 		} else if (this.props.drawStyle === DrawStyle.Histogram) {
 			lineConfig.fill = `${finalFillColor}40`;
+		} else if (this.props.drawStyle === DrawStyle.Scatter) {
+			lineConfig.fill = `${finalFillColor}${toAlphaHex(resolveFillOpacity(fillOpacity))}`;
 		} else if (fillMode && fillMode !== FillMode.None) {
+			const resolvedOpacity = resolveFillOpacity(fillOpacity);
 			if (fillMode === FillMode.Solid) {
-				lineConfig.fill = `${finalFillColor}70`;
+				lineConfig.fill = `${finalFillColor}${toAlphaHex(resolvedOpacity)}`;
 			} else if (fillMode === FillMode.Gradient) {
 				lineConfig.fill = (self: uPlot): CanvasGradient =>
-					generateGradientFill(self, finalFillColor, 'rgba(0, 0, 0, 0)');
+					generateGradientFill(
+						self,
+						finalFillColor,
+						'rgba(0, 0, 0, 0)',
+						resolvedOpacity,
+					);
 			}
 		}
 
@@ -114,7 +125,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			return { paths: pathBuilder };
 		}
 
-		if (drawStyle === DrawStyle.Points) {
+		if (isMarkerOnlyDrawStyle(drawStyle)) {
 			return { paths: (): null => null };
 		}
 
@@ -186,6 +197,10 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 		if (drawStyle === DrawStyle.Points) {
 			return true;
 		}
+		// The discs are the series path; uPlot's own points would double-draw them.
+		if (drawStyle === DrawStyle.Scatter) {
+			return false;
+		}
 		return !!showPoints;
 	}
 
@@ -210,7 +225,15 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 	}
 
 	getConfig(): ExtendedSeries {
-		const { scaleKey, label, spanGaps, show = true, metric } = this.props;
+		const {
+			scaleKey,
+			label,
+			spanGaps,
+			show = true,
+			metric,
+			partialTimestamps,
+			facets,
+		} = this.props;
 
 		const resolvedLineColor = this.getLineColor();
 
@@ -238,6 +261,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<
 			...pathConfig,
 			points: Object.keys(pointsConfig).length > 0 ? pointsConfig : undefined,
 			metric,
+			...(partialTimestamps?.size ? { partialTimestamps } : {}),
+			...(facets && { facets }),
 		};
 	}
 }
@@ -250,6 +275,11 @@ interface PathBuilders {
 	[key: string]: Series.PathBuilder;
 }
 
+/** Draws standalone markers, never a connecting line. */
+function isMarkerOnlyDrawStyle(drawStyle: DrawStyle): boolean {
+	return drawStyle === DrawStyle.Points || drawStyle === DrawStyle.Scatter;
+}
+
 /**
  * Get path builder based on draw style and interpolation
  */
@@ -257,7 +287,7 @@ function getPathBuilder({
 	drawStyle,
 	lineInterpolation,
 	barAlignment = BarAlignment.Center,
-	barWidthFactor = 0.6,
+	barWidthFactor = 0.85,
 	barMaxWidth = 200,
 	stepInterval,
 }: {
@@ -350,6 +380,7 @@ function getBarPathBuilder({
 				builders[barsCfgKey] = barsPathBuilderFactory({
 					size: [barWidthFactor, effectiveBarMaxWidth],
 					align: barAlignment,
+					each: reportBarRect,
 				});
 			}
 
@@ -364,6 +395,7 @@ function getBarPathBuilder({
 		builders[barsCfgKey] = barsPathBuilderFactory({
 			size: [barWidthFactor, barMaxWidth],
 			align: barAlignment,
+			each: reportBarRect,
 		});
 	}
 

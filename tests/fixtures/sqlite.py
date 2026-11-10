@@ -16,9 +16,6 @@ def sqlite(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerSQL:
-    """
-    Package-scoped fixture for SQLite.
-    """
 
     def create() -> types.TestContainerSQL:
         tmpdir = tmpfs("sqlite")

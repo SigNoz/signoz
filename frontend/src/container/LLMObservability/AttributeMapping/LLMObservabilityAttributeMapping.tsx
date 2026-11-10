@@ -1,19 +1,29 @@
-import { useCallback } from 'react';
-import { Divider } from '@signozhq/ui/divider';
-import { Tabs } from '@signozhq/ui/tabs';
+import { useCallback, useEffect } from 'react';
+import { Tabs } from 'antd';
+import logEvent from 'api/common/logEvent';
 import { useConfirmableAction } from 'hooks/useConfirmableAction';
 
-import AttributeMappingHeader from './components/AttributeMappingHeader/AttributeMappingHeader';
+import AttributeMappingActions from './components/AttributeMappingActions/AttributeMappingActions';
 import AttributeMappingsTab from './AttributeMappingsTab/AttributeMappingsTab';
 import DiscardChangesDialog from './components/DiscardChangesDialog/DiscardChangesDialog';
 import GroupFormDrawer from './components/GroupFormDrawer/GroupFormDrawer';
 import styles from './LLMObservabilityAttributeMapping.module.scss';
+import TestTab from './TestTab/TestTab';
 import { useAttributeMappingEditor } from './hooks/useAttributeMappingEditor';
 import { useGroupFormDrawer } from './components/GroupFormDrawer/hooks/useGroupFormDrawer';
+import { useTestSpanMapper } from './TestTab/useTestSpanMapper';
+
+const MAPPINGS_TAB_KEY = 'attribute-mappings';
+const TEST_TAB_KEY = 'test';
 
 function LLMObservabilityAttributeMapping(): JSX.Element {
 	const editor = useAttributeMappingEditor();
 	const groupDrawer = useGroupFormDrawer();
+	const spanTest = useTestSpanMapper(editor.snapshot, editor.groups);
+
+	useEffect(() => {
+		void logEvent('AI Observability Attribute Mapping: Page visited', {});
+	}, []);
 
 	const { discard } = editor;
 	// Discarding wipes the whole working copy, so gate it behind a confirm
@@ -31,7 +41,7 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 
 	const tabItems = [
 		{
-			key: 'attribute-mappings',
+			key: MAPPINGS_TAB_KEY,
 			label: 'Attribute Mappings',
 			children: (
 				<AttributeMappingsTab
@@ -42,11 +52,9 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 			),
 		},
 		{
-			key: 'test',
+			key: TEST_TAB_KEY,
 			label: 'Test',
-			disabled: true,
-			disabledReason: 'Coming soon',
-			children: null,
+			children: <TestTab spanTest={spanTest} />,
 		},
 	];
 
@@ -55,24 +63,23 @@ function LLMObservabilityAttributeMapping(): JSX.Element {
 			className={styles.llmObservabilityAttributeMapping}
 			data-testid="llm-observability-attribute-mapping-page"
 		>
-			<AttributeMappingHeader
-				isDirty={editor.isDirty}
-				isSaving={editor.isSaving}
-				onDiscard={discardConfirm.request}
-				onSave={editor.save}
-			/>
-
 			{editor.saveError && (
 				<div className={styles.pageError} role="alert">
 					{editor.saveError}
 				</div>
 			)}
-			<Divider />
 
 			<Tabs
-				testId="attribute-mapping-tabs"
-				defaultValue="attribute-mappings"
+				defaultActiveKey={MAPPINGS_TAB_KEY}
 				items={tabItems}
+				tabBarExtraContent={
+					<AttributeMappingActions
+						isDirty={editor.isDirty}
+						isSaving={editor.isSaving}
+						onDiscard={discardConfirm.request}
+						onSave={editor.save}
+					/>
+				}
 			/>
 			{groupDrawer.isOpen && (
 				<GroupFormDrawer

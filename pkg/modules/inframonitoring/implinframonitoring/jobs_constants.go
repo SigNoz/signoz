@@ -37,8 +37,7 @@ var jobsTableMetricNamesList = []string{
 	"k8s.job.desired_successful_pods",
 }
 
-// Carried forward from v1 jobAttrsToEnrich
-// (pkg/query-service/app/inframetrics/jobs.go:31-35).
+// Carried forward from v1 jobAttrsToEnrich (removed).
 var jobAttrKeysForMetadata = []string{
 	"k8s.job.name",
 	"k8s.namespace.name",

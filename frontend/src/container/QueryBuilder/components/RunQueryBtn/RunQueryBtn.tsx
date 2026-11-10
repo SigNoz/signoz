@@ -1,5 +1,5 @@
+import { ReactNode } from 'react';
 import { Button } from '@signozhq/ui/button';
-import cx from 'classnames';
 import {
 	ChevronUp,
 	Command,
@@ -12,9 +12,10 @@ import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 import './RunQueryBtn.scss';
 
 type RunQueryBtnProps = {
-	className?: string;
 	label?: string;
 	disabled?: boolean;
+	disabledTooltip?: ReactNode;
+	testId?: string;
 } & (
 	| {
 			onStageRunQuery: () => void;
@@ -29,44 +30,54 @@ type RunQueryBtnProps = {
 );
 
 function RunQueryBtn({
-	className,
 	label,
 	isLoadingQueries,
 	handleCancelQuery,
 	onStageRunQuery,
 	disabled,
+	disabledTooltip,
+	testId,
 }: RunQueryBtnProps): JSX.Element {
 	const isMac = getUserOperatingSystem() === UserOperatingSystem.MACOS;
 	const isLoading = isLoadingQueries ?? false;
 
 	return isLoading ? (
 		<Button
-			color="destructive"
+			size="md"
+			variant="solid"
+			color="danger"
 			type="button"
+			data-run-query-btn
 			prefix={<LoaderCircle size={14} className="loading-icon animate-spin" />}
-			className={cx('cancel-query-btn', className)}
 			onClick={handleCancelQuery}
+			testId={testId ? `${testId}-cancel` : undefined}
 		>
 			Cancel
 		</Button>
 	) : (
 		<Button
+			size="md"
+			variant="solid"
 			color="primary"
 			type="button"
-			className={cx('run-query-btn', className)}
+			data-run-query-btn
+			testId={testId}
 			disabled={disabled}
+			disabledTooltip={disabledTooltip}
 			onClick={onStageRunQuery}
 			prefix={<Play size={14} />}
+			suffix={
+				<div className="cmd-hint">
+					{isMac ? (
+						<Command size={12} data-testid="cmd-hint-modifier-mac" />
+					) : (
+						<ChevronUp size={12} data-testid="cmd-hint-modifier-non-mac" />
+					)}
+					<CornerDownLeft size={12} data-testid="cmd-hint-enter" />
+				</div>
+			}
 		>
 			{label || 'Run Query'}
-			<div className="cmd-hint">
-				{isMac ? (
-					<Command size={12} data-testid="cmd-hint-modifier-mac" />
-				) : (
-					<ChevronUp size={12} data-testid="cmd-hint-modifier-non-mac" />
-				)}
-				<CornerDownLeft size={12} data-testid="cmd-hint-enter" />
-			</div>
 		</Button>
 	);
 }

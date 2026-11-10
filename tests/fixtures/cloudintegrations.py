@@ -1,5 +1,3 @@
-"""Fixtures for cloud integration tests."""
-
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from http import HTTPStatus
@@ -28,20 +26,45 @@ class ProviderAccountSpec:
     provider: str
     # params for the account created by default.
     initial_params: dict
-    # params for the config an update (PUT) test sends.
-    updated_params: dict
     # params -> the provider-keyed `config` block for a POST/PUT body.
     build_config: Callable[[dict], dict]
     # params -> the full config block the API is expected to return under
     # config[provider] on GET/list. This may differ from what build_config sends:
     # e.g. AWS accepts deploymentRegion on POST but the API does not echo it back.
     expected_config: Callable[[dict], dict]
+    # only the suites that exercise updates need to supply it.
+    updated_params: dict = field(default_factory=dict)
+    # params -> the agentReport.syncState the API is expected to return after the first check-in.
+    expected_sync_state: Callable[[dict], dict | None] = lambda p: None
     # id shown in parametrized test names; defaults to the provider slug.
     id: str = field(default="")
 
     def __post_init__(self) -> None:
         if not self.id:
             object.__setattr__(self, "id", self.provider)
+
+
+# Per-provider service shape.
+@dataclass(frozen=True)
+class ProviderServiceSpec:
+    provider: str
+    service_id: str
+
+    account_config: dict
+    # id shown in parametrized test names; defaults to the provider slug.
+    id: str = field(default="")
+
+    def __post_init__(self) -> None:
+        if not self.id:
+            object.__setattr__(self, "id", self.provider)
+
+    def build_service_config(self, metrics_enabled: bool, logs_enabled: bool | None = None) -> dict:
+        return {
+            self.provider: {
+                "metrics": {"enabled": metrics_enabled},
+                "logs": {"enabled": metrics_enabled if logs_enabled is None else logs_enabled},
+            }
+        }
 
 
 @pytest.fixture(scope="function")
@@ -294,6 +317,7 @@ def simulate_agent_checkin(
     account_id: str,
     cloud_account_id: str,
     data: dict | None = None,
+    synced_version: int | None = None,
 ) -> requests.Response:
     endpoint = f"/api/v1/cloud_integrations/{cloud_provider}/accounts/check_in"
 
@@ -302,6 +326,8 @@ def simulate_agent_checkin(
         "providerAccountId": cloud_account_id,
         "data": data or {},
     }
+    if synced_version is not None:
+        checkin_payload["syncedVersion"] = synced_version
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(endpoint),

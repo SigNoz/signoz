@@ -1,42 +1,20 @@
 import React from 'react';
-import { Color } from '@signozhq/design-tokens';
 import { Badge } from '@signozhq/ui/badge';
 import { Progress } from '@signozhq/ui/progress';
-import { Typography } from '@signozhq/ui/typography';
 import {
 	InframonitoringtypesHostRecordDTO,
 	InframonitoringtypesHostStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
+import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/types';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
+import { TextNoData } from 'container/InfraMonitoringK8sV2/components';
+import { getStrokeColorForPercent } from 'container/InfraMonitoringK8sV2/components/EntityProgressBar.utils';
 import { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
 import {
 	getHostQueryPayload,
 	hostWidgetInfo,
 } from 'container/LogDetailedView/InfraMetrics/constants';
-
-import infraHostsStyles from './InfraMonitoringHosts.module.scss';
-
-export function getProgressColor(percent: number): string {
-	if (percent >= 90) {
-		return Color.BG_SAKURA_500;
-	}
-	if (percent >= 60) {
-		return Color.BG_AMBER_500;
-	}
-	return Color.BG_FOREST_500;
-}
-
-export function getMemoryProgressColor(percent: number): string {
-	if (percent >= 90) {
-		return Color.BG_CHERRY_500;
-	}
-	if (percent >= 60) {
-		return Color.BG_AMBER_500;
-	}
-	return Color.BG_FOREST_500;
-}
 
 export type HostDetailMetadataConfigType =
 	K8sDetailsMetadataConfig<InframonitoringtypesHostRecordDTO>;
@@ -50,12 +28,7 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 		render: (value, h): React.ReactNode => {
 			const isActive = h.status === InframonitoringtypesHostStatusDTO.active;
 			return (
-				<Badge
-					variant="outline"
-					className={`${infraHostsStyles.infraMonitoringTags} ${
-						isActive ? infraHostsStyles.tagsActive : infraHostsStyles.tagsInactive
-					}`}
-				>
+				<Badge color={isActive ? 'success' : 'secondary'} variant="outlined">
 					{value}
 				</Badge>
 			);
@@ -66,11 +39,11 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 		getValue: (h): string => h.meta?.[INFRA_MONITORING_ATTR_KEYS.OS_TYPE] || '-',
 		render: (value): React.ReactNode =>
 			value !== '-' ? (
-				<Badge variant="outline" className={infraHostsStyles.infraMonitoringTags}>
+				<Badge textTransform="none" color="primary" variant="outlined">
 					{value}
 				</Badge>
 			) : (
-				<Typography.Text>-</Typography.Text>
+				<TextNoData type="typography" />
 			),
 	},
 	{
@@ -79,7 +52,7 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 		render: (value): React.ReactNode => (
 			<Progress
 				percent={Number(Number(value).toFixed(1))}
-				strokeColor={getProgressColor(Number(value))}
+				strokeColor={getStrokeColorForPercent('cpu', Number(value))}
 				showInfo
 			/>
 		),
@@ -90,7 +63,7 @@ export const hostDetailsMetadataConfig: HostDetailMetadataConfigType[] = [
 		render: (value): React.ReactNode => (
 			<Progress
 				percent={Number(Number(value).toFixed(1))}
-				strokeColor={getMemoryProgressColor(Number(value))}
+				strokeColor={getStrokeColorForPercent('memory', Number(value))}
 				showInfo
 			/>
 		),
@@ -102,7 +75,7 @@ export function getHostMetricsQueryPayload(
 	start: number,
 	end: number,
 ): ReturnType<typeof getHostQueryPayload> {
-	return getHostQueryPayload(host.hostName, start, end, true);
+	return getHostQueryPayload(host.hostName, start, end);
 }
 
 export { hostWidgetInfo };

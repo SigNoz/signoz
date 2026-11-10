@@ -3,6 +3,7 @@ package dashboardtypes
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"regexp"
 	"strings"
@@ -30,12 +31,16 @@ var preV5Migrator = transition.NewDashboardMigrateV5(slog.New(slog.DiscardHandle
 
 // normalizePreV5QueryData upgrades one builder queryData/formula in place: the
 // shared migrator, then a reshape of any existing aggregations[] it leaves alone.
-func normalizePreV5QueryData(query map[string]any, widgetType string) {
+func normalizePreV5QueryData(query map[string]any, widgetType string, panelKind PanelPluginKind) {
 	dropLegacyFilter(query)
 	normalizeFilterItemOps(query)
+	foldReduceToIntoMetricAggregations(query)
 	preV5Migrator.MigrateQueryDataShapeSafe(context.Background(), query, widgetType)
 	normalizePreV5LogTraceAggregations(query)
 	normalizeMetricAggregations(query)
+	// After the migrator has built aggregations from flat fields and the reshape above
+	// has settled them; the caller's ensureDefaultAggregation only injects for logs/traces.
+	ensureMetricReduceTo(query, panelKind)
 	normalizeFunctionArgs(query)
 	dropInvalidFunctions(query)
 	// normalizeOrderByKeys runs in the caller, after ensureDefaultAggregation: a
@@ -104,26 +109,12 @@ func normalizeFunctionArgs(query map[string]any) {
 	}
 }
 
-// malformedOrderByValueKeys are v4 order-by columnNames meaning "order by the aggregation value"
-// that the v5 aggregation validator rejects (validateOrderByForAggregation). All resolve
-// to the same aggregation key. Add more as they surface. The frontend passes these
-// through (the query-service resolves them), but the v2 dashboard validator only accepts
-// a real aggregation key.
-var malformedOrderByValueKeys = map[string]bool{
-	"#SIGNOZ_VALUE":                  true,
-	"A":                              true,
-	"A.count()":                      true,
-	"__result":                       true,
-	"value":                          true,
-	"A.p99(duration_nano)":           true,
-	"aws_Kafka_MessagesInPerSec_max": true,
-	"byte_in_count":                  true,
-	"(http_server_request_duration_ms.bucket)": true,
-}
-
-// normalizeOrderByKeys rewrites any orderBy columnName in orderByValueKeys to the
-// v5-valid aggregation key. Left untouched if the key can't resolve (no aggregation to
-// name).
+// normalizeOrderByKeys rewrites any orderBy columnName the v5 aggregation validator
+// would reject (validateOrderByForAggregation) to the canonical aggregation value key.
+// v1 tolerated free-form "order by the value" aliases (#SIGNOZ_VALUE, the query name,
+// the raw metric/expression) that the query-service resolved at query time; v2 accepts
+// only a real order key. Anything already valid (a group-by key, an aggregation
+// expression/alias/index) is left alone. No-op if no aggregation key can be named.
 func normalizeOrderByKeys(query map[string]any) {
 	orders, ok := query["orderBy"].([]any)
 	if !ok {
@@ -133,15 +124,86 @@ func normalizeOrderByKeys(query map[string]any) {
 	if !ok {
 		return
 	}
+	valid := validAggregationOrderKeys(query)
 	for _, o := range orders {
 		order, ok := o.(map[string]any)
 		if !ok {
 			continue
 		}
-		if cn, _ := order["columnName"].(string); malformedOrderByValueKeys[cn] {
+		if cn, _ := order["columnName"].(string); cn != "" && !valid[cn] {
 			order["columnName"] = key
 		}
 	}
+}
+
+// validAggregationOrderKeys is a line-for-line mirror of validateOrderByForAggregation
+// (querybuildertypesv5/validation.go) over the untyped query map instead of a typed
+// QueryBuilderQuery. Keep the two in lockstep — every insertion here must match one
+// there — so a side-by-side read makes any drift obvious. The only adaptations: fields
+// are read out of maps, the type switch on the aggregation becomes a switch on the
+// query signal (metrics vs logs/traces), and a not-yet-upgraded group-by still carries
+// the v4 "key" instead of the v5 "name".
+func validAggregationOrderKeys(query map[string]any) map[string]bool {
+	validOrderKeys := make(map[string]bool)
+
+	for _, gb := range asObjects(query["groupBy"]) {
+		name, _ := gb["name"].(string)
+		if name == "" {
+			name, _ = gb["key"].(string)
+		}
+		validOrderKeys[name] = true
+	}
+
+	signal := signalFromDataSource(query["dataSource"])
+	for i, agg := range asObjects(query["aggregations"]) {
+		validOrderKeys[fmt.Sprintf("%d", i)] = true
+
+		switch signal {
+		// TraceAggregation / LogAggregation (identical bodies in the validator).
+		case telemetrytypes.SignalTraces, telemetrytypes.SignalLogs:
+			if alias, _ := agg["alias"].(string); alias != "" {
+				validOrderKeys[alias] = true
+			}
+			expression, _ := agg["expression"].(string)
+			validOrderKeys[expression] = true
+
+		// MetricAggregation.
+		case telemetrytypes.SignalMetrics:
+			// Also allow the generic __result pattern
+			validOrderKeys["__result"] = true
+
+			metricName, _ := agg["metricName"].(string)
+			spaceRaw, _ := agg["spaceAggregation"].(string)
+			timeRaw, _ := agg["timeAggregation"].(string)
+			spaceAggregation := metrictypes.SpaceAggregation{String: valuer.NewString(spaceRaw)}
+			timeAggregation := metrictypes.TimeAggregation{String: valuer.NewString(timeRaw)}
+
+			validOrderKeys[fmt.Sprintf("%s(%s)", spaceAggregation.StringValue(), metricName)] = true
+			if timeAggregation != metrictypes.TimeAggregationUnspecified {
+				validOrderKeys[fmt.Sprintf("%s(%s)", timeAggregation.StringValue(), metricName)] = true
+			}
+			if timeAggregation != metrictypes.TimeAggregationUnspecified && spaceAggregation != metrictypes.SpaceAggregationUnspecified {
+				validOrderKeys[fmt.Sprintf("%s(%s(%s))", spaceAggregation.StringValue(), timeAggregation.StringValue(), metricName)] = true
+			}
+		}
+	}
+
+	return validOrderKeys
+}
+
+// asObjects returns the map elements of a []any, skipping non-object entries.
+func asObjects(raw any) []map[string]any {
+	items, ok := raw.([]any)
+	if !ok {
+		return nil
+	}
+	out := make([]map[string]any, 0, len(items))
+	for _, it := range items {
+		if m, ok := it.(map[string]any); ok {
+			out = append(out, m)
+		}
+	}
+	return out
 }
 
 // aggregationOrderKey names the first aggregation the way validateOrderByForAggregation
@@ -226,7 +288,7 @@ func dropLegacyFilter(query map[string]any) {
 
 // normalizeFilterItemOps lowercases exists/nexists filter ops (frontend stores them
 // uppercase) to the spelling transition's buildCondition (pkg/transition/migrate_common.go)
-// matches; otherwise it appends a spurious empty value ("svc EXISTS ''"). Value
+// matches; otherwise it appends a spurious empty value ("svc EXISTS ”"). Value
 // operators already round-trip via that switch's default case.
 func normalizeFilterItemOps(query map[string]any) {
 	filters, ok := query["filters"].(map[string]any)
@@ -301,6 +363,77 @@ func normalizeMetricAggregations(query map[string]any) {
 			agg["spaceAggregation"] = metrictypes.SpaceAggregationSum.StringValue()
 		}
 	}
+}
+
+// foldReduceToIntoMetricAggregations moves a metric query's top-level reduceTo onto
+// its existing aggregations[] (where v5 wants it), which the shared migrator only does
+// when building an aggregation from flat fields. Runs before it so the value survives.
+func foldReduceToIntoMetricAggregations(query map[string]any) {
+	if signalFromDataSource(query["dataSource"]) != telemetrytypes.SignalMetrics {
+		return
+	}
+	reduceTo, ok := query["reduceTo"].(string)
+	if !ok || reduceTo == "" {
+		return
+	}
+	aggs, ok := query["aggregations"].([]any)
+	if !ok || len(aggs) == 0 {
+		return
+	}
+	for _, a := range aggs {
+		agg, ok := a.(map[string]any)
+		if !ok {
+			continue
+		}
+		if _, exists := agg["reduceTo"]; !exists {
+			agg["reduceTo"] = reduceTo
+		}
+	}
+}
+
+// ensureMetricReduceTo fills a metric aggregation's reduceTo on scalar panels, which
+// reject one without it (QueryBuilderQuery.Validate) where v1 never required it. The
+// shared migrator only derives a reduceTo for v3-shaped table widgets, so value/pie
+// panels and bodies already carrying aggregations[] arrive empty. A valid reduceTo is
+// left alone.
+func ensureMetricReduceTo(query map[string]any, panelKind PanelPluginKind) {
+	if requestTypeForPanel(panelKind) != qb.RequestTypeScalar {
+		return
+	}
+	if signalFromDataSource(query["dataSource"]) != telemetrytypes.SignalMetrics {
+		return
+	}
+	aggs, ok := query["aggregations"].([]any)
+	if !ok {
+		return
+	}
+	for _, a := range aggs {
+		agg, ok := a.(map[string]any)
+		if !ok {
+			continue
+		}
+		reduceTo, _ := agg["reduceTo"].(string)
+		if (qb.ReduceTo{String: valuer.NewString(reduceTo)}).IsValid() {
+			continue
+		}
+		agg["reduceTo"] = deriveReduceToForMetricAggregation(agg).StringValue()
+	}
+}
+
+// deriveReduceToForMetricAggregation reads the metric's kind off its aggregation: a
+// percentile space aggregation is a histogram, a rate/increase time aggregation is a
+// counter, anything else a gauge.
+func deriveReduceToForMetricAggregation(agg map[string]any) qb.ReduceTo {
+	spaceAgg, _ := agg["spaceAggregation"].(string)
+	if (metrictypes.SpaceAggregation{String: valuer.NewString(spaceAgg)}).IsPercentile() {
+		return qb.ReduceToAvg
+	}
+	timeAgg, _ := agg["timeAggregation"].(string)
+	switch (metrictypes.TimeAggregation{String: valuer.NewString(timeAgg)}) {
+	case metrictypes.TimeAggregationRate, metrictypes.TimeAggregationIncrease:
+		return qb.ReduceToSum
+	}
+	return qb.ReduceToLast
 }
 
 // normalizePreV5LogTraceAggregations reshapes an existing logs/traces aggregations[]
@@ -485,15 +618,32 @@ func normalizePreV5PageSize(query map[string]any, rowLimitPanel bool) {
 	}
 }
 
-// normalizeQueryLimit drops a limit above the v5 maximum (MaxQueryLimit); v1 allowed
-// larger/unbounded limits, and an over-max value fails validation. Removing it leaves
-// the query unlimited (the field is optional).
+// normalizeQueryLimit coerces limit to the int the v5 decode expects: v1 stored it
+// as a string ("5") or float, both of which fail the typed decode. An unparseable
+// value or one above the v5 maximum (MaxQueryLimit) is dropped, leaving the query
+// unlimited (the field is optional).
 func normalizeQueryLimit(query map[string]any) {
-	limit, ok := coerceFloat(query["limit"])
-	if !ok {
+	if query["limit"] == nil {
 		return
 	}
-	if limit > qb.MaxQueryLimit {
+	limit, ok := coerceFloat(query["limit"])
+	if !ok || limit > qb.MaxQueryLimit {
 		delete(query, "limit")
+		return
 	}
+	query["limit"] = int(limit)
+}
+
+// normalizeQueryOffset coerces offset to the int the v5 decode expects; v1 could
+// store it as a string. An unparseable value is dropped (offset defaults to 0).
+func normalizeQueryOffset(query map[string]any) {
+	if query["offset"] == nil {
+		return
+	}
+	offset, ok := coerceFloat(query["offset"])
+	if !ok {
+		delete(query, "offset")
+		return
+	}
+	query["offset"] = int(offset)
 }

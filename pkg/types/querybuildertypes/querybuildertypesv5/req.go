@@ -16,10 +16,8 @@ import (
 )
 
 type QueryEnvelope struct {
-	// Type is the type of the query.
-	Type QueryType `json:"type"` // "builder_query" | "builder_formula" | "builder_sub_query" | "builder_join" | "promql" | "clickhouse_sql"
-	// Spec is the deferred decoding of the query if any.
-	Spec any `json:"spec"`
+	Type QueryType `json:"type" description:"The kind of query the spec holds: builder_query, builder_ai_query, builder_formula, builder_trace_operator, promql or clickhouse_sql."`
+	Spec any       `json:"spec" description:"The query specification; its shape is selected by type, and by signal for builder_query."`
 }
 
 // builderQuerySpec is a signal-discriminated oneOf of the three
@@ -62,6 +60,13 @@ type queryEnvelopeBuilder struct {
 	Spec builderQuerySpec `json:"spec" description:"The builder query specification."`
 }
 
+// queryEnvelopeBuilderAI is the OpenAPI schema for a builder_ai_query QueryEnvelope.
+// The spec is always a traces builder query (the signal is implied by the type).
+type queryEnvelopeBuilderAI struct {
+	Type QueryType                           `json:"type" required:"true" description:"The type of the query."`
+	Spec QueryBuilderQuery[TraceAggregation] `json:"spec" description:"The AI builder query specification."`
+}
+
 // queryEnvelopeFormula is the OpenAPI schema for a QueryEnvelope with type=builder_formula.
 type queryEnvelopeFormula struct {
 	Type QueryType           `json:"type" required:"true" description:"The type of the query."`
@@ -100,6 +105,7 @@ var _ jsonschema.OneOfExposer = QueryEnvelope{}
 func (QueryEnvelope) JSONSchemaOneOf() []any {
 	return []any{
 		queryEnvelopeBuilder{},
+		queryEnvelopeBuilderAI{},
 		queryEnvelopeFormula{},
 		// queryEnvelopeJoin{}, // deferred — see commented queryEnvelopeJoin above
 		queryEnvelopeTraceOperator{},
@@ -120,6 +126,7 @@ func (QueryEnvelope) PrepareJSONSchema(s *jsonschema.Schema) error {
 		"propertyName": "type",
 		"mapping": map[string]string{
 			QueryTypeBuilder.StringValue():       "#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilder",
+			QueryTypeBuilderAI.StringValue():     "#/components/schemas/Querybuildertypesv5QueryEnvelopeBuilderAI",
 			QueryTypeFormula.StringValue():       "#/components/schemas/Querybuildertypesv5QueryEnvelopeFormula",
 			QueryTypeTraceOperator.StringValue(): "#/components/schemas/Querybuildertypesv5QueryEnvelopeTraceOperator",
 			QueryTypePromQL.StringValue():        "#/components/schemas/Querybuildertypesv5QueryEnvelopePromQL",
@@ -148,6 +155,15 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
+		q.Spec = spec
+
+	case QueryTypeBuilderAI:
+		// the signal is implied by the type, so pin it
+		var spec QueryBuilderQuery[TraceAggregation]
+		if err := json.Unmarshal(shadow.Spec, &spec); err != nil {
+			return err
+		}
+		spec.Signal = telemetrytypes.SignalTraces
 		q.Spec = spec
 
 	case QueryTypeFormula:
@@ -194,7 +210,7 @@ func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 			"unknown query type %q",
 			shadow.Type,
 		).WithAdditional(
-			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, builder_trace_operator, promql, clickhouse_sql",
+			"Valid query types are: builder_query, builder_ai_query, builder_sub_query, builder_formula, builder_join, builder_trace_operator, promql, clickhouse_sql",
 		).WithSuggestions(errors.NewValidReferences(errors.NounQueryTypes, QueryType{}.Enum()...))
 	}
 
@@ -244,8 +260,49 @@ func UnmarshalBuilderQueryBySignal(data []byte) (any, error) {
 }
 
 type CompositeQuery struct {
-	// Queries is the queries to use for the request.
-	Queries []QueryEnvelope `json:"queries"`
+	Queries []QueryEnvelope `json:"queries" description:"The queries to run, each wrapped in a type-discriminated envelope. Names must be unique; formulas and trace operators reference other queries by name."`
+}
+
+// ResultColumnKeys is what a scalar query yields per row, keyed the way the
+// UI keys columns: an aggregation column is the query name, or
+// queryName.expression when the query has several aggregations; a group
+// column is a group-by key name.
+type ResultColumnKeys struct {
+	Aggregations map[string]struct{}
+	Groups       map[string]struct{}
+}
+
+// CollectResultColumnKeys reports false when a query's columns are only known
+// at run time, as for ClickHouse SQL and PromQL. A disabled query yields no
+// aggregation column but keeps its group columns, since a formula over it
+// still carries them.
+func (c *CompositeQuery) CollectResultColumnKeys() (ResultColumnKeys, bool) {
+	keys := ResultColumnKeys{Aggregations: map[string]struct{}{}, Groups: map[string]struct{}{}}
+	for _, envelope := range c.Queries {
+		if envelope.GetType() == QueryTypeClickHouseSQL || envelope.GetType() == QueryTypePromQL {
+			return ResultColumnKeys{}, false
+		}
+		for _, key := range envelope.GetGroupBy() {
+			keys.Groups[key.Name] = struct{}{}
+		}
+		if envelope.IsDisabled() {
+			continue
+		}
+		expressions := envelope.GetAggregationExpressions()
+		if len(expressions) <= 1 {
+			keys.Aggregations[envelope.GetQueryName()] = struct{}{}
+			continue
+		}
+		for _, expression := range expressions {
+			// Metric aggregations have no expression and are keyed by the query name alone.
+			if expression == "" {
+				keys.Aggregations[envelope.GetQueryName()] = struct{}{}
+				continue
+			}
+			keys.Aggregations[envelope.GetQueryName()+"."+expression] = struct{}{}
+		}
+	}
+	return keys, true
 }
 
 // PrepareJSONSchema adds description to the CompositeQuery schema.
@@ -315,8 +372,8 @@ func (VariableType) Enum() []any {
 }
 
 type VariableItem struct {
-	Type  VariableType `json:"type"`
-	Value any          `json:"value"`
+	Type  VariableType `json:"type" description:"The kind of dashboard variable: query, dynamic, custom or text."`
+	Value any          `json:"value" description:"The selected value: a string, number or boolean, or a list of them for multi-select variables. The string __all__ is special only for dynamic variables in builder filters and PromQL, where it removes the condition that references the variable; query, custom and text variables, and ClickHouse SQL for every type, substitute it literally."`
 }
 
 var _ jsonschema.Preparer = VariableItem{}
@@ -342,6 +399,7 @@ func (VariableItem) PrepareJSONSchema(s *jsonschema.Schema) error {
 	list.WithItems(items)
 
 	value := jsonschema.Schema{}
+	value.Description = propertyDescription(s, "value")
 	value.OneOf = []jsonschema.SchemaOrBool{
 		jsonschema.String.ToSchemaOrBool(),
 		jsonschema.Number.ToSchemaOrBool(),
@@ -354,28 +412,21 @@ func (VariableItem) PrepareJSONSchema(s *jsonschema.Schema) error {
 }
 
 type QueryRangeRequest struct {
-	// SchemaVersion is the version of the schema to use for the request payload.
-	SchemaVersion string `json:"schemaVersion"`
-	// Start is the start time of the query in epoch milliseconds.
-	Start uint64 `json:"start"`
-	// End is the end time of the query in epoch milliseconds.
-	End uint64 `json:"end"`
-	// RequestType is the type of the request.
-	RequestType RequestType `json:"requestType"`
-	// CompositeQuery is the composite query to use for the request.
-	CompositeQuery CompositeQuery `json:"compositeQuery"`
-	// Variables is the variables to use for the request.
-	Variables map[string]VariableItem `json:"variables,omitempty"`
+	SchemaVersion  string                  `json:"schemaVersion" description:"The version of the request payload schema, currently v1."`
+	Start          uint64                  `json:"start" description:"The inclusive start of the time range as a Unix timestamp in milliseconds."`
+	End            uint64                  `json:"end" description:"The end of the time range as a Unix timestamp in milliseconds; must be greater than start except for raw_stream requests."`
+	RequestType    RequestType             `json:"requestType" description:"The shape of the result: scalar, time_series, raw, raw_stream, trace, distribution or heatmap. It decides which result type data.results carries."`
+	CompositeQuery CompositeQuery          `json:"compositeQuery" description:"The queries to execute together; at least one is required and formulas may reference the others by name."`
+	Variables      map[string]VariableItem `json:"variables,omitempty" description:"Dashboard variable values keyed by variable name. Builder filters substitute only the $name form and leave a quoted {{name}} unchanged; PromQL and ClickHouse SQL substitute $name, {{name}}, [[name]] and the Go template form {{.name}}."`
 
-	// NoCache is a flag to disable caching for the request.
-	NoCache bool `json:"noCache,omitempty"`
+	NoCache bool `json:"noCache,omitempty" description:"When true, results are computed fresh instead of being served from the query result cache. Defaults to false."`
 
-	FormatOptions *FormatOptions `json:"formatOptions,omitempty"`
+	FormatOptions *FormatOptions `json:"formatOptions,omitempty" description:"Post-processing applied to the result before it is returned."`
 }
 
 // PrepareJSONSchema adds description to the QueryRangeRequest schema.
 func (q *QueryRangeRequest) PrepareJSONSchema(schema *jsonschema.Schema) error {
-	schema.WithDescription("Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, joins, trace operators, PromQL, and ClickHouse SQL queries.")
+	schema.WithDescription("Request body for the v5 query range endpoint. Supports builder queries (traces, logs, metrics), formulas, trace operators, PromQL, and ClickHouse SQL queries.")
 	return nil
 }
 
@@ -655,12 +706,18 @@ func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 	// Copy the decoded values back to the original struct
 	*r = QueryRangeRequest(temp)
 
+	// Coerce the window to epoch milliseconds up front so every downstream
+	// consumer (TimeRange, narrowWindowByTraceID, step interval, etc.) can
+	// safely assume ms regardless of the resolution the caller sent.
+	r.Start = ToMilliSecs(r.Start)
+	r.End = ToMilliSecs(r.End)
+
 	return nil
 }
 
 type FormatOptions struct {
-	FillGaps               bool `json:"fillGaps,omitempty"`
-	FormatTableResultForUI bool `json:"formatTableResultForUI,omitempty"`
+	FillGaps               bool `json:"fillGaps,omitempty" description:"When true, every builder query and formula in a time_series result gets a zero value for each missing step, whatever its aggregation, so averages and percentiles read as zero where no data exists. PromQL and ClickHouse SQL queries keep their gaps. Defaults to false."`
+	FormatTableResultForUI bool `json:"formatTableResultForUI,omitempty" description:"When true, scalar results from several queries are merged into one table keyed by their group-by columns. Defaults to false."`
 }
 
 func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
@@ -707,4 +764,131 @@ func (r *QueryRangeRequest) GetQueriesSupportingZeroDefault() map[string]bool {
 	}
 
 	return canDefaultZero
+}
+
+type BucketOptions struct {
+	Kind BucketsKind `json:"kind"`
+	Spec any         `json:"spec"`
+}
+
+type BucketsKind struct {
+	valuer.String
+}
+
+var (
+	BucketsKindLinear = BucketsKind{valuer.NewString("linear")}
+	BucketsKindLog    = BucketsKind{valuer.NewString("log")}
+)
+
+// Enum implements jsonschema.Enum.
+func (BucketsKind) Enum() []any {
+	return []any{
+		BucketsKindLinear,
+		BucketsKindLog,
+	}
+}
+
+// LinearBucketsSpec divides (0, MaxValue] into NumBuckets equal bands.
+type LinearBucketsSpec struct {
+	// Everything above MaxValue is counted in the trailing overflow band. Evenly
+	// spaced upper bounds have no top to divide without it, so it is required.
+	MaxValue   float64 `json:"maxValue" required:"true" description:"The upper bound of the last regular band; values above it are counted in a trailing overflow band."`
+	NumBuckets int     `json:"numBuckets,omitempty" description:"The number of evenly spaced bands between 0 and maxValue. A default applies when omitted or 0."`
+}
+
+// LogBucketsSpec spaces upper bounds at 2^Scale bands per doubling, the mapping
+// an exponential histogram uses.
+type LogBucketsSpec struct {
+	// ClickHouse always buckets at MaxLogScale and the surplus is folded away
+	// afterwards, so every Scale reads the same cache entry. MaxLogScale applies
+	// when unset.
+	Scale *int `json:"scale,omitempty" description:"The exponential histogram scale: 2^scale bands per doubling of the value. The maximum supported scale applies when omitted."`
+}
+
+func (b *BucketOptions) UnmarshalJSON(data []byte) error {
+	var shadow struct {
+		Kind BucketsKind     `json:"kind"`
+		Spec json.RawMessage `json:"spec"`
+	}
+	if err := binding.JSON.BindBody(bytes.NewReader(data), &shadow, binding.WithDisallowUnknownFields(true)); err != nil {
+		return err
+	}
+
+	b.Kind = shadow.Kind
+
+	// An absent spec is a malformed pair rather than a request for defaults;
+	// `"spec": {}` asks for those.
+	if len(shadow.Spec) == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"bucketOptions spec is required, use an empty object for the kind's defaults")
+	}
+
+	switch shadow.Kind {
+	case BucketsKindLinear:
+		var spec LinearBucketsSpec
+		if err := binding.JSON.BindBody(bytes.NewReader(shadow.Spec), &spec, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("linear buckets spec")); err != nil {
+			return err
+		}
+		b.Spec = spec
+
+	case BucketsKindLog:
+		var spec LogBucketsSpec
+		if err := binding.JSON.BindBody(bytes.NewReader(shadow.Spec), &spec, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("log buckets spec")); err != nil {
+			return err
+		}
+		b.Spec = spec
+
+	default:
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"invalid bucketOptions kind: %s",
+			shadow.Kind.StringValue(),
+		).WithAdditional(
+			"Valid bucket kinds are: linear, log",
+		)
+	}
+
+	return nil
+}
+
+// bucketOptionsLinear and bucketOptionsLog are the OpenAPI schemas for the two
+// BucketOptions variants. They have to be named types: the reflector turns an
+// anonymous one into an inline subschema, leaving the discriminator mapping in
+// PrepareJSONSchema pointing at components that were never emitted. `kind` is
+// required:"true" on both so oapi-codegen renders the discriminator non-pointer.
+type bucketOptionsLinear struct {
+	Kind BucketsKind       `json:"kind" required:"true" description:"How the upper bounds are spaced."`
+	Spec LinearBucketsSpec `json:"spec" required:"true" description:"The evenly spaced bucket specification."`
+}
+
+type bucketOptionsLog struct {
+	Kind BucketsKind    `json:"kind" required:"true" description:"How the upper bounds are spaced."`
+	Spec LogBucketsSpec `json:"spec" required:"true" description:"The logarithmic bucket specification."`
+}
+
+var _ jsonschema.OneOfExposer = BucketOptions{}
+
+func (BucketOptions) JSONSchemaOneOf() []any {
+	return []any{
+		bucketOptionsLinear{},
+		bucketOptionsLog{},
+	}
+}
+
+var _ jsonschema.Preparer = BucketOptions{}
+
+// PrepareJSONSchema marks the options as a `kind`-discriminated union;
+// signoz.attachDiscriminators promotes it and strips the base properties.
+func (BucketOptions) PrepareJSONSchema(s *jsonschema.Schema) error {
+	if s.ExtraProperties == nil {
+		s.ExtraProperties = map[string]any{}
+	}
+	s.ExtraProperties["x-signoz-discriminator"] = map[string]any{
+		"propertyName": "kind",
+		"mapping": map[string]string{
+			BucketsKindLinear.StringValue(): "#/components/schemas/Querybuildertypesv5BucketOptionsLinear",
+			BucketsKindLog.StringValue():    "#/components/schemas/Querybuildertypesv5BucketOptionsLog",
+		},
+	}
+	return nil
 }

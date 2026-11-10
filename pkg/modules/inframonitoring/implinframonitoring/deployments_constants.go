@@ -35,8 +35,7 @@ var deploymentsTableMetricNamesList = []string{
 	"k8s.deployment.available",
 }
 
-// Carried forward from v1 deploymentAttrsToEnrich
-// (pkg/query-service/app/inframetrics/deployments.go:29-33).
+// Carried forward from v1 deploymentAttrsToEnrich (removed).
 var deploymentAttrKeysForMetadata = []string{
 	"k8s.deployment.name",
 	"k8s.namespace.name",

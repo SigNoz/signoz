@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { TimelineFilter, TimelineTab } from 'container/AlertHistory/types';
-import history from 'lib/history';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { navigate } from 'lib/router/navigation';
 import { Info } from '@signozhq/icons';
 import Tabs2 from 'periscope/components/Tabs2';
 
@@ -23,6 +23,7 @@ function TimelineTabs(): JSX.Element {
 		{
 			value: TimelineTab.OVERALL_STATUS,
 			label: 'Overall Status',
+			testId: 'timeline-tab-overall-status',
 		},
 		{
 			value: TimelineTab.TOP_5_CONTRIBUTORS,
@@ -33,6 +34,7 @@ function TimelineTabs(): JSX.Element {
 				</div>
 			),
 			disabled: true,
+			testId: 'timeline-tab-top-contributors',
 		},
 	];
 
@@ -40,7 +42,7 @@ function TimelineTabs(): JSX.Element {
 }
 
 function TimelineFilters(): JSX.Element {
-	const { search } = useLocation();
+	const { search } = useAppLocation();
 	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
 
 	const initialSelectedTab = useMemo(
@@ -50,21 +52,24 @@ function TimelineFilters(): JSX.Element {
 
 	const handleFilter = (value: TimelineFilter): void => {
 		searchParams.set('timelineFilter', value);
-		history.push({ search: searchParams.toString() });
+		navigate({ search: searchParams.toString() });
 	};
 
 	const tabs = [
 		{
 			value: TimelineFilter.ALL,
 			label: 'All',
+			testId: 'timeline-filter-all',
 		},
 		{
 			value: TimelineFilter.FIRED,
 			label: 'Fired',
+			testId: 'timeline-filter-fired',
 		},
 		{
 			value: TimelineFilter.RESOLVED,
 			label: 'Resolved',
+			testId: 'timeline-filter-resolved',
 		},
 	];
 

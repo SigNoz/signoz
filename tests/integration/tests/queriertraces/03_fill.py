@@ -29,11 +29,6 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 FILL_MODES = ["fillGaps", "fillZero"]
 
 
-def _bucket_ms(span: Traces) -> int:
-    """The minutely bucket (epoch millis) a seeded span lands in."""
-    return int(span.timestamp.timestamp() * 1000)
-
-
 @pytest.mark.parametrize("fill_mode", FILL_MODES)
 @pytest.mark.parametrize("noise", ["clean", "corrupt"])
 def test_traces_fill_plain(
@@ -84,7 +79,8 @@ def test_traces_fill_plain(
     assert response.status_code == HTTPStatus.OK, response.text
     series = get_all_series(response.json(), "A")
     assert len(series) >= 1
-    assert_minutely_bucket_values(series[0]["values"], now, expected_by_ts={_bucket_ms(span): 1}, context=f"traces/{fill_mode}")
+    # int(span.timestamp.timestamp() * 1000) is the minutely bucket (epoch millis) the seeded span lands in.
+    assert_minutely_bucket_values(series[0]["values"], now, expected_by_ts={int(span.timestamp.timestamp() * 1000): 1}, context=f"traces/{fill_mode}")
 
 
 @pytest.mark.parametrize("fill_mode", FILL_MODES)
@@ -157,8 +153,8 @@ def test_traces_fill_group_by(
 
     by_service = index_series_by_label(series, "service.name")
     assert set(by_service) == {"service-a", "service-b"}
-    assert_minutely_bucket_values(by_service["service-a"]["values"], now, expected_by_ts={_bucket_ms(span_a): 1}, context=f"traces/{fill_mode}/service-a")
-    assert_minutely_bucket_values(by_service["service-b"]["values"], now, expected_by_ts={_bucket_ms(span_b): 1}, context=f"traces/{fill_mode}/service-b")
+    assert_minutely_bucket_values(by_service["service-a"]["values"], now, expected_by_ts={int(span_a.timestamp.timestamp() * 1000): 1}, context=f"traces/{fill_mode}/service-a")
+    assert_minutely_bucket_values(by_service["service-b"]["values"], now, expected_by_ts={int(span_b.timestamp.timestamp() * 1000): 1}, context=f"traces/{fill_mode}/service-b")
 
 
 @pytest.mark.parametrize("fill_mode", FILL_MODES)
@@ -228,7 +224,7 @@ def test_traces_fill_formula(
     assert f1 is not None
     series = f1["aggregations"][0]["series"]
     assert len(series) >= 1
-    assert_minutely_bucket_values(series[0]["values"], now, expected_by_ts={_bucket_ms(span_test): 1, _bucket_ms(span_other): 1}, context=f"traces/{fill_mode}/F1")
+    assert_minutely_bucket_values(series[0]["values"], now, expected_by_ts={int(span_test.timestamp.timestamp() * 1000): 1, int(span_other.timestamp.timestamp() * 1000): 1}, context=f"traces/{fill_mode}/F1")
 
 
 @pytest.mark.parametrize("fill_mode", FILL_MODES)
@@ -303,5 +299,5 @@ def test_traces_fill_formula_group_by(
 
     by_service = index_series_by_label(series, "service.name")
     assert set(by_service) == {"group1", "group2"}
-    assert_minutely_bucket_values(by_service["group1"]["values"], now, expected_by_ts={_bucket_ms(span_g1): 2}, context=f"traces/{fill_mode}/F1/group1")
-    assert_minutely_bucket_values(by_service["group2"]["values"], now, expected_by_ts={_bucket_ms(span_g2): 2}, context=f"traces/{fill_mode}/F1/group2")
+    assert_minutely_bucket_values(by_service["group1"]["values"], now, expected_by_ts={int(span_g1.timestamp.timestamp() * 1000): 2}, context=f"traces/{fill_mode}/F1/group1")
+    assert_minutely_bucket_values(by_service["group2"]["values"], now, expected_by_ts={int(span_g2.timestamp.timestamp() * 1000): 2}, context=f"traces/{fill_mode}/F1/group2")

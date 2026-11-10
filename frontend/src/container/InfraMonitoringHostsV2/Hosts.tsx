@@ -13,8 +13,10 @@ import {
 import { AxiosError } from 'axios';
 import APIError from 'types/api/error';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
-import { QuickFiltersSource } from 'components/QuickFilters/types';
-import { InfraMonitoringEvents } from 'constants/events';
+import {
+	QuickFilterChangeEventData,
+	QuickFiltersSource,
+} from 'components/QuickFilters/types';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import K8sBaseDetails, {
 	K8sDetailsFilters,
@@ -50,6 +52,10 @@ import styles from './InfraMonitoringHosts.module.scss';
 import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import {
+	logInfraFilterCustomizedEvent,
+	logInfraMonitoringListViewedEvent,
+} from 'container/InfraMonitoringK8sV2/Base/events';
 
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
@@ -133,6 +139,7 @@ function Hosts(): JSX.Element {
 					records: data.records,
 					total: data.total,
 					endTimeBeforeRetention: data.endTimeBeforeRetention,
+					warning: data.warning,
 				};
 			} catch (error) {
 				return {
@@ -186,18 +193,36 @@ function Hosts(): JSX.Element {
 			hostInitialLogTracesExpression(host),
 		[],
 	);
+
+	const handleQuickFilterChange = useCallback(
+		(data: QuickFilterChangeEventData): void => {
+			logInfraFilterCustomizedEvent(
+				InfraMonitoringEntity.HOSTS,
+				'quick_filter',
+				data.expression,
+				data.filterItemKeys,
+			);
+		},
+		[],
+	);
+
 	const controlListPrefix = !showFilters ? (
 		<div className={styles.quickFiltersToggleContainer}>
 			<Button
 				className="periscope-btn ghost"
 				type="text"
 				size="small"
+				data-testid="quick-filters-toggle"
 				onClick={handleFilterVisibilityChange}
 			>
 				<Filter size={14} />
 			</Button>
 		</div>
 	) : undefined;
+
+	useEffect(() => {
+		logInfraMonitoringListViewedEvent(InfraMonitoringEntity.HOSTS);
+	}, []);
 
 	return (
 		<>
@@ -214,11 +239,12 @@ function Hosts(): JSX.Element {
 												style={{ rotate: '270deg', cursor: 'pointer' }}
 												onClick={handleFilterVisibilityChange}
 												size="md"
+												data-testid="quick-filters-toggle"
 											/>
 										</Tooltip>
 									</div>
 									<QuickFilters
-										source={QuickFiltersSource.INFRA_MONITORING}
+										quickFilterSource={QuickFiltersSource.INFRA_MONITORING}
 										config={getHostsQuickFiltersConfig()}
 										handleFilterVisibilityChange={handleFilterVisibilityChange}
 										useFieldApis={{
@@ -227,6 +253,7 @@ function Hosts(): JSX.Element {
 											startUnixMilli,
 											endUnixMilli,
 										}}
+										onQuickFilterChange={handleQuickFilterChange}
 									/>
 								</>
 							</OverlayScrollbar>
@@ -245,7 +272,6 @@ function Hosts(): JSX.Element {
 							fetchListData={fetchListData}
 							getRowKey={getHostRowKey}
 							getItemKey={getHostItemKey}
-							eventCategory={InfraMonitoringEvents.HostEntity}
 							detailsQueryKeyPrefix="hosts"
 						/>
 					</div>
@@ -253,7 +279,6 @@ function Hosts(): JSX.Element {
 			</div>
 			<K8sBaseDetails
 				category={InfraMonitoringEntity.HOSTS}
-				eventCategory={InfraMonitoringEvents.HostEntity}
 				getSelectedItemExpression={hostGetSelectedItemExpression}
 				fetchEntityData={fetchEntityData}
 				getEntityName={hostGetEntityName}

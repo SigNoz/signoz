@@ -1,5 +1,5 @@
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import {
 	createErrorResponse,
 	handleInternalServerError,
@@ -12,19 +12,12 @@ import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 import ForgotPassword, { ForgotPasswordRouteState } from '../index';
 
 // Mock dependencies
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: {
-			search: '',
-		},
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 const FORGOT_PASSWORD_ENDPOINT = '*/api/v2/factor_password/forgot';
 
@@ -118,7 +111,7 @@ describe('ForgotPassword Component', () => {
 			render(<ForgotPassword {...defaultProps} />);
 
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).not.toBeDisabled();
+			expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 
@@ -139,7 +132,7 @@ describe('ForgotPassword Component', () => {
 			render(<ForgotPassword {...propsWithoutOrgId} />);
 
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('enables submit button after selecting an organization', async () => {
@@ -148,14 +141,14 @@ describe('ForgotPassword Component', () => {
 			render(<ForgotPassword {...multiOrgProps} />);
 
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 
 			// Click on the dropdown to reveal the options
 			await user.click(screen.getByRole('combobox'));
 			await user.click(screen.getByText('Organization One'));
 
 			await waitFor(() => {
-				expect(submitButton).not.toBeDisabled();
+				expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 			});
 		});
 
@@ -169,7 +162,7 @@ describe('ForgotPassword Component', () => {
 			render(<ForgotPassword {...propsWithOrgId} />);
 
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).not.toBeDisabled();
+			expect(submitButton).not.toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 
@@ -236,7 +229,7 @@ describe('ForgotPassword Component', () => {
 			const backToLoginButton = screen.getByTestId('back-to-login');
 			await user.click(backToLoginButton);
 
-			expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+			expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LOGIN);
 		});
 	});
 
@@ -328,7 +321,7 @@ describe('ForgotPassword Component', () => {
 			const backButton = screen.getByTestId('forgot-password-back');
 			await user.click(backButton);
 
-			expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+			expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LOGIN);
 		});
 	});
 
@@ -368,7 +361,7 @@ describe('ForgotPassword Component', () => {
 			await user.click(submitButton);
 
 			await waitFor(() => {
-				expect(submitButton).toBeDisabled();
+				expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 			});
 		});
 	});
@@ -383,7 +376,7 @@ describe('ForgotPassword Component', () => {
 			render(<ForgotPassword {...propsWithEmptyEmail} />);
 
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('handles whitespace-only email', () => {
@@ -395,7 +388,7 @@ describe('ForgotPassword Component', () => {
 			render(<ForgotPassword {...propsWithWhitespaceEmail} />);
 
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('handles empty orgs array by disabling submission', () => {
@@ -410,7 +403,79 @@ describe('ForgotPassword Component', () => {
 			expect(screen.queryByTestId('orgId')).not.toBeInTheDocument();
 			// Submit should be disabled because no orgId can be determined
 			const submitButton = screen.getByTestId('forgot-password-submit');
-			expect(submitButton).toBeDisabled();
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
+		});
+	});
+
+	// The email input is disabled and Enter in the org Select opens it, so Enter
+	// only reaches the form through the focused submit button.
+	describe('Enter key submission', () => {
+		function mockForgot(delayMs = 0): { forgotCalls: () => number } {
+			let calls = 0;
+			server.use(
+				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) => {
+					calls += 1;
+					return res(
+						ctx.delay(delayMs),
+						ctx.status(200),
+						ctx.json({ status: 'success' }),
+					);
+				}),
+			);
+			return { forgotCalls: (): number => calls };
+		}
+
+		it('sends the reset link once on Enter on the submit button', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const { forgotCalls } = mockForgot();
+
+			render(<ForgotPassword {...defaultProps} />);
+
+			await user.tab();
+			await user.tab();
+			expect(screen.getByTestId('forgot-password-submit')).toHaveFocus();
+			await user.keyboard('{enter}');
+
+			await expect(
+				screen.findByText(/check your email/i),
+			).resolves.toBeInTheDocument();
+			expect(forgotCalls()).toBe(1);
+		});
+
+		it('does not send on Enter while no organization is selected', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const { forgotCalls } = mockForgot();
+
+			render(<ForgotPassword {...multiOrgProps} />);
+
+			const submitButton = screen.getByTestId('forgot-password-submit');
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
+			submitButton.focus();
+			await user.keyboard('{enter}');
+
+			// Give a wrongly sent request time to land before asserting it never did.
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(forgotCalls()).toBe(0);
+		});
+
+		it('does not send again on Enter while the first request is loading', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const { forgotCalls } = mockForgot(1000);
+
+			render(<ForgotPassword {...defaultProps} />);
+
+			const submitButton = screen.getByTestId('forgot-password-submit');
+			submitButton.focus();
+			await user.keyboard('{enter}');
+
+			await screen.findByText(/sending\.\.\./i);
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
+			await user.keyboard('{enter}');
+
+			await expect(
+				screen.findByText(/check your email/i, undefined, { timeout: 2000 }),
+			).resolves.toBeInTheDocument();
+			expect(forgotCalls()).toBe(1);
 		});
 	});
 });

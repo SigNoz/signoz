@@ -39,8 +39,12 @@ export function useAccountSettingsModal({
 }: UseAccountSettingsModalProps): UseAccountSettingsModal {
 	const [form] = Form.useForm();
 	const { mutate: updateAccount, isLoading } = useUpdateAccount();
+	// `account.config` is the shared per-provider union (Azure | AWS | GCP).
+	// Narrow to Azure by `resource_groups` (Azure-only) rather than
+	// `deployment_region`, which GCP also has — so it no longer identifies
+	// Azure uniquely.
 	const accountConfig = useMemo(
-		() => ('deployment_region' in account.config ? account.config : null),
+		() => ('resource_groups' in account.config ? account.config : null),
 		[account.config],
 	);
 	const [resourceGroups, setResourceGroups] = useState<string[]>(

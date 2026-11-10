@@ -3,13 +3,15 @@ import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
 import { Form, Select, Space } from 'antd';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
+import { useIsBodyJsonEnabled } from 'hooks/logs/useIsBodyJsonEnabled';
 import { ProcessorData } from 'types/api/pipeline/def';
 
 import { formValidationRules } from '../config';
-import { processorFields, ProcessorFormField } from './config';
+import { ProcessorFormField } from './config';
 import CSVInput from './FormFields/CSVInput';
 import JsonFlattening from './FormFields/JsonFlattening';
 import { FormWrapper, PipelineIndexIcon, StyledSelect } from './styles';
+import { resolveProcessorFields } from './utils';
 
 import './styles.scss';
 
@@ -92,6 +94,8 @@ function ProcessorFieldInput({
 					>
 						<Space>
 							<Switch
+								color="primary"
+								textPlacement="right"
 								value={form.getFieldValue('enable_flattening')}
 								onChange={(checked: boolean): void => {
 									form.setFieldValue('enable_flattening', checked);
@@ -133,16 +137,20 @@ function ProcessorForm({
 	selectedProcessorData,
 	isAdd,
 }: ProcessorFormProps): JSX.Element {
+	const isBodyJsonEnabled = useIsBodyJsonEnabled();
+
 	return (
 		<div className="processor-form-container">
-			{processorFields[processorType]?.map((fieldData: ProcessorFormField) => (
-				<ProcessorFieldInput
-					key={fieldData.name + String(fieldData.initialValue)}
-					fieldData={fieldData}
-					selectedProcessorData={selectedProcessorData}
-					isAdd={isAdd}
-				/>
-			))}
+			{resolveProcessorFields(processorType, isBodyJsonEnabled).map(
+				(fieldData: ProcessorFormField) => (
+					<ProcessorFieldInput
+						key={fieldData.name + String(fieldData.initialValue)}
+						fieldData={fieldData}
+						selectedProcessorData={selectedProcessorData}
+						isAdd={isAdd}
+					/>
+				),
+			)}
 		</div>
 	);
 }

@@ -18,7 +18,12 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		label: 'SERVICE',
 		render: (span): ReactNode | null =>
 			span['service.name'] ? (
-				<Badge color="vanilla" className={styles.serviceBadge}>
+				<Badge
+					textTransform="none"
+					variant="solid"
+					color="secondary"
+					maxWidth="100%"
+				>
 					<span className={styles.serviceDot} />
 					<span className={styles.badgeEllipsisText} title={span['service.name']}>
 						{span['service.name']}
@@ -31,7 +36,9 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		label: 'STATUS CODE',
 		render: (span): ReactNode | null =>
 			span.status_code_string ? (
-				<Badge color="vanilla">{span.status_code_string}</Badge>
+				<Badge textTransform="none" variant="solid" color="secondary">
+					{span.status_code_string}
+				</Badge>
 			) : null,
 	},
 	{
@@ -44,7 +51,11 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		key: 'spanKind',
 		label: 'SPAN KIND',
 		render: (span): ReactNode | null =>
-			span.kind_string ? <Badge color="vanilla">{span.kind_string}</Badge> : null,
+			span.kind_string ? (
+				<Badge textTransform="none" variant="solid" color="secondary">
+					{span.kind_string}
+				</Badge>
+			) : null,
 	},
 	{
 		key: 'statusMessage',
@@ -52,7 +63,12 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		render: (span): ReactNode | null =>
 			span.status_message ? (
 				<ExpandableValue value={span.status_message} title="Status message">
-					<Badge color="vanilla" className={styles.statusMessageBadge}>
+					<Badge
+						textTransform="none"
+						variant="solid"
+						color="secondary"
+						maxWidth="100%"
+					>
 						<span className={styles.badgeEllipsisText}>{span.status_message}</span>
 					</Badge>
 				</ExpandableValue>

@@ -1,10 +1,11 @@
-import { CSSProperties, useCallback } from 'react';
+import { CSSProperties, type MouseEvent, useCallback } from 'react';
 import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import cx from 'classnames';
-import { useCopyToClipboard } from 'hooks/useCopyToClipboard';
 
 import styles from './CopyButton.module.scss';
+import { useCopyButton } from './useCopyButton';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 export interface CopyButtonProps {
 	/** Text written to the clipboard on click. */
@@ -13,9 +14,11 @@ export interface CopyButtonProps {
 	size?: number;
 	/** Accessible label for the idle (not-yet-copied) state. Default "Copy". */
 	ariaLabel?: string;
-	/** Extra class merged onto the button. */
-	className?: string;
 	testId?: string;
+	/** Called after the copy is triggered (e.g. to show a toast). */
+	onCopy?: () => void;
+	/** Side on which the tooltip should appear. Default "right". */
+	tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
 }
 
 /**
@@ -27,40 +30,53 @@ function CopyButton({
 	value,
 	size = 14,
 	ariaLabel = 'Copy',
-	className,
 	testId,
+	onCopy,
+	tooltipSide = 'top',
 }: CopyButtonProps): JSX.Element {
-	const { copyToClipboard, isCopied } = useCopyToClipboard();
+	const { copyToClipboard, isCopied } = useCopyButton();
 
-	const handleClick = useCallback((): void => {
-		copyToClipboard(value);
-	}, [copyToClipboard, value]);
+	const handleClick = useCallback(
+		(e: MouseEvent<HTMLButtonElement>): void => {
+			e.stopPropagation();
+			copyToClipboard(value);
+			onCopy?.();
+		},
+		[copyToClipboard, value, onCopy],
+	);
 
 	const stackStyle: CSSProperties = { width: size, height: size };
 
 	return (
-		<Button
-			variant="ghost"
-			color="secondary"
-			size="icon"
-			className={cx(styles.copyButton, className)}
-			onClick={handleClick}
-			aria-label={isCopied ? 'Copied' : ariaLabel}
-			testId={testId}
-		>
-			<span className={styles.iconStack} style={stackStyle} data-copied={isCopied}>
-				<Copy size={size} className={cx(styles.icon, styles.copyIcon)} />
-				<Check size={size} className={cx(styles.icon, styles.checkIcon)} />
-			</span>
-		</Button>
+		// TODO: remove wrapper once Button supports tooltip
+		<Tooltip title={isCopied ? 'Copied' : ariaLabel} side={tooltipSide}>
+			<Button
+				variant="ghost"
+				color="secondary"
+				size="sm"
+				icon
+				onClick={handleClick}
+				aria-label={isCopied ? 'Copied' : ariaLabel}
+				testId={testId}
+			>
+				<span
+					className={styles.iconStack}
+					style={stackStyle}
+					data-copied={isCopied}
+				>
+					<Copy size={size} className={cx(styles.icon, styles.copyIcon)} />
+					<Check size={size} className={cx(styles.icon, styles.checkIcon)} />
+				</span>
+			</Button>
+		</Tooltip>
 	);
 }
 
 CopyButton.defaultProps = {
 	size: 14,
 	ariaLabel: 'Copy',
-	className: undefined,
 	testId: undefined,
+	onCopy: undefined,
 };
 
 export default CopyButton;

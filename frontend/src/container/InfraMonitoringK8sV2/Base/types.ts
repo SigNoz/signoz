@@ -1,9 +1,13 @@
 import { ReactNode } from 'react';
 import {
+	InframonitoringtypesContainerStatusDTO,
+	InframonitoringtypesNodeConditionDTO,
+	InframonitoringtypesPodStatusDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
-import { InfraMonitoringEvents } from 'constants/events';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import APIError from 'types/api/error';
 
@@ -17,6 +21,9 @@ export type K8sBaseFilters = {
 	filter: {
 		expression: string;
 		filterByStatus?: 'active' | 'inactive' | '';
+		filterByPodStatus?: InframonitoringtypesPodStatusDTO[];
+		filterByNodeReadiness?: InframonitoringtypesNodeConditionDTO[];
+		filterByContainerStatus?: InframonitoringtypesContainerStatusDTO[];
 	};
 	groupBy?: Array<{ name: string }>;
 	offset?: number;
@@ -64,6 +71,8 @@ export interface K8sDetailsFilters {
 export interface K8sDetailsWidgetInfo {
 	title: string;
 	yAxisUnit: string;
+	docPath?: string;
+	description?: string;
 }
 
 export type GetEntityQueryPayload<T> = (
@@ -73,6 +82,8 @@ export type GetEntityQueryPayload<T> = (
 ) => GetQueryResultsProps[];
 
 export interface K8sDetailsTabsConfig {
+	/** Declared by categories whose resources relate to others; see relations.ts */
+	showOverview?: boolean;
 	showMetrics?: boolean;
 	showLogs?: boolean;
 	showTraces?: boolean;
@@ -99,7 +110,6 @@ export interface K8sDetailsCustomTab<T> {
 
 export interface K8sBaseDetailsProps<T> {
 	category: InfraMonitoringEntity;
-	eventCategory: InfraMonitoringEvents;
 	// Data fetching configuration
 	getSelectedItemExpression: (params: SelectedItemParams) => string;
 	fetchEntityData: (
@@ -125,7 +135,6 @@ export interface K8sBaseDetailsProps<T> {
 export interface K8sBaseDetailsContentProps<T> {
 	entity: T;
 	category: InfraMonitoringEntity;
-	eventCategory: InfraMonitoringEvents;
 	metadataConfig: K8sDetailsMetadataConfig<T>[];
 	countsConfig?: K8sDetailsCountConfig<T>[];
 	getCountsFilterExpression?: (entity: T) => string;
@@ -139,6 +148,10 @@ export interface K8sBaseDetailsContentProps<T> {
 	customTabs?: K8sDetailsCustomTab<T>[];
 	logsAndTracesInitialExpression: string;
 	eventsInitialExpression: string;
+	/** The drawer entity's own attributes, used to find and scope related resources */
+	entityAttributes: Record<string, string>;
+	/** Name of the drawer entity, for the back control of a resource opened from it */
+	entityName: string;
 }
 
 // Aliases for backward compatibility

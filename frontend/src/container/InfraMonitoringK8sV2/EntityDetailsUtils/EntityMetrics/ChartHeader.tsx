@@ -1,10 +1,11 @@
-import { Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
 import { Compass, Info } from '@signozhq/icons';
-import { Tooltip } from 'antd';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import styles from './ChartHeader.module.scss';
+import { DOCS_BASE_URL } from 'constants/app';
 
-const DOCS_BASE_URL = `${process.env.DOCS_BASE_URL}/docs`;
+const DOCS_ROOT = `${DOCS_BASE_URL}/docs`;
 
 interface ChartHeaderProps {
 	title: string;
@@ -12,6 +13,7 @@ interface ChartHeaderProps {
 	tooltip?: string;
 	metricsExplorerUrl?: string;
 	metricsExplorerTestId?: string;
+	onExploreClick?: () => void;
 }
 
 function ChartHeader({
@@ -20,18 +22,18 @@ function ChartHeader({
 	tooltip,
 	metricsExplorerUrl,
 	metricsExplorerTestId = 'open-metrics-explorer',
+	onExploreClick,
 }: ChartHeaderProps): JSX.Element {
 	const renderInfoIcon = (): React.ReactNode => {
 		if (docPath) {
 			const tooltipTitle = tooltip || 'Not sure what this represents?';
 			return (
 				<Tooltip
-					arrow
 					title={
 						<>
 							{tooltipTitle}{' '}
 							<a
-								href={`${DOCS_BASE_URL}${docPath}`}
+								href={`${DOCS_ROOT}${docPath}`}
 								target="_blank"
 								rel="noopener"
 								onClick={(e): void => e.stopPropagation()}
@@ -66,14 +68,15 @@ function ChartHeader({
 			<span className={styles.chartHeaderLabel}>{title}</span>
 			{renderInfoIcon()}
 			{metricsExplorerUrl && (
-				<Tooltip title="Open in Metrics Explorer">
-					<Link
+				<Tooltip title="Go to Metrics Explorer">
+					<AppLink
 						to={metricsExplorerUrl}
 						className={styles.metricsExplorerLink}
 						data-testid={metricsExplorerTestId}
+						onClick={onExploreClick}
 					>
 						<Compass size={14} />
-					</Link>
+					</AppLink>
 				</Tooltip>
 			)}
 		</div>

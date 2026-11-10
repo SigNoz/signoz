@@ -1,28 +1,24 @@
 import { useCallback, useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
-import { Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { Check, Loader, Send, X } from '@signozhq/icons';
+import { Check, Send, X } from '@signozhq/icons';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { toPostableRuleDTO } from 'types/api/alerts/convert';
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
 
 import { useCreateAlertState } from '../context';
-import {
-	buildCreateThresholdAlertRulePayload,
-	validateCreateAlertState,
-} from './utils';
+import { buildCreateAlertRulePayload, validateCreateAlertState } from './utils';
 
 import './styles.scss';
 import {
 	invalidateGetRuleByID,
-	invalidateListRules,
+	invalidateListRulesV3,
 } from 'api/generated/services/rules';
 import { useQueryClient } from 'react-query';
 
@@ -85,7 +81,7 @@ function Footer(): JSX.Element {
 	);
 
 	const handleTestNotification = useCallback((): void => {
-		const payload = buildCreateThresholdAlertRulePayload({
+		const payload = buildCreateAlertRulePayload({
 			alertType,
 			basicAlertState,
 			thresholdState,
@@ -118,11 +114,12 @@ function Footer(): JSX.Element {
 		notificationSettings,
 		currentQuery,
 		testAlertRule,
+		handleApiError,
 	]);
 
 	const queryClient = useQueryClient();
 	const handleSaveAlert = useCallback((): void => {
-		const payload = buildCreateThresholdAlertRulePayload({
+		const payload = buildCreateAlertRulePayload({
 			alertType,
 			basicAlertState,
 			thresholdState,
@@ -140,7 +137,7 @@ function Footer(): JSX.Element {
 				{
 					onSuccess: () => {
 						void invalidateGetRuleByID(queryClient, { id: ruleId });
-						void invalidateListRules(queryClient);
+						void invalidateListRulesV3(queryClient);
 
 						toast.success('Alert rule updated successfully');
 						safeNavigate('/alerts');
@@ -174,83 +171,81 @@ function Footer(): JSX.Element {
 		createAlertRule,
 		safeNavigate,
 		handleApiError,
+		queryClient,
 	]);
 
-	const disableButtons =
-		isCreatingAlertRule || isTestingAlertRule || isUpdatingAlertRule;
+	const isSavingAlertRule = isCreatingAlertRule || isUpdatingAlertRule;
+	const disableButtons = isSavingAlertRule || isTestingAlertRule;
 
-	const saveAlertButton = useMemo(() => {
-		let button = (
+	const saveAlertButton = useMemo(
+		() => (
 			<Button
+				disabledTooltip={
+					alertValidationMessage || 'Wait for the test notification to finish'
+				}
+				size="md"
 				variant="solid"
 				color="primary"
 				onClick={handleSaveAlert}
-				disabled={disableButtons || Boolean(alertValidationMessage)}
+				disabled={isTestingAlertRule || Boolean(alertValidationMessage)}
+				loading={isSavingAlertRule}
+				prefix={<Check data-testid="save-alert-rule-check-icon" size={14} />}
+				testId="save-alert-rule-button"
 			>
-				{isCreatingAlertRule || isUpdatingAlertRule ? (
-					<Loader data-testid="save-alert-rule-loader-icon" size={14} />
-				) : (
-					<Check data-testid="save-alert-rule-check-icon" size={14} />
-				)}
 				Save Alert Rule
 			</Button>
-		);
-		if (alertValidationMessage) {
-			button = (
-				<Tooltip title={alertValidationMessage}>
-					<span>{button}</span>
-				</Tooltip>
-			);
-		}
-		return button;
-	}, [
-		alertValidationMessage,
-		disableButtons,
-		handleSaveAlert,
-		isCreatingAlertRule,
-		isUpdatingAlertRule,
-	]);
+		),
+		[
+			alertValidationMessage,
+			handleSaveAlert,
+			isSavingAlertRule,
+			isTestingAlertRule,
+		],
+	);
 
-	const testAlertButton = useMemo(() => {
-		let button = (
+	const testAlertButton = useMemo(
+		() => (
 			<Button
+				disabledTooltip={
+					alertValidationMessage || 'Wait for the alert rule to finish saving'
+				}
+				size="md"
 				variant="solid"
 				color="secondary"
 				onClick={handleTestNotification}
-				disabled={disableButtons || Boolean(alertValidationMessage)}
+				disabled={isSavingAlertRule || Boolean(alertValidationMessage)}
+				loading={isTestingAlertRule}
+				prefix={<Send data-testid="test-notification-send-icon" size={14} />}
+				testId="test-notification-button"
 			>
-				{isTestingAlertRule ? (
-					<Loader data-testid="test-notification-loader-icon" size={14} />
-				) : (
-					<Send data-testid="test-notification-send-icon" size={14} />
-				)}
 				Test Notification
 			</Button>
-		);
-		if (alertValidationMessage) {
-			button = (
-				<Tooltip title={alertValidationMessage}>
-					<span>{button}</span>
-				</Tooltip>
-			);
-		}
-		return button;
-	}, [
-		alertValidationMessage,
-		disableButtons,
-		handleTestNotification,
-		isTestingAlertRule,
-	]);
+		),
+		[
+			alertValidationMessage,
+			handleTestNotification,
+			isSavingAlertRule,
+			isTestingAlertRule,
+		],
+	);
 
 	return (
 		<div className="create-alert-v2-footer">
 			<Button
+				disabledTooltip={
+					isTestingAlertRule
+						? 'Wait for the test notification to finish'
+						: 'Wait for the alert rule to finish saving'
+				}
+				size="md"
 				variant="solid"
 				color="secondary"
 				onClick={handleDiscard}
 				disabled={disableButtons}
+				testId="discard-alert-rule-button"
+				prefix={<X size={14} />}
 			>
-				<X size={14} /> Discard
+				Discard
 			</Button>
 			<div className="button-group">
 				{testAlertButton}

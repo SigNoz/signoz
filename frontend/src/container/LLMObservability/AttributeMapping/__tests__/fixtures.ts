@@ -3,6 +3,8 @@ import {
 	SpantypesSpanMapperDTO as Mapper,
 	SpantypesSpanMapperGroupDTO as MapperGroup,
 	SpantypesSpanMapperOperationDTO as MapperOperation,
+	SpantypesSpanMapperOriginDTO as MapperOrigin,
+	SpantypesSpanMapperTestSpanDTO as TestSpan,
 } from 'api/generated/services/sigNoz.schemas';
 
 // Endpoint globs used by MSW handlers. The generated client hits relative
@@ -12,6 +14,7 @@ export const GROUPS_ENDPOINT = '*/api/v1/span_mapper_groups';
 export function mappersEndpoint(groupId: string): string {
 	return `*/api/v1/span_mapper_groups/${groupId}/span_mappers`;
 }
+export const TEST_ENDPOINT = '*/api/v1/span_mapper_groups/test';
 
 export function makeGroup(overrides: Partial<MapperGroup> = {}): MapperGroup {
 	return {
@@ -19,9 +22,15 @@ export function makeGroup(overrides: Partial<MapperGroup> = {}): MapperGroup {
 		orgId: 'org-1',
 		name: 'demo',
 		enabled: true,
+		origin: MapperOrigin.user,
+		version: 0,
 		condition: {
-			attributes: ['ai.embeddings'],
-			resource: ['cloud.account.id'],
+			attributes: [
+				{ value: 'ai.embeddings', enabled: true, origin: MapperOrigin.user },
+			],
+			resource: [
+				{ value: 'cloud.account.id', enabled: true, origin: MapperOrigin.user },
+			],
 		},
 		...overrides,
 	};
@@ -33,6 +42,7 @@ export function makeMapper(overrides: Partial<Mapper> = {}): Mapper {
 		groupId: 'group-1',
 		name: 'gen_ai.request.model',
 		enabled: true,
+		origin: MapperOrigin.user,
 		fieldContext: FieldContext.attribute,
 		config: {
 			sources: [
@@ -41,12 +51,16 @@ export function makeMapper(overrides: Partial<Mapper> = {}): Mapper {
 					context: FieldContext.attribute,
 					operation: MapperOperation.copy,
 					priority: 2,
+					enabled: true,
+					origin: MapperOrigin.user,
 				},
 				{
 					key: 'llm.model',
 					context: FieldContext.attribute,
 					operation: MapperOperation.move,
 					priority: 1,
+					enabled: true,
+					origin: MapperOrigin.user,
 				},
 			],
 		},
@@ -71,13 +85,24 @@ export function makeMappersResponse(mappers: Mapper[]): {
 	return { status: 'ok', data: { items: mappers } };
 }
 
+export function makeTestResponse(spans: TestSpan[]): {
+	status: string;
+	data: { spans: TestSpan[] };
+} {
+	return { status: 'ok', data: { spans } };
+}
+
 export const mockGroups: MapperGroup[] = [
 	makeGroup({
 		id: 'group-1',
 		name: 'demo',
 		condition: {
-			attributes: ['ai.embeddings'],
-			resource: ['cloud.account.id'],
+			attributes: [
+				{ value: 'ai.embeddings', enabled: true, origin: MapperOrigin.user },
+			],
+			resource: [
+				{ value: 'cloud.account.id', enabled: true, origin: MapperOrigin.user },
+			],
 		},
 	}),
 	makeGroup({

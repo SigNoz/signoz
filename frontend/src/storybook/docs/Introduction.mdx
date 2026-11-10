@@ -1,0 +1,113 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Docs/Introduction" />
+
+# SigNoz pages, without a backend
+
+Every story here is a real SigNoz page: the app's own provider tree, the real
+`AppLayout` with its side nav and banners, and msw answering every request. No
+backend, no seeded database, no login.
+
+What that buys you:
+
+- a page in a state that is hard to reach against a live backend (empty
+  workspace, expired license, a viewer's permissions, an endpoint that fails);
+- a state you can link to, so a bug report can point at it;
+- design and a11y review of a page without waiting on data.
+
+## Finding a page
+
+The sidebar mirrors the app's own side nav, so a page sits where you would click
+it in the product. `Alerts`, `Dashboards`, `Services`, `Logs`, `Traces` and the
+rest come first, then `Settings`, then `Auth` and `System` for the pages you
+reach by accident rather than on purpose.
+
+A page that is one route with several tabs is one story per tab, under the
+module: `Logs / Explorer`, `Logs / Pipelines`, `Logs / Saved Views`. Every tab
+renders the module page, so the tab strip is there either way; the story decides
+which tab is open.
+
+## Reading a story
+
+Three things drive what you see, and none of them is a prop:
+
+- **Controls panel.** Every knob is a knob on a response. Turning one
+  re-registers the msw handlers and remounts the page with an empty query cache,
+  so the page fetches again. `Data` (loaded, loading, error) and `Access` are on
+  every story; the rest belong to the page.
+- **Theme toolbar.** Dark and light, the same classes and tokens the app sets at
+  boot.
+- **The story itself.** A named state worth linking to, `Default` first. Anything
+  reachable by turning a knob is a control, not a story.
+
+`⌘K` works inside a story, dev tools included: **AuthZ DevTools** lists the
+permissions the page actually checked and overrides them one at a time.
+
+## Tags
+
+Filter the sidebar by tag to answer a question about the whole set at once.
+
+<table>
+	<thead>
+		<tr>
+			<th>Tag</th>
+			<th>What it means</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<code>authz</code>
+			</td>
+			<td>
+				The page gates UI on permission checks through <code>lib/authz</code>. These
+				are the stories to re-check when a resource or verb changes.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<code>role-gated</code>
+			</td>
+			<td>
+				The page still branches on the legacy role (<code>user.role</code>,{' '}
+				<code>hasEditPermission</code>) rather than on a permission.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<code>beta</code>
+			</td>
+			<td>Beta in the product. Drop the tag when it ships.</td>
+		</tr>
+		<tr>
+			<td>
+				<code>legacy</code>
+			</td>
+			<td>
+				Kept for parity with a page that is on its way out. Start from the current
+				page instead.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<code>play</code>
+			</td>
+			<td>
+				At least one state is reached by an interaction the story performs on mount,
+				so the canvas moves before it settles.
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<code>autodocs</code>
+			</td>
+			<td>Carried by every page story, and what gives it a Docs page.</td>
+		</tr>
+	</tbody>
+</table>
+
+## Adding one
+
+The `signoz-page-story` skill in `.claude/skills/` carries the workflow, and
+`src/storybook/README.md` is the harness it runs on: the runtime, the controls,
+the access model, the module mocks and the navigation containment.

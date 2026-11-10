@@ -76,14 +76,24 @@ type RuleStateHistory struct {
 	Labels       LabelsString         `ch:"labels"`
 	Fingerprint  uint64               `ch:"fingerprint"`
 	Value        float64              `ch:"value"`
+
+	RelatedLinks
 }
 
 type RuleStateHistoryContributor struct {
-	Fingerprint       uint64       `ch:"fingerprint"`
-	Labels            LabelsString `ch:"labels"`
-	Count             uint64       `ch:"count"`
-	RelatedTracesLink string
-	RelatedLogsLink   string
+	Fingerprint uint64       `ch:"fingerprint"`
+	Labels      LabelsString `ch:"labels"`
+	Count       uint64       `ch:"count"`
+
+	RelatedLinks
+}
+
+// RelatedLinks holds the encoded explorer query params for a history entry;
+// at most one field is non-empty.
+type RelatedLinks struct {
+	RelatedTracesLink   string
+	RelatedAITracesLink string
+	RelatedLogsLink     string
 }
 
 type Store interface {

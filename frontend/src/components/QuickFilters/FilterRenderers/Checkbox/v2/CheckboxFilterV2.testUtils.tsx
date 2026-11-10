@@ -1,7 +1,6 @@
 import { render, RenderResult } from 'tests/test-utils';
 import { server, rest } from 'mocks-server/server';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
@@ -11,6 +10,7 @@ import {
 	QuickFiltersSource,
 } from '../../../types';
 import CheckboxFilterV2 from './CheckboxFilterV2';
+import { DEFAULT_VISIBLE_ITEMS_COUNT } from '../constants';
 
 export const DEFAULT_FILTER: IQuickFiltersConfig = {
 	type: FiltersType.CHECKBOX,
@@ -20,7 +20,6 @@ export const DEFAULT_FILTER: IQuickFiltersConfig = {
 		dataType: DataTypes.String,
 		type: 'tag',
 	},
-	dataSource: DataSource.TRACES,
 	defaultOpen: true,
 };
 
@@ -30,10 +29,18 @@ export const DEFAULT_USE_FIELD_APIS: QuickFilterCheckboxUseFieldApis = {
 	existingQuery: null,
 };
 
+// Enough extra values to push a section past the count that shows its search box.
+// Named to sort last, so a test's own values stay within the first page.
+export const EXTRA_VALUES = Array.from(
+	{ length: DEFAULT_VISIBLE_ITEMS_COUNT },
+	(_, index) => `zz-extra-value-${index + 1}`,
+);
+
 export function mockFieldsValuesAPI(response: {
 	relatedValues?: (string | null)[];
 	stringValues?: (string | null)[];
 	numberValues?: (number | null)[];
+	boolValues?: (boolean | null)[];
 }): void {
 	server.use(
 		rest.get('http://localhost/api/v1/fields/values', (_, res, ctx) =>
@@ -46,12 +53,64 @@ export function mockFieldsValuesAPI(response: {
 							relatedValues: response.relatedValues ?? [],
 							stringValues: response.stringValues ?? [],
 							numberValues: response.numberValues ?? [],
+							boolValues: response.boolValues ?? [],
 						},
 					},
 				}),
 			),
 		),
 	);
+}
+
+/**
+ * Records every request the AI observability values endpoint receives, so a test
+ * can assert both the routing and the query params it was called with.
+ */
+export function mockAIObservabilityFieldsValuesAPI(response: {
+	relatedValues?: (string | null)[];
+	stringValues?: (string | null)[];
+	numberValues?: (number | null)[];
+}): { requests: URLSearchParams[] } {
+	const requests: URLSearchParams[] = [];
+
+	server.use(
+		rest.get(
+			'http://localhost/api/v1/ai_observability/fields/values',
+			(req, res, ctx) => {
+				requests.push(req.url.searchParams);
+
+				return res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							values: {
+								relatedValues: response.relatedValues ?? [],
+								stringValues: response.stringValues ?? [],
+								numberValues: response.numberValues ?? [],
+							},
+						},
+					}),
+				);
+			},
+		),
+	);
+
+	return { requests };
+}
+
+/** Fails the test if the signal-wide values endpoint is hit at all. */
+export function forbidFieldsValuesAPI(): { called: boolean } {
+	const state = { called: false };
+
+	server.use(
+		rest.get('http://localhost/api/v1/fields/values', (_, res, ctx) => {
+			state.called = true;
+			return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+		}),
+	);
+
+	return state;
 }
 
 export function mockFieldsValuesAPILoading(): void {
@@ -66,6 +125,13 @@ export function setupServer(): void {
 	beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
 	afterEach(() => server.resetHandlers());
 	afterAll(() => server.close());
+}
+
+// Components read currentQuery for the checkbox state and stagedQuery for the
+// values fetch; in the app both are set by the same URL sync, so tests pass one
+// query as both.
+export function buildQueryBuilderOverrides(query: unknown): never {
+	return { currentQuery: query, stagedQuery: query } as unknown as never;
 }
 
 export interface FilterItemConfig {
@@ -90,7 +156,7 @@ export function renderWithFilter(
 	return render(
 		<CheckboxFilterV2
 			filter={DEFAULT_FILTER}
-			source={QuickFiltersSource.TRACES_EXPLORER}
+			quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 			useFieldApis={{
 				...DEFAULT_USE_FIELD_APIS,
 				existingQuery: 'service.name = "api"',
@@ -99,18 +165,16 @@ export function renderWithFilter(
 		/>,
 		undefined,
 		{
-			queryBuilderOverrides: {
-				currentQuery: {
-					builder: {
-						queryData: [
-							{
-								filters: { items, op: 'AND' },
-								filter: { expression: 'service.name = "api"' },
-							},
-						],
-					},
+			queryBuilderOverrides: buildQueryBuilderOverrides({
+				builder: {
+					queryData: [
+						{
+							filters: { items, op: 'AND' },
+							filter: { expression: 'service.name = "api"' },
+						},
+					],
 				},
-			} as never,
+			}),
 		},
 	);
 }

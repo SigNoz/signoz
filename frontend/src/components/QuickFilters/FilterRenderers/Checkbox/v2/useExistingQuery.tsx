@@ -17,7 +17,7 @@ export function useExistingQuery({
 	useFieldApis,
 	activeQueryIndex,
 }: UseExistingQueryParams): UseExistingQueryResult {
-	const { currentQuery } = useQueryBuilder();
+	const { stagedQuery } = useQueryBuilder();
 
 	const existingQuery = useMemo(() => {
 		if (useFieldApis.existingQuery === null) {
@@ -28,7 +28,7 @@ export function useExistingQuery({
 			return useFieldApis.existingQuery;
 		}
 
-		const queryData = currentQuery.builder.queryData?.[activeQueryIndex];
+		const queryData = stagedQuery?.builder.queryData?.[activeQueryIndex];
 
 		// Prefer V5 filter.expression
 		if (queryData?.filter?.expression) {
@@ -43,7 +43,7 @@ export function useExistingQuery({
 		return undefined;
 	}, [
 		useFieldApis.existingQuery,
-		currentQuery.builder.queryData,
+		stagedQuery?.builder.queryData,
 		activeQueryIndex,
 	]);
 
@@ -51,11 +51,11 @@ export function useExistingQuery({
 	// This is separate from existingQuery because existingQuery can be explicitly
 	// disabled (null) while filters still exist in the query for UI purposes
 	const hasExistingQuery = useMemo(() => {
-		const queryData = currentQuery.builder.queryData?.[activeQueryIndex];
+		const queryData = stagedQuery?.builder.queryData?.[activeQueryIndex];
 		const hasV3Items = (queryData?.filters?.items?.length ?? 0) > 0;
 		const hasV5Expression = !!queryData?.filter?.expression;
 		return hasV3Items || hasV5Expression || !!existingQuery;
-	}, [currentQuery.builder.queryData, activeQueryIndex, existingQuery]);
+	}, [stagedQuery?.builder.queryData, activeQueryIndex, existingQuery]);
 
 	return { existingQuery, hasExistingQuery };
 }

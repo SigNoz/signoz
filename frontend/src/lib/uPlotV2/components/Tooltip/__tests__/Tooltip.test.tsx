@@ -73,9 +73,9 @@ function createTooltipContent(
 	};
 }
 
-function createUPlotInstance(cursorIdx: number | null): uPlot {
+function createUPlotInstance(cursorIdx: number | null, timestamp = 1): uPlot {
 	return {
-		data: [[1], []],
+		data: [[timestamp], []],
 		cursor: { idx: cursorIdx },
 		// The rest of the uPlot fields are not used by Tooltip
 	} as unknown as uPlot;
@@ -118,6 +118,40 @@ describe('Tooltip', () => {
 		const expectedTitle = dayjs(1 * 1000)
 			.tz('UTC')
 			.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
+
+		expect(screen.getByText(expectedTitle)).toBeInTheDocument();
+	});
+
+	it('marks the header partial when a visible series has a partial bucket at the cursor', () => {
+		const withSeries = (series: unknown[]): uPlot =>
+			Object.assign(createUPlotInstance(0), { series });
+		const partial = { show: true, partialTimestamps: new Set([1]) };
+
+		const { unmount } = renderTooltip({
+			uPlotInstance: withSeries([{}, partial]),
+		});
+		expect(screen.getByTestId('uplot-tooltip-header-partial')).toHaveTextContent(
+			'(partial)',
+		);
+		unmount();
+
+		renderTooltip({
+			uPlotInstance: withSeries([{}, { ...partial, show: false }]),
+		});
+		expect(
+			screen.queryByTestId('uplot-tooltip-header-partial'),
+		).not.toBeInTheDocument();
+	});
+
+	it('drops the date from the header title for a point on the current day', () => {
+		const todayTimestamp = dayjs().tz('UTC').startOf('hour').unix();
+		const uPlotInstance = createUPlotInstance(0, todayTimestamp);
+
+		renderTooltip({ uPlotInstance });
+
+		const expectedTitle = dayjs(todayTimestamp * 1000)
+			.tz('UTC')
+			.format(DATE_TIME_FORMATS.TIME_SECONDS);
 
 		expect(screen.getByText(expectedTitle)).toBeInTheDocument();
 	});
@@ -207,9 +241,9 @@ describe('Tooltip renderTooltipFooter', () => {
 	});
 
 	it('renders content returned by renderTooltipFooter', () => {
-		const renderTooltipFooter = jest.fn(
-			(): JSX.Element => <div data-testid="custom-tooltip-footer">Footer</div>,
-		);
+		const renderTooltipFooter = jest.fn((): JSX.Element => (
+			<div data-testid="custom-tooltip-footer">Footer</div>
+		));
 
 		renderTooltip({ renderTooltipFooter });
 

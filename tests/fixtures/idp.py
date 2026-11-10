@@ -7,6 +7,7 @@ import pytest
 import requests
 from keycloak import KeycloakAdmin
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
@@ -370,18 +371,26 @@ def idp_login(driver: webdriver.Chrome) -> Callable[[str, str], None]:
         password_field.send_keys(password)
 
         # Click the login button
+        idp_host = urlparse(driver.current_url).netloc
         login_button = wait.until(EC.element_to_be_clickable((By.ID, "kc-login")))
         login_button.click()
 
-        # Wait till kc-login element has vanished from the page, which means that a redirection is taking place.
-        wait.until(EC.invisibility_of_element((By.ID, "kc-login")))
+        # Wait till the browser has left the idp host — not just the login page: keycloak's SAML flow inserts an
+        # auto-submitting interstitial on the idp whose POST is what creates the user in signoz. The button is
+        # re-queried per poll; a mid-navigation WebDriverException (detached node) just retries the poll.
+        def _left_idp(drv: webdriver.Chrome) -> bool:
+            try:
+                return urlparse(drv.current_url).netloc != idp_host and not drv.find_elements(By.ID, "kc-login")
+            except WebDriverException:
+                return False
+
+        wait.until(_left_idp)
 
     return _idp_login
 
 
 @pytest.fixture(name="create_group_idp", scope="function")
 def create_group_idp(idp: types.TestContainerIDP) -> Callable[[str], str]:
-    """Creates a group in Keycloak IDP."""
     client = KeycloakAdmin(
         server_url=idp.container.host_configs["6060"].base(),
         username=IDP_ROOT_USERNAME,
@@ -410,7 +419,6 @@ def create_user_idp_with_groups(
     idp: types.TestContainerIDP,
     create_group_idp: Callable[[str], str],  # pylint: disable=redefined-outer-name
 ) -> Callable[[str, str, bool, list[str]], None]:
-    """Creates a user in Keycloak IDP with specified groups."""
     client = KeycloakAdmin(
         server_url=idp.container.host_configs["6060"].base(),
         username=IDP_ROOT_USERNAME,
@@ -458,7 +466,6 @@ def add_user_to_group(
     idp: types.TestContainerIDP,
     create_group_idp: Callable[[str], str],  # pylint: disable=redefined-outer-name
 ) -> Callable[[str, str], None]:
-    """Adds an existing user to a group."""
     client = KeycloakAdmin(
         server_url=idp.container.host_configs["6060"].base(),
         username=IDP_ROOT_USERNAME,
@@ -479,7 +486,6 @@ def create_user_idp_with_role(
     idp: types.TestContainerIDP,
     create_group_idp: Callable[[str], str],  # pylint: disable=redefined-outer-name
 ) -> Callable[[str, str, bool, str, list[str]], None]:
-    """Creates a user in Keycloak IDP with a custom role attribute and optional groups."""
     client = KeycloakAdmin(
         server_url=idp.container.host_configs["6060"].base(),
         username=IDP_ROOT_USERNAME,
@@ -527,7 +533,6 @@ def create_user_idp_with_role(
 
 @pytest.fixture(name="setup_user_profile", scope="package")
 def setup_user_profile(idp: types.TestContainerIDP) -> Callable[[], None]:
-    """Setup Keycloak User Profile with signoz_role attribute."""
 
     def _setup_user_profile() -> None:
         client = KeycloakAdmin(
@@ -568,7 +573,6 @@ def setup_user_profile(idp: types.TestContainerIDP) -> Callable[[], None]:
 
 
 def _ensure_groups_client_scope(client: KeycloakAdmin) -> None:
-    """Create 'groups' client scope if it doesn't exist."""
     # Check if groups scope exists
     scopes = client.get_client_scopes()
     groups_scope_exists = any(s.get("name") == "groups" for s in scopes)
@@ -619,27 +623,13 @@ def _ensure_groups_client_scope(client: KeycloakAdmin) -> None:
 
 
 def get_oidc_domain(signoz: types.SigNoz, admin_token: str) -> dict:
-    """Helper to get the OIDC domain."""
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
     return next(
         (domain for domain in response.json()["data"] if domain["name"] == "oidc.integration.test"),
-        None,
-    )
-
-
-def get_user_by_email(signoz: types.SigNoz, admin_token: str, email: str) -> dict:
-    """Helper to get a user by email."""
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    return next(
-        (user for user in response.json()["data"] if user["email"] == email),
         None,
     )
 
@@ -653,7 +643,6 @@ def perform_oidc_login(
     email: str,
     password: str,
 ) -> None:
-    """Helper to perform OIDC login flow."""
     session_context = get_session_context(email)
     url = session_context["orgs"][0]["authNSupport"]["callback"][0]["url"]
     parsed_url = urlparse(url)
@@ -664,7 +653,7 @@ def perform_oidc_login(
 
 def get_saml_domain(signoz: types.SigNoz, admin_token: str) -> dict:
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/domains"),
+        signoz.self.host_configs["8080"].get("/api/v2/auth_domains"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )

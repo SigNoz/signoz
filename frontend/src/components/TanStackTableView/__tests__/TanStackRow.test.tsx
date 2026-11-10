@@ -85,7 +85,9 @@ describe('TanStackRowCells', () => {
 			</table>,
 		);
 		await user.click(screen.getAllByRole('cell')[0]);
-		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' }, 'r1');
+		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' }, 'r1', {
+			isActive: false,
+		});
 	});
 
 	it('fires onRowClick with empty itemKey when getRowKeyData is not provided', async () => {
@@ -117,17 +119,19 @@ describe('TanStackRowCells', () => {
 			</table>,
 		);
 		await user.click(screen.getAllByRole('cell')[0]);
-		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' }, '');
+		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' }, '', {
+			isActive: false,
+		});
 	});
 
-	it('calls onRowDeactivate instead of onRowClick when row is active', async () => {
+	it('calls onRowClick with isActive: true when the row is active', async () => {
+		// The table no longer owns open/close — it reports the active state and the
+		// consumer routes the click. An active row must still fire onRowClick.
 		const user = userEvent.setup();
 		const onRowClick = jest.fn();
-		const onRowDeactivate = jest.fn();
 		const ctx: TableRowContext<Row> = {
 			colCount: 1,
 			onRowClick,
-			onRowDeactivate,
 			isRowActive: () => true,
 			getRowKeyData: () => ({ finalKey: 'r1', itemKey: 'r1' }),
 			hasSingleColumn: false,
@@ -152,8 +156,44 @@ describe('TanStackRowCells', () => {
 			</table>,
 		);
 		await user.click(screen.getAllByRole('cell')[0]);
-		expect(onRowDeactivate).toHaveBeenCalled();
-		expect(onRowClick).not.toHaveBeenCalled();
+		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' }, 'r1', {
+			isActive: true,
+		});
+	});
+
+	it('calls onRowClick with isActive: false when the row is not active', async () => {
+		const user = userEvent.setup();
+		const onRowClick = jest.fn();
+		const ctx: TableRowContext<Row> = {
+			colCount: 1,
+			onRowClick,
+			isRowActive: () => false,
+			getRowKeyData: () => ({ finalKey: 'r1', itemKey: 'r1' }),
+			hasSingleColumn: false,
+			columnOrderKey: '',
+			columnVisibilityKey: '',
+		};
+		const row = buildMockRow([{ id: 'body' }]);
+		render(
+			<table>
+				<tbody>
+					<tr>
+						<TanStackRowCells<Row>
+							row={row as never}
+							context={ctx}
+							itemKind="row"
+							hasSingleColumn={false}
+							columnOrderKey=""
+							columnVisibilityKey=""
+						/>
+					</tr>
+				</tbody>
+			</table>,
+		);
+		await user.click(screen.getAllByRole('cell')[0]);
+		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' }, 'r1', {
+			isActive: false,
+		});
 	});
 
 	it('does not render renderRowActions before hover', () => {

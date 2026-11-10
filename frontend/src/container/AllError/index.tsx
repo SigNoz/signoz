@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Link, useLocation } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Button, Card, Input, Space, TableProps, Tooltip, Flex } from 'antd';
 import { Search } from '@signozhq/icons';
 import type { ColumnType, TablePaginationConfig } from 'antd/es/table';
@@ -28,7 +29,7 @@ import {
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { isUndefined } from 'lodash-es';
 import { useAllErrorsQueryState } from 'pages/AllErrors/QueryStateContext';
 import { useTimezone } from 'providers/Timezone';
@@ -37,9 +38,8 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Exception, PayloadProps } from 'types/api/errors/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { FeatureKeys } from '../../constants/features';
-import { useAppContext } from '../../providers/App/App';
 import { FilterDropdownExtendsProps } from './types';
+import { useExceptionsStripInfo } from './useExceptionsStripInfo';
 import {
 	extractFilterValues,
 	getDefaultFilterValue,
@@ -68,7 +68,7 @@ function AllErrors(): JSX.Element {
 	const { maxTime, minTime, loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const params = useUrlQuery();
 	const { t } = useTranslation(['common']);
 	const {
@@ -162,6 +162,11 @@ function AllErrors(): JSX.Element {
 			},
 		]);
 
+	useExceptionsStripInfo({
+		shownCount: data?.payload?.length ?? 0,
+		totalCount: errorCountResponse.data?.payload ?? 0,
+	});
+
 	const isFetching = isErrorsFetching || errorCountResponse.isFetching;
 	useEffect(() => {
 		setIsFetching(isFetching);
@@ -224,7 +229,9 @@ function AllErrors(): JSX.Element {
 					queryParams.serviceName = serviceFilterValue;
 				}
 
-				history.replace(`${pathname}?${createQueryParams(queryParams)}`);
+				navigate(`${pathname}?${createQueryParams(queryParams)}`, {
+					replace: true,
+				});
 				confirm();
 			},
 		[
@@ -332,13 +339,14 @@ function AllErrors(): JSX.Element {
 			...getFilter(onExceptionTypeFilter, 'Search By Exception', 'exceptionType'),
 			render: (value, record): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
-					<Link
+					<AppLink
+						data-testid="exception-row-link"
 						to={`${ROUTES.ERROR_DETAIL}?groupId=${
 							record.groupID
 						}&timestamp=${getNanoSeconds(record.lastSeen)}`}
 					>
 						{value}
-					</Link>
+					</AppLink>
 				</Tooltip>
 			),
 			sorter: true,
@@ -418,11 +426,6 @@ function AllErrors(): JSX.Element {
 		},
 	];
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const onChangeHandler: TableProps<Exception>['onChange'] = useCallback(
 		(
 			paginations: TablePaginationConfig,
@@ -439,7 +442,7 @@ function AllErrors(): JSX.Element {
 					exceptionType: getFilterString(params.get(urlKey.exceptionType)),
 				});
 				const compositeQuery = params.get(urlKey.compositeQuery) || '';
-				history.replace(
+				navigate(
 					`${pathname}?${createQueryParams({
 						order: updatedOrder,
 						offset: (current - 1) * pageSize,
@@ -449,6 +452,7 @@ function AllErrors(): JSX.Element {
 						serviceName,
 						compositeQuery,
 					})}`,
+					{ replace: true },
 				);
 			}
 		},
@@ -458,7 +462,7 @@ function AllErrors(): JSX.Element {
 	useEffect(() => {
 		if (!isUndefined(errorCountResponse.data?.payload)) {
 			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
+				(val) => val.tagKey === getResourceDeploymentKeys(),
 			)?.tagValue;
 
 			logEvent('Exception: List page visited', {
@@ -483,6 +487,7 @@ function AllErrors(): JSX.Element {
 
 	return (
 		<ResizeTable
+			data-testid="exceptions-table"
 			columns={columns}
 			tableLayout="fixed"
 			dataSource={data?.payload as Exception[]}

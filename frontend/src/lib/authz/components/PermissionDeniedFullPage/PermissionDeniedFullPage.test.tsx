@@ -20,7 +20,7 @@ describe('PermissionDeniedFullPage', () => {
 	it('renders with multiple denied permissions', () => {
 		const deniedPermissions = [
 			buildPermission('read', buildObjectString('role', 'admin')),
-			buildPermission('update', buildObjectString('role', 'admin')),
+			buildPermission('update', buildObjectString<'update'>('role', 'admin')),
 		];
 		render(<PermissionDeniedFullPage deniedPermissions={deniedPermissions} />);
 		expect(screen.getByText(/read:role:admin/)).toBeInTheDocument();

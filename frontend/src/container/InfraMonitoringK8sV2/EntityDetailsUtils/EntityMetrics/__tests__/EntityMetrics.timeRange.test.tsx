@@ -60,7 +60,6 @@ function renderEntityMetrics(store: GlobalTimeStoreApi): jest.Mock {
 		<GlobalTimeContext.Provider value={store}>
 			<EntityMetrics
 				entity={entity}
-				eventEntity="test"
 				entityWidgetInfo={[{ title: 'CPU Usage', yAxisUnit: 'percentage' }]}
 				getEntityQueryPayload={getEntityQueryPayload}
 				queryKey="test-query-key"

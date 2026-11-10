@@ -7,10 +7,9 @@ import {
 	IQuickFiltersConfig,
 } from 'components/QuickFilters/types';
 import { TriangleAlert } from '@signozhq/icons';
-import { CellValueTooltip } from 'container/InfraMonitoringK8sV2/components';
+import TanStackTable from 'components/TanStackTableView';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
 const HOSTNAME_DOCS_URL =
 	'https://signoz.io/docs/infrastructure-monitoring/hostmetrics/#host-name-is-blankempty';
 
@@ -21,7 +20,7 @@ export function HostnameCell({
 }): React.ReactElement {
 	const isEmpty = !hostName || !hostName.trim();
 	if (!isEmpty) {
-		return <CellValueTooltip value={hostName} />;
+		return <TanStackTable.Text>{hostName}</TanStackTable.Text>;
 	}
 	return (
 		<>
@@ -74,7 +73,6 @@ export function getHostsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.SYSTEM_CPU_LOAD_AVERAGE_15M,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -87,7 +85,6 @@ export function getHostsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.SYSTEM_CPU_LOAD_AVERAGE_15M,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{

@@ -2,6 +2,7 @@ package implrulestatehistory
 
 import (
 	"context"
+	"log/slog"
 	"math"
 	"time"
 
@@ -13,11 +14,13 @@ import (
 )
 
 type module struct {
-	store rulestatehistorytypes.Store
+	store     rulestatehistorytypes.Store
+	ruleStore ruletypes.RuleStore
+	logger    *slog.Logger
 }
 
-func NewModule(store rulestatehistorytypes.Store) rulestatehistory.Module {
-	return &module{store: store}
+func NewModule(store rulestatehistorytypes.Store, ruleStore ruletypes.RuleStore, logger *slog.Logger) rulestatehistory.Module {
+	return &module{store: store, ruleStore: ruleStore, logger: logger}
 }
 
 func (m *module) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]rulestatehistorytypes.RuleStateHistory, error) {
@@ -25,7 +28,19 @@ func (m *module) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string
 }
 
 func (m *module) GetHistoryTimeline(ctx context.Context, orgID valuer.UUID, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistory, uint64, error) {
-	return m.store.ReadRuleStateHistoryByRuleID(ctx, orgID, ruleID, &query)
+	items, total, err := m.store.ReadRuleStateHistoryByRuleID(ctx, orgID, ruleID, &query)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if builder := m.relatedLinkBuilderForRule(ctx, orgID, ruleID); builder != nil {
+		for idx := range items {
+			start, end := builder.queryWindow(items[idx].UnixMilli)
+			items[idx].RelatedLinks = builder.links(ctx, items[idx].Labels, start, end)
+		}
+	}
+
+	return items, total, nil
 }
 
 func (m *module) GetHistoryFilterKeys(ctx context.Context, orgID valuer.UUID, ruleID string, query rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldKeys, error) {
@@ -37,7 +52,21 @@ func (m *module) GetHistoryFilterValues(ctx context.Context, orgID valuer.UUID, 
 }
 
 func (m *module) GetHistoryContributors(ctx context.Context, orgID valuer.UUID, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistoryContributor, error) {
-	return m.store.ReadRuleStateHistoryTopContributorsByRuleID(ctx, orgID, ruleID, &query)
+	contributors, err := m.store.ReadRuleStateHistoryTopContributorsByRuleID(ctx, orgID, ruleID, &query)
+	if err != nil {
+		return nil, err
+	}
+
+	if builder := m.relatedLinkBuilderForRule(ctx, orgID, ruleID); builder != nil {
+		// contributor counts aggregate the whole selected range, so the links
+		// span it too instead of a single evaluation window
+		start, end := time.UnixMilli(query.Start), time.UnixMilli(query.End)
+		for idx := range contributors {
+			contributors[idx].RelatedLinks = builder.links(ctx, contributors[idx].Labels, start, end)
+		}
+	}
+
+	return contributors, nil
 }
 
 func (m *module) GetHistoryOverallStatus(ctx context.Context, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.GettableRuleStateWindow, error) {

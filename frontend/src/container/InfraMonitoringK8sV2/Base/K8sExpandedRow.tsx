@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useQuery } from 'react-query';
-import { useLocation } from 'react-router-dom';
+import { useQuery, useQueryClient } from 'react-query';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
@@ -10,18 +10,19 @@ import TanStackTable, {
 	TableColumnDef,
 	TanStackTableStateProvider,
 } from 'components/TanStackTableView';
-import { QueryParams } from 'constants/query';
 import { CornerDownRight } from '@signozhq/icons';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { v4 as uuid } from 'uuid';
 import { useQueryState } from 'nuqs';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
-import { InfraMonitoringEntity } from '../constants';
+import {
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
 import {
 	SelectedItemParams,
 	useInfraMonitoringGroupBy,
@@ -29,10 +30,16 @@ import {
 	useInfraMonitoringPageListing,
 	useInfraMonitoringSelectedItemParams,
 } from '../hooks';
+import { resetDrawerHistory } from './useDrawerHistoryStore';
 import { K8sBaseFilters } from './types';
+import { useLogEventForColumnCustomized } from './useLogEventForColumnCustomized';
+import { useInfraMonitoringFontSize } from './useInfraMonitoringTablePreferencesStore';
 
 import styles from './K8sExpandedRow.module.scss';
 import { buildExpressionFromGroupMeta } from './utils';
+import { logInfraColumnSortedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
+import { QueryParams } from 'constants/query';
 
 const EXPANDED_ROW_LIMIT = 10;
 
@@ -62,9 +69,15 @@ export type K8sExpandedRowProps<T, TItemKey = string> = {
 	getRowKey?: (record: T) => string;
 	/** Function to get the item key used for selection. Defaults to getRowKey if not provided. */
 	getItemKey?: (record: T) => TItemKey;
+	getRowTestId?: (record: T) => string;
+	/** Query key prefix for pre-caching detail data on row click */
+	detailsQueryKeyPrefix?: string;
 };
 
-export function K8sExpandedRow<T, TItemKey = string>({
+export function K8sExpandedRow<
+	T,
+	TItemKey extends string | SelectedItemParams = string,
+>({
 	rowKey,
 	groupMeta,
 	entity,
@@ -73,7 +86,10 @@ export function K8sExpandedRow<T, TItemKey = string>({
 	extraQueryKeyParts = [],
 	getRowKey,
 	getItemKey,
+	getRowTestId,
+	detailsQueryKeyPrefix,
 }: K8sExpandedRowProps<T, TItemKey>): JSX.Element {
+	const fontSize = useInfraMonitoringFontSize();
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setCurrentPage] = useInfraMonitoringPageListing();
 	const { currentQuery } = useQueryBuilder();
@@ -82,8 +98,8 @@ export function K8sExpandedRow<T, TItemKey = string>({
 	const [, setSelectedItemParams] = useInfraMonitoringSelectedItemParams();
 	const [, setMainOrderBy] = useInfraMonitoringOrderBy();
 	const { safeNavigate } = useSafeNavigate();
-	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
+	const queryClient = useQueryClient();
 
 	const orderByParamKey = useMemo(
 		() => `orderBy_${rowKey.replace(/[^a-zA-Z0-9]/g, '_')}`,
@@ -104,6 +120,13 @@ export function K8sExpandedRow<T, TItemKey = string>({
 	}, [setOrderBy]);
 
 	const storageKey = `k8s-${entity}-columns-expanded`;
+
+	useLogEventForColumnCustomized({
+		entity,
+		source: 'expanded',
+		storageKey,
+		columns: tableColumns,
+	});
 
 	const expressionForRecord = useMemo(
 		() => buildExpressionFromGroupMeta(parentExpression || '', groupMeta),
@@ -177,18 +200,48 @@ export function K8sExpandedRow<T, TItemKey = string>({
 	const expandedData = data?.data ?? [];
 
 	const handleRowClick = useCallback(
-		(_row: T, itemKey: TItemKey): void => {
-			if (typeof itemKey === 'object' && itemKey !== null) {
-				setSelectedItemParams(itemKey as unknown as SelectedItemParams);
-			} else {
-				setSelectedItemParams({
-					selectedItem: itemKey as string,
-					clusterName: null,
-					namespaceName: null,
-				});
+		(row: T, itemKey: TItemKey): void => {
+			const params: SelectedItemParams =
+				typeof itemKey === 'object' && itemKey !== null
+					? itemKey
+					: {
+							selectedItem: itemKey,
+							clusterName: null,
+							namespaceName: null,
+						};
+
+			if (detailsQueryKeyPrefix) {
+				const detailQueryKey = getAutoRefreshQueryKey(
+					selectedTime,
+					`${detailsQueryKeyPrefix}EntityDetails`,
+					params.selectedItem,
+					params.clusterName,
+					params.namespaceName,
+					params.containerName,
+				);
+				queryClient.setQueryData(detailQueryKey, { data: row });
+			}
+
+			// Opening from the list starts a fresh trail for the drawer's back control
+			resetDrawerHistory();
+			setSelectedItemParams(params);
+		},
+		[
+			setSelectedItemParams,
+			detailsQueryKeyPrefix,
+			getAutoRefreshQueryKey,
+			selectedTime,
+			queryClient,
+		],
+	);
+
+	const handleSort = useCallback(
+		(sort: SortState | null): void => {
+			if (sort) {
+				logInfraColumnSortedEvent(entity, sort.columnName, sort.order, 'expanded');
 			}
 		},
-		[setSelectedItemParams],
+		[entity],
 	);
 
 	const handleViewAllClick = (): void => {
@@ -213,13 +266,26 @@ export function K8sExpandedRow<T, TItemKey = string>({
 			},
 		};
 
-		const newUrlQuery = new URLSearchParams(urlQuery.toString());
-		newUrlQuery.set(
+		const searchParams = getUnstableCurrentSearchParams();
+
+		searchParams.set(
 			QueryParams.compositeQuery,
 			encodeURIComponent(JSON.stringify(updatedQuery)),
 		);
 
-		safeNavigate(`${location.pathname}?${newUrlQuery.toString()}`);
+		searchParams.delete(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
+		searchParams.delete(INFRA_MONITORING_K8S_PARAMS_KEYS.EXPANDED);
+		searchParams.delete(orderByParamKey);
+		searchParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE, '1');
+
+		if (orderBy) {
+			searchParams.set(
+				INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY,
+				JSON.stringify(orderBy),
+			);
+		}
+
+		safeNavigate(`${location.pathname}?${searchParams.toString()}`);
 	};
 
 	const total = data?.total ?? 0;
@@ -227,10 +293,11 @@ export function K8sExpandedRow<T, TItemKey = string>({
 
 	const footerContent = hasMoreItems ? (
 		<Button
+			size="md"
 			type="button"
 			color="secondary"
 			variant="outlined"
-			className={styles.viewAllButton}
+			testId="expanded-row-view-all"
 			onClick={handleViewAllClick}
 			prefix={<CornerDownRight size={14} />}
 		>
@@ -256,7 +323,9 @@ export function K8sExpandedRow<T, TItemKey = string>({
 						isLoading={isLoading}
 						getRowKey={getRowKey}
 						getItemKey={getItemKey}
+						getRowTestId={getRowTestId}
 						onRowClick={handleRowClick}
+						onSort={handleSort}
 						enableQueryParams={{
 							orderBy: orderByParamKey,
 						}}
@@ -264,7 +333,7 @@ export function K8sExpandedRow<T, TItemKey = string>({
 							className: styles.expandedTable,
 						}}
 						disableVirtualScroll
-						cellTypographySize="medium"
+						cellTypographySize={fontSize}
 					/>
 				</TanStackTableStateProvider>
 				{!isLoading && expandedData.length > 0 && (

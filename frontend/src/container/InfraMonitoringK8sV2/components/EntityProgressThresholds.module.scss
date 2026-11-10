@@ -1,0 +1,39 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	max-width: 320px;
+	text-align: left;
+	text-wrap: wrap;
+	margin-bottom: var(--spacing-1);
+}
+
+.threshold {
+	display: flex;
+	align-items: stretch;
+	gap: var(--spacing-4);
+}
+
+.swatch {
+	width: 3px;
+	border-radius: 1px;
+	flex-shrink: 0;
+	background-color: var(--ept-color);
+}
+
+.thresholdBody {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-1);
+}
+
+.thresholdHeading {
+	display: flex;
+	align-items: baseline;
+	gap: var(--spacing-2);
+}
+
+.range {
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}

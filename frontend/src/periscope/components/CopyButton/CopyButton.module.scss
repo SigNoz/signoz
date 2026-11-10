@@ -1,8 +1,3 @@
-// Square copy button whose icon cross-fades between copy and check.
-.copyButton {
-	flex-shrink: 0;
-}
-
 // Both icons occupy the same box; only one is visible at a time.
 .iconStack {
 	position: relative;

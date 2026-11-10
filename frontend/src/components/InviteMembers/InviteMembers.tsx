@@ -80,7 +80,7 @@ function InviteMembers({
 							weight="semibold"
 							className={styles.headerCellRole}
 						>
-							Role
+							Roles
 						</Typography.Text>
 						<div className={styles.headerCellAction} />
 					</div>
@@ -108,11 +108,10 @@ function InviteMembers({
 
 							<div className={styles.cellRole}>
 								<RolesSelect
-									mode="single"
-									value={row.roleId || undefined}
-									onChange={(roleId): void => updateRole(row.id, roleId)}
-									placeholder="Select role"
-									allowClear={false}
+									mode="multiple"
+									value={row.roleIds}
+									onChange={(roleIds): void => updateRole(row.id, roleIds)}
+									placeholder="Select roles"
 									id={`invite-role-${row.id}`}
 								/>
 							</div>
@@ -120,11 +119,13 @@ function InviteMembers({
 							<div className={styles.cellAction}>
 								{canRemoveRow && (
 									<Button
-										variant="ghost"
-										color="destructive"
+										size="md"
+										variant="solid"
+										color="danger"
 										onClick={(): void => removeRow(row.id)}
 										aria-label="Remove row"
-										data-testid={`invite-remove-${row.id}`}
+										testId={`invite-remove-${row.id}`}
+										icon
 									>
 										<Trash2 size={12} />
 									</Button>
@@ -137,11 +138,12 @@ function InviteMembers({
 				{showAddButton && (
 					<div className={styles.addRow}>
 						<Button
+							size="md"
 							variant="dashed"
 							color="secondary"
 							prefix={<Plus size={12} />}
 							onClick={addRow}
-							data-testid="invite-add-row"
+							testId="invite-add-row"
 						>
 							Add another
 						</Button>

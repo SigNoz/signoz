@@ -1,7 +1,3 @@
-"""
-Look at the multi_temporality_counters_1h.jsonl file for the relevant data
-"""
-
 import random
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta

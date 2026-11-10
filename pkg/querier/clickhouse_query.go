@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -66,7 +67,7 @@ func (q *chSQLQuery) Window() (uint64, uint64) { return q.fromMS, q.toMS }
 func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableItem, start, end uint64) (string, error) {
 	varsData := map[string]any{}
 	for k, v := range vars {
-		varsData[k] = formatValueForCH(v.Value)
+		varsData[k] = clickhousesql.Literal(v.Value)
 	}
 
 	querybuilder.AssignReservedVars(varsData, start, end)
@@ -100,9 +101,20 @@ func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableIt
 	return newQuery.String(), nil
 }
 
-// Statement renders the SQL without executing it, for the preview path.
-func (q *chSQLQuery) Statement(_ context.Context) (*qbtypes.Statement, error) {
+func (q *chSQLQuery) render(ctx context.Context) (string, error) {
 	rendered, err := q.renderVars(q.query.Query, q.vars, q.fromMS, q.toMS)
+	if err != nil {
+		return "", err
+	}
+
+	clickhousesql.LogIfStatementIsNotValid(ctx, q.logger, rendered)
+
+	return rendered, nil
+}
+
+// Statement renders the SQL without executing it, for the preview path.
+func (q *chSQLQuery) Statement(ctx context.Context) (*qbtypes.Statement, error) {
+	rendered, err := q.render(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +136,7 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 		elapsed += p.Elapsed
 	}))
 
-	query, err := q.renderVars(q.query.Query, q.vars, q.fromMS, q.toMS)
+	query, err := q.render(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -135,11 +147,11 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	}
 	defer rows.Close()
 
-	// TODO: map the errors from ClickHouse to our error types
 	payload, err := consume(rows, q.kind, nil, qbtypes.Step{}, q.query.Name)
 	if err != nil {
 		return nil, err
 	}
+
 	return &qbtypes.Result{
 		Type:  q.kind,
 		Value: payload,

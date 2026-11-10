@@ -15,6 +15,18 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	},
 }));
 
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import {
+	mockUseAuthZDenyAll,
+	mockUseAuthZGrantAll,
+} from 'lib/authz/utils/authz-test-utils';
+
+// Admin gating on the write controls flows through useAuthZ. Mock it directly
+// (synchronous) so the functional tests stay synchronous; the read-only block
+// below flips it to deny-all.
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
+
 import {
 	GROUPS_ENDPOINT,
 	makeGroupsResponse,
@@ -102,6 +114,8 @@ describe('AttributeMappingsTab (integration)', () => {
 	beforeEach(() => {
 		// Reset URL state between tests — jsdom shares window.location across a file.
 		window.history.pushState(null, '', '/');
+		// Default to an admin; the read-only block overrides this.
+		mockedUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
 	});
 
 	afterEach(() => {
@@ -319,6 +333,7 @@ describe('AttributeMappingsTab (integration)', () => {
 						context: FieldContext.attribute,
 						operation: MapperOperation.copy,
 						priority,
+						enabled: true,
 					})),
 				},
 			}),
@@ -487,7 +502,10 @@ describe('AttributeMappingsTab (integration)', () => {
 			await user.click(screen.getByTestId('add-mapper-group-1'));
 			await screen.findByTestId('mapper-form-drawer');
 
-			expect(screen.getByTestId('mapper-form-save')).toBeDisabled();
+			expect(screen.getByTestId('mapper-form-save')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 
 			await user.type(
 				screen.getByTestId('mapper-form-target'),
@@ -496,7 +514,9 @@ describe('AttributeMappingsTab (integration)', () => {
 			await user.type(screen.getByTestId('mapper-form-source-0'), 'raw.model');
 
 			const create = screen.getByTestId('mapper-form-save');
-			await waitFor(() => expect(create).toBeEnabled());
+			await waitFor(() =>
+				expect(create).not.toHaveAttribute('aria-disabled', 'true'),
+			);
 			await user.click(create);
 
 			await waitFor(() =>
@@ -505,6 +525,57 @@ describe('AttributeMappingsTab (integration)', () => {
 			await expect(
 				screen.findByText('gen_ai.response.model'),
 			).resolves.toBeInTheDocument();
+		});
+	});
+
+	// The write APIs (create/update/delete group & mapper) are Admin-only on the
+	// backend, so a non-admin gets a read-only view: the data renders, but every
+	// write control is hidden.
+	describe('read-only (non-admin)', () => {
+		beforeEach(() => {
+			mockedUseAuthZ.mockImplementation(mockUseAuthZDenyAll);
+		});
+
+		it('hides the "Add a new group" button', async () => {
+			setupGroups();
+			render(<AttributeMappingsTabWithStore />);
+
+			await screen.findByTestId('group-name-group-1');
+			expect(screen.queryByTestId('add-group-row')).not.toBeInTheDocument();
+		});
+
+		it('hides the group enable toggle and actions menu', async () => {
+			setupGroups();
+			render(<AttributeMappingsTabWithStore />);
+
+			await screen.findByTestId('group-name-group-1');
+			expect(
+				screen.queryByTestId('group-enabled-group-1'),
+			).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('group-actions-group-1'),
+			).not.toBeInTheDocument();
+		});
+
+		it('renders mappers read-only: no "Add mapping" button or row actions', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			setupGroups();
+			setupMappers([makeMapper({ id: 'mapper-1', name: 'gen_ai.request.model' })]);
+			render(<AttributeMappingsTabWithStore />);
+
+			await screen.findByTestId('group-name-group-1');
+			await expandGroup(user);
+
+			// The mapper still renders...
+			await screen.findByTestId('mapper-target-mapper-1');
+			// ...but every write control is gone.
+			expect(screen.queryByTestId('add-mapper-group-1')).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('mapper-enabled-mapper-1'),
+			).not.toBeInTheDocument();
+			expect(
+				screen.queryByRole('button', { name: 'Mapping actions' }),
+			).not.toBeInTheDocument();
 		});
 	});
 });

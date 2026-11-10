@@ -5,6 +5,7 @@ import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { toast } from '@signozhq/ui/sonner';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -47,6 +48,7 @@ import {
 	isTraceToLogsQuery,
 } from './utils';
 
+import styles from './LogsExplorerList.module.scss';
 import './LogsExplorerList.style.scss';
 
 function Footer(): JSX.Element {
@@ -77,7 +79,7 @@ function LogsExplorerList({
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: DataSource.LOGS,
+		sourcePage: SavedviewtypesSourceDTO.logs,
 		aggregateOperator:
 			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
 	});
@@ -201,6 +203,7 @@ function LogsExplorerList({
 			return (
 				<TanStackTable<ILog>
 					ref={ref as React.Ref<TanStackTableHandle>}
+					className={styles.logsTable}
 					columns={logsColumns}
 					columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
 					respectColumnOrder={false}
@@ -211,9 +214,11 @@ function LogsExplorerList({
 					data={logs}
 					isLoading={isLoading || isFetching}
 					onEndReached={onEndReached}
-					isRowActive={(log): boolean =>
-						log.id === activeLog?.id || log.id === activeLogId
+					isRowActive={(log): boolean => log.id === activeLog?.id}
+					getRowClassName={(log): string =>
+						log.id === activeLogId ? 'logs-linked-row' : ''
 					}
+					getRowTestId={(log): string => `logs-table-row-${log.id}`}
 					getRowStyle={(log): CSSProperties =>
 						({
 							'--row-active-bg': getRowBackgroundColor(
@@ -226,10 +231,13 @@ function LogsExplorerList({
 							),
 						}) as CSSProperties
 					}
-					onRowClick={(log): void => {
-						handleSetActiveLog(log);
+					onRowClick={(log, _itemKey, { isActive }): void => {
+						if (isActive) {
+							handleCloseLogDetail();
+						} else {
+							handleSetActiveLog(log);
+						}
 					}}
-					onRowDeactivate={handleCloseLogDetail}
 					activeRowIndex={activeLogIndex}
 					renderRowActions={(log): ReactNode => (
 						<LogLinesActionButtons
@@ -282,6 +290,7 @@ function LogsExplorerList({
 		options.maxLines,
 		options.fontSize,
 		activeLogIndex,
+		activeLogId,
 		logs,
 		onEndReached,
 		getItemContent,
@@ -375,8 +384,6 @@ function LogsExplorerList({
 							selectedTab={selectedTab}
 							log={activeLog}
 							onClose={handleCloseLogDetail}
-							onAddToQuery={onAddToQuery}
-							onClickActionItem={onAddToQuery}
 							handleChangeSelectedView={handleChangeSelectedView}
 							logs={logs}
 							onNavigateLog={handleSetActiveLog}

@@ -9,6 +9,7 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.role import (
     expected_managed_transaction_keys,
+    find_role_by_name,
     flatten_transaction_groups,
     managed_role_names,
 )
@@ -67,11 +68,10 @@ def test_managed_role_transactions_match_expected(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    find_role_id: Callable[[str, str], str],
     role_name: str,
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    role_id = find_role_id(admin_token, role_name)
+    role_id = find_role_by_name(signoz, admin_token, role_name)
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),

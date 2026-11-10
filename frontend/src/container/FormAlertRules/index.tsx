@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { BellDot, CircleAlert, ExternalLink, Save } from '@signozhq/icons';
 import { Button, FormInstance, SelectProps } from 'antd';
 import { ConfirmDialog } from '@signozhq/ui/dialog';
@@ -21,13 +21,12 @@ import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/Que
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
-import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
-import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
+import QueryTypeTag from 'components/QueryTypeTag/QueryTypeTag';
+import PlotTag from 'components/PlotTag/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
@@ -39,7 +38,7 @@ import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQu
 import { isEmpty, isEqual } from 'lodash-es';
 import Tabs2 from 'periscope/components/Tabs2';
 import { useAlertRuleOptional } from 'providers/Alert';
-import { useAppContext } from 'providers/App/App';
+import { useIsAnomalyDetectionAvailable } from 'container/CreateAlertV2/useIsAnomalyDetectionAvailable';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -101,7 +100,6 @@ function FormAlertRules({
 }: FormAlertRuleProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
-	const { featureFlags } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -109,7 +107,7 @@ function FormAlertRules({
 	>((state) => state.globalTime);
 
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
 	const queryParams = new URLSearchParams(location.search);
 
 	const dataSource = useMemo(
@@ -812,9 +810,7 @@ function FormAlertRules({
 		},
 	];
 
-	const isAnomalyDetectionEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
-			?.active || false;
+	const isAnomalyDetectionEnabled = useIsAnomalyDetectionAvailable();
 
 	const source = useMemo(
 		() => urlQuery.get(QueryParams.source) as YAxisSource,
@@ -844,8 +840,6 @@ function FormAlertRules({
 
 	return (
 		<>
-			{Element}
-
 			<div
 				id="top"
 				className={`form-alert-rules-container ${
@@ -968,6 +962,7 @@ function FormAlertRules({
 								!isChannelConfigurationValid ||
 								queryStatus === 'error'
 							}
+							data-testid="alert-save-button"
 						>
 							{isNewRule ? t('button_createrule') : t('button_savechanges')}
 						</ActionButton>
@@ -981,6 +976,7 @@ function FormAlertRules({
 							}
 							type="default"
 							onClick={onTestRuleHandler}
+							data-testid="alert-test-button"
 						>
 							{' '}
 							{t('button_testrule')}
@@ -989,6 +985,7 @@ function FormAlertRules({
 							disabled={loading || false}
 							type="default"
 							onClick={onCancelHandler}
+							data-testid="alert-cancel-button"
 						>
 							{isNewRule && t('button_cancelchanges')}
 							{ruleId && !isEmpty(ruleId) && t('button_discard')}
@@ -998,6 +995,7 @@ function FormAlertRules({
 			</div>
 
 			<ConfirmDialog
+				testId="alert-save-confirm-dialog"
 				open={isConfirmSaveOpen}
 				onOpenChange={setIsConfirmSaveOpen}
 				title={t('confirm_save_title')}

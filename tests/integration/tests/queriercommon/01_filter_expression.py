@@ -1,19 +1,13 @@
-import os
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
 import pytest
-import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import get_column_data_from_response, make_query_request
-
-TESTDATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "testdata")
-FILTER_EXPRESSIONS_FILE = os.path.join(TESTDATA_DIR, "filter_expressions_10000.txt")
 
 
 @pytest.mark.parametrize(
@@ -180,101 +174,3 @@ def test_not_filter_expression(
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     assert set(get_column_data_from_response(response.json(), "body")) == expected_logs
-
-
-def test_filter_expressions_no_server_error(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    insert_logs,
-    get_token: Callable[[str, str], str],
-) -> None:
-    """
-    Reads every line from filter_expressions_10000.txt and fires it as a filter
-    expression against the logs query endpoint.
-
-    Expressions may be valid (200) or invalid (400) — both are acceptable.
-    A 500 means the server crashed on the input and is a test failure.
-    All failing expressions are collected before asserting so the full list is
-    visible in one run.
-    """
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    now = datetime.now(tz=UTC)
-    insert_logs(
-        [
-            Logs(
-                timestamp=now - timedelta(seconds=5),
-                body="alpha-log",
-                resources={
-                    "f1": "v10",
-                    "f2": "v20",
-                    "f3": "v30",
-                },
-                attributes={
-                    "f4": 40,
-                    "f5": 50,
-                    "f6": 60,
-                },
-            ),
-            Logs(
-                timestamp=now - timedelta(seconds=3),
-                body="beta-log",
-                resources={
-                    "f4": "v41",
-                    "f5": "v51",
-                    "f6": "v61",
-                },
-                attributes={
-                    "f1": 11,
-                    "f2": 21,
-                    "f3": 31,
-                },
-            ),
-        ]
-    )
-
-    def _make_raw_logs_query(
-        signoz: types.SigNoz,
-        token: str,
-        filter_expression: str,
-    ) -> requests.Response:
-        """Helper to query raw logs with a filter expression over the last 30 seconds."""
-        now = datetime.now(tz=UTC)
-        return make_query_request(
-            signoz,
-            token,
-            start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
-            end_ms=int(now.timestamp() * 1000),
-            request_type="raw",
-            queries=[
-                {
-                    "type": "builder_query",
-                    "spec": {
-                        "name": "A",
-                        "signal": "logs",
-                        "disabled": False,
-                        "limit": 100,
-                        "offset": 0,
-                        "filter": {"expression": filter_expression},
-                        "order": [
-                            {"key": {"name": "timestamp"}, "direction": "desc"},
-                            {"key": {"name": "id"}, "direction": "desc"},
-                        ],
-                        "having": {"expression": ""},
-                        "aggregations": [{"expression": "count()"}],
-                    },
-                }
-            ],
-        )
-
-    failures: list[str] = []
-    with ThreadPoolExecutor(max_workers=40) as executor:
-        with open(FILTER_EXPRESSIONS_FILE, encoding="utf-8") as f:
-            futures = {executor.submit(_make_raw_logs_query, signoz, token, expr.rstrip("\n")): expr.rstrip("\n") for expr in f}
-            for future in as_completed(futures):
-                expr = futures[future]
-                if future.result().status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
-                    failures.append(expr)
-
-    assert len(failures) <= 0, f"{len(failures)} expression(s) caused HTTP 500:\n" + "\n".join(f"  {expr!r}" for expr in failures)

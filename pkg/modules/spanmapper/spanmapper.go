@@ -28,6 +28,10 @@ type Module interface {
 	UpdateMapper(ctx context.Context, orgID, groupID, id valuer.UUID, fieldContext spantypes.FieldContext, config *spantypes.SpanMapperConfig, enabled *bool, updatedBy string) error
 	DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error
 	TestMappers(ctx context.Context, orgID valuer.UUID, spans []spantypes.SpanMapperTestSpan, groups []*spantypes.SpanMapperGroupWithMappers) ([]spantypes.SpanMapperTestSpan, []string, error)
+
+	// ReconcileSystemGroups provisions or upgrades the shipped mapping groups
+	// for one org. It runs at startup for every org and again on org creation.
+	ReconcileSystemGroups(ctx context.Context, orgID valuer.UUID) error
 }
 
 // Handler defines the HTTP handler interface for mapping group and mapper endpoints.

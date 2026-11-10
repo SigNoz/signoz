@@ -53,19 +53,19 @@ describe('ListAlertRules — list rendering', () => {
 
 		expect(screen.getByTestId('alert-row-rule-1-state')).toHaveAttribute(
 			'data-color',
-			'cherry',
+			'danger',
 		);
 		expect(screen.getByTestId('alert-row-rule-2-state')).toHaveAttribute(
 			'data-color',
-			'amber',
+			'warning',
 		);
 		expect(screen.getByTestId('alert-row-rule-3-state')).toHaveAttribute(
 			'data-color',
-			'forest',
+			'success',
 		);
 		expect(screen.getByTestId('alert-row-rule-4-state')).toHaveAttribute(
 			'data-color',
-			'vanilla',
+			'secondary',
 		);
 	});
 
@@ -93,25 +93,26 @@ describe('ListAlertRules — list rendering', () => {
 		);
 		expect(screen.getByTestId('alert-row-rule-1-severity')).toHaveAttribute(
 			'data-color',
-			'cherry',
+			'danger',
 		);
 		expect(screen.getByTestId('alert-row-rule-2-severity')).toHaveAttribute(
 			'data-color',
-			'amber',
+			'warning',
 		);
 	});
 
-	it('renders header controls (search, columns, new alert)', async () => {
+	it('renders header controls (search, states, columns, new alert)', async () => {
 		renderListAlertRules();
 
 		await waitFor(() =>
 			expect(screen.getByTestId('alert-row-rule-1-name')).toBeInTheDocument(),
 		);
 
-		expect(screen.getByTestId('list-alerts-search-input')).toBeInTheDocument();
+		expect(screen.getByTestId('alert-rules-list-search')).toBeInTheDocument();
 		expect(
-			screen.getByPlaceholderText('Search by Alert Name, Severity and Labels'),
+			screen.getByTestId('alert-rules-list-search-submit'),
 		).toBeInTheDocument();
+		expect(screen.getByTestId('alert-rules-filter-states')).toBeInTheDocument();
 		expect(screen.getByTestId('alert-columns-button')).toBeInTheDocument();
 		expect(
 			screen.getByTestId('list-alerts-new-alert-button'),
