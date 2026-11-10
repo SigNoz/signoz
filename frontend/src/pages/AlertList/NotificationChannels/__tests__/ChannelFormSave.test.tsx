@@ -210,13 +210,21 @@ describe('ChannelForm save', () => {
 				screen.getByTestId('jira-deployment-radio-item-cloud'),
 			).toHaveAttribute('aria-checked', 'true');
 
-			await user.type(screen.getByTestId('channel-name-textbox-field'), 'jira alerts');
-			await user.type(screen.getByTestId('jira-email-textbox-field'), 'ops@acme.io');
+			await user.type(
+				screen.getByTestId('channel-name-textbox-field'),
+				'jira alerts',
+			);
+			await user.type(
+				screen.getByTestId('jira-email-textbox-field'),
+				'ops@acme.io',
+			);
 
 			await user.click(
 				screen.getByTestId('jira-deployment-radio-item-selfhosted'),
 			);
-			expect(screen.queryByTestId('jira-email-textbox-field')).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('jira-email-textbox-field'),
+			).not.toBeInTheDocument();
 			await user.type(
 				screen.getByTestId('jira-site-textbox-field'),
 				'https://jira.acme.com',
@@ -422,6 +430,11 @@ describe('ChannelForm save', () => {
 					expect(screen.getByTestId('slack-channel-textbox-field')).toBeDisabled(),
 				FIND,
 			);
+			// set on the input itself, not inherited from the fieldset, so the
+			// component renders its own disabled state
+			expect(screen.getByTestId('slack-channel-textbox-field')).toHaveAttribute(
+				'disabled',
+			);
 
 			const save = screen.getByTestId('save-channel-button');
 			await waitFor(
@@ -436,6 +449,51 @@ describe('ChannelForm save', () => {
 				'aria-disabled',
 				'true',
 			);
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
+		'sends the saved config as a test from a read-only form',
+		async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				setupAuthzGrantByPrefix('read', 'list', 'create'),
+				rest.post(
+					'http://localhost/api/v2/notification_channels/test',
+					async (req, res, ctx) => {
+						body = await req.json();
+						return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			render(<ChannelForm channelId="3" onDone={jest.fn()} />);
+
+			await waitFor(
+				() =>
+					expect(screen.getByTestId('slack-channel-textbox-field')).toBeDisabled(),
+				FIND,
+			);
+			const testButton = screen.getByTestId('test-channel-button');
+			await waitFor(
+				() => expect(testButton).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.click(testButton);
+
+			await waitFor(() => expect(body).toBeDefined(), FIND);
+			expect(body).toMatchObject({
+				config: {
+					kind: 'slack',
+					spec: {
+						apiUrl: 'https://hooks.slack.com/services/dummy',
+						channel: '#dummy_channel',
+					},
+				},
+			});
 		},
 		TEST_TIMEOUT,
 	);

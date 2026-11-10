@@ -101,8 +101,8 @@ function FormAlertChannels({
 	return (
 		<FormProvider {...form}>
 			<form className={styles.form}>
-				{/* the @signozhq inputs take no disabled context and the settings
-				    still render antd textareas; the fieldset turns off both. */}
+				{/* useForm's `disabled` reaches registered fields; the fieldset still
+				    turns off the rest, such as the antd textareas. */}
 				<fieldset className={styles.fields} disabled={readOnly}>
 					<div className={styles.cards}>
 						<FormCard title={t('section_general')}>
@@ -137,6 +137,8 @@ function FormAlertChannels({
 											testId="field-send-resolved-checkbox"
 											value={!!field.value}
 											onChange={field.onChange}
+											disabled={field.disabled}
+											disabledTooltip={undefined}
 										/>
 									)}
 								/>

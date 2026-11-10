@@ -38,7 +38,7 @@ function ChannelFormBody({
 		onTest,
 		isSaving,
 		isTesting,
-	} = useChannelFormState({ draft, target, onDone });
+	} = useChannelFormState({ draft, target, onDone, readOnly });
 
 	const onDiscard = (): void => {
 		if (!isDirty) {
