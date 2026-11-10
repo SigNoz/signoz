@@ -57,6 +57,20 @@
 				min-width: 70px;
 			}
 
+			.sync-tag {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				min-height: 30px;
+				padding: 0 9px;
+				border-radius: var(--radius-1);
+				border: 1px solid
+					color-mix(in srgb, var(--primary-background) 20%, transparent);
+				background: var(--primary-background);
+				color: var(--primary-foreground);
+				text-transform: uppercase;
+			}
+
 			// Query selector themed as the primary sync chip; the Combobox has no
 			// primary color variant.
 			.select-box {

@@ -5,7 +5,6 @@ import {
 	RefreshCw,
 	Settings2 as SettingsIcon,
 } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui/badge';
 import { Combobox, type ComboboxItemType } from '@signozhq/ui/combobox';
 import { Skeleton } from 'antd';
 import { Button } from '@signozhq/ui/button';
@@ -220,9 +219,18 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					<Tooltip
 						title={`Filter currently in sync with query ${displayedQueryName}`}
 					>
-						<Badge variant="solid" color="primary" textTransform="uppercase">
-							{displayedQueryName}
-						</Badge>
+						<div className="sync-tag">
+							<Typography
+								variant="code"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="visible"
+							>
+								{displayedQueryName}
+							</Typography>
+						</div>
 					</Tooltip>
 				)
 			)}
@@ -309,7 +317,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						textPlacement="right"
 						value={showIP ?? true}
 						onChange={(checked): void => {
-							logEvent('API Monitoring: Show IP addresses clicked', {
+							void logEvent('API Monitoring: Show IP addresses clicked', {
 								showIP: checked,
 							});
 							setParams({ showIP: checked });
