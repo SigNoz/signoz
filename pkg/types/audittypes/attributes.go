@@ -125,6 +125,21 @@ func (attributes TargetAttributes) Put(orgID valuer.UUID, dest pcommon.Map) {
 	}
 }
 
+// Audit attributes: Relation (attach/detach).
+// One side of a relation: the resource the event is recorded from, placed on
+// the Resource, and its counterpart, placed on the log record.
+type RelatedResourceAttributes struct {
+	Resource ResourceAttributes
+	Target   TargetAttributes
+}
+
+func NewRelatedResourceAttributes(resource coretypes.Resource, resourceID string, targetResource coretypes.Resource, targetResourceID string) RelatedResourceAttributes {
+	return RelatedResourceAttributes{
+		Resource: NewResourceAttributes(resource, resourceID),
+		Target:   NewTargetAttributes(targetResource, targetResourceID),
+	}
+}
+
 // Audit attributes — Error (When outcome is failure)
 // Error messages are intentionally excluded to avoid leaking sensitive or
 // PII data into audit logs. The error type is sufficient for filtering and

@@ -132,16 +132,26 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		case coretypes.ResolvedResourceWithTargetResource:
 			for _, sourceID := range typed.SourceIDs() {
 				for _, targetID := range typed.TargetIDs() {
-					// A relation is recorded once from each side.
-					sides := []struct {
-						resource audittypes.ResourceAttributes
-						target   audittypes.TargetAttributes
-					}{
-						{audittypes.NewResourceAttributes(typed.SourceResource(), sourceID), audittypes.NewTargetAttributes(typed.TargetResource(), targetID)},
-						{audittypes.NewResourceAttributes(typed.TargetResource(), targetID), audittypes.NewTargetAttributes(typed.SourceResource(), sourceID)},
+					attributesList := []audittypes.RelatedResourceAttributes{
+						audittypes.NewRelatedResourceAttributes(
+							typed.SourceResource(),
+							sourceID,
+							typed.TargetResource(),
+							targetID,
+						),
 					}
 
-					for _, side := range sides {
+					// Sibling peers are symmetric, so mirror the event from the target's side too.
+					if !typed.IsParentChild() {
+						attributesList = append(attributesList, audittypes.NewRelatedResourceAttributes(
+							typed.TargetResource(),
+							targetID,
+							typed.SourceResource(),
+							sourceID,
+						))
+					}
+
+					for _, attributes := range attributesList {
 						middleware.auditor.Audit(req.Context(), audittypes.NewAuditEventFromHTTPRequest(
 							req,
 							routeTemplate,
@@ -151,8 +161,8 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 							verb,
 							category,
 							claims,
-							side.resource,
-							side.target,
+							attributes.Resource,
+							attributes.Target,
 							errorType,
 						))
 					}
