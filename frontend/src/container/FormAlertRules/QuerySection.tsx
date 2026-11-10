@@ -14,10 +14,11 @@ import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryB
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isEmpty } from 'lodash-es';
-import { Atom, Terminal } from '@signozhq/icons';
+import { Atom, Brain, Terminal } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
+import { DataSource } from 'types/common/queryBuilder';
 
 import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
@@ -86,6 +87,18 @@ function QuerySection({
 		/>
 	);
 
+	const renderAIQueryUI = (): JSX.Element => (
+		<QueryBuilderV2
+			panelType={panelType}
+			config={{
+				queryVariant: 'static',
+				initialDataSource: DataSource.TRACES,
+			}}
+			showTraceOperator={false}
+			version={alertDef.version || 'v3'}
+		/>
+	);
+
 	const anomalyDisabledTooltip = (url: string): JSX.Element => (
 		<span>
 			Coming soon for anomaly detection.{' '}
@@ -134,6 +147,20 @@ function QuerySection({
 			),
 			key: EQueryType.CLICKHOUSE,
 			disabled: isAnomalyDetection,
+		},
+	];
+
+	const aiTabs = [
+		{
+			label: (
+				<Tooltip title="AI Query Builder">
+					<Button className="nav-btns" data-testid="ai-query-builder-tab">
+						<Brain size={14} />
+						<Typography.Text>AI Query Builder</Typography.Text>
+					</Button>
+				</Tooltip>
+			),
+			key: EQueryType.AI_QUERY_BUILDER,
 		},
 	];
 
@@ -223,6 +250,7 @@ function QuerySection({
 			case AlertTypes.TRACES_BASED_ALERT:
 			case AlertTypes.LOGS_BASED_ALERT:
 			case AlertTypes.EXCEPTIONS_BASED_ALERT:
+			case AlertTypes.AI_TRACES_BASED_ALERT:
 				return (
 					<div className="alert-tabs">
 						<Tabs
@@ -248,7 +276,7 @@ function QuerySection({
 									/>
 								</span>
 							}
-							items={tabs}
+							items={typ === AlertTypes.AI_TRACES_BASED_ALERT ? aiTabs : tabs}
 						/>
 					</div>
 				);
@@ -286,6 +314,9 @@ function QuerySection({
 		}
 		if (c === EQueryType.QUERY_BUILDER) {
 			return renderMetricUI();
+		}
+		if (c === EQueryType.AI_QUERY_BUILDER) {
+			return renderAIQueryUI();
 		}
 		return null;
 	};
