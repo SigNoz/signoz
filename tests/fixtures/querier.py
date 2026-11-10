@@ -730,6 +730,44 @@ def build_scalar_query(
     return {"type": "builder_query", "spec": spec}
 
 
+def build_heatmap_query(
+    name: str,
+    signal: str,
+    expression: str,
+    *,
+    source: str | None = None,
+    group_by: list[dict] | None = None,
+    order: list[dict] | None = None,
+    filter_expression: str | None = None,
+    bucket_options: dict | None = None,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+) -> dict:
+    """Omitting bucket_options leaves the server's default log axis."""
+    spec: dict[str, Any] = {
+        "name": name,
+        "signal": signal,
+        "stepInterval": step_interval,
+        "aggregations": [{"expression": expression}],
+    }
+
+    if source:
+        spec["source"] = source
+
+    if group_by:
+        spec["groupBy"] = group_by
+
+    if order:
+        spec["order"] = order
+
+    if filter_expression:
+        spec["filter"] = {"expression": filter_expression}
+
+    if bucket_options is not None:
+        spec["bucketOptions"] = bucket_options
+
+    return {"type": "builder_query", "spec": spec}
+
+
 def build_traces_scalar_query(
     aggregations: list[dict],
     *,

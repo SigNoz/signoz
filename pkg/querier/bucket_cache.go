@@ -924,13 +924,15 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, q qbtypes
 // as empty rows that the same request never has when it bypasses the cache.
 //
 // PromQL and ClickHouse queries name their own buckets, and a histogram's are
-// its `le` labels, so only a gauge, sum or summary axis is cut.
+// its `le` labels, so only a gauge, sum or summary axis and an event axis are cut.
 func (bc *bucketCache) trimHeatmapAxisToTheWindow(q qbtypes.Query, tsData *qbtypes.TimeSeriesData) {
-	metricQuery, isMetricQuery := q.(*builderQuery[qbtypes.MetricAggregation])
-	if !isMetricQuery {
-		return
-	}
-	if metricQuery.spec.Aggregations[0].Type == metrictypes.HistogramType {
+	switch query := q.(type) {
+	case *builderQuery[qbtypes.MetricAggregation]:
+		if query.spec.Aggregations[0].Type == metrictypes.HistogramType {
+			return
+		}
+	case *builderQuery[qbtypes.LogAggregation], *builderQuery[qbtypes.TraceAggregation]:
+	default:
 		return
 	}
 
