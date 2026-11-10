@@ -90,6 +90,13 @@ func (q *builderQuery[T]) Fingerprint() string {
 		return ""
 	}
 
+	// A limit ranks the groups over the statement window, so the pieces of a
+	// window rank differently from the window. Such a query is never served
+	// from the cache.
+	if (q.spec.Signal == telemetrytypes.SignalLogs || q.spec.Signal == telemetrytypes.SignalTraces) && len(q.spec.GroupBy) > 0 && q.spec.Limit > 0 {
+		return ""
+	}
+
 	// Create a deterministic fingerprint for builder queries
 	// This needs to include all fields that affect the query results
 	parts := []string{q.queryType.StringValue()}

@@ -506,6 +506,18 @@ func (q *QueryBuilderQuery[T]) validateOrderBy(cfg validationConfig) error {
 		return q.validateOrderByForAggregation()
 	}
 
+	// a raw order key resolves like a select field, so only an empty one is
+	// invalid before resolution
+	for i, order := range q.Order {
+		if order.Key.Name == "" {
+			orderID := fmt.Sprintf("order by clause #%d", i+1)
+			if q.Name != "" {
+				orderID = fmt.Sprintf("order by clause #%d in query '%s'", i+1, q.Name)
+			}
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid empty key name for %s", orderID)
+		}
+	}
+
 	return nil
 }
 
@@ -593,19 +605,10 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 		return err
 	}
 
-	// Validate request type
-	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap, RequestTypeDistribution:
-		opts = append(opts, GetValidationOptions(r.RequestType)...)
-	default:
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"invalid request type: %s",
-			r.RequestType,
-		).WithAdditional(
-			"Valid request types are: raw, timeseries, scalar, heatmap, distribution",
-		)
+	if err := r.validateRequestType(); err != nil {
+		return err
 	}
+	opts = append(opts, GetValidationOptions(r.RequestType)...)
 
 	if err := r.validateBucketCounting(); err != nil {
 		return err
@@ -646,14 +649,10 @@ func (r *QueryRangeRequest) ValidateRequestScope() ([]ValidationOption, error) {
 		return nil, err
 	}
 
-	var opts []ValidationOption
-	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap, RequestTypeDistribution:
-		opts = GetValidationOptions(r.RequestType)
-	default:
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request type: %s", r.RequestType).
-			WithAdditional("Valid request types are: raw, timeseries, scalar, heatmap, distribution")
+	if err := r.validateRequestType(); err != nil {
+		return nil, err
 	}
+	opts := GetValidationOptions(r.RequestType)
 
 	if err := r.validateBucketCounting(); err != nil {
 		return nil, err
@@ -708,6 +707,20 @@ func (p *QueryRangePreviewParams) Validate() (QueryRangePreviewOptions, error) {
 // to ValidateRequestScope, letting the dry-run report errors independently.
 func (e QueryEnvelope) Validate(opts ...ValidationOption) error {
 	return validateQueryEnvelope(e, opts...)
+}
+
+// Enum is the one list of request types a query can use, so the spec and the
+// suggestions agree with what is accepted.
+func (r *QueryRangeRequest) validateRequestType() error {
+	if slices.Contains(RequestType{}.Enum(), any(r.RequestType)) {
+		return nil
+	}
+	if r.RequestType == RequestTypeUnknown {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "requestType is required").
+			WithSuggestions(errors.NewValidReferences(errors.NounRequestTypes, RequestType{}.Enum()...))
+	}
+	return errors.NewInvalidInputf(errors.CodeInvalidInput, "request type %q is not supported", r.RequestType.StringValue()).
+		WithSuggestions(errors.NewValidReferences(errors.NounRequestTypes, RequestType{}.Enum()...))
 }
 
 func (r *QueryRangeRequest) validateTimeRange() error {

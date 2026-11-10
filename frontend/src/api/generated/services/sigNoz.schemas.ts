@@ -7079,7 +7079,7 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	 */
 	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
-	 * @description Accepted but currently ignored; the computed values are returned unfiltered.
+	 * @description A filter on the formula values, referencing the formula by its name or as __result, for example F1 > 0. A time series keeps only the points that match and drops a series with none left; a scalar result keeps only the rows that match.
 	 */
 	having?: Querybuildertypesv5HavingDTO;
 	/**
