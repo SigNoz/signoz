@@ -16,15 +16,15 @@ import {
 	type BuildersByVariant,
 	type OrderByPayload,
 	type Query,
-	QueryMode,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
 import {
 	getQueryPanelDefinition,
 	isStaticPanelKind,
-	resolveQueryMode,
+	resolveQueryType,
 } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
-import { getQueryModeSignals } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
+import { getQueryTypeSignals } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
 import {
 	getBuilderVariant,
 	getQueryMode,
@@ -119,9 +119,9 @@ export function usePanelKindAndQueryModeSwitch({
 
 	const onChangeQueryMode = useQueryModeChange({
 		panelType,
-		supportedQueryModesKindMap:
+		supportedQueryTypesKindMap:
 			getQueryPanelDefinition(spec.plugin.kind as PanelKind)
-				?.supportedQueryModesKindMap ?? {},
+				?.supportedQueryTypesKindMap ?? {},
 		parkedBuilders,
 	});
 
@@ -149,12 +149,12 @@ export function usePanelKindAndQueryModeSwitch({
 			});
 
 			const newPanelType = toPanelType(newKind);
-			const targetMode = resolveQueryMode(newKind, getQueryMode(query));
+			const targetMode = resolveQueryType(newKind, getQueryMode(query));
 			const targetVariant = toBuilderVariant(targetMode);
 			// An AI query is a builder query carrying the tag, so it rides on `builder`.
 			const targetQueryType =
-				targetMode === QueryMode.AI_QUERY_BUILDER
-					? QueryMode.QUERY_BUILDER
+				targetMode === EQueryType.AI_QUERY_BUILDER
+					? EQueryType.QUERY_BUILDER
 					: targetMode;
 
 			// Only `plugin` needs a cast: it's a discriminated union over `kind`, and a
@@ -189,14 +189,14 @@ export function usePanelKindAndQueryModeSwitch({
 			};
 			// Tab unused on this kind: AI gets a fresh seed, Query Builder reuses `source` untagged.
 			const seedTargetTab = (source: Query): Query =>
-				targetMode === QueryMode.AI_QUERY_BUILDER
+				targetMode === EQueryType.AI_QUERY_BUILDER
 					? {
 							...source,
 							builder: seedBuilderForMode({
 								mode: targetMode,
-								defaultSignal: getQueryModeSignals(
-									getQueryPanelDefinition(newKind)?.supportedQueryModesKindMap,
-									QueryMode.QUERY_BUILDER,
+								defaultSignal: getQueryTypeSignals(
+									getQueryPanelDefinition(newKind)?.supportedQueryTypesKindMap,
+									EQueryType.QUERY_BUILDER,
 								)[0],
 								panelType: newPanelType,
 								updateAllQueriesOperators,

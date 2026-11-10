@@ -69,7 +69,7 @@ function BuilderHost({ panelKind }: { panelKind: PanelKind }): JSX.Element {
 	const parkedBuilders = useRef<BuildersByVariant>({});
 	const onChangeQueryMode = useQueryModeChange({
 		panelType: toPanelType(panelKind),
-		supportedQueryModesKindMap: panelDefinition.supportedQueryModesKindMap,
+		supportedQueryTypesKindMap: panelDefinition.supportedQueryTypesKindMap,
 		parkedBuilders,
 	});
 	return (
