@@ -339,8 +339,9 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end)
 
 	var (
-		cteFragments []string
-		cteArgs      [][]any
+		cteFragments   []string
+		cteArgs        [][]any
+		columnWarnings []string
 	)
 
 	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
@@ -379,10 +380,11 @@ func (b *logQueryStatementBuilder) buildListQuery(
 			}
 
 			// get column expression for the field - use array index directly to avoid pointer to loop variable
-			colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&query.SelectFields[index]), telemetrytypes.FieldDataTypeUnspecified, keys)
+			colExpr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&query.SelectFields[index]), telemetrytypes.FieldDataTypeUnspecified, keys)
 			if err != nil {
 				return nil, err
 			}
+			columnWarnings = append(columnWarnings, keyWarnings...)
 			sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", colExpr, selectColumnAlias(index, query.SelectFields[index].Name))))
 		}
 	}
@@ -398,10 +400,11 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	// Add order by
 	for _, orderBy := range query.Order {
 
-		colExpr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&orderBy.Key.TelemetryFieldKey), telemetrytypes.FieldDataTypeUnspecified, keys)
+		colExpr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&orderBy.Key.TelemetryFieldKey), telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 		sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(colExpr), orderBy.Direction.StringValue()))
 	}
 
@@ -424,7 +427,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       preparedWhereClause.Warnings,
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 		CostGuard:      b.costGuardFor(ctx, orgID, preparedWhereClause.RequiresCostGuard),
 	}
@@ -485,8 +488,9 @@ func (b *logQueryStatementBuilder) buildTimeSeriesOrHeatmapQuery(
 ) (*qbtypes.Statement, error) {
 
 	var (
-		cteFragments []string
-		cteArgs      [][]any
+		cteFragments   []string
+		cteArgs        [][]any
+		columnWarnings []string
 	)
 
 	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
@@ -510,17 +514,18 @@ func (b *logQueryStatementBuilder) buildTimeSeriesOrHeatmapQuery(
 		if !info.BodyJSONOn && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
 		}
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 
 		fieldAlias := groupByColumnAlias(i, gb.Name)
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
 		fieldNames = append(fieldNames, sqlbuilder.Escape(fieldAlias))
 	}
 
-	var bucketAliases, bucketWarnings []string
+	var bucketAliases []string
 	if heatmapField != nil {
 		valueFragment, aliases, warnings, err := querybuilder.HeatmapBucketColumns(
 			ctx, info, b.storage, sb, columnKey(heatmapField), query.BucketOptions, keys,
@@ -529,13 +534,14 @@ func (b *logQueryStatementBuilder) buildTimeSeriesOrHeatmapQuery(
 			return nil, err
 		}
 		cteFragments = append(cteFragments, valueFragment)
-		bucketAliases, bucketWarnings = aliases, warnings
+		bucketAliases = aliases
+		columnWarnings = append(columnWarnings, warnings...)
 	}
 
 	// Aggregations
 	allAggChArgs := make([]any, 0)
 	for i, agg := range query.Aggregations {
-		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
+		rewritten, chArgs, aggWarnings, err := b.aggExprRewriter.Rewrite(
 			ctx, orgID, start, end, agg.Expression,
 			uint64(query.StepInterval.Seconds()),
 			keys,
@@ -543,6 +549,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesOrHeatmapQuery(
 		if err != nil {
 			return nil, err
 		}
+		columnWarnings = append(columnWarnings, aggWarnings...)
 		allAggChArgs = append(allAggChArgs, chArgs...)
 		sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, i))
 	}
@@ -647,7 +654,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesOrHeatmapQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       append(preparedWhereClause.Warnings, bucketWarnings...),
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 		CostGuard:      b.costGuardFor(ctx, orgID, preparedWhereClause.RequiresCostGuard),
 	}
@@ -668,8 +675,9 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 ) (*qbtypes.Statement, error) {
 
 	var (
-		cteFragments []string
-		cteArgs      [][]any
+		cteFragments   []string
+		cteArgs        [][]any
+		columnWarnings []string
 	)
 
 	frag, args, skipResourceFilter, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables)
@@ -689,10 +697,11 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		if !info.BodyJSONOn && (strings.Contains(gb.Name, telemetrytypes.ArraySep) || strings.Contains(gb.Name, telemetrytypes.ArrayAnyIndex)) {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", gb.Name)
 		}
-		expr, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, columnKey(&gb.TelemetryFieldKey), telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 
 		fieldAlias := groupByColumnAlias(i, gb.Name)
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, fieldAlias)))
@@ -706,7 +715,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	if len(query.Aggregations) > 0 {
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
-			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
+			rewritten, chArgs, aggWarnings, err := b.aggExprRewriter.Rewrite(
 				ctx, orgID, start, end, aggExpr.Expression,
 				rateInterval,
 				keys,
@@ -714,6 +723,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 			if err != nil {
 				return nil, err
 			}
+			columnWarnings = append(columnWarnings, aggWarnings...)
 			allAggChArgs = append(allAggChArgs, chArgs...)
 			sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, idx))
 		}
@@ -779,7 +789,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       preparedWhereClause.Warnings,
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 		CostGuard:      b.costGuardFor(ctx, orgID, preparedWhereClause.RequiresCostGuard),
 	}
