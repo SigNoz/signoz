@@ -180,7 +180,7 @@ export const ColumnPicker: Story = {
 	play: openColumnPicker,
 };
 
-/** The State dropdown, open with one state picked. */
+/** The State dropdown, open with a state picked. */
 export const StateFilterOpen: Story = {
 	play: openStatesFilter,
 };

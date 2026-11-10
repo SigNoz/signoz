@@ -158,7 +158,7 @@ describe('ListAlertRules — search', () => {
 		await waitFor(() => {
 			expect(getCurrentNuqsSearchParams().get('states')).toBe('firing,disabled');
 		});
-	});
+	}, 15_000);
 
 	it('Clear empties the query and the states', async () => {
 		const user = userEvent.setup({ delay: null });

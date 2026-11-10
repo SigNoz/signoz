@@ -124,8 +124,10 @@ export const openStatesFilter = async ({
 	const option = (await screen.findAllByText('Firing')).find((node) =>
 		node.closest('.ant-select-dropdown'),
 	);
-	await userEvent.click(option ?? filter);
-	await screen.findByRole('checkbox', { checked: true });
+	if (screen.queryAllByRole('checkbox', { checked: true }).length === 0) {
+		await userEvent.click(option ?? filter);
+	}
+	await screen.findAllByRole('checkbox', { checked: true });
 };
 
 export const toggleAlert = async ({
