@@ -2,6 +2,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { withCanvas } from '../decorators/withCanvas';
+import {
+	findToastAction,
+	findToastText,
+	getToastAction,
+	getToastText,
+} from '../play/toastText';
 import FeedbackFixture from './FeedbackFixture';
 
 const meta = {
@@ -38,16 +44,14 @@ export const ActionableErrorToast: Story = {
 		await userEvent.click(
 			within(canvasElement).getByTestId('show-feedback-toast'),
 		);
-		await screen.findByText('Failed to save the notification channel');
+		await findToastText('Failed to save the notification channel');
 		await waitFor(() =>
 			expect(
-				screen.getByText('Failed to save the notification channel'),
+				getToastText('Failed to save the notification channel'),
 			).toBeVisible(),
 		);
-		await screen.findByRole('button', { name: 'Retry' });
-		await waitFor(() =>
-			expect(screen.getByRole('button', { name: 'Retry' })).toBeVisible(),
-		);
+		await findToastAction('Retry');
+		await waitFor(() => expect(getToastAction('Retry')).toBeVisible());
 	},
 };
 
@@ -59,7 +63,7 @@ export const LongMultilineToast: Story = {
 			within(canvasElement).getByTestId('show-feedback-toast'),
 		);
 		await expect(
-			await screen.findByText(/could not apply the retention policy/i),
+			await findToastText(/could not apply the retention policy/i),
 		).toBeVisible();
 	},
 };
@@ -84,10 +88,8 @@ export const PromiseErrorToast: Story = {
 		await userEvent.click(
 			within(canvasElement).getByTestId('show-feedback-toast'),
 		);
-		await expect(
-			await screen.findByText('Could not clone the panel'),
-		).toBeVisible();
-		await screen.findByRole('button', { name: 'Dismiss' });
+		await expect(await findToastText('Could not clone the panel')).toBeVisible();
+		await findToastAction('Dismiss');
 	},
 };
 
@@ -121,10 +123,10 @@ export const DangerWithDescription: Story = {
 			within(canvasElement).getByTestId('show-feedback-toast'),
 		);
 		await expect(
-			await screen.findByText('Failed to update account settings'),
+			await findToastText('Failed to update account settings'),
 		).toBeVisible();
-		await screen.findByText(/does not have permission/i);
-		await screen.findByRole('button', { name: 'Dismiss' });
+		await findToastText(/does not have permission/i);
+		await findToastAction('Dismiss');
 	},
 };
 
@@ -171,7 +173,7 @@ export const ToastOverConfirmation: Story = {
 			await screen.findByRole('button', { name: 'Show error notification' }),
 		);
 		await expect(
-			await screen.findByText(/could not apply the retention policy/i),
+			await findToastText(/could not apply the retention policy/i),
 		).toBeVisible();
 	},
 };

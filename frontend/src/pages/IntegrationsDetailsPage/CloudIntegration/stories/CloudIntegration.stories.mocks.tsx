@@ -13,6 +13,7 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { getToastText } from '@/storybook/play/toastText';
 import type { MockResolver } from '@/storybook/msw/types';
 
 import {
@@ -290,7 +291,7 @@ export const cloudIntegrationMocks = defineStoryMocks({
 export const untilLoaded = { timeout: 20_000 };
 
 export const expectToast = async (text: RegExp): Promise<void> => {
-	await waitFor(() => expect(screen.getByText(text)).toBeVisible(), {
+	await waitFor(() => expect(getToastText(text)).toBeVisible(), {
 		timeout: 10_000,
 	});
 };

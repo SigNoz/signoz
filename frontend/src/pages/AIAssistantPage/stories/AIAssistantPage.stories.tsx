@@ -4,6 +4,7 @@ import { renderAtRoute } from '@/storybook/renderAtRoute';
 import { screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
+import { findToastText } from '@/storybook/play/toastText';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import AIAssistantPage from '../AIAssistantPage';
@@ -230,7 +231,7 @@ export const VoiceInputUnavailableToast: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await startVoiceInput(canvasElement);
 		failVoiceInput('network');
-		await screen.findByText(/voice input unavailable in this browser/i);
+		await findToastText(/voice input unavailable in this browser/i);
 	},
 };
 
@@ -239,7 +240,7 @@ export const MicrophoneDeniedToast: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await startVoiceInput(canvasElement);
 		failVoiceInput('not-allowed');
-		await screen.findByText(/microphone access denied/i);
+		await findToastText(/microphone access denied/i);
 	},
 };
 

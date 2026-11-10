@@ -18,6 +18,7 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { findToastText } from '@/storybook/play/toastText';
 import {
 	fieldKeysResponse,
 	fieldValuesResponse,
@@ -476,7 +477,7 @@ export const clickSectionAction = async (
 };
 
 export const expectToast = (text: string | RegExp): Promise<HTMLElement> =>
-	screen.findByText(text, undefined, PAGE_LOAD);
+	findToastText(text, PAGE_LOAD);
 
 export const openJsonEditor = async (
 	canvasElement: HTMLElement,
