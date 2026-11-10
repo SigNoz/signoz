@@ -86,6 +86,11 @@ export const onboardingV2Mocks = defineStoryMocks({
 			'http://localhost/api/v1/roles',
 			response.json(() => rolesListResponse(0)),
 		),
+		// Add Credit Card creates the subscription; an empty redirect keeps the
+		// story from opening a billing tab.
+		rest.post('http://localhost/api/v1/subscriptions', (_req, res, ctx) =>
+			res(ctx.json({ status: 'success', data: { redirectURL: '' } })),
+		),
 		rest.post('http://localhost/api/v2/users', (_req, res, ctx) => {
 			if (values.invite === 'loading') {
 				return res(ctx.delay('infinite'));

@@ -100,6 +100,10 @@ export const workspaceMocks = defineStoryMocks({
 					)
 				: res(ctx.status(204));
 		}),
+
+		rest.post('http://localhost/api/v1/subscriptions', (_req, res, ctx) =>
+			res(ctx.status(200), ctx.json({ data: { redirectURL: '' } })),
+		),
 	],
 	config: () => ({ route: ROUTES.SETTINGS }),
 });
