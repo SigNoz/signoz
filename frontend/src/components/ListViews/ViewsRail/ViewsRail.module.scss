@@ -187,3 +187,9 @@
 	flex-wrap: wrap;
 	gap: 6px;
 }
+
+.saveForm {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+}

@@ -16,7 +16,7 @@ import {
 	openQuerySuggestions,
 	openRenameViewPopover,
 	openRowActions,
-	openSaveViewPopover,
+	openSaveViewDialog,
 	openStatesFilter,
 	toggleAlert,
 } from './__story_mockdata__/alertRules.play';
@@ -120,9 +120,9 @@ export const RailCollapsed: Story = {
 	args: { railCollapsed: true },
 };
 
-/** The popover that names the current filters as a new saved view. */
-export const SaveViewPopover: Story = {
-	play: openSaveViewPopover,
+/** The dialog that names the current filters as a new saved view. */
+export const SaveViewDialog: Story = {
+	play: openSaveViewDialog,
 };
 
 /** A saved view's rename popover, opened from its row. */

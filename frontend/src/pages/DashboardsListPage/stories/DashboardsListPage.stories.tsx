@@ -22,7 +22,7 @@ import {
 	openEditTagsDialog,
 	openFirstRowActions,
 	openRenameDialog,
-	openSaveViewPopover,
+	openSaveViewDialog,
 	openTemplateTab,
 	pinDashboard,
 	renameDashboard,
@@ -138,9 +138,9 @@ export const EditTagsDialog: Story = {
 	play: openEditTagsDialog,
 };
 
-/** The popover that names the current filters as a new saved view. */
-export const SaveViewPopover: Story = {
-	play: openSaveViewPopover,
+/** The dialog that names the current filters as a new saved view. */
+export const SaveViewDialog: Story = {
+	play: openSaveViewDialog,
 };
 
 /** The renamed toast, raised once the PATCH answers. */

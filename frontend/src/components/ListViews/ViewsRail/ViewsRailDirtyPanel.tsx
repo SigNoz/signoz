@@ -1,23 +1,21 @@
 import { Button } from '@signozhq/ui/button';
 import { Plus } from '@signozhq/icons';
 import cx from 'classnames';
-import ViewNamePopover from 'components/ViewNamePopover/ViewNamePopover';
 
 import styles from './ViewsRail.module.scss';
 
 interface Props {
 	isCustomActive: boolean;
 	testIdPrefix: string;
-	saveTestIdPrefix: string;
 	onSaveChanges: () => void;
-	onSaveAs: (name: string) => void;
+	/** Opens the save-as dialog. */
+	onSaveAs: () => void;
 	onReset: () => void;
 }
 
 function ViewsRailDirtyPanel({
 	isCustomActive,
 	testIdPrefix,
-	saveTestIdPrefix,
 	onSaveChanges,
 	onSaveAs,
 	onReset,
@@ -36,24 +34,15 @@ function ViewsRailDirtyPanel({
 					>
 						Save
 					</Button>
-					<ViewNamePopover
-						onSubmit={onSaveAs}
-						title="Save as view"
-						confirmLabel="Save view"
-						testIdPrefix={saveTestIdPrefix}
-						tooltip="Save current filters as a view"
-						trigger={(open): JSX.Element => (
-							<Button
-								variant="outlined"
-								color="secondary"
-								size="sm"
-								onClick={(e): void => open(e.currentTarget)}
-								testId={`${testIdPrefix}-view-save-as`}
-							>
-								Save as…
-							</Button>
-						)}
-					/>
+					<Button
+						variant="outlined"
+						color="secondary"
+						size="sm"
+						onClick={onSaveAs}
+						testId={`${testIdPrefix}-view-save-as`}
+					>
+						Save as…
+					</Button>
 					<Button
 						variant="ghost"
 						color="secondary"
@@ -72,25 +61,16 @@ function ViewsRailDirtyPanel({
 		<div className={cx(styles.dirtyPanel, styles.dirtyPanelDefault)}>
 			<div className={styles.dirtyTitle}>Filters active</div>
 			<div className={styles.dirtyActions}>
-				<ViewNamePopover
-					onSubmit={onSaveAs}
-					title="Save as view"
-					confirmLabel="Save view"
-					testIdPrefix={saveTestIdPrefix}
-					tooltip="Save current filters as a view"
-					trigger={(open): JSX.Element => (
-						<Button
-							variant="solid"
-							color="primary"
-							size="sm"
-							prefix={<Plus size={12} />}
-							onClick={(e): void => open(e.currentTarget)}
-							testId={`${testIdPrefix}-view-save-as-new`}
-						>
-							Save as new view
-						</Button>
-					)}
-				/>
+				<Button
+					variant="solid"
+					color="primary"
+					size="sm"
+					prefix={<Plus size={12} />}
+					onClick={onSaveAs}
+					testId={`${testIdPrefix}-view-save-as-new`}
+				>
+					Save as new view
+				</Button>
 				<Button
 					variant="ghost"
 					color="secondary"

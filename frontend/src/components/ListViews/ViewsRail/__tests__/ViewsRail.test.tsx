@@ -1,5 +1,5 @@
 import { Bookmark, Pin } from '@signozhq/icons';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import type { BuiltinListView } from '../../types';
 import ViewsRail from '../ViewsRail';
@@ -135,6 +135,51 @@ describe('ViewsRail', () => {
 		expect(
 			screen.queryByTestId(`${PREFIX}-view-save-changes`),
 		).not.toBeInTheDocument();
+	});
+
+	it('saves the current filters as a named view from the dialog', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const onViewSaved = jest.fn();
+		const props = renderRail({ onViewSaved });
+
+		await user.click(screen.getByTestId(`${PREFIX}-view-save-trigger`));
+		await expect(
+			screen.findByTestId('save-view-dialog'),
+		).resolves.toHaveAttribute('aria-modal', 'true');
+		expect(screen.getByTestId('save-view-confirm')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+
+		await user.type(
+			screen.getByTestId('save-view-name-field'),
+			'  Prod  {enter}',
+		);
+
+		expect(onViewSaved).toHaveBeenCalledWith('new');
+		expect(props.onSave).toHaveBeenCalledWith('Prod');
+		await waitFor(() =>
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+		);
+	});
+
+	it('opens the save dialog empty again after a cancel', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const props = renderRail({ isModified: true });
+
+		await user.click(screen.getByTestId(`${PREFIX}-view-save-as-new`));
+		await user.type(await screen.findByTestId('save-view-name-field'), 'Draft');
+		await user.click(screen.getByTestId('save-view-cancel'));
+		await waitFor(() =>
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+		);
+
+		await user.click(screen.getByTestId(`${PREFIX}-view-save-trigger`));
+
+		await expect(
+			screen.findByTestId('save-view-name-field'),
+		).resolves.toHaveValue('');
+		expect(props.onSave).not.toHaveBeenCalled();
 	});
 
 	it('wraps its body in the guard it is given', () => {

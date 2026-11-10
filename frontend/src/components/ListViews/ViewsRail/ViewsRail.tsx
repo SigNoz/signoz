@@ -6,14 +6,15 @@ import {
 } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { Bookmark, Plus, Search } from '@signozhq/icons';
 import cx from 'classnames';
 
 import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
-import ViewNamePopover from 'components/ViewNamePopover/ViewNamePopover';
 
 import type { BuiltinListView, ViewSaveMode } from '../types';
+import SaveViewDialog from './SaveViewDialog';
 import ViewsRailDirtyPanel from './ViewsRailDirtyPanel';
 import ViewsRailItem from './ViewsRailItem';
 
@@ -73,6 +74,7 @@ function ViewsRail({
 	onViewDeleted,
 }: Props): JSX.Element {
 	const [query, setQuery] = useState('');
+	const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
 	const { contextHolder, confirmDelete } = useDeleteConfirm();
 
 	const q = query.trim().toLowerCase();
@@ -141,6 +143,9 @@ function ViewsRail({
 		onSave(name);
 	};
 
+	const openSaveDialog = (): void => setIsSaveDialogOpen(true);
+	const closeSaveDialog = (): void => setIsSaveDialogOpen(false);
+
 	const handleSaveViewChanges = (): void => {
 		onViewSaved?.('update');
 		onSaveChanges();
@@ -164,26 +169,19 @@ function ViewsRail({
 		<>
 			<div className={styles.header}>
 				<h4 className={styles.headerTitle}>Views</h4>
-				<ViewNamePopover
-					onSubmit={handleSaveAsView}
-					title="Save as view"
-					confirmLabel="Save view"
-					testIdPrefix={saveTestIdPrefix}
-					tooltip="Save current filters as a view"
-					trigger={(open): JSX.Element => (
-						<Button
-							aria-label="Save current filters as a view"
-							variant="ghost"
-							color="secondary"
-							size="sm"
-							icon
-							testId={`${testIdPrefix}-view-save-trigger`}
-							onClick={(e): void => open(e.currentTarget)}
-						>
-							<Plus size={14} />
-						</Button>
-					)}
-				/>
+				<Tooltip title="Save current filters as a view">
+					<Button
+						aria-label="Save current filters as a view"
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						icon
+						testId={`${testIdPrefix}-view-save-trigger`}
+						onClick={openSaveDialog}
+					>
+						<Plus size={14} />
+					</Button>
+				</Tooltip>
 			</div>
 
 			<div className={styles.search}>
@@ -269,12 +267,17 @@ function ViewsRail({
 				<ViewsRailDirtyPanel
 					isCustomActive={isCustomActive}
 					testIdPrefix={testIdPrefix}
-					saveTestIdPrefix={saveTestIdPrefix}
 					onSaveChanges={handleSaveViewChanges}
-					onSaveAs={handleSaveAsView}
+					onSaveAs={openSaveDialog}
 					onReset={onReset}
 				/>
 			)}
+			<SaveViewDialog
+				open={isSaveDialogOpen}
+				onClose={closeSaveDialog}
+				onSubmit={handleSaveAsView}
+				testIdPrefix={saveTestIdPrefix}
+			/>
 			{contextHolder}
 		</>
 	);
