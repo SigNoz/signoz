@@ -3,6 +3,7 @@
  * use it. Do not hand-edit: regenerate it with the spec that needs the change.
  */
 import { expect, type Locator, type Page } from '@playwright/test';
+import { wheelTo } from '../scroll';
 
 // Panel action menu items take no testid (@signozhq/ui's dropdown preset drops
 // it), so their visible label is the contract, matched by Radix's menuitem role.
@@ -42,7 +43,7 @@ export function actionsAt(
 	const actions: PanelActions = {
 		async open() {
 			await actions.close();
-			await root().scrollIntoViewIfNeeded();
+			await wheelTo(root());
 			// The trigger only appears on hover.
 			await root().hover();
 			await page.getByTestId(`panel-actions-${panelId}`).click();

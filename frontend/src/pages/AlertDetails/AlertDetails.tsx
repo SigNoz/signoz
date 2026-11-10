@@ -21,7 +21,8 @@ import { fromRuleDTOToPostableRuleV2 } from 'types/api/alerts/convert';
 
 import AlertHeader from './AlertHeader/AlertHeader';
 import AlertNotFound from './AlertNotFound';
-import { useGetAlertRuleDetails, useRouteTabUtils } from './hooks';
+import { useGetAlertRuleDetails } from './hooks';
+import { useRouteTabUtils } from './useRouteTabUtils';
 
 import './AlertDetails.styles.scss';
 

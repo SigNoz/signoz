@@ -7,7 +7,6 @@ import {
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
-import { InfraMonitoringEvents } from 'constants/events';
 
 import { K8sEntityConfig } from '../Base/entity.config.types';
 import { K8sBaseFilters, K8sDetailsFilters } from '../Base/types';
@@ -114,7 +113,6 @@ export const podEntityConfig: K8sEntityConfig<InframonitoringtypesPodRecordDTO> 
 	{
 		list: {
 			entity: InfraMonitoringEntity.PODS,
-			eventCategory: InfraMonitoringEvents.Pod,
 			tableColumns: k8sPodColumnsConfig,
 			fetchListData,
 			getRowKey: getK8sPodRowKey,
@@ -123,7 +121,6 @@ export const podEntityConfig: K8sEntityConfig<InframonitoringtypesPodRecordDTO> 
 		},
 		details: {
 			category: InfraMonitoringEntity.PODS,
-			eventCategory: InfraMonitoringEvents.Pod,
 			tabsConfig: { showOverview: true },
 			queryKeyPrefix: 'pod',
 			getSelectedItemExpression: k8sPodGetSelectedItemExpression,

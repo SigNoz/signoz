@@ -10,7 +10,7 @@ import {
 	getGetRuleByIDQueryKey,
 	getGetRuleHistoryTimelineQueryOptions,
 	invalidateGetRuleByID,
-	invalidateListRules,
+	invalidateListRulesV3,
 	updateRuleByID,
 	useGetRuleByID,
 	useGetRuleHistoryOverallStatus,
@@ -29,27 +29,21 @@ import {
 	type RuletypesPostableRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
-import { TabRoutes } from 'components/RouteTab/types';
 import { QueryParams } from 'constants/query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
-import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import {
 	computeCursorForPage,
 	useTimelineTableOrder,
 	useTimelineTablePage,
 } from 'container/AlertHistory/Timeline/Table/useTimelineTableCursor';
-import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
+import { TimelineFilter } from 'container/AlertHistory/types';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
-import GetMinMax from 'lib/getMinMax';
-import { buildRoutePath } from 'lib/router/buildRoutePath';
+import GetMinMax, { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import { navigate } from 'lib/router/navigation';
-import { History, Table } from '@signozhq/icons';
-import EditRules from 'pages/EditRules';
-import BetaTag from 'periscope/components/BetaTag/BetaTag';
 import { useAlertRule } from 'providers/Alert';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { toPostableRuleDTOFromAlertDef } from 'types/api/alerts/convert';
@@ -63,6 +57,7 @@ export const useAlertHistoryQueryParams = (): {
 	startTime: number;
 	endTime: number;
 	hasStartAndEndParams: boolean;
+	relativeTime: string | null;
 	params: URLSearchParams;
 } => {
 	const params = useUrlQuery();
@@ -72,8 +67,9 @@ export const useAlertHistoryQueryParams = (): {
 	const relativeTimeParam = params.get(QueryParams.relativeTime);
 
 	const relativeTime =
-		(relativeTimeParam === 'null' ? null : relativeTimeParam) ||
-		DEFAULT_TIME_RANGE;
+		relativeTimeParam && isValidShortHandDateTimeFormat(relativeTimeParam)
+			? relativeTimeParam
+			: DEFAULT_TIME_RANGE;
 
 	const intStartTime = parseInt(startTime || '0', 10);
 	const intEndTime = parseInt(endTime || '0', 10);
@@ -93,62 +89,9 @@ export const useAlertHistoryQueryParams = (): {
 		startTime: Math.floor(nanoToMilli(minTime)),
 		endTime: Math.floor(nanoToMilli(maxTime)),
 		hasStartAndEndParams,
+		relativeTime: hasStartAndEndParams ? null : relativeTime,
 		params,
 	};
-};
-export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
-	const urlQuery = useUrlQuery();
-
-	const getRouteUrl = (tab: AlertDetailsTab): string => {
-		let route = '';
-		let params = urlQuery.toString();
-		const ruleIdKey = QueryParams.ruleId;
-		const relativeTimeKey = QueryParams.relativeTime;
-
-		switch (tab) {
-			case AlertDetailsTab.OVERVIEW:
-				route = ROUTES.ALERT_OVERVIEW;
-				break;
-			case AlertDetailsTab.HISTORY:
-				params = `${ruleIdKey}=${urlQuery.get(
-					ruleIdKey,
-				)}&${relativeTimeKey}=${urlQuery.get(relativeTimeKey)}`;
-				route = ROUTES.ALERT_HISTORY;
-				break;
-			default:
-				return '';
-		}
-
-		return `${buildRoutePath(route)}?${params}`;
-	};
-
-	const routes = [
-		{
-			Component: EditRules,
-			name: (
-				<div className="tab-item" data-testid="alert-details-tab-overview">
-					<Table size={14} />
-					Overview
-				</div>
-			),
-			route: getRouteUrl(AlertDetailsTab.OVERVIEW),
-			key: ROUTES.ALERT_OVERVIEW,
-		},
-		{
-			Component: AlertHistory,
-			name: (
-				<div className="tab-item" data-testid="alert-details-tab-history">
-					<History size={14} />
-					History
-					<BetaTag />
-				</div>
-			),
-			route: getRouteUrl(AlertDetailsTab.HISTORY),
-			key: ROUTES.ALERT_HISTORY,
-		},
-	];
-
-	return { routes };
 };
 type Props = {
 	ruleId: string | null;
@@ -356,12 +299,7 @@ export const useTimelineTable = ({
 	nextCursor?: string;
 }): {
 	paginationConfig: TablePaginationConfig;
-	onChangeHandler: (
-		pagination: TablePaginationConfig,
-		sorter: any,
-		filters: any,
-		extra: any,
-	) => void;
+	onChangeHandler: TableProps<AlertRuleTimelineTableResponse>['onChange'];
 	handleNextPage: () => void;
 	handlePrevPage: () => void;
 	hasNextPage: boolean;
@@ -448,8 +386,11 @@ export const useAlertRuleStatusToggle = ({
 		{
 			onSuccess: (data) => {
 				setAlertRuleState(data.data.state);
-				invalidateGetRuleByID(queryClient, { id: ruleId });
-				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
+				void invalidateGetRuleByID(queryClient, { id: ruleId });
+				void queryClient.refetchQueries([
+					REACT_QUERY_KEY.ALERT_RULE_DETAILS,
+					ruleId,
+				]);
 				notifications.success({
 					message: `Alert has been ${
 						data.data.state === 'disabled' ? 'disabled' : 'enabled'
@@ -457,8 +398,11 @@ export const useAlertRuleStatusToggle = ({
 				});
 			},
 			onError: (error) => {
-				invalidateGetRuleByID(queryClient, { id: ruleId });
-				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
+				void invalidateGetRuleByID(queryClient, { id: ruleId });
+				void queryClient.refetchQueries([
+					REACT_QUERY_KEY.ALERT_RULE_DETAILS,
+					ruleId,
+				]);
 				showErrorModal(
 					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
 				);
@@ -499,7 +443,7 @@ export const useAlertRuleClone = ({
 					message: `Success`,
 				});
 
-				await invalidateListRules(queryClient);
+				await invalidateListRulesV3(queryClient);
 
 				params.set(QueryParams.ruleId, response.data.id);
 				navigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
@@ -550,7 +494,7 @@ export const useAlertRuleUpdate = ({
 						data: { ...existingRule.data, alert: intermediateName },
 					});
 				}
-				void invalidateListRules(queryClient);
+				void invalidateListRulesV3(queryClient);
 				notifications.success({ message: 'Alert renamed successfully' });
 			},
 			onError: (error) => {

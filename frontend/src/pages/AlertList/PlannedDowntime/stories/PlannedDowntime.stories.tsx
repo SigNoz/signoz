@@ -111,7 +111,7 @@ export const NewDowntimeRecurring: Story = {
 			await screen.findByRole('combobox', { name: 'Repeats every' }),
 		);
 		await userEvent.click(await screen.findByText('Weekly'));
-		await screen.findByText('Duration');
+		await within(await screen.findByRole('dialog')).findByText('Duration');
 	},
 };
 

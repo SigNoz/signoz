@@ -10,9 +10,7 @@ import {
 import { Button } from '@signozhq/ui/button';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import logEvent from 'api/common/logEvent';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -55,7 +53,6 @@ import { logInfraExplorerNavigatedEvent } from 'container/InfraMonitoringK8sV2/B
 export default function K8sBaseDetailsContent<T>({
 	entity,
 	category,
-	eventCategory,
 	metadataConfig,
 	countsConfig,
 	getCountsFilterExpression,
@@ -138,14 +135,18 @@ export default function K8sBaseDetailsContent<T>({
 
 	// Wait until the view is a valid tab so we don't log a pending value before
 	// the validation effect above corrects an out-of-scope query param
-	const hasLoggedDefaultTab = useRef(false);
+	const loggedDefaultTabFor = useRef<string | null>(null);
 	useEffect(() => {
-		if (hasLoggedDefaultTab.current || !validTabs.includes(effectiveView)) {
+		const visitKey = `${category}:${selectedItem}`;
+		if (
+			loggedDefaultTabFor.current === visitKey ||
+			!validTabs.includes(effectiveView)
+		) {
 			return;
 		}
-		hasLoggedDefaultTab.current = true;
+		loggedDefaultTabFor.current = visitKey;
 		logInfraDrawerTabViewedEvent(category, effectiveView, true);
-	}, [validTabs, effectiveView, category]);
+	}, [validTabs, effectiveView, category, selectedItem]);
 
 	const [, setLogFiltersParam] = useInfraMonitoringLogFilters();
 	const [, setTracesFiltersParam] = useInfraMonitoringTracesFilters();
@@ -167,12 +168,6 @@ export default function K8sBaseDetailsContent<T>({
 		void setLogFiltersParam(null);
 		void setTracesFiltersParam(null);
 		void setEventsFiltersParam(null);
-		void logEvent(InfraMonitoringEvents.TabChanged, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.DetailedPage,
-			category: eventCategory,
-			view: value,
-		});
 		logInfraDrawerTabViewedEvent(category, value, false);
 	};
 
@@ -187,13 +182,6 @@ export default function K8sBaseDetailsContent<T>({
 			urlQuery.set(QueryParams.startTime, (timeRange.startTime * 1000).toString());
 			urlQuery.set(QueryParams.endTime, (timeRange.endTime * 1000).toString());
 		}
-
-		void logEvent(InfraMonitoringEvents.ExploreClicked, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.DetailedPage,
-			category: eventCategory,
-			view: effectiveView,
-		});
 
 		logInfraExplorerNavigatedEvent({
 			entityType: category,
@@ -301,6 +289,7 @@ export default function K8sBaseDetailsContent<T>({
 						type="single"
 						onChange={handleTabChange}
 						value={effectiveView}
+						testId="drawer-tab-bar"
 						items={[
 							...(tabVisibility.showOverview
 								? [
@@ -387,6 +376,7 @@ export default function K8sBaseDetailsContent<T>({
 								size="sm"
 								icon
 								color="secondary"
+								testId="open-logs-explorer"
 								onClick={handleExplorePagesRedirect}
 							>
 								<Compass size={18} />
@@ -401,6 +391,7 @@ export default function K8sBaseDetailsContent<T>({
 								size="sm"
 								icon
 								color="secondary"
+								testId="open-traces-explorer"
 								onClick={handleExplorePagesRedirect}
 							>
 								<Compass size={18} />
@@ -413,7 +404,6 @@ export default function K8sBaseDetailsContent<T>({
 			{effectiveView === VIEW_TYPES.OVERVIEW && tabVisibility.showOverview && (
 				<EntityOverview
 					category={category}
-					eventEntity={eventCategory}
 					attributes={entityAttributes}
 					entity={entity}
 					entityName={entityName}
@@ -423,7 +413,6 @@ export default function K8sBaseDetailsContent<T>({
 			{effectiveView === VIEW_TYPES.METRICS && (
 				<EntityMetrics<T>
 					entity={entity}
-					eventEntity={eventCategory}
 					entityWidgetInfo={entityWidgetInfo}
 					getEntityQueryPayload={getEntityQueryPayload}
 					category={category}
@@ -433,7 +422,6 @@ export default function K8sBaseDetailsContent<T>({
 			)}
 			{effectiveView === VIEW_TYPES.LOGS && (
 				<EntityLogs
-					eventEntity={eventCategory}
 					queryKey={`${queryKeyPrefix}Logs`}
 					category={category}
 					initialExpression={logsAndTracesInitialExpression}
@@ -441,7 +429,6 @@ export default function K8sBaseDetailsContent<T>({
 			)}
 			{effectiveView === VIEW_TYPES.TRACES && (
 				<EntityTraces
-					eventEntity={eventCategory}
 					queryKey={`${queryKeyPrefix}Traces`}
 					category={category}
 					initialExpression={logsAndTracesInitialExpression}
@@ -449,7 +436,6 @@ export default function K8sBaseDetailsContent<T>({
 			)}
 			{effectiveView === VIEW_TYPES.EVENTS && tabVisibility.showEvents && (
 				<EntityEvents
-					eventEntity={eventCategory}
 					queryKey={`${queryKeyPrefix}Events`}
 					initialExpression={eventsInitialExpression}
 					category={category}

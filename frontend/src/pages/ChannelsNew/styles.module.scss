@@ -3,5 +3,8 @@
 }
 
 .page {
-	padding: var(--spacing-4) var(--spacing-6) var(--spacing-6);
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: var(--spacing-4) var(--spacing-6) 0;
 }

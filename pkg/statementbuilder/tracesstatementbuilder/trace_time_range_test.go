@@ -22,7 +22,7 @@ func TestTraceTimeRangeOptimization(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 
 	fl := flaggertest.New(t)
-	storage := tracestelemetryschema.NewStorage()
+	storage := tracestelemetryschema.NewStorage(nil)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 
 	mockMetadataStore.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)

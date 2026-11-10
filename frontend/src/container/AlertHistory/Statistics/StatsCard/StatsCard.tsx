@@ -3,6 +3,7 @@ import { Tooltip } from 'antd';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ArrowDownLeft, ArrowUpRight, Calendar } from '@signozhq/icons';
+import { useAlertHistoryQueryParams } from 'pages/AlertDetails/hooks';
 import { AlertRuleStats } from 'types/api/alerts/def';
 import { calculateChange } from 'utils/calculateChange';
 
@@ -86,7 +87,7 @@ function StatsCard({
 }: StatsCardProps): JSX.Element {
 	const urlQuery = useUrlQuery();
 
-	const relativeTime = urlQuery.get('relativeTime');
+	const { relativeTime } = useAlertHistoryQueryParams();
 
 	const { changePercentage, changeDirection } = calculateChange(
 		totalCurrentCount,
