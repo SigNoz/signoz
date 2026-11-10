@@ -381,9 +381,7 @@ export default function BillingContainer(): JSX.Element {
 		>
 			{`We were not able to process payments for your account. Please update your card details `}
 			<AuthZTooltip checks={billingActionPermissions}>
-				<Button variant="link" color="primary" size="md" onClick={handleBilling}>
-					{t('here')}
-				</Button>
+				<Callout.Link onClick={handleBilling}>{t('here')}</Callout.Link>
 			</AuthZTooltip>
 			{` if your payment information has changed. Email us at `}
 			<Typography
@@ -466,7 +464,9 @@ export default function BillingContainer(): JSX.Element {
 				<Flex justify="space-between" align="center">
 					<Flex vertical gap={8}>
 						<p className={styles.pageInfoTitle}>
-							{isCloudUserVal ? t('teams_cloud') : t('teams')}{' '}
+							<span className="translate-safe">
+								{isCloudUserVal ? t('teams_cloud') : t('teams')}
+							</span>{' '}
 							{isFreeTrial ? (
 								<Badge variant="solid" color="success">
 									{' '}
