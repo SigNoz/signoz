@@ -1,5 +1,6 @@
 import styles from './MissingEntryRow.module.scss';
 import { ExternalLink, TriangleAlert } from '@signozhq/icons';
+import { Callout } from '@signozhq/ui/callout';
 import { Typography } from '@signozhq/ui/typography';
 import { Divider } from '@signozhq/ui/divider';
 import type {
@@ -80,20 +81,10 @@ export function MissingEntryRow({
 				{entry.associatedComponent.name}
 			</Typography>
 			{entry.documentationLink && (
-				<Typography.Link
-					variant="paragraph"
-					size="base"
-					weight="regular"
-					display="inline-flex"
-					gap={4}
-					marginLeft={2}
-					textOverflow="wrap"
-					href={entry.documentationLink}
-					target="_blank"
-				>
+				<Callout.Link href={entry.documentationLink} target="_blank">
 					Learn here
 					<ExternalLink size={12} />
-				</Typography.Link>
+				</Callout.Link>
 			)}
 			<Divider />
 		</div>

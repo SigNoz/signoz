@@ -35,15 +35,15 @@ function ChQuerySection({ alertType }: ChQuerySectionProps): JSX.Element {
 				<div className="info-banner-wrapper">
 					<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
 						<span>
-							<a href={docLink} target="_blank" rel="noopener">
+							<Callout.Link href={docLink} target="_blank">
 								Learn to write faster, optimized queries
-							</a>
+							</Callout.Link>
 							{showAgentSkill && (
 								<>
 									{' · Using AI? '}
-									<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noopener">
+									<Callout.Link href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank">
 										Install the SigNoz ClickHouse query agent skill
-									</a>
+									</Callout.Link>
 								</>
 							)}
 						</span>

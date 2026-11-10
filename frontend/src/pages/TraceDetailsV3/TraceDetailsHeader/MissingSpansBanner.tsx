@@ -29,14 +29,9 @@ function MissingSpansBanner(): JSX.Element | null {
 			>
 				<span className={styles.title}>
 					This trace has missing spans
-					<a
-						className={styles.link}
-						href={MISSING_SPANS_DOCS_URL}
-						target="_blank"
-						rel="noopener noreferrer"
-					>
+					<Callout.Link href={MISSING_SPANS_DOCS_URL} target="_blank">
 						Learn More <ArrowUpRight size={14} />
-					</a>
+					</Callout.Link>
 				</span>
 			</Callout.Closeable>
 		</div>

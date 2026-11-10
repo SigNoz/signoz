@@ -56,23 +56,19 @@ function LicenseRowDismissibleCallout(): JSX.Element | null {
 							{' '}
 							Find your{' '}
 							{hasServiceAccountsAccess && (
-								<AppLink
-									to={ROUTES.SERVICE_ACCOUNTS_SETTINGS}
-									className="license-key-callout__link"
+								<Callout.Link
+									render={<AppLink to={ROUTES.SERVICE_ACCOUNTS_SETTINGS} />}
 								>
 									Service account here
-								</AppLink>
+								</Callout.Link>
 							)}
 							{hasServiceAccountsAccess && hasIngestionAccess && ' and '}
 							{hasIngestionAccess && (
-								<AppLink
-									to={ROUTES.INGESTION_SETTINGS}
-									className="license-key-callout__link"
-								>
+								<Callout.Link render={<AppLink to={ROUTES.INGESTION_SETTINGS} />}>
 									Ingestion key here
-								</AppLink>
+								</Callout.Link>
 							)}
-							.
+							<span className="translate-safe">.</span>
 						</>
 					)}
 				</div>

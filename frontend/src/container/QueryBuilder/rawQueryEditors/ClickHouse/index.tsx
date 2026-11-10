@@ -20,13 +20,13 @@ function ClickHouseQueryContainer(): JSX.Element | null {
 			<div className="info-banner-wrapper">
 				<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
 					<span>
-						<a href={DOCLINKS.QUERY_CLICKHOUSE_TRACES} target="_blank" rel="noopener">
+						<Callout.Link href={DOCLINKS.QUERY_CLICKHOUSE_TRACES} target="_blank">
 							Learn to write faster, optimized queries
-						</a>
+						</Callout.Link>
 						{' · Using AI? '}
-						<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noopener">
+						<Callout.Link href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank">
 							Install the SigNoz ClickHouse query agent skill
-						</a>
+						</Callout.Link>
 					</span>
 				</Callout>
 			</div>
