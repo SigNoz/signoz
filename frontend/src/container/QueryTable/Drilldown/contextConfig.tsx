@@ -1,12 +1,9 @@
 import { ReactNode } from 'react';
-import {
-	PANEL_TYPES,
-	QUERY_BUILDER_OPERATORS_BY_TYPES,
-} from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ContextMenu, { ClickedData } from 'periscope/components/ContextMenu';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { getBaseMeta } from './drilldownUtils';
+import { getBaseMeta, getOperatorsByDataType } from './drilldownUtils';
 import { SUPPORTED_OPERATORS } from './menuOptions';
 import { BreakoutAttributeType } from './types';
 
@@ -49,15 +46,9 @@ export function getGroupContextMenuConfig({
 }: Omit<ContextMenuConfigParams, 'configType'>): GroupContextMenuConfig {
 	const filterKey = clickedData?.column?.dataIndex;
 
-	const filterDataType =
-		getBaseMeta(query, filterKey as string)?.dataType || 'string';
+	const filterDataType = getBaseMeta(query, filterKey as string)?.dataType;
 
-	const operators =
-		QUERY_BUILDER_OPERATORS_BY_TYPES[
-			filterDataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
-		];
-
-	const filterOperators = operators.filter(
+	const filterOperators = getOperatorsByDataType(filterDataType).filter(
 		(operator) => SUPPORTED_OPERATORS[operator],
 	);
 

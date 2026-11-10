@@ -2,6 +2,7 @@ import {
 	Dispatch,
 	memo,
 	MutableRefObject,
+	ReactNode,
 	SetStateAction,
 	useEffect,
 	useMemo,
@@ -10,6 +11,7 @@ import {
 import { useSelector } from 'react-redux';
 import { Space } from 'antd';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import ExportMenu from 'components/ExportMenu/ExportMenu';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -20,16 +22,21 @@ import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import APIError from 'types/api/error';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+
+import './TableView.styles.scss';
 
 function TableView({
 	setWarning,
 	setIsLoadingQueries,
 	queryKeyRef,
+	headerActions,
 }: {
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 	queryKeyRef?: MutableRefObject<any>;
+	headerActions?: ReactNode;
 }): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
@@ -98,6 +105,19 @@ function TableView({
 		<Space.Compact block direction="vertical">
 			{isError && error && <ErrorInPlace error={error as APIError} />}
 			{!isError && (
+				<div className="traces-table-view-header">
+					{headerActions}
+					{data && (
+						<ExportMenu
+							dataSource={DataSource.TRACES}
+							data={data}
+							query={stagedQuery || initialQueriesMap.traces}
+							fileName="traces-table"
+						/>
+					)}
+				</div>
+			)}
+			{!isError && (
 				<QueryTable
 					query={stagedQuery || initialQueriesMap.traces}
 					queryTableData={queryTableData as QueryDataV3[]}
@@ -111,6 +131,7 @@ function TableView({
 
 TableView.defaultProps = {
 	queryKeyRef: undefined,
+	headerActions: undefined,
 };
 
 export default memo(TableView);

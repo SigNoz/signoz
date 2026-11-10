@@ -1,0 +1,2035 @@
+{
+  "id": "cassandradb",
+  "title": "Cassandra DB",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_cassandra_cache_capacity_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cache capacity (bytes)."
+      },
+      {
+        "name": "azure_cassandra_cache_capacity_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cache capacity (bytes)."
+      },
+      {
+        "name": "azure_cassandra_cache_capacity_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cache capacity (bytes)."
+      },
+      {
+        "name": "azure_cassandra_cache_capacity_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cache capacity (bytes)."
+      },
+      {
+        "name": "azure_cassandra_cache_entries_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of cache entries."
+      },
+      {
+        "name": "azure_cassandra_cache_entries_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of cache entries."
+      },
+      {
+        "name": "azure_cassandra_cache_entries_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of cache entries."
+      },
+      {
+        "name": "azure_cassandra_cache_entries_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of cache entries."
+      },
+      {
+        "name": "azure_cassandra_cache_hit_rate_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "All time cache hit rate."
+      },
+      {
+        "name": "azure_cassandra_cache_hits_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of cache hits."
+      },
+      {
+        "name": "azure_cassandra_cache_hits_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of cache hits."
+      },
+      {
+        "name": "azure_cassandra_cache_hits_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of cache hits."
+      },
+      {
+        "name": "azure_cassandra_cache_hits_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of cache hits."
+      },
+      {
+        "name": "azure_cassandra_cache_miss_latency_histogram_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average cache miss latency (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_cache_miss_latency_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 latency of cache misses (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_cache_requests_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of cache requests."
+      },
+      {
+        "name": "azure_cassandra_cache_requests_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of cache requests."
+      },
+      {
+        "name": "azure_cassandra_cache_requests_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of cache requests."
+      },
+      {
+        "name": "azure_cassandra_cache_requests_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of cache requests."
+      },
+      {
+        "name": "azure_cassandra_cache_size_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Size of occupied cache (bytes)."
+      },
+      {
+        "name": "azure_cassandra_cache_size_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Size of occupied cache (bytes)."
+      },
+      {
+        "name": "azure_cassandra_cache_size_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Size of occupied cache (bytes)."
+      },
+      {
+        "name": "azure_cassandra_cache_size_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Size of occupied cache (bytes)."
+      },
+      {
+        "name": "azure_cassandra_client_auth_failure3_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of failed client authentication requests."
+      },
+      {
+        "name": "azure_cassandra_client_auth_failure3_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of failed client authentication requests."
+      },
+      {
+        "name": "azure_cassandra_client_auth_failure3_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of failed client authentication requests."
+      },
+      {
+        "name": "azure_cassandra_client_auth_failure3_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of failed client authentication requests."
+      },
+      {
+        "name": "azure_cassandra_client_auth_success_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of successful client authentication requests."
+      },
+      {
+        "name": "azure_cassandra_client_auth_success_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of successful client authentication requests."
+      },
+      {
+        "name": "azure_cassandra_client_auth_success_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of successful client authentication requests."
+      },
+      {
+        "name": "azure_cassandra_client_auth_success_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of successful client authentication requests."
+      },
+      {
+        "name": "azure_cassandra_client_connected_native_clients_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of connected native clients."
+      },
+      {
+        "name": "azure_cassandra_client_connected_native_clients_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of connected native clients."
+      },
+      {
+        "name": "azure_cassandra_client_connected_native_clients_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of connected native clients."
+      },
+      {
+        "name": "azure_cassandra_client_connected_native_clients_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of connected native clients."
+      },
+      {
+        "name": "azure_cassandra_client_request_condition_not_met_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of transaction preconditions that did not match current values."
+      },
+      {
+        "name": "azure_cassandra_client_request_condition_not_met_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of transaction preconditions that did not match current values."
+      },
+      {
+        "name": "azure_cassandra_client_request_condition_not_met_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of transaction preconditions that did not match current values."
+      },
+      {
+        "name": "azure_cassandra_client_request_condition_not_met_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of transaction preconditions that did not match current values."
+      },
+      {
+        "name": "azure_cassandra_client_request_contention_histogram_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average number of contended reads/writes encountered."
+      },
+      {
+        "name": "azure_cassandra_client_request_contention_histogram_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 number of contended writes encountered."
+      },
+      {
+        "name": "azure_cassandra_client_request_failures3_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of transaction failures encountered."
+      },
+      {
+        "name": "azure_cassandra_client_request_failures3_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of transaction failures encountered."
+      },
+      {
+        "name": "azure_cassandra_client_request_failures3_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of transaction failures encountered."
+      },
+      {
+        "name": "azure_cassandra_client_request_failures3_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of transaction failures encountered."
+      },
+      {
+        "name": "azure_cassandra_client_request_latency_histogram_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average client request latency (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_client_request_latency_max_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Maximum client request latency (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_client_request_latency_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 client request latency (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_client_request_timeouts3_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of timeouts encountered in client requests."
+      },
+      {
+        "name": "azure_cassandra_client_request_timeouts3_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of timeouts encountered in client requests."
+      },
+      {
+        "name": "azure_cassandra_client_request_timeouts3_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of timeouts encountered in client requests."
+      },
+      {
+        "name": "azure_cassandra_client_request_timeouts3_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of timeouts encountered in client requests."
+      },
+      {
+        "name": "azure_cassandra_client_request_unfinished_commit_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of transactions committed on write."
+      },
+      {
+        "name": "azure_cassandra_client_request_unfinished_commit_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of transactions committed on write."
+      },
+      {
+        "name": "azure_cassandra_client_request_unfinished_commit_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of transactions committed on write."
+      },
+      {
+        "name": "azure_cassandra_client_request_unfinished_commit_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of transactions committed on write."
+      },
+      {
+        "name": "azure_cassandra_commit_log_waiting_on_commit_latency_histogram_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average time spent waiting on commit log fsync (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_cql_prepared_statements_executed_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of prepared statements executed."
+      },
+      {
+        "name": "azure_cassandra_cql_prepared_statements_executed_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of prepared statements executed."
+      },
+      {
+        "name": "azure_cassandra_cql_prepared_statements_executed_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of prepared statements executed."
+      },
+      {
+        "name": "azure_cassandra_cql_prepared_statements_executed_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of prepared statements executed."
+      },
+      {
+        "name": "azure_cassandra_cql_regular_statements_executed_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of non-prepared statements executed."
+      },
+      {
+        "name": "azure_cassandra_cql_regular_statements_executed_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of non-prepared statements executed."
+      },
+      {
+        "name": "azure_cassandra_cql_regular_statements_executed_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of non-prepared statements executed."
+      },
+      {
+        "name": "azure_cassandra_cql_regular_statements_executed_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of non-prepared statements executed."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_count_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total count of dropped messages."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_count_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total count of dropped messages."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_count_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total count of dropped messages."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_count_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total count of dropped messages."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_cross_node_latency_average",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Average dropped latency across nodes."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_cross_node_latency_minimum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Average dropped latency across nodes."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_cross_node_latency_maximum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Average dropped latency across nodes."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_cross_node_latency_count",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Average dropped latency across nodes."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_cross_node_latency_p99_average",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "99th percentile of dropped latency across nodes."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_cross_node_latency_p99_minimum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "99th percentile of dropped latency across nodes."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_cross_node_latency_p99_maximum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "99th percentile of dropped latency across nodes."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_cross_node_latency_p99_count",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "99th percentile of dropped latency across nodes."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_internal_latency_average",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Average dropped latency within a node."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_internal_latency_minimum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Average dropped latency within a node."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_internal_latency_maximum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Average dropped latency within a node."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_internal_latency_count",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Average dropped latency within a node."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_rate_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of dropped messages."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_rate_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of dropped messages."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_rate_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of dropped messages."
+      },
+      {
+        "name": "azure_cassandra_dropped_message_rate_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of dropped messages."
+      },
+      {
+        "name": "azure_cassandra_hints_failed_rate_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of hints that failed to deliver."
+      },
+      {
+        "name": "azure_cassandra_hints_failed_rate_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of hints that failed to deliver."
+      },
+      {
+        "name": "azure_cassandra_hints_failed_rate_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of hints that failed to deliver."
+      },
+      {
+        "name": "azure_cassandra_hints_failed_rate_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of hints that failed to deliver."
+      },
+      {
+        "name": "azure_cassandra_hints_succeeded_rate_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of hints successfully delivered."
+      },
+      {
+        "name": "azure_cassandra_hints_succeeded_rate_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of hints successfully delivered."
+      },
+      {
+        "name": "azure_cassandra_hints_succeeded_rate_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of hints successfully delivered."
+      },
+      {
+        "name": "azure_cassandra_hints_succeeded_rate_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of hints successfully delivered."
+      },
+      {
+        "name": "azure_cassandra_hints_timed_out_rate_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of hints that timed out."
+      },
+      {
+        "name": "azure_cassandra_hints_timed_out_rate_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of hints that timed out."
+      },
+      {
+        "name": "azure_cassandra_hints_timed_out_rate_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of hints that timed out."
+      },
+      {
+        "name": "azure_cassandra_hints_timed_out_rate_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Rate of hints that timed out."
+      },
+      {
+        "name": "azure_cassandra_jvm_gc_count_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of garbage collections that have occurred."
+      },
+      {
+        "name": "azure_cassandra_jvm_gc_count_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of garbage collections that have occurred."
+      },
+      {
+        "name": "azure_cassandra_jvm_gc_count_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of garbage collections that have occurred."
+      },
+      {
+        "name": "azure_cassandra_jvm_gc_count_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of garbage collections that have occurred."
+      },
+      {
+        "name": "azure_cassandra_jvm_gc_time_average",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Approximate accumulated garbage collection elapsed time."
+      },
+      {
+        "name": "azure_cassandra_jvm_gc_time_minimum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Approximate accumulated garbage collection elapsed time."
+      },
+      {
+        "name": "azure_cassandra_jvm_gc_time_maximum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Approximate accumulated garbage collection elapsed time."
+      },
+      {
+        "name": "azure_cassandra_jvm_gc_time_count",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Approximate accumulated garbage collection elapsed time."
+      },
+      {
+        "name": "azure_cassandra_storage_total_hints_counter_total_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of total hints in storage."
+      },
+      {
+        "name": "azure_cassandra_storage_total_hints_counter_total_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of total hints in storage."
+      },
+      {
+        "name": "azure_cassandra_storage_total_hints_counter_total_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of total hints in storage."
+      },
+      {
+        "name": "azure_cassandra_storage_total_hints_counter_total_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative number of total hints in storage."
+      },
+      {
+        "name": "azure_cassandra_storage_total_hints_in_progress_counter_total_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of total hints in progress."
+      },
+      {
+        "name": "azure_cassandra_storage_total_hints_in_progress_counter_total_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of total hints in progress."
+      },
+      {
+        "name": "azure_cassandra_storage_total_hints_in_progress_counter_total_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of total hints in progress."
+      },
+      {
+        "name": "azure_cassandra_storage_total_hints_in_progress_counter_total_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of total hints in progress."
+      },
+      {
+        "name": "azure_cassandra_table_all_memtables_live_data_size_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total live data stored in the memtables that resides off-heap, excluding data structure overhead."
+      },
+      {
+        "name": "azure_cassandra_table_all_memtables_live_data_size_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total live data stored in the memtables that resides off-heap, excluding data structure overhead."
+      },
+      {
+        "name": "azure_cassandra_table_all_memtables_live_data_size_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total live data stored in the memtables that resides off-heap, excluding data structure overhead."
+      },
+      {
+        "name": "azure_cassandra_table_all_memtables_live_data_size_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total live data stored in the memtables that resides off-heap, excluding data structure overhead."
+      },
+      {
+        "name": "azure_cassandra_table_all_memtables_off_heap_size_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data stored in the memtables that resides off-heap."
+      },
+      {
+        "name": "azure_cassandra_table_all_memtables_off_heap_size_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data stored in the memtables that resides off-heap."
+      },
+      {
+        "name": "azure_cassandra_table_all_memtables_off_heap_size_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data stored in the memtables that resides off-heap."
+      },
+      {
+        "name": "azure_cassandra_table_all_memtables_off_heap_size_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data stored in the memtables that resides off-heap."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_disk_space_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Disk space used by the bloom filter (bytes)."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_disk_space_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Disk space used by the bloom filter (bytes)."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_disk_space_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Disk space used by the bloom filter (bytes)."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_disk_space_used_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Disk space used by the bloom filter (bytes)."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_false_positives_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of false positives on the table's bloom filter."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_false_positives_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of false positives on the table's bloom filter."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_false_positives_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of false positives on the table's bloom filter."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_false_positives_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of false positives on the table's bloom filter."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_false_ratio_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "False positive ratio of the table's bloom filter."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_false_ratio_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "False positive ratio of the table's bloom filter."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_false_ratio_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "False positive ratio of the table's bloom filter."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_false_ratio_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "False positive ratio of the table's bloom filter."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_off_heap_memory_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Off-heap memory used by the bloom filter."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_off_heap_memory_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Off-heap memory used by the bloom filter."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_off_heap_memory_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Off-heap memory used by the bloom filter."
+      },
+      {
+        "name": "azure_cassandra_table_bloom_filter_off_heap_memory_used_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Off-heap memory used by the bloom filter."
+      },
+      {
+        "name": "azure_cassandra_table_bytes_flushed_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total number of bytes flushed since server [re]start."
+      },
+      {
+        "name": "azure_cassandra_table_bytes_flushed_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total number of bytes flushed since server [re]start."
+      },
+      {
+        "name": "azure_cassandra_table_bytes_flushed_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total number of bytes flushed since server [re]start."
+      },
+      {
+        "name": "azure_cassandra_table_bytes_flushed_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total number of bytes flushed since server [re]start."
+      },
+      {
+        "name": "azure_cassandra_table_cas_commit_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average latency of the paxos commit round."
+      },
+      {
+        "name": "azure_cassandra_table_cas_commit_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 latency of the paxos commit round."
+      },
+      {
+        "name": "azure_cassandra_table_cas_prepare_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average latency of the paxos prepare round."
+      },
+      {
+        "name": "azure_cassandra_table_cas_prepare_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 latency of the paxos prepare round."
+      },
+      {
+        "name": "azure_cassandra_table_cas_propose_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average latency of the paxos propose round."
+      },
+      {
+        "name": "azure_cassandra_table_cas_propose_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 latency of the paxos propose round."
+      },
+      {
+        "name": "azure_cassandra_table_col_update_time_delta_histogram_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average column update time delta on this table."
+      },
+      {
+        "name": "azure_cassandra_table_col_update_time_delta_histogram_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 column update time delta on this table."
+      },
+      {
+        "name": "azure_cassandra_table_compaction_bytes_written_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total bytes written by compaction since server [re]start."
+      },
+      {
+        "name": "azure_cassandra_table_compaction_bytes_written_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total bytes written by compaction since server [re]start."
+      },
+      {
+        "name": "azure_cassandra_table_compaction_bytes_written_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total bytes written by compaction since server [re]start."
+      },
+      {
+        "name": "azure_cassandra_table_compaction_bytes_written_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total bytes written by compaction since server [re]start."
+      },
+      {
+        "name": "azure_cassandra_table_compression_metadata_off_heap_memory_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Off-heap memory used by compression metadata."
+      },
+      {
+        "name": "azure_cassandra_table_compression_metadata_off_heap_memory_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Off-heap memory used by compression metadata."
+      },
+      {
+        "name": "azure_cassandra_table_compression_metadata_off_heap_memory_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Off-heap memory used by compression metadata."
+      },
+      {
+        "name": "azure_cassandra_table_compression_metadata_off_heap_memory_used_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Off-heap memory used by compression metadata."
+      },
+      {
+        "name": "azure_cassandra_table_compression_ratio_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Current compression ratio for all SSTables."
+      },
+      {
+        "name": "azure_cassandra_table_compression_ratio_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Current compression ratio for all SSTables."
+      },
+      {
+        "name": "azure_cassandra_table_compression_ratio_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Current compression ratio for all SSTables."
+      },
+      {
+        "name": "azure_cassandra_table_compression_ratio_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Current compression ratio for all SSTables."
+      },
+      {
+        "name": "azure_cassandra_table_coordinator_read_latency_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average coordinator read latency for this table (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_table_coordinator_read_latency_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 coordinator read latency for this table (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_table_coordinator_scan_latency_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average coordinator range scan latency for this table (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_table_coordinator_scan_latency_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 coordinator range scan latency for this table (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_table_dropped_mutations3_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of dropped mutations on this table."
+      },
+      {
+        "name": "azure_cassandra_table_dropped_mutations3_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of dropped mutations on this table."
+      },
+      {
+        "name": "azure_cassandra_table_dropped_mutations3_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of dropped mutations on this table."
+      },
+      {
+        "name": "azure_cassandra_table_dropped_mutations3_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of dropped mutations on this table."
+      },
+      {
+        "name": "azure_cassandra_table_estimated_column_count_histogram_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated number of columns on average."
+      },
+      {
+        "name": "azure_cassandra_table_estimated_column_count_histogram_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 estimated number of columns."
+      },
+      {
+        "name": "azure_cassandra_table_estimated_partition_count_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Approximate number of keys in the table."
+      },
+      {
+        "name": "azure_cassandra_table_estimated_partition_count_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Approximate number of keys in the table."
+      },
+      {
+        "name": "azure_cassandra_table_estimated_partition_count_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Approximate number of keys in the table."
+      },
+      {
+        "name": "azure_cassandra_table_estimated_partition_count_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Approximate number of keys in the table."
+      },
+      {
+        "name": "azure_cassandra_table_estimated_partition_size_histogram_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Estimated partition size on average."
+      },
+      {
+        "name": "azure_cassandra_table_estimated_partition_size_histogram_p99_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "p99 estimated partition size (bytes)."
+      },
+      {
+        "name": "azure_cassandra_table_index_summary_off_heap_memory_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Off-heap memory used by the index summary."
+      },
+      {
+        "name": "azure_cassandra_table_index_summary_off_heap_memory_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Off-heap memory used by the index summary."
+      },
+      {
+        "name": "azure_cassandra_table_index_summary_off_heap_memory_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Off-heap memory used by the index summary."
+      },
+      {
+        "name": "azure_cassandra_table_index_summary_off_heap_memory_used_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Off-heap memory used by the index summary."
+      },
+      {
+        "name": "azure_cassandra_table_key_cache_hit_rate_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Key cache hit rate for this table."
+      },
+      {
+        "name": "azure_cassandra_table_live_disk_space_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Disk space used by SSTables belonging to this table (bytes)."
+      },
+      {
+        "name": "azure_cassandra_table_live_disk_space_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Disk space used by SSTables belonging to this table (bytes)."
+      },
+      {
+        "name": "azure_cassandra_table_live_disk_space_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Disk space used by SSTables belonging to this table (bytes)."
+      },
+      {
+        "name": "azure_cassandra_table_live_disk_space_used_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Disk space used by SSTables belonging to this table (bytes)."
+      },
+      {
+        "name": "azure_cassandra_table_live_scanned_histogram_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average live cells scanned in queries on this table."
+      },
+      {
+        "name": "azure_cassandra_table_live_scanned_histogram_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 live cells scanned in queries on this table."
+      },
+      {
+        "name": "azure_cassandra_table_live_sstable_count_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of SSTables on disk for this table."
+      },
+      {
+        "name": "azure_cassandra_table_live_sstable_count_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of SSTables on disk for this table."
+      },
+      {
+        "name": "azure_cassandra_table_live_sstable_count_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of SSTables on disk for this table."
+      },
+      {
+        "name": "azure_cassandra_table_live_sstable_count_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of SSTables on disk for this table."
+      },
+      {
+        "name": "azure_cassandra_table_max_partition_size_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Size of the largest compacted partition (bytes)."
+      },
+      {
+        "name": "azure_cassandra_table_mean_partition_size_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Size of the average compacted partition (bytes)."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_columns_count_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of columns present in the memtable."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_columns_count_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of columns present in the memtable."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_columns_count_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of columns present in the memtable."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_columns_count_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of columns present in the memtable."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_off_heap_size_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data stored in the memtable that resides off-heap, including overhead and overwritten partitions."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_off_heap_size_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data stored in the memtable that resides off-heap, including overhead and overwritten partitions."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_off_heap_size_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data stored in the memtable that resides off-heap, including overhead and overwritten partitions."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_off_heap_size_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data stored in the memtable that resides off-heap, including overhead and overwritten partitions."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_on_heap_size_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data stored in the memtable that resides on-heap, including overhead and overwritten partitions."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_on_heap_size_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data stored in the memtable that resides on-heap, including overhead and overwritten partitions."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_on_heap_size_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data stored in the memtable that resides on-heap, including overhead and overwritten partitions."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_on_heap_size_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data stored in the memtable that resides on-heap, including overhead and overwritten partitions."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_switch_count_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times a flush has resulted in the memtable being switched out."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_switch_count_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times a flush has resulted in the memtable being switched out."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_switch_count_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times a flush has resulted in the memtable being switched out."
+      },
+      {
+        "name": "azure_cassandra_table_memtable_switch_count_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times a flush has resulted in the memtable being switched out."
+      },
+      {
+        "name": "azure_cassandra_table_min_partition_size_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Size of the smallest compacted partition (bytes)."
+      },
+      {
+        "name": "azure_cassandra_table_pending_compactions3_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimate of the number of pending compactions for this table."
+      },
+      {
+        "name": "azure_cassandra_table_pending_compactions3_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimate of the number of pending compactions for this table."
+      },
+      {
+        "name": "azure_cassandra_table_pending_compactions3_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimate of the number of pending compactions for this table."
+      },
+      {
+        "name": "azure_cassandra_table_pending_compactions3_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimate of the number of pending compactions for this table."
+      },
+      {
+        "name": "azure_cassandra_table_pending_flushes3_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated number of flush tasks pending for this table."
+      },
+      {
+        "name": "azure_cassandra_table_pending_flushes3_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated number of flush tasks pending for this table."
+      },
+      {
+        "name": "azure_cassandra_table_pending_flushes3_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated number of flush tasks pending for this table."
+      },
+      {
+        "name": "azure_cassandra_table_pending_flushes3_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Estimated number of flush tasks pending for this table."
+      },
+      {
+        "name": "azure_cassandra_table_percent_repaired_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percent of table data that is repaired on disk."
+      },
+      {
+        "name": "azure_cassandra_table_range_latency_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average local range scan latency for this table (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_table_range_latency_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 local range scan latency for this table (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_table_read_latency_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average local read latency for this table (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_table_read_latency_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 local read latency for this table (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_table_row_cache_hit_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of table row cache hits."
+      },
+      {
+        "name": "azure_cassandra_table_row_cache_hit_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of table row cache hits."
+      },
+      {
+        "name": "azure_cassandra_table_row_cache_hit_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of table row cache hits."
+      },
+      {
+        "name": "azure_cassandra_table_row_cache_hit_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of table row cache hits."
+      },
+      {
+        "name": "azure_cassandra_table_row_cache_hit_out_of_range_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of table row cache hits that did not satisfy the query filter and went to disk."
+      },
+      {
+        "name": "azure_cassandra_table_row_cache_hit_out_of_range_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of table row cache hits that did not satisfy the query filter and went to disk."
+      },
+      {
+        "name": "azure_cassandra_table_row_cache_hit_out_of_range_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of table row cache hits that did not satisfy the query filter and went to disk."
+      },
+      {
+        "name": "azure_cassandra_table_row_cache_hit_out_of_range_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of table row cache hits that did not satisfy the query filter and went to disk."
+      },
+      {
+        "name": "azure_cassandra_table_row_cache_miss_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of table row cache misses."
+      },
+      {
+        "name": "azure_cassandra_table_row_cache_miss_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of table row cache misses."
+      },
+      {
+        "name": "azure_cassandra_table_row_cache_miss_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of table row cache misses."
+      },
+      {
+        "name": "azure_cassandra_table_row_cache_miss_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of table row cache misses."
+      },
+      {
+        "name": "azure_cassandra_table_speculative_retries_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times speculative retries were sent for this table."
+      },
+      {
+        "name": "azure_cassandra_table_speculative_retries_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times speculative retries were sent for this table."
+      },
+      {
+        "name": "azure_cassandra_table_speculative_retries_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times speculative retries were sent for this table."
+      },
+      {
+        "name": "azure_cassandra_table_speculative_retries_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times speculative retries were sent for this table."
+      },
+      {
+        "name": "azure_cassandra_table_sstables_per_read_histogram_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average number of SSTable data files accessed per single partition read."
+      },
+      {
+        "name": "azure_cassandra_table_sstables_per_read_histogram_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 number of SSTable data files accessed per single partition read."
+      },
+      {
+        "name": "azure_cassandra_table_tombstone_scanned_histogram_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average tombstones scanned in queries on this table."
+      },
+      {
+        "name": "azure_cassandra_table_tombstone_scanned_histogram_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 tombstones scanned in queries on this table."
+      },
+      {
+        "name": "azure_cassandra_table_total_disk_space_used3_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total disk space used by SSTables belonging to this table, including obsolete ones waiting to be GC'd."
+      },
+      {
+        "name": "azure_cassandra_table_total_disk_space_used3_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total disk space used by SSTables belonging to this table, including obsolete ones waiting to be GC'd."
+      },
+      {
+        "name": "azure_cassandra_table_total_disk_space_used3_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total disk space used by SSTables belonging to this table, including obsolete ones waiting to be GC'd."
+      },
+      {
+        "name": "azure_cassandra_table_total_disk_space_used3_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total disk space used by SSTables belonging to this table, including obsolete ones waiting to be GC'd."
+      },
+      {
+        "name": "azure_cassandra_table_view_lock_acquire_time_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average time taken acquiring a partition lock for materialized view updates on this table."
+      },
+      {
+        "name": "azure_cassandra_table_view_lock_acquire_time_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 time taken acquiring a partition lock for materialized view updates on this table."
+      },
+      {
+        "name": "azure_cassandra_table_view_read_time_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average time taken during the local read of a materialized view update."
+      },
+      {
+        "name": "azure_cassandra_table_view_read_time_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 time taken during the local read of a materialized view update."
+      },
+      {
+        "name": "azure_cassandra_table_waiting_on_free_memtable_space_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average time spent waiting for free memtable space, either on- or off-heap."
+      },
+      {
+        "name": "azure_cassandra_table_waiting_on_free_memtable_space_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 time spent waiting for free memtable space, either on- or off-heap."
+      },
+      {
+        "name": "azure_cassandra_table_write_latency_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average local write latency for this table (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_table_write_latency_p99_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "p99 local write latency for this table (microseconds)."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_active_tasks_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of tasks being actively worked on by this pool."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_active_tasks_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of tasks being actively worked on by this pool."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_active_tasks_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of tasks being actively worked on by this pool."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_active_tasks_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of tasks being actively worked on by this pool."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_currently_blocked_tasks3_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of tasks currently blocked due to queue saturation that will become unblocked on retry."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_currently_blocked_tasks3_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of tasks currently blocked due to queue saturation that will become unblocked on retry."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_currently_blocked_tasks3_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of tasks currently blocked due to queue saturation that will become unblocked on retry."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_currently_blocked_tasks3_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of tasks currently blocked due to queue saturation that will become unblocked on retry."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_max_pool_size_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Maximum number of threads in this pool."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_pending_tasks_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of tasks queued up on this pool."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_pending_tasks_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of tasks queued up on this pool."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_pending_tasks_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of tasks queued up on this pool."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_pending_tasks_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of tasks queued up on this pool."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_total_blocked_tasks_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of tasks that were blocked due to queue saturation."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_total_blocked_tasks_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of tasks that were blocked due to queue saturation."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_total_blocked_tasks_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of tasks that were blocked due to queue saturation."
+      },
+      {
+        "name": "azure_cassandra_thread_pools_total_blocked_tasks_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of tasks that were blocked due to queue saturation."
+      },
+      {
+        "name": "azure_cpu_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "CPU usage (active)."
+      },
+      {
+        "name": "azure_disk_utilization_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Disk utilization rate."
+      },
+      {
+        "name": "azure_diskio_merged_reads_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O merged reads."
+      },
+      {
+        "name": "azure_diskio_merged_reads_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O merged reads."
+      },
+      {
+        "name": "azure_diskio_merged_reads_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O merged reads."
+      },
+      {
+        "name": "azure_diskio_merged_reads_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O merged reads."
+      },
+      {
+        "name": "azure_diskio_merged_writes_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O merged writes."
+      },
+      {
+        "name": "azure_diskio_merged_writes_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O merged writes."
+      },
+      {
+        "name": "azure_diskio_merged_writes_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O merged writes."
+      },
+      {
+        "name": "azure_diskio_merged_writes_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O merged writes."
+      },
+      {
+        "name": "azure_diskio_read_bytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O read bytes."
+      },
+      {
+        "name": "azure_diskio_read_bytes_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O read bytes."
+      },
+      {
+        "name": "azure_diskio_read_bytes_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O read bytes."
+      },
+      {
+        "name": "azure_diskio_read_bytes_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O read bytes."
+      },
+      {
+        "name": "azure_diskio_read_time_average",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O read time (milliseconds)."
+      },
+      {
+        "name": "azure_diskio_read_time_minimum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O read time (milliseconds)."
+      },
+      {
+        "name": "azure_diskio_read_time_maximum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O read time (milliseconds)."
+      },
+      {
+        "name": "azure_diskio_read_time_count",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O read time (milliseconds)."
+      },
+      {
+        "name": "azure_diskio_reads_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O read counts."
+      },
+      {
+        "name": "azure_diskio_reads_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O read counts."
+      },
+      {
+        "name": "azure_diskio_reads_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O read counts."
+      },
+      {
+        "name": "azure_diskio_reads_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O read counts."
+      },
+      {
+        "name": "azure_diskio_write_bytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O write bytes."
+      },
+      {
+        "name": "azure_diskio_write_bytes_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O write bytes."
+      },
+      {
+        "name": "azure_diskio_write_bytes_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O write bytes."
+      },
+      {
+        "name": "azure_diskio_write_bytes_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O write bytes."
+      },
+      {
+        "name": "azure_diskio_write_time_average",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O write time (milliseconds)."
+      },
+      {
+        "name": "azure_diskio_write_time_minimum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O write time (milliseconds)."
+      },
+      {
+        "name": "azure_diskio_write_time_maximum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O write time (milliseconds)."
+      },
+      {
+        "name": "azure_diskio_write_time_count",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O write time (milliseconds)."
+      },
+      {
+        "name": "azure_diskio_writes_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O write counts."
+      },
+      {
+        "name": "azure_diskio_writes_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O write counts."
+      },
+      {
+        "name": "azure_diskio_writes_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O write counts."
+      },
+      {
+        "name": "azure_diskio_writes_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative disk I/O write counts."
+      },
+      {
+        "name": "azure_ethtool_rx_bytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative network received bytes."
+      },
+      {
+        "name": "azure_ethtool_rx_bytes_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative network received bytes."
+      },
+      {
+        "name": "azure_ethtool_rx_bytes_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative network received bytes."
+      },
+      {
+        "name": "azure_ethtool_rx_bytes_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative network received bytes."
+      },
+      {
+        "name": "azure_ethtool_rx_packets_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative network received packets."
+      },
+      {
+        "name": "azure_ethtool_rx_packets_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative network received packets."
+      },
+      {
+        "name": "azure_ethtool_rx_packets_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative network received packets."
+      },
+      {
+        "name": "azure_ethtool_rx_packets_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative network received packets."
+      },
+      {
+        "name": "azure_ethtool_tx_bytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative network transmitted bytes."
+      },
+      {
+        "name": "azure_ethtool_tx_bytes_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative network transmitted bytes."
+      },
+      {
+        "name": "azure_ethtool_tx_bytes_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative network transmitted bytes."
+      },
+      {
+        "name": "azure_ethtool_tx_bytes_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative network transmitted bytes."
+      },
+      {
+        "name": "azure_ethtool_tx_packets_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative network transmitted packets."
+      },
+      {
+        "name": "azure_ethtool_tx_packets_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative network transmitted packets."
+      },
+      {
+        "name": "azure_ethtool_tx_packets_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative network transmitted packets."
+      },
+      {
+        "name": "azure_ethtool_tx_packets_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Cumulative network transmitted packets."
+      },
+      {
+        "name": "azure_iops_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "I/O operations and bytes per second."
+      },
+      {
+        "name": "azure_percent_mem_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Memory utilization rate."
+      },
+      {
+        "name": "azure_raid_array_degraded_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Whether the RAID array is degraded (1 = degraded, 0 = not degraded)."
+      },
+      {
+        "name": "azure_raid_array_degraded_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Whether the RAID array is degraded (1 = degraded, 0 = not degraded)."
+      },
+      {
+        "name": "azure_raid_array_degraded_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Whether the RAID array is degraded (1 = degraded, 0 = not degraded)."
+      },
+      {
+        "name": "azure_raid_array_rebuild_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of RAID array rebuild."
+      },
+      {
+        "name": "azure_raid_array_rebuild_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of RAID array rebuild."
+      },
+      {
+        "name": "azure_raid_array_rebuild_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of RAID array rebuild."
+      },
+      {
+        "name": "azure_total_cpu_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Average CPU usage (active) across all CPUs."
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "resourceProvider": "Microsoft.DocumentDB",
+      "resourceType": "cassandraClusters",
+      "metrics": {},
+      "logs": {
+        "categoryGroups": [
+          "allLogs"
+        ]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Azure Cassandra DB Overview",
+        "description": "Overview of Azure Managed Instance for Apache Cassandra metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

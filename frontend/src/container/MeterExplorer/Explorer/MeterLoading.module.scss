@@ -1,0 +1,18 @@
+.loadingMeter {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	height: 240px;
+	padding: var(--spacing-12) 0;
+}
+
+.loadingMeterContent {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.loadingGif {
+	height: 72px;
+	margin-left: calc(-1 * var(--spacing-12));
+}

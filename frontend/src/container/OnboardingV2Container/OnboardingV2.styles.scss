@@ -1220,6 +1220,14 @@
 	.request-data-source-modal-input {
 		margin-top: 8px;
 	}
+
+	.invite-team-member-modal-footer {
+		display: flex;
+		justify-content: flex-end;
+		gap: var(--spacing-8);
+		border-top: 1px solid var(--l1-border);
+		padding-top: var(--spacing-6);
+	}
 }
 
 .request-data-source-modal {

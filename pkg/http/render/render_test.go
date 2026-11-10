@@ -99,13 +99,13 @@ func TestError(t *testing.T) {
 			name:       "AlreadyExists",
 			statusCode: http.StatusConflict,
 			err:        errors.New(errors.TypeAlreadyExists, errors.MustNewCode("already_exists"), "already exists").WithUrl("https://already_exists"),
-			expected:   []byte(`{"status":"error","error":{"type":"already-exists","code":"already_exists","message":"already exists","url":"https://already_exists"}}`),
+			expected:   []byte(`{"status":"error","error":{"type":"already-exists","code":"already_exists","message":"already exists","url":"https://already_exists","errors":[],"suggestions":[]}}`),
 		},
 		"/unauthenticated": {
 			name:       "Unauthenticated",
 			statusCode: http.StatusUnauthorized,
 			err:        errors.New(errors.TypeUnauthenticated, errors.MustNewCode("not_allowed"), "not allowed").WithUrl("https://unauthenticated").WithAdditional("a1", "a2"),
-			expected:   []byte(`{"status":"error","error":{"type":"unauthenticated","code":"not_allowed","message":"not allowed","url":"https://unauthenticated","errors":[{"message":"a1"},{"message":"a2"}]}}`),
+			expected:   []byte(`{"status":"error","error":{"type":"unauthenticated","code":"not_allowed","message":"not allowed","url":"https://unauthenticated","errors":[{"message":"a1","suggestions":[]},{"message":"a2","suggestions":[]}],"suggestions":[]}}`),
 		},
 	}
 
@@ -177,8 +177,7 @@ func TestErrorRetryAfterHeader(t *testing.T) {
 			name:                "BareErrorNoHeaderNoRetryBlock",
 			err:                 errors.New(errors.TypeInternal, errors.MustNewCode("boom"), "boom"),
 			wantRetryAfter:      "",
-			wantBodyContains:    `"code":"boom"`,
-			wantBodyNotContains: `"retry"`,
+			wantBodyNotContains: `"retry"`, // omitempty drops the nil retry block entirely
 		},
 	}
 

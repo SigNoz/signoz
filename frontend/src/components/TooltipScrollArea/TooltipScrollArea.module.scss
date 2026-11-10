@@ -1,0 +1,13 @@
+@use '../../styles/scrollbar' as *;
+
+// How tall a hover reveal grows before its content starts scrolling.
+.scrollArea {
+	max-height: 480px;
+	overflow-y: auto;
+	// Keep the page behind the tooltip still once the list hits its end.
+	overscroll-behavior: contain;
+	// Gap between the content and the scrollbar (or the tooltip edge when short).
+	padding-right: var(--spacing-4);
+
+	@include custom-scrollbar;
+}

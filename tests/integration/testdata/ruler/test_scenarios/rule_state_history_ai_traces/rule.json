@@ -1,0 +1,73 @@
+{
+  "alert": "rule_state_history_ai_traces",
+  "ruleType": "threshold_rule",
+  "alertType": "AI_TRACES_BASED_ALERT",
+  "condition": {
+    "thresholds": {
+      "kind": "basic",
+      "spec": [
+        {
+          "name": "critical",
+          "target": 0,
+          "matchType": "at_least_once",
+          "op": "above",
+          "channels": [
+            "test channel"
+          ]
+        }
+      ]
+    },
+    "compositeQuery": {
+      "queryType": "builder",
+      "panelType": "graph",
+      "queries": [
+        {
+          "type": "builder_ai_query",
+          "spec": {
+            "name": "A",
+            "signal": "traces",
+            "filter": {
+              "expression": "trace.input_tokens > 100"
+            },
+            "groupBy": [
+              {
+                "name": "service.name",
+                "fieldContext": "resource",
+                "fieldDataType": "string"
+              }
+            ],
+            "aggregations": [
+              {
+                "expression": "max(trace.total_tokens)"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "selectedQueryName": "A"
+  },
+  "evaluation": {
+    "kind": "rolling",
+    "spec": {
+      "evalWindow": "5m0s",
+      "frequency": "15s"
+    }
+  },
+  "labels": {},
+  "annotations": {
+    "description": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})",
+    "summary": "This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})"
+  },
+  "notificationSettings": {
+    "groupBy": [],
+    "usePolicy": false,
+    "renotify": {
+      "enabled": false,
+      "interval": "30m",
+      "alertStates": []
+    }
+  },
+  "version": "v5",
+  "schemaVersion": "v2alpha1"
+}

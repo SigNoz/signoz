@@ -138,7 +138,7 @@ func (service *Service) PutAlerts(ctx context.Context, orgID string, alerts aler
 	return server.PutAlerts(ctx, alerts)
 }
 
-func (service *Service) TestReceiver(ctx context.Context, orgID string, receiver alertmanagertypes.Receiver) error {
+func (service *Service) TestReceiver(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) error {
 	service.serversMtx.RLock()
 	defer service.serversMtx.RUnlock()
 
@@ -240,7 +240,7 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 }
 
 func (service *Service) compareAndSelectConfig(ctx context.Context, incomingConfig *alertmanagertypes.Config) (*alertmanagertypes.Config, error) {
-	channels, err := service.configStore.ListChannels(ctx, incomingConfig.StoreableConfig().OrgID)
+	channels, _, err := service.configStore.ListChannels(ctx, incomingConfig.StoreableConfig().OrgID, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,1208 @@
+{
+  "schemaVersion": "v6",
+  "image": "data:image/svg+xml;base64,PHN2ZyBpZD0iYmE3ZTNjODMtNGVhNi00MGQ1LTgyMGYtNzQ2Y2NlZGI4MTU2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOCAxOCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJlNzRkZGYyMy1mZTc0LTRmODktOWE0OS1jN2YyZTIyYmUyODQiIHgxPSIzLjcwNyIgeTE9IjUuMTIzIiB4Mj0iMy43MDciIHkyPSIyLjA2MSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzAwNzhkNCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYTBlZiIvPjwvbGluZWFyR3JhZGllbnQ+PGxpbmVhckdyYWRpZW50IGlkPSJiY2NlM2I5NC02YjgzLTQ0YzUtOWJmNy1hODlkNjY2ZjNkMWUiIHgxPSIxMi43NDEiIHkxPSIxMC41NTgiIHgyPSIxMi43NDEiIHkyPSI1LjE2MSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzAwNzhkNCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYTBlZiIvPjwvbGluZWFyR3JhZGllbnQ+PGxpbmVhckdyYWRpZW50IGlkPSJmOWIwODAzZi00MWU1LTQxNjUtOTIzMC1lMjIwNDI3ZWM0NzUiIHgxPSIzLjcwNyIgeTE9IjEzLjcyMyIgeDI9IjMuNzA3IiB5Mj0iMTAuMzc4IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjMDA3OGQ0Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjNWVhMGVmIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PGc+PGc+PHJlY3QgeD0iNy45MjMiIHk9IjEuOTIyIiB3aWR0aD0iMC45OCIgaGVpZ2h0PSI2LjE4MyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMC4wMTMgMTAuMDQ4KSByb3RhdGUoLTYxLjcyNSkiIGZpbGw9IiMwMDMwNjciLz48cGF0aCBkPSJNNy4wODEsNC4yVjEuNUguMzN2Mi43aDB2MGMwLC43MTYsMS41MTEsMS4zLDMuMzc2LDEuM3MzLjM3Ni0uNTgsMy4zNzYtMS4zWiIgZmlsbD0idXJsKCNlNzRkZGYyMy1mZTc0LTRmODktOWE0OS1jN2YyZTIyYmUyODQpIi8+PGVsbGlwc2UgY3g9IjMuNzA3IiBjeT0iMS41NDYiIHJ4PSIzLjM3NiIgcnk9IjEuMjk2IiBmaWxsPSIjODNiOWY5Ii8+PHBhdGggZD0iTTE2LjExNSw4LjYxNnYtMi43SDkuMzY1djIuN2gwdjBjMCwuNzE2LDEuNTExLDEuMywzLjM3NiwxLjNzMy4zNzYtLjU4LDMuMzc2LTEuM1oiIGZpbGw9InVybCgjYmNjZTNiOTQtNmI4My00NGM1LTliZjctYTg5ZDY2NmYzZDFlKSIvPjxlbGxpcHNlIGN4PSIxMi43NDEiIGN5PSI1Ljk2IiByeD0iMy4zNzYiIHJ5PSIxLjI5NiIgZmlsbD0iIzgzYjlmOSIvPjxyZWN0IHg9IjMuMjIiIHk9IjQuMTY4IiB3aWR0aD0iMC45OCIgaGVpZ2h0PSI3Ljk2MiIgZmlsbD0iIzAwMzA2NyIvPjxjaXJjbGUgY3g9IjMuNzUiIGN5PSIzLjMzNyIgcj0iMS4xNTciIGZpbGw9IiNjM2YxZmYiLz48cGF0aCBkPSJNNy4wODEsMTIuODI0di0yLjdILjMzdjIuN2gwdjBjMCwuNzE2LDEuNTExLDEuMywzLjM3NiwxLjNzMy4zNzYtLjU4LDMuMzc2LTEuM1oiIGZpbGw9InVybCgjZjliMDgwM2YtNDFlNS00MTY1LTkyMzAtZTIyMDQyN2VjNDc1KSIvPjxlbGxpcHNlIGN4PSIzLjcwNyIgY3k9IjEwLjE2NyIgcng9IjMuMzc2IiByeT0iMS4yOTYiIGZpbGw9IiM4M2I5ZjkiLz48cmVjdCB4PSIzLjcwOCIgeT0iOS4xNjQiIHdpZHRoPSI5Ljc0MSIgaGVpZ2h0PSIwLjk4IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMy4zNzYgNC43NjcpIHJvdGF0ZSgtMjYuMTQpIiBmaWxsPSIjMDAzMDY3Ii8+PGNpcmNsZSBjeD0iMy43MDEiIGN5PSIxMS45MzkiIHI9IjEuMTU3IiBmaWxsPSIjYzNmMWZmIi8+PGNpcmNsZSBjeD0iMTIuNzQzIiBjeT0iNy41NDgiIHI9IjEuMTU3IiBmaWxsPSIjYzNmMWZmIi8+PC9nPjxnPjxwYXRoIGQ9Ik0xNy4xNjYsMTUuNWgwYS4yNTUuMjU1LDAsMCwwLS4xLS4xODVBMTcsMTcsMCwwLDAsMTUuNTYzLDE0YTMuNTYzLDMuNTYzLDAsMCwwLTIuNjM4LS43MDYsNS41MTUsNS41MTUsMCwwLDAtMy4zMzksMi4wNjYuMjI0LjIyNCwwLDAsMC0uMDU4LjE0aDB2MGgwYS4yNi4yNiwwLDAsMCwuMS4xODYsMTcuMzE5LDE3LjMxOSwwLDAsMCwxLjUwNywxLjMxNSwzLjU2OCwzLjU2OCwwLDAsMCwyLjYzNy43MDYsNS41MTcsNS41MTcsMCwwLDAsMy4zMzktMi4wNjYuMjI5LjIyOSwwLDAsMCwuMDU5LS4xNDFoMFoiIGZpbGw9IiMwMDMwNjciLz48Y2lyY2xlIGN4PSIxMy4zODEiIGN5PSIxNS41MDEiIHI9IjEuODQ2IiBmaWxsPSIjYzNmMWZmIi8+PHBhdGggZD0iTTEzLjM4OSwxNC40NzhhLjg3NS44NzUsMCwwLDAtLjE0NC4wMjkuNTM3LjUzNywwLDAsMSwuMS4yOTIuNTU5LjU1OSwwLDAsMS0uNTU5LjU1OC41NDguNTQ4LDAsMCwxLS4zNjgtLjE0NS45ODUuOTg1LDAsMCwwLS4wNjIuMywxLjAzOCwxLjAzOCwwLDEsMCwxLjAzOC0xLjAzN1oiIGZpbGw9IiMwMDMwNjciLz48cGF0aCBkPSJNMTcuNTI5LDEzLjQ3MkE2LjU4Miw2LjU4MiwwLDAsMCwxNS42LDEyLjI0MWwuNDM3LS43NzZhLjQ1OC40NTgsMCwwLDAsLjA0NC0uMzQuNDQxLjQ0MSwwLDAsMC0uODA2LS4xMDZsLS41MzUuOTUyYTUuNzYyLDUuNzYyLDAsMCwwLS45MTQtLjE0M3YtLjk3NWEuNDQyLjQ0MiwwLDAsMC0uODgzLDB2Ljk3NGE1Ljg3OSw1Ljg3OSwwLDAsMC0uOTM0LjE0NGwtLjUzNi0uOTUyYS40NDIuNDQyLDAsMCwwLS42LS4xNTguNDUuNDUsMCwwLDAtLjE1OS42cS4yMTkuMzg3LjQzNy43NzZhNi41ODIsNi41ODIsMCwwLDAtMS45MzEsMS4yMzFjLS40MjIuMzgyLjIsMSwuNjI0LjYyNGE1LjE4Myw1LjE4MywwLDAsMSw3LjA2NywwQzE3LjMyNiwxNC40NzYsMTcuOTUxLDEzLjg1NCwxNy41MjksMTMuNDcyWiIgZmlsbD0iIzAwMzA2NyIvPjwvZz48L2c+PHJlY3QgeD0iLTQuOTM0IiB5PSItMy42OTEiIHdpZHRoPSIyOS4zMzEiIGhlaWdodD0iMzQuMjYxIiBmaWxsPSJub25lIiBzdHJva2U9IiNiMzFiMWIiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIvPjwvc3ZnPg==",
+  "name": "",
+  "generateName": true,
+  "tags": [],
+  "spec": {
+    "display": {
+      "name": "Azure Cassandra DB Overview",
+      "description": "Overview of Azure Managed Instance for Apache Cassandra"
+    },
+    "variables": [
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "azuremonitor.subscription_id",
+            "description": "Subscription ID for your Azure Account"
+          },
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/DynamicVariable",
+            "spec": {
+              "name": "azuremonitor.subscription_id",
+              "signal": "all"
+            }
+          },
+          "name": "azuremonitor.subscription_id"
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "name",
+            "description": "Azure Cassandra cluster name"
+          },
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/DynamicVariable",
+            "spec": {
+              "name": "name",
+              "signal": "all"
+            }
+          },
+          "name": "name"
+        }
+      }
+    ],
+    "panels": {
+      "2be62160-4daf-83d2-14d6-f385bb635189": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Client Request Latency p99 (microseconds)",
+            "description": "p99 client request latency (microseconds)."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_cassandra_client_request_latency_p99_average",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_cassandra_node",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_request_type",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{metadata_cassandra_node}} {{metadata_request_type}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "546421fa-5fb0-5eea-e335-0dd28386bb7f": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Client Request Timeouts",
+            "description": "Cumulative number of timeouts encountered in client requests."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_cassandra_client_request_timeouts3_maximum",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_cassandra_node",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_request_type",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{metadata_cassandra_node}} {{metadata_request_type}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "6ace8bce-dee7-854b-f2c4-9aba8cf84e7f": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "CPU Usage (Active)",
+            "description": "CPU usage (active)."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_cpu_maximum",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_address",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{metadata_address}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "6c709d5d-bfd8-a401-39ca-b71e77b91f43": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Memory Utilization",
+            "description": "Memory utilization rate."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_percent_mem_maximum",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_address",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{metadata_address}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "8fb81f18-75c9-b004-8ae9-7e0c3e156913": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Regular Statements Executed",
+            "description": "Total number of non-prepared statements executed."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_cassandra_cql_regular_statements_executed_maximum",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_cassandra_node",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{metadata_cassandra_node}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "93e1b49e-3178-d61b-27ab-e2154926063c": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Prepared Statements Executed",
+            "description": "Total number of prepared statements executed."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_cassandra_cql_prepared_statements_executed_maximum",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_cassandra_node",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{metadata_cassandra_node}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "a40e069f-c7ce-3250-52f9-0c01e89861ea": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "IOPS",
+            "description": "I/O operations and bytes per second."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_iops_maximum",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_address",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_kind",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{metadata_address}} {{metadata_kind}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "c26f845a-c2e3-56a3-c97c-f4731a0c56d0": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Connected Native Clients",
+            "description": "Number of connected native clients."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_cassandra_client_connected_native_clients_minimum",
+                        "temporality": "",
+                        "timeAggregation": "min",
+                        "spaceAggregation": "min"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_cassandra_node",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{metadata_cassandra_node}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "eff9620d-0b4e-9a9a-11b3-680b95ee204e": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Average CPU Usage Across CPUs",
+            "description": "Average CPU usage (active) across all CPUs."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_total_cpu_maximum",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_address",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{metadata_address}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "f6353acf-bf27-7fde-58df-47665fc080f4": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Client Request Failures",
+            "description": "Cumulative number of transaction failures encountered."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_cassandra_client_request_failures3_maximum",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_cassandra_node",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_request_type",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{metadata_cassandra_node}} {{metadata_request_type}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "f826e3c1-661d-b4e6-1367-6ead14857a3b": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Disk Utilization",
+            "description": "Disk utilization rate."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_disk_utilization_maximum",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DocumentDB/cassandraClusters' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      },
+                      {
+                        "name": "metadata_address",
+                        "signal": "",
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{metadata_address}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/6ace8bce-dee7-854b-f2c4-9aba8cf84e7f"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/eff9620d-0b4e-9a9a-11b3-680b95ee204e"
+              }
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/6c709d5d-bfd8-a401-39ca-b71e77b91f43"
+              }
+            },
+            {
+              "x": 6,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/f826e3c1-661d-b4e6-1367-6ead14857a3b"
+              }
+            },
+            {
+              "x": 0,
+              "y": 12,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/a40e069f-c7ce-3250-52f9-0c01e89861ea"
+              }
+            },
+            {
+              "x": 6,
+              "y": 12,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/2be62160-4daf-83d2-14d6-f385bb635189"
+              }
+            },
+            {
+              "x": 0,
+              "y": 18,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/f6353acf-bf27-7fde-58df-47665fc080f4"
+              }
+            },
+            {
+              "x": 6,
+              "y": 18,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/546421fa-5fb0-5eea-e335-0dd28386bb7f"
+              }
+            },
+            {
+              "x": 0,
+              "y": 24,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/c26f845a-c2e3-56a3-c97c-f4731a0c56d0"
+              }
+            },
+            {
+              "x": 6,
+              "y": 24,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/8fb81f18-75c9-b004-8ae9-7e0c3e156913"
+              }
+            },
+            {
+              "x": 0,
+              "y": 30,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/93e1b49e-3178-d61b-27ab-e2154926063c"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": "",
+    "links": []
+  }
+}

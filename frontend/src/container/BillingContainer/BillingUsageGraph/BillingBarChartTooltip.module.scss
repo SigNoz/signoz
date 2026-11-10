@@ -1,0 +1,9 @@
+.headerRow {
+	padding: var(--spacing-8);
+}
+
+.itemList {
+	overflow-y: auto;
+	max-height: 300px;
+	padding: var(--padding-3);
+}

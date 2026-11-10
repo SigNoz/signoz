@@ -13,6 +13,9 @@ type Store interface {
 
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableDashboard, error)
 
+	// GetByName resolves a dashboard by its per-org unique name.
+	GetByName(ctx context.Context, orgID valuer.UUID, name string) (*StorableDashboard, error)
+
 	GetPublic(context.Context, string) (*StorablePublicDashboard, error)
 
 	GetDashboardByOrgsAndPublicID(context.Context, []string, string) (*StorableDashboard, error)
@@ -25,6 +28,10 @@ type Store interface {
 
 	Update(context.Context, valuer.UUID, *StorableDashboard) error
 
+	// UpdateName updates only the name column of a dashboard, leaving its data
+	// untouched — used to backfill the name of a dashboard whose data fails to migrate.
+	UpdateName(ctx context.Context, orgID valuer.UUID, id valuer.UUID, name string) error
+
 	UpdatePublic(context.Context, *StorablePublicDashboard) error
 
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
@@ -32,4 +39,49 @@ type Store interface {
 	DeletePublic(context.Context, string) error
 
 	RunInTx(context.Context, func(context.Context) error) error
+
+	// ════════════════════════════════════════════════════════════════════════
+	// v2 dashboard methods
+	// ════════════════════════════════════════════════════════════════════════
+
+	// int64 return is the total row count for the filter (pre-limit/offset).
+	// ListV2 is the pure list; ListForUser additionally joins the caller's pins.
+	ListV2(ctx context.Context, orgID valuer.UUID, params *ListDashboardsV2Params) ([]*StorableDashboard, int64, error)
+
+	ListForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, params *ListDashboardsV2Params) ([]*StorableDashboardWithPinInfo, int64, error)
+
+	// ListByDataContainsAny returns the org's dashboards whose raw `data` JSON
+	// contains any of the given substrings (matched literally; LIKE wildcards escaped).
+	ListByDataContainsAny(ctx context.Context, orgID valuer.UUID, searches []string) ([]*StorableDashboard, error)
+
+	// Returns ErrCodePinnedDashboardLimitHit when the user is at MaxPinnedDashboardsPerUser.
+	PinForUser(ctx context.Context, preference *UserDashboardPreference) error
+
+	UnpinForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, dashboardID valuer.UUID) error
+
+	DeletePreferencesForDashboard(ctx context.Context, orgID valuer.UUID, dashboardID valuer.UUID) error
+
+	DeletePreferencesForUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error
+
+	// ════════════════════════════════════════════════════════════════════════
+	// Dashboard saved view methods
+	// ════════════════════════════════════════════════════════════════════════
+	CreateDashboardView(ctx context.Context, view *DashboardView) error
+
+	GetDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*DashboardView, error)
+
+	ListDashboardViews(ctx context.Context, orgID valuer.UUID) ([]*DashboardView, error)
+
+	UpdateDashboardView(ctx context.Context, view *DashboardView) error
+
+	DeleteDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
+	// ════════════════════════════════════════════════════════════════════════
+	// System dashboard methods
+	// ════════════════════════════════════════════════════════════════════════
+	CreateSystemDashboard(ctx context.Context, storable *StorableSystemDashboard) error
+
+	GetSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*StorableSystemDashboard, error)
+
+	UpdateSystemDashboardVersion(ctx context.Context, orgID valuer.UUID, name string, version int) error
 }

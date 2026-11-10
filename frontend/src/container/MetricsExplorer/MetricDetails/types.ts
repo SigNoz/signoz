@@ -1,7 +1,6 @@
 import {
 	MetricsexplorertypesMetricAlertDTO,
 	MetricsexplorertypesMetricAttributeDTO,
-	MetricsexplorertypesMetricDashboardDTO,
 	MetricsexplorertypesMetricHighlightsResponseDTO,
 	MetricsexplorertypesMetricMetadataDTO,
 	MetrictypesTemporalityDTO,
@@ -35,6 +34,7 @@ export interface AllAttributesProps {
 	metricName: string;
 	metricType: MetrictypesTypeDTO | undefined;
 	isMonotonic?: boolean;
+	temporality?: MetrictypesTemporalityDTO;
 	minTime?: number;
 	maxTime?: number;
 }
@@ -53,8 +53,6 @@ export interface AllAttributesEmptyTextProps {
 export type MetricHighlight = MetricsexplorertypesMetricHighlightsResponseDTO;
 
 export type MetricAlert = MetricsexplorertypesMetricAlertDTO;
-
-export type MetricDashboard = MetricsexplorertypesMetricDashboardDTO;
 
 export type MetricMetadata = MetricsexplorertypesMetricMetadataDTO;
 export interface MetricMetadataFormState {

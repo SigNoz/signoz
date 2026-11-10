@@ -13,6 +13,7 @@ import { StreamingEventItem } from '../../types';
 import ActivityGroup, { ActivityItem } from '../ActivityGroup';
 import ApprovalCard from '../ApprovalCard';
 import { RichCodeBlock } from '../blocks';
+import MarkdownExternalLink from '../MarkdownExternalLink/MarkdownExternalLink';
 import ClarificationForm from '../ClarificationForm';
 
 import messageStyles from '../MessageBubble/MessageBubble.module.scss';
@@ -30,7 +31,11 @@ function SmartPre({ children }: { children?: React.ReactNode }): JSX.Element {
 }
 
 const MD_PLUGINS = [remarkGfm];
-const MD_COMPONENTS = { code: RichCodeBlock, pre: SmartPre };
+const MD_COMPONENTS = {
+	code: RichCodeBlock,
+	pre: SmartPre,
+	a: MarkdownExternalLink,
+};
 
 type RenderGroup =
 	| { kind: 'text'; id: string; content: string }

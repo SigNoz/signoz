@@ -1,5 +1,5 @@
 import { ReactNode, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import { Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import TextToolTip from 'components/TextToolTip';
@@ -10,8 +10,8 @@ import {
 } from 'constants/apDex';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Graph from 'container/GridCardLayout/GridCard';
-import DisplayThreshold from 'container/GridCardLayout/WidgetHeader/DisplayThreshold';
+import Graph from 'container/WidgetCard/Card';
+import DisplayThreshold from 'container/WidgetCard/Header/DisplayThreshold';
 import {
 	GraphTitle,
 	SERVICE_CHART_ID,
@@ -21,10 +21,6 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
-
-import { FeatureKeys } from '../../../../../constants/features';
-import { useAppContext } from '../../../../../providers/App/App';
-import { IServiceName } from '../../types';
 import { ApDexMetricsProps } from './types';
 
 function ApDexMetrics({
@@ -36,12 +32,8 @@ function ApDexMetrics({
 	topLevelOperationsRoute,
 	handleGraphClick,
 }: ApDexMetricsProps): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
-	const servicename = decodeURIComponent(encodedServiceName);
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
+	const servicename = decodeURIComponent(encodedServiceName || '');
 	const apDexMetricsWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
@@ -55,7 +47,6 @@ function ApDexMetrics({
 						threashold: thresholdValue || 0,
 						delta: delta || false,
 						metricsBuckets: metricsBuckets || [],
-						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -81,7 +72,6 @@ function ApDexMetrics({
 			tagFilterItems,
 			thresholdValue,
 			topLevelOperationsRoute,
-			dotMetricsEnabled,
 		],
 	);
 

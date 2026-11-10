@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -26,14 +27,14 @@ func buildSpanPercentileQuery(
 	sort.Strings(attrKeys)
 
 	filterConditions := []string{
-		fmt.Sprintf("service.name = '%s'", strings.ReplaceAll(req.ServiceName, "'", `\'`)),
-		fmt.Sprintf("name = '%s'", strings.ReplaceAll(req.Name, "'", `\'`)),
+		fmt.Sprintf("service.name = %s", querybuilder.FilterStringLiteral(req.ServiceName)),
+		fmt.Sprintf("name = %s", querybuilder.FilterStringLiteral(req.Name)),
 	}
 
 	for _, key := range attrKeys {
 		value := req.ResourceAttributes[key]
 		filterConditions = append(filterConditions,
-			fmt.Sprintf("%s = '%s'", key, strings.ReplaceAll(value, "'", `\'`)))
+			fmt.Sprintf("%s = %s", key, querybuilder.FilterStringLiteral(value)))
 	}
 
 	filterExpr := strings.Join(filterConditions, " AND ")

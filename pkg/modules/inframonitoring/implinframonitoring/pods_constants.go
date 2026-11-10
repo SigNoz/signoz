@@ -10,8 +10,19 @@ import (
 const (
 	podUIDAttrKey       = "k8s.pod.uid"
 	podStartTimeAttrKey = "k8s.pod.start_time"
-	podPhaseMetricName  = "k8s.pod.phase"
+
+	podPhaseMetricName        = "k8s.pod.phase"
+	podStatusReasonMetricName = "k8s.pod.status_reason"
 )
+
+// podStatusMetricNamesList are the metrics required to derive the kubectl-style
+// pod display status. All three must be present (getMetricsExistence gate)
+// before getPerGroupPodStatusCounts runs.
+var podStatusMetricNamesList = []string{
+	podPhaseMetricName,
+	podStatusReasonMetricName,
+	containerStatusReasonMetricName,
+}
 
 var podUIDGroupByKey = qbtypes.GroupByKey{
 	TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
@@ -29,6 +40,9 @@ var podsTableMetricNamesList = []string{
 	"k8s.pod.memory_request_utilization",
 	"k8s.pod.memory_limit_utilization",
 	"k8s.pod.phase",
+	"k8s.pod.status_reason",
+	// "k8s.container.status.reason",
+	// "k8s.container.restarts",
 }
 
 var podAttrKeysForMetadata = []string{
@@ -55,8 +69,8 @@ var orderByToPodsQueryNames = map[string][]string{
 }
 
 // newPodsTableListQuery builds the composite QB v5 request for the pods list.
-// Pod phase is derived separately via getPerGroupPodPhaseCounts (works for both
-// list and grouped_list modes), so no phase query is included here.
+// Pod status is derived separately via getPerGroupPodStatusCounts (works for both
+// list and grouped_list modes), so no status query is included here.
 func (m *module) newPodsTableListQuery() *qbtypes.QueryRangeRequest {
 	queries := []qbtypes.QueryEnvelope{
 		// Query A: CPU usage

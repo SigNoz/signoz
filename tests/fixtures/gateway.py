@@ -5,8 +5,8 @@ from wiremock.client import WireMockMatchers
 
 from fixtures import types
 
-TEST_KEY_ID = "test-key-id-001"
-TEST_LIMIT_ID = "test-limit-id-001"
+TEST_KEY_ID = "0a3f5b1c-2d4e-4f6a-8b9c-1d2e3f4a5b6c"
+TEST_LIMIT_ID = "1b4a6c2d-3e5f-4a7b-9c8d-2e3f4a5b6c7d"
 
 
 def common_gateway_headers():

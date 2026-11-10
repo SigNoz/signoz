@@ -3,6 +3,7 @@ package sqlrulestore
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"slices"
 
@@ -57,6 +58,7 @@ func (r *rule) EditRule(ctx context.Context, storedRule *ruletypes.StorableRule,
 			BunDBCtx(ctx).
 			NewUpdate().
 			Model(storedRule).
+			Where("org_id = ?", storedRule.OrgID).
 			Where("id = ?", storedRule.ID.StringValue()).
 			Exec(ctx)
 		if err != nil {
@@ -67,12 +69,13 @@ func (r *rule) EditRule(ctx context.Context, storedRule *ruletypes.StorableRule,
 	})
 }
 
-func (r *rule) DeleteRule(ctx context.Context, id valuer.UUID, cb func(context.Context) error) error {
+func (r *rule) DeleteRule(ctx context.Context, orgID valuer.UUID, id valuer.UUID, cb func(context.Context) error) error {
 	if err := r.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		_, err := r.sqlstore.
 			BunDBCtx(ctx).
 			NewDelete().
 			Model(new(ruletypes.StorableRule)).
+			Where("org_id = ?", orgID.StringValue()).
 			Where("id = ?", id.StringValue()).
 			Exec(ctx)
 		if err != nil {
@@ -85,6 +88,41 @@ func (r *rule) DeleteRule(ctx context.Context, id valuer.UUID, cb func(context.C
 	}
 
 	return nil
+}
+
+func (r *rule) GetStoredRulesMatching(ctx context.Context, orgID string, filterSQL string, filterArgs []any) ([]*ruletypes.StorableRule, error) {
+	rules := make([]*ruletypes.StorableRule, 0)
+	q := r.sqlstore.
+		BunDB().
+		NewSelect().
+		Model(&rules).
+		Where("org_id = ?", orgID)
+	if filterSQL != "" {
+		q = q.Where(filterSQL, filterArgs...)
+	}
+	if err := q.Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return rules, nil
+}
+
+func (r *rule) GetStoredRuleLabels(ctx context.Context, orgID string) ([]string, error) {
+	labelsExpression := string(r.sqlstore.Formatter().JSONExtractString("rule.data", "$.labels"))
+
+	labels := make([]string, 0)
+	err := r.sqlstore.
+		BunDB().
+		NewSelect().
+		Model((*ruletypes.StorableRule)(nil)).
+		ColumnExpr(fmt.Sprintf("COALESCE(%s, '')", labelsExpression)).
+		Where("org_id = ?", orgID).
+		Scan(ctx, &labels)
+	if err != nil {
+		return nil, err
+	}
+
+	return labels, nil
 }
 
 func (r *rule) GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.StorableRule, error) {
@@ -102,12 +140,13 @@ func (r *rule) GetStoredRules(ctx context.Context, orgID string) ([]*ruletypes.S
 	return rules, nil
 }
 
-func (r *rule) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.StorableRule, error) {
+func (r *rule) GetStoredRule(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*ruletypes.StorableRule, error) {
 	rule := new(ruletypes.StorableRule)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
 		Model(rule).
+		Where("org_id = ?", orgID.StringValue()).
 		Where("id = ?", id.StringValue()).
 		Scan(ctx)
 	if err != nil {
@@ -196,7 +235,7 @@ func (r *rule) GetStoredRulesByMetricName(ctx context.Context, orgID string, met
 		if found && !seen[storedRule.ID.StringValue()] {
 			seen[storedRule.ID.StringValue()] = true
 			alerts = append(alerts, ruletypes.RuleAlert{
-				AlertName: ruleData.AlertName,
+				AlertName: ruleData.AlertName.StringValue(),
 				AlertID:   storedRule.ID.StringValue(),
 			})
 		}

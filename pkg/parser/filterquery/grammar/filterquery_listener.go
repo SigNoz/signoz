@@ -1,4 +1,4 @@
-// Code generated from grammar/FilterQuery.g4 by ANTLR 4.13.2. DO NOT EDIT.
+// Code generated from FilterQuery.g4 by ANTLR 4.13.2. DO NOT EDIT.
 
 package parser // FilterQuery
 
@@ -43,6 +43,9 @@ type FilterQueryListener interface {
 
 	// EnterFunctionCall is called when entering the functionCall production.
 	EnterFunctionCall(c *FunctionCallContext)
+
+	// EnterSearchCall is called when entering the searchCall production.
+	EnterSearchCall(c *SearchCallContext)
 
 	// EnterFunctionParamList is called when entering the functionParamList production.
 	EnterFunctionParamList(c *FunctionParamListContext)
@@ -94,6 +97,9 @@ type FilterQueryListener interface {
 
 	// ExitFunctionCall is called when exiting the functionCall production.
 	ExitFunctionCall(c *FunctionCallContext)
+
+	// ExitSearchCall is called when exiting the searchCall production.
+	ExitSearchCall(c *SearchCallContext)
 
 	// ExitFunctionParamList is called when exiting the functionParamList production.
 	ExitFunctionParamList(c *FunctionParamListContext)

@@ -10,14 +10,18 @@ export type { Interval };
 
 /**
  * Select the interval unit matching the timeline's logic.
- * Exported so crosshair labels use the same unit as timeline ticks.
+ * Exported so crosshair labels use the same unit as the timeline ticks.
+ *
+ * Takes the already-computed `intervalSpread` (spread / minIntervals) rather
+ * than deriving it from a hardcoded interval count — the tick count is
+ * width-dependent (`getMinimumIntervalsBasedOnWidth`), so callers must pass the
+ * same `intervalSpread` the ticks use or the badge unit can diverge from the
+ * ticks (e.g. ms vs s) on narrower rulers like the waterfall.
  */
 export function getIntervalUnit(
-	spread: number,
+	intervalSpread: number,
 	offsetTimestamp: number,
 ): IIntervalUnit {
-	const minIntervals = 6;
-	const intervalSpread = spread / minIntervals;
 	const valueForUnitSelection = Math.max(offsetTimestamp, intervalSpread);
 	let unit: IIntervalUnit = INTERVAL_UNITS[0];
 	for (let idx = INTERVAL_UNITS.length - 1; idx >= 0; idx -= 1) {

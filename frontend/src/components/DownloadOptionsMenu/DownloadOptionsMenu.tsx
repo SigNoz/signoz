@@ -1,10 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Button, Popover, Tooltip } from 'antd';
-import { RadioGroup, RadioGroupItem } from '@signozhq/ui/radio-group';
+import { Popover, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { RadioGroup } from '@signozhq/ui/radio-group';
 import { Typography } from '@signozhq/ui/typography';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { useExportRawData } from 'hooks/useDownloadOptionsMenu/useDownloadOptionsMenu';
-import { Download, LoaderCircle } from '@signozhq/icons';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useExportRawData } from 'hooks/useExportData/useServerExport';
+import { Download } from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -18,11 +20,13 @@ import './DownloadOptionsMenu.styles.scss';
 interface DownloadOptionsMenuProps {
 	dataSource: DataSource;
 	selectedColumns?: TelemetryFieldKey[];
+	panelType?: PANEL_TYPES;
 }
 
 export default function DownloadOptionsMenu({
 	dataSource,
 	selectedColumns,
+	panelType,
 }: DownloadOptionsMenuProps): JSX.Element {
 	const [exportFormat, setExportFormat] = useState<string>(DownloadFormats.CSV);
 	const [rowLimit, setRowLimit] = useState<number>(DownloadRowCounts.TEN_K);
@@ -33,6 +37,7 @@ export default function DownloadOptionsMenu({
 
 	const { isDownloading, handleExportRawData } = useExportRawData({
 		dataSource,
+		panelType,
 	});
 
 	const handleExport = useCallback(async (): Promise<void> => {
@@ -64,10 +69,15 @@ export default function DownloadOptionsMenu({
 			>
 				<div className="export-format">
 					<Typography.Text className="title">FORMAT</Typography.Text>
-					<RadioGroup value={exportFormat} onChange={setExportFormat}>
-						<RadioGroupItem value={DownloadFormats.CSV}>csv</RadioGroupItem>
-						<RadioGroupItem value={DownloadFormats.JSONL}>jsonl</RadioGroupItem>
-					</RadioGroup>
+					<RadioGroup
+						color="primary"
+						value={exportFormat}
+						onChange={setExportFormat}
+						items={[
+							{ value: DownloadFormats.CSV, label: 'csv' },
+							{ value: DownloadFormats.JSONL, label: 'jsonl' },
+						]}
+					/>
 				</div>
 
 				<div className="horizontal-line" />
@@ -75,19 +85,15 @@ export default function DownloadOptionsMenu({
 				<div className="row-limit">
 					<Typography.Text className="title">Number of Rows</Typography.Text>
 					<RadioGroup
+						color="primary"
 						value={String(rowLimit)}
 						onChange={(value): void => setRowLimit(Number(value))}
-					>
-						<RadioGroupItem value={String(DownloadRowCounts.TEN_K)}>
-							10k
-						</RadioGroupItem>
-						<RadioGroupItem value={String(DownloadRowCounts.THIRTY_K)}>
-							30k
-						</RadioGroupItem>
-						<RadioGroupItem value={String(DownloadRowCounts.FIFTY_K)}>
-							50k
-						</RadioGroupItem>
-					</RadioGroup>
+						items={[
+							{ value: String(DownloadRowCounts.TEN_K), label: '10k' },
+							{ value: String(DownloadRowCounts.THIRTY_K), label: '30k' },
+							{ value: String(DownloadRowCounts.FIFTY_K), label: '50k' },
+						]}
+					/>
 				</div>
 
 				{dataSource !== DataSource.TRACES && (
@@ -96,22 +102,26 @@ export default function DownloadOptionsMenu({
 
 						<div className="columns-scope">
 							<Typography.Text className="title">Columns</Typography.Text>
-							<RadioGroup value={columnsScope} onChange={setColumnsScope}>
-								<RadioGroupItem value={DownloadColumnsScopes.ALL}>All</RadioGroupItem>
-								<RadioGroupItem value={DownloadColumnsScopes.SELECTED}>
-									Selected
-								</RadioGroupItem>
-							</RadioGroup>
+							<RadioGroup
+								color="primary"
+								value={columnsScope}
+								onChange={setColumnsScope}
+								items={[
+									{ value: DownloadColumnsScopes.ALL, label: 'All' },
+									{ value: DownloadColumnsScopes.SELECTED, label: 'Selected' },
+								]}
+							/>
 						</div>
 					</>
 				)}
 
 				<Button
-					type="primary"
-					icon={<Download size={16} />}
+					variant="solid"
+					color="primary"
+					prefix={<Download size={16} />}
+					size="md"
+					width="100%"
 					onClick={handleExport}
-					className="export-button"
-					disabled={isDownloading}
 					loading={isDownloading}
 				>
 					Export
@@ -140,17 +150,16 @@ export default function DownloadOptionsMenu({
 		>
 			<Tooltip title="Download" placement="top">
 				<Button
-					className="periscope-btn ghost"
-					icon={
-						isDownloading ? (
-							<LoaderCircle size={14} className="animate-spin" />
-						) : (
-							<Download size={14} />
-						)
-					}
-					data-testid={`periscope-btn-download-${dataSource}`}
-					disabled={isDownloading}
-				/>
+					variant="ghost"
+					color="secondary"
+					size="sm"
+					icon
+					aria-label="Download"
+					testId={`periscope-btn-download-${dataSource}`}
+					loading={isDownloading}
+				>
+					<Download size={14} />
+				</Button>
 			</Tooltip>
 		</Popover>
 	);

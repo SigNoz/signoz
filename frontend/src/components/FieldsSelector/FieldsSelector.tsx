@@ -5,7 +5,9 @@ import { Input } from '@signozhq/ui/input';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import { buildCompositeKey } from 'container/OptionsMenu/utils';
+import { FieldKeysConfigProp } from 'api/querySuggestions/types';
+import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import AddedFields from './AddedFields';
@@ -26,33 +28,46 @@ interface FieldsSelectorProps {
 	onClose: () => void;
 	signal: DataSource;
 	maxFields?: number;
+	requiredFields?: readonly string[];
+	// Lets users add a free-typed field which
+	// does not show up in the suggestions
+	allowCustomFields?: boolean;
+	fieldKeysConfig?: FieldKeysConfigProp;
+	builderQueryType?: BuilderQueryType;
+	extraFields?: TelemetryFieldKey[];
 	width?: number;
 	height?: number;
 	defaultPosition?: { x: number; y: number };
 }
 
-function FieldsSelector({
-	isOpen,
+type FieldsSelectorContentProps = Omit<FieldsSelectorProps, 'isOpen'>;
+
+// Inner component: holds all hooks + UI. Gets mounted/unmounted via the
+// outer gate so opening always seeds a fresh draft from `fields`.
+// Assumes `fields` arrives normalized (key populated) — see outer gate.
+function FieldsSelectorContent({
 	title,
 	fields,
 	onFieldsChange,
 	onClose,
 	signal,
 	maxFields,
+	requiredFields,
+	allowCustomFields,
+	fieldKeysConfig,
+	builderQueryType,
+	extraFields,
 	width = DEFAULT_PANEL_WIDTH,
 	height,
 	defaultPosition,
-}: FieldsSelectorProps): JSX.Element | null {
-	if (!isOpen) {
-		return null;
-	}
-
+}: FieldsSelectorContentProps): JSX.Element {
 	const resolvedHeight =
 		height ?? window.innerHeight - DEFAULT_PANEL_HEIGHT_OFFSET;
 	const resolvedPosition = defaultPosition ?? {
 		x: window.innerWidth - width - DEFAULT_PANEL_RIGHT_INSET,
 		y: DEFAULT_PANEL_TOP_INSET,
 	};
+
 	const [draftFields, setDraftFields] = useState<TelemetryFieldKey[]>(fields);
 	const [inputValue, setInputValue] = useState('');
 	const [debouncedInputValue, setDebouncedInputValue] = useState('');
@@ -63,7 +78,7 @@ function FieldsSelector({
 
 	const handleInputChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>): void => {
-			const value = e.target.value.trim().toLowerCase();
+			const value = e.target.value.trim();
 			setInputValue(value);
 			debouncedUpdate(value);
 		},
@@ -72,15 +87,17 @@ function FieldsSelector({
 
 	const handleAdd = useCallback(
 		(field: TelemetryFieldKey): void => {
-			if (maxFields !== undefined && draftFields.length >= maxFields) {
-				return;
-			}
-			if (draftFields.some((f) => f.name === field.name)) {
-				return;
-			}
-			setDraftFields((prev) => [...prev, field]);
+			setDraftFields((prev) => {
+				if (maxFields !== undefined && prev.length >= maxFields) {
+					return prev;
+				}
+				if (prev.some((f) => f.key === field.key)) {
+					return prev;
+				}
+				return [...prev, field];
+			});
 		},
-		[draftFields, maxFields],
+		[maxFields],
 	);
 
 	const handleSave = useCallback((): void => {
@@ -99,7 +116,7 @@ function FieldsSelector({
 		() =>
 			!(
 				draftFields.length === fields.length &&
-				draftFields.every((f, i) => f.name === fields[i]?.name)
+				draftFields.every((f, i) => f.key === fields[i]?.key)
 			),
 		[draftFields, fields],
 	);
@@ -138,6 +155,7 @@ function FieldsSelector({
 					fields={draftFields}
 					onFieldsChange={setDraftFields}
 					maxFields={maxFields}
+					requiredFields={requiredFields}
 				/>
 
 				<OtherFields
@@ -146,11 +164,16 @@ function FieldsSelector({
 					addedFields={draftFields}
 					onAdd={handleAdd}
 					isAtLimit={isAtLimit}
+					allowCustomFields={allowCustomFields}
+					fieldKeysConfig={fieldKeysConfig}
+					builderQueryType={builderQueryType}
+					extraFields={extraFields}
 				/>
 
 				{hasUnsavedChanges && (
 					<div className={styles.footer}>
 						<Button
+							size="md"
 							variant="outlined"
 							color="secondary"
 							onClick={handleDiscard}
@@ -159,6 +182,7 @@ function FieldsSelector({
 							Discard
 						</Button>
 						<Button
+							size="md"
 							variant="solid"
 							color="primary"
 							onClick={handleSave}
@@ -171,6 +195,29 @@ function FieldsSelector({
 			</div>
 		</FloatingPanel>
 	);
+}
+
+// Outer gate: normalizes `fields` once (populates `key` so downstream code
+// can read it directly) and decides whether the inner component renders.
+// When isOpen flips false→true, the inner remounts → draft state seeds fresh.
+function FieldsSelector({
+	isOpen,
+	fields,
+	...rest
+}: FieldsSelectorProps): JSX.Element | null {
+	const normalizedFields = useMemo<TelemetryFieldKey[]>(
+		() =>
+			fields.map((f) => ({
+				...f,
+				key: buildCompositeKey(f.name, f.fieldContext, f.fieldDataType),
+			})),
+		[fields],
+	);
+
+	if (!isOpen) {
+		return null;
+	}
+	return <FieldsSelectorContent {...rest} fields={normalizedFields} />;
 }
 
 export default FieldsSelector;

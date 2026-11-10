@@ -76,7 +76,9 @@ function GeneralSettings(): JSX.Element {
 	if (getRetentionPeriodLogsApiResponse.isError || getDisksResponse.isError) {
 		return (
 			<Typography>
-				{(getRetentionPeriodLogsApiResponse.error as APIError).getErrorMessage() ||
+				{(getRetentionPeriodLogsApiResponse.error instanceof APIError
+					? getRetentionPeriodLogsApiResponse.error.getErrorMessage()
+					: undefined) ||
 					getDisksResponse.data?.error ||
 					t('something_went_wrong')}
 			</Typography>

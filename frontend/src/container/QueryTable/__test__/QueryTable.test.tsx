@@ -1,26 +1,13 @@
-import WidgetHeader from 'container/GridCardLayout/WidgetHeader';
+import WidgetHeader from 'container/WidgetCard/Header';
+import { mockAppLocation } from 'tests/router-mocks';
 import { fireEvent, render } from 'tests/test-utils';
 
 import { QueryTable } from '../QueryTable';
 import { QueryTableProps, WidgetHeaderProps } from './mocks';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: ``,
-	}),
-}));
+mockAppLocation({ pathname: '' });
 
 // Mock useDashabord hook
-jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): any => ({
-		dashboardData: {
-			data: {
-				variables: [],
-			},
-		},
-	}),
-}));
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({

@@ -1,0 +1,25 @@
+.noVariablesCard {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.noVariablesCopy {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.noVariablesTitle {
+	color: var(--l1-foreground);
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 20px;
+}
+
+.noVariablesInfo {
+	color: var(--l3-foreground);
+	font-size: 13px;
+	line-height: 18px;
+}

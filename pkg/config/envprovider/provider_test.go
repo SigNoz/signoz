@@ -18,8 +18,8 @@ func clearSignozEnv(t *testing.T) {
 		if strings.HasPrefix(kv, prefix) {
 			key := strings.SplitN(kv, "=", 2)[0]
 			orig, _ := os.LookupEnv(key)
-			os.Unsetenv(key)
-			t.Cleanup(func() { os.Setenv(key, orig) })
+			_ = os.Unsetenv(key)
+			t.Cleanup(func() { _ = os.Setenv(key, orig) })
 		}
 	}
 }

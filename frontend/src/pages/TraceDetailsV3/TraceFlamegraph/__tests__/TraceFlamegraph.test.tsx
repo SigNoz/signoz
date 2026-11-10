@@ -1,12 +1,12 @@
 import { render } from '@testing-library/react';
-import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
+import useGetTraceFlamegraphV3 from 'hooks/trace/useGetTraceFlamegraphV3';
 import { AllTheProviders } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { FLAMEGRAPH_SPAN_LIMIT } from '../constants';
 import TraceFlamegraph from '../TraceFlamegraph';
 
-jest.mock('hooks/trace/useGetTraceFlamegraph');
+jest.mock('hooks/trace/useGetTraceFlamegraphV3');
 
 // Short-circuit the worker so the test doesn't depend on layout computation.
 jest.mock('../hooks/useVisualLayoutWorker', () => ({
@@ -17,9 +17,8 @@ jest.mock('../hooks/useVisualLayoutWorker', () => ({
 	}),
 }));
 
-const mockUseGetTraceFlamegraph = useGetTraceFlamegraph as jest.MockedFunction<
-	typeof useGetTraceFlamegraph
->;
+const mockUseGetTraceFlamegraph =
+	useGetTraceFlamegraphV3 as jest.MockedFunction<typeof useGetTraceFlamegraphV3>;
 
 function renderFlamegraph(props: {
 	selectedSpan: SpanV3 | undefined;
@@ -45,7 +44,7 @@ describe('TraceFlamegraph - selectedSpanId pass-through', () => {
 	beforeEach(() => {
 		mockUseGetTraceFlamegraph.mockReset();
 		mockUseGetTraceFlamegraph.mockReturnValue({
-			data: { payload: { spans: [] } },
+			data: { spans: [] },
 			isFetching: false,
 			error: null,
 		} as never);

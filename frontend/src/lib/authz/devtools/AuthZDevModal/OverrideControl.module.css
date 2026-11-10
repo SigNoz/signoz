@@ -1,0 +1,73 @@
+.segmented {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-1);
+	padding: var(--spacing-1);
+	background: var(--l2-background);
+	border: 1px solid var(--l3-border);
+	border-radius: var(--radius-2);
+
+	--button-height: 22px;
+	--button-padding: 0 var(--spacing-3);
+	--button-secondary-ghost-label: var(--l2-foreground);
+	--button-secondary-ghost-label-hover: var(--l2-foreground);
+	--button-variant-ghost-background-color: transparent;
+	--button-border-radius: calc(var(--radius-2) - 1px);
+}
+
+.segmented [data-slot='button']:not([aria-pressed='true']):hover {
+	--button-secondary-ghost-label: var(--l2-foreground-hover);
+	--button-secondary-ghost-label-hover: var(--l2-foreground-hover);
+	--button-variant-ghost-background-color: var(--l2-background);
+}
+
+/* An empty label would still take a flex gap after the icon. */
+.segmented [aria-pressed='false'] {
+	--button-label-display: none;
+}
+
+.segmented [aria-pressed='true'][data-option='reset'] {
+	--button-secondary-ghost-label: var(--l1-foreground);
+	--button-secondary-ghost-label-hover: var(--l1-foreground);
+	--button-variant-ghost-background-color: var(--l3-background);
+}
+
+.segmented [aria-pressed='true'][data-option='granted'] {
+	--button-secondary-ghost-label: var(--success-foreground);
+	--button-secondary-ghost-label-hover: var(--success-foreground);
+	--button-variant-ghost-background-color: color-mix(
+		in srgb,
+		var(--accent-forest) 22%,
+		transparent
+	);
+}
+
+.segmented [aria-pressed='true'][data-option='denied'] {
+	--button-secondary-ghost-label: var(--danger-foreground);
+	--button-secondary-ghost-label-hover: var(--danger-foreground);
+	--button-variant-ghost-background-color: color-mix(
+		in srgb,
+		var(--accent-cherry) 22%,
+		transparent
+	);
+}
+
+.segmented [aria-pressed='true'][data-option='delay'] {
+	--button-secondary-ghost-label: var(--warning-foreground);
+	--button-secondary-ghost-label-hover: var(--warning-foreground);
+	--button-variant-ghost-background-color: color-mix(
+		in srgb,
+		var(--accent-amber) 22%,
+		transparent
+	);
+}
+
+.segmented [aria-pressed='true'][data-option='error'] {
+	--button-secondary-ghost-label: var(--danger-foreground);
+	--button-secondary-ghost-label-hover: var(--danger-foreground);
+	--button-variant-ghost-background-color: color-mix(
+		in srgb,
+		var(--accent-cherry) 22%,
+		transparent
+	);
+}

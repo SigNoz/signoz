@@ -8,6 +8,7 @@ import (
 type createUserOptions struct {
 	FactorPassword *types.FactorPassword
 	RoleNames      []string
+	RoleIDs        []valuer.UUID
 }
 
 type CreateUserOption func(*createUserOptions)
@@ -21,6 +22,12 @@ func WithFactorPassword(factorPassword *types.FactorPassword) CreateUserOption {
 func WithRoleNames(roleNames []string) CreateUserOption {
 	return func(o *createUserOptions) {
 		o.RoleNames = roleNames
+	}
+}
+
+func WithRoleIDs(roleIDs []valuer.UUID) CreateUserOption {
+	return func(o *createUserOptions) {
+		o.RoleIDs = roleIDs
 	}
 }
 

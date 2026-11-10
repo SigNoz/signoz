@@ -4,20 +4,33 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/gorilla/mux"
 )
 
+func telemetryReadScopes() []string {
+	return []string{
+		coretypes.ResourceTelemetryResourceLogs.Scope(coretypes.VerbRead),
+		coretypes.ResourceTelemetryResourceTraces.Scope(coretypes.VerbRead),
+		coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead),
+		coretypes.ResourceTelemetryResourceAuditLogs.Scope(coretypes.VerbRead),
+		coretypes.ResourceTelemetryResourceMeterMetrics.Scope(coretypes.VerbRead),
+	}
+}
+
 func (provider *provider) addQuerierRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v5/query_range", handler.New(provider.authzMiddleware.ViewAccess(provider.querierHandler.QueryRange), handler.OpenAPIDef{
+	if err := router.Handle("/api/v5/query_range", handler.New(provider.authzMiddleware.CheckResources(provider.querierHandler.QueryRange, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName), handler.OpenAPIDef{
 		ID:                 "QueryRangeV5",
 		Tags:               []string{"querier"},
 		Summary:            "Query range",
 		Description:        "Execute a composite query over a time range. Supports builder queries (traces, logs, metrics), formulas, trace operators, PromQL, and ClickHouse SQL.",
 		Request:            new(qbtypes.QueryRangeRequest),
 		RequestContentType: "application/json",
-		RequestExamples: []handler.OpenAPIExample{
+		RequestExamples: append([]handler.OpenAPIExample{
 			{
 				Name:    "traces_time_series",
 				Summary: "Time series: count spans grouped by service",
@@ -242,6 +255,150 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 				},
 			},
 			{
+				Name:    "ai_traces_trace",
+				Summary: "Trace list: AI traces with many tool calls, most expensive first",
+				Value: map[string]any{
+					"schemaVersion": "v1",
+					"start":         1640995200000,
+					"end":           1640998800000,
+					"requestType":   "trace",
+					"compositeQuery": map[string]any{
+						"queries": []any{
+							map[string]any{
+								"type": "builder_ai_query",
+								"spec": map[string]any{
+									"name":   "A",
+									"signal": "traces",
+									"filter": map[string]any{"expression": "trace.tool_call_count > 10 AND trace.distinct_tool_count < 3"},
+									"order": []any{
+										map[string]any{"key": map[string]any{"name": "trace.estimated_total_cost"}, "direction": "desc"},
+									},
+									"limit": 10,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:    "ai_traces_raw",
+				Summary: "Raw: LLM, tool, and agent spans of one service's AI traces with many tool calls",
+				Value: map[string]any{
+					"schemaVersion": "v1",
+					"start":         1640995200000,
+					"end":           1640998800000,
+					"requestType":   "raw",
+					"compositeQuery": map[string]any{
+						"queries": []any{
+							map[string]any{
+								"type": "builder_ai_query",
+								"spec": map[string]any{
+									"name":   "A",
+									"signal": "traces",
+									"filter": map[string]any{"expression": "service.name = 'ai-agent' AND trace.tool_call_count > 10"},
+									"order": []any{
+										map[string]any{"key": map[string]any{"name": "timestamp", "fieldContext": "span"}, "direction": "desc"},
+									},
+									"limit": 100,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:    "ai_traces_raw_select_fields",
+				Summary: "Raw: the same spans with the span name and gen_ai model, tool, and token fields selected",
+				Value: map[string]any{
+					"schemaVersion": "v1",
+					"start":         1640995200000,
+					"end":           1640998800000,
+					"requestType":   "raw",
+					"compositeQuery": map[string]any{
+						"queries": []any{
+							map[string]any{
+								"type": "builder_ai_query",
+								"spec": map[string]any{
+									"name":   "A",
+									"signal": "traces",
+									"filter": map[string]any{"expression": "service.name = 'ai-agent' AND trace.tool_call_count > 10"},
+									"selectFields": []any{
+										map[string]any{"name": "name", "fieldContext": "span"},
+										map[string]any{"name": "gen_ai.request.model", "fieldContext": "attribute"},
+										map[string]any{"name": "gen_ai.tool.name", "fieldContext": "attribute"},
+										map[string]any{"name": "gen_ai.usage.input_tokens", "fieldContext": "attribute"},
+										map[string]any{"name": "gen_ai.usage.output_tokens", "fieldContext": "attribute"},
+									},
+									"order": []any{
+										map[string]any{"key": map[string]any{"name": "timestamp", "fieldContext": "span"}, "direction": "desc"},
+									},
+									"limit": 100,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:    "ai_traces_time_series",
+				Summary: "Time series: per-trace AI cost by model",
+				Value: map[string]any{
+					"schemaVersion": "v1",
+					"start":         1640995200000,
+					"end":           1640998800000,
+					"requestType":   "time_series",
+					"compositeQuery": map[string]any{
+						"queries": []any{
+							map[string]any{
+								"type": "builder_ai_query",
+								"spec": map[string]any{
+									"name":   "A",
+									"signal": "traces",
+									"aggregations": []any{
+										map[string]any{"expression": "sum(trace.estimated_total_cost)"},
+									},
+									"stepInterval": "60s",
+									"groupBy":      []any{map[string]any{"name": "gen_ai.request.model", "fieldContext": "attribute"}},
+									"order": []any{
+										map[string]any{"key": map[string]any{"name": "sum(trace.estimated_total_cost)"}, "direction": "desc"},
+									},
+									"limit": 10,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:    "ai_traces_scalar",
+				Summary: "Scalar: average per-trace AI cost by model",
+				Value: map[string]any{
+					"schemaVersion": "v1",
+					"start":         1640995200000,
+					"end":           1640998800000,
+					"requestType":   "scalar",
+					"compositeQuery": map[string]any{
+						"queries": []any{
+							map[string]any{
+								"type": "builder_ai_query",
+								"spec": map[string]any{
+									"name":   "A",
+									"signal": "traces",
+									"aggregations": []any{
+										map[string]any{"expression": "avg(trace.estimated_total_cost)"},
+									},
+									"groupBy": []any{map[string]any{"name": "gen_ai.request.model", "fieldContext": "attribute"}},
+									"order": []any{
+										map[string]any{"key": map[string]any{"name": "avg(trace.estimated_total_cost)"}, "direction": "desc"},
+									},
+									"limit": 10,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
 				Name:    "logs_scalar",
 				Summary: "Scalar: total error log count",
 				Value: map[string]any{
@@ -441,13 +598,40 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 					},
 				},
 			},
-		},
+		}, queryRangeFunctionExamples()...),
 		Response:            new(qbtypes.QueryRangeResponse),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+		SecuritySchemes:     newScopedSecuritySchemes(telemetryReadScopes()),
+	}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+		Verb:      coretypes.VerbRead,
+		Category:  coretypes.ActionCategoryDataAccess,
+		Selector:  querybuilder.TelemetrySelector,
+		Resources: querybuilder.QueryRangeResources,
+	}))).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v5/query_range/preview", handler.New(provider.authzMiddleware.CheckResources(provider.querierHandler.QueryRangePreview, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName), handler.OpenAPIDef{
+		ID:                  "QueryRangePreviewV5",
+		Tags:                []string{"querier"},
+		Summary:             "Query range preview",
+		Description:         "Validate a composite query without executing it. Accepts the same payload as the query range endpoint. By default (verbose=true) returns, for each query, the rendered underlying ClickHouse statement(s) with each statement's EXPLAIN ESTIMATE (per-table parts/rows/marks) and granule index analysis (candidate/surviving granules and the per-index pruning funnel). Pass ?verbose=false for the lightweight per-query verdict (valid/error/warnings) with no rendered SQL and no ClickHouse round trips. Intended for agentic/dry-run consumption: per-query errors are reported in the response rather than failing the whole request.",
+		Request:             new(qbtypes.QueryRangeRequest),
+		RequestQuery:        new(qbtypes.QueryRangePreviewParams),
+		RequestContentType:  "application/json",
+		Response:            new(qbtypes.QueryRangePreviewResponse),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		SecuritySchemes:     newScopedSecuritySchemes(telemetryReadScopes()),
+	}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+		Verb:      coretypes.VerbRead,
+		Category:  coretypes.ActionCategoryDataAccess,
+		Selector:  querybuilder.TelemetrySelector,
+		Resources: querybuilder.QueryRangeResources,
+	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 

@@ -7,6 +7,8 @@ import { TableColumnDef } from './types';
 export interface UseColumnHandlersOptions<TData> {
 	/** Storage key for persisting column state (enables store mode) */
 	columnStorageKey?: string;
+	/** When false, drag-reorder skips the persisted columnOrder write — order flows back via onColumnOrderChange only. */
+	respectColumnOrder?: boolean;
 	effectiveSizing: ColumnSizingState;
 	storeSetSizing: (sizing: ColumnSizingState) => void;
 	storeSetOrder: (columns: TableColumnDef<TData>[]) => void;
@@ -28,6 +30,7 @@ export interface UseColumnHandlersResult<TData> {
  */
 export function useColumnHandlers<TData>({
 	columnStorageKey,
+	respectColumnOrder = true,
 	effectiveSizing,
 	storeSetSizing,
 	storeSetOrder,
@@ -50,12 +53,12 @@ export function useColumnHandlers<TData>({
 
 	const handleColumnOrderChange = useCallback(
 		(cols: TableColumnDef<TData>[]) => {
-			if (columnStorageKey) {
+			if (columnStorageKey && respectColumnOrder) {
 				storeSetOrder(cols);
 			}
 			onColumnOrderChange?.(cols);
 		},
-		[columnStorageKey, storeSetOrder, onColumnOrderChange],
+		[columnStorageKey, respectColumnOrder, storeSetOrder, onColumnOrderChange],
 	);
 
 	const handleRemoveColumn = useCallback(

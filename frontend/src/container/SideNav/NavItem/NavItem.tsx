@@ -6,7 +6,6 @@ import { Pin, PinOff } from '@signozhq/icons';
 import { SidebarItem } from '../sideNav.types';
 
 import './NavItem.styles.scss';
-import './NavItem.styles.scss';
 
 export default function NavItem({
 	item,
@@ -27,7 +26,7 @@ export default function NavItem({
 	showIcon?: boolean;
 	dataTestId?: string;
 }): JSX.Element {
-	const { label, icon, isBeta, isNew, isEarlyAccess } = item;
+	const { label, icon, isBeta, isNew, isEarlyAccess, tooltip } = item;
 
 	const handleTogglePinClick = (
 		event: React.MouseEvent<SVGSVGElement, MouseEvent>,
@@ -36,7 +35,7 @@ export default function NavItem({
 		onTogglePin?.(item);
 	};
 
-	return (
+	const navItem = (
 		<div
 			className={cx(
 				'nav-item',
@@ -52,7 +51,7 @@ export default function NavItem({
 			data-testid={dataTestId}
 		>
 			{showIcon && <div className="nav-item-active-marker" />}
-			<div className={cx('nav-item-data', isBeta ? 'beta-tag' : '')}>
+			<div className="nav-item-data">
 				{showIcon && (
 					<div className={cx('nav-item-icon', isEarlyAccess ? 'noz-wave' : '')}>
 						{icon}
@@ -63,7 +62,7 @@ export default function NavItem({
 
 				{isBeta && (
 					<div className="nav-item-beta">
-						<Badge color="robin" className="sidenav-beta-tag">
+						<Badge variant="solid" color="primary">
 							Beta
 						</Badge>
 					</div>
@@ -71,7 +70,7 @@ export default function NavItem({
 
 				{isNew && (
 					<div className="nav-item-new">
-						<Badge color="robin" className="sidenav-new-tag">
+						<Badge variant="solid" color="primary">
 							New
 						</Badge>
 					</div>
@@ -79,7 +78,9 @@ export default function NavItem({
 
 				{isEarlyAccess && (
 					<div className="nav-item-early-access">
-						<Badge color="robin">Early Access</Badge>
+						<Badge variant="solid" color="primary">
+							Early Access
+						</Badge>
 					</div>
 				)}
 
@@ -90,6 +91,8 @@ export default function NavItem({
 							className="nav-item-pin-icon"
 							onClick={handleTogglePinClick}
 							color="var(--Vanilla-400, #c0c1c3)"
+							data-testid={`nav-item-pin-${item.itemKey}`}
+							aria-label="Add to shortcuts"
 						/>
 					</Tooltip>
 				)}
@@ -101,11 +104,20 @@ export default function NavItem({
 							className="nav-item-pin-icon"
 							onClick={handleTogglePinClick}
 							color="var(--Vanilla-400, #c0c1c3)"
+							data-testid={`nav-item-pin-${item.itemKey}`}
+							aria-label="Remove from shortcuts"
 						/>
 					</Tooltip>
 				)}
 			</div>
 		</div>
+	);
+
+	// Only non-pinnable items set `tooltip`; it would nest with the pin tooltip.
+	return (
+		<Tooltip title={tooltip} placement="right">
+			{navItem}
+		</Tooltip>
 	);
 }
 

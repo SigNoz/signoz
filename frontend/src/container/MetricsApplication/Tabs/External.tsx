@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppParams } from 'lib/router/useAppParams';
 import { Col } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Graph from 'container/GridCardLayout/GridCard';
+import Graph from 'container/WidgetCard/Card';
 import {
 	externalCallDuration,
 	externalCallDurationByAddress,
@@ -23,15 +24,13 @@ import {
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import store from 'store';
 import { UpdateTimeInterval } from 'store/actions';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { FeatureKeys } from '../../../constants/features';
-import { useAppContext } from '../../../providers/App/App';
 import {
 	GraphTitle,
 	legend,
@@ -41,7 +40,6 @@ import {
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import GraphControlsPanel from './Overview/GraphControlsPanel/GraphControlsPanel';
-import { IServiceName } from './types';
 import {
 	handleNonInQueryRange,
 	onViewAPIMonitoringPopupClick,
@@ -53,13 +51,13 @@ import {
 function External(): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const [selectedData, setSelectedData] = useState<any>(undefined);
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
 
-	const servicename = decodeURIComponent(encodedServiceName);
+	const servicename = decodeURIComponent(encodedServiceName || '');
 	const { queries } = useResourceAttribute();
 
 	const urlQuery = useUrlQuery();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const dispatch = useDispatch();
 
 	const onDragSelect = useCallback(
@@ -70,7 +68,7 @@ function External(): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
@@ -84,10 +82,6 @@ function External(): JSX.Element {
 			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
 	);
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
 
 	const externalCallErrorWidget = useMemo(
 		() =>
@@ -99,7 +93,6 @@ function External(): JSX.Element {
 						servicename,
 						legend: legend.address,
 						tagFilterItems,
-						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -109,7 +102,7 @@ function External(): JSX.Element {
 				yAxisUnit: '%',
 				id: GraphTitle.EXTERNAL_CALL_ERROR_PERCENTAGE,
 			}),
-		[servicename, tagFilterItems, dotMetricsEnabled],
+		[servicename, tagFilterItems],
 	);
 
 	const selectedTraceTags = useMemo(
@@ -126,7 +119,6 @@ function External(): JSX.Element {
 					builder: externalCallDuration({
 						servicename,
 						tagFilterItems,
-						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -137,7 +129,7 @@ function External(): JSX.Element {
 				id: GraphTitle.EXTERNAL_CALL_DURATION,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems, dotMetricsEnabled],
+		[servicename, tagFilterItems],
 	);
 
 	const errorApmToTraceQuery = useGetAPMToTracesQueries({
@@ -171,7 +163,7 @@ function External(): JSX.Element {
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
 			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
+				(val) => val.tagKey === getResourceDeploymentKeys(),
 			)?.tagValue;
 
 			logEvent('APM: Service detail page visited', {
@@ -194,7 +186,6 @@ function External(): JSX.Element {
 						servicename,
 						legend: legend.address,
 						tagFilterItems,
-						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -205,7 +196,7 @@ function External(): JSX.Element {
 				id: GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems, dotMetricsEnabled],
+		[servicename, tagFilterItems],
 	);
 
 	const externalCallDurationAddressWidget = useMemo(
@@ -218,7 +209,6 @@ function External(): JSX.Element {
 						servicename,
 						legend: legend.address,
 						tagFilterItems,
-						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -229,7 +219,7 @@ function External(): JSX.Element {
 				id: GraphTitle.EXTERNAL_CALL_DURATION_BY_ADDRESS,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems, dotMetricsEnabled],
+		[servicename, tagFilterItems],
 	);
 
 	const apmToTraceQuery = useGetAPMToTracesQueries({

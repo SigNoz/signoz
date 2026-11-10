@@ -37,15 +37,10 @@ export const latency = ({
 	tagFilterItems,
 	isSpanMetricEnable = false,
 	topLevelOperationsRoute,
-	dotMetricsEnabled,
 }: LatencyProps): QueryBuilderData => {
-	const signozLatencyBucketMetrics = dotMetricsEnabled
-		? WidgetKeys.Signoz_latency_bucket
-		: WidgetKeys.Signoz_latency_bucket_norm;
+	const signozLatencyBucketMetrics = WidgetKeys.SignozLatencyBucket;
 
-	const signozMetricsServiceName = dotMetricsEnabled
-		? WidgetKeys.Service_name
-		: WidgetKeys.Service_name_norm;
+	const signozMetricsServiceName = WidgetKeys.OTelServiceName;
 	const newAutoCompleteData: BaseAutocompleteData = {
 		key: isSpanMetricEnable
 			? signozLatencyBucketMetrics
@@ -287,28 +282,21 @@ export const apDexMetricsQueryBuilderQueries = ({
 	threashold,
 	delta,
 	metricsBuckets,
-	dotMetricsEnabled,
 }: ApDexMetricsQueryBuilderQueriesProps): QueryBuilderData => {
 	const autoCompleteDataA: BaseAutocompleteData = {
-		key: dotMetricsEnabled
-			? WidgetKeys.SignozLatencyCount
-			: WidgetKeys.SignozLatencyCountNorm,
+		key: WidgetKeys.SignozLatencyCount,
 		dataType: DataTypes.Float64,
 		type: '',
 	};
 
 	const autoCompleteDataB: BaseAutocompleteData = {
-		key: dotMetricsEnabled
-			? WidgetKeys.Signoz_latency_bucket
-			: WidgetKeys.Signoz_latency_bucket_norm,
+		key: WidgetKeys.SignozLatencyBucket,
 		dataType: DataTypes.Float64,
 		type: '',
 	};
 
 	const autoCompleteDataC: BaseAutocompleteData = {
-		key: dotMetricsEnabled
-			? WidgetKeys.Signoz_latency_bucket
-			: WidgetKeys.Signoz_latency_bucket_norm,
+		key: WidgetKeys.SignozLatencyBucket,
 		dataType: DataTypes.Float64,
 		type: '',
 	};
@@ -317,9 +305,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 		{
 			id: '',
 			key: {
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
 				type: MetricsType.Tag,
 			},
@@ -343,7 +329,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 		{
 			id: '',
 			key: {
-				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
+				key: WidgetKeys.StatusCode,
 				dataType: DataTypes.String,
 				type: MetricsType.Tag,
 			},
@@ -363,9 +349,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 		{
 			id: '',
 			key: {
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
 				type: MetricsType.Tag,
 			},
@@ -399,7 +383,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 		{
 			id: '',
 			key: {
-				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
+				key: WidgetKeys.StatusCode,
 				dataType: DataTypes.String,
 				type: MetricsType.Tag,
 			},
@@ -409,9 +393,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 		{
 			id: '',
 			key: {
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
 				type: MetricsType.Tag,
 			},
@@ -474,13 +456,10 @@ export const operationPerSec = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperations,
-	dotMetricsEnabled,
 }: OperationPerSecProps): QueryBuilderData => {
 	const autocompleteData: BaseAutocompleteData[] = [
 		{
-			key: dotMetricsEnabled
-				? WidgetKeys.SignozLatencyCount
-				: WidgetKeys.SignozLatencyCountNorm,
+			key: WidgetKeys.SignozLatencyCount,
 			dataType: DataTypes.Float64,
 			type: '',
 		},
@@ -491,9 +470,7 @@ export const operationPerSec = ({
 			{
 				id: '',
 				key: {
-					key: dotMetricsEnabled
-						? WidgetKeys.Service_name
-						: WidgetKeys.Service_name_norm,
+					key: WidgetKeys.OTelServiceName,
 					dataType: DataTypes.String,
 					type: MetricsType.Resource,
 				},
@@ -534,7 +511,6 @@ export const errorPercentage = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperations,
-	dotMetricsEnabled,
 }: OperationPerSecProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
@@ -553,9 +529,7 @@ export const errorPercentage = ({
 		{
 			id: '',
 			key: {
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
 				type: MetricsType.Resource,
 			},
@@ -575,7 +549,7 @@ export const errorPercentage = ({
 		{
 			id: '',
 			key: {
-				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
+				key: WidgetKeys.StatusCode,
 				dataType: DataTypes.Int64,
 				type: MetricsType.Tag,
 			},
@@ -589,9 +563,7 @@ export const errorPercentage = ({
 		{
 			id: '',
 			key: {
-				key: dotMetricsEnabled
-					? WidgetKeys.Service_name
-					: WidgetKeys.Service_name_norm,
+				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
 				type: MetricsType.Resource,
 			},

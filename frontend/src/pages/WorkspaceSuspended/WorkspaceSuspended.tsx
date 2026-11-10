@@ -1,34 +1,32 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { Alert, Button, Col, Flex, Modal, Row, Skeleton, Space } from 'antd';
+import { Button, Col, Flex, Modal, Row, Skeleton, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import manageCreditCardApi from 'api/v1/portal/create';
+import { updateSubscription } from 'api/generated/services/subscriptions';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import ROUTES from 'constants/routes';
-import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { SubscriptionManagePermissions } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
+import { navigate } from 'lib/router/navigation';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { getBaseUrl } from 'utils/basePath';
-import { getFormattedDateWithMinutes } from 'utils/timeUtils';
 
 import featureGraphicCorrelationUrl from '@/assets/Images/feature-graphic-correlation.svg';
 
 import './WorkspaceSuspended.styles.scss';
 
 function WorkspaceSuspended(): JSX.Element {
-	const { user } = useAppContext();
-	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
 	const { activeLicense, isFetchingActiveLicense } = useAppContext();
 
 	const { t } = useTranslation(['failedPayment']);
 
 	const { mutate: manageCreditCard, isLoading } = useMutation(
-		manageCreditCardApi,
+		updateSubscription,
 		{
 			onSuccess: (data) => {
 				if (data.data?.redirectURL) {
@@ -62,7 +60,7 @@ function WorkspaceSuspended(): JSX.Element {
 				!shouldSuspendWorkspace ||
 				activeLicense?.platform === LicensePlatform.SELF_HOSTED
 			) {
-				history.push(ROUTES.HOME);
+				navigate(ROUTES.HOME);
 			}
 		}
 	}, [isFetchingActiveLicense, activeLicense]);
@@ -109,42 +107,21 @@ function WorkspaceSuspended(): JSX.Element {
 										</Typography.Title>
 										<Typography.Text className="workspace-suspended__details">
 											{t('actionDescription')}
-											<br />
-											{t('yourDataIsSafe')}{' '}
-											<span className="workspace-suspended__details__highlight">
-												{getFormattedDateWithMinutes(
-													dayjs(activeLicense?.event_queue?.scheduled_at).unix() ||
-														Date.now(),
-												)}
-											</span>{' '}
-											{t('actNow')}
 										</Typography.Text>
 									</Space>
 								</Col>
 							</Row>
-							{!isAdmin && (
-								<Row
-									justify="center"
-									align="middle"
-									className="workspace-suspended__modal__cta"
-									gutter={[16, 16]}
-								>
-									<Col>
-										<Alert
-											message="Contact your admin to proceed with the upgrade."
-											type="info"
-										/>
-									</Col>
-								</Row>
-							)}
-							{isAdmin && (
-								<Row
-									justify="center"
-									align="middle"
-									className="workspace-suspended__modal__cta"
-									gutter={[8, 8]}
-								>
-									<Flex gap={8} justify="center" align="center">
+							<Row
+								justify="center"
+								align="middle"
+								className="workspace-suspended__modal__cta"
+								gutter={[8, 8]}
+							>
+								<Flex gap={8} justify="center" align="center">
+									<AuthZTooltip
+										checks={SubscriptionManagePermissions}
+										withPortal={false}
+									>
 										<Button
 											type="primary"
 											shape="round"
@@ -154,10 +131,10 @@ function WorkspaceSuspended(): JSX.Element {
 										>
 											{t('continueMyJourney')}
 										</Button>
-										<RefreshPaymentStatus btnShape="round" />
-									</Flex>
-								</Row>
-							)}
+									</AuthZTooltip>
+									<RefreshPaymentStatus withPortal={false} />
+								</Flex>
+							</Row>
 							<div className="workspace-suspended__creative">
 								<img src={featureGraphicCorrelationUrl} alt="correlation-graphic" />
 							</div>

@@ -1,12 +1,10 @@
 import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { Col, Input, Row, Select } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
+import BucketOptions from 'components/QueryBuilderV2/QueryV2/QueryAddOns/BucketOptions/BucketOptions';
+import { parseLimit, sanitizeLimit } from 'components/QueryBuilderV2/utils';
 import { LEGEND } from 'constants/global';
-// ** Components
-import { FilterLabel } from 'container/QueryBuilder/components';
-import HavingFilter from 'container/QueryBuilder/filters/Formula/Having/HavingFilter';
-import LimitFilter from 'container/QueryBuilder/filters/Formula/Limit/Limit';
-import OrderByFilter from 'container/QueryBuilder/filters/Formula/OrderBy/OrderByFilter';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -17,7 +15,6 @@ import {
 import { getFormatedLegend } from 'utils/getFormatedLegend';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { AdditionalFiltersToggler } from '../AdditionalFiltersToggler';
 import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
 // ** Types
 import { FormulaProps } from './Formula.interfaces';
@@ -27,22 +24,22 @@ import './Formula.styles.scss';
 export function Formula({
 	index,
 	formula,
-	filterConfigs,
 	query,
-	isAdditionalFilterEnable,
 	isQBV2,
 }: FormulaProps): JSX.Element {
-	const { removeQueryBuilderEntityByIndex, handleSetFormulaData } =
-		useQueryBuilder();
+	const {
+		removeQueryBuilderEntityByIndex,
+		handleSetFormulaData,
+		panelType,
+		currentQuery,
+	} = useQueryBuilder();
 
-	const { listOfAdditionalFormulaFilters, handleChangeFormulaData } =
-		useQueryOperations({
-			index,
-			query,
-			filterConfigs,
-			formula,
-			entityVersion: '',
-		});
+	const { handleChangeFormulaData } = useQueryOperations({
+		index,
+		query,
+		formula,
+		entityVersion: '',
+	});
 
 	const [isCollapse, setIsCollapsed] = useState(false);
 
@@ -83,16 +80,9 @@ export function Formula({
 		[handleChangeFormulaData],
 	);
 
-	const handleChangeHavingFilter = useCallback(
-		(value: IBuilderFormula['having']) => {
-			handleChangeFormulaData('having', value);
-		},
-		[handleChangeFormulaData],
-	);
-
-	const handleChangeOrderByFilter = useCallback(
-		(value: IBuilderFormula['orderBy']) => {
-			handleChangeFormulaData('orderBy', value);
+	const handleChangeBucketOptions = useCallback(
+		(value: IBuilderFormula['bucketOptions']) => {
+			handleChangeFormulaData('bucketOptions', value);
 		},
 		[handleChangeFormulaData],
 	);
@@ -122,56 +112,8 @@ export function Formula({
 		[formula.orderBy],
 	);
 
-	const renderAdditionalFilters = useMemo(
-		() => (
-			<>
-				<Col span={11}>
-					<Row gutter={[11, 5]}>
-						<Col flex="5.93rem">
-							<FilterLabel label="Limit" />
-						</Col>
-						<Col flex="1 1 12.5rem">
-							<LimitFilter formula={formula} onChange={handleChangeLimit} />
-						</Col>
-					</Row>
-				</Col>
-				<Col span={11}>
-					<Row gutter={[11, 5]}>
-						<Col flex="5.93rem">
-							<FilterLabel label="HAVING" />
-						</Col>
-						<Col flex="1 1 12.5rem">
-							<HavingFilter formula={formula} onChange={handleChangeHavingFilter} />
-						</Col>
-					</Row>
-				</Col>
-				<Col span={11}>
-					<Row gutter={[11, 5]}>
-						<Col flex="5.93rem">
-							<FilterLabel label="Order by" />
-						</Col>
-						<Col flex="1 1 12.5rem">
-							<OrderByFilter
-								query={query}
-								formula={formula}
-								onChange={handleChangeOrderByFilter}
-							/>
-						</Col>
-					</Row>
-				</Col>
-			</>
-		),
-		[
-			formula,
-			handleChangeHavingFilter,
-			handleChangeLimit,
-			handleChangeOrderByFilter,
-			query,
-		],
-	);
-
 	return (
-		<Row gutter={[0, 15]}>
+		<Row gutter={[0, 15]} data-testid={`formula-${formula.queryName}`}>
 			<QBEntityOptions
 				isCollapsed={isCollapse}
 				showFunctions={false}
@@ -189,6 +131,7 @@ export function Formula({
 						<Input.TextArea
 							name="expression"
 							className="formula-expression"
+							data-testid="formula-expression"
 							onChange={handleChange}
 							size="middle"
 							value={formula.expression}
@@ -200,23 +143,13 @@ export function Formula({
 						<Input
 							name="legend"
 							className="formula-legend"
+							data-testid="formula-legend"
 							onChange={handleChange}
 							size="middle"
 							value={formula.legend}
 							addonBefore="Legend Format"
 						/>
 					</Col>
-					{isAdditionalFilterEnable && (
-						<Col span={24}>
-							<AdditionalFiltersToggler
-								listOfAdditionalFilter={listOfAdditionalFormulaFilters}
-							>
-								<Row gutter={[0, 11]} justify="space-between">
-									{renderAdditionalFilters}
-								</Row>
-							</AdditionalFiltersToggler>
-						</Col>
-					)}
 					{isQBV2 && (
 						<Col span={24}>
 							<div className="formula-qbv2-container">
@@ -239,11 +172,23 @@ export function Formula({
 								<InputWithLabel
 									label="Limit"
 									type="number"
-									onChange={(value): void => handleChangeLimit(Number(value))}
+									onChange={(value): void => handleChangeLimit(parseLimit(value))}
+									sanitize={sanitizeLimit}
 									initialValue={formula?.limit ?? undefined}
 									placeholder="Enter limit"
 								/>
 							</div>
+						</Col>
+					)}
+					{/* A heatmap draws its one enabled query, which is the formula when its
+					    inputs are disabled — so the formula states its own bucket axis. */}
+					{isQBV2 && panelType === PANEL_TYPES.HEATMAP && (
+						<Col span={24}>
+							<BucketOptions
+								bucketOptions={formula.bucketOptions}
+								unit={currentQuery.unit}
+								onChange={handleChangeBucketOptions}
+							/>
 						</Col>
 					)}
 				</Row>

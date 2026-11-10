@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 
 import { computeVisualLayout, VisualLayout } from '../computeVisualLayout';
 import { LayoutWorkerResponse } from '../visualLayoutWorkerTypes';
@@ -94,7 +94,7 @@ export function useVisualLayoutWorker(spans: FlamegraphSpan[][]): {
 			cleanup();
 		};
 
-		// Timeout: if worker doesn't respond in 30s, terminate and error
+		// Timeout: if worker doesn't respond in 15s, terminate and error
 		const WORKER_TIMEOUT_MS = 15000;
 		const timeoutId = setTimeout(() => {
 			if (requestIdRef.current === currentId && isComputingRef.current) {

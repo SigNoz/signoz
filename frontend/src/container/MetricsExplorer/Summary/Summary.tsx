@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
-import { useSearchParams } from 'react-router-dom-v5-compat';
+import { useAppSearchParams } from 'lib/router/useAppSearchParams';
 import * as Sentry from '@sentry/react';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -21,7 +21,7 @@ import {
 import eyesEmojiUrl from 'assets/Images/eyesEmoji.svg';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { usePageSize } from 'container/InfraMonitoringK8s/utils';
+import { usePageSize } from './usePageSize';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
@@ -78,7 +78,7 @@ function Summary(): JSX.Element {
 		[stagedQuery],
 	);
 
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useAppSearchParams();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(
 		() => searchParams.get(IS_METRIC_DETAILS_OPEN_KEY) === 'true' || false,
 	);

@@ -40,13 +40,31 @@ type SpeechRecognitionConstructor = new () => ISpeechRecognition;
 
 // ── Vendor-prefix shim for Safari / older browsers ────────────────────────────
 
-const SpeechRecognitionAPI: SpeechRecognitionConstructor | null =
-	typeof window !== 'undefined'
-		? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-			((window as any).SpeechRecognition ??
+// Some hardened/enterprise browsers install a getter
+// on window.SpeechRecognition that THROWS on access ("Web Speech API is disabled
+// due to your security policy") instead of leaving the property undefined.
+// Because this resolves at module-evaluation time, an uncaught throw here aborts
+// the entire bundle and the app renders a blank page. Read defensively so a
+// throwing getter degrades to "unsupported" rather than crashing the app.
+function resolveSpeechRecognitionAPI(): SpeechRecognitionConstructor | null {
+	if (typeof window === 'undefined') {
+		return null;
+	}
+	try {
+		return (
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(window as any).SpeechRecognition ??
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(window as any).webkitSpeechRecognition ??
-			null)
-		: null;
+			null
+		);
+	} catch {
+		return null;
+	}
+}
+
+const SpeechRecognitionAPI: SpeechRecognitionConstructor | null =
+	resolveSpeechRecognitionAPI();
 
 export type SpeechRecognitionError =
 	| 'not-supported'

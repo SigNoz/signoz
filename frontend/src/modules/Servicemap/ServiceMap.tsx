@@ -1,9 +1,8 @@
 //@ts-nocheck
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { Card } from 'antd';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
@@ -11,6 +10,7 @@ import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { whilelistedKeys } from 'hooks/useResourceAttribute/config';
 import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
+import { filterServiceMapSupportedQueries } from 'hooks/useResourceAttribute/utils';
 import { getDetailedServiceMapItems, ServiceMapStore } from 'store/actions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
@@ -38,7 +38,7 @@ const Container = styled.div`
 	}
 `;
 
-interface ServiceMapProps extends RouteComponentProps<any> {
+interface ServiceMapProps {
 	serviceMap: ServiceMapStore;
 	globalTime: GlobalTime;
 	getDetailedServiceMapItems: (
@@ -70,32 +70,37 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 
 	const { queries } = useResourceAttribute();
 
+	const supportedQueries = useMemo(
+		() => filterServiceMapSupportedQueries(queries),
+		[queries],
+	);
+
 	useEffect(() => {
 		/*
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		getDetailedServiceMapItems(globalTime, queries);
-	}, [globalTime, getDetailedServiceMapItems, queries]);
+		getDetailedServiceMapItems(globalTime, supportedQueries);
+	}, [globalTime, getDetailedServiceMapItems, supportedQueries]);
 
 	useEffect(() => {
 		fgRef.current && fgRef.current.d3Force('charge').strength(-400);
 	});
 
-	if (serviceMap.loading) {
-		return <Spinner size="large" tip="Loading..." />;
-	}
+	const renderBody = (): JSX.Element => {
+		if (serviceMap.loading) {
+			return <Spinner size="large" tip="Loading..." />;
+		}
 
-	if (!serviceMap.loading && serviceMap.items.length === 0) {
-		return (
-			<Container>
-				<ResourceAttributesFilter />
-				<Card>No Service Found</Card>
-			</Container>
-		);
-	}
+		if (serviceMap.items.length === 0) {
+			return <Card data-testid="service-map-empty">No Service Found</Card>;
+		}
+
+		return <Map fgRef={fgRef} serviceMap={serviceMap} />;
+	};
+
 	return (
-		<div className="service-map-container">
+		<Container className="service-map-container" data-testid="service-map">
 			<ResourceAttributesFilter
 				suffixIcon={
 					<TextToolTip
@@ -108,8 +113,8 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 				}
 			/>
 
-			<Map fgRef={fgRef} serviceMap={serviceMap} />
-		</div>
+			{renderBody()}
+		</Container>
 	);
 }
 
@@ -123,8 +128,6 @@ const mapStateToProps = (
 	globalTime: state.globalTime,
 });
 
-export default withRouter(
-	connect(mapStateToProps, {
-		getDetailedServiceMapItems,
-	})(ServiceMap),
-);
+export default connect(mapStateToProps, {
+	getDetailedServiceMapItems,
+})(ServiceMap);

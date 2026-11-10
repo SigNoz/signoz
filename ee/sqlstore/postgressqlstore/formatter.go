@@ -16,9 +16,19 @@ func newFormatter(dialect schema.Dialect) sqlstore.SQLFormatter {
 }
 
 func (f *formatter) JSONExtractString(column, path string) []byte {
-	var sql []byte
-	sql = f.bunf.AppendIdent(sql, column)
-	sql = append(sql, f.convertJSONPathToPostgres(path)...)
+	ops := f.convertJSONPathToPostgres(path)
+	if len(ops) == 0 {
+		return f.bunf.AppendIdent(nil, column)
+	}
+	return append(f.TextToJsonColumn(column), ops...)
+}
+
+func (f *formatter) JSONExtractMapValue(column, mapField, key string) []byte {
+	sql := f.TextToJsonColumn(column)
+	sql = append(sql, "->"...)
+	sql = schema.Append(f.bunf, sql, mapField)
+	sql = append(sql, "->>"...)
+	sql = schema.Append(f.bunf, sql, key)
 	return sql
 }
 
@@ -150,4 +160,8 @@ func (f *formatter) LowerExpression(expression string) []byte {
 	sql = append(sql, expression...)
 	sql = append(sql, ')')
 	return sql
+}
+
+func (f *formatter) EscapeLikePattern(value string) string {
+	return strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(value)
 }

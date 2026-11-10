@@ -1,0 +1,272 @@
+{
+  "id": "appservice",
+  "title": "App Services",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_averagememoryworkingset_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_bytesreceived_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_bytessent_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_backendrequestcount_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_cputime_count",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_cputime_total",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_cputime_minimum",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_cputime_maximum",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_currentassemblies_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_filesystemusage_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_gen0collections_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_ge10collections_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_gen2collections_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_handles_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_healthcheckstatus_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_http101_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+
+      {
+        "name": "azure_http2xx_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+
+      {
+        "name": "azure_http3xx_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+
+      {
+        "name": "azure_http401_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+
+      {
+        "name": "azure_http403_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+
+      {
+        "name": "azure_http404_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+
+      {
+        "name": "azure_http406_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+
+      {
+        "name": "azure_http4xx_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+
+      {
+        "name": "azure_http5xx_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+
+      {
+        "name": "azure_httpresponsetime_average",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_iootherbytespersecond_total",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_iootheroperationspersecond_total",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_ioreadbytespersecond_total",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_ioreadoperationspersecond_total",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_iowritebytespersecond_total",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_iowriteoperationspersecond_total",
+        "unit": "BytesPerSecond",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_privatebytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_requests_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_requestsinapplicationqueue_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_thread_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_totalappdomains_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_totalappdomainsunloaded_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "resourceProvider": "Microsoft.Web",
+      "resourceType": "sites",
+      "metrics": {},
+      "logs": {
+        "categoryGroups": ["allLogs"]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "App Services Overview",
+        "description": "Overview of App Services metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

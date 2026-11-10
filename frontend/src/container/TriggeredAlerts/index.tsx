@@ -175,6 +175,7 @@ function TriggeredAlerts(): JSX.Element {
 					value={searchText}
 					onChange={handleSearchChange}
 					suffix={<Search size={14} className={styles.searchIcon} />}
+					testId="triggered-alerts-search-input"
 				/>
 				<ComboboxSimple
 					className={styles.filterSelect}
@@ -186,6 +187,7 @@ function TriggeredAlerts(): JSX.Element {
 					allowCreate
 					items={severyFilters}
 					maxDisplayedPills={2}
+					testId="triggered-alerts-filter-combobox"
 				/>
 				<ComboboxSimple
 					className={styles.filterSelect}
@@ -196,6 +198,7 @@ function TriggeredAlerts(): JSX.Element {
 					items={labelOptions}
 					multiple
 					maxDisplayedPills={2}
+					testId="triggered-alerts-groupby-combobox"
 				/>
 			</div>
 

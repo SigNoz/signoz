@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { navigate } from 'lib/router/navigation';
+import { useAppParams } from 'lib/router/useAppParams';
 import { Skeleton } from 'antd';
-import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
+import useGetTraceFlamegraphV3 from 'hooks/trace/useGetTraceFlamegraphV3';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { COLOR_BY_FIELDS } from '../constants';
@@ -27,10 +28,8 @@ function TraceFlamegraph({
 	selectedSpan,
 	totalSpansCount,
 }: TraceFlamegraphProps): JSX.Element {
-	const { id: traceId } = useParams<TraceDetailFlamegraphURLProps>();
+	const { id: traceId } = useAppParams<'id'>();
 	const urlQuery = useUrlQuery();
-	const history = useHistory();
-	const { search } = useLocation();
 	const [firstSpanAtFetchLevel, setFirstSpanAtFetchLevel] = useState<string>(
 		urlQuery.get('spanId') || '',
 	);
@@ -39,20 +38,20 @@ function TraceFlamegraph({
 		setFirstSpanAtFetchLevel(urlQuery.get('spanId') || '');
 	}, [urlQuery]);
 
-	const handleSpanClick = useCallback(
-		(spanId: string): void => {
-			setFirstSpanAtFetchLevel(spanId);
-			const searchParams = new URLSearchParams(search);
-			//tood: use from query params constants
-			if (searchParams.get('spanId') !== spanId) {
-				searchParams.set('spanId', spanId);
-				history.replace({ search: searchParams.toString() });
-			}
-		},
-		[history, search],
-	);
+	const handleSpanClick = useCallback((spanId: string): void => {
+		setFirstSpanAtFetchLevel(spanId);
+		const searchParams = getUnstableCurrentSearchParams();
+		//tood: use from query params constants
+		if (searchParams.get('spanId') !== spanId) {
+			searchParams.set('spanId', spanId);
+			navigate({ search: searchParams.toString() }, { replace: true });
+		}
+	}, []);
 
 	const previewFields = useTraceStore((s) => s.previewFields);
+	// Gate the fetch until prefs load, else selectFields (in the query key)
+	// repopulates and triggers a second fetch.
+	const userPrefsReady = useTraceStore((s) => s.userPreferences !== null);
 
 	// Color-by fields baseline + user-picked preview fields. De-duped by `name`,
 	// color-by entries first so their canonical metadata wins on collision.
@@ -70,17 +69,14 @@ function TraceFlamegraph({
 		data,
 		isFetching,
 		error: fetchError,
-	} = useGetTraceFlamegraph({
-		traceId,
+	} = useGetTraceFlamegraphV3({
+		traceId: traceId || '',
 		selectedSpanId: selectedSpanIdForFetch,
-		limit: FLAMEGRAPH_SPAN_LIMIT,
 		selectFields: flamegraphSelectFields,
+		enabled: !!traceId && userPrefsReady,
 	});
 
-	const spans = useMemo(
-		() => data?.payload?.spans || [],
-		[data?.payload?.spans],
-	);
+	const spans = useMemo(() => data?.spans || [], [data?.spans]);
 
 	const {
 		layout,
@@ -99,8 +95,8 @@ function TraceFlamegraph({
 						setFirstSpanAtFetchLevel={setFirstSpanAtFetchLevel}
 						onSpanClick={handleSpanClick}
 						traceMetadata={{
-							startTime: data?.payload?.startTimestampMillis || 0,
-							endTime: data?.payload?.endTimestampMillis || 0,
+							startTime: data?.startTimestampMillis || 0,
+							endTime: data?.endTimestampMillis || 0,
 						}}
 						filteredSpanIds={filteredSpanIds}
 						isFilterActive={isFilterActive}
@@ -124,7 +120,7 @@ function TraceFlamegraph({
 		if (fetchError || workerError) {
 			return <Error error={(fetchError || workerError) as any} />;
 		}
-		if (data?.payload?.spans && data.payload.spans.length === 0) {
+		if (data?.spans && data.spans.length === 0) {
 			return <div>No data found for trace {traceId}</div>;
 		}
 		return (
@@ -134,17 +130,17 @@ function TraceFlamegraph({
 				setFirstSpanAtFetchLevel={setFirstSpanAtFetchLevel}
 				onSpanClick={handleSpanClick}
 				traceMetadata={{
-					startTime: data?.payload?.startTimestampMillis || 0,
-					endTime: data?.payload?.endTimestampMillis || 0,
+					startTime: data?.startTimestampMillis || 0,
+					endTime: data?.endTimestampMillis || 0,
 				}}
 				filteredSpanIds={filteredSpanIds}
 				isFilterActive={isFilterActive}
 			/>
 		);
 	}, [
-		data?.payload?.endTimestampMillis,
-		data?.payload?.startTimestampMillis,
-		data?.payload?.spans,
+		data?.endTimestampMillis,
+		data?.startTimestampMillis,
+		data?.spans,
 		fetchError,
 		filteredSpanIds,
 		firstSpanAtFetchLevel,

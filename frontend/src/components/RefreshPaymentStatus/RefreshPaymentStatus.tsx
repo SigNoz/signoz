@@ -1,56 +1,80 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Tooltip } from 'antd';
-import refreshPaymentStatus from 'api/v3/licenses/put';
-import cx from 'classnames';
+import { refreshLicense } from 'api/generated/services/licenses';
+import { Button } from '@signozhq/ui/button';
 import { RefreshCcw } from '@signozhq/icons';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { buildLicenseUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/license.permissions';
 import { useAppContext } from 'providers/App/App';
 
+export type RefreshPaymentStatusType = 'button' | 'text';
+
 function RefreshPaymentStatus({
-	btnShape,
 	type,
+	withPortal,
 }: {
-	btnShape?: 'default' | 'round' | 'circle';
-	type?: 'button' | 'text' | 'tooltip';
+	type?: RefreshPaymentStatusType;
+	withPortal?: false;
 }): JSX.Element {
 	const { t } = useTranslation(['failedPayment']);
-	const { activeLicenseRefetch } = useAppContext();
+	const { activeLicense, activeLicenseRefetch } = useAppContext();
 
 	const [isLoading, setIsLoading] = useState(false);
 
 	const handleRefreshPaymentStatus = async (): Promise<void> => {
+		if (!activeLicense) {
+			return;
+		}
+
 		setIsLoading(true);
 
 		try {
-			await refreshPaymentStatus();
+			await refreshLicense({ id: activeLicense.id });
 
-			await Promise.all([activeLicenseRefetch()]);
+			activeLicenseRefetch();
 		} catch (e) {
 			console.error(e);
 		}
 		setIsLoading(false);
 	};
 
-	return (
-		<span className="refresh-payment-status-btn-wrapper">
-			<Tooltip title={type === 'tooltip' ? t('refreshPaymentStatus') : ''}>
-				<Button
-					type={type === 'text' ? 'text' : 'default'}
-					shape={btnShape}
-					className={cx('periscope-btn', { text: type === 'text' })}
-					onClick={handleRefreshPaymentStatus}
-					icon={<RefreshCcw size={14} />}
-					loading={isLoading}
-				>
-					{type !== 'tooltip' ? t('refreshPaymentStatus') : ''}
-				</Button>
-			</Tooltip>
-		</span>
+	const buttonTypes = {
+		button: {
+			variant: 'link',
+			color: 'secondary',
+			size: 'md',
+			children: t('refreshPaymentStatus'),
+		},
+		text: {
+			variant: 'solid',
+			color: 'warning',
+			size: 'sm',
+			children: t('refreshPaymentStatus'),
+		},
+	} as const satisfies Record<RefreshPaymentStatusType, unknown>;
+
+	const button = (
+		<AuthZTooltip
+			checks={
+				activeLicense ? [buildLicenseUpdatePermission(activeLicense.id)] : []
+			}
+			enabled={!!activeLicense}
+			withPortal={withPortal}
+		>
+			<Button
+				onClick={handleRefreshPaymentStatus}
+				prefix={<RefreshCcw size={14} />}
+				loading={isLoading}
+				{...buttonTypes[type || 'button']}
+			/>
+		</AuthZTooltip>
 	);
+
+	return <span className="refresh-payment-status-btn-wrapper">{button}</span>;
 }
 RefreshPaymentStatus.defaultProps = {
-	btnShape: 'default',
 	type: 'button',
+	withPortal: undefined,
 };
 
 export default RefreshPaymentStatus;

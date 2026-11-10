@@ -1,10 +1,12 @@
 package querybuildertypesv5
 
 import (
+	"bytes"
 	"regexp"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -35,35 +37,31 @@ const (
 )
 
 type QueryBuilderTraceOperator struct {
-	Name     string `json:"name"`
-	Disabled bool   `json:"disabled,omitempty"`
+	Name     string `json:"name" description:"The unique name of the trace operator query."`
+	Disabled bool   `json:"disabled" description:"When true, the result is excluded from the response but the query may still run. Defaults to false."`
 
-	Expression string `json:"expression"`
+	Expression string `json:"expression" description:"A trace-structure expression over traces builder query names using => for direct child, -> for descendant, && for both present, || for either present and NOT for absence, for example A => B && NOT C. At most 10 operators."`
 
-	Filter *Filter `json:"filter,omitempty"`
+	Filter *Filter `json:"filter,omitempty" description:"Accepted but currently not applied to the matched traces. Put filters on the operand queries instead."`
 
-	// User-configurable span return strategy - which query's spans to return
-	ReturnSpansFrom string `json:"returnSpansFrom,omitempty"`
+	ReturnSpansFrom string `json:"returnSpansFrom,omitempty" description:"The name of the operand query whose spans are returned; when empty, the spans matched by the whole expression are returned."`
 
-	// Trace-specific ordering (only span_count and trace_duration allowed)
-	Order []OrderBy `json:"order,omitempty"`
+	Order []OrderBy `json:"order,omitzero" description:"The sort order of the matched traces; only span_count and trace_duration may be used as keys."`
 
-	Aggregations []TraceAggregation `json:"aggregations,omitempty"`
-	StepInterval Step               `json:"stepInterval,omitempty"`
-	GroupBy      []GroupByKey       `json:"groupBy,omitempty"`
+	Aggregations []TraceAggregation `json:"aggregations,omitzero" description:"The aggregations to compute over the matched traces for scalar and time_series requests."`
+	StepInterval Step               `json:"stepInterval,omitzero" description:"The time bucket for time_series aggregation: seconds as a number or a Go duration string such as 60s."`
+	GroupBy      []GroupByKey       `json:"groupBy,omitzero" description:"The fields to group aggregations by."`
 
-	// having clause to apply to the aggregated query results
-	Having *Having `json:"having,omitempty"`
+	Having *Having `json:"having,omitempty" description:"A condition on the aggregation results, for example count() > 10."`
 
-	Limit  int    `json:"limit,omitempty"`
-	Offset int    `json:"offset,omitempty"`
-	Cursor string `json:"cursor,omitempty"`
+	Limit  int    `json:"limit,omitempty" description:"The maximum number of traces or groups to return. For raw requests 0 means 100 rows; for aggregations 0 means unlimited."`
+	Offset int    `json:"offset,omitempty" description:"The number of raw or trace rows, or of ordered series or rows for time_series and scalar requests, to skip before the page starts. Requires limit."`
+	Cursor string `json:"cursor,omitempty" description:"Accepted but currently ignored by the trace operator; page raw results with offset."`
 
-	Legend string `json:"legend,omitempty"`
+	Legend string `json:"legend" description:"The display name template for each series; {{field}} placeholders are replaced by group-by label values."`
 
-	// Other post-processing options
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty"`
-	Functions    []Function                         `json:"functions,omitempty"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" description:"The span fields to return for each row in raw requests, in addition to the always-present timestamp, trace_id and span_id columns."`
+	Functions    []Function                         `json:"functions,omitzero" description:"Post-processing functions applied in order to each result series."`
 
 	// Internal parsed representation (not exposed in JSON)
 	ParsedExpression *TraceOperand `json:"-"`
@@ -274,6 +272,10 @@ func (q *QueryBuilderTraceOperator) ValidatePagination() error {
 		)
 	}
 
+	if q.Offset > 0 && q.Limit == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset requires a limit")
+	}
+
 	// For production use, you might want to enforce maximum limits
 	if q.Limit > 10000 {
 		return errors.WrapInvalidInputf(
@@ -372,8 +374,8 @@ func (q *QueryBuilderTraceOperator) UnmarshalJSON(data []byte) error {
 	type Alias QueryBuilderTraceOperator
 
 	var temp Alias
-	// Use UnmarshalJSONWithContext for better error messages
-	if err := UnmarshalJSONWithContext(data, &temp, "query spec"); err != nil {
+	// Strict-decode the alias so unknown fields surface with field-name suggestions.
+	if err := binding.JSON.BindBody(bytes.NewReader(data), &temp, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("query spec")); err != nil {
 		return err
 	}
 

@@ -11,12 +11,7 @@ import {
 } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import {
-	TooltipRoot,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import {
 	createColumnHelper,
 	flexRender,
@@ -25,21 +20,19 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
 import cx from 'classnames';
-import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
-import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import { colorToRgb } from 'lib/uPlotLib/utils/generateColor';
 import {
-	ArrowUpRight,
 	ChevronDown,
 	ChevronRight,
-	CircleAlert,
 	Link,
 	ListPlus,
+	Sparkle,
 } from '@signozhq/icons';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { resolveSpanColor } from 'pages/TraceDetailsV3/utils';
@@ -51,6 +44,8 @@ import { toFixed } from 'utils/toFixed';
 
 import { EventTooltipContent } from '../../../SpanHoverCard/EventTooltipContent';
 import { SpanHoverCard } from '../../../SpanHoverCard/SpanHoverCard';
+import SpanHintBadge from '../../../SpanHintBadge/SpanHintBadge';
+import { isAiSpan } from '../../../utils/aiTraceUtils';
 import AddSpanToFunnelModal from '../../AddSpanToFunnelModal/AddSpanToFunnelModal';
 import { IInterestedSpan } from '../../types';
 
@@ -112,26 +107,19 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 	const eventTimeMs = event.timeUnixNano / 1e6;
 
 	return (
-		<TooltipProvider>
-			<TooltipRoot
-				open
-				onOpenChange={(open: boolean): void => {
-					if (!open) {
-						setShowPopover(false);
-					}
-				}}
-			>
-				<TooltipTrigger asChild>{dot}</TooltipTrigger>
-				<TooltipContent className={styles.popover}>
-					<EventTooltipContent
-						eventName={event.name}
-						timeOffsetMs={eventTimeMs - spanTimestamp}
-						isError={isError}
-						attributeMap={event.attributeMap || {}}
-					/>
-				</TooltipContent>
-			</TooltipRoot>
-		</TooltipProvider>
+		<Tooltip
+			open
+			title={
+				<EventTooltipContent
+					eventName={event.name}
+					timeOffsetMs={eventTimeMs - spanTimestamp}
+					isError={isError}
+					attributeMap={event.attributeMap || {}}
+				/>
+			}
+		>
+			{dot}
+		</Tooltip>
 	);
 });
 
@@ -246,6 +234,19 @@ const SpanOverview = memo(function SpanOverview({
 		onAddSpanToFunnel(span);
 	};
 
+	// e2e hook: expose the filter highlight/dim state as a stable attribute, since
+	// the styles.* classes are hashed at build time and can't be asserted.
+	let spanState = 'default';
+	if (isHighlighted) {
+		spanState = 'highlighted';
+	} else if (isDimmed) {
+		spanState = 'dimmed';
+	} else if (isSelectedNonMatching) {
+		spanState = 'selected-non-matching';
+	} else if (isSelected) {
+		spanState = 'selected';
+	}
+
 	return (
 		<div
 			className={cx(styles.spanOverview, {
@@ -254,6 +255,7 @@ const SpanOverview = memo(function SpanOverview({
 				[styles.isSelectedNonMatching]: isSelectedNonMatching,
 				[styles.isDimmed]: isDimmed,
 			})}
+			data-span-state={spanState}
 			onClick={(): void => handleSpanClick(span)}
 			onMouseEnter={(): void => onHoverEnter(span.span_id)}
 			onMouseLeave={(): void => onHoverLeave()}
@@ -301,6 +303,7 @@ const SpanOverview = memo(function SpanOverview({
 				{span.has_children && (
 					<span
 						className={styles.treeArrow}
+						data-testid={`cell-collapse-${span.span_id}`}
 						onClick={(event): void => {
 							event.stopPropagation();
 							event.preventDefault();
@@ -314,20 +317,31 @@ const SpanOverview = memo(function SpanOverview({
 			<span className={styles.subtreeCountSlot}>
 				{span.has_children && (
 					<span className={styles.subtreeCount}>
-						<Badge color="vanilla">{span.sub_tree_node_count}</Badge>
+						<Badge variant="solid" color="secondary">
+							{span.sub_tree_node_count}
+						</Badge>
 					</span>
 				)}
 			</span>
 
 			{/* Colored service dot */}
-			<span
-				className={cx(styles.treeIcon, { [styles.hasError]: span.has_error })}
-				style={
-					{
-						'--service-dot-color': effectiveColor,
-					} as React.CSSProperties
-				}
-			/>
+			{isAiSpan(span) ? (
+				<Sparkle
+					size={10}
+					color={effectiveColor}
+					fill={effectiveColor}
+					className={styles.aiSpanIcon}
+				/>
+			) : (
+				<span
+					className={cx(styles.treeIcon, { [styles.hasError]: span.has_error })}
+					style={
+						{
+							'--service-dot-color': effectiveColor,
+						} as React.CSSProperties
+					}
+				/>
+			)}
 
 			{/* Span name + service name */}
 			<span className={styles.treeLabel}>
@@ -337,40 +351,31 @@ const SpanOverview = memo(function SpanOverview({
 
 			{/* Action buttons — shown on hover via CSS, right-aligned */}
 			<span className={styles.rowActions}>
-				<TooltipProvider delayDuration={200}>
-					<TooltipRoot>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								color="secondary"
-								className={styles.actionBtn}
-								onClick={onSpanCopy}
-							>
-								<Link size={12} />
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent className={styles.actionTooltip}>
-							Copy Span Link
-						</TooltipContent>
-					</TooltipRoot>
-					<TooltipRoot>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								color="secondary"
-								className={styles.actionBtn}
-								onClick={handleFunnelClick}
-							>
-								<ListPlus size={12} />
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent className={styles.actionTooltip}>
-							Add to Trace Funnel
-						</TooltipContent>
-					</TooltipRoot>
-				</TooltipProvider>
+				<Tooltip title="Copy Span Link">
+					<Button
+						aria-label="Copy span link"
+						variant="ghost"
+						size="sm"
+						icon
+						color="secondary"
+						onClick={onSpanCopy}
+					>
+						<Link size={12} />
+					</Button>
+				</Tooltip>
+				<Tooltip title="Add to Trace Funnel">
+					<Button
+						aria-label="Add to Trace Funnel"
+						testId="span-add-to-funnel-btn"
+						variant="ghost"
+						size="sm"
+						icon
+						color="secondary"
+						onClick={handleFunnelClick}
+					>
+						<ListPlus size={12} />
+					</Button>
+				</Tooltip>
 			</span>
 		</div>
 	);
@@ -536,7 +541,9 @@ function Success(props: ISuccessProps): JSX.Element {
 		cursorX,
 		onMouseMove: onCrosshairMove,
 		onMouseLeave: onCrosshairLeave,
-	} = useCrosshair({ containerRef: timelineAreaRef, enabled: false });
+		// Rows are padded 0 15px while `.timeline` spans full width — inset the
+		// crosshair by the same 15px so it aligns with the ruler ticks and bars.
+	} = useCrosshair({ containerRef: timelineAreaRef, insetX: 15 });
 
 	// Imperative DOM class toggling for hover highlights (avoids React re-renders)
 	const applyHoverClass = useCallback((spanId: string | null): void => {
@@ -670,19 +677,19 @@ function Success(props: ISuccessProps): JSX.Element {
 		setSelectedSpanToAddToFunnel(span);
 	}, []);
 
-	const urlQuery = useUrlQuery();
 	const { safeNavigate } = useSafeNavigate();
 
 	const handleSpanClick = useCallback(
 		(span: SpanV3): void => {
 			setSelectedSpan(span);
+			const params = getUnstableCurrentSearchParams();
 			if (span?.span_id) {
-				urlQuery.set('spanId', span?.span_id);
+				params.set('spanId', span?.span_id);
 			}
 
-			safeNavigate({ search: urlQuery.toString() });
+			safeNavigate({ search: params.toString() }, { replace: true });
 		},
-		[setSelectedSpan, urlQuery, safeNavigate],
+		[setSelectedSpan, safeNavigate],
 	);
 
 	// Left side columns using TanStack React Table (extensible for future columns)
@@ -831,36 +838,8 @@ function Success(props: ISuccessProps): JSX.Element {
 	const virtualItems = virtualizer.getVirtualItems();
 	const leftRows = leftTable.getRowModel().rows;
 
-	const handleHoverCardOpenChange = useCallback((open: boolean): void => {
-		if (!open) {
-			setHoveredSpanId(null);
-		}
-	}, []);
-
 	return (
 		<div className={styles.root}>
-			{traceMetadata.hasMissingSpans && (
-				<div className={styles.missingSpans}>
-					<section className={styles.leftInfo}>
-						<CircleAlert size={14} />
-						<span className={styles.text}>This trace has missing spans</span>
-					</section>
-					<Button
-						variant="ghost"
-						color="secondary"
-						className={styles.rightInfo}
-						suffix={<ArrowUpRight size={14} />}
-						onClick={(): WindowProxy | null =>
-							window.open(
-								'https://signoz.io/docs/userguide/traces/#missing-spans',
-								'_blank',
-							)
-						}
-					>
-						Learn More
-					</Button>
-				</div>
-			)}
 			{isFetching && <div className={styles.loadingBar} />}
 			<div className={styles.splitPanel} ref={scrollContainerRef}>
 				{/* Sticky header row */}
@@ -902,7 +881,6 @@ function Success(props: ISuccessProps): JSX.Element {
 					/>
 					<SpanHoverCard
 						hoveredSpanId={hoveredSpanId}
-						onOpenChange={handleHoverCardOpenChange}
 						anchorLeft={sidebarWidth}
 						rowHeight={ROW_HEIGHT}
 						spans={spans}
@@ -979,13 +957,11 @@ function Success(props: ISuccessProps): JSX.Element {
 										transform: `translateY(${virtualRow.start}px)`,
 									}}
 									data-span-id={span.span_id}
-									onMouseEnter={(): void => handleRowMouseEnter(span.span_id)}
-									onMouseLeave={handleRowMouseLeave}
+									onMouseEnter={(): void => applyHoverClass(span.span_id)}
+									onMouseLeave={(): void => applyHoverClass(null)}
 									onClick={(): void => handleSpanClick(span)}
 								>
-									{span.response_status_code && (
-										<HttpStatusBadge statusCode={span.response_status_code} />
-									)}
+									<SpanHintBadge span={span} />
 								</div>
 							);
 						})}

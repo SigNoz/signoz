@@ -13,6 +13,19 @@ interface Props {
 	changelog: ChangelogSchema;
 }
 
+interface LinkProps {
+	href?: string;
+	children?: React.ReactNode;
+}
+
+function Link({ href, children }: LinkProps): JSX.Element {
+	return (
+		<a href={href} target="_blank" rel="noopener noreferrer">
+			{children}
+		</a>
+	);
+}
+
 function renderMedia(media: Media): JSX.Element | null {
 	if (SupportedImageTypes.includes(media.ext)) {
 		return (
@@ -62,7 +75,9 @@ function ChangelogRenderer({ changelog }: Props): JSX.Element {
 							<div key={feature.id}>
 								<div className="changelog-renderer-section-title">{feature.title}</div>
 								{feature.media && renderMedia(feature.media)}
-								<ReactMarkdown>{feature.description}</ReactMarkdown>
+								<ReactMarkdown components={{ a: Link }}>
+									{feature.description}
+								</ReactMarkdown>
 							</div>
 						))}
 					</div>
@@ -71,7 +86,9 @@ function ChangelogRenderer({ changelog }: Props): JSX.Element {
 					<div className="changelog-renderer-bug-fixes">
 						<div className="changelog-renderer-section-title">Bug Fixes</div>
 						{changelog.bug_fixes && (
-							<ReactMarkdown>{changelog.bug_fixes}</ReactMarkdown>
+							<ReactMarkdown components={{ a: Link }}>
+								{changelog.bug_fixes}
+							</ReactMarkdown>
 						)}
 					</div>
 				)}
@@ -79,7 +96,9 @@ function ChangelogRenderer({ changelog }: Props): JSX.Element {
 					<div className="changelog-renderer-maintenance">
 						<div className="changelog-renderer-section-title">Maintenance</div>
 						{changelog.maintenance && (
-							<ReactMarkdown>{changelog.maintenance}</ReactMarkdown>
+							<ReactMarkdown components={{ a: Link }}>
+								{changelog.maintenance}
+							</ReactMarkdown>
 						)}
 					</div>
 				)}

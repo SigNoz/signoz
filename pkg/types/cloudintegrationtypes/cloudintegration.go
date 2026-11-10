@@ -25,6 +25,17 @@ var (
 	ErrCodeServiceDefinitionNotFound            = errors.MustNewCode("service_definition_not_found")
 )
 
+var (
+	RegionStateEnabled  = RegionState{valuer.NewString("enabled")}
+	RegionStateDisabled = RegionState{valuer.NewString("disabled")}
+)
+
+type RegionState struct{ valuer.String }
+
+func (RegionState) Enum() []any {
+	return []any{RegionStateEnabled, RegionStateDisabled}
+}
+
 // StorableCloudIntegration represents a cloud integration stored in the database.
 // This is also referred as "Account" in the context of cloud integrations.
 type StorableCloudIntegration struct {
@@ -43,8 +54,16 @@ type StorableCloudIntegration struct {
 // StorableAgentReport represents the last heartbeat and arbitrary data sent by the agent
 // as of now there is no use case for Data field, but keeping it for backwards compatibility with older structure.
 type StorableAgentReport struct {
-	TimestampMillis int64          `json:"timestamp_millis"` // backward compatibility
-	Data            map[string]any `json:"data"`
+	TimestampMillis int64              `json:"timestamp_millis"` // backward compatibility
+	Data            map[string]any     `json:"data"`
+	SyncState       *StorableSyncState `json:"sync_state,omitempty"`
+}
+
+// StorableSyncState holds every region sent to the agent. A disabled region is dropped only after the agent acks Version.
+type StorableSyncState struct {
+	Version int64                       `json:"version"`
+	InSync  bool                        `json:"in_sync"`
+	Regions map[string]*RegionSyncState `json:"regions"`
 }
 
 // StorableCloudIntegrationService is to store service config for a cloud integration, which is a cloud provider specific configuration.
@@ -63,6 +82,7 @@ type StorableCloudIntegrationService struct {
 type StorableServiceConfig struct {
 	AWS   *StorableAWSServiceConfig
 	Azure *StorableAzureServiceConfig
+	GCP   *StorableGCPServiceConfig
 }
 
 type StorableAWSServiceConfig struct {
@@ -91,6 +111,15 @@ type StorableAzureLogsServiceConfig struct {
 type StorableAzureMetricsServiceConfig struct {
 	Enabled bool `json:"enabled"`
 }
+
+type StorableGCPServiceConfig struct {
+	Logs    *StorableGCPServiceLogsConfig    `json:"logs,omitempty"`
+	Metrics *StorableGCPServiceMetricsConfig `json:"metrics,omitempty"`
+}
+
+type StorableGCPServiceLogsConfig = GCPServiceLogsConfig
+
+type StorableGCPServiceMetricsConfig = GCPServiceMetricsConfig
 
 // Scan scans value from DB.
 func (r *StorableAgentReport) Scan(src any) error {
@@ -138,10 +167,28 @@ func NewStorableCloudIntegration(account *Account) (*StorableCloudIntegration, e
 		storableAccount.LastAgentReport = &StorableAgentReport{
 			TimestampMillis: account.AgentReport.TimestampMillis,
 			Data:            account.AgentReport.Data,
+			SyncState:       NewStorableSyncState(account.AgentReport.SyncState),
 		}
 	}
 
 	return storableAccount, nil
+}
+
+func NewStorableSyncState(syncState *SyncState) *StorableSyncState {
+	if syncState == nil {
+		return nil
+	}
+
+	regions := make(map[string]*RegionSyncState, len(syncState.Regions))
+	for region, regionSyncState := range syncState.Regions {
+		regions[region] = &RegionSyncState{State: regionSyncState.State}
+	}
+
+	return &StorableSyncState{
+		Version: syncState.Version,
+		InSync:  syncState.InSync,
+		Regions: regions,
+	}
 }
 
 // NewStorableCloudIntegrationService creates a new StorableCloudIntegrationService with
@@ -162,6 +209,7 @@ func (account *StorableCloudIntegration) Update(providerAccountID *string, agent
 		account.LastAgentReport = &StorableAgentReport{
 			TimestampMillis: agentReport.TimestampMillis,
 			Data:            agentReport.Data,
+			SyncState:       NewStorableSyncState(agentReport.SyncState),
 		}
 	}
 }
@@ -225,6 +273,30 @@ func newStorableServiceConfig(provider CloudProviderType, serviceID ServiceID, s
 		}
 
 		return &StorableServiceConfig{Azure: storableAzureServiceConfig}, nil
+	case CloudProviderTypeGCP:
+		storableGCPServiceConfig := new(StorableGCPServiceConfig)
+
+		if supportedSignals.Logs {
+			if serviceConfig.GCP.Logs == nil {
+				return nil, errors.NewInvalidInputf(ErrCodeCloudIntegrationInvalidConfig, "logs config is required for GCP service: %s", serviceID.StringValue())
+			}
+
+			storableGCPServiceConfig.Logs = &StorableGCPServiceLogsConfig{
+				Enabled: serviceConfig.GCP.Logs.Enabled,
+			}
+		}
+
+		if supportedSignals.Metrics {
+			if serviceConfig.GCP.Metrics == nil {
+				return nil, errors.NewInvalidInputf(ErrCodeCloudIntegrationInvalidConfig, "metrics config is required for GCP service: %s", serviceID.StringValue())
+			}
+
+			storableGCPServiceConfig.Metrics = &StorableGCPServiceMetricsConfig{
+				Enabled: serviceConfig.GCP.Metrics.Enabled,
+			}
+		}
+
+		return &StorableServiceConfig{GCP: storableGCPServiceConfig}, nil
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -246,6 +318,13 @@ func newStorableServiceConfigFromJSON(provider CloudProviderType, jsonStr string
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't parse Azure service config JSON")
 		}
 		return &StorableServiceConfig{Azure: azureConfig}, nil
+	case CloudProviderTypeGCP:
+		gcpConfig := new(StorableGCPServiceConfig)
+		err := json.Unmarshal([]byte(jsonStr), gcpConfig)
+		if err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't parse GCP service config JSON")
+		}
+		return &StorableServiceConfig{GCP: gcpConfig}, nil
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -264,6 +343,13 @@ func (config *StorableServiceConfig) toJSON(provider CloudProviderType) ([]byte,
 		jsonBytes, err := json.Marshal(config.Azure)
 		if err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't serialize Azure service config to JSON")
+		}
+
+		return jsonBytes, nil
+	case CloudProviderTypeGCP:
+		jsonBytes, err := json.Marshal(config.GCP)
+		if err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't serialize GCP service config to JSON")
 		}
 
 		return jsonBytes, nil

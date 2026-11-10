@@ -11,7 +11,7 @@ export const buildSchedule = (
 	schedule: Partial<AlertmanagertypesScheduleDTO>,
 ): AlertmanagertypesScheduleDTO => ({
 	timezone: schedule?.timezone ?? '',
-	startTime: schedule?.startTime,
+	startTime: schedule?.startTime ?? '',
 	endTime: schedule?.endTime,
 	recurrence: schedule?.recurrence,
 });

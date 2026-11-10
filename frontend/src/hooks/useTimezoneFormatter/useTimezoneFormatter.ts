@@ -22,11 +22,13 @@ interface CacheEntry {
 const CACHE_SIZE_LIMIT = 1000;
 const CACHE_CLEANUP_PERCENTAGE = 0.5; // Remove 50% when limit is reached
 
+export type FormatTimezoneAdjustedTimestamp = (
+	input: TimestampInput,
+	format?: string,
+) => string;
+
 function useTimezoneFormatter({ userTimezone }: { userTimezone: Timezone }): {
-	formatTimezoneAdjustedTimestamp: (
-		input: TimestampInput,
-		format?: string,
-	) => string;
+	formatTimezoneAdjustedTimestamp: FormatTimezoneAdjustedTimestamp;
 } {
 	// Initialize cache using useMemo to persist between renders
 	const cache = useMemo(() => new Map<string, CacheEntry>(), []);

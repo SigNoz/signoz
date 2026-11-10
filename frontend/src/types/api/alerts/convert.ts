@@ -69,19 +69,24 @@ function stripUndefinedLabels(
 export function toPostableRuleDTO(
 	local: PostableAlertRuleV2,
 ): RuletypesPostableRuleDTO {
-	const payload = {
+	const payload: Record<keyof RuletypesPostableRuleDTO, any> = {
 		alert: local.alert,
 		alertType: toAlertTypeDTO(local.alertType),
 		ruleType: toRuleTypeDTO(local.ruleType),
 		condition: local.condition,
 		annotations: local.annotations,
 		labels: stripUndefinedLabels(local.labels),
+		evalWindow: (local as unknown as RuletypesPostableRuleDTO).evalWindow,
+		frequency: (local as unknown as RuletypesPostableRuleDTO).frequency,
+		preferredChannels: (local as unknown as RuletypesPostableRuleDTO)
+			.preferredChannels,
 		notificationSettings: local.notificationSettings,
 		evaluation: local.evaluation,
 		schemaVersion: local.schemaVersion,
 		source: local.source,
 		version: local.version,
 		disabled: local.disabled,
+		description: (local as unknown as RuletypesPostableRuleDTO).description,
 	};
 	return payload as unknown as RuletypesPostableRuleDTO;
 }
@@ -89,7 +94,7 @@ export function toPostableRuleDTO(
 export function toPostableRuleDTOFromAlertDef(
 	local: AlertDef,
 ): RuletypesPostableRuleDTO {
-	const payload = {
+	const payload: Record<keyof RuletypesPostableRuleDTO, any> = {
 		alert: local.alert,
 		alertType: toAlertTypeDTO(local.alertType),
 		ruleType: toRuleTypeDTO(local.ruleType),
@@ -99,11 +104,16 @@ export function toPostableRuleDTOFromAlertDef(
 		evalWindow: local.evalWindow,
 		frequency: local.frequency,
 		preferredChannels: local.preferredChannels,
+		notificationSettings: (local as unknown as RuletypesPostableRuleDTO)
+			.notificationSettings,
+		evaluation: (local as unknown as RuletypesPostableRuleDTO).evaluation,
+		schemaVersion: (local as unknown as RuletypesPostableRuleDTO).schemaVersion,
 		source: local.source,
 		version: local.version,
 		disabled: local.disabled,
+		description: (local as unknown as RuletypesPostableRuleDTO).description,
 	};
-	return payload as unknown as RuletypesPostableRuleDTO;
+	return payload;
 }
 
 export function fromRuleDTOToPostableRuleV2(

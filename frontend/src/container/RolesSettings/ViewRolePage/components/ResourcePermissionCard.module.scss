@@ -1,0 +1,78 @@
+.card {
+	display: flex;
+	flex-direction: column;
+	background: var(--l2-background);
+	border: 1px solid var(--l1-border);
+	border-radius: var(--spacing-4);
+	overflow: hidden;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-5);
+	width: 100%;
+	padding: var(--spacing-6) var(--spacing-7);
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	transition: background 0.15s ease;
+	text-align: left;
+
+	&:hover {
+		background: var(--l1-background-hover);
+	}
+
+	&:focus {
+		outline: 2px solid var(--primary);
+		outline-offset: -2px;
+	}
+}
+
+.headerLeft {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+	min-width: 0;
+}
+
+.chevron {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	color: var(--l2-foreground);
+	flex-shrink: 0;
+}
+
+.icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--l2-foreground);
+	flex-shrink: 0;
+}
+
+.grantedCount {
+	display: inline-flex;
+	align-items: center;
+	padding: var(--spacing-1) var(--spacing-4);
+	color: var(--bg-robin-300);
+	background: color-mix(in srgb, var(--bg-robin-500) 14%, transparent);
+	border-radius: 16px;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.rows {
+	display: flex;
+	flex-direction: column;
+	padding: 0 var(--spacing-7);
+
+	// A subtle divider between consecutive action rows.
+	> * + * {
+		border-top: 1px solid var(--l1-border);
+	}
+}

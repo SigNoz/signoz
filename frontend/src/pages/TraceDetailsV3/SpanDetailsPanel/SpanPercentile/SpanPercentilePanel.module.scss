@@ -3,11 +3,12 @@
 	display: flex;
 	flex-direction: column;
 	position: relative;
-	border: 1px solid var(--l1-border);
+	border: 1px solid var(--l2-border);
 	border-radius: 4px;
 	filter: drop-shadow(2px 4px 16px rgba(0, 0, 0, 0.2));
 	backdrop-filter: blur(20px);
-	margin: 8px 16px;
+	margin: 8px 0 0;
+	width: 100%;
 }
 
 .header {
@@ -16,7 +17,7 @@
 	justify-content: space-between;
 	gap: 8px;
 	padding: 8px;
-	border-bottom: 1px solid var(--l1-border);
+	border-bottom: 1px solid var(--l2-border);
 }
 
 .content {
@@ -162,20 +163,20 @@
 
 .resourceSelector {
 	overflow: hidden;
-	width: calc(100% + 16px);
+	width: 100%;
 	position: absolute;
 	top: 32px;
-	left: -8px;
+	left: 0;
 	z-index: 1000;
 	border-radius: 4px;
-	border: 1px solid var(--l1-border);
+	border: 1px solid var(--l2-border);
 	background: var(--l1-background);
 	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 	backdrop-filter: blur(20px);
 }
 
 .resourceSelectorHeader {
-	border-bottom: 1px solid var(--l1-border);
+	border-bottom: 1px solid var(--l2-border);
 }
 
 .resourceSelectorInput {

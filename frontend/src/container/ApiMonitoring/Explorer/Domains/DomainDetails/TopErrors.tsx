@@ -171,7 +171,13 @@ function TopErrors({
 					/>
 				</div>
 				<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-					<Switch value={showStatusCodeErrors} onChange={setShowStatusCodeErrors} />
+					<Switch
+						color="primary"
+						textPlacement="right"
+						value={showStatusCodeErrors}
+						onChange={setShowStatusCodeErrors}
+						testId="top-errors-status-message-toggle"
+					/>
 					<span style={{ color: 'white', fontSize: '14px' }}>
 						Status Message Exists
 					</span>
@@ -181,7 +187,7 @@ function TopErrors({
 				</div>
 			</div>
 
-			<div className="endpoints-table-container">
+			<div className="endpoints-table-container" data-testid="top-errors-table">
 				<div className="endpoints-table-header">
 					{showStatusCodeErrors ? 'Errors with Status Message' : 'All Errors'}{' '}
 					<Tooltip

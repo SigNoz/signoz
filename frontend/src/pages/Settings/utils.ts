@@ -3,10 +3,7 @@ import { TFunction } from 'i18next';
 import { ROLES, USER_ROLES } from 'types/roles';
 
 import {
-	alertChannels,
 	billingSettings,
-	createAlertChannels,
-	editAlertChannels,
 	generalSettings,
 	ingestionSettings,
 	keyboardShortcuts,
@@ -15,7 +12,9 @@ import {
 	multiIngestionSettings,
 	mySettings,
 	organizationSettings,
+	roleCreate,
 	roleDetails,
+	roleEdit,
 	rolesSettings,
 	serviceAccountsSettings,
 } from './config';
@@ -34,14 +33,20 @@ export const getRoutes = (
 	const isAdmin = userRole === USER_ROLES.ADMIN;
 	const isEditor = userRole === USER_ROLES.EDITOR;
 
-	if (isWorkspaceBlocked && isAdmin) {
-		settings.push(
-			...organizationSettings(t),
-			...membersSettings(t),
-			...mySettings(t),
-			...billingSettings(t),
-			...keyboardShortcuts(t),
-		);
+	if (isWorkspaceBlocked) {
+		if (isAdmin) {
+			settings.push(
+				...organizationSettings(t),
+				...membersSettings(t),
+				...mySettings(t),
+			);
+		}
+
+		settings.push(...billingSettings(t));
+
+		if (isAdmin) {
+			settings.push(...keyboardShortcuts(t));
+		}
 
 		return settings;
 	}
@@ -60,13 +65,13 @@ export const getRoutes = (
 		settings.push(...ingestionSettings(t));
 	}
 
-	settings.push(...alertChannels(t));
-
 	// Visible to all authenticated users
 	settings.push(
 		...serviceAccountsSettings(t),
 		...rolesSettings(t),
+		...roleCreate(t),
 		...roleDetails(t),
+		...roleEdit(t),
 	);
 
 	// Admin-only: members management
@@ -74,14 +79,12 @@ export const getRoutes = (
 		settings.push(...membersSettings(t));
 	}
 
-	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
+	if (isCloudUser || isEnterpriseSelfHostedUser) {
 		settings.push(...billingSettings(t));
 	}
 
 	settings.push(
 		...mySettings(t),
-		...createAlertChannels(t),
-		...editAlertChannels(t),
 		...keyboardShortcuts(t),
 		...mcpServerSettings(t),
 	);

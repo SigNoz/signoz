@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
 
 import logEvent from 'api/common/logEvent';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppParams } from 'lib/router/useAppParams';
+import { navigate } from 'lib/router/navigation';
 import ROUTES from 'constants/routes';
 
 import ConversationView from 'container/AIAssistant/ConversationView';
@@ -11,23 +13,20 @@ import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantS
 import { VariantContext } from 'container/AIAssistant/VariantContext';
 import Noz from 'components/Noz/Noz';
 
+import { useAIAssistantStripInfo } from './useAIAssistantStripInfo';
+
 import styles from './AIAssistantPage.module.scss';
 import ConversationsList from 'container/AIAssistant/components/ConversationsList';
 
-interface RouteParams {
-	conversationId: string;
-}
-
 export default function AIAssistantPage(): JSX.Element {
-	const history = useHistory();
-	const location = useLocation<{ fromInApp?: boolean } | undefined>();
+	const location = useAppLocation<{ fromInApp?: boolean } | undefined>();
 	const { pathname } = location;
-	const { conversationId } = useParams<RouteParams>();
+	const { conversationId } = useAppParams<'conversationId'>();
 
 	// Skip the mount-time Opened fire when the user expanded an already-open
 	// drawer/modal — that surface already emitted Opened with the right source.
-	// Router state (vs a module flag) survives StrictMode double-mount and
-	// aborted navigations.
+	// Router state (vs a module flag) survives page remounts and aborted
+	// navigations.
 	const fromInApp = location.state?.fromInApp === true;
 	useEffect(() => {
 		if (fromInApp) {
@@ -41,6 +40,8 @@ export default function AIAssistantPage(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	useAIAssistantStripInfo();
+
 	const conversations = useAIAssistantStore((s) => s.conversations);
 	const activeConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
@@ -52,18 +53,36 @@ export default function AIAssistantPage(): JSX.Element {
 		(s) => s.startNewConversation,
 	);
 
-	// Keep a ref so the effect can read latest conversations without re-firing
-	// when startNewConversation mutates the store mid-effect.
+	// Keep refs so the effect can read the latest store state without re-firing
+	// when it mutates the store mid-effect (it only depends on the URL param).
 	const conversationsRef = useRef(conversations);
 	conversationsRef.current = conversations;
+	const activeConversationIdRef = useRef(activeConversationId);
+	activeConversationIdRef.current = activeConversationId;
 
 	useEffect(() => {
-		if (conversationsRef.current[conversationId]) {
+		// URL points at a known conversation → just activate it.
+		if (conversationId && conversationsRef.current[conversationId]) {
 			setActiveConversation(conversationId);
-		} else {
-			const newId = startNewConversation();
-			history.replace(ROUTES.AI_ASSISTANT.replace(':conversationId', newId));
+			return;
 		}
+
+		// The URL has no usable conversation id (bare `/ai-assistant`, or a stale
+		// param). Prefer resuming the active conversation — including the
+		// rehydrating placeholder for the persisted thread — over minting a new
+		// one. This is what stops a throwaway blank chat from flashing as a
+		// second thread during load, and stops a duplicate when the page
+		// remounts during startup route churn (the active id is already set, so
+		// we resume instead of create). Starting fresh is the last resort, only
+		// when there is genuinely nothing to resume.
+		const activeId = activeConversationIdRef.current;
+		const resumeId =
+			activeId && conversationsRef.current[activeId]
+				? activeId
+				: startNewConversation();
+		navigate(ROUTES.AI_ASSISTANT.replace(':conversationId', resumeId), {
+			replace: true,
+		});
 		// Only re-run when the URL param changes, not when conversations mutates.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [conversationId]);
@@ -78,19 +97,17 @@ export default function AIAssistantPage(): JSX.Element {
 			activeConversationId !== conversationId &&
 			conversations[activeConversationId]
 		) {
-			history.replace(
+			navigate(
 				ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
+				{ replace: true },
 			);
 		}
-	}, [activeConversationId, conversationId, conversations, history]);
+	}, [activeConversationId, conversationId, conversations]);
 
 	// When conversations sidebar selects a thread, navigate to it
-	const handleHistorySelect = useCallback(
-		(id: string) => {
-			history.push(ROUTES.AI_ASSISTANT.replace(':conversationId', id));
-		},
-		[history],
-	);
+	const handleHistorySelect = useCallback((id: string) => {
+		navigate(ROUTES.AI_ASSISTANT.replace(':conversationId', id));
+	}, []);
 
 	const handleNewConversation = useCallback(() => {
 		void logEvent(AIAssistantEvents.NewChatClicked, {
@@ -99,14 +116,14 @@ export default function AIAssistantPage(): JSX.Element {
 			source: 'history_list',
 		});
 		const newId = startNewConversation();
-		history.push(ROUTES.AI_ASSISTANT.replace(':conversationId', newId));
-	}, [startNewConversation, history, pathname]);
+		navigate(ROUTES.AI_ASSISTANT.replace(':conversationId', newId));
+	}, [startNewConversation, pathname]);
 
 	// Prefer the URL param, but fall back to the store's `activeConversationId`
 	// for the brief render after a re-key (client UUID → backend threadId), so
 	// the chat doesn't unmount while the URL sync effect catches up.
 	let activeId: string | null = null;
-	if (conversations[conversationId]) {
+	if (conversationId && conversations[conversationId]) {
 		activeId = conversationId;
 	} else if (activeConversationId && conversations[activeConversationId]) {
 		activeId = activeConversationId;

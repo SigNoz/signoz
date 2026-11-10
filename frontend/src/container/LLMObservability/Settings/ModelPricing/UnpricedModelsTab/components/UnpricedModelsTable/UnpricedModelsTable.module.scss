@@ -1,0 +1,22 @@
+// Capped scroll viewport — mirrors ModelCostsTable so the unpriced tab doesn't
+// shift on load, but uses max-height so a short list stays compact instead of
+// reserving the full viewport. The extra offset over the model-costs table
+// accounts for the banner toolbar above.
+.unpricedModelsTable {
+	--tanstack-table-row-height: 48px;
+	max-height: calc(100vh - 220px);
+	overflow-y: auto;
+
+	:global(table) tbody tr {
+		cursor: default;
+	}
+}
+
+.unpricedModelsEmpty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 400px;
+	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-base);
+}

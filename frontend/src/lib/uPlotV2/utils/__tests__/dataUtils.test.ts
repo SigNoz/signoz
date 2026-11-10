@@ -281,3 +281,20 @@ describe('dataUtils', () => {
 		});
 	});
 });
+
+describe('insertLargeGapNullsIntoAlignedData index alignment', () => {
+	// ChartWrapper gap-processes the pre-stack series to keep tooltip indices aligned;
+	// that only holds because insertions are decided from the x axis, never from y.
+	it('inserts at the same positions regardless of the y values', () => {
+		const x = [0, 100, 200];
+		const options = [{ spanGaps: 50 }];
+		const raw = [x, [1, 2, 3]] as uPlot.AlignedData;
+		const stacked = [x, [10, 20, 30]] as uPlot.AlignedData;
+
+		const fromRaw = insertLargeGapNullsIntoAlignedData(raw, options);
+		const fromStacked = insertLargeGapNullsIntoAlignedData(stacked, options);
+
+		expect(fromRaw[0]).toStrictEqual(fromStacked[0]);
+		expect(fromRaw[1]).toHaveLength((fromStacked[1] as unknown[]).length);
+	});
+});

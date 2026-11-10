@@ -44,7 +44,7 @@ describe('UPlotScaleBuilder', () => {
 		expect(adjustSpy).toHaveBeenCalledWith(null, null, undefined, undefined);
 	});
 
-	it('handles time scales using explicit min/max and rounds max down to the previous minute', () => {
+	it('handles time scales using explicit min/max', () => {
 		const min = 1_700_000_000; // seconds
 		const max = 1_700_000_600; // seconds
 
@@ -62,21 +62,25 @@ describe('UPlotScaleBuilder', () => {
 
 		expect(xScale.time).toBe(true);
 		expect(xScale.auto).toBe(false);
-		expect(Array.isArray(xScale.range)).toBe(true);
+		expect(xScale.range).toStrictEqual([min, max]);
+	});
 
-		const [resolvedMin, resolvedMax] = xScale.range as [number, number];
+	it('keeps short time windows intact', () => {
+		const min = 1_786_527_160;
+		const max = 1_786_527_183;
 
-		// min is passed through
-		expect(resolvedMin).toBe(min);
+		const builder = new UPlotScaleBuilder(
+			createScaleProps({
+				scaleKey: 'x',
+				time: true,
+				min,
+				max,
+			}),
+		);
 
-		// max is coerced to "endTime - 1 minute" and rounded down to minute precision
-		const oneMinuteAgoTimestamp = (max - 60) * 1000;
-		const currentDate = new Date(oneMinuteAgoTimestamp);
-		currentDate.setSeconds(0);
-		currentDate.setMilliseconds(0);
-		const expectedMax = Math.floor(currentDate.getTime() / 1000);
+		const config = builder.getConfig();
 
-		expect(resolvedMax).toBe(expectedMax);
+		expect(config.x.range).toStrictEqual([min, max]);
 	});
 
 	it('falls back to getFallbackMinMaxTimeStamp when time scale has no min/max', () => {
@@ -99,9 +103,7 @@ describe('UPlotScaleBuilder', () => {
 
 		expect(getFallbackMinMaxSpy).toHaveBeenCalled();
 		expect(resolvedMin).toBe(100);
-		// max is aligned to "fallbackMax - 60 seconds" minute boundary
-		expect(resolvedMax).toBeLessThanOrEqual(200);
-		expect(resolvedMax).toBeGreaterThan(100);
+		expect(resolvedMax).toBe(200);
 	});
 
 	it('pipes limits through soft-limit adjustment and log-scale normalization before range config', () => {

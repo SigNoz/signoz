@@ -1,0 +1,30 @@
+/* `styles.scss` sizes `#root`; the Storybook preview mounts into
+   `#storybook-root`, which needs the same box for `AppLayout` to lay out. */
+#storybook-root {
+	height: 100%;
+	overflow: hidden;
+}
+
+/* The story's last frame, without waiting out every fade: a zero-length single
+   iteration that keeps its end state, which is also where Chromatic parks an
+   animation. An infinite spinner would otherwise be caught at whatever angle
+   the frame landed on, and a text caret blinks on or off at random. Applied
+   after `play` by `settleForCapture`, off under Motion: Live. */
+html.sb-still {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0s !important;
+		animation-delay: 0s !important;
+		animation-iteration-count: 1 !important;
+		animation-fill-mode: forwards !important;
+		animation-play-state: paused !important;
+		transition-duration: 0s !important;
+		transition-delay: 0s !important;
+		caret-color: transparent !important;
+	}
+
+	* {
+		scroll-behavior: auto !important;
+	}
+}

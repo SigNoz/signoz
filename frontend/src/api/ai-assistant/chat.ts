@@ -55,6 +55,9 @@ import type {
 	ThreadDetailResponseDTO,
 	ThreadListResponseDTO,
 	ThreadSummaryDTO,
+	ChipDTO,
+	ChipsResponseDTO,
+	PageTypeDTO,
 	ToolCallEventDTO,
 	ToolResultEventDTO,
 } from './sigNozAIAssistantAPI.schemas';
@@ -540,4 +543,20 @@ export async function submitFeedback(
 		rating,
 		comment: comment ?? null,
 	});
+}
+
+// ---------------------------------------------------------------------------
+// Contextual empty-state chips
+// GET /api/v1/assistant/empty-state/chips?page_type=… → { chips }
+// ---------------------------------------------------------------------------
+
+export async function getEmptyStateChips(
+	pageType: PageTypeDTO,
+	signal?: AbortSignal,
+): Promise<ChipDTO[]> {
+	const response = await AIAssistantInstance.get<ChipsResponseDTO>(
+		'/empty-state/chips',
+		{ params: { page_type: pageType }, signal },
+	);
+	return response.data.chips;
 }

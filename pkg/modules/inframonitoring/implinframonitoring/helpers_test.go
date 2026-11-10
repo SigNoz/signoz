@@ -5,6 +5,7 @@ import (
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/stretchr/testify/assert"
 )
 
 func groupByKey(name string) qbtypes.GroupByKey {
@@ -88,10 +89,7 @@ func TestIsKeyInGroupByAttrs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := isKeyInGroupByAttrs(tt.groupByAttrs, tt.key)
-			if got != tt.expectedFound {
-				t.Errorf("isKeyInGroupByAttrs(%v, %q) = %v, want %v",
-					tt.groupByAttrs, tt.key, got, tt.expectedFound)
-			}
+			assert.Equal(t, tt.expectedFound, got)
 		})
 	}
 }
@@ -156,10 +154,7 @@ func TestMergeFilterExpressions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := mergeFilterExpressions(tt.queryFilterExpr, tt.reqFilterExpr)
-			if got != tt.expected {
-				t.Errorf("mergeFilterExpressions(%q, %q) = %q, want %q",
-					tt.queryFilterExpr, tt.reqFilterExpr, got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }
@@ -205,10 +200,7 @@ func TestCompositeKeyFromList(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := compositeKeyFromList(tt.parts)
-			if got != tt.expected {
-				t.Errorf("compositeKeyFromList(%v) = %q, want %q",
-					tt.parts, got, tt.expected)
-			}
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }
@@ -269,15 +261,207 @@ func TestCompositeKeyFromLabels(t *testing.T) {
 			groupBy:  []qbtypes.GroupByKey{groupByKey("a"), groupByKey("m"), groupByKey("z")},
 			expected: "first\x00middle\x00last",
 		},
+		{
+			// deployments default group identity: (deployment, namespace).
+			name: "deployment and namespace group-by",
+			labels: map[string]string{
+				"k8s.deployment.name": "web-1",
+				"k8s.namespace.name":  "ns-x",
+			},
+			groupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey, namespaceNameGroupByKey},
+			expected: "web-1\x00ns-x",
+		},
+		{
+			// statefulsets default group identity: (statefulset, namespace).
+			name: "statefulset and namespace group-by",
+			labels: map[string]string{
+				"k8s.statefulset.name": "web-1",
+				"k8s.namespace.name":   "ns-x",
+			},
+			groupBy:  []qbtypes.GroupByKey{statefulSetNameGroupByKey, namespaceNameGroupByKey},
+			expected: "web-1\x00ns-x",
+		},
+		{
+			// jobs default group identity: (job, namespace).
+			name: "job and namespace group-by",
+			labels: map[string]string{
+				"k8s.job.name":       "web-1",
+				"k8s.namespace.name": "ns-x",
+			},
+			groupBy:  []qbtypes.GroupByKey{jobNameGroupByKey, namespaceNameGroupByKey},
+			expected: "web-1\x00ns-x",
+		},
+		{
+			// daemonsets default group identity: (daemonset, namespace).
+			name: "daemonset and namespace group-by",
+			labels: map[string]string{
+				"k8s.daemonset.name": "web-1",
+				"k8s.namespace.name": "ns-x",
+			},
+			groupBy:  []qbtypes.GroupByKey{daemonSetNameGroupByKey, namespaceNameGroupByKey},
+			expected: "web-1\x00ns-x",
+		},
+		{
+			// workload default group identity with cluster: (name, namespace, cluster).
+			name: "name, namespace and cluster group-by",
+			labels: map[string]string{
+				"k8s.deployment.name": "web-1",
+				"k8s.namespace.name":  "ns-x",
+				"k8s.cluster.name":    "cluster-a",
+			},
+			groupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey},
+			expected: "web-1\x00ns-x\x00cluster-a",
+		},
+		{
+			// absent cluster label -> empty trailing segment (Helm-less / self-configured collector).
+			name: "missing cluster label yields empty trailing segment",
+			labels: map[string]string{
+				"k8s.deployment.name": "web-1",
+				"k8s.namespace.name":  "ns-x",
+			},
+			groupBy:  []qbtypes.GroupByKey{deploymentNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey},
+			expected: "web-1\x00ns-x\x00",
+		},
+		{
+			// volumes default group identity: (pvc, namespace, cluster).
+			name: "pvc, namespace and cluster group-by",
+			labels: map[string]string{
+				"k8s.persistentvolumeclaim.name": "data-pg-0",
+				"k8s.namespace.name":             "ns-x",
+				"k8s.cluster.name":               "cluster-a",
+			},
+			groupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey},
+			expected: "data-pg-0\x00ns-x\x00cluster-a",
+		},
+		{
+			// absent cluster label on a PVC -> empty trailing segment.
+			name: "pvc missing cluster label yields empty trailing segment",
+			labels: map[string]string{
+				"k8s.persistentvolumeclaim.name": "data-pg-0",
+				"k8s.namespace.name":             "ns-x",
+			},
+			groupBy:  []qbtypes.GroupByKey{pvcNameGroupByKey, namespaceNameGroupByKey, clusterNameGroupByKey},
+			expected: "data-pg-0\x00ns-x\x00",
+		},
+		{
+			// namespaces default group identity: (namespace, cluster) — namespaces are
+			// cluster-scoped, so cluster is the only cross-cluster disambiguator.
+			name: "namespace and cluster group-by",
+			labels: map[string]string{
+				"k8s.namespace.name": "ns-x",
+				"k8s.cluster.name":   "cluster-a",
+			},
+			groupBy:  []qbtypes.GroupByKey{namespaceNameGroupByKey, clusterNameGroupByKey},
+			expected: "ns-x\x00cluster-a",
+		},
+		{
+			// absent cluster label on a namespace -> empty trailing segment.
+			name: "namespace missing cluster label yields empty trailing segment",
+			labels: map[string]string{
+				"k8s.namespace.name": "ns-x",
+			},
+			groupBy:  []qbtypes.GroupByKey{namespaceNameGroupByKey, clusterNameGroupByKey},
+			expected: "ns-x\x00",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := compositeKeyFromLabels(tt.labels, tt.groupBy)
-			if got != tt.expected {
-				t.Errorf("compositeKeyFromLabels(%v, %v) = %q, want %q",
-					tt.labels, tt.groupBy, got, tt.expected)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestIntersectMap(t *testing.T) {
+	tests := []struct {
+		name     string
+		m        map[string]int
+		keep     map[string]podStatusCounts
+		expected map[string]int
+	}{
+		{
+			name:     "keep subset",
+			m:        map[string]int{"a": 1, "b": 2, "c": 3},
+			keep:     map[string]podStatusCounts{"a": {}, "c": {}},
+			expected: map[string]int{"a": 1, "c": 3},
+		},
+		{
+			name:     "empty keep drops everything",
+			m:        map[string]int{"a": 1, "b": 2},
+			keep:     map[string]podStatusCounts{},
+			expected: map[string]int{},
+		},
+		{
+			name:     "keep key absent from m is ignored",
+			m:        map[string]int{"a": 1},
+			keep:     map[string]podStatusCounts{"a": {}, "z": {}},
+			expected: map[string]int{"a": 1},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := intersectMap(tt.m, tt.keep)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+func TestIntersectRankedGroups(t *testing.T) {
+	groups := []rankedGroup{
+		{compositeKey: "a", value: 3},
+		{compositeKey: "b", value: 2},
+		{compositeKey: "c", value: 1},
+	}
+
+	tests := []struct {
+		name     string
+		groups   []rankedGroup
+		keep     map[string]podStatusCounts
+		expected []string // compositeKeys in order
+	}{
+		{
+			name:     "preserves order, drops non-matching",
+			groups:   groups,
+			keep:     map[string]podStatusCounts{"a": {}, "c": {}},
+			expected: []string{"a", "c"},
+		},
+		{
+			name:     "empty keep drops all",
+			groups:   groups,
+			keep:     map[string]podStatusCounts{},
+			expected: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := intersectRankedGroups(tt.groups, tt.keep)
+			gotKeys := make([]string, 0, len(got))
+			for _, g := range got {
+				gotKeys = append(gotKeys, g.compositeKey)
 			}
+			assert.Equal(t, tt.expected, gotKeys)
+		})
+	}
+}
+
+func TestBuildPageGroupsFilterExprQuotesValues(t *testing.T) {
+	testCases := []struct {
+		name       string
+		pageGroups []map[string]string
+		expected   string
+	}{
+		{name: "SingleQuote", pageGroups: []map[string]string{{"host.name": `h'1`}}, expected: `host.name IN ('h\'1')`},
+		{name: "TrailingBackslash", pageGroups: []map[string]string{{"host.name": `h\`}}, expected: `host.name IN ('h\\')`},
+		{name: "Injection", pageGroups: []map[string]string{{"host.name": `h') OR 1=1 --`}}, expected: `host.name IN ('h\') OR 1=1 --')`},
+		{name: "MultipleGroups", pageGroups: []map[string]string{{"host.name": `h'1`}, {"host.name": `h'2`}}, expected: `host.name IN ('h\'1', 'h\'2')`},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expected, buildPageGroupsFilterExpr(testCase.pageGroups))
 		})
 	}
 }

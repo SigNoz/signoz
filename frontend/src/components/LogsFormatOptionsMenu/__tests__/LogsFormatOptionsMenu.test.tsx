@@ -1,5 +1,11 @@
 import { FontSize } from 'container/OptionsMenu/types';
-import { fireEvent, render, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import LogsFormatOptionsMenu from '../LogsFormatOptionsMenu';
 
@@ -62,6 +68,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 						onSearch: jest.fn(),
 						onSelect: jest.fn(),
 						onRemove: jest.fn(),
+						onReorder: jest.fn(),
 					},
 				}}
 			/>,
@@ -106,18 +113,12 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 	});
 
 	it('increments max-lines and calls onChange', async () => {
-		const { maxLinesOnChange } = setup();
+		const { maxLinesOnChange, getByTestId } = setup();
 
 		// Increment max lines
-		const input = document.querySelector(
-			'.max-lines-per-row-input input',
-		) as HTMLInputElement;
+		const input = getByTestId('max-lines-per-row') as HTMLInputElement;
 		const initial = Number(input.value);
-		const buttons = document.querySelectorAll(
-			'.max-lines-per-row-input .periscope-btn',
-		);
-		const incrementBtn = buttons[1] as HTMLElement;
-		fireEvent.click(incrementBtn);
+		fireEvent.click(screen.getByRole('button', { name: 'More lines per row' }));
 
 		await waitFor(() => {
 			expect(Number(input.value)).toBe(initial + 1);
@@ -127,31 +128,112 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		});
 	});
 
+	it('clamps a typed max-lines value to 10', async () => {
+		const { maxLinesOnChange, getByTestId } = setup();
+		const input = getByTestId('max-lines-per-row') as HTMLInputElement;
+		const user = userEvent.setup();
+
+		await user.clear(input);
+		await user.type(input, '15');
+		await user.tab();
+
+		await waitFor(() => expect(input.value).toBe('10'));
+		expect(maxLinesOnChange).toHaveBeenLastCalledWith(10);
+	});
+
+	it('stops max-lines at 10', async () => {
+		const { getByTestId } = setup();
+		const input = getByTestId('max-lines-per-row') as HTMLInputElement;
+		const increment = screen.getByRole('button', { name: 'More lines per row' });
+		const user = userEvent.setup();
+
+		for (let i = 0; i < 12; i++) {
+			await user.click(increment);
+		}
+
+		await waitFor(() => expect(input.value).toBe('10'));
+	});
+
 	it('changes font size to MEDIUM and calls onChange', async () => {
-		const { fontSizeOnChange } = setup();
+		const { fontSizeOnChange, getByTestId } = setup();
 		// Open font dropdown
-		const fontButton = document.querySelector(
-			'.font-size-container .value',
-		) as HTMLElement;
-		fireEvent.click(fontButton);
+		fireEvent.click(getByTestId('font-size-select'));
 
 		// Choose MEDIUM
-		const optionButtons = Array.from(
-			document.querySelectorAll('.font-size-dropdown .option-btn'),
-		);
-		const mediumBtn = optionButtons[1] as HTMLElement;
-		fireEvent.click(mediumBtn);
+		fireEvent.click(getByTestId(`font-size-option-${FontSize.MEDIUM}`));
 
 		await waitFor(() => {
 			expect(
-				document.querySelectorAll('.font-size-dropdown .option-btn .icon'),
-			).toHaveLength(1);
-			expect(
-				(optionButtons[1] as Element).querySelector('.icon'),
+				getByTestId(`font-size-option-${FontSize.MEDIUM}`).querySelector('svg'),
 			).toBeInTheDocument();
+			expect(
+				getByTestId(`font-size-option-${FontSize.SMALL}`).querySelector('svg'),
+			).not.toBeInTheDocument();
 		});
 		await waitFor(() => {
 			expect(fontSizeOnChange).toHaveBeenCalledWith(FontSize.MEDIUM);
+		});
+	});
+
+	function renderWithOnOpen(
+		onOpenColumns?: jest.Mock,
+		selectedOptionFormat: 'table' | 'raw' | 'list' = 'table',
+	): { getByTestId: ReturnType<typeof render>['getByTestId'] } {
+		const items = [
+			{ key: 'raw', label: 'Raw', data: { title: 'max lines per row' } },
+			{ key: 'list', label: 'Default' },
+			{ key: 'table', label: 'Column', data: { title: 'columns' } },
+		];
+
+		const { getByTestId } = render(
+			<LogsFormatOptionsMenu
+				items={items}
+				selectedOptionFormat={selectedOptionFormat}
+				config={{
+					format: { value: selectedOptionFormat, onChange: jest.fn() },
+					maxLines: { value: 1, onChange: jest.fn() },
+					fontSize: { value: FontSize.SMALL, onChange: jest.fn() },
+				}}
+				onOpenColumns={onOpenColumns}
+			/>,
+		);
+		fireEvent.click(getByTestId('periscope-btn-format-options'));
+		return { getByTestId };
+	}
+
+	it('renders "Edit columns" row when format=table and onOpenColumns provided', () => {
+		const onOpenColumns = jest.fn();
+		const { getByTestId } = renderWithOnOpen(onOpenColumns, 'table');
+
+		expect(getByTestId('periscope-btn-edit-columns')).toBeInTheDocument();
+	});
+
+	it('does not render "Edit columns" row when onOpenColumns is not provided', () => {
+		renderWithOnOpen(undefined, 'table');
+
+		expect(
+			document.querySelector('[data-testid="periscope-btn-edit-columns"]'),
+		).toBeNull();
+	});
+
+	it('does not render "Edit columns" row when format is not table', () => {
+		renderWithOnOpen(jest.fn(), 'raw');
+
+		expect(
+			document.querySelector('[data-testid="periscope-btn-edit-columns"]'),
+		).toBeNull();
+	});
+
+	it('fires onOpenColumns and closes the popover when "Edit columns" is clicked', async () => {
+		const onOpenColumns = jest.fn();
+		const { getByTestId } = renderWithOnOpen(onOpenColumns, 'table');
+
+		fireEvent.click(getByTestId('periscope-btn-edit-columns'));
+
+		expect(onOpenColumns).toHaveBeenCalledTimes(1);
+		await waitFor(() => {
+			// Popover content unmounts on close.
+			expect(document.querySelector('.menu-container')).toBeNull();
 		});
 	});
 });

@@ -1,22 +1,20 @@
 import { I18nextProvider } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import logEvent from 'api/common/logEvent';
+import { logEventMock } from '__tests__/logEventMock';
 import i18n from 'ReactI18';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 
 import CreatePipelineButton from '../Layouts/Pipeline/CreatePipelineButton';
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
 
-jest.mock('api/common/logEvent');
-
 describe('PipelinePage container test', () => {
 	it('should render CreatePipelineButton section', async () => {
 		const { asFragment } = render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<CreatePipelineButton
@@ -27,14 +25,14 @@ describe('PipelinePage container test', () => {
 						/>
 					</I18nextProvider>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 		expect(asFragment()).toMatchSnapshot();
 	});
 
 	it('CreatePipelineButton - edit mode & tracking', async () => {
 		const { getByText } = render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<CreatePipelineButton
@@ -45,7 +43,7 @@ describe('PipelinePage container test', () => {
 						/>
 					</I18nextProvider>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		// enter_edit_mode click and track event data
@@ -53,14 +51,17 @@ describe('PipelinePage container test', () => {
 		expect(editButton).toBeInTheDocument();
 		await userEvent.click(editButton);
 
-		expect(logEvent).toHaveBeenCalledWith('Logs: Pipelines: Entered Edit Mode', {
-			source: 'signoz-ui',
-		});
+		expect(logEventMock).toHaveBeenCalledWith(
+			'Logs: Pipelines: Entered Edit Mode',
+			{
+				source: 'signoz-ui',
+			},
+		);
 	});
 
 	it('CreatePipelineButton - add new mode & tracking', async () => {
 		const { getByText } = render(
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<CreatePipelineButton
@@ -71,14 +72,14 @@ describe('PipelinePage container test', () => {
 						/>
 					</I18nextProvider>
 				</Provider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 		// new_pipeline click and track event data
 		const editButton = getByText('new_pipeline');
 		expect(editButton).toBeInTheDocument();
 		await userEvent.click(editButton);
 
-		expect(logEvent).toHaveBeenCalledWith(
+		expect(logEventMock).toHaveBeenCalledWith(
 			'Logs: Pipelines: Clicked Add New Pipeline',
 			{
 				source: 'signoz-ui',

@@ -1,0 +1,9 @@
+.emptyState {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 12px;
+	border: 1px dashed var(--l2-border);
+	border-radius: 6px;
+	padding: 14px;
+}

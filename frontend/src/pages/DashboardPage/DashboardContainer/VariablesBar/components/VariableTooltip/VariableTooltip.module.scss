@@ -1,0 +1,54 @@
+.tooltipContent {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	max-width: 240px;
+}
+
+.tooltipDescription {
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+// Divider and labels use the tooltip's own text color at reduced opacity so they
+// read on the tooltip surface in either theme without hard-coding a palette.
+.tooltipDivider {
+	height: 1px;
+	background: currentColor;
+	opacity: 0.16;
+}
+
+.tooltipSection {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.tooltipLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.tooltipRefs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.tooltipRef {
+	font-size: 12px;
+}
+
+// Directional colors: parents (Depends on) in forest, children (Used by) in amber.
+.dependsColor {
+	color: var(--bg-forest-500);
+}
+
+.usedByColor {
+	color: var(--bg-amber-500);
+}

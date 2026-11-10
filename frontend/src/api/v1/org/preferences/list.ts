@@ -5,6 +5,13 @@ import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
 import { PayloadProps } from 'types/api/preferences/list';
 import { OrgPreference } from 'types/api/preferences/preference';
 
+/**
+ * @deprecated Use the generated `useListOrgPreferences` hook (or `listOrgPreferences` fetcher) from
+ * `api/generated/services/preferences` instead. This hand-written client targets the
+ * same endpoint and will be removed once call sites migrate.
+ *
+ * Part of https://github.com/SigNoz/engineering-pod/issues/5289, add a comment or update when removing this method.
+ */
 const listPreference = async (): Promise<
 	SuccessResponseV2<OrgPreference[]>
 > => {

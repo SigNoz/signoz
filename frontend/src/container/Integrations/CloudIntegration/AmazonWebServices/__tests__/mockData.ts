@@ -24,6 +24,7 @@ const accountsResponse: ListAccounts200 = {
 				agentReport: {
 					timestampMillis: 1747114366214,
 					data: null,
+					syncState: null,
 				},
 				providerAccountId: PROVIDER_ACCOUNT_ID,
 				removedAt: null,
@@ -32,7 +33,7 @@ const accountsResponse: ListAccounts200 = {
 	},
 };
 
-/** Response shape for GET /cloud_integrations/aws/services/:serviceId (used by ServiceDetails). */
+/** Response shape for GET /cloud_integrations/aws/accounts/:accountId/services/:serviceId (used by ServiceDetails). */
 const buildServiceDetailsResponse = (
 	serviceId: string,
 	initialConfigLogsS3Buckets: Record<string, string[]> = {},
@@ -55,7 +56,6 @@ const buildServiceDetailsResponse = (
 				},
 			},
 		},
-		telemetryCollectionStrategy: { aws: {} },
 	},
 });
 

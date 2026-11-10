@@ -1,20 +1,15 @@
+import { logEventMock } from '__tests__/logEventMock';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import MCPServerSettings from './MCPServerSettings';
 
-const mockLogEvent = jest.fn();
 const mockCopyToClipboard = jest.fn();
-const mockHistoryPush = jest.fn();
+const mockNavigate = jest.fn();
 const mockUseGetGlobalConfig = jest.fn();
 const mockUseGetHosts = jest.fn();
 const mockUseGetTenantLicense = jest.fn();
 const mockToastSuccess = jest.fn();
 const mockToastWarning = jest.fn();
-
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: (...args: unknown[]): unknown => mockLogEvent(...args),
-}));
 
 jest.mock('api/generated/services/global', () => ({
 	useGetGlobalConfig: (...args: unknown[]): unknown =>
@@ -42,18 +37,14 @@ jest.mock('@signozhq/ui/sonner', () => ({
 	},
 }));
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: (...args: unknown[]): unknown => mockHistoryPush(...args),
-		location: { pathname: '/', search: '', hash: '', state: null },
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: (...args: unknown[]): unknown => mockNavigate(...args),
 }));
 
 jest.mock('utils/basePath', () => ({
+	...jest.requireActual('utils/basePath'),
 	getBaseUrl: (): string => 'http://localhost',
-	getBasePath: (): string => '/',
-	withBasePath: (p: string): string => p,
 }));
 
 const MCP_URL = 'https://mcp.us.signoz.cloud/mcp';
@@ -148,7 +139,7 @@ describe('MCPServerSettings', () => {
 
 		render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
 
-		expect(mockLogEvent).toHaveBeenCalledWith('MCP Settings: Page viewed', {
+		expect(logEventMock).toHaveBeenCalledWith('MCP Settings: Page viewed', {
 			role: 'ADMIN',
 		});
 	});
@@ -187,7 +178,7 @@ describe('MCPServerSettings', () => {
 
 		await user.click(screen.getByText('Create service account'));
 
-		expect(mockHistoryPush).toHaveBeenCalledWith(
+		expect(mockNavigate).toHaveBeenCalledWith(
 			'/settings/service-accounts?create-sa=true',
 		);
 	});

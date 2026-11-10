@@ -13,9 +13,6 @@ logger = setup_logger(__name__)
 
 @pytest.fixture(name="postgres", scope="package")
 def postgres(network: Network, request: pytest.FixtureRequest, pytestconfig: pytest.Config) -> types.TestContainerSQL:
-    """
-    Package-scoped fixture for PostgreSQL TestContainer.
-    """
 
     def create() -> types.TestContainerSQL:
         version = request.config.getoption("--postgres-version")

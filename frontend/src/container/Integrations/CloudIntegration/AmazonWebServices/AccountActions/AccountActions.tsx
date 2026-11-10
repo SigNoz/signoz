@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useAppNavigate } from 'lib/router/useAppNavigate';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { Select, Skeleton } from 'antd';
@@ -17,9 +17,12 @@ import { ChevronDown, Dot, PencilLine, Plug, Plus } from '@signozhq/icons';
 
 import AzureCloudAccountSetupModal from '../../AzureCloudServices/AddNewAccount/CloudAccountSetupModal';
 import AzureAccountSettingsModal from '../../AzureCloudServices/EditAccount/AccountSettingsModal';
+import GcpCloudAccountSetupDrawer from '../../GoogleCloudPlatform/AddNewAccount/CloudAccountSetupDrawer';
+import GcpAccountSettingsDrawer from '../../GoogleCloudPlatform/EditAccount/AccountSettingsDrawer';
 import {
 	mapAccountDtoToAwsCloudAccount,
 	mapAccountDtoToAzureCloudAccount,
+	mapAccountDtoToGcpCloudAccount,
 } from '../../mapCloudAccountFromDto';
 import AwsCloudAccountSetupModal from '../AddNewAccount/CloudAccountSetupModal';
 import AwsAccountSettingsModal from '../EditAccount/AccountSettingsModal';
@@ -66,6 +69,8 @@ function AccountActionsRenderer({
 
 					<span className="account-selector">
 						<Select
+							data-testid="cloud-account-selector"
+							aria-label="Cloud account"
 							value={activeAccount?.providerAccountId}
 							options={selectOptions}
 							rootClassName={cx('cloud-account-selector', {
@@ -85,6 +90,7 @@ function AccountActionsRenderer({
 						color="secondary"
 						prefix={<PencilLine size={14} />}
 						onClick={onAccountSettingsModalOpen}
+						testId="cloud-edit-account-btn"
 					>
 						Edit Account
 					</Button>
@@ -95,6 +101,7 @@ function AccountActionsRenderer({
 						color="secondary"
 						onClick={onIntegrationModalOpen}
 						prefix={<Plus size={14} />}
+						testId="cloud-add-account-btn"
 					>
 						Add New Account
 					</Button>
@@ -109,6 +116,7 @@ function AccountActionsRenderer({
 			prefix={<Plug size={14} />}
 			onClick={onIntegrationModalOpen}
 			size="sm"
+			testId="cloud-integrate-now-btn"
 		>
 			Integrate Now
 		</Button>
@@ -117,7 +125,7 @@ function AccountActionsRenderer({
 
 function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const navigate = useNavigate();
+	const navigate = useAppNavigate();
 
 	const { data: listAccountsResponse, isLoading } = useListAccounts({
 		cloudProvider: type,
@@ -150,6 +158,18 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 					return;
 				}
 				const mapped = mapAccountDtoToAzureCloudAccount(account);
+				if (mapped) {
+					mappedAccounts.push(mapped);
+				}
+			});
+		}
+
+		if (type === IntegrationType.GCP_SERVICES) {
+			raw.forEach((account) => {
+				if (!account) {
+					return;
+				}
+				const mapped = mapAccountDtoToGcpCloudAccount(account);
 				if (mapped) {
 					mappedAccounts.push(mapped);
 				}
@@ -207,13 +227,23 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 	// log telemetry event when an account is viewed.
 	useEffect(() => {
 		if (activeAccount) {
+			const { config } = activeAccount;
+			let enabledRegions: string[];
+			if ('regions' in config) {
+				// AWS
+				enabledRegions = config.regions;
+			} else if ('resource_groups' in config) {
+				// Azure
+				enabledRegions = config.resource_groups;
+			} else {
+				// GCP
+				enabledRegions = config.project_ids;
+			}
+
 			logEvent(`${type} Integration: Account viewed`, {
 				cloudAccountId: activeAccount?.cloud_account_id,
 				status: activeAccount?.status,
-				enabledRegions:
-					'regions' in activeAccount.config
-						? activeAccount.config.regions
-						: activeAccount.config.resource_groups,
+				enabledRegions,
 			});
 		}
 	}, [activeAccount, type]);
@@ -260,6 +290,11 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 							onClose={(): void => setIsIntegrationModalOpen(false)}
 						/>
 					)}
+					{type === IntegrationType.GCP_SERVICES && (
+						<GcpCloudAccountSetupDrawer
+							onClose={(): void => setIsIntegrationModalOpen(false)}
+						/>
+					)}
 				</>
 			)}
 
@@ -276,6 +311,13 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 					)}
 					{type === IntegrationType.AZURE_SERVICES && (
 						<AzureAccountSettingsModal
+							onClose={(): void => setIsAccountSettingsModalOpen(false)}
+							account={activeAccount}
+							setActiveAccount={setActiveAccount}
+						/>
+					)}
+					{type === IntegrationType.GCP_SERVICES && (
+						<GcpAccountSettingsDrawer
 							onClose={(): void => setIsAccountSettingsModalOpen(false)}
 							account={activeAccount}
 							setActiveAccount={setActiveAccount}

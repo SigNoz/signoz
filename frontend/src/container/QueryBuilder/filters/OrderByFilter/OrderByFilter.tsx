@@ -1,21 +1,29 @@
 import { useMemo } from 'react';
 import { Select, Spin } from 'antd';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
-import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
+import {
+	DATA_SOURCE_TO_SIGNAL,
+	DataSource,
+	MetricAggregateOperator,
+	QUERY_SOURCE_TO_FIELD_SOURCE,
+} from 'types/common/queryBuilder';
 import { getParsedAggregationOptionsForOrderBy } from 'utils/aggregationConverter';
-import { popupContainer } from 'utils/selectPopupContainer';
+import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
-import { selectStyle } from '../QueryBuilderSearch/config';
+import { selectStyle } from '../QueryBuilderSearchV2/config';
+import { getMetricNameForQuery } from '../utils';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import { useOrderByFilter } from './useOrderByFilter';
 
 export function OrderByFilter({
 	query,
 	onChange,
-	isListViewPanel = false,
+	isRawQuery = false,
 	entityVersion,
 	isNewQueryV2 = false,
+	placeholder,
 }: OrderByFilterProps): JSX.Element {
+	const getPopupContainer = useSelectPopupContainer();
 	const {
 		debouncedSearchText,
 		selectedValue,
@@ -26,15 +34,16 @@ export function OrderByFilter({
 		handleSearchKeys,
 	} = useOrderByFilter({ query, onChange, entityVersion });
 
-	const { data, isFetching } = useGetAggregateKeys(
+	const { data: fieldKeys, isFetching } = useFieldKeysSuggestion(
 		{
-			aggregateAttribute: query.aggregateAttribute?.key || '',
-			dataSource: query.dataSource,
-			aggregateOperator: query.aggregateOperator || '',
+			signal: DATA_SOURCE_TO_SIGNAL[query.dataSource],
+			source: QUERY_SOURCE_TO_FIELD_SOURCE[query.source ?? ''],
+			metricName: getMetricNameForQuery(query),
 			searchText: debouncedSearchText,
 		},
+		query.builderQueryType,
 		{
-			enabled: !!query.aggregateAttribute?.key || isListViewPanel,
+			enabled: !!query.aggregateAttribute?.key || isRawQuery,
 			keepPreviousData: true,
 		},
 	);
@@ -46,9 +55,11 @@ export function OrderByFilter({
 	);
 
 	const optionsData = useMemo(() => {
-		const keyOptions = createOptions(data?.payload?.attributeKeys || []);
-		const groupByOptions = createOptions(query.groupBy);
-		const aggregationOptionsFromParsed = createOptions(parsedAggregationOptions);
+		const keyOptions = createOptions((fieldKeys ?? []).map((key) => key.name));
+		const groupByOptions = createOptions(query.groupBy.map((item) => item.key));
+		const aggregationOptionsFromParsed = createOptions(
+			parsedAggregationOptions.map((item) => item.key),
+		);
 
 		const options =
 			query.aggregateOperator === MetricAggregateOperator.NOOP
@@ -61,7 +72,7 @@ export function OrderByFilter({
 		return generateOptions(options);
 	}, [
 		createOptions,
-		data?.payload?.attributeKeys,
+		fieldKeys,
 		query.groupBy,
 		query.aggregateOperator,
 		parsedAggregationOptions,
@@ -78,7 +89,7 @@ export function OrderByFilter({
 
 	return (
 		<Select
-			getPopupContainer={popupContainer}
+			getPopupContainer={getPopupContainer}
 			mode="tags"
 			style={selectStyle}
 			onSearch={handleSearchKeys}
@@ -91,6 +102,8 @@ export function OrderByFilter({
 			options={optionsData}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
+			placeholder={placeholder}
+			data-testid="order-by"
 		/>
 	);
 }

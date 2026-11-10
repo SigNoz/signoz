@@ -41,6 +41,7 @@ export const QUERY_BUILDER_FUNCTIONS = {
 	HASANY: 'hasAny',
 	HASALL: 'hasAll',
 	HASTOKEN: 'hasToken',
+	SEARCH: 'search',
 };
 
 export function negateOperator(operatorOrFunction: string): string {

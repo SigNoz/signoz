@@ -38,6 +38,36 @@ const createWrapper = (
 	};
 };
 
+const createNestedWrapper = (
+	parentProps: GlobalTimeProviderOptions,
+	childProps: GlobalTimeProviderOptions,
+	nuqsProps?: {
+		searchParams?: string;
+		onUrlUpdate?: (event: { queryString: string }) => void;
+	},
+) => {
+	const queryClient = createTestQueryClient();
+
+	return function NestedWrapper({
+		children,
+	}: {
+		children: ReactNode;
+	}): JSX.Element {
+		return (
+			<QueryClientProvider client={queryClient}>
+				<NuqsTestingAdapter
+					searchParams={nuqsProps?.searchParams}
+					onUrlUpdate={nuqsProps?.onUrlUpdate}
+				>
+					<GlobalTimeProvider {...parentProps}>
+						<GlobalTimeProvider {...childProps}>{children}</GlobalTimeProvider>
+					</GlobalTimeProvider>
+				</NuqsTestingAdapter>
+			</QueryClientProvider>
+		);
+	};
+};
+
 describe('GlobalTimeProvider', () => {
 	describe('name prop', () => {
 		it('should pass name to store when provided', () => {
@@ -82,138 +112,73 @@ describe('GlobalTimeProvider', () => {
 
 	describe('inheritGlobalTime', () => {
 		it('should inherit time from parent store when inheritGlobalTime is true', () => {
-			const queryClient = createTestQueryClient();
-
-			const NestedWrapper = ({
-				children,
-			}: {
-				children: React.ReactNode;
-			}): JSX.Element => (
-				<QueryClientProvider client={queryClient}>
-					<NuqsTestingAdapter>
-						<GlobalTimeProvider initialTime="6h">
-							<GlobalTimeProvider inheritGlobalTime>{children}</GlobalTimeProvider>
-						</GlobalTimeProvider>
-					</NuqsTestingAdapter>
-				</QueryClientProvider>
+			const wrapper = createNestedWrapper(
+				{ initialTime: '6h' },
+				{ inheritGlobalTime: true },
 			);
 
 			const { result } = renderHook(() => useGlobalTime((s) => s.selectedTime), {
-				wrapper: NestedWrapper,
+				wrapper,
 			});
 
-			// Should inherit '6h' from parent provider
 			expect(result.current).toBe('6h');
 		});
 
 		it('should use initialTime when inheritGlobalTime is false', () => {
-			const queryClient = createTestQueryClient();
-
-			const NestedWrapper = ({
-				children,
-			}: {
-				children: React.ReactNode;
-			}): JSX.Element => (
-				<QueryClientProvider client={queryClient}>
-					<NuqsTestingAdapter>
-						<GlobalTimeProvider initialTime="6h">
-							<GlobalTimeProvider inheritGlobalTime={false} initialTime="15m">
-								{children}
-							</GlobalTimeProvider>
-						</GlobalTimeProvider>
-					</NuqsTestingAdapter>
-				</QueryClientProvider>
+			const wrapper = createNestedWrapper(
+				{ initialTime: '6h' },
+				{ inheritGlobalTime: false, initialTime: '15m' },
 			);
 
 			const { result } = renderHook(() => useGlobalTime((s) => s.selectedTime), {
-				wrapper: NestedWrapper,
+				wrapper,
 			});
 
-			// Should use its own initialTime, not parent's
 			expect(result.current).toBe('15m');
 		});
 
 		it('should prefer URL params over inheritGlobalTime when both are present', async () => {
-			const queryClient = createTestQueryClient();
-
-			const NestedWrapper = ({
-				children,
-			}: {
-				children: React.ReactNode;
-			}): JSX.Element => (
-				<QueryClientProvider client={queryClient}>
-					<NuqsTestingAdapter searchParams="?relativeTime=1h">
-						<GlobalTimeProvider initialTime="6h">
-							<GlobalTimeProvider inheritGlobalTime enableUrlParams>
-								{children}
-							</GlobalTimeProvider>
-						</GlobalTimeProvider>
-					</NuqsTestingAdapter>
-				</QueryClientProvider>
+			const wrapper = createNestedWrapper(
+				{ initialTime: '6h' },
+				{ inheritGlobalTime: true, enableUrlParams: true },
+				{ searchParams: '?relativeTime=1h' },
 			);
 
 			const { result } = renderHook(() => useGlobalTime((s) => s.selectedTime), {
-				wrapper: NestedWrapper,
+				wrapper,
 			});
 
-			// inheritGlobalTime sets initial value to '6h', but URL sync updates it to '1h'
 			await waitFor(() => {
 				expect(result.current).toBe('1h');
 			});
 		});
 
 		it('should use inherited time when URL params are empty', async () => {
-			const queryClient = createTestQueryClient();
-
-			const NestedWrapper = ({
-				children,
-			}: {
-				children: React.ReactNode;
-			}): JSX.Element => (
-				<QueryClientProvider client={queryClient}>
-					<NuqsTestingAdapter searchParams="">
-						<GlobalTimeProvider initialTime="6h">
-							<GlobalTimeProvider inheritGlobalTime enableUrlParams>
-								{children}
-							</GlobalTimeProvider>
-						</GlobalTimeProvider>
-					</NuqsTestingAdapter>
-				</QueryClientProvider>
+			const wrapper = createNestedWrapper(
+				{ initialTime: '6h' },
+				{ inheritGlobalTime: true, enableUrlParams: true },
+				{ searchParams: '' },
 			);
 
 			const { result } = renderHook(() => useGlobalTime((s) => s.selectedTime), {
-				wrapper: NestedWrapper,
+				wrapper,
 			});
 
-			// No URL params, should keep inherited value
 			expect(result.current).toBe('6h');
 		});
 
 		it('should prefer custom time URL params over inheritGlobalTime', async () => {
-			const queryClient = createTestQueryClient();
 			const startTime = 1700000000000;
 			const endTime = 1700003600000;
 
-			const NestedWrapper = ({
-				children,
-			}: {
-				children: React.ReactNode;
-			}): JSX.Element => (
-				<QueryClientProvider client={queryClient}>
-					<NuqsTestingAdapter
-						searchParams={`?startTime=${startTime}&endTime=${endTime}`}
-					>
-						<GlobalTimeProvider initialTime="6h">
-							<GlobalTimeProvider inheritGlobalTime enableUrlParams>
-								{children}
-							</GlobalTimeProvider>
-						</GlobalTimeProvider>
-					</NuqsTestingAdapter>
-				</QueryClientProvider>
+			const wrapper = createNestedWrapper(
+				{ initialTime: '6h' },
+				{ inheritGlobalTime: true, enableUrlParams: true },
+				{ searchParams: `?startTime=${startTime}&endTime=${endTime}` },
 			);
 
 			const { result } = renderHook(() => useGlobalTime(), {
-				wrapper: NestedWrapper,
+				wrapper,
 			});
 
 			// URL custom time params should override inherited time
@@ -688,6 +653,153 @@ describe('GlobalTimeProvider', () => {
 
 			expect(result.current.refreshInterval).toBe(5000);
 			expect(result.current.isRefreshEnabled).toBe(true);
+		});
+	});
+
+	describe('resetToParentTime', () => {
+		it('should return false when no parent store exists', () => {
+			const wrapper = createWrapper({ initialTime: '1h' });
+
+			const { result } = renderHook(() => useGlobalTime(), { wrapper });
+
+			expect(result.current.resetToParentTime()).toBe(false);
+			expect(result.current.parentStore).toBeUndefined();
+		});
+
+		it('should have parentStore when inheritGlobalTime is true', () => {
+			const wrapper = createNestedWrapper(
+				{ initialTime: '6h' },
+				{ inheritGlobalTime: true },
+			);
+
+			const { result } = renderHook(() => useGlobalTime(), { wrapper });
+
+			expect(result.current.parentStore).toBeDefined();
+		});
+
+		it('should reset to parent time when called', () => {
+			const wrapper = createNestedWrapper(
+				{ initialTime: '6h' },
+				{ inheritGlobalTime: true },
+			);
+
+			const { result } = renderHook(() => useGlobalTime(), { wrapper });
+
+			expect(result.current.selectedTime).toBe('6h');
+			const initialMinMax = result.current.lastComputedMinMax;
+
+			act(() => {
+				result.current.setSelectedTime('15m');
+			});
+
+			expect(result.current.selectedTime).toBe('15m');
+			const changedMinMax = result.current.lastComputedMinMax;
+			expect(changedMinMax.maxTime - changedMinMax.minTime).toBeLessThan(
+				initialMinMax.maxTime - initialMinMax.minTime,
+			);
+
+			act(() => {
+				const success = result.current.resetToParentTime();
+				expect(success).toBe(true);
+			});
+
+			expect(result.current.selectedTime).toBe('6h');
+			const resetMinMax = result.current.lastComputedMinMax;
+			expect(resetMinMax.maxTime - resetMinMax.minTime).toBeGreaterThan(
+				changedMinMax.maxTime - changedMinMax.minTime,
+			);
+		});
+
+		it('should set shouldClearUrlParams flag when reset', () => {
+			const wrapper = createNestedWrapper(
+				{ initialTime: '6h' },
+				{ inheritGlobalTime: true },
+			);
+
+			const { result } = renderHook(() => useGlobalTime(), { wrapper });
+
+			act(() => {
+				result.current.setSelectedTime('15m');
+			});
+
+			act(() => {
+				result.current.resetToParentTime();
+			});
+
+			expect(result.current.shouldClearUrlParams).toBe(true);
+
+			act(() => {
+				result.current.clearUrlParamsFlag();
+			});
+
+			expect(result.current.shouldClearUrlParams).toBe(false);
+		});
+
+		it('should clear URL params when resetToParentTime is called with enableUrlParams', async () => {
+			let currentQueryString = 'relativeTime=15m';
+
+			const wrapper = createNestedWrapper(
+				{ initialTime: '6h' },
+				{ inheritGlobalTime: true, enableUrlParams: true },
+				{
+					searchParams: currentQueryString,
+					onUrlUpdate: (event): void => {
+						currentQueryString = event.queryString;
+					},
+				},
+			);
+
+			const { result } = renderHook(() => useGlobalTime(), { wrapper });
+
+			await waitFor(() => {
+				expect(result.current.selectedTime).toBe('15m');
+			});
+
+			act(() => {
+				result.current.resetToParentTime();
+			});
+
+			await waitFor(() => {
+				expect(currentQueryString).not.toContain('relativeTime');
+				expect(currentQueryString).not.toContain('startTime');
+				expect(currentQueryString).not.toContain('endTime');
+			});
+
+			expect(result.current.selectedTime).toBe('6h');
+		});
+
+		it('should clear custom time URL params when resetToParentTime is called', async () => {
+			const startTime = 1700000000000;
+			const endTime = 1700003600000;
+			let currentQueryString = `startTime=${startTime}&endTime=${endTime}`;
+
+			const wrapper = createNestedWrapper(
+				{ initialTime: '6h' },
+				{ inheritGlobalTime: true, enableUrlParams: true },
+				{
+					searchParams: currentQueryString,
+					onUrlUpdate: (event): void => {
+						currentQueryString = event.queryString;
+					},
+				},
+			);
+
+			const { result } = renderHook(() => useGlobalTime(), { wrapper });
+
+			await waitFor(() => {
+				expect(result.current.selectedTime).toContain('||_||');
+			});
+
+			act(() => {
+				result.current.resetToParentTime();
+			});
+
+			await waitFor(() => {
+				expect(currentQueryString).not.toContain('startTime');
+				expect(currentQueryString).not.toContain('endTime');
+			});
+
+			expect(result.current.selectedTime).toBe('6h');
 		});
 	});
 });

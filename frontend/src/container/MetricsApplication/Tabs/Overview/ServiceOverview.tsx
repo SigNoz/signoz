@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
-import { Skeleton } from 'antd';
+import { useAppParams } from 'lib/router/useAppParams';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Graph from 'container/GridCardLayout/GridCard';
+import Graph from 'container/WidgetCard/Card';
 import {
 	GraphTitle,
 	SERVICE_CHART_ID,
@@ -21,7 +20,6 @@ import { useAppContext } from 'providers/App/App';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { IServiceName } from '../types';
 import {
 	handleNonInQueryRange,
 	onViewTracePopupClick,
@@ -39,8 +37,8 @@ function ServiceOverview({
 	topLevelOperationsIsLoading,
 	stepInterval,
 }: ServiceOverviewProps): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
+	const servicename = decodeURIComponent(encodedServiceName || '');
 
 	const { featureFlags } = useAppContext();
 	const isSpanMetricEnable =
@@ -57,10 +55,6 @@ function ServiceOverview({
 		[isSpanMetricEnable, queries],
 	);
 
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const latencyWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
@@ -72,7 +66,6 @@ function ServiceOverview({
 						tagFilterItems,
 						isSpanMetricEnable,
 						topLevelOperationsRoute,
-						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -82,13 +75,7 @@ function ServiceOverview({
 				yAxisUnit: 'ns',
 				id: SERVICE_CHART_ID.latency,
 			}),
-		[
-			isSpanMetricEnable,
-			servicename,
-			tagFilterItems,
-			topLevelOperationsRoute,
-			dotMetricsEnabled,
-		],
+		[isSpanMetricEnable, servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
 	const isQueryEnabled =
@@ -124,24 +111,14 @@ function ServiceOverview({
 			/>
 			<Card data-testid="service_latency">
 				<GraphContainer>
-					{topLevelOperationsIsLoading && (
-						<Skeleton
-							style={{
-								height: '100%',
-								padding: '16px',
-							}}
-						/>
-					)}
-					{!topLevelOperationsIsLoading && (
-						<Graph
-							onDragSelect={onDragSelect}
-							widget={latencyWidget}
-							onClickHandler={handleGraphClick('Service')}
-							isQueryEnabled={isQueryEnabled}
-							version={ENTITY_VERSION_V4}
-							enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
-						/>
-					)}
+					<Graph
+						onDragSelect={onDragSelect}
+						widget={latencyWidget}
+						onClickHandler={handleGraphClick('Service')}
+						isQueryEnabled={isQueryEnabled}
+						version={ENTITY_VERSION_V4}
+						enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
+					/>
 				</GraphContainer>
 			</Card>
 		</>

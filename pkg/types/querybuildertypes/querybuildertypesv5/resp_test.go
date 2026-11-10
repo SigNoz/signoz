@@ -50,13 +50,21 @@ func TestTimeSeriesValue_MarshalJSON(t *testing.T) {
 			expected: `{"timestamp":1234567890,"value":"-Inf"}`,
 		},
 		{
-			name: "values array with NaN",
+			name: "zero value",
+			value: TimeSeriesValue{
+				Timestamp: 1234567890,
+				Value:     0,
+			},
+			expected: `{"timestamp":1234567890,"value":0}`,
+		},
+		{
+			name: "values array with NaN, and no value beside it",
 			value: TimeSeriesValue{
 				Timestamp: 1234567890,
 				Value:     1.0,
 				Values:    []float64{1.0, math.NaN(), 3.0, math.Inf(1)},
 			},
-			expected: `{"timestamp":1234567890,"value":1,"values":[1,"NaN",3,"Inf"]}`,
+			expected: `{"timestamp":1234567890,"values":[1,"NaN",3,"Inf"]}`,
 		},
 	}
 
@@ -130,7 +138,7 @@ func TestScalarData_MarshalJSON(t *testing.T) {
 					{4.0, 5.0, 6.0},
 				},
 			},
-			expected: `{"queryName":"test_query","columns":[{"name":"value","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[1,2,3],[4,5,6]]}`,
+			expected: `{"queryName":"test_query","columns":[{"name":"value","signal":"","fieldContext":"","fieldDataType":"","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[1,2,3],[4,5,6]]}`,
 		},
 		{
 			name: "scalar data with NaN",
@@ -149,7 +157,7 @@ func TestScalarData_MarshalJSON(t *testing.T) {
 					{math.Inf(1), 5.0, math.Inf(-1)},
 				},
 			},
-			expected: `{"queryName":"test_query","columns":[{"name":"value","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[1,"NaN",3],["Inf",5,"-Inf"]]}`,
+			expected: `{"queryName":"test_query","columns":[{"name":"value","signal":"","fieldContext":"","fieldDataType":"","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[1,"NaN",3],["Inf",5,"-Inf"]]}`,
 		},
 		{
 			name: "scalar data with mixed types",
@@ -168,7 +176,7 @@ func TestScalarData_MarshalJSON(t *testing.T) {
 					{nil, math.Inf(1), 3.14, false},
 				},
 			},
-			expected: `{"queryName":"test_query","columns":[{"name":"mixed","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[["string",42,"NaN",true],[null,"Inf",3.14,false]]}`,
+			expected: `{"queryName":"test_query","columns":[{"name":"mixed","signal":"","fieldContext":"","fieldDataType":"","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[["string",42,"NaN",true],[null,"Inf",3.14,false]]}`,
 		},
 		{
 			name: "scalar data with nested structures",
@@ -189,7 +197,7 @@ func TestScalarData_MarshalJSON(t *testing.T) {
 					},
 				},
 			},
-			expected: `{"queryName":"test_query","columns":[{"name":"nested","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[{"count":10,"value":"NaN"},[1,"Inf",3]]]}`,
+			expected: `{"queryName":"test_query","columns":[{"name":"nested","signal":"","fieldContext":"","fieldDataType":"","queryName":"test_query","aggregationIndex":0,"meta":{},"columnType":"aggregation"}],"data":[[{"count":10,"value":"NaN"},[1,"Inf",3]]]}`,
 		},
 		{
 			name: "empty scalar data",
@@ -392,6 +400,133 @@ func TestRawData_MarshalJSON(t *testing.T) {
 			got, err := json.Marshal(tt.data)
 			assert.NoError(t, err)
 			assert.JSONEq(t, tt.expected, string(got))
+		})
+	}
+}
+
+func TestRoundToNonZeroDecimals(t *testing.T) {
+	cases := []struct {
+		name string
+		in   float64
+		n    int
+		want float64
+	}{
+		{"whole number", 42, 3, 42},
+		{"ge one rounds to three decimals", 123.45678, 3, 123.457},
+		{"ge one rounds to two decimals", 123.45678, 2, 123.46},
+		{"trailing zeros trimmed", 1.5, 3, 1.5},
+		{"lt one keeps three significant digits", 0.0001234567, 3, 0.000123},
+		{"lt one keeps two significant digits", 0.0001234567, 2, 0.00012},
+		{"negative", -123.45678, 3, -123.457},
+		{"zero", 0, 3, 0},
+		// val*multiplier overflows to +Inf for near-max values (#12151).
+		{"near max stays finite", 1.6e308, 3, 1.6e308},
+		{"negative near max stays finite", -1.6e308, 3, -1.6e308},
+		// scale overflows to +Inf for subnormal values; Inf/Inf made NaN.
+		{"smallest subnormal stays finite", 5e-324, 3, 5e-324},
+		{"subnormal stays finite", 1e-310, 3, 1e-310},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, roundToNonZeroDecimals(tc.in, tc.n))
+		})
+	}
+
+	assert.True(t, math.IsNaN(roundToNonZeroDecimals(math.NaN(), 3)))
+	assert.Equal(t, math.Inf(1), roundToNonZeroDecimals(math.Inf(1), 3))
+	assert.Equal(t, math.Inf(-1), roundToNonZeroDecimals(math.Inf(-1), 3))
+}
+
+func TestTimeSeriesDataFilterToTimeRange(t *testing.T) {
+	testCases := []struct {
+		name             string
+		timeSeriesData   *TimeSeriesData
+		startMs          uint64
+		endMs            uint64
+		expectedFiltered *TimeSeriesData
+	}{
+		{
+			name: "HalfOpenRange_KeepsStartDropsEnd",
+			timeSeriesData: &TimeSeriesData{
+				QueryName: "A",
+				Aggregations: []*AggregationBucket{{
+					Index: 0,
+					Series: []*TimeSeries{{
+						Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "node-1"}},
+						Values: []*TimeSeriesValue{
+							{Timestamp: 1000, Value: 1},
+							{Timestamp: 2000, Value: 2},
+							{Timestamp: 3000, Value: 3},
+							{Timestamp: 4000, Value: 4},
+						},
+					}},
+				}},
+			},
+			startMs: 2000,
+			endMs:   4000,
+			expectedFiltered: &TimeSeriesData{
+				QueryName: "A",
+				Aggregations: []*AggregationBucket{{
+					Index: 0,
+					Series: []*TimeSeries{{
+						Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "node-1"}},
+						Values: []*TimeSeriesValue{
+							{Timestamp: 2000, Value: 2},
+							{Timestamp: 3000, Value: 3},
+						},
+					}},
+				}},
+			},
+		},
+		{
+			// heatmap counts are positional against Meta.Buckets, so the axis
+			// has to survive even when no value falls in the range
+			name: "NothingInRange_KeepsSeriesAndHeatmapAxis",
+			timeSeriesData: &TimeSeriesData{
+				QueryName: "A",
+				Aggregations: []*AggregationBucket{{
+					Index: 1,
+					Alias: "__result_1",
+					Meta:  AggregationMeta{Unit: "By", Buckets: []float64{1, 2, 4}},
+					Series: []*TimeSeries{{
+						Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "node-1"}},
+						Values: []*TimeSeriesValue{{Timestamp: 1000, Values: []float64{1, 2, 3, 4}}},
+					}},
+				}},
+			},
+			startMs: 5000,
+			endMs:   6000,
+			expectedFiltered: &TimeSeriesData{
+				QueryName: "A",
+				Aggregations: []*AggregationBucket{{
+					Index: 1,
+					Alias: "__result_1",
+					Meta:  AggregationMeta{Unit: "By", Buckets: []float64{1, 2, 4}},
+					Series: []*TimeSeries{{
+						Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "node-1"}},
+						Values: []*TimeSeriesValue{},
+					}},
+				}},
+			},
+		},
+		{
+			name: "NoSeries_KeepsAggregation",
+			timeSeriesData: &TimeSeriesData{
+				QueryName:    "A",
+				Aggregations: []*AggregationBucket{{Index: 0}},
+			},
+			startMs: 1000,
+			endMs:   2000,
+			expectedFiltered: &TimeSeriesData{
+				QueryName:    "A",
+				Aggregations: []*AggregationBucket{{Index: 0, Series: []*TimeSeries{}}},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expectedFiltered, testCase.timeSeriesData.FilterToTimeRange(testCase.startMs, testCase.endMs))
 		})
 	}
 }

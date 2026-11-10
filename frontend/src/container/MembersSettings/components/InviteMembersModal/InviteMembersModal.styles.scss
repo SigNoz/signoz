@@ -1,0 +1,38 @@
+.invite-members-modal {
+	max-width: 700px;
+	background: var(--popover);
+	border: 1px solid var(--secondary);
+	border-radius: 4px;
+	box-shadow: 0 4px 9px 0 rgba(0, 0, 0, 0.04);
+
+	[data-slot='dialog-header'] {
+		padding: var(--padding-4);
+		border-bottom: 1px solid var(--secondary);
+		flex-shrink: 0;
+		background: transparent;
+		margin: 0;
+	}
+
+	[data-slot='dialog-title'] {
+		font-family: Inter, sans-serif;
+		font-size: var(--label-base-400-font-size);
+		font-weight: var(--label-base-400-font-weight);
+		line-height: var(--label-base-400-line-height);
+		letter-spacing: -0.065px;
+		color: var(--l1-foreground);
+		margin: 0;
+	}
+
+	[data-slot='dialog-description'] {
+		padding: var(--padding-4);
+	}
+}
+
+.invite-members-modal__footer {
+	padding-top: var(--padding-4);
+	border-top: 1px solid var(--l1-border);
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--spacing-6);
+}

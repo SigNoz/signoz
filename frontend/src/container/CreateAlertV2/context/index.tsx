@@ -10,7 +10,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import {
 	useCreateRule,
 	useTestRule,
@@ -22,11 +22,19 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
-import { INITIAL_CREATE_ALERT_STATE } from './constants';
+import {
+	INITIAL_ANOMALY_THRESHOLD,
+	INITIAL_CREATE_ALERT_STATE,
+	INITIAL_EVALUATION_WINDOW_STATE,
+} from './constants';
+import {
+	EvaluationWindowPreset,
+	pickAlertPrefillParams,
+	resolveUrlAlertPrefill,
+} from './resolveUrlAlertPrefill';
 import {
 	AdvancedOptionsAction,
 	AlertThresholdAction,
-	AlertThresholdMatchType,
 	CreateAlertAction,
 	CreateAlertSlice,
 	EvaluationWindowAction,
@@ -121,11 +129,16 @@ export function CreateAlertProvider(
 		[setCreateAlertState],
 	);
 
-	const location = useLocation();
+	const location = useAppLocation();
 	const queryParams = new URLSearchParams(location.search);
-	const thresholdsFromURL = queryParams.get(QueryParams.thresholds);
 	const ruleNameFromURL = queryParams.get(QueryParams.ruleName);
 	const yAxisUnitFromURL = queryParams.get(QueryParams.yAxisUnit);
+	// Prefill declared in the URL; applied verbatim, agnostic of the producer.
+	const prefillParams = pickAlertPrefillParams(location.search);
+	const urlPrefill = useMemo(
+		() => resolveUrlAlertPrefill(new URLSearchParams(prefillParams)),
+		[prefillParams],
+	);
 
 	const [alertType, setAlertType] = useState<AlertTypes>(() => {
 		if (isEditMode) {
@@ -134,14 +147,41 @@ export function CreateAlertProvider(
 		return getInitialAlertTypeFromURL(queryParams, currentQuery);
 	});
 
+	const resetThresholdState = useCallback((type: AlertTypes): void => {
+		setCreateAlertState({
+			slice: CreateAlertSlice.THRESHOLD,
+			action: {
+				type: 'RESET',
+			},
+		});
+
+		if (type === AlertTypes.ANOMALY_BASED_ALERT) {
+			setCreateAlertState({
+				slice: CreateAlertSlice.THRESHOLD,
+				action: {
+					type: 'SET_THRESHOLDS',
+					payload: [INITIAL_ANOMALY_THRESHOLD],
+				},
+			});
+		}
+	}, []);
+
 	const handleAlertTypeChange = useCallback(
 		(value: AlertTypes): void => {
-			const queryToRedirect = buildInitialAlertDef(value);
-			const currentQueryToRedirect = mapQueryDataFromApi(
-				queryToRedirect.condition.compositeQuery,
-			);
+			// Threshold and anomaly alerts share the metric query, so switching keeps it.
+			const metricAlertTypes = [
+				AlertTypes.METRICS_BASED_ALERT,
+				AlertTypes.ANOMALY_BASED_ALERT,
+			];
+			const keepsQuery =
+				value !== alertType &&
+				metricAlertTypes.includes(value) &&
+				metricAlertTypes.includes(alertType);
+			const queryToRedirect = keepsQuery
+				? currentQuery
+				: mapQueryDataFromApi(buildInitialAlertDef(value).condition.compositeQuery);
 			redirectWithQueryBuilderData(
-				currentQueryToRedirect,
+				queryToRedirect,
 				{
 					[QueryParams.alertType]: value,
 					[QueryParams.ruleType]:
@@ -153,47 +193,82 @@ export function CreateAlertProvider(
 				true,
 			);
 			setAlertType(value);
+			if (isEditMode && keepsQuery) {
+				resetThresholdState(value);
+			}
+			if (
+				value === AlertTypes.ANOMALY_BASED_ALERT &&
+				createAlertState.evaluationWindow.windowType !== 'rolling'
+			) {
+				setEvaluationWindow({
+					type: 'SET_INITIAL_STATE',
+					payload: INITIAL_EVALUATION_WINDOW_STATE,
+				});
+			}
 		},
-		[redirectWithQueryBuilderData],
+		[
+			alertType,
+			createAlertState.evaluationWindow.windowType,
+			currentQuery,
+			isEditMode,
+			redirectWithQueryBuilderData,
+			resetThresholdState,
+			setEvaluationWindow,
+		],
 	);
 
 	const ruleNameAppliedRef = useRef(false);
 	const yAxisUnitAppliedRef = useRef(false);
 
 	useEffect(() => {
-		setCreateAlertState({
-			slice: CreateAlertSlice.THRESHOLD,
-			action: {
-				type: 'RESET',
-			},
-		});
+		// URL-declared prefill is a create-flow concern. In edit mode the alert
+		// state is owned by SET_INITIAL_STATE; running the RESET below would wipe
+		// the loaded thresholds each time the query builder rewrites location.search
+		// (which yields a fresh urlPrefill object and re-triggers this effect).
+		if (isEditMode) {
+			return;
+		}
 
-		if (thresholdsFromURL) {
-			try {
-				const thresholds = JSON.parse(thresholdsFromURL);
-				setCreateAlertState({
-					slice: CreateAlertSlice.THRESHOLD,
-					action: {
-						type: 'SET_THRESHOLDS',
-						payload: thresholds,
-					},
-				});
-			} catch (error) {
-				console.error('Error parsing thresholds from URL:', error);
-			}
+		resetThresholdState(alertType);
 
+		if (urlPrefill.thresholds) {
 			setCreateAlertState({
-				slice: CreateAlertSlice.EVALUATION_WINDOW,
+				slice: CreateAlertSlice.THRESHOLD,
 				action: {
-					type: 'SET_INITIAL_STATE_FOR_METER',
+					type: 'SET_THRESHOLDS',
+					payload: urlPrefill.thresholds,
 				},
 			});
+		}
 
+		if (urlPrefill.matchType) {
 			setCreateAlertState({
 				slice: CreateAlertSlice.THRESHOLD,
 				action: {
 					type: 'SET_MATCH_TYPE',
-					payload: AlertThresholdMatchType.IN_TOTAL,
+					payload: urlPrefill.matchType,
+				},
+			});
+		}
+
+		if (urlPrefill.operator) {
+			setCreateAlertState({
+				slice: CreateAlertSlice.THRESHOLD,
+				action: {
+					type: 'SET_OPERATOR',
+					payload: urlPrefill.operator,
+				},
+			});
+		}
+
+		if (
+			urlPrefill.evaluationWindowPreset === EvaluationWindowPreset.METER &&
+			alertType !== AlertTypes.ANOMALY_BASED_ALERT
+		) {
+			setCreateAlertState({
+				slice: CreateAlertSlice.EVALUATION_WINDOW,
+				action: {
+					type: 'SET_INITIAL_STATE_FOR_METER',
 				},
 			});
 		}
@@ -219,7 +294,14 @@ export function CreateAlertProvider(
 				},
 			});
 		}
-	}, [alertType, thresholdsFromURL, ruleNameFromURL, yAxisUnitFromURL]);
+	}, [
+		alertType,
+		urlPrefill,
+		ruleNameFromURL,
+		yAxisUnitFromURL,
+		isEditMode,
+		resetThresholdState,
+	]);
 
 	useEffect(() => {
 		if (isEditMode && initialAlertState) {

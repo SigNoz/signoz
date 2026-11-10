@@ -38,7 +38,7 @@ function ConfigureOIDCAuthnProvider({
 					Configure OpenID Connect Single Sign-On with your Identity Provider. Read
 					the{' '}
 					<a
-						href="https://signoz.io/docs/userguide/sso-authentication"
+						href="https://signoz.io/docs/manage/administrator-guide/sso/overview/"
 						target="_blank"
 						rel="noreferrer"
 					>
@@ -149,6 +149,7 @@ function ConfigureOIDCAuthnProvider({
 							noStyle
 						>
 							<Checkbox
+								color="primary"
 								id="oidc-skip-email-verification"
 								onChange={(checked: boolean): void => {
 									form.setFieldValue(
@@ -172,6 +173,7 @@ function ConfigureOIDCAuthnProvider({
 							noStyle
 						>
 							<Checkbox
+								color="primary"
 								id="oidc-get-user-info"
 								onChange={(checked: boolean): void => {
 									form.setFieldValue(['oidcConfig', 'getUserInfo'], checked);

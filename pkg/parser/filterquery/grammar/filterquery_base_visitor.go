@@ -1,4 +1,4 @@
-// Code generated from grammar/FilterQuery.g4 by ANTLR 4.13.2. DO NOT EDIT.
+// Code generated from FilterQuery.g4 by ANTLR 4.13.2. DO NOT EDIT.
 
 package parser // FilterQuery
 
@@ -53,6 +53,10 @@ func (v *BaseFilterQueryVisitor) VisitFullText(ctx *FullTextContext) interface{}
 }
 
 func (v *BaseFilterQueryVisitor) VisitFunctionCall(ctx *FunctionCallContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseFilterQueryVisitor) VisitSearchCall(ctx *SearchCallContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

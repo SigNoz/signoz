@@ -3,7 +3,8 @@ import { Color } from '@signozhq/design-tokens';
 import { Spin } from 'antd';
 import { TIMEZONE_DATA } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
-import { getRandomColor } from 'container/ExplorerOptions/utils';
+import { AlertDetectionTypes } from 'container/FormAlertRules';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { v4 } from 'uuid';
 
@@ -52,7 +53,9 @@ export function getColorForThreshold(thresholdLabel: string): string {
 	if (thresholdLabel === 'info') {
 		return Color.BG_ROBIN_500;
 	}
-	return getRandomColor();
+	const colorKeys = Object.keys(Color) as (keyof typeof Color)[];
+	const randomKey = colorKeys[Math.floor(Math.random() * colorKeys.length)];
+	return Color[randomKey];
 }
 
 export function parseGoTime(input: string): {
@@ -238,82 +241,34 @@ export function getAdvancedOptionsStateFromAlertDef(
 	};
 }
 
-// Mirrors the backend's CompareOperator.Normalize() in
-// pkg/types/ruletypes/compare.go. Maps any accepted alias to the enum value
-// the dropdown understands. Returns undefined for aliases the UI does not
-// expose (e.g. above_or_equal, below_or_equal) so callers can keep the raw
-// value on screen instead of silently rewriting it.
-export function normalizeOperator(
-	raw: string | undefined,
-): AlertThresholdOperator | undefined {
-	switch (raw) {
-		case '1':
-		case 'above':
-		case '>':
-			return AlertThresholdOperator.IS_ABOVE;
-		case '2':
-		case 'below':
-		case '<':
-			return AlertThresholdOperator.IS_BELOW;
-		case '3':
-		case 'equal':
-		case 'eq':
-		case '=':
-			return AlertThresholdOperator.IS_EQUAL_TO;
-		case '4':
-		case 'not_equal':
-		case 'not_eq':
-		case '!=':
-			return AlertThresholdOperator.IS_NOT_EQUAL_TO;
-		case '7':
-		case 'outside_bounds':
-			return AlertThresholdOperator.ABOVE_BELOW;
-		default:
-			return undefined;
-	}
-}
-
-// Mirrors the backend's MatchType.Normalize() in pkg/types/ruletypes/match.go.
-export function normalizeMatchType(
-	raw: string | undefined,
-): AlertThresholdMatchType | undefined {
-	switch (raw) {
-		case '1':
-		case 'at_least_once':
-			return AlertThresholdMatchType.AT_LEAST_ONCE;
-		case '2':
-		case 'all_the_times':
-			return AlertThresholdMatchType.ALL_THE_TIME;
-		case '3':
-		case 'on_average':
-		case 'avg':
-			return AlertThresholdMatchType.ON_AVERAGE;
-		case '4':
-		case 'in_total':
-		case 'sum':
-			return AlertThresholdMatchType.IN_TOTAL;
-		case '5':
-		case 'last':
-			return AlertThresholdMatchType.LAST;
-		default:
-			return undefined;
-	}
-}
+// Condition-alias normalizers live in a leaf module (they depend only on the
+// enums) so `context/index` can consume them without an index↔utils cycle.
+export {
+	normalizeOperator,
+	normalizeMatchType,
+} from './context/conditionNormalizers';
 
 export function getThresholdStateFromAlertDef(
 	alertDef: PostableAlertRuleV2,
 ): AlertThresholdState {
+	const isAnomalyRule =
+		alertDef.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT;
 	return {
 		...INITIAL_ALERT_THRESHOLD_STATE,
 		thresholds:
 			alertDef.condition.thresholds?.spec.map((threshold) => ({
 				id: v4(),
 				label: threshold.name,
-				thresholdValue: threshold.target,
+				// anomaly targets are signed z-scores; the operator carries the direction
+				thresholdValue: isAnomalyRule
+					? Math.abs(threshold.target)
+					: threshold.target,
 				recoveryThresholdValue: null,
 				unit: threshold.targetUnit,
 				color: getColorForThreshold(threshold.name),
-				channels: threshold.channels,
+				// rules created outside the UI can come back with a null channels
+				// field; drop the guard once the API enforces the schema
+				channels: threshold.channels ?? [],
 			})) || [],
 		selectedQuery: alertDef.condition.selectedQueryName || '',
 		operator:
@@ -321,7 +276,21 @@ export function getThresholdStateFromAlertDef(
 		matchType:
 			alertDef.condition.thresholds?.spec[0].matchType ||
 			AlertThresholdMatchType.AT_LEAST_ONCE,
+		algorithm:
+			alertDef.condition.algorithm || INITIAL_ALERT_THRESHOLD_STATE.algorithm,
+		seasonality:
+			alertDef.condition.seasonality || INITIAL_ALERT_THRESHOLD_STATE.seasonality,
 	};
+}
+
+// Anomaly rules are stored as metric alerts; only the rule type tells them apart.
+export function getAlertTypeFromAlertDef(
+	alertDef: PostableAlertRuleV2 | undefined,
+): AlertTypes {
+	if (alertDef?.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT) {
+		return AlertTypes.ANOMALY_BASED_ALERT;
+	}
+	return alertDef?.alertType as AlertTypes;
 }
 
 export function getCreateAlertLocalStateFromAlertDef(

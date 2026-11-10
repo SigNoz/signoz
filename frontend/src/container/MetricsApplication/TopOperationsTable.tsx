@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import { Search } from '@signozhq/icons';
 import {
 	InputRef,
@@ -24,7 +24,6 @@ import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
-import { IServiceName } from './Tabs/types';
 import { useGetAPMToTracesQueries } from './Tabs/util';
 import {
 	convertedTracesToDownloadData,
@@ -41,9 +40,9 @@ function TopOperationsTable({
 	onEntryPointToggle,
 }: TopOperationsTableProps): JSX.Element {
 	const searchInput = useRef<InputRef>(null);
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
 	const { safeNavigate } = useSafeNavigate();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const servicename = decodeURIComponent(encodedServiceName || '');
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -55,11 +54,11 @@ function TopOperationsTable({
 
 	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
 
-	const params = useParams<{ servicename: string }>();
+	const params = useAppParams<'servicename'>();
 
 	const handleOnClick = (operation: string, openInNewTab: boolean): void => {
 		const { servicename: encodedServiceName } = params;
-		const servicename = decodeURIComponent(encodedServiceName);
+		const servicename = decodeURIComponent(encodedServiceName || '');
 
 		const opFilters: TagFilterItem[] = [
 			{
@@ -118,6 +117,7 @@ function TopOperationsTable({
 		render: (text: string): JSX.Element => (
 			<Tooltip placement="topLeft" title={text}>
 				<Typography.Link
+					testId="top-operation-link"
 					onClick={(e): void => {
 						e.stopPropagation();
 						e.preventDefault();
@@ -197,12 +197,12 @@ function TopOperationsTable({
 
 	const entryPointSpanInfo = {
 		text: 'Shows the spans where requests enter new services for the first time',
-		url: 'https://signoz.io/docs/traces-management/guides/entry-point-spans-service-overview/',
+		url: 'https://signoz.io/docs/apm-and-distributed-tracing/application-details/',
 		urlText: 'Learn more about Entrypoint Spans.',
 	};
 
 	return (
-		<div className="top-operation">
+		<div className="top-operation" data-testid="top-operations">
 			<div className="top-operation__controls">
 				<div className="top-operation__download">
 					<Download
@@ -212,7 +212,14 @@ function TopOperationsTable({
 					/>
 				</div>
 				<div className="top-operation__entry-point">
-					<Switch value={isEntryPoint} onChange={onEntryPointToggle} />
+					<Switch
+						testId="top-operations-entrypoint-toggle"
+						aria-label="Entrypoint Spans"
+						color="primary"
+						textPlacement="right"
+						value={isEntryPoint}
+						onChange={onEntryPointToggle}
+					/>
 					<span className="top-operation__entry-point-label">Entrypoint Spans</span>
 					<TextToolTip
 						text={entryPointSpanInfo.text}

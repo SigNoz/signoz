@@ -3,7 +3,7 @@ import { Skeleton } from 'antd';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { GetTraceV3SuccessResponse, SpanV3 } from 'types/api/trace/getTraceV3';
+import { GetTraceV4SuccessResponse, SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { TraceWaterfallStates } from './constants';
 import Error from './TraceWaterfallStates/Error/Error';
@@ -22,7 +22,7 @@ interface ITraceWaterfallProps {
 	localUncollapsedNodes: Set<string>;
 	setLocalUncollapsedNodes: Dispatch<SetStateAction<Set<string>>>;
 	traceData:
-		| SuccessResponse<GetTraceV3SuccessResponse, unknown>
+		| SuccessResponse<GetTraceV4SuccessResponse, unknown>
 		| ErrorResponse
 		| undefined;
 	isFetchingTraceData: boolean;

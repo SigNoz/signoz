@@ -1,7 +1,10 @@
 import { Badge } from '@signozhq/ui/badge';
 import styled from 'styled-components';
 
-export const TagContainer = styled(Badge)`
+export const TagContainer = styled(Badge).attrs({
+	color: 'secondary' as const,
+	variant: 'outlined' as const,
+})`
 	&&& {
 		border-color: var(--bg-slate-400);
 		border-radius: 0.25rem;

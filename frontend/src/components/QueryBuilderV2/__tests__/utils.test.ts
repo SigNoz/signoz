@@ -9,11 +9,64 @@ import { extractQueryPairs } from 'utils/queryContextUtils';
 
 import {
 	convertAggregationToExpression,
+	convertExpressionToFilters,
 	convertFiltersToExpression,
 	convertFiltersToExpressionWithExistingQuery,
+	convertHavingToExpression,
 	formatValueForExpression,
+	parseLimit,
 	removeKeysFromExpression,
+	sanitizeLimit,
 } from '../utils';
+
+describe('convertHavingToExpression', () => {
+	it.each([
+		['COUNT()', 'count() > 5'],
+		['COUNT_DISTINCT(service.name)', 'count_distinct(service.name) > 5'],
+		['P99(duration_nano)', 'p99(duration_nano) > 5'],
+		['SUM(http.Request.Size)', 'sum(http.Request.Size) > 5'],
+		['count()', 'count() > 5'],
+	])('references %s by its lower-case function', (columnName, expected) => {
+		expect(
+			convertHavingToExpression([{ columnName, op: '>', value: 5 }]),
+		).toStrictEqual({ expression: expected });
+	});
+
+	it('joins several conditions and formats list values', () => {
+		expect(
+			convertHavingToExpression([
+				{ columnName: 'COUNT()', op: '>', value: 5 },
+				{ columnName: 'COUNT()', op: 'NOT IN', value: [1, 2] },
+			]),
+		).toStrictEqual({ expression: 'count() > 5 AND count() NOT IN [1, 2]' });
+	});
+});
+
+describe('sanitizeLimit', () => {
+	it.each([
+		['10', '10'],
+		['-10', '10'],
+		['2.5', '25'],
+		['1e3', '13'],
+		['', ''],
+	])('sanitizes %j to %j', (value, expected) => {
+		expect(sanitizeLimit(value)).toBe(expected);
+	});
+});
+
+describe('parseLimit', () => {
+	it.each([
+		['10', 10],
+		['1', 1],
+		['', null],
+		['0', null],
+		['-5', null],
+		['2.5', null],
+		['abc', null],
+	])('parses %j as %j', (value, expected) => {
+		expect(parseLimit(value)).toBe(expected);
+	});
+});
 
 describe('convertFiltersToExpression', () => {
 	beforeEach(() => {
@@ -1596,6 +1649,38 @@ describe('formatValueForExpression', () => {
 		it('should handle array with single element', () => {
 			expect(formatValueForExpression(['single'])).toBe("['single']");
 			expect(formatValueForExpression([123] as any)).toBe('[123]');
+		});
+	});
+
+	// Regression: an escaped single quote must not gain a backslash on each
+	// expression <-> filters round-trip (broke Create Alert from a panel).
+	describe('escaped quote round-trip', () => {
+		const EXPR = "name = 'it\\'s a ribbon'"; // name = 'it\'s a ribbon' (single backslash)
+
+		it('stores the unescaped value in the filter item', () => {
+			const items = convertExpressionToFilters(EXPR);
+			expect(items).toHaveLength(1);
+			expect(items[0].value).toBe("it's a ribbon");
+		});
+
+		it('is lossless: expression -> filters -> expression', () => {
+			const items = convertExpressionToFilters(EXPR);
+			expect(convertFiltersToExpression({ items, op: 'AND' }).expression).toBe(
+				EXPR,
+			);
+		});
+
+		it('is idempotent across repeated existing-query conversions', () => {
+			const pass1 = convertFiltersToExpressionWithExistingQuery(
+				{ items: [], op: 'AND' },
+				EXPR,
+			);
+			expect(pass1.filter.expression).toBe(EXPR);
+			const pass2 = convertFiltersToExpressionWithExistingQuery(
+				pass1.filters,
+				pass1.filter.expression,
+			);
+			expect(pass2.filter.expression).toBe(EXPR);
 		});
 	});
 });

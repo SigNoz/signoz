@@ -10,7 +10,8 @@ import {
 export function isOneClickIntegration(integrationId: string): boolean {
 	return (
 		integrationId === INTEGRATION_TYPES.AWS ||
-		integrationId === INTEGRATION_TYPES.AZURE
+		integrationId === INTEGRATION_TYPES.AZURE ||
+		integrationId === INTEGRATION_TYPES.GCP
 	);
 }
 

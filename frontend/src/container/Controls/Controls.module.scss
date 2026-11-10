@@ -1,0 +1,6 @@
+.container {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	--button-font-size: var(--periscope-font-size-base, 13px);
+}

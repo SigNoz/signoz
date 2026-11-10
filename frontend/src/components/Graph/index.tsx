@@ -28,7 +28,7 @@ import {
 } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { generateGridTitle } from 'container/GridPanelSwitch/utils';
+import { generateGridTitle } from 'utils/generateGridTitle';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import isEqual from 'lodash-es/isEqual';
@@ -111,14 +111,11 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 
 		const lineChartRef = useRef<Chart>();
 
-		useImperativeHandle(
-			ref,
-			(): ToggleGraphProps => ({
-				toggleGraph(graphIndex: number, isVisible: boolean): void {
-					toggleGraph(graphIndex, isVisible, lineChartRef);
-				},
-			}),
-		);
+		useImperativeHandle(ref, (): ToggleGraphProps => ({
+			toggleGraph(graphIndex: number, isVisible: boolean): void {
+				toggleGraph(graphIndex, isVisible, lineChartRef);
+			},
+		}));
 
 		const getGridColor = useCallback(() => {
 			if (currentTheme === undefined) {

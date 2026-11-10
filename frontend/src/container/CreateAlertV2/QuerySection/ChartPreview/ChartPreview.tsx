@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryParams } from 'constants/query';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
-import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
+import PlotTag from 'components/PlotTag/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
 import { AppState } from 'store/reducers';
@@ -41,7 +41,7 @@ function ChartPreview({
 
 	const yAxisUnit = alertState.yAxisUnit || '';
 
-	const location = useLocation();
+	const location = useAppLocation();
 	const yAxisUnitFromURL = new URLSearchParams(location.search).get(
 		QueryParams.yAxisUnit,
 	);

@@ -1,0 +1,47 @@
+.pieChartWrapper {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+}
+
+.pieChartNoData {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	height: 100%;
+	font-size: 14px;
+}
+
+// Size is set inline from the computed chart dimensions (mirrors the uPlot
+// chart/legend split); this just centres the donut within that box.
+.pieChartContainer {
+	flex: 0 0 auto;
+	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.pieChartTooltip {
+	z-index: 9999;
+}
+
+// width/height are set inline from the computed chart dimensions; border-box
+// keeps the padding inside that height and overflow:hidden clips the
+// virtualized grid to the rectangle.
+.pieChartLegend {
+	flex: 0 0 auto;
+	box-sizing: border-box;
+	min-height: 0;
+	min-width: 0;
+	overflow: hidden;
+	padding-left: 12px;
+	padding-bottom: 12px;
+}
+
+.pieChartLegendRight {
+	padding-top: 8px;
+}

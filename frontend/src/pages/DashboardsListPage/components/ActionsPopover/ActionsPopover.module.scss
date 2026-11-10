@@ -1,0 +1,10 @@
+.renameFooter {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.deleteName {
+	color: var(--danger-background);
+	font-weight: var(--font-weight-medium);
+}

@@ -1,0 +1,200 @@
+import { renderHook } from '@testing-library/react';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { preparePieData } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/PieChartPanel/prepareData';
+import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
+import { resolveSeriesLabelV5 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/resolveSeriesLabel';
+import type {
+	PanelQueryData,
+	PanelSeries,
+} from 'pages/DashboardPage/DashboardContainer/queryV5/types';
+import { flattenTimeSeries } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
+
+import { useLegendSeries } from '../useLegendSeries';
+
+jest.mock('hooks/useDarkMode', () => ({ useIsDarkMode: jest.fn() }));
+jest.mock('lib/getLabelName', () => jest.fn(() => 'base'));
+jest.mock('lib/uPlotLib/utils/generateColor', () => ({
+	generateColor: jest.fn((label: string) => `color:${label}`),
+}));
+jest.mock('constants/theme', () => ({
+	themeColors: { chartcolors: ['dark'], lightModeColor: ['light'] },
+}));
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries',
+	() => ({ getBuilderQueries: jest.fn(() => []) }),
+);
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/Panels/utils/resolveSeriesLabel',
+	() => ({ resolveSeriesLabelV5: jest.fn() }),
+);
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData',
+	() => ({
+		flattenTimeSeries: jest.fn(),
+		getTimeSeriesResults: jest.fn(() => []),
+		getScalarResults: jest.fn(() => []),
+	}),
+);
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables',
+	() => ({ prepareScalarTables: jest.fn(() => []) }),
+);
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/Panels/kinds/PieChartPanel/prepareData',
+	() => ({ preparePieData: jest.fn(() => []) }),
+);
+
+const mockUseIsDarkMode = jest.mocked(useIsDarkMode);
+const mockFlatten = jest.mocked(flattenTimeSeries);
+const mockResolveLabel = jest.mocked(resolveSeriesLabelV5);
+const mockGenerateColor = jest.mocked(generateColor);
+const mockPreparePie = jest.mocked(preparePieData);
+const mockPrepareScalarTables = jest.mocked(prepareScalarTables);
+
+const PANEL = {
+	kind: 'Panel',
+	spec: { plugin: { kind: 'signoz/TimeSeriesPanel', spec: {} }, queries: [] },
+} as unknown as DashboardtypesPanelDTO;
+const PIE_PANEL = {
+	kind: 'Panel',
+	spec: { plugin: { kind: 'signoz/PieChartPanel', spec: {} }, queries: [] },
+} as unknown as DashboardtypesPanelDTO;
+const HISTOGRAM_PANEL = {
+	kind: 'Panel',
+	spec: { plugin: { kind: 'signoz/HistogramPanel', spec: {} }, queries: [] },
+} as unknown as DashboardtypesPanelDTO;
+const scatterPanel = (colorBy?: string[]): DashboardtypesPanelDTO =>
+	({
+		kind: 'Panel',
+		spec: {
+			plugin: {
+				kind: 'signoz/ScatterPlotPanel',
+				spec: { dimensions: { colorBy } },
+			},
+			queries: [],
+		},
+	}) as unknown as DashboardtypesPanelDTO;
+const DATA = { response: {}, legendMap: {} } as unknown as PanelQueryData;
+
+// Each flattened series carries the label resolveSeriesLabelV5 should report.
+function seriesWithLabels(labels: string[]): PanelSeries[] {
+	return labels.map((legend) => ({
+		queryName: 'A',
+		legend,
+		labels: {},
+		values: [],
+		kind: 'series',
+		aggregation: { index: 0, alias: '' },
+	}));
+}
+
+describe('useLegendSeries', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		mockUseIsDarkMode.mockReturnValue(true);
+		mockResolveLabel.mockImplementation((s) => s.legend);
+	});
+
+	it('is empty when there are no series', () => {
+		mockFlatten.mockReturnValue([]);
+		const { result } = renderHook(() => useLegendSeries(PANEL, DATA));
+		expect(result.current).toStrictEqual([]);
+	});
+
+	it('maps each series to a { label, defaultColor } pair', () => {
+		mockFlatten.mockReturnValue(seriesWithLabels(['a', 'b']));
+		const { result } = renderHook(() => useLegendSeries(PANEL, DATA));
+		expect(result.current).toStrictEqual([
+			{ label: 'a', defaultColor: 'color:a' },
+			{ label: 'b', defaultColor: 'color:b' },
+		]);
+	});
+
+	it('dedupes by label, keeping first-seen order', () => {
+		mockFlatten.mockReturnValue(seriesWithLabels(['a', 'b', 'a', 'c']));
+		const { result } = renderHook(() => useLegendSeries(PANEL, DATA));
+		expect(result.current.map((s) => s.label)).toStrictEqual(['a', 'b', 'c']);
+		// The duplicate 'a' must not generate a second color.
+		expect(
+			mockGenerateColor.mock.calls.filter(([label]) => label === 'a'),
+		).toHaveLength(1);
+	});
+
+	it('skips series that resolve to an empty label', () => {
+		mockFlatten.mockReturnValue(seriesWithLabels(['', 'a', '']));
+		const { result } = renderHook(() => useLegendSeries(PANEL, DATA));
+		expect(result.current).toStrictEqual([
+			{ label: 'a', defaultColor: 'color:a' },
+		]);
+	});
+
+	it('resolves histogram panels via the time-series path', () => {
+		mockFlatten.mockReturnValue(seriesWithLabels(['a', 'b']));
+		const { result } = renderHook(() => useLegendSeries(HISTOGRAM_PANEL, DATA));
+		expect(result.current).toStrictEqual([
+			{ label: 'a', defaultColor: 'color:a' },
+			{ label: 'b', defaultColor: 'color:b' },
+		]);
+		// The pie path must not run for a histogram panel.
+		expect(mockPreparePie).not.toHaveBeenCalled();
+	});
+
+	it('resolves pie panels from their scalar slices, deduped by label', () => {
+		mockPreparePie.mockReturnValue([
+			{ label: 'x', value: 1, color: 'c1' },
+			{ label: 'y', value: 1, color: 'c2' },
+			{ label: 'x', value: 1, color: 'c1' },
+		]);
+		const { result } = renderHook(() => useLegendSeries(PIE_PANEL, DATA));
+		expect(result.current).toStrictEqual([
+			{ label: 'x', defaultColor: 'c1' },
+			{ label: 'y', defaultColor: 'c2' },
+		]);
+		// The time-series path must not run for a pie panel.
+		expect(mockFlatten).not.toHaveBeenCalled();
+	});
+
+	it('resolves scatter plot panels by the colour-by label', () => {
+		mockPrepareScalarTables.mockReturnValue([
+			{
+				queryName: 'A',
+				legend: '',
+				columns: [
+					{ id: 'ns', name: 'ns', queryName: '', isValueColumn: false },
+					{ id: 'pod', name: 'pod', queryName: '', isValueColumn: false },
+					{ id: 'A', name: 'A', queryName: 'A', isValueColumn: true },
+					{ id: 'B', name: 'B', queryName: 'B', isValueColumn: true },
+				],
+				rows: [
+					{ data: { ns: 'prod', pod: 'p1', A: 1, B: 2 } },
+					{ data: { ns: 'dev', pod: 'p2', A: 3, B: 4 } },
+					{ data: { ns: 'prod', pod: 'p3', A: 5, B: 6 } },
+				],
+			},
+		]);
+
+		const { result } = renderHook(() =>
+			useLegendSeries(scatterPanel(['ns']), DATA),
+		);
+
+		expect(result.current).toStrictEqual([
+			{ label: 'prod', defaultColor: 'color:prod' },
+			{ label: 'dev', defaultColor: 'color:dev' },
+		]);
+		expect(mockFlatten).not.toHaveBeenCalled();
+	});
+
+	it('uses the dark palette in dark mode and the light palette otherwise', () => {
+		mockFlatten.mockReturnValue(seriesWithLabels(['a']));
+
+		const dark = renderHook(() => useLegendSeries(PANEL, DATA));
+		expect(mockGenerateColor).toHaveBeenLastCalledWith('a', ['dark']);
+		dark.unmount();
+
+		mockUseIsDarkMode.mockReturnValue(false);
+		renderHook(() => useLegendSeries(PANEL, DATA));
+		expect(mockGenerateColor).toHaveBeenLastCalledWith('a', ['light']);
+	});
+});

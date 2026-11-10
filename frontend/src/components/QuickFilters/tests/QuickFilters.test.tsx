@@ -1,23 +1,26 @@
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { ENVIRONMENT } from 'constants/env';
 import {
 	ApiMonitoringParams,
 	useApiMonitoringParams,
 } from 'container/ApiMonitoring/queryParams';
+import { getHostsQuickFiltersConfig } from 'container/InfraMonitoringHostsV2/utils';
+import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	otherFiltersResponse,
-	quickFiltersAttributeValuesResponse,
+	quickFiltersFieldValuesResponse,
 	quickFiltersListResponse,
 } from 'mocks-server/__mockdata__/customQuickFilters';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import '@testing-library/jest-dom';
 
 import QuickFilters from '../QuickFilters';
-import { IQuickFiltersConfig, QuickFiltersSource, SignalType } from '../types';
-import { QuickFiltersConfig } from './constants';
+import { IQuickFiltersConfig, QuickFiltersSource } from '../types';
+import { QuickFiltersConfig, QuickFiltersFieldApis } from './constants';
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
@@ -33,11 +36,10 @@ const mockSetApiMonitoringParams = jest.fn() as jest.MockedFunction<
 const mockUseApiMonitoringParams = jest.mocked(useApiMonitoringParams);
 
 const BASE_URL = ENVIRONMENT.baseURL;
-const SIGNAL = SignalType.LOGS;
-const quickFiltersListURL = `${BASE_URL}/api/v1/orgs/me/filters/${SIGNAL}`;
-const saveQuickFiltersURL = `${BASE_URL}/api/v1/orgs/me/filters`;
-const quickFiltersSuggestionsURL = `${BASE_URL}/api/v3/filter_suggestions`;
-const quickFiltersAttributeValuesURL = `${BASE_URL}/api/v3/autocomplete/attribute_values`;
+const quickFiltersListURL = `${BASE_URL}/api/v2/quick_filters/logs`;
+const saveQuickFiltersURL = `${BASE_URL}/api/v2/quick_filters/logs`;
+const anyQuickFiltersListURL = `${BASE_URL}/api/v2/quick_filters/:source`;
+const quickFiltersSuggestionsURL = `${BASE_URL}/api/v1/fields/keys`;
 const fieldsValuesURL = `${BASE_URL}/api/v1/fields/values`;
 
 const FILTER_OS_DESCRIPTION = 'os.description';
@@ -55,6 +57,9 @@ const setupServer = (): void => {
 		rest.get(quickFiltersListURL, (_, res, ctx) =>
 			res(ctx.status(200), ctx.json(quickFiltersListResponse)),
 		),
+		rest.get(anyQuickFiltersListURL, (_, res, ctx) =>
+			res(ctx.status(200), ctx.json({ status: 'success', data: { filters: [] } })),
+		),
 		rest.get(quickFiltersSuggestionsURL, (_, res, ctx) =>
 			res(ctx.status(200), ctx.json(otherFiltersResponse)),
 		),
@@ -62,56 +67,31 @@ const setupServer = (): void => {
 			putHandler(await req.json());
 			return res(ctx.status(200), ctx.json({}));
 		}),
-		rest.get(quickFiltersAttributeValuesURL, (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(quickFiltersAttributeValuesResponse)),
-		),
 		rest.get(fieldsValuesURL, (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(quickFiltersAttributeValuesResponse)),
+			res(ctx.status(200), ctx.json(quickFiltersFieldValuesResponse)),
 		),
 	);
 };
 
 function TestQuickFilters({
-	signal = SignalType.LOGS,
+	quickFilterSource = QuickFiltersSource.EXCEPTIONS,
 	config = QuickFiltersConfig,
 }: {
-	signal?: SignalType;
+	quickFilterSource?: QuickFiltersSource;
 	config?: IQuickFiltersConfig[];
 }): JSX.Element {
 	return (
 		<QuickFilters
-			source={QuickFiltersSource.EXCEPTIONS}
+			quickFilterSource={quickFilterSource}
 			config={config}
 			handleFilterVisibilityChange={handleFilterVisibilityChange}
-			signal={signal}
+			useFieldApis={QuickFiltersFieldApis}
 		/>
 	);
 }
 
 TestQuickFilters.defaultProps = {
-	signal: '',
-	config: QuickFiltersConfig,
-};
-
-function TestQuickFiltersApiMonitoring({
-	signal = SignalType.LOGS,
-	config = QuickFiltersConfig,
-}: {
-	signal?: SignalType;
-	config?: IQuickFiltersConfig[];
-}): JSX.Element {
-	return (
-		<QuickFilters
-			source={QuickFiltersSource.API_MONITORING}
-			config={config}
-			handleFilterVisibilityChange={handleFilterVisibilityChange}
-			signal={signal}
-		/>
-	);
-}
-
-TestQuickFiltersApiMonitoring.defaultProps = {
-	signal: '',
+	quickFilterSource: QuickFiltersSource.EXCEPTIONS,
 	config: QuickFiltersConfig,
 };
 
@@ -289,10 +269,14 @@ describe('Quick Filters', () => {
 	it('toggles Show IP addresses and updates API Monitoring params', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestQuickFiltersApiMonitoring />);
+		render(
+			<TestQuickFilters quickFilterSource={QuickFiltersSource.API_MONITORING} />,
+		);
 
 		// Switch should be rendered and initially checked
-		expect(screen.getByText('Show IP addresses')).toBeInTheDocument();
+		await expect(
+			screen.findByText('Show IP addresses'),
+		).resolves.toBeInTheDocument();
 		const toggle = screen.getByRole('switch');
 		expect(toggle).toHaveAttribute('aria-checked', 'true');
 
@@ -310,7 +294,9 @@ describe('Quick Filters with custom filters', () => {
 	it('loads the custom filters correctly', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(
+			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
+		);
 
 		expect(screen.getByText('Filters for')).toBeInTheDocument();
 		expect(screen.getByText(QUERY_NAME)).toBeInTheDocument();
@@ -338,10 +324,71 @@ describe('Quick Filters with custom filters', () => {
 		);
 	});
 
+	it('keeps same-name fields with different context as distinct entries', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		server.use(
+			rest.get(quickFiltersSuggestionsURL, (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							complete: true,
+							keys: {
+								level: [
+									{
+										name: 'level',
+										fieldContext: 'attribute',
+										fieldDataType: 'string',
+										signal: 'logs',
+									},
+									{
+										name: 'level',
+										fieldContext: 'span',
+										fieldDataType: 'string',
+										signal: 'logs',
+									},
+								],
+							},
+						},
+					}),
+				),
+			),
+		);
+
+		render(
+			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
+		);
+		await screen.findByText(FILTER_SERVICE_NAME);
+
+		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
+		const settingsButton = icon.closest('button') ?? icon;
+		await user.click(settingsButton);
+
+		const otherSection = screen.getByText(OTHER_FILTERS_LABEL).parentElement!;
+		// Both `level` variants are shown despite sharing a name.
+		await waitFor(() =>
+			expect(within(otherSection).getAllByText('level')).toHaveLength(2),
+		);
+
+		// Adding one variant removes only that one; the other stays.
+		const firstLevel = within(otherSection).getAllByText('level')[0];
+		const addButton = firstLevel.parentElement?.querySelector('button');
+		await user.click(addButton as HTMLButtonElement);
+
+		const addedSection = screen.getByText(ADDED_FILTERS_LABEL).parentElement!;
+		await waitFor(() => {
+			expect(within(addedSection).getAllByText('level')).toHaveLength(1);
+			expect(within(otherSection).getAllByText('level')).toHaveLength(1);
+		});
+	});
+
 	it('adds a filter from OTHER FILTERS to ADDED FILTERS when clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(
+			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
+		);
 		await screen.findByText(FILTER_SERVICE_NAME);
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
@@ -362,7 +409,9 @@ describe('Quick Filters with custom filters', () => {
 	it('removes a filter from ADDED FILTERS and moves it to OTHER FILTERS', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(
+			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
+		);
 		await screen.findByText(FILTER_SERVICE_NAME);
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
@@ -391,7 +440,9 @@ describe('Quick Filters with custom filters', () => {
 	it('restores original filter state on Discard', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(
+			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
+		);
 		await screen.findByText(FILTER_SERVICE_NAME);
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
@@ -433,7 +484,9 @@ describe('Quick Filters with custom filters', () => {
 	it('saves the updated filters by calling PUT with correct payload', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(
+			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
+		);
 		await screen.findByText(FILTER_SERVICE_NAME);
 
 		const icon = await screen.findByTestId(SETTINGS_ICON_TEST_ID);
@@ -456,12 +509,10 @@ describe('Quick Filters with custom filters', () => {
 		});
 
 		const requestBody = putHandler.mock.calls[0][0];
-		expect(requestBody.filters).toStrictEqual(
-			expect.arrayContaining([
-				expect.not.objectContaining({ key: FILTER_OS_DESCRIPTION }),
-			]),
+		expect(requestBody.filters).not.toContainEqual(
+			expect.objectContaining({ name: FILTER_OS_DESCRIPTION }),
 		);
-		expect(requestBody.signal).toBe(SIGNAL);
+		expect(requestBody.filters).toHaveLength(10);
 	});
 
 	it('should render duration slider for duration_nono filter', async () => {
@@ -472,7 +523,9 @@ describe('Quick Filters with custom filters', () => {
 			pointerEventsCheck: 0,
 		});
 
-		const { getByTestId } = render(<TestQuickFilters signal={SIGNAL} />);
+		const { getByTestId } = render(
+			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
+		);
 		await screen.findByText(FILTER_SERVICE_NAME);
 		expect(screen.getByText('Duration')).toBeInTheDocument();
 
@@ -526,7 +579,7 @@ describe('Quick Filters with custom filters', () => {
 });
 
 describe('Quick Filters refetch behavior', () => {
-	it('fetches custom filters on every mount when signal is provided', async () => {
+	it('fetches custom filters on every mount for a page with a saved list', async () => {
 		let getCalls = 0;
 
 		server.use(
@@ -536,14 +589,18 @@ describe('Quick Filters refetch behavior', () => {
 			}),
 		);
 
-		const { unmount } = render(<TestQuickFilters signal={SIGNAL} />);
+		const { unmount } = render(
+			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
+		);
 		await expect(
 			screen.findByText(FILTER_SERVICE_NAME),
 		).resolves.toBeInTheDocument();
 
 		unmount();
 
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(
+			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
+		);
 		await expect(
 			screen.findByText(FILTER_SERVICE_NAME),
 		).resolves.toBeInTheDocument();
@@ -551,19 +608,24 @@ describe('Quick Filters refetch behavior', () => {
 		expect(getCalls).toBe(2);
 	});
 
-	it('does not fetch custom filters when signal is undefined', async () => {
+	it('does not fetch custom filters for a page without a saved list', async () => {
 		let getCalls = 0;
 
 		server.use(
-			rest.get(quickFiltersListURL, (_req, res, ctx) => {
+			rest.get(anyQuickFiltersListURL, (_req, res, ctx) => {
 				getCalls += 1;
 				return res(ctx.status(200), ctx.json(quickFiltersListResponse));
 			}),
 		);
 
-		render(<TestQuickFilters signal={undefined} />);
+		render(
+			<TestQuickFilters quickFilterSource={QuickFiltersSource.INFRA_MONITORING} />,
+		);
 
-		await waitFor(() => expect(getCalls).toBe(0));
+		await expect(
+			screen.findByText(FILTER_SERVICE_NAME),
+		).resolves.toBeInTheDocument();
+		expect(getCalls).toBe(0);
 	});
 
 	it('refetches custom filters after saving settings', async () => {
@@ -582,7 +644,9 @@ describe('Quick Filters refetch behavior', () => {
 		);
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(
+			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
+		);
 
 		await expect(
 			screen.findByText(FILTER_SERVICE_NAME),
@@ -612,9 +676,9 @@ describe('Quick Filters refetch behavior', () => {
 				filters: [
 					...(quickFiltersListResponse.data.filters ?? []),
 					{
-						key: 'new.custom.filter',
-						dataType: 'string',
-						type: 'resource',
+						name: 'new.custom.filter',
+						fieldDataType: 'string',
+						fieldContext: 'resource',
 					} as const,
 				],
 			},
@@ -634,7 +698,9 @@ describe('Quick Filters refetch behavior', () => {
 		);
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		render(<TestQuickFilters signal={SIGNAL} />);
+		render(
+			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
+		);
 
 		await expect(
 			screen.findByText(FILTER_SERVICE_NAME),
@@ -665,10 +731,47 @@ describe('Quick Filters refetch behavior', () => {
 			),
 		);
 
-		render(<TestQuickFilters signal={SIGNAL} config={[]} />);
+		render(
+			<TestQuickFilters
+				quickFilterSource={QuickFiltersSource.LOGS_EXPLORER}
+				config={[]}
+			/>,
+		);
 
 		await expect(
 			screen.findByText('No filters found'),
 		).resolves.toBeInTheDocument();
+	});
+});
+
+describe('Quick Filters field APIs', () => {
+	it('sends the page signal for every filter, the infra Environment filter included', async () => {
+		const requests: URLSearchParams[] = [];
+		server.use(
+			rest.get(fieldsValuesURL, (req, res, ctx) => {
+				requests.push(req.url.searchParams);
+				return res(ctx.status(200), ctx.json(quickFiltersFieldValuesResponse));
+			}),
+		);
+
+		render(
+			<QuickFilters
+				quickFilterSource={QuickFiltersSource.INFRA_MONITORING}
+				config={getHostsQuickFiltersConfig()}
+				handleFilterVisibilityChange={handleFilterVisibilityChange}
+				useFieldApis={QuickFiltersFieldApis}
+			/>,
+		);
+
+		await waitFor(() =>
+			expect(requests.map((params) => params.get('name'))).toContain(
+				INFRA_MONITORING_ATTR_KEYS.DEPLOYMENT_ENVIRONMENT,
+			),
+		);
+		const environment = requests.find(
+			(params) =>
+				params.get('name') === INFRA_MONITORING_ATTR_KEYS.DEPLOYMENT_ENVIRONMENT,
+		);
+		expect(environment?.get('signal')).toBe(TelemetrytypesSignalDTO.metrics);
 	});
 });

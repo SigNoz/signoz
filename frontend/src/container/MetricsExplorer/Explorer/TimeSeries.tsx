@@ -19,6 +19,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import ExplorerActions from 'container/ExplorerActions/ExplorerActions';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -51,6 +52,7 @@ function TimeSeries({
 	showYAxisUnitSelector,
 	metrics,
 	isCancelled = false,
+	exportDefaultQuery,
 }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 
@@ -191,9 +193,6 @@ function TimeSeries({
 		if (metrics[0] && yAxisUnit) {
 			updateMetricMetadata(
 				{
-					pathParams: {
-						metricName: metricNames[0],
-					},
 					data: buildUpdateMetricYAxisUnitPayload(
 						metricNames[0],
 						metrics[0],
@@ -275,6 +274,9 @@ function TimeSeries({
 							metricName;
 
 						const currentYAxisUnit = yAxisUnit || metricUnit;
+						const exportQuery = changeLayoutForOneChartPerQuery
+							? queryPayloads[index]
+							: exportDefaultQuery;
 
 						return (
 							<div
@@ -314,6 +316,15 @@ function TimeSeries({
 									dataSource={DataSource.METRICS}
 									error={queries[index].error as APIError}
 									setWarning={setWarning}
+									allowExport
+									headerActions={
+										<ExplorerActions
+											query={stagedQuery ? exportQuery : null}
+											sourcepage={DataSource.METRICS}
+											panelType={PANEL_TYPES.TIME_SERIES}
+											isOneChartPerQuery={changeLayoutForOneChartPerQuery}
+										/>
+									}
 								/>
 							</div>
 						);

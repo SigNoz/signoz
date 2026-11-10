@@ -1,0 +1,787 @@
+{
+  "id": "mysqlflexibleserver",
+  "title": "MySQL - Flexible Server",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_ha_io_status_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Status for replication IO thread running (HA)."
+      },
+      {
+        "name": "azure_ha_sql_status_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Status for replication SQL thread running (HA)."
+      },
+      {
+        "name": "azure_replica_io_running_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Status for replication IO thread running (replica)."
+      },
+      {
+        "name": "azure_replica_sql_running_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Status for replication SQL thread running (replica)."
+      },
+      {
+        "name": "azure_aborted_connections_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of failed attempts to connect to the MySQL server."
+      },
+      {
+        "name": "azure_ha_replication_lag_average",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "HA replication lag in seconds."
+      },
+      {
+        "name": "azure_ha_replication_lag_maximum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "HA replication lag in seconds."
+      },
+      {
+        "name": "azure_ha_replication_lag_minimum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "HA replication lag in seconds."
+      },
+      {
+        "name": "azure_innodb_row_lock_time_average",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": "Total time spent acquiring row locks for InnoDB tables, in milliseconds."
+      },
+      {
+        "name": "azure_innodb_row_lock_time_maximum",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": "Total time spent acquiring row locks for InnoDB tables, in milliseconds."
+      },
+      {
+        "name": "azure_innodb_row_lock_time_minimum",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": "Total time spent acquiring row locks for InnoDB tables, in milliseconds."
+      },
+      {
+        "name": "azure_innodb_row_lock_waits_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of times operations on InnoDB tables had to wait for a row lock."
+      },
+      {
+        "name": "azure_innodb_row_lock_waits_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times operations on InnoDB tables had to wait for a row lock."
+      },
+      {
+        "name": "azure_innodb_row_lock_waits_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of times operations on InnoDB tables had to wait for a row lock."
+      },
+      {
+        "name": "azure_replication_lag_average",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "Replication lag in seconds."
+      },
+      {
+        "name": "azure_replication_lag_maximum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "Replication lag in seconds."
+      },
+      {
+        "name": "azure_replication_lag_minimum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "Replication lag in seconds."
+      },
+      {
+        "name": "azure_uptime_total",
+        "unit": "Seconds",
+        "type": "Sum",
+        "description": "Number of seconds that the server has been up."
+      },
+      {
+        "name": "azure_uptime_maximum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "Number of seconds that the server has been up."
+      },
+      {
+        "name": "azure_backup_storage_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Backup storage used."
+      },
+      {
+        "name": "azure_backup_storage_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Backup storage used."
+      },
+      {
+        "name": "azure_backup_storage_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Backup storage used."
+      },
+      {
+        "name": "azure_binlog_storage_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used by binlog files."
+      },
+      {
+        "name": "azure_binlog_storage_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used by binlog files."
+      },
+      {
+        "name": "azure_binlog_storage_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used by binlog files."
+      },
+      {
+        "name": "azure_cpu_credits_consumed_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "CPU credits consumed (Burstable SKU)."
+      },
+      {
+        "name": "azure_cpu_credits_consumed_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "CPU credits consumed (Burstable SKU)."
+      },
+      {
+        "name": "azure_cpu_credits_consumed_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "CPU credits consumed (Burstable SKU)."
+      },
+      {
+        "name": "azure_cpu_credits_remaining_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "CPU credits remaining (Burstable SKU)."
+      },
+      {
+        "name": "azure_cpu_credits_remaining_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "CPU credits remaining (Burstable SKU)."
+      },
+      {
+        "name": "azure_cpu_credits_remaining_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "CPU credits remaining (Burstable SKU)."
+      },
+      {
+        "name": "azure_cpu_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Host CPU percent."
+      },
+      {
+        "name": "azure_cpu_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Host CPU percent."
+      },
+      {
+        "name": "azure_cpu_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Host CPU percent."
+      },
+      {
+        "name": "azure_data_storage_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used by data files."
+      },
+      {
+        "name": "azure_data_storage_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used by data files."
+      },
+      {
+        "name": "azure_data_storage_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used by data files."
+      },
+      {
+        "name": "azure_ibdata1_storage_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used by ibdata1 files."
+      },
+      {
+        "name": "azure_ibdata1_storage_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used by ibdata1 files."
+      },
+      {
+        "name": "azure_ibdata1_storage_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used by ibdata1 files."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_pages_data_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of pages in the InnoDB buffer pool containing data."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_pages_data_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of pages in the InnoDB buffer pool containing data."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_pages_data_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of pages in the InnoDB buffer pool containing data."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_pages_dirty_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Current number of dirty pages in the InnoDB buffer pool."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_pages_dirty_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Current number of dirty pages in the InnoDB buffer pool."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_pages_dirty_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Current number of dirty pages in the InnoDB buffer pool."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_pages_free_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of free pages in the InnoDB buffer pool."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_pages_free_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of free pages in the InnoDB buffer pool."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_pages_free_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of free pages in the InnoDB buffer pool."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_read_requests_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of logical read requests."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_read_requests_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of logical read requests."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_read_requests_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of logical read requests."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_reads_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of logical reads that InnoDB could not satisfy from the buffer pool and had to read from disk."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_reads_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of logical reads that InnoDB could not satisfy from the buffer pool and had to read from disk."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_reads_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of logical reads that InnoDB could not satisfy from the buffer pool and had to read from disk."
+      },
+      {
+        "name": "azure_io_consumption_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Storage I/O consumption percent."
+      },
+      {
+        "name": "azure_io_consumption_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Storage I/O consumption percent."
+      },
+      {
+        "name": "azure_io_consumption_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Storage I/O consumption percent."
+      },
+      {
+        "name": "azure_memory_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Memory percent."
+      },
+      {
+        "name": "azure_memory_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Memory percent."
+      },
+      {
+        "name": "azure_memory_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Memory percent."
+      },
+      {
+        "name": "azure_others_storage_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used by other files."
+      },
+      {
+        "name": "azure_others_storage_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used by other files."
+      },
+      {
+        "name": "azure_others_storage_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used by other files."
+      },
+      {
+        "name": "azure_serverlog_storage_limit_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Server log storage limit."
+      },
+      {
+        "name": "azure_serverlog_storage_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Server log storage percent."
+      },
+      {
+        "name": "azure_serverlog_storage_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Server log storage percent."
+      },
+      {
+        "name": "azure_serverlog_storage_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Server log storage percent."
+      },
+      {
+        "name": "azure_serverlog_storage_usage_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Server log storage used."
+      },
+      {
+        "name": "azure_serverlog_storage_usage_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Server log storage used."
+      },
+      {
+        "name": "azure_serverlog_storage_usage_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Server log storage used."
+      },
+      {
+        "name": "azure_sort_merge_passes_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of merge passes the sort algorithm has had to do."
+      },
+      {
+        "name": "azure_sort_merge_passes_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of merge passes the sort algorithm has had to do."
+      },
+      {
+        "name": "azure_sort_merge_passes_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of merge passes the sort algorithm has had to do."
+      },
+      {
+        "name": "azure_storage_limit_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage limit."
+      },
+      {
+        "name": "azure_storage_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Storage percent."
+      },
+      {
+        "name": "azure_storage_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Storage percent."
+      },
+      {
+        "name": "azure_storage_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Storage percent."
+      },
+      {
+        "name": "azure_storage_used_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used."
+      },
+      {
+        "name": "azure_storage_used_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used."
+      },
+      {
+        "name": "azure_storage_used_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Storage used."
+      },
+      {
+        "name": "azure_threads_running_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of threads that are not sleeping."
+      },
+      {
+        "name": "azure_threads_running_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of threads that are not sleeping."
+      },
+      {
+        "name": "azure_threads_running_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of threads that are not sleeping."
+      },
+      {
+        "name": "azure_active_connections_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Active connections."
+      },
+      {
+        "name": "azure_active_connections_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Active connections."
+      },
+      {
+        "name": "azure_active_connections_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Active connections."
+      },
+      {
+        "name": "azure_active_transactions_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of active transactions."
+      },
+      {
+        "name": "azure_active_transactions_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of active transactions."
+      },
+      {
+        "name": "azure_active_transactions_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of active transactions."
+      },
+      {
+        "name": "azure_active_transactions_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of active transactions."
+      },
+      {
+        "name": "azure_com_alter_table_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of times ALTER TABLE statement has been executed."
+      },
+      {
+        "name": "azure_com_create_db_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of times CREATE DB statement has been executed."
+      },
+      {
+        "name": "azure_com_create_table_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of times CREATE TABLE statement has been executed."
+      },
+      {
+        "name": "azure_com_delete_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of times DELETE statement has been executed."
+      },
+      {
+        "name": "azure_com_drop_db_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of times DROP DB statement has been executed."
+      },
+      {
+        "name": "azure_com_drop_table_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of times DROP TABLE statement has been executed."
+      },
+      {
+        "name": "azure_com_insert_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of times INSERT statement has been executed."
+      },
+      {
+        "name": "azure_com_select_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of times SELECT statement has been executed."
+      },
+      {
+        "name": "azure_com_update_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of times UPDATE statement has been executed."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_pages_flushed_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of requests to flush pages from the InnoDB buffer pool."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_pages_flushed_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of requests to flush pages from the InnoDB buffer pool."
+      },
+      {
+        "name": "azure_innodb_buffer_pool_pages_flushed_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of requests to flush pages from the InnoDB buffer pool."
+      },
+      {
+        "name": "azure_innodb_data_writes_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Total number of data writes."
+      },
+      {
+        "name": "azure_innodb_data_writes_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of data writes."
+      },
+      {
+        "name": "azure_innodb_data_writes_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total number of data writes."
+      },
+      {
+        "name": "azure_lock_deadlocks_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of deadlocks."
+      },
+      {
+        "name": "azure_lock_deadlocks_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of deadlocks."
+      },
+      {
+        "name": "azure_lock_deadlocks_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of deadlocks."
+      },
+      {
+        "name": "azure_lock_deadlocks_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of deadlocks."
+      },
+      {
+        "name": "azure_lock_timeouts_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of lock timeouts."
+      },
+      {
+        "name": "azure_lock_timeouts_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of lock timeouts."
+      },
+      {
+        "name": "azure_lock_timeouts_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of lock timeouts."
+      },
+      {
+        "name": "azure_lock_timeouts_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of lock timeouts."
+      },
+      {
+        "name": "azure_network_bytes_egress_total",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": "Host network egress in bytes."
+      },
+      {
+        "name": "azure_network_bytes_ingress_total",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": "Host network ingress in bytes."
+      },
+      {
+        "name": "azure_queries_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of queries executed."
+      },
+      {
+        "name": "azure_slow_queries_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of queries that have taken more than long_query_time seconds."
+      },
+      {
+        "name": "azure_storage_io_count_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of storage I/O operations consumed."
+      },
+      {
+        "name": "azure_total_connections_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Total connections."
+      },
+      {
+        "name": "azure_trx_rseg_history_len_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Length of the TRX_RSEG_HISTORY list."
+      },
+      {
+        "name": "azure_trx_rseg_history_len_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Length of the TRX_RSEG_HISTORY list."
+      },
+      {
+        "name": "azure_trx_rseg_history_len_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Length of the TRX_RSEG_HISTORY list."
+      },
+      {
+        "name": "azure_trx_rseg_history_len_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Length of the TRX_RSEG_HISTORY list."
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "resourceProvider": "Microsoft.DBforMySQL",
+      "resourceType": "flexibleServers",
+      "metrics": {},
+      "logs": {
+        "categoryGroups": [
+          "allLogs"
+        ]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Azure Database for MySQL - Flexible Server Overview",
+        "description": "Overview of Azure Database for MySQL - Flexible Server metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

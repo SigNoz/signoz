@@ -239,16 +239,9 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 		return nil, errors.NewInternalf(CodeInvalidOperatorType, "operator type received %s", parent.Type)
 	}
 
-	parseFromNotNilCheck, err := fieldNotNilCheck(parent.ParseFrom)
-	if err != nil {
-		return nil, errors.WrapInvalidInputf(err, CodeFieldNilCheckType,
-			"couldn't generate nil check for parseFrom of json parser op %s: %s", parent.Name, err,
-		)
-	}
-	parent.If = fmt.Sprintf(
-		`%s && ((type(%s) == "string" && isJSON(%s) && type(fromJSON(unquote(%s))) == "map" ) || type(%s) == "map")`,
-		parseFromNotNilCheck, parent.ParseFrom, parent.ParseFrom, parent.ParseFrom, parent.ParseFrom,
-	)
+	// on_error: send_quiet replaces the expensive isJSON `if` check;
+	// parse failures pass the record through unchanged without noisy logs.
+	parent.OnError = signozstanzahelper.SendOnErrorQuiet
 	if parent.EnableFlattening {
 		parent.MaxFlatteningDepth = constants.MaxJSONFlatteningDepth
 	}
@@ -298,7 +291,7 @@ func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.
 	}
 
 	// JSONMapping: host
-	err = generateMoveOperators(mapping[pipelinetypes.Host], `resource["host.name"]`)
+	err := generateMoveOperators(mapping[pipelinetypes.Host], `resource["host.name"]`)
 	if err != nil {
 		return nil, err
 	}

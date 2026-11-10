@@ -1,0 +1,36 @@
+.actionToggle {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	padding: var(--spacing-6) var(--spacing-8);
+
+	&::after {
+		content: '';
+		position: absolute;
+		right: var(--spacing-8);
+		bottom: 0;
+		left: var(--spacing-8);
+		height: 1px;
+		background: var(--l2-border);
+	}
+
+	&:last-child::after {
+		display: none;
+	}
+}
+
+.actionToggleHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-8);
+}
+
+.actionToggleSelectorWrapper {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+
+	--divider-color: var(--l2-border);
+}

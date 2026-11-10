@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { ensureAiRequiredColumns } from 'container/LLMObservability/Explorer/constants';
+import { ensureLogsRequiredColumns } from 'container/OptionsMenu/constants';
 import { has } from 'lodash-es';
-import { DataSource } from 'types/common/queryBuilder';
 
+import getAiObservabilityLoaderConfig from '../configs/aiObservabilityLoaderConfig';
 import logsLoaderConfig from '../configs/logsLoaderConfig';
 import tracesLoaderConfig from '../configs/tracesLoaderConfig';
-import { FormattingOptions, Preferences } from '../types';
+import { FormattingOptions, Preferences, PreferenceSourcePage } from '../types';
 
 const migrateColumns = (columns: any): any =>
 	columns.map((column: any) => {
@@ -51,21 +55,51 @@ function logsPreferencesLoader(): {
 	columns: TelemetryFieldKey[];
 	formatting: FormattingOptions;
 } {
-	return preferencesLoader(logsLoaderConfig);
+	const result = preferencesLoader<{
+		columns: TelemetryFieldKey[];
+		formatting: FormattingOptions;
+	}>(logsLoaderConfig);
+	return { ...result, columns: ensureLogsRequiredColumns(result.columns) };
 }
 
 function tracesPreferencesLoader(): {
 	columns: TelemetryFieldKey[];
 } {
-	return preferencesLoader(tracesLoaderConfig);
+	const { columns } = preferencesLoader<Preferences>(tracesLoaderConfig);
+	return { columns };
 }
 
+// Loads the open panel only. Same priority as the other loaders: localStorage,
+// then the url, then the defaults.
+function aiObservabilityPreferencesLoader(
+	panelType?: PANEL_TYPES,
+): Preferences {
+	if (!panelType) {
+		return { columns: [] };
+	}
+	const { columns } = preferencesLoader<Preferences>(
+		getAiObservabilityLoaderConfig(panelType),
+	);
+	return { columns: ensureAiRequiredColumns(columns, panelType), panelType };
+}
+
+const PREFERENCE_LOADERS: Record<
+	PreferenceSourcePage,
+	(panelType?: PANEL_TYPES) => Preferences
+> = {
+	[SavedviewtypesSourceDTO.logs]: logsPreferencesLoader,
+	[SavedviewtypesSourceDTO.traces]: tracesPreferencesLoader,
+	[SavedviewtypesSourceDTO.ai_observability]: aiObservabilityPreferencesLoader,
+};
+
 export function usePreferenceLoader({
-	dataSource,
+	sourcePage,
+	panelType,
 	reSync,
 	setReSync,
 }: {
-	dataSource: DataSource;
+	sourcePage: PreferenceSourcePage;
+	panelType?: PANEL_TYPES;
 	reSync: boolean;
 	setReSync: (value: boolean) => void;
 }): {
@@ -73,33 +107,25 @@ export function usePreferenceLoader({
 	loading: boolean;
 	error: Error | null;
 } {
-	const [preferences, setPreferences] = useState<Preferences | null>(() => {
-		if (dataSource === DataSource.LOGS) {
-			const { columns, formatting } = logsPreferencesLoader();
-			return { columns, formatting };
-		}
-		if (dataSource === DataSource.TRACES) {
-			const { columns } = tracesPreferencesLoader();
-			return { columns };
-		}
-		return null;
-	});
+	const loadSlicePreferences = PREFERENCE_LOADERS[sourcePage];
+	const [preferences, setPreferences] = useState<Preferences | null>(() =>
+		loadSlicePreferences(panelType),
+	);
 	const [error, setError] = useState<Error | null>(null);
+
+	// Switching panels loads the new panel's columns in the same render.
+	const [loadedPanelType, setLoadedPanelType] = useState(panelType);
+	if (loadedPanelType !== panelType) {
+		setLoadedPanelType(panelType);
+		setPreferences(loadSlicePreferences(panelType));
+	}
 
 	useEffect((): void => {
 		function loadPreferences(): void {
 			setError(null);
 
 			try {
-				if (dataSource === DataSource.LOGS) {
-					const { columns, formatting } = logsPreferencesLoader();
-					setPreferences({ columns, formatting });
-				}
-
-				if (dataSource === DataSource.TRACES) {
-					const { columns } = tracesPreferencesLoader();
-					setPreferences({ columns });
-				}
+				setPreferences(loadSlicePreferences(panelType));
 			} catch (e) {
 				setError(e as Error);
 			} finally {
@@ -114,7 +140,7 @@ export function usePreferenceLoader({
 		if (reSync) {
 			loadPreferences();
 		}
-	}, [dataSource, reSync, setReSync]);
+	}, [loadSlicePreferences, panelType, reSync, setReSync]);
 
 	return { preferences, loading: false, error };
 }

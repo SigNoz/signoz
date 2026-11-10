@@ -74,6 +74,7 @@ func (Temporality) Enum() []any {
 		Delta,
 		Cumulative,
 		Unspecified,
+		Unknown,
 	}
 }
 
@@ -137,7 +138,7 @@ func (t *Type) Scan(src interface{}) error {
 }
 
 func (t Type) IsPercentileSpaceAggregationAllowed() bool {
-	return t == HistogramType || t == ExpHistogramType || t == SummaryType
+	return t == HistogramType || t == ExpHistogramType
 }
 
 var (
@@ -187,6 +188,7 @@ func (TimeAggregation) Enum() []any {
 		TimeAggregationCountDistinct,
 		TimeAggregationRate,
 		TimeAggregationIncrease,
+		TimeAggregationUnspecified,
 	}
 }
 
@@ -275,8 +277,8 @@ type MetricValueFilter struct {
 }
 
 type ComparisonSpaceAggregationParam struct {
-	Operater  string  `json:"operator" required:"true"`
-	Threshold float64 `json:"threshold" required:"true"`
+	Operater  string  `json:"operator" required:"true" description:"Comparison applied to histogram bucket bounds when spaceAggregation is count: <= gives the estimated count of observations at or below threshold, > the estimated count above it."`
+	Threshold float64 `json:"threshold" required:"true" description:"Bucket bound the comparison uses, in the unit of the histogram metric. The count is exact when threshold equals one of the metric's le bucket bounds, and otherwise an estimate interpolated linearly between the two nearest bounds."`
 }
 
 func (param ComparisonSpaceAggregationParam) StringValue() string {

@@ -1,0 +1,21 @@
+.statusFilterGroup {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.statusFilter {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.statusFilterLabel {
+	color: var(--muted-foreground);
+	font-size: var(--periscope-font-size-base);
+	white-space: nowrap;
+}
+
+.statusFilterControl {
+	min-width: 180px;
+}

@@ -54,7 +54,7 @@ func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rules, total, err := h.module.List(ctx, orgID, q.Offset, q.Limit)
+	rules, total, err := h.module.List(ctx, orgID, q.Offset, q.Limit, q.Search, q.IsOverride)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -92,7 +92,7 @@ func (h *handler) Get(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) CreateOrUpdate(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
@@ -116,6 +116,28 @@ func (h *handler) CreateOrUpdate(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusNoContent, nil)
+}
+
+// ListUnmappedModels handles GET /api/v1/llm_pricing_rules/unmapped_models.
+func (h *handler) ListUnmappedModels(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	models, err := h.module.ListUnmappedModels(ctx, orgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, llmpricingruletypes.NewGettableUnmappedModels(models))
 }
 
 // Delete handles DELETE /api/v1/llm_pricing_rules/{id}.

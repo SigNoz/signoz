@@ -30,23 +30,6 @@
 		font-weight: 500;
 		line-height: 28px;
 	}
-
-	.mq-details-options {
-		letter-spacing: -0.06px;
-		cursor: pointer;
-
-		.ant-radio-button-wrapper {
-			border-color: var(--l1-border);
-			color: var(--l2-foreground);
-		}
-		.ant-radio-button-wrapper-checked {
-			background: var(--l1-border);
-			color: var(--l1-foreground);
-		}
-		.ant-radio-button-wrapper::before {
-			width: 0px;
-		}
-	}
 }
 
 .droprate-view {

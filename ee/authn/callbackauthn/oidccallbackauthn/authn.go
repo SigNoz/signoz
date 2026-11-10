@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"path"
 
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/client"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -26,13 +28,14 @@ var defaultScopes []string = []string{"email", "profile", oidc.ScopeOpenID}
 var _ authn.CallbackAuthN = (*AuthN)(nil)
 
 type AuthN struct {
-	settings   factory.ScopedProviderSettings
-	store      authtypes.AuthNStore
-	licensing  licensing.Licensing
-	httpClient *client.Client
+	settings     factory.ScopedProviderSettings
+	store        authtypes.AuthNStore
+	licensing    licensing.Licensing
+	httpClient   *client.Client
+	globalConfig global.Config
 }
 
-func New(store authtypes.AuthNStore, licensing licensing.Licensing, providerSettings factory.ProviderSettings) (*AuthN, error) {
+func New(store authtypes.AuthNStore, licensing licensing.Licensing, providerSettings factory.ProviderSettings, globalConfig global.Config) (*AuthN, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn")
 
 	httpClient, err := client.New(providerSettings.Logger, providerSettings.TracerProvider, providerSettings.MeterProvider)
@@ -41,18 +44,15 @@ func New(store authtypes.AuthNStore, licensing licensing.Licensing, providerSett
 	}
 
 	return &AuthN{
-		settings:   settings,
-		store:      store,
-		licensing:  licensing,
-		httpClient: httpClient,
+		settings:     settings,
+		store:        store,
+		licensing:    licensing,
+		httpClient:   httpClient,
+		globalConfig: globalConfig,
 	}, nil
 }
 
 func (a *AuthN) LoginURL(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (string, error) {
-	if authDomain.AuthDomainConfig().AuthNProvider != authtypes.AuthNProviderOIDC {
-		return "", errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthDomainMismatch, "domain type is not oidc")
-	}
-
 	_, oauth2Config, err := a.oidcProviderAndoauth2Config(ctx, siteURL, authDomain)
 	if err != nil {
 		return "", err
@@ -81,6 +81,11 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
+	oidcConfig, err := authDomain.Config().OIDCConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	oidcProvider, oauth2Config, err := a.oidcProviderAndoauth2Config(ctx, state.URL, authDomain)
 	if err != nil {
 		return nil, err
@@ -102,14 +107,14 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, err
 	}
 
-	if claims == nil && authDomain.AuthDomainConfig().OIDC.GetUserInfo {
+	if claims == nil && oidcConfig.GetUserInfo {
 		claims, err = a.claimsFromUserInfo(ctx, oidcProvider, token)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	emailClaim, ok := claims[authDomain.AuthDomainConfig().OIDC.ClaimMapping.Email].(string)
+	emailClaim, ok := claims[oidcConfig.ClaimMapping.Email].(string)
 	if !ok {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "oidc: missing email in claims")
 	}
@@ -119,7 +124,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "oidc: failed to parse email").WithAdditional(err.Error())
 	}
 
-	if !authDomain.AuthDomainConfig().OIDC.InsecureSkipEmailVerified {
+	if !oidcConfig.InsecureSkipEmailVerified {
 		emailVerifiedClaim, ok := claims["email_verified"].(bool)
 		if !ok {
 			return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "oidc: missing email_verified in claims")
@@ -131,14 +136,14 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	}
 
 	name := ""
-	if nameClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Name; nameClaim != "" {
+	if nameClaim := oidcConfig.ClaimMapping.Name; nameClaim != "" {
 		if n, ok := claims[nameClaim].(string); ok {
 			name = n
 		}
 	}
 
 	var groups []string
-	if groupsClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Groups; groupsClaim != "" {
+	if groupsClaim := oidcConfig.ClaimMapping.Groups; groupsClaim != "" {
 		if claimValue, exists := claims[groupsClaim]; exists {
 			switch g := claimValue.(type) {
 			case []any:
@@ -157,7 +162,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	}
 
 	role := ""
-	if roleClaim := authDomain.AuthDomainConfig().OIDC.ClaimMapping.Role; roleClaim != "" {
+	if roleClaim := oidcConfig.ClaimMapping.Role; roleClaim != "" {
 		if r, ok := claims[roleClaim].(string); ok {
 			role = r
 		}
@@ -173,11 +178,16 @@ func (a *AuthN) ProviderInfo(ctx context.Context, authDomain *authtypes.AuthDoma
 }
 
 func (a *AuthN) oidcProviderAndoauth2Config(ctx context.Context, siteURL *url.URL, authDomain *authtypes.AuthDomain) (*oidc.Provider, *oauth2.Config, error) {
-	if authDomain.AuthDomainConfig().OIDC.IssuerAlias != "" {
-		ctx = oidc.InsecureIssuerURLContext(ctx, authDomain.AuthDomainConfig().OIDC.IssuerAlias)
+	oidcConfig, err := authDomain.Config().OIDCConfig()
+	if err != nil {
+		return nil, nil, err
 	}
 
-	oidcProvider, err := oidc.NewProvider(ctx, authDomain.AuthDomainConfig().OIDC.Issuer)
+	if oidcConfig.IssuerAlias != "" {
+		ctx = oidc.InsecureIssuerURLContext(ctx, oidcConfig.IssuerAlias)
+	}
+
+	oidcProvider, err := oidc.NewProvider(ctx, oidcConfig.Issuer)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -185,19 +195,19 @@ func (a *AuthN) oidcProviderAndoauth2Config(ctx context.Context, siteURL *url.UR
 	scopes := make([]string, len(defaultScopes))
 	copy(scopes, defaultScopes)
 
-	if authDomain.AuthDomainConfig().RoleMapping != nil && len(authDomain.AuthDomainConfig().RoleMapping.GroupMappings) > 0 {
+	if authDomain.RoleMapping() != nil && len(authDomain.RoleMapping().GroupMappings) > 0 {
 		scopes = append(scopes, "groups")
 	}
 
 	return oidcProvider, &oauth2.Config{
-		ClientID:     authDomain.AuthDomainConfig().OIDC.ClientID,
-		ClientSecret: authDomain.AuthDomainConfig().OIDC.ClientSecret,
+		ClientID:     oidcConfig.ClientID,
+		ClientSecret: oidcConfig.ClientSecret,
 		Endpoint:     oidcProvider.Endpoint(),
 		Scopes:       scopes,
 		RedirectURL: (&url.URL{
 			Scheme: siteURL.Scheme,
 			Host:   siteURL.Host,
-			Path:   redirectPath,
+			Path:   path.Join(a.globalConfig.ExternalPath(), redirectPath),
 		}).String(),
 	}, nil
 }
@@ -208,7 +218,12 @@ func (a *AuthN) claimsFromIDToken(ctx context.Context, authDomain *authtypes.Aut
 		return nil, errors.New(errors.TypeNotFound, errors.CodeNotFound, "oidc: no id_token in token response")
 	}
 
-	verifier := provider.Verifier(&oidc.Config{ClientID: authDomain.AuthDomainConfig().OIDC.ClientID})
+	oidcConfig, err := authDomain.Config().OIDCConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	verifier := provider.Verifier(&oidc.Config{ClientID: oidcConfig.ClientID})
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
 		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "oidc: failed to verify token").WithAdditional(err.Error())

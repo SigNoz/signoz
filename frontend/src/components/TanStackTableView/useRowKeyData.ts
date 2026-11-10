@@ -1,51 +1,51 @@
 import { useCallback, useMemo } from 'react';
 
-export interface RowKeyDataItem {
+export interface RowKeyDataItem<TItemKey = string> {
 	/** Final unique key for the row (with dedup suffix if needed) */
 	finalKey: string;
 	/** Item key for tracking (may differ from finalKey) */
-	itemKey: string;
+	itemKey: TItemKey;
 	/** Group metadata when grouped */
 	groupMeta: Record<string, string> | undefined;
 }
 
-export interface UseRowKeyDataOptions<TData> {
+export interface UseRowKeyDataOptions<TData, TItemKey = string> {
 	data: TData[];
 	isLoading: boolean;
 	getRowKey?: (item: TData) => string;
-	getItemKey?: (item: TData) => string;
+	getItemKey?: (item: TData) => TItemKey;
 	groupBy?: Array<{ key: string }>;
 	getGroupKey?: (item: TData) => Record<string, string>;
 }
 
-export interface UseRowKeyDataResult {
+export interface UseRowKeyDataResult<TItemKey = string> {
 	/** Array of key data for each row, undefined if getRowKey not provided or loading */
-	rowKeyData: RowKeyDataItem[] | undefined;
-	getRowKeyData: (index: number) => RowKeyDataItem | undefined;
+	rowKeyData: RowKeyDataItem<TItemKey>[] | undefined;
+	getRowKeyData: (index: number) => RowKeyDataItem<TItemKey> | undefined;
 }
 
 /**
  * Computes unique row keys with duplicate handling and group prefixes.
  */
-export function useRowKeyData<TData>({
+export function useRowKeyData<TData, TItemKey = string>({
 	data,
 	isLoading,
 	getRowKey,
 	getItemKey,
 	groupBy,
 	getGroupKey,
-}: UseRowKeyDataOptions<TData>): UseRowKeyDataResult {
+}: UseRowKeyDataOptions<TData, TItemKey>): UseRowKeyDataResult<TItemKey> {
 	// eslint-disable-next-line sonarjs/cognitive-complexity
-	const rowKeyData = useMemo((): RowKeyDataItem[] | undefined => {
+	const rowKeyData = useMemo((): RowKeyDataItem<TItemKey>[] | undefined => {
 		if (!getRowKey || isLoading) {
 			return undefined;
 		}
 
 		const keyCount = new Map<string, number>();
 
-		return data.map((item, index): RowKeyDataItem => {
+		return data.map((item, index): RowKeyDataItem<TItemKey> => {
 			const itemIdentifier = getRowKey(item);
-			const itemKey = getItemKey?.(item) ?? itemIdentifier;
+			const itemKey = getItemKey?.(item) ?? (itemIdentifier as TItemKey);
 			const groupMeta = groupBy?.length ? getGroupKey?.(item) : undefined;
 
 			// Build rowKey with group prefix when grouped

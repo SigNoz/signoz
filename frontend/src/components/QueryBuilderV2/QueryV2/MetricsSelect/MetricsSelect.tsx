@@ -142,6 +142,7 @@ export const MetricsSelect = memo(function MetricsSelect({
 			{signalSourceChangeEnabled && (
 				<Select
 					className="source-selector"
+					popupClassName="qb-select-popover"
 					placeholder="Source"
 					options={SOURCE_OPTIONS}
 					value={source}

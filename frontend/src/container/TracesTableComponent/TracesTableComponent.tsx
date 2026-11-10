@@ -22,11 +22,11 @@ import {
 import { Pagination } from 'hooks/queryPagination';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { openInNewTab } from 'utils/navigation';
 
@@ -37,6 +37,7 @@ function TracesTableComponent({
 	queryResponse,
 	setRequestData,
 	onColumnWidthsChange,
+	hidePagination,
 }: TracesTableComponentProps): JSX.Element {
 	const [pagination, setPagination] = useState<Pagination>({
 		offset: 0,
@@ -90,7 +91,7 @@ function TracesTableComponent({
 				if (event.metaKey || event.ctrlKey) {
 					openInNewTab(getTraceLink(record));
 				} else {
-					history.push(getTraceLink(record));
+					navigate(getTraceLink(record));
 				}
 			},
 		}),
@@ -139,34 +140,36 @@ function TracesTableComponent({
 					/>
 				</OverlayScrollbar>
 			</div>
-			<div className="controller">
-				<Controls
-					totalCount={totalCount}
-					perPageOptions={PER_PAGE_OPTIONS}
-					isLoading={queryResponse.isFetching}
-					offset={pagination.offset}
-					countPerPage={pagination.limit}
-					handleNavigatePrevious={(): void => {
-						handlePaginationChange({
-							...pagination,
-							offset: pagination.offset - pagination.limit,
-						});
-					}}
-					handleNavigateNext={(): void => {
-						handlePaginationChange({
-							...pagination,
-							offset: pagination.offset + pagination.limit,
-						});
-					}}
-					handleCountItemsPerPageChange={(value): void => {
-						handlePaginationChange({
-							...pagination,
-							limit: value,
-							offset: 0,
-						});
-					}}
-				/>
-			</div>
+			{!hidePagination && (
+				<div className="controller">
+					<Controls
+						totalCount={totalCount}
+						perPageOptions={PER_PAGE_OPTIONS}
+						isLoading={queryResponse.isFetching}
+						offset={pagination.offset}
+						countPerPage={pagination.limit}
+						handleNavigatePrevious={(): void => {
+							handlePaginationChange({
+								...pagination,
+								offset: pagination.offset - pagination.limit,
+							});
+						}}
+						handleNavigateNext={(): void => {
+							handlePaginationChange({
+								...pagination,
+								offset: pagination.offset + pagination.limit,
+							});
+						}}
+						handleCountItemsPerPageChange={(value): void => {
+							handlePaginationChange({
+								...pagination,
+								limit: value,
+								offset: 0,
+							});
+						}}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }
@@ -178,6 +181,7 @@ export type TracesTableComponentProps = {
 	>;
 	widget: Widgets;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
+	hidePagination?: boolean;
 	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 };
 

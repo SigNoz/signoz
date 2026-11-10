@@ -1,0 +1,52 @@
+.section {
+	border-top: 1px solid var(--l1-border);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 0 20px 0 0;
+
+	&:hover {
+		background: var(--l2-background);
+	}
+}
+
+.toggle {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	padding: 18px 0 18px 20px;
+	border: none;
+	background: transparent;
+	font: inherit;
+	cursor: pointer;
+}
+
+.title {
+	font-size: 13px;
+	font-weight: 400;
+	white-space: nowrap;
+	color: var(--l1-foreground);
+}
+
+.chevron {
+	flex: none;
+	color: var(--l3-foreground);
+	cursor: pointer;
+	transition: transform 0.15s ease;
+
+	&.open {
+		transform: rotate(180deg);
+	}
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: 26px;
+	padding: 4px 20px 26px;
+}

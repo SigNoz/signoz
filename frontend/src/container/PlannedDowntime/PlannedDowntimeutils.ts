@@ -1,18 +1,19 @@
 import { UseMutateAsyncFunction } from 'react-query';
 import type { NotificationInstance } from 'antd/es/notification/interface';
-import type { DefaultOptionType } from 'antd/es/select';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type {
 	DeleteDowntimeScheduleByIDPathParameters,
 	RenderErrorResponseDTO,
 	AlertmanagertypesPlannedMaintenanceDTO,
-	AlertmanagertypesRecurrenceDTO,
+	AlertmanagertypesScheduleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs, { Dayjs } from 'dayjs';
 import { isEmpty } from 'lodash-es';
+
+import type { DowntimeAlertOption } from './types';
 import APIError from 'types/api/error';
 
 type DateTimeString = string | null | undefined;
@@ -56,8 +57,8 @@ export const formatDateTime = (
 
 export const getAlertOptionsFromIds = (
 	alertIds: string[],
-	alertOptions: DefaultOptionType[],
-): DefaultOptionType[] =>
+	alertOptions: DowntimeAlertOption[],
+): DowntimeAlertOption[] =>
 	alertOptions.filter(
 		(alert) =>
 			alert !== undefined &&
@@ -66,14 +67,17 @@ export const getAlertOptionsFromIds = (
 	);
 
 export const recurrenceInfo = (
-	recurrence?: AlertmanagertypesRecurrenceDTO | null,
-	timezone?: string,
+	schedule?: AlertmanagertypesScheduleDTO | null,
 ): string => {
+	if (!schedule) {
+		return 'No';
+	}
+	const { startTime, endTime, timezone, recurrence } = schedule;
 	if (!recurrence) {
 		return 'No';
 	}
 
-	const { startTime, duration, repeatOn, repeatType, endTime } = recurrence;
+	const { duration, repeatOn, repeatType } = recurrence;
 
 	const formattedStartTime = startTime
 		? formatDateTime(startTime, timezone)
@@ -95,7 +99,7 @@ export const defaultInitialValues: Partial<AlertmanagertypesPlannedMaintenanceDT
 			timezone: '',
 			endTime: undefined,
 			recurrence: undefined,
-			startTime: undefined,
+			startTime: '',
 		},
 		alertIds: [],
 		createdAt: undefined,
@@ -218,3 +222,48 @@ export const recurrenceOptionWithSubmenu: Option[] = [
 export const isScheduleRecurring = (
 	schedule?: AlertmanagertypesPlannedMaintenanceDTO['schedule'] | null,
 ): boolean => (schedule ? !isEmpty(schedule?.recurrence) : false);
+
+const REPEAT_TYPE_LABEL: Record<string, string> = {
+	daily: 'Daily',
+	weekly: 'Weekly',
+	monthly: 'Monthly',
+};
+
+export const formatRepeats = (
+	schedule: AlertmanagertypesScheduleDTO,
+): string => {
+	const recurrence = schedule.recurrence;
+	if (!recurrence) {
+		return 'Does not repeat';
+	}
+
+	const label =
+		REPEAT_TYPE_LABEL[recurrence.repeatType] ?? recurrence.repeatType;
+	const days = recurrence.repeatOn?.length
+		? ` on ${recurrence.repeatOn
+				.map((day) => day.charAt(0).toUpperCase() + day.slice(1, 3))
+				.join(', ')}`
+		: '';
+	const duration = recurrence.duration ? ` · ${recurrence.duration}` : '';
+	return `${label}${days}${duration}`;
+};
+
+export const formatWindow = (
+	schedule: AlertmanagertypesScheduleDTO,
+): string => {
+	if (!schedule.startTime) {
+		return '-';
+	}
+	const start = formatDateTime(schedule.startTime, schedule.timezone);
+	const timezone = schedule.timezone ? ` (${schedule.timezone})` : '';
+	if (!schedule.endTime) {
+		return `From ${start}${timezone}`;
+	}
+	return `${start} ⎯ ${formatDateTime(schedule.endTime, schedule.timezone)}${timezone}`;
+};
+
+export const formatScheduleDuration = (
+	schedule: AlertmanagertypesScheduleDTO,
+): string =>
+	schedule.recurrence?.duration ||
+	getDuration(schedule.startTime, schedule.endTime);

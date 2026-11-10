@@ -9,6 +9,7 @@ export default function BarChartTooltip(props: BarTooltipProps): JSX.Element {
 		(): TooltipContentItem[] =>
 			buildTooltipContent({
 				data: props.uPlotInstance.data,
+				unstackedData: props.unstackedData,
 				series: props.uPlotInstance.series,
 				dataIndexes: props.dataIndexes,
 				activeSeriesIndex: props.seriesIndex,
@@ -21,6 +22,7 @@ export default function BarChartTooltip(props: BarTooltipProps): JSX.Element {
 			}),
 		[
 			props.uPlotInstance,
+			props.unstackedData,
 			props.seriesIndex,
 			props.dataIndexes,
 			props.yAxisUnit,

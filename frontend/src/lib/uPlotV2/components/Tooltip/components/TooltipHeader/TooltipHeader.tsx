@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
 import cx from 'classnames';
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import dayjs from 'dayjs';
-import { Pin } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import type uPlot from 'uplot';
+import { formatTimestampOmittingTodaysDate } from 'utils/timeUtils';
 
+import type { ExtendedSeries } from '../../../../config/types';
 import { TooltipContentItem } from '../../../types';
 import TooltipItem from '../TooltipItem/TooltipItem';
+import TooltipPinnedBadge from '../TooltipPinnedBadge/TooltipPinnedBadge';
 
 import Styles from './TooltipHeader.module.scss';
 
@@ -18,6 +18,9 @@ interface TooltipHeaderProps {
 	showTooltipHeader: boolean;
 	isPinned: boolean;
 	activeItem: TooltipContentItem | null;
+	headerRowClassName?: string;
+	/** Overrides the default, which drops the date part for points on the current day. */
+	dateFormat?: string;
 }
 
 export default function TooltipHeader({
@@ -26,11 +29,13 @@ export default function TooltipHeader({
 	showTooltipHeader,
 	isPinned,
 	activeItem,
+	headerRowClassName,
+	dateFormat,
 }: TooltipHeaderProps): JSX.Element {
 	const { timezone: userTimezone } = useTimezone();
 	const resolvedTimezone = timezone?.value ?? userTimezone.value;
 
-	const headerTitle = useMemo(() => {
+	const header = useMemo(() => {
 		if (!showTooltipHeader) {
 			return null;
 		}
@@ -42,14 +47,24 @@ export default function TooltipHeader({
 		if (timestamp == null) {
 			return null;
 		}
-		return dayjs(timestamp * 1000)
-			.tz(resolvedTimezone)
-			.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
+		return {
+			title: formatTimestampOmittingTodaysDate(
+				timestamp * 1000,
+				resolvedTimezone,
+				dateFormat,
+			),
+			isPartial: (uPlotInstance.series ?? []).some(
+				(series: ExtendedSeries) =>
+					series.show && series.partialTimestamps?.has(timestamp),
+			),
+		};
 	}, [
 		resolvedTimezone,
 		uPlotInstance.data,
+		uPlotInstance.series,
 		uPlotInstance.cursor.idx,
 		showTooltipHeader,
+		dateFormat,
 	]);
 
 	return (
@@ -57,16 +72,21 @@ export default function TooltipHeader({
 			className={Styles.headerContainer}
 			data-testid="uplot-tooltip-header-container"
 		>
-			{showTooltipHeader && headerTitle && (
-				<div className={Styles.headerRow}>
-					<span>{headerTitle}</span>
-					{isPinned && (
-						<div className={cx(Styles.status)} data-testid="uplot-tooltip-status">
-							<>
-								<Pin size={12} />
-								<span>Pinned</span>
-							</>
-						</div>
+			{showTooltipHeader && header && (
+				<div className={cx(Styles.headerRow, headerRowClassName)}>
+					<span>{header.title}</span>
+					{(header.isPartial || isPinned) && (
+						<span className={Styles.headerEnd}>
+							{header.isPartial && (
+								<span
+									className={Styles.partialLabel}
+									data-testid="uplot-tooltip-header-partial"
+								>
+									(partial)
+								</span>
+							)}
+							{isPinned && <TooltipPinnedBadge />}
+						</span>
 					)}
 				</div>
 			)}

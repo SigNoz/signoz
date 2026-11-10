@@ -79,7 +79,7 @@
 		margin-bottom: 12px;
 	}
 
-	input,
+	input:not(.ant-select-selection-search-input),
 	textarea {
 		height: 32px;
 		background: var(--l2-background) !important;
@@ -133,16 +133,6 @@
 			border-color: var(--primary) !important;
 			box-shadow: none !important;
 			outline: none;
-		}
-	}
-
-	button[role='checkbox'] {
-		border: 1px solid var(--l2-foreground) !important;
-		border-radius: 2px;
-
-		&[data-state='checked'] {
-			background-color: var(--primary) !important;
-			border-color: var(--primary) !important;
 		}
 	}
 

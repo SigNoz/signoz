@@ -1,5 +1,4 @@
 .logs-explorer-views-container {
-	margin-bottom: 24px;
 	flex: 1;
 	min-height: 0;
 	display: flex;
@@ -155,40 +154,6 @@
 				}
 			}
 
-			.query-stats {
-				display: flex;
-				align-items: center;
-				gap: 12px;
-
-				align-self: flex-end;
-
-				.rows {
-					color: var(--l2-foreground);
-					font-family: 'Geist Mono';
-					font-size: 12px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 18px; /* 150% */
-					letter-spacing: 0.36px;
-				}
-
-				.divider {
-					width: 1px;
-					height: 14px;
-					background: var(--l3-background);
-				}
-
-				.time {
-					color: var(--l2-foreground);
-					font-family: 'Geist Mono';
-					font-size: 12px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 18px; /* 150% */
-					letter-spacing: 0.36px;
-				}
-			}
-
 			.ant-btn {
 				border: none;
 			}
@@ -216,6 +181,15 @@
 				flex: 1;
 				min-height: 0;
 				overflow-y: visible;
+
+				.table-view-container-header {
+					display: flex;
+					justify-content: flex-end;
+					align-items: center;
+					gap: 8px;
+					padding: 12px;
+					flex-shrink: 0;
+				}
 			}
 
 			.time-series-view-container {
@@ -224,14 +198,6 @@
 				flex-direction: column;
 				min-height: 0;
 				overflow-y: visible;
-
-				.time-series-view-container-header {
-					display: flex;
-					justify-content: flex-start;
-					align-items: center;
-					padding: 12px;
-					flex-shrink: 0;
-				}
 
 				.time-series-view {
 					flex-shrink: 0;
@@ -251,13 +217,6 @@
 		padding: 0px 8px;
 
 		.logs-frequency-chart {
-			.ant-card-body {
-				height: 140px;
-				min-height: 140px;
-				padding: 0 16px 22px 16px;
-				font-family: 'Geist Mono';
-			}
-
 			margin-bottom: 0px;
 		}
 	}

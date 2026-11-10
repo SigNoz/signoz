@@ -1,6 +1,7 @@
 package querybuildertypesv5
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"strconv"
@@ -12,29 +13,28 @@ import (
 
 	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 )
 
 type QueryBuilderFormula struct {
-	// name of the formula
-	Name string `json:"name"`
-	// expression to apply to the query
-	Expression string `json:"expression"`
+	Name       string `json:"name" description:"The unique name of the formula, such as F1, used by selectedQueryName and by panels. Referencing a formula from another formula is not reliable."`
+	Expression string `json:"expression" description:"An arithmetic expression over builder query names, for example A / B * 100. Reference queries, not other formulas."`
 
-	Disabled bool `json:"disabled,omitempty"`
+	Disabled bool `json:"disabled" description:"When true, the result is excluded from the response; the formula may still be evaluated. Defaults to false."`
 
-	// order by keys and directions
-	Order []OrderBy `json:"order,omitempty"`
+	Order []OrderBy `json:"order,omitzero" description:"The sort order of the formula result."`
 
-	// limit the maximum number of rows to return
-	Limit int `json:"limit,omitempty"`
+	Limit int `json:"limit,omitempty" description:"The maximum number of series or rows to return. Unlimited when 0."`
 
-	// having clause to apply to the formula result
-	Having *Having `json:"having,omitempty"`
+	Offset int `json:"offset,omitempty" description:"The number of ordered series or rows to skip before the page starts. Requires limit."`
 
-	// functions to apply to the formula result
-	Functions []Function `json:"functions,omitempty"`
+	Having *Having `json:"having,omitempty" description:"A filter on the formula values, referencing the formula by its name or as __result, for example F1 > 0. A time series keeps only the points that match and drops a series with none left; a scalar result keeps only the rows that match."`
 
-	Legend string `json:"legend,omitempty"`
+	Functions []Function `json:"functions,omitzero" description:"Post-processing functions applied in order to each result series."`
+
+	BucketOptions *BucketOptions `json:"bucketOptions,omitempty" description:"The value axis to count the formula result into, as a kind-discriminated linear or log bucket spec. Read only by heatmap requests, and only from the query they draw."`
+
+	Legend string `json:"legend" description:"The display name template for each series; {{field}} placeholders are replaced by label values."`
 }
 
 // Copy creates a deep copy of the QueryBuilderFormula.
@@ -59,6 +59,11 @@ func (f QueryBuilderFormula) Copy() QueryBuilderFormula {
 		c.Having = f.Having.Copy()
 	}
 
+	if f.BucketOptions != nil {
+		bucketOptionsCopy := *f.BucketOptions
+		c.BucketOptions = &bucketOptionsCopy
+	}
+
 	return c
 }
 
@@ -66,7 +71,7 @@ func (f QueryBuilderFormula) Copy() QueryBuilderFormula {
 func (f *QueryBuilderFormula) UnmarshalJSON(data []byte) error {
 	type Alias QueryBuilderFormula
 	var temp Alias
-	if err := UnmarshalJSONWithContext(data, &temp, "formula spec"); err != nil {
+	if err := binding.JSON.BindBody(bytes.NewReader(data), &temp, binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("formula spec")); err != nil {
 		return err
 	}
 	*f = QueryBuilderFormula(temp)
@@ -91,6 +96,18 @@ func (f QueryBuilderFormula) Validate() error {
 		)
 	}
 
+	if f.Offset < 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"offset must be non-negative, got %d",
+			f.Offset,
+		)
+	}
+
+	if f.Offset > 0 && f.Limit == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset requires a limit")
+	}
+
 	// Validate expression is parseable
 	if _, err := govaluate.NewEvaluableExpressionWithFunctions(f.Expression, EvalFuncs()); err != nil {
 		return errors.NewInvalidInputf(
@@ -99,6 +116,10 @@ func (f QueryBuilderFormula) Validate() error {
 			f.Name,
 			err.Error(),
 		)
+	}
+
+	if f.Limit < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be non-negative, got %d", f.Limit)
 	}
 
 	// Validate functions if present
@@ -120,6 +141,22 @@ func (f QueryBuilderFormula) Validate() error {
 	return nil
 }
 
+func (f QueryBuilderFormula) ExtractReferencedQueryNames() ([]string, error) {
+	// parsed the way the evaluator parses it, so the names match what it resolves
+	expression, err := govaluate.NewEvaluableExpressionWithFunctions(f.Expression, EvalFuncs())
+	if err != nil {
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to parse expression for formula query %q", f.Name)
+	}
+
+	var names []string
+	for _, variable := range expression.Vars() {
+		if !slices.Contains(names, variable) {
+			names = append(names, variable)
+		}
+	}
+	return names, nil
+}
+
 // small container to store the query name and index or alias reference
 // for a variable in the formula expression
 // read below for more details on aggregation references.
@@ -135,6 +172,9 @@ type seriesLookup struct {
 	data map[string]map[int64]float64
 	// seriesKey -> original series for metadata preservation
 	seriesMetadata map[string]*TimeSeries
+	// maps a variable to its series keys, letting evaluation iterate a single
+	// variable's series directly.
+	variableToSeriesKeys map[string][]string
 }
 
 // FormulaEvaluator handles formula evaluation b/w time series from different aggregations
@@ -291,34 +331,35 @@ func (fe *FormulaEvaluator) EvaluateFormula(timeSeriesData map[string]*TimeSerie
 	// Find all unique label combinations across referenced series
 	uniqueLabelSets := fe.findUniqueLabelSets(lookup)
 
-	// Process each unique label set
-	var resultSeries []*TimeSeries
-	var wg sync.WaitGroup
+	// Work per label-set is cheap  enough that spawning a goroutine per item
+	// costs more in scheduler signaling  than it saves in parallelism.
+	const numWorkers = 4
+	workCh := make(chan []*Label, len(uniqueLabelSets))
 	resultChan := make(chan *TimeSeries, len(uniqueLabelSets))
-	maxSeries := make(chan struct{}, 4)
 
-	// For each candidate label set, evaluate the formula expression
-	// and store the result in the resultChan
-	for _, labelSet := range uniqueLabelSets {
-		wg.Add(1)
-		go func(labels []*Label) {
+	var wg sync.WaitGroup
+	wg.Add(numWorkers)
+	for range numWorkers {
+		go func() {
 			defer wg.Done()
-			maxSeries <- struct{}{}
-			defer func() { <-maxSeries }()
-
-			// main workhorse of the formula evaluation
-			series := fe.evaluateForLabelSet(labels, lookup)
-			if series != nil && len(series.Values) > 0 {
-				resultChan <- series
+			for labels := range workCh {
+				series := fe.evaluateForLabelSet(labels, lookup)
+				if series != nil && len(series.Values) > 0 {
+					resultChan <- series
+				}
 			}
-		}(labelSet)
+		}()
 	}
 
-	go func() {
-		wg.Wait()
-		close(resultChan)
-	}()
+	for _, labelSet := range uniqueLabelSets {
+		workCh <- labelSet
+	}
+	close(workCh)
 
+	wg.Wait()
+	close(resultChan)
+
+	resultSeries := make([]*TimeSeries, 0, len(uniqueLabelSets))
 	for series := range resultChan {
 		resultSeries = append(resultSeries, series)
 	}
@@ -340,6 +381,8 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 		// when the series is returned to the caller
 		// It's also used for finding matching series for a variable
 		seriesMetadata: make(map[string]*TimeSeries),
+
+		variableToSeriesKeys: make(map[string][]string),
 	}
 
 	for variable, aggRef := range fe.aggRefs {
@@ -391,6 +434,7 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 			if _, exists := lookup.data[seriesKey]; !exists {
 				lookup.data[seriesKey] = make(map[int64]float64, len(series.Values))
 				lookup.seriesMetadata[seriesKey] = series
+				lookup.variableToSeriesKeys[variable] = append(lookup.variableToSeriesKeys[variable], seriesKey)
 			}
 
 			// Store all timestamp-value pairs
@@ -473,35 +517,37 @@ func (fe *FormulaEvaluator) findUniqueLabelSets(lookup *seriesLookup) [][]*Label
 
 	// Find unique label sets using proper label comparison
 	var uniqueSets [][]*Label
+	var uniqueMaps []map[string]any
 	for _, labelSet := range allLabelSets {
 		isUnique := true
-		for _, uniqueSet := range uniqueSets {
-			if fe.isSubset(uniqueSet, labelSet) {
+		for _, uniqueMap := range uniqueMaps {
+			if isSubset(uniqueMap, labelSet) {
 				isUnique = false
 				break
 			}
 		}
 		if isUnique {
 			uniqueSets = append(uniqueSets, labelSet)
+			uniqueMaps = append(uniqueMaps, labelsToMap(labelSet))
 		}
 	}
 
 	return uniqueSets
 }
 
-func (fe *FormulaEvaluator) isSubset(labels1, labels2 []*Label) bool {
-	labelMap1 := make(map[string]any)
-	labelMap2 := make(map[string]any)
-
-	for _, label := range labels1 {
-		labelMap1[label.Key.Name] = label.Value
+func labelsToMap(labels []*Label) map[string]any {
+	m := make(map[string]any, len(labels))
+	for _, label := range labels {
+		m[label.Key.Name] = label.Value
 	}
-	for _, label := range labels2 {
-		labelMap2[label.Key.Name] = label.Value
-	}
+	return m
+}
 
-	for k, v := range labelMap2 {
-		if val, ok := labelMap1[k]; !ok || val != v {
+// isSubset reports whether every label in subset is present with the same value in
+// supersetMap (i.e. subset ⊆ superset).
+func isSubset(supersetMap map[string]any, subset []*Label) bool {
+	for _, label := range subset {
+		if val, ok := supersetMap[label.Key.Name]; !ok || val != label.Value {
 			return false
 		}
 	}
@@ -517,10 +563,14 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 	// for the variable
 	var allTimestamps = make(map[int64]struct{})
 
+	// targetLabels is fixed for this call, so build its lookup once and reuse it
+	// across every series comparison below.
+	targetMap := labelsToMap(targetLabels)
+
 	for variable := range fe.aggRefs {
-		// Find series with matching labels for this variable
-		for seriesKey, series := range lookup.seriesMetadata {
-			if strings.HasPrefix(seriesKey, variable+"|") && fe.isSubset(targetLabels, series.Labels) {
+		// only this variable's series.
+		for _, seriesKey := range lookup.variableToSeriesKeys[variable] {
+			if isSubset(targetMap, lookup.seriesMetadata[seriesKey].Labels) {
 				if timestampData, exists := lookup.data[seriesKey]; exists {
 					variableData[variable] = timestampData
 					// Collect all timestamps
@@ -546,8 +596,11 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 	}
 	slices.Sort(timestamps)
 
-	// Evaluate formula at each timestamp
-	var resultValues []*TimeSeriesValue
+	// backing slab-allocates all values in one block; resultValues holds interior
+	// pointers into it. Fixed length and never appended to, so it never moves.
+	backing := make([]TimeSeriesValue, len(timestamps))
+	resultValues := make([]*TimeSeriesValue, 0, len(timestamps))
+	n := 0
 	values := fe.valuesPool.Get().(map[string]any)
 	defer fe.valuesPool.Put(values)
 
@@ -592,10 +645,12 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 			continue
 		}
 
-		resultValues = append(resultValues, &TimeSeriesValue{
+		backing[n] = TimeSeriesValue{
 			Timestamp: timestamp,
 			Value:     value,
-		})
+		}
+		resultValues = append(resultValues, &backing[n])
+		n++
 	}
 
 	if len(resultValues) == 0 {

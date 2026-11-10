@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
+import { matchRoute } from 'lib/router/matchRoute';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
@@ -9,10 +11,9 @@ import {
 	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
-import cx from 'classnames';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import type { MessageActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import {
 	ApplyFilterSignalDTO,
@@ -25,6 +26,7 @@ import {
 } from 'api/ai-assistant/chat';
 import ROUTES from 'constants/routes';
 import { QueryParams } from 'constants/query';
+import { buildExplorerNavigationUrl } from 'utils/buildExplorerNavigationUrl';
 import { openInNewTab } from 'utils/navigation';
 import {
 	ArchiveRestore,
@@ -33,7 +35,6 @@ import {
 	ExternalLink,
 	Eye,
 	Filter,
-	LoaderCircle,
 	MessageCircle,
 	RotateCcw,
 	Sparkles,
@@ -47,6 +48,20 @@ import { AIAssistantEvents, SuggestedPromptCategory } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 
+import { getOpenResourceTarget } from './utils/getOpenResourceTarget';
+import {
+	getPanelTypeForRequestType,
+	requestTypeFromActionQuery,
+} from './utils/getPanelTypeForRequestType';
+import { isOnResourcePage } from './utils/isOnResourcePage';
+import { openSavedViewByKey } from './utils/openSavedView';
+import {
+	isSavedViewOpenAction,
+	resolveResourceId,
+	resolveSavedViewSourceHint,
+} from './utils/resolveOpenResource';
+import { ResourceType } from './utils/resourceRoute';
+
 import styles from './ActionsSection.module.scss';
 
 interface ActionsSectionProps {
@@ -54,20 +69,6 @@ interface ActionsSectionProps {
 	/** ID of the assistant message these actions belong to — used in analytics. */
 	messageId: string;
 }
-
-/**
- * Resource-type strings the backend uses for `open_resource` and rollback
- * actions. Centralized here so the route/module lookups below stay in sync.
- */
-const ResourceType = {
-	dashboard: 'dashboard',
-	alert: 'alert',
-	service: 'service',
-	saved_view: 'saved_view',
-	logs_explorer: 'logs_explorer',
-	traces_explorer: 'traces_explorer',
-	metrics_explorer: 'metrics_explorer',
-} as const;
 
 /** Maps an open_resource action's resourceType to its product module name. */
 function targetModuleForResource(resourceType: string): string | null {
@@ -78,6 +79,8 @@ function targetModuleForResource(resourceType: string): string | null {
 			return 'alerts';
 		case ResourceType.service:
 			return 'apm';
+		case ResourceType.channel:
+			return 'channels';
 		case ResourceType.saved_view:
 			return 'savedViews';
 		case ResourceType.logs_explorer:
@@ -137,39 +140,6 @@ function ActionIcon({
 			return <Filter size={size} />;
 		default:
 			return <ExternalLink size={size} />;
-	}
-}
-
-/**
- * Resolves an `open_resource` action to an in-app route.
- * Resource taxonomy mirrors `MessageContextDTOType`: dashboard, alert,
- * saved_view, service, and the *_explorer signals.
- */
-function resourceRoute(
-	resourceType: string,
-	resourceId: string,
-): string | null {
-	switch (resourceType) {
-		case ResourceType.dashboard:
-			return ROUTES.DASHBOARD.replace(':dashboardId', resourceId);
-		case ResourceType.alert: {
-			const params = new URLSearchParams({ [QueryParams.ruleId]: resourceId });
-			return `${ROUTES.EDIT_ALERTS}?${params.toString()}`;
-		}
-		case ResourceType.service:
-			return ROUTES.SERVICE_METRICS.replace(':servicename', resourceId);
-		case ResourceType.saved_view:
-			// No detail route — saved views land on the list page.
-			// Caller may provide signal-aware metadata in future; default to logs.
-			return ROUTES.LOGS_SAVE_VIEWS;
-		case ResourceType.logs_explorer:
-			return ROUTES.LOGS_EXPLORER;
-		case ResourceType.traces_explorer:
-			return ROUTES.TRACES_EXPLORER;
-		case ResourceType.metrics_explorer:
-			return ROUTES.METRICS_EXPLORER_EXPLORER;
-		default:
-			return null;
 	}
 }
 
@@ -251,20 +221,11 @@ function signalMatchesPathname(
 ): boolean {
 	switch (signal) {
 		case ApplyFilterSignalDTO.logs:
-			return Boolean(
-				matchPath(pathname, { path: ROUTES.LOGS_EXPLORER, exact: false }),
-			);
+			return Boolean(matchRoute(pathname, ROUTES.LOGS_EXPLORER));
 		case ApplyFilterSignalDTO.traces:
-			return Boolean(
-				matchPath(pathname, { path: ROUTES.TRACES_EXPLORER, exact: false }),
-			);
+			return Boolean(matchRoute(pathname, ROUTES.TRACES_EXPLORER));
 		case ApplyFilterSignalDTO.metrics:
-			return Boolean(
-				matchPath(pathname, {
-					path: ROUTES.METRICS_EXPLORER_EXPLORER,
-					exact: false,
-				}),
-			);
+			return Boolean(matchRoute(pathname, ROUTES.METRICS_EXPLORER_EXPLORER));
 		default:
 			return false;
 	}
@@ -313,7 +274,6 @@ function explorerRouteForSignal(signal: ApplyFilterSignalDTO): string | null {
 }
 
 interface ApplyFilterDeps {
-	history: ReturnType<typeof useHistory>;
 	pathname: string;
 	redirectWithQueryBuilderData: ReturnType<
 		typeof useQueryBuilder
@@ -355,8 +315,8 @@ function withDerivedFilterExpressions(query: Query): Query {
  *     page-action recipe — calling redirect alone is not sufficient because
  *     the URL→state effect runs after the next render and the editor binds
  *     to `filter.expression`, not `filters.items`.
- *   - Off-page: use `history.push` so the landing explorer initializes from
- *     the new URL on mount.
+ *   - Off-page: `navigate()` so the landing explorer initializes from the
+ *     new URL on mount.
  */
 function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 	// eslint-disable-next-line no-console
@@ -379,6 +339,11 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 		);
 		return;
 	}
+	// Read before toUrlCompositeQuery, which drops the requestType envelope.
+	const panelType = getPanelTypeForRequestType(
+		requestTypeFromActionQuery(action.query),
+		action.signal,
+	);
 	const normalized = withDerivedFilterExpressions(urlQuery as unknown as Query);
 	// eslint-disable-next-line no-console
 	console.log('[apply_filter] normalized', normalized);
@@ -388,7 +353,9 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 		normalized.builder.queryData.forEach((q, i) => {
 			deps.handleSetQueryData(i, q);
 		});
-		deps.redirectWithQueryBuilderData(normalized);
+		deps.redirectWithQueryBuilderData(normalized, {
+			[QueryParams.panelTypes]: panelType,
+		});
 		return;
 	}
 	const base = explorerRouteForSignal(action.signal);
@@ -398,9 +365,11 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 		return;
 	}
 	// eslint-disable-next-line no-console
-	console.log('[apply_filter] off-page → history.push', base);
-	const encoded = encodeURIComponent(JSON.stringify(normalized));
-	deps.history.push(`${base}?${QueryParams.compositeQuery}=${encoded}`);
+	console.log('[apply_filter] off-page → navigate', base);
+	const url = buildExplorerNavigationUrl(base, normalized, {
+		[QueryParams.panelTypes]: panelType,
+	});
+	navigate(url);
 }
 
 /** Picks the right rollback API call for a given action kind. */
@@ -429,8 +398,7 @@ export default function ActionsSection({
 	actions,
 	messageId,
 }: ActionsSectionProps): JSX.Element | null {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname, search } = useAppLocation();
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 	const { threadId, page, mode } = useAIAssistantAnalyticsContext();
 	const { redirectWithQueryBuilderData, handleSetQueryData } = useQueryBuilder();
@@ -462,19 +430,12 @@ export default function ActionsSection({
 			}
 			autoAppliedFilterKeys.add(key);
 			applyFilter(action, {
-				history,
 				pathname,
 				redirectWithQueryBuilderData,
 				handleSetQueryData,
 			});
 		});
-	}, [
-		actions,
-		pathname,
-		history,
-		redirectWithQueryBuilderData,
-		handleSetQueryData,
-	]);
+	}, [actions, pathname, redirectWithQueryBuilderData, handleSetQueryData]);
 
 	if (actions.length === 0) {
 		return null;
@@ -482,6 +443,31 @@ export default function ActionsSection({
 
 	const setResult = (key: string, result: ChipResult): void => {
 		setResults((prev) => ({ ...prev, [key]: result }));
+	};
+
+	const runOpenSavedView = async (
+		key: string,
+		action: MessageActionDTO,
+	): Promise<void> => {
+		const resourceId = resolveResourceId(action);
+		if (!resourceId) {
+			return;
+		}
+		setResult(key, { state: 'loading' });
+		try {
+			await openSavedViewByKey(resourceId, resolveSavedViewSourceHint(action));
+			void logEvent(AIAssistantEvents.ResourceOpened, {
+				threadId,
+				messageId,
+				targetModule: targetModuleForResource(ResourceType.saved_view),
+				resourceId,
+			});
+			setResult(key, { state: 'success' });
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : 'Failed to open saved view';
+			setResult(key, { state: 'error', error: message });
+		}
 	};
 
 	const runRollback = async (
@@ -500,6 +486,25 @@ export default function ActionsSection({
 			const message = err instanceof Error ? err.message : 'Failed';
 			setResult(key, { state: 'error', error: message });
 		}
+	};
+
+	const handleOpenResource = (key: string, action: MessageActionDTO): void => {
+		if (isSavedViewOpenAction(action)) {
+			void runOpenSavedView(key, action);
+			return;
+		}
+
+		const target = getOpenResourceTarget(action);
+		if (!target) {
+			return;
+		}
+		void logEvent(AIAssistantEvents.ResourceOpened, {
+			threadId,
+			messageId,
+			targetModule: targetModuleForResource(target.resourceType),
+			resourceId: target.resourceId,
+		});
+		navigate(target.path);
 	};
 
 	const handleClick = (key: string, action: MessageActionDTO): void => {
@@ -542,21 +547,9 @@ export default function ActionsSection({
 				}
 				break;
 			}
-			case MessageActionKindDTO.open_resource: {
-				if (action.resourceType && action.resourceId) {
-					const path = resourceRoute(action.resourceType, action.resourceId);
-					if (path) {
-						void logEvent(AIAssistantEvents.ResourceOpened, {
-							threadId,
-							messageId,
-							targetModule: targetModuleForResource(action.resourceType),
-							resourceId: action.resourceId,
-						});
-						history.push(path);
-					}
-				}
+			case MessageActionKindDTO.open_resource:
+				handleOpenResource(key, action);
 				break;
-			}
 			case MessageActionKindDTO.undo:
 			case MessageActionKindDTO.revert:
 			case MessageActionKindDTO.restore: {
@@ -572,7 +565,6 @@ export default function ActionsSection({
 					});
 				}
 				applyFilter(action, {
-					history,
 					pathname,
 					redirectWithQueryBuilderData,
 					handleSetQueryData,
@@ -608,14 +600,15 @@ export default function ActionsSection({
 					// "applied"). Without a documented terminal vocabulary we don't auto-
 					// disable on it — only the local in-flight click result does. The state
 					// is still surfaced visually via the suffix pill below.
-					const isDisabled = isLoading || isSuccess;
 
 					const tooltip = isError ? result.error : (action.tooltip ?? undefined);
+					const openTarget = getOpenResourceTarget(action);
+					const isViewingResource =
+						openTarget !== null &&
+						isOnResourcePage(openTarget.path, { pathname, search });
 
 					let icon: JSX.Element;
-					if (isLoading) {
-						icon = <LoaderCircle size={12} className={styles.spin} />;
-					} else if (isSuccess) {
+					if (isSuccess) {
 						icon = <Check size={12} />;
 					} else if (isError) {
 						icon = <TriangleAlert size={12} />;
@@ -625,25 +618,29 @@ export default function ActionsSection({
 
 					const chip = (
 						<Button
+							disabledTooltip={
+								isViewingResource
+									? "You're already viewing this page"
+									: 'This action already ran'
+							}
 							variant="outlined"
 							color="secondary"
 							size="sm"
-							className={cx(styles.chip, { [styles.error]: isError })}
 							onClick={(): void => handleClick(key, action)}
-							disabled={isDisabled}
+							disabled={isSuccess || isViewingResource}
+							loading={isLoading}
 							aria-label={action.label}
+							testId={`ai-action-chip-${action.kind}`}
 							prefix={icon}
 						>
 							<span className={styles.chipLabel}>{action.label}</span>
 						</Button>
 					);
 
-					return tooltip ? (
-						<TooltipSimple key={key} title={tooltip}>
+					return (
+						<Tooltip key={key} title={tooltip}>
 							{chip}
-						</TooltipSimple>
-					) : (
-						<span key={key}>{chip}</span>
+						</Tooltip>
 					);
 				})}
 			</div>

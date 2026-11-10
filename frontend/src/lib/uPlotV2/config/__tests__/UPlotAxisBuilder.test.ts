@@ -1,5 +1,4 @@
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
 import type uPlot from 'uplot';
 
@@ -121,6 +120,41 @@ describe('UPlotAxisBuilder', () => {
 		});
 	});
 
+	it('draws the axis line by default, styled like the grid', () => {
+		const config = new UPlotAxisBuilder(
+			createAxisProps({ isDarkMode: true, grid: { width: 0.5 } }),
+		).getConfig();
+
+		expect(config.border).toStrictEqual({
+			show: true,
+			stroke: config.grid?.stroke,
+			width: 0.5,
+		});
+	});
+
+	it('leaves the axis line off when showBorder is false', () => {
+		expect(
+			new UPlotAxisBuilder(createAxisProps({ showBorder: false })).getConfig(),
+		).not.toHaveProperty('border');
+	});
+
+	it('leaves the axis line off when the grid is hidden', () => {
+		expect(
+			new UPlotAxisBuilder(createAxisProps({ grid: { show: false } })).getConfig(),
+		).not.toHaveProperty('border');
+	});
+
+	it('passes explicit splits and a label filter through to uPlot', () => {
+		const splits = jest.fn();
+		const filter = jest.fn();
+		const config = new UPlotAxisBuilder(
+			createAxisProps({ splits, filter }),
+		).getConfig();
+
+		expect(config.splits).toBe(splits);
+		expect(config.filter).toBe(filter);
+	});
+
 	it('uses provided ticks config when present and falls back to defaults otherwise', () => {
 		const customTicks = { width: 1, show: false };
 		const withTicks = new UPlotAxisBuilder(
@@ -137,11 +171,11 @@ describe('UPlotAxisBuilder', () => {
 		});
 	});
 
-	it('uses time-based X-axis values formatter for time-series like panels', () => {
+	it('uses time-based X-axis values formatter when the caller declares a time axis', () => {
 		const builder = new UPlotAxisBuilder(
 			createAxisProps({
 				scaleKey: 'x',
-				panelType: PANEL_TYPES.TIME_SERIES,
+				isTimeAxis: true,
 			}),
 		);
 
@@ -150,11 +184,11 @@ describe('UPlotAxisBuilder', () => {
 		expect(config.values).toBe(uPlotXAxisValuesFormat);
 	});
 
-	it('does not attach X-axis datetime formatter when panel type is not supported', () => {
+	it('does not attach X-axis datetime formatter for a non-time axis', () => {
 		const builder = new UPlotAxisBuilder(
 			createAxisProps({
 				scaleKey: 'x',
-				panelType: PANEL_TYPES.LIST, // not in PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT
+				isTimeAxis: false,
 			}),
 		);
 
@@ -290,22 +324,9 @@ describe('UPlotAxisBuilder', () => {
 		expect(config.space).toBe(50);
 	});
 
-	it('includes PANEL_TYPES.BAR and PANEL_TYPES.TIME_SERIES in X-axis datetime formatter', () => {
-		const barBuilder = new UPlotAxisBuilder(
-			createAxisProps({
-				scaleKey: 'x',
-				panelType: PANEL_TYPES.BAR,
-			}),
-		);
-		expect(barBuilder.getConfig().values).toBe(uPlotXAxisValuesFormat);
-
-		const timeSeriesBuilder = new UPlotAxisBuilder(
-			createAxisProps({
-				scaleKey: 'x',
-				panelType: PANEL_TYPES.TIME_SERIES,
-			}),
-		);
-		expect(timeSeriesBuilder.getConfig().values).toBe(uPlotXAxisValuesFormat);
+	it('omits the X-axis datetime formatter when no time axis is declared', () => {
+		const builder = new UPlotAxisBuilder(createAxisProps({ scaleKey: 'x' }));
+		expect(builder.getConfig().values).toBeUndefined();
 	});
 
 	it('should return the existing size when cycleNum > 1', () => {
@@ -388,5 +409,53 @@ describe('UPlotAxisBuilder', () => {
 
 		expect(config.label).toBe('Merged');
 		expect(config.values).toBeDefined();
+	});
+});
+
+describe('UPlotAxisBuilder value x axis', () => {
+	it('formats a non-time x axis with its unit', () => {
+		(getToolTipValue as jest.Mock).mockReturnValue('1.2K req/s');
+		const config = new UPlotAxisBuilder(
+			createAxisProps({ scaleKey: 'x', isTimeAxis: false, yAxisUnit: 'reqps' }),
+		).getConfig();
+
+		const values = (config.values as uPlot.Axis.DynamicValues)(
+			{} as uPlot,
+			[1200],
+			0,
+			0,
+			0,
+		);
+
+		expect(values).toStrictEqual(['1.2K req/s']);
+		expect(getToolTipValue).toHaveBeenCalledWith('1200', 'reqps', undefined);
+	});
+
+	it('leaves a non-time x axis to uPlot when nothing says how to format it', () => {
+		const config = new UPlotAxisBuilder(
+			createAxisProps({ scaleKey: 'x', isTimeAxis: false }),
+		).getConfig();
+
+		expect(config.values).toBeUndefined();
+	});
+});
+
+describe('UPlotAxisBuilder out-of-range splits', () => {
+	it('leaves a split the scale cannot place unlabelled', () => {
+		(getToolTipValue as jest.Mock).mockImplementation((v: string) => `${v} ms`);
+		const config = new UPlotAxisBuilder(
+			createAxisProps({ scaleKey: 'y', yAxisUnit: 'ms' }),
+		).getConfig();
+		const u = { scales: { y: { min: 0, max: 1000 } } } as unknown as uPlot;
+
+		const values = (config.values as uPlot.Axis.DynamicValues)(
+			u,
+			[-10, 0, 500, 5000],
+			0,
+			0,
+			0,
+		);
+
+		expect(values).toStrictEqual(['', '0 ms', '500 ms', '']);
 	});
 });

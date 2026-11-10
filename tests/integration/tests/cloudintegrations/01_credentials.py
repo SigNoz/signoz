@@ -143,7 +143,7 @@ def test_get_credentials_unsupported_provider(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/cloud_integrations/gcp/credentials"),
+        signoz.self.host_configs["8080"].get("/api/v1/cloud_integrations/unknown/credentials"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )

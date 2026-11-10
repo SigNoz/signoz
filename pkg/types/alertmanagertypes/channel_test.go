@@ -6,9 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewConfigFromChannels(t *testing.T) {
@@ -22,9 +25,9 @@ func TestNewConfigFromChannels(t *testing.T) {
 			name: "OneEmailChannel",
 			channels: Channels{
 				{
-					Name: "email-receiver",
-					Type: "email",
-					Data: `{"name":"email-receiver","email_configs":[{"to":"test@example.com"}]}`,
+					DisplayName: "email-receiver",
+					Type:        "email",
+					Data:        `{"name":"email-receiver","email_configs":[{"to":"test@example.com"}]}`,
 				},
 			},
 			expectedRoutes: []map[string]any{{"receiver": "email-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
@@ -35,12 +38,8 @@ func TestNewConfigFromChannels(t *testing.T) {
 					"email_configs": []any{map[string]any{
 						"send_resolved": false,
 						"to":            "test@example.com",
-						"from":          "alerts@example.com",
-						"hello":         "localhost",
-						"smarthost":     "smtp.example.com:587",
-						"require_tls":   true,
+						"smarthost":     "",
 						"html":          "{{ template \"email.default.html\" . }}",
-						"tls_config":    map[string]any{"insecure_skip_verify": false},
 						"threading":     map[string]any{},
 					}},
 				},
@@ -50,9 +49,9 @@ func TestNewConfigFromChannels(t *testing.T) {
 			name: "OneSlackChannel",
 			channels: Channels{
 				{
-					Name: "slack-receiver",
-					Type: "slack",
-					Data: `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
+					DisplayName: "slack-receiver",
+					Type:        "slack",
+					Data:        `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
 				},
 			},
 			expectedRoutes: []map[string]any{{"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
@@ -63,7 +62,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 					"slack_configs": []any{map[string]any{
 						"send_resolved": true,
 						"api_url":       "https://slack.com/api/test",
-						"app_url":       "https://slack.com/api/chat.postMessage",
 						"channel":       "#alerts",
 						"callback_id":   "{{ template \"slack.default.callbackid\" . }}",
 						"color":         "{{ if eq .Status \"firing\" }}danger{{ else }}good{{ end }}",
@@ -77,12 +75,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 						"title":         "{{ template \"slack.default.title\" . }}",
 						"title_link":    "{{ template \"slack.default.titlelink\" . }}",
 						"username":      "{{ template \"slack.default.username\" . }}",
-						"http_config": map[string]any{
-							"tls_config":       map[string]any{"insecure_skip_verify": false},
-							"follow_redirects": true,
-							"enable_http2":     true,
-							"proxy_url":        nil,
-						},
 					}},
 				},
 			},
@@ -91,9 +83,9 @@ func TestNewConfigFromChannels(t *testing.T) {
 			name: "OnePagerdutyChannel",
 			channels: Channels{
 				{
-					Name: "pagerduty-receiver",
-					Type: "pagerduty",
-					Data: `{"name":"pagerduty-receiver","pagerduty_configs":[{"service_key":"test"}]}`,
+					DisplayName: "pagerduty-receiver",
+					Type:        "pagerduty",
+					Data:        `{"name":"pagerduty-receiver","pagerduty_configs":[{"service_key":"test"}]}`,
 				},
 			},
 			expectedRoutes: []map[string]any{{"receiver": "pagerduty-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
@@ -104,7 +96,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 					"pagerduty_configs": []any{map[string]any{
 						"send_resolved": false,
 						"service_key":   "test",
-						"url":           "https://events.pagerduty.com/v2/enqueue",
 						"client":        "{{ template \"pagerduty.default.client\" . }}",
 						"client_url":    "{{ template \"pagerduty.default.clientURL\" . }}",
 						"description":   "{{ template \"pagerduty.default.description\" .}}",
@@ -116,12 +107,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 							"num_resolved": "{{ .Alerts.Resolved | len }}",
 							"resolved":     "{{ .Alerts.Resolved | toJson }}",
 						},
-						"http_config": map[string]any{
-							"tls_config":       map[string]any{"insecure_skip_verify": false},
-							"follow_redirects": true,
-							"enable_http2":     true,
-							"proxy_url":        nil,
-						},
 					}},
 				},
 			},
@@ -130,14 +115,14 @@ func TestNewConfigFromChannels(t *testing.T) {
 			name: "OnePagerdutyAndOneSlackChannel",
 			channels: Channels{
 				{
-					Name: "pagerduty-receiver",
-					Type: "pagerduty",
-					Data: `{"name":"pagerduty-receiver","pagerduty_configs":[{"service_key":"test"}]}`,
+					DisplayName: "pagerduty-receiver",
+					Type:        "pagerduty",
+					Data:        `{"name":"pagerduty-receiver","pagerduty_configs":[{"service_key":"test"}]}`,
 				},
 				{
-					Name: "slack-receiver",
-					Type: "slack",
-					Data: `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
+					DisplayName: "slack-receiver",
+					Type:        "slack",
+					Data:        `{"name":"slack-receiver","slack_configs":[{"channel":"#alerts","api_url":"https://slack.com/api/test","send_resolved":true}]}`,
 				},
 			},
 			expectedRoutes: []map[string]any{{"receiver": "pagerduty-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}, {"receiver": "slack-receiver", "continue": true, "matchers": []any{"ruleId=~\"-1\""}}},
@@ -148,7 +133,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 					"pagerduty_configs": []any{map[string]any{
 						"send_resolved": false,
 						"service_key":   "test",
-						"url":           "https://events.pagerduty.com/v2/enqueue",
 						"client":        "{{ template \"pagerduty.default.client\" . }}",
 						"client_url":    "{{ template \"pagerduty.default.clientURL\" . }}",
 						"description":   "{{ template \"pagerduty.default.description\" .}}",
@@ -160,12 +144,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 							"num_resolved": "{{ .Alerts.Resolved | len }}",
 							"resolved":     "{{ .Alerts.Resolved | toJson }}",
 						},
-						"http_config": map[string]any{
-							"tls_config":       map[string]any{"insecure_skip_verify": false},
-							"follow_redirects": true,
-							"enable_http2":     true,
-							"proxy_url":        nil,
-						},
 					}},
 				},
 				{
@@ -173,7 +151,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 					"slack_configs": []any{map[string]any{
 						"send_resolved": true,
 						"api_url":       "https://slack.com/api/test",
-						"app_url":       "https://slack.com/api/chat.postMessage",
 						"channel":       "#alerts",
 						"callback_id":   "{{ template \"slack.default.callbackid\" . }}",
 						"color":         "{{ if eq .Status \"firing\" }}danger{{ else }}good{{ end }}",
@@ -187,12 +164,6 @@ func TestNewConfigFromChannels(t *testing.T) {
 						"title":         "{{ template \"slack.default.title\" . }}",
 						"title_link":    "{{ template \"slack.default.titlelink\" . }}",
 						"username":      "{{ template \"slack.default.username\" . }}",
-						"http_config": map[string]any{
-							"tls_config":       map[string]any{"insecure_skip_verify": false},
-							"follow_redirects": true,
-							"enable_http2":     true,
-							"proxy_url":        nil,
-						},
 					}},
 				},
 			},
@@ -275,9 +246,9 @@ func TestNewChannelFromReceiver(t *testing.T) {
 				},
 			},
 			expected: &Channel{
-				Name: "test-receiver",
-				Type: "slack",
-				Data: `{"name":"test-receiver","slack_configs":[{"send_resolved":true,"api_url":"https://slack.com/api/test","channel":"#alerts","timeout":0}]}`,
+				DisplayName: "test-receiver",
+				Type:        "slack",
+				Data:        `{"name":"test-receiver","slack_configs":[{"send_resolved":true,"api_url":"https://slack.com/api/test","channel":"#alerts","timeout":0}]}`,
 			},
 			pass: true,
 		},
@@ -285,17 +256,79 @@ func TestNewChannelFromReceiver(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			channel, err := NewChannelFromReceiver(testCase.receiver, "1")
+			receiver := testCase.receiver
+			channel, err := NewChannelFromReceiver(&Receiver{Receiver: &receiver}, "1")
 			if !testCase.pass {
 				assert.Error(t, err)
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, testCase.expected.Name, channel.Name)
+			assert.Equal(t, testCase.expected.DisplayName, channel.DisplayName)
 			assert.Equal(t, testCase.expected.Type, channel.Type)
 			assert.Equal(t, testCase.expected.Data, channel.Data)
 		})
 	}
 
+}
+
+// Type and Data are derived from the native googlechat_configs field.
+func TestNewChannelFromReceiverGoogleChat(t *testing.T) {
+	webhookURL, err := url.Parse("https://chat.googleapis.com/v1/spaces/test/messages")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	receiver := &Receiver{
+		Receiver: &config.Receiver{Name: "googlechat-receiver"},
+		GoogleChatConfigs: []*GoogleChatReceiverConfig{
+			{
+				WebhookURL: &config.SecretURL{URL: webhookURL},
+				Title:      "Alert",
+				Text:       "Body",
+			},
+		},
+	}
+
+	channel, err := NewChannelFromReceiver(receiver, "1")
+	assert.NoError(t, err)
+	assert.Equal(t, "googlechat-receiver", channel.DisplayName)
+	assert.Equal(t, "googlechat", channel.Type)
+	assert.JSONEq(t,
+		`{"name":"googlechat-receiver","googlechat_configs":[{"send_resolved":false,"webhook_url":"https://chat.googleapis.com/v1/spaces/test/messages","title":"Alert","text":"Body"}]}`,
+		channel.Data,
+	)
+}
+
+func TestMapChannelNamesToIDs(t *testing.T) {
+	slackID := valuer.GenerateUUID()
+	pagerID := valuer.GenerateUUID()
+	channels := Channels{
+		{Identifiable: types.Identifiable{ID: slackID}, DisplayName: "slack"},
+		{Identifiable: types.Identifiable{ID: pagerID}, DisplayName: "pager"},
+	}
+
+	testCases := []struct {
+		name    string
+		names   []string
+		want    []string
+		wantErr bool
+	}{
+		{name: "AllKnown_IDsInRequestOrder", names: []string{"pager", "slack"}, want: []string{pagerID.StringValue(), slackID.StringValue()}},
+		{name: "UnknownName_Errors", names: []string{"slack", "missing"}, wantErr: true},
+		{name: "NoNames_Empty", names: nil, want: []string{}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			got, err := MapChannelNamesToIDs(channels, testCase.names)
+			if testCase.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, testCase.want, got)
+		})
+	}
 }

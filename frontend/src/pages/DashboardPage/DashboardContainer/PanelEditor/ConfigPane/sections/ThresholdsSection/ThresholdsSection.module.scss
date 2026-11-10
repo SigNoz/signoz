@@ -1,0 +1,151 @@
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.help {
+	font-size: 13px;
+	line-height: 19px;
+	color: var(--l2-foreground);
+}
+
+// ── View mode: compact summary row ──────────────────────────────────────────
+.viewRow {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 8px 10px 8px 16px;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	background-color: var(--l2-background);
+
+	&:hover {
+		border-color: var(--l2-border);
+	}
+}
+
+.viewText {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.viewValue {
+	overflow: hidden;
+	font-family: 'Geist Mono', monospace;
+	font-size: 13px;
+	color: var(--l1-foreground);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.viewLabel {
+	overflow: hidden;
+	font-size: 12px;
+	color: var(--l2-foreground);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.marker {
+	flex: none;
+}
+
+.markerSquare {
+	width: 14px;
+	height: 14px;
+	flex: none;
+	border: 1px solid transparent;
+	border-radius: 3px;
+}
+
+// ── Edit mode: labelled form ────────────────────────────────────────────────
+.editRow {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding: 16px;
+	border: 1px solid var(--bg-robin-500);
+	border-radius: 4px;
+	background-color: var(--l2-background);
+}
+
+.editTitle {
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--l1-foreground);
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.fieldLabel {
+	font-size: 13px;
+	color: var(--l2-foreground);
+}
+
+.emphasis {
+	font-weight: 500;
+	color: var(--l1-foreground);
+}
+
+.optional {
+	color: var(--l3-foreground);
+}
+
+.amountRow {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px;
+}
+
+.formatPreview {
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-family: 'Geist Mono', monospace;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--bg-vanilla-100);
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+// ── Shared ──────────────────────────────────────────────────────────────────
+// Match Formatting: make the YAxisUnitSelector fill the row width.
+.unitSelector {
+	:global(.ant-select) {
+		width: 100%;
+	}
+	:global(.ant-select-selector) {
+		border-color: var(--l2-border) !important;
+	}
+}
+
+.invalidUnit {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+	color: var(--callout-warning-description);
+}
+
+.invalidUnitIcon {
+	flex: none;
+	margin-top: 2px;
+	color: var(--callout-warning-icon);
+}
+
+.invalidUnitText {
+	font-size: 12px;
+	line-height: 17px;
+	color: inherit;
+}

@@ -2,6 +2,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import duration from 'dayjs/plugin/duration';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 
@@ -9,6 +10,7 @@ dayjs.extend(utc);
 dayjs.extend(customParseFormat);
 dayjs.extend(duration);
 dayjs.extend(timezone);
+dayjs.extend(relativeTime);
 
 export function toUTCEpoch(time: number): number {
 	const x = new Date();
@@ -299,4 +301,63 @@ Shortcuts:
 		startTimeMs,
 		endTimeMs,
 	};
+};
+
+/**
+ * Formats age in milliseconds to a human-readable string (e.g., "5d 3h", "2h 30m", "45s")
+ */
+export function formatAge(ms: number): string {
+	if (ms < 0 || Number.isNaN(ms) || !Number.isFinite(ms)) {
+		return '-';
+	}
+
+	const seconds = Math.floor(ms / 1000);
+	const minutes = Math.floor(seconds / 60);
+	const hours = Math.floor(minutes / 60);
+	const days = Math.floor(hours / 24);
+
+	if (days > 0) {
+		const remainingHours = hours % 24;
+		return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+	}
+	if (hours > 0) {
+		const remainingMinutes = minutes % 60;
+		return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+	}
+	if (minutes > 0) {
+		return `${minutes}m`;
+	}
+	return `${seconds}s`;
+}
+
+/**
+ * Formats a nanosecond duration (as a string) as milliseconds with two
+ * decimals, e.g. `'12345678' -> '12.35'`.
+ */
+export const getMs = (value: string): string =>
+	parseFloat(
+		dayjs
+			.duration({
+				milliseconds: parseInt(value, 10) / 1000000,
+			})
+			.format('SSS'),
+	).toFixed(2);
+
+/** `overrideFormat`, when given, wins over the same-day check. */
+export const formatTimestampOmittingTodaysDate = (
+	timestampMs: number,
+	timezone: string,
+	overrideFormat?: string,
+): string => {
+	const time = dayjs(timestampMs).tz(timezone);
+
+	if (overrideFormat) {
+		return time.format(overrideFormat);
+	}
+
+	return time.format(
+		time.isSame(dayjs().tz(timezone), 'day')
+			? DATE_TIME_FORMATS.TIME_SECONDS
+			: DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS,
+	);
 };

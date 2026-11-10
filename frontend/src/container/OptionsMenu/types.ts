@@ -1,6 +1,7 @@
 import { InputNumberProps, RadioProps, SelectProps } from 'antd';
 import { TelemetryFieldKey } from 'api/v5/v5';
-import { LogViewMode } from 'container/LogsTable';
+
+export type LogViewMode = 'raw' | 'table' | 'list';
 
 export enum FontSize {
 	SMALL = 'small',
@@ -40,5 +41,10 @@ export type OptionsMenuConfig = {
 		isFetching: boolean;
 		value: TelemetryFieldKey[];
 		onRemove: (key: string) => void;
+		onReorder: (orderedIds: string[]) => void;
+	};
+	fieldsSelector?: {
+		value: TelemetryFieldKey[];
+		onFieldsChange: (next: TelemetryFieldKey[]) => void;
 	};
 };

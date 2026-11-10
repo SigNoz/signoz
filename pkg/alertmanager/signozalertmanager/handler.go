@@ -98,11 +98,12 @@ func (handler *handler) ListChannels(rw http.ResponseWriter, req *http.Request) 
 	}
 
 	// This ensures that the UI receives an empty array instead of null
-	if len(channels) == 0 {
-		channels = make([]*alertmanagertypes.Channel, 0)
+	v1Channels := make([]*alertmanagertypes.Channel, 0, len(channels))
+	for _, channel := range channels {
+		v1Channels = append(v1Channels, channel.ToV1Channel())
 	}
 
-	render.Success(rw, http.StatusOK, channels)
+	render.Success(rw, http.StatusOK, v1Channels)
 }
 
 func (handler *handler) ListAllChannels(rw http.ResponseWriter, req *http.Request) {
@@ -152,7 +153,7 @@ func (handler *handler) GetChannelByID(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	render.Success(rw, http.StatusOK, channel)
+	render.Success(rw, http.StatusOK, channel.ToV1Channel())
 }
 
 func (handler *handler) UpdateChannelByID(rw http.ResponseWriter, req *http.Request) {
@@ -272,7 +273,7 @@ func (handler *handler) CreateChannel(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, channel)
+	render.Success(rw, http.StatusCreated, channel.ToV1Channel())
 }
 
 func (handler *handler) CreateRoutePolicy(rw http.ResponseWriter, req *http.Request) {

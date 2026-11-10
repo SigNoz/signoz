@@ -8,11 +8,6 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// Helper function to create a time pointer.
-func timePtr(t time.Time) *time.Time {
-	return &t
-}
-
 func TestShouldSkipMaintenance(t *testing.T) {
 	cases := []struct {
 		name        string
@@ -24,9 +19,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "only-on-saturday",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "Europe/London",
+					Timezone:  "Europe/London",
+					StartTime: time.Date(2025, 3, 1, 0, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2025, 3, 1, 0, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("24h"),
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday, RepeatOnTuesday, RepeatOnWednesday, RepeatOnThursday, RepeatOnFriday, RepeatOnSunday},
@@ -41,10 +36,10 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "weekly-across-midnight-previous-day",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 1, 22, 0, 0, 0, time.UTC), // Monday 22:00
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 1, 22, 0, 0, 0, time.UTC), // Monday 22:00
-						Duration:   valuer.MustParseTextDuration("4h"),           // Until Tuesday 02:00
+						Duration:   valuer.MustParseTextDuration("4h"), // Until Tuesday 02:00
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday}, // Only Monday
 					},
@@ -58,10 +53,10 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "weekly-across-midnight-previous-day",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 1, 22, 0, 0, 0, time.UTC), // Monday 22:00
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 1, 22, 0, 0, 0, time.UTC), // Monday 22:00
-						Duration:   valuer.MustParseTextDuration("4h"),           // Until Tuesday 02:00
+						Duration:   valuer.MustParseTextDuration("4h"), // Until Tuesday 02:00
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday}, // Only Monday
 					},
@@ -75,10 +70,10 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "weekly-across-midnight-previous-day",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 1, 22, 0, 0, 0, time.UTC), // Monday 22:00
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 1, 22, 0, 0, 0, time.UTC), // Monday 22:00
-						Duration:   valuer.MustParseTextDuration("52h"),          // Until Thursday 02:00
+						Duration:   valuer.MustParseTextDuration("52h"), // Until Thursday 02:00
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday}, // Only Monday
 					},
@@ -92,10 +87,10 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "weekly-across-midnight-previous-day-not-in-repeaton",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 2, 22, 0, 0, 0, time.UTC), // Tuesday 22:00
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 2, 22, 0, 0, 0, time.UTC), // Tuesday 22:00
-						Duration:   valuer.MustParseTextDuration("4h"),           // Until Wednesday 02:00
+						Duration:   valuer.MustParseTextDuration("4h"), // Until Wednesday 02:00
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnTuesday}, // Only Tuesday
 					},
@@ -109,10 +104,10 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "daily-maintenance-across-midnight",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC), // 23:00
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC), // 23:00
-						Duration:   valuer.MustParseTextDuration("2h"),           // Until 01:00 next day
+						Duration:   valuer.MustParseTextDuration("2h"), // Until 01:00 next day
 						RepeatType: RepeatTypeDaily,
 					},
 				},
@@ -125,9 +120,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "at-start-time-boundary",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeDaily,
 					},
@@ -141,9 +136,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "at-end-time-boundary",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeDaily,
 					},
@@ -157,9 +152,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "monthly-multi-day-duration",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 28, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 28, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("72h"), // 3 days
 						RepeatType: RepeatTypeMonthly,
 					},
@@ -173,9 +168,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "weekly-multi-day-duration",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 28, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 28, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("72h"), // 3 days
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnSunday},
@@ -190,9 +185,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "monthly-crosses-to-next-month",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 30, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 30, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("48h"), // 2 days, crosses to Feb 1
 						RepeatType: RepeatTypeMonthly,
 					},
@@ -206,9 +201,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "timezone-offset-test",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "America/New_York", // UTC-5 or UTC-4 depending on DST
+					Timezone:  "America/New_York", // UTC-5 or UTC-4 depending on DST
+					StartTime: time.Date(2024, 1, 1, 22, 0, 0, 0, time.FixedZone("America/New_York", -5*3600)),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 1, 22, 0, 0, 0, time.FixedZone("America/New_York", -5*3600)),
 						Duration:   valuer.MustParseTextDuration("4h"),
 						RepeatType: RepeatTypeDaily,
 					},
@@ -222,9 +217,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "daily-maintenance-time-outside-window",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeDaily,
 					},
@@ -238,10 +233,10 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "recurring-maintenance-with-past-end-date",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+					EndTime:   time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-						EndTime:    timePtr(time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC)),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeDaily,
 					},
@@ -255,10 +250,10 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "monthly-maintenance-spans-month-end",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 3, 31, 22, 0, 0, 0, time.UTC), // March 31, 22:00
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 3, 31, 22, 0, 0, 0, time.UTC), // March 31, 22:00
-						Duration:   valuer.MustParseTextDuration("6h"),            // Until April 1, 04:00
+						Duration:   valuer.MustParseTextDuration("6h"), // Until April 1, 04:00
 						RepeatType: RepeatTypeMonthly,
 					},
 				},
@@ -271,9 +266,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "weekly-empty-repeaton",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{}, // Empty - should apply to all days
@@ -288,9 +283,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "monthly-maintenance-february-fewer-days",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 31, 12, 0, 0, 0, time.UTC), // January 31st
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 31, 12, 0, 0, 0, time.UTC), // January 31st
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeMonthly,
 					},
@@ -303,9 +298,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "daily-maintenance-crosses-midnight",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 1, 23, 30, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 1, 23, 30, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("1h"), // Crosses to 00:30 next day
 						RepeatType: RepeatTypeDaily,
 					},
@@ -318,9 +313,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "monthly-maintenance-crosses-month-end",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 31, 12, 0, 0, 0, time.UTC), // January 31st
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 31, 12, 0, 0, 0, time.UTC), // January 31st
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeMonthly,
 					},
@@ -333,9 +328,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "monthly-maintenance-crosses-month-end-and-duration-is-2-days",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 30, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 30, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("48h"), // 2 days duration
 						RepeatType: RepeatTypeMonthly,
 					},
@@ -348,10 +343,10 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "weekly-maintenance-crosses-midnight",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 1, 23, 0, 0, 0, time.UTC), // Monday 23:00
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 1, 23, 0, 0, 0, time.UTC), // Monday 23:00
-						Duration:   valuer.MustParseTextDuration("2h"),           // Until Tuesday 01:00
+						Duration:   valuer.MustParseTextDuration("2h"), // Until Tuesday 01:00
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday}, // Only Monday
 					},
@@ -364,9 +359,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "monthly-maintenance-crosses-month-end-and-duration-is-2-days",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 31, 12, 0, 0, 0, time.UTC), // January 31st
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 31, 12, 0, 0, 0, time.UTC), // January 31st
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeMonthly,
 					},
@@ -379,9 +374,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "daily-maintenance-crosses-midnight",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("4h"), // Until 02:00 next day
 						RepeatType: RepeatTypeDaily,
 					},
@@ -394,9 +389,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "monthly-maintenance-crosses-month-end-and-duration-is-2-hours",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 31, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 31, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeMonthly,
 					},
@@ -445,9 +440,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "recurring maintenance, repeat sunday, saturday, weekly for 24 hours, in Us/Eastern timezone",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "US/Eastern",
+					Timezone:  "US/Eastern",
+					StartTime: time.Date(2025, 3, 29, 20, 0, 0, 0, time.FixedZone("US/Eastern", -4*3600)),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2025, 3, 29, 20, 0, 0, 0, time.FixedZone("US/Eastern", -4*3600)),
 						Duration:   valuer.MustParseTextDuration("24h"),
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnSunday, RepeatOnSaturday},
@@ -458,57 +453,57 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			skip: true,
 		},
 		{
-			name: "recurring maintenance, repeat daily from 12:00 to 14:00",
+			name: "recurring maintenance, repeat daily from 12:00 to 14:00, ts < start",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeDaily,
 					},
 				},
 			},
-			ts:   time.Date(2024, 1, 1, 12, 10, 0, 0, time.UTC),
+			ts:   time.Date(2024, 1, 10, 11, 0, 0, 0, time.UTC),
+			skip: false,
+		},
+		{
+			name: "recurring maintenance, repeat daily from 12:00 to 14:00, start <= ts <= end",
+			maintenance: &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+					Recurrence: &Recurrence{
+						Duration:   valuer.MustParseTextDuration("2h"),
+						RepeatType: RepeatTypeDaily,
+					},
+				},
+			},
+			ts:   time.Date(2024, 1, 10, 13, 0, 0, 0, time.UTC),
 			skip: true,
 		},
 		{
-			name: "recurring maintenance, repeat daily from 12:00 to 14:00",
+			name: "recurring maintenance, repeat daily from 12:00 to 14:00, start > end",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeDaily,
 					},
 				},
 			},
-			ts:   time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
-			skip: true,
-		},
-		{
-			name: "recurring maintenance, repeat daily from 12:00 to 14:00",
-			maintenance: &PlannedMaintenance{
-				Schedule: &Schedule{
-					Timezone: "UTC",
-					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-						Duration:   valuer.MustParseTextDuration("2h"),
-						RepeatType: RepeatTypeDaily,
-					},
-				},
-			},
-			ts:   time.Date(2024, 4, 1, 12, 10, 0, 0, time.UTC),
-			skip: true,
+			ts:   time.Date(2024, 1, 10, 15, 0, 0, 0, time.UTC),
+			skip: false,
 		},
 		{
 			name: "recurring maintenance, repeat weekly on monday from 12:00 to 14:00",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday},
@@ -522,9 +517,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "recurring maintenance, repeat weekly on monday from 12:00 to 14:00",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday},
@@ -538,9 +533,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "recurring maintenance, repeat weekly on monday from 12:00 to 14:00",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday},
@@ -554,9 +549,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "recurring maintenance, repeat weekly on monday from 12:00 to 14:00",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday},
@@ -570,9 +565,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "recurring maintenance, repeat weekly on monday from 12:00 to 14:00",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 1, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeWeekly,
 						RepeatOn:   []RepeatOn{RepeatOnMonday},
@@ -586,9 +581,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "recurring maintenance, repeat monthly on 4th from 12:00 to 14:00",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 4, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 4, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeMonthly,
 					},
@@ -601,9 +596,9 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "recurring maintenance, repeat monthly on 4th from 12:00 to 14:00",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 4, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 4, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeMonthly,
 					},
@@ -616,54 +611,15 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "recurring maintenance, repeat monthly on 4th from 12:00 to 14:00",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2024, 4, 4, 12, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
-						StartTime:  time.Date(2024, 4, 4, 12, 0, 0, 0, time.UTC),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeMonthly,
 					},
 				},
 			},
 			ts:   time.Date(2024, 5, 4, 12, 10, 0, 0, time.UTC),
-			skip: true,
-		},
-		// The recurrence should govern, when set. Not the fixed range.
-		{
-			name: "recurring-daily-with-fixed-times-outside-daily-window",
-			maintenance: &PlannedMaintenance{
-				Schedule: &Schedule{
-					Timezone: "UTC",
-					// These fixed fields should be ignored when Recurrence is set.
-					StartTime: time.Date(2026, 4, 1, 14, 0, 0, 0, time.UTC),
-					EndTime:   time.Date(2026, 4, 30, 18, 0, 0, 0, time.UTC),
-					Recurrence: &Recurrence{
-						StartTime:  time.Date(2026, 4, 1, 14, 0, 0, 0, time.UTC), // daily at 14:00
-						Duration:   valuer.MustParseTextDuration("2h"),           // until 16:00
-						RepeatType: RepeatTypeDaily,
-					},
-				},
-			},
-			// 2026-04-15 11:00 is inside the fixed range but outside the daily 14:00-16:00 window.
-			ts:   time.Date(2026, 4, 15, 11, 0, 0, 0, time.UTC),
-			skip: false,
-		},
-		{
-			name: "recurring-daily-with-fixed-times-inside-daily-window",
-			maintenance: &PlannedMaintenance{
-				Schedule: &Schedule{
-					Timezone:  "UTC",
-					StartTime: time.Date(2026, 4, 1, 14, 0, 0, 0, time.UTC),
-					EndTime:   time.Date(2026, 4, 30, 18, 0, 0, 0, time.UTC),
-					Recurrence: &Recurrence{
-						StartTime:  time.Date(2026, 4, 1, 14, 0, 0, 0, time.UTC),
-						EndTime:    timePtr(time.Date(2026, 4, 30, 18, 0, 0, 0, time.UTC)),
-						Duration:   valuer.MustParseTextDuration("2h"),
-						RepeatType: RepeatTypeDaily,
-					},
-				},
-			},
-			// 15:00 is inside the daily 14:00-16:00 window. Should skip.
-			ts:   time.Date(2026, 4, 15, 15, 0, 0, 0, time.UTC),
 			skip: true,
 		},
 	}
@@ -679,13 +635,211 @@ func TestShouldSkipMaintenance(t *testing.T) {
 	}
 }
 
+func TestIsActiveFixedSchedule(t *testing.T) {
+	start := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
+	end := time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC)
+
+	cases := []struct {
+		name      string
+		startTime time.Time
+		endTime   time.Time
+		now       time.Time
+		active    bool
+	}{
+		{
+			name:      "no end, t < start",
+			startTime: start,
+			now:       start.Add(-time.Hour),
+			active:    false,
+		},
+		{
+			name:      "no end, start == t",
+			startTime: start,
+			now:       start,
+			active:    true,
+		},
+		{
+			// A fixed schedule with no end time stays active indefinitely.
+			name:      "no end, start << t",
+			startTime: start,
+			now:       start.AddDate(10, 0, 0),
+			active:    true,
+		},
+		{
+			name:      "with end, start < t < end",
+			startTime: start,
+			endTime:   end,
+			now:       start.Add(24 * time.Hour),
+			active:    true,
+		},
+		{
+			name:      "with end, t == end",
+			startTime: start,
+			endTime:   end,
+			now:       end,
+			active:    true,
+		},
+		{
+			name:      "with end, end < t",
+			startTime: start,
+			endTime:   end,
+			now:       end.Add(time.Hour),
+			active:    false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			m := &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone:  "UTC",
+					StartTime: c.startTime,
+					EndTime:   c.endTime,
+				},
+			}
+			if got := m.IsActive(c.now); got != c.active {
+				t.Errorf("IsActive() = %v, want %v", got, c.active)
+			}
+		})
+	}
+}
+
+func TestIsActiveRecurringSchedule(t *testing.T) {
+	// Daily window 12:00-14:00, starting 2024-01-01 (a Monday).
+	start := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
+
+	daily := &Recurrence{
+		Duration:   valuer.MustParseTextDuration("2h"),
+		RepeatType: RepeatTypeDaily,
+	}
+
+	cases := []struct {
+		name       string
+		startTime  time.Time
+		endTime    time.Time
+		recurrence *Recurrence
+		now        time.Time
+		active     bool
+	}{
+		{
+			// The recurrence has not begun yet, even though the time-of-day matches.
+			name:       "daily: t < recurrence start",
+			startTime:  start,
+			recurrence: daily,
+			now:        time.Date(2023, 12, 31, 13, 0, 0, 0, time.UTC),
+			active:     false,
+		},
+		{
+			name:       "daily: no end, within window",
+			startTime:  start,
+			recurrence: daily,
+			now:        time.Date(2024, 6, 15, 13, 0, 0, 0, time.UTC),
+			active:     true,
+		},
+		{
+			name:       "daily: no end, outside window",
+			startTime:  start,
+			recurrence: daily,
+			now:        time.Date(2024, 6, 15, 15, 0, 0, 0, time.UTC),
+			active:     false,
+		},
+		{
+			name:       "daily: at window start boundary",
+			startTime:  start,
+			recurrence: daily,
+			now:        time.Date(2024, 6, 15, 12, 0, 0, 0, time.UTC),
+			active:     true,
+		},
+		{
+			name:       "daily: at window end boundary",
+			startTime:  start,
+			recurrence: daily,
+			now:        time.Date(2024, 6, 15, 14, 0, 0, 0, time.UTC),
+			active:     true,
+		},
+		{
+			// Past the recurrence end, the time-of-day match no longer applies.
+			name:       "daily: t > recurrence end",
+			startTime:  start,
+			endTime:    time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+			recurrence: daily,
+			now:        time.Date(2024, 1, 15, 13, 0, 0, 0, time.UTC),
+			active:     false,
+		},
+		{
+			name:       "daily: before recurrence end, within window",
+			startTime:  start,
+			endTime:    time.Date(2024, 1, 10, 23, 0, 0, 0, time.UTC),
+			recurrence: daily,
+			now:        time.Date(2024, 1, 10, 13, 0, 0, 0, time.UTC),
+			active:     true,
+		},
+		{
+			name:      "weekly: on allowed day, within window",
+			startTime: start, // Monday
+			recurrence: &Recurrence{
+				Duration:   valuer.MustParseTextDuration("2h"),
+				RepeatType: RepeatTypeWeekly,
+				RepeatOn:   []RepeatOn{RepeatOnMonday},
+			},
+			now:    time.Date(2024, 4, 15, 13, 0, 0, 0, time.UTC), // a Monday
+			active: true,
+		},
+		{
+			name:      "weekly: on non-allowed day",
+			startTime: start,
+			recurrence: &Recurrence{
+				Duration:   valuer.MustParseTextDuration("2h"),
+				RepeatType: RepeatTypeWeekly,
+				RepeatOn:   []RepeatOn{RepeatOnMonday},
+			},
+			now:    time.Date(2024, 4, 16, 13, 0, 0, 0, time.UTC), // a Tuesday
+			active: false,
+		},
+		{
+			name:      "monthly: on day-of-month, within window",
+			startTime: time.Date(2024, 1, 4, 12, 0, 0, 0, time.UTC),
+			recurrence: &Recurrence{
+				Duration:   valuer.MustParseTextDuration("2h"),
+				RepeatType: RepeatTypeMonthly,
+			},
+			now:    time.Date(2024, 5, 4, 13, 0, 0, 0, time.UTC),
+			active: true,
+		},
+		{
+			name:      "monthly: on different day-of-month",
+			startTime: time.Date(2024, 1, 4, 12, 0, 0, 0, time.UTC),
+			recurrence: &Recurrence{
+				Duration:   valuer.MustParseTextDuration("2h"),
+				RepeatType: RepeatTypeMonthly,
+			},
+			now:    time.Date(2024, 5, 5, 13, 0, 0, 0, time.UTC),
+			active: false,
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			m := &PlannedMaintenance{
+				Schedule: &Schedule{
+					Timezone:   "UTC",
+					StartTime:  c.startTime,
+					EndTime:    c.endTime,
+					Recurrence: c.recurrence,
+				},
+			}
+			if got := m.IsActive(c.now); got != c.active {
+				t.Errorf("IsActive() = %v, want %v", got, c.active)
+			}
+		})
+	}
+}
+
 func TestShouldSkip_Scope(t *testing.T) {
-	activeSchedule := func() *Schedule {
-		return &Schedule{
-			Timezone:  "UTC",
-			StartTime: time.Now().UTC().Add(-time.Hour),
-			EndTime:   time.Now().UTC().Add(time.Hour),
-		}
+	activeSchedule := &Schedule{
+		Timezone:  "UTC",
+		StartTime: time.Now().UTC().Add(-time.Hour),
+		EndTime:   time.Now().UTC().Add(time.Hour),
 	}
 	now := time.Now().UTC()
 
@@ -699,7 +853,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 	}{
 		{
 			name:        "empty scope - no label filtering applied",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule()},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -707,7 +861,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "scope matches labels",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -715,7 +869,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "scope does not match labels",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "staging"},
@@ -723,7 +877,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "AND expression - both conditions match",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" AND service = "api"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production" AND service = "api"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production", "service": "api"},
@@ -731,7 +885,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "AND expression - one condition does not match",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" AND service = "api"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production" AND service = "api"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production", "service": "worker"},
@@ -739,7 +893,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "OR expression - first alternative matches",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" OR env = "staging"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production" OR env = "staging"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -747,7 +901,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "OR expression - second alternative matches",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" OR env = "staging"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production" OR env = "staging"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "staging"},
@@ -755,7 +909,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "OR expression - neither alternative matches",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production" OR env = "staging"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production" OR env = "staging"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "development"},
@@ -763,7 +917,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "scope references label absent from lset",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env = "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"service": "api"},
@@ -771,7 +925,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "in expression - value is in list",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env in ["production", "staging"]`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env in ["production", "staging"]`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "staging"},
@@ -779,7 +933,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "in expression - value not in list",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), Scope: `env in ["production", "staging"]`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, Scope: `env in ["production", "staging"]`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "development"},
@@ -787,7 +941,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "ruleID in list and scope matches - should skip",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-1", "rule-2"}, Scope: `env = "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, RuleIDs: []string{"rule-1", "rule-2"}, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -795,7 +949,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "ruleID not in list and scope matches - ruleID gate prevents skip",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-2"}, Scope: `env = "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, RuleIDs: []string{"rule-2"}, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "production"},
@@ -803,7 +957,7 @@ func TestShouldSkip_Scope(t *testing.T) {
 		},
 		{
 			name:        "ruleID in list but scope does not match - should not skip",
-			maintenance: &PlannedMaintenance{Schedule: activeSchedule(), RuleIDs: []string{"rule-1"}, Scope: `env = "production"`},
+			maintenance: &PlannedMaintenance{Schedule: activeSchedule, RuleIDs: []string{"rule-1"}, Scope: `env = "production"`},
 			ruleID:      "rule-1",
 			ts:          now,
 			lset:        model.LabelSet{"env": "staging"},

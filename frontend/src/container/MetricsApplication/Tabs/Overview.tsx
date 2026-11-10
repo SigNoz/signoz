@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppParams } from 'lib/router/useAppParams';
 import logEvent from 'api/common/logEvent';
 import getTopLevelOperations, {
 	ServiceDataProps,
@@ -22,7 +23,7 @@ import {
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
@@ -51,7 +52,6 @@ import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
 import TopOperationMetrics from './Overview/TopOperationMetrics';
 import { Button, Card } from './styles';
-import { IServiceName } from './types';
 import {
 	generateExplorerPath,
 	handleNonInQueryRange,
@@ -62,15 +62,15 @@ import {
 } from './util';
 
 function Application(): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
+	const servicename = decodeURIComponent(encodedServiceName || '');
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
-	const { search, pathname } = useLocation();
+	const { search, pathname } = useAppLocation();
 	const { queries } = useResourceAttribute();
 	const urlQuery = useUrlQuery();
 
@@ -93,15 +93,12 @@ function Application(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleSetTimeStamp],
 	);
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
 			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
+				(val) => val.tagKey === getResourceDeploymentKeys(),
 			)?.tagValue;
 
 			logEvent('APM: Service detail page visited', {
@@ -127,6 +124,9 @@ function Application(): JSX.Element {
 				start: minTime,
 				end: maxTime,
 			}),
+		// the time range is part of the key, so without this every window change blanks the
+		// operations list and the widgets below are rebuilt with an empty `operation in []`
+		keepPreviousData: true,
 	});
 
 	const selectedTraceTags: string = JSON.stringify(
@@ -159,7 +159,6 @@ function Application(): JSX.Element {
 						servicename,
 						tagFilterItems,
 						topLevelOperations: topLevelOperationsRoute,
-						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -169,7 +168,7 @@ function Application(): JSX.Element {
 				yAxisUnit: 'ops',
 				id: SERVICE_CHART_ID.rps,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute, dotMetricsEnabled],
+		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
 	const errorPercentageWidget = useMemo(
@@ -182,7 +181,6 @@ function Application(): JSX.Element {
 						servicename,
 						tagFilterItems,
 						topLevelOperations: topLevelOperationsRoute,
-						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -193,7 +191,7 @@ function Application(): JSX.Element {
 				id: SERVICE_CHART_ID.errorPercentage,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute, dotMetricsEnabled],
+		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
 	const stepInterval = useMemo(
@@ -214,7 +212,7 @@ function Application(): JSX.Element {
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
@@ -244,7 +242,7 @@ function Application(): JSX.Element {
 				urlParams.set(QueryParams.startTime, startTime.toString());
 				urlParams.set(QueryParams.endTime, endTime.toString());
 				urlParams.delete(QueryParams.relativeTime);
-				const avialableParams = routeConfig[ROUTES.TRACE];
+				const avialableParams = routeConfig[ROUTES.TRACES_EXPLORER];
 				const queryString = getQueryString(avialableParams, urlParams);
 
 				const JSONCompositeQuery = encodeURIComponent(
@@ -263,7 +261,7 @@ function Application(): JSX.Element {
 				if (isModifierKeyPressed(e)) {
 					openInNewTab(newPath);
 				} else {
-					history.push(newPath);
+					navigate(newPath);
 				}
 			},
 		// eslint-disable-next-line react-hooks/exhaustive-deps

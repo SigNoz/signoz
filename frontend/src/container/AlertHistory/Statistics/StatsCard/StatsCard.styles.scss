@@ -67,8 +67,8 @@
 	gap: 4px;
 
 	&--success {
-		background: color-mix(in srgb, var(--success-background) 10%, transparent);
-		color: var(--success-foreground);
+		background: color-mix(in srgb, var(--text-forest-500) 10%, transparent);
+		color: var(--text-forest-400);
 	}
 
 	&--error {

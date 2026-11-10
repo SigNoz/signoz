@@ -8,10 +8,12 @@ import { EventTooltipContent } from '../SpanHoverCard/EventTooltipContent';
 import { SpanTooltipContent } from '../SpanHoverCard/SpanHoverCard';
 import { DEFAULT_ROW_HEIGHT } from './constants';
 import { useCanvasSetup } from './hooks/useCanvasSetup';
+import { useCursorTooltipPosition } from './hooks/useCursorTooltipPosition';
 import { useFlamegraphCrosshair } from './hooks/useFlamegraphCrosshair';
 import { useFlamegraphDrag } from './hooks/useFlamegraphDrag';
 import { useFlamegraphDraw } from './hooks/useFlamegraphDraw';
 import { useFlamegraphHover } from './hooks/useFlamegraphHover';
+import { useFlamegraphTestHook } from './hooks/useFlamegraphTestHook';
 import { useFlamegraphZoom } from './hooks/useFlamegraphZoom';
 import { useScrollToSpan } from './hooks/useScrollToSpan';
 import { EventRect, FlamegraphCanvasProps, SpanRect } from './types';
@@ -159,6 +161,14 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 
 	useCanvasSetup(canvasRef, containerRef, drawFlamegraph, overlayCanvasRef);
 
+	// E2E-only: expose the live span→rect map so specs can target canvas bars.
+	// No-op unless window.__SIGNOZ_E2E__ is set (Playwright addInitScript).
+	useFlamegraphTestHook({
+		canvasRef,
+		containerRef,
+		spanRectsRef,
+	});
+
 	const {
 		cursorXPercent,
 		cursorX,
@@ -191,15 +201,11 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		handleHoverMouseLeave,
 	]);
 
+	const tooltipRef = useCursorTooltipPosition<HTMLDivElement>(tooltipContent);
+
 	const tooltipElement = tooltipContent
 		? createPortal(
-				<div
-					className={styles.tooltip}
-					style={{
-						left: Math.min(tooltipContent.clientX + 15, window.innerWidth - 220),
-						top: Math.min(tooltipContent.clientY + 15, window.innerHeight - 100),
-					}}
-				>
+				<div ref={tooltipRef} className={styles.tooltip}>
 					{tooltipContent.event ? (
 						<EventTooltipContent
 							eventName={tooltipContent.event.name}

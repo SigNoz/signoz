@@ -130,6 +130,7 @@ func Error(rw http.ResponseWriter, cause error) {
 		rw.Header().Set("Retry-After", strconv.Itoa(int(math.Ceil(d.Seconds()))))
 	}
 
+	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(httpCode)
 	_, _ = rw.Write(body)
 }

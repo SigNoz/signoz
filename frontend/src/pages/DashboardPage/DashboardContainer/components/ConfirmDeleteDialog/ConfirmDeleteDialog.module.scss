@@ -1,0 +1,12 @@
+.body {
+	color: var(--l2-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	line-height: 20px;
+}
+
+.footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}

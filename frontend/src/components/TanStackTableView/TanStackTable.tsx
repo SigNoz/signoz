@@ -5,6 +5,7 @@ import {
 	useCallback,
 	useEffect,
 	useImperativeHandle,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 } from 'react';
@@ -17,7 +18,6 @@ import {
 	SortableContext,
 } from '@dnd-kit/sortable';
 import { ComboboxSimple } from '@signozhq/ui/combobox';
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 import { Pagination } from '@signozhq/ui/pagination';
 import type { Row } from '@tanstack/react-table';
 import {
@@ -44,18 +44,25 @@ import {
 	TanStackTableHandle,
 	TanStackTableProps,
 } from './types';
+import { chromePerformanceMeasureTanstackTable } from './perfDevtools';
 import { useColumnDnd } from './useColumnDnd';
 import { useColumnHandlers } from './useColumnHandlers';
 import { useColumnState } from './useColumnState';
 import { useEffectiveData } from './useEffectiveData';
 import { useFlatItems } from './useFlatItems';
+import { useResetScroll } from './useResetScroll';
 import { useRowKeyData } from './useRowKeyData';
 import { useTableParams } from './useTableParams';
-import { buildPageSizeItems, buildTanstackColumnDef } from './utils';
+import {
+	buildPageSizeItems,
+	buildTanstackColumnDef,
+	getFillColumnIndex,
+} from './utils';
 import { VirtuosoTableColGroup } from './VirtuosoTableColGroup';
 
 import tableStyles from './TanStackTable.module.scss';
 import viewStyles from './TanStackTableView.module.scss';
+import { chromePerformanceNow } from 'lib/chromePerformanceDevTools';
 
 const COLUMN_DND_AUTO_SCROLL = {
 	layoutShiftCompensation: false as const,
@@ -67,11 +74,12 @@ const INCREASE_VIEWPORT_BY = { top: 500, bottom: 500 };
 const noopColumnVisibility = (): void => {};
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
-function TanStackTableInner<TData>(
+function TanStackTableInner<TData, TItemKey = string>(
 	{
 		data,
 		columns,
 		columnStorageKey,
+		respectColumnOrder = true,
 		columnSizing: columnSizingProp,
 		onColumnSizingChange,
 		onColumnOrderChange,
@@ -88,11 +96,11 @@ function TanStackTableInner<TData>(
 		getGroupKey,
 		getRowStyle,
 		getRowClassName,
+		getRowTestId,
 		isRowActive,
 		renderRowActions,
 		onRowClick,
 		onRowClickNewTab,
-		onRowDeactivate,
 		onSort,
 		activeRowIndex,
 		renderExpandedRow,
@@ -106,7 +114,8 @@ function TanStackTableInner<TData>(
 		suffixPaginationContent,
 		enableAlternatingRowColors,
 		disableVirtualScroll,
-	}: TanStackTableProps<TData>,
+		resetScrollKey,
+	}: TanStackTableProps<TData, TItemKey>,
 	forwardedRef: React.ForwardedRef<TanStackTableHandle>,
 ): JSX.Element {
 	if (disableVirtualScroll && onEndReached) {
@@ -114,6 +123,8 @@ function TanStackTableInner<TData>(
 			'TanStackTable: Cannot use onEndReached with disableVirtualScroll. Infinite scroll requires virtualization.',
 		);
 	}
+
+	const renderStart = chromePerformanceNow();
 
 	const virtuosoRef = useRef<TableVirtuosoHandle | null>(null);
 	const isDarkMode = useIsDarkMode();
@@ -175,6 +186,7 @@ function TanStackTableInner<TData>(
 		storageKey: columnStorageKey,
 		columns,
 		isGrouped,
+		respectColumnOrder,
 	});
 
 	// Use store values when columnStorageKey is provided, otherwise fall back to props/defaults
@@ -191,7 +203,7 @@ function TanStackTableInner<TData>(
 		skeletonRowCount,
 	});
 
-	const { rowKeyData, getRowKeyData } = useRowKeyData({
+	const { rowKeyData, getRowKeyData } = useRowKeyData<TData, TItemKey>({
 		data: effectiveData,
 		isLoading,
 		getRowKey,
@@ -206,6 +218,7 @@ function TanStackTableInner<TData>(
 		handleRemoveColumn,
 	} = useColumnHandlers({
 		columnStorageKey,
+		respectColumnOrder,
 		effectiveSizing,
 		storeSetSizing,
 		storeSetOrder,
@@ -223,12 +236,23 @@ function TanStackTableInner<TData>(
 		[effectiveColumns],
 	);
 
+	// A rebuilt column def is a new cell component to React, which remounts every
+	// cell it renders. Read the row callbacks through refs so inline ones do not.
+	const isRowActiveRef = useRef(isRowActive);
+	isRowActiveRef.current = isRowActive;
+	const getRowKeyDataRef = useRef(getRowKeyData);
+	getRowKeyDataRef.current = getRowKeyData;
+
 	const tanstackColumns = useMemo<ColumnDef<TData>[]>(
 		() =>
 			effectiveColumns.map((colDef) =>
-				buildTanstackColumnDef(colDef, isRowActive, getRowKeyData),
+				buildTanstackColumnDef<TData, TItemKey>(
+					colDef,
+					(row) => isRowActiveRef.current?.(row) ?? false,
+					(index) => getRowKeyDataRef.current(index),
+				),
 			),
-		[effectiveColumns, isRowActive, getRowKeyData],
+		[effectiveColumns],
 	);
 
 	const getRowId = useCallback(
@@ -316,15 +340,15 @@ function TanStackTableInner<TData>(
 		});
 	}, [flatIndexForActiveRow]);
 
+	useResetScroll(virtuosoRef, resetScrollKey);
+
 	const { sensors, columnIds, handleDragEnd } = useColumnDnd({
 		columns: effectiveColumns,
 		onColumnOrderChange: handleColumnOrderChange,
 	});
 
 	const hasSingleColumn = useMemo(
-		() =>
-			effectiveColumns.filter((c) => !c.pin && c.enableRemove !== false).length <=
-			1,
+		() => effectiveColumns.filter((c) => !c.pin).length <= 1,
 		[effectiveColumns],
 	);
 
@@ -343,6 +367,19 @@ function TanStackTableInner<TData>(
 
 	const visibleColumnsCount = table.getVisibleFlatColumns().length;
 
+	useLayoutEffect(() => {
+		chromePerformanceMeasureTanstackTable('Table render', renderStart, {
+			track: 'Table render',
+			color: 'primary',
+			tooltipText: 'TanStackTable render + commit',
+			properties: [
+				['rows', String(flatItems.length)],
+				['columns', String(visibleColumnsCount)],
+				['loading', String(isLoading)],
+			],
+		});
+	});
+
 	const columnOrderKey = useMemo(() => columnIds.join(','), [columnIds]);
 	const columnVisibilityKey = useMemo(
 		() =>
@@ -355,15 +392,15 @@ function TanStackTableInner<TData>(
 		[effectiveVisibility, columnIds],
 	);
 
-	const virtuosoContext = useMemo<TableRowContext<TData>>(
+	const virtuosoContext = useMemo<TableRowContext<TData, TItemKey>>(
 		() => ({
 			getRowStyle,
 			getRowClassName,
+			getRowTestId,
 			isRowActive,
 			renderRowActions,
 			onRowClick,
 			onRowClickNewTab,
-			onRowDeactivate,
 			renderExpandedRow,
 			getRowKeyData,
 			colCount: visibleColumnsCount,
@@ -377,11 +414,11 @@ function TanStackTableInner<TData>(
 		[
 			getRowStyle,
 			getRowClassName,
+			getRowTestId,
 			isRowActive,
 			renderRowActions,
 			onRowClick,
 			onRowClickNewTab,
-			onRowDeactivate,
 			renderExpandedRow,
 			getRowKeyData,
 			visibleColumnsCount,
@@ -395,6 +432,9 @@ function TanStackTableInner<TData>(
 	);
 
 	const tableHeader = useCallback(() => {
+		const fillColumnIndex = getFillColumnIndex(
+			flatHeaders.map((header) => columnsById.get(header.id)),
+		);
 		return (
 			<DndContext
 				sensors={sensors}
@@ -420,7 +460,7 @@ function TanStackTableInner<TData>(
 									canRemoveColumn={canRemoveColumn}
 									orderBy={orderBy}
 									onSort={setOrderBy}
-									isLastColumn={index === flatHeaders.length - 1}
+									isLastColumn={index >= fillColumnIndex}
 								/>
 							);
 						})}
@@ -519,13 +559,15 @@ function TanStackTableInner<TData>(
 	);
 
 	type VirtuosoTableComponentProps = ComponentProps<
-		NonNullable<TableComponents<FlatItem<TData>, TableRowContext<TData>>['Table']>
+		NonNullable<
+			TableComponents<FlatItem<TData>, TableRowContext<TData, TItemKey>>['Table']
+		>
 	>;
 
 	// Use refs in virtuosoComponents to keep the component reference stable during resize
 	// This prevents Virtuoso from re-rendering all rows when columns are resized
 	const virtuosoComponents = useMemo(
-		() => ({
+		(): TableComponents<FlatItem<TData>, TableRowContext<TData, TItemKey>> => ({
 			Table: ({ style, children }: VirtuosoTableComponentProps): JSX.Element => (
 				<table className={tableStyles.tanStackTable} style={style}>
 					<VirtuosoTableColGroup
@@ -551,116 +593,118 @@ function TanStackTableInner<TData>(
 					isInfiniteScrollMode={isInfiniteScrollMode}
 				/>
 				<ColumnVisibilitySync visibility={effectiveVisibility} />
-				<TooltipProvider>
-					{disableVirtualScroll ? (
-						<div
-							className={virtuosoClassName}
-							{...restTableScrollerProps}
-							data-testid={testId}
-						>
-							<table className={tableStyles.tanStackTable} style={virtuosoTableStyle}>
-								<VirtuosoTableColGroup columns={effectiveColumns} table={table} />
-								<thead>{tableHeader()}</thead>
-								<tbody>
-									{(isLoading && data.length === 0
-										? flatItems.slice(0, skeletonRowCount)
-										: flatItems
-									).map((item, index) => (
-										<TanStackCustomTableRow
-											key={
-												item.kind === 'expansion' ? `${item.row.id}-expansion` : item.row.id
-											}
-											item={item}
-											context={virtuosoContext}
-											data-index={index}
-											data-item-index={index}
-											data-known-size={0}
-										/>
-									))}
-								</tbody>
-							</table>
-						</div>
-					) : (
-						<TableVirtuoso<FlatItem<TData>, TableRowContext<TData>>
-							className={virtuosoClassName}
-							ref={virtuosoRef}
-							{...restTableScrollerProps}
-							data={flatItems}
-							totalCount={flatItems.length}
-							context={virtuosoContext}
-							increaseViewportBy={INCREASE_VIEWPORT_BY}
-							initialTopMostItemIndex={
-								flatIndexForActiveRow >= 0 ? flatIndexForActiveRow : 0
-							}
-							fixedHeaderContent={tableHeader}
-							style={virtuosoTableStyle}
-							components={virtuosoComponents}
-							endReached={onEndReached ? handleEndReached : undefined}
-							data-testid={testId}
-						/>
-					)}
-					{showInfiniteScrollLoader && (
-						<div
-							className={viewStyles.tanstackLoadingOverlay}
-							data-testid="tanstack-infinite-loader"
-						>
-							<Spin
-								indicator={<Loader className="animate-spin" />}
-								tip="Loading more..."
-							/>
-						</div>
-					)}
-					{showPagination && pagination && (
-						<div className={cx(viewStyles.paginationContainer, paginationClassname)}>
-							{prefixPaginationContent}
-							{pagination.showTotalCount && effectiveTotalCount > 0 && (
-								<span
-									className={viewStyles.paginationTotalCount}
-									data-testid="pagination-total-count"
-								>
-									Showing {(page - 1) * limit + 1} -{' '}
-									{Math.min(page * limit, effectiveTotalCount)} of {effectiveTotalCount}
-									{pagination.totalCountLabel ? ` ${pagination.totalCountLabel}` : ''}
-								</span>
-							)}
-							<Pagination
-								current={page}
-								pageSize={limit}
-								total={effectiveTotalCount}
-								onPageChange={(p): void => {
-									setPage(p);
-									pagination.onPageChange?.(p);
-								}}
-							/>
-							{pagination.showPageSize !== false && (
-								<div className={viewStyles.paginationPageSize}>
-									<ComboboxSimple
-										testId="pagination-page-size"
-										value={limit?.toString()}
-										defaultValue="10"
-										onChange={(value): void => {
-											setLimit(+value);
-											pagination.onLimitChange?.(+value);
-											if (page !== 1) {
-												setPage(1);
-												pagination.onPageChange?.(1);
-											}
-										}}
-										items={pageSizeItems}
+				{disableVirtualScroll ? (
+					<div
+						className={virtuosoClassName}
+						{...restTableScrollerProps}
+						data-testid={testId}
+					>
+						<table className={tableStyles.tanStackTable} style={virtuosoTableStyle}>
+							<VirtuosoTableColGroup columns={effectiveColumns} table={table} />
+							<thead>{tableHeader()}</thead>
+							<tbody>
+								{(isLoading && data.length === 0
+									? flatItems.slice(0, skeletonRowCount)
+									: flatItems
+								).map((item, index) => (
+									<TanStackCustomTableRow
+										key={
+											item.kind === 'expansion' ? `${item.row.id}-expansion` : item.row.id
+										}
+										item={item}
+										context={virtuosoContext}
+										data-index={index}
+										data-item-index={index}
+										data-known-size={0}
 									/>
-								</div>
-							)}
-							{suffixPaginationContent}
-						</div>
-					)}
-				</TooltipProvider>
+								))}
+							</tbody>
+						</table>
+					</div>
+				) : (
+					<TableVirtuoso<FlatItem<TData>, TableRowContext<TData, TItemKey>>
+						className={virtuosoClassName}
+						ref={virtuosoRef}
+						{...restTableScrollerProps}
+						data={flatItems}
+						totalCount={flatItems.length}
+						context={virtuosoContext}
+						increaseViewportBy={INCREASE_VIEWPORT_BY}
+						initialTopMostItemIndex={
+							flatIndexForActiveRow >= 0 ? flatIndexForActiveRow : 0
+						}
+						fixedHeaderContent={tableHeader}
+						style={virtuosoTableStyle}
+						components={virtuosoComponents}
+						endReached={onEndReached ? handleEndReached : undefined}
+						data-testid={testId}
+					/>
+				)}
+				{showInfiniteScrollLoader && (
+					<div
+						className={viewStyles.tanstackLoadingOverlay}
+						data-testid="tanstack-infinite-loader"
+					>
+						<Spin
+							indicator={<Loader className="animate-spin" />}
+							tip="Loading more..."
+						/>
+					</div>
+				)}
+				{showPagination && pagination && (
+					<div className={cx(viewStyles.paginationContainer, paginationClassname)}>
+						{prefixPaginationContent}
+						{pagination.showTotalCount && effectiveTotalCount > 0 && (
+							<span
+								className={viewStyles.paginationTotalCount}
+								data-testid="pagination-total-count"
+							>
+								Showing {(page - 1) * limit + 1} -{' '}
+								{Math.min(page * limit, effectiveTotalCount)} of {effectiveTotalCount}
+								{pagination.totalCountLabel ? ` ${pagination.totalCountLabel}` : ''}
+							</span>
+						)}
+						<Pagination
+							current={page}
+							pageSize={limit}
+							total={effectiveTotalCount}
+							onPageChange={(p): void => {
+								setPage(p);
+								pagination.onPageChange?.(p);
+							}}
+						/>
+						{pagination.showPageSize !== false && (
+							<div className={viewStyles.paginationPageSize}>
+								<ComboboxSimple
+									testId="pagination-page-size"
+									value={limit?.toString()}
+									defaultValue="10"
+									onChange={(value): void => {
+										value ??= '10';
+										setLimit(+value);
+										pagination.onLimitChange?.(+value);
+										if (page !== 1) {
+											setPage(1);
+											pagination.onPageChange?.(1);
+										}
+									}}
+									items={pageSizeItems}
+								/>
+							</div>
+						)}
+						{suffixPaginationContent}
+					</div>
+				)}
 			</TanStackTableStateProvider>
 		</div>
 	);
 }
 
-const TanStackTableForward = forwardRef(TanStackTableInner) as <TData>(
-	props: TanStackTableProps<TData> & {
+const TanStackTableForward = forwardRef(TanStackTableInner) as <
+	TData,
+	TItemKey = string,
+>(
+	props: TanStackTableProps<TData, TItemKey> & {
 		ref?: React.Ref<TanStackTableHandle>;
 	},
 ) => JSX.Element;

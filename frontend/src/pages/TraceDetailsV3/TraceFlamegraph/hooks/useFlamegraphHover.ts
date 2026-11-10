@@ -11,10 +11,9 @@ import {
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { RESERVED_PREVIEW_KEYS } from 'pages/TraceDetailsV3/SpanHoverCard/SpanHoverCard';
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
-import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 
-import { EventRect, SpanRect } from '../types';
-import { ITraceMetadata } from '../types';
+import { EventRect, ITraceMetadata, SpanRect } from '../types';
 import {
 	getFlamegraphServiceName,
 	getFlamegraphSpanGroupValue,
@@ -200,7 +199,7 @@ export function useFlamegraphHover(
 
 			if (eventRect) {
 				const { event, span } = eventRect;
-				const eventTimeMs = event.timeUnixNano / 1e6;
+				const eventTimeMs = (event.timeUnixNano ?? 0) / 1e6;
 				setHoveredEventKey(`${span.spanId}-${event.name}-${event.timeUnixNano}`);
 				setHoveredSpanId(span.spanId);
 				setTooltipContent({
@@ -220,10 +219,10 @@ export function useFlamegraphHover(
 						return isDarkMode ? pair.color : pair.colorDark;
 					})(),
 					event: {
-						name: event.name,
+						name: event.name ?? '',
 						timeOffsetMs: eventTimeMs - span.timestamp,
-						isError: event.isError,
-						attributeMap: event.attributeMap || {},
+						isError: event.isError ?? false,
+						attributeMap: (event.attributeMap as Record<string, string>) ?? {},
 					},
 				});
 				updateCursor(canvas, eventRect.span);

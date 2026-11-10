@@ -15,13 +15,13 @@ type ServeOpenAPIFunc func(openapi.OperationContext)
 type Handler interface {
 	http.Handler
 	ServeOpenAPI(openapi.OperationContext)
-	AuditDef() *AuditDef
+	ResourceDefs() []ResourceDef
 }
 
 type handler struct {
-	handlerFunc http.HandlerFunc
-	openAPIDef  OpenAPIDef
-	auditDef    *AuditDef
+	handlerFunc  http.HandlerFunc
+	openAPIDef   OpenAPIDef
+	resourceDefs []ResourceDef
 }
 
 func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Handler {
@@ -113,9 +113,11 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 			openapi.WithHTTPStatus(handler.openAPIDef.SuccessStatusCode),
 		)
 	} else {
+		// No response body (e.g. 204 No Content): omit the content type so the
+		// spec doesn't declare a body for a bodyless response, which would make
+		// clients try to decode an empty payload.
 		opCtx.AddRespStructure(
 			nil,
-			openapi.WithContentType(handler.openAPIDef.ResponseContentType),
 			openapi.WithHTTPStatus(handler.openAPIDef.SuccessStatusCode),
 		)
 	}
@@ -130,6 +132,6 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 	}
 }
 
-func (handler *handler) AuditDef() *AuditDef {
-	return handler.auditDef
+func (handler *handler) ResourceDefs() []ResourceDef {
+	return handler.resourceDefs
 }

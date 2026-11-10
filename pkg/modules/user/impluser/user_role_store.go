@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/uptrace/bun"
 )
 
 type userRoleStore struct {
@@ -19,24 +18,24 @@ func NewUserRoleStore(sqlstore sqlstore.SQLStore, settings factory.ProviderSetti
 	return &userRoleStore{sqlstore: sqlstore, settings: settings}
 }
 
-func (store *userRoleStore) ListUserRolesByOrgIDAndUserIDs(ctx context.Context, orgID valuer.UUID, userIDs []valuer.UUID) ([]*authtypes.UserRole, error) {
-	userRoles := make([]*authtypes.UserRole, 0)
+func (store *userRoleStore) GetUserRoleByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.UserRole, error) {
+	userRole := new(authtypes.UserRole)
 
 	err := store.sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
-		Model(&userRoles).
+		Model(userRole).
 		Join("JOIN users").
 		JoinOn("users.id = user_role.user_id").
 		Where("users.org_id = ?", orgID).
-		Where("users.id IN (?)", bun.In(userIDs)).
+		Where("user_role.id = ?", id).
 		Relation("Role").
 		Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeUserRolesNotFound, "user role with id: %s doesn't exist in org: %s", id, orgID)
 	}
 
-	return userRoles, nil
+	return userRole, nil
 }
 
 func (store *userRoleStore) CreateUserRoles(ctx context.Context, userRoles []*authtypes.UserRole) error {

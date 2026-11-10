@@ -1,4 +1,10 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import {
+	useCallback,
+	useMemo,
+	useRef,
+	useState,
+	type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -13,15 +19,23 @@ import Styles from './TooltipList.module.scss';
 // Fallback per-item height before Virtuoso reports the real total.
 const TOOLTIP_ITEM_HEIGHT = 38;
 const LIST_MAX_HEIGHT = 300;
+// Vertical padding (spacing-4 top + bottom) the SCSS applies to the scroll
+// viewport. Virtuoso's reported height covers only the items, so it must be
+// added back — otherwise the box is short by this amount, clipping the last
+// row and showing a scrollbar even when every row would fit.
+const LIST_VERTICAL_PADDING = 16;
 
 interface TooltipListProps {
 	id: string;
 	content: TooltipContentItem[];
+	/** Makes each row a button. */
+	onItemClick?: (index: number, event: ReactMouseEvent) => void;
 }
 
 export default function TooltipList({
 	id,
 	content,
+	onItemClick,
 }: TooltipListProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const isScrollEventTriggered = useRef(false);
@@ -30,13 +44,13 @@ export default function TooltipList({
 	// Use the measured height from Virtuoso when available; fall back to a
 	// per-item estimate on first render. Math.ceil prevents a 1 px
 	// subpixel rounding gap from triggering a spurious scrollbar.
-	const height = useMemo(
-		() =>
-			totalListHeight > 0
-				? Math.ceil(Math.min(totalListHeight, LIST_MAX_HEIGHT))
-				: Math.min(content.length * TOOLTIP_ITEM_HEIGHT, LIST_MAX_HEIGHT),
-		[totalListHeight, content.length],
-	);
+	const height = useMemo(() => {
+		const contentHeight =
+			totalListHeight > 0 ? totalListHeight : content.length * TOOLTIP_ITEM_HEIGHT;
+		return Math.ceil(
+			Math.min(contentHeight + LIST_VERTICAL_PADDING, LIST_MAX_HEIGHT),
+		);
+	}, [totalListHeight, content.length]);
 
 	const handleScroll = useCallback(() => {
 		if (!isScrollEventTriggered.current) {
@@ -57,9 +71,23 @@ export default function TooltipList({
 				onScroll={handleScroll}
 				style={{ height }}
 				totalListHeightChanged={setTotalListHeight}
-				itemContent={(_, item): JSX.Element => (
-					<TooltipItem item={item} isItemActive={item.isHighlighted === true} />
-				)}
+				itemContent={(index, item): JSX.Element => {
+					const row = (
+						<TooltipItem item={item} isItemActive={item.isHighlighted === true} />
+					);
+					return onItemClick ? (
+						<button
+							type="button"
+							className={Styles.itemButton}
+							data-testid="uplot-tooltip-item-button"
+							onClick={(event): void => onItemClick(index, event)}
+						>
+							{row}
+						</button>
+					) : (
+						row
+					);
+				}}
 			/>
 		</div>
 	);

@@ -1,6 +1,8 @@
 .create-alert-v2-footer {
 	position: fixed;
-	bottom: 0;
+	// Lifted above the bottom strip. Don't extend this pattern — new fixed-bottom
+	// UI belongs in the bounded layout, not in another offset here.
+	bottom: var(--bottom-strip-height, 0px);
 	left: 63px;
 	right: 0;
 	background-color: var(--l1-background);
@@ -28,4 +30,8 @@
 		border: 1px solid var(--l1-border);
 		color: var(--l2-foreground);
 	}
+}
+
+body.ai-assistant-panel-open .create-alert-v2-footer {
+	right: var(--ai-assistant-panel-width, 380px);
 }

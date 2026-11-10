@@ -37,7 +37,7 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 			ID:                 "CreateOrUpdateLLMPricingRules",
 			Tags:               []string{"llmpricingrules"},
 			Summary:            "Create or update pricing rules",
-			Description:        "Single write endpoint used by both the user and the Zeus sync job. Per-rule match is by id, then sourceId, then insert. Override rows (is_override=true) are fully preserved when the request does not provide isOverride; only synced_at is stamped.",
+			Description:        "Single write endpoint used by both the user and the Zeus sync job. Rules without isOverride are matched by sourceId and override rows (is_override=true) are skipped. Rules with isOverride are matched by id and inserted when new.",
 			Request:            new(llmpricingruletypes.UpdatableLLMPricingRules),
 			RequestContentType: "application/json",
 			SuccessStatusCode:  http.StatusNoContent,
@@ -46,6 +46,26 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 			SecuritySchemes:    newSecuritySchemes(types.RoleAdmin),
 		},
 	)).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/llm_pricing_rules/unmapped_models", handler.New(
+		provider.authzMiddleware.ViewAccess(provider.llmPricingRuleHandler.ListUnmappedModels),
+		handler.OpenAPIDef{
+			ID:                  "ListUnmappedLLMModels",
+			Tags:                []string{"llmpricingrules"},
+			Summary:             "List unmapped models",
+			Description:         "Returns models seen in the last hour of trace data (gen_ai.request.model) that no pricing rule pattern matches, so the user can add them to an existing rule or create a new one.",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new(llmpricingruletypes.GettableUnmappedModels),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		},
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 

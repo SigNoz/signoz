@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { SolidXCircle } from '@signozhq/icons';
-import { Button, Select, Spin } from 'antd';
+import { Button, Select, SelectProps, Spin } from 'antd';
 import useResourceAttribute, {
 	isResourceEmpty,
 } from 'hooks/useResourceAttribute';
@@ -14,12 +14,14 @@ import { SelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
-import { FeatureKeys } from '../../constants/features';
-import { useAppContext } from '../../providers/App/App';
 import QueryChip from './components/QueryChip';
 import { QueryChipItem, SearchContainer } from './styles';
 
 import './ResourceAttributesFilter.styles.scss';
+
+const renderValueTag: SelectProps['tagRender'] = ({ label }) => (
+	<QueryChipItem>{label}</QueryChipItem>
+);
 
 function ResourceAttributesFilter({
 	suffixIcon,
@@ -42,12 +44,7 @@ function ResourceAttributesFilter({
 		SelectOption<string, string>[]
 	>([]);
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
-	const resourceDeploymentKey = getResourceDeploymentKeys(dotMetricsEnabled);
+	const resourceDeploymentKey = getResourceDeploymentKeys();
 
 	const [selectedEnvironments, setSelectedEnvironments] = useState<string[]>([]);
 
@@ -73,21 +70,20 @@ function ResourceAttributesFilter({
 	}, [queries, resourceDeploymentKey]);
 
 	useEffect(() => {
-		getEnvironmentTagKeys(dotMetricsEnabled).then((tagKeys) => {
+		getEnvironmentTagKeys().then((tagKeys) => {
 			if (tagKeys && Array.isArray(tagKeys) && tagKeys.length > 0) {
-				getEnvironmentTagValues(dotMetricsEnabled).then((tagValues) => {
+				getEnvironmentTagValues().then((tagValues) => {
 					setEnvironments(tagValues);
 				});
 			}
 		});
-	}, [dotMetricsEnabled]);
+	}, []);
 
 	return (
 		<div className="resourceAttributesFilter-container">
 			<div className="environment-selector">
 				<Select
 					getPopupContainer={popupContainer}
-					key={selectedEnvironments.join('')}
 					showSearch
 					mode="multiple"
 					value={selectedEnvironments}
@@ -127,6 +123,7 @@ function ResourceAttributesFilter({
 						style={{ flex: 1 }}
 						options={optionsData.options}
 						mode={optionsData?.mode}
+						tagRender={renderValueTag}
 						data-testid="resource-attributes-filter"
 						onClick={handleFocus}
 						onBlur={handleBlur}

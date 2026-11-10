@@ -17,40 +17,139 @@ import (
 	"github.com/prometheus/alertmanager/config"
 )
 
-type (
-	// Receiver is the type for the receiver configuration.
-	Receiver = config.Receiver
-)
-
-// Creates a new receiver from a string. The input is initialized with the default values from the upstream alertmanager.
-// The only default value which is missed is `send_resolved` (as it is a bool) which if not set in the input will always be set to `false`.
-func NewReceiver(input string) (Receiver, error) {
-	receiver := Receiver{}
-	err := json.Unmarshal([]byte(input), &receiver)
-	if err != nil {
-		return Receiver{}, err
-	}
-
-	// We marshal and unmarshal the receiver to ensure that the receiver is
-	// initialized with defaults from the upstream alertmanager.
-	bytes, err := yaml.Marshal(receiver)
-	if err != nil {
-		return Receiver{}, err
-	}
-
-	receiverWithDefaults := Receiver{}
-	if err := yaml.Unmarshal(bytes, &receiverWithDefaults); err != nil {
-		return Receiver{}, err
-	}
-
-	if err := receiverWithDefaults.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
-		return Receiver{}, err
-	}
-
-	return receiverWithDefaults, nil
+// Receiver embeds upstream config.Receiver to support custom receivers
+// To add another native notifier, mirror GoogleChatConfigs here
+// and extend customReceiverConfigs in config.go.
+type Receiver struct {
+	*config.Receiver
+	GoogleChatConfigs []*GoogleChatReceiverConfig `json:"googlechat_configs,omitempty" yaml:"googlechat_configs,omitempty"`
+	// Shadows upstream's jira_configs so our custom notifier (rich ADF, deep-links,
+	// lifecycle comments) handles it instead of upstream's plain Jira notifier.
+	JiraConfigs []*JiraReceiverConfig `json:"jira_configs,omitempty" yaml:"jira_configs,omitempty"`
+	// JSM Ops (ex-Opsgenie alert API); delivered by reusing the Opsgenie notifier.
+	JSMOpsConfigs []*JSMOpsReceiverConfig `json:"jsmops_configs,omitempty" yaml:"jsmops_configs,omitempty"`
+	// Shadows upstream's incidentio_configs so our custom notifier (templater,
+	// group-key dedup, label metadata) handles it instead of upstream's.
+	IncidentIOConfigs []*IncidentIOReceiverConfig `json:"incidentio_configs,omitempty" yaml:"incidentio_configs,omitempty"`
+	// Shadows upstream's telegram_configs to carry a title alongside the message.
+	TelegramConfigs []*TelegramReceiverConfig `json:"telegram_configs,omitempty" yaml:"telegram_configs,omitempty"`
 }
 
-func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, templater Templater, lSet model.LabelSet, alert ...*Alert) error {
+// NewReceiver builds a Receiver from its JSON input, applying each notifier
+// config's per-config defaults via UnmarshalYAML.
+func NewReceiver(input string) (*Receiver, error) {
+	receiver := &Receiver{Receiver: &config.Receiver{}}
+	if err := json.Unmarshal([]byte(input), receiver); err != nil {
+		return nil, err
+	}
+
+	return newDefaultedReceiver(receiver)
+}
+
+func newDefaultedReceiver(receiver *Receiver) (*Receiver, error) {
+	withDefaults, err := defaultedBaseReceiver(receiver.Receiver)
+	if err != nil {
+		return nil, err
+	}
+	stripEmailTransport(withDefaults)
+	receiver.Receiver = withDefaults
+
+	// Extend this block when adding another native notifier type.
+	// defaultedNotifierConfig triggers each config's UnmarshalYAML, which applies
+	// defaults and validates (e.g. the Google Chat webhook URL).
+	for i, gc := range receiver.GoogleChatConfigs {
+		defaulted, err := defaultedNotifierConfig(gc)
+		if err != nil {
+			return nil, err
+		}
+		receiver.GoogleChatConfigs[i] = defaulted
+	}
+
+	for i, jc := range receiver.JiraConfigs {
+		defaulted, err := defaultedNotifierConfig(jc)
+		if err != nil {
+			return nil, err
+		}
+		receiver.JiraConfigs[i] = defaulted
+	}
+
+	for i, jc := range receiver.JSMOpsConfigs {
+		defaulted, err := defaultedNotifierConfig(jc)
+		if err != nil {
+			return nil, err
+		}
+		receiver.JSMOpsConfigs[i] = defaulted
+	}
+
+	for i, ic := range receiver.IncidentIOConfigs {
+		defaulted, err := defaultedNotifierConfig(ic)
+		if err != nil {
+			return nil, err
+		}
+		receiver.IncidentIOConfigs[i] = defaulted
+	}
+
+	for i, tc := range receiver.TelegramConfigs {
+		defaulted, err := defaultedNotifierConfig(tc)
+		if err != nil {
+			return nil, err
+		}
+		receiver.TelegramConfigs[i] = defaulted
+	}
+
+	return receiver, nil
+}
+
+func stripEmailTransport(base *config.Receiver) {
+	for _, ec := range base.EmailConfigs {
+		ec.From = ""
+		ec.Hello = ""
+		ec.Smarthost = config.HostPort{}
+		ec.AuthUsername = ""
+		ec.AuthPassword = ""
+		ec.AuthPasswordFile = ""
+		ec.AuthSecret = ""
+		ec.AuthSecretFile = ""
+		ec.AuthIdentity = ""
+		ec.RequireTLS = nil
+		ec.TLSConfig = nil
+		ec.ForceImplicitTLS = nil
+	}
+}
+
+func defaultedBaseReceiver(base *config.Receiver) (*config.Receiver, error) {
+	bytes, err := yaml.Marshal(base)
+	if err != nil {
+		return nil, err
+	}
+
+	withDefaults := &config.Receiver{}
+	if err := yaml.Unmarshal(bytes, withDefaults); err != nil {
+		return nil, err
+	}
+
+	if err := withDefaults.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
+		return nil, err
+	}
+
+	return withDefaults, nil
+}
+
+// defaultedNotifierConfig triggers T.UnmarshalYAML via a yaml round-trip,
+// installing T's DefaultXxxConfig over user values.
+func defaultedNotifierConfig[T any](cfg *T) (*T, error) {
+	bytes, err := yaml.Marshal(cfg)
+	if err != nil {
+		return nil, err
+	}
+	out := new(T)
+	if err := yaml.Unmarshal(bytes, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func TestReceiver(ctx context.Context, receiver *Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, templater Templater, lSet model.LabelSet, alert ...*Alert) error {
 	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, lSet.Fingerprint(), time.Now().Unix()))
 	ctx = notify.WithGroupLabels(ctx, lSet)
 	ctx = notify.WithReceiverName(ctx, receiver.Name)
@@ -67,12 +166,17 @@ func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFu
 		return err
 	}
 
-	receiver, err = testConfig.GetReceiver(receiver.Name)
+	resolvedConfig, err := testConfig.Resolved()
 	if err != nil {
 		return err
 	}
 
-	integrations, err := receiverIntegrationsFunc(receiver, tmpl, logger, templater)
+	defaultedReceiver, err := resolvedConfig.GetReceiver(receiver.Name)
+	if err != nil {
+		return err
+	}
+
+	integrations, err := receiverIntegrationsFunc(defaultedReceiver, tmpl, logger, templater)
 	if err != nil {
 		return err
 	}

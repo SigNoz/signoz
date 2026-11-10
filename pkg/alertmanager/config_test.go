@@ -3,6 +3,8 @@ package alertmanager
 import (
 	"context"
 	"net/url"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,7 +16,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const prefix = "SIGNOZ_"
+
+// clearSignozEnv unsets all existing SIGNOZ_* env vars for the duration of the test.
+func clearSignozEnv(t *testing.T) {
+	t.Helper()
+	for _, kv := range os.Environ() {
+		if strings.HasPrefix(kv, prefix) {
+			key := strings.SplitN(kv, "=", 2)[0]
+			orig, _ := os.LookupEnv(key)
+			_ = os.Unsetenv(key)
+			t.Cleanup(func() { _ = os.Setenv(key, orig) })
+		}
+	}
+}
+
 func TestNewWithEnvProvider(t *testing.T) {
+	clearSignozEnv(t)
 	t.Setenv("SIGNOZ_ALERTMANAGER_PROVIDER", "signoz")
 	t.Setenv("SIGNOZ_ALERTMANAGER_LEGACY_API__URL", "http://localhost:9093/api")
 	t.Setenv("SIGNOZ_ALERTMANAGER_SIGNOZ_ROUTE_REPEAT__INTERVAL", "5m")

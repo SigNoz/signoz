@@ -1,13 +1,3 @@
-"""HTTP seeder — single entrypoint for e2e/integration telemetry.
-
-POST /telemetry/{metrics,logs,traces} insert into ClickHouse via
-fixtures.{metrics,logs,traces}. DELETE truncates the signal tables.
-
-Parallel-safe: every seeded row is tagged `seeder=true`. Tests share
-the seeded baseline; per-test mutations live in their own dashboards.
-Only test_teardown should call DELETE — workers must finish first.
-"""
-
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -37,6 +27,8 @@ CH_USER = os.environ["CH_USER"]
 CH_PASSWORD = os.environ["CH_PASSWORD"]
 CH_CLUSTER = os.environ["CH_CLUSTER"]
 
+# Every seeded row carries this tag so parallel tests can share the seeded
+# baseline; per-test mutations live in their own dashboards.
 SEEDER_MARKER = {"seeder": "true"}
 
 
@@ -96,6 +88,8 @@ def post_traces(payload: list[dict[str, Any]]) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+# The DELETE endpoints truncate the signal tables. Only test_teardown should
+# call them — workers must finish first.
 @app.delete("/telemetry/traces", status_code=status.HTTP_204_NO_CONTENT)
 def delete_traces() -> Response:
     try:

@@ -3,8 +3,6 @@ import {
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 
-import { ResetIdStartAndEnd, SetSearchQueryString } from './logs';
-
 export const UPDATE_TIME_INTERVAL = 'UPDATE_TIME_INTERVAL';
 export const GLOBAL_TIME_LOADING_START = 'GLOBAL_TIME_LOADING_START';
 export const UPDATE_AUTO_REFRESH_DISABLED = 'UPDATE_AUTO_REFRESH_DISABLED';
@@ -42,6 +40,4 @@ export type GlobalTimeAction =
 	| UpdateTimeInterval
 	| GlobalTimeLoading
 	| UpdateAutoRefreshDisabled
-	| UpdateAutoRefreshInterval
-	| ResetIdStartAndEnd
-	| SetSearchQueryString;
+	| UpdateAutoRefreshInterval;

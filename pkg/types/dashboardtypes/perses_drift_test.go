@@ -6,12 +6,12 @@ package dashboardtypes
 
 import (
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
 
-	v1 "github.com/perses/perses/pkg/model/api/v1"
-	"github.com/perses/perses/pkg/model/api/v1/dashboard"
+	"github.com/perses/spec/go/dashboard"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -21,21 +21,27 @@ func TestDashboardSpecMatchesPerses(t *testing.T) {
 		name   string
 		ours   reflect.Type
 		perses reflect.Type
+		// omit lists json fields intentionally dropped from our type that Perses
+		// still has, so their absence is not reported as drift.
+		omit []string
 	}{
-		{"DashboardSpec", typeOf[DashboardSpec](), typeOf[v1.DashboardSpec]()},
-		{"Panel", typeOf[Panel](), typeOf[v1.Panel]()},
-		{"PanelSpec", typeOf[PanelSpec](), typeOf[v1.PanelSpec]()},
-		{"Query", typeOf[Query](), typeOf[v1.Query]()},
-		{"QuerySpec", typeOf[QuerySpec](), typeOf[v1.QuerySpec]()},
-		{"DatasourceSpec", typeOf[DatasourceSpec](), typeOf[v1.DatasourceSpec]()},
-		{"Variable", typeOf[Variable](), typeOf[dashboard.Variable]()},
-		{"ListVariableSpec", typeOf[ListVariableSpec](), typeOf[dashboard.ListVariableSpec]()},
-		{"Layout", typeOf[Layout](), typeOf[dashboard.Layout]()},
+		{name: "DashboardSpec", ours: typeOf[DashboardSpec](), perses: typeOf[dashboard.Spec](), omit: []string{"datasources"}},
+		{name: "Panel", ours: typeOf[Panel](), perses: typeOf[dashboard.Panel]()},
+		{name: "PanelSpec", ours: typeOf[PanelSpec](), perses: typeOf[dashboard.PanelSpec]()},
+		{name: "Query", ours: typeOf[Query](), perses: typeOf[dashboard.Query]()},
+		{name: "QuerySpec", ours: typeOf[QuerySpec](), perses: typeOf[dashboard.QuerySpec]()},
+		{name: "Variable", ours: typeOf[Variable](), perses: typeOf[dashboard.Variable]()},
+		{name: "ListVariableSpec", ours: typeOf[ListVariableSpec](), perses: typeOf[dashboard.ListVariableSpec]()},
+		{name: "TextVariableSpec", ours: typeOf[TextVariableSpec](), perses: typeOf[dashboard.TextVariableSpec]()},
+		{name: "Layout", ours: typeOf[Layout](), perses: typeOf[dashboard.Layout]()},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			missing, extra := drift(c.ours, c.perses)
+			for _, f := range c.omit {
+				missing = slices.DeleteFunc(missing, func(m string) bool { return m == f })
+			}
 
 			assert.Empty(t, missing,
 				"DashboardSpec (%s) is missing json fields present on Perses %s — upstream likely added or renamed a field",

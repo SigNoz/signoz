@@ -21,6 +21,7 @@ import AllAttributes from './AllAttributes';
 import DashboardsAndAlertsPopover from './DashboardsAndAlertsPopover';
 import Highlights from './Highlights';
 import Metadata from './Metadata';
+import VolumeControlSection from '../VolumeControl/components/VolumeControlSection/VolumeControlSection';
 import { MetricDetailsProps } from './types';
 import { getMetricDetailsQuery } from './utils';
 
@@ -85,13 +86,12 @@ function MetricDetails({
 				undefined,
 				undefined,
 				metadata?.isMonotonic,
+				metadata?.temporality,
 			);
 			handleExplorerTabChange(
 				PANEL_TYPES.TIME_SERIES,
 				{
 					query: compositeQuery,
-					name: metricName,
-					id: metricName,
 				},
 				ROUTES.METRICS_EXPLORER_EXPLORER,
 				true,
@@ -107,6 +107,7 @@ function MetricDetails({
 		handleExplorerTabChange,
 		metadata?.type,
 		metadata?.isMonotonic,
+		metadata?.temporality,
 	]);
 
 	useEffect(() => {
@@ -138,7 +139,7 @@ function MetricDetails({
 			width="60%"
 			title={
 				<div className="metric-details-header">
-					<div className="metric-details-title">
+					<div className="metric-details-title" data-testid="metric-details-title">
 						<Divider type="vertical" />
 						<Typography.Text>{metricName}</Typography.Text>
 					</div>
@@ -190,10 +191,12 @@ function MetricDetails({
 					isLoadingMetricMetadata={isLoadingMetricMetadata}
 					refetchMetricMetadata={refetchMetricMetadata}
 				/>
+				<VolumeControlSection metricName={metricName} />
 				<AllAttributes
 					metricName={metricName}
 					metricType={metadata?.type}
 					isMonotonic={metadata?.isMonotonic}
+					temporality={metadata?.temporality}
 					minTime={minTime}
 					maxTime={maxTime}
 				/>

@@ -43,7 +43,7 @@ type PostableTag struct {
 	Value string `json:"value" required:"true"`
 }
 
-type GettableTag = PostableTag
+type GettableTag PostableTag
 
 func NewGettableTagFromTag(tag *Tag) *GettableTag {
 	return &GettableTag{Key: tag.Key, Value: tag.Value}

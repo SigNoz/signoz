@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/perses/perses/pkg/model/api/v1/common"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -21,6 +24,19 @@ const (
 	MaxTagsPerDashboard    = 10
 	dashboardNameSuffixLen = 8
 )
+
+// SystemDashboardNamePrefix is reserved for dashboards SigNoz ships and owns. Generated
+// names never contain consecutive hyphens, so only a typed name can carry it — create rejects that.
+const SystemDashboardNamePrefix = "signoz---"
+
+const (
+	dashboardIconPathPrefix = "/assets/Icons/"
+	dashboardLogoPathPrefix = "/assets/Logos/"
+)
+
+// base64ImageDataURIRegex matches the only free-form image value we allow — a
+// base64 image data URI. Mirrors the frontend resolver's allow-list.
+var base64ImageDataURIRegex = regexp.MustCompile(`^data:image/(?:png|jpe?g|gif|webp|avif|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$`)
 
 type DSLKey string
 
@@ -31,7 +47,7 @@ const (
 	DSLKeyUpdatedAt   DSLKey = "updated_at"
 	DSLKeyCreatedBy   DSLKey = "created_by"
 	DSLKeyLocked      DSLKey = "locked"
-	DSLKeyPublic      DSLKey = "public"
+	DSLKeySource      DSLKey = "source"
 )
 
 // reservedDSLKeys are dashboard column-level filter names in the list-query DSL.
@@ -44,7 +60,7 @@ var reservedDSLKeys = map[DSLKey]struct{}{
 	DSLKeyUpdatedAt:   {},
 	DSLKeyCreatedBy:   {},
 	DSLKeyLocked:      {},
-	DSLKeyPublic:      {},
+	DSLKeySource:      {},
 }
 
 type DashboardV2 struct {
@@ -52,19 +68,152 @@ type DashboardV2 struct {
 	types.TimeAuditable
 	types.UserAuditable
 
-	OrgID  valuer.UUID `json:"orgId" required:"true"`
-	Locked bool        `json:"locked" required:"true"`
-	Source Source      `json:"source" required:"true"`
+	OrgID  valuer.UUID `json:"orgId" required:"true" description:"The organization that owns the dashboard."`
+	Locked bool        `json:"locked" required:"true" description:"Whether the dashboard is locked. A locked dashboard rejects update and patch until it is unlocked."`
+	Source Source      `json:"source" required:"true" description:"Where the dashboard came from: user, integration or system. Only user dashboards can be modified."`
 
 	DashboardV2MetadataBase
-	Name string          `json:"name" required:"true"`
-	Tags []*tagtypes.Tag `json:"tags" required:"true"`
-	Spec DashboardSpec   `json:"spec" required:"true"`
+	Name string          `json:"name" required:"true" description:"The dashboard's unique, immutable name, a DNS-1123 label."`
+	Tags []*tagtypes.Tag `json:"tags" required:"true" description:"The key/value tags attached to the dashboard, for example key team with value payments."`
+	Spec DashboardSpec   `json:"spec" required:"true" description:"The dashboard content: display, variables, panels, layouts and links."`
+}
+
+func (d *DashboardV2) ErrIfNotMutable() error {
+	if d.Source != SourceUser {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be modified", d.Source)
+	}
+	return nil
+}
+
+func (d *DashboardV2) ErrIfNotUpdatable() error {
+	if err := d.ErrIfNotMutable(); err != nil {
+		return err
+	}
+	if d.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot update a locked dashboard, please unlock the dashboard to update")
+	}
+	return nil
+}
+
+func (d *DashboardV2) ErrIfNotPublishable() error {
+	if d.Source == SourceSystem {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be made public")
+	}
+	return d.ErrIfNotMutable()
+}
+
+func (d *DashboardV2) Update(updatable UpdatableDashboardV2, updatedBy string, resolvedTags []*tagtypes.Tag) error {
+	if err := d.ErrIfNotUpdatable(); err != nil {
+		return err
+	}
+	return d.UpdateUnsafe(updatable, updatedBy, resolvedTags)
+}
+
+// UpdateUnsafe applies the update without the source/lock gate. Intended for internal system callers.
+func (d *DashboardV2) UpdateUnsafe(updatable UpdatableDashboardV2, updatedBy string, resolvedTags []*tagtypes.Tag) error {
+	if updatable.Name != d.Name {
+		return errors.NewInvalidInputf(ErrCodeDashboardImmutable, "name is immutable; cannot change from %q to %q", d.Name, updatable.Name)
+	}
+	d.DashboardV2MetadataBase = updatable.DashboardV2MetadataBase
+	d.Tags = resolvedTags
+	d.Spec = updatable.Spec
+	d.UpdatedBy = updatedBy
+	d.UpdatedAt = time.Now()
+	return nil
+}
+
+func (d *DashboardV2) ErrIfNotLockable(isAdmin bool, updatedBy string) error {
+	if d.Source == SourceIntegration {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "integration dashboards cannot be locked or unlocked")
+	}
+	if d.Source == SourceSystem {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "system dashboards cannot be locked or unlocked")
+	}
+	if d.CreatedBy != updatedBy && !isAdmin {
+		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "you are not authorized to lock/unlock this dashboard")
+	}
+	return nil
+}
+
+func (d *DashboardV2) LockUnlock(lock bool, isAdmin bool, updatedBy string) error {
+	if err := d.ErrIfNotLockable(isAdmin, updatedBy); err != nil {
+		return err
+	}
+	d.Locked = lock
+	d.UpdatedBy = updatedBy
+	d.UpdatedAt = time.Now()
+	return nil
+}
+
+func (d *DashboardV2) ErrIfNotSystem() error {
+	if d.Source != SourceSystem {
+		return errors.Newf(errors.TypeNotFound, ErrCodeDashboardNotFound, "dashboard %q is not a system dashboard", d.Name)
+	}
+	return nil
+}
+
+func (d *DashboardV2) ErrIfNotClonable() error {
+	if !d.Source.isClonable() {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardImmutable, "%s dashboards cannot be cloned", d.Source)
+	}
+	return nil
+}
+
+func (d DashboardV2) ToPostableForCloning() PostableDashboardV2 {
+	spec := d.Spec
+	spec.Display.Name = nextCloneDisplayName(spec.Display.Name)
+	return PostableDashboardV2{
+		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
+		GenerateName:            true,
+		Tags:                    tagtypes.NewPostableTagsFromTags(d.Tags),
+		Spec:                    spec,
+	}
+}
+
+// cloneCopySuffixRegex matches a " - Copy" or " - Copy (n)" suffix on a display name.
+var cloneCopySuffixRegex = regexp.MustCompile(`^(.*) - Copy(?: \((\d+)\))?$`)
+
+// nextCloneDisplayName appends " - Copy" to a clone's display name, bumping an
+// existing " - Copy (n)" counter, then truncates the base to fit MaxDisplayNameLen.
+func nextCloneDisplayName(name string) string {
+	base, count := name, 0
+	if m := cloneCopySuffixRegex.FindStringSubmatch(name); m != nil {
+		base = m[1]
+		count = 1 // bare " - Copy"
+		if m[2] != "" {
+			count, _ = strconv.Atoi(m[2])
+		}
+	}
+
+	suffix := " - Copy"
+	if count++; count > 1 {
+		suffix = fmt.Sprintf(" - Copy (%d)", count)
+	}
+
+	limit := max(MaxDisplayNameLen-utf8.RuneCountInString(suffix), 0)
+	if runes := []rune(base); len(runes) > limit {
+		base = strings.TrimRight(string(runes[:limit]), " ")
+	}
+	return base + suffix
 }
 
 type DashboardV2MetadataBase struct {
-	SchemaVersion string `json:"schemaVersion" required:"true"`
-	Image         string `json:"image,omitempty"`
+	SchemaVersion string `json:"schemaVersion" required:"true" pattern:"^v6$" description:"The dashboard schema version. Must be v6."`
+	Image         string `json:"image" description:"Icon or logo shown in the dashboard list: the path of an icon or logo bundled with the UI under /assets/Icons/ or /assets/Logos/ (only the prefix is validated), or a base64 image data URI for png, jpeg, gif, webp, avif or svg. Empty for none."`
+}
+
+func (m DashboardV2MetadataBase) validateImage() error {
+	if m.Image == "" {
+		return nil
+	}
+	if (strings.HasPrefix(m.Image, dashboardIconPathPrefix) && len(m.Image) > len(dashboardIconPathPrefix)) ||
+		(strings.HasPrefix(m.Image, dashboardLogoPathPrefix) && len(m.Image) > len(dashboardLogoPathPrefix)) {
+		return nil
+	}
+	if base64ImageDataURIRegex.MatchString(m.Image) {
+		return nil
+	}
+	return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "image must be an %q or %q path, or a base64 image data URI", dashboardIconPathPrefix, dashboardLogoPathPrefix)
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -73,18 +222,26 @@ type DashboardV2MetadataBase struct {
 
 type PostableDashboardV2 struct {
 	DashboardV2MetadataBase
-	Name         string                 `json:"name,omitempty"`
-	GenerateName bool                   `json:"generateName,omitempty"`
-	Tags         []tagtypes.PostableTag `json:"tags" required:"true"`
-	Spec         DashboardSpec          `json:"spec" required:"true"`
+	Name         string                 `json:"name" description:"The dashboard's unique name, a DNS-1123 label (lowercase letters, digits and hyphens, at most 63 characters). Immutable after creation. Must be empty when generateName is true."`
+	GenerateName bool                   `json:"generateName" description:"When true the server derives name from spec.display.name plus a random suffix. Requires an empty name and a non-empty spec.display.name."`
+	Tags         []tagtypes.PostableTag `json:"tags" required:"true" maxItems:"10" description:"Up to 10 key/value tags, for example key team with value payments. Keys must not be one of the reserved list filter keys: name, description, created_at, updated_at, created_by, locked, source. Use [] for none."`
+	Spec         DashboardSpec          `json:"spec" required:"true" description:"The dashboard content: display, variables, panels, layouts and links."`
 }
 
-func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy string, source Source) *DashboardV2 {
+func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy string, source Source) (*DashboardV2, error) {
 	now := time.Now()
 
 	name := postable.Name
 	if postable.GenerateName {
 		name = generateDashboardName(postable.Spec.Display.Name)
+	}
+	// Checked on the final name, here rather than in validateName, because only
+	// the constructor knows the source.
+	if source != SourceSystem && strings.HasPrefix(name, SystemDashboardNamePrefix) {
+		return nil, errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: the %q prefix is reserved for system dashboards", name, SystemDashboardNamePrefix)
+	}
+	if source == SourceSystem && !strings.HasPrefix(name, SystemDashboardNamePrefix) {
+		return nil, errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name %q is invalid: system dashboard names must start with the %q prefix", name, SystemDashboardNamePrefix)
 	}
 
 	return &DashboardV2{
@@ -98,7 +255,7 @@ func (postable PostableDashboardV2) NewDashboardV2(orgID valuer.UUID, createdBy 
 		Name:                    name,
 		Tags:                    tagtypes.NewTagsFromPostableTags(orgID, coretypes.KindDashboard, postable.Tags),
 		Spec:                    postable.Spec,
-	}
+	}, nil
 }
 
 func (p *PostableDashboardV2) UnmarshalJSON(data []byte) error {
@@ -110,9 +267,6 @@ func (p *PostableDashboardV2) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
 	}
 	*p = PostableDashboardV2(tmp)
-	if p.Spec.Display == nil {
-		p.Spec.Display = &common.Display{}
-	}
 	if !p.GenerateName && p.Spec.Display.Name == "" {
 		p.Spec.Display.Name = p.Name
 	}
@@ -126,7 +280,10 @@ func (p *PostableDashboardV2) Validate() error {
 	if err := p.validateName(); err != nil {
 		return err
 	}
-	if err := p.validateTags(); err != nil {
+	if err := validateDashboardTags(p.Tags); err != nil {
+		return err
+	}
+	if err := p.validateImage(); err != nil {
 		return err
 	}
 	return p.Spec.Validate()
@@ -139,7 +296,7 @@ func (p *PostableDashboardV2) validateName() error {
 	if p.Name != "" {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "name must be empty when generateName is true, got %q", p.Name)
 	}
-	if p.Spec.Display == nil || p.Spec.Display.Name == "" {
+	if p.Spec.Display.Name == "" {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.display.name is required when generateName is true")
 	}
 	return nil
@@ -193,11 +350,11 @@ func generateDashboardName(displayName string) string {
 	return prefix + "-" + string(suffix)
 }
 
-func (p *PostableDashboardV2) validateTags() error {
-	if len(p.Tags) > MaxTagsPerDashboard {
+func validateDashboardTags(tags []tagtypes.PostableTag) error {
+	if len(tags) > MaxTagsPerDashboard {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "a dashboard can have at most %d tags", MaxTagsPerDashboard)
 	}
-	for _, tag := range p.Tags {
+	for _, tag := range tags {
 		if _, reserved := reservedDSLKeys[DSLKey(strings.ToLower(strings.TrimSpace(tag.Key)))]; reserved {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "tag key %q is reserved", tag.Key)
 		}
@@ -214,19 +371,49 @@ type GettableDashboardV2 struct {
 	types.TimeAuditable
 	types.UserAuditable
 
-	OrgID  valuer.UUID `json:"orgId" required:"true"`
-	Locked bool        `json:"locked" required:"true"`
-	Source Source      `json:"source" required:"true"`
+	OrgID  valuer.UUID `json:"orgId" required:"true" description:"The organization that owns the dashboard."`
+	Locked bool        `json:"locked" required:"true" description:"Whether the dashboard is locked. A locked dashboard rejects update and patch until it is unlocked."`
+	Source Source      `json:"source" required:"true" description:"Where the dashboard came from: user, integration or system. Only user dashboards can be modified."`
 
 	DashboardV2MetadataBase
-	Name string                  `json:"name" required:"true"`
-	Tags []*tagtypes.GettableTag `json:"tags" required:"true"`
-	Spec DashboardSpec           `json:"spec" required:"true"`
+	Name string                  `json:"name" required:"true" description:"The dashboard's unique, immutable name, a DNS-1123 label."`
+	Tags []*tagtypes.GettableTag `json:"tags" required:"true" description:"The key/value tags attached to the dashboard, for example key team with value payments."`
+	Spec DashboardSpec           `json:"spec" required:"true" description:"The dashboard content: display, variables, panels, layouts and links."`
 }
 
 func (d DashboardV2) ToGettableDashboardV2() GettableDashboardV2 {
 	return GettableDashboardV2{
 		Identifiable:            d.Identifiable,
+		TimeAuditable:           d.TimeAuditable,
+		UserAuditable:           d.UserAuditable,
+		OrgID:                   d.OrgID,
+		Locked:                  d.Locked,
+		Source:                  d.Source,
+		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
+		Name:                    d.Name,
+		Tags:                    tagtypes.NewGettableTagsFromTags(d.Tags),
+		Spec:                    d.Spec,
+	}
+}
+
+// GettableSystemDashboard is the system-dashboard endpoint's response. System
+// dashboards are addressed by their stable definition name, so it carries no id.
+type GettableSystemDashboard struct {
+	types.TimeAuditable
+	types.UserAuditable
+
+	OrgID  valuer.UUID `json:"orgId" required:"true" description:"The organization that owns the dashboard."`
+	Locked bool        `json:"locked" required:"true" description:"Whether the dashboard is locked. A locked dashboard rejects update and patch until it is unlocked."`
+	Source Source      `json:"source" required:"true" description:"Where the dashboard came from: user, integration or system. Only user dashboards can be modified."`
+
+	DashboardV2MetadataBase
+	Name string                  `json:"name" required:"true" description:"The dashboard's unique, immutable name, a DNS-1123 label."`
+	Tags []*tagtypes.GettableTag `json:"tags" required:"true" description:"The key/value tags attached to the dashboard, for example key team with value payments."`
+	Spec DashboardSpec           `json:"spec" required:"true" description:"The dashboard content: display, variables, panels, layouts and links."`
+}
+
+func (d DashboardV2) ToGettableSystemDashboard() GettableSystemDashboard {
+	return GettableSystemDashboard{
 		TimeAuditable:           d.TimeAuditable,
 		UserAuditable:           d.UserAuditable,
 		OrgID:                   d.OrgID,
@@ -262,6 +449,57 @@ func (s StorableDashboardV2Data) toStorableDashboardData() (StorableDashboardDat
 }
 
 type StorableDashboardV2Metadata = DashboardV2MetadataBase
+
+// ════════════════════════════════════════════════════════════════════════
+// Updatable
+// ════════════════════════════════════════════════════════════════════════
+
+type UpdatableDashboardV2 struct {
+	DashboardV2MetadataBase
+	Name string                 `json:"name" required:"true" description:"The dashboard's current name. The name is immutable, so a different value is rejected."`
+	Tags []tagtypes.PostableTag `json:"tags" required:"true" maxItems:"10" description:"The full replacement tag set, up to 10 key/value tags, for example key team with value payments. Keys must not be one of the reserved list filter keys: name, description, created_at, updated_at, created_by, locked, source."`
+	Spec DashboardSpec          `json:"spec" required:"true" description:"The full replacement dashboard content: display, variables, panels, layouts and links."`
+}
+
+func (u *UpdatableDashboardV2) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	type alias UpdatableDashboardV2
+	var tmp alias
+	if err := dec.Decode(&tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s", err.Error())
+	}
+	*u = UpdatableDashboardV2(tmp)
+	if u.Spec.Display.Name == "" {
+		u.Spec.Display.Name = u.Name
+	}
+	return u.Validate()
+}
+
+func (u *UpdatableDashboardV2) Validate() error {
+	if u.SchemaVersion != SchemaVersion {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "schemaVersion must be %q, got %q", SchemaVersion, u.SchemaVersion)
+	}
+	if err := validateDashboardName(u.Name); err != nil {
+		return err
+	}
+	if err := validateDashboardTags(u.Tags); err != nil {
+		return err
+	}
+	if err := u.validateImage(); err != nil {
+		return err
+	}
+	return u.Spec.Validate()
+}
+
+func (d DashboardV2) toUpdatableDashboardV2() UpdatableDashboardV2 {
+	return UpdatableDashboardV2{
+		DashboardV2MetadataBase: d.DashboardV2MetadataBase,
+		Name:                    d.Name,
+		Tags:                    tagtypes.NewPostableTagsFromTags(d.Tags),
+		Spec:                    d.Spec,
+	}
+}
 
 // ════════════════════════════════════════════════════════════════════════
 // Convertors

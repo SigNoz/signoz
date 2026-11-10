@@ -3,7 +3,7 @@ import { Badge } from '@signozhq/ui/badge';
 import ExpandableValue from 'periscope/components/ExpandableValue';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import styles from './SpanDetailsPanel.module.scss';
+import styles from './SpanSummary.module.scss';
 import { TraceIdField } from './TraceIdField';
 
 interface HighlightedOption {
@@ -18,9 +18,16 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		label: 'SERVICE',
 		render: (span): ReactNode | null =>
 			span['service.name'] ? (
-				<Badge color="vanilla">
+				<Badge
+					textTransform="none"
+					variant="solid"
+					color="secondary"
+					maxWidth="100%"
+				>
 					<span className={styles.serviceDot} />
-					{span['service.name']}
+					<span className={styles.badgeEllipsisText} title={span['service.name']}>
+						{span['service.name']}
+					</span>
 				</Badge>
 			) : null,
 	},
@@ -29,7 +36,9 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		label: 'STATUS CODE',
 		render: (span): ReactNode | null =>
 			span.status_code_string ? (
-				<Badge color="vanilla">{span.status_code_string}</Badge>
+				<Badge textTransform="none" variant="solid" color="secondary">
+					{span.status_code_string}
+				</Badge>
 			) : null,
 	},
 	{
@@ -42,7 +51,11 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		key: 'spanKind',
 		label: 'SPAN KIND',
 		render: (span): ReactNode | null =>
-			span.kind_string ? <Badge color="vanilla">{span.kind_string}</Badge> : null,
+			span.kind_string ? (
+				<Badge textTransform="none" variant="solid" color="secondary">
+					{span.kind_string}
+				</Badge>
+			) : null,
 	},
 	{
 		key: 'statusMessage',
@@ -51,11 +64,12 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 			span.status_message ? (
 				<ExpandableValue value={span.status_message} title="Status message">
 					<Badge
-						color="vanilla"
-						textEllipsis="end"
-						className={styles.statusMessageBadge}
+						textTransform="none"
+						variant="solid"
+						color="secondary"
+						maxWidth="100%"
 					>
-						{span.status_message}
+						<span className={styles.badgeEllipsisText}>{span.status_message}</span>
 					</Badge>
 				</ExpandableValue>
 			) : null,

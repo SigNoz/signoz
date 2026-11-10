@@ -6,14 +6,11 @@ import { userEvent } from 'tests/test-utils';
 
 import AlertNotFound from '../AlertNotFound';
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-	},
+jest.mock('lib/router/navigation', () => ({
+	navigate: jest.fn(),
 }));
 
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 
 const mockSafeNavigate = jest.fn();
 const useGetTenantLicenseSpy = jest.spyOn(
@@ -82,7 +79,7 @@ describe('AlertNotFound', () => {
 
 		render(<AlertNotFound isTestAlert={false} />);
 		await user.click(screen.getByText('Contact Support'));
-		expect(history.push).toHaveBeenCalledWith('/support');
+		expect(navigate).toHaveBeenCalledWith('/support');
 	});
 
 	it('should navigate to the support page for self-hosted users when the contact support button is clicked', async () => {

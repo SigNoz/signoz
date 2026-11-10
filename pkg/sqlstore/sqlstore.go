@@ -114,9 +114,16 @@ type SQLFormatter interface {
 	// JSONKeys return extracted key from json as well as alias to be used for select and where clause
 	JSONKeys(column, path, alias string) ([]byte, []byte)
 
+	// JSONExtractMapValue extracts one key's value from a JSON object field; dots in the key are not path nesting.
+	JSONExtractMapValue(column, mapField, key string) []byte
+
 	// TextToJsonColumn converts a text column to JSON type
 	TextToJsonColumn(column string) []byte
 
 	// LowerExpression wraps any SQL expression with lower() function for case-insensitive operations
 	LowerExpression(expression string) []byte
+
+	// EscapeLikePattern escapes LIKE wildcards (`%`, `_`, and the escape char `\`)
+	// in a value so it matches literally. Pair the pattern with `ESCAPE '\'`.
+	EscapeLikePattern(value string) string
 }

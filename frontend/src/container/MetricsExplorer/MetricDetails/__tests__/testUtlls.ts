@@ -2,7 +2,7 @@ import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import {
 	GetMetricAlerts200,
 	GetMetricAttributes200,
-	GetMetricDashboards200,
+	GetMetricDashboardsV2200,
 	GetMetricHighlights200,
 	GetMetricMetadata200,
 	MetrictypesTemporalityDTO,
@@ -40,14 +40,14 @@ export function getMockMetricHighlightsData(
 export const MOCK_DASHBOARD_1 = {
 	dashboardName: 'Dashboard 1',
 	dashboardId: '1',
-	widgetId: '1',
-	widgetName: 'Widget 1',
+	panelId: '1',
+	panelName: 'Panel 1',
 };
 export const MOCK_DASHBOARD_2 = {
 	dashboardName: 'Dashboard 2',
 	dashboardId: '2',
-	widgetId: '2',
-	widgetName: 'Widget 2',
+	panelId: '2',
+	panelName: 'Panel 2',
 };
 export const MOCK_ALERT_1 = {
 	alertName: 'Alert 1',
@@ -59,7 +59,7 @@ export const MOCK_ALERT_2 = {
 };
 
 export function getMockDashboardsData(
-	overrides?: Partial<GetMetricDashboards200>,
+	overrides?: Partial<GetMetricDashboardsV2200>,
 	{
 		isLoading = false,
 		isError = false,
@@ -67,7 +67,7 @@ export function getMockDashboardsData(
 		isLoading?: boolean;
 		isError?: boolean;
 	} = {},
-): ReturnType<typeof metricsExplorerHooks.useGetMetricDashboards> {
+): ReturnType<typeof metricsExplorerHooks.useGetMetricDashboardsV2> {
 	return {
 		data: {
 			data: {
@@ -79,7 +79,7 @@ export function getMockDashboardsData(
 
 		isLoading,
 		isError,
-	} as ReturnType<typeof metricsExplorerHooks.useGetMetricDashboards>;
+	} as ReturnType<typeof metricsExplorerHooks.useGetMetricDashboardsV2>;
 }
 
 export function getMockAlertsData(

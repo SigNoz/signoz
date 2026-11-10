@@ -8,16 +8,17 @@ import { Tabs } from '@signozhq/ui/tabs';
 import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
-	getListServicesMetadataQueryKey,
-	invalidateGetService,
-	invalidateListServicesMetadata,
+	getListAccountServicesMetadataQueryKey,
+	invalidateGetAccountService,
+	invalidateListAccountServicesMetadata,
+	useGetAccountService,
 	useGetService,
 	useUpdateService,
 } from 'api/generated/services/cloudintegration';
 import {
 	CloudintegrationtypesServiceConfigDTO,
 	CloudintegrationtypesServiceDTO,
-	ListServicesMetadata200,
+	ListAccountServicesMetadata200,
 } from 'api/generated/services/sigNoz.schemas';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
@@ -45,14 +46,34 @@ const EMPTY_FORM_VALUES: ServiceConfigFormValues = {
 	s3BucketsByRegion: {},
 };
 
+const GCP_METRICS_INFO_TOOLTIP =
+	'These are suggested metrics for your OpenTelemetry Collector Configuration. The metrics you actually receive may vary based on the metrics listed in your collector config.';
+
+function getIntegrationServiceConfig(
+	type: IntegrationType,
+	serviceDetailsData?: ServiceDetailsData,
+):
+	| { logs?: { enabled?: boolean }; metrics?: { enabled?: boolean } }
+	| undefined {
+	const config = serviceDetailsData?.cloudIntegrationService?.config;
+
+	if (type === IntegrationType.AWS_SERVICES) {
+		return config?.aws;
+	}
+	if (type === IntegrationType.GCP_SERVICES) {
+		return config?.gcp;
+	}
+	return config?.azure;
+}
+
 function getInitialFormValues(
 	type: IntegrationType,
 	serviceDetailsData?: ServiceDetailsData,
 ): ServiceConfigFormValues {
-	const integrationConfig =
-		type === IntegrationType.AWS_SERVICES
-			? serviceDetailsData?.cloudIntegrationService?.config?.aws
-			: serviceDetailsData?.cloudIntegrationService?.config?.azure;
+	const integrationConfig = getIntegrationServiceConfig(
+		type,
+		serviceDetailsData,
+	);
 
 	return {
 		logsEnabled: integrationConfig?.logs?.enabled || false,
@@ -97,16 +118,21 @@ function getServiceConfigPayload({
 		};
 	}
 
-	return {
-		azure: {
-			logs: {
-				enabled: isLogsSupported ? logsEnabled : false,
-			},
-			metrics: {
-				enabled: isMetricsSupported ? metricsEnabled : false,
-			},
+	// Azure and GCP share the same simple logs/metrics enable-flag shape.
+	const signalConfig = {
+		logs: {
+			enabled: isLogsSupported ? logsEnabled : false,
+		},
+		metrics: {
+			enabled: isMetricsSupported ? metricsEnabled : false,
 		},
 	};
+
+	if (type === IntegrationType.GCP_SERVICES) {
+		return { gcp: signalConfig };
+	}
+
+	return { azure: signalConfig };
 }
 
 function ServiceDetails({
@@ -118,34 +144,53 @@ function ServiceDetails({
 	const cloudAccountId = urlQuery.get('cloudAccountId');
 	const serviceId = urlQuery.get('service');
 	const isReadOnly = !cloudAccountId;
-	const serviceQueryParams = cloudAccountId
-		? { cloud_integration_id: cloudAccountId }
-		: undefined;
 
 	const {
-		queryKey: _queryKey,
-		data: serviceDetailsData,
-		isLoading: isServiceDetailsLoading,
+		queryKey: _accountServiceQueryKey,
+		data: accountServiceData,
+		isLoading: isAccountServiceLoading,
+	} = useGetAccountService(
+		{
+			cloudProvider: type,
+			id: cloudAccountId || '',
+			serviceId: serviceId || '',
+		},
+		{
+			query: {
+				enabled: !!serviceId && !!cloudAccountId,
+				select: (response): ServiceDetailsData => response.data,
+			},
+		},
+	);
+
+	const {
+		queryKey: _readOnlyServiceQueryKey,
+		data: readOnlyServiceData,
+		isLoading: isReadOnlyServiceLoading,
 	} = useGetService(
 		{
 			cloudProvider: type,
 			serviceId: serviceId || '',
 		},
 		{
-			...serviceQueryParams,
-		},
-		{
 			query: {
-				enabled: !!serviceId,
+				enabled: !!serviceId && !cloudAccountId,
 				select: (response): ServiceDetailsData => response.data,
 			},
 		},
 	);
 
-	const integrationConfig =
-		type === IntegrationType.AWS_SERVICES
-			? serviceDetailsData?.cloudIntegrationService?.config?.aws
-			: serviceDetailsData?.cloudIntegrationService?.config?.azure;
+	const serviceDetailsData = cloudAccountId
+		? accountServiceData
+		: readOnlyServiceData;
+	const isServiceDetailsLoading = cloudAccountId
+		? isAccountServiceLoading
+		: isReadOnlyServiceLoading;
+
+	const integrationConfig = getIntegrationServiceConfig(
+		type,
+		serviceDetailsData,
+	);
 	const isServiceEnabledInPersistedConfig =
 		Boolean(integrationConfig?.logs?.enabled) ||
 		Boolean(integrationConfig?.metrics?.enabled);
@@ -240,16 +285,12 @@ function ServiceDetails({
 							// instead of waiting for the refetch to complete.
 							reset(nextFormValues);
 
-							const servicesListQueryKey = getListServicesMetadataQueryKey(
-								{
-									cloudProvider: type,
-								},
-								{
-									cloud_integration_id: cloudAccountId,
-								},
-							);
+							const servicesListQueryKey = getListAccountServicesMetadataQueryKey({
+								cloudProvider: type,
+								id: cloudAccountId,
+							});
 
-							queryClient.setQueryData<ListServicesMetadata200 | undefined>(
+							queryClient.setQueryData<ListAccountServicesMetadata200 | undefined>(
 								servicesListQueryKey,
 								(prev) => {
 									if (!prev?.data?.services?.length) {
@@ -272,26 +313,16 @@ function ServiceDetails({
 								},
 							);
 
-							invalidateGetService(
-								queryClient,
-								{
-									cloudProvider: type,
-									serviceId,
-								},
-								{
-									cloud_integration_id: cloudAccountId,
-								},
-							);
+							invalidateGetAccountService(queryClient, {
+								cloudProvider: type,
+								id: cloudAccountId,
+								serviceId,
+							});
 
-							invalidateListServicesMetadata(
-								queryClient,
-								{
-									cloudProvider: type,
-								},
-								{
-									cloud_integration_id: cloudAccountId,
-								},
-							);
+							invalidateListAccountServicesMetadata(queryClient, {
+								cloudProvider: type,
+								id: cloudAccountId,
+							});
 
 							logEvent(`${type} Integration: Service settings saved`, {
 								cloudAccountId,
@@ -369,8 +400,16 @@ function ServiceDetails({
 											name="logsEnabled"
 											render={({ field }): JSX.Element => (
 												<Switch
+													color="primary"
+													textPlacement="right"
+													disabledTooltip={
+														isReadOnly
+															? 'Connect an AWS account first'
+															: 'Wait for the changes to save'
+													}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
+													testId="cloud-service-logs-switch"
 													onChange={(checked): void => {
 														field.onChange(checked);
 													}}
@@ -410,8 +449,16 @@ function ServiceDetails({
 											name="metricsEnabled"
 											render={({ field }): JSX.Element => (
 												<Switch
+													color="primary"
+													textPlacement="right"
+													disabledTooltip={
+														isReadOnly
+															? 'Connect an AWS account first'
+															: 'Wait for the changes to save'
+													}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
+													testId="cloud-service-metrics-switch"
 													onChange={field.onChange}
 												/>
 											)}
@@ -424,26 +471,30 @@ function ServiceDetails({
 						{hasUnsavedChanges && !isReadOnly && (
 							<div className="aws-service-details-overview-configuration-actions">
 								<Button
+									disabledTooltip="Wait for the changes to save"
 									variant="solid"
 									color="secondary"
+									testId="cloud-service-discard-btn"
 									onClick={handleDiscard}
 									disabled={isUpdatingServiceConfig}
 									size="sm"
 									prefix={<X size={14} />}
-									className="discard-btn"
+									width={100}
 									type="button"
 								>
 									Discard
 								</Button>
 								<Button
+									disabledTooltip="Select at least one S3 bucket"
 									variant="solid"
 									color="primary"
 									size="sm"
-									className="save-btn"
+									width={100}
 									prefix={<Save size={14} />}
+									testId="cloud-service-save-btn"
 									type="submit"
 									loading={isUpdatingServiceConfig}
-									disabled={isS3SyncBucketsMissing || isUpdatingServiceConfig}
+									disabled={isS3SyncBucketsMissing}
 								>
 									Save
 								</Button>
@@ -471,6 +522,11 @@ function ServiceDetails({
 				<CloudServiceDataCollected
 					logsData={serviceDetailsData?.dataCollected?.logs || []}
 					metricsData={serviceDetailsData?.dataCollected?.metrics || []}
+					metricsInfoTooltip={
+						type === IntegrationType.GCP_SERVICES
+							? GCP_METRICS_INFO_TOOLTIP
+							: undefined
+					}
 				/>
 			</div>
 		);
@@ -479,6 +535,8 @@ function ServiceDetails({
 	return (
 		<div className="aws-service-details-container">
 			<Tabs
+				orientation="horizontal"
+				alignment="start"
 				defaultValue="overview"
 				className="aws-service-details-tabs"
 				items={[

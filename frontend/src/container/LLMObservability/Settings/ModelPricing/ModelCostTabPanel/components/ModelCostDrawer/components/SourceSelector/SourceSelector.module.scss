@@ -1,0 +1,50 @@
+.fieldLabel {
+	composes: fieldLabel from '../../shared.module.scss';
+}
+
+.drawerSection {
+	composes: drawerSection from '../../shared.module.scss';
+}
+
+.drawerSurface {
+	composes: drawerSurface from '../../shared.module.scss';
+}
+
+.drawerSurfaceHead {
+	composes: drawerSurfaceHead from '../../shared.module.scss';
+}
+
+.managedLabel {
+	composes: managedLabel from '../../shared.module.scss';
+}
+
+.sourceRadioTitle {
+	font-weight: var(--font-weight-semibold);
+	font-size: var(--periscope-font-size-base);
+	color: var(--l1-foreground);
+}
+
+.sourceRadioDesc {
+	margin-top: 2px;
+	font-size: 12px;
+	color: var(--l3-foreground);
+}
+
+.resetConfirm {
+	margin-top: var(--spacing-6);
+	padding: var(--spacing-6);
+	border-radius: var(--radius-2);
+	background: color-mix(in srgb, var(--accent-primary) 6%, transparent);
+	border: 1px solid color-mix(in srgb, var(--accent-primary) 20%, transparent);
+
+	p {
+		margin: 0 0 var(--spacing-5);
+		font-size: 12px;
+	}
+}
+
+.resetConfirmActions {
+	display: flex;
+	gap: var(--spacing-4);
+	justify-content: flex-end;
+}

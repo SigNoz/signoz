@@ -1,15 +1,14 @@
 import React from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Button } from 'antd';
-import ROUTES from 'constants/routes';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import useTableContextMenu from '../useTableContextMenu';
@@ -38,18 +37,11 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-jest.mock('container/GridCardLayout/useResolveQuery', () => ({
+jest.mock('container/WidgetCard/hooks/useResolveQuery', () => ({
 	__esModule: true,
 	default: (): any => ({
 		getUpdatedQuery: jest.fn().mockResolvedValue({}),
 		isLoading: false,
-	}),
-}));
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.DASHBOARD}/`,
 	}),
 }));
 
@@ -64,16 +56,6 @@ jest.mock('react-redux', () => ({
 			maxTime: 1713738000000,
 			minTime: 1713734400000,
 		},
-	}),
-}));
-
-jest.mock('container/QueryTable/Drilldown/useDashboardVarConfig', () => ({
-	__esModule: true,
-	default: (): any => ({
-		dashbaordVariablesConfig: {
-			items: <>items</>,
-		},
-		// contextItems: <></>,
 	}),
 }));
 
@@ -136,9 +118,9 @@ const renderWithProviders = (
 ): ReturnType<typeof render> =>
 	render(
 		<MockQueryClientProvider>
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>{component}</Provider>
-			</MemoryRouter>
+			</TestRouter>
 		</MockQueryClientProvider>,
 	);
 
@@ -237,6 +219,10 @@ describe('TableDrilldown Breakout Functionality', () => {
 		// Verify that the groupBy has been updated to only contain the selected breakout option
 		expect(aggregateQueryData.groupBy).toHaveLength(1);
 		expect(aggregateQueryData.groupBy[0].key).toBe('deployment.environment');
+
+		// The picked field's type travels with it — dropping it leaves the breakout query
+		// untyped, so a drilldown on its result can't tell a number from a string.
+		expect(aggregateQueryData.groupBy[0].dataType).toBe('string');
 
 		// Verify that orderBy has been cleared (as per getBreakoutQuery logic)
 		expect(aggregateQueryData.orderBy).toStrictEqual([]);

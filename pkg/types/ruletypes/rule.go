@@ -11,7 +11,8 @@ import (
 )
 
 type StorableRule struct {
-	bun.BaseModel `bun:"table:rule"`
+	// The alias must stay rule: the list filter compiler emits rule.<col> refs.
+	bun.BaseModel `bun:"table:rule,alias:rule"`
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
@@ -47,6 +48,15 @@ func NewStatsFromRules(rules []*StorableRule) map[string]any {
 	return stats
 }
 
+func (rule *StorableRule) ToPostableRuleForCloning() (*PostableRule, error) {
+	postable := &PostableRule{}
+	if err := json.Unmarshal([]byte(rule.Data), postable); err != nil {
+		return nil, err
+	}
+	postable.AlertName = postable.AlertName.GenerateCloneName()
+	return postable, nil
+}
+
 // RuleAlert represents an alert associated with a rule, used when filtering by metric name.
 type RuleAlert struct {
 	AlertName string
@@ -56,8 +66,18 @@ type RuleAlert struct {
 type RuleStore interface {
 	CreateRule(context.Context, *StorableRule, func(context.Context, valuer.UUID) error) (valuer.UUID, error)
 	EditRule(context.Context, *StorableRule, func(context.Context) error) error
-	DeleteRule(context.Context, valuer.UUID, func(context.Context) error) error
+	DeleteRule(context.Context, valuer.UUID, valuer.UUID, func(context.Context) error) error
 	GetStoredRules(context.Context, string) ([]*StorableRule, error)
-	GetStoredRule(context.Context, valuer.UUID) (*StorableRule, error)
+	// GetStoredRulesMatching returns the org's rules matching a compiled filter clause; an empty clause matches all.
+	GetStoredRulesMatching(context.Context, string, string, []any) ([]*StorableRule, error)
+	// GetStoredRuleLabels returns each rule's labels as raw JSON text, empty string when absent.
+	GetStoredRuleLabels(context.Context, string) ([]string, error)
+	GetStoredRule(context.Context, valuer.UUID, valuer.UUID) (*StorableRule, error)
 	GetStoredRulesByMetricName(context.Context, string, string) ([]RuleAlert, error)
+
+	CreateRuleView(context.Context, *RuleView) error
+	GetRuleView(context.Context, valuer.UUID, valuer.UUID) (*RuleView, error)
+	ListRuleViews(context.Context, valuer.UUID) ([]*RuleView, error)
+	UpdateRuleView(context.Context, *RuleView) error
+	DeleteRuleView(context.Context, valuer.UUID, valuer.UUID) error
 }

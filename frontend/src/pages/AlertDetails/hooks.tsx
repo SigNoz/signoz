@@ -1,71 +1,63 @@
-import { useCallback, useMemo } from 'react';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { generatePath, useLocation } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useMutation, useQueryClient, useQuery } from 'react-query';
 import { TablePaginationConfig, TableProps } from 'antd';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { patchRulePartial } from 'api/alerts/patchRulePartial';
-import ruleStats from 'api/alerts/ruleStats';
-import timelineGraph from 'api/alerts/timelineGraph';
-import timelineTable from 'api/alerts/timelineTable';
-import topContributors from 'api/alerts/topContributors';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
-	createRule,
+	cloneRuleByID,
 	deleteRuleByID,
 	getGetRuleByIDQueryKey,
+	getGetRuleHistoryTimelineQueryOptions,
 	invalidateGetRuleByID,
-	invalidateListRules,
+	invalidateListRulesV3,
 	updateRuleByID,
 	useGetRuleByID,
-	useListRules,
+	useGetRuleHistoryOverallStatus,
+	useGetRuleHistoryStats,
+	useGetRuleHistoryTopContributors,
 } from 'api/generated/services/rules';
-import type {
-	GetRuleByID200,
-	RenderErrorResponseDTO,
-	RuletypesPostableRuleDTO,
+import {
+	Querybuildertypesv5OrderDirectionDTO,
+	RuletypesAlertStateDTO,
+	type GetRuleByID200,
+	type GetRuleHistoryOverallStatus200,
+	type GetRuleHistoryStats200,
+	type GetRuleHistoryTimeline200,
+	type GetRuleHistoryTopContributors200,
+	type RenderErrorResponseDTO,
+	type RuletypesPostableRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
-import { TabRoutes } from 'components/RouteTab/types';
 import { QueryParams } from 'constants/query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
-import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
-import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
-import { urlKey } from 'container/AllError/utils';
+import {
+	computeCursorForPage,
+	useTimelineTableOrder,
+	useTimelineTablePage,
+} from 'container/AlertHistory/Timeline/Table/useTimelineTableCursor';
+import { TimelineFilter } from 'container/AlertHistory/types';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useNotifications } from 'hooks/useNotifications';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import createQueryParams from 'lib/createQueryParams';
-import GetMinMax from 'lib/getMinMax';
-import history from 'lib/history';
-import { History, Table } from '@signozhq/icons';
-import EditRules from 'pages/EditRules';
-import { OrderPreferenceItems } from 'pages/Logs/config';
-import BetaTag from 'periscope/components/BetaTag/BetaTag';
-import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
+import GetMinMax, { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
+import { navigate } from 'lib/router/navigation';
 import { useAlertRule } from 'providers/Alert';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import { toPostableRuleDTOFromAlertDef } from 'types/api/alerts/convert';
-import {
-	AlertDef,
-	AlertRuleStatsPayload,
-	AlertRuleTimelineGraphResponsePayload,
-	AlertRuleTimelineTableResponse,
-	AlertRuleTimelineTableResponsePayload,
-	AlertRuleTopContributorsPayload,
-} from 'types/api/alerts/def';
+import { AlertDef, AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import APIError from 'types/api/error';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { nanoToMilli } from 'utils/timeUtils';
+import { Typography } from '@signozhq/ui/typography';
 
 export const useAlertHistoryQueryParams = (): {
 	ruleId: string | null;
 	startTime: number;
 	endTime: number;
 	hasStartAndEndParams: boolean;
+	relativeTime: string | null;
 	params: URLSearchParams;
 } => {
 	const params = useUrlQuery();
@@ -75,8 +67,9 @@ export const useAlertHistoryQueryParams = (): {
 	const relativeTimeParam = params.get(QueryParams.relativeTime);
 
 	const relativeTime =
-		(relativeTimeParam === 'null' ? null : relativeTimeParam) ||
-		DEFAULT_TIME_RANGE;
+		relativeTimeParam && isValidShortHandDateTimeFormat(relativeTimeParam)
+			? relativeTimeParam
+			: DEFAULT_TIME_RANGE;
 
 	const intStartTime = parseInt(startTime || '0', 10);
 	const intEndTime = parseInt(endTime || '0', 10);
@@ -96,62 +89,9 @@ export const useAlertHistoryQueryParams = (): {
 		startTime: Math.floor(nanoToMilli(minTime)),
 		endTime: Math.floor(nanoToMilli(maxTime)),
 		hasStartAndEndParams,
+		relativeTime: hasStartAndEndParams ? null : relativeTime,
 		params,
 	};
-};
-export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
-	const urlQuery = useUrlQuery();
-
-	const getRouteUrl = (tab: AlertDetailsTab): string => {
-		let route = '';
-		let params = urlQuery.toString();
-		const ruleIdKey = QueryParams.ruleId;
-		const relativeTimeKey = QueryParams.relativeTime;
-
-		switch (tab) {
-			case AlertDetailsTab.OVERVIEW:
-				route = ROUTES.ALERT_OVERVIEW;
-				break;
-			case AlertDetailsTab.HISTORY:
-				params = `${ruleIdKey}=${urlQuery.get(
-					ruleIdKey,
-				)}&${relativeTimeKey}=${urlQuery.get(relativeTimeKey)}`;
-				route = ROUTES.ALERT_HISTORY;
-				break;
-			default:
-				return '';
-		}
-
-		return `${generatePath(route)}?${params}`;
-	};
-
-	const routes = [
-		{
-			Component: EditRules,
-			name: (
-				<div className="tab-item">
-					<Table size={14} />
-					Overview
-				</div>
-			),
-			route: getRouteUrl(AlertDetailsTab.OVERVIEW),
-			key: ROUTES.ALERT_OVERVIEW,
-		},
-		{
-			Component: AlertHistory,
-			name: (
-				<div className="tab-item">
-					<History size={14} />
-					History
-					<BetaTag />
-				</div>
-			),
-			route: getRouteUrl(AlertDetailsTab.HISTORY),
-			key: ROUTES.ALERT_HISTORY,
-		},
-	];
-
-	return { routes };
 };
 type Props = {
 	ruleId: string | null;
@@ -201,10 +141,7 @@ type GetAlertRuleDetailsApiProps = {
 };
 
 type GetAlertRuleDetailsStatsProps = GetAlertRuleDetailsApiProps & {
-	data:
-		| SuccessResponse<AlertRuleStatsPayload, unknown>
-		| ErrorResponse
-		| undefined;
+	data: GetRuleHistoryStats200 | undefined;
 };
 
 export const useGetAlertRuleDetailsStats =
@@ -213,18 +150,15 @@ export const useGetAlertRuleDetailsStats =
 
 		const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
-		const { isLoading, isRefetching, isError, data } = useQuery(
-			[REACT_QUERY_KEY.ALERT_RULE_STATS, ruleId, startTime, endTime],
+		const { isLoading, isRefetching, isError, data } = useGetRuleHistoryStats(
+			{ id: ruleId || '' },
+			{ start: startTime, end: endTime },
 			{
-				queryFn: () =>
-					ruleStats({
-						id: ruleId || '',
-						start: startTime,
-						end: endTime,
-					}),
-				enabled: isValidRuleId && !!startTime && !!endTime,
-				refetchOnMount: false,
-				refetchOnWindowFocus: false,
+				query: {
+					enabled: isValidRuleId && !!startTime && !!endTime,
+					refetchOnMount: false,
+					refetchOnWindowFocus: false,
+				},
 			},
 		);
 
@@ -232,10 +166,7 @@ export const useGetAlertRuleDetailsStats =
 	};
 
 type GetAlertRuleDetailsTopContributorsProps = GetAlertRuleDetailsApiProps & {
-	data:
-		| SuccessResponse<AlertRuleTopContributorsPayload, unknown>
-		| ErrorResponse
-		| undefined;
+	data: GetRuleHistoryTopContributors200 | undefined;
 };
 
 export const useGetAlertRuleDetailsTopContributors =
@@ -244,108 +175,138 @@ export const useGetAlertRuleDetailsTopContributors =
 
 		const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
-		const { isLoading, isRefetching, isError, data } = useQuery(
-			[REACT_QUERY_KEY.ALERT_RULE_TOP_CONTRIBUTORS, ruleId, startTime, endTime],
-			{
-				queryFn: () =>
-					topContributors({
-						id: ruleId || '',
-						start: startTime,
-						end: endTime,
-					}),
-				enabled: isValidRuleId,
-				refetchOnMount: false,
-				refetchOnWindowFocus: false,
-			},
-		);
+		const { isLoading, isRefetching, isError, data } =
+			useGetRuleHistoryTopContributors(
+				{ id: ruleId || '' },
+				{ start: startTime, end: endTime },
+				{
+					query: {
+						enabled: isValidRuleId && !!startTime && !!endTime,
+						refetchOnMount: false,
+						refetchOnWindowFocus: false,
+					},
+				},
+			);
 
 		return { isLoading, isRefetching, isError, data, isValidRuleId, ruleId };
 	};
 
 type GetAlertRuleDetailsTimelineTableProps = GetAlertRuleDetailsApiProps & {
-	data:
-		| SuccessResponse<AlertRuleTimelineTableResponsePayload, unknown>
-		| ErrorResponse
-		| undefined;
+	data: GetRuleHistoryTimeline200 | undefined;
+	error: AxiosError<RenderErrorResponseDTO> | null;
+	refetch: () => void;
+	cancel: () => void;
 };
 
 export const useGetAlertRuleDetailsTimelineTable = ({
-	filters,
+	filterExpression,
 }: {
-	filters: TagFilter;
+	filterExpression: string;
 }): GetAlertRuleDetailsTimelineTableProps => {
+	const queryClient = useQueryClient();
 	const { ruleId, startTime, endTime, params } = useAlertHistoryQueryParams();
-	const { updatedOrder, offset } = useMemo(
-		() => ({
-			updatedOrder: params.get(urlKey.order) ?? OrderPreferenceItems.ASC,
-			offset: parseInt(params.get(urlKey.offset) ?? '0', 10),
-		}),
-		[params],
+	const [page, setPage] = useTimelineTablePage();
+	const [order] = useTimelineTableOrder();
+
+	const updatedOrder = useMemo(
+		() =>
+			order === 'asc'
+				? Querybuildertypesv5OrderDirectionDTO.asc
+				: Querybuildertypesv5OrderDirectionDTO.desc,
+		[order],
 	);
 
 	const timelineFilter = params.get('timelineFilter');
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
-	const hasStartAndEnd = startTime !== null && endTime !== null;
 
-	const { isLoading, isRefetching, isError, data } = useQuery(
-		[
-			REACT_QUERY_KEY.ALERT_RULE_TIMELINE_TABLE,
-			ruleId,
-			startTime,
-			endTime,
-			timelineFilter,
-			updatedOrder,
-			offset,
-			JSON.stringify(filters.items),
-		],
+	const stateFilter = useMemo(() => {
+		if (!timelineFilter || timelineFilter === TimelineFilter.ALL) {
+			return undefined;
+		}
+		return timelineFilter === TimelineFilter.FIRED
+			? RuletypesAlertStateDTO.firing
+			: RuletypesAlertStateDTO.inactive;
+	}, [timelineFilter]);
+
+	const filtersKey = `${filterExpression}|${stateFilter ?? ''}|${startTime}|${endTime}`;
+	const prevFiltersKeyRef = useRef(filtersKey);
+	const filtersChanged = prevFiltersKeyRef.current !== filtersKey;
+	const cursor = computeCursorForPage(filtersChanged ? 1 : page);
+
+	useEffect(() => {
+		if (prevFiltersKeyRef.current !== filtersKey) {
+			prevFiltersKeyRef.current = filtersKey;
+			if (page > 1) {
+				void setPage(1);
+			}
+		}
+	}, [filtersKey, page, setPage]);
+
+	const queryParams = useMemo(
+		() => ({
+			start: startTime,
+			end: endTime,
+			limit: TIMELINE_TABLE_PAGE_SIZE,
+			order: updatedOrder,
+			cursor,
+			filterExpression: filterExpression || undefined,
+			state: stateFilter,
+		}),
+		[startTime, endTime, updatedOrder, cursor, filterExpression, stateFilter],
+	);
+
+	const queryOptions = getGetRuleHistoryTimelineQueryOptions(
+		{ id: ruleId || '' },
+		queryParams,
 		{
-			queryFn: () =>
-				timelineTable({
-					id: ruleId || '',
-					start: startTime,
-					end: endTime,
-					limit: TIMELINE_TABLE_PAGE_SIZE,
-					order: updatedOrder,
-					offset,
-					filters,
-					...(timelineFilter && timelineFilter !== TimelineFilter.ALL
-						? {
-								state: timelineFilter === TimelineFilter.FIRED ? 'firing' : 'normal',
-							}
-						: {}),
-				}),
-			enabled: isValidRuleId && hasStartAndEnd,
-			refetchOnMount: false,
-			refetchOnWindowFocus: false,
+			query: {
+				enabled: isValidRuleId,
+				refetchOnMount: false,
+				refetchOnWindowFocus: false,
+			},
 		},
 	);
 
-	return { isLoading, isRefetching, isError, data, isValidRuleId, ruleId };
+	const { isLoading, isRefetching, isError, data, error, refetch } =
+		useQuery(queryOptions);
+
+	const queryKeyRef = useRef(queryOptions.queryKey);
+	queryKeyRef.current = queryOptions.queryKey;
+
+	const cancel = useCallback(() => {
+		void queryClient.cancelQueries({ queryKey: queryKeyRef.current });
+	}, [queryClient]);
+
+	return {
+		isLoading,
+		isRefetching,
+		isError,
+		data,
+		error: error as AxiosError<RenderErrorResponseDTO> | null,
+		isValidRuleId,
+		ruleId,
+		refetch,
+		cancel,
+	};
 };
 
 export const useTimelineTable = ({
 	totalItems,
+	nextCursor,
 }: {
 	totalItems: number;
+	nextCursor?: string;
 }): {
 	paginationConfig: TablePaginationConfig;
-	onChangeHandler: (
-		pagination: TablePaginationConfig,
-		sorter: any,
-		filters: any,
-		extra: any,
-	) => void;
+	onChangeHandler: TableProps<AlertRuleTimelineTableResponse>['onChange'];
+	handleNextPage: () => void;
+	handlePrevPage: () => void;
+	hasNextPage: boolean;
+	hasPrevPage: boolean;
 } => {
-	const { safeNavigate } = useSafeNavigate();
-
-	const { pathname } = useLocation();
-
-	const { search } = useLocation();
-
-	const params = useMemo(() => new URLSearchParams(search), [search]);
-
-	const offset = params.get('offset') ?? '0';
+	const [page, setPage] = useTimelineTablePage();
+	const [, setOrder] = useTimelineTableOrder();
 
 	const onChangeHandler: TableProps<AlertRuleTimelineTableResponse>['onChange'] =
 		useCallback(
@@ -357,38 +318,52 @@ export const useTimelineTable = ({
 					| SorterResult<AlertRuleTimelineTableResponse>,
 			) => {
 				if (!Array.isArray(sorter)) {
-					const { pageSize = 0, current = 0 } = pagination;
 					const { order } = sorter;
 					const updatedOrder = order === 'ascend' ? 'asc' : 'desc';
-					const params = new URLSearchParams(window.location.search);
-
-					safeNavigate(
-						`${pathname}?${createQueryParams({
-							...Object.fromEntries(params),
-							order: updatedOrder,
-							offset: current * TIMELINE_TABLE_PAGE_SIZE - TIMELINE_TABLE_PAGE_SIZE,
-							pageSize,
-						})}`,
-					);
+					void Promise.all([setOrder(updatedOrder), setPage(1)]);
 				}
 			},
-			[pathname, safeNavigate],
+			[setOrder, setPage],
 		);
 
-	const offsetInt = parseInt(offset, 10);
-	const pageSize = params.get('pageSize') ?? String(TIMELINE_TABLE_PAGE_SIZE);
-	const pageSizeInt = parseInt(pageSize, 10);
+	const handleNextPage = useCallback(() => {
+		if (!nextCursor) {
+			return;
+		}
+		void setPage(page + 1);
+	}, [nextCursor, page, setPage]);
+
+	const handlePrevPage = useCallback(() => {
+		if (page <= 1) {
+			return;
+		}
+		void setPage(page - 1);
+	}, [page, setPage]);
 
 	const paginationConfig: TablePaginationConfig = {
-		pageSize: pageSizeInt,
-		showTotal: PaginationInfoText,
-		current: offsetInt / TIMELINE_TABLE_PAGE_SIZE + 1,
+		pageSize: TIMELINE_TABLE_PAGE_SIZE,
+		showTotal: (total, [start, end]) => (
+			<span>
+				<Typography.Text size="small">
+					{start} &#8212; {end}
+				</Typography.Text>
+				<Typography.Text size="small"> of {total}</Typography.Text>
+			</span>
+		),
+		current: page,
 		showSizeChanger: false,
 		hideOnSinglePage: true,
 		total: totalItems,
 	};
 
-	return { paginationConfig, onChangeHandler };
+	return {
+		paginationConfig,
+		onChangeHandler,
+		handleNextPage,
+		handlePrevPage,
+		hasNextPage: !!nextCursor,
+		hasPrevPage: page > 1,
+	};
 };
 
 export const useAlertRuleStatusToggle = ({
@@ -411,8 +386,11 @@ export const useAlertRuleStatusToggle = ({
 		{
 			onSuccess: (data) => {
 				setAlertRuleState(data.data.state);
-				invalidateGetRuleByID(queryClient, { id: ruleId });
-				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
+				void invalidateGetRuleByID(queryClient, { id: ruleId });
+				void queryClient.refetchQueries([
+					REACT_QUERY_KEY.ALERT_RULE_DETAILS,
+					ruleId,
+				]);
 				notifications.success({
 					message: `Alert has been ${
 						data.data.state === 'disabled' ? 'disabled' : 'enabled'
@@ -420,8 +398,11 @@ export const useAlertRuleStatusToggle = ({
 				});
 			},
 			onError: (error) => {
-				invalidateGetRuleByID(queryClient, { id: ruleId });
-				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
+				void invalidateGetRuleByID(queryClient, { id: ruleId });
+				void queryClient.refetchQueries([
+					REACT_QUERY_KEY.ALERT_RULE_DETAILS,
+					ruleId,
+				]);
 				showErrorModal(
 					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
 				);
@@ -440,39 +421,32 @@ export const useAlertRuleStatusToggle = ({
 	return { handleAlertStateToggle };
 };
 
-export const useAlertRuleDuplicate = ({
-	alertDetails,
+export const useAlertRuleClone = ({
+	ruleId,
 }: {
-	alertDetails: AlertDef;
+	ruleId: string;
 }): {
-	handleAlertDuplicate: () => void;
+	handleAlertClone: () => void;
 } => {
 	const { notifications } = useNotifications();
+	const queryClient = useQueryClient();
 
 	const params = useUrlQuery();
 
-	const { refetch } = useListRules({
-		query: { cacheTime: 0 },
-	});
 	const { showErrorModal } = useErrorModal();
-	const { mutate: duplicateAlert } = useMutation(
-		[REACT_QUERY_KEY.DUPLICATE_ALERT_RULE],
-		(args: { data: AlertDef }) =>
-			createRule(toPostableRuleDTOFromAlertDef(args.data)),
+	const { mutate: cloneAlert } = useMutation(
+		[REACT_QUERY_KEY.CLONE_ALERT_RULE],
+		() => cloneRuleByID({ id: ruleId }),
 		{
-			onSuccess: async () => {
+			onSuccess: async (response) => {
 				notifications.success({
 					message: `Success`,
 				});
 
-				const { data: allAlertsData } = await refetch();
+				await invalidateListRulesV3(queryClient);
 
-				const rules = allAlertsData?.data;
-				if (rules && rules.length > 0) {
-					const clonedAlert = rules[rules.length - 1];
-					params.set(QueryParams.ruleId, String(clonedAlert.id));
-					history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
-				}
+				params.set(QueryParams.ruleId, response.data.id);
+				navigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 			},
 			onError: (error) =>
 				showErrorModal(
@@ -481,15 +455,13 @@ export const useAlertRuleDuplicate = ({
 		},
 	);
 
-	const handleAlertDuplicate = (): void => {
-		const args = {
-			data: { ...alertDetails, alert: alertDetails.alert?.concat(' - Copy') },
-		};
-		duplicateAlert(args);
+	const handleAlertClone = (): void => {
+		cloneAlert();
 	};
 
-	return { handleAlertDuplicate };
+	return { handleAlertClone };
 };
+
 export const useAlertRuleUpdate = ({
 	alertDetails,
 	setAlertRuleName,
@@ -522,7 +494,7 @@ export const useAlertRuleUpdate = ({
 						data: { ...existingRule.data, alert: intermediateName },
 					});
 				}
-				void invalidateListRules(queryClient);
+				void invalidateListRulesV3(queryClient);
 				notifications.success({ message: 'Alert renamed successfully' });
 			},
 			onError: (error) => {
@@ -563,7 +535,7 @@ export const useAlertRuleDelete = ({
 					message: `Success`,
 				});
 
-				history.push(ROUTES.LIST_ALL_ALERT);
+				navigate(ROUTES.LIST_ALL_ALERT);
 			},
 			onError: (error) =>
 				showErrorModal(
@@ -581,10 +553,7 @@ export const useAlertRuleDelete = ({
 };
 
 type GetAlertRuleDetailsTimelineGraphProps = GetAlertRuleDetailsApiProps & {
-	data:
-		| SuccessResponse<AlertRuleTimelineGraphResponsePayload, unknown>
-		| ErrorResponse
-		| undefined;
+	data: GetRuleHistoryOverallStatus200 | undefined;
 };
 
 export const useGetAlertRuleDetailsTimelineGraphData =
@@ -594,20 +563,18 @@ export const useGetAlertRuleDetailsTimelineGraphData =
 		const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 		const hasStartAndEnd = startTime !== null && endTime !== null;
 
-		const { isLoading, isRefetching, isError, data } = useQuery(
-			[REACT_QUERY_KEY.ALERT_RULE_TIMELINE_GRAPH, ruleId, startTime, endTime],
-			{
-				queryFn: () =>
-					timelineGraph({
-						id: ruleId || '',
-						start: startTime,
-						end: endTime,
-					}),
-				enabled: isValidRuleId && hasStartAndEnd,
-				refetchOnMount: false,
-				refetchOnWindowFocus: false,
-			},
-		);
+		const { isLoading, isRefetching, isError, data } =
+			useGetRuleHistoryOverallStatus(
+				{ id: ruleId || '' },
+				{ start: startTime, end: endTime },
+				{
+					query: {
+						enabled: isValidRuleId && hasStartAndEnd,
+						refetchOnMount: false,
+						refetchOnWindowFocus: false,
+					},
+				},
+			);
 
 		return { isLoading, isRefetching, isError, data, isValidRuleId, ruleId };
 	};

@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useAppNavigate } from 'lib/router/useAppNavigate';
 import { Skeleton } from 'antd';
-import { useListServicesMetadata } from 'api/generated/services/cloudintegration';
+import {
+	useListAccounts,
+	useListAccountServicesMetadata,
+	useListServicesMetadata,
+} from 'api/generated/services/cloudintegration';
 import type { CloudintegrationtypesServiceMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import { IntegrationType } from 'container/Integrations/types';
@@ -19,18 +23,37 @@ function ServicesList({
 	type,
 }: ServicesListProps): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const navigate = useNavigate();
-	const hasValidCloudAccountId = Boolean(cloudAccountId);
-	const serviceQueryParams = hasValidCloudAccountId
-		? { cloud_integration_id: cloudAccountId }
-		: undefined;
+	const navigate = useAppNavigate();
+	const isAccountConnected = Boolean(cloudAccountId);
+	const { data: listAccountsResponse, isLoading: isAccountsLoading } =
+		useListAccounts({ cloudProvider: type });
+	const hasConnectedAccounts =
+		(listAccountsResponse?.data?.accounts?.length ?? 0) > 0;
 
-	const { data: servicesMetadata, isLoading } = useListServicesMetadata(
+	const { data: accountServicesMetadata, isLoading: isAccountServicesLoading } =
+		useListAccountServicesMetadata(
+			{ cloudProvider: type, id: cloudAccountId },
+			{ query: { enabled: isAccountConnected } },
+		);
+
+	const {
+		data: providerServicesMetadata,
+		isLoading: isProviderServicesLoading,
+	} = useListServicesMetadata(
+		{ cloudProvider: type },
 		{
-			cloudProvider: type,
+			query: { enabled: !isAccountsLoading && !hasConnectedAccounts },
 		},
-		serviceQueryParams,
 	);
+
+	const servicesMetadata = hasConnectedAccounts
+		? accountServicesMetadata
+		: providerServicesMetadata;
+	const isLoading =
+		isAccountsLoading ||
+		(hasConnectedAccounts
+			? isAccountServicesLoading || !isAccountConnected
+			: isProviderServicesLoading);
 
 	const awsServices = useMemo(
 		() => servicesMetadata?.data?.services ?? [],
@@ -114,6 +137,7 @@ function ServicesList({
 					active: service.id === activeService,
 				})}
 				key={service.id}
+				data-testid={`cloud-service-item-${service.id}`}
 				onClick={(): void => handleActiveService(service.id)}
 			>
 				<img
@@ -132,7 +156,7 @@ function ServicesList({
 		<div className="aws-services-list-view">
 			<div className="aws-services-list-view-sidebar">
 				<div className="aws-services-list-view-sidebar-content">
-					<div className="aws-services-enabled">
+					<div className="aws-services-enabled" data-testid="cloud-services-enabled">
 						<div className="aws-services-list-view-sidebar-content-header">
 							Enabled
 						</div>
@@ -146,7 +170,10 @@ function ServicesList({
 					</div>
 
 					{!isNotEnabledServicesEmpty && (
-						<div className="aws-services-not-enabled">
+						<div
+							className="aws-services-not-enabled"
+							data-testid="cloud-services-not-enabled"
+						>
 							<div className="aws-services-list-view-sidebar-content-header">
 								Not Enabled
 							</div>

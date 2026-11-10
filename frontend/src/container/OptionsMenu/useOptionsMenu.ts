@@ -1,17 +1,18 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { AxiosResponse } from 'axios';
-import { LogViewMode } from 'container/LogsTable';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { has } from 'lodash-es';
-import { AllTraceFilterKeyValue } from 'pages/TracesExplorer/Filter/filterUtils';
+import { AllTraceFilterKeyValue } from 'constants/traceFilterKeys';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
+import { PreferenceSourcePage } from 'providers/preferences/types';
 import {
 	QueryKeyRequestProps,
 	QueryKeySuggestionsResponseProps,
@@ -21,27 +22,28 @@ import {
 	FieldDataType,
 	SignalType,
 } from 'types/api/v5/queryRange';
-import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	defaultLogsSelectedColumns,
 	defaultOptionsQuery,
 	defaultTraceSelectedColumns,
 	EXCLUDED_COLUMNS,
+	SOURCE_PAGE_SIGNAL,
 	URL_OPTIONS,
 } from './constants';
 import {
 	FontSize,
 	InitialOptions,
+	LogViewMode,
 	OptionsMenuConfig,
 	OptionsQuery,
 } from './types';
-import { getOptionsFromKeys } from './utils';
+import { buildCompositeKey, getOptionsFromKeys } from './utils';
 
 interface UseOptionsMenuProps {
 	storageKey?: string;
-	dataSource: DataSource;
-	aggregateOperator: string;
+	sourcePage: PreferenceSourcePage;
+	aggregateOperator?: string;
 	initialOptions?: InitialOptions;
 }
 
@@ -52,15 +54,14 @@ interface UseOptionsMenu {
 }
 
 const useOptionsMenu = ({
-	dataSource,
-	// aggregateOperator,
+	sourcePage,
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
+	const signal = SOURCE_PAGE_SIGNAL[sourcePage];
 	const { notifications } = useNotifications();
-	const prefCtx = usePreferenceContext();
 	// TODO: send null to updateColumns and updateFormatting if dataSource is not logs or traces
-	const slice = dataSource === DataSource.TRACES ? prefCtx.traces : prefCtx.logs;
-	const { preferences, updateColumns, updateFormatting } = slice;
+	const { preferences, updateColumns, updateFormatting } =
+		usePreferenceContext()[sourcePage];
 
 	const [searchText, setSearchText] = useState<string>('');
 	const [isFocused, setIsFocused] = useState<boolean>(false);
@@ -68,10 +69,10 @@ const useOptionsMenu = ({
 
 	const initialQueryParamsV5: QueryKeyRequestProps = useMemo(
 		() => ({
-			signal: dataSource,
+			signal,
 			searchText: '',
 		}),
-		[dataSource],
+		[signal],
 	);
 
 	const { query: optionsQuery, redirectWithQuery: redirectWithOptionsData } =
@@ -113,7 +114,7 @@ const useOptionsMenu = ({
 					(suggestion) => ({
 						name: suggestion.name,
 						signal: suggestion.signal as SignalType,
-						fieldDataType: suggestion.fieldDataType as FieldDataType,
+						fieldDataType: suggestion.fieldDataType,
 						fieldContext: suggestion.fieldContext as FieldContext,
 					}),
 				);
@@ -127,7 +128,7 @@ const useOptionsMenu = ({
 			?.map((column) => attributesData.find(({ name }) => name === column))
 			.filter((e) => !!e) || []) as TelemetryFieldKey[];
 
-		if (dataSource === DataSource.TRACES) {
+		if (sourcePage === SavedviewtypesSourceDTO.traces) {
 			initialSelected = initialSelected
 				?.map((col) => {
 					if (col && Object.keys(AllTraceFilterKeyValue).includes(col?.name)) {
@@ -157,7 +158,7 @@ const useOptionsMenu = ({
 		isFetchedInitialAttributes,
 		initialOptions?.selectColumns,
 		initialAttributesResult,
-		dataSource,
+		sourcePage,
 	]);
 
 	const {
@@ -187,39 +188,15 @@ const useOptionsMenu = ({
 			searchedAttributesDataV5?.data.data.keys || {},
 		).flat();
 		if (searchedAttributesDataList.length) {
-			if (dataSource === DataSource.LOGS) {
-				const logsSelectedColumns: TelemetryFieldKey[] =
-					defaultLogsSelectedColumns.map((e) => ({
-						...e,
-						name: e.name,
-						signal: e.signal as SignalType,
-						fieldContext: e.fieldContext as FieldContext,
-						fieldDataType: e.fieldDataType as FieldDataType,
-					}));
-				return [
-					...logsSelectedColumns,
-					...searchedAttributesDataList
-						.filter((attribute) => attribute.name !== 'body')
-						// eslint-disable-next-line sonarjs/no-identical-functions
-						.map((e) => ({
-							...e,
-							name: e.name,
-							signal: e.signal as SignalType,
-							fieldContext: e.fieldContext as FieldContext,
-							fieldDataType: e.fieldDataType as FieldDataType,
-						})),
-				];
-			}
-			// eslint-disable-next-line sonarjs/no-identical-functions
 			return searchedAttributesDataList.map((e) => ({
 				...e,
 				name: e.name,
 				signal: e.signal as SignalType,
 				fieldContext: e.fieldContext as FieldContext,
-				fieldDataType: e.fieldDataType as FieldDataType,
+				fieldDataType: e.fieldDataType,
 			}));
 		}
-		if (dataSource === DataSource.TRACES) {
+		if (sourcePage === SavedviewtypesSourceDTO.traces) {
 			return defaultTraceSelectedColumns.map((e) => ({
 				...e,
 				name: e.name,
@@ -227,16 +204,16 @@ const useOptionsMenu = ({
 		}
 
 		return [];
-	}, [dataSource, searchedAttributesDataV5?.data.data.keys]);
+	}, [sourcePage, searchedAttributesDataV5?.data.data.keys]);
 
 	const initialOptionsQuery: OptionsQuery = useMemo(() => {
 		let defaultColumns: TelemetryFieldKey[] = defaultOptionsQuery.selectColumns;
-		if (dataSource === DataSource.TRACES) {
+		if (sourcePage === SavedviewtypesSourceDTO.traces) {
 			defaultColumns = defaultTraceSelectedColumns.map((e) => ({
 				...e,
 				name: e.name,
 			}));
-		} else if (dataSource === DataSource.LOGS) {
+		} else if (sourcePage === SavedviewtypesSourceDTO.logs) {
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			defaultColumns = defaultLogsSelectedColumns.map((e) => ({
 				...e,
@@ -256,7 +233,7 @@ const useOptionsMenu = ({
 			...initialOptions,
 			selectColumns: finalSelectColumns,
 		};
-	}, [dataSource, initialOptions, initialSelectedColumns]);
+	}, [sourcePage, initialOptions, initialSelectedColumns]);
 
 	const selectedColumnKeys = useMemo(
 		() => preferences?.columns?.map(({ name }) => name) || [],
@@ -265,7 +242,7 @@ const useOptionsMenu = ({
 
 	const optionsFromAttributeKeys = useMemo(() => {
 		const filteredAttributeKeys = searchedAttributeKeys.filter((item) => {
-			const exclusions = EXCLUDED_COLUMNS[dataSource];
+			const exclusions = EXCLUDED_COLUMNS[signal];
 			if (exclusions) {
 				return !exclusions.includes(item.name);
 			}
@@ -273,7 +250,7 @@ const useOptionsMenu = ({
 		});
 
 		return getOptionsFromKeys(filteredAttributeKeys, selectedColumnKeys);
-	}, [dataSource, searchedAttributeKeys, selectedColumnKeys]);
+	}, [signal, searchedAttributeKeys, selectedColumnKeys]);
 
 	const handleRedirectWithOptionsData = useCallback(
 		(newQueryData: OptionsQuery) => {
@@ -297,57 +274,31 @@ const useOptionsMenu = ({
 				return [...acc, column];
 			}, [] as TelemetryFieldKey[]);
 
-			const optionsData: OptionsQuery = {
-				...defaultOptionsQuery,
-				selectColumns: newSelectedColumns,
-				format: preferences?.formatting?.format || defaultOptionsQuery.format,
-				maxLines: preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
-				fontSize: preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
-			};
-
 			updateColumns(newSelectedColumns);
-			handleRedirectWithOptionsData(optionsData);
 		},
-		[
-			searchedAttributeKeys,
-			selectedColumnKeys,
-			preferences,
-			handleRedirectWithOptionsData,
-			updateColumns,
-		],
+		[searchedAttributeKeys, selectedColumnKeys, preferences, updateColumns],
 	);
 
 	const handleRemoveSelectedColumn = useCallback(
 		(columnKey: string) => {
 			const newSelectedColumns = preferences?.columns?.filter(
-				({ name }) => name !== columnKey,
+				(f) =>
+					buildCompositeKey(f.name, f.fieldContext, f.fieldDataType) !== columnKey,
 			);
 
-			if (!newSelectedColumns?.length && dataSource !== DataSource.LOGS) {
+			if (
+				!newSelectedColumns?.length &&
+				sourcePage !== SavedviewtypesSourceDTO.logs
+			) {
 				notifications.error({
 					message: 'There must be at least one selected column',
 				});
-			} else {
-				const optionsData: OptionsQuery = {
-					...defaultOptionsQuery,
-					selectColumns: newSelectedColumns || [],
-					format: preferences?.formatting?.format || defaultOptionsQuery.format,
-					maxLines:
-						preferences?.formatting?.maxLines || defaultOptionsQuery.maxLines,
-					fontSize:
-						preferences?.formatting?.fontSize || defaultOptionsQuery.fontSize,
-				};
-				updateColumns(newSelectedColumns || []);
-				handleRedirectWithOptionsData(optionsData);
+				return;
 			}
+
+			updateColumns(newSelectedColumns || []);
 		},
-		[
-			dataSource,
-			notifications,
-			preferences,
-			handleRedirectWithOptionsData,
-			updateColumns,
-		],
+		[sourcePage, notifications, preferences, updateColumns],
 	);
 
 	const handleFormatChange = useCallback(
@@ -414,6 +365,23 @@ const useOptionsMenu = ({
 		setSearchText(value);
 	}, []);
 
+	const reorderSelectColumns = useCallback(
+		(orderedIds: string[]): void => {
+			const current = preferences?.columns ?? [];
+			const byCompositeKey = new Map(
+				current.map((f) => [
+					buildCompositeKey(f.name, f.fieldContext, f.fieldDataType),
+					f,
+				]),
+			);
+			const reordered = orderedIds
+				.map((id) => byCompositeKey.get(id))
+				.filter((f): f is TelemetryFieldKey => f !== undefined);
+			updateColumns(reordered);
+		},
+		[preferences, updateColumns],
+	);
+
 	const handleFocus = (): void => {
 		setIsFocused(true);
 	};
@@ -436,6 +404,11 @@ const useOptionsMenu = ({
 				onSelect: handleSelectColumns,
 				onRemove: handleRemoveSelectedColumn,
 				onSearch: handleSearchAttribute,
+				onReorder: reorderSelectColumns,
+			},
+			fieldsSelector: {
+				value: preferences?.columns?.filter((item) => has(item, 'name')) ?? [],
+				onFieldsChange: updateColumns,
 			},
 			format: {
 				value: preferences?.formatting?.format || defaultOptionsQuery.format,
@@ -457,6 +430,8 @@ const useOptionsMenu = ({
 			handleSelectColumns,
 			handleRemoveSelectedColumn,
 			handleSearchAttribute,
+			reorderSelectColumns,
+			updateColumns,
 			handleFormatChange,
 			handleMaxLinesChange,
 			handleFontSizeChange,

@@ -2,6 +2,10 @@ import React, { useMemo } from 'react';
 import cx from 'classnames';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Button } from '@signozhq/ui/button';
+import { RotateCw, TriangleAlert } from '@signozhq/icons';
+
+import { RetryActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 
 // Side-effect: registers all built-in block types into the BlockRegistry
 import '../blocks';
@@ -11,6 +15,7 @@ import { Message, MessageBlock } from '../../types';
 import ActionsSection from '../ActionsSection';
 import ActivityGroup, { ActivityItem } from '../ActivityGroup';
 import { RichCodeBlock } from '../blocks';
+import MarkdownExternalLink from '../MarkdownExternalLink/MarkdownExternalLink';
 import { MessageContext } from '../MessageContext';
 import MessageFeedback from '../MessageFeedback';
 import UserMessageActions from '../UserMessageActions';
@@ -37,7 +42,11 @@ function SmartPre({ children }: { children?: React.ReactNode }): JSX.Element {
 }
 
 const MD_PLUGINS = [remarkGfm];
-const MD_COMPONENTS = { code: RichCodeBlock, pre: SmartPre };
+const MD_COMPONENTS = {
+	code: RichCodeBlock,
+	pre: SmartPre,
+	a: MarkdownExternalLink,
+};
 
 type RenderGroup =
 	| { kind: 'text'; id: string; content: string }
@@ -99,18 +108,23 @@ function renderGroup(group: RenderGroup): JSX.Element {
 interface MessageBubbleProps {
 	message: Message;
 	onRegenerate?: () => void;
+	onRetry?: () => void;
 	isLastAssistant?: boolean;
 }
 
 export default function MessageBubble({
 	message,
 	onRegenerate,
+	onRetry,
 	isLastAssistant = false,
 }: MessageBubbleProps): JSX.Element {
 	const variant = useVariant();
 	const isCompact = variant === 'panel';
 	const isUser = message.role === 'user';
+	const isError = !isUser && Boolean(message.isError);
 	const hasBlocks = !isUser && message.blocks && message.blocks.length > 0;
+	const showRetry =
+		isError && message.retryAction === RetryActionDTO.manual && Boolean(onRetry);
 
 	// Recompute groups only when the blocks array identity changes — store
 	// updates that don't touch this message's blocks should not re-render the
@@ -133,7 +147,7 @@ export default function MessageBubble({
 		<div className={messageClass} data-testid={`ai-message-${message.id}`}>
 			<div className={bodyClass}>
 				<div className={styles.bubbleRow}>
-					<div className={styles.bubble}>
+					<div className={cx(styles.bubble, { [styles.error]: isError })}>
 						{message.attachments && message.attachments.length > 0 && (
 							<div className={styles.attachments}>
 								{message.attachments.map((att) => {
@@ -156,6 +170,11 @@ export default function MessageBubble({
 
 						{isUser ? (
 							<p className={styles.text}>{message.content}</p>
+						) : isError ? (
+							<div className={styles.errorContent}>
+								<TriangleAlert size={14} className={styles.errorIcon} />
+								<span className={styles.errorText}>{message.content}</span>
+							</div>
 						) : hasBlocks ? (
 							<MessageContext.Provider value={{ messageId: message.id }}>
 								{groups.map((g) => renderGroup(g))}
@@ -178,7 +197,22 @@ export default function MessageBubble({
 					</div>
 				</div>
 
-				{!isUser && !message.isRateLimitError && (
+				{showRetry && (
+					<div className={styles.retryButton}>
+						<Button
+							size="sm"
+							variant="ghost"
+							color="secondary"
+							prefix={<RotateCw size={12} />}
+							onClick={onRetry}
+							testId={`ai-message-retry-${message.id}`}
+						>
+							Retry
+						</Button>
+					</div>
+				)}
+
+				{!isUser && !isError && !message.isRateLimitError && (
 					<MessageFeedback
 						message={message}
 						onRegenerate={onRegenerate}

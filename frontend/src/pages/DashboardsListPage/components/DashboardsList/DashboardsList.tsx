@@ -1,0 +1,400 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import logEvent from 'api/common/logEvent';
+import { useListDashboardsForUserV2 } from 'api/generated/services/dashboard';
+import {
+	DashboardtypesListOrderDTO,
+	DashboardtypesListSortDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { useDashboardCollectionPermissions } from 'hooks/dashboards/useDashboardCollectionPermissions';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import { LIST_CHECKS } from 'pages/DashboardsListPage/constants/permissions';
+import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
+import { useAppContext } from 'providers/App/App';
+import { toAPIError } from 'utils/errorUtils';
+
+import {
+	type TagPair,
+	useAccumulatedTags,
+} from '../../hooks/useAccumulatedTags';
+import { useActiveView } from '../../hooks/useActiveView';
+import { useDashboardViewCtx } from '../../hooks/useDashboardViewCtx';
+import { useCreatorOptions } from 'components/ListFilter/useCreatorOptions';
+import { useDashboardFilters } from '../../hooks/useDashboardFilters';
+import {
+	usePage,
+	useSortColumn,
+	useSortOrder,
+} from '../../hooks/useDashboardsListQueryParams';
+import { useDashboardViewsStore } from '../../store/useDashboardViewsStore';
+import { useDashboardsListVisibleColumnsStore } from '../../store/useVisibleColumnsStore';
+import { DEFAULT_DASHBOARD_VIEW, findBuiltinView } from '../../list.config';
+import type { SuggestionSource } from 'components/ListFilter/dsl/types';
+import type { DashboardListItem } from '../../utils/helpers';
+import DashboardsFilterZone from '../DashboardsFilterZone/DashboardsFilterZone';
+import NewDashboardModal from '../NewDashboardModal/NewDashboardModal';
+import type { ReactElement } from 'react';
+import ListCommandHeader from 'components/ListViews/ListCommandHeader/ListCommandHeader';
+import ListStatusBar from 'components/ListViews/ListStatusBar/ListStatusBar';
+import type { ViewSaveMode } from 'components/ListViews/types';
+import ViewsRail from 'components/ListViews/ViewsRail/ViewsRail';
+import DashboardsResults from './DashboardsResults';
+import NewDashboardButton from './NewDashboardButton';
+import ViewsRailGuard from './ViewsRailGuard';
+import WorkspaceEmptyState from './WorkspaceEmptyState';
+
+import styles from './DashboardsList.module.scss';
+
+const PAGE_SIZE = 20;
+// Favorites / recently-viewed are filtered client-side (no server id filter), so
+// we pull a single large page and constrain it in-memory.
+const CLIENT_VIEW_LIMIT = 200;
+
+function DashboardsList(): JSX.Element {
+	const { isCloudUser } = useGetTenantLicense();
+
+	const { user } = useAppContext();
+	// `list` also authorizes pinning and saved views, so it gates the table only.
+	const { canList } = useDashboardCollectionPermissions();
+
+	const { query, isEmpty: filtersEmpty, setQuery } = useDashboardFilters();
+	const [sortColumn, setSortColumn] = useSortColumn();
+	const [sortOrder, setSortOrder] = useSortOrder();
+	const [page, setPage] = usePage();
+
+	const viewCtx = useDashboardViewCtx();
+
+	const {
+		activeViewId,
+		builtinViews,
+		customViews,
+		customViewsLoading,
+		isCustomActive,
+		isModified,
+		clientView,
+		selectView,
+		saveView,
+		saveActiveView,
+		resetView,
+		removeView,
+		renameView,
+	} = useActiveView({
+		query,
+		setQuery,
+		ctx: viewCtx,
+		sortColumn,
+		sortOrder,
+		setSortColumn,
+		setSortOrder,
+		canListDashboards: canList,
+	});
+
+	const railCollapsed = useDashboardViewsStore((s) => s.railCollapsed);
+	const setRailCollapsed = useDashboardViewsStore((s) => s.setRailCollapsed);
+
+	// Any filter change resets to the first page so the user isn't stranded on a
+	// now-out-of-range offset.
+	const handleQueryChange = useCallback(
+		(value: string): void => {
+			setQuery(value);
+			void setPage(1);
+		},
+		[setQuery, setPage],
+	);
+
+	// View actions that change the result set reset pagination too.
+	const handleSelectView = useCallback(
+		(id: string): void => {
+			void logEvent(DashboardListEvents.ViewSelected, {
+				viewId: id,
+				viewType: builtinViews.some((v) => v.id === id) ? 'builtin' : 'custom',
+			});
+			selectView(id);
+			void setPage(1);
+		},
+		[selectView, setPage, builtinViews],
+	);
+	const handleResetView = useCallback((): void => {
+		void logEvent(DashboardListEvents.ViewReset, {});
+		resetView();
+		void setPage(1);
+	}, [resetView, setPage]);
+	const handleRemoveView = useCallback(
+		(id: string): Promise<void> => {
+			void setPage(1);
+			return removeView(id);
+		},
+		[removeView, setPage],
+	);
+	const toggleRail = useCallback((): void => {
+		void logEvent(DashboardListEvents.RailToggled, { collapsed: !railCollapsed });
+		setRailCollapsed(!railCollapsed);
+	}, [setRailCollapsed, railCollapsed]);
+	const guardViewsRail = useCallback(
+		(content: ReactElement): ReactElement => (
+			<ViewsRailGuard>{content}</ViewsRailGuard>
+		),
+		[],
+	);
+	const logViewSaved = useCallback((mode: ViewSaveMode): void => {
+		void logEvent(DashboardListEvents.ViewSaved, { mode });
+	}, []);
+	const logViewRenamed = useCallback((): void => {
+		void logEvent(DashboardListEvents.ViewRenamed, {});
+	}, []);
+	const logViewDeleted = useCallback((): void => {
+		void logEvent(DashboardListEvents.ViewDeleted, {});
+	}, []);
+
+	const listParams = useMemo(
+		() => ({
+			query: query || undefined,
+			sort: sortColumn,
+			order: sortOrder,
+			limit: clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE,
+			offset: clientView ? 0 : (page - 1) * PAGE_SIZE,
+		}),
+		[query, sortColumn, sortOrder, page, clientView],
+	);
+
+	const {
+		data: response,
+		isLoading,
+		isFetching,
+		error,
+		refetch,
+	} = useListDashboardsForUserV2(listParams, {
+		query: { keepPreviousData: true, enabled: canList },
+	});
+
+	const apiError = useMemo(
+		() => (error ? toAPIError(error) : undefined),
+		[error],
+	);
+	const errorHttpStatus = apiError?.getHttpStatusCode();
+	const errorMessage = apiError?.getErrorMessage();
+
+	const rawDashboards = useMemo<DashboardListItem[]>(
+		() => response?.data?.dashboards ?? [],
+		[response],
+	);
+
+	// Favorites / recently-viewed constrain the fetched rows by a client-side id
+	// set; all other views are already constrained server-side.
+	const dashboards = useMemo<DashboardListItem[]>(() => {
+		const clientFilter = findBuiltinView(activeViewId)?.clientFilter;
+		return clientFilter ? clientFilter(rawDashboards, viewCtx) : rawDashboards;
+	}, [rawDashboards, activeViewId, viewCtx]);
+	const total = clientView ? dashboards.length : (response?.data?.total ?? 0);
+
+	// Step back a page when a delete empties the current one, instead of showing nothing.
+	useEffect(() => {
+		if (clientView || isFetching) {
+			return;
+		}
+		if (page > 1 && dashboards.length === 0) {
+			void setPage(page - 1);
+		}
+	}, [clientView, isFetching, dashboards.length, page, setPage]);
+
+	// Authors present on the loaded page — a fallback for the creator filter until
+	// the org-wide user list resolves.
+	const pageAuthorEmails = useMemo<string[]>(
+		() =>
+			rawDashboards
+				.map((d) => d.createdBy)
+				.filter((email): email is string => !!email),
+		[rawDashboards],
+	);
+	const creatorOptions = useCreatorOptions({
+		currentUserEmail: user.email,
+		fallbackEmails: pageAuthorEmails,
+	});
+
+	// All key:value tags the API reports for the org's dashboards, powering the
+	// DSL key/value autocomplete. Accumulated across refetches so previously-seen
+	// tags stay suggestable even when a filtered page omits them.
+	const responseTags = useMemo<TagPair[]>(
+		() =>
+			(response?.data?.tags ?? []).map((t) => ({ key: t.key, value: t.value })),
+		[response],
+	);
+	const availableTags = useAccumulatedTags(responseTags);
+
+	// Autocomplete data source: reserved keys from the response, tag keys/values
+	// accumulated across pages, and creator emails for `created_by` values.
+	const source = useMemo<SuggestionSource>(() => {
+		const valuesByKey: Record<string, string[]> = {};
+		const dynamicKeys = new Set<string>();
+		availableTags.forEach((t) => {
+			dynamicKeys.add(t.key);
+			const lower = t.key.toLowerCase();
+			(valuesByKey[lower] ??= []).push(t.value);
+		});
+		return {
+			reservedKeys: response?.data?.reservedKeywords,
+			dynamicKeys: Array.from(dynamicKeys),
+			valuesByKey,
+			creatorEmails: creatorOptions.map((o) => o.email),
+			currentUserEmail: user.email,
+		};
+	}, [availableTags, creatorOptions, response, user.email]);
+
+	const [isCreateOpen, setIsCreateOpen] = useState(false);
+	const visibleColumns = useDashboardsListVisibleColumnsStore(
+		(s) => s.visibleColumns,
+	);
+
+	const openCreate = useCallback((): void => {
+		void logEvent('Dashboard List: New dashboard clicked', {});
+		setIsCreateOpen(true);
+	}, []);
+
+	const onSortChange = useCallback(
+		(column: DashboardtypesListSortDTO): void => {
+			void logEvent(DashboardListEvents.SortChanged, { column, order: sortOrder });
+			void setSortColumn(column);
+			void setPage(1);
+		},
+		[setSortColumn, setPage, sortOrder],
+	);
+
+	const onOrderChange = useCallback(
+		(order: DashboardtypesListOrderDTO): void => {
+			void logEvent(DashboardListEvents.SortChanged, {
+				column: sortColumn,
+				order,
+			});
+			void setSortOrder(order);
+			void setPage(1);
+		},
+		[setSortOrder, setPage, sortColumn],
+	);
+
+	const visitLoggedRef = useRef(false);
+	useEffect(() => {
+		if (!visitLoggedRef.current && !isLoading && response !== undefined) {
+			void logEvent('Dashboard List V2: Page visited', {
+				number: dashboards.length,
+			});
+			visitLoggedRef.current = true;
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isLoading]);
+
+	const activeLabel =
+		customViews.find((v) => v.id === activeViewId)?.name ??
+		builtinViews.find((v) => v.id === activeViewId)?.label ??
+		'Dashboards';
+
+	// The workspace-empty CTA ("create your first dashboard") belongs only to the
+	// unfiltered All view; every other view's zero result is a no-results state.
+	const showWorkspaceEmpty =
+		canList &&
+		!error &&
+		dashboards.length === 0 &&
+		activeViewId === DEFAULT_DASHBOARD_VIEW &&
+		filtersEmpty &&
+		page === 1;
+
+	const isWorkspaceEmpty = showWorkspaceEmpty && !isLoading;
+
+	return (
+		<div className={styles.layout}>
+			<ViewsRail
+				activeViewId={activeViewId}
+				builtinViews={builtinViews}
+				customViews={customViews}
+				customViewsLoading={customViewsLoading}
+				isCustomActive={isCustomActive}
+				isModified={isModified}
+				collapsed={railCollapsed}
+				onSelect={handleSelectView}
+				onSave={saveView}
+				onSaveChanges={saveActiveView}
+				onReset={handleResetView}
+				onDelete={handleRemoveView}
+				onRename={renameView}
+				testIdPrefix="dashboards"
+				deleteDescription="This removes the saved view. Your dashboards are not affected."
+				guard={guardViewsRail}
+				onViewSaved={logViewSaved}
+				onViewRenamed={logViewRenamed}
+				onViewDeleted={logViewDeleted}
+			/>
+			<div className={styles.main}>
+				<div className={styles.mainScroll}>
+					{isWorkspaceEmpty ? (
+						<WorkspaceEmptyState onCreate={openCreate} />
+					) : (
+						<>
+							<div className={styles.headerZone}>
+								<ListCommandHeader
+									label={activeLabel}
+									count={total}
+									isModified={isModified}
+									action={<NewDashboardButton onClick={openCreate} />}
+								/>
+								<DashboardsFilterZone
+									query={query}
+									creatorOptions={creatorOptions}
+									source={source}
+									disabled={!canList}
+									onQueryChange={handleQueryChange}
+								/>
+							</div>
+							<div className={styles.viewContent}>
+								{/* Fails closed, unlike the guard's default: the fetch is
+								    already gated on the same check, so falling open would
+								    render the table shell with nothing in it and no reason
+								    given. */}
+								<AuthZGuardContent checks={LIST_CHECKS} onFailRenderContent={false}>
+									<DashboardsResults
+										isLoading={isLoading}
+										hasError={!!error}
+										isCloudUser={!!isCloudUser}
+										onRetry={(): void => {
+											void refetch();
+										}}
+										errorHttpStatus={errorHttpStatus}
+										errorMessage={errorMessage}
+										dashboards={dashboards}
+										activeViewId={activeViewId}
+										searchValue={query}
+										hasFilters={!filtersEmpty}
+										sortColumn={sortColumn}
+										onSortChange={onSortChange}
+										sortOrder={sortOrder}
+										onOrderChange={onOrderChange}
+										page={page}
+										pageSize={clientView ? CLIENT_VIEW_LIMIT : PAGE_SIZE}
+										total={total}
+										onPageChange={setPage}
+										showUpdatedAt={visibleColumns.updatedAt}
+										showUpdatedBy={visibleColumns.updatedBy}
+										loading={isFetching}
+									/>
+								</AuthZGuardContent>
+							</div>
+						</>
+					)}
+				</div>
+				<ListStatusBar
+					collapsed={railCollapsed}
+					onToggleCollapse={toggleRail}
+					count={dashboards.length}
+					total={total}
+					noun="dashboards"
+					testId="dashboards-rail-toggle"
+				/>
+			</div>
+
+			<NewDashboardModal
+				open={isCreateOpen}
+				onClose={(): void => setIsCreateOpen(false)}
+			/>
+		</div>
+	);
+}
+
+export default DashboardsList;

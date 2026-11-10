@@ -1,14 +1,10 @@
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { Router } from 'react-router-dom';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
-import { createMemoryHistory, MemoryHistory } from 'history';
 import { encode } from 'js-base64';
-import { AppContext } from 'providers/App/App';
-import { IAppContext } from 'providers/App/types';
-import { getAppContextMock } from 'tests/test-utils';
+import { navigate } from 'lib/router/navigation';
+import { TestRouter } from 'tests/router';
 
 import ResourceProvider from '../ResourceProvider';
 import useResourceAttribute from '../useResourceAttribute';
@@ -21,17 +17,6 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: {
-			search: '',
-			pathname: '/',
-		},
-	},
-}));
-
 jest.mock('api/metrics/getResourceAttributes', () => ({
 	getResourceAttributesTagKeys: jest.fn(),
 	getResourceAttributesTagValues: jest.fn(),
@@ -41,10 +26,7 @@ jest.mock('api/metrics/getResourceAttributes', () => ({
 import {
 	getResourceAttributesTagKeys,
 	getResourceAttributesTagValues,
-	// eslint-disable-next-line import/newline-after-import
 } from 'api/metrics/getResourceAttributes';
-// eslint-disable-next-line import/first, import/order
-import history from 'lib/history';
 
 const mockTagKeys = getResourceAttributesTagKeys as jest.MockedFunction<
 	typeof getResourceAttributesTagKeys
@@ -54,11 +36,9 @@ const mockTagValues = getResourceAttributesTagValues as jest.MockedFunction<
 >;
 
 function createWrapper({
-	routerHistory,
-	appContextOverrides,
+	initialRoute,
 }: {
-	routerHistory: MemoryHistory;
-	appContextOverrides?: Partial<IAppContext>;
+	initialRoute: string;
 }): ({ children }: { children: ReactNode }) => JSX.Element {
 	const queryClient = new QueryClient({
 		defaultOptions: { queries: { retry: false } },
@@ -66,21 +46,12 @@ function createWrapper({
 	return function Wrapper({ children }: { children: ReactNode }): JSX.Element {
 		return (
 			<QueryClientProvider client={queryClient}>
-				<AppContext.Provider
-					value={getAppContextMock('ADMIN', appContextOverrides)}
-				>
-					<Router history={routerHistory}>
-						<ResourceProvider>{children}</ResourceProvider>
-					</Router>
-				</AppContext.Provider>
+				<TestRouter initialRoute={initialRoute}>
+					<ResourceProvider>{children}</ResourceProvider>
+				</TestRouter>
 			</QueryClientProvider>
 		);
 	};
-}
-
-function mockLibHistory(search = '', pathname = '/'): void {
-	(history.location as { search: string; pathname: string }).search = search;
-	(history.location as { search: string; pathname: string }).pathname = pathname;
 }
 
 type TagKeysPayload = Parameters<typeof mockTagKeys.mockResolvedValue>[0];
@@ -122,14 +93,12 @@ describe('ResourceProvider', () => {
 		mockSafeNavigate.mockReset();
 		mockTagKeys.mockReset();
 		mockTagValues.mockReset();
-		mockLibHistory('', '/');
 	});
 
 	describe('initial state', () => {
 		it('starts loading with empty staging, selectedQuery, and queries', () => {
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({ initialRoute: '/' }),
 			});
 
 			expect(result.current.loading).toBe(true);
@@ -151,11 +120,10 @@ describe('ResourceProvider', () => {
 					tagValue: ['frontend'],
 				},
 			];
-			mockLibHistory(`?resourceAttribute=${encode(JSON.stringify(seeded))}`, '/');
-
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({
+					initialRoute: `/?resourceAttribute=${encode(JSON.stringify(seeded))}`,
+				}),
 			});
 
 			expect(result.current.queries).toStrictEqual(seeded);
@@ -167,9 +135,8 @@ describe('ResourceProvider', () => {
 			mockTagKeys.mockResolvedValue(
 				successTagKeysPayload(['resource_service_name']),
 			);
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({ initialRoute: '/' }),
 			});
 
 			act(() => {
@@ -189,9 +156,8 @@ describe('ResourceProvider', () => {
 			mockTagKeys.mockResolvedValue(
 				successTagKeysPayload(['resource_service_name']),
 			);
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({ initialRoute: '/' }),
 			});
 
 			act(() => {
@@ -217,9 +183,8 @@ describe('ResourceProvider', () => {
 			mockTagValues.mockResolvedValue(
 				successTagValuesPayload(['frontend', 'backend']),
 			);
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({ initialRoute: '/' }),
 			});
 
 			act(() => {
@@ -250,9 +215,8 @@ describe('ResourceProvider', () => {
 				successTagKeysPayload(['resource_service_name']),
 			);
 			mockTagValues.mockResolvedValue(successTagValuesPayload(['frontend']));
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({ initialRoute: '/' }),
 			});
 
 			act(() => {
@@ -298,9 +262,8 @@ describe('ResourceProvider', () => {
 				successTagKeysPayload(['resource_service_name']),
 			);
 			mockTagValues.mockResolvedValue(successTagValuesPayload(['frontend']));
-			const routerHistory = createMemoryHistory({ initialEntries: ['/svc'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({ initialRoute: '/svc' }),
 			});
 
 			act(() => {
@@ -338,9 +301,8 @@ describe('ResourceProvider', () => {
 			mockTagKeys.mockResolvedValue(
 				successTagKeysPayload(['resource_service_name']),
 			);
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({ initialRoute: '/' }),
 			});
 
 			act(() => {
@@ -365,11 +327,10 @@ describe('ResourceProvider', () => {
 				{ id: 'a', tagKey: 'resource_a', operator: 'IN', tagValue: ['x'] },
 				{ id: 'b', tagKey: 'resource_b', operator: 'IN', tagValue: ['y'] },
 			];
-			mockLibHistory(`?resourceAttribute=${encode(JSON.stringify(seeded))}`, '/');
-
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({
+					initialRoute: `/?resourceAttribute=${encode(JSON.stringify(seeded))}`,
+				}),
 			});
 
 			expect(result.current.queries).toHaveLength(2);
@@ -388,11 +349,10 @@ describe('ResourceProvider', () => {
 			const seeded = [
 				{ id: 'a', tagKey: 'resource_a', operator: 'IN', tagValue: ['x'] },
 			];
-			mockLibHistory(`?resourceAttribute=${encode(JSON.stringify(seeded))}`, '/');
-
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({
+					initialRoute: `/?resourceAttribute=${encode(JSON.stringify(seeded))}`,
+				}),
 			});
 
 			act(() => {
@@ -411,10 +371,9 @@ describe('ResourceProvider', () => {
 	});
 
 	describe('handleEnvironmentChange', () => {
-		it('adds an environment query when envs are provided', async () => {
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
+		it('adds a dotted environment query when envs are provided', async () => {
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({ initialRoute: '/' }),
 			});
 
 			act(() => {
@@ -424,7 +383,7 @@ describe('ResourceProvider', () => {
 			await waitFor(() => {
 				expect(result.current.queries).toHaveLength(1);
 				expect(result.current.queries[0]).toMatchObject({
-					tagKey: 'resource_deployment_environment',
+					tagKey: 'resource_deployment.environment',
 					operator: 'IN',
 					tagValue: ['production'],
 				});
@@ -435,7 +394,7 @@ describe('ResourceProvider', () => {
 			const seeded = [
 				{
 					id: 'env',
-					tagKey: 'resource_deployment_environment',
+					tagKey: 'resource_deployment.environment',
 					operator: 'IN',
 					tagValue: ['production'],
 				},
@@ -446,11 +405,10 @@ describe('ResourceProvider', () => {
 					tagValue: ['frontend'],
 				},
 			];
-			mockLibHistory(`?resourceAttribute=${encode(JSON.stringify(seeded))}`, '/');
-
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({
+					initialRoute: `/?resourceAttribute=${encode(JSON.stringify(seeded))}`,
+				}),
 			});
 
 			act(() => {
@@ -459,7 +417,7 @@ describe('ResourceProvider', () => {
 
 			await waitFor(() => {
 				const tagKeys = result.current.queries.map((q) => q.tagKey);
-				expect(tagKeys).not.toContain('resource_deployment_environment');
+				expect(tagKeys).not.toContain('resource_deployment.environment');
 				expect(tagKeys).toContain('resource_service_name');
 			});
 		});
@@ -468,16 +426,15 @@ describe('ResourceProvider', () => {
 			const seeded = [
 				{
 					id: 'env',
-					tagKey: 'resource_deployment_environment',
+					tagKey: 'resource_deployment.environment',
 					operator: 'IN',
 					tagValue: ['production'],
 				},
 			];
-			mockLibHistory(`?resourceAttribute=${encode(JSON.stringify(seeded))}`, '/');
-
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({
+					initialRoute: `/?resourceAttribute=${encode(JSON.stringify(seeded))}`,
+				}),
 			});
 
 			act(() => {
@@ -486,49 +443,16 @@ describe('ResourceProvider', () => {
 
 			await waitFor(() => {
 				const envQueries = result.current.queries.filter(
-					(q) => q.tagKey === 'resource_deployment_environment',
+					(q) => q.tagKey === 'resource_deployment.environment',
 				);
 				expect(envQueries).toHaveLength(1);
 				expect(envQueries[0].tagValue).toStrictEqual(['staging']);
 			});
 		});
 
-		it('uses the dotted deployment env key when DOT_METRICS_ENABLED is active', async () => {
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
-			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({
-					routerHistory,
-					appContextOverrides: {
-						featureFlags: [
-							{
-								name: FeatureKeys.DOT_METRICS_ENABLED,
-								active: true,
-								usage: 0,
-								usage_limit: -1,
-								route: '',
-							},
-						],
-					},
-				}),
-			});
-
-			act(() => {
-				result.current.handleEnvironmentChange(['production']);
-			});
-
-			await waitFor(() => {
-				expect(result.current.queries[0].tagKey).toBe(
-					'resource_deployment.environment',
-				);
-			});
-		});
-
 		it('preserves unrelated query params when dispatching', async () => {
-			const routerHistory = createMemoryHistory({
-				initialEntries: ['/?tab=overview'],
-			});
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({ initialRoute: '/?tab=overview' }),
 			});
 
 			act(() => {
@@ -544,60 +468,41 @@ describe('ResourceProvider', () => {
 		});
 	});
 
-	describe('getVisibleQueries (SERVICE_MAP filtering)', () => {
-		it('filters queries down to whitelisted keys on SERVICE_MAP', () => {
-			const seeded = [
-				{
-					id: 'a',
-					tagKey: 'resource_service_name',
-					operator: 'IN',
-					tagValue: ['frontend'],
-				},
-				{
-					id: 'b',
-					tagKey: 'resource_k8s_cluster_name',
-					operator: 'IN',
-					tagValue: ['prod'],
-				},
-			];
-			mockLibHistory(
-				`?resourceAttribute=${encode(JSON.stringify(seeded))}`,
-				ROUTES.SERVICE_MAP,
-			);
+	describe('SERVICE_MAP', () => {
+		const seeded = [
+			{
+				id: 'a',
+				tagKey: 'resource_service_name',
+				operator: 'IN',
+				tagValue: ['frontend'],
+			},
+			{
+				id: 'b',
+				tagKey: 'resource_k8s_cluster_name',
+				operator: 'IN',
+				tagValue: ['prod'],
+			},
+		];
 
-			const routerHistory = createMemoryHistory({
-				initialEntries: [ROUTES.SERVICE_MAP],
-			});
+		it('exposes every query from the URL, including ones the map cannot apply', () => {
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({
+					initialRoute: `${ROUTES.SERVICE_MAP}?resourceAttribute=${encode(
+						JSON.stringify(seeded),
+					)}`,
+				}),
 			});
 
-			expect(result.current.queries).toStrictEqual([seeded[1]]);
+			expect(result.current.queries).toStrictEqual(seeded);
 		});
 
 		it('returns all queries on non-SERVICE_MAP routes', () => {
-			const seeded = [
-				{
-					id: 'a',
-					tagKey: 'resource_service_name',
-					operator: 'IN',
-					tagValue: ['frontend'],
-				},
-				{
-					id: 'b',
-					tagKey: 'resource_k8s_cluster_name',
-					operator: 'IN',
-					tagValue: ['prod'],
-				},
-			];
-			mockLibHistory(
-				`?resourceAttribute=${encode(JSON.stringify(seeded))}`,
-				'/services',
-			);
-
-			const routerHistory = createMemoryHistory({ initialEntries: ['/services'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({
+					initialRoute: `/services?resourceAttribute=${encode(
+						JSON.stringify(seeded),
+					)}`,
+				}),
 			});
 
 			expect(result.current.queries).toHaveLength(2);
@@ -610,13 +515,8 @@ describe('ResourceProvider', () => {
 					'resource_k8s_cluster_name',
 				]),
 			);
-			mockLibHistory('', ROUTES.SERVICE_MAP);
-
-			const routerHistory = createMemoryHistory({
-				initialEntries: [ROUTES.SERVICE_MAP],
-			});
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({ initialRoute: ROUTES.SERVICE_MAP }),
 			});
 
 			act(() => {
@@ -637,9 +537,8 @@ describe('ResourceProvider', () => {
 
 	describe('URL re-hydration and in-flight loading', () => {
 		it('re-hydrates queries when the router URL changes mid-session', async () => {
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({ initialRoute: '/' }),
 			});
 
 			expect(result.current.queries).toStrictEqual([]);
@@ -654,12 +553,10 @@ describe('ResourceProvider', () => {
 			];
 			const encoded = encode(JSON.stringify(seeded));
 
-			// The useEffect that re-hydrates reads from lib/history (mocked singleton)
-			// but is triggered by urlQuery, which comes from the router.
-			// Update both to simulate a real URL change.
-			mockLibHistory(`?resourceAttribute=${encoded}`, '/');
+			// The effect that re-hydrates reads the URL through lib/history, the same
+			// history the router runs on, so one navigation drives both.
 			act(() => {
-				routerHistory.push(`/?resourceAttribute=${encoded}`);
+				navigate(`/?resourceAttribute=${encoded}`);
 			});
 
 			await waitFor(() => {
@@ -672,9 +569,8 @@ describe('ResourceProvider', () => {
 			mockTagKeys.mockResolvedValueOnce(
 				successTagKeysPayload(['resource_service_name']),
 			);
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({ initialRoute: '/' }),
 			});
 
 			act(() => {
@@ -727,9 +623,8 @@ describe('ResourceProvider', () => {
 				payload: null,
 			} as unknown as TagKeysPayload);
 
-			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
-				wrapper: createWrapper({ routerHistory }),
+				wrapper: createWrapper({ initialRoute: '/' }),
 			});
 
 			act(() => {

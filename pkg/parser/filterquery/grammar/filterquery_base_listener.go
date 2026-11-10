@@ -1,4 +1,4 @@
-// Code generated from grammar/FilterQuery.g4 by ANTLR 4.13.2. DO NOT EDIT.
+// Code generated from FilterQuery.g4 by ANTLR 4.13.2. DO NOT EDIT.
 
 package parser // FilterQuery
 
@@ -92,6 +92,12 @@ func (s *BaseFilterQueryListener) EnterFunctionCall(ctx *FunctionCallContext) {}
 
 // ExitFunctionCall is called when production functionCall is exited.
 func (s *BaseFilterQueryListener) ExitFunctionCall(ctx *FunctionCallContext) {}
+
+// EnterSearchCall is called when production searchCall is entered.
+func (s *BaseFilterQueryListener) EnterSearchCall(ctx *SearchCallContext) {}
+
+// ExitSearchCall is called when production searchCall is exited.
+func (s *BaseFilterQueryListener) ExitSearchCall(ctx *SearchCallContext) {}
 
 // EnterFunctionParamList is called when production functionParamList is entered.
 func (s *BaseFilterQueryListener) EnterFunctionParamList(ctx *FunctionParamListContext) {}

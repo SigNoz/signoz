@@ -1,19 +1,19 @@
 import {
-	WaterfallAggregationResponse,
-	WaterfallAggregationType,
-} from 'types/api/trace/getTraceV3';
+	SpantypesSpanAggregationResultDTO,
+	SpantypesSpanAggregationTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 export const AGGREGATIONS = {
-	EXEC_TIME_PCT: 'execution_time_percentage',
-	SPAN_COUNT: 'span_count',
-	DURATION: 'duration',
-} as const satisfies Record<string, WaterfallAggregationType>;
+	EXEC_TIME_PCT: SpantypesSpanAggregationTypeDTO.execution_time_percentage,
+	SPAN_COUNT: SpantypesSpanAggregationTypeDTO.span_count,
+	DURATION: SpantypesSpanAggregationTypeDTO.duration,
+} as const;
 
 export function getAggregationMap(
-	aggregations: WaterfallAggregationResponse[] | undefined,
-	type: WaterfallAggregationType,
+	aggregations: SpantypesSpanAggregationResultDTO[] | undefined,
+	type: SpantypesSpanAggregationTypeDTO,
 	fieldName: string,
-): Record<string, number> | undefined {
+): Record<string, number> | null | undefined {
 	return aggregations?.find(
 		(a) => a.aggregation === type && a.field.name === fieldName,
 	)?.value;

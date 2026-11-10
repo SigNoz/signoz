@@ -8,7 +8,7 @@ import {
 	OPERATORS,
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
-import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import FilterQueryParser, {
 	AndExpressionContext,
@@ -176,7 +176,9 @@ function formatSingleValueForFilter(
 		}
 
 		if (isQuoted(value)) {
-			return unquote(value);
+			// Unescape `\'` → `'` (inverse of formatSingleValue) so the round-trip doesn't
+			// double the backslash each pass.
+			return unquote(value).replace(/\\'/g, "'");
 		}
 	}
 
@@ -524,6 +526,34 @@ export const convertFiltersToExpressionWithExistingQuery = (
 };
 
 /**
+ * Canonical name for a comparison's operator, limited to the equality and
+ * membership forms. Every other shape (LIKE, BETWEEN, EXISTS, CONTAINS, REGEXP,
+ * the ordering operators) returns undefined, so an operator-restricted removal
+ * leaves it in place.
+ *
+ * The ANTLR4 runtime returns null for an absent token or rule despite the
+ * non-nullable TypeScript signatures.
+ */
+const getComparisonOperator = (ctx: ComparisonContext): string | undefined => {
+	if ((ctx.inClause() as unknown) !== null) {
+		return 'in';
+	}
+	if ((ctx.notInClause() as unknown) !== null) {
+		return 'not in';
+	}
+	if ((ctx.EQUALS() as unknown) !== null) {
+		return '=';
+	}
+	if (
+		(ctx.NOT_EQUALS() as unknown) !== null ||
+		(ctx.NEQ() as unknown) !== null
+	) {
+		return '!=';
+	}
+	return undefined;
+};
+
+/**
  * Removes clauses for specified keys from a filter query expression.
  *
  * Uses an ANTLR parse-tree traversal over the existing FilterQuery grammar so that
@@ -540,12 +570,16 @@ export const convertFiltersToExpressionWithExistingQuery = (
  *   - `true`: removes only the first clause whose value contains any `$`.
  *   - `string` (e.g. `"$service.name"`): removes only the clause whose value exactly
  *     matches that string — preferred when the specific variable reference is known.
+ * @param operatorsToRemove - When given, restricts removal to clauses whose operator
+ *   is in this set (`=`, `!=`, `in`, `not in`); every other clause on the key is kept.
+ *   Omit to remove a matching key's clauses whatever their operator.
  * @returns The rewritten expression, or an empty string if all clauses were removed.
  */
 export const removeKeysFromExpression = (
 	expression: string,
 	keysToRemove: string[],
 	removeOnlyVariableExpressions: string | boolean = false,
+	operatorsToRemove?: string[],
 ): string => {
 	if (!keysToRemove || keysToRemove.length === 0) {
 		return expression;
@@ -555,6 +589,9 @@ export const removeKeysFromExpression = (
 	}
 
 	const keysSet = new Set(keysToRemove.map((k) => k.trim().toLowerCase()));
+	const operatorsSet = operatorsToRemove
+		? new Set(operatorsToRemove.map((op) => op.trim().toLowerCase()))
+		: null;
 	// Tracks keys for which a variable expression has already been removed.
 	// Having multiple $-value clauses for the same key is invalid; we remove at most one.
 	const removedVariableKeys = new Set<string>();
@@ -656,6 +693,13 @@ export const removeKeysFromExpression = (
 			return src(ctx);
 		}
 
+		if (operatorsSet) {
+			const operator = getComparisonOperator(ctx);
+			if (!operator || !operatorsSet.has(operator)) {
+				return src(ctx);
+			}
+		}
+
 		if (removeOnlyVariableExpressions) {
 			// Scope the value check to value nodes only — not the full comparison text —
 			// so a key that contains '$' does not trigger removal when the value is a
@@ -721,6 +765,91 @@ export const removeKeysFromExpression = (
 	return result?.text ?? '';
 };
 
+const escapeRegExp = (value: string): string =>
+	value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export const createVariablePlaceholderRegExp = (
+	variableName: string,
+): RegExp => {
+	const escapedName = escapeRegExp(variableName);
+	// (?![\w.]) prevents $env from matching inside $environment or $env.attr
+	return new RegExp(
+		`(\\$${escapedName}(?![\\w.])|\\{\\{\\s*\\.?${escapedName}\\s*\\}\\}|\\[\\[\\s*${escapedName}\\s*\\]\\])`,
+		'g',
+	);
+};
+
+const matchesVariablePlaceholder = (
+	text: string,
+	variableName: string,
+): boolean => createVariablePlaceholderRegExp(variableName).test(text);
+
+export const removeVariableFromExpression = (
+	expression: string | undefined,
+	variableName: string,
+): string => {
+	if (!expression) {
+		return '';
+	}
+
+	const queryPairs = extractQueryPairs(expression);
+
+	const keysToRemove = queryPairs
+		.filter((pair) => {
+			const singleValue = pair.value?.toString() ?? '';
+			const listValues = (pair.valueList ?? []).join(' ');
+			return (
+				matchesVariablePlaceholder(singleValue, variableName) ||
+				matchesVariablePlaceholder(listValues, variableName)
+			);
+		})
+		.map((pair) => pair.key);
+
+	if (keysToRemove.length === 0) {
+		return expression;
+	}
+
+	return removeKeysFromExpression(expression, keysToRemove, `$${variableName}`);
+};
+
+// Appends `clause` as a top-level AND term, parenthesising the base only when it
+// has a top-level OR (AND binds tighter, so `a OR b AND c` would misbind).
+export const appendAndClause = (
+	expression: string | undefined,
+	clause: string,
+): string => {
+	const base = expression?.trim();
+	if (!base) {
+		return clause;
+	}
+
+	const chars = CharStreams.fromString(base);
+	const lexer = new FilterQueryLexer(chars);
+	lexer.removeErrorListeners();
+	const tokenStream = new CommonTokenStream(lexer);
+	const parser = new FilterQueryParser(tokenStream);
+	parser.removeErrorListeners();
+	const tree = parser.query();
+
+	if (parser.syntaxErrorsCount > 0) {
+		return `(${base}) AND ${clause}`;
+	}
+
+	const hasTopLevelOr =
+		tree.expression().orExpression().andExpression_list().length > 1;
+	return hasTopLevelOr ? `(${base}) AND ${clause}` : `${base} AND ${clause}`;
+};
+
+/** Strips everything but digits, so a limit input can't hold a sign or decimal. */
+export const sanitizeLimit = (value: string): string =>
+	value.replace(/\D/g, '');
+
+/** A query or formula limit: a positive integer, otherwise none. */
+export const parseLimit = (value: string): number | null => {
+	const limit = Number(value);
+	return Number.isInteger(limit) && limit > 0 ? limit : null;
+};
+
 /**
  * Convert old having format to new having format
  * @param having - Array of old having objects with columnName, op, and value
@@ -752,7 +881,14 @@ export const convertHavingToExpression = (
 				formattedValue = String(value);
 			}
 
-			return `${columnName} ${op} ${formattedValue}`;
+			// The old having filter upper-cased the function (`COUNT()`); v5 only
+			// resolves the aggregation's own lower-case expression.
+			const reference = columnName.replace(
+				/^\s*([A-Za-z_]\w*)\(/,
+				(_, fn: string) => `${fn.toLowerCase()}(`,
+			);
+
+			return `${reference} ${op} ${formattedValue}`;
 		})
 		.filter((expression) => expression !== ''); // Remove empty expressions
 

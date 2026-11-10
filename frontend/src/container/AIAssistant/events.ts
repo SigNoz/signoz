@@ -70,6 +70,8 @@ export const AIAssistantOpenSource = {
 	Icon: 'icon',
 	Shortcut: 'shortcut',
 	Cmdk: 'cmdk',
+	TraceDetails: 'trace_details',
+	BottomStrip: 'bottom_strip',
 } as const;
 export type AIAssistantOpenSource =
 	(typeof AIAssistantOpenSource)[keyof typeof AIAssistantOpenSource];
@@ -89,6 +91,7 @@ export enum AIAssistantEvents {
 	SuggestedPromptClicked = 'AI Assistant: Suggested prompt clicked',
 	CancelClicked = 'AI Assistant: Cancel clicked',
 	RegenerateClicked = 'AI Assistant: Regenerate clicked',
+	RetryClicked = 'AI Assistant: Retry clicked',
 	MessageCopied = 'AI Assistant: Message copied',
 	FeedbackSubmitted = 'AI Assistant: Feedback submitted',
 	ResourceOpened = 'AI Assistant: Resource opened',

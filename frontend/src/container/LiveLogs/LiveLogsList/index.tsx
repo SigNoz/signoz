@@ -5,6 +5,7 @@ import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { toast } from '@signozhq/ui/sonner';
 import { Card } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
@@ -16,7 +17,6 @@ import { useLogsTableColumns } from 'components/Logs/TableView/useLogsTableColum
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import type { TanStackTableHandle } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
-import { useHiddenColumnIds } from 'components/TanStackTableView/useColumnStore';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { OptionFormatTypes } from 'constants/optionsFormatTypes';
@@ -24,16 +24,14 @@ import { QueryParams } from 'constants/query';
 import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEventSource } from 'providers/EventSource';
-import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 // interfaces
 import { ILog } from 'types/api/logs/log';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { StringOperators } from 'types/common/queryBuilder';
 
 import loadingPlaneUrl from '@/assets/Icons/loading-plane.gif';
 import { getAbsoluteUrl } from 'utils/basePath';
@@ -54,9 +52,6 @@ function LiveLogsList({
 	const { isConnectionLoading } = useEventSource();
 
 	const { activeLogId } = useCopyLogLink();
-	const { logs: logsPreferences } = usePreferenceContext();
-	const hiddenColumnIds = useHiddenColumnIds(LOCALSTORAGE.LOGS_LIST_COLUMNS);
-	const hasReconciledHiddenColumnsRef = useRef(false);
 
 	const {
 		activeLog,
@@ -72,9 +67,9 @@ function LiveLogsList({
 		[logs],
 	);
 
-	const { options } = useOptionsMenu({
+	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: DataSource.LOGS,
+		sourcePage: SavedviewtypesSourceDTO.logs,
 		aggregateOperator: StringOperators.NOOP,
 	});
 
@@ -83,46 +78,12 @@ function LiveLogsList({
 		[formattedLogs, activeLogId],
 	);
 
-	const selectedFields = convertKeysToColumnFields([
-		...defaultLogsSelectedColumns,
-		...options.selectColumns,
-	]);
-
-	const syncedSelectedColumns = useMemo(
-		() =>
-			options.selectColumns.filter(({ name }) => !hiddenColumnIds.includes(name)),
-		[options.selectColumns, hiddenColumnIds],
-	);
+	const selectedFields = convertKeysToColumnFields(options.selectColumns);
 
 	const logsColumns = useLogsTableColumns({
 		fields: selectedFields,
 		fontSize: options.fontSize,
-		appendTo: 'end',
 	});
-
-	useEffect(() => {
-		if (hasReconciledHiddenColumnsRef.current) {
-			return;
-		}
-
-		hasReconciledHiddenColumnsRef.current = true;
-
-		if (syncedSelectedColumns.length === options.selectColumns.length) {
-			return;
-		}
-
-		logsPreferences.updateColumns(syncedSelectedColumns);
-	}, [logsPreferences, options.selectColumns.length, syncedSelectedColumns]);
-
-	const handleColumnRemove = useCallback(
-		(columnId: string) => {
-			const updatedColumns = options.selectColumns.filter(
-				({ name }) => name !== columnId,
-			);
-			logsPreferences.updateColumns(updatedColumns);
-		},
-		[options.selectColumns, logsPreferences],
-	);
 
 	const makeOnLogCopy = useCallback(
 		(log: ILog) =>
@@ -226,7 +187,7 @@ function LiveLogsList({
 	);
 
 	return (
-		<div className="live-logs-list">
+		<div className="live-logs-list" data-testid="live-logs-list">
 			{(formattedLogs.length === 0 || isLoading || isLoadingList) &&
 				renderLoading()}
 
@@ -237,12 +198,17 @@ function LiveLogsList({
 							ref={ref as React.Ref<TanStackTableHandle>}
 							columns={logsColumns}
 							columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
-							onColumnRemove={handleColumnRemove}
+							respectColumnOrder={false}
+							onColumnRemove={config?.addColumn?.onRemove}
 							plainTextCellLineClamp={options.maxLines}
 							cellTypographySize={options.fontSize}
 							data={formattedLogs}
 							isLoading={false}
+							getRowTestId={(log): string => `logs-table-row-${log.id}`}
 							isRowActive={(log): boolean => log.id === activeLog?.id}
+							getRowClassName={(log): string =>
+								log.id === activeLogId ? 'logs-linked-row' : ''
+							}
 							getRowStyle={(log): CSSProperties =>
 								({
 									'--row-active-bg': getRowBackgroundColor(
@@ -255,10 +221,13 @@ function LiveLogsList({
 									),
 								}) as CSSProperties
 							}
-							onRowClick={(log): void => {
-								handleSetActiveLog(log);
+							onRowClick={(log, _itemKey, { isActive }): void => {
+								if (isActive) {
+									handleCloseLogDetail();
+								} else {
+									handleSetActiveLog(log);
+								}
 							}}
-							onRowDeactivate={handleCloseLogDetail}
 							activeRowIndex={activeLogIndex}
 							renderRowActions={(log): ReactNode => (
 								<LogLinesActionButtons
@@ -292,8 +261,6 @@ function LiveLogsList({
 					selectedTab={selectedTab}
 					log={activeLog}
 					onClose={handleCloseLogDetail}
-					onAddToQuery={onAddToQuery}
-					onClickActionItem={onAddToQuery}
 					handleChangeSelectedView={handleChangeSelectedView}
 					logs={formattedLogs}
 					onNavigateLog={handleSetActiveLog}

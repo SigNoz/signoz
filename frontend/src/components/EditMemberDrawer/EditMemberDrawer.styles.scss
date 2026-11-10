@@ -90,7 +90,6 @@
 			font-weight: var(--uppercase-small-500-font-weight);
 			line-height: 100%;
 			letter-spacing: 0.44px;
-			text-transform: uppercase;
 		}
 	}
 
@@ -113,6 +112,7 @@
 	&__footer-left {
 		display: flex;
 		align-items: center;
+		gap: var(--spacing-4);
 	}
 
 	&__footer-right {
@@ -126,10 +126,6 @@
 		height: 21px;
 		background: var(--l1-border);
 		flex-shrink: 0;
-	}
-
-	&__tooltip-wrapper {
-		display: inline-flex;
 	}
 
 	&__footer-btn {
@@ -200,6 +196,7 @@
 		background: var(--l2-background);
 		border: 1px solid var(--l1-border);
 		border-radius: 2px;
+		padding-right: var(--spacing-4);
 	}
 
 	&__link-text-wrap {
@@ -219,9 +216,5 @@
 		color: var(--l2-foreground);
 		line-height: var(--line-height-18);
 		letter-spacing: -0.07px;
-	}
-
-	&__copy-btn {
-		border-left: 1px solid var(--l1-border);
 	}
 }

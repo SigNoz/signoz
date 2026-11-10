@@ -1,6 +1,5 @@
 import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { addFilterToSelectedQuery, FilterData } from './drilldownUtils';
@@ -89,7 +88,11 @@ export const getBreakoutQuery = (
 		.filter((item: IBuilderQuery) => item.queryName === aggregateData.queryName)
 		.map((item: IBuilderQuery) => ({
 			...item,
-			groupBy: [{ key: groupBy.key, type: groupBy.type } as BaseAutocompleteData],
+			// The picked field's type travels with it: dropped, the breakout query goes out
+			// untyped and a drilldown on its result can't tell a number from a string.
+			groupBy: [
+				{ key: groupBy.key, dataType: groupBy.dataType, type: groupBy.type },
+			],
 			orderBy: [],
 			legend: item.legend && groupBy.key ? `{{${groupBy.key}}}` : '',
 		}));

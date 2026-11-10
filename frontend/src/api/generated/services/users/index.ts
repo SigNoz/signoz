@@ -18,775 +18,65 @@ import type {
 } from 'react-query';
 
 import type {
-	CreateInvite201,
+	AuthtypesPostableUserDTO,
+	AuthtypesPostableUserRoleDTO,
 	CreateResetPasswordToken201,
 	CreateResetPasswordTokenPathParameters,
+	CreateUser201,
+	CreateUserRole201,
 	DeleteUserPathParameters,
+	DeleteUserRolePathParameters,
 	GetMyUser200,
-	GetMyUserDeprecated200,
 	GetResetPasswordToken200,
-	GetResetPasswordTokenDeprecated200,
-	GetResetPasswordTokenDeprecatedPathParameters,
 	GetResetPasswordTokenPathParameters,
 	GetRolesByUserID200,
 	GetRolesByUserIDPathParameters,
 	GetUser200,
-	GetUserDeprecated200,
-	GetUserDeprecatedPathParameters,
 	GetUserPathParameters,
+	GetUserRole200,
+	GetUserRolePathParameters,
 	GetUsersByRoleID200,
 	GetUsersByRoleIDPathParameters,
 	ListUsers200,
-	ListUsersDeprecated200,
-	RemoveUserRoleByUserIDAndRoleIDPathParameters,
 	RenderErrorResponseDTO,
-	SetRoleByUserIDPathParameters,
 	TypesChangePasswordRequestDTO,
-	TypesDeprecatedUserDTO,
-	TypesPostableBulkInviteRequestDTO,
 	TypesPostableForgotPasswordDTO,
-	TypesPostableInviteDTO,
 	TypesPostableResetPasswordDTO,
-	TypesPostableRoleDTO,
 	TypesPostableVerifyResetPasswordTokenDTO,
 	TypesUpdatableUserDTO,
-	UpdateUserDeprecated200,
-	UpdateUserDeprecatedPathParameters,
 	UpdateUserPathParameters,
 } from '../sigNoz.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
-/**
- * This endpoint returns the reset password token by id
- * @deprecated
- * @summary Get reset password token
- */
-export const getResetPasswordTokenDeprecated = (
-	{ id }: GetResetPasswordTokenDeprecatedPathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<GetResetPasswordTokenDeprecated200>({
-		url: `/api/v1/getResetPasswordToken/${id}`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getGetResetPasswordTokenDeprecatedQueryKey = ({
-	id,
-}: GetResetPasswordTokenDeprecatedPathParameters) => {
-	return [`/api/v1/getResetPasswordToken/${id}`] as const;
-};
-
-export const getGetResetPasswordTokenDeprecatedQueryOptions = <
-	TData = Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ id }: GetResetPasswordTokenDeprecatedPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
-			TError,
-			TData
-		>;
-	},
-) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey =
-		queryOptions?.queryKey ?? getGetResetPasswordTokenDeprecatedQueryKey({ id });
-
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>
-	> = ({ signal }) => getResetPasswordTokenDeprecated({ id }, signal);
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!id,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type GetResetPasswordTokenDeprecatedQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>
->;
-export type GetResetPasswordTokenDeprecatedQueryError =
-	ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @deprecated
- * @summary Get reset password token
- */
-
-export function useGetResetPasswordTokenDeprecated<
-	TData = Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ id }: GetResetPasswordTokenDeprecatedPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
-			TError,
-			TData
-		>;
-	},
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetResetPasswordTokenDeprecatedQueryOptions(
-		{ id },
-		options,
-	);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @deprecated
- * @summary Get reset password token
- */
-export const invalidateGetResetPasswordTokenDeprecated = async (
-	queryClient: QueryClient,
-	{ id }: GetResetPasswordTokenDeprecatedPathParameters,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getGetResetPasswordTokenDeprecatedQueryKey({ id }) },
-		options,
-	);
-
-	return queryClient;
-};
-
-/**
- * This endpoint creates an invite for a user
- * @summary Create invite
- */
-export const createInvite = (
-	typesPostableInviteDTO?: BodyType<TypesPostableInviteDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<CreateInvite201>({
-		url: `/api/v1/invite`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: typesPostableInviteDTO,
-		signal,
-	});
-};
-
-export const getCreateInviteMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createInvite>>,
-		TError,
-		{ data?: BodyType<TypesPostableInviteDTO> },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof createInvite>>,
-	TError,
-	{ data?: BodyType<TypesPostableInviteDTO> },
-	TContext
-> => {
-	const mutationKey = ['createInvite'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof createInvite>>,
-		{ data?: BodyType<TypesPostableInviteDTO> }
-	> = (props) => {
-		const { data } = props ?? {};
-
-		return createInvite(data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type CreateInviteMutationResult = NonNullable<
-	Awaited<ReturnType<typeof createInvite>>
->;
-export type CreateInviteMutationBody =
-	| BodyType<TypesPostableInviteDTO>
-	| undefined;
-export type CreateInviteMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Create invite
- */
-export const useCreateInvite = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createInvite>>,
-		TError,
-		{ data?: BodyType<TypesPostableInviteDTO> },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof createInvite>>,
-	TError,
-	{ data?: BodyType<TypesPostableInviteDTO> },
-	TContext
-> => {
-	return useMutation(getCreateInviteMutationOptions(options));
-};
-/**
- * This endpoint creates a bulk invite for a user
- * @summary Create bulk invite
- */
-export const createBulkInvite = (
-	typesPostableBulkInviteRequestDTO?: BodyType<TypesPostableBulkInviteRequestDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<void>({
-		url: `/api/v1/invite/bulk`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: typesPostableBulkInviteRequestDTO,
-		signal,
-	});
-};
-
-export const getCreateBulkInviteMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createBulkInvite>>,
-		TError,
-		{ data?: BodyType<TypesPostableBulkInviteRequestDTO> },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof createBulkInvite>>,
-	TError,
-	{ data?: BodyType<TypesPostableBulkInviteRequestDTO> },
-	TContext
-> => {
-	const mutationKey = ['createBulkInvite'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof createBulkInvite>>,
-		{ data?: BodyType<TypesPostableBulkInviteRequestDTO> }
-	> = (props) => {
-		const { data } = props ?? {};
-
-		return createBulkInvite(data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type CreateBulkInviteMutationResult = NonNullable<
-	Awaited<ReturnType<typeof createBulkInvite>>
->;
-export type CreateBulkInviteMutationBody =
-	| BodyType<TypesPostableBulkInviteRequestDTO>
-	| undefined;
-export type CreateBulkInviteMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Create bulk invite
- */
-export const useCreateBulkInvite = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createBulkInvite>>,
-		TError,
-		{ data?: BodyType<TypesPostableBulkInviteRequestDTO> },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof createBulkInvite>>,
-	TError,
-	{ data?: BodyType<TypesPostableBulkInviteRequestDTO> },
-	TContext
-> => {
-	return useMutation(getCreateBulkInviteMutationOptions(options));
-};
-/**
- * This endpoint resets the password by token
- * @summary Reset password
- */
-export const resetPassword = (
-	typesPostableResetPasswordDTO?: BodyType<TypesPostableResetPasswordDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<void>({
-		url: `/api/v1/resetPassword`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: typesPostableResetPasswordDTO,
-		signal,
-	});
-};
-
-export const getResetPasswordMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof resetPassword>>,
-		TError,
-		{ data?: BodyType<TypesPostableResetPasswordDTO> },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof resetPassword>>,
-	TError,
-	{ data?: BodyType<TypesPostableResetPasswordDTO> },
-	TContext
-> => {
-	const mutationKey = ['resetPassword'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof resetPassword>>,
-		{ data?: BodyType<TypesPostableResetPasswordDTO> }
-	> = (props) => {
-		const { data } = props ?? {};
-
-		return resetPassword(data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type ResetPasswordMutationResult = NonNullable<
-	Awaited<ReturnType<typeof resetPassword>>
->;
-export type ResetPasswordMutationBody =
-	| BodyType<TypesPostableResetPasswordDTO>
-	| undefined;
-export type ResetPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Reset password
- */
-export const useResetPassword = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof resetPassword>>,
-		TError,
-		{ data?: BodyType<TypesPostableResetPasswordDTO> },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof resetPassword>>,
-	TError,
-	{ data?: BodyType<TypesPostableResetPasswordDTO> },
-	TContext
-> => {
-	return useMutation(getResetPasswordMutationOptions(options));
-};
-/**
- * This endpoint lists all users
- * @summary List users
- */
-export const listUsersDeprecated = (signal?: AbortSignal) => {
-	return GeneratedAPIInstance<ListUsersDeprecated200>({
-		url: `/api/v1/user`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getListUsersDeprecatedQueryKey = () => {
-	return [`/api/v1/user`] as const;
-};
-
-export const getListUsersDeprecatedQueryOptions = <
-	TData = Awaited<ReturnType<typeof listUsersDeprecated>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listUsersDeprecated>>,
-		TError,
-		TData
-	>;
-}) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey = queryOptions?.queryKey ?? getListUsersDeprecatedQueryKey();
-
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof listUsersDeprecated>>
-	> = ({ signal }) => listUsersDeprecated(signal);
-
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof listUsersDeprecated>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type ListUsersDeprecatedQueryResult = NonNullable<
-	Awaited<ReturnType<typeof listUsersDeprecated>>
->;
-export type ListUsersDeprecatedQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary List users
- */
-
-export function useListUsersDeprecated<
-	TData = Awaited<ReturnType<typeof listUsersDeprecated>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listUsersDeprecated>>,
-		TError,
-		TData
-	>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListUsersDeprecatedQueryOptions(options);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary List users
- */
-export const invalidateListUsersDeprecated = async (
-	queryClient: QueryClient,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getListUsersDeprecatedQueryKey() },
-		options,
-	);
-
-	return queryClient;
-};
-
-/**
- * This endpoint deletes the user by id
- * @summary Delete user
- */
-export const deleteUser = (
-	{ id }: DeleteUserPathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<void>({
-		url: `/api/v1/user/${id}`,
-		method: 'DELETE',
-		signal,
-	});
-};
-
-export const getDeleteUserMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteUser>>,
-		TError,
-		{ pathParams: DeleteUserPathParameters },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof deleteUser>>,
-	TError,
-	{ pathParams: DeleteUserPathParameters },
-	TContext
-> => {
-	const mutationKey = ['deleteUser'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof deleteUser>>,
-		{ pathParams: DeleteUserPathParameters }
-	> = (props) => {
-		const { pathParams } = props ?? {};
-
-		return deleteUser(pathParams);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type DeleteUserMutationResult = NonNullable<
-	Awaited<ReturnType<typeof deleteUser>>
->;
-
-export type DeleteUserMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Delete user
- */
-export const useDeleteUser = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteUser>>,
-		TError,
-		{ pathParams: DeleteUserPathParameters },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof deleteUser>>,
-	TError,
-	{ pathParams: DeleteUserPathParameters },
-	TContext
-> => {
-	return useMutation(getDeleteUserMutationOptions(options));
-};
-/**
- * This endpoint returns the user by id
- * @summary Get user
- */
-export const getUserDeprecated = (
-	{ id }: GetUserDeprecatedPathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<GetUserDeprecated200>({
-		url: `/api/v1/user/${id}`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getGetUserDeprecatedQueryKey = ({
-	id,
-}: GetUserDeprecatedPathParameters) => {
-	return [`/api/v1/user/${id}`] as const;
-};
-
-export const getGetUserDeprecatedQueryOptions = <
-	TData = Awaited<ReturnType<typeof getUserDeprecated>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ id }: GetUserDeprecatedPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getUserDeprecated>>,
-			TError,
-			TData
-		>;
-	},
-) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey =
-		queryOptions?.queryKey ?? getGetUserDeprecatedQueryKey({ id });
-
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getUserDeprecated>>
-	> = ({ signal }) => getUserDeprecated({ id }, signal);
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!id,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getUserDeprecated>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type GetUserDeprecatedQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getUserDeprecated>>
->;
-export type GetUserDeprecatedQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Get user
- */
-
-export function useGetUserDeprecated<
-	TData = Awaited<ReturnType<typeof getUserDeprecated>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ id }: GetUserDeprecatedPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getUserDeprecated>>,
-			TError,
-			TData
-		>;
-	},
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetUserDeprecatedQueryOptions({ id }, options);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Get user
- */
-export const invalidateGetUserDeprecated = async (
-	queryClient: QueryClient,
-	{ id }: GetUserDeprecatedPathParameters,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getGetUserDeprecatedQueryKey({ id }) },
-		options,
-	);
-
-	return queryClient;
-};
-
-/**
- * This endpoint updates the user by id
- * @summary Update user
- */
-export const updateUserDeprecated = (
-	{ id }: UpdateUserDeprecatedPathParameters,
-	typesDeprecatedUserDTO?: BodyType<TypesDeprecatedUserDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<UpdateUserDeprecated200>({
-		url: `/api/v1/user/${id}`,
-		method: 'PUT',
-		headers: { 'Content-Type': 'application/json' },
-		data: typesDeprecatedUserDTO,
-		signal,
-	});
-};
-
-export const getUpdateUserDeprecatedMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateUserDeprecated>>,
-		TError,
-		{
-			pathParams: UpdateUserDeprecatedPathParameters;
-			data?: BodyType<TypesDeprecatedUserDTO>;
-		},
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof updateUserDeprecated>>,
-	TError,
-	{
-		pathParams: UpdateUserDeprecatedPathParameters;
-		data?: BodyType<TypesDeprecatedUserDTO>;
-	},
-	TContext
-> => {
-	const mutationKey = ['updateUserDeprecated'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof updateUserDeprecated>>,
-		{
-			pathParams: UpdateUserDeprecatedPathParameters;
-			data?: BodyType<TypesDeprecatedUserDTO>;
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
 		}
-	> = (props) => {
-		const { pathParams, data } = props ?? {};
-
-		return updateUserDeprecated(pathParams, data);
-	};
-
-	return { mutationFn, ...mutationOptions };
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
 };
 
-export type UpdateUserDeprecatedMutationResult = NonNullable<
-	Awaited<ReturnType<typeof updateUserDeprecated>>
->;
-export type UpdateUserDeprecatedMutationBody =
-	| BodyType<TypesDeprecatedUserDTO>
-	| undefined;
-export type UpdateUserDeprecatedMutationError =
-	ErrorType<RenderErrorResponseDTO>;
-
 /**
- * @summary Update user
- */
-export const useUpdateUserDeprecated = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateUserDeprecated>>,
-		TError,
-		{
-			pathParams: UpdateUserDeprecatedPathParameters;
-			data?: BodyType<TypesDeprecatedUserDTO>;
-		},
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof updateUserDeprecated>>,
-	TError,
-	{
-		pathParams: UpdateUserDeprecatedPathParameters;
-		data?: BodyType<TypesDeprecatedUserDTO>;
-	},
-	TContext
-> => {
-	return useMutation(getUpdateUserDeprecatedMutationOptions(options));
-};
-/**
- * This endpoint returns the user I belong to
+ * This endpoint is deprecated and always fails. Use GET /api/v2/users/me instead.
+ * @deprecated
  * @summary Get my user
  */
 export const getMyUserDeprecated = (signal?: AbortSignal) => {
-	return GeneratedAPIInstance<GetMyUserDeprecated200>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/user/me`,
 		method: 'GET',
 		signal,
@@ -828,6 +118,7 @@ export type GetMyUserDeprecatedQueryResult = NonNullable<
 export type GetMyUserDeprecatedQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Get my user
  */
 
@@ -847,10 +138,11 @@ export function useGetMyUserDeprecated<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
+ * @deprecated
  * @summary Get my user
  */
 export const invalidateGetMyUserDeprecated = async (
@@ -947,6 +239,89 @@ export const useForgotPassword = <
 	TContext
 > => {
 	return useMutation(getForgotPasswordMutationOptions(options));
+};
+/**
+ * This endpoint resets the password using a single use reset password token
+ * @summary Reset password
+ */
+export const resetPassword = (
+	typesPostableResetPasswordDTO?: BodyType<TypesPostableResetPasswordDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/factor_password/reset`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: typesPostableResetPasswordDTO,
+		signal,
+	});
+};
+
+export const getResetPasswordMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof resetPassword>>,
+		TError,
+		{ data?: BodyType<TypesPostableResetPasswordDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof resetPassword>>,
+	TError,
+	{ data?: BodyType<TypesPostableResetPasswordDTO> },
+	TContext
+> => {
+	const mutationKey = ['resetPassword'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof resetPassword>>,
+		{ data?: BodyType<TypesPostableResetPasswordDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return resetPassword(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ResetPasswordMutationResult = NonNullable<
+	Awaited<ReturnType<typeof resetPassword>>
+>;
+export type ResetPasswordMutationBody =
+	| BodyType<TypesPostableResetPasswordDTO>
+	| undefined;
+export type ResetPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Reset password
+ */
+export const useResetPassword = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof resetPassword>>,
+		TError,
+		{ data?: BodyType<TypesPostableResetPasswordDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof resetPassword>>,
+	TError,
+	{ data?: BodyType<TypesPostableResetPasswordDTO> },
+	TContext
+> => {
+	return useMutation(getResetPasswordMutationOptions(options));
 };
 /**
  * This endpoint verifies whether a reset password token exists and is not expired
@@ -1077,7 +452,7 @@ export const getGetUsersByRoleIDQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getUsersByRoleID>>,
@@ -1114,7 +489,7 @@ export function useGetUsersByRoleID<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1127,6 +502,267 @@ export const invalidateGetUsersByRoleID = async (
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
 		{ queryKey: getGetUsersByRoleIDQueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint assigns a role to a user
+ * @summary Create user role
+ */
+export const createUserRole = (
+	authtypesPostableUserRoleDTO?: BodyType<AuthtypesPostableUserRoleDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CreateUserRole201>({
+		url: `/api/v2/user_roles`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: authtypesPostableUserRoleDTO,
+		signal,
+	});
+};
+
+export const getCreateUserRoleMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createUserRole>>,
+		TError,
+		{ data?: BodyType<AuthtypesPostableUserRoleDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createUserRole>>,
+	TError,
+	{ data?: BodyType<AuthtypesPostableUserRoleDTO> },
+	TContext
+> => {
+	const mutationKey = ['createUserRole'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createUserRole>>,
+		{ data?: BodyType<AuthtypesPostableUserRoleDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return createUserRole(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateUserRoleMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createUserRole>>
+>;
+export type CreateUserRoleMutationBody =
+	| BodyType<AuthtypesPostableUserRoleDTO>
+	| undefined;
+export type CreateUserRoleMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create user role
+ */
+export const useCreateUserRole = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createUserRole>>,
+		TError,
+		{ data?: BodyType<AuthtypesPostableUserRoleDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createUserRole>>,
+	TError,
+	{ data?: BodyType<AuthtypesPostableUserRoleDTO> },
+	TContext
+> => {
+	return useMutation(getCreateUserRoleMutationOptions(options));
+};
+/**
+ * This endpoint revokes a role from a user
+ * @summary Delete user role
+ */
+export const deleteUserRole = (
+	{ id }: DeleteUserRolePathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/user_roles/${id}`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getDeleteUserRoleMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteUserRole>>,
+		TError,
+		{ pathParams: DeleteUserRolePathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteUserRole>>,
+	TError,
+	{ pathParams: DeleteUserRolePathParameters },
+	TContext
+> => {
+	const mutationKey = ['deleteUserRole'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteUserRole>>,
+		{ pathParams: DeleteUserRolePathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteUserRole(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteUserRoleMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteUserRole>>
+>;
+
+export type DeleteUserRoleMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete user role
+ */
+export const useDeleteUserRole = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteUserRole>>,
+		TError,
+		{ pathParams: DeleteUserRolePathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteUserRole>>,
+	TError,
+	{ pathParams: DeleteUserRolePathParameters },
+	TContext
+> => {
+	return useMutation(getDeleteUserRoleMutationOptions(options));
+};
+/**
+ * This endpoint gets an existing user role
+ * @summary Get user role
+ */
+export const getUserRole = (
+	{ id }: GetUserRolePathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetUserRole200>({
+		url: `/api/v2/user_roles/${id}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetUserRoleQueryKey = ({ id }: GetUserRolePathParameters) => {
+	return [`/api/v2/user_roles/${id}`] as const;
+};
+
+export const getGetUserRoleQueryOptions = <
+	TData = Awaited<ReturnType<typeof getUserRole>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetUserRolePathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getUserRole>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetUserRoleQueryKey({ id });
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserRole>>> = ({
+		signal,
+	}) => getUserRole({ id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getUserRole>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetUserRoleQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getUserRole>>
+>;
+export type GetUserRoleQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get user role
+ */
+
+export function useGetUserRole<
+	TData = Awaited<ReturnType<typeof getUserRole>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetUserRolePathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getUserRole>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetUserRoleQueryOptions({ id }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get user role
+ */
+export const invalidateGetUserRole = async (
+	queryClient: QueryClient,
+	{ id }: GetUserRolePathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetUserRoleQueryKey({ id }) },
 		options,
 	);
 
@@ -1191,7 +827,7 @@ export function useListUsers<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1209,6 +845,168 @@ export const invalidateListUsers = async (
 	return queryClient;
 };
 
+/**
+ * This endpoint creates a user for the organization
+ * @summary Create user
+ */
+export const createUser = (
+	authtypesPostableUserDTO?: BodyType<AuthtypesPostableUserDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CreateUser201>({
+		url: `/api/v2/users`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: authtypesPostableUserDTO,
+		signal,
+	});
+};
+
+export const getCreateUserMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createUser>>,
+		TError,
+		{ data?: BodyType<AuthtypesPostableUserDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createUser>>,
+	TError,
+	{ data?: BodyType<AuthtypesPostableUserDTO> },
+	TContext
+> => {
+	const mutationKey = ['createUser'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createUser>>,
+		{ data?: BodyType<AuthtypesPostableUserDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return createUser(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateUserMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createUser>>
+>;
+export type CreateUserMutationBody =
+	| BodyType<AuthtypesPostableUserDTO>
+	| undefined;
+export type CreateUserMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create user
+ */
+export const useCreateUser = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createUser>>,
+		TError,
+		{ data?: BodyType<AuthtypesPostableUserDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createUser>>,
+	TError,
+	{ data?: BodyType<AuthtypesPostableUserDTO> },
+	TContext
+> => {
+	return useMutation(getCreateUserMutationOptions(options));
+};
+/**
+ * This endpoint deletes the user by id
+ * @summary Delete user
+ */
+export const deleteUser = (
+	{ id }: DeleteUserPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/users/${id}`,
+		method: 'DELETE',
+		signal,
+	});
+};
+
+export const getDeleteUserMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteUser>>,
+		TError,
+		{ pathParams: DeleteUserPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteUser>>,
+	TError,
+	{ pathParams: DeleteUserPathParameters },
+	TContext
+> => {
+	const mutationKey = ['deleteUser'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteUser>>,
+		{ pathParams: DeleteUserPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteUser(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteUserMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteUser>>
+>;
+
+export type DeleteUserMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete user
+ */
+export const useDeleteUser = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteUser>>,
+		TError,
+		{ pathParams: DeleteUserPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteUser>>,
+	TError,
+	{ pathParams: DeleteUserPathParameters },
+	TContext
+> => {
+	return useMutation(getDeleteUserMutationOptions(options));
+};
 /**
  * This endpoint returns the user by id
  * @summary Get user by user id
@@ -1248,7 +1046,7 @@ export const getGetUserQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData> & {
 		queryKey: QueryKey;
@@ -1279,7 +1077,7 @@ export function useGetUser<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1443,7 +1241,7 @@ export const getGetResetPasswordTokenQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getResetPasswordToken>>,
@@ -1480,7 +1278,7 @@ export function useGetResetPasswordToken<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1624,7 +1422,7 @@ export const getGetRolesByUserIDQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getRolesByUserID>>,
@@ -1661,7 +1459,7 @@ export function useGetRolesByUserID<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1680,185 +1478,6 @@ export const invalidateGetRolesByUserID = async (
 	return queryClient;
 };
 
-/**
- * This endpoint assigns the role to the user roles by user id
- * @summary Set user roles
- */
-export const setRoleByUserID = (
-	{ id }: SetRoleByUserIDPathParameters,
-	typesPostableRoleDTO?: BodyType<TypesPostableRoleDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<void>({
-		url: `/api/v2/users/${id}/roles`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: typesPostableRoleDTO,
-		signal,
-	});
-};
-
-export const getSetRoleByUserIDMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof setRoleByUserID>>,
-		TError,
-		{
-			pathParams: SetRoleByUserIDPathParameters;
-			data?: BodyType<TypesPostableRoleDTO>;
-		},
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof setRoleByUserID>>,
-	TError,
-	{
-		pathParams: SetRoleByUserIDPathParameters;
-		data?: BodyType<TypesPostableRoleDTO>;
-	},
-	TContext
-> => {
-	const mutationKey = ['setRoleByUserID'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof setRoleByUserID>>,
-		{
-			pathParams: SetRoleByUserIDPathParameters;
-			data?: BodyType<TypesPostableRoleDTO>;
-		}
-	> = (props) => {
-		const { pathParams, data } = props ?? {};
-
-		return setRoleByUserID(pathParams, data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type SetRoleByUserIDMutationResult = NonNullable<
-	Awaited<ReturnType<typeof setRoleByUserID>>
->;
-export type SetRoleByUserIDMutationBody =
-	| BodyType<TypesPostableRoleDTO>
-	| undefined;
-export type SetRoleByUserIDMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Set user roles
- */
-export const useSetRoleByUserID = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof setRoleByUserID>>,
-		TError,
-		{
-			pathParams: SetRoleByUserIDPathParameters;
-			data?: BodyType<TypesPostableRoleDTO>;
-		},
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof setRoleByUserID>>,
-	TError,
-	{
-		pathParams: SetRoleByUserIDPathParameters;
-		data?: BodyType<TypesPostableRoleDTO>;
-	},
-	TContext
-> => {
-	return useMutation(getSetRoleByUserIDMutationOptions(options));
-};
-/**
- * This endpoint removes a role from the user by user id and role id
- * @summary Remove a role from user
- */
-export const removeUserRoleByUserIDAndRoleID = (
-	{ id, roleId }: RemoveUserRoleByUserIDAndRoleIDPathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<void>({
-		url: `/api/v2/users/${id}/roles/${roleId}`,
-		method: 'DELETE',
-		signal,
-	});
-};
-
-export const getRemoveUserRoleByUserIDAndRoleIDMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof removeUserRoleByUserIDAndRoleID>>,
-		TError,
-		{ pathParams: RemoveUserRoleByUserIDAndRoleIDPathParameters },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof removeUserRoleByUserIDAndRoleID>>,
-	TError,
-	{ pathParams: RemoveUserRoleByUserIDAndRoleIDPathParameters },
-	TContext
-> => {
-	const mutationKey = ['removeUserRoleByUserIDAndRoleID'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof removeUserRoleByUserIDAndRoleID>>,
-		{ pathParams: RemoveUserRoleByUserIDAndRoleIDPathParameters }
-	> = (props) => {
-		const { pathParams } = props ?? {};
-
-		return removeUserRoleByUserIDAndRoleID(pathParams);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type RemoveUserRoleByUserIDAndRoleIDMutationResult = NonNullable<
-	Awaited<ReturnType<typeof removeUserRoleByUserIDAndRoleID>>
->;
-
-export type RemoveUserRoleByUserIDAndRoleIDMutationError =
-	ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Remove a role from user
- */
-export const useRemoveUserRoleByUserIDAndRoleID = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof removeUserRoleByUserIDAndRoleID>>,
-		TError,
-		{ pathParams: RemoveUserRoleByUserIDAndRoleIDPathParameters },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof removeUserRoleByUserIDAndRoleID>>,
-	TError,
-	{ pathParams: RemoveUserRoleByUserIDAndRoleIDPathParameters },
-	TContext
-> => {
-	return useMutation(getRemoveUserRoleByUserIDAndRoleIDMutationOptions(options));
-};
 /**
  * This endpoint returns the user I belong to
  * @summary Get my user v2
@@ -1917,7 +1536,7 @@ export function useGetMyUser<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**

@@ -1,13 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Button } from '@signozhq/ui/button';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import {
-	Activity,
-	TriangleAlert,
-	ChartBar,
-	Search,
-	Zap,
-} from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
 
 import logEvent from 'api/common/logEvent';
@@ -20,29 +12,7 @@ import MessageBubble from '../MessageBubble';
 import StreamingMessage from '../StreamingMessage';
 
 import styles from './VirtualizedMessages.module.scss';
-
-const SUGGESTIONS = [
-	{
-		icon: TriangleAlert,
-		text: 'Show me the top errors in the last hour',
-	},
-	{
-		icon: Activity,
-		text: 'What services have the highest latency?',
-	},
-	{
-		icon: ChartBar,
-		text: 'Give me an overview of system health',
-	},
-	{
-		icon: Search,
-		text: 'Find slow database queries',
-	},
-	{
-		icon: Zap,
-		text: 'Which endpoints have the most 5xx errors?',
-	},
-];
+import { useEmptyStateChips } from './useEmptyStateChips';
 
 const EMPTY_EVENTS: StreamingEventItem[] = [];
 
@@ -66,6 +36,9 @@ export default function VirtualizedMessages({
 }: VirtualizedMessagesProps): JSX.Element {
 	const regenerateAssistantMessage = useAIAssistantStore(
 		(s) => s.regenerateAssistantMessage,
+	);
+	const retryAssistantMessage = useAIAssistantStore(
+		(s) => s.retryAssistantMessage,
 	);
 	const { threadId } = useAIAssistantAnalyticsContext(conversationId);
 	const streamingStatus = useAIAssistantStore(
@@ -114,6 +87,14 @@ export default function VirtualizedMessages({
 		},
 		[conversationId, isStreaming, regenerateAssistantMessage, threadId],
 	);
+
+	const handleRetry = useCallback((): void => {
+		if (isStreaming) {
+			return;
+		}
+		void logEvent(AIAssistantEvents.RetryClicked, { threadId });
+		void retryAssistantMessage(conversationId);
+	}, [conversationId, isStreaming, retryAssistantMessage, threadId]);
 
 	// Scroll all the way to the actual bottom — including the 64px of bottom
 	// padding on the scroller — so the last bubble has visible breathing room
@@ -173,8 +154,10 @@ export default function VirtualizedMessages({
 
 	const showStreamingSlot =
 		isStreaming || Boolean(pendingApproval) || Boolean(pendingClarification);
+	const isEmptyState = messages.length === 0 && !showStreamingSlot;
+	const { chips: emptyStateChips } = useEmptyStateChips(isEmptyState);
 
-	if (messages.length === 0 && !showStreamingSlot) {
+	if (isEmptyState) {
 		return (
 			<div className={styles.empty}>
 				<div className={`${styles.emptyIcon} noz-wave`}>
@@ -184,24 +167,22 @@ export default function VirtualizedMessages({
 				<p className={styles.emptySubtitle}>
 					Ask questions about your traces, logs, metrics, and infrastructure.
 				</p>
-				<div className={styles.emptySuggestions}>
-					{SUGGESTIONS.map((s) => (
-						<Button
-							key={s.text}
-							variant="outlined"
-							color="secondary"
-							className={styles.emptyChip}
+				<div className={styles.suggestions}>
+					{emptyStateChips.map((chip) => (
+						<div
+							key={chip.id}
+							className={styles.suggestion}
 							onClick={(): void => {
 								void logEvent(AIAssistantEvents.SuggestedPromptClicked, {
-									promptId: s.text,
+									promptId: chip.id,
 									category: SuggestedPromptCategory.EmptyState,
 								});
-								onSendSuggestedPrompt(s.text);
+								onSendSuggestedPrompt(chip.text);
 							}}
-							prefix={<s.icon size={14} />}
+							data-testid={`empty-state-chip-${chip.id}`}
 						>
-							{s.text}
-						</Button>
+							{chip.text}
+						</div>
 					))}
 				</div>
 			</div>
@@ -234,6 +215,11 @@ export default function VirtualizedMessages({
 							onRegenerate={
 								isLastAssistant && !showStreamingSlot
 									? (): void => handleRegenerate(msg.id)
+									: undefined
+							}
+							onRetry={
+								msg.isError && isLastAssistant && !showStreamingSlot
+									? handleRetry
 									: undefined
 							}
 							isLastAssistant={isLastAssistant}

@@ -1,0 +1,197 @@
+/**
+ * AI-owned. Generated and maintained by the `signoz-page-story` skill.
+ * Do not hand-edit: regenerate instead.
+ */
+
+import { FeatureKeys } from 'constants/features';
+import ROUTES from 'constants/routes';
+import dayjs from 'dayjs';
+import { rest } from 'msw';
+import { screen, userEvent, within } from 'storybook/test';
+import { defaultFeatureFlags } from 'tests/fixtures/appContextMock';
+
+import {
+	choiceControl,
+	countControl,
+	multiChoiceControl,
+	toggleControl,
+} from '@/storybook/controls/controls';
+import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { MockResolver } from '@/storybook/msw/types';
+
+import {
+	CREATE_OUTCOMES,
+	type CreateOutcome,
+	EXPIRIES,
+	type Expiry,
+	ingestionKeyCreateError,
+	ingestionKeysResponse,
+	KEYS_PER_PAGE,
+	legacyIngestionResponse,
+	LIMIT_SIGNALS,
+	type LimitSignal,
+} from './__story_mockdata__/ingestion';
+
+const KEYS = 'Ingestion · keys';
+const LIMITS = 'Ingestion · limits';
+
+const rejectCreate: MockResolver = (_req, res, ctx) =>
+	res(ctx.status(409), ctx.json(ingestionKeyCreateError()));
+
+const holdCreate: MockResolver = (_req, res, ctx) => res(ctx.delay('infinite'));
+
+export const ingestionMocks = defineStoryMocks({
+	controls: {
+		gateway: toggleControl('Gateway', {
+			group: KEYS,
+			description:
+				'The feature that puts key management in the console. Without it the tab is the read-only card of the single key the workspace was given.',
+			value: true,
+		}),
+		keys: countControl('Ingestion keys', {
+			group: KEYS,
+			description: 'The page asks for ten at a time, which is the whole page.',
+			value: 4,
+			max: KEYS_PER_PAGE,
+		}),
+		expiry: choiceControl<Expiry>('Expiry', {
+			group: KEYS,
+			description:
+				'When the keys run out. `soon` is inside the window the row warns about; `expired` is past it.',
+			options: EXPIRIES,
+			value: 'none',
+		}),
+		create: choiceControl<CreateOutcome>('Creating a key', {
+			group: KEYS,
+			description:
+				'What the create behind the new key form answers. `hangs` holds the submit button in its loading state.',
+			options: CREATE_OUTCOMES,
+			value: 'succeeds',
+		}),
+		limits: multiChoiceControl<LimitSignal>('Signals with a limit', {
+			group: LIMITS,
+			description:
+				'A signal without a limit shows the button that adds one instead of its usage against a cap.',
+			options: LIMIT_SIGNALS,
+			value: ['logs', 'traces'],
+		}),
+	},
+	handlers: (values, response) => [
+		rest.get(
+			'http://localhost/api/v2/gateway/ingestion_keys/search',
+			response.json((req) =>
+				ingestionKeysResponse(
+					values.keys,
+					values.limits,
+					values.expiry,
+					Number(req.url.searchParams.get('page') ?? 1),
+				),
+			),
+		),
+
+		rest.get(
+			'http://localhost/api/v2/gateway/ingestion_keys',
+			response.json((req) =>
+				ingestionKeysResponse(
+					values.keys,
+					values.limits,
+					values.expiry,
+					Number(req.url.searchParams.get('page') ?? 1),
+				),
+			),
+		),
+
+		rest.post(
+			'http://localhost/api/v2/gateway/ingestion_keys',
+			{
+				succeeds: response.json(() => ({
+					status: 'success',
+					data: { id: 'ingestion-key-new', value: 'sk_new' },
+				})),
+				fails: rejectCreate,
+				hangs: holdCreate,
+			}[values.create],
+		),
+
+		rest.patch(
+			'http://localhost/api/v2/gateway/ingestion_keys/:keyId',
+			response.json(() => ({ status: 'success', data: null })),
+		),
+
+		rest.delete(
+			'http://localhost/api/v2/gateway/ingestion_keys/:keyId',
+			response.json(() => ({ status: 'success', data: null })),
+		),
+
+		rest.post(
+			'http://localhost/api/v2/gateway/ingestion_keys/:keyId/limits',
+			response.json(() => ({ status: 'success', data: { id: 'limit-new' } })),
+		),
+
+		rest.patch(
+			'http://localhost/api/v2/gateway/ingestion_keys/limits/:limitId',
+			response.json(() => ({ status: 'success', data: null })),
+		),
+
+		rest.delete(
+			'http://localhost/api/v2/gateway/ingestion_keys/limits/:limitId',
+			response.json(() => ({ status: 'success', data: null })),
+		),
+
+		rest.get(
+			'http://localhost/api/v1/settings/ingestion_key',
+			response.json(() => legacyIngestionResponse()),
+		),
+	],
+	config: ({ gateway }) => ({
+		route: ROUTES.INGESTION_SETTINGS,
+		appContext: {
+			featureFlags: defaultFeatureFlags.map((flag) =>
+				flag.name === FeatureKeys.GATEWAY ? { ...flag, active: gateway } : flag,
+			),
+		},
+	}),
+});
+
+/** The list fetches before it renders a row, which outlasts the 1s default. */
+export const untilLoaded = { timeout: 15_000 };
+
+export async function openCreateKey(
+	canvasElement: HTMLElement,
+): Promise<ReturnType<typeof within>> {
+	await userEvent.click(
+		await within(canvasElement).findByText(
+			'New Ingestion key',
+			undefined,
+			untilLoaded,
+		),
+	);
+	return within(
+		await screen.findByRole(
+			'dialog',
+			{ name: 'Create new ingestion key' },
+			untilLoaded,
+		),
+	);
+}
+
+export async function addTag(
+	dialog: ReturnType<typeof within>,
+	tag: string,
+): Promise<void> {
+	await userEvent.click(await dialog.findByRole('button', { name: /New Tag/ }));
+	await userEvent.keyboard(`${tag}{Enter}`);
+}
+
+export async function submitCreateKey(
+	dialog: ReturnType<typeof within>,
+): Promise<void> {
+	await userEvent.type(dialog.getByLabelText('Name'), 'otel-collectors');
+	await userEvent.click(dialog.getByLabelText('Expiration'));
+	await userEvent.click(
+		await screen.findByTitle(dayjs().add(1, 'day').format('YYYY-MM-DD')),
+	);
+	await userEvent.click(
+		dialog.getByRole('button', { name: 'Create new Ingestion key' }),
+	);
+}

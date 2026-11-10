@@ -16,7 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/metercollector"
 	"github.com/SigNoz/signoz/pkg/modules/retention"
-	"github.com/SigNoz/signoz/pkg/telemetrymeter"
+	"github.com/SigNoz/signoz/pkg/telemetryschema/metertelemetryschema"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
@@ -153,7 +153,7 @@ func (provider *Provider) Collect(
 func buildOriginQuery(meterName string) (string, []any) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("toInt64(ifNull(min(unix_milli), 0))")
-	sb.From(telemetrymeter.DBName + "." + telemetrymeter.SamplesTableName)
+	sb.From(metertelemetryschema.DBName + "." + metertelemetryschema.SamplesTableName)
 	sb.Where(sb.Equal("metric_name", meterName))
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
@@ -171,7 +171,7 @@ func buildQuery(meterName string, segment *retentiontypes.RetentionPolicySegment
 
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(selects...)
-	sb.From(telemetrymeter.DBName + "." + telemetrymeter.SamplesTableName)
+	sb.From(metertelemetryschema.DBName + "." + metertelemetryschema.SamplesTableName)
 	sb.Where(
 		sb.Equal("metric_name", meterName),
 		sb.GTE("unix_milli", segment.StartMs),

@@ -1,7 +1,9 @@
 import type { MessageContext } from 'api/ai-assistant/chat';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { matchPath } from 'react-router-dom';
+import { matchRoute } from 'lib/router/matchRoute';
+import { AlertListTabs } from 'pages/AlertList/types';
+import { NEW_PANEL_ID } from 'pages/DashboardPage/DashboardContainer/PanelEditor/newPanelRoute';
 
 /**
  * Resolves the page the user is currently on into structured `MessageContext`
@@ -11,7 +13,7 @@ import { matchPath } from 'react-router-dom';
  *
  * **URL-only.** All inputs come from `pathname` + `search`; we never reach
  * into Redux / context. SigNoz already encodes most page state into the URL
- * (`compositeQuery`, `startTime`/`endTime`, `viewName`/`viewKey`,
+ * (`compositeQuery`, `startTime`/`endTime`, `viewKey`,
  * `variables`, `expandedWidgetId`, `activeLogId`, …), so URL parsing is
  * sufficient. Anything not in the URL is simply omitted from `metadata` —
  * the server applies its own defaults.
@@ -29,22 +31,24 @@ export function getAutoContexts(
 
 	// ── Dashboards ────────────────────────────────────────────────────────────
 
-	// Widget edit (panel_edit) — `/dashboard/:dashboardId/:widgetId`.
-	const widgetMatch = matchPath<{ dashboardId: string; widgetId: string }>(
+	// Panel editor (V2). `panel/new` has no widget id yet and the schema requires
+	// a non-empty `panel_edit.widgetId`, so it reports `panel_create` instead.
+	const panelEditorMatch = matchRoute<'dashboardId' | 'panelId'>(
 		pathname,
-		{ path: ROUTES.DASHBOARD_WIDGET, exact: true },
+		ROUTES.DASHBOARD_PANEL_EDITOR,
+		{ exact: true },
 	);
-	if (widgetMatch) {
+	if (panelEditorMatch) {
+		const { dashboardId, panelId } = panelEditorMatch.params;
+		const isNewPanel = panelId === NEW_PANEL_ID;
 		return [
 			{
 				source: 'auto',
 				type: 'dashboard',
-				resourceId: widgetMatch.params.dashboardId,
-				metadata: {
-					page: 'panel_edit',
-					widgetId: widgetMatch.params.widgetId,
-					...sharedMetadata,
-				},
+				resourceId: dashboardId,
+				metadata: isNewPanel
+					? { page: 'panel_create', ...sharedMetadata }
+					: { page: 'panel_edit', widgetId: panelId, ...sharedMetadata },
 			},
 		];
 	}
@@ -52,8 +56,7 @@ export function getAutoContexts(
 	// Dashboard detail — `/dashboard/:dashboardId`. The `expandedWidgetId`
 	// query param signals the panel-fullscreen overlay; otherwise it's the
 	// plain dashboard view.
-	const dashboardMatch = matchPath<{ dashboardId: string }>(pathname, {
-		path: ROUTES.DASHBOARD,
+	const dashboardMatch = matchRoute<'dashboardId'>(pathname, ROUTES.DASHBOARD, {
 		exact: true,
 	});
 	if (dashboardMatch) {
@@ -86,7 +89,7 @@ export function getAutoContexts(
 	}
 
 	// Dashboard list — `/dashboard`.
-	if (matchPath(pathname, { path: ROUTES.ALL_DASHBOARD, exact: true })) {
+	if (matchRoute(pathname, ROUTES.ALL_DASHBOARD, { exact: true })) {
 		return [
 			{
 				source: 'auto',
@@ -99,8 +102,13 @@ export function getAutoContexts(
 
 	// ── Alerts ────────────────────────────────────────────────────────────────
 
-	// Alert edit — `/alerts/edit?ruleId=…`.
-	if (matchPath(pathname, { path: ROUTES.EDIT_ALERTS, exact: true })) {
+	// Alert detail (overview / per-rule history) — `/alerts/overview?ruleId=…`
+	// or `/alerts/history?ruleId=…`. Mirrors dashboard_detail: resourceId is the
+	// rule id and shared metadata carries the URL time range when present.
+	if (
+		matchRoute(pathname, ROUTES.ALERT_OVERVIEW, { exact: true }) ||
+		matchRoute(pathname, ROUTES.ALERT_HISTORY, { exact: true })
+	) {
 		const ruleId = params.get(QueryParams.ruleId);
 		if (ruleId) {
 			return [
@@ -108,24 +116,48 @@ export function getAutoContexts(
 					source: 'auto',
 					type: 'alert',
 					resourceId: ruleId,
-					metadata: { page: 'alert_edit' },
+					metadata: {
+						page: 'alert_detail',
+						ruleId,
+						...sharedMetadata,
+					},
 				},
 			];
 		}
 	}
 
-	if (matchPath(pathname, { path: ROUTES.ALERTS_NEW, exact: true })) {
+	// Alert edit — `/alerts/edit?ruleId=…`. The form syncs its query-builder
+	// state to the URL (`useShareBuilderUrl`), so shared metadata carries the
+	// alert's query + time range, mirroring the dashboard panel editor.
+	if (matchRoute(pathname, ROUTES.EDIT_ALERTS, { exact: true })) {
+		const ruleId = params.get(QueryParams.ruleId);
+		if (ruleId) {
+			return [
+				{
+					source: 'auto',
+					type: 'alert',
+					resourceId: ruleId,
+					metadata: { page: 'alert_edit', ruleId, ...sharedMetadata },
+				},
+			];
+		}
+	}
+
+	// Alert new — `/alerts/new`. No rule id yet (draft), but the query-builder
+	// state is on the URL, so shared metadata carries the in-progress query.
+	if (matchRoute(pathname, ROUTES.ALERTS_NEW, { exact: true })) {
 		return [
 			{
 				source: 'auto',
 				type: 'alert',
 				resourceId: null,
-				metadata: { page: 'alert_new' },
+				metadata: { page: 'alert_new', ...sharedMetadata },
 			},
 		];
 	}
 
-	if (matchPath(pathname, { path: ROUTES.ALERT_HISTORY, exact: true })) {
+	// Triggered-alerts index — `/alerts/history` without a rule id.
+	if (matchRoute(pathname, ROUTES.ALERT_HISTORY, { exact: true })) {
 		return [
 			{
 				source: 'auto',
@@ -139,13 +171,18 @@ export function getAutoContexts(
 		];
 	}
 
-	if (matchPath(pathname, { path: ROUTES.LIST_ALL_ALERT, exact: true })) {
+	// Alerts index — `/alerts` with tab query param (defaults to Alert Rules).
+	if (matchRoute(pathname, ROUTES.LIST_ALL_ALERT, { exact: true })) {
+		const page = resolveAlertsIndexPage(params.get(QueryParams.tab));
 		return [
 			{
 				source: 'auto',
 				type: 'alert',
 				resourceId: null,
-				metadata: { page: 'alert_list' },
+				metadata: {
+					page,
+					...(page === 'alerts_triggered' ? sharedMetadata : {}),
+				},
 			},
 		];
 	}
@@ -154,10 +191,10 @@ export function getAutoContexts(
 
 	// Service detail (covers sub-routes like top-level-operations) —
 	// `/services/:servicename[/...]`.
-	const serviceMatch = matchPath<{ servicename: string }>(pathname, {
-		path: ROUTES.SERVICE_METRICS,
-		exact: false,
-	});
+	const serviceMatch = matchRoute<'servicename'>(
+		pathname,
+		ROUTES.SERVICE_METRICS,
+	);
 	if (serviceMatch?.params.servicename) {
 		return [
 			{
@@ -173,7 +210,7 @@ export function getAutoContexts(
 	}
 
 	// Services list — `/services`.
-	if (matchPath(pathname, { path: ROUTES.APPLICATION, exact: true })) {
+	if (matchRoute(pathname, ROUTES.APPLICATION, { exact: true })) {
 		return [
 			{
 				source: 'auto',
@@ -189,7 +226,7 @@ export function getAutoContexts(
 
 	// ── Logs ──────────────────────────────────────────────────────────────────
 
-	if (matchPath(pathname, { path: ROUTES.LOGS_EXPLORER, exact: false })) {
+	if (matchRoute(pathname, ROUTES.LOGS_EXPLORER)) {
 		const activeLogId = params.get(QueryParams.activeLogId);
 		// `?activeLogId=…` indicates a log-detail panel is open. Per the
 		// schema, log_detail requires payload fields (timestamp, service,
@@ -214,8 +251,7 @@ export function getAutoContexts(
 
 	// Trace detail — `/trace/:id`. Treated as a detail-as-metadata page
 	// (resourceId null, `traceId` lives in metadata).
-	const traceMatch = matchPath<{ id: string }>(pathname, {
-		path: ROUTES.TRACE_DETAIL,
+	const traceMatch = matchRoute<'id'>(pathname, ROUTES.TRACE_DETAIL, {
 		exact: true,
 	});
 	if (traceMatch?.params.id) {
@@ -235,7 +271,7 @@ export function getAutoContexts(
 		];
 	}
 
-	if (matchPath(pathname, { path: ROUTES.TRACES_EXPLORER, exact: false })) {
+	if (matchRoute(pathname, ROUTES.TRACES_EXPLORER)) {
 		return [
 			{
 				source: 'auto',
@@ -251,9 +287,8 @@ export function getAutoContexts(
 
 	// ── Metrics ───────────────────────────────────────────────────────────────
 
-	if (
-		matchPath(pathname, { path: ROUTES.METRICS_EXPLORER_EXPLORER, exact: false })
-	) {
+	// Metrics explorer — `/metrics-explorer` and sub-routes (summary, explorer).
+	if (matchRoute(pathname, ROUTES.METRICS_EXPLORER_BASE)) {
 		return [
 			{
 				source: 'auto',
@@ -267,7 +302,23 @@ export function getAutoContexts(
 		];
 	}
 
+	// NOTE: Homepage (`/home`) and infrastructure monitoring
+	// (`/infrastructure-monitoring/*`) intentionally emit no auto-context here.
+	// They have no resource that maps to `MessageContextDTOType`, so attaching
+	// a chip would misrepresent the page (e.g. a bogus "metrics_explorer"
+	// context). Their `page_type` for empty-state chips is resolved directly
+	// from the route in `resolvePageType`.
+
 	return [];
+}
+
+type AlertsIndexPage = 'alert_list' | 'alerts_triggered';
+
+function resolveAlertsIndexPage(tab: string | null): AlertsIndexPage {
+	if (tab === AlertListTabs.TRIGGERED_ALERTS) {
+		return 'alerts_triggered';
+	}
+	return 'alert_list';
 }
 
 /**
@@ -306,10 +357,6 @@ function collectSharedMetadata(
 	const viewKey = params.get(QueryParams.viewKey);
 	if (viewKey) {
 		out.savedViewId = viewKey;
-	}
-	const viewName = params.get(QueryParams.viewName);
-	if (viewName) {
-		out.savedViewName = viewName;
 	}
 	const variablesRaw = params.get(QueryParams.variables);
 	if (variablesRaw) {

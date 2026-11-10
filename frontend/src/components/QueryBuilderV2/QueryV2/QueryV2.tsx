@@ -6,10 +6,9 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import QBEntityOptions from 'container/QueryBuilder/components/QBEntityOptions/QBEntityOptions';
 import { QueryProps } from 'container/QueryBuilder/type';
 import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearchV2/SpanScopeSelector';
@@ -20,6 +19,14 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { QueryBuilderField } from '../queryBuilderFields.types';
+import {
+	mergeQueryBuilderFieldsConfig,
+	RAW_QUERY_FIELDS,
+	resolveQueryBuilderField,
+} from '../queryBuilderFields.utils';
+
+import { isScalarPanelType } from './panelTypes';
 import MetricsAggregateSection from './MerticsAggregateSection/MetricsAggregateSection';
 import { MetricsSelect } from './MetricsSelect/MetricsSelect';
 import QueryAddOns from './QueryAddOns/QueryAddOns';
@@ -31,8 +38,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 		index,
 		queryVariant,
 		query,
-		filterConfigs,
-		isListViewPanel = false,
+		isRawQuery = false,
 		showTraceOperator = false,
 		hasTraceOperator = false,
 		version,
@@ -43,6 +49,8 @@ export const QueryV2 = forwardRef(function QueryV2(
 		signalSourceChangeEnabled = false,
 		queriesCount = 1,
 		savePreviousQuery = false,
+		fieldsConfig,
+		allowedDataSources,
 	}: QueryProps & {
 		onSignalSourceChange: (value: string) => void;
 		signalSourceChangeEnabled: boolean;
@@ -53,8 +61,8 @@ export const QueryV2 = forwardRef(function QueryV2(
 ): JSX.Element {
 	const { cloneQuery, panelType } = useQueryBuilder();
 
-	const showFunctions = query?.functions?.length > 0;
-	const { dataSource } = query;
+	const hasQueryFunctions = query?.functions?.length > 0;
+	const { dataSource, builderQueryType } = query;
 
 	const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -66,8 +74,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 	} = useQueryOperations({
 		index,
 		query,
-		filterConfigs,
-		isListViewPanel,
+		isRawQuery,
 		entityVersion: version,
 		savePreviousQuery,
 	});
@@ -84,28 +91,62 @@ export const QueryV2 = forwardRef(function QueryV2(
 		cloneQuery('query', query);
 	};
 
+	const queryActionItems: DropdownItemType[] = [
+		{
+			type: 'item',
+			label: 'Clone',
+			value: 'clone-query',
+			prefix: <Copy size={14} />,
+			onClick: handleCloneEntity,
+		},
+	];
+
+	if (queriesCount && queriesCount > 1) {
+		queryActionItems.push({
+			type: 'item',
+			label: 'Delete',
+			value: 'delete-query',
+			prefix: <Trash size={14} />,
+			onClick: handleDeleteQuery,
+		});
+	}
+
 	const showReduceTo = useMemo(
-		() =>
-			dataSource === DataSource.METRICS &&
-			(panelType === PANEL_TYPES.TABLE ||
-				panelType === PANEL_TYPES.PIE ||
-				panelType === PANEL_TYPES.VALUE),
+		() => dataSource === DataSource.METRICS && isScalarPanelType(panelType),
 		[dataSource, panelType],
 	);
 
 	const showSpanScopeSelector = useMemo(
-		() => dataSource === DataSource.TRACES,
-		[dataSource],
+		() =>
+			dataSource === DataSource.TRACES && builderQueryType !== 'builder_ai_query',
+		[dataSource, builderQueryType],
+	);
+
+	const resolvedConfig = useMemo(
+		() =>
+			mergeQueryBuilderFieldsConfig(
+				isRawQuery ? RAW_QUERY_FIELDS : undefined,
+				fieldsConfig,
+			),
+		[isRawQuery, fieldsConfig],
+	);
+
+	const aggregation = useMemo(
+		() => resolveQueryBuilderField(QueryBuilderField.Aggregation, resolvedConfig),
+		[resolvedConfig],
+	);
+
+	const functions = useMemo(
+		() => resolveQueryBuilderField(QueryBuilderField.Functions, resolvedConfig),
+		[resolvedConfig],
 	);
 
 	const showInlineQuerySearch = useMemo(() => {
 		if (!showTraceOperator) {
 			return false;
 		}
-		return (
-			dataSource === DataSource.TRACES && (hasTraceOperator || isListViewPanel)
-		);
-	}, [hasTraceOperator, isListViewPanel, showTraceOperator, dataSource]);
+		return dataSource === DataSource.TRACES && (hasTraceOperator || isRawQuery);
+	}, [hasTraceOperator, isRawQuery, showTraceOperator, dataSource]);
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
@@ -138,6 +179,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 		<div
 			className={cx('query-v2', { 'where-clause-view': showOnlyWhereClause })}
 			ref={ref}
+			data-testid={`query-${query.queryName}`}
 		>
 			<div className="qb-content-section">
 				{(!showOnlyWhereClause || showTraceOperator) && (
@@ -148,12 +190,15 @@ export const QueryV2 = forwardRef(function QueryV2(
 									hasTraceOperator={hasTraceOperator}
 									isMetricsDataSource={dataSource === DataSource.METRICS}
 									showFunctions={
-										(version && version === ENTITY_VERSION_V4) ||
-										query.dataSource === DataSource.LOGS ||
-										query.dataSource === DataSource.METRICS ||
-										showFunctions ||
-										false
+										!functions.hidden &&
+										((version && version === ENTITY_VERSION_V4) ||
+											query.dataSource === DataSource.LOGS ||
+											query.dataSource === DataSource.METRICS ||
+											hasQueryFunctions ||
+											false)
 									}
+									areFunctionsDisabled={functions.disabled}
+									functionsDisabledReason={functions.reason}
 									isCollapsed={isCollapsed}
 									showTraceOperator={showTraceOperator}
 									entityType="query"
@@ -166,7 +211,8 @@ export const QueryV2 = forwardRef(function QueryV2(
 									onQueryFunctionsUpdates={handleQueryFunctionsUpdates}
 									showDeleteButton={false}
 									showCloneOption={false}
-									isListViewPanel={isListViewPanel}
+									isRawQuery={isRawQuery}
+									allowedDataSources={allowedDataSources}
 									index={index}
 									queryVariant={queryVariant}
 									onChangeDataSource={handleChangeDataSource}
@@ -195,32 +241,15 @@ export const QueryV2 = forwardRef(function QueryV2(
 							)}
 
 							{isMultiQueryAllowed && (
-								<DropdownMenuSimple
-									className="query-actions-dropdown"
-									menu={{
-										items: [
-											{
-												label: 'Clone',
-												key: 'clone-query',
-												icon: <Copy size={14} />,
-												onClick: handleCloneEntity,
-											},
-											...(queriesCount && queriesCount > 1
-												? [
-														{
-															label: 'Delete',
-															key: 'delete-query',
-															icon: <Trash size={14} />,
-															onClick: handleDeleteQuery,
-														},
-													]
-												: []),
-										],
-									}}
+								<Dropdown
+									items={queryActionItems}
+									testId="query-actions"
+									nativeButton={false}
 									align="end"
+									side="bottom"
 								>
 									<Ellipsis size={16} />
-								</DropdownMenuSimple>
+								</Dropdown>
 							)}
 						</div>
 					</div>
@@ -266,7 +295,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 						</div>
 
 						{!showOnlyWhereClause &&
-							!isListViewPanel &&
+							!aggregation.hidden &&
 							!(hasTraceOperator && dataSource === DataSource.TRACES) &&
 							dataSource !== DataSource.METRICS && (
 								<QueryAggregation
@@ -276,6 +305,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 									onAggregationIntervalChange={handleChangeAggregateEvery}
 									onChange={handleChangeAggregation}
 									queryData={query}
+									fieldsConfig={fieldsConfig}
 								/>
 							)}
 
@@ -286,7 +316,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 								index={index}
 								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}-${signalSource}`}
 								version="v4"
-								signalSource={signalSource as 'meter' | ''}
+								fieldsConfig={fieldsConfig}
 							/>
 						)}
 
@@ -296,9 +326,10 @@ export const QueryV2 = forwardRef(function QueryV2(
 									index={index}
 									query={query}
 									version="v3"
-									isListViewPanel={isListViewPanel}
+									isRawQuery={isRawQuery}
 									showReduceTo={showReduceTo}
 									panelType={panelType}
+									fieldsConfig={fieldsConfig}
 								/>
 							)}
 					</div>

@@ -195,14 +195,12 @@ describe('Metadata', () => {
 		expect(mockUseUpdateMetricMetadata).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
+					metricName: MOCK_METRIC_NAME,
 					type: MetrictypesTypeDTO.sum,
 					temporality: MetrictypesTemporalityDTO.cumulative,
 					unit: 'By',
 					isMonotonic: true,
 				}),
-				pathParams: {
-					metricName: MOCK_METRIC_NAME,
-				},
 			}),
 			expect.objectContaining({
 				onSuccess: expect.any(Function),

@@ -20,6 +20,7 @@ type UseColumnStateOptions<TData> = {
 	storageKey?: string;
 	columns: TableColumnDef<TData>[];
 	isGrouped?: boolean;
+	respectColumnOrder?: boolean;
 };
 
 type UseColumnStateResult<TData> = {
@@ -40,6 +41,7 @@ export function useColumnState<TData>({
 	storageKey,
 	columns,
 	isGrouped = false,
+	respectColumnOrder = true,
 }: UseColumnStateOptions<TData>): UseColumnStateResult<TData> {
 	useEffect(() => {
 		if (storageKey) {
@@ -65,6 +67,13 @@ export function useColumnState<TData>({
 
 	const columnSizing = useStoreSizing(storageKey ?? '');
 	const prevColumnIdsRef = useRef<Set<string> | null>(null);
+	const prevStorageKeyRef = useRef<string | undefined>(storageKey);
+
+	// Reset prevColumnIdsRef when storageKey changes to avoid cross-table interference
+	if (prevStorageKeyRef.current !== storageKey) {
+		prevColumnIdsRef.current = null;
+		prevStorageKeyRef.current = storageKey;
+	}
 
 	useEffect(
 		function autoShowNewlyAddedColumns(): void {
@@ -130,7 +139,7 @@ export function useColumnState<TData>({
 	}, [hiddenColumnIds, columns, isGrouped]);
 
 	const sortedColumns = useMemo((): TableColumnDef<TData>[] => {
-		if (columnOrder.length === 0) {
+		if (!respectColumnOrder || columnOrder.length === 0) {
 			return columns;
 		}
 
@@ -144,7 +153,7 @@ export function useColumnState<TData>({
 		});
 
 		return [...pinned, ...sortedRest];
-	}, [columns, columnOrder]);
+	}, [columns, columnOrder, respectColumnOrder]);
 
 	const hideColumn = useCallback(
 		(columnId: string) => {

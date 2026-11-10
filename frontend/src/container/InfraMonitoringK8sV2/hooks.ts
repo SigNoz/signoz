@@ -1,0 +1,289 @@
+import {
+	createParser,
+	Options,
+	parseAsArrayOf,
+	parseAsInteger,
+	parseAsJson,
+	parseAsString,
+	parseAsStringEnum,
+	useQueryState,
+	useQueryStates,
+	UseQueryStateReturn,
+} from 'nuqs';
+import {
+	InframonitoringtypesContainerStatusDTO,
+	InframonitoringtypesNodeConditionDTO,
+	InframonitoringtypesPodStatusDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { useCallback, useMemo } from 'react';
+import {
+	IBuilderQuery,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
+import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
+
+import {
+	DEFAULT_K8S_CATEGORY,
+	INFRA_MONITORING_K8S_PARAMS_KEYS,
+} from './constants';
+import { orderBySchema, OrderBySchemaType } from './schemas';
+
+export type StatusFilterValue = 'active' | 'inactive';
+
+const defaultNuqsOptions: Options = {
+	history: 'push',
+};
+
+export const useInfraMonitoringPageListing = (): UseQueryStateReturn<
+	number,
+	number | undefined
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
+		// do not use .withDefault here, this can cause bugs when
+		// two hooks of nuqs define default twice, this is also
+		// defined at useTableParams
+		parseAsInteger.withOptions(defaultNuqsOptions),
+	);
+
+export const useInfraMonitoringOrderBy = (): UseQueryStateReturn<
+	OrderBySchemaType,
+	OrderBySchemaType
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY,
+		parseAsJson(orderBySchema).withOptions(defaultNuqsOptions),
+	);
+
+const parseAsGroupBy = createParser<string[]>({
+	parse: (value: string): string[] | null => {
+		try {
+			const parsed = JSON.parse(value);
+			if (!Array.isArray(parsed)) {
+				return null;
+			}
+			return parsed
+				.map((item: unknown) => {
+					if (typeof item === 'string') {
+						return item;
+					}
+					if (item && typeof item === 'object' && 'key' in item) {
+						return String((item as { key: unknown }).key);
+					}
+					return '';
+				})
+				.filter(Boolean);
+		} catch {
+			return null;
+		}
+	},
+	serialize: (value: string[]): string => JSON.stringify(value),
+	eq: (a: string[], b: string[]): boolean =>
+		JSON.stringify(a) === JSON.stringify(b),
+});
+
+export const useInfraMonitoringGroupBy = (): UseQueryStateReturn<
+	string[],
+	[]
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY,
+		parseAsGroupBy.withDefault([]).withOptions(defaultNuqsOptions),
+	);
+
+export const useInfraMonitoringView = (): UseQueryStateReturn<
+	string | null,
+	undefined
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
+		parseAsString.withOptions(defaultNuqsOptions),
+	);
+
+export const useInfraMonitoringLogFilters = (): UseQueryStateReturn<
+	TagFilter,
+	undefined
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS,
+		parseAsJsonNoValidate<IBuilderQuery['filters']>().withOptions(
+			defaultNuqsOptions,
+		),
+	);
+
+export const useInfraMonitoringTracesFilters = (): UseQueryStateReturn<
+	TagFilter,
+	undefined
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS,
+		parseAsJsonNoValidate<IBuilderQuery['filters']>().withOptions(
+			defaultNuqsOptions,
+		),
+	);
+
+export const useInfraMonitoringEventsFilters = (): UseQueryStateReturn<
+	TagFilter,
+	undefined
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
+		parseAsJsonNoValidate<IBuilderQuery['filters']>().withOptions(
+			defaultNuqsOptions,
+		),
+	);
+
+export const useInfraMonitoringCategory = (): UseQueryStateReturn<
+	string,
+	string
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY,
+		parseAsString
+			.withDefault(DEFAULT_K8S_CATEGORY)
+			.withOptions({ ...defaultNuqsOptions, clearOnDefault: false }),
+	);
+
+export interface SelectedItemParams {
+	selectedItem: string | null;
+	/** Drawer category, when it differs from the list page category. */
+	category?: string | null;
+	clusterName?: string | null;
+	namespaceName?: string | null;
+	containerName?: string | null;
+}
+
+const selectedItemParamsParsers = {
+	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM]: parseAsString,
+	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CATEGORY]: parseAsString,
+	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME]: parseAsString,
+	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]: parseAsString,
+	[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME]: parseAsString,
+};
+
+export type UseSelectedItemParamsReturn = [
+	SelectedItemParams,
+	(params: SelectedItemParams | null) => void,
+];
+
+export const useInfraMonitoringSelectedItemParams =
+	(): UseSelectedItemParamsReturn => {
+		const [rawParams, setRawParams] = useQueryStates(
+			selectedItemParamsParsers,
+			defaultNuqsOptions,
+		);
+
+		const params: SelectedItemParams = useMemo(
+			() => ({
+				selectedItem:
+					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM] ?? null,
+				category:
+					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CATEGORY] ?? null,
+				clusterName:
+					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME] ??
+					null,
+				namespaceName:
+					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME] ??
+					null,
+				containerName:
+					rawParams[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME] ??
+					null,
+			}),
+			[rawParams],
+		);
+
+		const setParams = useCallback(
+			(newParams: Partial<SelectedItemParams> | null): void => {
+				if (newParams === null) {
+					void setRawParams({
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM]: null,
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CATEGORY]: null,
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME]: null,
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]: null,
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME]: null,
+					});
+					return;
+				}
+
+				void setRawParams({
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM]:
+						newParams.selectedItem ?? null,
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CATEGORY]:
+						newParams.category ?? null,
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CLUSTER_NAME]:
+						newParams.clusterName ?? null,
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_NAMESPACE_NAME]:
+						newParams.namespaceName ?? null,
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM_CONTAINER_NAME]:
+						newParams.containerName ?? null,
+				});
+			},
+			[setRawParams],
+		);
+
+		return [params, setParams];
+	};
+
+export const useInfraMonitoringStatusFilter = (): UseQueryStateReturn<
+	string,
+	string
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.STATUS_FILTER,
+		parseAsString.withDefault('').withOptions(defaultNuqsOptions),
+	);
+
+/**
+ * The list APIs reject the `no_data` sentinel (see IsFilterable in
+ * pkg/types/inframonitoringtypes), so it is never offered as a filter value.
+ */
+function withoutNoData<T extends string>(values: T[]): T[] {
+	return values.filter((value) => value !== 'no_data');
+}
+
+export const FILTERABLE_POD_STATUSES = withoutNoData(
+	Object.values(InframonitoringtypesPodStatusDTO),
+);
+
+export const FILTERABLE_NODE_CONDITIONS = withoutNoData(
+	Object.values(InframonitoringtypesNodeConditionDTO),
+);
+
+export const FILTERABLE_CONTAINER_STATUSES = withoutNoData(
+	Object.values(InframonitoringtypesContainerStatusDTO),
+);
+
+const EMPTY_FILTER: [] = [];
+
+export const useInfraMonitoringPodStatusFilter = (): UseQueryStateReturn<
+	InframonitoringtypesPodStatusDTO[],
+	[]
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.POD_STATUS_FILTER,
+		parseAsArrayOf(parseAsStringEnum(FILTERABLE_POD_STATUSES))
+			.withDefault(EMPTY_FILTER)
+			.withOptions(defaultNuqsOptions),
+	);
+
+export const useInfraMonitoringNodeReadinessFilter = (): UseQueryStateReturn<
+	InframonitoringtypesNodeConditionDTO[],
+	[]
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_READINESS_FILTER,
+		parseAsArrayOf(parseAsStringEnum(FILTERABLE_NODE_CONDITIONS))
+			.withDefault(EMPTY_FILTER)
+			.withOptions(defaultNuqsOptions),
+	);
+
+export const useInfraMonitoringContainerStatusFilter = (): UseQueryStateReturn<
+	InframonitoringtypesContainerStatusDTO[],
+	[]
+> =>
+	useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.CONTAINER_STATUS_FILTER,
+		parseAsArrayOf(parseAsStringEnum(FILTERABLE_CONTAINER_STATUSES))
+			.withDefault(EMPTY_FILTER)
+			.withOptions(defaultNuqsOptions),
+	);

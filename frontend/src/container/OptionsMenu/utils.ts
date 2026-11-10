@@ -14,3 +14,12 @@ export const getOptionsFromKeys = (
 		({ value }) => !selectedKeys.find((key) => key === value),
 	);
 };
+
+export const buildCompositeKey = (
+	name: string,
+	context?: string,
+	dataType?: string,
+): string => {
+	const withContext = context ? `${context}:${name}` : name;
+	return dataType ? `${withContext}:${dataType}` : withContext;
+};

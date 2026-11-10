@@ -15,10 +15,11 @@ import (
 
 type handler struct {
 	module serviceaccount.Module
+	getter serviceaccount.Getter
 }
 
-func NewHandler(module serviceaccount.Module) serviceaccount.Handler {
-	return &handler{module: module}
+func NewHandler(module serviceaccount.Module, getter serviceaccount.Getter) serviceaccount.Handler {
+	return &handler{module: module, getter: getter}
 }
 
 func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
@@ -213,15 +214,9 @@ func (handler *handler) UpdateMe(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (handler *handler) SetRole(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) CreateServiceAccountRole(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	id, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -233,16 +228,16 @@ func (handler *handler) SetRole(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.SetRole(ctx, valuer.MustNewUUID(claims.OrgID), id, req.ID)
+	serviceAccountRole, err := handler.module.SetRole(ctx, valuer.MustNewUUID(claims.OrgID), req.ServiceAccountID, req.RoleID)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusNoContent, nil)
+	render.Success(rw, http.StatusCreated, types.Identifiable{ID: serviceAccountRole.ID})
 }
 
-func (handler *handler) DeleteRole(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) GetServiceAccountRole(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -256,13 +251,36 @@ func (handler *handler) DeleteRole(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roleID, err := valuer.NewUUID(mux.Vars(r)["rid"])
+	serviceAccountRole, err := handler.getter.GetServiceAccountRole(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.module.DeleteRole(ctx, valuer.MustNewUUID(claims.OrgID), id, roleID)
+	render.Success(rw, http.StatusOK, serviceAccountRole)
+}
+
+func (handler *handler) DeleteServiceAccountRole(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	serviceAccountRole, err := handler.getter.GetServiceAccountRole(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.DeleteRole(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccountRole.ServiceAccountID, serviceAccountRole.RoleID)
 	if err != nil {
 		render.Error(rw, err)
 		return

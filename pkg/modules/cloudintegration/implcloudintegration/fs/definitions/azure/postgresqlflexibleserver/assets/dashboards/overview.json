@@ -1,0 +1,3968 @@
+{
+  "schemaVersion": "v6",
+  "image": "data:image/svg+xml;base64,PHN2ZyBpZD0iZmM4OTAxMjctNzI4Yi00YWMwLWI1ZGEtODZjZGZjMTkxZTg2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOCAxOCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJhMjhkZWUyMC00YzcxLTQ2YjUtYjk1Ny04MDRjNjdkYTcyNWEiIHgxPSIyLjQ0IiB5MT0iMTAuNjciIHgyPSIxNS4yNyIgeTI9IjEwLjY3IiBncmFkaWVudFRyYW5zZm9ybT0idHJhbnNsYXRlKDAuMTQgLTAuNSkgcm90YXRlKC0wLjAxKSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzAwNWJhMSIvPjxzdG9wIG9mZnNldD0iMC4wNyIgc3RvcC1jb2xvcj0iIzAwNjBhOSIvPjxzdG9wIG9mZnNldD0iMC4zNiIgc3RvcC1jb2xvcj0iIzAwNzFjOCIvPjxzdG9wIG9mZnNldD0iMC41MiIgc3RvcC1jb2xvcj0iIzAwNzhkNCIvPjxzdG9wIG9mZnNldD0iMC42NCIgc3RvcC1jb2xvcj0iIzAwNzRjZCIvPjxzdG9wIG9mZnNldD0iMC44MiIgc3RvcC1jb2xvcj0iIzAwNmFiYiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzAwNWJhMSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjx0aXRsZT5JY29uLWRhdGFiYXNlcy0xMzE8L3RpdGxlPjxwYXRoIGQ9Ik05LDUuMTRjLTMuNTQsMC02LjQxLTEtNi40MS0yLjMyVjE1LjE4YzAsMS4yNywyLjgyLDIuMyw2LjMyLDIuMzJIOWMzLjU0LDAsNi40MS0xLDYuNDEtMi4zMlYyLjgyQzE1LjQxLDQuMSwxMi41NCw1LjE0LDksNS4xNFoiIGZpbGw9InVybCgjYTI4ZGVlMjAtNGM3MS00NmI1LWI5NTctODA0YzY3ZGE3MjVhKSIvPjxwYXRoIGQ9Ik0xNS40MSwyLjgyYzAsMS4yOC0yLjg3LDIuMzItNi40MSwyLjMycy02LjQxLTEtNi40MS0yLjMyUzUuNDYuNSw5LC41czYuNDEsMSw2LjQxLDIuMzIiIGZpbGw9IiNlOGU4ZTgiLz48cGF0aCBkPSJNMTMuOTEsMi42M2MwLC44Mi0yLjIsMS40OC00LjkxLDEuNDhTNC4wOCwzLjQ1LDQuMDgsMi42NCw2LjI4LDEuMTYsOSwxLjE2czQuOTEuNjYsNC45MSwxLjQ3IiBmaWxsPSIjNTBlNmZmIi8+PHBhdGggZD0iTTksM2ExMS42NSwxMS42NSwwLDAsMC0zLjkuNTdBMTEuNTMsMTEuNTMsMCwwLDAsOSw0LjExYTExLjQ3LDExLjQ3LDAsMCwwLDMuODktLjU4QTExLjkzLDExLjkzLDAsMCwwLDksM1oiIGZpbGw9IiMxOThhYjMiLz48cGF0aCBkPSJNMTIsOWMwLC4wOCwwLC4yNCwwLC40MmE1LjEyLDUuMTIsMCwwLDAtLjA4LjYzYzAsLjEyLDAsLjMuMDUuNDZzMCwuMjcsMCwuMzZhMS42OCwxLjY4LDAsMCwxLS4yNS44Ni40My40MywwLDAsMCwwLC4wN2wuMS4xMmExMC41NSwxMC41NSwwLDAsMCwxLjA2LTIuMzhoMGMuMjgtLjk1LjMxLTEuNjMuMDktMS45MmEyLjU4LDIuNTgsMCwwLDAtMi42OC0uODYsMy4yOSwzLjI5LDAsMCwxLC45MS42N0EyLjI4LDIuMjgsMCwwLDEsMTIsOVptLS4zMS4wOGExLjE1LDEuMTUsMCwwLDAtLjc5LjA5Yy0uMjkuMTgtLjIuNTUsMCwxYTcuNzcsNy43NywwLDAsMCwuMzUuODVsLjA5LjE2aDBjLjA1LjA4LjA4LjE1LjExLjJsLjA4LjEzYTEuMjgsMS4yOCwwLDAsMCwuMTgtLjY1LDIuODYsMi44NiwwLDAsMCwwLS4zM2MwLS4xNywwLS4zNi0uMDUtLjQ5YTYuMSw2LjEsMCwwLDEsLjA4LS42OUMxMS43MSw5LjI0LDExLjcyLDkuMTMsMTEuNzMsOS4wNVptLS4zLjQxYS40LjQsMCwwLDEtLjE4LjFoMGEuMzMuMzMsMCwwLDEtLjE0LDBBLjIzLjIzLDAsMCwxLDExLDkuNGgwYzAtLjA3LjExLS4xMy4yNC0uMTVoLjE5cy4wOSwwLC4wOS4wOEEuMi4yLDAsMCwxLDExLjQzLDkuNDZabS00LjY5Ljg5YzAtLjA3LDAtLjEzLDAtLjE3YTEsMSwwLDAsMCwwLS4xNyw1LjU1LDUuNTUsMCwwLDEsMC0xQTUuMjIsNS4yMiwwLDAsMSw3LDcuOTQsMi40MSwyLjQxLDAsMCwxLDcuNTgsNyw0Ljc4LDQuNzgsMCwwLDAsNi4yMyw2LjhhMS44NywxLjg3LDAsMCwwLTEuMS4zQTIsMiwwLDAsMCw0LjUsOC45MiwxMi4yNywxMi4yNywwLDAsMCw1LDExLjE2Yy4zNCwxLjE0LjczLDEuODQsMS4wNywxLjk1aDBjLjE1LjA1LjMxLDAsLjQ3LS4yMS4yOC0uMzQuNTQtLjYzLjY5LS44QTEuODgsMS44OCwwLDAsMSw2Ljc0LDEwLjM1Wm0uMjYuNGEyLjE4LDIuMTgsMCwwLDAsLjA2LjU2LDEuNSwxLjUsMCwwLDAsLjI2LjQ0LDEuMDcsMS4wNywwLDAsMCwuMzUuMjUsMS4wOSwxLjA5LDAsMCwwLC4zOS4wOGMwLS4xNy4xNC0uMzguMjMtLjZhNC4zNSw0LjM1LDAsMCwwLC4yMS0uNTksNi42MSw2LjYxLDAsMCwwLDAtMS4xMWMwLS4wOSwwLS4xOS0uMDYtLjNhLjQ1LjQ1LDAsMCwwLS4xMi0uMjdsMCwwQS42Ni42NiwwLDAsMCw4LDkuMDhINy44YTEuNTYsMS41NiwwLDAsMC0uNDguMTRBMiwyLDAsMCwwLDcsOS40MXYuMTFjMCwuMiwwLC40MSwwLC42MXYwYS44Ni44NiwwLDAsMSwwLC4xNWwwLC4zOUg3Wm0uNjYtMS4zNCwwLDBhLjQ2LjQ2LDAsMCwxLC4yOCwwLC42LjYsMCwwLDEsLjE5LjA2Yy4wOSwwLC4xLjExLjA5LjE0aDBhLjM3LjM3LDAsMCwxLS4xMi4xM0EuMy4zLDAsMCwxLDgsOS43M2gwYS4zNC4zNCwwLDAsMS0uMjgtLjI4Wm0uNzQsM2EuMjMuMjMsMCwwLDAtLjEzLjA2bC0uMTQuMTdjLS4xNy4yMS0uMjQuMjgtLjczLjM4YS41Mi41MiwwLDAsMC0uMjYuMS41OC41OCwwLDAsMCwuMjQuMTEsMS4xOCwxLjE4LDAsMCwwLC43MiwwQTEuNywxLjcsMCwwLDAsOC40NSwxM2EuNjEuNjEsMCwwLDAsLjItLjMxLjM2LjM2LDAsMCwwLS4xLS4yOEEuMTUuMTUsMCwwLDAsOC40LDEyLjM5Wm00LjYxLDBhMS42MywxLjYzLDAsMCwxLTEuMTMsMCwuMjIuMjIsMCwwLDAtLjE0LDAsLjMuMywwLDAsMC0uMTcuMTQsMS4wOSwxLjA5LDAsMCwwLDAsLjMxLDEuOCwxLjgsMCwwLDAsMS4xLS4xLDEuMzYsMS4zNiwwLDAsMCwuNDgtLjM0Wm0tMi40LTIuMTRjLS4xNC0uNDEtLjM0LTEsLjE4LTEuMzZhMS4zNSwxLjM1LDAsMCwxLC44OS0uMTVBMy4xOCwzLjE4LDAsMCwwLDExLDcuNjRsLS4xLS4xLS4wNi0uMDZoMGEuMzQuMzQsMCwwLDAtLjA2LS4wNmwwLDAsMCwwQTIuMzQsMi4zNCwwLDAsMCwxMC4xMSw3LDIuNjMsMi42MywwLDAsMCw5LDYuNzhhMS41MiwxLjUyLDAsMCwwLS43LjExQTEuNzcsMS43NywwLDAsMCw4LDdhMi4xLDIuMSwwLDAsMC0uNzQsMSw1Ljg0LDUuODQsMCwwLDAtLjIxLDEsMS42NiwxLjY2LDAsMCwxLDEtLjIzLjg0Ljg0LDAsMCwxLC43Ny45MSw3LjI2LDcuMjYsMCwwLDEsMCwxLjI3LDMuODcsMy44NywwLDAsMS0uMjMuNjNjLS4wNi4xNy0uMTQuMzUtLjE4LjQ5YS41LjUsMCwwLDEsLjM4LjE0LjY2LjY2LDAsMCwxLC4xOS41M0g5YzAsLjA4LDAsLjE2LDAsLjI0YTYuNTUsNi41NSwwLDAsMCwuMjQsMi40NC41NC41NCwwLDAsMCwuMjQuMjEuNi42LDAsMCwwLC4zMS4xLDEuMywxLjMsMCwwLDAsMS0uMzQsMS4wNSwxLjA1LDAsMCwwLC4yOS0uNjZjLjA3LS40NS4yMi0xLjcuMjQtMmgwYS43Mi43MiwwLDAsMSwuMDktLjQ0LjYzLjYzLDAsMCwxLC4yNy0uMjRBNS4zNiw1LjM2LDAsMCwxLDEwLjYxLDEwLjI0WiIgZmlsbD0iI2YyZjJmMiIvPjwvc3ZnPg==",
+  "name": "",
+  "generateName": true,
+  "tags": [],
+  "spec": {
+    "display": {
+      "name": "Azure Database for PostgreSQL - Flexible Server Overview",
+      "description": "Overview of Azure Database for PostgreSQL - Flexible Server"
+    },
+    "variables": [
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "azuremonitor.subscription_id",
+            "description": "Subscription ID for your Azure Account"
+          },
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/DynamicVariable",
+            "spec": {
+              "name": "azuremonitor.subscription_id",
+              "signal": "all"
+            }
+          },
+          "name": "azuremonitor.subscription_id"
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "name",
+            "description": "Azure Database for PostgreSQL - Flexible Server name"
+          },
+          "allowAllValue": false,
+          "allowMultiple": false,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "none",
+          "plugin": {
+            "kind": "signoz/DynamicVariable",
+            "spec": {
+              "name": "name",
+              "signal": "all"
+            }
+          },
+          "name": "name"
+        }
+      }
+    ],
+    "panels": {
+      "001df44f-0b43-bd90-7793-ef0936481958": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Backends",
+            "description": "Number of backends connected to this database."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_numbackends_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "07a69638-8f41-2ec9-30ec-793b54b45a3f": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "PgBouncer Active Client Connections",
+            "description": "Client connections associated with a PostgreSQL connection (PgBouncer)."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_client_connections_active_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "08f7212e-f7cc-8d06-8e0c-3d9fc05ca33d": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "CPU Percentage",
+            "description": "CPU percent."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_cpu_percent_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "0a12d0e5-8b11-71e5-33df-59b26756147c": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Read IOPS",
+            "description": "Number of data disk I/O read operations per second."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_read_iops_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "0b22aede-05ff-39c3-4914-e977b902ff5f": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Database Size",
+            "description": "Total database size."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_database_size_bytes_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "187bec49-ee72-5d00-78b9-2a39ec90e57d": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Transaction Log Storage Used",
+            "description": "Transaction log storage used."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_txlogs_storage_used_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "27efb3d4-0420-e3a8-7b9a-19d9b8b31f34": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Storage Percentage",
+            "description": "Storage percent."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_storage_percent_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "28d68d62-4b71-80df-734f-b11374a1f9ea": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "PgBouncer Active Server Connections",
+            "description": "Connections to PostgreSQL in use by a client connection (PgBouncer)."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_server_connections_active_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "2a5c7e18-479f-31e7-9679-d9223752ca8f": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Disk IOPS Consumed Percentage",
+            "description": "Percentage of disk I/Os consumed per minute."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_disk_iops_consumed_percentage_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "2b497174-78a0-121f-7b1b-8bdd100b2f81": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Database Is Alive",
+            "description": "Indicates if the database is up (1) or not (0)."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_is_db_alive_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "avg"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "329f0be3-8e97-d43e-e956-d7f81651e6e6": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Tuples Fetched",
+            "description": "Number of rows fetched by queries in this database."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_tup_fetched_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "32ad9fcb-47a2-9088-b48f-3be8f4589e1c": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Storage Used",
+            "description": "Storage used."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_storage_used_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "41b335cf-3109-8406-4ea8-b73074c8f550": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Failed Connections",
+            "description": "Number of failed connections."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_connections_failed_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "43b54c6c-3c69-412c-dc99-d99cb44dc5ac": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "PgBouncer Connection Pools",
+            "description": "Total number of connection pools (PgBouncer)."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_num_pools_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "49ecce74-f037-bb3c-3dc4-d07b41662675": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Max Connections",
+            "description": "Max connections."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_max_connections_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "4b6030e9-f9b0-62aa-6e4d-6a900055cf2f": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Transactions Per Second",
+            "description": "Number of transactions executed per second (Preview)."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_tps_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "5b4d2de4-f761-a727-a209-e4544f95764e": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Max Physical Replication Lag (Bytes)",
+            "description": "Maximum lag in bytes across all asynchronous physical replication slots."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_physical_replication_delay_in_bytes_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "5e292c54-477e-9bf5-1d15-257c868f287d": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Read Replica Lag (Seconds)",
+            "description": "Read replica lag in seconds."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_physical_replication_delay_in_seconds_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "671d6013-fff2-11c7-e833-529e7cae9055": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Storage Free",
+            "description": "Storage free."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_storage_free_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "6f6777a7-4eb6-bb6d-5891-ee19e7bb54e8": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Backup Storage Used",
+            "description": "Backup storage used."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_backup_storage_used_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "74b88de5-0ddb-51a6-62dd-60ffbd702e9b": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Active Connections",
+            "description": "Active connections."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_active_connections_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "7e1e073e-5156-4326-aab4-b8890722a734": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Network In",
+            "description": "Network in across active connections."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_network_bytes_ingress_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "858a7651-930a-226f-be14-8509cc0a6ad1": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Transactions Committed",
+            "description": "Number of transactions committed in this database."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_xact_commit_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "875df359-745b-5ecd-385d-9306d65cd92d": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "IOPS",
+            "description": "I/O operations per second."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_iops_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "91426513-d932-4e3b-8d55-f6f98e0f4091": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Tuples Deleted",
+            "description": "Number of rows deleted by queries in this database."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_tup_deleted_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "940c35d0-bea2-0613-f748-9c8f85d2be0f": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Deadlocks",
+            "description": "Number of deadlocks detected in this database."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_deadlocks_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "987bb15c-ef42-bc57-253e-6831f58e1a6b": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Disk Bandwidth Consumed Percentage",
+            "description": "Percentage of disk bandwidth consumed per minute."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_disk_bandwidth_consumed_percentage_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "a0c5e550-3e78-2cdf-3220-3387ec7c20bb": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Succeeded Connections",
+            "description": "Number of succeeded connections."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_connections_succeeded_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "a3f6bb5c-e6fe-d4c1-64ac-348174730a67": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Memory Percentage",
+            "description": "Memory percent."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "%",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_memory_percent_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "a95c0cb9-deaa-d863-be06-ab06e949840f": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "PgBouncer Total Pooled Connections",
+            "description": "Current number of pooled connections (PgBouncer)."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_total_pooled_connections_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "acf86516-931d-3f54-fc46-b1c13e7591cb": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Temporary Files Size",
+            "description": "Total amount of data written to temporary files by queries."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_temp_bytes_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "b455de58-2bb8-be2b-dba4-efb88573c788": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "PgBouncer Waiting Client Connections",
+            "description": "Client connections waiting for a PostgreSQL connection (PgBouncer)."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_client_connections_waiting_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "b5f6a178-4619-9330-a91b-d4e441a3dd10": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Network Out",
+            "description": "Network out across active connections."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_network_bytes_egress_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "b85e041b-c084-469d-c0da-a345fc8f62f7": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "PgBouncer Idle Server Connections",
+            "description": "Idle connections to PostgreSQL, ready to service a client (PgBouncer)."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_server_connections_idle_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "b88b5e62-7bec-18a0-2c2f-28950f6132fd": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Tuples Updated",
+            "description": "Number of rows updated by queries in this database."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_tup_updated_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "bf95c61b-cbdd-9b53-5f3e-781217741c07": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Disk Queue Depth",
+            "description": "Number of outstanding I/O operations to the data disk."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_disk_queue_depth_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "c5fb24bf-2bbc-672c-635d-cbcea6ad2bcd": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Max Logical Replication Lag (Bytes)",
+            "description": "Maximum lag in bytes across all logical replication slots."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "By",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_logical_replication_delay_in_bytes_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "d3e0be9e-a54b-d1f3-7e17-c6edfbbeacc6": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Tuples Returned",
+            "description": "Number of rows returned by queries in this database."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_tup_returned_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "e04f07c2-864b-2789-9ed7-f2ce30638465": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Transactions Rolled Back",
+            "description": "Number of transactions rolled back in this database."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_xact_rollback_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "e07d22a6-b764-cf87-cebf-f203045bb280": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Tuples Inserted",
+            "description": "Number of rows inserted by queries in this database."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_tup_inserted_total",
+                        "temporality": "",
+                        "timeAggregation": "max",
+                        "spaceAggregation": "sum"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      },
+      "f2b55ecd-5629-03a1-9a51-25c1152abd2f": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Write IOPS",
+            "description": "Number of data disk I/O write operations per second."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": 0,
+                "softMax": 0,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": null
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "aggregations": [
+                      {
+                        "metricName": "azure_write_iops_maximum",
+                        "temporality": "",
+                        "timeAggregation": "avg",
+                        "spaceAggregation": "max"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND type = 'Microsoft.DBforPostgreSQL/flexibleServers' AND name = $name "
+                    },
+                    "groupBy": [
+                      {
+                        "name": "name",
+                        "signal": "",
+                        "fieldContext": "",
+                        "fieldDataType": "string"
+                      }
+                    ],
+                    "order": [],
+                    "having": {
+                      "expression": ""
+                    },
+                    "functions": [],
+                    "legend": "{{name}}"
+                  }
+                }
+              }
+            }
+          ],
+          "links": []
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/08f7212e-f7cc-8d06-8e0c-3d9fc05ca33d"
+              }
+            },
+            {
+              "x": 6,
+              "y": 0,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/a3f6bb5c-e6fe-d4c1-64ac-348174730a67"
+              }
+            },
+            {
+              "x": 0,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/32ad9fcb-47a2-9088-b48f-3be8f4589e1c"
+              }
+            },
+            {
+              "x": 6,
+              "y": 6,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/27efb3d4-0420-e3a8-7b9a-19d9b8b31f34"
+              }
+            },
+            {
+              "x": 0,
+              "y": 12,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/671d6013-fff2-11c7-e833-529e7cae9055"
+              }
+            },
+            {
+              "x": 6,
+              "y": 12,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/187bec49-ee72-5d00-78b9-2a39ec90e57d"
+              }
+            },
+            {
+              "x": 0,
+              "y": 18,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/875df359-745b-5ecd-385d-9306d65cd92d"
+              }
+            },
+            {
+              "x": 6,
+              "y": 18,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/0a12d0e5-8b11-71e5-33df-59b26756147c"
+              }
+            },
+            {
+              "x": 0,
+              "y": 24,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/f2b55ecd-5629-03a1-9a51-25c1152abd2f"
+              }
+            },
+            {
+              "x": 6,
+              "y": 24,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/2a5c7e18-479f-31e7-9679-d9223752ca8f"
+              }
+            },
+            {
+              "x": 0,
+              "y": 30,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/987bb15c-ef42-bc57-253e-6831f58e1a6b"
+              }
+            },
+            {
+              "x": 6,
+              "y": 30,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/bf95c61b-cbdd-9b53-5f3e-781217741c07"
+              }
+            },
+            {
+              "x": 0,
+              "y": 36,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/6f6777a7-4eb6-bb6d-5891-ee19e7bb54e8"
+              }
+            },
+            {
+              "x": 6,
+              "y": 36,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/74b88de5-0ddb-51a6-62dd-60ffbd702e9b"
+              }
+            },
+            {
+              "x": 0,
+              "y": 42,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/a0c5e550-3e78-2cdf-3220-3387ec7c20bb"
+              }
+            },
+            {
+              "x": 6,
+              "y": 42,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/49ecce74-f037-bb3c-3dc4-d07b41662675"
+              }
+            },
+            {
+              "x": 0,
+              "y": 48,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/7e1e073e-5156-4326-aab4-b8890722a734"
+              }
+            },
+            {
+              "x": 6,
+              "y": 48,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/b5f6a178-4619-9330-a91b-d4e441a3dd10"
+              }
+            },
+            {
+              "x": 0,
+              "y": 54,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/41b335cf-3109-8406-4ea8-b73074c8f550"
+              }
+            },
+            {
+              "x": 6,
+              "y": 54,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/4b6030e9-f9b0-62aa-6e4d-6a900055cf2f"
+              }
+            },
+            {
+              "x": 0,
+              "y": 60,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/940c35d0-bea2-0613-f748-9c8f85d2be0f"
+              }
+            },
+            {
+              "x": 6,
+              "y": 60,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/001df44f-0b43-bd90-7793-ef0936481958"
+              }
+            },
+            {
+              "x": 0,
+              "y": 66,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/0b22aede-05ff-39c3-4914-e977b902ff5f"
+              }
+            },
+            {
+              "x": 6,
+              "y": 66,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/329f0be3-8e97-d43e-e956-d7f81651e6e6"
+              }
+            },
+            {
+              "x": 0,
+              "y": 72,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/d3e0be9e-a54b-d1f3-7e17-c6edfbbeacc6"
+              }
+            },
+            {
+              "x": 6,
+              "y": 72,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/e07d22a6-b764-cf87-cebf-f203045bb280"
+              }
+            },
+            {
+              "x": 0,
+              "y": 78,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/b88b5e62-7bec-18a0-2c2f-28950f6132fd"
+              }
+            },
+            {
+              "x": 6,
+              "y": 78,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/91426513-d932-4e3b-8d55-f6f98e0f4091"
+              }
+            },
+            {
+              "x": 0,
+              "y": 84,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/858a7651-930a-226f-be14-8509cc0a6ad1"
+              }
+            },
+            {
+              "x": 6,
+              "y": 84,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/e04f07c2-864b-2789-9ed7-f2ce30638465"
+              }
+            },
+            {
+              "x": 0,
+              "y": 90,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/acf86516-931d-3f54-fc46-b1c13e7591cb"
+              }
+            },
+            {
+              "x": 6,
+              "y": 90,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/2b497174-78a0-121f-7b1b-8bdd100b2f81"
+              }
+            },
+            {
+              "x": 0,
+              "y": 96,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/5e292c54-477e-9bf5-1d15-257c868f287d"
+              }
+            },
+            {
+              "x": 6,
+              "y": 96,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/5b4d2de4-f761-a727-a209-e4544f95764e"
+              }
+            },
+            {
+              "x": 0,
+              "y": 102,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/c5fb24bf-2bbc-672c-635d-cbcea6ad2bcd"
+              }
+            },
+            {
+              "x": 6,
+              "y": 102,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/07a69638-8f41-2ec9-30ec-793b54b45a3f"
+              }
+            },
+            {
+              "x": 0,
+              "y": 108,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/b455de58-2bb8-be2b-dba4-efb88573c788"
+              }
+            },
+            {
+              "x": 6,
+              "y": 108,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/28d68d62-4b71-80df-734f-b11374a1f9ea"
+              }
+            },
+            {
+              "x": 0,
+              "y": 114,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/b85e041b-c084-469d-c0da-a345fc8f62f7"
+              }
+            },
+            {
+              "x": 6,
+              "y": 114,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/43b54c6c-3c69-412c-dc99-d99cb44dc5ac"
+              }
+            },
+            {
+              "x": 0,
+              "y": 120,
+              "width": 6,
+              "height": 6,
+              "content": {
+                "$ref": "#/spec/panels/a95c0cb9-deaa-d863-be06-ab06e949840f"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "",
+    "refreshInterval": "",
+    "links": []
+  }
+}

@@ -1,0 +1,25 @@
+.container {
+	// Gutter matches the header/subHeader 16px; bottom gap before the panels.
+	padding: 0 16px 12px;
+}
+
+.title {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	width: 100%;
+}
+
+.link {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	color: inherit;
+	font-weight: 500;
+	white-space: nowrap;
+
+	&:hover {
+		opacity: 0.85;
+	}
+}

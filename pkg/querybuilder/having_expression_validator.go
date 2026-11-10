@@ -237,7 +237,13 @@ func (v *havingExpressionRewriteVisitor) visitIdentifier(ctx grammar.IIdentifier
 	return name
 }
 
-// rewriteAndValidate is the single-pass implementation used by all RewriteFor* methods.
+func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string, error) {
+	rewritten, _, err := r.parseAndValidate(expression)
+	return rewritten, err
+}
+
+// parseAndValidate is the single-pass implementation used by all RewriteFor* methods.
+// It also returns the parse tree, which CompileFormulaHaving evaluates in Go.
 //
 // Validation layers:
 //  1. The visitor runs on the parse tree, rewriting and collecting invalid references.
@@ -248,7 +254,7 @@ func (v *havingExpressionRewriteVisitor) visitIdentifier(ctx grammar.IIdentifier
 //  2. String literals in comparison-operand position → descriptive error
 //     ("aggregator results are numeric").
 //  3. ANTLR syntax errors → error with messages referencing the original token names.
-func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string, error) {
+func (r *HavingExpressionRewriter) parseAndValidate(expression string) (string, grammar.IQueryContext, error) {
 	original := strings.TrimSpace(expression)
 
 	// Parse the expression once.
@@ -281,7 +287,7 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 	// This is checked before invalid references so that "contains string literals" takes
 	// priority when a bare string literal is also an unresolvable operand.
 	if v.hasStringLiteral {
-		return "", errors.NewInvalidInputf(
+		return "", nil, errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"`Having` expression contains string literals",
 		).WithAdditional("Aggregator results are numeric")
@@ -294,24 +300,30 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 			validKeys = append(validKeys, k)
 		}
 		sort.Strings(validKeys)
-		additional := []string{"Valid references are: [" + strings.Join(validKeys, ", ") + "]"}
+		// Each suggestion is a self-describing string prefixed with either
+		// "did you mean: " (the full corrected expression) or "valid references: "
+		// (the set of valid references).
+		var suggestions []string
 		if len(v.invalid) == 1 {
 			inv := v.invalid[0]
-			// Only suggest for plain identifier typos, not for unresolved function
-			// calls: a function call will appear as "name(" in the expression, and
-			// the closest valid key may itself contain "(" (e.g. "sum(a)"), making
-			// a simple string substitution produce a corrupt expression.
-			isFuncCall := strings.Contains(original, inv+"(")
-			if match, dist := closestMatch(inv, validKeys); !isFuncCall && !strings.Contains(match, "(") && dist <= 3 {
-				corrected := strings.ReplaceAll(original, inv, match)
-				additional = append(additional, "Suggestion: `"+corrected+"`")
-			}
+			suggestions = errors.NewSuggestionsFromFunc(func() string {
+				match, ok := errors.ClosestLevenshteinMatch(inv, validKeys)
+				if !ok || strings.Contains(original, inv+"(") || strings.Contains(match, "(") {
+					return ""
+				}
+				return strings.ReplaceAll(original, inv, match)
+			})
 		}
-		return "", errors.NewInvalidInputf(
+
+		suggestions = append(suggestions, errors.NewValidReferences(errors.NounReferences, validKeys...))
+		havingErr := errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"Invalid references in `Having` expression: [%s]",
 			strings.Join(v.invalid, ", "),
-		).WithAdditional(additional...)
+		).WithAdditional(
+			"Valid references are: [" + strings.Join(validKeys, ", ") + "]",
+		).WithSuggestions(suggestions...)
+		return "", nil, havingErr
 	}
 
 	// Layer 3 – ANTLR syntax errors. We parse the original expression, so error messages
@@ -324,24 +336,25 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 				msgs = append(msgs, m)
 			}
 		}
-		detail := strings.Join(msgs, "; ")
-		if detail == "" {
-			detail = "check the expression syntax"
-		}
-		additional := []string{detail}
-		// For single-error expressions, try to produce an actionable suggestion.
-		if len(allSyntaxErrors) == 1 {
-			if s := havingSuggestion(allSyntaxErrors[0], original); s != "" {
-				additional = append(additional, "Suggestion: `"+s+"`")
-			}
-		}
-		return "", errors.NewInvalidInputf(
+		havingErr := errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"Syntax error in `Having` expression",
-		).WithAdditional(additional...)
+		)
+
+		// A single syntax error can carry an actionable suggestion on the same detail;
+		// multiple errors are surfaced as one additional detail each. If the parser
+		// produced no message (rare), the top-level message stands on its own.
+		if len(allSyntaxErrors) == 1 && len(msgs) == 1 {
+			suggestions := errors.NewSuggestionsFromFunc(func() string {
+				return havingSuggestion(allSyntaxErrors[0], original)
+			})
+
+			return "", nil, havingErr.WithSuggestiveAdditional(msgs[0], suggestions...)
+		}
+		return "", nil, havingErr.WithAdditional(msgs...)
 	}
 
-	return result, nil
+	return result, tree, nil
 }
 
 // havingSuggestion returns a corrected expression string to show as a suggestion when
@@ -446,42 +459,6 @@ func hasUnclosedBracket(s string) bool {
 		}
 	}
 	return count > 0
-}
-
-// closestMatch returns the element of candidates with the smallest Levenshtein
-// distance to query, along with that distance.
-func closestMatch(query string, candidates []string) (string, int) {
-	best, bestDist := "", -1
-	for _, c := range candidates {
-		if d := levenshtein(query, c); bestDist < 0 || d < bestDist {
-			best, bestDist = c, d
-		}
-	}
-	return best, bestDist
-}
-
-// levenshtein computes the edit distance between a and b.
-func levenshtein(a, b string) int {
-	ra, rb := []rune(a), []rune(b)
-	la, lb := len(ra), len(rb)
-	row := make([]int, lb+1)
-	for j := range row {
-		row[j] = j
-	}
-	for i := 1; i <= la; i++ {
-		prev := row[0]
-		row[0] = i
-		for j := 1; j <= lb; j++ {
-			tmp := row[j]
-			if ra[i-1] == rb[j-1] {
-				row[j] = prev
-			} else {
-				row[j] = 1 + min(prev, min(row[j], row[j-1]))
-			}
-			prev = tmp
-		}
-	}
-	return row[lb]
 }
 
 // endsWithComparisonOp reports whether s ends with a comparison operator token

@@ -1,5 +1,6 @@
 import {
 	Dispatch,
+	ReactNode,
 	SetStateAction,
 	useCallback,
 	useEffect,
@@ -9,14 +10,16 @@ import {
 } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import cx from 'classnames';
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
-import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
+import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
+import { getLocalStorageGraphVisibilityState } from 'container/WidgetCard/Card/utils';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
 import { MetricsLoading } from 'container/MetricsExplorer/MetricsLoading/MetricsLoading';
@@ -29,7 +32,8 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
+import { stackSeries } from 'lib/visualization/charts/utils/stackSeriesUtils';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty } from 'lodash-es';
@@ -37,15 +41,18 @@ import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { SuccessResponse, Warning } from 'types/api';
-import { LegendPosition } from 'types/api/dashboard/getAll';
+import { LegendPosition } from 'types/api/widgets/widget';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { QueryRangeResponseV5 } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
-import './TimeSeriesView.styles.scss';
+import ExportMenu from 'components/ExportMenu/ExportMenu';
+
+import styles from './TimeSeriesView.module.scss';
 
 function TimeSeriesView({
 	data,
@@ -57,18 +64,35 @@ function TimeSeriesView({
 	dataSource,
 	setWarning,
 	panelType = PANEL_TYPES.TIME_SERIES,
+	stackBarChart = false,
+	allowExport = false,
+	exportFileName,
+	onYAxisUnitChange,
+	headerActions,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
 	const { currentQuery } = useQueryBuilder();
 
-	const chartData = useMemo(
+	const rawChartData = useMemo(
 		() => getUPlotChartData(data?.payload),
 		[data?.payload],
 	);
+
+	const { chartData, stackedBands } = useMemo(() => {
+		if (!stackBarChart || !rawChartData || rawChartData.length < 2) {
+			return { chartData: rawChartData, stackedBands: null };
+		}
+		const noSeriesHidden = (): boolean => false;
+		const { data: stacked, bands } = stackSeries(
+			rawChartData as uPlot.AlignedData,
+			noSeriesHidden,
+		);
+		return { chartData: stacked, stackedBands: bands };
+	}, [rawChartData, stackBarChart]);
 
 	useEffect(() => {
 		if (data?.payload) {
@@ -135,7 +159,7 @@ function TimeSeriesView({
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			urlQuery.delete(QueryParams.relativeTime);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 		},
 		[dispatch, location.pathname, urlQuery],
 	);
@@ -189,7 +213,7 @@ function TimeSeriesView({
 
 	const { timezone } = useTimezone();
 
-	const chartOptions = getUPlotChartOptions({
+	const baseChartOptions = getUPlotChartOptions({
 		id: 'time-series-explorer',
 		onDragSelect,
 		yAxisUnit: yAxisUnit || '',
@@ -222,9 +246,42 @@ function TimeSeriesView({
 		},
 	});
 
+	const chartOptions = useMemo(
+		() =>
+			stackedBands
+				? { ...baseChartOptions, bands: stackedBands }
+				: baseChartOptions,
+		[baseChartOptions, stackedBands],
+	);
+
+	const showExport = allowExport && !!data?.rawV5Response;
+	const showHeader = showExport || !!onYAxisUnitChange || !!headerActions;
+
 	return (
-		<div className="time-series-view">
+		<div className={cx('time-series-view', styles.timeSeriesView)}>
 			{isError && error && <ErrorInPlace error={error as APIError} />}
+
+			{showHeader && (
+				<div className={styles.header} data-testid="time-series-view-header">
+					<div>
+						{onYAxisUnitChange && (
+							<BuilderUnitsFilter onChange={onYAxisUnitChange} yAxisUnit={yAxisUnit} />
+						)}
+					</div>
+					<div className={styles.headerActions}>
+						{headerActions}
+						{showExport && data?.rawV5Response && (
+							<ExportMenu
+								dataSource={dataSource}
+								yAxisUnit={yAxisUnit}
+								data={data}
+								query={currentQuery}
+								fileName={exportFileName ?? `${dataSource}-timeseries`}
+							/>
+						)}
+					</div>
+				</div>
+			)}
 
 			<div
 				className="graph-container"
@@ -273,7 +330,11 @@ function TimeSeriesView({
 }
 
 interface TimeSeriesViewProps {
-	data?: SuccessResponse<MetricRangePayloadProps> & { warning?: Warning };
+	data?: SuccessResponse<MetricRangePayloadProps> & {
+		warning?: Warning;
+		rawV5Response?: QueryRangeResponseV5;
+		legendMap?: Record<string, string>;
+	};
 	yAxisUnit?: string;
 	isLoading: boolean;
 	isError: boolean;
@@ -282,6 +343,15 @@ interface TimeSeriesViewProps {
 	dataSource: DataSource;
 	setWarning?: Dispatch<SetStateAction<Warning | undefined>>;
 	panelType?: PANEL_TYPES;
+	stackBarChart?: boolean;
+	// Opt-in: render the client-side export menu (Logs explorer for now).
+	allowExport?: boolean;
+	exportFileName?: string;
+	// Opt-in: render the y-axis unit selector in the header (views without their
+	// own selector, e.g. Logs). Metrics keeps its separate YAxisUnitSelector.
+	onYAxisUnitChange?: (value: string) => void;
+	// Rendered in the header ahead of the export menu.
+	headerActions?: ReactNode;
 }
 
 TimeSeriesView.defaultProps = {
@@ -290,6 +360,8 @@ TimeSeriesView.defaultProps = {
 	error: undefined,
 	setWarning: undefined,
 	panelType: PANEL_TYPES.TIME_SERIES,
+	stackBarChart: false,
+	exportFileName: undefined,
 };
 
 export default TimeSeriesView;

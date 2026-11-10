@@ -1,3 +1,4 @@
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	AWSCloudAccountConfig,
 	AWSServiceConfig,
@@ -6,6 +7,7 @@ import {
 export enum IntegrationType {
 	AWS_SERVICES = 'aws',
 	AZURE_SERVICES = 'azure',
+	GCP_SERVICES = 'gcp',
 }
 
 interface LogField {
@@ -87,7 +89,10 @@ export interface ServiceData {
 export interface CloudAccount {
 	id: string;
 	cloud_account_id: string;
-	config: AzureCloudAccountConfig | AWSCloudAccountConfig;
+	config:
+		| AzureCloudAccountConfig
+		| AWSCloudAccountConfig
+		| GCPCloudAccountConfig;
 	status: AccountStatus | IServiceStatus;
 	providerAccountId: string;
 }
@@ -95,6 +100,13 @@ export interface CloudAccount {
 export interface AzureCloudAccountConfig {
 	deployment_region: string;
 	resource_groups: string[];
+}
+
+export interface GCPCloudAccountConfig {
+	connection_method: CloudintegrationtypesGCPConnectionMethodDTO;
+	deployment_region: string;
+	deployment_project_id: string;
+	project_ids: string[];
 }
 
 export interface AccountStatus {
@@ -106,6 +118,12 @@ export interface IntegrationStatus {
 }
 
 export interface AzureRegion {
+	label: string;
+	geography: string;
+	value: string;
+}
+
+export interface GCPRegion {
 	label: string;
 	geography: string;
 	value: string;

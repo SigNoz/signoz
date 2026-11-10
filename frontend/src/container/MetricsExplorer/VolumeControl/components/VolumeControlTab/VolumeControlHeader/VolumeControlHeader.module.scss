@@ -1,0 +1,20 @@
+.header {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.titleRow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--bg-robin-400, #7190f9);
+}
+
+.title {
+	margin: 0 !important;
+}
+
+.subtitle {
+	max-width: 680px;
+}

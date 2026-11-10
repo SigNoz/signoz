@@ -38,12 +38,6 @@ export const pipelineFields = [
 	},
 ];
 
-export const tagInputStyle: React.CSSProperties = {
-	width: 78,
-	verticalAlign: 'top',
-	flex: 1,
-};
-
 export const pipelineColumns: Array<
 	ColumnType<PipelineData> | ColumnGroupType<PipelineData>
 > = [

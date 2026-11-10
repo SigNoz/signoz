@@ -1,0 +1,16 @@
+{
+  "records": [
+    {
+      "namespaceName": "acc-ns-1",
+      "namespaceCPU": 1.0,
+      "namespaceMemory": 200000000.0,
+      "counts": {"deployments": 2, "daemonSets": 1, "jobs": 1, "statefulSets": 0}
+    },
+    {
+      "namespaceName": "acc-ns-2",
+      "namespaceCPU": 2.25,
+      "namespaceMemory": 600000000.0,
+      "counts": {"deployments": 1, "daemonSets": 1, "jobs": 1, "statefulSets": 0}
+    }
+  ]
+}

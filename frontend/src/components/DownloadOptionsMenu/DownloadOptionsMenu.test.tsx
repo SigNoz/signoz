@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { message } from 'antd';
 import configureStore from 'redux-mock-store';
 import store from 'store';
@@ -106,7 +107,7 @@ describe.each([
 		renderWithStore(dataSource);
 		const button = screen.getByTestId(testId);
 		expect(button).toBeInTheDocument();
-		expect(button).toHaveClass('periscope-btn', 'ghost');
+		expect(button).toHaveAccessibleName('Download');
 	});
 
 	it('shows popover with export options when download button is clicked', () => {
@@ -194,6 +195,23 @@ describe.each([
 		});
 	});
 
+	it('sends the chosen jsonl format and 30k row limit', async () => {
+		renderWithStore(dataSource);
+		await userEvent.click(screen.getByTestId(testId));
+		await userEvent.click(screen.getByRole('radio', { name: 'jsonl' }));
+		await userEvent.click(screen.getByRole('radio', { name: '30k' }));
+		await userEvent.click(screen.getByText('Export'));
+
+		await waitFor(() => {
+			expect(mockDownloadExportData).toHaveBeenCalledTimes(1);
+		});
+		const callArgs = mockDownloadExportData.mock.calls[0][0];
+		expect(callArgs.format).toBe(DownloadFormats.JSONL);
+		expect(callArgs.body.compositeQuery.queries[0].spec.limit).toBe(
+			DownloadRowCounts.THIRTY_K,
+		);
+	});
+
 	it('clears groupBy and having in the export payload', async () => {
 		const mockQuery = createMockStagedQuery(dataSource);
 		mockQuery.builder.queryData[0].groupBy = [
@@ -213,7 +231,9 @@ describe.each([
 			const callArgs = mockDownloadExportData.mock.calls[0][0];
 			const query = callArgs.body.compositeQuery.queries[0];
 			expect(query.spec.groupBy).toBeUndefined();
-			expect(query.spec.having).toStrictEqual({ expression: '' });
+			// An empty having ({ expression: '' }) is a no-op filter and serializes to
+			// undefined — same as the cleared groupBy above.
+			expect(query.spec.having).toBeUndefined();
 		});
 	});
 
@@ -306,13 +326,16 @@ describe.each([
 
 		fireEvent.click(screen.getByText('Export'));
 
-		expect(screen.getByTestId(testId)).toBeDisabled();
+		expect(screen.getByTestId(testId)).toHaveAttribute('aria-disabled', 'true');
 		expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
 		resolveDownload!();
 
 		await waitFor(() => {
-			expect(screen.getByTestId(testId)).not.toBeDisabled();
+			expect(screen.getByTestId(testId)).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 });

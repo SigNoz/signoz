@@ -3,7 +3,6 @@
 	flex-direction: column;
 	flex: 1;
 	min-height: 0;
-	overflow: hidden;
 	border-radius: 4px;
 }
 
@@ -96,7 +95,6 @@
 			font-weight: var(--uppercase-small-500-font-weight);
 			line-height: 100%;
 			letter-spacing: 0.44px;
-			text-transform: uppercase;
 		}
 	}
 }

@@ -1,17 +1,70 @@
+import json
 import uuid
 from collections.abc import Callable
 from http import HTTPStatus
 
+import pytest
 import requests
+from sqlalchemy import sql
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
-from fixtures.cloudintegrations import simulate_agent_checkin
+from fixtures.cloudintegrations import (
+    ProviderAccountSpec,
+    simulate_agent_checkin,
+)
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-CLOUD_PROVIDER = "aws"
+AWS_ACCOUNT_SPEC = ProviderAccountSpec(
+    provider="aws",
+    initial_params={"deployment_region": "us-east-1", "regions": ["us-east-1"]},
+    updated_params={"deployment_region": "us-east-1", "regions": ["us-east-1", "us-west-2", "eu-west-1"]},
+    build_config=lambda p: {"aws": {"deploymentRegion": p["deployment_region"], "regions": p["regions"]}},
+    expected_config=lambda p: {"regions": p["regions"]},
+    expected_sync_state=lambda p: {
+        "version": 1,
+        "inSync": True,
+        "regions": {region: {"state": "enabled"} for region in p["regions"]},
+    },
+)
+
+GCP_ACCOUNT_SPEC = ProviderAccountSpec(
+    provider="gcp",
+    initial_params={
+        "deployment_project_id": "signoz-test-project",
+        "deployment_region": "us-central1",
+        "project_ids": ["signoz-test-project"],
+    },
+    updated_params={
+        "deployment_project_id": "signoz-test-project",
+        "deployment_region": "us-central1",
+        "project_ids": ["signoz-test-project", "signoz-test-project-2"],
+    },
+    build_config=lambda p: {
+        "gcp": {
+            "connectionMethod": "manual",
+            "deploymentProjectId": p["deployment_project_id"],
+            "deploymentRegion": p["deployment_region"],
+            "projectIds": p["project_ids"],
+        }
+    },
+    expected_config=lambda p: {
+        "connectionMethod": "manual",
+        "deploymentProjectId": p["deployment_project_id"],
+        "deploymentRegion": p["deployment_region"],
+        "projectIds": p["project_ids"],
+    },
+)
+
+PROVIDER_ACCOUNT_SPECS = [AWS_ACCOUNT_SPEC, GCP_ACCOUNT_SPEC]
+
+provider_spec = pytest.mark.parametrize(
+    "spec",
+    PROVIDER_ACCOUNT_SPECS,
+    ids=[s.id for s in PROVIDER_ACCOUNT_SPECS],
+)
 
 
 def test_apply_license(
@@ -24,16 +77,59 @@ def test_apply_license(
     add_license(signoz, make_http_mocks, get_token)
 
 
+def test_gcp_account_without_connection_method_remains_manual(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    """A stored manual account without the new field can still be read, connected and updated."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    project_id = "signoz-test-project"
+    config = {"deploymentProjectId": project_id, "deploymentRegion": "us-central1", "projectIds": [project_id]}
+    account = create_cloud_integration_account(admin_token, "gcp", config={"gcp": config | {"connectionMethod": "manual"}})
+
+    # Reproduce the released manual account format, which had no connection method.
+    with signoz.sqlstore.conn.begin() as conn:
+        conn.execute(
+            sql.text("UPDATE cloud_integration SET config=:config WHERE id=:id"),
+            {"config": json.dumps(config), "id": account["id"]},
+        )
+
+    account_url = signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/gcp/accounts/{account['id']}")
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    response = requests.get(
+        account_url,
+        headers=headers,
+        timeout=10,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["config"]["gcp"] == config | {"connectionMethod": "manual"}
+
+    checkin = simulate_agent_checkin(signoz, admin_token, "gcp", account["id"], project_id)
+    assert checkin.status_code == HTTPStatus.OK, checkin.text
+    assert checkin.json()["data"]["integrationConfig"] == {}
+
+    updated_config = config | {"projectIds": [project_id, "signoz-test-project-2"]}
+    response = requests.put(account_url, headers=headers, json={"config": {"gcp": updated_config}}, timeout=10)
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    with signoz.sqlstore.conn.connect() as conn:
+        stored = conn.execute(sql.text("SELECT config FROM cloud_integration WHERE id=:id"), {"id": account["id"]}).scalar_one()
+    assert json.loads(stored) == updated_config | {"connectionMethod": "manual"}
+
+
+@provider_spec
 def test_list_accounts_empty(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    spec: ProviderAccountSpec,
 ) -> None:
     """List accounts returns an empty list when no accounts have checked in."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{spec.provider}/accounts"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -46,24 +142,30 @@ def test_list_accounts_empty(
     assert len(data["accounts"]) == 0, "accounts list should be empty when no accounts have checked in"
 
 
+@provider_spec
 def test_list_accounts_after_checkin(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
+    spec: ProviderAccountSpec,
 ) -> None:
-    """List accounts returns an account after it has checked in."""
+    """List accounts returns an account, with its provider config, after check-in."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER, regions=["us-east-1"])
+    account = create_cloud_integration_account(
+        admin_token,
+        spec.provider,
+        config=spec.build_config(spec.initial_params),
+    )
     account_id = account["id"]
     provider_account_id = str(uuid.uuid4())
 
-    checkin = simulate_agent_checkin(signoz, admin_token, CLOUD_PROVIDER, account_id, provider_account_id)
+    checkin = simulate_agent_checkin(signoz, admin_token, spec.provider, account_id, provider_account_id)
     assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{spec.provider}/accounts"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -74,25 +176,32 @@ def test_list_accounts_after_checkin(
     found = next((a for a in data["accounts"] if a["id"] == account_id), None)
     assert found is not None, f"Account {account_id} should appear in list after check-in"
     assert found["providerAccountId"] == provider_account_id, "providerAccountId should match"
-    assert found["config"]["aws"]["regions"] == ["us-east-1"], "regions should match account config"
+    assert found["config"][spec.provider] == spec.expected_config(spec.initial_params), "config should match account config"
     assert found["agentReport"] is not None, "agentReport should be present after check-in"
+    assert found["agentReport"]["syncState"] == spec.expected_sync_state(spec.initial_params), "syncState should be seeded from the account regions on first check-in"
     assert found["removedAt"] is None, "removedAt should be null for a live account"
 
 
+@provider_spec
 def test_get_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
+    spec: ProviderAccountSpec,
 ) -> None:
-    """Get a specific account by ID returns the account with correct fields."""
+    """Get a specific account by ID returns the account with its provider config."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER, regions=["us-east-1", "eu-west-1"])
+    account = create_cloud_integration_account(
+        admin_token,
+        spec.provider,
+        config=spec.build_config(spec.initial_params),
+    )
     account_id = account["id"]
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{spec.provider}/accounts/{account_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -101,23 +210,22 @@ def test_get_account(
 
     data = response.json()["data"]
     assert data["id"] == account_id, "id should match"
-    assert data["config"]["aws"]["regions"] == [
-        "us-east-1",
-        "eu-west-1",
-    ], "regions should match"
+    assert data["config"][spec.provider] == spec.expected_config(spec.initial_params), "config should match"
     assert data["removedAt"] is None, "removedAt should be null"
 
 
+@provider_spec
 def test_get_account_not_found(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    spec: ProviderAccountSpec,
 ) -> None:
     """Get a non-existent account returns 404."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{uuid.uuid4()}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{spec.provider}/accounts/{uuid.uuid4()}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -125,46 +233,52 @@ def test_get_account_not_found(
     assert response.status_code == HTTPStatus.NOT_FOUND, f"Expected 404, got {response.status_code}"
 
 
+@provider_spec
 def test_update_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
+    spec: ProviderAccountSpec,
 ) -> None:
     """Update account config and verify the change is persisted via GET."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER, regions=["us-east-1"])
+    account = create_cloud_integration_account(
+        admin_token,
+        spec.provider,
+        config=spec.build_config(spec.initial_params),
+    )
     account_id = account["id"]
 
-    checkin = simulate_agent_checkin(signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4()))
+    checkin = simulate_agent_checkin(signoz, admin_token, spec.provider, account_id, str(uuid.uuid4()))
     assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
 
-    updated_regions = ["us-east-1", "us-west-2", "eu-west-1"]
-
     response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{spec.provider}/accounts/{account_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
-        json={"config": {"aws": {"regions": updated_regions}}},
+        json={"config": spec.build_config(spec.updated_params)},
         timeout=10,
     )
 
     assert response.status_code == HTTPStatus.NO_CONTENT, f"Expected 204, got {response.status_code}"
 
     get_response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{spec.provider}/accounts/{account_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
     assert get_response.status_code == HTTPStatus.OK
-    assert get_response.json()["data"]["config"]["aws"]["regions"] == updated_regions, "Regions should reflect the update"
+    assert get_response.json()["data"]["config"][spec.provider] == spec.expected_config(spec.updated_params), "Config should reflect the update"
 
 
+@provider_spec
 def test_update_account_after_checkin_preserves_connected_status(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
+    spec: ProviderAccountSpec,
 ) -> None:
     """Updating config after agent check-in must not remove the account from the connected list.
 
@@ -175,17 +289,21 @@ def test_update_account_after_checkin_preserves_connected_status(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # 1. Create account
-    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER, regions=["us-east-1"])
+    account = create_cloud_integration_account(
+        admin_token,
+        spec.provider,
+        config=spec.build_config(spec.initial_params),
+    )
     account_id = account["id"]
     provider_account_id = str(uuid.uuid4())
 
     # 2. Agent checks in — sets account_id and last_agent_report
-    checkin = simulate_agent_checkin(signoz, admin_token, CLOUD_PROVIDER, account_id, provider_account_id)
+    checkin = simulate_agent_checkin(signoz, admin_token, spec.provider, account_id, provider_account_id)
     assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
 
     # 3. Verify the account appears in the connected list
     list_response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{spec.provider}/accounts"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -195,18 +313,17 @@ def test_update_account_after_checkin_preserves_connected_status(
     assert found_before is not None, "Account should be listed after check-in"
 
     # 4. Update account config
-    updated_regions = ["us-east-1", "us-west-2"]
     update_response = requests.put(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{spec.provider}/accounts/{account_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
-        json={"config": {"aws": {"regions": updated_regions}}},
+        json={"config": spec.build_config(spec.updated_params)},
         timeout=10,
     )
     assert update_response.status_code == HTTPStatus.NO_CONTENT, f"Expected 204, got {update_response.status_code}"
 
     # 5. Verify the account still appears in the connected list with correct fields
     list_response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{spec.provider}/accounts"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -216,27 +333,62 @@ def test_update_account_after_checkin_preserves_connected_status(
     assert found_after is not None, "Account must still be listed after config update (account_id should not be reset)"
     assert found_after["providerAccountId"] == provider_account_id, "providerAccountId should be preserved after update"
     assert found_after["agentReport"] is not None, "agentReport should be preserved after update"
-    assert found_after["config"]["aws"]["regions"] == updated_regions, "Config should reflect the update"
+    assert found_after["agentReport"]["syncState"] == found_before["agentReport"]["syncState"], "config update must not change syncState"
+    assert found_after["config"][spec.provider] == spec.expected_config(spec.updated_params), "Config should reflect the update"
     assert found_after["removedAt"] is None, "removedAt should still be null"
 
 
-def test_disconnect_account(
+def test_update_gcp_agent_account_rejected(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    project_id = "signoz-agent-update-project"
+    account_id = create_cloud_integration_account(admin_token, "gcp", config={"gcp": {"connectionMethod": "agent", "deploymentProjectId": project_id, "deploymentRegion": "us-central1", "projectIds": [project_id]}})["id"]
+    account_url = signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/gcp/accounts/{account_id}")
+
+    checkin = simulate_agent_checkin(signoz, admin_token, "gcp", account_id, project_id)
+    assert checkin.status_code == HTTPStatus.OK, checkin.text
+
+    response = requests.put(account_url, headers=headers, json={"config": {"gcp": {"deploymentProjectId": project_id, "deploymentRegion": "us-central1", "projectIds": [project_id, "signoz-agent-update-project-2"]}}}, timeout=10)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+
+    response = requests.get(account_url, headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["config"]["gcp"] == {
+        "connectionMethod": "agent",
+        "deploymentProjectId": project_id,
+        "deploymentRegion": "us-central1",
+        "projectIds": [project_id],
+    }, "a rejected update must not change the agent account config"
+
+
+@provider_spec
+def test_disconnect_account(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+    spec: ProviderAccountSpec,
+) -> None:
     """Disconnect an account removes it from the connected list."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account = create_cloud_integration_account(
+        admin_token,
+        spec.provider,
+        config=spec.build_config(spec.initial_params),
+    )
     account_id = account["id"]
 
-    checkin = simulate_agent_checkin(signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4()))
+    checkin = simulate_agent_checkin(signoz, admin_token, spec.provider, account_id, str(uuid.uuid4()))
     assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{spec.provider}/accounts/{account_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -244,7 +396,7 @@ def test_disconnect_account(
     assert response.status_code == HTTPStatus.NO_CONTENT, f"Expected 204, got {response.status_code}"
 
     list_response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{spec.provider}/accounts"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
@@ -252,16 +404,18 @@ def test_disconnect_account(
     assert not any(a["id"] == account_id for a in accounts), "Disconnected account should not appear in the connected list"
 
 
+@provider_spec
 def test_disconnect_account_idempotent(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    spec: ProviderAccountSpec,
 ) -> None:
     """Disconnect on a non-existent account ID returns 204 (blind update, no existence check)."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{uuid.uuid4()}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{spec.provider}/accounts/{uuid.uuid4()}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )

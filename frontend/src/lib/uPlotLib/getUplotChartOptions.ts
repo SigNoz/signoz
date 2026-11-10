@@ -1,20 +1,20 @@
 // @ts-nocheck
 /* eslint-disable sonarjs/cognitive-complexity */
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
-import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
-import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import { FullViewProps } from 'container/WidgetCard/Card/FullView/types';
+import { saveLegendEntriesToLocalStorage } from 'container/WidgetCard/Card/FullView/utils';
+import { ThresholdProps } from 'types/api/widgets/threshold';
 import {
 	applyEnhancedLegendStyling,
 	calculateEnhancedLegendConfig,
-} from 'container/PanelWrapper/enhancedLegend';
+} from 'container/WidgetCard/Panels/enhancedLegend';
 import { Dimensions } from 'hooks/useDimensions';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import { convertValue } from 'lib/getConvertedValue';
 import getLabelName from 'lib/getLabelName';
 import { cloneDeep, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
-import { LegendPosition } from 'types/api/dashboard/getAll';
+import { LegendPosition } from 'types/api/widgets/widget';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';

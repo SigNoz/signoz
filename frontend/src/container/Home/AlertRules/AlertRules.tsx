@@ -1,23 +1,22 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Button, Skeleton } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
-import { useListRules } from 'api/generated/services/rules';
-import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
-import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import { AppLink } from 'lib/router/AppLink';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
-import { toCompositeMetricQuery } from 'types/api/alerts/convert';
 import { USER_ROLES } from 'types/roles';
 
 import beaconUrl from '@/assets/Icons/beacon.svg';
 
 import { getItemIcon } from '../constants';
+import { useHomeAlertRules } from './useHomeAlertRules';
 
 export default function AlertRules({
 	onUpdateChecklistDoneItem,
@@ -27,49 +26,19 @@ export default function AlertRules({
 	loadingUserPreferences: boolean;
 }): JSX.Element {
 	const { user } = useAppContext();
-	const [rulesExist, setRulesExist] = useState(false);
 
-	const [sortedAlertRules, setSortedAlertRules] = useState<RuletypesRuleDTO[]>(
-		[],
-	);
-
-	const location = useLocation();
+	const location = useAppLocation();
 	const params = new URLSearchParams(location.search);
 
 	// Fetch Alerts
-	const {
-		data: alerts,
-		isError,
-		isLoading,
-	} = useListRules({
-		query: { cacheTime: 0 },
-	});
+	const { rules: alertRules, isError, isLoading } = useHomeAlertRules();
+	const rulesExist = alertRules.length > 0;
 
 	useEffect(() => {
-		const rules = alerts?.data ?? [];
-		setRulesExist(rules.length > 0);
-
-		const sortedRules = [...rules].sort((a, b) => {
-			// First, prioritize firing alerts
-			if (a.state === 'firing' && b.state !== 'firing') {
-				return -1;
-			}
-			if (a.state !== 'firing' && b.state === 'firing') {
-				return 1;
-			}
-
-			// Then sort by updatedAt timestamp
-			return (
-				new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
-			);
-		});
-
-		if (sortedRules.length > 0 && !loadingUserPreferences) {
+		if (rulesExist && !loadingUserPreferences) {
 			onUpdateChecklistDoneItem('SETUP_ALERTS');
 		}
-
-		setSortedAlertRules(sortedRules.slice(0, 5));
-	}, [alerts, onUpdateChecklistDoneItem, loadingUserPreferences]);
+	}, [rulesExist, onUpdateChecklistDoneItem, loadingUserPreferences]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">
@@ -88,24 +57,24 @@ export default function AlertRules({
 
 				{user?.role !== USER_ROLES.VIEWER && (
 					<div className="empty-actions-container">
-						<Link to={ROUTES.ALERTS_NEW}>
+						<AppLink to={ROUTES.ALERTS_NEW}>
 							<Button
 								type="default"
 								className="periscope-btn secondary"
 								icon={<Plus size={16} />}
 								onClick={(): void => {
-									logEvent('Homepage: Create alert rule clicked', {});
+									void logEvent('Homepage: Create alert rule clicked', {});
 								}}
 							>
 								Create Alert Rule
 							</Button>
-						</Link>
+						</AppLink>
 
 						<Button
 							type="link"
 							className="learn-more-link"
 							onClick={(): void => {
-								logEvent('Homepage: Learn more clicked', {
+								void logEvent('Homepage: Learn more clicked', {
 									source: 'Alert Rules',
 								});
 
@@ -124,39 +93,27 @@ export default function AlertRules({
 		</div>
 	);
 
-	const onEditHandler = (record: RuletypesRuleDTO) => (): void => {
-		logEvent('Homepage: Alert clicked', {
+	const onEditHandler = (record: RuletypesListableRuleDTO) => (): void => {
+		void logEvent('Homepage: Alert clicked', {
 			ruleId: record.id,
 			ruleName: record.alert,
 			ruleState: record.state,
 		});
 
-		const compositeQuery = mapQueryDataFromApi(
-			toCompositeMetricQuery(record.condition.compositeQuery),
-		);
-		params.set(
-			QueryParams.compositeQuery,
-			encodeURIComponent(JSON.stringify(compositeQuery)),
-		);
-
-		const panelType = record.condition.compositeQuery.panelType;
-		if (panelType) {
-			params.set(QueryParams.panelTypes, panelType);
-		}
-
 		params.set(QueryParams.ruleId, record.id);
 
-		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+		navigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 	};
 
 	const renderAlertRules = (): JSX.Element => (
 		<div className="alert-rules-container home-data-item-container">
 			<div className="alert-rules-list">
-				{sortedAlertRules.map((rule) => (
+				{alertRules.map((rule) => (
 					<div
 						role="button"
 						tabIndex={0}
 						className="alert-rule-item home-data-item"
+						data-testid={`home-alert-rule-${rule.id}`}
 						key={rule.id}
 						onClick={onEditHandler(rule)}
 						onKeyDown={(e): void => {
@@ -178,12 +135,12 @@ export default function AlertRules({
 						</div>
 
 						<div className="alert-rule-item-description home-data-item-tag">
-							<Badge color="sienna" variant="outline">
+							<Badge textTransform="uppercase" color="archive" variant="outlined">
 								{rule?.labels?.severity}
 							</Badge>
 
 							{rule.state === 'firing' && (
-								<Badge color="cherry" variant="outline" className="firing-tag">
+								<Badge color="danger" variant="outlined" textTransform="uppercase">
 									{rule.state}
 								</Badge>
 							)}
@@ -218,7 +175,12 @@ export default function AlertRules({
 		<Card className="alert-rules-card home-data-card">
 			{rulesExist && (
 				<Card.Header>
-					<div className="alert-rules-header home-data-card-header">Alerts</div>
+					<div
+						className="alert-rules-header home-data-card-header"
+						data-testid="home-section-alerts"
+					>
+						Alerts
+					</div>
 				</Card.Header>
 			)}
 			<Card.Content>
@@ -228,17 +190,17 @@ export default function AlertRules({
 			{rulesExist && (
 				<Card.Footer>
 					<div className="alert-rules-footer home-data-card-footer">
-						<Link to={ROUTES.LIST_ALL_ALERT}>
+						<AppLink to={ROUTES.LIST_ALL_ALERT}>
 							<Button
 								type="link"
 								className="periscope-btn link learn-more-link"
 								onClick={(): void => {
-									logEvent('Homepage: All alert rules clicked', {});
+									void logEvent('Homepage: All alert rules clicked', {});
 								}}
 							>
 								All Alert Rules <ArrowRight size={12} />
 							</Button>
-						</Link>
+						</AppLink>
 					</div>
 				</Card.Footer>
 			)}

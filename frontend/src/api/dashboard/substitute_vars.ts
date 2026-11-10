@@ -9,6 +9,13 @@ interface ISubstituteVars {
 	compositeQuery: ICompositeMetricQuery;
 }
 
+/**
+ * @deprecated Use the generated `useReplaceVariables` hook (or `replaceVariables` fetcher) from
+ * `api/generated/services/querier` instead. This hand-written client targets the
+ * same endpoint and will be removed once call sites migrate.
+ *
+ * Part of https://github.com/SigNoz/engineering-pod/issues/5289, add a comment or update when removing this method.
+ */
 export const getSubstituteVars = async (
 	props?: Partial<QueryRangePayloadV5>,
 	signal?: AbortSignal,

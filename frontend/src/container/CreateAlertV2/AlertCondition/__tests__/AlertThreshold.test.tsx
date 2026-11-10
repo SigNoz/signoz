@@ -1,13 +1,17 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { TestRouter } from 'tests/router';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { Channels } from 'types/api/channels/getAll';
+import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import { CreateAlertProvider } from '../../context';
+import {
+	THRESHOLD_MATCH_TYPE_OPTIONS,
+	THRESHOLD_OPERATOR_OPTIONS,
+} from '../../context/constants';
 import AlertThreshold from '../AlertThreshold';
 
-const mockChannels: Channels[] = [];
+const mockChannels: ChannelOption[] = [];
 const mockRefreshChannels = jest.fn();
 const mockIsLoadingChannels = false;
 const mockIsErrorChannels = false;
@@ -85,20 +89,21 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 }));
 
 // Mock getAllChannels API
-jest.mock('api/channels/getAll', () => ({
+jest.mock('hooks/notificationChannels/useChannelOptions', () => ({
 	__esModule: true,
-	default: jest.fn(() =>
-		Promise.resolve({
-			data: [
-				{ id: '1', name: 'Email Channel' },
-				{ id: '2', name: 'Slack Channel' },
-			] as Channels[],
-		}),
-	),
+	useChannelOptions: jest.fn(() => ({
+		data: [
+			{ id: '1', name: 'Email Channel' },
+			{ id: '2', name: 'Slack Channel' },
+		] as ChannelOption[],
+		isLoading: false,
+		isError: false,
+		refetch: jest.fn(),
+	})),
 }));
 
 // Mock alert format categories
-jest.mock('container/NewWidget/RightContainer/alertFomatCategories', () => ({
+jest.mock('constants/formats/alertFormatCategories', () => ({
 	getCategoryByOptionId: jest.fn(() => ({ name: 'bytes' })),
 	getCategorySelectOptionByName: jest.fn(() => [
 		{ label: 'Bytes', value: 'bytes' },
@@ -128,13 +133,13 @@ const createTestQueryClient = (): QueryClient =>
 const renderAlertThreshold = (): ReturnType<typeof render> => {
 	const queryClient = createTestQueryClient();
 	return render(
-		<MemoryRouter>
+		<TestRouter>
 			<QueryClientProvider client={queryClient}>
 				<CreateAlertProvider initialAlertType={AlertTypes.METRICS_BASED_ALERT}>
 					<AlertThreshold {...mockProps} />
 				</CreateAlertProvider>
 			</QueryClientProvider>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 };
 
@@ -287,5 +292,50 @@ describe('AlertThreshold', () => {
 		expect(screen.getByText('critical')).toBeInTheDocument();
 		verifySelectRenders(TEST_STRINGS.IS_ABOVE);
 		verifySelectRenders(TEST_STRINGS.AT_LEAST_ONCE);
+	});
+
+	it.each([
+		[
+			'operator',
+			THRESHOLD_OPERATOR_OPTIONS,
+			[
+				'ABOVE',
+				'BELOW',
+				'EQUAL TO',
+				'NOT EQUAL TO',
+				'ABOVE OR EQUAL TO',
+				'BELOW OR EQUAL TO',
+			],
+		],
+		[
+			'match type',
+			THRESHOLD_MATCH_TYPE_OPTIONS,
+			['AT LEAST ONCE', 'ALL THE TIME', 'ON AVERAGE', 'IN TOTAL', 'LAST'],
+		],
+	])(
+		'the %s select offers exactly its documented options',
+		(_label, options, expected) => {
+			// Asserted on the options the select is fed rather than on the rendered
+			// dropdown: antd virtualises its list, so in jsdom (zero-height viewport)
+			// only the first two items exist in the DOM and their text is the wire
+			// value, not the label.
+			expect(options.map((option) => option.label)).toStrictEqual(expected);
+
+			renderAlertThreshold();
+			expect(screen.getByText(options[0].label)).toBeInTheDocument();
+		},
+	);
+
+	it('never renders the recovery threshold control', () => {
+		// `showRecoveryThreshold` starts false and its only setter is commented
+		// out, so neither the input nor its remove button can appear.
+		renderAlertThreshold();
+
+		expect(
+			screen.queryByTestId('recovery-threshold-value-input'),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('remove-recovery-threshold-button'),
+		).not.toBeInTheDocument();
 	});
 });

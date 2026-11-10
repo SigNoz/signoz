@@ -26,20 +26,11 @@ export const ServiceMapPage = Loadable(
 	() => import(/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap'),
 );
 
-export const LogsSaveViews = Loadable(
-	() => import(/* webpackChunkName: "LogsSaveViews" */ 'pages/LogsModulePage'), // TODO: Add a wrapper so that the same component can be used in traces
-);
-
 export const TracesExplorer = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesModulePage'
 		),
-);
-
-export const TracesSaveViews = Loadable(
-	() =>
-		import(/* webpackChunkName: "Traces Save Views" */ 'pages/TracesModulePage'),
 );
 
 export const TracesFunnels = Loadable(
@@ -53,21 +44,10 @@ export const TracesFunnelDetails = Loadable(
 		),
 );
 
-export const TraceFilter = Loadable(
-	() => import(/* webpackChunkName: "Trace Filter Page" */ 'pages/Trace'),
-);
-
-export const TraceDetail = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "TraceDetail Page" */ 'pages/TraceDetailV2/index'
-		),
-);
-
 export const TraceDetailV3 = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "TraceDetailV3 Page" */ 'pages/TraceDetailV3Page/index'
+			/* webpackChunkName: "TraceDetailV3 Page" */ 'pages/TraceDetailsV3/index'
 		),
 );
 
@@ -81,14 +61,6 @@ export const SignupPage = Loadable(
 
 export const SettingsPage = Loadable(
 	() => import(/* webpackChunkName: "SettingsPage" */ 'pages/Settings'),
-);
-
-export const GettingStarted = Loadable(
-	() => import(/* webpackChunkName: "GettingStarted" */ 'pages/GettingStarted'),
-);
-
-export const Onboarding = Loadable(
-	() => import(/* webpackChunkName: "Onboarding" */ 'pages/OnboardingPage'),
 );
 
 export const OrgOnboarding = Loadable(
@@ -110,9 +82,11 @@ export const DashboardPage = Loadable(
 	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardPage'),
 );
 
-export const DashboardWidget = Loadable(
+export const DashboardPanelEditorPage = Loadable(
 	() =>
-		import(/* webpackChunkName: "DashboardWidgetPage" */ 'pages/DashboardWidget'),
+		import(
+			/* webpackChunkName: "DashboardPanelEditorPage" */ 'pages/DashboardPage/PanelEditorPage/PanelEditorPage'
+		),
 );
 
 export const EditRulesPage = Loadable(
@@ -135,12 +109,12 @@ export const AlertOverview = Loadable(
 	() => import(/* webpackChunkName: "Alert Overview" */ 'pages/AlertList'),
 );
 
-export const CreateAlertChannelAlerts = Loadable(
-	() => import(/* webpackChunkName: "Create Channels" */ 'pages/Settings'),
+export const ChannelsNew = Loadable(
+	() => import(/* webpackChunkName: "Create Channels" */ 'pages/AlertList'),
 );
 
-export const AllAlertChannels = Loadable(
-	() => import(/* webpackChunkName: "All Channels" */ 'pages/Settings'),
+export const ChannelsEdit = Loadable(
+	() => import(/* webpackChunkName: "Edit Channels" */ 'pages/AlertList'),
 );
 
 export const AllErrors = Loadable(
@@ -169,18 +143,6 @@ export const MySettings = Loadable(
 
 export const Logs = Loadable(
 	() => import(/* webpackChunkName: "Logs" */ 'pages/LogsModulePage'),
-);
-
-export const LogsExplorer = Loadable(
-	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsModulePage'),
-);
-
-export const OldLogsExplorer = Loadable(
-	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/Logs'),
-);
-
-export const LiveLogs = Loadable(
-	() => import(/* webpackChunkName: "Live Logs" */ 'pages/LiveLogs'),
 );
 
 export const PipelinePage = Loadable(
@@ -321,5 +283,12 @@ export const AIAssistantPage = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "AI Assistant Page" */ 'pages/AIAssistantPage/AIAssistantPage'
+		),
+);
+
+export const LLMObservabilityPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "LLM Observability Page" */ 'pages/LLMObservability'
 		),
 );

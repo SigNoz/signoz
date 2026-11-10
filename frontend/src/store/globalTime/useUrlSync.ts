@@ -91,6 +91,17 @@ export function useUrlSync(
 		let previousSelectedTime = store.getState().selectedTime;
 
 		return store.subscribe((state) => {
+			if (state.shouldClearUrlParams) {
+				previousSelectedTime = state.selectedTime;
+				void setUrlState({
+					[keys.relativeTimeKey]: null,
+					[keys.startTimeKey]: null,
+					[keys.endTimeKey]: null,
+				});
+				store.getState().clearUrlParamsFlag();
+				return;
+			}
+
 			if (state.selectedTime === previousSelectedTime) {
 				return;
 			}

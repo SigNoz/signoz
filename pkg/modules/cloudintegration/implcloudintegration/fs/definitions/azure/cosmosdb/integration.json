@@ -1,0 +1,529 @@
+{
+  "id": "cosmosdb",
+  "title": "Cosmos DB",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_totalrequests_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of requests made against the account."
+      },
+      {
+        "name": "azure_totalrequestunits_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Request Units (RUs) consumed."
+      },
+      {
+        "name": "azure_totalrequestunits_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Request Units (RUs) consumed."
+      },
+      {
+        "name": "azure_totalrequestunits_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Request Units (RUs) consumed."
+      },
+      {
+        "name": "azure_normalizedruconsumption_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Maximum RU consumption percentage per minute."
+      },
+      {
+        "name": "azure_normalizedruconsumption_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Maximum RU consumption percentage per minute."
+      },
+      {
+        "name": "azure_metadatarequests_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Count of metadata requests (enumerating databases/collections and their configurations)."
+      },
+      {
+        "name": "azure_datausage_total",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": "Total data usage, reported at 5-minute granularity."
+      },
+      {
+        "name": "azure_datausage_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data usage, reported at 5-minute granularity."
+      },
+      {
+        "name": "azure_datausage_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data usage, reported at 5-minute granularity."
+      },
+      {
+        "name": "azure_datausage_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total data usage, reported at 5-minute granularity."
+      },
+      {
+        "name": "azure_indexusage_total",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": "Total index usage, reported at 5-minute granularity."
+      },
+      {
+        "name": "azure_indexusage_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total index usage, reported at 5-minute granularity."
+      },
+      {
+        "name": "azure_indexusage_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total index usage, reported at 5-minute granularity."
+      },
+      {
+        "name": "azure_indexusage_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total index usage, reported at 5-minute granularity."
+      },
+      {
+        "name": "azure_documentcountv2_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Total document count."
+      },
+      {
+        "name": "azure_documentcountv2_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Total document count."
+      },
+      {
+        "name": "azure_documentquota_total",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": "Total storage quota, reported at 5-minute granularity."
+      },
+      {
+        "name": "azure_documentquota_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Total storage quota, reported at 5-minute granularity."
+      },
+      {
+        "name": "azure_provisionedthroughput_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Provisioned throughput (RU/s)."
+      },
+      {
+        "name": "azure_autoscalemaxthroughput_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Autoscale maximum throughput (RU/s)."
+      },
+      {
+        "name": "azure_autoscaledru_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Autoscaled RU consumption per region and per partition."
+      },
+      {
+        "name": "azure_serversidelatencydirect_average",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Server-side latency in Direct connection mode."
+      },
+      {
+        "name": "azure_serversidelatencydirect_minimum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Server-side latency in Direct connection mode."
+      },
+      {
+        "name": "azure_serversidelatencydirect_maximum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Server-side latency in Direct connection mode."
+      },
+      {
+        "name": "azure_serversidelatencydirect_total",
+        "unit": "MilliSeconds",
+        "type": "Sum",
+        "description": "Server-side latency in Direct connection mode."
+      },
+      {
+        "name": "azure_serversidelatencygateway_average",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Server-side latency in Gateway connection mode."
+      },
+      {
+        "name": "azure_serversidelatencygateway_minimum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Server-side latency in Gateway connection mode."
+      },
+      {
+        "name": "azure_serversidelatencygateway_maximum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "Server-side latency in Gateway connection mode."
+      },
+      {
+        "name": "azure_serversidelatencygateway_total",
+        "unit": "MilliSeconds",
+        "type": "Sum",
+        "description": "Server-side latency in Gateway connection mode."
+      },
+      {
+        "name": "azure_replicationlatency_minimum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "P99 replication latency across source and target regions for a geo-enabled account."
+      },
+      {
+        "name": "azure_replicationlatency_maximum",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "P99 replication latency across source and target regions for a geo-enabled account."
+      },
+      {
+        "name": "azure_replicationlatency_average",
+        "unit": "MilliSeconds",
+        "type": "Gauge",
+        "description": "P99 replication latency across source and target regions for a geo-enabled account."
+      },
+      {
+        "name": "azure_serviceavailability_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Account requests availability at one-hour, day, or month granularity."
+      },
+      {
+        "name": "azure_serviceavailability_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Account requests availability at one-hour, day, or month granularity."
+      },
+      {
+        "name": "azure_serviceavailability_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Account requests availability at one-hour, day, or month granularity."
+      },
+      {
+        "name": "azure_physicalpartitioncount_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Physical partition count."
+      },
+      {
+        "name": "azure_physicalpartitionsizeinfo_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Physical partition size in bytes."
+      },
+      {
+        "name": "azure_physicalpartitionsizeinfo_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Physical partition size in bytes."
+      },
+      {
+        "name": "azure_physicalpartitionthroughputinfo_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Physical partition throughput (RU/s)."
+      },
+      {
+        "name": "azure_cassandrarequests_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of Cassandra API requests made."
+      },
+      {
+        "name": "azure_cassandrarequestcharges_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Request Units consumed for Cassandra API requests."
+      },
+      {
+        "name": "azure_cassandrarequestcharges_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Request Units consumed for Cassandra API requests."
+      },
+      {
+        "name": "azure_cassandrarequestcharges_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Request Units consumed for Cassandra API requests."
+      },
+      {
+        "name": "azure_cassandrarequestcharges_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Request Units consumed for Cassandra API requests."
+      },
+      {
+        "name": "azure_cassandraconnectionclosures_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of Cassandra connections that were closed, reported at 1-minute granularity."
+      },
+      {
+        "name": "azure_cassandraconnectionclosures_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of Cassandra connections that were closed, reported at 1-minute granularity."
+      },
+      {
+        "name": "azure_cassandraconnectionclosures_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of Cassandra connections that were closed, reported at 1-minute granularity."
+      },
+      {
+        "name": "azure_cassandraconnectionclosures_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of Cassandra connections that were closed, reported at 1-minute granularity."
+      },
+      {
+        "name": "azure_gremlinrequests_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of Gremlin API requests made."
+      },
+      {
+        "name": "azure_gremlinrequestcharges_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Request Units consumed for Gremlin API requests."
+      },
+      {
+        "name": "azure_gremlinrequestcharges_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Request Units consumed for Gremlin API requests."
+      },
+      {
+        "name": "azure_gremlinrequestcharges_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Request Units consumed for Gremlin API requests."
+      },
+      {
+        "name": "azure_gremlinrequestcharges_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Request Units consumed for Gremlin API requests."
+      },
+      {
+        "name": "azure_mongorequests_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of Mongo API requests made."
+      },
+      {
+        "name": "azure_mongorequestcharge_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Request Units consumed for Mongo API requests."
+      },
+      {
+        "name": "azure_mongorequestcharge_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Request Units consumed for Mongo API requests."
+      },
+      {
+        "name": "azure_mongorequestcharge_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Request Units consumed for Mongo API requests."
+      },
+      {
+        "name": "azure_dedicatedgatewayaveragecpuusage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Average CPU usage across dedicated gateway instances."
+      },
+      {
+        "name": "azure_dedicatedgatewaymaximumcpuusage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Average maximum CPU usage across dedicated gateway instances."
+      },
+      {
+        "name": "azure_dedicatedgatewaymaximumcpuusage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Average maximum CPU usage across dedicated gateway instances."
+      },
+      {
+        "name": "azure_dedicatedgatewaycpuusage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "CPU usage across dedicated gateway instances."
+      },
+      {
+        "name": "azure_dedicatedgatewaycpuusage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "CPU usage across dedicated gateway instances."
+      },
+      {
+        "name": "azure_dedicatedgatewaycpuusage_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "CPU usage across dedicated gateway instances."
+      },
+      {
+        "name": "azure_dedicatedgatewayaveragememoryusage_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Average memory usage across dedicated gateway instances."
+      },
+      {
+        "name": "azure_dedicatedgatewaymemoryusage_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Memory usage across dedicated gateway instances."
+      },
+      {
+        "name": "azure_dedicatedgatewaymemoryusage_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Memory usage across dedicated gateway instances."
+      },
+      {
+        "name": "azure_dedicatedgatewaymemoryusage_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Memory usage across dedicated gateway instances."
+      },
+      {
+        "name": "azure_dedicatedgatewayrequests_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Requests at the dedicated gateway."
+      },
+      {
+        "name": "azure_integratedcacheevictedentriessize_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Size of the entries evicted from the integrated cache."
+      },
+      {
+        "name": "azure_integratedcacheitemexpirationcount_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of items evicted from the integrated cache due to TTL expiration."
+      },
+      {
+        "name": "azure_integratedcacheitemhitrate_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Point reads that used the integrated cache divided by point reads routed through the dedicated gateway with eventual consistency."
+      },
+      {
+        "name": "azure_integratedcachequeryexpirationcount_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of queries evicted from the integrated cache due to TTL expiration."
+      },
+      {
+        "name": "azure_integratedcachequeryhitrate_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Queries that used the integrated cache divided by queries routed through the dedicated gateway with eventual consistency."
+      },
+      {
+        "name": "azure_materializedviewcatchupgapinminutes_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Maximum time difference (minutes) between data in the source container and data propagated to the materialized view."
+      },
+      {
+        "name": "azure_materializedviewsbuilderaveragecpuusage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Average CPU usage across materialized view builder instances."
+      },
+      {
+        "name": "azure_materializedviewsbuildermaximumcpuusage_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Average maximum CPU usage across materialized view builder instances."
+      },
+      {
+        "name": "azure_materializedviewsbuildermaximumcpuusage_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Average maximum CPU usage across materialized view builder instances."
+      },
+      {
+        "name": "azure_materializedviewsbuilderaveragememoryusage_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Average memory usage across materialized view builder instances."
+      },
+      {
+        "name": "azure_globalsecondaryindexcatchupgapinminutes_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Maximum time difference (minutes) between data in the source container and data propagated to the global secondary index."
+      },
+      {
+        "name": "azure_globalsecondaryindexpropagationlatencyinseconds_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Average time difference (seconds) between data in the source container and data propagated to the global secondary index."
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "resourceProvider": "Microsoft.DocumentDB",
+      "resourceType": "databaseAccounts",
+      "metrics": {},
+      "logs": {
+        "categoryGroups": [
+          "allLogs"
+        ]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Azure Cosmos DB Overview",
+        "description": "Overview of Azure Cosmos DB metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

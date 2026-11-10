@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
-import { useNavigationType } from 'react-router-dom-v5-compat';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppNavigationType } from 'lib/router/useAppNavigationType';
 import { RefreshCw, Undo } from '@signozhq/icons';
 import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -12,13 +12,13 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
 import {
 	useGlobalTimeQueryInvalidate,
 	useIsGlobalTimeQueryRefreshing,
 } from 'store/globalTime';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useSyncTimeOnStagedQueryChange } from 'hooks/queryBuilder/useSyncTimeOnStagedQueryChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
@@ -53,18 +53,16 @@ import {
 	Time,
 	TimeRange,
 } from './types';
-import { getUnstableCurrentSearchParams } from './utils/getUnstableCurrentSearchParams';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import './DateTimeSelectionV2.styles.scss';
 
 function DateTimeSelection({
 	showAutoRefresh,
 	showRefreshText = true,
-	location,
 	updateTimeInterval,
 	globalTimeLoading,
 	showResetButton = false,
-	showOldExplorerCTA = false,
 	defaultRelativeTime = RelativeTimeMap['6hr'] as Time,
 	isModalTimeSelection = false,
 	onTimeChange,
@@ -77,9 +75,10 @@ function DateTimeSelection({
 	disableUrlSync = false,
 	showRecentlyUsed = true,
 }: Props): JSX.Element {
+	const location = useAppLocation();
 	const [formSelector] = Form.useForm();
 	const { safeNavigate } = useSafeNavigate();
-	const navigationType = useNavigationType(); // Returns 'POP' for back/forward navigation
+	const navigationType = useAppNavigationType(); // Returns 'POP' for back/forward navigation
 	const dispatch = useDispatch();
 
 	const { maxTime, minTime, selectedTime } = useSelector<
@@ -186,6 +185,8 @@ function DateTimeSelection({
 		useState<boolean>(false);
 
 	const { stagedQuery, currentQuery, initQueryBuilderData } = useQueryBuilder();
+
+	useSyncTimeOnStagedQueryChange(stagedQuery?.id);
 
 	const getInputLabel = (
 		startTime?: Dayjs,
@@ -685,12 +686,6 @@ function DateTimeSelection({
 				</FormItem>
 			)}
 
-			{showOldExplorerCTA && (
-				<div style={{ marginRight: 12 }}>
-					<NewExplorerCTA />
-				</div>
-			)}
-
 			{!hasSelectedTimeError && !refreshButtonHidden && showRefreshText && (
 				<div className="refresh-text-container">
 					<RefreshText
@@ -767,7 +762,6 @@ interface DateTimeSelectionV2Props {
 	showAutoRefresh: boolean;
 	showRefreshText?: boolean;
 	hideShareModal?: boolean;
-	showOldExplorerCTA?: boolean;
 	showResetButton?: boolean;
 	defaultRelativeTime?: Time;
 	isModalTimeSelection?: boolean;
@@ -789,7 +783,6 @@ interface DateTimeSelectionV2Props {
 
 DateTimeSelection.defaultProps = {
 	hideShareModal: false,
-	showOldExplorerCTA: false,
 	showRefreshText: true,
 	showResetButton: false,
 	defaultRelativeTime: RelativeTimeMap['6hr'] as Time,
@@ -842,6 +835,6 @@ const mapDispatchToProps = (
 	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
 });
 
-type Props = DateTimeSelectionV2Props & DispatchProps & RouteComponentProps;
+type Props = DateTimeSelectionV2Props & DispatchProps;
 
-export default connect(null, mapDispatchToProps)(withRouter(DateTimeSelection));
+export default connect(null, mapDispatchToProps)(DateTimeSelection);

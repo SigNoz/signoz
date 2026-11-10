@@ -1,0 +1,247 @@
+{
+  "id": "mongodb",
+  "title": "MongoDB (DocumentDB)",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_cpupercent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percent CPU utilization on the node."
+      },
+      {
+        "name": "azure_cpupercent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percent CPU utilization on the node."
+      },
+      {
+        "name": "azure_cpupercent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percent CPU utilization on the node."
+      },
+      {
+        "name": "azure_memorypercent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percent memory utilization on the node."
+      },
+      {
+        "name": "azure_memorypercent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percent memory utilization on the node."
+      },
+      {
+        "name": "azure_memorypercent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percent memory utilization on the node."
+      },
+      {
+        "name": "azure_committedmemorypercent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of the commit memory limit allocated by applications on the node."
+      },
+      {
+        "name": "azure_committedmemorypercent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of the commit memory limit allocated by applications on the node."
+      },
+      {
+        "name": "azure_committedmemorypercent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of the commit memory limit allocated by applications on the node."
+      },
+      {
+        "name": "azure_storagepercent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percent of available storage used on the node."
+      },
+      {
+        "name": "azure_storagepercent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percent of available storage used on the node."
+      },
+      {
+        "name": "azure_storagepercent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percent of available storage used on the node."
+      },
+      {
+        "name": "azure_storageused_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Quantity of available storage used on the node."
+      },
+      {
+        "name": "azure_storageused_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Quantity of available storage used on the node."
+      },
+      {
+        "name": "azure_storageused_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Quantity of available storage used on the node."
+      },
+      {
+        "name": "azure_autoscaleutilizationpercent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percent autoscale utilization."
+      },
+      {
+        "name": "azure_autoscaleutilizationpercent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percent autoscale utilization."
+      },
+      {
+        "name": "azure_autoscaleutilizationpercent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percent autoscale utilization."
+      },
+      {
+        "name": "azure_iops_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Disk IO operations per second on the node."
+      },
+      {
+        "name": "azure_iops_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Disk IO operations per second on the node."
+      },
+      {
+        "name": "azure_iops_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Disk IO operations per second on the node."
+      },
+      {
+        "name": "azure_networkbytesegress_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Network bytes sent on the node."
+      },
+      {
+        "name": "azure_networkbytesegress_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Network bytes sent on the node."
+      },
+      {
+        "name": "azure_networkbytesegress_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Network bytes sent on the node."
+      },
+      {
+        "name": "azure_networkbytesegress_total",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": "Network bytes sent on the node."
+      },
+      {
+        "name": "azure_networkbytesingress_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Network bytes received on the node."
+      },
+      {
+        "name": "azure_networkbytesingress_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Network bytes received on the node."
+      },
+      {
+        "name": "azure_networkbytesingress_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Network bytes received on the node."
+      },
+      {
+        "name": "azure_networkbytesingress_total",
+        "unit": "Bytes",
+        "type": "Sum",
+        "description": "Network bytes received on the node."
+      },
+      {
+        "name": "azure_mongorequestdurationms_average",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": "End-to-end duration in milliseconds of client MongoDB requests handled by the cluster."
+      },
+      {
+        "name": "azure_mongorequestdurationms_maximum",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": "End-to-end duration in milliseconds of client MongoDB requests handled by the cluster."
+      },
+      {
+        "name": "azure_mongorequestdurationms_minimum",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": "End-to-end duration in milliseconds of client MongoDB requests handled by the cluster."
+      },
+      {
+        "name": "azure_mongorequestdurationms_total",
+        "unit": "Milliseconds",
+        "type": "Sum",
+        "description": "End-to-end duration in milliseconds of client MongoDB requests handled by the cluster."
+      },
+      {
+        "name": "azure_mongorequestdurationms_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of client MongoDB requests handled by the cluster."
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "resourceProvider": "Microsoft.DocumentDB",
+      "resourceType": "mongoClusters",
+      "metrics": {},
+      "logs": {
+        "categoryGroups": [
+          "allLogs"
+        ]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Azure MongoDB (DocumentDB) Overview",
+        "description": "Overview of Azure MongoDB (DocumentDB) metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

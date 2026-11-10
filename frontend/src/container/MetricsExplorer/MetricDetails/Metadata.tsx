@@ -21,7 +21,7 @@ import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
-import { DataType } from 'container/LogDetailedView/TableView';
+import { DataType } from 'container/LogDetailedView/LogDetailedView.types';
 import { useNotifications } from 'hooks/useNotifications';
 import { PenLine, Save, X } from '@signozhq/icons';
 
@@ -237,9 +237,6 @@ function Metadata({
 	const handleSave = useCallback(() => {
 		updateMetricMetadata(
 			{
-				pathParams: {
-					metricName,
-				},
 				data: transformUpdateMetricMetadataRequest(metricName, metricMetadataState),
 			},
 			{
@@ -301,6 +298,7 @@ function Metadata({
 						type="text"
 						onClick={cancelEdit}
 						disabled={isUpdatingMetricsMetadata}
+						data-testid="metadata-cancel-button"
 					>
 						<X size={14} />
 						<Typography.Text>Cancel</Typography.Text>
@@ -313,6 +311,7 @@ function Metadata({
 							handleSave();
 						}}
 						disabled={isUpdatingMetricsMetadata}
+						data-testid="metadata-save-button"
 					>
 						<Save size={14} />
 						<Typography.Text>Save</Typography.Text>
@@ -333,6 +332,7 @@ function Metadata({
 						setIsEditing(true);
 					}}
 					disabled={isUpdatingMetricsMetadata || isLoadingMetricMetadata}
+					data-testid="metadata-edit-button"
 				>
 					<PenLine size={14} />
 					<Typography.Text>Edit</Typography.Text>
@@ -371,6 +371,7 @@ function Metadata({
 					</div>
 				) : (
 					<ResizeTable
+						data-testid="metric-metadata-table"
 						columns={columns}
 						tableLayout="fixed"
 						dataSource={tableData}

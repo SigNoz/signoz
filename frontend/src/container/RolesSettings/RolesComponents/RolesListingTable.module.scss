@@ -1,0 +1,166 @@
+.rolesListingTable {
+	margin-top: 12px;
+	border-radius: 4px;
+}
+
+.scrollContainer {
+	overflow-x: auto;
+}
+
+.tableInner {
+	min-width: 850px;
+}
+
+.tableHeader {
+	display: flex;
+	align-items: center;
+	padding: 8px 16px;
+	gap: 24px;
+}
+
+.headerCell {
+	font-family: Inter;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.44px;
+	color: var(--foreground);
+	line-height: 16px;
+}
+
+.headerCellName {
+	flex: 0 0 180px;
+}
+
+.headerCellDescription {
+	flex: 1;
+	min-width: 0;
+}
+
+.headerCellCreatedAt {
+	flex: 0 0 180px;
+	text-align: right;
+}
+
+.headerCellUpdatedAt {
+	flex: 0 0 180px;
+	text-align: right;
+}
+
+.sectionHeader {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 32px;
+	padding: 0 16px;
+	background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
+	border-top: 1px solid var(--secondary);
+	border-bottom: 1px solid var(--secondary);
+	font-family: Inter;
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--foreground);
+	line-height: 16px;
+	margin: 0;
+}
+
+.sectionHeaderCount {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 20px;
+	height: 18px;
+	padding: 0 6px;
+	border-radius: 9px;
+	background: var(--l3-background);
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--foreground);
+	line-height: 1;
+}
+
+.tableRow {
+	display: flex;
+	align-items: center;
+	padding: 8px 16px;
+	background: color-mix(in srgb, var(--bg-robin-200) 2%, transparent);
+	border-bottom: 1px solid var(--secondary);
+	gap: 24px;
+}
+
+.tableRowClickable {
+	cursor: pointer;
+
+	&:hover {
+		background: color-mix(in srgb, var(--bg-robin-200) 5%, transparent);
+	}
+}
+
+.tableCell {
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 400;
+	color: var(--foreground);
+	line-height: 20px;
+}
+
+.tableCellName {
+	flex: 0 0 180px;
+	font-weight: 500;
+}
+
+.tableCellDescription {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.tableCellCreatedAt {
+	flex: 0 0 180px;
+	text-align: right;
+	white-space: nowrap;
+}
+
+.tableCellUpdatedAt {
+	flex: 0 0 180px;
+	text-align: right;
+	white-space: nowrap;
+}
+
+.emptyState {
+	padding: 24px 16px;
+	text-align: center;
+	color: var(--foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 400;
+}
+
+.pagination {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	padding: 8px 16px;
+
+	:global(.ant-pagination-total-text) {
+		margin-right: auto;
+
+		.numbers {
+			font-family: Inter;
+			font-size: 12px;
+			color: var(--foreground);
+		}
+
+		.total {
+			font-family: Inter;
+			font-size: 12px;
+			color: var(--foreground);
+			opacity: 0.5;
+		}
+	}
+}
+
+.descriptionTooltip {
+	max-height: none;
+	overflow-y: visible;
+}

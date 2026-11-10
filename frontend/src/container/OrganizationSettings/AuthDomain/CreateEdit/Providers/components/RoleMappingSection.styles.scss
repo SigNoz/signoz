@@ -111,31 +111,9 @@
 	&__select {
 		width: 100%;
 
-		&.ant-select {
-			.ant-select-selector {
-				height: 32px;
-				background: var(--l2-background) !important;
-				border: 1px solid var(--l2-border) !important;
-				border-radius: 2px;
-				color: var(--l2-foreground) !important;
-
-				.ant-select-selection-item {
-					color: var(--l2-foreground) !important;
-				}
-			}
-
-			&:hover .ant-select-selector {
-				border-color: var(--l2-border) !important;
-			}
-
-			&.ant-select-focused .ant-select-selector {
-				border-color: var(--primary) !important;
-				box-shadow: none !important;
-			}
-
-			.ant-select-arrow {
-				color: var(--l2-foreground);
-			}
+		.ant-select-selection-search {
+			inset-inline-start: var(--padding-2) !important;
+			inset-inline-end: var(--padding-2) !important;
 		}
 	}
 
@@ -185,57 +163,7 @@
 
 		&--role {
 			flex: 1;
-			min-width: 120px;
-		}
-	}
-
-	&__remove-btn {
-		flex-shrink: 0;
-		width: 32px !important;
-		height: 32px !important;
-		min-width: 32px !important;
-		padding: 0 !important;
-		border: none !important;
-		border-radius: 2px !important;
-		background: transparent !important;
-		color: var(--destructive) !important;
-		opacity: 0.6 !important;
-		cursor: pointer;
-		transition:
-			background-color 0.2s,
-			opacity 0.2s;
-		box-shadow: none !important;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-
-		svg {
-			color: var(--destructive) !important;
-			width: 12px !important;
-			height: 12px !important;
-		}
-
-		&:hover {
-			background: color-mix(
-				in srgb,
-				var(--danger-background) 10%,
-				transparent
-			) !important;
-			opacity: 0.9 !important;
-			color: var(--destructive) !important;
-
-			svg {
-				color: var(--destructive) !important;
-			}
-		}
-
-		&:active {
-			opacity: 0.7 !important;
-			background: color-mix(
-				in srgb,
-				var(--danger-background) 15%,
-				transparent
-			) !important;
+			min-width: 180px;
 		}
 	}
 
@@ -260,19 +188,8 @@
 		}
 	}
 
-	// --- Checkbox border visibility ---
-	button[role='checkbox'] {
-		border: 1px solid var(--l2-foreground) !important;
-		border-radius: 2px;
-
-		&[data-state='checked'] {
-			background-color: var(--primary) !important;
-			border-color: var(--primary) !important;
-		}
-	}
-
 	// todo: https://github.com/SigNoz/components/issues/116
-	input {
+	input:not(.ant-select-selection-search-input) {
 		height: 32px;
 		background: var(--l2-background) !important;
 		border: 1px solid var(--l2-border) !important;

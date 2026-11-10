@@ -21,6 +21,8 @@ export interface QueryData {
 	queryName: string;
 	legend?: string;
 	values: [number, string][];
+	/** Epoch-second x values (as in `values`) of buckets that don't cover a full step. */
+	partialTimestamps?: number[];
 	quantity?: number[];
 	unit?: string;
 	table?: {
@@ -45,7 +47,7 @@ export interface SeriesItem {
 		[key: string]: string;
 	};
 	labelsArray: { [key: string]: string }[];
-	values: { timestamp: number; value: string }[];
+	values: { timestamp: number; value: string; partial?: boolean }[];
 	metaData?: {
 		alias: string;
 		index: number;

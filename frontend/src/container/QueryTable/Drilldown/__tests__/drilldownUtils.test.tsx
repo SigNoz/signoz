@@ -1,8 +1,11 @@
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
+	getOperatorsByDataType,
 	getQueryData,
 	getViewQuery,
+	isNumberDataType,
 	isValidQueryName,
 } from '../drilldownUtils';
 import { METRIC_TO_LOGS_TRACES_MAPPINGS } from '../metricsCorrelationUtils';
@@ -686,5 +689,42 @@ describe('drilldownUtils', () => {
 			expect(expr).toContain('serviceName');
 			expect(expr).toContain(`name = 'GET /api'`);
 		});
+	});
+
+	describe('getOperatorsByDataType', () => {
+		it('gives numeric operators for the V5 `number` data type', () => {
+			const operators = getOperatorsByDataType('number');
+			expect(operators).toContain('>=');
+			expect(operators).toContain('<');
+			expect(operators).not.toContain('LIKE');
+		});
+
+		it('gives numeric operators for the V3 int64 / float64 data types', () => {
+			expect(getOperatorsByDataType(DataTypes.Int64)).toContain('>=');
+			expect(getOperatorsByDataType(DataTypes.Float64)).toContain('>=');
+		});
+
+		it('falls back to the string operators for unmapped, empty and missing types', () => {
+			const stringOperators = getOperatorsByDataType(DataTypes.String);
+			expect(getOperatorsByDataType('[]string')).toStrictEqual(stringOperators);
+			expect(getOperatorsByDataType('')).toStrictEqual(stringOperators);
+			expect(getOperatorsByDataType(undefined)).toStrictEqual(stringOperators);
+		});
+	});
+
+	describe('isNumberDataType', () => {
+		it.each([DataTypes.Int64, DataTypes.Float64, 'number' as DataTypes])(
+			'treats %s as numeric',
+			(dataType) => {
+				expect(isNumberDataType(dataType)).toBe(true);
+			},
+		);
+
+		it.each([DataTypes.String, DataTypes.bool, DataTypes.EMPTY, undefined])(
+			'does not treat %s as numeric',
+			(dataType) => {
+				expect(isNumberDataType(dataType)).toBe(false);
+			},
+		);
 	});
 });

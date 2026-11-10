@@ -1,27 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useSearchParams } from 'react-router-dom-v5-compat';
+import { useAppSearchParams } from 'lib/router/useAppSearchParams';
 import * as Sentry from '@sentry/react';
-import { Tooltip } from 'antd';
+import { Filter } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { Switch } from '@signozhq/ui/switch';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
-import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
-import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import {
-	ICurrentQueryData,
-	useHandleExplorerTabChange,
-} from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import {
@@ -29,15 +26,9 @@ import {
 	metricsRunQueryAction,
 	metricsSaveViewAction,
 } from 'pages/MetricsExplorer/aiActions';
-import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { Warning } from 'types/api';
-import { Dashboard } from 'types/api/dashboard/getAll';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
-import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
-import { explorerViewToPanelType } from 'utils/explorerUtils';
-import { v4 as uuid } from 'uuid';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import MetricDetails from '../MetricDetails/MetricDetails';
@@ -58,14 +49,12 @@ function Explorer(): JSX.Element {
 		stagedQuery,
 		updateAllQueriesOperators,
 		currentQuery,
-		handleSetConfig,
 		handleSetQueryData,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
-	const { safeNavigate } = useSafeNavigate();
-	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
+	const [showSidebar, setShowSidebar] = useState(true);
 
 	const queryClient = useQueryClient();
 	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
@@ -112,7 +101,7 @@ function Explorer(): JSX.Element {
 		[units, isMetricUnitsLoading, isMetricUnitsError],
 	);
 
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useAppSearchParams();
 	const isOneChartPerQueryEnabled =
 		searchParams.get(ONE_CHART_PER_QUERY_ENABLED_KEY) === 'true';
 
@@ -213,16 +202,6 @@ function Explorer(): JSX.Element {
 
 	useShareBuilderUrl({ defaultValue: defaultQuery });
 
-	const handleChangeSelectedView = useCallback(
-		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
-			const nextPanelType =
-				explorerViewToPanelType[view] || PANEL_TYPES.TIME_SERIES;
-			handleSetConfig(nextPanelType, DataSource.METRICS);
-			handleExplorerTabChange(nextPanelType, querySearchParameters);
-		},
-		[handleSetConfig, handleExplorerTabChange],
-	);
-
 	// ─── AI Assistant page actions (only when license feature is on) ───────────
 	const aiActions = useMemo(
 		() =>
@@ -258,38 +237,6 @@ function Explorer(): JSX.Element {
 	usePageActions('metrics-explorer', aiActions);
 	// ───────────────────────────────────────────────────────────────────────────
 
-	const handleExport = useCallback(
-		(
-			dashboard: Dashboard | null,
-			_isNewDashboard?: boolean,
-			queryToExport?: Query,
-		): void => {
-			if (!dashboard) {
-				return;
-			}
-
-			const widgetId = uuid();
-
-			let query = queryToExport || exportDefaultQuery;
-			if (yAxisUnit && !query.unit) {
-				query = {
-					...query,
-					unit: yAxisUnit,
-				};
-			}
-
-			const dashboardEditView = generateExportToDashboardLink({
-				query,
-				panelType: PANEL_TYPES.TIME_SERIES,
-				dashboardId: dashboard.id,
-				widgetId,
-			});
-
-			safeNavigate(dashboardEditView);
-		},
-		[exportDefaultQuery, safeNavigate, yAxisUnit],
-	);
-
 	const splitedQueries = useMemo(
 		() =>
 			splitQueryIntoOneChartPerQuery(
@@ -320,11 +267,6 @@ function Explorer(): JSX.Element {
 		});
 	}, []);
 
-	const queryComponents = useMemo(
-		(): QueryBuilderProps['queryComponents'] => ({}),
-		[],
-	);
-
 	const [warning, setWarning] = useState<Warning | undefined>();
 
 	const oneChartPerQueryDisabledTooltip = useMemo(() => {
@@ -350,66 +292,77 @@ function Explorer(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<div className="metrics-explorer-explore-container">
-				<div className="explore-header">
-					<div className="explore-header-left-actions">
-						<span>1 chart/query</span>
-						<Tooltip
-							open={disableOneChartPerQuery ? undefined : false}
-							title={oneChartPerQueryDisabledTooltip}
-						>
+			<QuickFiltersLayout
+				showFilters={showSidebar}
+				onToggleFilters={(): void => setShowSidebar(!showSidebar)}
+				savedViewProps={{ source: SavedviewtypesSourceDTO.metrics }}
+			>
+				<div className="metrics-explorer-explore-container">
+					<div className="explore-header">
+						<div className="explore-header-left-actions">
+							{!showSidebar && (
+								<Tooltip title="Show Views">
+									<Button
+										variant="outlined"
+										color="secondary"
+										size="sm"
+										icon
+										aria-label="Show Views"
+										onClick={(): void => setShowSidebar(true)}
+										testId="metrics-explorer-show-sidebar"
+									>
+										<Filter size={16} />
+									</Button>
+								</Tooltip>
+							)}
+							<span>1 chart/query</span>
 							<Switch
+								testId="metrics-explorer-one-chart-per-query"
+								color="primary"
+								textPlacement="right"
 								value={showOneChartPerQuery}
 								onChange={handleToggleShowOneChartPerQuery}
 								disabled={disableOneChartPerQuery || splitedQueries.length <= 1}
+								disabledTooltip={oneChartPerQueryDisabledTooltip}
 							/>
-						</Tooltip>
+						</div>
+						<div className="explore-header-right-actions">
+							{!isEmpty(warning) && <WarningPopover warningData={warning} />}
+							<DateTimeSelector showAutoRefresh />
+							<RightToolbarActions
+								onStageRunQuery={(): void => handleRunQuery()}
+								isLoadingQueries={isLoadingQueries}
+								handleCancelQuery={handleCancelQuery}
+							/>
+						</div>
 					</div>
-					<div className="explore-header-right-actions">
-						{!isEmpty(warning) && <WarningPopover warningData={warning} />}
-						<DateTimeSelector showAutoRefresh />
-						<RightToolbarActions
-							onStageRunQuery={(): void => handleRunQuery()}
-							isLoadingQueries={isLoadingQueries}
-							handleCancelQuery={handleCancelQuery}
+					<QueryBuilderV2
+						config={{ initialDataSource: DataSource.METRICS, queryVariant: 'static' }}
+						panelType={PANEL_TYPES.TIME_SERIES}
+						showFunctions={false}
+						version="v3"
+					/>
+					<div className="explore-content">
+						<TimeSeries
+							onFetchingStateChange={setIsLoadingQueries}
+							showOneChartPerQuery={showOneChartPerQuery}
+							setWarning={setWarning}
+							areAllMetricUnitsSame={areAllMetricUnitsSame}
+							isMetricUnitsLoading={isMetricUnitsLoading}
+							isMetricUnitsError={isMetricUnitsError}
+							metricUnits={units}
+							metricNames={metricNames}
+							metrics={metrics}
+							handleOpenMetricDetails={handleOpenMetricDetails}
+							yAxisUnit={yAxisUnit}
+							setYAxisUnit={setYAxisUnit}
+							showYAxisUnitSelector={showYAxisUnitSelector}
+							isCancelled={isCancelled}
+							exportDefaultQuery={exportDefaultQuery}
 						/>
 					</div>
 				</div>
-				<QueryBuilderV2
-					config={{ initialDataSource: DataSource.METRICS, queryVariant: 'static' }}
-					panelType={PANEL_TYPES.TIME_SERIES}
-					queryComponents={queryComponents}
-					showFunctions={false}
-					version="v3"
-				/>
-				<div className="explore-content">
-					<TimeSeries
-						onFetchingStateChange={setIsLoadingQueries}
-						showOneChartPerQuery={showOneChartPerQuery}
-						setWarning={setWarning}
-						areAllMetricUnitsSame={areAllMetricUnitsSame}
-						isMetricUnitsLoading={isMetricUnitsLoading}
-						isMetricUnitsError={isMetricUnitsError}
-						metricUnits={units}
-						metricNames={metricNames}
-						metrics={metrics}
-						handleOpenMetricDetails={handleOpenMetricDetails}
-						yAxisUnit={yAxisUnit}
-						setYAxisUnit={setYAxisUnit}
-						showYAxisUnitSelector={showYAxisUnitSelector}
-						isCancelled={isCancelled}
-					/>
-				</div>
-			</div>
-			<ExplorerOptionWrapper
-				disabled={!stagedQuery}
-				query={exportDefaultQuery}
-				sourcepage={DataSource.METRICS}
-				onExport={handleExport}
-				isOneChartPerQuery={showOneChartPerQuery}
-				splitedQueries={splitedQueries}
-				handleChangeSelectedView={handleChangeSelectedView}
-			/>
+			</QuickFiltersLayout>
 			{isMetricDetailsOpen && selectedMetricName && (
 				<MetricDetails
 					metricName={selectedMetricName}

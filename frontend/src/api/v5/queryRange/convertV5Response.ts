@@ -1,9 +1,12 @@
+import { extractOnlyMessageBody } from 'lib/logs/logBody';
 import { cloneDeep, isEmpty } from 'lodash-es';
 import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import {
+	BuilderQuery,
 	DistributionData,
 	MetricRangePayloadV5,
+	QueryEnvelope,
 	QueryRangeRequestV5,
 	RawData,
 	ScalarData,
@@ -11,10 +14,16 @@ import {
 } from 'types/api/v5/queryRange';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
+const isBuilderQueryEnvelope = (
+	envelope: QueryEnvelope,
+): envelope is QueryEnvelope & { spec: BuilderQuery } =>
+	envelope.type === 'builder_query' || envelope.type === 'builder_ai_query';
+
 function getColName(
 	col: ScalarData['columns'][number],
 	legendMap: Record<string, string>,
 	aggregationPerQuery: Record<string, any>,
+	clickhouseQueryNames: Set<string>,
 ): string {
 	if (col.columnType === 'group') {
 		return col.name;
@@ -39,16 +48,32 @@ function getColName(
 		return alias || expression || col.queryName;
 	}
 
+	// clickhouse_sql value columns carry their real SQL alias in col.name — use
+	// it so each value column keeps its own header instead of collapsing onto
+	// the query name. Formulas/promql use placeholder names, so they fall back
+	// to legend || queryName.
+	if (clickhouseQueryNames.has(col.queryName)) {
+		return col.name;
+	}
 	return legend || col.queryName;
 }
 
 function getColId(
 	col: ScalarData['columns'][number],
 	aggregationPerQuery: Record<string, any>,
+	clickhouseQueryNames: Set<string>,
 ): string {
 	if (col.columnType === 'group') {
 		return col.name;
 	}
+
+	// clickhouse_sql value columns are keyed by their real SQL alias so multiple
+	// value columns stay unique instead of all collapsing onto the query name
+	// (which would overwrite every cell in the row with the last column's value).
+	if (clickhouseQueryNames.has(col.queryName)) {
+		return col.name;
+	}
+
 	const aggregation =
 		aggregationPerQuery?.[col.queryName]?.[col.aggregationIndex];
 	const expression = aggregation?.expression || '';
@@ -101,6 +126,7 @@ function convertTimeSeriesData(
 				values: series.values.map((value: any) => ({
 					timestamp: value.timestamp,
 					value: String(value.value),
+					...(value.partial ? { partial: true } : {}),
 				})),
 				metaData: {
 					alias,
@@ -141,6 +167,7 @@ function convertScalarDataArrayToTable(
 	scalarDataArray: ScalarData[],
 	legendMap: Record<string, string>,
 	aggregationPerQuery: Record<string, any>,
+	clickhouseQueryNames: Set<string>,
 ): QueryDataV3[] {
 	// If no scalar data, return empty structure
 
@@ -166,10 +193,10 @@ function convertScalarDataArrayToTable(
 
 		// Collect columns for this specific query
 		const columns = scalarData?.columns?.map((col) => ({
-			name: getColName(col, legendMap, aggregationPerQuery),
+			name: getColName(col, legendMap, aggregationPerQuery, clickhouseQueryNames),
 			queryName: col.queryName,
 			isValueColumn: col.columnType === 'aggregation',
-			id: getColId(col, aggregationPerQuery),
+			id: getColId(col, aggregationPerQuery, clickhouseQueryNames),
 		}));
 
 		// Process rows for this specific query
@@ -177,8 +204,13 @@ function convertScalarDataArrayToTable(
 			const rowData: Record<string, any> = {};
 
 			scalarData?.columns?.forEach((col, colIndex) => {
-				const columnName = getColName(col, legendMap, aggregationPerQuery);
-				const columnId = getColId(col, aggregationPerQuery);
+				const columnName = getColName(
+					col,
+					legendMap,
+					aggregationPerQuery,
+					clickhouseQueryNames,
+				);
+				const columnId = getColId(col, aggregationPerQuery, clickhouseQueryNames);
 				rowData[columnId || columnName] = dataRow[colIndex];
 			});
 
@@ -202,6 +234,7 @@ function convertScalarWithFormatForWeb(
 	scalarDataArray: ScalarData[],
 	legendMap: Record<string, string>,
 	aggregationPerQuery: Record<string, any>,
+	clickhouseQueryNames: Set<string>,
 ): QueryDataV3[] {
 	if (!scalarDataArray || scalarDataArray.length === 0) {
 		return [];
@@ -210,13 +243,18 @@ function convertScalarWithFormatForWeb(
 	return scalarDataArray.map((scalarData) => {
 		const columns =
 			scalarData.columns?.map((col) => {
-				const colName = getColName(col, legendMap, aggregationPerQuery);
+				const colName = getColName(
+					col,
+					legendMap,
+					aggregationPerQuery,
+					clickhouseQueryNames,
+				);
 
 				return {
 					name: colName,
 					queryName: col.queryName,
 					isValueColumn: col.columnType === 'aggregation',
-					id: getColId(col, aggregationPerQuery),
+					id: getColId(col, aggregationPerQuery, clickhouseQueryNames),
 				};
 			}) || [];
 
@@ -256,14 +294,22 @@ function convertRawData(
 		queryName: rawData.queryName,
 		legend: legendMap[rawData.queryName] || rawData.queryName,
 		series: null,
-		list: rawData.rows?.map((row) => ({
-			timestamp: row.timestamp,
-			data: {
+		list: rawData.rows?.map((row) => {
+			const data = {
 				// Map raw data to ILog structure - spread row.data first to include all properties
 				...row.data,
 				date: row.timestamp,
-			} as any,
-		})),
+			} as any;
+
+			if ('body' in row.data) {
+				data.body = extractOnlyMessageBody(row.data.body);
+			}
+
+			return {
+				timestamp: row.timestamp,
+				data,
+			};
+		}),
 		nextCursor: rawData.nextCursor,
 	};
 }
@@ -289,6 +335,7 @@ function convertV5DataByType(
 	v5Data: any,
 	legendMap: Record<string, string>,
 	aggregationPerQuery: Record<string, any>,
+	clickhouseQueryNames: Set<string>,
 ): MetricRangePayloadV3['data'] {
 	switch (v5Data?.type) {
 		case 'time_series': {
@@ -307,6 +354,7 @@ function convertV5DataByType(
 				scalarData,
 				legendMap,
 				aggregationPerQuery,
+				clickhouseQueryNames,
 			);
 			return {
 				resultType: 'scalar',
@@ -349,7 +397,7 @@ function convertV5DataByType(
  */
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function convertV5ResponseToLegacy(
-	v5Response: SuccessResponse<MetricRangePayloadV5>,
+	v5Response: SuccessResponse<MetricRangePayloadV5, QueryRangeRequestV5>,
 	legendMap: Record<string, string>,
 	formatForWeb?: boolean,
 ): SuccessResponse<MetricRangePayloadV3> & { warning?: Warning } {
@@ -357,21 +405,28 @@ export function convertV5ResponseToLegacy(
 	const v5Data = payload?.data;
 
 	const aggregationPerQuery =
-		(params as QueryRangeRequestV5)?.compositeQuery?.queries
-			?.filter((query) => query.type === 'builder_query')
-			.reduce(
-				(acc, query) => {
-					if (
-						query.type === 'builder_query' &&
-						'aggregations' in query.spec &&
-						query.spec.name
-					) {
-						acc[query.spec.name] = query.spec.aggregations;
-					}
-					return acc;
-				},
-				{} as Record<string, any>,
-			) || {};
+		params?.compositeQuery?.queries?.filter(isBuilderQueryEnvelope).reduce(
+			(acc, query) => {
+				if (
+					isBuilderQueryEnvelope(query) &&
+					'aggregations' in query.spec &&
+					query.spec.name
+				) {
+					acc[query.spec.name] = query.spec.aggregations;
+				}
+				return acc;
+			},
+			{} as Record<string, any>,
+		) || {};
+
+	// clickhouse_sql queries have no aggregation metadata; their value columns
+	// are named/keyed by the real SQL alias the response carries (see getColId).
+	const clickhouseQueryNames = new Set<string>(
+		(params?.compositeQuery?.queries ?? [])
+			.filter((query) => query.type === 'clickhouse_sql')
+			.map((query) => (query.spec as { name?: string })?.name)
+			.filter((name): name is string => !!name),
+	);
 
 	// If formatForWeb is true, return as-is (like existing logic)
 	if (formatForWeb && v5Data?.type === 'scalar') {
@@ -380,6 +435,7 @@ export function convertV5ResponseToLegacy(
 			scalarData,
 			legendMap,
 			aggregationPerQuery,
+			clickhouseQueryNames,
 		);
 
 		return {
@@ -402,6 +458,7 @@ export function convertV5ResponseToLegacy(
 		v5Data,
 		legendMap,
 		aggregationPerQuery,
+		clickhouseQueryNames,
 	);
 
 	// Create legacy-compatible response structure

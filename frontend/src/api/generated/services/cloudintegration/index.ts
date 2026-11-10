@@ -31,15 +31,17 @@ import type {
 	DisconnectAccountPathParameters,
 	GetAccount200,
 	GetAccountPathParameters,
+	GetAccountService200,
+	GetAccountServicePathParameters,
 	GetConnectionCredentials200,
 	GetConnectionCredentialsPathParameters,
 	GetService200,
-	GetServiceParams,
 	GetServicePathParameters,
+	ListAccountServicesMetadata200,
+	ListAccountServicesMetadataPathParameters,
 	ListAccounts200,
 	ListAccountsPathParameters,
 	ListServicesMetadata200,
-	ListServicesMetadataParams,
 	ListServicesMetadataPathParameters,
 	RenderErrorResponseDTO,
 	UpdateAccountPathParameters,
@@ -48,6 +50,26 @@ import type {
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
+
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
 
 /**
  * [Deprecated] This endpoint is called by the deployed agent to check in
@@ -197,7 +219,7 @@ export const getListAccountsQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!cloudProvider,
+		enabled: cloudProvider !== null && cloudProvider !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof listAccounts>>,
@@ -234,7 +256,7 @@ export function useListAccounts<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -478,7 +500,11 @@ export const getGetAccountQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!(cloudProvider && id),
+		enabled:
+			cloudProvider !== null &&
+			cloudProvider !== undefined &&
+			id !== null &&
+			id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<Awaited<ReturnType<typeof getAccount>>, TError, TData> & {
 		queryKey: QueryKey;
@@ -513,7 +539,7 @@ export function useGetAccount<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -631,6 +657,237 @@ export const useUpdateAccount = <
 > => {
 	return useMutation(getUpdateAccountMutationOptions(options));
 };
+/**
+ * This endpoint lists the services metadata for the specified account and cloud provider
+ * @summary List account services metadata
+ */
+export const listAccountServicesMetadata = (
+	{ cloudProvider, id }: ListAccountServicesMetadataPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListAccountServicesMetadata200>({
+		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts/${id}/services`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getListAccountServicesMetadataQueryKey = ({
+	cloudProvider,
+	id,
+}: ListAccountServicesMetadataPathParameters) => {
+	return [
+		`/api/v1/cloud_integrations/${cloudProvider}/accounts/${id}/services`,
+	] as const;
+};
+
+export const getListAccountServicesMetadataQueryOptions = <
+	TData = Awaited<ReturnType<typeof listAccountServicesMetadata>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ cloudProvider, id }: ListAccountServicesMetadataPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listAccountServicesMetadata>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getListAccountServicesMetadataQueryKey({ cloudProvider, id });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof listAccountServicesMetadata>>
+	> = ({ signal }) => listAccountServicesMetadata({ cloudProvider, id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled:
+			cloudProvider !== null &&
+			cloudProvider !== undefined &&
+			id !== null &&
+			id !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof listAccountServicesMetadata>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListAccountServicesMetadataQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listAccountServicesMetadata>>
+>;
+export type ListAccountServicesMetadataQueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List account services metadata
+ */
+
+export function useListAccountServicesMetadata<
+	TData = Awaited<ReturnType<typeof listAccountServicesMetadata>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ cloudProvider, id }: ListAccountServicesMetadataPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listAccountServicesMetadata>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListAccountServicesMetadataQueryOptions(
+		{ cloudProvider, id },
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List account services metadata
+ */
+export const invalidateListAccountServicesMetadata = async (
+	queryClient: QueryClient,
+	{ cloudProvider, id }: ListAccountServicesMetadataPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListAccountServicesMetadataQueryKey({ cloudProvider, id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint gets a service and its configuration for the specified cloud integration account
+ * @summary Get service for account
+ */
+export const getAccountService = (
+	{ cloudProvider, id, serviceId }: GetAccountServicePathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetAccountService200>({
+		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts/${id}/services/${serviceId}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetAccountServiceQueryKey = ({
+	cloudProvider,
+	id,
+	serviceId,
+}: GetAccountServicePathParameters) => {
+	return [
+		`/api/v1/cloud_integrations/${cloudProvider}/accounts/${id}/services/${serviceId}`,
+	] as const;
+};
+
+export const getGetAccountServiceQueryOptions = <
+	TData = Awaited<ReturnType<typeof getAccountService>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ cloudProvider, id, serviceId }: GetAccountServicePathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getAccountService>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getGetAccountServiceQueryKey({ cloudProvider, id, serviceId });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getAccountService>>
+	> = ({ signal }) =>
+		getAccountService({ cloudProvider, id, serviceId }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled:
+			cloudProvider !== null &&
+			cloudProvider !== undefined &&
+			id !== null &&
+			id !== undefined &&
+			serviceId !== null &&
+			serviceId !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getAccountService>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetAccountServiceQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getAccountService>>
+>;
+export type GetAccountServiceQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get service for account
+ */
+
+export function useGetAccountService<
+	TData = Awaited<ReturnType<typeof getAccountService>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ cloudProvider, id, serviceId }: GetAccountServicePathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getAccountService>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetAccountServiceQueryOptions(
+		{ cloudProvider, id, serviceId },
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get service for account
+ */
+export const invalidateGetAccountService = async (
+	queryClient: QueryClient,
+	{ cloudProvider, id, serviceId }: GetAccountServicePathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetAccountServiceQueryKey({ cloudProvider, id, serviceId }) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * This endpoint updates a service for the specified cloud provider
  * @summary Update service
@@ -876,7 +1133,7 @@ export const getGetConnectionCredentialsQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!cloudProvider,
+		enabled: cloudProvider !== null && cloudProvider !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getConnectionCredentials>>,
@@ -917,7 +1174,7 @@ export function useGetConnectionCredentials<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -937,30 +1194,24 @@ export const invalidateGetConnectionCredentials = async (
 };
 
 /**
- * This endpoint lists the services metadata for the specified cloud provider
+ * This endpoint lists the services metadata for the specified cloud provider, without any account context.
  * @summary List services metadata
  */
 export const listServicesMetadata = (
 	{ cloudProvider }: ListServicesMetadataPathParameters,
-	params?: ListServicesMetadataParams,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<ListServicesMetadata200>({
 		url: `/api/v1/cloud_integrations/${cloudProvider}/services`,
 		method: 'GET',
-		params,
 		signal,
 	});
 };
 
-export const getListServicesMetadataQueryKey = (
-	{ cloudProvider }: ListServicesMetadataPathParameters,
-	params?: ListServicesMetadataParams,
-) => {
-	return [
-		`/api/v1/cloud_integrations/${cloudProvider}/services`,
-		...(params ? [params] : []),
-	] as const;
+export const getListServicesMetadataQueryKey = ({
+	cloudProvider,
+}: ListServicesMetadataPathParameters) => {
+	return [`/api/v1/cloud_integrations/${cloudProvider}/services`] as const;
 };
 
 export const getListServicesMetadataQueryOptions = <
@@ -968,7 +1219,6 @@ export const getListServicesMetadataQueryOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider }: ListServicesMetadataPathParameters,
-	params?: ListServicesMetadataParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof listServicesMetadata>>,
@@ -980,17 +1230,16 @@ export const getListServicesMetadataQueryOptions = <
 	const { query: queryOptions } = options ?? {};
 
 	const queryKey =
-		queryOptions?.queryKey ??
-		getListServicesMetadataQueryKey({ cloudProvider }, params);
+		queryOptions?.queryKey ?? getListServicesMetadataQueryKey({ cloudProvider });
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof listServicesMetadata>>
-	> = ({ signal }) => listServicesMetadata({ cloudProvider }, params, signal);
+	> = ({ signal }) => listServicesMetadata({ cloudProvider }, signal);
 
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!cloudProvider,
+		enabled: cloudProvider !== null && cloudProvider !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof listServicesMetadata>>,
@@ -1013,7 +1262,6 @@ export function useListServicesMetadata<
 	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider }: ListServicesMetadataPathParameters,
-	params?: ListServicesMetadataParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof listServicesMetadata>>,
@@ -1024,7 +1272,6 @@ export function useListServicesMetadata<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 	const queryOptions = getListServicesMetadataQueryOptions(
 		{ cloudProvider },
-		params,
 		options,
 	);
 
@@ -1032,7 +1279,7 @@ export function useListServicesMetadata<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1041,11 +1288,10 @@ export function useListServicesMetadata<
 export const invalidateListServicesMetadata = async (
 	queryClient: QueryClient,
 	{ cloudProvider }: ListServicesMetadataPathParameters,
-	params?: ListServicesMetadataParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getListServicesMetadataQueryKey({ cloudProvider }, params) },
+		{ queryKey: getListServicesMetadataQueryKey({ cloudProvider }) },
 		options,
 	);
 
@@ -1053,29 +1299,26 @@ export const invalidateListServicesMetadata = async (
 };
 
 /**
- * This endpoint gets a service for the specified cloud provider
+ * This endpoint gets a service definition for the specified cloud provider, without any account context.
  * @summary Get service
  */
 export const getService = (
 	{ cloudProvider, serviceId }: GetServicePathParameters,
-	params?: GetServiceParams,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetService200>({
 		url: `/api/v1/cloud_integrations/${cloudProvider}/services/${serviceId}`,
 		method: 'GET',
-		params,
 		signal,
 	});
 };
 
-export const getGetServiceQueryKey = (
-	{ cloudProvider, serviceId }: GetServicePathParameters,
-	params?: GetServiceParams,
-) => {
+export const getGetServiceQueryKey = ({
+	cloudProvider,
+	serviceId,
+}: GetServicePathParameters) => {
 	return [
 		`/api/v1/cloud_integrations/${cloudProvider}/services/${serviceId}`,
-		...(params ? [params] : []),
 	] as const;
 };
 
@@ -1084,7 +1327,6 @@ export const getGetServiceQueryOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider, serviceId }: GetServicePathParameters,
-	params?: GetServiceParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getService>>,
@@ -1096,17 +1338,20 @@ export const getGetServiceQueryOptions = <
 	const { query: queryOptions } = options ?? {};
 
 	const queryKey =
-		queryOptions?.queryKey ??
-		getGetServiceQueryKey({ cloudProvider, serviceId }, params);
+		queryOptions?.queryKey ?? getGetServiceQueryKey({ cloudProvider, serviceId });
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getService>>> = ({
 		signal,
-	}) => getService({ cloudProvider, serviceId }, params, signal);
+	}) => getService({ cloudProvider, serviceId }, signal);
 
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!(cloudProvider && serviceId),
+		enabled:
+			cloudProvider !== null &&
+			cloudProvider !== undefined &&
+			serviceId !== null &&
+			serviceId !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<Awaited<ReturnType<typeof getService>>, TError, TData> & {
 		queryKey: QueryKey;
@@ -1127,7 +1372,6 @@ export function useGetService<
 	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider, serviceId }: GetServicePathParameters,
-	params?: GetServiceParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getService>>,
@@ -1138,7 +1382,6 @@ export function useGetService<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 	const queryOptions = getGetServiceQueryOptions(
 		{ cloudProvider, serviceId },
-		params,
 		options,
 	);
 
@@ -1146,7 +1389,7 @@ export function useGetService<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1155,11 +1398,10 @@ export function useGetService<
 export const invalidateGetService = async (
 	queryClient: QueryClient,
 	{ cloudProvider, serviceId }: GetServicePathParameters,
-	params?: GetServiceParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetServiceQueryKey({ cloudProvider, serviceId }, params) },
+		{ queryKey: getGetServiceQueryKey({ cloudProvider, serviceId }) },
 		options,
 	);
 

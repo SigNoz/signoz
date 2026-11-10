@@ -59,7 +59,6 @@ def test_create_service_account_missing_name(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    """Creating a service account with an empty name should be rejected."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.post(
@@ -213,7 +212,6 @@ def test_delete_already_deleted_service_account(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    """Deleting an already-deleted service account should be handled gracefully."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     service_account_id = create_service_account(signoz, token, "sa-double-delete")
 

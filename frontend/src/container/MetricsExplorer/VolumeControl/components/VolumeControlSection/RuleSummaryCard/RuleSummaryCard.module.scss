@@ -1,0 +1,48 @@
+.card {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	border: 1px solid var(--l1-border);
+	border-radius: 6px;
+	padding: 12px 14px;
+	background: var(--l2-background);
+}
+
+.cardRow {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+
+	> [data-slot='button'] {
+		margin-left: auto;
+	}
+}
+
+.statusIndicator {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	flex: 0 0 auto;
+}
+
+.statusActive {
+	background: var(--bg-forest-500, #25e192);
+}
+
+.statusPending {
+	background: var(--bg-amber-500, #ffcc56);
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.labelChip {
+	font-family: 'Geist Mono', monospace;
+	padding: 2px 8px;
+	border-radius: 4px;
+	background: var(--l3-background);
+	border: 1px solid var(--l1-border);
+}

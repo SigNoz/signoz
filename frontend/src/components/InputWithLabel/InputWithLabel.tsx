@@ -17,6 +17,8 @@ function InputWithLabel({
 	onChange,
 	className,
 	closeIcon,
+	disabled,
+	sanitize,
 }: {
 	label: string;
 	initialValue?: string | number | null;
@@ -27,14 +29,18 @@ function InputWithLabel({
 	onChange: (value: string) => void;
 	className?: string;
 	closeIcon?: React.ReactNode;
+	disabled?: boolean;
+	/** Rewrites the typed value before it is shown and reported. */
+	sanitize?: (value: string) => string;
 }): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>(
 		initialValue ? initialValue.toString() : '',
 	);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		setInputValue(e.target.value);
-		onChange?.(e.target.value);
+		const value = sanitize ? sanitize(e.target.value) : e.target.value;
+		setInputValue(value);
+		onChange?.(value);
 	};
 
 	return (
@@ -45,11 +51,15 @@ function InputWithLabel({
 		>
 			{!labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
 			<Input
-				className="input"
+				className={cx('input', {
+					'input__has-label-after': !labelAfter,
+					'input__has-close-button': !!onClose,
+				})}
 				placeholder={placeholder}
 				type={type}
 				value={inputValue}
 				onChange={handleChange}
+				disabled={disabled}
 				name={label.toLowerCase()}
 				data-testid={`input-${label}`}
 			/>
@@ -72,6 +82,7 @@ InputWithLabel.defaultProps = {
 	initialValue: undefined,
 	className: undefined,
 	closeIcon: undefined,
+	sanitize: undefined,
 };
 
 export default InputWithLabel;

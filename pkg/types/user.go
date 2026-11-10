@@ -24,6 +24,8 @@ var (
 	ErrCodeRootUserOperationUnsupported = errors.MustNewCode("root_user_operation_unsupported")
 	ErrCodeUserStatusDeleted            = errors.MustNewCode("user_status_deleted")
 	ErrCodeUserStatusPendingInvite      = errors.MustNewCode("user_status_pending_invite")
+	ErrCodeUserStatusNotPendingInvite   = errors.MustNewCode("user_status_not_pending_invite")
+	ErrCodeUserDeprecated               = errors.MustNewCode("user_deprecated")
 )
 
 var (
@@ -45,17 +47,8 @@ type User struct {
 	TimeAuditable
 }
 
-type DeprecatedUser struct {
-	*User
-	Role Role `json:"role"`
-}
-
 type UpdatableUser struct {
 	DisplayName string `json:"displayName" required:"true"`
-}
-
-type PostableRole struct {
-	Name string `json:"name" required:"true"`
 }
 
 type PostableRegisterOrgAndAdmin struct {
@@ -120,40 +113,11 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 	}, nil
 }
 
-func NewDeprecatedUserFromUserAndRole(user *User, role Role) *DeprecatedUser {
-	return &DeprecatedUser{
-		user,
-		role,
-	}
-}
-
-func NewUserFromDeprecatedUser(deprecatedUser *DeprecatedUser) *User {
-	return &User{
-		Identifiable:  deprecatedUser.Identifiable,
-		DisplayName:   deprecatedUser.DisplayName,
-		Email:         deprecatedUser.Email,
-		OrgID:         deprecatedUser.OrgID,
-		IsRoot:        deprecatedUser.IsRoot,
-		Status:        deprecatedUser.Status,
-		TimeAuditable: deprecatedUser.TimeAuditable,
-	}
-}
-
 // Update applies mutable fields from the input to the user. Immutable fields
 // (email, is_root, org_id, id) are preserved. Only non-zero input fields are applied.
 func (u *User) Update(displayName string) {
 	if displayName != "" {
 		u.DisplayName = displayName
-	}
-	u.UpdatedAt = time.Now()
-}
-
-func (u *DeprecatedUser) Update(displayName string, role Role) {
-	if displayName != "" {
-		u.DisplayName = displayName
-	}
-	if role != "" {
-		u.Role = role
 	}
 	u.UpdatedAt = time.Now()
 }
@@ -214,20 +178,18 @@ func (u *User) ErrIfPending() error {
 	return nil
 }
 
+// ErrIfNotPending returns an error if the user is not in pending invite state.
+// This error can be enriched with specific operation by the called using errors.WithAdditionalf.
+func (u *User) ErrIfNotPending() error {
+	if u.Status != UserStatusPendingInvite {
+		return errors.New(errors.TypeInvalidInput, ErrCodeUserStatusNotPendingInvite, "operation is only supported for pending invite user")
+	}
+	return nil
+}
+
 func NewTraitsFromUser(user *User) map[string]any {
 	return map[string]any{
 		"name":         user.DisplayName,
-		"email":        user.Email.String(),
-		"display_name": user.DisplayName,
-		"status":       user.Status,
-		"created_at":   user.CreatedAt,
-	}
-}
-
-func NewTraitsFromDeprecatedUser(user *DeprecatedUser) map[string]any {
-	return map[string]any{
-		"name":         user.DisplayName,
-		"role":         user.Role,
 		"email":        user.Email.String(),
 		"display_name": user.DisplayName,
 		"status":       user.Status,

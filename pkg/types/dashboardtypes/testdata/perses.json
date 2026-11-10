@@ -4,15 +4,6 @@
         "description": "Trying to cover as many concepts here as possible"
     },
     "duration": "1h",
-    "datasources": {
-        "SigNozDatasource": {
-            "default": true,
-            "plugin": {
-                "kind": "signoz/Datasource",
-                "spec": {}
-            }
-        }
-    },
     "variables": [
         {
             "kind": "ListVariable",
@@ -22,7 +13,7 @@
                     "name": "serviceName"
                 },
                 "allowAllValue": true,
-                "allowMultiple": false,
+                "allowMultiple": true,
                 "sort": "none",
                 "plugin": {
                     "kind": "signoz/DynamicVariable",
@@ -80,6 +71,7 @@
             }
         }
     ],
+    "links": [],
     "panels": {
         "24e2697b": {
             "kind": "Panel",
@@ -132,7 +124,7 @@
                 ],
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -167,6 +159,7 @@
         "ff2f72f1": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "fraction of calls",
                     "description": ""
@@ -191,7 +184,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/CompositeQuery",
@@ -253,6 +246,7 @@
         "011605e7": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "total resp size"
                 },
@@ -269,7 +263,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -304,6 +298,7 @@
         "e23516fc": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "num traces for service"
                 },
@@ -334,7 +329,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -359,6 +354,7 @@
         "130c8d6b": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "num logs for service"
                 },
@@ -373,7 +369,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -398,6 +394,7 @@
         "246f7c6d": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "num traces for service per resp code"
                 },
@@ -418,7 +415,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -451,6 +448,7 @@
         "21f7d4d0": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "average latency per service"
                 },
@@ -476,7 +474,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/ClickHouseSQL",
@@ -493,6 +491,7 @@
         "ad5fd556": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "logs from service"
                 },
@@ -517,7 +516,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "LogQuery",
+                        "kind": "raw",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -557,6 +556,7 @@
         "f07b59ee": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "response size buckets"
                 },
@@ -571,7 +571,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/BuilderQuery",
@@ -596,6 +596,7 @@
         "e1a41831": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "trace operator",
                     "description": ""
@@ -610,7 +611,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/CompositeQuery",
@@ -652,6 +653,7 @@
                                             "type": "builder_trace_operator",
                                             "spec": {
                                                 "name": "T1",
+                                                "expression": "A => B",
                                                 "aggregations": [
                                                     {
                                                         "expression": "count()",
@@ -671,6 +673,7 @@
         "f0d70491": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "no results in this promql",
                     "description": ""
@@ -681,7 +684,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/CompositeQuery",
@@ -712,6 +715,7 @@
         "0e6eb4ca": {
             "kind": "Panel",
             "spec": {
+                "links": [],
                 "display": {
                     "name": "no results in this promql",
                     "description": ""
@@ -722,7 +726,7 @@
                 },
                 "queries": [
                     {
-                        "kind": "TimeSeriesQuery",
+                        "kind": "time_series",
                         "spec": {
                             "plugin": {
                                 "kind": "signoz/PromQLQuery",

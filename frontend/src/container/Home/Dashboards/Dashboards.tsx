@@ -1,21 +1,31 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
 import { Button, Skeleton } from 'antd';
+import { AppLink } from 'lib/router/AppLink';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
+import { useListDashboardsForUserV2 } from 'api/generated/services/dashboard';
+import {
+	DashboardtypesListOrderDTO,
+	DashboardtypesListSortDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
-import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
-import { Dashboard } from 'types/api/dashboard/getAll';
 import { USER_ROLES } from 'types/roles';
 import { openInNewTab } from 'utils/navigation';
 
 import dialsUrl from '@/assets/Icons/dials.svg';
 
 import { getItemIcon } from '../constants';
+
+// The five most-recent dashboards from the V2 list API.
+interface RecentDashboard {
+	id: string;
+	title: string;
+	tags: string[];
+}
 
 export default function Dashboards({
 	onUpdateChecklistDoneItem,
@@ -27,32 +37,32 @@ export default function Dashboards({
 	const { safeNavigate } = useSafeNavigate();
 	const { user } = useAppContext();
 
-	const [sortedDashboards, setSortedDashboards] = useState<Dashboard[]>([]);
-
-	// Fetch Dashboards
 	const {
 		data: dashboardsList,
 		isLoading: isDashboardListLoading,
 		isError: isDashboardListError,
-	} = useGetAllDashboard();
+	} = useListDashboardsForUserV2({
+		sort: DashboardtypesListSortDTO.updated_at,
+		order: DashboardtypesListOrderDTO.desc,
+		limit: 5,
+		offset: 0,
+	});
+
+	const sortedDashboards = useMemo<RecentDashboard[]>(
+		() =>
+			(dashboardsList?.data?.dashboards ?? []).map((d) => ({
+				id: d.id,
+				title: d.spec?.display?.name ?? d.name,
+				tags: (d.tags ?? []).map((t) => (t.value ? `${t.key}:${t.value}` : t.key)),
+			})),
+		[dashboardsList],
+	);
 
 	useEffect(() => {
-		if (!dashboardsList) {
-			return;
-		}
-
-		const sortedDashboards = dashboardsList.data.sort((a, b) => {
-			const aUpdateAt = new Date(a.updatedAt).getTime();
-			const bUpdateAt = new Date(b.updatedAt).getTime();
-			return bUpdateAt - aUpdateAt;
-		});
-
 		if (sortedDashboards.length > 0 && !loadingUserPreferences) {
 			onUpdateChecklistDoneItem('SETUP_DASHBOARDS');
 		}
-
-		setSortedDashboards(sortedDashboards.slice(0, 5));
-	}, [dashboardsList, onUpdateChecklistDoneItem, loadingUserPreferences]);
+	}, [sortedDashboards, onUpdateChecklistDoneItem, loadingUserPreferences]);
 
 	const emptyStateCard = (): JSX.Element => (
 		<div className="empty-state-container">
@@ -69,7 +79,7 @@ export default function Dashboards({
 
 				{user?.role !== USER_ROLES.VIEWER && (
 					<div className="empty-actions-container">
-						<Link to={ROUTES.ALL_DASHBOARD}>
+						<AppLink to={ROUTES.ALL_DASHBOARD}>
 							<Button
 								type="default"
 								className="periscope-btn secondary"
@@ -80,7 +90,7 @@ export default function Dashboards({
 							>
 								New Dashboard
 							</Button>
-						</Link>
+						</AppLink>
 
 						<Button
 							type="link"
@@ -113,7 +123,7 @@ export default function Dashboards({
 						event.stopPropagation();
 						logEvent('Homepage: Dashboard clicked', {
 							dashboardId: dashboard.id,
-							dashboardName: dashboard.data.title,
+							dashboardName: dashboard.title,
 						});
 						if (event.metaKey || event.ctrlKey) {
 							openInNewTab(getLink());
@@ -143,13 +153,18 @@ export default function Dashboards({
 								/>
 
 								<div className="alert-rule-item-name home-data-item-name">
-									{dashboard.data.title}
+									{dashboard.title}
 								</div>
 							</div>
 
 							<div className="alert-rule-item-description home-data-item-tag">
-								{dashboard.data.tags?.map((tag) => (
-									<Badge color="sienna" variant="outline" key={tag}>
+								{dashboard.tags.map((tag) => (
+									<Badge
+										textTransform="none"
+										color="archive"
+										variant="outlined"
+										key={tag}
+									>
 										{tag}
 									</Badge>
 								))}
@@ -187,7 +202,12 @@ export default function Dashboards({
 		<Card className="dashboards-list-card home-data-card">
 			{dashboardsExist && (
 				<Card.Header>
-					<div className="dashboards-header home-data-card-header">Dashboards</div>
+					<div
+						className="dashboards-header home-data-card-header"
+						data-testid="home-section-dashboards"
+					>
+						Dashboards
+					</div>
 				</Card.Header>
 			)}
 			<Card.Content>
@@ -197,7 +217,7 @@ export default function Dashboards({
 			{dashboardsExist && (
 				<Card.Footer>
 					<div className="dashboards-footer home-data-card-footer">
-						<Link to={ROUTES.ALL_DASHBOARD}>
+						<AppLink to={ROUTES.ALL_DASHBOARD}>
 							<Button
 								type="link"
 								className="periscope-btn link learn-more-link"
@@ -207,7 +227,7 @@ export default function Dashboards({
 							>
 								All Dashboards <ArrowRight size={12} />
 							</Button>
-						</Link>
+						</AppLink>
 					</div>
 				</Card.Footer>
 			)}

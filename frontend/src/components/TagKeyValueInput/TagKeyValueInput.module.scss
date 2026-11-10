@@ -1,0 +1,37 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	width: 100%;
+}
+
+.field {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 8px;
+	border-radius: 2px;
+	border: 1px solid var(--l2-border);
+}
+
+.input {
+	flex: 1;
+	min-width: 120px;
+	border: none;
+	background: transparent;
+
+	&::placeholder {
+		color: var(--l3-foreground);
+	}
+}
+
+.editInput {
+	width: 160px;
+	height: 24px;
+}
+
+.error {
+	color: var(--bg-cherry-500);
+	font-size: 12px;
+}

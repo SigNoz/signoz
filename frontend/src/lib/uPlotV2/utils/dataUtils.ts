@@ -1,7 +1,7 @@
 import {
 	fillMissingXAxisTimestamps,
 	getXAxisTimestamps,
-} from 'container/DashboardContainer/visualization/panels/utils';
+} from 'lib/visualization/panels/utils';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 /**

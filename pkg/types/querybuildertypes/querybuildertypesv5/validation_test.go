@@ -1,11 +1,18 @@
 package querybuildertypesv5
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 func contains(s, substr string) bool {
@@ -521,6 +528,28 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 			errMsg:  "expression cannot be blank",
 		},
 		{
+			name: "Formula_NegativeLimit_Rejected",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeTimeSeries,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeFormula,
+							Spec: QueryBuilderFormula{
+								Name:       "F1",
+								Expression: "A * 2",
+								Limit:      -5,
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "invalid formula 'F1': limit must be non-negative, got -5",
+		},
+		{
 			name: "promql with empty query should return error",
 			request: QueryRangeRequest{
 				Start:       1640995200000,
@@ -696,6 +725,31 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 			errMsg:  "raw request type is not supported for metric queries",
 		},
 		{
+			name: "Raw_EmptyOrderKey_Rejected",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeRaw,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[LogAggregation]{
+								Name:   "B",
+								Signal: telemetrytypes.SignalLogs,
+								Order: []OrderBy{
+									{Key: OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp"}}, Direction: OrderDirectionDesc},
+									{Key: OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: ""}}, Direction: OrderDirectionAsc},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "invalid query 'B': invalid empty key name for order by clause #2 in query 'B'",
+		},
+		{
 			name: "timeseries request with group by timestamp should return error",
 			request: QueryRangeRequest{
 				Start:       1640995200000,
@@ -762,6 +816,100 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 								Name:         "A",
 								Signal:       telemetrytypes.SignalLogs,
 								Aggregations: []LogAggregation{},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "scalar request with metric query without reduceTo should return error",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeScalar,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[MetricAggregation]{
+								Name:   "A",
+								Signal: telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{MetricName: "test_metric", SpaceAggregation: metrictypes.SpaceAggregationSum},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "reduceTo is required",
+		},
+		{
+			name: "scalar request with metric query with invalid reduceTo should return error",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeScalar,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[MetricAggregation]{
+								Name:   "A",
+								Signal: telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{MetricName: "test_metric", SpaceAggregation: metrictypes.SpaceAggregationSum, ReduceTo: ReduceTo{valuer.NewString("p99")}},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "invalid reduceTo",
+		},
+		{
+			name: "scalar request with metric query with reduceTo should pass",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeScalar,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[MetricAggregation]{
+								Name:   "A",
+								Signal: telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{MetricName: "test_metric", SpaceAggregation: metrictypes.SpaceAggregationSum, ReduceTo: ReduceToLast},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "timeseries request with metric query without reduceTo should pass",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeTimeSeries,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[MetricAggregation]{
+								Name:   "A",
+								Signal: telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{MetricName: "test_metric", SpaceAggregation: metrictypes.SpaceAggregationSum},
+								},
 							},
 						},
 					},
@@ -1312,6 +1460,44 @@ func TestRequestType_IsAggregation(t *testing.T) {
 	}
 }
 
+func TestQueryRangeRequest_ValidateRequestType(t *testing.T) {
+	validRequestTypes := []string{"valid request types are `scalar`, `time_series`, `raw`, `raw_stream`, `trace`, `heatmap`, `distribution`"}
+
+	testCases := []struct {
+		name        string
+		requestType string
+		message     string
+	}{
+		{
+			name:        "Missing_Required",
+			requestType: "",
+			message:     "requestType is required",
+		},
+		{
+			name:        "Timeseries_Unknown",
+			requestType: `"requestType": "timeseries",`,
+			message:     `unknown request type "timeseries"`,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			body := fmt.Sprintf(`{"schemaVersion": "v1", "start": 1640995200000, "end": 1640998800000, %s "compositeQuery": {"queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "logs"}}]}}`, testCase.requestType)
+
+			var request QueryRangeRequest
+			err := json.Unmarshal([]byte(body), &request)
+			if err == nil {
+				err = request.Validate()
+			}
+			require.Error(t, err)
+
+			got := errors.AsJSON(err)
+			assert.Equal(t, testCase.message, got.Message)
+			assert.Equal(t, validRequestTypes, got.Suggestions)
+		})
+	}
+}
+
 func TestNonAggregationFieldsSkipped(t *testing.T) {
 	// Fields that only apply to aggregation queries (groupBy, having, aggregations)
 	// should be silently skipped for non-aggregation request types.
@@ -1420,4 +1606,87 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 			t.Errorf("expected no error for isRoot in selectFields with timeseries request type, got: %v", err)
 		}
 	})
+}
+
+func TestMetricAggregationValidateForTypeAndTemporality(t *testing.T) {
+	cases := []struct {
+		name             string
+		metricType       metrictypes.Type
+		temporality      metrictypes.Temporality
+		spaceAggregation metrictypes.SpaceAggregation
+		comparisonParam  *metrictypes.ComparisonSpaceAggregationParam
+		wantErr          bool
+	}{
+		{
+			name:             "percentile on histogram is allowed",
+			metricType:       metrictypes.HistogramType,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile95,
+			wantErr:          false,
+		},
+		{
+			name:             "percentile on delta exponential histogram is allowed",
+			metricType:       metrictypes.ExpHistogramType,
+			temporality:      metrictypes.Delta,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile99,
+			wantErr:          false,
+		},
+		{
+			name:             "cumulative exponential histogram is not allowed",
+			metricType:       metrictypes.ExpHistogramType,
+			temporality:      metrictypes.Cumulative,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile99,
+			wantErr:          true,
+		},
+		{
+			name:             "exponential histogram with unresolved temporality is not allowed",
+			metricType:       metrictypes.ExpHistogramType,
+			temporality:      metrictypes.Unknown,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile99,
+			wantErr:          true,
+		},
+		{
+			name:             "cumulative histogram is unaffected by the exponential histogram rule",
+			metricType:       metrictypes.HistogramType,
+			temporality:      metrictypes.Cumulative,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile95,
+			wantErr:          false,
+		},
+		{
+			name:             "percentile on summary is not allowed",
+			metricType:       metrictypes.SummaryType,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile95,
+			wantErr:          true,
+		},
+		{
+			name:             "percentile on sum is not allowed",
+			metricType:       metrictypes.SumType,
+			spaceAggregation: metrictypes.SpaceAggregationPercentile95,
+			wantErr:          true,
+		},
+		{
+			name:             "non-percentile space aggregation on sum is allowed",
+			metricType:       metrictypes.SumType,
+			spaceAggregation: metrictypes.SpaceAggregationSum,
+			wantErr:          false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			agg := MetricAggregation{
+				MetricName:                      "test_metric",
+				Type:                            tc.metricType,
+				Temporality:                     tc.temporality,
+				SpaceAggregation:                tc.spaceAggregation,
+				ComparisonSpaceAggregationParam: tc.comparisonParam,
+			}
+			err := agg.ValidateForTypeAndTemporality()
+			if tc.wantErr && err == nil {
+				t.Errorf("expected error, got nil")
+			}
+			if !tc.wantErr && err != nil {
+				t.Errorf("expected no error, got: %v", err)
+			}
+		})
+	}
 }

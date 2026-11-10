@@ -1,0 +1,11 @@
+.statusBadgeButton {
+	display: inline-flex;
+	padding: 0;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font: inherit;
+
+	// The badge sets its own cursor, so the button's never reaches it.
+	--badge-cursor: pointer;
+}

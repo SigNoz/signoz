@@ -1,0 +1,565 @@
+{
+  "id": "sqldatabase",
+  "title": "SQL Database",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_cpu_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of CPU used by the database workload, relative to its limit."
+      },
+      {
+        "name": "azure_cpu_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of CPU used by the database workload, relative to its limit."
+      },
+      {
+        "name": "azure_cpu_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Percentage of CPU used by the database workload, relative to its limit."
+      },
+      {
+        "name": "azure_sql_instance_cpu_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Total CPU usage (user plus system) of the SQL instance, as a percentage."
+      },
+      {
+        "name": "azure_sql_instance_cpu_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Total CPU usage (user plus system) of the SQL instance, as a percentage."
+      },
+      {
+        "name": "azure_sql_instance_cpu_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Total CPU usage (user plus system) of the SQL instance, as a percentage."
+      },
+      {
+        "name": "azure_sql_instance_memory_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Memory usage of the SQL instance, as a percentage of its limit."
+      },
+      {
+        "name": "azure_sql_instance_memory_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Memory usage of the SQL instance, as a percentage of its limit."
+      },
+      {
+        "name": "azure_sql_instance_memory_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Memory usage of the SQL instance, as a percentage of its limit."
+      },
+      {
+        "name": "azure_physical_data_read_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Data file IO usage as a percentage of the limit."
+      },
+      {
+        "name": "azure_physical_data_read_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Data file IO usage as a percentage of the limit."
+      },
+      {
+        "name": "azure_physical_data_read_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Data file IO usage as a percentage of the limit."
+      },
+      {
+        "name": "azure_log_write_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Transaction log write throughput as a percentage of the limit."
+      },
+      {
+        "name": "azure_log_write_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Transaction log write throughput as a percentage of the limit."
+      },
+      {
+        "name": "azure_log_write_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Transaction log write throughput as a percentage of the limit."
+      },
+      {
+        "name": "azure_workers_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Worker threads in use as a percentage of the limit."
+      },
+      {
+        "name": "azure_workers_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Worker threads in use as a percentage of the limit."
+      },
+      {
+        "name": "azure_workers_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Worker threads in use as a percentage of the limit."
+      },
+      {
+        "name": "azure_sessions_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Active sessions as a percentage of the limit."
+      },
+      {
+        "name": "azure_sessions_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Active sessions as a percentage of the limit."
+      },
+      {
+        "name": "azure_sessions_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Active sessions as a percentage of the limit."
+      },
+      {
+        "name": "azure_sessions_count_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of active sessions."
+      },
+      {
+        "name": "azure_sessions_count_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of active sessions."
+      },
+      {
+        "name": "azure_sessions_count_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of active sessions."
+      },
+      {
+        "name": "azure_dtu_consumption_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "DTU consumption as a percentage of the limit (DTU-based purchasing model)."
+      },
+      {
+        "name": "azure_dtu_consumption_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "DTU consumption as a percentage of the limit (DTU-based purchasing model)."
+      },
+      {
+        "name": "azure_dtu_consumption_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "DTU consumption as a percentage of the limit (DTU-based purchasing model)."
+      },
+      {
+        "name": "azure_dtu_used_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "DTUs used (DTU-based purchasing model)."
+      },
+      {
+        "name": "azure_dtu_used_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "DTUs used (DTU-based purchasing model)."
+      },
+      {
+        "name": "azure_dtu_used_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "DTUs used (DTU-based purchasing model)."
+      },
+      {
+        "name": "azure_dtu_limit_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "DTU limit (DTU-based purchasing model)."
+      },
+      {
+        "name": "azure_dtu_limit_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "DTU limit (DTU-based purchasing model)."
+      },
+      {
+        "name": "azure_dtu_limit_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "DTU limit (DTU-based purchasing model)."
+      },
+      {
+        "name": "azure_cpu_used_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "vCores used (vCore-based purchasing model)."
+      },
+      {
+        "name": "azure_cpu_used_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "vCores used (vCore-based purchasing model)."
+      },
+      {
+        "name": "azure_cpu_used_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "vCores used (vCore-based purchasing model)."
+      },
+      {
+        "name": "azure_cpu_limit_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "vCore limit (vCore-based purchasing model)."
+      },
+      {
+        "name": "azure_cpu_limit_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "vCore limit (vCore-based purchasing model)."
+      },
+      {
+        "name": "azure_cpu_limit_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "vCore limit (vCore-based purchasing model)."
+      },
+      {
+        "name": "azure_storage_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Data space used by the database."
+      },
+      {
+        "name": "azure_storage_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Data space used by the database."
+      },
+      {
+        "name": "azure_storage_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Data space used by the database."
+      },
+      {
+        "name": "azure_storage_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Data space used as a percentage of the maximum data size."
+      },
+      {
+        "name": "azure_storage_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Data space used as a percentage of the maximum data size."
+      },
+      {
+        "name": "azure_storage_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Data space used as a percentage of the maximum data size."
+      },
+      {
+        "name": "azure_allocated_data_storage_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Data space allocated to the database (includes unused space)."
+      },
+      {
+        "name": "azure_allocated_data_storage_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Data space allocated to the database (includes unused space)."
+      },
+      {
+        "name": "azure_allocated_data_storage_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Data space allocated to the database (includes unused space)."
+      },
+      {
+        "name": "azure_xtp_storage_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "In-Memory OLTP storage used as a percentage of the limit."
+      },
+      {
+        "name": "azure_xtp_storage_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "In-Memory OLTP storage used as a percentage of the limit."
+      },
+      {
+        "name": "azure_xtp_storage_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "In-Memory OLTP storage used as a percentage of the limit."
+      },
+      {
+        "name": "azure_full_backup_size_bytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative full backup storage size."
+      },
+      {
+        "name": "azure_full_backup_size_bytes_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative full backup storage size."
+      },
+      {
+        "name": "azure_full_backup_size_bytes_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative full backup storage size."
+      },
+      {
+        "name": "azure_diff_backup_size_bytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative differential backup storage size."
+      },
+      {
+        "name": "azure_diff_backup_size_bytes_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative differential backup storage size."
+      },
+      {
+        "name": "azure_diff_backup_size_bytes_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative differential backup storage size."
+      },
+      {
+        "name": "azure_log_backup_size_bytes_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative transaction log backup storage size."
+      },
+      {
+        "name": "azure_log_backup_size_bytes_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative transaction log backup storage size."
+      },
+      {
+        "name": "azure_log_backup_size_bytes_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": "Cumulative transaction log backup storage size."
+      },
+      {
+        "name": "azure_replication_lag_seconds_average",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "Geo-replication lag (RPO) in seconds; reported on the primary database only."
+      },
+      {
+        "name": "azure_replication_lag_seconds_maximum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "Geo-replication lag (RPO) in seconds; reported on the primary database only."
+      },
+      {
+        "name": "azure_replication_lag_seconds_minimum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": "Geo-replication lag (RPO) in seconds; reported on the primary database only."
+      },
+      {
+        "name": "azure_connection_successful_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of successful connections."
+      },
+      {
+        "name": "azure_connection_successful_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of successful connections."
+      },
+      {
+        "name": "azure_connection_failed_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of failed connections caused by system errors."
+      },
+      {
+        "name": "azure_connection_failed_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of failed connections caused by system errors."
+      },
+      {
+        "name": "azure_connection_failed_user_error_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of failed connections caused by user errors."
+      },
+      {
+        "name": "azure_connection_failed_user_error_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of failed connections caused by user errors."
+      },
+      {
+        "name": "azure_blocked_by_firewall_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of connection attempts blocked by the firewall."
+      },
+      {
+        "name": "azure_blocked_by_firewall_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of connection attempts blocked by the firewall."
+      },
+      {
+        "name": "azure_deadlock_total",
+        "unit": "Count",
+        "type": "Sum",
+        "description": "Number of deadlocks."
+      },
+      {
+        "name": "azure_deadlock_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Number of deadlocks."
+      },
+      {
+        "name": "azure_availability_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Database availability percentage (100 if connections succeed, 0 if all fail) per minute."
+      },
+      {
+        "name": "azure_availability_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Database availability percentage (100 if connections succeed, 0 if all fail) per minute."
+      },
+      {
+        "name": "azure_availability_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Database availability percentage (100 if connections succeed, 0 if all fail) per minute."
+      },
+      {
+        "name": "azure_availability_count",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "Database availability percentage (100 if connections succeed, 0 if all fail) per minute."
+      },
+      {
+        "name": "azure_availability_total",
+        "unit": "Percent",
+        "type": "Sum",
+        "description": "Database availability percentage (100 if connections succeed, 0 if all fail) per minute."
+      },
+      {
+        "name": "azure_tempdb_data_size_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Space used in tempdb data files, in kilobytes."
+      },
+      {
+        "name": "azure_tempdb_data_size_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Space used in tempdb data files, in kilobytes."
+      },
+      {
+        "name": "azure_tempdb_data_size_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Space used in tempdb data files, in kilobytes."
+      },
+      {
+        "name": "azure_tempdb_log_size_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Space used in the tempdb transaction log file, in kilobytes."
+      },
+      {
+        "name": "azure_tempdb_log_size_maximum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Space used in the tempdb transaction log file, in kilobytes."
+      },
+      {
+        "name": "azure_tempdb_log_size_minimum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": "Space used in the tempdb transaction log file, in kilobytes."
+      },
+      {
+        "name": "azure_tempdb_log_used_percent_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "tempdb transaction log space used as a percentage."
+      },
+      {
+        "name": "azure_tempdb_log_used_percent_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "tempdb transaction log space used as a percentage."
+      },
+      {
+        "name": "azure_tempdb_log_used_percent_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": "tempdb transaction log space used as a percentage."
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "resourceProvider": "Microsoft.Sql",
+      "resourceType": "servers/databases",
+      "metrics": {},
+      "logs": {
+        "categoryGroups": [
+          "allLogs"
+        ]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Azure SQL Database Overview",
+        "description": "Overview of Azure SQL Database metrics",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

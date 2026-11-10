@@ -1,0 +1,45 @@
+.mapToCell {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-1);
+	min-width: 0;
+}
+
+.mapToSelect {
+	width: 100%;
+	max-width: 280px;
+}
+
+.mapToDropdown {
+	width: 280px;
+}
+
+.footer {
+	padding: var(--spacing-2);
+	background-color: var(--l2-background);
+}
+
+.createItem {
+	gap: var(--spacing-4);
+	font-style: normal;
+	color: var(--accent-primary);
+	--command-item-cursor: pointer;
+	--command-item-svg-size: var(--spacing-7);
+
+	&[data-selected='true'] {
+		background-color: var(--callout-primary-background);
+		color: var(--accent-primary);
+	}
+}
+
+.skeletonList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+	padding: var(--spacing-3) var(--spacing-4);
+}
+
+.skeletonRow {
+	display: block;
+	width: 100%;
+}

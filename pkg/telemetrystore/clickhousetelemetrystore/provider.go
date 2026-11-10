@@ -3,12 +3,115 @@ package clickhousetelemetrystore
 import (
 	"context"
 
+	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"go.opentelemetry.io/otel/metric"
 )
+
+var (
+	ErrCodeSyntaxError       = errors.MustNewCode("syntax_error")
+	ErrCodeUnknownTable      = errors.MustNewCode("unknown_table")
+	ErrCodeUnknownDatabase   = errors.MustNewCode("unknown_database")
+	ErrCodeUnknownIdentifier = errors.MustNewCode("unknown_identifier")
+	ErrCodeIllegalArgument   = errors.MustNewCode("illegal_argument")
+
+	ErrCodeDistributedSubqueryDenied = errors.MustNewCode("distributed_subquery_denied")
+	ErrCodeDecimalOverflow           = errors.MustNewCode("decimal_overflow")
+	ErrCodeNoCommonType              = errors.MustNewCode("no_common_type")
+	ErrCodeNotAnAggregate            = errors.MustNewCode("not_an_aggregate")
+	ErrCodeIllegalAggregation        = errors.MustNewCode("illegal_aggregation")
+	ErrCodeInvalidRegexp             = errors.MustNewCode("invalid_regexp")
+
+	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
+	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
+	ErrCodeExecutionFailed = errors.MustNewCode("execution_failed")
+)
+
+// Codes absent from this map fall through to the raw driver error in castError.
+var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickhouse.Exception) error{
+	chproto.ErrSyntaxError: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeSyntaxError, "SQL syntax error: %s", ex.Message)
+	},
+	chproto.ErrUnknownTable: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapNotFoundf(cause, ErrCodeUnknownTable, "unknown table: %s", ex.Message)
+	},
+	chproto.ErrUnknownDatabase: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapNotFoundf(cause, ErrCodeUnknownDatabase, "unknown database: %s", ex.Message)
+	},
+	chproto.ErrUnknownIdentifier: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeUnknownIdentifier, "unknown identifier: %s", ex.Message)
+	},
+	chproto.ErrUnknownFunction: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeUnknownIdentifier, "unknown function: %s", ex.Message)
+	},
+	chproto.ErrUnknownAggregateFunction: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeUnknownIdentifier, "unknown aggregate function: %s", ex.Message)
+	},
+	chproto.ErrUnknownType: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeUnknownIdentifier, "unknown type: %s", ex.Message)
+	},
+	chproto.ErrUnknownStorage: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeUnknownIdentifier, "unknown storage engine: %s", ex.Message)
+	},
+	chproto.ErrIllegalColumn: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeUnknownIdentifier, "illegal column: %s", ex.Message)
+	},
+	chproto.ErrUnknownElementInAst: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeSyntaxError, "unknown element in SQL AST: %s", ex.Message)
+	},
+	chproto.ErrUnknownTypeOfQuery: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeSyntaxError, "unknown query type: %s", ex.Message)
+	},
+	chproto.ErrIllegalTypeOfArgument: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "illegal argument type: %s", ex.Message)
+	},
+	chproto.ErrNumberOfArgumentsDoesntMatch: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "wrong number of arguments: %s", ex.Message)
+	},
+	chproto.ErrTooManyArgumentsForFunction: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "too many arguments to function: %s", ex.Message)
+	},
+	chproto.ErrTooLessArgumentsForFunction: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "too few arguments to function: %s", ex.Message)
+	},
+	chproto.ErrBadGet: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "parameter of the wrong type: %s", ex.Message).
+			WithSuggestions("write numeric function parameters in the type the function expects, for example 1.0 rather than 1 where it takes a Float64")
+	},
+	chproto.ErrDistributedInJoinSubqueryDenied: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeDistributedSubqueryDenied, "IN or JOIN subquery over a distributed table is not allowed: %s", ex.Message).
+			WithSuggestions("use GLOBAL IN or GLOBAL JOIN for the subquery")
+	},
+	chproto.ErrDecimalOverflow: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeDecimalOverflow, "decimal overflow: %s", ex.Message).
+			WithSuggestions("cast the Decimal values to Float64, or to a wider Decimal such as Decimal128, before the arithmetic")
+	},
+	chproto.ErrNoCommonType: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeNoCommonType, "values have no common type: %s", ex.Message).
+			WithSuggestions("cast the values to one type, for example with toInt64 or toFloat64, so that the branches of if or multiIf, the elements of an array, or the columns of a UNION share it; count() returns UInt64, which has no common type with Int64")
+	},
+	chproto.ErrNotAnAggregate: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeNotAnAggregate, "column is neither in GROUP BY nor inside an aggregate function: %s", ex.Message).
+			WithSuggestions("add the column to GROUP BY, or wrap it in an aggregate function such as any()")
+	},
+	chproto.ErrIllegalAggregation: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalAggregation, "aggregate function in a place that does not allow one: %s", ex.Message).
+			WithSuggestions("give an aggregate an alias that is not a column name, because ClickHouse reads the alias in WHERE; move a condition on an aggregate from WHERE to HAVING; compute a nested aggregate in a subquery")
+	},
+	chproto.ErrSizesOfArraysDontMatch: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeIllegalArgument, "arrays of different sizes: %s", ex.Message).
+			WithSuggestions("pass arrays of the same length to a function that takes several arrays, such as arrayMap or arrayZip")
+	},
+	chproto.ErrCannotCompileRegexp: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeInvalidRegexp, "regular expression does not compile: %s", ex.Message).
+			WithSuggestions("write the pattern in RE2 syntax, which has no lookaround or backreferences, and escape a backslash that is meant literally")
+	},
+}
 
 type provider struct {
 	settings       factory.ScopedProviderSettings
@@ -33,8 +136,10 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	options.MaxIdleConns = config.Connection.MaxIdleConns
 	options.MaxOpenConns = config.Connection.MaxOpenConns
 	options.DialTimeout = config.Connection.DialTimeout
-	// This is to avoid the driver decoding issues with JSON columns
-	options.Settings["output_format_native_write_json_as_string"] = 1
+	// Read JSON columns natively: the driver mis-decodes JSON(max_dynamic_paths=0) columns without
+	// the flattened serialization, and reading them as a string collapses a key stored at both a
+	// scalar and an object path.
+	options.Settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
 
 	chConn, err := clickhouse.Open(options)
 	if err != nil {
@@ -67,16 +172,29 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-	return &provider{
+	p := &provider{
 		settings:       settings,
 		clickHouseConn: chConn,
 		cluster:        config.Clickhouse.Cluster,
 		hooks:          hooks,
-	}, nil
+	}
+	return p, nil
 }
 
 func (p *provider) ClickhouseDB() clickhouse.Conn {
 	return p
+}
+
+func (p *provider) Estimate(ctx context.Context, stmt string, args ...any) ([]telemetrystoretypes.EstimateEntry, error) {
+	return RunExplainEstimate(ctx, p, stmt, args...)
+}
+
+func (p *provider) Plan(ctx context.Context, stmt string, args ...any) error {
+	return RunExplainPlan(ctx, p, stmt, args...)
+}
+
+func (p *provider) Indexes(ctx context.Context, stmt string, args ...any) (telemetrystoretypes.Granules, bool, error) {
+	return RunExplainIndexes(ctx, p, stmt, args...)
 }
 
 func (p *provider) Cluster() string {
@@ -103,11 +221,11 @@ func (p *provider) Query(ctx context.Context, query string, args ...interface{})
 	if err != nil {
 		event.Err = err
 		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
-		return nil, err
+		return nil, castError(err)
 	}
 
 	return &rowsWithHooks{
-		Rows:    rows,
+		Rows:    telemetrystore.WrapRows(rows),
 		ctx:     ctx,
 		event:   event,
 		onClose: func() { telemetrystore.WrapAfterQuery(p.hooks, ctx, event) },
@@ -120,10 +238,15 @@ func (p *provider) QueryRow(ctx context.Context, query string, args ...interface
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
 	row := p.clickHouseConn.QueryRow(ctx, query, args...)
 
+	if row == nil {
+		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+		return nil
+	}
+
 	event.Err = row.Err()
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
-	return row
+	return &rowWithCastError{Row: row}
 }
 
 func (p *provider) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
@@ -135,7 +258,7 @@ func (p *provider) Select(ctx context.Context, dest interface{}, query string, a
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
-	return err
+	return castError(err)
 }
 
 func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) error {
@@ -147,20 +270,19 @@ func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
-	return err
+	return castError(err)
 }
 
 func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	// TODO: migrate to WithAsync() — https://github.com/SigNoz/engineering-pod/issues/5093
-	err := p.clickHouseConn.AsyncInsert(ctx, query, wait, args...) //nolint:staticcheck
+	err := p.clickHouseConn.Exec(clickhouse.Context(ctx, clickhouse.WithAsync(wait)), query, args...)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
-	return err
+	return castError(err)
 }
 
 func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
@@ -172,7 +294,10 @@ func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...drive
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
 
-	return batch, err
+	if batch == nil {
+		return nil, castError(err)
+	}
+	return &batchWithCastError{Batch: batch}, castError(err)
 }
 
 func (p *provider) ServerVersion() (*driver.ServerVersion, error) {
@@ -181,4 +306,28 @@ func (p *provider) ServerVersion() (*driver.ServerVersion, error) {
 
 func (p *provider) Contributors() []string {
 	return p.clickHouseConn.Contributors()
+}
+
+func castError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if errors.Is(err, context.Canceled) {
+		return errors.WrapCanceledf(err, ErrCodeQueryCanceled, "query canceled")
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return errors.WrapTimeoutf(err, ErrCodeQueryTimeout, "query timed out")
+	}
+
+	var ex *clickhouse.Exception
+	if !errors.As(err, &ex) {
+		return err
+	}
+
+	if wrap, ok := clickHouseExceptionWrappers[chproto.Error(ex.Code)]; ok {
+		return wrap(err, ex)
+	}
+
+	return err
 }
