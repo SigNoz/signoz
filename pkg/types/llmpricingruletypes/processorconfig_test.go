@@ -138,8 +138,7 @@ func TestUpdatableLLMPricingRuleUnmarshalJSON(t *testing.T) {
 		{name: "missing", pattern: ``, wantErr: true},
 		{name: "null", pattern: `null`, wantErr: true},
 		{name: "empty_list", pattern: `[]`, wantErr: true},
-		{name: "empty_entry", pattern: `["gpt-4o*", ""]`, wantErr: true},
-		{name: "bad_glob", pattern: `["gpt-["]`, wantErr: true},
+		{name: "mid_star", pattern: `["gpt-*-turbo"]`, wantErr: true},
 	}
 
 	for _, tc := range tests {

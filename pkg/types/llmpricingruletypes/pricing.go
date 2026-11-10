@@ -3,9 +3,9 @@ package llmpricingruletypes
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"path"
 	"time"
 
+	"github.com/SigNoz/signoz-otel-collector/pkg/llmpricing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -220,18 +220,14 @@ func (u *UpdatableLLMPricingRule) UnmarshalJSON(data []byte) error {
 	return u.Validate()
 }
 
-// Validate mirrors the collector's pattern check: at least one pattern, none
-// empty, all valid path.Match globs.
+// Validate requires at least one pattern and holds each to the collector's rules.
 func (u *UpdatableLLMPricingRule) Validate() error {
 	if len(u.ModelPattern) == 0 {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "model %q: modelPattern must contain at least one pattern", u.Model)
 	}
 	for _, p := range u.ModelPattern {
-		if p == "" {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "model %q: modelPattern must not contain an empty pattern", u.Model)
-		}
-		if _, err := path.Match(p, ""); err != nil {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "model %q: modelPattern %q is not a valid glob", u.Model, p)
+		if err := llmpricing.ValidatePattern(p); err != nil {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodePricingRuleInvalidInput, "model %q: %v", u.Model, err)
 		}
 	}
 	return nil
@@ -270,7 +266,7 @@ func NewLLMPricingRuleFromUpdatable(u *UpdatableLLMPricingRule, orgID valuer.UUI
 func ModelMatchesAnyRule(model string, rules []*LLMPricingRule) bool {
 	for _, r := range rules {
 		for _, pattern := range r.ModelPattern {
-			if ok, err := path.Match(pattern, model); err == nil && ok {
+			if llmpricing.ParsePattern(pattern).Matches(model) {
 				return true
 			}
 		}
