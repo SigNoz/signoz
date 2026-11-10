@@ -43,22 +43,22 @@ function LogDetail({
 			title={title}
 			width="extra-wide"
 			closePosition="start"
-			headerPrefix={
-				<LogNavigation
-					onNavigatePrev={goToPrev}
-					onNavigateNext={goToNext}
-					isPrevDisabled={isPrevDisabled}
-					isNextDisabled={isNextDisabled}
-				/>
-			}
 			headerSuffix={
-				shownLog && (
-					<LogActions
-						log={shownLog}
-						showOpenInExplorer={!!handleOpenInExplorer}
-						onOpenInExplorer={handleOpenInExplorer}
+				<>
+					{shownLog && (
+						<LogActions
+							log={shownLog}
+							showOpenInExplorer={!!handleOpenInExplorer}
+							onOpenInExplorer={handleOpenInExplorer}
+						/>
+					)}
+					<LogNavigation
+						onNavigatePrev={goToPrev}
+						onNavigateNext={goToNext}
+						isPrevDisabled={isPrevDisabled}
+						isNextDisabled={isNextDisabled}
 					/>
-				)
+				</>
 			}
 			testId="log-detail-drawer"
 		>
