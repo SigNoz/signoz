@@ -48,7 +48,18 @@ export default function QueryBuilderSearchDropdown(
 				className={cx('content', { 'non-logs-data-source': !isLogsDataSource })}
 			>
 				{!currentFilterItem?.key ? (
-					<div className="suggested-filters">Suggested Filters</div>
+					<div className="suggested-filters">
+						<Typography
+							variant="uppercase"
+							size="small"
+							weight="bold"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
+							Suggested Filters
+						</Typography>
+					</div>
 				) : !currentFilterItem?.op ? (
 					<div className="operator-for">
 						<Typography

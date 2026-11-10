@@ -89,6 +89,7 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 									color="inherit"
 									as="span"
 									textOverflow="wrap"
+									textTransform="capitalize"
 								>
 									{value.type}
 								</Typography>
