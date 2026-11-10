@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { isBuilderQueryType } from 'lib/query/builderSlot';
 import { ContextLinksData } from 'types/api/widgets/widget';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -41,7 +42,7 @@ export function useGraphContextMenu({
 } {
 	const drilldownQuery = useGetCompositeQueryParam() || query;
 
-	const isQueryTypeBuilder = drilldownQuery?.queryType === 'builder';
+	const isQueryTypeBuilder = isBuilderQueryType(drilldownQuery?.queryType);
 
 	const { aggregateDrilldownConfig } = useAggregateDrilldown({
 		query: drilldownQuery,

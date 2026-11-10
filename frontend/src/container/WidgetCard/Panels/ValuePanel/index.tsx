@@ -6,6 +6,7 @@ import ValueGraph from 'components/ValueGraph';
 import { generateGridTitle } from 'utils/generateGridTitle';
 import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextMenu';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
+import { isBuilderQueryType } from 'lib/query/builderSlot';
 import { EQueryType } from 'types/common/dashboard';
 
 import {
@@ -72,8 +73,7 @@ function GridValueComponent({
 		);
 	}
 
-	const isQueryTypeBuilder =
-		widget?.query?.queryType === EQueryType.QUERY_BUILDER;
+	const isQueryTypeBuilder = isBuilderQueryType(widget?.query?.queryType);
 
 	return (
 		<>

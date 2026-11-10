@@ -67,6 +67,23 @@ describe('useGetQueryLabels', () => {
 		});
 	});
 
+	describe('AI_QUERY_BUILDER type', () => {
+		it('returns formula labels from builder_ai_query', () => {
+			const query = buildQuery({
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				builder_ai_query: {
+					queryData: [],
+					queryFormulas: [{ queryName: 'F1' } as unknown as IBuilderFormula],
+					queryTraceOperator: [],
+				},
+			});
+
+			const { result } = renderHook(() => useGetQueryLabels(query));
+
+			expect(result.current).toStrictEqual([{ label: 'F1', value: 'F1' }]);
+		});
+	});
+
 	describe('CLICKHOUSE type', () => {
 		it('returns empty array when clickhouse_sql is undefined', () => {
 			const query = buildQuery({
