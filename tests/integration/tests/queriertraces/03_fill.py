@@ -39,14 +39,6 @@ def test_traces_fill_plain(
     noise: str,
     fill_mode: str,
 ) -> None:
-    """
-    Setup:
-    One span 3 minutes ago.
-
-    Tests:
-    fillGaps / fillZero over count() with no group by leave the single populated
-    bucket at the span count and every other bucket in the window at 0.
-    """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     span = Traces(
@@ -93,14 +85,6 @@ def test_traces_fill_group_by(
     noise: str,
     fill_mode: str,
 ) -> None:
-    """
-    Setup:
-    service-a span 3 minutes ago, service-b span 2 minutes ago.
-
-    Tests:
-    fillGaps / fillZero over count() grouped by service.name yield one series per
-    service, each with its single populated bucket and zeros elsewhere.
-    """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     span_a = Traces(
@@ -167,14 +151,6 @@ def test_traces_fill_formula(
     noise: str,
     fill_mode: str,
 ) -> None:
-    """
-    Setup:
-    'test' service span 3 minutes ago, 'another-test' service span 2 minutes ago.
-
-    Tests:
-    A formula F1 = A + B over two disabled per-service count() queries fills empty
-    buckets to 0, so F1 carries a 1 in each service's populated bucket.
-    """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     span_test = Traces(
@@ -237,15 +213,6 @@ def test_traces_fill_formula_group_by(
     noise: str,
     fill_mode: str,
 ) -> None:
-    """
-    Setup:
-    group1 span 3 minutes ago, group2 span 2 minutes ago.
-
-    Tests:
-    A formula F1 = A + B over two disabled group-by count() queries yields one
-    series per service, each carrying A+B (=2) in its populated bucket and zeros
-    elsewhere.
-    """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     span_g1 = Traces(

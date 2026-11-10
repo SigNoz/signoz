@@ -38,16 +38,10 @@ def test_traces_aggregate_percentiles(
     noise: str,
 ) -> None:
     """
-    Setup:
-    5 spans with durations 1s..5s.
-
-    Tests:
-    p25 / p50 / p90 / p95 / p99 over duration_nano match numpy's linear-interpolated
-    percentiles (ClickHouse quantile() uses the same interpolation for small inputs).
-    Under the "collision" variant a numeric span attribute named duration_nano unions
-    with the intrinsic column into a multiIf; the aggregation must still resolve to the
-    intrinsic column rather than error with ClickHouse NO_COMMON_TYPE (386) — the
-    regression behind the span_percentile 500.
+    The percentiles match numpy's linear interpolation, which ClickHouse quantile()
+    uses for small inputs. Under the collision variant a numeric attribute named
+    duration_nano unions with the intrinsic column into a multiIf; the aggregation
+    must resolve to the column, not fail with NO_COMMON_TYPE.
     """
     use_attribute_backend(attribute_backend)
 
@@ -107,15 +101,6 @@ def test_traces_aggregate_group_by_non_resource(
     group_key: str,
     expected: dict[str, int],
 ) -> None:
-    """
-    Setup:
-    3 spans: (name op-a, endpoint /a) x2 and (name op-b, endpoint /b) x1.
-
-    Tests:
-    Grouping by an intrinsic column (name) or a string span attribute (endpoint) —
-    not just a resource key — buckets by the real value; under the corrupt variant a
-    same-named colliding attribute must not divert the grouping.
-    """
     use_attribute_backend(attribute_backend)
 
     extra_attrs, extra_resources = trace_noise(noise)
@@ -161,15 +146,6 @@ def test_traces_aggregate_multi_group_by(
     attribute_backend: str,
     noise: str,
 ) -> None:
-    """
-    Setup:
-    Spans across (service.name, name) pairs: (svc-1, op-a) x2, (svc-1, op-b) x1,
-    (svc-2, op-a) x1.
-
-    Tests:
-    Grouping by two keys (a resource key and an intrinsic column) returns one row per
-    present pair with the correct per-pair count.
-    """
     use_attribute_backend(attribute_backend)
 
     extra_attrs, extra_resources = trace_noise(noise)
@@ -230,15 +206,6 @@ def test_traces_aggregate_having_breadth(
     having_expression: str,
     expected_services: set[str],
 ) -> None:
-    """
-    Setup:
-    svc-a: 3 spans of 1s (sum 3s, count 3); svc-b: 1 span of 5s (sum 5s, count 1).
-
-    Tests:
-    HAVING on a sum() aggregation, on count(), and a compound count()+sum() predicate
-    each keep only the qualifying groups — extending the count()-only HAVING in
-    02_aggregation.py.
-    """
     use_attribute_backend(attribute_backend)
 
     extra_attrs, extra_resources = trace_noise(noise)
@@ -293,15 +260,8 @@ def test_traces_duration_nano_qol_filter_with_collision(
     duration_filter: str,
 ) -> None:
     """
-    Setup:
-    5 spans (durations 1s..5s) that also carry a same-named `duration_nano` span
-    attribute (numeric on some, string on others).
-
-    Tests the duration_nano QoL filter — as a duration string ('2s') and as raw
-    nanoseconds — resolves to the intrinsic column despite the collision: it parses the
-    duration, filters on the real durations (3 spans exceed 2s), and doesn't error with
-    ClickHouse NO_COMMON_TYPE (386). The string attribute is cast; the intrinsic column
-    stays a bare comparison.
+    The duration string is parsed against the intrinsic column; the colliding
+    string attribute is cast, so there is no NO_COMMON_TYPE.
     """
     use_attribute_backend(attribute_backend)
 

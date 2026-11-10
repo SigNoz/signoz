@@ -30,14 +30,6 @@ def test_traces_aggregate_min_max(
     insert_traces: Callable[[list[Traces]], None],
     noise: str,
 ) -> None:
-    """
-    Setup:
-    http-service: 3 spans (3s / 0.5s / 1s); topic-service: 1 span (4s).
-
-    Tests:
-    max(duration_nano) / min(duration_nano) grouped by service.name return each
-    service's duration extremes, derived from the inserted spans.
-    """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     specs = [

@@ -40,15 +40,8 @@ def test_json_body_unknown_key_collision_groupby(
     insert_logs_with_unknown_keys: Callable[[list[Logs], set[str]], None],
 ) -> None:
     """
-    Setup:
-    6 logs carrying `field` in different physical places: 2 as a string attribute
-    ("sa"), 1 as a number attribute (10), 1 as a bool attribute (True), 2 in the body
-    JSON ("bs"). `field` is stripped from attribute metadata, so it is unknown
-    everywhere and takes the synthesize path.
-
-    Tests:
-    Grouping by the unknown `field` walks the whole multiIf (attribute maps then body)
-    and buckets every record by its value, no matter which place holds it.
+    `field` is stripped from the attribute metadata, so every place it lives is
+    reached through the synthesized multiIf, attribute maps then body.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs = [
@@ -102,14 +95,8 @@ def test_json_body_unknown_key_collision_filter(
     expected_rids: set[str],
 ) -> None:
     """
-    Setup:
-    The attribute/body collision dataset, each record tagged with a unique `rid`
-    resource so the filter result is checked by exact record identity, not just count.
-
-    Tests:
-    Filtering the unknown `field` resolves attributes OR the body JSON path and selects
-    exactly the expected records: a typed operand hits its attribute map, a body value
-    is matched via the body branch, and `exists` finds all six records.
+    Each record carries a unique `rid` resource, so the result is checked by record
+    identity, not by count.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs = [
@@ -144,14 +131,8 @@ def test_json_body_unknown_key_attribute_parity(
     insert_logs_with_unknown_keys: Callable[[list[Logs], set[str]], None],
 ) -> None:
     """
-    Setup:
-    4 logs carrying the same value under known_key (in metadata) and unknown_key
-    (stripped), string / number / bool across records — no body values this time.
-
-    Tests:
-    Even with use_json_body on (the synthesized multiIf carries a trailing body
-    branch), grouping by the unknown attribute key still matches grouping by the known
-    one: the extra body branch does not perturb attribute-map resolution.
+    With use_json_body on, the synthesized multiIf carries a trailing body branch.
+    It must not change how the attribute maps resolve.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     specs = [("log-a", "alpha"), ("log-b", 42), ("log-c", 42), ("log-d", True)]
@@ -197,16 +178,6 @@ def test_json_body_unknown_key_aggregation_over_body(
     get_token: Callable[[str, str], str],
     insert_logs_with_unknown_keys: Callable[[list[Logs], set[str]], None],
 ) -> None:
-    """
-    Setup:
-    The same attribute/body collision dataset — `field` carried as a string / number /
-    bool attribute and in the body JSON, one place per record.
-
-    Tests:
-    Aggregating over the unknown `field` walks the whole multiIf including the body
-    branch: count() sees every record (all 6) and count_distinct() counts the distinct
-    stringified values across attribute maps AND the body ("sa", "10", "true", "bs").
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs = [
         Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": SERVICE}, attributes={"field": "sa"}, body="attr-str-0"),
@@ -250,17 +221,8 @@ def test_json_body_unknown_key_body_path_parity(
     prefix: str,
 ) -> None:
     """
-    Setup:
-    Logs whose body carries the same value under two paths — known_field and
-    unknown_field — but only known_field is exported to the body path metadata
-    (distributed_field_keys); unknown_field is left unregistered.
-
-    Tests:
-    Grouping, counting distinct values, and selecting by the registered body path
-    (known_field, metadata-driven) and by the unregistered one (unknown_field,
-    fallback body path) return identical results, for the bare key and the
-    body.-prefixed key — the body counterpart of the attribute parity in
-    13_unknown_key_collisions.py.
+    known_field is registered in the body path metadata and unknown_field is not,
+    so one resolves through metadata and the other through the fallback body path.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs = []

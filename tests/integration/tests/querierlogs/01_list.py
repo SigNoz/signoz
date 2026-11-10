@@ -20,19 +20,6 @@ def test_logs_list(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Insert 2 logs with different attributes
-
-    Tests:
-    1. Query logs for the last 10 seconds and check if the logs are returned in the correct order
-    2. Query values of severity_text attribute from the autocomplete API
-    3. Query values of severity_text attribute from the fields API
-    4. Query values of code.file attribute from the autocomplete API
-    5. Query values of code.file attribute from the fields API
-    6. Query values of code.line attribute from the autocomplete API
-    7. Query values of code.line attribute from the fields API
-    """
     insert_logs(
         [
             Logs(
@@ -410,10 +397,6 @@ def test_logs_list_with_order_by(
     order_by_context: str,
     expected_order: list[str],
 ) -> None:
-    """
-    Setup:
-    Insert 3 logs with service.name in attributes and resources
-    """
 
     attribute_resource_pair = [
         [{"id": "log-001", "service.name": "c"}, {}],

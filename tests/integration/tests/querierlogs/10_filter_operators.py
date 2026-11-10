@@ -66,15 +66,6 @@ def test_logs_filter_operators(
     expression: str,
     expected_bodies: set[str],
 ) -> None:
-    """
-    Setup:
-    Five logs across services / environments / methods, each body naming itself,
-    with numeric `resp_code` / `latency_ms` attributes and an `error.type`
-    attribute present on one.
-
-    Tests:
-    Each production-shaped filter operator selects exactly the expected logs.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     # (body, service, deployment.environment, http.request.method, resp_code, latency_ms, has_error_type)
     specs = [

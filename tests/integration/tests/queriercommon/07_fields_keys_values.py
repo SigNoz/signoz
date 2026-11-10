@@ -35,13 +35,8 @@ def test_fields_keys_by_context(
     absent: list[str],
 ) -> None:
     """
-    Setup:
-    Insert a log with a code.file attribute and a span with an http.method attribute and a host.name resource.
-
-    Tests:
-    1. Keys for a context list that context's intrinsic columns and the stored keys the context maps to,
-       each with its context; intrinsics of other contexts are not listed. The span context also keeps
-       listing attributes because `span.<attribute>` resolves attributes in queries.
+    The span context also lists attributes, because `span.<attribute>` resolves
+    attributes in queries.
     """
     now = datetime.now(tz=UTC)
     insert_logs([Logs(timestamp=now, attributes={"code.file": "/opt/integration.go"}, body="a log line")])
@@ -83,8 +78,7 @@ def test_fields_keys_by_data_type(
     absent: list[str],
 ) -> None:
     """
-    Tests:
-    1. A data type filter keeps the intrinsic columns of that type; number, int64 and float64 are one family.
+    number, int64 and float64 are one family.
     """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
@@ -117,11 +111,6 @@ def test_fields_keys_search_matches_intrinsics_case_insensitively(
     search_text: str,
     present: list[str],
 ) -> None:
-    """
-    Tests:
-    1. The search text matches intrinsic columns case-insensitively, as it does for stored keys,
-       with or without a context prefix.
-    """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/fields/keys"),
@@ -158,14 +147,8 @@ def test_fields_values_bool_fields(
     expected: list[bool],
 ) -> None:
     """
-    Setup:
-    Insert a log with a bool attribute.
-
-    Tests:
-    1. Values for a bool field are true and false (narrowed by the search text): for the calculated span
-       field, for a stored bool attribute whose tag rows carry no value, and for a key the caller
-       declares bool.
-    2. A span scope selector (isRoot) only takes true.
+    The tag rows of a bool attribute carry no value, so true and false come from
+    the type, not from the data.
     """
     insert_logs([Logs(timestamp=datetime.now(tz=UTC), attributes={"retry": True}, body="retrying")])
 
@@ -189,16 +172,9 @@ def test_fields_values_start_excludes_span_values_not_seen_since_the_day(
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
-    Setup:
-    Insert a span three days old and a span now, with different service names.
-
-    Tests:
-    1. Values with startUnixMilli an hour ago contain only the service seen today: the start is
-       floored to the day, the tag table's deduplication unit.
-    2. Values without a start contain both services.
-
-    Logs are not covered: the logs collector stamps tag rows with the ingestion hour, not the
-    log's timestamp, and the fixture writes the log's timestamp.
+    The start is floored to the day, the tag table's deduplication unit.
+    Logs are not covered: the logs collector stamps tag rows with the ingestion
+    hour, and the fixture writes the log's timestamp.
     """
     signal = "traces"
     now = datetime.now(tz=UTC)

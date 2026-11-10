@@ -18,17 +18,6 @@ def test_logs_json_body_simple_searches(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Insert logs with JSON bodies containing simple key-value pairs
-
-    Tests:
-    1. Search by body.message Contains "value"
-    2. Search by body.status = 200 (numeric)
-    3. Search by body.active = true (boolean)
-    4. Search by body.level = "error" with CONTAINS
-    5. Search by body.code > 100 (comparison)
-    """
     now = datetime.now(tz=UTC)
 
     # Log with simple JSON body
@@ -305,16 +294,6 @@ def test_logs_json_body_nested_keys(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Insert logs with JSON bodies containing nested objects
-
-    Tests:
-    1. Search by body.user.name = "value"
-    2. Search by body.request.secure = true (boolean)
-    3. Search by body.response.latency = 123.45 (floating point)
-    4. Search by body.response.status.code = 200
-    """
     now = datetime.now(tz=UTC)
 
     log1_body = json.dumps(
@@ -571,17 +550,6 @@ def test_logs_json_body_listing(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Insert multiple logs with JSON bodies
-
-    Tests:
-    1. List all logs with JSON bodies
-    2. List logs with pagination (limit and offset)
-    3. List logs ordered by timestamp
-    4. List logs with multiple filters combined (AND/OR)
-    5. Count logs matching JSON body filters
-    """
     now = datetime.now(tz=UTC)
 
     logs_data = [
@@ -935,7 +903,9 @@ def test_logs_json_body_in_operator(
     expression: str,
     expected_services: set[str],
 ) -> None:
-    """IN over a body JSON path fans out to one comparison per value."""
+    """
+    IN over a body JSON path fans out to one comparison per value.
+    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     specs = [("auth", 200, ["alpha", "beta"]), ("payment", 500, ["gamma"]), ("search", 404, ["beta", "alpha"])]
     insert_logs(

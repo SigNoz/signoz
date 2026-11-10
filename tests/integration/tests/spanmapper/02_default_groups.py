@@ -15,19 +15,8 @@ def test_default_groups_are_seeded_and_shipped_items_are_toggle_only(
     get_token: Callable[[str, str], str],
 ) -> None:
     """
-    Setup:
-    A fresh org. The reconciler seeds the shipped mapping groups at startup
-    and on org creation, so nothing has to be created here.
-
-    Tests:
-    1. The list contains llm, agent and tool as system groups with shipped
-       substrings
-    2. Shipped mappers and their sources are system-owned and enabled
-    3. A shipped name cannot be taken by a user group, and system groups and
-       mappers cannot be deleted
-    4. A shipped source can be switched off and a user override added; both
-       round-trip through PATCH and the simulator honours them
-    5. A shipped substring can be switched off and a user one added
+    The reconciler seeds the shipped groups at startup and on org creation, so
+    nothing is created here.
     """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     headers = {"authorization": f"Bearer {token}", "content-type": "application/json"}

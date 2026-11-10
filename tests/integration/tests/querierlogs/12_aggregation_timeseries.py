@@ -34,14 +34,6 @@ def test_logs_aggregate_min_max(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    svc-a: 3 logs (latency_ms 10/20/30); svc-b: 1 log (latency_ms 40).
-
-    Tests:
-    max(latency_ms) / min(latency_ms) as two aggregations in one time_series query
-    grouped by service.name return each service's latency extremes.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     specs = [("svc-a", 10), ("svc-a", 20), ("svc-a", 30), ("svc-b", 40)]
     logs = [
@@ -104,15 +96,6 @@ def test_logs_aggregate_time_series_limit(
     limit: int,
     direction: str,
 ) -> None:
-    """
-    Setup:
-    Four services with distinct log counts (a=5, b=3, c=7, d=1).
-
-    Tests:
-    A time_series group-by with a limit returns only the N series that the ordered
-    aggregation keeps — top-N for desc, bottom-N for asc — each series summing to
-    that service's log count.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     counts = {"svc-a": 5, "svc-b": 3, "svc-c": 7, "svc-d": 1}
     logs = [
@@ -163,15 +146,6 @@ def test_logs_aggregate_multi_group_by(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Logs across (service.name, deployment.environment) pairs:
-    (svc-a, prod)=2, (svc-a, dev)=1, (svc-b, prod)=3.
-
-    Tests:
-    A scalar query grouped by two resource keys returns one row per present pair
-    (the cross product, not the full Cartesian) with the correct per-pair count.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     pair_counts = {("svc-a", "prod"): 2, ("svc-a", "dev"): 1, ("svc-b", "prod"): 3}
     logs = [
