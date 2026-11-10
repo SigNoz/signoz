@@ -13,6 +13,12 @@ import {
 	READ,
 	UPDATE,
 } from '../../../stories/channelAuthz';
+import {
+	expectJiraDeploymentLocked,
+	expectReadOnlyForm,
+	expectWebhookAuthLocked,
+	sendSavedConfig,
+} from '../__story_mockdata__/channelsEdit.play';
 import { channelsEditMocks } from '../ChannelsEdit.stories.mocks';
 
 import AlertList from '../../../index';
@@ -56,18 +62,12 @@ export const NoRead: Story = {
 
 /**
  * Reading is enough to open the page, so losing `update` alone leaves it
- * standing read-only: the fields go disabled and Save is locked, not hidden.
+ * standing read-only: every field goes disabled and Save is locked, not hidden.
+ * The Channel type control walks the same check across every integration.
  */
 export const NoUpdate: Story = {
 	args: { revoked: [UPDATE] },
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await expectDisabled(
-			await canvas.findByTestId('save-channel-button', undefined, PAGE_LOAD),
-		);
-		await expectDisabled(await canvas.findByTestId('slack-channel-textbox'));
-	},
+	play: expectReadOnlyForm,
 };
 
 /**
@@ -101,15 +101,22 @@ export const NoCreate: Story = {
  */
 export const ReadOnly: Story = {
 	args: { revoked: [UPDATE, CREATE, DELETE] },
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
+	play: async (context) => {
+		await expectReadOnlyForm(context);
 		await expectDisabled(
-			await canvas.findByTestId('save-channel-button', undefined, PAGE_LOAD),
+			await within(context.canvasElement).findByTestId('test-channel-button'),
 		);
-		await expectDisabled(await canvas.findByTestId('test-channel-button'));
-		await expectDisabled(await canvas.findByTestId('slack-channel-textbox'));
 	},
+};
+
+/**
+ * Read-only keeps Test: sending is a create on the collection, so a reader who
+ * cannot edit the channel can still test it. The request carries the saved
+ * config.
+ */
+export const NoUpdateTest: Story = {
+	args: { revoked: [UPDATE] },
+	play: sendSavedConfig,
 };
 
 /**
@@ -143,6 +150,25 @@ export const TelegramReadOnly: Story = {
 		await userEvent.click(toggle);
 		await expect(toggle.getAttribute('aria-checked')).toBe(before);
 	},
+};
+
+/**
+ * The same denial on a webhook saved with basic auth. The credential fields are
+ * off, and so is the radio that would swap them for a bearer token.
+ */
+export const WebhookReadOnly: Story = {
+	args: { channelType: 'webhook', revoked: [UPDATE, CREATE, DELETE] },
+	play: expectWebhookAuthLocked,
+};
+
+/**
+ * The same denial on a Jira Cloud channel. Every field is off, including the
+ * advanced ones, and so is the radio that would swap the Atlassian email and API
+ * token for a personal access token.
+ */
+export const JiraReadOnly: Story = {
+	args: { channelType: 'jira', revoked: [UPDATE, CREATE, DELETE] },
+	play: expectJiraDeploymentLocked,
 };
 
 /** No channel permission at all: the page is denied before the form exists. */
