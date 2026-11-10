@@ -110,6 +110,8 @@ func (b *auditQueryStatementBuilder) Build(
 		stmt, err = b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeTimeSeries:
 		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
+	case qbtypes.RequestTypeHeatmap, qbtypes.RequestTypeDistribution:
+		stmt, err = b.buildHeatmapTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
 		stmt, err = b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, false, variables)
 	default:
@@ -323,6 +325,48 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
+	return b.buildTimeSeriesOrHeatmapQuery(ctx, orgID, sb, query, start, end, keys, variables, nil)
+}
+
+// buildHeatmapTimeSeriesQuery counts rows per (time bucket, group, value
+// bucket) of the field its aggregation names.
+func (b *auditQueryStatementBuilder) buildHeatmapTimeSeriesQuery(
+	ctx context.Context,
+	orgID valuer.UUID,
+	sb *sqlbuilder.SelectBuilder,
+	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	heatmapField, countQuery, err := qbtypes.HeatmapCountQuery(query)
+	if err != nil {
+		return nil, err
+	}
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end)
+	mayBeAbsent, err := querybuilder.HeatmapFieldMayBeAbsent(ctx, info, b.storage, heatmapField, keys)
+	if err != nil {
+		return nil, err
+	}
+	if mayBeAbsent {
+		countQuery = qbtypes.RequireHeatmapField(countQuery, *heatmapField)
+	}
+	return b.buildTimeSeriesOrHeatmapQuery(ctx, orgID, sb, countQuery, start, end, keys, variables, heatmapField)
+}
+
+// buildTimeSeriesOrHeatmapQuery builds one row per (time bucket, group). A
+// non-nil heatmapField makes it a heatmap instead: the bucket a row's
+// heatmapField falls in joins the group keys, so a row is one cell.
+func (b *auditQueryStatementBuilder) buildTimeSeriesOrHeatmapQuery(
+	ctx context.Context,
+	orgID valuer.UUID,
+	sb *sqlbuilder.SelectBuilder,
+	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+	heatmapField *telemetrytypes.TelemetryFieldKey,
+) (*qbtypes.Statement, error) {
 	var (
 		cteFragments   []string
 		cteArgs        [][]any
@@ -355,6 +399,17 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 		colExpr := sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, clickhousesql.Identifier(gb.Name)))
 		sb.SelectMore(colExpr)
 		fieldNames = append(fieldNames, sqlbuilder.Escape(clickhousesql.Identifier(gb.Name)))
+	}
+
+	var bucketAliases []string
+	if heatmapField != nil {
+		valueFragment, aliases, warnings, err := querybuilder.HeatmapBucketColumns(ctx, info, b.storage, sb, heatmapField, query.BucketOptions, keys)
+		if err != nil {
+			return nil, err
+		}
+		cteFragments = append(cteFragments, valueFragment)
+		bucketAliases = aliases
+		columnWarnings = append(columnWarnings, warnings...)
 	}
 
 	allAggChArgs := make([]any, 0)
@@ -393,6 +448,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 		sb.GroupBy("ts")
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		sb.GroupBy(bucketAliases...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
@@ -420,6 +476,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 	} else {
 		sb.GroupBy("ts")
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		sb.GroupBy(bucketAliases...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
