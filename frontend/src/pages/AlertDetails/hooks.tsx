@@ -10,7 +10,7 @@ import {
 	getGetRuleByIDQueryKey,
 	getGetRuleHistoryTimelineQueryOptions,
 	invalidateGetRuleByID,
-	invalidateListRules,
+	invalidateListRulesV3,
 	updateRuleByID,
 	useGetRuleByID,
 	useGetRuleHistoryOverallStatus,
@@ -443,7 +443,7 @@ export const useAlertRuleClone = ({
 					message: `Success`,
 				});
 
-				await invalidateListRules(queryClient);
+				await invalidateListRulesV3(queryClient);
 
 				params.set(QueryParams.ruleId, response.data.id);
 				navigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
@@ -494,7 +494,7 @@ export const useAlertRuleUpdate = ({
 						data: { ...existingRule.data, alert: intermediateName },
 					});
 				}
-				void invalidateListRules(queryClient);
+				void invalidateListRulesV3(queryClient);
 				notifications.success({ message: 'Alert renamed successfully' });
 			},
 			onError: (error) => {

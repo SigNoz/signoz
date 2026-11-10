@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -221,6 +222,62 @@ func TestStatementBuilder(t *testing.T) {
 				require.Equal(t, testCase.expected.Query, q.Query)
 				require.Equal(t, testCase.expected.Args, q.Args)
 			}
+		})
+	}
+}
+
+func TestStatementBuilderHeatmap(t *testing.T) {
+	statementBuilder := newTestAuditStatementBuilder(t)
+
+	testCases := []struct {
+		name        string
+		requestType qbtypes.RequestType
+		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		expected    qbtypes.Statement
+	}{
+		{
+			name:        "AttributeField_GroupByMaterialized_LinearAxis_RequiresField",
+			requestType: qbtypes.RequestTypeHeatmap,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:        telemetrytypes.SignalLogs,
+				Source:        telemetrytypes.SourceAudit,
+				StepInterval:  qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations:  []qbtypes.LogAggregation{{Expression: "http.response.status_code"}},
+				Filter:        &qbtypes.Filter{Expression: "signoz.audit.resource.kind = 'dashboard'"},
+				GroupBy:       []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.audit.action"}}},
+				BucketOptions: &qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLinear, Spec: qbtypes.LinearBucketsSpec{MaxValue: 500, NumBuckets: 5}},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE ((simpleJSONExtractString(labels, 'signoz.audit.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), ifNull(multiIf(mapContains(attributes_number, 'http.response.status_code'), toFloat64(attributes_number['http.response.status_code']), NULL), 0) AS __bucket_value SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toString(multiIf(`attribute_string_signoz$$audit$$action_exists` = true, `attribute_string_signoz$$audit$$action`, NULL)) AS `signoz.audit.action`, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value > 500, toFloat64(500), (least(greatest(ceil(__bucket_value * 5 / 500), 1), 5) - 1) * 500 / 5) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value > 500, toFloat64('+Inf'), least(greatest(ceil(__bucket_value * 5 / 500), 1), 5) * 500 / 5) AS __bucket_max, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND mapContains(attributes_number, 'http.response.status_code') AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, `signoz.audit.action`, __bucket_min, __bucket_max",
+				Args:  []any{"dashboard", "%signoz.audit.resource.kind%", "%signoz.audit.resource.kind\":\"dashboard%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			},
+		},
+		{
+			name:        "Distribution_AttributeField_SameStatementAsHeatmap",
+			requestType: qbtypes.RequestTypeDistribution,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:        telemetrytypes.SignalLogs,
+				Source:        telemetrytypes.SourceAudit,
+				StepInterval:  qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations:  []qbtypes.LogAggregation{{Expression: "http.response.status_code"}},
+				Filter:        &qbtypes.Filter{Expression: "signoz.audit.resource.kind = 'dashboard'"},
+				GroupBy:       []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.audit.action"}}},
+				BucketOptions: &qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLinear, Spec: qbtypes.LinearBucketsSpec{MaxValue: 500, NumBuckets: 5}},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE ((simpleJSONExtractString(labels, 'signoz.audit.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), ifNull(multiIf(mapContains(attributes_number, 'http.response.status_code'), toFloat64(attributes_number['http.response.status_code']), NULL), 0) AS __bucket_value SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toString(multiIf(`attribute_string_signoz$$audit$$action_exists` = true, `attribute_string_signoz$$audit$$action`, NULL)) AS `signoz.audit.action`, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value > 500, toFloat64(500), (least(greatest(ceil(__bucket_value * 5 / 500), 1), 5) - 1) * 500 / 5) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value > 500, toFloat64('+Inf'), least(greatest(ceil(__bucket_value * 5 / 500), 1), 5) * 500 / 5) AS __bucket_max, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND mapContains(attributes_number, 'http.response.status_code') AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, `signoz.audit.action`, __bucket_min, __bucket_max",
+				Args:  []any{"dashboard", "%signoz.audit.resource.kind%", "%signoz.audit.resource.kind\":\"dashboard%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			statement, err := statementBuilder.Build(context.Background(), valuer.UUID{}, 1747947419000, 1747983448000, testCase.requestType, testCase.query, nil)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected.Query, statement.Query)
+			assert.Equal(t, testCase.expected.Args, statement.Args)
+			assert.Equal(t, testCase.expected.Warnings, statement.Warnings)
 		})
 	}
 }
