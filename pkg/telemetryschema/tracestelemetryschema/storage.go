@@ -162,12 +162,14 @@ var (
 	}
 )
 
-type storage struct{}
+type storage struct {
+	schemaMetadataStore telemetrytypes.SchemaMetadataStore
+}
 
 var _ qbtypes.Storage = (*storage)(nil)
 
-func NewStorage() qbtypes.Storage {
-	return &storage{}
+func NewStorage(schemaMetadataStore telemetrytypes.SchemaMetadataStore) qbtypes.Storage {
+	return &storage{schemaMetadataStore: schemaMetadataStore}
 }
 
 func (m *storage) getColumn(
@@ -562,7 +564,33 @@ func (m *storage) Fallback(ctx context.Context, q qbtypes.QueryInfo, key *teleme
 		literal := telemetrytypes.NewTelemetryFieldKey(key.FieldContext.StringValue()+"."+key.Name, key.FieldContext, key.FieldDataType)
 		keys = append(querybuilder.SynthesizeKeys(key, value), querybuilder.SynthesizeKeys(literal, value)...)
 	}
+	if err := m.addBaseColumnEvolutions(ctx, q, keys); err != nil {
+		return nil, err
+	}
 	return querybuilder.WrapAsLogicalFields(key.Name, keys), nil
+}
+
+func (m *storage) addBaseColumnEvolutions(ctx context.Context, q qbtypes.QueryInfo, keys []*telemetrytypes.TelemetryFieldKey) error {
+	if !q.TraceAttrsJSONOn || m.schemaMetadataStore == nil {
+		return nil
+	}
+	var attributeKeys []*telemetrytypes.TelemetryFieldKey
+	for _, key := range keys {
+		if key.FieldContext == telemetrytypes.FieldContextAttribute && len(key.Evolutions) == 0 {
+			attributeKeys = append(attributeKeys, key)
+		}
+	}
+	if len(attributeKeys) == 0 {
+		return nil
+	}
+	evolutions, err := m.schemaMetadataStore.GetBaseColumnEvolutions(ctx, telemetrytypes.SignalTraces, telemetrytypes.FieldContextAttribute)
+	if err != nil {
+		return err
+	}
+	for _, key := range attributeKeys {
+		key.Evolutions = evolutions
+	}
+	return nil
 }
 
 // stampColumnType gives an untyped column key the data type its column reads

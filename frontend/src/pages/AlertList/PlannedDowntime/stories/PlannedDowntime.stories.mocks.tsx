@@ -17,10 +17,8 @@ import {
 	FIRST_DOWNTIME_NAME,
 } from './__story_mockdata__/plannedDowntime';
 
-import {
-	alertRulesResponse,
-	RULE_MAX,
-} from '../../stories/__story_mockdata__/alerts';
+import { alertRulesPage } from '../../AlertRules/stories/__story_mockdata__/ruleViews';
+import { RULE_MAX } from '../../stories/__story_mockdata__/alerts';
 import { AlertListSubTabs, AlertListTabs } from '../../types';
 
 const LIST = 'Planned downtime · list';
@@ -86,18 +84,20 @@ export const plannedDowntimeMocks = defineStoryMocks({
 				res(ctx.status(200), ctx.json({ status: 'success', data: null })),
 		),
 
-		rest.get('http://localhost/api/v2/rules', (_req, res, ctx) =>
-			values.rulesState === 'error'
-				? res(ctx.status(500), ctx.json({ status: 'error' }))
-				: res(
-						ctx.json(
-							alertRulesResponse(values.silencedRules, {
-								severity: 'mixed',
-								state: 'mixed',
-							}),
-						),
+		rest.get('http://localhost/api/v3/rules', (req, res, ctx) => {
+			if (values.rulesState === 'error') {
+				return res(ctx.status(500), ctx.json({ status: 'error' }));
+			}
+			return res(
+				ctx.json(
+					alertRulesPage(
+						values.silencedRules,
+						{ severity: 'mixed', state: 'mixed' },
+						req.url.searchParams,
 					),
-		),
+				),
+			);
+		}),
 	],
 	config: () => ({
 		route: `/alerts?tab=${AlertListTabs.CONFIGURATION}&subTab=${AlertListSubTabs.PLANNED_DOWNTIME}`,

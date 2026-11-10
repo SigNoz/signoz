@@ -104,7 +104,7 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 	metadataStore.KeysMap = keysMap
 
 	fl := flaggertest.New(t)
-	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(context.Background(), providerSettings, statementbuilder.Config{})
+	traceStmtBuilder, err := tracesstatementbuilder.NewFactory(telemetryStore, metadataStore, nil, fl).New(context.Background(), providerSettings, statementbuilder.Config{})
 	require.NoError(t, err)
 
 	return querier.New(
@@ -140,7 +140,7 @@ func prepareQuerierForAITraces(t *testing.T, telemetryStore telemetrystore.Telem
 	metadataStore.KeysMap = keysMap
 
 	fl := flaggertest.New(t)
-	aiTraceStmtBuilder, err := aistatementbuilder.NewFactory(telemetryStore, metadataStore, fl).New(context.Background(), providerSettings, statementbuilder.Config{})
+	aiTraceStmtBuilder, err := aistatementbuilder.NewFactory(telemetryStore, metadataStore, nil, fl).New(context.Background(), providerSettings, statementbuilder.Config{})
 	require.NoError(t, err)
 
 	return querier.New(

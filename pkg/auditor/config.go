@@ -27,6 +27,8 @@ type Config struct {
 	OTLPHTTP OTLPHTTPConfig `mapstructure:"otlphttp"`
 
 	File FileConfig `mapstructure:"file"`
+
+	Kafka KafkaConfig `mapstructure:"kafka"`
 }
 
 // OTLPHTTPConfig holds configuration for the OTLP HTTP exporter provider.
@@ -52,6 +54,23 @@ type FileConfig struct {
 	// Path is the absolute path to the audit log file. The file is opened with
 	// O_APPEND|O_CREATE|O_WRONLY; existing contents are preserved across runs.
 	Path string `mapstructure:"path"`
+}
+
+type KafkaConfig struct {
+	// Brokers are the seed broker addresses (host:port) used to discover the cluster.
+	Brokers []string `mapstructure:"brokers"`
+
+	// Topic must already exist; the producer does not create it.
+	Topic string `mapstructure:"topic"`
+
+	// ClientID identifies this producer in broker logs and metrics.
+	ClientID string `mapstructure:"client_id"`
+
+	// Compression is the codec for produced batches: none, gzip, snappy, lz4 or zstd.
+	Compression string `mapstructure:"compression"`
+
+	// ShutdownTimeout bounds draining buffered events on stop; events still undelivered when it expires are dropped.
+	ShutdownTimeout time.Duration `mapstructure:"shutdown_timeout"`
 }
 
 // RetryConfig configures exponential backoff for the OTLP HTTP exporter.
@@ -89,6 +108,12 @@ func newConfig() factory.Config {
 				MaxElapsedTime:  time.Minute,
 			},
 		},
+		Kafka: KafkaConfig{
+			Brokers:         []string{"localhost:9092"},
+			ClientID:        "signoz",
+			Compression:     "lz4",
+			ShutdownTimeout: 30 * time.Second,
+		},
 	}
 }
 
@@ -122,6 +147,26 @@ func (c Config) Validate() error {
 	if c.Provider == "file" {
 		if c.File.Path == "" {
 			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::file::path must be set when provider is file")
+		}
+	}
+
+	if c.Provider == "kafka" {
+		if len(c.Kafka.Brokers) == 0 {
+			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::kafka::brokers must be set when provider is kafka")
+		}
+
+		if c.Kafka.Topic == "" {
+			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::kafka::topic must be set when provider is kafka")
+		}
+
+		switch c.Kafka.Compression {
+		case "none", "gzip", "snappy", "lz4", "zstd":
+		default:
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::kafka::compression must be one of none, gzip, snappy, lz4 or zstd, got %q", c.Kafka.Compression)
+		}
+
+		if c.Kafka.ShutdownTimeout <= 0 {
+			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::kafka::shutdown_timeout must be greater than 0")
 		}
 	}
 

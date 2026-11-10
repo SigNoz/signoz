@@ -18,7 +18,7 @@ import { buildCreateAlertRulePayload, validateCreateAlertState } from './utils';
 import './styles.scss';
 import {
 	invalidateGetRuleByID,
-	invalidateListRules,
+	invalidateListRulesV3,
 } from 'api/generated/services/rules';
 import { useQueryClient } from 'react-query';
 
@@ -137,7 +137,7 @@ function Footer(): JSX.Element {
 				{
 					onSuccess: () => {
 						void invalidateGetRuleByID(queryClient, { id: ruleId });
-						void invalidateListRules(queryClient);
+						void invalidateListRulesV3(queryClient);
 
 						toast.success('Alert rule updated successfully');
 						safeNavigate('/alerts');

@@ -1,9 +1,9 @@
-import { expect, test } from '../../fixtures/auth';
-import { setupTheme, tokenColor, typeExpression } from '@helpers/query-builder';
+import { expect, LOGS_EXPLORER_PATH, test } from '../../drivers/explorers';
 
-const LOGS_EXPLORER = '/logs/logs-explorer';
+// The editor's highlight colours come from two CodeMirror themes, and the only
+// way to read them back is the computed style of a rendered token.
 
-type ThemeConfig = {
+interface ThemeConfig {
 	name: string;
 	theme: 'dark' | 'light';
 	colors: {
@@ -12,7 +12,7 @@ type ThemeConfig = {
 		property: string;
 		string: string;
 	};
-};
+}
 
 const THEMES: ThemeConfig[] = [
 	{
@@ -39,28 +39,30 @@ const THEMES: ThemeConfig[] = [
 
 for (const { name, theme, colors } of THEMES) {
 	test.describe(`QueryBuilder token highlighting — ${name}`, () => {
-		test(`k8s.namespace.name — each segment gets its own color`, async ({
+		test('TC-01 each segment of a dotted key gets its own colour', async ({
 			authedPage: page,
+			editor,
 		}) => {
-			await setupTheme(page, theme);
-			await page.goto(LOGS_EXPLORER);
-			await typeExpression(page, 'k8s.namespace.name');
+			await editor.setTheme(theme);
+			await page.goto(LOGS_EXPLORER_PATH);
+			await editor.type('k8s.namespace.name');
 
-			expect(await tokenColor(page, 'k8s')).toBe(colors.identifier);
-			expect(await tokenColor(page, '.')).toBe(colors.operator);
-			expect(await tokenColor(page, 'namespace')).toBe(colors.property);
-			expect(await tokenColor(page, 'name')).toBe(colors.property);
+			await expect(editor.token('k8s')).toHaveCSS('color', colors.identifier);
+			await expect(editor.token('.')).toHaveCSS('color', colors.operator);
+			await expect(editor.token('namespace')).toHaveCSS('color', colors.property);
+			await expect(editor.token('name')).toHaveCSS('color', colors.property);
 		});
 
-		test(`['value', 'value2'] — string tokens have native theme color`, async ({
+		test('TC-02 string tokens take the native theme colour', async ({
 			authedPage: page,
+			editor,
 		}) => {
-			await setupTheme(page, theme);
-			await page.goto(LOGS_EXPLORER);
-			await typeExpression(page, "['value', 'value2']");
+			await editor.setTheme(theme);
+			await page.goto(LOGS_EXPLORER_PATH);
+			await editor.type("['value', 'value2']");
 
-			expect(await tokenColor(page, "'value'")).toBe(colors.string);
-			expect(await tokenColor(page, "'value2'")).toBe(colors.string);
+			await expect(editor.token("'value'")).toHaveCSS('color', colors.string);
+			await expect(editor.token("'value2'")).toHaveCSS('color', colors.string);
 		});
 	});
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ScalarFieldValue } from 'utils/stringUtils';
 import { QueryParams } from 'constants/query';
 import { getFilterQueryData } from 'container/LogDetailedView/logAttributeActions.utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -37,7 +38,7 @@ export const useActiveLog = (): UseActiveLog => {
 	const onAddToQuery = useCallback(
 		(
 			fieldKey: string,
-			fieldValue: string,
+			fieldValue: ScalarFieldValue,
 			operator: string,
 			dataType?: DataTypes,
 		): void => {

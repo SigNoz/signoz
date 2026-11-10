@@ -80,6 +80,7 @@ function CeleryTaskStateGraphConfig({
 			{tabs.map((tab, index) => (
 				<Col
 					key={tab.key}
+					data-testid={`celery-state-tab-${tab.key}`}
 					onClick={(): void => handleTabClick(tab.key as CeleryTaskState)}
 					className={`celery-task-states__tab ${
 						tab.key === barState ? 'celery-task-states__tab--selected' : ''

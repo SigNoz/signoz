@@ -4,14 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/clickhousesql"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -264,7 +261,7 @@ func rewriteQueryForHistogramCTE(requestType qbtypes.RequestType, query qbtypes.
 	})
 
 	query.Aggregations = slices.Clone(query.Aggregations)
-	if query.Aggregations[0].SpaceAggregation.IsPercentile() && requestType != qbtypes.RequestTypeHeatmap {
+	if query.Aggregations[0].SpaceAggregation.IsPercentile() && !requestType.CountsIntoBuckets() {
 		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationRate
 	} else {
 		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
@@ -320,7 +317,8 @@ func (b *StatementBuilder) buildReducedTimeSeriesCTE(
 	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, metricstelemetryschema.TimeseriesV4ReducedLocalTableName))
 	sb.Select("fingerprint")
 	for i, g := range query.GroupBy {
-		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		// buildTimeSeriesCTE resolves the same keys and reports their warnings
+		col, _, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -544,10 +542,15 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, tsTable))
 
 	sb.Select("fingerprint")
+	var columnWarnings []string
 	for i, g := range query.GroupBy {
-		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		col, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, nil, err
+		}
+		// the histogram rewrite adds le itself, so its warning is not the caller's
+		if query.Aggregations[0].Type != metrictypes.HistogramType || !isHistogramBucket(g) {
+			columnWarnings = append(columnWarnings, keyWarnings...)
 		}
 		sb.SelectMore(sqlbuilder.Escape(fmt.Sprintf("%s AS %s", col, GroupByColumnAlias(i, g.Name))))
 	}
@@ -577,7 +580,7 @@ func (b *StatementBuilder) buildTimeSeriesCTE(
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	// the caller joins this into another builder, which compiles it again
-	return fmt.Sprintf("(%s) AS filtered_time_series", sqlbuilder.Escape(q)), args, preparedWhereClause.Warnings, nil
+	return fmt.Sprintf("(%s) AS filtered_time_series", sqlbuilder.Escape(q)), args, append(preparedWhereClause.Warnings, columnWarnings...), nil
 }
 
 func (b *StatementBuilder) buildTemporalAggregationCTE(
@@ -818,7 +821,7 @@ func (b *StatementBuilder) BuildFinalSelect(
 		args = append(args, a...)
 	}
 
-	if requestType == qbtypes.RequestTypeHeatmap {
+	if requestType.CountsIntoBuckets() {
 		return buildHeatmapFinalSelect(combined, args, query)
 	}
 	return buildAggregationFinalSelect(combined, args, query)
@@ -911,6 +914,10 @@ const (
 
 	heatmapValueAlias = "__result_0"
 	heatmapWindow     = "__heatmap_window"
+
+	// The column __spatial_aggregation_cte carries the sample in, which is what
+	// the bucket axis is cut from.
+	heatmapValueColumn = "value"
 )
 
 func isHistogramBucket(k qbtypes.GroupByKey) bool { return k.Name == histogramBucketKey }
@@ -976,10 +983,7 @@ func buildValueHeatmapFinalSelect(
 	args []any,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 ) (*qbtypes.Statement, error) {
-	bucketMin, bucketMax, err := renderHeatmapBucketExprs(*query.Aggregations[0].HeatmapBucketing)
-	if err != nil {
-		return nil, err
-	}
+	bucketMin, bucketMax := querybuilder.RenderHeatmapBucketExprs(*query.Aggregations[0].HeatmapBucketing, heatmapValueColumn)
 
 	groupAliases := GroupByAliases(query.GroupBy)
 
@@ -995,61 +999,6 @@ func buildValueHeatmapFinalSelect(
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
-}
-
-// renderHeatmapBucketExprs renders the bucket (min, max] that `value` falls in.
-// Only the bucket under everything the axis covers is open below, and only the
-// one over it is open above.
-func renderHeatmapBucketExprs(bucketing qbtypes.HeatmapBucketing) (minExpr, maxExpr string, err error) {
-	switch bucketing.Kind {
-	case qbtypes.BucketsKindLinear:
-		return renderLinearBucketExprs(bucketing)
-	case qbtypes.BucketsKindLog:
-		return renderLogBucketExprs()
-	default:
-		return "", "", errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"unsupported bucketsScaling %q for heatmap requests", bucketing.Kind.StringValue())
-	}
-}
-
-func renderLinearBucketExprs(bucketing qbtypes.HeatmapBucketing) (string, string, error) {
-	maxValue := formatFloat(bucketing.MaxValue)
-	numBuckets := strconv.Itoa(bucketing.NumBuckets)
-	index := fmt.Sprintf("least(greatest(ceil(value * %s / %s), 1), %s)", numBuckets, maxValue, numBuckets)
-
-	minExpr := fmt.Sprintf(
-		"multiIf(value <= 0, toFloat64('-Inf'), value > %s, toFloat64(%s), (%s - 1) * %s / %s)",
-		maxValue, maxValue, index, maxValue, numBuckets,
-	)
-	maxExpr := fmt.Sprintf(
-		"multiIf(value <= 0, toFloat64(0), value > %s, toFloat64('+Inf'), %s * %s / %s)",
-		maxValue, index, maxValue, numBuckets,
-	)
-	return minExpr, maxExpr, nil
-}
-
-// ClickHouse buckets at MaxLogScale whatever HeatmapBucketing.LogScale asks for;
-// postprocessing folds the axis down afterwards.
-func renderLogBucketExprs() (string, string, error) {
-	bucketsPerDoubling := formatFloat(math.Exp2(qbtypes.MaxLogScale))
-	lowest := formatFloat(qbtypes.MinLogUpperBound)
-	highest := formatFloat(qbtypes.MaxLogUpperBound)
-
-	minExpr := fmt.Sprintf(
-		"multiIf(value <= 0, toFloat64('-Inf'), value <= %s, toFloat64(0), value > %s, toFloat64(%s), pow(2, (ceil(log2(value) * %s) - 1) / %s))",
-		lowest, highest, highest, bucketsPerDoubling, bucketsPerDoubling,
-	)
-	maxExpr := fmt.Sprintf(
-		"multiIf(value <= 0, toFloat64(0), value <= %s, %s, value > %s, toFloat64('+Inf'), pow(2, ceil(log2(value) * %s) / %s))",
-		lowest, lowest, highest, bucketsPerDoubling, bucketsPerDoubling,
-	)
-	return minExpr, maxExpr, nil
-}
-
-// formatFloat renders a float64 as the shortest literal that reads back as the
-// same value, so an upper bound computed from it is identical on every row.
-func formatFloat(v float64) string {
-	return strconv.FormatFloat(v, 'g', -1, 64)
 }
 
 func GroupByColumnAlias(i int, name string) string {

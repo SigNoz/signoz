@@ -73,6 +73,7 @@ function MetricsTable({
 				<ErrorInPlace error={error} />
 			) : (
 				<Table
+					data-testid="metrics-table"
 					loading={{
 						spinning: isLoading,
 						indicator: (
