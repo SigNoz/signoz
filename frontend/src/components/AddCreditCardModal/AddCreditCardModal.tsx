@@ -54,6 +54,9 @@ function AddCreditCardModal({
 		updateCreditCard({ url: getBaseUrl() });
 	};
 
+	// TODO: antd stacks at 1000, under `@signozhq/ui` dialogs (1001). Opened from
+	// CustomDomainEditModal's "Contact Support" it renders behind that dialog.
+	// Moving to the `@signozhq/ui` Dialog fixes it.
 	return (
 		<Modal
 			className="add-credit-card-modal"

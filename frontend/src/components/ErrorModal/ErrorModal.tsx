@@ -20,6 +20,8 @@ type Props = {
 
 // Above every `@signozhq/ui` dialog (`--dialog-z-index: 1001`, plus one per
 // nested layer), so the error shows over the dialog whose action failed.
+// TODO: temporary. Drop it once this moves to the `@signozhq/ui` Dialog, which
+// stacks above the layer that opened it.
 const ERROR_MODAL_Z_INDEX = 2000;
 
 const classNames = {
