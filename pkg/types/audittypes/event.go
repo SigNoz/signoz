@@ -40,9 +40,6 @@ type AuditEvent struct {
 	// Custom Audit Attributes - Target
 	TargetAttributes TargetAttributes
 
-	// Custom Audit Attributes - Workspace
-	WorkspaceAttributes WorkspaceAttributes
-
 	// Custom Audit Attributes - Error
 	ErrorAttributes ErrorAttributes
 
@@ -80,7 +77,6 @@ func NewAuditEventFromHTTPRequest(
 		PrincipalAttributes: principalAttributes,
 		ResourceAttributes:  resourceAttributes,
 		TargetAttributes:    targetAttributes,
-		WorkspaceAttributes: NewWorkspaceAttributes(resourceAttributes, targetAttributes),
 		ErrorAttributes:     errorAttributes,
 		TransportAttributes: transportAttributes,
 	}
@@ -158,9 +154,6 @@ func (event AuditEvent) ToLogRecord(dest plog.LogRecord) {
 
 	// Target attributes
 	event.TargetAttributes.Put(event.PrincipalAttributes.PrincipalOrgID, attrs)
-
-	// Workspace attributes
-	event.WorkspaceAttributes.Put(attrs)
 
 	// Error attributes
 	event.ErrorAttributes.Put(attrs)

@@ -125,28 +125,6 @@ func (attributes TargetAttributes) Put(orgID valuer.UUID, dest pcommon.Map) {
 	}
 }
 
-// Audit attributes — Workspace.
-type WorkspaceAttributes struct {
-	// The ingestion key the resource is or belongs to.
-	WorkspaceKeyID string
-}
-
-func NewWorkspaceAttributes(resourceAttributes ResourceAttributes, targetAttributes TargetAttributes) WorkspaceAttributes {
-	if resourceAttributes.Resource.Kind() == coretypes.KindIngestionKey {
-		return WorkspaceAttributes{WorkspaceKeyID: resourceAttributes.ResourceID}
-	}
-
-	if resourceAttributes.Resource.Kind() == coretypes.KindIngestionLimit && targetAttributes.TargetResource != nil && targetAttributes.TargetResource.Kind() == coretypes.KindIngestionKey {
-		return WorkspaceAttributes{WorkspaceKeyID: targetAttributes.TargetResourceID}
-	}
-
-	return WorkspaceAttributes{}
-}
-
-func (attributes WorkspaceAttributes) Put(dest pcommon.Map) {
-	putStrIfNotEmpty(dest, string(sigsemconv.SigNozWorkspaceKeyIDKey), attributes.WorkspaceKeyID)
-}
-
 // Audit attributes — Error (When outcome is failure)
 // Error messages are intentionally excluded to avoid leaking sensitive or
 // PII data into audit logs. The error type is sufficient for filtering and

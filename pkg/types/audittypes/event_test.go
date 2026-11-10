@@ -322,12 +322,11 @@ func TestAuditEventToLogRecord(t *testing.T) {
 			protoMajor:         1,
 			protoMinor:         1,
 			expectedAttributes: map[string]any{
-				"signoz.audit.outcome":    "failure",
-				"exception.type":          "forbidden",
-				"signoz.workspace.key.id": "key-001",
-				"client.address":          "10.0.0.2",
+				"signoz.audit.outcome": "failure",
+				"exception.type":       "forbidden",
+				"client.address":       "10.0.0.2",
 			},
-			absentAttributes: []string{"client.port", "signoz.principal.id", "signoz.principal.type", "signoz.principal.email"},
+			absentAttributes: []string{"client.port", "signoz.principal.id", "signoz.principal.type", "signoz.principal.email", "signoz.workspace.key.id"},
 		},
 		{
 			name:               "Attach_IngestionLimitToKey",
@@ -342,9 +341,8 @@ func TestAuditEventToLogRecord(t *testing.T) {
 			expectedAttributes: map[string]any{
 				"signoz.resource.target.kind": "ingestion-key",
 				"signoz.resource.target.id":   "key-002",
-				"signoz.workspace.key.id":     "key-002",
 			},
-			absentAttributes: []string{"signoz.resource.kind", "signoz.resource.id"},
+			absentAttributes: []string{"signoz.resource.kind", "signoz.resource.id", "signoz.workspace.key.id"},
 		},
 	}
 
