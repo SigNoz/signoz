@@ -11,6 +11,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+const (
+	deploymentStatusKey   = "deployment.status"
+	deploymentIDKey       = "deployment.id"
+	vcsRevisionKey        = "vcs.ref.head.revision"
+	vcsRefNameKey         = "vcs.ref.head.name"
+	vcsRepositoryURLKey   = "vcs.repository.url.full"
+	cicdPipelineRunURLKey = "cicd.pipeline.run.url.full"
+)
+
 var deploymentIdentityKeys = []string{"service.name", "deployment.environment", "deployment.environment.name", "service.version"}
 
 type DeploymentSpec struct {
@@ -23,10 +32,16 @@ type DeploymentSpec struct {
 	TraceID            string                `json:"traceId" required:"true"`
 	SpanID             string                `json:"spanId" required:"true"`
 	LogID              string                `json:"logId" required:"true"`
+	Status             string                `json:"status" required:"true"`
+	DeploymentID       string                `json:"deploymentId" required:"true"`
+	VCSRevision        string                `json:"vcsRevision" required:"true"`
+	VCSRefName         string                `json:"vcsRefName" required:"true"`
+	VCSRepositoryURL   string                `json:"vcsRepositoryUrl" required:"true"`
+	PipelineRunURL     string                `json:"pipelineRunUrl" required:"true"`
 	ResourceAttributes map[string]string     `json:"resourceAttributes" required:"true"`
 }
 
-// DeploymentRow is the storage shape one marker row is scanned into; FirstSeen is epoch ms.
+// DeploymentRow is the storage shape one marker row is scanned into; FirstSeen is epoch ms, Attributes are the log record attributes.
 type DeploymentRow struct {
 	Signal      telemetrytypes.Signal
 	Service     string
@@ -37,6 +52,7 @@ type DeploymentRow struct {
 	SpanID      string
 	LogID       string
 	Labels      string
+	Attributes  map[string]string
 }
 
 func NewDeploymentSpecFromRow(row DeploymentRow) (DeploymentSpec, error) {
@@ -60,6 +76,12 @@ func NewDeploymentSpecFromRow(row DeploymentRow) (DeploymentSpec, error) {
 		TraceID:            row.TraceID,
 		SpanID:             row.SpanID,
 		LogID:              row.LogID,
+		Status:             row.Attributes[deploymentStatusKey],
+		DeploymentID:       row.Attributes[deploymentIDKey],
+		VCSRevision:        row.Attributes[vcsRevisionKey],
+		VCSRefName:         row.Attributes[vcsRefNameKey],
+		VCSRepositoryURL:   row.Attributes[vcsRepositoryURLKey],
+		PipelineRunURL:     row.Attributes[cicdPipelineRunURLKey],
 		ResourceAttributes: resourceAttributes,
 	}, nil
 }

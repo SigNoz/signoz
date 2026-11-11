@@ -126,7 +126,7 @@ func (m *module) queryLogsDeployments(ctx context.Context, orgID valuer.UUID, re
 			row         = annotationtypes.DeploymentRow{Signal: telemetrytypes.SignalLogs}
 			firstSeenNs uint64
 		)
-		if err := rows.Scan(&row.Service, &row.Environment, &row.Version, &firstSeenNs, &row.LogID, &row.Labels); err != nil {
+		if err := rows.Scan(&row.Service, &row.Environment, &row.Version, &firstSeenNs, &row.LogID, &row.Attributes, &row.Labels); err != nil {
 			return nil, 0, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan logs deployment row")
 		}
 		row.FirstSeen = int64(firstSeenNs / 1000000)
@@ -173,7 +173,7 @@ func buildLogsDeploymentsQuery(filterClause *sqlbuilder.WhereClause, envKeys []s
 
 	final := buildFinalSelect(
 		logsTables,
-		"argMin(raw_logs.id, raw_logs.timestamp) AS first_id",
+		"argMin(raw_logs.id, raw_logs.timestamp) AS first_id, argMin(raw_logs.attributes_string, raw_logs.timestamp) AS attributes",
 		"first_seen >= t1_ns AND first_seen <= t2_ns",
 	)
 
@@ -234,7 +234,7 @@ func buildResourcePasses(tables signalTables, filterClause *sqlbuilder.WhereClau
 	return ctes, [][]any{constantArgs, firstBucketArgs, candArgs}
 }
 
-// buildFinalSelect joins the raw table back to cand; idSelect and having carry the signal-specific columns and bounds.
+// buildFinalSelect joins the raw table back to cand; signalSelect and having carry the signal-specific columns and bounds.
 // resolveEnvironmentKeys returns the environment spellings to read, the semconv family when the families flag is on, else the legacy key alone.
 func resolveEnvironmentKeys(ctx context.Context, orgID valuer.UUID, fl flagger.Flagger, signal telemetrytypes.Signal) []string {
 	if !querybuilder.SemconvFamiliesEnabled(ctx, orgID, fl) {
@@ -259,7 +259,7 @@ func buildEnvironmentExpr(keys []string) string {
 	return fmt.Sprintf("COALESCE(%s, '')", strings.Join(reads, ", "))
 }
 
-func buildFinalSelect(tables signalTables, idSelect, having string) string {
+func buildFinalSelect(tables signalTables, signalSelect, having string) string {
 	raw := tables.rawAlias
 	return fmt.Sprintf(
 		"SELECT cand.service, cand.env, cand.version, min(%s.timestamp) AS first_seen, %s, argMin(cand.labels, %s.timestamp) AS labels "+
@@ -269,7 +269,7 @@ func buildFinalSelect(tables signalTables, idSelect, having string) string {
 			"GROUP BY cand.service, cand.env, cand.version "+
 			"HAVING %s "+
 			"ORDER BY first_seen",
-		raw, idSelect, raw,
+		raw, signalSelect, raw,
 		tables.dbName, tables.dataTable, raw,
 		raw, raw,
 		raw, raw,

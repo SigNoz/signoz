@@ -13,6 +13,14 @@ from fixtures.traces import Traces
 
 ENDPOINT = "/api/v1/annotations"
 IDENTITY_KEYS = ("service.name", "deployment.environment", "deployment.environment.name", "service.version")
+EVENT_FIELDS = {
+    "status": "deployment.status",
+    "deploymentId": "deployment.id",
+    "vcsRevision": "vcs.ref.head.revision",
+    "vcsRefName": "vcs.ref.head.name",
+    "vcsRepositoryUrl": "vcs.repository.url.full",
+    "pipelineRunUrl": "cicd.pipeline.run.url.full",
+}
 # load_from_file shifts the earliest dataset row (the baseline tuple) to now - BASELINE_OFFSET.
 BASELINE_OFFSET = timedelta(hours=3)
 ALL_MARKERS = {("checkout", "1.1.0"), ("cart", "2.0.0"), ("worker", "3.0.0"), ("tieA", "4.0.0"), ("tieB", "4.0.0"), ("api", "6.0.0"), ("sp`ec'ial", "5.0.0$0")}
@@ -88,7 +96,7 @@ def test_deployments_accuracy(
     for record in data["records"]:
         assert record["kind"] == "deployment"
         spec = record["spec"]
-        for field in ("id", "signal", "service", "environment", "version", "firstSeen", "traceId", "spanId", "logId", "resourceAttributes"):
+        for field in ("id", "signal", "service", "environment", "version", "firstSeen", "traceId", "spanId", "logId", *EVENT_FIELDS, "resourceAttributes"):
             assert field in spec, f"missing {field} in {spec!r}"
         assert re.fullmatch(r"dep_[0-9a-f]{16}", spec["id"])
         key = (spec["service"], spec["version"])
@@ -97,11 +105,16 @@ def test_deployments_accuracy(
             assert spec["firstSeen"] == int(span.timestamp.timestamp() * 1000)
             assert (spec["traceId"], spec["spanId"], spec["logId"]) == (span.trace_id, span.span_id, "")
             resources = span.resources_string
+            event_fields = {field: spec[field] for field in EVENT_FIELDS}
+            assert event_fields == dict.fromkeys(EVENT_FIELDS, ""), f"traces marker {key} should carry no event fields, got {event_fields}"
         else:
             log = log_of[key]
             assert spec["firstSeen"] == int(log.timestamp) // 1_000_000
             assert (spec["traceId"], spec["spanId"], spec["logId"]) == ("", "", log.id)
             resources = log.resources_string
+            event_fields = {field: spec[field] for field in EVENT_FIELDS}
+            want = {field: log.attributes_string.get(attribute, "") for field, attribute in EVENT_FIELDS.items()}
+            assert event_fields == want, f"logs marker {key}: expected event fields {want}, got {event_fields}"
         assert spec["environment"] == resources["deployment.environment"]
         assert spec["resourceAttributes"] == {k: v for k, v in resources.items() if k not in IDENTITY_KEYS}
 

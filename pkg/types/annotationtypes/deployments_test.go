@@ -81,6 +81,63 @@ func TestNewDeploymentSpecFromRow(t *testing.T) {
 	}
 }
 
+func TestNewDeploymentSpecFromRowEventAttributes(t *testing.T) {
+	testCases := []struct {
+		name       string
+		attributes map[string]string
+		want       DeploymentSpec
+	}{
+		{
+			name: "EventAttributes_AllFieldsMapped",
+			attributes: map[string]string{
+				"deployment.status":          "succeeded",
+				"deployment.id":              "run-101",
+				"vcs.ref.head.revision":      "9f1c2ab",
+				"vcs.ref.head.name":          "main",
+				"vcs.repository.url.full":    "https://github.com/acme/checkout",
+				"cicd.pipeline.run.url.full": "https://github.com/acme/checkout/actions/runs/101",
+			},
+			want: DeploymentSpec{
+				Status:           "succeeded",
+				DeploymentID:     "run-101",
+				VCSRevision:      "9f1c2ab",
+				VCSRefName:       "main",
+				VCSRepositoryURL: "https://github.com/acme/checkout",
+				PipelineRunURL:   "https://github.com/acme/checkout/actions/runs/101",
+			},
+		},
+		{
+			name:       "EventAttributes_Partial_RestEmpty",
+			attributes: map[string]string{"deployment.status": "failed"},
+			want:       DeploymentSpec{Status: "failed"},
+		},
+		{
+			name:       "EventAttributes_Absent_EmptyStrings",
+			attributes: nil,
+			want:       DeploymentSpec{},
+		},
+		{
+			name:       "UnrelatedAttributes_NotExposed",
+			attributes: map[string]string{"code.file": "main.py", "deployment.name": "checkout-rollout"},
+			want:       DeploymentSpec{},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			spec, err := NewDeploymentSpecFromRow(DeploymentRow{Signal: telemetrytypes.SignalLogs, Service: "checkout", Environment: "prod", Version: "1.0.0", LogID: "log-1", Attributes: testCase.attributes})
+			require.NoError(t, err)
+			assert.Equal(t, testCase.want.Status, spec.Status)
+			assert.Equal(t, testCase.want.DeploymentID, spec.DeploymentID)
+			assert.Equal(t, testCase.want.VCSRevision, spec.VCSRevision)
+			assert.Equal(t, testCase.want.VCSRefName, spec.VCSRefName)
+			assert.Equal(t, testCase.want.VCSRepositoryURL, spec.VCSRepositoryURL)
+			assert.Equal(t, testCase.want.PipelineRunURL, spec.PipelineRunURL)
+			assert.Equal(t, map[string]string{}, spec.ResourceAttributes)
+		})
+	}
+}
+
 func TestMergeDeployments(t *testing.T) {
 	traces := []DeploymentSpec{
 		{Service: "checkout", Environment: "prod", Version: "1.2.0", FirstSeen: 200, Signal: telemetrytypes.SignalTraces, TraceID: "t1"},
