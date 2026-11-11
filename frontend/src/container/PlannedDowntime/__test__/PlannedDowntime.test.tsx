@@ -1,6 +1,6 @@
 import { UseQueryResult } from 'react-query';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import type {
 	ListDowntimeSchedules200,
 	RenderErrorResponseDTO,
@@ -13,7 +13,18 @@ import {
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { mockAppLocation, mockNavigate } from 'tests/router-mocks';
 import { render, userEvent } from 'tests/test-utils';
-import { USER_ROLES } from 'types/roles';
+import { server } from 'mocks-server/server';
+import {
+	setupAuthzAdmin,
+	setupAuthzAllow,
+	setupAuthzDenyAll,
+} from 'lib/authz/utils/authz-test-utils';
+import {
+	buildPlannedMaintenanceDeletePermission,
+	PlannedMaintenanceAttachPermission,
+	PlannedMaintenanceCreatePermission,
+	PlannedMaintenanceListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/planned-maintenance.permissions';
 
 import { PlannedDowntime } from '../PlannedDowntime';
 import { buildSchedule, createMockDowntime } from './testUtils';
@@ -21,13 +32,21 @@ import { buildSchedule, createMockDowntime } from './testUtils';
 const SEARCH_TEST_ID = 'planned-downtime-search';
 const CREATE_TEST_ID = 'planned-downtime-create';
 
-function renderPage(role: string = USER_ROLES.ADMIN): void {
+function renderPage(): void {
 	render(
 		<VirtuosoMockContext.Provider value={{ viewportHeight: 800, itemHeight: 46 }}>
 			<PlannedDowntime />
 		</VirtuosoMockContext.Provider>,
-		{},
-		{ role },
+	);
+}
+
+const EDIT_ROW = 'downtime-edit-1';
+const DELETE_ROW = 'downtime-delete-1';
+
+async function openRowActions(): Promise<void> {
+	await userEvent.click(await screen.findByTestId('downtime-actions-1'));
+	await waitFor(() =>
+		expect(screen.getByTestId(EDIT_ROW)).not.toHaveAttribute('data-loading'),
 	);
 }
 
@@ -157,26 +176,56 @@ describe('PlannedDowntime Component', () => {
 			isLoading: false,
 			isFetching: false,
 		};
+		server.use(setupAuthzAdmin());
 	});
 
-	it('renders the header, search and create action', () => {
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	it('renders the header, search and create action', async () => {
 		renderPage();
 
 		expect(screen.getByText('All planned downtimes')).toBeInTheDocument();
 		expect(screen.getByTestId(SEARCH_TEST_ID)).toBeInTheDocument();
-		expect(screen.getByTestId(CREATE_TEST_ID)).toHaveAttribute(
-			'aria-disabled',
-			'false',
+		await waitFor(() =>
+			expect(screen.getByTestId(CREATE_TEST_ID)).toHaveAttribute(
+				'aria-disabled',
+				'false',
+			),
 		);
 	});
 
-	it('disables the "New downtime" button for users with VIEWER role', () => {
-		renderPage(USER_ROLES.VIEWER);
+	it('disables "New Downtime" without attach and names it', async () => {
+		server.use(
+			setupAuthzAllow(
+				PlannedMaintenanceListPermission,
+				PlannedMaintenanceCreatePermission,
+			),
+		);
+		renderPage();
 
+		await waitFor(() =>
+			expect(screen.getByTestId(CREATE_TEST_ID)).toHaveAttribute(
+				'data-denied-permissions',
+				PlannedMaintenanceAttachPermission,
+			),
+		);
 		expect(screen.getByTestId(CREATE_TEST_ID)).toHaveAttribute(
 			'aria-disabled',
 			'true',
 		);
+	});
+
+	it('shows a permission callout instead of the list without list', async () => {
+		server.use(setupAuthzDenyAll());
+		renderPage();
+
+		await expect(
+			screen.findByText('list:planned-maintenance:*'),
+		).resolves.toBeInTheDocument();
+		expect(screen.queryByText(MOCK_DOWNTIME_1_NAME)).not.toBeInTheDocument();
+		expect(screen.getByTestId(SEARCH_TEST_ID)).toBeDisabled();
 	});
 
 	it('should load with search term from URL query params', () => {
@@ -291,19 +340,57 @@ describe('PlannedDowntime Component', () => {
 	it('opens the delete confirmation from the row actions', async () => {
 		renderPage();
 
-		await userEvent.click(await screen.findByTestId('downtime-actions-1'));
-		await userEvent.click(await screen.findByText('Delete'));
+		await openRowActions();
+		await userEvent.click(screen.getByTestId(DELETE_ROW));
 
 		await expect(
 			screen.findByRole('button', { name: 'Delete Schedule' }),
 		).resolves.toBeInTheDocument();
 	});
 
-	it('hides row actions for viewers', async () => {
-		renderPage(USER_ROLES.VIEWER);
+	it('disables the empty-state create action without attach', async () => {
+		mockDowntimeQueryResult.data = { data: [], status: 'success' };
+		server.use(
+			setupAuthzAllow(
+				PlannedMaintenanceListPermission,
+				PlannedMaintenanceCreatePermission,
+			),
+		);
+		renderPage();
 
-		await screen.findByText(MOCK_DOWNTIME_1_NAME);
-		expect(screen.queryByTestId('downtime-actions-1')).not.toBeInTheDocument();
+		await waitFor(() =>
+			expect(screen.getByTestId('planned-downtime-empty-create')).toHaveAttribute(
+				'data-denied-permissions',
+				PlannedMaintenanceAttachPermission,
+			),
+		);
+	});
+
+	it('disables Edit and Delete when denied', async () => {
+		server.use(setupAuthzAllow(PlannedMaintenanceListPermission));
+		renderPage();
+
+		await openRowActions();
+		await waitFor(() =>
+			expect(screen.getByTestId(EDIT_ROW)).toHaveAttribute('data-disabled'),
+		);
+		expect(screen.getByTestId(DELETE_ROW)).toHaveAttribute('data-disabled');
+	});
+
+	it('gates Edit and Delete on that schedule separately', async () => {
+		server.use(
+			setupAuthzAllow(
+				PlannedMaintenanceListPermission,
+				buildPlannedMaintenanceDeletePermission('1'),
+			),
+		);
+		renderPage();
+
+		await openRowActions();
+		await waitFor(() =>
+			expect(screen.getByTestId(EDIT_ROW)).toHaveAttribute('data-disabled'),
+		);
+		expect(screen.getByTestId(DELETE_ROW)).not.toHaveAttribute('data-disabled');
 	});
 
 	it('preserves existing query parameters such as sort and pagination when typing in search (Bug 54)', async () => {
