@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"slices"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -13,8 +14,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
 type addSpanMapperTuples struct {
@@ -56,20 +55,20 @@ func (migration *addSpanMapperTuples) Up(ctx context.Context, db *bun.DB) error 
 	isPG := migration.sqlstore.BunDB().Dialect().Name() == dialect.PG
 
 	tuples := []migrationTuple{
-		{authtypes.SigNozAdminRoleName, "metaresource", "span-mapper-group", "read"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "span-mapper-group", "update"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "span-mapper-group", "delete"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "span-mapper-group", "create"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "span-mapper-group", "list"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "span-mapper-group", "attach"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "span-mapper-group", "detach"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "span-mapper", "update"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "span-mapper", "delete"},
-		{authtypes.SigNozAdminRoleName, "metaresource", "span-mapper", "create"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "span-mapper-group", "read"},
-		{authtypes.SigNozEditorRoleName, "metaresource", "span-mapper-group", "list"},
-		{authtypes.SigNozViewerRoleName, "metaresource", "span-mapper-group", "read"},
-		{authtypes.SigNozViewerRoleName, "metaresource", "span-mapper-group", "list"},
+		{"signoz-admin", "metaresource", "span-mapper-group", "read"},
+		{"signoz-admin", "metaresource", "span-mapper-group", "update"},
+		{"signoz-admin", "metaresource", "span-mapper-group", "delete"},
+		{"signoz-admin", "metaresource", "span-mapper-group", "create"},
+		{"signoz-admin", "metaresource", "span-mapper-group", "list"},
+		{"signoz-admin", "metaresource", "span-mapper-group", "attach"},
+		{"signoz-admin", "metaresource", "span-mapper-group", "detach"},
+		{"signoz-admin", "metaresource", "span-mapper", "update"},
+		{"signoz-admin", "metaresource", "span-mapper", "delete"},
+		{"signoz-admin", "metaresource", "span-mapper", "create"},
+		{"signoz-editor", "metaresource", "span-mapper-group", "read"},
+		{"signoz-editor", "metaresource", "span-mapper-group", "list"},
+		{"signoz-viewer", "metaresource", "span-mapper-group", "read"},
+		{"signoz-viewer", "metaresource", "span-mapper-group", "list"},
 	}
 
 	for _, orgID := range orgIDs {
@@ -138,26 +137,9 @@ func (migration *addSpanMapperTuples) Up(ctx context.Context, db *bun.DB) error 
 		}
 	}
 
-	managedRoleGroups := make(map[string]string, len(coretypes.ManagedRoleToTransactions))
-	for roleName, transactions := range coretypes.ManagedRoleToTransactions {
-		data, err := json.Marshal(authtypes.NewTransactionGroupsFromTransactions(transactions))
-		if err != nil {
-			return err
-		}
-		managedRoleGroups[roleName] = string(data)
-	}
-
 	for _, orgID := range orgIDs {
-		for roleName, data := range managedRoleGroups {
-			if _, err := tx.NewUpdate().
-				Model(new(roles)).
-				Set("transaction_groups = ?", data).
-				Where("org_id = ?", orgID).
-				Where("type = ?", authtypes.RoleTypeManaged.StringValue()).
-				Where("name = ?", roleName).
-				Exec(ctx); err != nil {
-				return err
-			}
+		if err := addManagedRoleTransactionGroups(ctx, tx, orgID, tuples); err != nil {
+			return err
 		}
 	}
 
@@ -165,5 +147,83 @@ func (migration *addSpanMapperTuples) Up(ctx context.Context, db *bun.DB) error 
 }
 
 func (migration *addSpanMapperTuples) Down(context.Context, *bun.DB) error {
+	return nil
+}
+
+type migrationTransactionGroup struct {
+	Relation    string               `json:"relation"`
+	ObjectGroup migrationObjectGroup `json:"objectGroup"`
+}
+
+type migrationObjectGroup struct {
+	Resource  migrationObjectResource `json:"resource"`
+	Selectors []string                `json:"selectors"`
+}
+
+type migrationObjectResource struct {
+	Type string `json:"type"`
+	Kind string `json:"kind"`
+}
+
+// addManagedRoleTransactionGroups merges each tuple as a wildcard grant into its managed role's stored transaction groups.
+func addManagedRoleTransactionGroups(ctx context.Context, tx bun.Tx, orgID string, tuples []migrationTuple) error {
+	tuplesByRole := make(map[string][]migrationTuple)
+	for _, tuple := range tuples {
+		tuplesByRole[tuple.roleName] = append(tuplesByRole[tuple.roleName], tuple)
+	}
+
+	for roleName, roleTuples := range tuplesByRole {
+		var data sql.NullString
+		err := tx.NewSelect().
+			Table("role").
+			Column("transaction_groups").
+			Where("org_id = ?", orgID).
+			Where("type = ?", "managed").
+			Where("name = ?", roleName).
+			Scan(ctx, &data)
+		if err == sql.ErrNoRows || (err == nil && !data.Valid) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+
+		var groups []*migrationTransactionGroup
+		if err := json.Unmarshal([]byte(data.String), &groups); err != nil {
+			return err
+		}
+
+		for _, tuple := range roleTuples {
+			index := slices.IndexFunc(groups, func(group *migrationTransactionGroup) bool {
+				return group.Relation == tuple.relation && group.ObjectGroup.Resource.Type == tuple.objectType && group.ObjectGroup.Resource.Kind == tuple.objectName
+			})
+			if index == -1 {
+				groups = append(groups, &migrationTransactionGroup{
+					Relation:    tuple.relation,
+					ObjectGroup: migrationObjectGroup{Resource: migrationObjectResource{Type: tuple.objectType, Kind: tuple.objectName}, Selectors: []string{"*"}},
+				})
+				continue
+			}
+			if !slices.Contains(groups[index].ObjectGroup.Selectors, "*") {
+				groups[index].ObjectGroup.Selectors = append(groups[index].ObjectGroup.Selectors, "*")
+			}
+		}
+
+		updated, err := json.Marshal(groups)
+		if err != nil {
+			return err
+		}
+
+		if _, err := tx.NewUpdate().
+			Table("role").
+			Set("transaction_groups = ?", string(updated)).
+			Where("org_id = ?", orgID).
+			Where("type = ?", "managed").
+			Where("name = ?", roleName).
+			Exec(ctx); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
