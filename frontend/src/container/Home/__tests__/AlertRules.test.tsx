@@ -10,7 +10,13 @@ import {
 	listRulesV3Response,
 } from 'mocks-server/__mockdata__/alert_rules';
 import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent } from 'tests/test-utils';
+import {
+	setupAuthzAdmin,
+	setupAuthzDeny,
+	setupAuthzDenyAll,
+} from 'lib/authz/utils/authz-test-utils';
+import { RuleCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import AlertRules from '../AlertRules/AlertRules';
 
@@ -115,5 +121,48 @@ describe('Home alert rules', () => {
 			'home-alert-rule-burning',
 			'home-alert-rule-quiet',
 		]);
+	});
+});
+
+describe('Home alert rules - authz', () => {
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	it('shows a permission callout instead of a skeleton without list', async () => {
+		serveRules([burning]);
+		server.use(setupAuthzDenyAll());
+		renderAlertRules();
+
+		await expect(screen.findByText('list:rule:*')).resolves.toBeInTheDocument();
+		expect(screen.queryByTestId(/^home-alert-rule-/)).not.toBeInTheDocument();
+	});
+
+	it('locks Create Alert Rule without create, with no link to follow', async () => {
+		serveRules([]);
+		server.use(setupAuthzDeny(RuleCreatePermission));
+		renderAlertRules();
+
+		await waitFor(() =>
+			expect(screen.getByTestId('home-create-alert-rule')).toHaveAttribute(
+				'data-denied-permissions',
+				RuleCreatePermission,
+			),
+		);
+		const button = screen.getByTestId('home-create-alert-rule');
+		expect(button).toBeDisabled();
+		expect(button.closest('a')).toBeNull();
+	});
+
+	it('links Create Alert Rule to the new alert page with create', async () => {
+		serveRules([]);
+		server.use(setupAuthzAdmin());
+		renderAlertRules();
+
+		const button = await screen.findByTestId('home-create-alert-rule');
+		await waitFor(() =>
+			expect(button.closest('a')).toHaveAttribute('href', ROUTES.ALERTS_NEW),
+		);
+		expect(screen.queryByText('list:rule:*')).not.toBeInTheDocument();
 	});
 });
