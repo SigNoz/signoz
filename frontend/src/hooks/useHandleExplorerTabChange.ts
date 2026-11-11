@@ -25,6 +25,7 @@ export const useHandleExplorerTabChange = (): {
 		querySearchParameters?: ICurrentQueryData,
 		redirectToUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 		newTab?: boolean,
+		searchParams?: Record<string, unknown>,
 	) => void;
 } => {
 	const {
@@ -69,6 +70,7 @@ export const useHandleExplorerTabChange = (): {
 			currentQueryData?: ICurrentQueryData,
 			redirectToUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 			newTab?: boolean,
+			searchParams?: Record<string, unknown>,
 		) => {
 			const newPanelType = type as PANEL_TYPES;
 
@@ -82,6 +84,7 @@ export const useHandleExplorerTabChange = (): {
 			redirectWithQueryBuilderData(
 				query,
 				{
+					...searchParams,
 					[QueryParams.panelTypes]: newPanelType,
 					...(nextViewKey ? { [QueryParams.viewKey]: nextViewKey } : {}),
 				},

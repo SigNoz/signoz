@@ -147,7 +147,7 @@ func TestV2MinimalReadShape(t *testing.T) {
 
 	body := readBody(t, stored)
 
-	for _, field := range []string{"labels", "annotations", "description", "preferredChannels", "evalWindow", "frequency"} {
+	for _, field := range []string{"labels", "annotations", "description"} {
 		assert.NotContains(t, body, field)
 	}
 
@@ -159,7 +159,7 @@ func TestV2MinimalReadShape(t *testing.T) {
 	assert.JSONEq(t, `false`, string(ns["usePolicy"]))
 
 	assert.JSONEq(t, `false`, string(body["disabled"]))
-	assert.JSONEq(t, `"v5"`, string(body["version"]))
+	assert.JSONEq(t, `""`, string(body["version"]))
 
 	var condition struct {
 		Thresholds struct {
@@ -297,6 +297,7 @@ func TestPatchMergePreservesUnpatchedFields(t *testing.T) {
 				"panelType": "graph",
 				"queryType": "promql"
 			},
+			"selectedQueryName": "A",
 			"thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90, "matchType": "at_least_once", "op": "above"}]}
 		},
 		"evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m", "frequency": "1m"}},

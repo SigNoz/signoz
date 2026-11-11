@@ -74,8 +74,8 @@ func TestPostableChannelValidate(t *testing.T) {
 				Name:        "jira",
 				DisplayName: "jira",
 				Config: ChannelConfig{Kind: ChannelKindJira, Spec: &ChannelJiraConfig{
-					Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Bug",
-					Email: "oncall@acme.com", APIToken: "api-token",
+					Deployment: JiraDeploymentCloud, Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Bug",
+					Auth:    ChannelJiraAuth{JiraAuth: ChannelJiraCloudAuth{Email: "oncall@acme.com", APIToken: "api-token"}},
 					Summary: valuer.MustNewUnsetOrNonEmptyString("jira summary"), Description: valuer.MustNewUnsetOrNonEmptyString("jira description"), ReopenDuration: valuer.MustNewUnsetOrNonEmptyString("three days"),
 				}},
 			},

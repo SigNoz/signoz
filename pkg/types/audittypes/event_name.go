@@ -1,6 +1,17 @@
 package audittypes
 
-import "github.com/SigNoz/signoz/pkg/types/coretypes"
+import (
+	"github.com/SigNoz/signoz-semantic-conventions/gen/go/sigsemconv"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
+)
+
+var eventNames = map[coretypes.Verb]EventName{
+	coretypes.VerbCreate: {s: sigsemconv.SigNozAuditCreateEventName},
+	coretypes.VerbUpdate: {s: sigsemconv.SigNozAuditUpdateEventName},
+	coretypes.VerbDelete: {s: sigsemconv.SigNozAuditDeleteEventName},
+	coretypes.VerbAttach: {s: sigsemconv.SigNozAuditAttachEventName},
+	coretypes.VerbDetach: {s: sigsemconv.SigNozAuditDetachEventName},
+}
 
 // EventName is a typed wrapper for audit event names, ensuring not every
 // string qualifies as an event name.
@@ -8,15 +19,16 @@ type EventName struct {
 	s string
 }
 
-// NewEventName derives the audit event name from a resource kind and action.
-// Format: {resource_kind}.{pastTense(action)}
-//
-// Examples:
-//
-//	NewEventName("dashboard", coretypes.VerbCreate)  → "dashboard.created"
-//	NewEventName("dashboard", coretypes.VerbUpdate)  → "dashboard.updated"
-func NewEventName(resourceKind coretypes.Kind, action coretypes.Verb) EventName {
-	return EventName{s: resourceKind.String() + "." + action.PastTense()}
+// NewEventName returns the audit event name of an action, signoz.audit.{action}.
+// It is zero for an action that is not audited; see IsAudited.
+func NewEventName(action coretypes.Verb) EventName {
+	return eventNames[action]
+}
+
+// IsAudited reports whether an action records an audit event.
+func IsAudited(action coretypes.Verb) bool {
+	_, ok := eventNames[action]
+	return ok
 }
 
 // String returns the string representation of the event name.

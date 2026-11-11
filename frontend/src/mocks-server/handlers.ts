@@ -6,7 +6,11 @@ import {
 	notificationChannelsV2,
 	notificationChannelV2,
 } from './__mockdata__/alerts';
-import { alertRulesFixture } from './__mockdata__/alert_rules';
+import {
+	alertRulesFixture,
+	listRulesV3Response,
+	ruleViewsFixture,
+} from './__mockdata__/alert_rules';
 import { triggeredAlertsFixture } from './__mockdata__/triggered_alerts';
 import { billingSuccessResponse } from './__mockdata__/billing';
 import {
@@ -227,6 +231,47 @@ export const handlers = [
 			ctx.status(200),
 			ctx.json({ data: alertRulesFixture, status: 'success' }),
 		),
+	),
+	rest.get('http://localhost/api/v3/rules', (req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json(listRulesV3Response(alertRulesFixture, req.url.searchParams)),
+		),
+	),
+	rest.get('http://localhost/api/v2/rule_views', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({ data: { views: ruleViewsFixture }, status: 'success' }),
+		),
+	),
+	rest.post('http://localhost/api/v2/rule_views', async (req, res, ctx) => {
+		const body = (await req.json()) as Pick<
+			(typeof ruleViewsFixture)[number],
+			'name' | 'data'
+		>;
+		return res(
+			ctx.status(201),
+			ctx.json({
+				data: { ...ruleViewsFixture[0], ...body, id: 'new-view-id' },
+				status: 'success',
+			}),
+		);
+	}),
+	rest.put('http://localhost/api/v2/rule_views/:id', async (req, res, ctx) => {
+		const body = (await req.json()) as Pick<
+			(typeof ruleViewsFixture)[number],
+			'name' | 'data'
+		>;
+		return res(
+			ctx.status(200),
+			ctx.json({
+				data: { ...ruleViewsFixture[0], ...body, id: req.params.id },
+				status: 'success',
+			}),
+		);
+	}),
+	rest.delete('http://localhost/api/v2/rule_views/:id', (_, res, ctx) =>
+		res(ctx.status(204)),
 	),
 	rest.post('http://localhost/api/v2/rules', async (req, res, ctx) => {
 		const body = (await req.json()) as { alert?: string };
