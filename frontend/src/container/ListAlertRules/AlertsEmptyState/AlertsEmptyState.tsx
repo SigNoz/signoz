@@ -5,9 +5,9 @@ import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-import useComponentPermission from 'hooks/useComponentPermission';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { RuleCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { useAppContext } from 'providers/App/App';
 import { DataSource } from 'types/common/queryBuilder';
 import { isModifierKeyPressed } from 'utils/app';
 
@@ -32,6 +32,8 @@ const alertLogEvents = (
 	void logEvent(title, dataSource ? { ...attributes, dataSource } : attributes);
 };
 
+const CREATE_CHECKS = [RuleCreatePermission];
+
 interface AlertsEmptyStateProps {
 	onRefresh?: () => void;
 }
@@ -39,12 +41,7 @@ interface AlertsEmptyStateProps {
 export function AlertsEmptyState({
 	onRefresh,
 }: AlertsEmptyStateProps): JSX.Element {
-	const { user } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
-	const [addNewAlert] = useComponentPermission(
-		['add_new_alert', 'action'],
-		user.role,
-	);
 
 	const [loading, setLoading] = useState(false);
 
@@ -85,20 +82,19 @@ export function AlertsEmptyState({
 						</section>
 						<div className={styles.actionContainer}>
 							<div className={styles.buttonGroup}>
-								<Button
+								<AuthZButton
+									checks={CREATE_CHECKS}
 									size="md"
 									variant="solid"
 									color="primary"
 									onClick={onClickNewAlertHandler}
-									disabled={!addNewAlert}
-									disabledTooltip="You need permission to create alert rules"
 									loading={loading}
 									testId="add-alert"
 									prefix={<Plus size="md" />}
 									width="150px"
 								>
 									New Alert Rule
-								</Button>
+								</AuthZButton>
 								{onRefresh && (
 									<Button
 										size="md"
