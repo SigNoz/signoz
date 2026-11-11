@@ -1730,6 +1730,8 @@ components:
       type: object
     AnnotationtypesDeploymentSpec:
       properties:
+        deploymentId:
+          type: string
         environment:
           type: string
         firstSeen:
@@ -1738,6 +1740,8 @@ components:
         id:
           type: string
         logId:
+          type: string
+        pipelineRunUrl:
           type: string
         resourceAttributes:
           additionalProperties:
@@ -1750,7 +1754,15 @@ components:
           $ref: '#/components/schemas/TelemetrytypesSignal'
         spanId:
           type: string
+        status:
+          type: string
         traceId:
+          type: string
+        vcsRefName:
+          type: string
+        vcsRepositoryUrl:
+          type: string
+        vcsRevision:
           type: string
         version:
           type: string
@@ -1764,6 +1776,12 @@ components:
       - traceId
       - spanId
       - logId
+      - status
+      - deploymentId
+      - vcsRevision
+      - vcsRefName
+      - vcsRepositoryUrl
+      - pipelineRunUrl
       - resourceAttributes
       type: object
     AnnotationtypesPostableAnnotations:

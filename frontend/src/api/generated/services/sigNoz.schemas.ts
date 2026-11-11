@@ -3239,6 +3239,10 @@ export interface AnnotationtypesDeploymentSpecDTO {
 	/**
 	 * @type string
 	 */
+	deploymentId: string;
+	/**
+	 * @type string
+	 */
 	environment: string;
 	/**
 	 * @type integer
@@ -3253,6 +3257,10 @@ export interface AnnotationtypesDeploymentSpecDTO {
 	 * @type string
 	 */
 	logId: string;
+	/**
+	 * @type string
+	 */
+	pipelineRunUrl: string;
 	/**
 	 * @type object,null
 	 */
@@ -3269,7 +3277,23 @@ export interface AnnotationtypesDeploymentSpecDTO {
 	/**
 	 * @type string
 	 */
+	status: string;
+	/**
+	 * @type string
+	 */
 	traceId: string;
+	/**
+	 * @type string
+	 */
+	vcsRefName: string;
+	/**
+	 * @type string
+	 */
+	vcsRepositoryUrl: string;
+	/**
+	 * @type string
+	 */
+	vcsRevision: string;
 	/**
 	 * @type string
 	 */
