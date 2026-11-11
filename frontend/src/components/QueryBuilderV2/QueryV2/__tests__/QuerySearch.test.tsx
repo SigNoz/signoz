@@ -224,6 +224,77 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		await waitFor(() => expect(onRun).toHaveBeenCalled(), { timeout: 2000 });
 	});
 
+	it('does not render the run button by default', () => {
+		render(
+			<QuerySearch
+				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+				queryData={initialQueriesMap.logs.builder.queryData[0]}
+				dataSource={DataSource.LOGS}
+				onRun={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.queryByTestId('query-search-run-button'),
+		).not.toBeInTheDocument();
+	});
+
+	it('calls onRun with the editor text when the run button is clicked', async () => {
+		const onRun = jest.fn() as jest.MockedFunction<(q: string) => void>;
+
+		render(
+			<QuerySearch
+				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+				queryData={{
+					...initialQueriesMap.logs.builder.queryData[0],
+					filter: { expression: SAMPLE_STATUS_QUERY },
+				}}
+				dataSource={DataSource.LOGS}
+				onRun={onRun}
+				showRunButton
+			/>,
+		);
+
+		await waitFor(() =>
+			expect(document.querySelector(CM_EDITOR_SELECTOR)?.textContent).toBe(
+				SAMPLE_STATUS_QUERY,
+			),
+		);
+
+		await userEvent.click(screen.getByTestId('query-search-run-button'));
+
+		expect(onRun).toHaveBeenCalledWith(SAMPLE_STATUS_QUERY);
+	});
+
+	it('runs the locked scope combined with the editor text', async () => {
+		const onRun = jest.fn() as jest.MockedFunction<(q: string) => void>;
+		const scope = "kind_string = 'Client'";
+
+		render(
+			<QuerySearch
+				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+				queryData={{
+					...initialQueriesMap.traces.builder.queryData[0],
+					filter: { expression: SAMPLE_STATUS_QUERY },
+				}}
+				dataSource={DataSource.TRACES}
+				onRun={onRun}
+				initialExpression={scope}
+				showRunButton
+			/>,
+		);
+
+		await waitFor(() =>
+			expect(document.querySelector(CM_EDITOR_SELECTOR)?.textContent).toBe(
+				SAMPLE_STATUS_QUERY,
+			),
+		);
+
+		await userEvent.click(screen.getByTestId('query-search-run-button'));
+
+		expect(onRun).toHaveBeenCalledWith(`${scope} AND (${SAMPLE_STATUS_QUERY})`);
+	});
+
 	it('initializes CodeMirror with expression from queryData.filter.expression on mount', async () => {
 		const testExpression =
 			"http.status_code >= 500 AND service.name = 'frontend'";

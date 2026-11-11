@@ -1,6 +1,12 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CircleCheck, Info, TriangleAlert, Filter } from '@signozhq/icons';
+import {
+	CircleCheck,
+	Info,
+	TriangleAlert,
+	Filter,
+	Play,
+} from '@signozhq/icons';
 import {
 	autocompletion,
 	closeCompletion,
@@ -16,6 +22,7 @@ import { githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorView, keymap, Prec } from '@uiw/react-codemirror';
 import { Button, Card, Collapse, Popover, Tooltip } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
+import { Button as SignozButton } from '@signozhq/ui/button';
 import cx from 'classnames';
 import {
 	negationQueryOperatorSuggestions,
@@ -105,6 +112,7 @@ interface QuerySearchProps {
 	signalSource?: string;
 	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
 	onRun?: (query: string) => void;
+	showRunButton?: boolean;
 	showFilterSuggestionsWithoutMetric?: boolean;
 	/** When set, the editor shows only the user expression; API/filter uses `initial AND (user)`. */
 	initialExpression?: string;
@@ -125,6 +133,7 @@ function QuerySearch({
 	queryData,
 	dataSource,
 	onRun,
+	showRunButton,
 	signalSource,
 	hardcodedAttributeKeys,
 	showFilterSuggestionsWithoutMetric,
@@ -172,6 +181,18 @@ function QuerySearch({
 		(): string => editorRef.current?.state.doc.toString() || '',
 		[],
 	);
+
+	const handleRun = useCallback((): void => {
+		if (!onRun) {
+			return;
+		}
+		const user = getCurrentExpression();
+		onRun(
+			isScopedFilter
+				? combineInitialAndUserExpression(initialExpression ?? '', user)
+				: user,
+		);
+	}, [onRun, getCurrentExpression, isScopedFilter, initialExpression]);
 
 	const updateEditorValue = useCallback(
 		(value: string, options: { skipOnChange?: boolean } = {}): void => {
@@ -1557,167 +1578,174 @@ function QuerySearch({
 				</div>
 			)}
 
-			<div className="query-where-clause-editor-container">
-				{isScopedFilter ? (
-					<Tooltip title={initialExpression || ''} placement="left">
-						<div className="query-search-initial-scope-label">
-							<Filter
+			<div className="query-where-clause-row">
+				<div className="query-where-clause-editor-container">
+					{isScopedFilter ? (
+						<Tooltip title={initialExpression || ''} placement="left">
+							<div className="query-search-initial-scope-label">
+								<Filter
+									size={14}
+									style={{
+										opacity: 0.9,
+										color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+									}}
+								/>
+							</div>
+						</Tooltip>
+					) : null}
+					<Tooltip
+						title={<div data-log-detail-ignore="true">{getTooltipContent()}</div>}
+						placement="left"
+					>
+						<a
+							href="https://signoz.io/docs/userguide/search-syntax/"
+							target="_blank"
+							rel="noopener noreferrer"
+							style={{
+								position: 'absolute',
+								top: 8,
+								right: validation.isValid === false && getCurrentExpression() ? 40 : 8, // Move left when error shown
+								cursor: 'help',
+								zIndex: 10,
+								transition: 'right 0.2s ease',
+								display: 'inline-flex',
+								alignItems: 'center',
+								color: '#8c8c8c',
+							}}
+							onClick={(e): void => e.stopPropagation()}
+						>
+							<Info
 								size={14}
 								style={{
 									opacity: 0.9,
 									color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
 								}}
 							/>
-						</div>
+						</a>
 					</Tooltip>
-				) : null}
-				<Tooltip
-					title={<div data-log-detail-ignore="true">{getTooltipContent()}</div>}
-					placement="left"
-				>
-					<a
-						href="https://signoz.io/docs/userguide/search-syntax/"
-						target="_blank"
-						rel="noopener noreferrer"
-						style={{
-							position: 'absolute',
-							top: 8,
-							right: validation.isValid === false && getCurrentExpression() ? 40 : 8, // Move left when error shown
-							cursor: 'help',
-							zIndex: 10,
-							transition: 'right 0.2s ease',
-							display: 'inline-flex',
-							alignItems: 'center',
-							color: '#8c8c8c',
-						}}
-						onClick={(e): void => e.stopPropagation()}
-					>
-						<Info
-							size={14}
-							style={{
-								opacity: 0.9,
-								color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
-							}}
-						/>
-					</a>
-				</Tooltip>
 
-				<CodeMirror
-					theme={isDarkMode ? copilot : githubLight}
-					onChange={handleChange}
-					onUpdate={handleUpdate}
-					onCreateEditor={handleEditorCreate}
-					className={cx('query-where-clause-editor', {
-						isValid: validation.isValid === true,
-						hasErrors: validation.errors.length > 0,
-						hasInitialExpression: isScopedFilter,
-					})}
-					extensions={[
-						autocompletion({
-							override: [combinedSuggestions],
-							defaultKeymap: true,
-							closeOnBlur: true,
-							activateOnTyping: true,
-							maxRenderedOptions: 50,
-							addToOptions: [{ render: renderRecentDeleteButton, position: 100 }],
-						}),
-						javascript({ jsx: false, typescript: false }),
-						EditorView.lineWrapping,
-						stopEventsExtension,
-						Prec.highest(
-							keymap.of([
-								...completionKeymap,
-								{
-									key: 'Escape',
-									run: closeCompletion,
-								},
-								{
-									key: 'Enter',
-									preventDefault: true,
-									// Prevent default behavior of Enter to add new line
-									// and instead run a custom action
-									run: (): boolean => true,
-								},
-								{
-									key: 'Mod-Enter',
-									preventDefault: true,
-									// Prevent default behavior of Mod-Enter to add new line
-									// and instead run a custom action
-									// Mod-Enter is usually Ctrl-Enter or Cmd-Enter based on OS
-									run: (): boolean => {
-										if (onRun && typeof onRun === 'function') {
-											const user = getCurrentExpression();
-											onRun(
-												isScopedFilter
-													? combineInitialAndUserExpression(initialExpression ?? '', user)
-													: user,
-											);
-										}
-										return true;
-									},
-								},
-								{
-									key: 'Shift-Enter',
-									preventDefault: true,
-									// Prevent default behavior of Shift-Enter to add new line
-									run: (): boolean => true,
-								},
-							]),
-						),
-					]}
-					placeholder={placeholder}
-					basicSetup={{
-						lineNumbers: false,
-					}}
-					onFocus={(): void => {
-						setIsFocused(true);
-					}}
-					onBlur={handleBlur}
-				/>
-
-				{getCurrentExpression() && validation.isValid === false && !isFocused && (
-					<div
-						className={cx('query-status-container', {
+					<CodeMirror
+						theme={isDarkMode ? copilot : githubLight}
+						onChange={handleChange}
+						onUpdate={handleUpdate}
+						onCreateEditor={handleEditorCreate}
+						className={cx('query-where-clause-editor', {
+							isValid: validation.isValid === true,
 							hasErrors: validation.errors.length > 0,
+							hasInitialExpression: isScopedFilter,
 						})}
-					>
-						<Popover
-							placement="bottomRight"
-							showArrow={false}
-							content={
-								<div className="query-status-content">
-									<div className="query-status-content-header">
-										<div className="query-validation">
-											<div className="query-validation-errors">
-												{validation.errors.map((error) => (
-													<div key={error.message} className="query-validation-error">
-														<div className="query-validation-error">
-															{error.line}:{error.column} - {error.message}
+						extensions={[
+							autocompletion({
+								override: [combinedSuggestions],
+								defaultKeymap: true,
+								closeOnBlur: true,
+								activateOnTyping: true,
+								maxRenderedOptions: 50,
+								addToOptions: [{ render: renderRecentDeleteButton, position: 100 }],
+							}),
+							javascript({ jsx: false, typescript: false }),
+							EditorView.lineWrapping,
+							stopEventsExtension,
+							Prec.highest(
+								keymap.of([
+									...completionKeymap,
+									{
+										key: 'Escape',
+										run: closeCompletion,
+									},
+									{
+										key: 'Enter',
+										preventDefault: true,
+										// Prevent default behavior of Enter to add new line
+										// and instead run a custom action
+										run: (): boolean => true,
+									},
+									{
+										key: 'Mod-Enter',
+										preventDefault: true,
+										// Prevent default behavior of Mod-Enter to add new line
+										// and instead run a custom action
+										// Mod-Enter is usually Ctrl-Enter or Cmd-Enter based on OS
+										run: (): boolean => {
+											handleRun();
+											return true;
+										},
+									},
+									{
+										key: 'Shift-Enter',
+										preventDefault: true,
+										// Prevent default behavior of Shift-Enter to add new line
+										run: (): boolean => true,
+									},
+								]),
+							),
+						]}
+						placeholder={placeholder}
+						basicSetup={{
+							lineNumbers: false,
+						}}
+						onFocus={(): void => {
+							setIsFocused(true);
+						}}
+						onBlur={handleBlur}
+					/>
+
+					{getCurrentExpression() && validation.isValid === false && !isFocused && (
+						<div
+							className={cx('query-status-container', {
+								hasErrors: validation.errors.length > 0,
+							})}
+						>
+							<Popover
+								placement="bottomRight"
+								showArrow={false}
+								content={
+									<div className="query-status-content">
+										<div className="query-status-content-header">
+											<div className="query-validation">
+												<div className="query-validation-errors">
+													{validation.errors.map((error) => (
+														<div key={error.message} className="query-validation-error">
+															<div className="query-validation-error">
+																{error.line}:{error.column} - {error.message}
+															</div>
 														</div>
-													</div>
-												))}
+													))}
+												</div>
 											</div>
 										</div>
 									</div>
-								</div>
-							}
-							overlayClassName="query-status-popover"
-						>
-							{validation.isValid ? (
-								<Button
-									type="text"
-									icon={<CircleCheck size="md" />}
-									className="periscope-btn ghost"
-								/>
-							) : (
-								<Button
-									type="text"
-									icon={<TriangleAlert size={14} color={Color.BG_CHERRY_500} />}
-									className="periscope-btn ghost"
-								/>
-							)}
-						</Popover>
-					</div>
+								}
+								overlayClassName="query-status-popover"
+							>
+								{validation.isValid ? (
+									<Button
+										type="text"
+										icon={<CircleCheck size="md" />}
+										className="periscope-btn ghost"
+									/>
+								) : (
+									<Button
+										type="text"
+										icon={<TriangleAlert size={14} color={Color.BG_CHERRY_500} />}
+										className="periscope-btn ghost"
+									/>
+								)}
+							</Popover>
+						</div>
+					)}
+				</div>
+				{showRunButton && (
+					<SignozButton
+						variant="solid"
+						color="secondary"
+						size="md"
+						prefix={<Play size={14} />}
+						onClick={handleRun}
+						testId="query-search-run-button"
+					>
+						Run
+					</SignozButton>
 				)}
 			</div>
 
@@ -1811,6 +1839,7 @@ function QuerySearch({
 
 QuerySearch.defaultProps = {
 	onRun: undefined,
+	showRunButton: false,
 	signalSource: '',
 	hardcodedAttributeKeys: undefined,
 	placeholder:
