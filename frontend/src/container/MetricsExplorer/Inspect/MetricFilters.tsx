@@ -51,6 +51,8 @@ function MetricFilters({
 				color="inherit"
 				as="span"
 				textOverflow="wrap"
+				display="inline-block"
+				width="60px"
 			>
 				Where
 			</Typography>
