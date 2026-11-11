@@ -36,6 +36,7 @@ import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { useNotifications } from 'hooks/useNotifications';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { defaultTo, isEmpty } from 'lodash-es';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -54,6 +55,7 @@ import {
 } from './PlannedDowntimeutils';
 
 import './PlannedDowntime.styles.scss';
+import { usePlannedDowntimeFormPermissions } from './usePlannedDowntimeFormPermissions';
 import { RadioGroup } from '@signozhq/ui/radio-group';
 
 dayjs.locale('en');
@@ -141,6 +143,24 @@ export function PlannedDowntimeForm(
 
 	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
+
+	const { isReadOnly, saveChecks, getRuleDenial } =
+		usePlannedDowntimeFormPermissions({
+			initialValues,
+			isEditMode,
+			alertOptions,
+			isAllRules: alertRuleScope === 'all',
+			selectedRules: selectedTags,
+		});
+
+	const gatedAlertOptions = useMemo(
+		() =>
+			alertOptions.map((option) => {
+				const denial = getRuleDenial(String(option.value));
+				return { ...option, disabled: !!denial, title: denial };
+			}),
+		[alertOptions, getRuleDenial],
+	);
 
 	const requiredFieldRule = [{ required: true }];
 
@@ -359,6 +379,7 @@ export function PlannedDowntimeForm(
 				form={form}
 				layout="vertical"
 				className="createForm"
+				disabled={isReadOnly}
 				onFinish={onFinish}
 				onValuesChange={(): void => {
 					setRecurrenceType(form.getFieldValue('recurrence')?.repeatType as string);
@@ -480,9 +501,10 @@ export function PlannedDowntimeForm(
 						<>
 							<Form.Item noStyle shouldUpdate>
 								<AlertRuleTags
-									closable
+									closable={!isReadOnly}
 									selectedTags={selectedTags}
 									handleClose={handleClose}
+									getLockReason={getRuleDenial}
 								/>
 							</Form.Item>
 							<Form.Item
@@ -510,7 +532,8 @@ export function PlannedDowntimeForm(
 									tagRender={noTagRenderer}
 									onChange={handleAlertRulesChange}
 									showSearch
-									options={alertOptions}
+									options={gatedAlertOptions}
+									data-testid="downtime-alert-rules"
 									filterOption={(input, option): boolean =>
 										(option?.label as string)
 											?.toLowerCase()
@@ -526,8 +549,13 @@ export function PlannedDowntimeForm(
 										)
 									}
 								>
-									{alertOptions?.map((option) => (
-										<Select.Option key={option.value} value={option.value}>
+									{gatedAlertOptions.map((option) => (
+										<Select.Option
+											key={option.value}
+											value={option.value}
+											disabled={option.disabled}
+											title={option.title}
+										>
 											{option.label}
 										</Select.Option>
 									))}
@@ -568,19 +596,22 @@ export function PlannedDowntimeForm(
 				</Form.Item>
 				<Form.Item style={{ marginBottom: 0 }}>
 					<ModalButtonWrapper>
-						<Button
-							key="submit"
-							type="primary"
-							htmlType="submit"
-							onClick={handleOk}
-							loading={saveLoading || isLoading}
-							className="downtime-schedule-btn"
-						>
-							<Flex align="center" gap={4}>
-								<Check size={16} />
-								{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
-							</Flex>
-						</Button>
+						<AuthZTooltip checks={saveChecks}>
+							<Button
+								key="submit"
+								type="primary"
+								htmlType="submit"
+								onClick={handleOk}
+								loading={saveLoading || isLoading}
+								className="downtime-schedule-btn"
+								data-testid="downtime-save"
+							>
+								<Flex align="center" gap={4}>
+									<Check size={16} />
+									{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+								</Flex>
+							</Button>
+						</AuthZTooltip>
 					</ModalButtonWrapper>
 				</Form.Item>
 			</Form>
