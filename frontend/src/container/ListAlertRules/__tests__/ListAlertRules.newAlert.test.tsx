@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import ROUTES from 'constants/routes';
 import { screen, waitFor } from 'tests/test-utils';
 
-import { renderListAlertRules } from './_helpers';
+import { renderListAlertRules, waitForAuthZButton } from './_helpers';
 
 describe('ListAlertRules — new alert button', () => {
 	beforeEach(() => {
@@ -16,6 +16,7 @@ describe('ListAlertRules — new alert button', () => {
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
+		await waitForAuthZButton('list-alerts-new-alert-button');
 
 		await user.click(screen.getByRole('button', { name: /new alert/i }));
 
@@ -33,6 +34,7 @@ describe('ListAlertRules — new alert button', () => {
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
+		await waitForAuthZButton('list-alerts-new-alert-button');
 
 		await user.click(screen.getByRole('button', { name: /new alert/i }));
 
@@ -49,6 +51,7 @@ describe('ListAlertRules — new alert button', () => {
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
+		await waitForAuthZButton('list-alerts-new-alert-button');
 
 		await user.keyboard('{Control>}');
 		await user.click(screen.getByRole('button', { name: /new alert/i }));
