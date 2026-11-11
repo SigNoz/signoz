@@ -1,6 +1,25 @@
 import type { ComponentProps } from 'react';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { USER_ROLES } from 'types/roles';
+import {
+	AUTHZ_CHECK_URL,
+	setupAuthzAdmin,
+	setupAuthzAllow,
+	setupAuthzDeny,
+} from 'lib/authz/utils/authz-test-utils';
+import {
+	buildNotificationChannelAttachPermission,
+	buildNotificationChannelDetachPermission,
+	NotificationChannelCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
+import {
+	buildRoutePolicyAttachPermission,
+	buildRoutePolicyReadPermission,
+	buildRoutePolicyUpdatePermission,
+	RoutePolicyAttachPermission,
+	RoutePolicyCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/route-policy.permissions';
 
 import RoutingPolicyDetails from '../RoutingPolicyDetails';
 import {
@@ -30,10 +49,7 @@ const SAVE_BUTTON = 'routing-policy-save';
 
 type Props = ComponentProps<typeof RoutingPolicyDetails>;
 
-function renderDetails(
-	props: Partial<Props> = {},
-	role: string = USER_ROLES.ADMIN,
-): void {
+function renderDetails(props: Partial<Props> = {}): void {
 	render(
 		<RoutingPolicyDetails
 			routingPolicy={mockRoutingPolicy}
@@ -47,8 +63,6 @@ function renderDetails(
 			refreshChannels={mockRefreshChannels}
 			{...props}
 		/>,
-		undefined,
-		{ role },
 	);
 }
 
@@ -58,7 +72,32 @@ function channelsSelectInput(): HTMLElement {
 	);
 }
 
+async function waitForSaveEnabled(): Promise<void> {
+	await waitFor(() => expect(screen.getByTestId(SAVE_BUTTON)).toBeEnabled());
+}
+
+/** The picker's option row for a channel; antd renders it outside our markup. */
+async function findChannelOption(name: string): Promise<HTMLElement> {
+	await userEvent.setup().click(channelsSelectInput());
+	const matches = await screen.findAllByText(name);
+	const option = matches
+		.map((el) => el.closest<HTMLElement>('.ant-select-item-option'))
+		.find(Boolean);
+	if (!option) {
+		throw new Error(`No picker option for ${name}`);
+	}
+	return option;
+}
+
 describe('RoutingPolicyDetails', () => {
+	beforeEach(() => {
+		server.use(setupAuthzAdmin());
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
 	it('renders base create layout with header, 3 inputs and footer', () => {
 		renderDetails({ mode: 'create' });
 
@@ -127,6 +166,9 @@ describe('RoutingPolicyDetails', () => {
 
 		await user.click(screen.getByTestId(SAVE_BUTTON));
 
+		await waitForSaveEnabled();
+		await user.click(screen.getByTestId(SAVE_BUTTON));
+
 		await waitFor(() =>
 			expect(mockHandlePolicyDetailsModalAction).toHaveBeenCalledWith('create', {
 				name: NEW_NAME,
@@ -157,6 +199,7 @@ describe('RoutingPolicyDetails', () => {
 		await user.clear(descriptionTextarea);
 		await user.paste(NEW_DESCRIPTION);
 
+		await waitForSaveEnabled();
 		await user.click(screen.getByTestId(SAVE_BUTTON));
 
 		await waitFor(() =>
@@ -223,27 +266,152 @@ describe('RoutingPolicyDetails', () => {
 		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
 	});
 
-	it('should show create channel button for admin users in empty state', async () => {
+	it('offers to create a channel with notification-channel:create', async () => {
 		const user = userEvent.setup();
 		renderDetails({ channels: [] });
 
 		await user.click(channelsSelectInput());
 
 		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
-		expect(screen.getByText('Create one')).toBeInTheDocument();
+		await expect(screen.findByText('Create one')).resolves.toBeInTheDocument();
 	});
 
-	it('should show admin message for non-admin users in empty state', async () => {
+	it('asks for an admin without notification-channel:create', async () => {
 		const user = userEvent.setup();
-		renderDetails({ channels: [] }, USER_ROLES.VIEWER);
+		server.use(setupAuthzDeny(NotificationChannelCreatePermission));
+		renderDetails({ channels: [] });
 
 		await user.click(channelsSelectInput());
 
-		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
-		expect(
-			screen.getByText('Please ask your admin to create one.'),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText('Please ask your admin to create one.'),
+		).resolves.toBeInTheDocument();
 		expect(screen.queryByText('Create one')).not.toBeInTheDocument();
+	});
+
+	describe('authz', () => {
+		const POLICY_ID = mockRoutingPolicy.id;
+		const LINKED = MOCK_CHANNEL_1;
+		const UNLINKED = MOCK_CHANNEL_2;
+
+		it('opens read-only with Save disabled without update', async () => {
+			server.use(setupAuthzAllow(buildRoutePolicyReadPermission(POLICY_ID)));
+			renderDetails({ mode: 'edit' });
+
+			await waitFor(() =>
+				expect(screen.getByDisplayValue(mockRoutingPolicy.name)).toBeDisabled(),
+			);
+			expect(screen.getByTestId(SAVE_BUTTON)).toBeDisabled();
+		});
+
+		it('names update when Save is denied on edit', async () => {
+			server.use(setupAuthzDeny(buildRoutePolicyUpdatePermission(POLICY_ID)));
+			renderDetails({ mode: 'edit' });
+
+			await waitFor(() =>
+				expect(screen.getByTestId(SAVE_BUTTON)).toHaveAttribute(
+					'data-denied-permissions',
+					buildRoutePolicyUpdatePermission(POLICY_ID),
+				),
+			);
+		});
+
+		it('disables Save on create without attach on routing policies', async () => {
+			server.use(setupAuthzDeny(RoutePolicyAttachPermission));
+			renderDetails({ mode: 'create' });
+
+			await waitFor(() =>
+				expect(screen.getByTestId(SAVE_BUTTON)).toHaveAttribute(
+					'data-denied-permissions',
+					RoutePolicyAttachPermission,
+				),
+			);
+			expect(screen.getByTestId(SAVE_BUTTON)).toBeDisabled();
+		});
+
+		it('enables Save on create with create and attach', async () => {
+			server.use(
+				setupAuthzAllow(RoutePolicyCreatePermission, RoutePolicyAttachPermission),
+			);
+			renderDetails({ mode: 'create' });
+
+			await waitForSaveEnabled();
+			expect(screen.getByTestId(SAVE_BUTTON)).not.toHaveAttribute(
+				'data-denied-permissions',
+			);
+		});
+
+		it('disables a channel the user cannot attach, naming the permission', async () => {
+			server.use(
+				setupAuthzDeny(buildNotificationChannelAttachPermission(UNLINKED.id)),
+			);
+			renderDetails({ mode: 'edit' });
+			await waitForSaveEnabled();
+
+			const option = await findChannelOption(UNLINKED.name);
+			await waitFor(() =>
+				expect(option).toHaveClass('ant-select-item-option-disabled'),
+			);
+			expect(option.getAttribute('title')).toContain(
+				`attach:notification-channel:${UNLINKED.id}`,
+			);
+		});
+
+		it('locks a linked channel the user cannot detach', async () => {
+			server.use(
+				setupAuthzDeny(buildNotificationChannelDetachPermission(LINKED.id)),
+			);
+			renderDetails({ mode: 'edit' });
+			await waitForSaveEnabled();
+
+			const linked = await findChannelOption(LINKED.name);
+			await waitFor(() =>
+				expect(linked).toHaveClass('ant-select-item-option-disabled'),
+			);
+			expect(linked.getAttribute('title')).toContain(
+				`detach:notification-channel:${LINKED.id}`,
+			);
+			await expect(findChannelOption(UNLINKED.name)).resolves.not.toHaveClass(
+				'ant-select-item-option-disabled',
+			);
+		});
+
+		it('blocks adding channels without attach on the policy', async () => {
+			server.use(setupAuthzDeny(buildRoutePolicyAttachPermission(POLICY_ID)));
+			renderDetails({ mode: 'edit' });
+			await waitForSaveEnabled();
+
+			const option = await findChannelOption(UNLINKED.name);
+			await waitFor(() =>
+				expect(option).toHaveClass('ant-select-item-option-disabled'),
+			);
+			expect(option.getAttribute('title')).toContain(
+				`attach:route-policy:${POLICY_ID}`,
+			);
+		});
+
+		it('leaves channels pickable on create when the check fails', async () => {
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.status(500))),
+			);
+			renderDetails({ mode: 'create' });
+
+			const option = await findChannelOption(UNLINKED.name);
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			expect(option).not.toHaveClass('ant-select-item-option-disabled');
+		});
+
+		it('falls open when the check fails', async () => {
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.status(500))),
+			);
+			renderDetails({ mode: 'edit' });
+
+			const option = await findChannelOption(UNLINKED.name);
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			expect(option).not.toHaveClass('ant-select-item-option-disabled');
+			expect(screen.getByDisplayValue(mockRoutingPolicy.name)).toBeEnabled();
+		});
 	});
 
 	it('should call refreshChannels when refresh button is clicked in empty state', async () => {

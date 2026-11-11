@@ -4,8 +4,8 @@ import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { Check, Loader, X } from '@signozhq/icons';
-import { useAppContext } from 'providers/App/App';
-import { USER_ROLES } from 'types/roles';
+import { useNotificationChannelCollectionPermissions } from 'hooks/notificationChannels/useNotificationChannelCollectionPermissions';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { openInNewTab } from 'utils/navigation';
 
 import { INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE } from './constants';
@@ -13,6 +13,7 @@ import {
 	RoutingPolicyDetailsFormState,
 	RoutingPolicyDetailsProps,
 } from './types';
+import { useRoutingPolicyFormPermissions } from './useRoutingPolicyFormPermissions';
 
 function RoutingPolicyDetails({
 	closeModal,
@@ -26,7 +27,10 @@ function RoutingPolicyDetails({
 	refreshChannels,
 }: RoutingPolicyDetailsProps): JSX.Element {
 	const [form] = Form.useForm();
-	const { user } = useAppContext();
+	const { isReadOnly, saveChecks, getChannelDenial } =
+		useRoutingPolicyFormPermissions(mode, routingPolicy, channels);
+	const { canCreate: canCreateChannel } =
+		useNotificationChannelCollectionPermissions();
 
 	const initialFormState = useMemo(() => {
 		if (mode === 'edit') {
@@ -71,7 +75,7 @@ function RoutingPolicyDetails({
 				>
 					No channels yet.
 				</Typography>
-				{user?.role === USER_ROLES.ADMIN ? (
+				{canCreateChannel ? (
 					<Typography
 						variant="paragraph"
 						size="base"
@@ -136,6 +140,7 @@ function RoutingPolicyDetails({
 			<Form<RoutingPolicyDetailsFormState>
 				form={form}
 				initialValues={initialFormState}
+				disabled={isReadOnly}
 				onFinish={handleSave}
 			>
 				<div className="create-policy-container">
@@ -241,10 +246,15 @@ function RoutingPolicyDetails({
 							]}
 						>
 							<Select
-								options={channels.map((channel) => ({
-									value: channel.name,
-									label: channel.name,
-								}))}
+								options={channels.map((channel) => {
+									const denial = getChannelDenial(channel);
+									return {
+										value: channel.name,
+										label: channel.name,
+										disabled: !!denial,
+										title: denial,
+									};
+								})}
 								mode="multiple"
 								placeholder="Select notification channels"
 								aria-label="Notification Channels"
@@ -274,16 +284,18 @@ function RoutingPolicyDetails({
 					>
 						Cancel
 					</Button>
-					<Button
-						icon={saveButtonIcon}
-						type="primary"
-						htmlType="submit"
-						loading={isPolicyDetailsModalActionLoading}
-						disabled={isPolicyDetailsModalActionLoading}
-						data-testid="routing-policy-save"
-					>
-						Save Routing Policy
-					</Button>
+					<AuthZTooltip checks={saveChecks}>
+						<Button
+							icon={saveButtonIcon}
+							type="primary"
+							htmlType="submit"
+							loading={isPolicyDetailsModalActionLoading}
+							disabled={isPolicyDetailsModalActionLoading}
+							data-testid="routing-policy-save"
+						>
+							Save Routing Policy
+						</Button>
+					</AuthZTooltip>
 				</Flex>
 			</Form>
 		</Modal>
