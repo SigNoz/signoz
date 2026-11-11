@@ -481,8 +481,7 @@ func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*qbtypes.Cach
 
 	// Merge values based on type
 	var mergedValue any
-	switch resultType {
-	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
+	if resultType.IsBuiltFromTimeSeries() {
 		mergedValue = bc.mergeTimeSeriesValues(ctx, buckets)
 		// Raw and Scalar types are not cached, so no merge needed
 	}
@@ -629,8 +628,8 @@ func (bc *bucketCache) isEmptyResult(result *qbtypes.Result) (isEmpty bool, isFi
 		return true, false
 	}
 
-	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
+	switch {
+	case result.Type.IsBuiltFromTimeSeries():
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			// No aggregations at all means truly empty
 			if len(tsData.Aggregations) == 0 {
@@ -665,7 +664,7 @@ func (bc *bucketCache) isEmptyResult(result *qbtypes.Result) (isEmpty bool, isFi
 			return !hasValues, !hasValues && totalSeries > 0
 		}
 
-	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeScalar, qbtypes.RequestTypeTrace:
+	default:
 		// Raw and scalar data are not cached
 		return true, false
 	}
@@ -768,8 +767,8 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 		Warnings: result.Warnings,
 	}
 
-	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
+	switch {
+	case result.Type.IsBuiltFromTimeSeries():
 		// Trim time series data
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok && tsData != nil {
 			trimmedData := &qbtypes.TimeSeriesData{}
@@ -812,7 +811,7 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 			trimmedResult.Value = trimmedData
 		}
 
-	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeScalar, qbtypes.RequestTypeTrace:
+	default:
 		// Don't cache raw or scalar data
 		return nil
 	}
@@ -854,8 +853,8 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, q qbtypes
 		}
 	}
 
-	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
+	switch {
+	case result.Type.IsBuiltFromTimeSeries():
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			filteredData := &qbtypes.TimeSeriesData{
 				Aggregations: make([]*qbtypes.AggregationBucket, 0, len(tsData.Aggregations)),
@@ -916,13 +915,15 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, q qbtypes
 // as empty rows that the same request never has when it bypasses the cache.
 //
 // PromQL and ClickHouse queries name their own buckets, and a histogram's are
-// its `le` labels, so only a gauge, sum or summary axis is cut.
+// its `le` labels, so only a gauge, sum or summary axis and an event axis are cut.
 func (bc *bucketCache) trimHeatmapAxisToTheWindow(q qbtypes.Query, tsData *qbtypes.TimeSeriesData) {
-	metricQuery, isMetricQuery := q.(*builderQuery[qbtypes.MetricAggregation])
-	if !isMetricQuery {
-		return
-	}
-	if metricQuery.spec.Aggregations[0].Type == metrictypes.HistogramType {
+	switch query := q.(type) {
+	case *builderQuery[qbtypes.MetricAggregation]:
+		if query.spec.Aggregations[0].Type == metrictypes.HistogramType {
+			return
+		}
+	case *builderQuery[qbtypes.LogAggregation], *builderQuery[qbtypes.TraceAggregation]:
+	default:
 		return
 	}
 

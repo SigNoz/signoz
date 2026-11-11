@@ -59,7 +59,8 @@ Follow these rules:
 
 ### Unexported symbols
 
-- Struct receivers: one or two characters (`c`, `f`, `br`).
+- Struct receivers: the lowercase name of the role the type plays, the same on every method of the type (`provider`, `module`, `handler`, `store`, `middleware`, `migration`). Never one or two characters: `c`, `h`, `m` say nothing at the call site and collide with local variables.
+- When the receiver name would shadow an imported package, alias the import, not the receiver (`pkghandler "github.com/SigNoz/signoz/pkg/http/handler"` with a `handler` receiver).
 - Helper functions: descriptive lowercase names (`parseToken`, `buildQuery`).
 
 ### Constants

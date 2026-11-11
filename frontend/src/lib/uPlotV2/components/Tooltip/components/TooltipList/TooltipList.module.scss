@@ -28,6 +28,23 @@
 	}
 }
 
+.itemButton {
+	display: block;
+	width: 100%;
+	padding: 0;
+	border: none;
+	border-radius: var(--radius);
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--l2-background-hover);
+	}
+}
+
 .listLightMode {
 	&::-webkit-scrollbar-thumb {
 		background: var(--bg-vanilla-400);

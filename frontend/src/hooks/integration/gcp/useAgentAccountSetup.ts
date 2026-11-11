@@ -5,10 +5,11 @@ import {
 	CloudintegrationtypesGCPConnectionMethodDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { GcpSetupFormValues } from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/AddNewAccount/types';
+import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { ModalStateEnum } from 'container/Integrations/HeroSection/types';
 
 import logEvent from '../../../api/common/logEvent';
-import { useAgentConnectionPolling } from './useAgentConnectionPolling';
+import { useAgentConnectionPolling } from '../useAgentConnectionPolling';
 import { useGcpAccountSetup } from './useGcpAccountSetup';
 
 const GENERATE_COMMAND_ERROR = 'Failed to generate the GCP setup command';
@@ -116,6 +117,7 @@ export function useAgentAccountSetup({
 	}, []);
 
 	useAgentConnectionPolling({
+		cloudProvider: INTEGRATION_TYPES.GCP,
 		accountId: accountId ?? '',
 		enabled: modalState === ModalStateEnum.WAITING && accountId !== null,
 		onConnected: handleAgentConnected,

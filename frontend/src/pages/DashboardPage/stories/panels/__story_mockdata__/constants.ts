@@ -67,6 +67,11 @@ export const LINE_STYLES = Object.values(LineStyle);
 
 export const GAPS = ['none', 'hole'] as const;
 
+export const PIE_SLICES = ['even', 'long-tail'] as const;
+
+/** Slices `long-tail` answers with: 14 drawn, the other 10 grouped (the pie draws at most 15). */
+export const LONG_TAIL_SLICES = 24;
+
 export const SPAN_GAPS = ['bridge', 'break-10m'] as const;
 
 /** Points cut out of every series by `hole`: 12 of the 30, a gap past the 10m break. */

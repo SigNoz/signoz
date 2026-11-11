@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Group } from '@visx/group';
 import { Pie as VisxPie } from '@visx/shape';
-import { defaultStyles, useTooltip, useTooltipInPortal } from '@visx/tooltip';
+import { useTooltipInPortal } from '@visx/tooltip';
 import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -14,14 +14,15 @@ import { PieChartProps, PieSlice } from 'lib/visualization/charts/types';
 import { calculateChartDimensions } from 'lib/visualization/charts/utils';
 
 import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
-import PieArc from 'lib/visualization/charts/Pie/PieArc';
-import PieCenterLabel from 'lib/visualization/charts/Pie/PieCenterLabel';
+import PieArc from 'lib/visualization/charts/Pie/components/PieArc/PieArc';
+import { groupPieSlices } from 'lib/visualization/charts/Pie/utils/groupPieSlices';
+import PieCenterLabel from 'lib/visualization/charts/Pie/components/PieCenterLabel/PieCenterLabel';
+import PieTooltipContent from 'lib/visualization/charts/Pie/components/PieTooltip/PieTooltipContent';
 import styles from 'lib/visualization/charts/Pie/Pie.module.scss';
-import { PieTooltipData } from 'lib/visualization/charts/Pie/types';
-import {
-	getDonutGeometry,
-	getFillColor,
-} from 'lib/visualization/charts/Pie/utils';
+import { usePieTooltip } from 'lib/visualization/charts/Pie/hooks/usePieTooltip';
+import { getFillColor } from 'lib/visualization/charts/Pie/utils/colors';
+import { getDonutGeometry } from 'lib/visualization/charts/Pie/utils/geometry';
+import { compareSlices } from 'lib/visualization/charts/Pie/utils/slices';
 
 /**
  * Donut chart rendered with @visx. Splits its area into chart + legend with the
@@ -56,20 +57,29 @@ export default function Pie({
 		[data, hiddenKeys],
 	);
 
-	// Hidden slices drop out so the remaining arcs + centre total recompute.
+	// Hidden slices drop out before grouping, so Other and the centre total recompute.
 	const visibleData = useMemo(
-		() => data.filter((slice) => !hiddenKeys.has(slice.label)),
-		[data, hiddenKeys],
+		() =>
+			groupPieSlices(
+				data.filter((slice) => !hiddenKeys.has(slice.label)),
+				isDarkMode,
+			),
+		[data, hiddenKeys, isDarkMode],
 	);
 
-	const {
-		tooltipOpen,
-		tooltipLeft,
-		tooltipTop,
-		tooltipData,
-		hideTooltip,
-		showTooltip,
-	} = useTooltip<PieTooltipData>();
+	// A series folded into Other highlights the Other arc.
+	const drawnColorByLabel = useMemo(
+		() =>
+			new Map(
+				visibleData.flatMap((slice) =>
+					(slice.groupedMembers ?? [slice]).map((entry): [string, string] => [
+						entry.label,
+						slice.color,
+					]),
+				),
+			),
+		[visibleData],
+	);
 
 	const { containerRef, TooltipInPortal } = useTooltipInPortal({
 		scroll: true,
@@ -112,34 +122,64 @@ export default function Pie({
 		[visibleData],
 	);
 
-	const labelColor = isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400;
-	const activeColor =
-		focusedSeriesIndex !== null ? data[focusedSeriesIndex].color : null;
-
-	const handleSliceEnter = useCallback(
-		(slice: PieSlice, centroidX: number, centroidY: number): void => {
-			showTooltip({
-				tooltipData: {
-					label: slice.label,
-					value: getYAxisFormattedValue(
-						slice.value.toString(),
-						yAxisUnit || 'none',
-						decimalPrecision,
-					),
-					color: slice.color,
-				},
-				tooltipTop: centroidY + height / 2,
-				tooltipLeft: centroidX + width / 2,
-			});
-			setFocusedKey(slice.label);
-		},
-		[showTooltip, setFocusedKey, yAxisUnit, decimalPrecision, height, width],
+	const formatValue = useCallback(
+		(value: number): string =>
+			getYAxisFormattedValue(
+				value.toString(),
+				yAxisUnit || 'none',
+				decimalPrecision,
+			),
+		[yAxisUnit, decimalPrecision],
 	);
 
-	const handleSliceLeave = useCallback((): void => {
-		hideTooltip();
-		setFocusedKey(null);
-	}, [hideTooltip, setFocusedKey]);
+	const {
+		tooltipOpen,
+		tooltipTop,
+		tooltipLeft,
+		tooltipData,
+		isPinned,
+		unpin,
+		handleSliceHover,
+		handleSliceLeave,
+		handleSliceClick,
+		handleMemberClick,
+	} = usePieTooltip({
+		slices: visibleData,
+		chartRef: wrapperRef,
+		formatValue,
+		setFocusedKey,
+		onSliceClick,
+	});
+
+	const labelColor = isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400;
+	const hoveredColor = tooltipOpen ? tooltipData?.slice.color : undefined;
+	const activeColor =
+		hoveredColor ??
+		(focusedSeriesIndex !== null
+			? (drawnColorByLabel.get(labels[focusedSeriesIndex]) ?? null)
+			: null);
+
+	// The tooltip re-renders Pie on every mouse move; a stable element lets React skip the legend.
+	const legend = useMemo(
+		() => (
+			<Legend
+				items={legendItems}
+				position={position}
+				averageLegendWidth={averageLegendWidth}
+				showSearch={showLegendSearch}
+				focusedSeriesIndex={focusedSeriesIndex}
+				onAction={onLegendAction}
+			/>
+		),
+		[
+			legendItems,
+			position,
+			averageLegendWidth,
+			showLegendSearch,
+			focusedSeriesIndex,
+			onLegendAction,
+		],
+	);
 
 	if (!data.length) {
 		return (
@@ -169,6 +209,7 @@ export default function Pie({
 							<VisxPie
 								data={visibleData}
 								pieValue={(slice: PieSlice): number => slice.value}
+								pieSort={compareSlices}
 								outerRadius={radius}
 								innerRadius={innerRadius}
 								padAngle={0.01}
@@ -193,9 +234,9 @@ export default function Pie({
 											decimalPrecision={decimalPrecision}
 											labelColor={labelColor}
 											fill={getFillColor(arc.data.color, activeColor)}
-											onEnter={handleSliceEnter}
+											onHover={handleSliceHover}
 											onLeave={handleSliceLeave}
-											onClick={onSliceClick}
+											onClick={handleSliceClick}
 										/>
 									))
 								}
@@ -216,19 +257,19 @@ export default function Pie({
 						top={tooltipTop}
 						left={tooltipLeft}
 						className={styles.pieChartTooltip}
-						style={{
-							...defaultStyles,
-							color: labelColor,
-						}}
+						unstyled
+						applyPositionStyle
+						style={{ pointerEvents: isPinned ? 'auto' : 'none' }}
+						data-pie-tooltip=""
 					>
-						<div
-							className={styles.pieChartIndicator}
-							style={{ background: tooltipData.color }}
+						<PieTooltipContent
+							id={id ?? ''}
+							data={tooltipData}
+							isPinned={isPinned}
+							canDrilldown={!!onSliceClick}
+							onMemberClick={handleMemberClick}
+							onUnpin={unpin}
 						/>
-						<div className={styles.pieChartTooltipContent}>
-							<span>{tooltipData.label}</span>
-							<span className={styles.pieChartTooltipValue}>{tooltipData.value}</span>
-						</div>
 					</TooltipInPortal>
 				)}
 			</div>
@@ -241,14 +282,7 @@ export default function Pie({
 					height: legendHeight,
 				}}
 			>
-				<Legend
-					items={legendItems}
-					position={position}
-					averageLegendWidth={averageLegendWidth}
-					showSearch={showLegendSearch}
-					focusedSeriesIndex={focusedSeriesIndex}
-					onAction={onLegendAction}
-				/>
+				{legend}
 			</div>
 		</div>
 	);

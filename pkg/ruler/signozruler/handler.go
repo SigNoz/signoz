@@ -54,7 +54,7 @@ func (handler *handler) GetRuleByID(rw http.ResponseWriter, req *http.Request) {
 
 	id, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid"))
 		return
 	}
 
@@ -93,7 +93,7 @@ func (handler *handler) CloneRuleByID(rw http.ResponseWriter, req *http.Request)
 
 	id, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid"))
 		return
 	}
 
@@ -112,7 +112,7 @@ func (handler *handler) UpdateRuleByID(rw http.ResponseWriter, req *http.Request
 
 	id, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid"))
 		return
 	}
 
@@ -138,7 +138,7 @@ func (handler *handler) DeleteRuleByID(rw http.ResponseWriter, req *http.Request
 
 	id, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid"))
 		return
 	}
 
@@ -157,7 +157,7 @@ func (handler *handler) PatchRuleByID(rw http.ResponseWriter, req *http.Request)
 
 	id, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid"))
 		return
 	}
 
@@ -261,7 +261,7 @@ func (handler *handler) GetDowntimeScheduleByID(rw http.ResponseWriter, req *htt
 
 	id, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid"))
 		return
 	}
 
@@ -310,7 +310,7 @@ func (handler *handler) UpdateDowntimeScheduleByID(rw http.ResponseWriter, req *
 
 	id, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid"))
 		return
 	}
 
@@ -340,7 +340,7 @@ func (handler *handler) DeleteDowntimeScheduleByID(rw http.ResponseWriter, req *
 
 	id, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid"))
 		return
 	}
 
@@ -430,7 +430,7 @@ func (handler *handler) UpdateRuleView(rw http.ResponseWriter, req *http.Request
 
 	id, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid"))
 		return
 	}
 
@@ -466,7 +466,7 @@ func (handler *handler) DeleteRuleView(rw http.ResponseWriter, req *http.Request
 
 	id, err := valuer.NewUUID(mux.Vars(req)["id"])
 	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid"))
 		return
 	}
 

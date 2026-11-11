@@ -635,7 +635,16 @@ export function shellDriver(page: Page): Shell {
 
 			saveShortcuts: async () => {
 				const saved = page.waitForResponse(isPreferencePut('nav_shortcuts'));
-				await page.getByTestId('save-changes-btn').click();
+				const dialog = page
+					.getByRole('dialog')
+					.filter({ hasText: 'Manage Shortcuts' });
+				// dnd-kit stops every click for 50 ms after a drop.
+				await expect(async () => {
+					if (await dialog.isVisible()) {
+						await page.getByTestId('save-changes-btn').click({ timeout: 5_000 });
+					}
+					await expect(dialog).toBeHidden({ timeout: 1_000 });
+				}).toPass();
 				const response = await saved;
 				expect(response.ok()).toBe(true);
 				return (response.request().postDataJSON() as { value: string[] }).value;

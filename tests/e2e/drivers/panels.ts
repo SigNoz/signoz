@@ -18,6 +18,7 @@ import { type Legend, legendAt } from './panels/legend';
 import { type Markdown, markdownAt } from './panels/markdown';
 import { type PiePanel, pieAt } from './panels/pie';
 import { type TableRows, tableAt } from './panels/table';
+import { wheelTo } from './scroll';
 
 // Rendered panels, on the dashboard grid and in the View modal. Each surface
 // lives in its own part under ./panels, and so does a kind with UI of its own.
@@ -47,7 +48,7 @@ export const RENDERER_TESTID: Record<PanelKind, string> = {
 export interface PanelHandle {
 	root(): Locator;
 	/** Panels fetch lazily behind an IntersectionObserver. */
-	scrollIntoView(): Promise<void>;
+	wheelIntoView(): Promise<void>;
 	/** Scrolls in, then waits for the kind's own renderer. */
 	waitRendered(kind: PanelKind): Promise<void>;
 	renderer(kind: PanelKind): Locator;
@@ -129,11 +130,11 @@ function panelHandle(page: Page, id: string): PanelHandle {
 
 	return {
 		root,
-		async scrollIntoView() {
-			await root().scrollIntoViewIfNeeded();
+		async wheelIntoView() {
+			await wheelTo(root());
 		},
 		async waitRendered(kind) {
-			await root().scrollIntoViewIfNeeded();
+			await wheelTo(root());
 			await expect(root()).toHaveAttribute('data-panel-visible', 'true');
 			await expect(byTestId(RENDERER_TESTID[kind])).toBeVisible();
 		},
