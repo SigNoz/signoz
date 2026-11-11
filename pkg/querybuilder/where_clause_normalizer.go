@@ -2,6 +2,7 @@ package querybuilder
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -39,6 +40,7 @@ const (
 type normalizedPart struct {
 	text    string
 	join    joinKind
+	negated bool
 	skipped bool
 }
 
@@ -48,11 +50,12 @@ type normalizedValue struct {
 }
 
 type whereClauseNormalizer struct {
-	variables  map[string]qbtypes.VariableItem
-	conditions []WhereClauseCondition
-	negated    bool
-	orDepth    int
-	errors     []string
+	variables     map[string]qbtypes.VariableItem
+	conditions    []WhereClauseCondition
+	negated       bool
+	orDepth       int
+	negationDepth int
+	errors        []string
 }
 
 func NormalizeWhereClause(expression string, variables map[string]qbtypes.VariableItem) (*NormalizedWhereClause, error) {
@@ -113,8 +116,11 @@ func NormalizeWhereClause(expression string, variables map[string]qbtypes.Variab
 	sort.Slice(visitor.conditions, func(i, j int) bool {
 		return visitor.conditions[i].sortKey() < visitor.conditions[j].sortKey()
 	})
+	conditions := slices.CompactFunc(visitor.conditions, func(left, right WhereClauseCondition) bool {
+		return left.sortKey() == right.sortKey()
+	})
 
-	return &NormalizedWhereClause{Expression: part.text, Conditions: visitor.conditions}, nil
+	return &NormalizedWhereClause{Expression: part.text, Conditions: conditions}, nil
 }
 
 func (condition WhereClauseCondition) sortKey() string {
@@ -197,20 +203,22 @@ func (visitor *whereClauseNormalizer) visitUnaryExpression(ctx grammar.IUnaryExp
 	negated := ctx.NOT() != nil
 	if negated {
 		visitor.negated = !visitor.negated
+		visitor.negationDepth++
 	}
 
 	part := visitor.visitPrimary(ctx.Primary())
 
 	if negated {
 		visitor.negated = !visitor.negated
+		visitor.negationDepth--
 
 		if part.skipped {
 			return part
 		}
-		if part.join != joinKindNone {
-			return normalizedPart{text: "NOT (" + part.text + ")", join: joinKindNone}
+		if part.join != joinKindNone || part.negated {
+			return normalizedPart{text: "NOT (" + part.text + ")", negated: true}
 		}
-		return normalizedPart{text: "NOT " + part.text, join: joinKindNone}
+		return normalizedPart{text: "NOT " + part.text, negated: true}
 	}
 
 	return part
@@ -406,14 +414,14 @@ func (visitor *whereClauseNormalizer) visitFullText(ctx grammar.IFullTextContext
 
 func (visitor *whereClauseNormalizer) fullTextTerm(term string) string {
 	visitor.appendCondition("", WhereClauseOperatorFullText, []string{term})
-	return quoteValue(term)
+	return FilterStringLiteral(term)
 }
 
 func (visitor *whereClauseNormalizer) normalizeValue(ctx grammar.IValueContext) normalizedValue {
 	switch {
 	case ctx.QUOTED_TEXT() != nil:
 		raw := trimQuotes(ctx.QUOTED_TEXT().GetText())
-		return normalizedValue{text: quoteValue(raw), raw: raw}
+		return normalizedValue{text: FilterStringLiteral(raw), raw: raw}
 	case ctx.NUMBER() != nil:
 		text := ctx.NUMBER().GetText()
 		return normalizedValue{text: text, raw: text}
@@ -425,7 +433,7 @@ func (visitor *whereClauseNormalizer) normalizeValue(ctx grammar.IValueContext) 
 		if strings.HasPrefix(raw, "$") {
 			return normalizedValue{text: raw, raw: raw}
 		}
-		return normalizedValue{text: quoteValue(raw), raw: raw}
+		return normalizedValue{text: FilterStringLiteral(raw), raw: raw}
 	}
 }
 
@@ -439,7 +447,7 @@ func (visitor *whereClauseNormalizer) appendCondition(key, operator string, valu
 		Operator: operator,
 		Values:   values,
 		Negated:  visitor.negated,
-		TopLevel: visitor.orDepth == 0 && !visitor.negated,
+		TopLevel: visitor.orDepth == 0 && visitor.negationDepth == 0,
 	})
 }
 
@@ -522,7 +530,7 @@ func (visitor *whereClauseNormalizer) resolveVariable(raw string) (qbtypes.Varia
 func formatVariableValue(value any) normalizedValue {
 	switch typed := value.(type) {
 	case string:
-		return normalizedValue{text: quoteValue(typed), raw: typed}
+		return normalizedValue{text: FilterStringLiteral(typed), raw: typed}
 	case bool:
 		text := strconv.FormatBool(typed)
 		return normalizedValue{text: text, raw: text}
@@ -537,7 +545,9 @@ func normalizeKeyText(keyText string) string {
 	return telemetrytypes.TelemetryFieldKeyToText(&fieldKey)
 }
 
-func quoteValue(value string) string {
+// FilterStringLiteral quotes value for the filter expression grammar, not for
+// ClickHouse: the grammar's quoted text takes backslash escapes and no hex escapes.
+func FilterStringLiteral(value string) string {
 	escaped := strings.ReplaceAll(value, `\`, `\\`)
 	escaped = strings.ReplaceAll(escaped, `'`, `\'`)
 	return "'" + escaped + "'"

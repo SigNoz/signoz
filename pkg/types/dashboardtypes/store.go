@@ -13,6 +13,9 @@ type Store interface {
 
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableDashboard, error)
 
+	// GetByName resolves a dashboard by its per-org unique name.
+	GetByName(ctx context.Context, orgID valuer.UUID, name string) (*StorableDashboard, error)
+
 	GetPublic(context.Context, string) (*StorablePublicDashboard, error)
 
 	GetDashboardByOrgsAndPublicID(context.Context, []string, string) (*StorableDashboard, error)
@@ -72,4 +75,13 @@ type Store interface {
 	UpdateDashboardView(ctx context.Context, view *DashboardView) error
 
 	DeleteDashboardView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
+	// ════════════════════════════════════════════════════════════════════════
+	// System dashboard methods
+	// ════════════════════════════════════════════════════════════════════════
+	CreateSystemDashboard(ctx context.Context, storable *StorableSystemDashboard) error
+
+	GetSystemDashboard(ctx context.Context, orgID valuer.UUID, name string) (*StorableSystemDashboard, error)
+
+	UpdateSystemDashboardVersion(ctx context.Context, orgID valuer.UUID, name string, version int) error
 }

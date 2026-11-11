@@ -248,8 +248,18 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return err
 	}
 
-	// for now we are only soft deleting users
-	if err := module.store.SoftDeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
+	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.tokenizer.DeleteTokensByUserID(ctx, user.ID); err != nil {
+			return err
+		}
+
+		if err := module.tokenizer.DeleteIdentity(ctx, user.ID); err != nil {
+			return err
+		}
+
+		// for now we are only soft deleting users
+		return module.store.SoftDeleteUser(ctx, orgID.String(), user.ID.StringValue())
+	}); err != nil {
 		return err
 	}
 

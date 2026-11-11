@@ -87,8 +87,7 @@ export function useAccountSettingsDrawer({
 				{
 					onSuccess: () => {
 						const nextConfig = {
-							deployment_region: accountConfig.deployment_region,
-							deployment_project_id: accountConfig.deployment_project_id,
+							...accountConfig,
 							project_ids: values.projectIds || [],
 						};
 

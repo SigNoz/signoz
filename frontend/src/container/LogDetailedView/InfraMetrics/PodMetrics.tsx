@@ -4,9 +4,8 @@ import { Card, Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import dayjs from 'dayjs';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
@@ -58,9 +57,9 @@ function PodMetrics({
 	);
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({
-			queryKey: ['metrics', payload, ENTITY_VERSION_V4, 'POD'],
+			queryKey: ['metrics', payload, ENTITY_VERSION_V5, 'POD'],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
+				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
 			enabled: !!payload,
 		})),
 	);
@@ -74,7 +73,6 @@ function PodMetrics({
 		[queries],
 	);
 	const { timezone } = useTimezone();
-	const { currentQuery } = useQueryBuilder();
 
 	const options = useMemo(
 		() =>
@@ -92,7 +90,7 @@ function PodMetrics({
 					tzDate: (timestamp: number) =>
 						uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 					timezone: timezone.value,
-					query: currentQuery,
+					query: queryPayloads[idx].query,
 					legendScrollPosition: legendScrollPositionRef.current,
 					setLegendScrollPosition: (position: {
 						scrollTop: number;
@@ -110,7 +108,7 @@ function PodMetrics({
 			end,
 			verticalLineTimestamp,
 			timezone.value,
-			currentQuery,
+			queryPayloads,
 		],
 	);
 

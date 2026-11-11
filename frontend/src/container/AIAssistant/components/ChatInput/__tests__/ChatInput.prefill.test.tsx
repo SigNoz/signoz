@@ -12,8 +12,12 @@ jest.mock('api/generated/services/dashboard', () => ({
 }));
 
 jest.mock('api/generated/services/rules', () => ({
-	useListRules: (): unknown => ({ data: [], isLoading: false, isError: false }),
-	getListRulesQueryKey: (): string[] => ['rules'],
+	useListRulesV3: (): unknown => ({
+		data: undefined,
+		isLoading: false,
+		isError: false,
+	}),
+	getListRulesV3QueryKey: (): string[] => ['rules'],
 }));
 
 jest.mock('hooks/useQueryService', () => ({
@@ -46,16 +50,11 @@ jest.mock('../../../hooks/useAIAssistantAnalyticsContext', () => ({
 }));
 
 // eslint-disable-next-line import/first
-import { TooltipProvider } from '@signozhq/ui/tooltip';
 // eslint-disable-next-line import/first
 import ChatInput from '../ChatInput';
 
 function renderChatInput(): void {
-	render(
-		<TooltipProvider>
-			<ChatInput onSend={jest.fn()} />
-		</TooltipProvider>,
-	);
+	render(<ChatInput onSend={jest.fn()} />);
 }
 
 function getComposer(): HTMLTextAreaElement {

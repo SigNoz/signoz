@@ -28,30 +28,22 @@ function InfraMetrics({
 	dataSource = DataSource.LOGS,
 }: MetricsDataProps): JSX.Element {
 	const [selectedView, setSelectedView] = useState<string>(() =>
-		podName ? VIEW_TYPES.POD : VIEW_TYPES.NODE,
+		nodeName || hostName ? VIEW_TYPES.NODE : VIEW_TYPES.POD,
 	);
 
 	const viewOptions = useMemo(() => {
 		const options = [
 			{
-				label: (
-					<div className="view-title">
-						<Table size={14} />
-						Node
-					</div>
-				),
+				icon: <Table size={14} />,
+				label: 'Node',
 				value: VIEW_TYPES.NODE,
 			},
 		];
 
 		if (podName) {
 			options.push({
-				label: (
-					<div className="view-title">
-						<History size={14} />
-						Pod
-					</div>
-				),
+				icon: <History size={14} />,
+				label: 'Pod',
 				value: VIEW_TYPES.POD,
 			});
 		}
@@ -60,6 +52,10 @@ function InfraMetrics({
 	}, [podName]);
 
 	const handleModeChange = (value: string): void => {
+		// single toggle-group emits '' on re-click of the pressed item
+		if (!value) {
+			return;
+		}
 		setSelectedView(value);
 	};
 
@@ -84,7 +80,6 @@ function InfraMetrics({
 			<SignozRadioGroup
 				value={selectedView}
 				onChange={handleModeChange}
-				className="views-tabs"
 				options={viewOptions}
 			/>
 			{/* TODO(Rahul): Make a common config driven component for this and other infra metrics components */}

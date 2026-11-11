@@ -334,7 +334,7 @@
 				align-items: center;
 				justify-content: space-between;
 
-				.periscope-calendar {
+				[data-slot='calendar'] {
 					border-radius: 4px;
 					border: none !important;
 					background: none !important;
@@ -342,13 +342,9 @@
 					padding-top: 8px !important;
 				}
 
-				.periscope-calendar-day {
-					button {
-						&:hover {
-							background-color: var(--primary-background) !important;
-							color: var(--l1-foreground) !important;
-						}
-					}
+				[data-slot='calendar-button'][data-variant='day']:hover {
+					background-color: var(--primary-background) !important;
+					color: var(--l1-foreground) !important;
 				}
 
 				.calendar-actions {

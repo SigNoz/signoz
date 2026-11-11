@@ -38,19 +38,20 @@ import {
 	TEST_ENDPOINT,
 } from '../../__tests__/fixtures';
 
+const SAMPLE_SPAN = JSON.parse(SAMPLE_SPAN_JSON) as {
+	attributes: Record<string, unknown>;
+	resource: Record<string, unknown>;
+};
+
+const MAPPED_ATTRIBUTE_KEY = 'gen_ai.content.prompt';
+
+// Deriving from the sample keeps exactly one key added, so the single `populated` badge assertion below stays exact.
 const RESULT_SPAN = {
 	attributes: {
-		'my_company.llm.input': 'What is quantum computing?',
-		'llm.input_messages': 'What is quantum computing?',
-		'gen_ai.request.model': 'gpt-4',
-		'gen_ai.usage.total_tokens': 1250,
-		'gen_ai.content.completion': 'Quantum computing leverages...',
-		'gen_ai.content.prompt': 'What is quantum computing?',
+		...SAMPLE_SPAN.attributes,
+		[MAPPED_ATTRIBUTE_KEY]: SAMPLE_SPAN.attributes['input.value'],
 	},
-	resource: {
-		'service.name': 'llm-gateway',
-		'deployment.environment': 'production',
-	},
+	resource: SAMPLE_SPAN.resource,
 };
 
 const EDITED_SPAN_JSON = `{
@@ -61,6 +62,26 @@ const EDITED_SPAN_JSON = `{
     "service.name": "my-edited-gateway"
   }
 }`;
+
+const SPAN_WITH_EXTRA_KEY_JSON = `{
+  "attributes": {
+    "input.value": "What is quantum computing?"
+  },
+  "resource": {
+    "service.name": "llm-gateway"
+  },
+  "demo": {
+    "name": "demo"
+  }
+}`;
+
+const EXTRA_KEY_RESULT_SPAN = {
+	attributes: {
+		'input.value': 'What is quantum computing?',
+		[MAPPED_ATTRIBUTE_KEY]: 'What is quantum computing?',
+	},
+	resource: { 'service.name': 'llm-gateway' },
+};
 
 const SPAN_INPUT_KEY = LOCALSTORAGE.LLM_ATTRIBUTE_MAPPING_TEST_SPAN;
 
@@ -97,10 +118,51 @@ describe('TestTab — sample-span flow', () => {
 		).resolves.toBeInTheDocument();
 		expect(screen.getByTestId('test-result-0')).toBeInTheDocument();
 		expect(screen.getByTestId('test-result-0-attributes')).toHaveTextContent(
-			'gen_ai.content.prompt',
+			MAPPED_ATTRIBUTE_KEY,
 		);
 		expect(screen.getByText('populated')).toBeInTheDocument();
 		expect(screen.queryByTestId('test-error')).not.toBeInTheDocument();
+	});
+
+	it('trims extra top-level keys and sends only the envelope', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		let body: { spans?: { attributes?: Record<string, unknown> }[] } | undefined;
+		server.use(
+			rest.post(TEST_ENDPOINT, async (req, res, ctx) => {
+				body = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(makeTestResponse([EXTRA_KEY_RESULT_SPAN])),
+				);
+			}),
+		);
+
+		render(<LLMObservabilityAttributeMapping />);
+
+		await user.click(screen.getByRole('tab', { name: 'Test' }));
+		const runBtn = await screen.findByTestId('run-test-button');
+
+		await user.clear(screen.getByTestId('monaco'));
+		await user.paste(SPAN_WITH_EXTRA_KEY_JSON);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('monaco')).toHaveValue(SPAN_WITH_EXTRA_KEY_JSON),
+		);
+		expect(screen.queryByTestId('test-input-error')).not.toBeInTheDocument();
+
+		await user.click(runBtn);
+
+		await expect(
+			screen.findByTestId('test-results'),
+		).resolves.toBeInTheDocument();
+		expect(body?.spans?.[0]?.attributes).toStrictEqual({
+			'input.value': 'What is quantum computing?',
+		});
+		expect(screen.getByTestId('test-result-0-attributes')).toHaveTextContent(
+			MAPPED_ATTRIBUTE_KEY,
+		);
+		expect(screen.getByTestId('test-result-0-resource')).toBeInTheDocument();
+		expect(screen.getByText('populated')).toBeInTheDocument();
 	});
 
 	it('surfaces a backend error and renders no results', async () => {
@@ -160,12 +222,12 @@ describe('TestTab — sample-span flow', () => {
 		const resetBtn = await screen.findByTestId('reset-template-button');
 
 		expect(screen.getByTestId('monaco')).toHaveValue(EDITED_SPAN_JSON);
-		expect(resetBtn).toBeEnabled();
+		expect(resetBtn).not.toHaveAttribute('aria-disabled', 'true');
 
 		await user.click(resetBtn);
 
 		expect(screen.getByTestId('monaco')).toHaveValue(SAMPLE_SPAN_JSON);
 		expect(get(SPAN_INPUT_KEY)).toBeFalsy();
-		expect(resetBtn).toBeDisabled();
+		expect(resetBtn).toHaveAttribute('aria-disabled', 'true');
 	});
 });

@@ -3,6 +3,7 @@ package logstelemetryschema
 import (
 	"context"
 	"fmt"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"testing"
 	"time"
 
@@ -17,19 +18,17 @@ import (
 // TestFilterExprLogsBodyJSON tests a comprehensive set of query patterns for body JSON search.
 func TestFilterExprLogsBodyJSON(t *testing.T) {
 	fl := flaggertest.New(t)
-	fm := NewFieldMapper(fl)
-	cb := NewConditionBuilder(fm, fl)
+	storage := NewStorage()
 	// Define a comprehensive set of field keys to support all test cases
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	keys := BuildCompleteFieldKeyMap(releaseTime)
 
 	opts := querybuilder.FilterExprVisitorOpts{
-		Context:          context.Background(),
-		Logger:           instrumentationtest.New().Logger(),
-		FieldMapper:      fm,
-		ConditionBuilder: cb,
-		FieldKeys:        keys,
-		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "body"},
+		Context: context.Background(),
+		Logger:  instrumentationtest.New().Logger(),
+		Storage: storage, Query: querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0),
+		FieldKeys:      keys,
+		FullTextColumn: &telemetrytypes.TelemetryFieldKey{Name: "body"},
 	}
 
 	testCases := []struct {

@@ -333,6 +333,7 @@ describe('AttributeMappingsTab (integration)', () => {
 						context: FieldContext.attribute,
 						operation: MapperOperation.copy,
 						priority,
+						enabled: true,
 					})),
 				},
 			}),
@@ -501,7 +502,10 @@ describe('AttributeMappingsTab (integration)', () => {
 			await user.click(screen.getByTestId('add-mapper-group-1'));
 			await screen.findByTestId('mapper-form-drawer');
 
-			expect(screen.getByTestId('mapper-form-save')).toBeDisabled();
+			expect(screen.getByTestId('mapper-form-save')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 
 			await user.type(
 				screen.getByTestId('mapper-form-target'),
@@ -510,7 +514,9 @@ describe('AttributeMappingsTab (integration)', () => {
 			await user.type(screen.getByTestId('mapper-form-source-0'), 'raw.model');
 
 			const create = screen.getByTestId('mapper-form-save');
-			await waitFor(() => expect(create).toBeEnabled());
+			await waitFor(() =>
+				expect(create).not.toHaveAttribute('aria-disabled', 'true'),
+			);
 			await user.click(create);
 
 			await waitFor(() =>

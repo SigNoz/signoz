@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -116,12 +117,40 @@ func (provider *provider) ListRuleStates(ctx context.Context) (*ruletypes.Gettab
 	return provider.manager.ListRuleStates(ctx)
 }
 
+func (provider *provider) ListRules(ctx context.Context, params *ruletypes.ListRulesParams) (*ruletypes.ListableRules, error) {
+	return provider.manager.ListRules(ctx, params)
+}
+
 func (provider *provider) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.GettableRule, error) {
 	return provider.manager.GetRule(ctx, id)
 }
 
 func (provider *provider) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.GettableRule, error) {
 	return provider.manager.CreateRule(ctx, ruleStr)
+}
+
+func (provider *provider) CloneRule(ctx context.Context, id valuer.UUID) (*ruletypes.GettableRule, error) {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	storedRule, err := provider.ruleStore.GetStoredRule(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	postableRule, err := storedRule.ToPostableRuleForCloning()
+	if err != nil {
+		return nil, err
+	}
+
+	return provider.manager.CreatePostableRule(ctx, postableRule)
 }
 
 func (provider *provider) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) error {
@@ -142,4 +171,42 @@ func (provider *provider) TestNotification(ctx context.Context, orgID valuer.UUI
 
 func (provider *provider) MaintenanceStore() alertmanagertypes.MaintenanceStore {
 	return provider.manager.MaintenanceStore()
+}
+
+func (provider *provider) CreateRuleView(ctx context.Context, orgID valuer.UUID, postable ruletypes.PostableRuleView) (*ruletypes.RuleView, error) {
+	if err := postable.Validate(); err != nil {
+		return nil, err
+	}
+	view := postable.NewRuleView(orgID)
+	if err := provider.ruleStore.CreateRuleView(ctx, view); err != nil {
+		return nil, err
+	}
+	return view, nil
+}
+
+func (provider *provider) ListRuleViews(ctx context.Context, orgID valuer.UUID) (*ruletypes.ListableRuleViews, error) {
+	views, err := provider.ruleStore.ListRuleViews(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	return &ruletypes.ListableRuleViews{Views: views}, nil
+}
+
+func (provider *provider) UpdateRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable ruletypes.UpdatableRuleView) (*ruletypes.RuleView, error) {
+	if err := updatable.Validate(); err != nil {
+		return nil, err
+	}
+	view, err := provider.ruleStore.GetRuleView(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+	view.Update(updatable)
+	if err := provider.ruleStore.UpdateRuleView(ctx, view); err != nil {
+		return nil, err
+	}
+	return view, nil
+}
+
+func (provider *provider) DeleteRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return provider.ruleStore.DeleteRuleView(ctx, orgID, id)
 }

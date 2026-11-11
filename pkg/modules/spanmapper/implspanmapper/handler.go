@@ -69,6 +69,10 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
+	if err := req.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
 
 	group := spantypes.NewSpanMapperGroup(orgID, claims.Email, req)
 
@@ -188,6 +192,10 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 
 	req := new(spantypes.PostableSpanMapper)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+	if err := req.Validate(); err != nil {
 		render.Error(rw, err)
 		return
 	}

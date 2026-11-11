@@ -9,6 +9,7 @@ import CheckboxFilterV2 from '../CheckboxFilterV2';
 import {
 	DEFAULT_FILTER,
 	DEFAULT_USE_FIELD_APIS,
+	EXTRA_VALUES,
 	mockFieldsValuesAPI,
 	mockFieldsValuesAPILoading,
 	setupServer,
@@ -24,7 +25,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -46,7 +47,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={closedFilter}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -89,7 +90,7 @@ describe('CheckboxFilterV2 - states', () => {
 								data: {
 									values: {
 										relatedValues: [],
-										stringValues: ['production', 'staging'],
+										stringValues: ['production', 'staging', ...EXTRA_VALUES],
 										numberValues: [],
 									},
 								},
@@ -103,7 +104,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -132,7 +133,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -151,7 +152,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -171,7 +172,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -194,7 +195,7 @@ describe('CheckboxFilterV2 - states', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);

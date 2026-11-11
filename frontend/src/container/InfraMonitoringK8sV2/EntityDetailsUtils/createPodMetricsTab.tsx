@@ -1,8 +1,7 @@
 import { Container } from '@signozhq/icons';
-import { InfraMonitoringEvents } from 'constants/events';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 
-import { CustomTab } from '../Base/K8sBaseDetails';
+import { CustomTab } from '../Base/types';
 import {
 	InfraMonitoringEntity,
 	podUtilizationByPodWidgetInfo,
@@ -10,20 +9,6 @@ import {
 } from '../constants';
 
 import EntityMetrics from './EntityMetrics';
-
-const categoryToEventEntity: Record<InfraMonitoringEntity, string> = {
-	[InfraMonitoringEntity.DAEMONSETS]: InfraMonitoringEvents.DaemonSet,
-	[InfraMonitoringEntity.DEPLOYMENTS]: InfraMonitoringEvents.Deployment,
-	[InfraMonitoringEntity.JOBS]: InfraMonitoringEvents.Job,
-	[InfraMonitoringEntity.NAMESPACES]: InfraMonitoringEvents.Namespace,
-	[InfraMonitoringEntity.STATEFULSETS]: InfraMonitoringEvents.StatefulSet,
-	[InfraMonitoringEntity.PODS]: InfraMonitoringEvents.Pod,
-	[InfraMonitoringEntity.NODES]: InfraMonitoringEvents.Node,
-	[InfraMonitoringEntity.CLUSTERS]: InfraMonitoringEvents.Cluster,
-	[InfraMonitoringEntity.VOLUMES]: InfraMonitoringEvents.Volume,
-	[InfraMonitoringEntity.HOSTS]: InfraMonitoringEvents.HostEntity,
-	[InfraMonitoringEntity.CONTAINERS]: 'container',
-};
 
 interface CreatePodMetricsTabParams<T> {
 	getQueryPayload: (
@@ -42,8 +27,6 @@ export function createPodMetricsTab<T>({
 	category,
 	docBasePath,
 }: CreatePodMetricsTabParams<T>): CustomTab<T> {
-	const eventEntity = categoryToEventEntity[category];
-
 	const widgetInfo = docBasePath
 		? podUtilizationByPodWidgetInfo.map((widget) => ({
 				...widget,
@@ -58,7 +41,6 @@ export function createPodMetricsTab<T>({
 		render: ({ entity }) => (
 			<EntityMetrics
 				entity={entity}
-				eventEntity={eventEntity}
 				entityWidgetInfo={widgetInfo}
 				getEntityQueryPayload={getQueryPayload}
 				queryKey={queryKey}

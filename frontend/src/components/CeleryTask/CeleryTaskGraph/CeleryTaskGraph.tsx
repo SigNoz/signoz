@@ -1,19 +1,20 @@
 import { useCallback, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { ENTITY_VERSION_V4 } from 'constants/app';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { ViewMenuAction } from 'container/GridCardLayout/config';
-import GridCard from 'container/GridCardLayout/GridCard';
-import { Card } from 'container/GridCardLayout/styles';
+import { ViewMenuAction } from 'container/WidgetCard/config';
+import GridCard from 'container/WidgetCard/Card';
+import { Card } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { UpdateTimeInterval } from 'store/actions';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
@@ -54,8 +55,7 @@ function CeleryTaskGraph({
 	checkIfDataExists?: (isDataAvailable: boolean) => void;
 	analyticsEvent?: string;
 }): JSX.Element {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const isDarkMode = useIsDarkMode();
@@ -83,13 +83,13 @@ function CeleryTaskGraph({
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, history, pathname, urlQuery],
+		[dispatch, pathname, urlQuery],
 	);
 
 	return (

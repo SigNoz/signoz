@@ -11,6 +11,7 @@ from wiremock.client import (
 )
 
 from fixtures import types
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 
 
 def test_apply_license(
@@ -52,7 +53,17 @@ def test_apply_license(
         ],
     )
 
-    access_token = get_token("admin@integration.test", "password123Z$")
+    access_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.post(
+        url=signoz.self.host_configs["8080"].get("/api/v4/licenses"),
+        json={"key": "secret-key"},
+        headers={"Authorization": "Bearer " + access_token},
+        timeout=5,
+    )
+
+    assert response.status_code == http.HTTPStatus.CREATED
+    assert response.json()["data"]["id"] == "0196360e-90cd-7a74-8313-1aa815ce2a67"
 
     response = requests.post(
         url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
@@ -61,7 +72,7 @@ def test_apply_license(
         timeout=5,
     )
 
-    assert response.status_code == http.HTTPStatus.ACCEPTED
+    assert response.status_code == http.HTTPStatus.CONFLICT
 
     response = requests.post(
         url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),
@@ -69,7 +80,7 @@ def test_apply_license(
         timeout=5,
     )
 
-    assert response.json()["count"] == 1
+    assert response.json()["count"] == 2
 
 
 def test_refresh_license(
@@ -111,7 +122,15 @@ def test_refresh_license(
         ],
     )
 
-    access_token = get_token("admin@integration.test", "password123Z$")
+    access_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.put(
+        url=signoz.self.host_configs["8080"].get("/api/v4/licenses/0196360e-90cd-7a74-8313-1aa815ce2a67"),
+        headers={"Authorization": "Bearer " + access_token},
+        timeout=5,
+    )
+
+    assert response.status_code == http.HTTPStatus.NO_CONTENT
 
     response = requests.put(
         url=signoz.self.host_configs["8080"].get("/api/v3/licenses"),
@@ -122,12 +141,12 @@ def test_refresh_license(
     assert response.status_code == http.HTTPStatus.NO_CONTENT
 
     response = requests.get(
-        url=signoz.self.host_configs["8080"].get("/api/v3/licenses/active"),
+        url=signoz.self.host_configs["8080"].get("/api/v4/licenses/active"),
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
     )
     assert response.status_code == http.HTTPStatus.OK
-    assert response.json()["data"]["valid_from"] == 1732146922
+    assert response.json()["data"]["validFrom"] == 1732146922
 
     response = requests.post(
         url=signoz.zeus.host_configs["8080"].get("/__admin/requests/count"),
@@ -135,7 +154,7 @@ def test_refresh_license(
         timeout=5,
     )
 
-    assert response.json()["count"] == 1
+    assert response.json()["count"] == 2
 
 
 def test_license_checkout(
@@ -164,10 +183,10 @@ def test_license_checkout(
         ],
     )
 
-    access_token = get_token("admin@integration.test", "password123Z$")
+    access_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.post(
-        url=signoz.self.host_configs["8080"].get("/api/v1/checkout"),
+        url=signoz.self.host_configs["8080"].get("/api/v1/subscriptions"),
         json={"url": "https://integration-signoz.com"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
@@ -211,16 +230,16 @@ def test_license_portal(
         ],
     )
 
-    access_token = get_token("admin@integration.test", "password123Z$")
+    access_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = requests.post(
-        url=signoz.self.host_configs["8080"].get("/api/v1/portal"),
+    response = requests.put(
+        url=signoz.self.host_configs["8080"].get("/api/v1/subscriptions"),
         json={"url": "https://integration-signoz.com"},
         headers={"Authorization": "Bearer " + access_token},
         timeout=5,
     )
 
-    assert response.status_code == http.HTTPStatus.CREATED
+    assert response.status_code == http.HTTPStatus.OK
     assert response.json()["data"]["redirectURL"] == "https://signoz.portal.com"
 
     response = requests.post(

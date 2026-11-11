@@ -3,7 +3,6 @@ import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
@@ -32,7 +31,6 @@ import {
 	MeterAggregateOperator,
 	MetricAggregateOperator,
 	NumberOperators,
-	QueryAdditionalFilter,
 	QueryBuilderData,
 	ReduceOperators,
 	StringOperators,
@@ -102,43 +100,6 @@ export const metricsSpaceAggregationOperatorsByType = {
 	Gauge: metricsGaugeSpaceAggregateOperatorOptions,
 	Histogram: metricsHistogramSpaceAggregateOperatorOptions,
 	ExponentialHistogram: metricsHistogramSpaceAggregateOperatorOptions,
-};
-
-export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
-	metrics: [
-		{ text: 'Aggregation interval', field: 'stepInterval' },
-		{ text: 'Having', field: 'having' },
-	],
-	logs: [
-		{ text: 'Order by', field: 'orderBy' },
-		{ text: 'Limit', field: 'limit' },
-		{ text: 'Having', field: 'having' },
-		{ text: 'Aggregation interval', field: 'stepInterval' },
-	],
-	traces: [
-		{ text: 'Order by', field: 'orderBy' },
-		{ text: 'Limit', field: 'limit' },
-		{ text: 'Having', field: 'having' },
-		{ text: 'Aggregation interval', field: 'stepInterval' },
-	],
-};
-
-const commonFormulaFilters: QueryAdditionalFilter[] = [
-	{
-		text: 'Having',
-		field: 'having',
-	},
-	{ text: 'Order by', field: 'orderBy' },
-	{ text: 'Limit', field: 'limit' },
-];
-
-export const mapOfFormulaToFilters: Record<
-	DataSource,
-	QueryAdditionalFilter[]
-> = {
-	metrics: commonFormulaFilters,
-	logs: commonFormulaFilters,
-	traces: commonFormulaFilters,
 };
 
 export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
@@ -348,6 +309,19 @@ export const initialQueryMeterWithType: Query = {
 	},
 };
 
+export const initialQueryAIWithType: Query = {
+	...initialQueryWithType,
+	builder: {
+		...initialQueryWithType.builder,
+		queryData: [
+			{
+				...initialQueryBuilderFormValuesMap.traces,
+				builderQueryType: 'builder_ai_query',
+			},
+		],
+	},
+};
+
 export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	string: Object.values(StringOperators),
 	number: Object.values(NumberOperators),
@@ -361,8 +335,12 @@ export enum PANEL_TYPES {
 	LIST = 'list',
 	TRACE = 'trace',
 	BAR = 'bar',
+	AREA = 'area',
+	SCATTER = 'scatter',
 	PIE = 'pie',
 	HISTOGRAM = 'histogram',
+	HEATMAP = 'heatmap',
+	TEXT = 'text',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
 
@@ -533,7 +511,7 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 };
 
 export enum OperatorConfigKeys {
-	'EXCEPTIONS' = 'EXCEPTIONS',
+	EXCEPTIONS = 'EXCEPTIONS',
 }
 
 export const OPERATORS_CONFIG = {
@@ -601,18 +579,6 @@ export const listViewInitialLogQuery: Query = {
 	},
 };
 
-export const PANEL_TYPES_INITIAL_QUERY: Record<PANEL_TYPES, Query> = {
-	[PANEL_TYPES.TIME_SERIES]: initialQueriesMap.metrics,
-	[PANEL_TYPES.VALUE]: initialQueriesMap.metrics,
-	[PANEL_TYPES.TABLE]: initialQueriesMap.metrics,
-	[PANEL_TYPES.LIST]: listViewInitialLogQuery,
-	[PANEL_TYPES.TRACE]: initialQueriesMap.traces,
-	[PANEL_TYPES.BAR]: initialQueriesMap.metrics,
-	[PANEL_TYPES.PIE]: initialQueriesMap.metrics,
-	[PANEL_TYPES.HISTOGRAM]: initialQueriesMap.metrics,
-	[PANEL_TYPES.EMPTY_WIDGET]: initialQueriesMap.metrics,
-};
-
 export const listViewInitialTraceQuery: Query = {
 	// it should be the above commented query
 	...initialQueriesMap.traces,
@@ -625,7 +591,6 @@ export const listViewInitialTraceQuery: Query = {
 				orderBy: [{ columnName: 'timestamp', order: 'desc' }],
 				offset: 0,
 				pageSize: 10,
-				selectColumns: defaultTraceSelectedColumns,
 			},
 		],
 	},

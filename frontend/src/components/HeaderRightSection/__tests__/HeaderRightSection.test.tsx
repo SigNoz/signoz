@@ -1,5 +1,5 @@
 // Mock dependencies before imports
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { logEventMock } from '__tests__/logEventMock';
@@ -7,9 +7,8 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 import HeaderRightSection from '../HeaderRightSection';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: jest.fn(),
+jest.mock('lib/router/useAppLocation', () => ({
+	useAppLocation: jest.fn(),
 }));
 
 jest.mock('../FeedbackModal', () => ({
@@ -45,7 +44,7 @@ jest.mock('hooks/useIsAIAssistantEnabled', () => ({
 	useIsAIAssistantEnabled: (): boolean => false,
 }));
 
-const mockUseLocation = useLocation as jest.Mock;
+const mockUseAppLocation = useAppLocation as jest.Mock;
 const mockUseGetTenantLicense = useGetTenantLicense as jest.Mock;
 
 const defaultProps = {
@@ -61,7 +60,7 @@ const mockLocation = {
 describe('HeaderRightSection', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		mockUseLocation.mockReturnValue(mockLocation);
+		mockUseAppLocation.mockReturnValue(mockLocation);
 		// Default to licensed user (Enterprise or Cloud)
 		mockUseGetTenantLicense.mockReturnValue({
 			isCloudUser: true,

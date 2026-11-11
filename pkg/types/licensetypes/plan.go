@@ -17,6 +17,10 @@ var (
 	// License State.
 	LicenseStatusInvalid = valuer.NewString("invalid")
 
+	// License Platform.
+	LicensePlatformCloud      = valuer.NewString("cloud")
+	LicensePlatformSelfHosted = valuer.NewString("self_hosted")
+
 	// Plan.
 	PlanNameEnterprise = valuer.NewString("enterprise")
 	PlanNameBasic      = valuer.NewString("basic")

@@ -90,13 +90,6 @@
 	gap: 8px;
 }
 
-.buttonContent {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 4px;
-}
-
 .getStartedText {
 	display: flex;
 	justify-content: center;
@@ -179,6 +172,9 @@
 }
 
 .infoLinkContainer {
+	display: flex;
+	align-items: center;
+
 	svg {
 		color: var(--primary);
 	}

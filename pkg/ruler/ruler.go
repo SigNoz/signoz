@@ -17,6 +17,9 @@ type Ruler interface {
 	// ListRuleStates returns all rules with their current evaluation state.
 	ListRuleStates(ctx context.Context) (*ruletypes.GettableRules, error)
 
+	// ListRules returns a filtered, sorted page of rules with state, plus label pairs and reserved filter keys.
+	ListRules(ctx context.Context, params *ruletypes.ListRulesParams) (*ruletypes.ListableRules, error)
+
 	// GetRule returns a single rule by ID.
 	GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.GettableRule, error)
 
@@ -25,6 +28,9 @@ type Ruler interface {
 	// internally because it stores the raw JSON as Data. Requires changing the storage
 	// model to store structured data.
 	CreateRule(ctx context.Context, ruleStr string) (*ruletypes.GettableRule, error)
+
+	// CloneRule creates a new rule from the stored definition of id, with a " - Copy" suffixed name.
+	CloneRule(ctx context.Context, id valuer.UUID) (*ruletypes.GettableRule, error)
 
 	// EditRule replaces the rule identified by id with the given JSON string.
 	// TODO: same as CreateRule — accept PostableRule instead of raw string.
@@ -46,4 +52,9 @@ type Ruler interface {
 	// TODO: expose downtime CRUD as methods on Ruler directly instead of leaking the
 	// store interface. The handler should not call store methods directly.
 	MaintenanceStore() alertmanagertypes.MaintenanceStore
+
+	CreateRuleView(ctx context.Context, orgID valuer.UUID, postable ruletypes.PostableRuleView) (*ruletypes.RuleView, error)
+	ListRuleViews(ctx context.Context, orgID valuer.UUID) (*ruletypes.ListableRuleViews, error)
+	UpdateRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatable ruletypes.UpdatableRuleView) (*ruletypes.RuleView, error)
+	DeleteRuleView(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 }

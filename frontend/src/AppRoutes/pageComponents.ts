@@ -26,20 +26,11 @@ export const ServiceMapPage = Loadable(
 	() => import(/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap'),
 );
 
-export const LogsSaveViews = Loadable(
-	() => import(/* webpackChunkName: "LogsSaveViews" */ 'pages/LogsModulePage'), // TODO: Add a wrapper so that the same component can be used in traces
-);
-
 export const TracesExplorer = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesModulePage'
 		),
-);
-
-export const TracesSaveViews = Loadable(
-	() =>
-		import(/* webpackChunkName: "Traces Save Views" */ 'pages/TracesModulePage'),
 );
 
 export const TracesFunnels = Loadable(
@@ -50,17 +41,6 @@ export const TracesFunnelDetails = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "Traces Funnel Details" */ 'pages/TracesModulePage'
-		),
-);
-
-export const TraceFilter = Loadable(
-	() => import(/* webpackChunkName: "Trace Filter Page" */ 'pages/Trace'),
-);
-
-export const TraceDetailOldRedirect = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "TraceDetailOldRedirect" */ 'pages/TraceDetailOldRedirect/index'
 		),
 );
 
@@ -102,15 +82,10 @@ export const DashboardPage = Loadable(
 	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardPage'),
 );
 
-export const DashboardWidget = Loadable(
-	() =>
-		import(/* webpackChunkName: "DashboardWidgetPage" */ 'pages/DashboardWidget'),
-);
-
 export const DashboardPanelEditorPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "DashboardPanelEditorPage" */ 'pages/DashboardPageV2/PanelEditorPage/PanelEditorPage'
+			/* webpackChunkName: "DashboardPanelEditorPage" */ 'pages/DashboardPage/PanelEditorPage/PanelEditorPage'
 		),
 );
 
@@ -168,18 +143,6 @@ export const MySettings = Loadable(
 
 export const Logs = Loadable(
 	() => import(/* webpackChunkName: "Logs" */ 'pages/LogsModulePage'),
-);
-
-export const LogsExplorer = Loadable(
-	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsModulePage'),
-);
-
-export const OldLogsExplorer = Loadable(
-	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/Logs'),
-);
-
-export const LiveLogs = Loadable(
-	() => import(/* webpackChunkName: "Live Logs" */ 'pages/LiveLogs'),
 );
 
 export const PipelinePage = Loadable(

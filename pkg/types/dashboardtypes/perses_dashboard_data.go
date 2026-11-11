@@ -21,13 +21,13 @@ import (
 // dropped: SigNoz never reads it (queries carry their own signal/source), so
 // the drift test allowlists it as an intentional omission.
 type DashboardSpec struct {
-	Display         Display               `json:"display" required:"true"`
-	Variables       []Variable            `json:"variables" required:"true" nullable:"false"`
-	Panels          map[string]*Panel     `json:"panels" required:"true" nullable:"false"`
-	Layouts         []Layout              `json:"layouts" required:"true" nullable:"false"`
-	Duration        common.DurationString `json:"duration"`
-	RefreshInterval common.DurationString `json:"refreshInterval"`
-	Links           []Link                `json:"links,omitzero"`
+	Display         Display               `json:"display" required:"true" description:"The dashboard title and description."`
+	Variables       []Variable            `json:"variables" required:"true" nullable:"false" description:"The dashboard variables, each a ListVariable or TextVariable envelope, referenced in queries as $name. Names must be unique. Use [] for none."`
+	Panels          map[string]*Panel     `json:"panels" required:"true" nullable:"false" description:"The panels keyed by panel id. An id has up to 75 characters from letters, digits, dot, underscore and hyphen. A panel is shown only where a layout item references it as #/spec/panels/<id>. Use {} for none."`
+	Layouts         []Layout              `json:"layouts" required:"true" nullable:"false" description:"The Grid layouts that place panels, at most 500. Each panel can be placed at most once. Use [] for none."`
+	Duration        common.DurationString `json:"duration" description:"The default time range, as a Prometheus duration such as 1h or 7d. Stored, but not applied by the UI."`
+	RefreshInterval common.DurationString `json:"refreshInterval" description:"The auto refresh interval, as a Prometheus duration such as 30s. Stored, but not applied by the UI."`
+	Links           []Link                `json:"links,omitzero" description:"External links stored with the dashboard. Not shown by the UI."`
 }
 
 // ══════════════════════════════════════════════
@@ -114,8 +114,8 @@ func (d *DashboardSpec) validatePanels() error {
 			return err
 		}
 		panelKind := panel.Spec.Plugin.Kind
-		if len(panel.Spec.Queries) != 1 {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel must have one query, found %d", path, len(panel.Spec.Queries))
+		if err := validatePanelQueryCount(panel.Spec.Queries, panelKind, path); err != nil {
+			return err
 		}
 		allowed := allowedQueryKinds[panelKind]
 		for qi, q := range panel.Spec.Queries {
@@ -123,6 +123,34 @@ func (d *DashboardSpec) validatePanels() error {
 				return err
 			}
 		}
+		// validatePanelQueryCount left exactly one query for a spec that reads it.
+		if spec, ok := panel.Spec.Plugin.Spec.(queryBoundPanelSpec); ok {
+			if err := spec.validateAgainstQuery(panel.Spec.Queries[0], path+".spec.plugin.spec"); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// queryBoundPanelSpec is a panel spec with fields that depend on the panel's
+// query. It is checked after the query itself validates.
+type queryBoundPanelSpec interface {
+	validateAgainstQuery(query Query, path string) error
+}
+
+func validatePanelQueryCount(queries []Query, panelKind PanelPluginKind, path string) error {
+	if queries == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: is required and must not be null; use [] for a panel that renders without a query", path)
+	}
+	if panelKind.rendersWithoutQuery() {
+		if len(queries) != 0 {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel kind %q renders without a query and must have queries: [], found %d", path, panelKind, len(queries))
+		}
+		return nil
+	}
+	if len(queries) != 1 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.spec.queries: panel must have one query, found %d", path, len(queries))
 	}
 	return nil
 }
@@ -141,6 +169,7 @@ func (d *DashboardSpec) validateQuery(qi int, q Query, panelKind PanelPluginKind
 func validateQueryAllowedForPanel(plugin QueryPlugin, allowed []QueryPluginKind, panelKind PanelPluginKind, path string) error {
 	compositeSubQueryTypeToPluginKind := map[qb.QueryType]QueryPluginKind{
 		qb.QueryTypeBuilder:       QueryKindBuilder,
+		qb.QueryTypeBuilderAI:     QueryKindAIBuilder,
 		qb.QueryTypeFormula:       QueryKindFormula,
 		qb.QueryTypeTraceOperator: QueryKindTraceOperator,
 		qb.QueryTypePromQL:        QueryKindPromQL,

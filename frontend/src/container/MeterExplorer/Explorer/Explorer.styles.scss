@@ -1,19 +1,5 @@
 .meter-explorer-container {
-	display: flex;
-	flex-direction: row;
-
-	.meter-explorer-quick-filters-section {
-		width: 280px;
-		border-right: 1px solid var(--l1-border);
-
-		&.hidden {
-			display: none;
-		}
-	}
-
 	.meter-explorer-content-section {
-		width: 100%;
-
 		// Meant to fix the query builder colors
 		--input-background: var(--l2-background);
 		--input-hover-background: var(--l2-background);
@@ -83,14 +69,6 @@
 			}
 		}
 	}
-
-	&.quick-filters-open {
-		.meter-explorer-content-section {
-			width: calc(100% - 280px);
-		}
-	}
-
-	padding-bottom: 80px;
 }
 
 .dashboards-and-alerts-popover-container {

@@ -1,7 +1,9 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
-import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { matchRoute } from 'lib/router/matchRoute';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Plus, X } from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
@@ -21,13 +23,11 @@ const AI_ASSISTANT_PANEL_OPEN_CLASS = 'ai-assistant-panel-open';
 const AI_ASSISTANT_PANEL_WIDTH_VAR = '--ai-assistant-panel-width';
 
 export default function AIAssistantPanel(): JSX.Element | null {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const [showHistory, setShowHistory] = useState(false);
 
 	const isOpen = useAIAssistantStore((s) => s.isDrawerOpen);
-	const isFullScreenPage = !!matchPath(pathname, {
-		path: ROUTES.AI_ASSISTANT,
+	const isFullScreenPage = !!matchRoute(pathname, ROUTES.AI_ASSISTANT, {
 		exact: true,
 	});
 	const activeConversationId = useAIAssistantStore(
@@ -47,11 +47,11 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		// Router state tells AIAssistantPage to skip its mount-time Opened fire:
 		// the assistant was already open in the drawer, so this is a surface
 		// switch, not a new open.
-		history.push(
+		navigate(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
-			{ fromInApp: true },
+			{ state: { fromInApp: true } },
 		);
-	}, [activeConversationId, closeDrawer, history]);
+	}, [activeConversationId, closeDrawer]);
 
 	const handleNew = useCallback(() => {
 		void logEvent(AIAssistantEvents.NewChatClicked, {
@@ -144,50 +144,59 @@ export default function AIAssistantPanel(): JSX.Element | null {
 					</div>
 
 					<div className={styles.actions}>
-						<TooltipSimple title={showHistory ? 'Back to chat' : 'Conversations'}>
+						<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
 							<Button
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
 								onClick={(): void => setShowHistory((v) => !v)}
 								aria-label="Toggle conversations"
-								prefix={<History size={14} />}
-							/>
-						</TooltipSimple>
+							>
+								<History size={14} />
+							</Button>
+						</Tooltip>
 
-						<TooltipSimple title="New conversation">
+						<Tooltip title="New conversation">
 							<Button
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
 								onClick={handleNew}
 								aria-label="New conversation"
-								prefix={<Plus size={14} />}
-							/>
-						</TooltipSimple>
+							>
+								<Plus size={14} />
+							</Button>
+						</Tooltip>
 
-						<TooltipSimple title="Open full screen">
+						<Tooltip title="Open full screen">
 							<Button
+								disabledTooltip="Start a conversation first"
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
 								onClick={handleExpand}
 								disabled={!activeConversationId}
 								aria-label="Open full screen"
-								prefix={<Maximize2 size={14} />}
-							/>
-						</TooltipSimple>
+							>
+								<Maximize2 size={14} />
+							</Button>
+						</Tooltip>
 
-						<TooltipSimple title="Close">
+						<Tooltip title="Close">
 							<Button
 								variant="ghost"
-								size="icon"
+								size="sm"
+								icon
 								color="secondary"
 								onClick={closeDrawer}
 								aria-label="Close panel"
-								prefix={<X size={14} />}
-							/>
-						</TooltipSimple>
+							>
+								<X size={14} />
+							</Button>
+						</Tooltip>
 					</div>
 				</div>
 

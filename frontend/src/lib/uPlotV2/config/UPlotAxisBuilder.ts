@@ -1,16 +1,10 @@
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import uPlot, { Axis } from 'uplot';
 
 import { uPlotXAxisValuesFormat } from '../../uPlotLib/utils/constants';
 import getGridColor from '../../uPlotLib/utils/getGridColor';
 import { buildYAxisSizeCalculator } from '../utils/axis';
 import { AxisProps, ConfigBuilder } from './types';
-
-const PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT = [
-	PANEL_TYPES.TIME_SERIES,
-	PANEL_TYPES.BAR,
-];
 
 /**
  * Builder for uPlot axis configuration
@@ -45,6 +39,16 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		};
 	}
 
+	/** Styled like the grid. */
+	private buildBorderConfig(
+		grid: uPlot.Axis.Grid | undefined,
+	): uPlot.Axis.Border | undefined {
+		if (this.props.showBorder === false || !grid || grid.show === false) {
+			return undefined;
+		}
+		return { show: true, stroke: grid.stroke, width: grid.width };
+	}
+
 	/**
 	 * Build ticks configuration
 	 */
@@ -65,15 +69,17 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 
 	/**
 	 * Build values formatter for X-axis (time)
+	 * A non-time x axis with a unit or precision formats like a value axis.
 	 */
 	private buildXAxisValuesFormatter(): uPlot.Axis.Values | undefined {
-		const { panelType } = this.props;
+		const { isTimeAxis, yAxisUnit, decimalPrecision } = this.props;
 
-		if (
-			panelType &&
-			PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT.includes(panelType)
-		) {
+		if (isTimeAxis) {
 			return uPlotXAxisValuesFormat as uPlot.Axis.Values;
+		}
+
+		if (yAxisUnit !== undefined || decimalPrecision !== undefined) {
+			return this.buildValueAxisFormatter();
 		}
 
 		return undefined;
@@ -81,18 +87,29 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 
 	/**
 	 * Build values formatter for Y-axis (values with units)
+	 * Blanks splits outside the scale; uPlot's asinh splits always include ±threshold.
 	 */
-	private buildYAxisValuesFormatter(): uPlot.Axis.Values {
-		const { yAxisUnit, decimalPrecision } = this.props;
+	private buildValueAxisFormatter(): uPlot.Axis.Values {
+		const { yAxisUnit, decimalPrecision, scaleKey } = this.props;
 
-		return (_, t): string[] =>
-			t.map((v) => {
-				if (v === null || v === undefined || Number.isNaN(v)) {
+		return (u, t): string[] => {
+			const scale = u?.scales?.[scaleKey];
+			const min = scale?.min ?? -Infinity;
+			const max = scale?.max ?? Infinity;
+			return t.map((v) => {
+				if (
+					v === null ||
+					v === undefined ||
+					Number.isNaN(v) ||
+					v < min ||
+					v > max
+				) {
 					return '';
 				}
 				const value = getToolTipValue(v.toString(), yAxisUnit, decimalPrecision);
 				return `${value}`;
 			});
+		};
 	}
 
 	/**
@@ -110,7 +127,7 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		return scaleKey === 'x'
 			? this.buildXAxisValuesFormatter()
 			: scaleKey === 'y'
-				? this.buildYAxisValuesFormatter()
+				? this.buildValueAxisFormatter()
 				: undefined;
 	}
 
@@ -157,10 +174,13 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 			show = true,
 			side = 2, // bottom by default
 			space,
+			splits,
+			filter,
 			gap = 5, // default gap is 5
 		} = this.props;
 
 		const grid = this.buildGridConfig();
+		const border = this.buildBorderConfig(grid);
 		const ticks = this.buildTicksConfig();
 		const values = this.buildValuesFormatter();
 		const size = this.buildSizeCalculator();
@@ -185,14 +205,23 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		if (ticks) {
 			axisConfig.ticks = ticks;
 		}
+		if (border) {
+			axisConfig.border = border;
+		}
 		if (values) {
 			axisConfig.values = values;
+		}
+		if (splits) {
+			axisConfig.splits = splits;
 		}
 		if (gap !== undefined) {
 			axisConfig.gap = gap;
 		}
 		if (space !== undefined) {
 			axisConfig.space = space;
+		}
+		if (filter) {
+			axisConfig.filter = filter;
 		}
 		if (size) {
 			axisConfig.size = size;

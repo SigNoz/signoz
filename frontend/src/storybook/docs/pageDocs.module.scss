@@ -1,0 +1,45 @@
+.states {
+	margin: 24px 0;
+}
+
+.heading {
+	margin-bottom: 8px;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	border-top: 1px solid var(--sb-docs-border, rgba(38, 85, 115, 0.15));
+}
+
+.item {
+	display: grid;
+	grid-template-columns: minmax(160px, 240px) 1fr;
+	gap: 16px;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--sb-docs-border, rgba(38, 85, 115, 0.15));
+
+	@media (max-width: 720px) {
+		grid-template-columns: 1fr;
+		gap: 4px;
+	}
+}
+
+.name {
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.description {
+	margin: 0;
+	opacity: 0.8;
+}
+
+.undocumented {
+	margin: 0;
+	font-style: italic;
+	opacity: 0.6;
+}

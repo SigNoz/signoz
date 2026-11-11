@@ -502,3 +502,28 @@ func (handler *handler) GetPublicWidgetQueryRangeV2(rw http.ResponseWriter, r *h
 
 	render.Success(rw, http.StatusOK, queryRangeResults)
 }
+
+func (handler *handler) GetSystemDashboard(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	name := mux.Vars(r)["name"]
+	if name == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "name is missing in the path"))
+		return
+	}
+
+	systemDashboard, err := handler.module.GetSystemDashboard(ctx, valuer.MustNewUUID(claims.OrgID), name)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, systemDashboard.ToGettableSystemDashboard())
+}

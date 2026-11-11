@@ -1,4 +1,6 @@
 .form {
+	--input-foreground: var(--l1-foreground);
+	--input-placeholder-color: var(--l3-foreground);
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-10);
@@ -12,17 +14,12 @@
 }
 
 .label {
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-semibold);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	color: var(--l3-foreground);
+	font-size: var(--periscope-font-size-base);
+	color: var(--l2-foreground);
 }
 
 .labelHint {
-	font-weight: var(--font-weight-normal);
-	text-transform: none;
-	letter-spacing: normal;
+	color: var(--l3-foreground);
 }
 
 .hint {

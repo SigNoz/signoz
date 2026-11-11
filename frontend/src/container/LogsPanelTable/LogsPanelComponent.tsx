@@ -22,7 +22,7 @@ import { FlatLogData } from 'lib/logs/flatLogData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { getLogPanelColumnsList } from './utils';
@@ -91,13 +91,8 @@ function LogsPanelComponent({
 		() => logs.map((log) => FlatLogData(log) as RowData),
 		[logs],
 	);
-	const {
-		activeLog,
-		onAddToQuery,
-		selectedTab,
-		handleSetActiveLog,
-		handleCloseLogDetail,
-	} = useLogDetailHandlers();
+	const { activeLog, selectedTab, handleSetActiveLog, handleCloseLogDetail } =
+		useLogDetailHandlers();
 
 	const handleRow = useCallback(
 		(record: RowData): HTMLAttributes<RowData> => ({
@@ -179,8 +174,6 @@ function LogsPanelComponent({
 					selectedTab={selectedTab}
 					log={activeLog}
 					onClose={handleCloseLogDetail}
-					onAddToQuery={onAddToQuery}
-					onClickActionItem={onAddToQuery}
 					isListViewPanel
 					listViewPanelSelectedFields={widget?.selectedLogFields}
 					logs={logs}

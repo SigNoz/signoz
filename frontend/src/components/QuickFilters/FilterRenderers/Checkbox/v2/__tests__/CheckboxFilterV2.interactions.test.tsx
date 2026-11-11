@@ -7,8 +7,10 @@ import { QuickFiltersSource } from '../../../../types';
 
 import CheckboxFilterV2 from '../CheckboxFilterV2';
 import {
+	buildQueryBuilderOverrides,
 	DEFAULT_FILTER,
 	DEFAULT_USE_FIELD_APIS,
+	EXTRA_VALUES,
 	getFilterFromCall,
 	mockFieldsValuesAPI,
 	renderWithFilter,
@@ -16,6 +18,25 @@ import {
 } from '../CheckboxFilterV2.testUtils';
 
 setupServer();
+
+const activeEnvironmentFilter = buildQueryBuilderOverrides({
+	builder: {
+		queryData: [
+			{
+				filters: {
+					items: [
+						{
+							key: { key: 'deployment.environment' },
+							op: 'in',
+							value: ['production'],
+						},
+					],
+					op: 'AND',
+				},
+			},
+		],
+	},
+});
 
 describe('CheckboxFilterV2 - interactions', () => {
 	describe('search functionality', () => {
@@ -29,7 +50,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 					const values =
 						searchTextReceived === ''
-							? ['production', 'staging', 'development']
+							? ['production', 'staging', 'development', ...EXTRA_VALUES]
 							: ['production'];
 
 					return res(
@@ -51,7 +72,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -71,6 +92,41 @@ describe('CheckboxFilterV2 - interactions', () => {
 					screen.queryByTestId('checkbox-value-row-staging'),
 				).not.toBeInTheDocument();
 			});
+			expect(screen.getByTestId('checkbox-filter-search')).toBeInTheDocument();
+		});
+
+		it('shows no search box when every value fits', async () => {
+			mockFieldsValuesAPI({ stringValues: EXTRA_VALUES });
+
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+				/>,
+			);
+
+			await screen.findByTestId(`checkbox-value-row-${EXTRA_VALUES[0]}`);
+
+			expect(
+				screen.queryByTestId('checkbox-filter-search'),
+			).not.toBeInTheDocument();
+		});
+
+		it('shows the search box once there are more values than fit', async () => {
+			mockFieldsValuesAPI({ stringValues: ['production', ...EXTRA_VALUES] });
+
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+				/>,
+			);
+
+			await expect(
+				screen.findByTestId('checkbox-filter-search'),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('filters values via search while preserving existingQuery context', async () => {
@@ -90,7 +146,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 								data: {
 									values: {
 										relatedValues: ['production'],
-										stringValues: ['staging', 'development'],
+										stringValues: ['staging', 'development', ...EXTRA_VALUES],
 										numberValues: [],
 									},
 								},
@@ -117,7 +173,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={{
 						...DEFAULT_USE_FIELD_APIS,
 						existingQuery: 'service.name = "api"',
@@ -125,18 +181,16 @@ describe('CheckboxFilterV2 - interactions', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: { items: [], op: 'AND' },
-										filter: { expression: 'service.name = "api"' },
-									},
-								],
-							},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: { items: [], op: 'AND' },
+									filter: { expression: 'service.name = "api"' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -171,7 +225,10 @@ describe('CheckboxFilterV2 - interactions', () => {
 							data: {
 								values: {
 									relatedValues: [],
-									stringValues: searchText === '' ? ['prod', 'staging'] : ['prod-match'],
+									stringValues:
+										searchText === ''
+											? ['prod', 'staging', ...EXTRA_VALUES]
+											: ['prod-match'],
 									numberValues: [],
 								},
 							},
@@ -183,7 +240,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={{
 						...DEFAULT_USE_FIELD_APIS,
 						existingQuery: 'service.name = "api"',
@@ -218,7 +275,8 @@ describe('CheckboxFilterV2 - interactions', () => {
 							data: {
 								values: {
 									relatedValues: [],
-									stringValues: searchText === '' ? ['prod', 'staging'] : [],
+									stringValues:
+										searchText === '' ? ['prod', 'staging', ...EXTRA_VALUES] : [],
 									numberValues: [],
 								},
 							},
@@ -230,7 +288,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -272,7 +330,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={{
 						...DEFAULT_USE_FIELD_APIS,
 						existingQuery: 'service.name = "api"',
@@ -313,7 +371,9 @@ describe('CheckboxFilterV2 - interactions', () => {
 					const relatedValues =
 						searchText === '' ? ['pod-a-v1', 'pod-b-v1', 'pod-c-v1'] : ['pod-a-v1']; // filtered to match 'pod-a'
 					const stringValues =
-						searchText === '' ? ['pod-a-v2', 'pod-b-v2', 'pod-c-v2'] : ['pod-a-v2']; // filtered to match 'pod-a'
+						searchText === ''
+							? ['pod-a-v2', 'pod-b-v2', 'pod-c-v2', ...EXTRA_VALUES]
+							: ['pod-a-v2']; // filtered to match 'pod-a'
 
 					return res(
 						ctx.status(200),
@@ -334,7 +394,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={{
 						...DEFAULT_USE_FIELD_APIS,
 						existingQuery: 'service.name = "api"',
@@ -380,7 +440,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -408,7 +468,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={{ ...DEFAULT_FILTER, defaultOpen: false }}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -420,6 +480,113 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			expect(header).toHaveAttribute('data-state', 'open');
 			await screen.findByTestId('checkbox-value-row-production');
+		});
+
+		it('opens a closed filter when the query filters on its key', async () => {
+			mockFieldsValuesAPI({
+				stringValues: ['production', 'staging'],
+			});
+
+			render(
+				<CheckboxFilterV2
+					filter={{ ...DEFAULT_FILTER, defaultOpen: false }}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+				/>,
+				undefined,
+				{ queryBuilderOverrides: activeEnvironmentFilter },
+			);
+
+			expect(screen.getByTestId('checkbox-filter-header')).toHaveAttribute(
+				'data-state',
+				'open',
+			);
+			await expect(
+				screen.findByTestId('checkbox-value-row-production'),
+			).resolves.toHaveAttribute('data-state', 'checked');
+		});
+
+		it('keeps the user toggle over the auto-open', async () => {
+			const user = userEvent.setup();
+
+			mockFieldsValuesAPI({
+				stringValues: ['production'],
+			});
+
+			render(
+				<CheckboxFilterV2
+					filter={{ ...DEFAULT_FILTER, defaultOpen: false }}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+				/>,
+				undefined,
+				{ queryBuilderOverrides: activeEnvironmentFilter },
+			);
+
+			const header = screen.getByTestId('checkbox-filter-header');
+			await screen.findByTestId('checkbox-value-row-production');
+
+			await user.click(header);
+
+			expect(header).toHaveAttribute('data-state', 'closed');
+			expect(
+				screen.queryByTestId('checkbox-value-row-production'),
+			).not.toBeInTheDocument();
+
+			await user.click(header);
+
+			expect(header).toHaveAttribute('data-state', 'open');
+			await screen.findByTestId('checkbox-value-row-production');
+		});
+
+		it('clears the search when the filter is collapsed', async () => {
+			const user = userEvent.setup();
+			const values = Array.from(
+				{ length: 12 },
+				(_, i) => `value-${String(i).padStart(2, '0')}`,
+			);
+
+			server.use(
+				rest.get('http://localhost/api/v1/fields/values', (req, res, ctx) => {
+					const searchText = req.url.searchParams.get('searchText') || '';
+					return res(
+						ctx.status(200),
+						ctx.json({
+							status: 'success',
+							data: {
+								values: {
+									relatedValues: [],
+									stringValues: values.filter((value) => value.includes(searchText)),
+									numberValues: [],
+								},
+							},
+						}),
+					);
+				}),
+			);
+
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+				/>,
+			);
+
+			await screen.findByTestId('checkbox-value-row-value-00');
+			await user.type(screen.getByTestId('checkbox-filter-search'), '11');
+			await waitFor(() =>
+				expect(
+					screen.queryByTestId('checkbox-value-row-value-00'),
+				).not.toBeInTheDocument(),
+			);
+
+			const header = screen.getByTestId('checkbox-filter-header');
+			await user.click(header);
+			await user.click(header);
+
+			await screen.findByTestId('checkbox-value-row-value-00');
+			expect(screen.getByTestId('checkbox-filter-search')).toHaveValue('');
 		});
 	});
 
@@ -434,7 +601,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -460,7 +627,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -485,31 +652,29 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: {
-											items: [
-												{
-													key: { key: 'deployment.environment' },
-													op: 'in',
-													value: ['production'],
-												},
-											],
-											op: 'AND',
-										},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'deployment.environment' },
+												op: 'in',
+												value: ['production'],
+											},
+										],
+										op: 'AND',
 									},
-								],
-							},
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -518,7 +683,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(screen.getByTestId('checkbox-filter-clear-all')).toBeInTheDocument();
 		});
 
-		it('hides clear button when no filter applied for attribute', async () => {
+		it('hides reset when the section has no filter applied', async () => {
 			mockFieldsValuesAPI({
 				stringValues: ['production'],
 			});
@@ -526,7 +691,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);
@@ -549,32 +714,30 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 					onFilterChange={onFilterChange}
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: {
-											items: [
-												{
-													key: { key: 'deployment.environment' },
-													op: 'in',
-													value: ['production'],
-												},
-											],
-											op: 'AND',
-										},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'deployment.environment' },
+												op: 'in',
+												value: ['production'],
+											},
+										],
+										op: 'AND',
 									},
-								],
-							},
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -598,7 +761,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 					onFilterChange={onFilterChange}
 				/>,
@@ -637,7 +800,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			expect(filter?.value).toBe('valueA');
 		});
 
-		it('converts NOT IN to IN when toggling unchecked (other) item', async () => {
+		it('adds to NOT IN when unchecking a non-excluded (other) item', async () => {
 			const user = userEvent.setup();
 			const onFilterChange = jest.fn();
 
@@ -646,18 +809,70 @@ describe('CheckboxFilterV2 - interactions', () => {
 				stringValues: ['valueB'],
 			});
 
-			// Clicking unchecked "Other" item with NOT IN filter should convert to IN [B]
+			// valueB is not excluded, so under NOT IN [valueA] it is still included
+			// and renders checked. Unchecking it excludes it too → NOT IN [A, B].
 			renderWithFilter(onFilterChange, { op: 'not in', value: ['valueA'] });
 
 			const rowB = await screen.findByTestId('checkbox-value-row-valueB');
-			expect(rowB).toHaveAttribute('data-state', 'unchecked');
+			expect(rowB).toHaveAttribute('data-state', 'checked');
 
 			await user.click(within(rowB).getByRole('checkbox'));
 
 			expect(onFilterChange).toHaveBeenCalledTimes(1);
 			const filter = getFilterFromCall(onFilterChange);
-			expect(filter?.op).toBe('in');
-			expect(filter?.value).toBe('valueB');
+			expect(filter?.op).toBe('not in');
+			expect(filter?.value).toStrictEqual(['valueA', 'valueB']);
+		});
+
+		it('adds to NOT IN when unchecking a non-excluded item without related values', async () => {
+			const user = userEvent.setup();
+			const onFilterChange = jest.fn();
+
+			mockFieldsValuesAPI({
+				stringValues: ['valueA', 'valueB'],
+			});
+
+			// Without related values the display follows the clause: valueB is not
+			// excluded, so it renders checked; unchecking it excludes it too.
+			render(
+				<CheckboxFilterV2
+					filter={DEFAULT_FILTER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
+					useFieldApis={DEFAULT_USE_FIELD_APIS}
+					onFilterChange={onFilterChange}
+				/>,
+				undefined,
+				{
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'deployment.environment' },
+												op: 'not in',
+												value: ['valueA'],
+											},
+										],
+										op: 'AND',
+									},
+								},
+							],
+						},
+					}),
+				},
+			);
+
+			const rowB = await screen.findByTestId('checkbox-value-row-valueB');
+			expect(rowB).toHaveAttribute('data-state', 'checked');
+
+			await user.click(within(rowB).getByRole('checkbox'));
+
+			expect(onFilterChange).toHaveBeenCalledTimes(1);
+			const filter = getFilterFromCall(onFilterChange);
+			expect(filter?.op).toBe('not in');
+			expect(filter?.value).toStrictEqual(['valueA', 'valueB']);
 		});
 
 		it('accumulates both values in IN when toggling checked (related) then unchecked (other)', async () => {
@@ -756,7 +971,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			render(
 				<CheckboxFilterV2
 					filter={{ ...DEFAULT_FILTER, customRendererForValue: customRenderer }}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={DEFAULT_USE_FIELD_APIS}
 				/>,
 			);

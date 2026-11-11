@@ -31,6 +31,7 @@ function InterStepConfig({
 					value={step.latency_type ?? LatencyOptions.P99}
 					options={options}
 					disabled={!hasEditPermission}
+					disabledTooltip="You need edit permissions to change the latency type"
 					onChange={
 						hasEditPermission
 							? (value): void =>

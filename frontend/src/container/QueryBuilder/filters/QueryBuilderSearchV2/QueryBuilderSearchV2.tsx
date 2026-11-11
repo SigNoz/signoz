@@ -8,8 +8,8 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { Select, Spin, Tooltip } from 'antd';
-import { Badge } from '@signozhq/ui/badge';
+import { type RefSelectProps, Select, Spin } from 'antd';
+import { Pill } from '@signozhq/ui/pill';
 import cx from 'classnames';
 import {
 	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
@@ -20,15 +20,15 @@ import {
 } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
-import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
+import { useDynamicVariableSuggestions } from 'hooks/dashboard/useDynamicVariableSuggestions';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
-import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
 import { useGetAttributeSuggestions } from 'hooks/queryBuilder/useGetAttributeSuggestions';
 import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useRunQueryWithFilterItems } from 'hooks/queryBuilder/useRunQueryWithFilterItems';
 import useDebounceValue from 'hooks/useDebounce';
 import {
 	cloneDeep,
@@ -40,7 +40,6 @@ import {
 	unset,
 } from 'lodash-es';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
-import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -53,16 +52,15 @@ import { DataSource } from 'types/common/queryBuilder';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
-import { selectStyle } from '../QueryBuilderSearch/config';
-import { PLACEHOLDER } from '../QueryBuilderSearch/constant';
-import { TypographyText } from '../QueryBuilderSearch/style';
+import { selectStyle } from './config';
+import { PLACEHOLDER } from './constant';
 import {
 	checkCommaInValue,
 	getOperatorFromValue,
 	getOperatorValue,
 	getTagToken,
 	isInNInOperator,
-} from '../QueryBuilderSearch/utils';
+} from './utils';
 import { filterByOperatorConfig } from '../utils';
 import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
 import SpanScopeSelector from './SpanScopeSelector';
@@ -88,7 +86,6 @@ interface CustomTagProps {
 interface QueryBuilderSearchV2Props {
 	query: IBuilderQuery;
 	onChange: (value: TagFilter) => void;
-	whereClauseConfig?: WhereClauseConfig;
 	placeholder?: string;
 	className?: string;
 	suffixIcon?: React.ReactNode;
@@ -145,7 +142,6 @@ function QueryBuilderSearchV2(
 		placeholder,
 		className,
 		suffixIcon,
-		whereClauseConfig,
 		hardcodedAttributeKeys,
 		hasPopupContainer,
 		rootClassName,
@@ -161,9 +157,10 @@ function QueryBuilderSearchV2(
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const { handleRunQuery, currentQuery } = useQueryBuilder();
+	const { currentQuery } = useQueryBuilder();
+	const runQuery = useRunQueryWithFilterItems();
 
-	const selectRef = useRef<BaseSelectRef>(null);
+	const selectRef = useRef<RefSelectProps>(null);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -263,10 +260,7 @@ function QueryBuilderSearchV2(
 		return false;
 	}, [currentState, query.aggregateAttribute?.dataType, query.dataSource]);
 
-	const dashboardDynamicVariables = useDashboardVariablesByType(
-		'DYNAMIC',
-		'values',
-	);
+	const dashboardDynamicVariables = useDynamicVariableSuggestions();
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
@@ -469,42 +463,18 @@ function QueryBuilderSearchV2(
 			if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
 				event.preventDefault();
 				event.stopPropagation();
-				handleRunQuery();
+				runQuery();
 				setIsOpen(false);
 			}
 		},
-		[handleRunQuery, searchValue],
+		[runQuery, searchValue],
 	);
 
 	const handleOnBlur = useCallback((): void => {
 		if (searchValue) {
 			const operatorType =
 				operatorTypeMapper[currentFilterItem?.op || ''] || 'NOT_VALID';
-			// if key is added and operator is not present then convert to body CONTAINS key
 			if (
-				currentFilterItem?.key &&
-				isEmpty(currentFilterItem?.op) &&
-				whereClauseConfig?.customKey === 'body' &&
-				whereClauseConfig?.customOp === OPERATORS.CONTAINS
-			) {
-				// eslint-disable-next-line sonarjs/no-identical-functions
-				setTags((prev) => [
-					...prev,
-					{
-						key: {
-							key: 'body',
-							dataType: DataTypes.String,
-							type: '',
-							id: 'body--string----true',
-						},
-						op: OPERATORS.CONTAINS,
-						value: currentFilterItem?.key?.key,
-					},
-				]);
-				setCurrentFilterItem(undefined);
-				setSearchValue('');
-				setCurrentState(DropdownState.ATTRIBUTE_KEY);
-			} else if (
 				currentFilterItem?.op === OPERATORS.EXISTS ||
 				currentFilterItem?.op === OPERATORS.NOT_EXISTS
 			) {
@@ -546,8 +516,6 @@ function QueryBuilderSearchV2(
 		currentFilterItem?.op,
 		currentFilterItem?.value,
 		searchValue,
-		whereClauseConfig?.customKey,
-		whereClauseConfig?.customOp,
 	]);
 
 	// this useEffect takes care of tokenisation based on the search state
@@ -816,9 +784,8 @@ function QueryBuilderSearchV2(
 				values.push(...(attributeValues?.payload?.[key] || []));
 
 				// here we want to suggest the variable name matching with the key here, we will go over the dynamic variables for the keys
-				const variableName = dashboardDynamicVariables?.find(
-					(variable) =>
-						variable?.dynamicVariablesAttribute === currentFilterItem?.key?.key,
+				const variableName = dashboardDynamicVariables.find(
+					(variable) => variable.attribute === currentFilterItem?.key?.key,
 				)?.name;
 
 				if (variableName) {
@@ -957,35 +924,15 @@ function QueryBuilderSearchV2(
 			setTags((prev) => prev.filter((t) => !isEqual(t, tagDetails)));
 		};
 
-		const isDisabled = !!searchValue;
-
 		return (
-			<span className="qb-search-bar-tokenised-tags">
-				<Badge
-					color="vanilla"
-					className={tagDetails?.key?.type || ''}
-					closable={!searchValue && closable}
-					onClose={(e): void => {
-						e.preventDefault();
-						onCloseHandler();
-					}}
-				>
-					<Tooltip title={chipValue}>
-						<TypographyText
-							className="qb-tag-text"
-							$isInNin={isInNin}
-							$isEnabled={!!searchValue}
-							onClick={(): void => {
-								if (!isDisabled) {
-									tagEditHandler(value);
-								}
-							}}
-						>
-							{chipValue}
-						</TypographyText>
-					</Tooltip>
-				</Badge>
-			</span>
+			<Pill.Closeable
+				disabled={!!searchValue || !closable}
+				maxWidth={isInNin ? '10rem' : '100%'}
+				onClick={(): void => tagEditHandler(value)}
+				onClose={onCloseHandler}
+			>
+				{chipValue}
+			</Pill.Closeable>
 		);
 	};
 
@@ -1089,7 +1036,6 @@ QueryBuilderSearchV2.defaultProps = {
 	placeholder: PLACEHOLDER,
 	className: '',
 	suffixIcon: null,
-	whereClauseConfig: {},
 	hasPopupContainer: true,
 	rootClassName: '',
 	hardcodedAttributeKeys: undefined,

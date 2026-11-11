@@ -1,5 +1,5 @@
 import type { KeyboardEvent, MouseEvent } from 'react';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { CloudintegrationtypesServiceDashboardDTO } from 'api/generated/services/sigNoz.schemas';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { openInNewTab } from 'utils/navigation';
@@ -47,6 +47,7 @@ function DashboardCard({
 					? 'aws-service-dashboard-item-clickable'
 					: 'aws-service-dashboard-item-disabled'
 			} `}
+			data-testid={`cloud-service-dashboard-${dashboardId ?? dashboard.title}`}
 			{...interactiveProps}
 		>
 			<div className="aws-service-dashboard-item-content">
@@ -59,7 +60,7 @@ function DashboardCard({
 	);
 
 	if (!dashboardId) {
-		return <TooltipSimple title={DISABLED_TOOLTIP}>{card}</TooltipSimple>;
+		return <Tooltip title={DISABLED_TOOLTIP}>{card}</Tooltip>;
 	}
 
 	return card;

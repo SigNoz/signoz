@@ -15,7 +15,7 @@ import { Typography } from '@signozhq/ui/typography';
 import {
 	ANY_RESOURCE_VALUE,
 	QUERY_TYPES,
-	SUPPORTED_GRANT_KEY,
+	SUPPORTED_GRANT_KEYS,
 } from './TelemetrySelectorWizard.constants';
 import { isQueryTypeAvailable } from './TelemetrySelectorWizard.utils';
 import useTelemetrySelectorWizard from './useTelemetrySelectorWizard';
@@ -38,6 +38,7 @@ function TelemetrySelectorWizard({
 		open,
 		queryType,
 		selectedQueryType,
+		grantKey,
 		value,
 		selector,
 		isAnyResource,
@@ -46,6 +47,7 @@ function TelemetrySelectorWizard({
 		canAdd,
 		handleOpenChange,
 		handleQueryTypeChange,
+		handleKeyChange,
 		handleValueChange,
 		handleAnyResourceChange,
 		handleSelectorChange,
@@ -55,11 +57,12 @@ function TelemetrySelectorWizard({
 
 	const trigger = (
 		<Button
+			color="primary"
 			variant="solid"
 			size="sm"
-			data-testid={`telemetry-wizard-trigger-${testId}`}
+			testId={`telemetry-wizard-trigger-${testId}`}
+			prefix={<Wand size={14} />}
 		>
-			<Wand size={14} />
 			Wizard
 		</Button>
 	);
@@ -67,6 +70,7 @@ function TelemetrySelectorWizard({
 	const footer = (
 		<>
 			<Button
+				size="md"
 				variant="ghost"
 				color="secondary"
 				onClick={(): void => handleOpenChange(false)}
@@ -74,10 +78,13 @@ function TelemetrySelectorWizard({
 				Cancel
 			</Button>
 			<Button
+				size="md"
+				color="primary"
 				variant="solid"
 				onClick={handleAdd}
 				disabled={!canAdd}
-				data-testid={`wizard-add-btn-${testId}`}
+				disabledTooltip={validation.message}
+				testId={`wizard-add-btn-${testId}`}
 			>
 				Add Selector
 			</Button>
@@ -125,12 +132,22 @@ function TelemetrySelectorWizard({
 						<Typography as="label" weight="medium">
 							Key
 						</Typography>
-						<Input
-							value={SUPPORTED_GRANT_KEY}
-							readOnly
-							disabled
-							testId={`wizard-key-input-${testId}`}
-						/>
+						<Select value={grantKey} onChange={handleKeyChange}>
+							<SelectTrigger data-testid={`wizard-key-select-${testId}`}>
+								<SelectValue>{grantKey}</SelectValue>
+							</SelectTrigger>
+							<SelectContent withPortal={false} className={styles.selectContent}>
+								{SUPPORTED_GRANT_KEYS.map((supportedKey) => (
+									<SelectItem
+										key={supportedKey}
+										value={supportedKey}
+										testId={`wizard-key-option-${supportedKey}-${testId}`}
+									>
+										{supportedKey}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 				)}
 
@@ -153,9 +170,11 @@ function TelemetrySelectorWizard({
 							testId={`wizard-value-input-${testId}`}
 						/>
 						<Checkbox
+							color="primary"
 							id={`wizard-any-resource-${testId}`}
 							value={isAnyResource}
 							disabled={!supportsKeyScoping}
+							disabledTooltip="This query type does not support key scoping"
 							onChange={(checked): void => handleAnyResourceChange(checked === true)}
 							testId={`wizard-any-resource-checkbox-${testId}`}
 						>

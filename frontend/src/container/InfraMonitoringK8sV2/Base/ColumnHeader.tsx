@@ -1,11 +1,12 @@
 import { Info } from '@signozhq/icons';
-import { TooltipSimple } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 import styles from './ColumnHeader.module.scss';
 import cx from 'classnames';
 import { MouseEventHandler } from 'react';
+import { DOCS_BASE_URL } from 'constants/app';
 
-const DOCS_BASE_URL = `${process.env.DOCS_BASE_URL}/docs`;
+const DOCS_ROOT = `${DOCS_BASE_URL}/docs`;
 
 interface ColumnHeaderProps {
 	children?: React.ReactNode;
@@ -37,13 +38,12 @@ function ColumnHeader({
 			const isJustStringTitle = typeof tooltipTitle === 'string';
 
 			return (
-				<TooltipSimple
-					arrow
+				<Tooltip
 					title={
 						<div onClick={stopPropagationHandler}>
 							{tooltipTitle}{' '}
 							<a
-								href={`${DOCS_BASE_URL}${docPath}`}
+								href={`${DOCS_ROOT}${docPath}`}
 								target="_blank"
 								rel="noopener"
 								onClick={stopPropagationHandler}
@@ -58,19 +58,17 @@ function ColumnHeader({
 					<div className={styles.infoIcon}>
 						<Info size="md" />
 					</div>
-				</TooltipSimple>
+				</Tooltip>
 			);
 		}
 
 		if (tooltip) {
 			return (
-				<TooltipSimple
-					title={<div onClick={stopPropagationHandler}>{tooltip}</div>}
-				>
+				<Tooltip title={<div onClick={stopPropagationHandler}>{tooltip}</div>}>
 					<div className={styles.infoIcon}>
 						<Info size="md" />
 					</div>
-				</TooltipSimple>
+				</Tooltip>
 			);
 		}
 

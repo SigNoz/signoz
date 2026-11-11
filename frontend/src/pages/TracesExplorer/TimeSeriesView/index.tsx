@@ -1,6 +1,7 @@
 import {
 	Dispatch,
 	MutableRefObject,
+	ReactNode,
 	SetStateAction,
 	useEffect,
 	useMemo,
@@ -29,6 +30,7 @@ function TimeSeriesViewContainer({
 	setWarning,
 	setIsLoadingQueries,
 	queryKeyRef,
+	headerActions,
 }: TimeSeriesViewProps): JSX.Element {
 	const { stagedQuery, currentQuery, panelType } = useQueryBuilder();
 
@@ -126,6 +128,7 @@ function TimeSeriesViewContainer({
 				dataSource={dataSource}
 				setWarning={setWarning}
 				allowExport
+				headerActions={headerActions}
 			/>
 		</div>
 	);
@@ -137,11 +140,13 @@ interface TimeSeriesViewProps {
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 	queryKeyRef?: MutableRefObject<any>;
+	headerActions?: ReactNode;
 }
 
 TimeSeriesViewContainer.defaultProps = {
 	dataSource: DataSource.TRACES,
 	queryKeyRef: undefined,
+	headerActions: undefined,
 };
 
 export default TimeSeriesViewContainer;

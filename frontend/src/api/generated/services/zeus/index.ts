@@ -27,6 +27,26 @@ import type {
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
+
 /**
  * This endpoint gets the host info from zeus.
  * @summary Get host info from Zeus.
@@ -85,7 +105,7 @@ export function useGetHosts<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**

@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { toast } from '@signozhq/ui/sonner';
 import { useQueryClient } from 'react-query';
+import logEvent from 'api/common/logEvent';
 import {
 	getListLLMPricingRulesQueryKey,
 	getListUnmappedLLMModelsQueryKey,
@@ -93,6 +94,10 @@ export function useModelCostDrawer(): UseModelCostDrawerResult {
 			try {
 				await createOrUpdate({
 					data: { rules: [buildRulePayload(draft)] },
+				});
+				void logEvent('AI Observability Model Pricing: Model cost saved', {
+					mode,
+					modelName: draft.modelName,
 				});
 				await invalidateList();
 				setIsOpen(false);

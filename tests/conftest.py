@@ -19,6 +19,7 @@ pytest_plugins = [
     "fixtures.traces",
     "fixtures.metrics",
     "fixtures.queriercommon",
+    "fixtures.semconvfamilies",
     "fixtures.metadata",
     "fixtures.meter",
     "fixtures.browser",
@@ -31,6 +32,7 @@ pytest_plugins = [
     "fixtures.alerts",
     "fixtures.cloudintegrations",
     "fixtures.jsontypes",
+    "fixtures.materialized",
     "fixtures.seeder",
     "fixtures.serviceaccount",
     "fixtures.role",
@@ -98,6 +100,7 @@ def pytest_addoption(parser: pytest.Parser):
         default="delete",
         help="sqlite mode",
     )
+    # Keep the version defaults below in sync with pull-images in .github/workflows/e2eci.yaml.
     parser.addoption(
         "--postgres-version",
         action="store",
@@ -113,6 +116,6 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption(
         "--schema-migrator-version",
         action="store",
-        default="v0.144.6",
+        default="v0.144.9",  # todo(nikhil): change to 0.144.10
         help="schema migrator version",
     )

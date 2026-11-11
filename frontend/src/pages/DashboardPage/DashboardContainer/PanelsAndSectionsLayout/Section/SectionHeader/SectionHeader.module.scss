@@ -1,0 +1,38 @@
+.header {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 8px 12px;
+
+	&.headerOpen {
+		border-bottom: 1px solid var(--l1-border);
+	}
+}
+
+.dragHandle {
+	--button-cursor: grab;
+
+	&:active {
+		--button-cursor: grabbing;
+	}
+}
+
+.toggle {
+	flex: 1;
+	min-width: 0;
+	--button-justify-content: flex-start;
+}
+
+.title {
+	margin-left: 4px;
+	color: var(--l1-foreground);
+	font-weight: 500;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.repeatBadge {
+	margin-left: 8px;
+	opacity: 0.6;
+}

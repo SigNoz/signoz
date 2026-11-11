@@ -184,11 +184,6 @@ func (handler *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userID == claims.UserID {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "users cannot call this api on self"))
-		return
-	}
-
 	updatableUser := new(types.UpdatableUser)
 	if err := json.NewDecoder(r.Body).Decode(&updatableUser); err != nil {
 		render.Error(w, err)
@@ -431,11 +426,6 @@ func (handler *handler) CreateUserRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.UserID.String() == claims.UserID {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "users cannot call this api on self"))
-		return
-	}
-
 	userRole, err := handler.setter.AddUserRoleByRoleID(ctx, valuer.MustNewUUID(claims.OrgID), req.UserID, req.RoleID)
 	if err != nil {
 		render.Error(w, err)
@@ -489,11 +479,6 @@ func (handler *handler) DeleteUserRole(w http.ResponseWriter, r *http.Request) {
 	userRole, err := handler.getter.GetUserRoleByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(w, err)
-		return
-	}
-
-	if userRole.UserID.String() == claims.UserID {
-		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "users cannot call this api on self"))
 		return
 	}
 

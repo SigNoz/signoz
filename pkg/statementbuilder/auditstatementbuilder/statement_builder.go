@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -22,17 +23,17 @@ import (
 type auditQueryStatementBuilder struct {
 	logger                    *slog.Logger
 	metadataStore             telemetrytypes.MetadataStore
-	fm                        qbtypes.FieldMapper
-	cb                        qbtypes.ConditionBuilder
+	storage                   qbtypes.Storage
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
 	fullTextColumn            *telemetrytypes.TelemetryFieldKey
+	fl                        flagger.Flagger
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.LogAggregation] = (*auditQueryStatementBuilder)(nil)
 
 // NewFactory returns a provider factory for the audit statement builder. Its New
-// internalizes the FieldMapper, ConditionBuilder, and AggExprRewriter.
+// internalizes the storage and the AggExprRewriter.
 func NewFactory(
 	metadataStore telemetrytypes.MetadataStore,
 	fl flagger.Flagger,
@@ -40,11 +41,10 @@ func NewFactory(
 	return factory.NewProviderFactory(
 		factory.MustNewName("audit"),
 		func(_ context.Context, settings factory.ProviderSettings, _ statementbuilder.Config) (qbtypes.StatementBuilder[qbtypes.LogAggregation], error) {
-			fm := audittelemetryschema.NewFieldMapper()
-			cb := audittelemetryschema.NewConditionBuilder(fm)
-			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, audittelemetryschema.DefaultFullTextColumn, fm, cb, fl)
+			storage := audittelemetryschema.NewStorage()
+			aggExprRewriter := querybuilder.NewAggExprRewriter(settings, audittelemetryschema.DefaultFullTextColumn, storage, fl, telemetrytypes.SignalLogs)
 			return NewAuditQueryStatementBuilder(
-				settings, metadataStore, fm, cb, aggExprRewriter, audittelemetryschema.DefaultFullTextColumn, fl,
+				settings, metadataStore, storage, aggExprRewriter, audittelemetryschema.DefaultFullTextColumn, fl,
 			), nil
 		},
 	)
@@ -53,8 +53,7 @@ func NewFactory(
 func NewAuditQueryStatementBuilder(
 	settings factory.ProviderSettings,
 	metadataStore telemetrytypes.MetadataStore,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
+	storage qbtypes.Storage,
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	flagger flagger.Flagger,
@@ -75,11 +74,11 @@ func NewAuditQueryStatementBuilder(
 	return &auditQueryStatementBuilder{
 		logger:                    auditSettings.Logger(),
 		metadataStore:             metadataStore,
-		fm:                        fieldMapper,
-		cb:                        conditionBuilder,
+		storage:                   storage,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
 		fullTextColumn:            fullTextColumn,
+		fl:                        flagger,
 	}
 }
 
@@ -111,6 +110,8 @@ func (b *auditQueryStatementBuilder) Build(
 		stmt, err = b.buildListQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeTimeSeries:
 		stmt, err = b.buildTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
+	case qbtypes.RequestTypeHeatmap, qbtypes.RequestTypeDistribution:
+		stmt, err = b.buildHeatmapTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
 		stmt, err = b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, false, variables)
 	default:
@@ -228,9 +229,11 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end)
 	var (
-		cteFragments []string
-		cteArgs      [][]any
+		cteFragments   []string
+		cteArgs        [][]any
+		columnWarnings []string
 	)
 
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables); err != nil {
@@ -263,11 +266,12 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 				continue
 			}
 
-			colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &query.SelectFields[index], telemetrytypes.FieldDataTypeUnspecified, keys)
+			colExpr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, &query.SelectFields[index], telemetrytypes.FieldDataTypeUnspecified, keys)
 			if err != nil {
 				return nil, err
 			}
-			sb.SelectMore(colExpr)
+			columnWarnings = append(columnWarnings, keyWarnings...)
+			sb.SelectMore(fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(colExpr), query.SelectFields[index].Name))
 		}
 	}
 
@@ -279,11 +283,12 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 	}
 
 	for _, orderBy := range query.Order {
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
+		colExpr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, &orderBy.Key.TelemetryFieldKey, telemetrytypes.FieldDataTypeUnspecified, keys)
 		if err != nil {
 			return nil, err
 		}
-		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
+		columnWarnings = append(columnWarnings, keyWarnings...)
+		sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(colExpr), orderBy.Direction.StringValue()))
 	}
 
 	if query.Limit > 0 {
@@ -304,7 +309,7 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       preparedWhereClause.Warnings,
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
@@ -320,9 +325,52 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
+	return b.buildTimeSeriesOrHeatmapQuery(ctx, orgID, sb, query, start, end, keys, variables, nil)
+}
+
+// buildHeatmapTimeSeriesQuery counts rows per (time bucket, group, value
+// bucket) of the field its aggregation names.
+func (b *auditQueryStatementBuilder) buildHeatmapTimeSeriesQuery(
+	ctx context.Context,
+	orgID valuer.UUID,
+	sb *sqlbuilder.SelectBuilder,
+	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	heatmapField, countQuery, err := qbtypes.HeatmapCountQuery(query)
+	if err != nil {
+		return nil, err
+	}
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end)
+	mayBeAbsent, err := querybuilder.HeatmapFieldMayBeAbsent(ctx, info, b.storage, heatmapField, keys)
+	if err != nil {
+		return nil, err
+	}
+	if mayBeAbsent {
+		countQuery = qbtypes.RequireHeatmapField(countQuery, *heatmapField)
+	}
+	return b.buildTimeSeriesOrHeatmapQuery(ctx, orgID, sb, countQuery, start, end, keys, variables, heatmapField)
+}
+
+// buildTimeSeriesOrHeatmapQuery builds one row per (time bucket, group). A
+// non-nil heatmapField makes it a heatmap instead: the bucket a row's
+// heatmapField falls in joins the group keys, so a row is one cell.
+func (b *auditQueryStatementBuilder) buildTimeSeriesOrHeatmapQuery(
+	ctx context.Context,
+	orgID valuer.UUID,
+	sb *sqlbuilder.SelectBuilder,
+	query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+	heatmapField *telemetrytypes.TelemetryFieldKey,
+) (*qbtypes.Statement, error) {
 	var (
-		cteFragments []string
-		cteArgs      [][]any
+		cteFragments   []string
+		cteArgs        [][]any
+		columnWarnings []string
 	)
 
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables); err != nil {
@@ -340,23 +388,37 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 	var allGroupByArgs []any
 
 	fieldNames := make([]string, 0, len(query.GroupBy))
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end)
 	for _, gb := range query.GroupBy {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), gb.Name)
+		colExpr := sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, clickhousesql.Identifier(gb.Name)))
 		sb.SelectMore(colExpr)
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.Name))
+		fieldNames = append(fieldNames, sqlbuilder.Escape(clickhousesql.Identifier(gb.Name)))
+	}
+
+	var bucketAliases []string
+	if heatmapField != nil {
+		valueFragment, aliases, warnings, err := querybuilder.HeatmapBucketColumns(ctx, info, b.storage, sb, heatmapField, query.BucketOptions, keys)
+		if err != nil {
+			return nil, err
+		}
+		cteFragments = append(cteFragments, valueFragment)
+		bucketAliases = aliases
+		columnWarnings = append(columnWarnings, warnings...)
 	}
 
 	allAggChArgs := make([]any, 0)
 	for i, agg := range query.Aggregations {
-		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, orgID, start, end, agg.Expression, uint64(query.StepInterval.Seconds()), keys)
+		rewritten, chArgs, aggWarnings, err := b.aggExprRewriter.Rewrite(ctx, orgID, start, end, agg.Expression, uint64(query.StepInterval.Seconds()), keys)
 		if err != nil {
 			return nil, err
 		}
+		columnWarnings = append(columnWarnings, aggWarnings...)
 		allAggChArgs = append(allAggChArgs, chArgs...)
 		sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, i))
 	}
@@ -386,6 +448,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 
 		sb.GroupBy("ts")
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		sb.GroupBy(bucketAliases...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
@@ -399,7 +462,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 			for _, orderBy := range query.Order {
 				_, ok := aggOrderBy(orderBy, query)
 				if !ok {
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(clickhousesql.Identifier(orderBy.Key.Name)), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -413,6 +476,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 	} else {
 		sb.GroupBy("ts")
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		sb.GroupBy(bucketAliases...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
@@ -426,7 +490,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 			for _, orderBy := range query.Order {
 				_, ok := aggOrderBy(orderBy, query)
 				if !ok {
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(clickhousesql.Identifier(orderBy.Key.Name)), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -442,7 +506,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       preparedWhereClause.Warnings,
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
@@ -460,8 +524,9 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
 	var (
-		cteFragments []string
-		cteArgs      [][]any
+		cteFragments   []string
+		cteArgs        [][]any
+		columnWarnings []string
 	)
 
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, orgID, sb, query, start, end, variables); err != nil {
@@ -475,13 +540,15 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 
 	var allGroupByArgs []any
 
+	info := querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end)
 	for _, gb := range query.GroupBy {
-		expr, err := b.fm.ColumnExpressionFor(ctx, orgID, start, end, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		expr, keyWarnings, err := querybuilder.ResolveColumn(ctx, info, b.storage, &gb.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return nil, err
 		}
+		columnWarnings = append(columnWarnings, keyWarnings...)
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", sqlbuilder.Escape(expr), gb.Name)
+		colExpr := sqlbuilder.Escape(fmt.Sprintf("toString(%s) AS %s", expr, clickhousesql.Identifier(gb.Name)))
 		sb.SelectMore(colExpr)
 	}
 
@@ -490,10 +557,11 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 	if len(query.Aggregations) > 0 {
 		for idx := range query.Aggregations {
 			aggExpr := query.Aggregations[idx]
-			rewritten, chArgs, err := b.aggExprRewriter.Rewrite(ctx, orgID, start, end, aggExpr.Expression, rateInterval, keys)
+			rewritten, chArgs, aggWarnings, err := b.aggExprRewriter.Rewrite(ctx, orgID, start, end, aggExpr.Expression, rateInterval, keys)
 			if err != nil {
 				return nil, err
 			}
+			columnWarnings = append(columnWarnings, aggWarnings...)
 			allAggChArgs = append(allAggChArgs, chArgs...)
 			sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, idx))
 		}
@@ -522,7 +590,7 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 		if ok {
 			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+			sb.OrderBy(fmt.Sprintf("%s %s", sqlbuilder.Escape(clickhousesql.Identifier(orderBy.Key.Name)), orderBy.Direction.StringValue()))
 		}
 	}
 
@@ -532,6 +600,10 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 
 	if query.Limit > 0 {
 		sb.Limit(query.Limit)
+	}
+
+	if query.Offset > 0 {
+		sb.Offset(query.Offset)
 	}
 
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
@@ -544,7 +616,7 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 	stmt := &qbtypes.Statement{
 		Query:          finalSQL,
 		Args:           finalArgs,
-		Warnings:       preparedWhereClause.Warnings,
+		Warnings:       append(preparedWhereClause.Warnings, columnWarnings...),
 		WarningsDocURL: preparedWhereClause.WarningsDocURL,
 	}
 
@@ -566,16 +638,13 @@ func (b *auditQueryStatementBuilder) addFilterCondition(
 	if query.Filter != nil && query.Filter.Expression != "" {
 		preparedWhereClause, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
-			OrgID:              orgID,
+			Query:              querybuilder.NewQueryInfo(ctx, orgID, b.fl, telemetrytypes.SignalLogs, nil, start, end),
+			Storage:            b.storage,
 			Logger:             b.logger,
-			FieldMapper:        b.fm,
-			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
 			SkipResourceFilter: true,
 			FullTextColumn:     b.fullTextColumn,
 			Variables:          variables,
-			StartNs:            start,
-			EndNs:              end,
 		})
 
 		if err != nil {

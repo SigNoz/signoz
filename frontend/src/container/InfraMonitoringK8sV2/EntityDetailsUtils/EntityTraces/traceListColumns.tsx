@@ -3,7 +3,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import { TextNoData } from '../../components/TextNoData';
-import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
+import { getMs } from 'utils/timeUtils';
 import {
 	BlockLink,
 	getTraceLink,
@@ -117,10 +117,10 @@ export const getTraceListColumns = (
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
 							<Badge
-								data-testid={key}
-								color="robin"
-								variant="outline"
-								className={styles.pointer}
+								textTransform="none"
+								testId={key}
+								color="primary"
+								variant="outlined"
 							>
 								{httpMethod}
 							</Badge>
@@ -147,11 +147,7 @@ export const getTraceListColumns = (
 
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<HttpStatusBadge
-								statusCode={statusCode}
-								testId={key}
-								className={styles.pointer}
-							/>
+							<HttpStatusBadge statusCode={statusCode} testId={key} />
 						</BlockLink>
 					);
 				}

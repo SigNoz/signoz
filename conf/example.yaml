@@ -138,6 +138,18 @@ sqlstore:
 
 ##################### APIServer #####################
 apiserver:
+  # The TCP address the API server listens on, in the form "host:port".
+  address: 0.0.0.0:8080
+  # Maximum duration for reading an entire request, including the body.
+  read_timeout: 60s
+  # Keep at 0; any value cuts off streaming endpoints (livetail, SSE, export_raw_data).
+  write_timeout: 0
+  # tls:
+  #   enabled: true
+  #   cert_file: /path/to/server.crt
+  #   key_file: /path/to/server.key
+  #   # Minimum TLS version: "1.2" or "1.3". Defaults to "1.2".
+  #   min_version: "1.2"
   timeout:
     # Default request timeout.
     default: 60s
@@ -166,6 +178,9 @@ querier:
   # range with padding to include slightly delayed log exports. Logs only; set
   # to 0 to disable.
   log_trace_id_window_padding: 5m
+  schemametadatastore:
+    # How long found schema metadata stays cached; 0 caches it for the life of the process.
+    cache_ttl: 0s
 
 ##################### TelemetryStore #####################
 telemetrystore:
@@ -190,7 +205,6 @@ telemetrystore:
       max_bytes_to_read: 0
       max_result_rows: 0
       ignore_data_skipping_indices: ""
-      secondary_indices_enable_bulk_filtering: false
 
 ##################### Prometheus #####################
 prometheus:
@@ -330,7 +344,7 @@ gateway:
 ##################### Tokenizer #####################
 tokenizer:
   # Specifies the tokenizer provider to use.
-  provider: jwt
+  provider: opaque
   lifetime:
     # The duration for which a user can be idle before being required to authenticate.
     idle: 168h
@@ -397,7 +411,6 @@ identn:
     # headers to use for tokenizer identN resolver
     headers:
       - Authorization
-      - Sec-WebSocket-Protocol
   apikey:
     # toggle apikey identN
     enabled: true
@@ -423,6 +436,7 @@ auditor:
   # Specifies the auditor provider to use.
   # noop: discards all audit events (community default).
   # otlphttp: exports audit events via OTLP HTTP (enterprise).
+  # kafka: exports audit events to a Kafka topic as OTLP protobuf (enterprise).
   provider: noop
   # The async channel capacity for audit events. Events are dropped when full (fail-open).
   buffer_size: 1000
@@ -448,6 +462,18 @@ auditor:
       max_interval: 30s
       # The total maximum time spent retrying.
       max_elapsed_time: 60s
+  kafka:
+    # The seed broker addresses (host:port) used to discover the cluster.
+    brokers:
+      - localhost:9092
+    # The topic audit events are written to. It must already exist.
+    topic: ""
+    # The client id the producer reports to the brokers.
+    client_id: signoz
+    # The compression codec for produced batches: none, gzip, snappy, lz4 or zstd.
+    compression: lz4
+    # The maximum time to drain buffered events on shutdown. Undelivered events are dropped after it.
+    shutdown_timeout: 30s
 
 ##################### Cloud Integration #####################
 cloudintegration:

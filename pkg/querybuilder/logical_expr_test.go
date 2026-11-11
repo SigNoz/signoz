@@ -4,39 +4,30 @@ import (
 	"context"
 	"testing"
 
-	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// stubFieldMapper provides just the two per-key primitives the shared
-// composition builds on; the remaining FieldMapper methods are unused here.
-type stubFieldMapper struct{}
+// stubStorage provides the one read the shared composition builds on.
+type stubStorage struct{}
 
-func (stubFieldMapper) FieldFor(_ context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) (string, error) {
-	return "value(" + key.Name + ")", nil
+func (stubStorage) Read(_ context.Context, _ qbtypes.QueryInfo, key *telemetrytypes.TelemetryFieldKey) (qbtypes.Read, error) {
+	return qbtypes.Read{SQL: "value(" + key.Name + ")", Presence: "has(" + key.Name + ")", Absence: "NOT has(" + key.Name + ")", WhenAbsent: qbtypes.AbsentIsSentinel}, nil
 }
 
-func (stubFieldMapper) ExistsFor(_ context.Context, _ valuer.UUID, _, _ uint64, key *telemetrytypes.TelemetryFieldKey, exists bool) (string, error) {
-	if exists {
-		return "has(" + key.Name + ")", nil
-	}
-	return "NOT has(" + key.Name + ")", nil
+func (stubStorage) Fallback(context.Context, qbtypes.QueryInfo, *telemetrytypes.TelemetryFieldKey, qbtypes.FilterOperator, any) ([]*telemetrytypes.LogicalField, error) {
+	return nil, nil
 }
 
-func (stubFieldMapper) ColumnFor(context.Context, valuer.UUID, uint64, uint64, *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
-	return nil, qbtypes.ErrColumnNotFound
+func (stubStorage) Traits() qbtypes.Traits {
+	return qbtypes.Traits{}
 }
 
-func (stubFieldMapper) ColumnExpressionFor(context.Context, valuer.UUID, uint64, uint64, *telemetrytypes.TelemetryFieldKey, telemetrytypes.FieldDataType, map[string][]*telemetrytypes.TelemetryFieldKey) (string, error) {
-	return "", qbtypes.ErrColumnNotFound
-}
-
-func (stubFieldMapper) CandidateKeys(context.Context, valuer.UUID, *telemetrytypes.TelemetryFieldKey, any, map[string][]*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.TelemetryFieldKey {
-	return nil
+func (s stubStorage) Compile(ctx context.Context, q qbtypes.QueryInfo, logical *telemetrytypes.LogicalField, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (qbtypes.Compiled, error) {
+	return SharedCondition(ctx, q, s, logical, operator, value, sb)
 }
 
 func stringFamily(names ...string) *telemetrytypes.LogicalField {
@@ -47,21 +38,21 @@ func stringFamily(names ...string) *telemetrytypes.LogicalField {
 	return &telemetrytypes.LogicalField{Name: names[0], FieldDataType: telemetrytypes.FieldDataTypeString, Members: members}
 }
 
-func TestLogicalValueExprSingleMemberDelegatesToFieldFor(t *testing.T) {
+func TestLogicalReadSingleMemberDelegatesToRead(t *testing.T) {
 	logical := telemetrytypes.SingleLogicalField("a", &telemetrytypes.TelemetryFieldKey{Name: "a"})
-	expr, err := LogicalValueExpr(context.Background(), valuer.UUID{}, 0, 0, stubFieldMapper{}, logical)
+	read, err := LogicalRead(context.Background(), qbtypes.QueryInfo{}, stubStorage{}, logical)
 	require.NoError(t, err)
-	assert.Equal(t, "value(a)", expr)
+	assert.Equal(t, "value(a)", read.SQL)
 }
 
-func TestLogicalValueExprStringFamilyMergesCurrentFirst(t *testing.T) {
-	expr, err := LogicalValueExpr(context.Background(), valuer.UUID{}, 0, 0, stubFieldMapper{}, stringFamily("current", "old"))
+func TestLogicalReadStringFamilyMergesCurrentFirst(t *testing.T) {
+	read, err := LogicalRead(context.Background(), qbtypes.QueryInfo{}, stubStorage{}, stringFamily("current", "old"))
 	require.NoError(t, err)
 	// The trailing '' preserves keyless-row semantics for negative operators.
-	assert.Equal(t, "COALESCE(NULLIF(value(current), ''), NULLIF(value(old), ''), '')", expr)
+	assert.Equal(t, "COALESCE(NULLIF(value(current), ''), NULLIF(value(old), ''), '')", read.SQL)
 }
 
-func TestLogicalValueExprNumericFamilyGuardsEveryMember(t *testing.T) {
+func TestLogicalReadNumericFamilyGuardsEveryMember(t *testing.T) {
 	logical := &telemetrytypes.LogicalField{
 		Name:          "current",
 		FieldDataType: telemetrytypes.FieldDataTypeNumber,
@@ -70,26 +61,24 @@ func TestLogicalValueExprNumericFamilyGuardsEveryMember(t *testing.T) {
 			{Name: "old", FieldDataType: telemetrytypes.FieldDataTypeNumber},
 		},
 	}
-	expr, err := LogicalValueExpr(context.Background(), valuer.UUID{}, 0, 0, stubFieldMapper{}, logical)
+	read, err := LogicalRead(context.Background(), qbtypes.QueryInfo{}, stubStorage{}, logical)
 	require.NoError(t, err)
-	assert.Equal(t, "multiIf(has(current), value(current), has(old), value(old), NULL)", expr)
+	assert.Equal(t, "multiIf(has(current), value(current), has(old), value(old), NULL)", read.SQL)
 }
 
-func TestLogicalExistsExprSingleMemberDelegatesToExistsFor(t *testing.T) {
+func TestLogicalReadSingleMemberDelegatesAbsence(t *testing.T) {
 	logical := telemetrytypes.SingleLogicalField("a", &telemetrytypes.TelemetryFieldKey{Name: "a"})
-	expr, err := LogicalExistsExpr(context.Background(), valuer.UUID{}, 0, 0, stubFieldMapper{}, logical, false)
+	read, err := LogicalRead(context.Background(), qbtypes.QueryInfo{}, stubStorage{}, logical)
 	require.NoError(t, err)
-	assert.Equal(t, "NOT has(a)", expr)
+	assert.Equal(t, "NOT has(a)", read.Absence)
 }
 
-func TestLogicalExistsExprFamilyIsAnyMemberPresence(t *testing.T) {
+func TestLogicalReadFamilyPresenceIsAnyMember(t *testing.T) {
 	family := stringFamily("current", "old")
 
-	expr, err := LogicalExistsExpr(context.Background(), valuer.UUID{}, 0, 0, stubFieldMapper{}, family, true)
+	read, err := LogicalRead(context.Background(), qbtypes.QueryInfo{}, stubStorage{}, family)
 	require.NoError(t, err)
-	assert.Equal(t, "(has(current) OR has(old))", expr)
+	assert.Equal(t, "(has(current) OR has(old))", read.Presence)
 
-	expr, err = LogicalExistsExpr(context.Background(), valuer.UUID{}, 0, 0, stubFieldMapper{}, family, false)
-	require.NoError(t, err)
-	assert.Equal(t, "NOT (has(current) OR has(old))", expr)
+	assert.Equal(t, "NOT (has(current) OR has(old))", read.Absence)
 }

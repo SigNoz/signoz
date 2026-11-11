@@ -2,6 +2,8 @@ package logstelemetryschema
 
 import (
 	"context"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"testing"
 	"time"
 
@@ -15,19 +17,17 @@ import (
 func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 	fl := flaggertest.New(t)
 	ctx := context.Background()
-	fm := NewFieldMapper(fl)
-	cb := NewConditionBuilder(fm, fl)
+	storage := NewStorage()
 
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	keys := BuildCompleteFieldKeyMap(releaseTime)
 
 	opts := querybuilder.FilterExprVisitorOpts{
-		Context:          ctx,
-		Logger:           instrumentationtest.New().Logger(),
-		FieldMapper:      fm,
-		ConditionBuilder: cb,
-		FieldKeys:        keys,
-		FullTextColumn:   DefaultFullTextColumn,
+		Context: ctx,
+		Logger:  instrumentationtest.New().Logger(),
+		Storage: storage, Query: querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0),
+		FieldKeys:      keys,
+		FullTextColumn: DefaultFullTextColumn,
 	}
 
 	tests := []string{
@@ -53,19 +53,17 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 // TestLikeAndILikeWithWildcards_NoWarn Tests that LIKE/ILIKE with wildcards do not add warnings.
 func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 	fl := flaggertest.New(t)
-	fm := NewFieldMapper(fl)
-	cb := NewConditionBuilder(fm, fl)
+	storage := NewStorage()
 
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	keys := BuildCompleteFieldKeyMap(releaseTime)
 
 	opts := querybuilder.FilterExprVisitorOpts{
-		Context:          context.Background(),
-		Logger:           instrumentationtest.New().Logger(),
-		FieldMapper:      fm,
-		ConditionBuilder: cb,
-		FieldKeys:        keys,
-		FullTextColumn:   DefaultFullTextColumn}
+		Context: context.Background(),
+		Logger:  instrumentationtest.New().Logger(),
+		Storage: storage, Query: querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalLogs, nil, 0, 0),
+		FieldKeys:      keys,
+		FullTextColumn: DefaultFullTextColumn}
 
 	tests := []string{
 		"service.name LIKE 'demo-%'",

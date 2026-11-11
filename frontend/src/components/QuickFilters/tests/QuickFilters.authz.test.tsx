@@ -1,0 +1,208 @@
+import { ENVIRONMENT } from 'constants/env';
+import {
+	ApiMonitoringParams,
+	useApiMonitoringParams,
+} from 'container/ApiMonitoring/queryParams';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import {
+	QuickFilterReadPermission,
+	QuickFilterUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/quick-filter.permissions';
+import {
+	AUTHZ_CHECK_URL,
+	setupAuthzAdmin,
+	setupAuthzDeny,
+	setupAuthzDenyAll,
+} from 'lib/authz/utils/authz-test-utils';
+import {
+	otherFiltersResponse,
+	quickFiltersFieldValuesResponse,
+	quickFiltersListResponse,
+} from 'mocks-server/__mockdata__/customQuickFilters';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+
+import QuickFilters from '../QuickFilters';
+import { QuickFiltersSource } from '../types';
+import { QuickFiltersConfig, QuickFiltersFieldApis } from './constants';
+
+jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: jest.fn(),
+}));
+jest.mock('container/ApiMonitoring/queryParams');
+
+const mockUseApiMonitoringParams = jest.mocked(useApiMonitoringParams);
+
+const BASE_URL = ENVIRONMENT.baseURL;
+const quickFiltersListURL = `${BASE_URL}/api/v2/quick_filters/logs`;
+const fieldsKeysURL = `${BASE_URL}/api/v1/fields/keys`;
+const fieldsValuesURL = `${BASE_URL}/api/v1/fields/values`;
+
+const NOT_AUTHORIZED_TEXT = /is not authorized to perform/i;
+const FILTER_SERVICE_NAME = 'Service Name';
+const SETTINGS_CONTAINER_TEST_ID = 'settings-icon-container';
+
+beforeEach(() => {
+	(useQueryBuilder as jest.Mock).mockReturnValue({
+		currentQuery: {
+			builder: {
+				queryData: [
+					{
+						queryName: 'Test Query',
+						filters: { items: [] },
+					},
+				],
+			},
+		},
+		lastUsedQuery: 0,
+		redirectWithQueryBuilderData: jest.fn(),
+	});
+	mockUseApiMonitoringParams.mockReturnValue([
+		{ showIP: true } as ApiMonitoringParams,
+		jest.fn(),
+	]);
+	server.use(
+		rest.get(quickFiltersListURL, (_req, res, ctx) =>
+			res(ctx.status(200), ctx.json(quickFiltersListResponse)),
+		),
+		rest.get(fieldsKeysURL, (_req, res, ctx) =>
+			res(ctx.status(200), ctx.json(otherFiltersResponse)),
+		),
+		rest.get(fieldsValuesURL, (_req, res, ctx) =>
+			res(ctx.status(200), ctx.json(quickFiltersFieldValuesResponse)),
+		),
+	);
+});
+
+afterEach(() => {
+	server.resetHandlers();
+	jest.clearAllMocks();
+});
+
+function renderWithSavedList(): void {
+	render(
+		<QuickFilters
+			quickFilterSource={QuickFiltersSource.LOGS_EXPLORER}
+			handleFilterVisibilityChange={jest.fn()}
+			useFieldApis={QuickFiltersFieldApis}
+		/>,
+	);
+}
+
+function renderStaticConfig(): void {
+	render(
+		<QuickFilters
+			quickFilterSource={QuickFiltersSource.INFRA_MONITORING}
+			config={QuickFiltersConfig}
+			handleFilterVisibilityChange={jest.fn()}
+			useFieldApis={QuickFiltersFieldApis}
+		/>,
+	);
+}
+
+describe('QuickFilters - AuthZ', () => {
+	describe('read denied', () => {
+		it('shows the inline denial instead of the filters, header stays', async () => {
+			server.use(setupAuthzDeny(QuickFilterReadPermission));
+
+			renderWithSavedList();
+
+			await expect(
+				screen.findByText(NOT_AUTHORIZED_TEXT),
+			).resolves.toBeInTheDocument();
+
+			expect(screen.queryByText(FILTER_SERVICE_NAME)).not.toBeInTheDocument();
+			expect(screen.getByText('Filters for')).toBeInTheDocument();
+
+			const settingsTrigger = await screen.findByTestId(
+				SETTINGS_CONTAINER_TEST_ID,
+			);
+			await waitFor(() =>
+				expect(settingsTrigger).toHaveAttribute(
+					'data-denied-permissions',
+					expect.stringContaining('read'),
+				),
+			);
+		});
+	});
+
+	describe('update denied', () => {
+		it('renders the filters but disables the settings trigger', async () => {
+			server.use(setupAuthzDeny(QuickFilterUpdatePermission));
+
+			renderWithSavedList();
+
+			await expect(
+				screen.findByText(FILTER_SERVICE_NAME),
+			).resolves.toBeInTheDocument();
+
+			const settingsTrigger = await screen.findByTestId(
+				SETTINGS_CONTAINER_TEST_ID,
+			);
+			await waitFor(() =>
+				expect(settingsTrigger).toHaveAttribute(
+					'data-denied-permissions',
+					expect.stringContaining('update'),
+				),
+			);
+
+			await userEvent.click(settingsTrigger);
+			expect(screen.queryByText(/ADDED FILTERS/i)).not.toBeInTheDocument();
+		});
+	});
+
+	describe('all permissions granted', () => {
+		it('renders the filters and opens settings from the trigger', async () => {
+			server.use(setupAuthzAdmin());
+
+			renderWithSavedList();
+
+			await expect(
+				screen.findByText(FILTER_SERVICE_NAME),
+			).resolves.toBeInTheDocument();
+
+			const settingsTrigger = await screen.findByTestId(
+				SETTINGS_CONTAINER_TEST_ID,
+			);
+			expect(settingsTrigger).not.toHaveAttribute('data-denied-permissions');
+
+			await userEvent.click(settingsTrigger);
+			await expect(
+				screen.findByText(/ADDED FILTERS/i),
+			).resolves.toBeInTheDocument();
+		});
+	});
+
+	describe('static config pages (no saved list)', () => {
+		it('is not gated even when every permission is denied', async () => {
+			server.use(setupAuthzDenyAll());
+
+			renderStaticConfig();
+
+			await expect(
+				screen.findByText(FILTER_SERVICE_NAME),
+			).resolves.toBeInTheDocument();
+			expect(screen.queryByText(NOT_AUTHORIZED_TEXT)).not.toBeInTheDocument();
+		});
+	});
+
+	describe('permission check loading', () => {
+		it('shows the skeleton, not the filters or a denial', async () => {
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.delay('infinite'))),
+			);
+
+			renderWithSavedList();
+
+			await waitFor(() =>
+				// eslint-disable-next-line testing-library/no-node-access
+				expect(
+					document.querySelector('.quick-filters-skeleton'),
+				).toBeInTheDocument(),
+			);
+			expect(screen.queryByText(NOT_AUTHORIZED_TEXT)).not.toBeInTheDocument();
+			expect(screen.queryByText(FILTER_SERVICE_NAME)).not.toBeInTheDocument();
+		});
+	});
+});

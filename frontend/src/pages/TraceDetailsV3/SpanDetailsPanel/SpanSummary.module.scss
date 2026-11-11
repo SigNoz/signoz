@@ -47,13 +47,7 @@
 	border-radius: 50%;
 	background: var(--accent-forest);
 	flex-shrink: 0;
-}
-
-// Badges stay fit-content so short values shrink and long ones truncate.
-.serviceBadge,
-.statusMessageBadge {
-	max-width: 100%;
-	min-width: 0;
+	margin-right: 4px;
 }
 
 // Truncating text inside a badge (service name, status message).

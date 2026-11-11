@@ -7,7 +7,7 @@ import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerFo
 import { useForgotPassword } from 'api/generated/services/users';
 import AuthError from 'components/AuthError/AuthError';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import APIError from 'types/api/error';
 import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 import { getBaseUrl } from 'utils/basePath';
@@ -79,19 +79,15 @@ function ForgotPassword({
 
 	const hasMultipleOrgs = orgs.length > 1;
 
-	const isSubmitEnabled = useMemo((): boolean => {
-		if (isLoading) {
-			return false;
-		}
-
+	const submitDisabledReason = useMemo((): string | undefined => {
 		if (!watchedEmail?.trim()) {
-			return false;
+			return 'Enter your email first';
 		}
 
 		// Ensure we have an orgId (either selected from dropdown or the initial one)
 		const currentOrgId = hasMultipleOrgs ? selectedOrgId : initialOrgId;
-		return Boolean(currentOrgId);
-	}, [watchedEmail, selectedOrgId, isLoading, initialOrgId, hasMultipleOrgs]);
+		return currentOrgId ? undefined : 'Select an organization first';
+	}, [watchedEmail, selectedOrgId, initialOrgId, hasMultipleOrgs]);
 
 	const handleSubmit = useCallback((): void => {
 		const values = form.getFieldsValue();
@@ -112,7 +108,7 @@ function ForgotPassword({
 	}, [form, forgotPasswordMutate, initialOrgId, hasMultipleOrgs]);
 
 	const handleBackToLogin = useCallback((): void => {
-		history.push(ROUTES.LOGIN);
+		navigate(ROUTES.LOGIN);
 	}, []);
 
 	// Success screen
@@ -187,10 +183,12 @@ function ForgotPassword({
 
 				<div className="login-form-actions forgot-password-actions">
 					<Button
+						size="md"
+						color="secondary"
 						variant="solid"
 						type="button"
-						data-testid="forgot-password-back"
-						className="forgot-password-back-button"
+						testId="forgot-password-back"
+						width="100%"
 						onClick={handleBackToLogin}
 						prefix={<ArrowLeft size={12} />}
 					>
@@ -198,13 +196,15 @@ function ForgotPassword({
 					</Button>
 
 					<Button
-						disabled={!isSubmitEnabled}
+						disabledTooltip={submitDisabledReason}
+						size="md"
+						disabled={Boolean(submitDisabledReason)}
 						loading={isLoading}
 						variant="solid"
 						color="primary"
 						type="submit"
-						data-testid="forgot-password-submit"
-						className="login-submit-btn"
+						testId="forgot-password-submit"
+						width="100%"
 						suffix={<ArrowRight size={12} />}
 					>
 						{isLoading ? 'Sending...' : 'Send reset link'}

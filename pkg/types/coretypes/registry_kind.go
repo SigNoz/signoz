@@ -31,6 +31,7 @@ var Kinds = []Kind{
 	KindFactorAPIKey,
 	KindLicense,
 	KindSubscription,
+	KindDeploymentHost,
 	KindLogs,
 	KindTraces,
 	KindMetrics,
@@ -38,6 +39,8 @@ var Kinds = []Kind{
 	KindMeterMetrics,
 	KindLogsField,
 	KindTracesField,
+	KindMetricsField,
+	KindLLMPricingRule,
 }
 
 var (
@@ -71,6 +74,7 @@ var (
 	KindFactorAPIKey                 = MustNewKind("factor-api-key")
 	KindLicense                      = MustNewKind("license")
 	KindSubscription                 = MustNewKind("subscription")
+	KindDeploymentHost               = MustNewKind("deployment-host")
 	KindLogs                         = MustNewKind("logs")
 	KindTraces                       = MustNewKind("traces")
 	KindMetrics                      = MustNewKind("metrics")
@@ -78,4 +82,6 @@ var (
 	KindMeterMetrics                 = MustNewKind("meter-metrics")
 	KindLogsField                    = MustNewKind("logs-field")
 	KindTracesField                  = MustNewKind("traces-field")
+	KindMetricsField                 = MustNewKind("metrics-field")
+	KindLLMPricingRule               = MustNewKind("llm-pricing-rule")
 )

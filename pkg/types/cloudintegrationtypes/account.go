@@ -3,6 +3,7 @@ package cloudintegrationtypes
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -26,6 +27,17 @@ type Account struct {
 type AgentReport struct {
 	TimestampMillis int64          `json:"timestampMillis" required:"true"`
 	Data            map[string]any `json:"data" required:"true" nullable:"true"`
+	SyncState       *SyncState     `json:"syncState" required:"true" nullable:"true"`
+}
+
+type SyncState struct {
+	Version int64                       `json:"version" required:"true"`
+	InSync  bool                        `json:"inSync" required:"true"`
+	Regions map[string]*RegionSyncState `json:"regions" required:"true" nullable:"false"`
+}
+
+type RegionSyncState struct {
+	State RegionState `json:"state" required:"true"`
 }
 
 type AccountConfig struct {
@@ -138,7 +150,7 @@ func NewAccountFromStorable(storableAccount *StorableCloudIntegration) (*Account
 		}
 		account.Config.Azure = azureConfig
 	case CloudProviderTypeGCP:
-		gcpConfig := new(GCPAccountConfig)
+		gcpConfig := &GCPAccountConfig{ConnectionMethod: GCPConnectionMethodManual}
 		err := json.Unmarshal([]byte(storableAccount.Config), gcpConfig)
 		if err != nil {
 			return nil, err
@@ -150,6 +162,7 @@ func NewAccountFromStorable(storableAccount *StorableCloudIntegration) (*Account
 		account.AgentReport = &AgentReport{
 			TimestampMillis: storableAccount.LastAgentReport.TimestampMillis,
 			Data:            storableAccount.LastAgentReport.Data,
+			SyncState:       NewSyncStateFromStorable(storableAccount.LastAgentReport.SyncState),
 		}
 	}
 
@@ -227,25 +240,16 @@ func NewAccountConfigFromPostable(provider CloudProviderType, config *PostableAc
 			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "GCP config can not be nil for GCP provider")
 		}
 
-		if config.GCP.DeploymentProjectID == "" {
-			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "deployment project ID is required for GCP provider")
+		gcpConfig := &GCPAccountConfig{
+			ConnectionMethod:    config.GCP.ConnectionMethod,
+			DeploymentProjectID: config.GCP.DeploymentProjectID,
+			ProjectIDs:          config.GCP.ProjectIDs,
+			DeploymentRegion:    config.GCP.DeploymentRegion,
 		}
-
-		if err := validateGCPRegion(config.GCP.DeploymentRegion); err != nil {
+		if err := gcpConfig.ErrIfInvalid(); err != nil {
 			return nil, err
 		}
-
-		if len(config.GCP.ProjectIDs) == 0 {
-			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "at least one project id is required for GCP provider")
-		}
-
-		return &AccountConfig{
-			GCP: &GCPAccountConfig{
-				DeploymentProjectID: config.GCP.DeploymentProjectID,
-				ProjectIDs:          config.GCP.ProjectIDs,
-				DeploymentRegion:    config.GCP.DeploymentRegion,
-			},
-		}, nil
+		return &AccountConfig{GCP: gcpConfig}, nil
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -288,12 +292,12 @@ func NewAccountConfigFromUpdatable(provider CloudProviderType, config *Updatable
 			return nil, err
 		}
 
-		if len(config.Config.GCP.ProjectIDs) == 0 {
-			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "at least one project id is required for GCP provider")
+		if err := validateGCPProjectIDs(config.Config.GCP.ProjectIDs); err != nil {
+			return nil, err
 		}
 
-		if config.Config.GCP.DeploymentProjectID == "" {
-			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "deployment project ID is required for GCP provider")
+		if err := validateGCPDeploymentProjectID(config.Config.GCP.DeploymentProjectID); err != nil {
+			return nil, err
 		}
 
 		return &AccountConfig{
@@ -308,10 +312,28 @@ func NewAccountConfigFromUpdatable(provider CloudProviderType, config *Updatable
 	}
 }
 
-func NewAgentReport(data map[string]any) *AgentReport {
+func NewAgentReport(data map[string]any, syncState *SyncState) *AgentReport {
 	return &AgentReport{
 		TimestampMillis: time.Now().UnixMilli(),
 		Data:            data,
+		SyncState:       syncState,
+	}
+}
+
+func NewSyncStateFromStorable(storableSyncState *StorableSyncState) *SyncState {
+	if storableSyncState == nil {
+		return nil
+	}
+
+	regions := make(map[string]*RegionSyncState, len(storableSyncState.Regions))
+	for region, regionSyncState := range storableSyncState.Regions {
+		regions[region] = &RegionSyncState{State: regionSyncState.State}
+	}
+
+	return &SyncState{
+		Version: storableSyncState.Version,
+		InSync:  storableSyncState.InSync,
+		Regions: regions,
 	}
 }
 
@@ -324,6 +346,13 @@ func GetSigNozAPIURLFromDeployment(deployment *zeustypes.GettableDeployment) (st
 }
 
 func (account *Account) Update(provider CloudProviderType, config *AccountConfig) error {
+	if provider == CloudProviderTypeGCP {
+		if account.Config.GCP.ConnectionMethod == GCPConnectionMethodAgent {
+			return errors.NewInvalidInputf(ErrCodeInvalidInput, "GCP agent account configuration cannot be updated")
+		}
+		config.GCP.ConnectionMethod = account.Config.GCP.ConnectionMethod
+	}
+
 	// deployment region can not be updated once set for Azure
 	if provider == CloudProviderTypeAzure {
 		config.Azure.DeploymentRegion = account.Config.Azure.DeploymentRegion
@@ -333,6 +362,52 @@ func (account *Account) Update(provider CloudProviderType, config *AccountConfig
 	account.UpdatedAt = time.Now()
 
 	return nil
+}
+
+func (account *Account) ErrIfInvalidProviderAccountID(providerAccountID string) error {
+	if account.Provider != CloudProviderTypeGCP || account.Config.GCP.ConnectionMethod != GCPConnectionMethodAgent {
+		return nil
+	}
+
+	if providerAccountID != account.Config.GCP.DeploymentProjectID {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "providerAccountId must match deploymentProjectId for GCP agent setup")
+	}
+
+	return nil
+}
+
+func (account *Account) UpdateAgentReport(providerAccountID *string, agentReport *AgentReport) {
+	account.ProviderAccountID = providerAccountID
+	account.AgentReport = agentReport
+}
+
+// UpdateSyncState keeps the rest of the agent report, and is a no-op when the agent has never checked in.
+func (account *Account) UpdateSyncState(syncState *SyncState) {
+	if account.AgentReport == nil {
+		return
+	}
+
+	account.AgentReport.SyncState = syncState
+}
+
+// NextSyncState returns the sync state for this check-in, or nil for providers without one.
+func (account *Account) NextSyncState(syncedVersion *int64) *SyncState {
+	if account.Provider != CloudProviderTypeAWS {
+		return nil
+	}
+
+	var previous *SyncState
+	if account.AgentReport != nil {
+		previous = account.AgentReport.SyncState
+	}
+
+	regions := account.Config.AWS.Regions
+	// Removed before the agent ever checked in: no region was sent to it, so there is nothing to clean up.
+	if account.AgentReport == nil && account.RemovedAt != nil {
+		regions = nil
+	}
+
+	return newSyncState(previous, regions, account.RemovedAt != nil, syncedVersion)
 }
 
 func (postableAccount *PostableAccount) UnmarshalJSON(data []byte) error {
@@ -405,4 +480,80 @@ func (config *AccountConfig) ToJSON() ([]byte, error) {
 
 func NewIngestionKeyName(provider CloudProviderType) string {
 	return fmt.Sprintf("%s-integration", provider.StringValue())
+}
+
+// newSyncState returns the sync state after a check-in without mutating previous.
+func newSyncState(previous *SyncState, regions []string, removed bool, syncedVersion *int64) *SyncState {
+	if previous == nil {
+		previous = newSyncStateFromRegions(regions)
+	}
+
+	next := previous.copy()
+
+	// The agent synced this version, so its disabled regions are cleaned up and can be dropped.
+	if syncedVersion != nil && *syncedVersion == next.Version {
+		next.InSync = true
+		maps.DeleteFunc(next.Regions, func(_ string, regionSyncState *RegionSyncState) bool {
+			return regionSyncState.State == RegionStateDisabled
+		})
+	}
+
+	// Once the integration is removed, every region is disabled.
+	if removed {
+		regions = nil
+	}
+
+	changed := false
+	desiredRegionsMap := make(map[string]struct{}, len(regions))
+
+	for _, region := range regions {
+		desiredRegionsMap[region] = struct{}{}
+
+		if regionSyncState, ok := next.Regions[region]; ok && regionSyncState.State == RegionStateEnabled {
+			continue
+		}
+
+		next.Regions[region] = &RegionSyncState{State: RegionStateEnabled}
+		changed = true
+	}
+
+	for region, regionSyncState := range next.Regions {
+		_, ok := desiredRegionsMap[region]
+		if ok && regionSyncState.State == RegionStateEnabled {
+			continue
+		}
+
+		if !ok && regionSyncState.State == RegionStateDisabled {
+			continue
+		}
+
+		regionSyncState.State = RegionStateDisabled
+		changed = true
+	}
+
+	if changed {
+		next.Version++
+		next.InSync = false
+	}
+
+	return next
+}
+
+// newSyncStateFromRegions is used on the first check-in, when the agent has already deployed regions, so it starts in sync.
+func newSyncStateFromRegions(regions []string) *SyncState {
+	syncState := &SyncState{Version: 1, InSync: true, Regions: make(map[string]*RegionSyncState, len(regions))}
+	for _, region := range regions {
+		syncState.Regions[region] = &RegionSyncState{State: RegionStateEnabled}
+	}
+
+	return syncState
+}
+
+func (syncState *SyncState) copy() *SyncState {
+	regions := make(map[string]*RegionSyncState, len(syncState.Regions))
+	for region, regionSyncState := range syncState.Regions {
+		regions[region] = &RegionSyncState{State: regionSyncState.State}
+	}
+
+	return &SyncState{Version: syncState.Version, InSync: syncState.InSync, Regions: regions}
 }

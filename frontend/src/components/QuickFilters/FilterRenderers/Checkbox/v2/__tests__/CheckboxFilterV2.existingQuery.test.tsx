@@ -6,6 +6,7 @@ import { QuickFiltersSource } from '../../../../types';
 
 import CheckboxFilterV2 from '../CheckboxFilterV2';
 import {
+	buildQueryBuilderOverrides,
 	DEFAULT_FILTER,
 	DEFAULT_USE_FIELD_APIS,
 	setupServer,
@@ -49,7 +50,7 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={{
 						...DEFAULT_USE_FIELD_APIS,
 						existingQuery: 'custom.query = "value"',
@@ -57,18 +58,16 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: { items: [], op: 'AND' },
-										filter: { expression: 'should.be.ignored = "yes"' },
-									},
-								],
-							},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: { items: [], op: 'AND' },
+									filter: { expression: 'should.be.ignored = "yes"' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -83,7 +82,7 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={{
 						...DEFAULT_USE_FIELD_APIS,
 						existingQuery: null,
@@ -91,18 +90,16 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: { items: [], op: 'AND' },
-										filter: { expression: 'should.be.ignored = "yes"' },
-									},
-								],
-							},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: { items: [], op: 'AND' },
+									filter: { expression: 'should.be.ignored = "yes"' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -119,32 +116,30 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={USE_FIELD_APIS_AUTO_DERIVE}
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: {
-											items: [
-												{
-													key: { key: 'service.name', dataType: 'string', type: 'tag' },
-													op: '=',
-													value: 'from-v3-items',
-												},
-											],
-											op: 'AND',
-										},
-										filter: { expression: 'v5.expression = "preferred"' },
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'service.name', dataType: 'string', type: 'tag' },
+												op: '=',
+												value: 'from-v3-items',
+											},
+										],
+										op: 'AND',
 									},
-								],
-							},
+									filter: { expression: 'v5.expression = "preferred"' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -159,23 +154,21 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={USE_FIELD_APIS_AUTO_DERIVE}
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: { items: [], op: 'AND' },
-										filter: { expression: 'only.v5 = "expression"' },
-									},
-								],
-							},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: { items: [], op: 'AND' },
+									filter: { expression: 'only.v5 = "expression"' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -192,31 +185,29 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={USE_FIELD_APIS_AUTO_DERIVE}
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: {
-											items: [
-												{
-													key: { key: 'service.name', dataType: 'string', type: 'tag' },
-													op: '=',
-													value: 'api-service',
-												},
-											],
-											op: 'AND',
-										},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'service.name', dataType: 'string', type: 'tag' },
+												op: '=',
+												value: 'api-service',
+											},
+										],
+										op: 'AND',
 									},
-								],
-							},
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -231,36 +222,34 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={USE_FIELD_APIS_AUTO_DERIVE}
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: {
-											items: [
-												{
-													key: { key: 'service.name', dataType: 'string', type: 'tag' },
-													op: '=',
-													value: 'api',
-												},
-												{
-													key: { key: 'env', dataType: 'string', type: 'tag' },
-													op: '=',
-													value: 'prod',
-												},
-											],
-											op: 'AND',
-										},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: {
+										items: [
+											{
+												key: { key: 'service.name', dataType: 'string', type: 'tag' },
+												op: '=',
+												value: 'api',
+											},
+											{
+												key: { key: 'env', dataType: 'string', type: 'tag' },
+												op: '=',
+												value: 'prod',
+											},
+										],
+										op: 'AND',
 									},
-								],
-							},
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 
@@ -275,22 +264,20 @@ describe('CheckboxFilterV2 - existingQuery calculation', () => {
 			render(
 				<CheckboxFilterV2
 					filter={DEFAULT_FILTER}
-					source={QuickFiltersSource.TRACES_EXPLORER}
+					quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 					useFieldApis={USE_FIELD_APIS_AUTO_DERIVE}
 				/>,
 				undefined,
 				{
-					queryBuilderOverrides: {
-						currentQuery: {
-							builder: {
-								queryData: [
-									{
-										filters: { items: [], op: 'AND' },
-									},
-								],
-							},
+					queryBuilderOverrides: buildQueryBuilderOverrides({
+						builder: {
+							queryData: [
+								{
+									filters: { items: [], op: 'AND' },
+								},
+							],
 						},
-					} as never,
+					}),
 				},
 			);
 

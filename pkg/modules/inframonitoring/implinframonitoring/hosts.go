@@ -6,7 +6,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/metricstelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
@@ -49,7 +51,7 @@ func (m *module) getPerGroupHostStatusCounts(
 	selectCols := make([]string, 0, len(req.GroupBy)+2)
 	for _, key := range req.GroupBy {
 		selectCols = append(selectCols,
-			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", sb.Var(key.Name), quoteIdentifier(key.Name)),
+			fmt.Sprintf("JSONExtractString(labels, %s) AS %s", sb.Var(key.Name), sqlbuilder.Escape(clickhousesql.Identifier(key.Name))),
 		)
 	}
 
@@ -124,7 +126,7 @@ func (m *module) getPerGroupHostStatusCounts(
 	// GROUP BY
 	groupByAliases := make([]string, 0, len(req.GroupBy))
 	for _, key := range req.GroupBy {
-		groupByAliases = append(groupByAliases, quoteIdentifier(key.Name))
+		groupByAliases = append(groupByAliases, sqlbuilder.Escape(clickhousesql.Identifier(key.Name)))
 	}
 	sb.GroupBy(groupByAliases...)
 
@@ -345,7 +347,7 @@ func (m *module) applyHostsActiveStatusFilter(req *inframonitoringtypes.Postable
 
 	activeHosts := make([]string, 0, len(activeHostsMap))
 	for host := range activeHostsMap {
-		activeHosts = append(activeHosts, fmt.Sprintf("'%s'", host))
+		activeHosts = append(activeHosts, querybuilder.FilterStringLiteral(host))
 	}
 
 	if len(activeHosts) == 0 {

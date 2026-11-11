@@ -2,7 +2,6 @@ import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { Button, Select, Skeleton, Table } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -16,7 +15,8 @@ import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import history from 'lib/history';
+import { AppLink } from 'lib/router/AppLink';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRight, ArrowUpRight } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
@@ -28,7 +28,7 @@ import {
 } from 'types/api/licensesV3/getActive';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'types/reducer/trace';
+import { Tags } from 'hooks/useResourceAttribute/types';
 import { USER_ROLES } from 'types/roles';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
@@ -77,7 +77,7 @@ const EmptyState = memo(
 									activeLicenseV3 &&
 									activeLicenseV3.platform === LicensePlatform.CLOUD
 								) {
-									history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+									navigate(ROUTES.GET_STARTED_WITH_CLOUD);
 								} else {
 									openInNewTab(DOCS_LINKS.ADD_DATA_SOURCE);
 								}
@@ -315,7 +315,10 @@ function ServiceMetrics({
 		<Card className="services-list-card home-data-card">
 			{servicesExist && (
 				<Card.Header>
-					<div className="services-header home-data-card-header">
+					<div
+						className="services-header home-data-card-header"
+						data-testid="home-section-services"
+					>
 						{' '}
 						Services
 						<div className="services-header-actions">
@@ -340,7 +343,7 @@ function ServiceMetrics({
 			{servicesExist && (
 				<Card.Footer>
 					<div className="services-footer home-data-card-footer">
-						<Link to="/services">
+						<AppLink to="/services">
 							<Button
 								type="link"
 								className="periscope-btn link learn-more-link"
@@ -350,7 +353,7 @@ function ServiceMetrics({
 							>
 								All Services <ArrowRight size={12} />
 							</Button>
-						</Link>
+						</AppLink>
 					</div>
 				</Card.Footer>
 			)}

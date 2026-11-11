@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
-import { CardContainer } from 'container/GridCardLayout/styles';
+import { CardContainer } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/widgets/widget';
 
 import MetricColumnGraphs from './MetricColumnGraphs';
 import MetricPageGridGraph from './MetricPageGraph';
@@ -140,7 +140,7 @@ function MetricPage(): JSX.Element {
 	}, []);
 
 	return (
-		<div className="metric-page">
+		<div className="metric-page" data-testid="mq-metric-page">
 			<MetricColumnGraphs checkIfDataExists={checkIfDataExists} />
 			{metricSections.map(({ key, title, description, graphCount }) => (
 				<CollapsibleMetricSection

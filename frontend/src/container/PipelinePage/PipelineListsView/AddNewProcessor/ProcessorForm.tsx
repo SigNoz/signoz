@@ -2,9 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
 import { Form, Select, Space } from 'antd';
-import { FeatureKeys } from 'constants/features';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
-import { useAppContext } from 'providers/App/App';
+import { useIsBodyJsonEnabled } from 'hooks/logs/useIsBodyJsonEnabled';
 import { ProcessorData } from 'types/api/pipeline/def';
 
 import { formValidationRules } from '../config';
@@ -95,6 +94,8 @@ function ProcessorFieldInput({
 					>
 						<Space>
 							<Switch
+								color="primary"
+								textPlacement="right"
 								value={form.getFieldValue('enable_flattening')}
 								onChange={(checked: boolean): void => {
 									form.setFieldValue('enable_flattening', checked);
@@ -136,10 +137,7 @@ function ProcessorForm({
 	selectedProcessorData,
 	isAdd,
 }: ProcessorFormProps): JSX.Element {
-	const { featureFlags } = useAppContext();
-	const isBodyJsonEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_JSON_BODY)
-			?.active || false;
+	const isBodyJsonEnabled = useIsBodyJsonEnabled();
 
 	return (
 		<div className="processor-form-container">

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cloneDeep, isEqual } from 'lodash-es';
 import { toast } from '@signozhq/ui/sonner';
 import { useQueryClient } from 'react-query';
+import logEvent from 'api/common/logEvent';
 import {
 	useCreateSpanMapper,
 	useCreateSpanMapperGroup,
@@ -262,6 +263,7 @@ export function useAttributeMappingEditor(): AttributeMappingEditor {
 		setSaveError(null);
 		try {
 			await persistDraft(snapshot, draft, mutations);
+			void logEvent('AI Observability Attribute Mapping: Changes saved', {});
 			// Refresh the groups list in place — it stays mounted, so this just
 			// swaps in fresh data without a loading flash. Using the query's own
 			// refetch keeps it scoped to the groups list; the per-group mapper

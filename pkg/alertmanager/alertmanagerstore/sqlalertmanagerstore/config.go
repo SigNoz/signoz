@@ -3,13 +3,12 @@ package sqlalertmanagerstore
 import (
 	"context"
 	"database/sql"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/tidwall/gjson"
-	"github.com/uptrace/bun"
 )
 
 type config struct {
@@ -75,7 +74,7 @@ func (store *config) CreateChannel(ctx context.Context, channel *alertmanagertyp
 			NewInsert().
 			Model(channel).
 			Exec(ctx); err != nil {
-			return err
+			return store.sqlstore.WrapAlreadyExistsErrf(err, alertmanagertypes.ErrCodeAlertmanagerChannelAlreadyExists, "channel with name %q already exists", channel.Name)
 		}
 
 		return nil
@@ -138,21 +137,88 @@ func (store *config) DeleteChannelByID(ctx context.Context, orgID string, id val
 	}, opts...)
 }
 
-func (store *config) ListChannels(ctx context.Context, orgID string) ([]*alertmanagertypes.Channel, error) {
-	var channels []*alertmanagertypes.Channel
+func (store *config) ListChannels(ctx context.Context, orgID string, params *alertmanagertypes.ListChannelsParams) ([]*alertmanagertypes.Channel, int64, error) {
+	// Nil params means no pagination, so every match is on the only page.
+	if params == nil {
+		var channels []*alertmanagertypes.Channel
 
-	err := store.
+		if err := store.
+			sqlstore.
+			BunDB().
+			NewSelect().
+			Model(&channels).
+			Where("org_id = ?", orgID).
+			Scan(ctx); err != nil {
+			return nil, 0, err
+		}
+
+		return channels, int64(len(channels)), nil
+	}
+
+	type listedChannel struct {
+		*alertmanagertypes.Channel `bun:",extend"`
+
+		Total int64 `bun:"total"`
+	}
+
+	rows := make([]*listedChannel, 0)
+
+	q := store.
 		sqlstore.
 		BunDB().
 		NewSelect().
-		Model(&channels).
-		Where("org_id = ?", orgID).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
+		Model(&rows).
+		ColumnExpr("*").
+		ColumnExpr("COUNT(*) OVER () AS total").
+		Where("org_id = ?", orgID)
+
+	formatter := store.sqlstore.Formatter()
+
+	if params.Query != "" {
+		// LOWER(col) LIKE LOWER(?) behaves the same on SQLite (no ILIKE) and
+		// Postgres. The value's % and _ are escaped to match literally, with
+		// ESCAPE pinning backslash as the escape character.
+		q = q.Where(
+			string(formatter.LowerExpression("display_name"))+" LIKE LOWER(?) ESCAPE '\\'",
+			"%"+formatter.EscapeLikePattern(params.Query)+"%",
+		)
 	}
 
-	return channels, nil
+	if !params.Kind.IsZero() {
+		q = q.Where("type = ?", params.Kind.StringValue())
+	}
+
+	q = q.
+		OrderExpr(params.Sort.ToColumn() + " " + strings.ToUpper(params.Order.StringValue())).
+		Limit(params.Limit).
+		Offset(params.Offset)
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, 0, err
+	}
+
+	// COUNT(*) OVER () is computed pre-LIMIT, so any returned row carries the full
+	// filter total.
+	var total int64
+	if len(rows) > 0 {
+		total = rows[0].Total
+	} else if params.Offset > 0 {
+		// An empty page carries no total. At offset zero that means nothing
+		// matched, but past the last match it hides the rows the offset skipped.
+		matches, err := q.Count(ctx)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		total = int64(matches)
+	}
+
+	channels := make([]*alertmanagertypes.Channel, len(rows))
+	for index, row := range rows {
+		channels[index] = row.Channel
+	}
+
+	return channels, total, nil
 }
 
 func (store *config) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.Channel, error) {
@@ -169,37 +235,6 @@ func (store *config) ListAllChannels(ctx context.Context) ([]*alertmanagertypes.
 	}
 
 	return channels, nil
-}
-
-func (store *config) GetMatchers(ctx context.Context, orgID string) (map[string][]string, error) {
-	type matcher struct {
-		bun.BaseModel `bun:"table:rule"`
-		ID            valuer.UUID `bun:"id,pk"`
-		Data          string      `bun:"data"`
-	}
-
-	matchers := []matcher{}
-
-	err := store.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Column("id", "data").
-		Model(&matchers).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	matchersMap := make(map[string][]string)
-	for _, matcher := range matchers {
-		receivers := gjson.Get(matcher.Data, "preferredChannels").Array()
-		for _, receiver := range receivers {
-			matchersMap[matcher.ID.StringValue()] = append(matchersMap[matcher.ID.StringValue()], receiver.String())
-		}
-	}
-
-	return matchersMap, nil
 }
 
 func (store *config) wrap(ctx context.Context, fn func(ctx context.Context) error, opts ...alertmanagertypes.StoreOption) error {

@@ -10,13 +10,10 @@ import UPlotChart from '../UPlotChart/UPlotChart';
 // Mocks
 // ---------------------------------------------------------------------------
 
-jest.mock(
-	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
-	() => ({
-		getStoredSeriesVisibility: jest.fn(),
-		updateSeriesVisibilityToLocalStorage: jest.fn(),
-	}),
-);
+jest.mock('lib/visualization/panels/utils/legendVisibilityUtils', () => ({
+	getStoredSeriesVisibility: jest.fn(),
+	updateSeriesVisibilityToLocalStorage: jest.fn(),
+}));
 
 jest.mock('@sentry/react', () => ({
 	ErrorBoundary: ({ children }: { children: ReactNode }): JSX.Element => (
@@ -352,6 +349,57 @@ describe('UPlotChart', () => {
 			expect(onDestroy).toHaveBeenCalledWith(firstInstance);
 			expect(firstInstance.destroy).toHaveBeenCalledTimes(1);
 			expect(plotRef).toHaveBeenCalledWith(null);
+		});
+	});
+
+	describe('instance handle', () => {
+		const hostOf = (call: number): HTMLElement & { __uplot?: unknown } =>
+			mockUPlotConstructor.mock.calls[call][2];
+
+		it('hangs the live instance on the container it was created on', () => {
+			render(
+				<UPlotChart
+					config={createMockConfig()}
+					data={validData}
+					width={600}
+					height={400}
+				/>,
+				{ wrapper: Wrapper },
+			);
+
+			expect(hostOf(0).__uplot).toBe(instances[0]);
+		});
+
+		it('clears the handle from that container on unmount', () => {
+			const { unmount } = render(
+				<UPlotChart
+					config={createMockConfig()}
+					data={validData}
+					width={600}
+					height={400}
+				/>,
+				{ wrapper: Wrapper },
+			);
+			const host = hostOf(0);
+
+			unmount();
+
+			expect(host.__uplot).toBeUndefined();
+		});
+
+		it('clears the handle from that container when the data becomes empty', () => {
+			const config = createMockConfig();
+			const { rerender } = render(
+				<UPlotChart config={config} data={validData} width={600} height={400} />,
+				{ wrapper: Wrapper },
+			);
+			const host = hostOf(0);
+
+			rerender(
+				<UPlotChart config={config} data={emptyData} width={600} height={400} />,
+			);
+
+			expect(host.__uplot).toBeUndefined();
 		});
 	});
 

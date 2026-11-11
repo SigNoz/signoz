@@ -36,16 +36,14 @@ import type {
 	GetDashboardV2200,
 	GetDashboardV2PathParameters,
 	GetPublicDashboard200,
-	GetPublicDashboardData200,
-	GetPublicDashboardDataPathParameters,
 	GetPublicDashboardDataV2200,
 	GetPublicDashboardDataV2PathParameters,
 	GetPublicDashboardPanelQueryRangeV2200,
 	GetPublicDashboardPanelQueryRangeV2Params,
 	GetPublicDashboardPanelQueryRangeV2PathParameters,
 	GetPublicDashboardPathParameters,
-	GetPublicDashboardWidgetQueryRange200,
-	GetPublicDashboardWidgetQueryRangePathParameters,
+	GetSystemDashboard200,
+	GetSystemDashboardPathParameters,
 	ListDashboardViews200,
 	ListDashboardsForUserV2200,
 	ListDashboardsForUserV2Params,
@@ -69,6 +67,26 @@ import type {
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
+
+const withQueryKey = <T extends object, K>(
+	query: T,
+	queryKey: K,
+): T & { queryKey: K } => {
+	const result = { queryKey } as T & { queryKey: K };
+	for (const key of Object.keys(query)) {
+		// The explicit queryKey always wins, matching the previous
+		// `{ ...query, queryKey }` spread where it was set last.
+		if (key === 'queryKey') {
+			continue;
+		}
+		Object.defineProperty(result, key, {
+			enumerable: true,
+			configurable: true,
+			get: () => (query as Record<string, unknown>)[key],
+		});
+	}
+	return result;
+};
 
 /**
  * This endpoint deletes the public sharing config and disables the public sharing of a dashboard
@@ -196,7 +214,7 @@ export const getGetPublicDashboardQueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getPublicDashboard>>,
@@ -233,7 +251,7 @@ export function useGetPublicDashboard<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -453,217 +471,6 @@ export const useUpdatePublicDashboard = <
 	return useMutation(getUpdatePublicDashboardMutationOptions(options));
 };
 /**
- * This endpoint returns the sanitized dashboard data for public access
- * @summary Get public dashboard data
- */
-export const getPublicDashboardData = (
-	{ id }: GetPublicDashboardDataPathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<GetPublicDashboardData200>({
-		url: `/api/v1/public/dashboards/${id}`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getGetPublicDashboardDataQueryKey = ({
-	id,
-}: GetPublicDashboardDataPathParameters) => {
-	return [`/api/v1/public/dashboards/${id}`] as const;
-};
-
-export const getGetPublicDashboardDataQueryOptions = <
-	TData = Awaited<ReturnType<typeof getPublicDashboardData>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ id }: GetPublicDashboardDataPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getPublicDashboardData>>,
-			TError,
-			TData
-		>;
-	},
-) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey =
-		queryOptions?.queryKey ?? getGetPublicDashboardDataQueryKey({ id });
-
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getPublicDashboardData>>
-	> = ({ signal }) => getPublicDashboardData({ id }, signal);
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!id,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getPublicDashboardData>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type GetPublicDashboardDataQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getPublicDashboardData>>
->;
-export type GetPublicDashboardDataQueryError =
-	ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Get public dashboard data
- */
-
-export function useGetPublicDashboardData<
-	TData = Awaited<ReturnType<typeof getPublicDashboardData>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ id }: GetPublicDashboardDataPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getPublicDashboardData>>,
-			TError,
-			TData
-		>;
-	},
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetPublicDashboardDataQueryOptions({ id }, options);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Get public dashboard data
- */
-export const invalidateGetPublicDashboardData = async (
-	queryClient: QueryClient,
-	{ id }: GetPublicDashboardDataPathParameters,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getGetPublicDashboardDataQueryKey({ id }) },
-		options,
-	);
-
-	return queryClient;
-};
-
-/**
- * This endpoint return query range results for a widget of public dashboard
- * @summary Get query range result
- */
-export const getPublicDashboardWidgetQueryRange = (
-	{ id, idx }: GetPublicDashboardWidgetQueryRangePathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<GetPublicDashboardWidgetQueryRange200>({
-		url: `/api/v1/public/dashboards/${id}/widgets/${idx}/query_range`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getGetPublicDashboardWidgetQueryRangeQueryKey = ({
-	id,
-	idx,
-}: GetPublicDashboardWidgetQueryRangePathParameters) => {
-	return [`/api/v1/public/dashboards/${id}/widgets/${idx}/query_range`] as const;
-};
-
-export const getGetPublicDashboardWidgetQueryRangeQueryOptions = <
-	TData = Awaited<ReturnType<typeof getPublicDashboardWidgetQueryRange>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ id, idx }: GetPublicDashboardWidgetQueryRangePathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getPublicDashboardWidgetQueryRange>>,
-			TError,
-			TData
-		>;
-	},
-) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey =
-		queryOptions?.queryKey ??
-		getGetPublicDashboardWidgetQueryRangeQueryKey({ id, idx });
-
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getPublicDashboardWidgetQueryRange>>
-	> = ({ signal }) => getPublicDashboardWidgetQueryRange({ id, idx }, signal);
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!(id && idx),
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getPublicDashboardWidgetQueryRange>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type GetPublicDashboardWidgetQueryRangeQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getPublicDashboardWidgetQueryRange>>
->;
-export type GetPublicDashboardWidgetQueryRangeQueryError =
-	ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Get query range result
- */
-
-export function useGetPublicDashboardWidgetQueryRange<
-	TData = Awaited<ReturnType<typeof getPublicDashboardWidgetQueryRange>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(
-	{ id, idx }: GetPublicDashboardWidgetQueryRangePathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getPublicDashboardWidgetQueryRange>>,
-			TError,
-			TData
-		>;
-	},
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetPublicDashboardWidgetQueryRangeQueryOptions(
-		{ id, idx },
-		options,
-	);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Get query range result
- */
-export const invalidateGetPublicDashboardWidgetQueryRange = async (
-	queryClient: QueryClient,
-	{ id, idx }: GetPublicDashboardWidgetQueryRangePathParameters,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getGetPublicDashboardWidgetQueryRangeQueryKey({ id, idx }) },
-		options,
-	);
-
-	return queryClient;
-};
-
-/**
  * Returns every saved view in the calling user's org. Saved views are shared org-wide.
  * @summary List dashboard saved views
  */
@@ -729,7 +536,7 @@ export function useListDashboardViews<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1089,7 +896,7 @@ export function useListDashboardsV2<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1315,7 +1122,7 @@ export const getGetDashboardV2QueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getDashboardV2>>,
@@ -1352,7 +1159,7 @@ export function useGetDashboardV2<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -1886,6 +1693,108 @@ export const useMigrateDashboardV2 = <
 	return useMutation(getMigrateDashboardV2MutationOptions(options));
 };
 /**
+ * Returns a dashboard SigNoz ships and owns, addressed by its stable definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards are read-only and upgraded through releases. The dashboard's own `name` field carries a reserved prefix that the path segment must not include.
+ * @summary Get system dashboard
+ */
+export const getSystemDashboard = (
+	{ name }: GetSystemDashboardPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetSystemDashboard200>({
+		url: `/api/v2/dashboards/system/${name}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetSystemDashboardQueryKey = ({
+	name,
+}: GetSystemDashboardPathParameters) => {
+	return [`/api/v2/dashboards/system/${name}`] as const;
+};
+
+export const getGetSystemDashboardQueryOptions = <
+	TData = Awaited<ReturnType<typeof getSystemDashboard>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ name }: GetSystemDashboardPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getSystemDashboard>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetSystemDashboardQueryKey({ name });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getSystemDashboard>>
+	> = ({ signal }) => getSystemDashboard({ name }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: name !== null && name !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getSystemDashboard>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetSystemDashboardQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getSystemDashboard>>
+>;
+export type GetSystemDashboardQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get system dashboard
+ */
+
+export function useGetSystemDashboard<
+	TData = Awaited<ReturnType<typeof getSystemDashboard>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ name }: GetSystemDashboardPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getSystemDashboard>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetSystemDashboardQueryOptions({ name }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Get system dashboard
+ */
+export const invalidateGetSystemDashboard = async (
+	queryClient: QueryClient,
+	{ name }: GetSystemDashboardPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetSystemDashboardQueryKey({ name }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
  * This endpoint returns the sanitized v2-shape dashboard data for public access. Each panel query is reduced to a safe field subset, so filters and raw query strings are not exposed.
  * @summary Get public dashboard data (v2)
  */
@@ -1931,7 +1840,7 @@ export const getGetPublicDashboardDataV2QueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!id,
+		enabled: id !== null && id !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getPublicDashboardDataV2>>,
@@ -1969,7 +1878,7 @@ export function useGetPublicDashboardDataV2<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -2043,7 +1952,7 @@ export const getGetPublicDashboardPanelQueryRangeV2QueryOptions = <
 	return {
 		queryKey,
 		queryFn,
-		enabled: !!(id && key),
+		enabled: id !== null && id !== undefined && key !== null && key !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getPublicDashboardPanelQueryRangeV2>>,
@@ -2086,7 +1995,7 @@ export function useGetPublicDashboardPanelQueryRangeV2<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**
@@ -2191,7 +2100,7 @@ export function useListDashboardsForUserV2<
 		queryKey: QueryKey;
 	};
 
-	return { ...query, queryKey: queryOptions.queryKey };
+	return withQueryKey(query, queryOptions.queryKey);
 }
 
 /**

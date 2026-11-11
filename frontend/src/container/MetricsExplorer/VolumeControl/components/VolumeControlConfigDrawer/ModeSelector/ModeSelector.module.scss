@@ -9,9 +9,9 @@
 	flex-direction: column;
 	gap: 4px;
 	text-align: left;
-	border: 1px solid var(--bg-slate-400, #1d212d);
+	border: 1px solid var(--l1-border);
 	border-radius: 6px;
-	background: var(--bg-ink-300, #16181d);
+	background: var(--l2-background);
 	padding: 12px;
 	cursor: pointer;
 	transition:
@@ -19,7 +19,7 @@
 		background 0.12s ease;
 
 	&:hover {
-		border-color: var(--bg-slate-200, #2c3140);
+		border-color: var(--l3-border);
 	}
 }
 

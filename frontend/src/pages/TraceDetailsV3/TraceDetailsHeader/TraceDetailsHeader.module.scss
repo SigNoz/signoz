@@ -17,11 +17,6 @@
 	}
 }
 
-.backBtn {
-	flex-shrink: 0;
-	border: 1px solid var(--l1-border);
-}
-
 .traceIdSection {
 	display: flex;
 	align-items: center;
@@ -32,6 +27,17 @@
 	:global(.key-value-label__value) {
 		font-variant-numeric: tabular-nums;
 	}
+}
+
+.tabs {
+	flex-shrink: 0;
+}
+
+.aiDot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--accent-primary);
 }
 
 .filterSection {

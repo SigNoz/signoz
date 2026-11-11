@@ -8,7 +8,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	fromPerses,
 	toPerses,
-} from 'pages/DashboardPageV2/DashboardContainer/queryV5/persesQueryAdapters';
+} from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import { ClickedData } from 'periscope/components/ContextMenu';
 
 import { getGroupContextMenuConfig } from '../contextConfig';

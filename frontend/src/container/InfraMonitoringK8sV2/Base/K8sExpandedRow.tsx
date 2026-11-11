@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
@@ -30,6 +30,7 @@ import {
 	useInfraMonitoringPageListing,
 	useInfraMonitoringSelectedItemParams,
 } from '../hooks';
+import { resetDrawerHistory } from './useDrawerHistoryStore';
 import { K8sBaseFilters } from './types';
 import { useLogEventForColumnCustomized } from './useLogEventForColumnCustomized';
 import { useInfraMonitoringFontSize } from './useInfraMonitoringTablePreferencesStore';
@@ -37,7 +38,7 @@ import { useInfraMonitoringFontSize } from './useInfraMonitoringTablePreferences
 import styles from './K8sExpandedRow.module.scss';
 import { buildExpressionFromGroupMeta } from './utils';
 import { logInfraColumnSortedEvent } from 'container/InfraMonitoringK8sV2/Base/events';
-import { getUnstableCurrentSearchParams } from 'container/TopNav/DateTimeSelectionV2/utils/getUnstableCurrentSearchParams';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import { QueryParams } from 'constants/query';
 
 const EXPANDED_ROW_LIMIT = 10;
@@ -68,6 +69,7 @@ export type K8sExpandedRowProps<T, TItemKey = string> = {
 	getRowKey?: (record: T) => string;
 	/** Function to get the item key used for selection. Defaults to getRowKey if not provided. */
 	getItemKey?: (record: T) => TItemKey;
+	getRowTestId?: (record: T) => string;
 	/** Query key prefix for pre-caching detail data on row click */
 	detailsQueryKeyPrefix?: string;
 };
@@ -84,6 +86,7 @@ export function K8sExpandedRow<
 	extraQueryKeyParts = [],
 	getRowKey,
 	getItemKey,
+	getRowTestId,
 	detailsQueryKeyPrefix,
 }: K8sExpandedRowProps<T, TItemKey>): JSX.Element {
 	const fontSize = useInfraMonitoringFontSize();
@@ -95,7 +98,7 @@ export function K8sExpandedRow<
 	const [, setSelectedItemParams] = useInfraMonitoringSelectedItemParams();
 	const [, setMainOrderBy] = useInfraMonitoringOrderBy();
 	const { safeNavigate } = useSafeNavigate();
-	const location = useLocation();
+	const location = useAppLocation();
 	const queryClient = useQueryClient();
 
 	const orderByParamKey = useMemo(
@@ -214,10 +217,13 @@ export function K8sExpandedRow<
 					params.selectedItem,
 					params.clusterName,
 					params.namespaceName,
+					params.containerName,
 				);
 				queryClient.setQueryData(detailQueryKey, { data: row });
 			}
 
+			// Opening from the list starts a fresh trail for the drawer's back control
+			resetDrawerHistory();
 			setSelectedItemParams(params);
 		},
 		[
@@ -287,11 +293,11 @@ export function K8sExpandedRow<
 
 	const footerContent = hasMoreItems ? (
 		<Button
+			size="md"
 			type="button"
 			color="secondary"
 			variant="outlined"
-			className={styles.viewAllButton}
-			data-testid="expanded-row-view-all"
+			testId="expanded-row-view-all"
 			onClick={handleViewAllClick}
 			prefix={<CornerDownRight size={14} />}
 		>
@@ -317,6 +323,7 @@ export function K8sExpandedRow<
 						isLoading={isLoading}
 						getRowKey={getRowKey}
 						getItemKey={getItemKey}
+						getRowTestId={getRowTestId}
 						onRowClick={handleRowClick}
 						onSort={handleSort}
 						enableQueryParams={{

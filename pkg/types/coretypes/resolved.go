@@ -31,6 +31,8 @@ type ResolvedResourceWithTargetResource interface {
 	// IsParentChild true: the target is a child audited along but not authz-checked
 	// (only the source is); false: a sibling peer that is also authz-checked.
 	IsParentChild() bool
+	// HasNoLinks true: a request-phase ids extractor ran and found nothing to link.
+	HasNoLinks() bool
 }
 
 func NewContextWithResolvedResources(ctx context.Context, resolved []ResolvedResource) context.Context {

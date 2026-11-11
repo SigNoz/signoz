@@ -3,11 +3,9 @@ package impldashboard
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/authz"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -29,22 +27,6 @@ func NewHandler(module dashboard.Module, providerSettings factory.ProviderSettin
 	return &handler{module: module, providerSettings: providerSettings, authz: authz}
 }
 
-func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
-	render.Error(rw, dashboardtypes.NewV1DeprecatedError("create a dashboard with POST /api/v2/dashboards"))
-}
-
-func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
-	render.Error(rw, dashboardtypes.NewV1DeprecatedError("update a dashboard with PUT /api/v2/dashboards/{id}, or patch it with PATCH /api/v2/dashboards/{id}"))
-}
-
-func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
-	render.Error(rw, dashboardtypes.NewV1DeprecatedError("lock a dashboard with PUT /api/v2/dashboards/{id}/lock, or unlock it with DELETE /api/v2/dashboards/{id}/lock"))
-}
-
-func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
-	render.Error(rw, dashboardtypes.NewV1DeprecatedError("delete a dashboard with DELETE /api/v2/dashboards/{id}"))
-}
-
 func (handler *handler) CreatePublic(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -61,7 +43,7 @@ func (handler *handler) CreatePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	_, err = handler.module.GetV2(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -99,7 +81,7 @@ func (handler *handler) GetPublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	_, err = handler.module.GetV2(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -112,107 +94,6 @@ func (handler *handler) GetPublic(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusOK, dashboardtypes.NewGettablePublicDashboard(publicDashboard))
-}
-
-func (handler *handler) GetPublicData(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	id, err := valuer.NewUUID(mux.Vars(r)["id"])
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	dashboard, err := handler.module.GetDashboardByPublicID(ctx, id)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	publicDashboard, err := handler.module.GetPublic(ctx, dashboard.OrgID, valuer.MustNewUUID(dashboard.ID))
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	gettablePublicDashboardData, err := dashboardtypes.NewPublicDashboardDataFromDashboard(dashboard, publicDashboard)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, gettablePublicDashboardData)
-}
-
-func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	id, err := valuer.NewUUID(mux.Vars(r)["id"])
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	widgetIndex, ok := mux.Vars(r)["idx"]
-	if !ok {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "widget index is missing from the path"))
-		return
-	}
-
-	dashboard, err := handler.module.GetDashboardByPublicID(ctx, id)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	publicDashboard, err := handler.module.GetPublic(ctx, dashboard.OrgID, valuer.MustNewUUID(dashboard.ID))
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	widgetIdx, err := strconv.ParseUint(widgetIndex, 10, 64)
-	if err != nil {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid widget index"))
-		return
-	}
-
-	var startTime, endTime uint64
-	if publicDashboard.TimeRangeEnabled {
-		startTimeUint, err := strconv.ParseUint(r.URL.Query().Get("startTime"), 10, 64)
-		if err != nil {
-			render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid startTime"))
-			return
-		}
-
-		endTimeUint, err := strconv.ParseUint(r.URL.Query().Get("endTime"), 10, 64)
-		if err != nil {
-			render.Error(rw, errors.New(errors.TypeInvalidInput, dashboardtypes.ErrCodePublicDashboardInvalidInput, "invalid endTime"))
-			return
-		}
-
-		startTime = startTimeUint
-		endTime = endTimeUint
-	} else {
-		timeRange, err := time.ParseDuration(publicDashboard.DefaultTimeRange)
-		if err != nil {
-			// this should't happen as we shouldn't let such values in DB
-			panic(err)
-		}
-
-		startTime = uint64(time.Now().Add(-timeRange).UnixMilli())
-		endTime = uint64(time.Now().UnixMilli())
-	}
-
-	queryRangeResults, err := handler.module.GetPublicWidgetQueryRange(ctx, id, widgetIdx, startTime, endTime)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, queryRangeResults)
 }
 
 func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
@@ -231,7 +112,7 @@ func (handler *handler) UpdatePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	_, err = handler.module.GetV2(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -275,7 +156,7 @@ func (handler *handler) DeletePublic(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	_, err = handler.module.GetV2(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(rw, err)
 		return

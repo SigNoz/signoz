@@ -1,0 +1,94 @@
+.row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.group {
+	display: contents;
+}
+
+.swatch {
+	position: relative;
+	display: block;
+	width: 24px;
+	height: 24px;
+	flex: none;
+	padding: 0;
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	background: none;
+	cursor: pointer;
+
+	&:has(.input:focus-visible),
+	&:focus-visible {
+		outline: 2px solid var(--bg-robin-400);
+		outline-offset: 2px;
+	}
+}
+
+// Clicks and focus land on the radio; the swatch is what the user sees.
+.input {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.selected,
+.selected:has(.input:focus-visible) {
+	outline: 2px solid var(--l1-foreground);
+	outline-offset: 2px;
+}
+
+.transparent {
+	background-color: var(--l2-background);
+	background-image:
+		linear-gradient(
+			45deg,
+			var(--l2-border) 25%,
+			transparent 25%,
+			transparent 75%,
+			var(--l2-border) 75%
+		),
+		linear-gradient(
+			45deg,
+			var(--l2-border) 25%,
+			transparent 25%,
+			transparent 75%,
+			var(--l2-border) 75%
+		);
+	background-size: 8px 8px;
+	background-position:
+		0 0,
+		4px 4px;
+}
+
+.surface {
+	background: var(--l2-background);
+}
+
+.custom {
+	background: conic-gradient(
+		from 0deg,
+		var(--bg-cherry-400),
+		var(--bg-amber-400),
+		var(--bg-forest-400),
+		var(--bg-robin-400),
+		var(--bg-sakura-400),
+		var(--bg-cherry-400)
+	);
+}
+
+.customAnchor {
+	display: inline-flex;
+}
+
+.divider {
+	flex: none;
+	width: 1px;
+	height: 18px;
+	background: var(--l2-border);
+}

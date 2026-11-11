@@ -2,7 +2,6 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import { ServicesList } from 'types/api/metrics/getService';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
@@ -47,7 +46,6 @@ export const getQueryRangeRequestData = ({
 			graphType: serviceMetricsWidget?.panelTypes,
 			query: updatedQuery,
 			globalSelectedInterval,
-			variables: getDashboardVariables(),
 		});
 	});
 	return requestData;

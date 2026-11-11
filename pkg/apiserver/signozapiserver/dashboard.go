@@ -77,6 +77,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			Description:         "This endpoint creates a dashboard in the v2 format that follows Perses spec.",
 			Request:             new(dashboardtypes.PostableDashboardV2),
 			RequestContentType:  "application/json",
+			RequestExamples:     createDashboardExamples(),
 			Response:            new(dashboardtypes.GettableDashboardV2),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusCreated,
@@ -200,6 +201,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			Description:         "This endpoint updates a v2-shape dashboard's metadata, data, and tag set. Locked dashboards are rejected.",
 			Request:             new(dashboardtypes.UpdatableDashboardV2),
 			RequestContentType:  "application/json",
+			RequestExamples:     updateDashboardExamples(),
 			Response:            new(dashboardtypes.GettableDashboardV2),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
@@ -233,6 +235,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			// the array-of-ops schema visible to spec consumers; the runtime decoder
 			// parses JSON regardless of the request's actual Content-Type header.
 			RequestContentType:  "application/json",
+			RequestExamples:     patchDashboardExamples(),
 			Response:            new(dashboardtypes.GettableDashboardV2),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
@@ -329,6 +332,33 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			Selector: coretypes.IDSelector,
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/dashboards/system/{name}", handler.New(
+		provider.authzMiddleware.CheckResources(provider.dashboardHandler.GetSystemDashboard, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		handler.OpenAPIDef{
+			ID:                  "GetSystemDashboard",
+			Tags:                []string{"dashboard"},
+			Summary:             "Get system dashboard",
+			Description:         "Returns a dashboard SigNoz ships and owns, addressed by its stable definition name (e.g. `ai-o11y-overview`) rather than its id. System dashboards are read-only and upgraded through releases. The dashboard's own `name` field carries a reserved prefix that the path segment must not include.",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new(dashboardtypes.GettableSystemDashboard),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbRead)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceDashboard,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			ID:       provider.systemDashboardID(),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
@@ -603,62 +633,6 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/public/dashboards/{id}", handler.New(provider.authzMiddleware.CheckWithoutClaims(
-		provider.dashboardHandler.GetPublicData,
-		authtypes.Relation{Verb: coretypes.VerbRead},
-		coretypes.ResourceMetaResourcePublicDashboard,
-		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
-			id, err := valuer.NewUUID(mux.Vars(req)["id"])
-			if err != nil {
-				return nil, valuer.UUID{}, err
-			}
-
-			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
-		}, []string{}), handler.OpenAPIDef{
-		ID:                  "GetPublicDashboardData",
-		Tags:                []string{"dashboard"},
-		Summary:             "Get public dashboard data",
-		Description:         "This endpoint returns the sanitized dashboard data for public access",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            new(dashboardtypes.GettablePublicDashboardData),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
-	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v1/public/dashboards/{id}/widgets/{idx}/query_range", handler.New(provider.authzMiddleware.CheckWithoutClaims(
-		provider.dashboardHandler.GetPublicWidgetQueryRange,
-		authtypes.Relation{Verb: coretypes.VerbRead},
-		coretypes.ResourceMetaResourcePublicDashboard,
-		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
-			id, err := valuer.NewUUID(mux.Vars(req)["id"])
-			if err != nil {
-				return nil, valuer.UUID{}, err
-			}
-
-			return provider.dashboardModule.GetPublicDashboardSelectorsAndOrg(req.Context(), id, orgs)
-		}, []string{}), handler.OpenAPIDef{
-		ID:                  "GetPublicDashboardWidgetQueryRange",
-		Tags:                []string{"dashboard"},
-		Summary:             "Get query range result",
-		Description:         "This endpoint return query range results for a widget of public dashboard",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            new(querybuildertypesv5.QueryRangeResponse),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
-	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v2/public/dashboards/{id}", handler.New(provider.authzMiddleware.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicDataV2,
 		authtypes.Relation{Verb: coretypes.VerbRead},
@@ -717,4 +691,24 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 	}
 
 	return nil
+}
+
+// systemDashboardID resolves the {name} path param to the dashboard's id. Authz
+// tuples and audit records are written against ids, so the name has to be
+// resolved before either runs.
+func (provider *provider) systemDashboardID() coretypes.ResourceIDExtractor {
+	return coretypes.NewResourceIDExtractor(coretypes.PhaseRequest, func(ec coretypes.ExtractorContext) (string, error) {
+		ctx := ec.Request.Context()
+		claims, err := authtypes.ClaimsFromContext(ctx)
+		if err != nil {
+			return "", err
+		}
+
+		systemDashboard, err := provider.dashboardModule.GetSystemDashboard(ctx, valuer.MustNewUUID(claims.OrgID), mux.Vars(ec.Request)["name"])
+		if err != nil {
+			return "", err
+		}
+
+		return systemDashboard.ID.StringValue(), nil
+	})
 }

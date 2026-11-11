@@ -1,5 +1,4 @@
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import {
@@ -76,7 +75,7 @@ export function buildEntityMetricsChartConfig({
 		show: true,
 		side: 2,
 		isDarkMode,
-		panelType: PANEL_TYPES.TIME_SERIES,
+		isTimeAxis: true,
 	});
 
 	builder.addAxis({
@@ -85,7 +84,6 @@ export function buildEntityMetricsChartConfig({
 		side: 3,
 		isDarkMode,
 		yAxisUnit,
-		panelType: PANEL_TYPES.TIME_SERIES,
 	});
 
 	if (!apiResponse?.data?.result) {

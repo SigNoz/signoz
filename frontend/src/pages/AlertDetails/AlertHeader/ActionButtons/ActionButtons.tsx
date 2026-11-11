@@ -1,24 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tooltip } from 'antd';
-import { DropdownMenuSimple, type MenuItem } from '@signozhq/ui/dropdown-menu';
 import { Divider } from '@signozhq/ui/divider';
+import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Switch } from '@signozhq/ui/switch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Copy, Ellipsis, PenLine, Trash2 } from '@signozhq/icons';
+import { Copy, Ellipsis, Trash2 } from '@signozhq/icons';
 import {
+	useAlertRuleClone,
 	useAlertRuleDelete,
-	useAlertRuleDuplicate,
 	useAlertRuleStatusToggle,
-	useAlertRuleUpdate,
 } from 'pages/AlertDetails/hooks';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useAlertRule } from 'providers/Alert';
-import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
-import { AlertDef } from 'types/api/alerts/def';
 
 import { AlertHeaderProps } from '../AlertHeader';
-import RenameModal from './RenameModal';
 
 import './ActionButtons.styles.scss';
 
@@ -29,57 +25,26 @@ function AlertActionButtons({
 	ruleId: string;
 	alertDetails: AlertHeaderProps['alertDetails'];
 }): JSX.Element {
-	const { alertRuleState, setAlertRuleState, alertRuleName, setAlertRuleName } =
-		useAlertRule();
-	const [intermediateName, setIntermediateName] = useState<string>(
-		alertDetails.alert,
-	);
-	const [isRenameAlertOpen, setIsRenameAlertOpen] = useState<boolean>(false);
+	const { alertRuleState, setAlertRuleState } = useAlertRule();
 	const isDarkMode = useIsDarkMode();
 
 	const { handleAlertStateToggle } = useAlertRuleStatusToggle({ ruleId });
-	const { handleAlertDuplicate } = useAlertRuleDuplicate({
-		alertDetails: alertDetails as unknown as AlertDef,
-	});
+	const { handleAlertClone } = useAlertRuleClone({ ruleId });
 	const { handleAlertDelete } = useAlertRuleDelete({ ruleId });
-	const { handleAlertUpdate, isLoading } = useAlertRuleUpdate({
-		alertDetails: alertDetails as unknown as AlertDef,
-		setAlertRuleName,
-		intermediateName,
-	});
 
-	const handleRename = useCallback(() => {
-		setIsRenameAlertOpen(true);
-	}, []);
-
-	const onNameChangeHandler = useCallback(() => {
-		handleAlertUpdate();
-		setIsRenameAlertOpen(false);
-	}, [handleAlertUpdate]);
-
-	const isV2Alert = alertDetails.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
-
-	const menuItems: MenuItem[] = [
-		...(!isV2Alert
-			? [
-					{
-						key: 'rename-rule',
-						label: 'Rename',
-						icon: <PenLine size={16} color={Color.BG_VANILLA_400} />,
-						onClick: handleRename,
-					},
-				]
-			: []),
+	const menuItems: DropdownItemType[] = [
 		{
-			key: 'duplicate-rule',
-			label: 'Duplicate',
-			icon: <Copy size={16} color={Color.BG_VANILLA_400} />,
-			onClick: handleAlertDuplicate,
+			type: 'item',
+			value: 'clone-rule',
+			label: 'Clone',
+			prefix: <Copy size={16} color={Color.BG_VANILLA_400} />,
+			onClick: handleAlertClone,
 		},
 		{
-			key: 'delete-rule',
+			type: 'item',
+			value: 'delete-rule',
 			label: 'Delete',
-			icon: <Trash2 size={16} color={Color.BG_CHERRY_400} />,
+			prefix: <Trash2 size={16} color={Color.BG_CHERRY_400} />,
 			onClick: handleAlertDelete,
 			danger: true,
 		},
@@ -97,12 +62,6 @@ function AlertActionButtons({
 		}
 	}, [setAlertRuleState, alertRuleState, alertDetails.state]);
 
-	useEffect(() => {
-		if (alertRuleName !== undefined) {
-			setIntermediateName(alertRuleName);
-		}
-	}, [alertRuleName]);
-
 	// on unmount remove the alert state
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => (): void => setAlertRuleState(undefined), []);
@@ -113,43 +72,39 @@ function AlertActionButtons({
 	}, [handleAlertStateToggle]);
 
 	return (
-		<>
-			<div className="alert-action-buttons">
-				<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
-					{isAlertRuleDisabled !== undefined && (
-						<Switch onChange={toggleAlertRule} value={!isAlertRuleDisabled} />
-					)}
-				</Tooltip>
-				<CopyToClipboard textToCopy={window.location.href} />
+		<div className="alert-action-buttons">
+			<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
+				{isAlertRuleDisabled !== undefined && (
+					<Switch
+						color="primary"
+						textPlacement="right"
+						onChange={toggleAlertRule}
+						value={!isAlertRuleDisabled}
+						testId="alert-actions-toggle"
+					/>
+				)}
+			</Tooltip>
+			<CopyToClipboard textToCopy={window.location.href} />
 
-				<Divider type="vertical" className="alert-action-buttons__divider" />
+			<Divider type="vertical" className="alert-action-buttons__divider" />
 
-				<DropdownMenuSimple menu={{ items: menuItems }}>
-					<span className="dropdown-trigger-wrapper">
-						<Tooltip title="More options">
-							<Button
-								type="text"
-								icon={
-									<Ellipsis
-										size={16}
-										color={isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400}
-									/>
-								}
-							/>
-						</Tooltip>
-					</span>
-				</DropdownMenuSimple>
-			</div>
-
-			<RenameModal
-				isOpen={isRenameAlertOpen}
-				setIsOpen={setIsRenameAlertOpen}
-				isLoading={isLoading}
-				onNameChangeHandler={onNameChangeHandler}
-				intermediateName={intermediateName}
-				setIntermediateName={setIntermediateName}
-			/>
-		</>
+			<Tooltip title="More options">
+				<span className="dropdown-trigger-wrapper">
+					<Dropdown items={menuItems} nativeButton align="end" side="bottom">
+						<Button
+							type="text"
+							data-testid="alert-actions-menu"
+							icon={
+								<Ellipsis
+									size={16}
+									color={isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400}
+								/>
+							}
+						/>
+					</Dropdown>
+				</span>
+			</Tooltip>
+		</div>
 	);
 }
 

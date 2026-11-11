@@ -6,7 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -114,7 +114,7 @@ function CustomTimePickerPopoverContent({
 	customDateTimeInputStatus = CustomTimePickerInputStatus.UNSET,
 	inputErrorDetails,
 }: CustomTimePickerPopoverContentProps): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	const isLogsExplorerPage = useMemo(
 		() => pathname === ROUTES.LOGS_EXPLORER,
@@ -180,6 +180,7 @@ function CustomTimePickerPopoverContent({
 						type="text"
 						className="time-btns"
 						key={option.label + option.value}
+						data-testid={`time-chip-${option.value}`}
 						onClick={(): void => {
 							handleExitLiveLogs();
 							onSelectHandler(option.label, option.value);
@@ -250,6 +251,7 @@ function CustomTimePickerPopoverContent({
 						<Button
 							className={cx('data-time-live', isLiveLogsEnabled ? 'active' : '')}
 							type="text"
+							data-testid="time-picker-live"
 							onClick={handleGoLive}
 						>
 							Live
@@ -259,6 +261,7 @@ function CustomTimePickerPopoverContent({
 						<Button
 							type="text"
 							key={option.label + option.value}
+							data-testid={`time-option-${option.value}`}
 							onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
 								e.stopPropagation();
 								e.preventDefault();

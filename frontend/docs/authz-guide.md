@@ -34,10 +34,19 @@ These hold for every page. The per-pattern sections below only add to them.
 4. **Never gate per row.** If a user can `list`, render every row. Check `read` only when the row is opened (drawer or
    detail route).
 5. **Gate the narrowest thing that works**, a button over a section, a section over a page.
+   - **Gate a page on `read` alone.** It is the only verb the page's own request needs. `update` and `delete` gate
+     individual controls, so waiting for them holds up the whole page for nothing — pass them as `preloadChecks` and
+     they resolve in the same request, leaving the controls to read from cache.
 6. **A resource may be gated while a sub-resource is not.** A user without `read` on Service Accounts can still hold
    `create` on API Keys, so blocking the outer container would hide work they are allowed to do.
 7. **Verbs not covered here** (`attach`, `detach`, `assignee`) behave like `delete`: gate the control that triggers
    them, not the surrounding content.
+8. **Expose the selector.** A role is scoped to a resource by pasting its selector into the role editor, so every
+   resource a role can be scoped to shows that selector with a copy control on its detail view or drawer. The selector
+   is whatever the editor accepts for the resource (dashboard ID, service account ID, role name, ...), listed per
+   resource in [permissions.config.ts](../src/container/RolesSettings/permissions.config.ts). It is already known from
+   the row or URL, so it stays visible and copyable without `read`. Reference: the ID field in
+   [ServiceAccountDrawer/OverviewTab.tsx](../src/components/ServiceAccountDrawer/OverviewTab.tsx).
 
 ## Page patterns
 
@@ -45,11 +54,20 @@ These hold for every page. The per-pattern sections below only add to them.
 
 ![Visual rules for structuring a list page](./assets/list-example.svg)
 
-Without `list`, but with any of `read` / `create` / `update`, only the table is blocked:
+Without `list`, but with any of `read` / `create` / `update`, the table and
+everything that only feeds it are blocked:
 
-- Title, description, search filters and action buttons stay visible.
-- Filters and any control that drives the table are non-interactive.
-- The create button stays enabled if the user holds `create`.
+- Title, description, search, filters and action buttons stay visible. Nothing is
+  hidden for lack of permission.
+- Disable what only shapes the blocked request — the search box, the filter chips,
+  a Clear button — and give it the same denial. It edits a query that has nowhere
+  to run, so leaving it live invites the user to compose a filter and watch
+  nothing happen.
+- Gate a region as one section when several of its controls are dead. A saved
+  views rail is a block with a single callout, not a column of identical
+  tooltips; a row of filters is one tooltip zone, not one per control.
+- The create button stays enabled if the user holds `create`. It is independent
+  of `list`.
 
 ### Edit page
 
@@ -96,6 +114,11 @@ Blocking is always a visible denial, never a silent removal. Use the components 
 [`lib/authz/components`](../src/lib/authz/components/README.md) rather than hand-rolling a check, they carry the
 denial message and the loading state.
 
+**Denial copy comes from the components.** Never write a custom message for a permission check. `disabledTooltip` is
+for a block that is *not* a permission — a lock, an immutable resource, a mount that is deliberately read-only. It
+takes precedence over the checks, which are then skipped, so set it only when that block is the real obstacle: a
+missing permission must still surface its own wording.
+
 | Scope           | Component                                 | Denied state                                |
 | --------------- | ----------------------------------------- | ------------------------------------------- |
 | Button          | `AuthZButton`                             | Disabled + tooltip                          |
@@ -119,6 +142,8 @@ Use the existing components. Create a new one only if none fit.
 - [ ] Am I gating a shared component rather than a page or section?
   - If so, it must stay functional with no permission. Example: the Query Builder works without field suggestions when
     the user cannot read them.
+- [ ] Does the page expose the resource's selector with a copy control (rule 8)?
+  - The expected format is the `selectorPlaceholder` for the resource in `permissions.config.ts`.
 
 ## Testing
 

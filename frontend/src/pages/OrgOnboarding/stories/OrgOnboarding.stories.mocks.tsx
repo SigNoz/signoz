@@ -1,0 +1,71 @@
+/**
+ * AI-owned. Generated and maintained by the `signoz-page-story` skill.
+ * Do not hand-edit: regenerate instead.
+ */
+
+import ROUTES from 'constants/routes';
+import { rest } from 'msw';
+import { rolesListResponse } from 'pages/Settings/stories/__story_mockdata__/roles';
+
+import { choiceControl } from '@/storybook/controls/controls';
+import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+
+const QUESTIONNAIRE = 'Onboarding · questionnaire';
+
+/**
+ * The four pages the questionnaire holds in component state. Nothing in the URL
+ * says which one is open, so a story reaches one by answering the ones before
+ * it; `advanceToQuestionnairePage` in the story file is that walk.
+ */
+export const QUESTIONNAIRE_PAGES = [
+	'about-your-org',
+	'about-signoz',
+	'your-scale',
+	'invite-team',
+] as const;
+
+export type QuestionnairePage = (typeof QUESTIONNAIRE_PAGES)[number];
+
+export const PROFILE_UPDATES = ['success', 'error'] as const;
+
+export type ProfileUpdate = (typeof PROFILE_UPDATES)[number];
+
+export const orgOnboardingMocks = defineStoryMocks({
+	controls: {
+		page: choiceControl<QuestionnairePage>('Questionnaire page', {
+			group: QUESTIONNAIRE,
+			description:
+				'Which page of the questionnaire the story opens on. Every page before it is answered with the least its Next button accepts.',
+			options: QUESTIONNAIRE_PAGES,
+			value: 'about-your-org',
+		}),
+		profileUpdate: choiceControl<ProfileUpdate>('Profile save', {
+			group: QUESTIONNAIRE,
+			description:
+				'How the PUT behind the scale page answers. `error` raises the failure as a toast and lets the questionnaire carry on to the last page.',
+			options: PROFILE_UPDATES,
+			value: 'success',
+		}),
+	},
+	handlers: (values, response) => [
+		// Answering the scale page saves the profile, and the last page only opens
+		// once that call settles: a plain resolver, so `Data` cannot strand the
+		// questionnaire two pages in.
+		rest.put('http://localhost/api/v2/zeus/profiles', (_req, res, ctx) =>
+			values.profileUpdate === 'error'
+				? res(
+						ctx.status(500),
+						ctx.json({
+							status: 'error',
+							error: { code: 'internal', message: 'Could not save the profile' },
+						}),
+					)
+				: res(ctx.status(204)),
+		),
+		rest.get(
+			'http://localhost/api/v1/roles',
+			response.json(() => rolesListResponse(0)),
+		),
+	],
+	config: () => ({ route: ROUTES.ONBOARDING }),
+});

@@ -1,0 +1,38 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	height: calc(100vh - 240px);
+	min-height: 400px;
+}
+
+.controls {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 4px;
+	min-height: 40px;
+	padding: 4px 8px;
+	border-bottom: 1px solid var(--l1-border);
+}
+
+.orderBy {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.orderByLabel {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	color: var(--l2-foreground);
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 16px;
+}
+
+.drawerScope {
+	display: contents;
+}

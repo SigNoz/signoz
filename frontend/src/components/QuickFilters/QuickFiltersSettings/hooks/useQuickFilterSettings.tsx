@@ -1,27 +1,31 @@
-import { useCallback, useState } from 'react';
-import { useMutation } from 'react-query';
+import { useCallback, useMemo, useState } from 'react';
+import { useUpdateQuickFilters } from 'api/generated/services/quick-filter';
 import logEvent from 'api/common/logEvent';
-import updateCustomFiltersAPI from 'api/quickFilters/updateCustomFilters';
-import axios, { AxiosError } from 'axios';
-import { SignalType } from 'components/QuickFilters/types';
+import {
+	TelemetrytypesFieldContextDTO,
+	TelemetrytypesFieldDataTypeDTO,
+	QuickfiltertypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
-import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 interface UseQuickFilterSettingsProps {
 	setIsSettingsOpen: (isSettingsOpen: boolean) => void;
-	customFilters: FilterType[];
+	customFilters: TelemetryFieldKey[];
 	refetchCustomFilters: () => void;
-	signal?: SignalType;
+	savedFiltersSource: QuickfiltertypesSourceDTO;
 }
 
 interface UseQuickFilterSettingsReturn {
-	addedFilters: FilterType[];
-	setAddedFilters: React.Dispatch<React.SetStateAction<FilterType[]>>;
+	addedFilters: TelemetryFieldKey[];
+	setAddedFilters: React.Dispatch<React.SetStateAction<TelemetryFieldKey[]>>;
 	handleSettingsClose: () => void;
 	handleDiscardChanges: () => void;
 	handleSaveChanges: () => void;
+	hasUnsavedChanges: boolean;
 	isUpdatingCustomFilters: boolean;
 	inputValue: string;
 	setInputValue: React.Dispatch<React.SetStateAction<string>>;
@@ -33,31 +37,47 @@ const useQuickFilterSettings = ({
 	customFilters,
 	setIsSettingsOpen,
 	refetchCustomFilters,
-	signal,
+	savedFiltersSource,
 }: UseQuickFilterSettingsProps): UseQuickFilterSettingsReturn => {
 	const [inputValue, setInputValue] = useState<string>('');
 	const [debouncedInputValue, setDebouncedInputValue] = useState<string>('');
-	const [addedFilters, setAddedFilters] = useState<FilterType[]>(customFilters);
+	const normalizedCustomFilters = useMemo<TelemetryFieldKey[]>(
+		() =>
+			customFilters.map((filter) => ({
+				...filter,
+				key: buildCompositeKey(
+					filter.name,
+					filter.fieldContext,
+					filter.fieldDataType,
+				),
+			})),
+		[customFilters],
+	);
+	const [addedFilters, setAddedFilters] = useState<TelemetryFieldKey[]>(
+		normalizedCustomFilters,
+	);
 	const { notifications } = useNotifications();
 
 	const { mutate: updateCustomFilters, isLoading: isUpdatingCustomFilters } =
-		useMutation(updateCustomFiltersAPI, {
-			onSuccess: () => {
-				setIsSettingsOpen(false);
-				refetchCustomFilters();
-				logEvent('Quick Filters Settings: changes saved', {
-					addedFilters,
-				});
-				notifications.success({
-					message: 'Quick filters updated successfully',
-					placement: 'bottomRight',
-				});
-			},
-			onError: (error: AxiosError) => {
-				notifications.error({
-					message: axios.isAxiosError(error) ? error.message : SOMETHING_WENT_WRONG,
-					placement: 'bottomRight',
-				});
+		useUpdateQuickFilters({
+			mutation: {
+				onSuccess: () => {
+					setIsSettingsOpen(false);
+					refetchCustomFilters();
+					void logEvent('Quick Filters Settings: changes saved', {
+						addedFilters,
+					});
+					notifications.success({
+						message: 'Quick filters updated successfully',
+						placement: 'bottomRight',
+					});
+				},
+				onError: (error) => {
+					notifications.error({
+						message: error.message || SOMETHING_WENT_WRONG,
+						placement: 'bottomRight',
+					});
+				},
 			},
 		});
 	const debouncedUpdate = useDebouncedFn((value) => {
@@ -78,23 +98,34 @@ const useQuickFilterSettings = ({
 	}, [setIsSettingsOpen]);
 
 	const handleDiscardChanges = useCallback((): void => {
-		setAddedFilters(customFilters);
-	}, [customFilters, setAddedFilters]);
+		setAddedFilters(normalizedCustomFilters);
+	}, [normalizedCustomFilters, setAddedFilters]);
+
+	const hasUnsavedChanges = useMemo(
+		() =>
+			!(
+				addedFilters.length === normalizedCustomFilters.length &&
+				addedFilters.every(
+					(filter, index) => filter.key === normalizedCustomFilters[index].key,
+				)
+			),
+		[addedFilters, normalizedCustomFilters],
+	);
 
 	const handleSaveChanges = useCallback((): void => {
-		if (signal) {
-			updateCustomFilters({
-				data: {
-					filters: addedFilters.map((filter) => ({
-						key: filter.key,
-						datatype: filter.dataType,
-						type: filter.type,
-					})),
-					signal,
-				},
-			});
-		}
-	}, [addedFilters, signal, updateCustomFilters]);
+		updateCustomFilters({
+			pathParams: { source: savedFiltersSource },
+			data: {
+				// Send only the stored TelemetryFieldKey fields; the composite `key`
+				// is UI-only.
+				filters: addedFilters.map((filter) => ({
+					name: filter.name,
+					fieldContext: filter.fieldContext as TelemetrytypesFieldContextDTO,
+					fieldDataType: filter.fieldDataType as TelemetrytypesFieldDataTypeDTO,
+				})),
+			},
+		});
+	}, [addedFilters, savedFiltersSource, updateCustomFilters]);
 
 	return {
 		handleSettingsClose,
@@ -102,6 +133,7 @@ const useQuickFilterSettings = ({
 		addedFilters,
 		setAddedFilters,
 		handleSaveChanges,
+		hasUnsavedChanges,
 		isUpdatingCustomFilters,
 		inputValue,
 		setInputValue,

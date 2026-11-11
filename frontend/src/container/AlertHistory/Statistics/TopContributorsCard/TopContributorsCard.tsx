@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import history from 'lib/history';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRight } from '@signozhq/icons';
 
 import TopContributorsContent from './TopContributorsContent';
@@ -16,7 +16,7 @@ function TopContributorsCard({
 	topContributorsData,
 	totalCurrentTriggers,
 }: TopContributorsCardProps): JSX.Element {
-	const { search } = useLocation();
+	const { search } = useAppLocation();
 	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
 
 	const viewAllTopContributorsParam = searchParams.get('viewAllTopContributors');
@@ -43,16 +43,21 @@ function TopContributorsCard({
 
 			return newState;
 		});
-		history.push({ search: searchParams.toString() });
+		navigate({ search: searchParams.toString() });
 	};
 
 	return (
 		<>
-			<div className="top-contributors-card">
+			<div className="top-contributors-card" data-testid="top-contributors-card">
 				<div className="top-contributors-card__header">
 					<div className="title">top contributors</div>
 					{topContributorsData.length > 3 && (
-						<Button type="text" className="view-all" onClick={toggleViewAllDrawer}>
+						<Button
+							type="text"
+							className="view-all"
+							onClick={toggleViewAllDrawer}
+							data-testid="top-contributors-view-all"
+						>
 							<div className="label">View all</div>
 							<div className="icon">
 								<ArrowRight

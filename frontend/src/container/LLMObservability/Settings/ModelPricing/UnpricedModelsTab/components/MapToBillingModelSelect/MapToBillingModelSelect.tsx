@@ -119,15 +119,18 @@ function MapToBillingModelSelect({
 						    options scroll. Escape hatch when no existing billing model fits:
 						    define this model's own pricing rather than mapping onto another. */}
 						<ComboboxSeparator alwaysRender />
-						<ComboboxCreateItem
-							inputValue={modelName}
-							value={`create-pricing-${modelName}`}
-							prefix={<Plus size={14} />}
-							onSelect={handleCreateNew}
-							testId={`map-to-create-${modelName}`}
-						>
-							Create pricing for &quot;{modelName}&quot;
-						</ComboboxCreateItem>
+						<div className={styles.footer}>
+							<ComboboxCreateItem
+								className={styles.createItem}
+								inputValue={modelName}
+								value={`create-pricing-${modelName}`}
+								prefix={<Plus size={14} />}
+								onSelect={handleCreateNew}
+								testId={`map-to-create-${modelName}`}
+							>
+								Create a new pricing model
+							</ComboboxCreateItem>
+						</div>
 					</ComboboxCommand>
 				</ComboboxContent>
 			</Combobox>

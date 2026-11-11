@@ -1,23 +1,40 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
-// .env holds user-provided defaults (staging creds).
-// .env.local is written by tests/e2e/bootstrap/setup.py when the pytest
-// lifecycle brings the backend up locally; override=true so local-backend
-// coordinates win over any stale .env values. Subprocess-injected env
-// (e.g. when pytest shells out to `pnpm test`) still takes priority —
-// dotenv doesn't touch vars that are already set in process.env.
-dotenv.config({ path: path.resolve(__dirname, '.env') });
-dotenv.config({ path: path.resolve(__dirname, '.env.local'), override: true });
+// Precedence, lowest to highest:
+//   .env        — user-provided defaults (staging creds)
+//   .env.local  — written by tests/e2e/bootstrap/setup.py when the pytest
+//                 lifecycle brings the backend up locally, so it must win over
+//                 any stale .env value
+//   the real environment — anything the caller exported on purpose, e.g.
+//                 `SIGNOZ_E2E_BASE_URL=http://127.0.0.1:3301 pnpm test` to run
+//                 against a locally served frontend, or the vars pytest injects
+//                 when it shells out to `pnpm test`.
+//
+// This is deliberately *not* `dotenv.config({ override: true })`: that flag
+// makes the file beat process.env, so an exported SIGNOZ_E2E_BASE_URL was
+// silently discarded and every run went to whatever .env.local pointed at.
+// Parsing by hand is the only way to get ".env.local beats .env" without also
+// getting ".env.local beats the caller".
+const exported = new Set(Object.keys(process.env));
+for (const file of ['.env', '.env.local']) {
+	const filePath = path.resolve(__dirname, file);
+	if (!fs.existsSync(filePath)) {
+		continue;
+	}
+	const parsed = dotenv.parse(fs.readFileSync(filePath));
+	for (const [key, value] of Object.entries(parsed)) {
+		if (!exported.has(key)) {
+			process.env[key] = value;
+		}
+	}
+}
 
 export default defineConfig({
 	testDir: './tests',
-
-	// Temporarily excluded: the V1 -> V2 dashboard migration changes the
-	// behaviour the dashboards specs assert against, so they fail as written.
-	// Remove this once they are updated for the V2 dashboard.
-	testIgnore: ['**/tests/dashboards/**'],
 
 	// All Playwright output lands under artifacts/. One subdir per reporter
 	// plus results/ for per-test artifacts (traces/screenshots/videos).
@@ -33,11 +50,17 @@ export default defineConfig({
 	// Retry on CI only
 	retries: process.env.CI ? 2 : 0,
 
-	// Workers
-	workers: process.env.CI ? 2 : undefined,
+	// Capped at 6 rather than fixed, so a four-core laptop still gets `cpus / 2`.
+	// Past six, extra workers only queue behind the one shared SigNoz container —
+	// measured in `docs/flake-notes.md`.
+	workers: process.env.CI
+		? 2
+		: Math.max(1, Math.min(6, Math.floor(os.cpus().length / 2))),
 
-	// The SPA hydrates slowly on CI, so the 5s expect default fires mid-load.
-	expect: { timeout: 15_000 },
+	// The SPA hydrates slowly on CI, so the 5s expect default fires mid-load, and
+	// `toPass` needs its own budget because it reads `expect.toPass.timeout`
+	// rather than `expect.timeout` — see `docs/flake-notes.md`.
+	expect: { timeout: 15_000, toPass: { timeout: 20_000 } },
 	timeout: process.env.CI ? 60_000 : 30_000,
 
 	// Reporter
@@ -77,7 +100,15 @@ export default defineConfig({
 		},
 		{
 			name: 'chromium',
-			use: devices['Desktop Chrome'],
+			use: {
+				...devices['Desktop Chrome'],
+				launchOptions: {
+					// Google Fonts CSS blocks the app script and `load` until it settles,
+					// so a stalled request blanks the page. Failing DNS settles it at once;
+					// a `route` would too, but routing turns off the HTTP cache.
+					args: ['--host-resolver-rules=MAP fonts.googleapis.com ~NOTFOUND'],
+				},
+			},
 			dependencies: ['setup'],
 		},
 		{

@@ -3,19 +3,16 @@ package app
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 
+	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
 	"log/slog"
-	"math"
 	"net/http"
 	"regexp"
 	"slices"
@@ -30,18 +27,15 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	jsoniter "github.com/json-iterator/go"
 	_ "modernc.org/sqlite"
 
-	"github.com/SigNoz/signoz/pkg/contextlinks"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
@@ -60,14 +54,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
@@ -116,11 +108,6 @@ type APIHandler struct {
 	// is registers.
 	SetupCompleted bool
 
-	// Websocket connection upgrader
-	Upgrader *websocket.Upgrader
-
-	LicensingAPI licensing.API
-
 	QueryParserAPI *queryparser.API
 
 	Signoz *signoz.SigNoz
@@ -138,8 +125,6 @@ type APIHandlerOpts struct {
 
 	// Flux Interval
 	FluxInterval time.Duration
-
-	LicensingAPI licensing.API
 
 	QueryParserAPI *queryparser.API
 
@@ -176,7 +161,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
-		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
 		QueryParserAPI:                opts.QueryParserAPI,
 	}
@@ -211,12 +195,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 	// If the root user is enabled, the setup is complete
 	if config.User.Root.Enabled {
 		aH.SetupCompleted = true
-	}
-
-	aH.Upgrader = &websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
 	}
 
 	return aH, nil
@@ -360,16 +338,8 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *middlew
 
 	subRouter.HandleFunc("/filter_suggestions", am.ViewAccess(aH.getQueryBuilderSuggestions)).Methods(http.MethodGet)
 
-	// TODO(Raj): Remove this handler after /ws based path has been completely rolled out.
-	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
-
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.Signoz.Handlers.QuerierHandler.QueryRawStream)).Methods(http.MethodGet)
-}
-
-func (aH *APIHandler) RegisterWebSocketPaths(router *mux.Router, am *middleware.AuthZ) {
-	subRouter := router.PathPrefix("/ws").Subrouter()
-	subRouter.HandleFunc("/query_progress", am.ViewAccess(aH.GetQueryProgressUpdates)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *middleware.AuthZ) {
@@ -387,24 +357,7 @@ func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules", am.EditAccess(aH.createRule)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.editRule)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.patchRule)).Methods(http.MethodPatch)
-	router.HandleFunc("/api/v1/testRule", am.EditAccess(aH.testRule)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}/history/stats", am.ViewAccess(aH.getRuleStats)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}/history/timeline", am.ViewAccess(aH.getRuleStateHistory)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}/history/top_contributors", am.ViewAccess(aH.getRuleStateHistoryTopContributors)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}/history/overall_status", am.ViewAccess(aH.getOverallStateTransitions)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.List)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.Signoz.Handlers.Dashboard.Create)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/{id}", am.ViewAccess(aH.Get)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Update)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Delete)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/dashboards/{id}/lock", am.EditAccess(aH.Signoz.Handlers.Dashboard.LockUnlock)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.Signoz.Handlers.SavedView.List)).Methods(http.MethodGet)
@@ -439,7 +392,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v2/traces/fields", am.EditAccess(aH.updateTraceField)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/features", am.ViewAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/features", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/health", am.OpenAccess(aH.getHealth)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/listErrors", am.ViewAccess(aH.listErrors)).Methods(http.MethodPost)
@@ -450,19 +403,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/disks", am.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
-	// Quick Filters
+	// Quick Filters (v1 routes serve the legacy v3 shape; v2 lives in signozapiserver)
 	router.HandleFunc("/api/v1/orgs/me/filters", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetQuickFilters)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetSignalFilters)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/orgs/me/filters/{signal}", am.ViewAccess(aH.Signoz.Handlers.QuickFilter.GetSourceFilters)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/orgs/me/filters", am.AdminAccess(aH.Signoz.Handlers.QuickFilter.UpdateQuickFilters)).Methods(http.MethodPut)
 
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
-
-	router.HandleFunc("/api/v3/licenses", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
-		render.Success(rw, http.StatusOK, []any{})
-	})).Methods(http.MethodGet)
-	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
-		aH.LicensingAPI.Activate(rw, req)
-	})).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/span_percentile", am.ViewAccess(aH.Signoz.Handlers.SpanPercentile.GetSpanPercentileDetails)).Methods(http.MethodPost)
 
@@ -540,377 +486,6 @@ func (aH *APIHandler) PopulateTemporality(ctx context.Context, orgID valuer.UUID
 	return nil
 }
 
-func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
-
-	rules, err := aH.ruleManager.ListRuleStates(r.Context())
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	// todo(amol): need to add sorter
-
-	aH.Respond(w, rules)
-}
-
-func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	ruleResponse, err := aH.ruleManager.GetRule(r.Context(), id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
-			return
-		}
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	aH.Respond(w, ruleResponse)
-}
-
-func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		aH.logger.ErrorContext(r.Context(), "error reading request body for create rule", errors.Attr(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	rule, err := aH.ruleManager.CreateRule(r.Context(), string(body))
-	if err != nil {
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	aH.Respond(w, rule)
-}
-
-func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		aH.logger.ErrorContext(r.Context(), "error reading request body for edit rule", errors.Attr(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	err = aH.ruleManager.EditRule(r.Context(), string(body), id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
-			return
-		}
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	aH.Respond(w, "rule successfully edited")
-}
-
-func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
-	err := aH.ruleManager.DeleteRule(r.Context(), id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
-			return
-		}
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	aH.Respond(w, "rule successfully deleted")
-}
-
-func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		aH.logger.ErrorContext(r.Context(), "error reading request body for patch rule", errors.Attr(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	gettableRule, err := aH.ruleManager.PatchRule(r.Context(), string(body), id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
-			return
-		}
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	aH.Respond(w, gettableRule)
-}
-
-func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		aH.logger.ErrorContext(r.Context(), "error reading request body for test rule", errors.Attr(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-
-	alertCount, err := aH.ruleManager.TestNotification(ctx, orgID, string(body))
-	if err != nil {
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	response := map[string]interface{}{
-		"alertCount": alertCount,
-		"message":    "notification sent",
-	}
-	aH.Respond(w, response)
-}
-
-func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
-	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	totalCurrentTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	currentTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	currentAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	currentAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	if params.End-params.Start >= 86400000 {
-		days := int64(math.Ceil(float64(params.End-params.Start) / 86400000))
-		params.Start -= days * 86400000
-		params.End -= days * 86400000
-	} else {
-		params.Start -= 86400000
-		params.End -= 86400000
-	}
-
-	totalPastTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	pastTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	pastAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	pastAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	if math.IsNaN(currentAvgResolutionTime) || math.IsInf(currentAvgResolutionTime, 0) {
-		currentAvgResolutionTime = 0
-	}
-	if math.IsNaN(pastAvgResolutionTime) || math.IsInf(pastAvgResolutionTime, 0) {
-		pastAvgResolutionTime = 0
-	}
-
-	stats := model.Stats{
-		TotalCurrentTriggers:           totalCurrentTriggers,
-		TotalPastTriggers:              totalPastTriggers,
-		CurrentTriggersSeries:          currentTriggersSeries,
-		PastTriggersSeries:             pastTriggersSeries,
-		CurrentAvgResolutionTime:       strconv.FormatFloat(currentAvgResolutionTime, 'f', -1, 64),
-		PastAvgResolutionTime:          strconv.FormatFloat(pastAvgResolutionTime, 'f', -1, 64),
-		CurrentAvgResolutionTimeSeries: currentAvgResolutionTimeSeries,
-		PastAvgResolutionTimeSeries:    pastAvgResolutionTimeSeries,
-	}
-
-	aH.Respond(w, stats)
-}
-
-func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
-	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	stateItems, err := aH.reader.GetOverallStateTransitions(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, stateItems)
-}
-
-func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	params := model.QueryRuleStateHistory{}
-	err = json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-	if err := params.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), id.StringValue(), &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	rule, err := aH.ruleManager.GetRule(r.Context(), id)
-	if err == nil {
-		for idx := range res.Items {
-			lbls := make(map[string]string)
-			err := json.Unmarshal([]byte(res.Items[idx].Labels), &lbls)
-			if err != nil {
-				continue
-			}
-			end := time.Unix(res.Items[idx].UnixMilli/1000, 0)
-			// why are we subtracting 3 minutes?
-			// the query range is calculated based on the rule's evalWindow and evalDelay
-			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
-			// to get the correct query range
-			start := end.Add(-rule.EvalWindow.Duration() - 3*time.Minute)
-			if rule.AlertType == ruletypes.AlertTypeLogs {
-				// TODO(srikanthccv): re-visit this and support multiple queries
-				var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
-
-				for _, query := range rule.RuleCondition.CompositeQuery.Queries {
-					if query.Type == qbtypes.QueryTypeBuilder {
-						switch spec := query.Spec.(type) {
-						case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-							q = spec
-						}
-					}
-				}
-
-				filterExpr := ""
-				if q.Filter != nil && q.Filter.Expression != "" {
-					filterExpr = q.Filter.Expression
-				}
-
-				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
-
-				res.Items[idx].RelatedLogsLink = contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()
-			} else if rule.AlertType == ruletypes.AlertTypeTraces {
-				// TODO(srikanthccv): re-visit this and support multiple queries
-				var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
-
-				for _, query := range rule.RuleCondition.CompositeQuery.Queries {
-					if query.Type == qbtypes.QueryTypeBuilder {
-						switch spec := query.Spec.(type) {
-						case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-							q = spec
-						}
-					}
-				}
-
-				filterExpr := ""
-				if q.Filter != nil && q.Filter.Expression != "" {
-					filterExpr = q.Filter.Expression
-				}
-
-				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
-				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause).Encode()
-			}
-		}
-	}
-
-	aH.Respond(w, res)
-}
-
-func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	params := model.QueryRuleStateHistory{}
-	err = json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), id.StringValue(), &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, res)
-}
-
 func prepareQuery(r *http.Request) (string, error) {
 	var postData *model.DashboardVars
 
@@ -976,14 +551,6 @@ func prepareQuery(r *http.Request) (string, error) {
 	return newQuery, nil
 }
 
-func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
-	render.Error(rw, dashboardtypes.NewV1DeprecatedError("get a dashboard with GET /api/v2/dashboards/{id}"))
-}
-
-func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
-	render.Error(rw, dashboardtypes.NewV1DeprecatedError("list dashboards with GET /api/v2/dashboards"))
-}
-
 func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {
 	query, err := prepareQuery(r)
 	if err != nil {
@@ -991,7 +558,7 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	querybuilder.LogIfStatementIsNotValid(r.Context(), aH.logger, query)
+	clickhousesql.LogIfStatementIsNotValid(r.Context(), aH.logger, query)
 
 	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
 	if err != nil {
@@ -1128,13 +695,19 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	query, err := parseGetTopOperationsRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetTopOperations(r.Context(), query)
+	result, apiErr := aH.reader.GetTopOperations(r.Context(), orgID, query)
 
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
@@ -1145,13 +718,20 @@ func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getEntryPointOps(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	query, err := parseGetTopOperationsRequest(r)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	result, apiErr := aH.reader.GetEntryPointOperations(r.Context(), query)
+	result, apiErr := aH.reader.GetEntryPointOperations(r.Context(), orgID, query)
 	if apiErr != nil {
 		render.Error(w, apiErr)
 		return
@@ -1226,12 +806,19 @@ func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Requ
 }
 
 func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
 	query, err := parseGetServicesRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetServices(r.Context(), query)
+	result, apiErr := aH.reader.GetServices(r.Context(), orgID, query)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1240,13 +827,19 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) dependencyGraph(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	query, err := parseGetServicesRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
-	result, err := aH.reader.GetDependencyGraph(r.Context(), query)
+	result, err := aH.reader.GetDependencyGraph(r.Context(), orgID, query)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1471,7 +1064,7 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
-		aH.HandleError(w, err, http.StatusInternalServerError)
+		aH.HandleError(w, err, http.StatusUnauthorized)
 		return
 	}
 
@@ -1492,15 +1085,6 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	featureSet = append(featureSet, &licensetypes.Feature{
 		Name:       valuer.NewString(flagger.FeatureUseJSONBody.String()),
 		Active:     bodyJSONQuery,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	})
-
-	aiObservability := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureEnableAIObservability, evalCtx)
-	featureSet = append(featureSet, &licensetypes.Feature{
-		Name:       valuer.NewString(flagger.FeatureEnableAIObservability.String()),
-		Active:     aiObservability,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
@@ -3531,27 +3115,6 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	// Hook up query progress tracking if requested
-	queryIdHeader := r.Header.Get("X-SIGNOZ-QUERY-ID")
-	if len(queryIdHeader) > 0 {
-		onQueryFinished, apiErr := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
-
-		if apiErr != nil {
-			aH.logger.ErrorContext(ctx, "failed to report query start for progress tracking",
-				"query_id", queryIdHeader, errors.Attr(apiErr),
-			)
-
-		} else {
-			// Adding queryId to the context signals clickhouse queries to report progress
-			//lint:ignore SA1029 ignore for now
-			ctx = context.WithValue(ctx, "queryId", queryIdHeader)
-
-			defer func() {
-				go onQueryFinished()
-			}()
-		}
-	}
-
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.CodeNamespace:    "app",
 		instrumentationtypes.CodeFunctionName: "QueryRange",
@@ -3731,73 +3294,6 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
-}
-
-func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Request) {
-	// Upgrade connection to websocket, sending back the requested protocol
-	// value for sec-websocket-protocol
-	//
-	// Since js websocket API doesn't allow setting headers, this header is often
-	// used for passing auth tokens. As per websocket spec the connection will only
-	// succeed if the requested `Sec-Websocket-Protocol` is sent back as a header
-	// in the upgrade response (signifying that the protocol is supported by the server).
-	upgradeResponseHeaders := http.Header{}
-	requestedProtocol := r.Header.Get("Sec-WebSocket-Protocol")
-	if len(requestedProtocol) > 0 {
-		upgradeResponseHeaders.Add("Sec-WebSocket-Protocol", requestedProtocol)
-	}
-
-	c, err := aH.Upgrader.Upgrade(w, r, upgradeResponseHeaders)
-	if err != nil {
-		RespondError(w, model.InternalError(fmt.Errorf(
-			"couldn't upgrade connection: %w", err,
-		)), nil)
-		return
-	}
-	defer c.Close()
-
-	// Websocket upgrade complete. Subscribe to query progress and send updates to client
-	//
-	// Note: we handle any subscription problems (queryId query param missing or query already complete etc)
-	// after the websocket connection upgrade by closing the channel.
-	// The other option would be to handle the errors before websocket upgrade by sending an
-	// error response instead of the upgrade response, but that leads to a generic websocket
-	// connection failure on the client.
-
-	queryId := r.URL.Query().Get("q")
-
-	progressCh, unsubscribe, apiErr := aH.reader.SubscribeToQueryProgress(queryId)
-	if apiErr != nil {
-		// Shouldn't happen unless query progress requested after query finished
-		aH.logger.WarnContext(r.Context(), "failed to subscribe to query progress",
-			"query_id", queryId, errors.Attr(apiErr),
-		)
-		return
-	}
-	defer func() { go unsubscribe() }()
-
-	for queryProgress := range progressCh {
-		msg, err := json.Marshal(queryProgress)
-		if err != nil {
-			aH.logger.ErrorContext(r.Context(), "failed to serialize progress message",
-				"query_id", queryId, "progress", queryProgress, errors.Attr(err),
-			)
-			continue
-		}
-
-		err = c.WriteMessage(websocket.TextMessage, msg)
-		if err != nil {
-			aH.logger.ErrorContext(r.Context(), "failed to write progress message to websocket",
-				"query_id", queryId, "msg", string(msg), errors.Attr(err),
-			)
-			break
-
-		} else {
-			aH.logger.DebugContext(r.Context(), "wrote progress message to websocket",
-				"query_id", queryId, "msg", string(msg),
-			)
-		}
-	}
 }
 
 func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
@@ -4162,20 +3658,20 @@ func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middlew
 		Methods(http.MethodPut)
 
 	// Analytics endpoints
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", aH.handleValidateTraces).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", aH.handleFunnelAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", aH.handleStepAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps/overview", aH.handleFunnelStepAnalytics).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", aH.handleFunnelSlowTraces).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", aH.handleFunnelErrorTraces).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/validate", am.ViewAccess(aH.handleValidateTraces)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/overview", am.ViewAccess(aH.handleFunnelAnalytics)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps", am.ViewAccess(aH.handleStepAnalytics)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/steps/overview", am.ViewAccess(aH.handleFunnelStepAnalytics)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/slow-traces", am.ViewAccess(aH.handleFunnelSlowTraces)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/{funnel_id}/analytics/error-traces", am.ViewAccess(aH.handleFunnelErrorTraces)).Methods("POST")
 
 	// Analytics endpoints
-	traceFunnelsRouter.HandleFunc("/analytics/validate", aH.handleValidateTracesWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/overview", aH.handleFunnelAnalyticsWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/steps", aH.handleStepAnalyticsWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/steps/overview", aH.handleFunnelStepAnalyticsWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/slow-traces", aH.handleFunnelSlowTracesWithPayload).Methods("POST")
-	traceFunnelsRouter.HandleFunc("/analytics/error-traces", aH.handleFunnelErrorTracesWithPayload).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/validate", am.ViewAccess(aH.handleValidateTracesWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/overview", am.ViewAccess(aH.handleFunnelAnalyticsWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/steps", am.ViewAccess(aH.handleStepAnalyticsWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/steps/overview", am.ViewAccess(aH.handleFunnelStepAnalyticsWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/slow-traces", am.ViewAccess(aH.handleFunnelSlowTracesWithPayload)).Methods("POST")
+	traceFunnelsRouter.HandleFunc("/analytics/error-traces", am.ViewAccess(aH.handleFunnelErrorTracesWithPayload)).Methods("POST")
 }
 
 func (aH *APIHandler) handleValidateTraces(w http.ResponseWriter, r *http.Request) {

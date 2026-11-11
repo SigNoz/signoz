@@ -1,8 +1,8 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import {
 	Dispatch,
 	memo,
 	MutableRefObject,
+	ReactNode,
 	SetStateAction,
 	useEffect,
 	useMemo,
@@ -12,36 +12,34 @@ import { useSelector } from 'react-redux';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
-import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { QueryParams } from 'constants/query';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
-import NoLogs from 'container/NoLogs/NoLogs';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
+import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
+import TracesTable from 'container/TracesExplorer/TracesTable/TracesTable';
+import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import { useKeepRowsForSameQuery } from 'container/TracesExplorer/TracesTable/useKeepRowsForSameQuery';
+import { useTracesTablePagination } from 'container/TracesExplorer/TracesTable/useTracesTablePagination';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Pagination } from 'hooks/queryPagination';
-import useUrlQueryData from 'hooks/useUrlQueryData';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
-import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import DOCLINKS from 'utils/docLinks';
 
-import TraceExplorerControls from '../Controls';
-import { TracesLoading } from '../TraceLoading/TraceLoading';
-import { columns, PER_PAGE_OPTIONS } from './configs';
-import { ActionsContainer, Container } from './styles';
+import { columns } from './configs';
+
+import styles from './TracesView.module.scss';
 
 interface TracesViewProps {
 	isFilterApplied: boolean;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	setIsLoadingQueries: Dispatch<SetStateAction<boolean>>;
 	queryKeyRef?: MutableRefObject<any>;
+	headerActions?: ReactNode;
 }
 
 function TracesView({
@@ -49,6 +47,7 @@ function TracesView({
 	setWarning,
 	setIsLoadingQueries,
 	queryKeyRef,
+	headerActions,
 }: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
@@ -58,9 +57,7 @@ function TracesView({
 		minTime,
 	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
-	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
-		QueryParams.pagination,
-	);
+	const pagination = useTracesTablePagination();
 
 	const transformedQuery = useMemo(
 		() => getListViewQuery(stagedQuery || initialQueriesMap.traces),
@@ -75,7 +72,7 @@ function TracesView({
 			minTime,
 			stagedQuery,
 			panelType,
-			paginationQueryData,
+			pagination.request,
 		],
 		[
 			globalSelectedTime,
@@ -83,7 +80,7 @@ function TracesView({
 			minTime,
 			stagedQuery,
 			panelType,
-			paginationQueryData,
+			pagination.request,
 		],
 	);
 
@@ -91,25 +88,27 @@ function TracesView({
 		queryKeyRef.current = queryKey;
 	}
 
-	const { data, isLoading, isFetching, isError, error } = useGetQueryRange(
-		{
-			query: transformedQuery,
-			graphType: panelType || PANEL_TYPES.TRACE,
-			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: globalSelectedTime,
-			params: {
-				dataSource: 'traces',
+	const { data, isLoading, isFetching, isError, error, isPreviousData } =
+		useGetQueryRange(
+			{
+				query: transformedQuery,
+				graphType: panelType || PANEL_TYPES.TRACE,
+				selectedTime: 'GLOBAL_TIME',
+				globalSelectedInterval: globalSelectedTime,
+				params: {
+					dataSource: 'traces',
+				},
+				tableParams: {
+					pagination: pagination.request,
+				},
 			},
-			tableParams: {
-				pagination: paginationQueryData,
+			ENTITY_VERSION_V5,
+			{
+				queryKey,
+				keepPreviousData: true,
+				enabled: !!stagedQuery && panelType === PANEL_TYPES.TRACE,
 			},
-		},
-		ENTITY_VERSION_V5,
-		{
-			queryKey,
-			enabled: !!stagedQuery && panelType === PANEL_TYPES.TRACE,
-		},
-	);
+		);
 
 	useEffect(() => {
 		if (data?.payload) {
@@ -118,9 +117,17 @@ function TracesView({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data?.payload, data?.warning]);
 
-	const responseData = data?.payload?.data?.newResult?.data?.result[0]?.list;
-	const tableData = useMemo(
-		() => responseData?.map((listItem) => listItem.data),
+	const keepRows = useKeepRowsForSameQuery(isPreviousData);
+	const responseData = keepRows
+		? data?.payload?.data?.newResult?.data?.result[0]?.list
+		: undefined;
+
+	const rows = useMemo<TracesTableRow[]>(
+		() =>
+			(responseData ?? []).map((item) => {
+				const row = item.data;
+				return { ...row, id: row.trace_id };
+			}) as TracesTableRow[],
 		[responseData],
 	);
 
@@ -133,76 +140,54 @@ function TracesView({
 	}, [isLoading, isFetching, setIsLoadingQueries]);
 
 	useEffect(() => {
-		if (!isLoading && !isFetching && !isError && (tableData || []).length !== 0) {
-			logEvent('Traces Explorer: Data present', {
+		if (!isLoading && !isFetching && !isError && rows.length !== 0) {
+			void logEvent('Traces Explorer: Data present', {
 				panelType: 'TRACE',
 			});
 		}
-	}, [isLoading, isFetching, isError, panelType, tableData]);
+	}, [isLoading, isFetching, isError, rows.length]);
 
 	return (
-		<Container>
-			{(tableData || []).length !== 0 && (
-				<ActionsContainer>
-					<Typography>
-						This tab only shows Root Spans. More details
-						<Typography.Link href={DOCLINKS.TRACES_DETAILS_LINK} target="_blank">
-							{' '}
-							here
-						</Typography.Link>
-					</Typography>
+		<div className={styles.container}>
+			<div className={styles.actionsContainer}>
+				<Typography>
+					This tab only shows Root Spans. More details
+					<Typography.Link href={DOCLINKS.TRACES_DETAILS_LINK} target="_blank">
+						{' '}
+						here
+					</Typography.Link>
+				</Typography>
 
-					<div className="trace-explorer-controls">
-						<DownloadOptionsMenu
-							dataSource={DataSource.TRACES}
-							panelType={PANEL_TYPES.TRACE}
-						/>
+				<div className={styles.controls}>
+					{headerActions}
+					<DownloadOptionsMenu
+						dataSource={DataSource.TRACES}
+						panelType={PANEL_TYPES.TRACE}
+					/>
+				</div>
+			</div>
 
-						<TraceExplorerControls
-							isLoading={isLoading}
-							totalCount={responseData?.length || 0}
-							perPageOptions={PER_PAGE_OPTIONS}
-						/>
-					</div>
-				</ActionsContainer>
-			)}
-
-			{isError && error && <ErrorInPlace error={error as APIError} />}
-
-			{(isLoading || (isFetching && (tableData || []).length === 0)) && (
-				<TracesLoading />
-			)}
-
-			{!isLoading &&
-				!isFetching &&
-				!isError &&
-				!isFilterApplied &&
-				(tableData || []).length === 0 && <NoLogs dataSource={DataSource.TRACES} />}
-
-			{!isLoading &&
-				!isFetching &&
-				(tableData || []).length === 0 &&
-				!isError &&
-				isFilterApplied && (
-					<EmptyLogsSearch dataSource={DataSource.TRACES} panelType="TRACE" />
-				)}
-
-			{(tableData || []).length !== 0 && (
-				<ResizeTable
-					loading={isLoading}
-					columns={columns}
-					tableLayout="fixed"
-					dataSource={tableData}
-					scroll={{ x: true }}
-					pagination={false}
-				/>
-			)}
-		</Container>
+			<TracesTable
+				data={rows}
+				columns={columns}
+				columnStorageKey={LOCALSTORAGE.TRACES_VIEW_COLUMNS}
+				respectColumnOrder
+				panelType="TRACE"
+				getRowHref={getTraceLink}
+				isLoading={isLoading}
+				isFetching={isFetching}
+				isError={isError}
+				error={error}
+				isFilterApplied={isFilterApplied}
+				pagination={pagination}
+			/>
+		</div>
 	);
 }
 
 TracesView.defaultProps = {
 	queryKeyRef: undefined,
+	headerActions: undefined,
 };
 
 export default memo(TracesView);

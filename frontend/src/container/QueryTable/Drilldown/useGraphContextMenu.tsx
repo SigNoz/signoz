@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
-import { ContextLinksData } from 'types/api/dashboard/getAll';
+import { ContextLinksData } from 'types/api/widgets/widget';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 

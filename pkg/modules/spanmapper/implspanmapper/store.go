@@ -17,6 +17,10 @@ func NewStore(sqlstore sqlstore.SQLStore) spantypes.SpanMapperStore {
 	return &store{sqlstore: sqlstore}
 }
 
+func (s *store) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {
+	return s.sqlstore.RunInTxCtx(ctx, nil, cb)
+}
+
 func (s *store) CreateGroup(ctx context.Context, group *spantypes.SpanMapperGroup) error {
 	storable := group.ToStorable()
 	_, err := s.sqlstore.
@@ -34,7 +38,7 @@ func (s *store) GetGroup(ctx context.Context, orgID, id valuer.UUID) (*spantypes
 	storable := new(spantypes.StorableSpanMapperGroup)
 
 	err := s.sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(storable).
 		Where("org_id = ?", orgID).
@@ -46,11 +50,27 @@ func (s *store) GetGroup(ctx context.Context, orgID, id valuer.UUID) (*spantypes
 	return storable.ToSpanMapperGroup(), nil
 }
 
+func (s *store) GetGroupByName(ctx context.Context, orgID valuer.UUID, name string) (*spantypes.SpanMapperGroup, error) {
+	storable := new(spantypes.StorableSpanMapperGroup)
+
+	err := s.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Where("org_id = ?", orgID).
+		Where("name = ?", name).
+		Scan(ctx)
+	if err != nil {
+		return nil, s.sqlstore.WrapNotFoundErrf(err, spantypes.ErrCodeMappingGroupNotFound, "span mapper group %q not found", name)
+	}
+	return storable.ToSpanMapperGroup(), nil
+}
+
 func (s *store) ListGroups(ctx context.Context, orgID valuer.UUID, q *spantypes.ListSpanMapperGroupsQuery) ([]*spantypes.SpanMapperGroup, error) {
 	storables := make([]*spantypes.StorableSpanMapperGroup, 0)
 
 	sel := s.sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(&storables).
 		Where("org_id = ?", orgID)
@@ -91,38 +111,43 @@ func (s *store) UpdateGroup(ctx context.Context, group *spantypes.SpanMapperGrou
 }
 
 func (s *store) DeleteGroup(ctx context.Context, orgID, id valuer.UUID) error {
-	tx, err := s.sqlstore.BunDBCtx(ctx).BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = tx.Rollback() }()
+	return s.RunInTx(ctx, func(ctx context.Context) error {
+		db := s.sqlstore.BunDBCtx(ctx)
 
-	// Cascade: remove mappers belonging to this group first.
-	if _, err := tx.NewDelete().
-		Model((*spantypes.StorableSpanMapper)(nil)).
-		Where("group_id = ?", id).
-		Exec(ctx); err != nil {
-		return err
-	}
+		// Cascade: remove mappers belonging to this group first.
+		if _, err := db.NewDelete().
+			Model((*spantypes.StorableSpanMapper)(nil)).
+			Where("group_id = ?", id).
+			Exec(ctx); err != nil {
+			return err
+		}
 
-	res, err := tx.NewDelete().
-		Model((*spantypes.StorableSpanMapperGroup)(nil)).
-		Where("org_id = ?", orgID).
-		Where("id = ?", id).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
+		res, err := db.NewDelete().
+			Model((*spantypes.StorableSpanMapperGroup)(nil)).
+			Where("org_id = ?", orgID).
+			Where("id = ?", id).
+			Where("origin = ?", spantypes.SpanMapperOriginUser).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected == 0 {
-		return errors.Newf(errors.TypeNotFound, spantypes.ErrCodeMappingGroupNotFound, "span mapper group %s not found", id)
-	}
-
-	return tx.Commit()
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if rowsAffected == 0 {
+			group, err := s.GetGroup(ctx, orgID, id)
+			if err != nil {
+				return err
+			}
+			if err := group.ErrIfNotDeletable(); err != nil {
+				return err
+			}
+			return errors.Newf(errors.TypeNotFound, spantypes.ErrCodeMappingGroupNotFound, "span mapper group %s not found", id)
+		}
+		return nil
+	})
 }
 
 func (s *store) CreateMapper(ctx context.Context, mapper *spantypes.SpanMapper) error {
@@ -146,7 +171,7 @@ func (s *store) GetMapper(ctx context.Context, orgID, groupID, id valuer.UUID) (
 
 	storable := new(spantypes.StorableSpanMapper)
 	err := s.sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(storable).
 		Where("group_id = ?", groupID).
@@ -166,7 +191,7 @@ func (s *store) ListMappers(ctx context.Context, orgID, groupID valuer.UUID) ([]
 
 	storables := make([]*spantypes.StorableSpanMapper, 0)
 	if err := s.sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(&storables).
 		Where("group_id = ?", groupID).
@@ -200,7 +225,7 @@ func (s *store) UpdateMapper(ctx context.Context, mapper *spantypes.SpanMapper) 
 	return nil
 }
 
-func (s *store) DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error {
+func (s *store) DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID, origin spantypes.SpanMapperOrigin) error {
 	if _, err := s.GetGroup(ctx, orgID, groupID); err != nil {
 		return err
 	}
@@ -211,6 +236,7 @@ func (s *store) DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID
 		Model((*spantypes.StorableSpanMapper)(nil)).
 		Where("group_id = ?", groupID).
 		Where("id = ?", id).
+		Where("origin = ?", origin).
 		Exec(ctx)
 	if err != nil {
 		return err
@@ -221,6 +247,13 @@ func (s *store) DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID
 		return err
 	}
 	if rowsAffected == 0 {
+		mapper, err := s.GetMapper(ctx, orgID, groupID, id)
+		if err != nil {
+			return err
+		}
+		if err := mapper.ErrIfNotDeletable(); err != nil {
+			return err
+		}
 		return errors.Newf(errors.TypeNotFound, spantypes.ErrCodeMapperNotFound, "span mapper %s not found", id)
 	}
 	return nil

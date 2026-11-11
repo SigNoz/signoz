@@ -5,7 +5,13 @@
   "main": "index.js",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
+    "env:start": "cd .. && uv run pytest --basetemp=./tmp/ -vv --reuse --rebuild --capture=no --with-web e2e/bootstrap/setup.py::test_setup",
+    "env:stop": "cd .. && uv run pytest --basetemp=./tmp/ -vv --teardown --capture=no e2e/bootstrap/setup.py::test_teardown",
+    "env:start:base-path": "cd .. && uv run pytest --basetemp=./tmp/ -vv --reuse --rebuild --capture=no --with-web e2e/bootstrap/basepath/setup.py::test_setup",
+    "env:stop:base-path": "cd .. && uv run pytest --basetemp=./tmp/ -vv --teardown --capture=no e2e/bootstrap/basepath/setup.py::test_teardown",
+    "env:clean": "rm -rf ../tmp ../.pytest_cache .env.local artifacts && echo 'Cleaned. Run docker container prune if needed.'",
     "test": "playwright test",
+    "test:local": "pnpm env:start && pnpm test",
     "test:staging": "SIGNOZ_E2E_BASE_URL=https://app.us.staging.signoz.cloud playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
@@ -36,9 +42,9 @@
     "@types/node": "^20.0.0",
     "dotenv": "^16.0.0",
     "eslint-plugin-playwright": "^2.10.2",
-    "oxfmt": "^0.41.0",
-    "oxlint": "^1.59.0",
-    "oxlint-tsgolint": "^0.20.0",
+    "oxfmt": "0.73.0",
+    "oxlint": "1.88.0",
+    "oxlint-tsgolint": "7.0.2004",
     "typescript": "^5.0.0"
   },
   "engines": {

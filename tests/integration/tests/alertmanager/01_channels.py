@@ -228,7 +228,7 @@ def test_email_channel_never_stores_or_serves_smtp_settings(
 
     with signoz.sqlstore.conn.connect() as conn:
         stored = conn.execute(
-            text("SELECT data FROM notification_channel WHERE name = :name"),
+            text("SELECT data FROM notification_channel WHERE display_name = :name"),
             {"name": hostile_name},
         ).fetchone()
         assert stored is not None

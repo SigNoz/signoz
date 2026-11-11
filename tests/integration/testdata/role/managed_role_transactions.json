@@ -47,7 +47,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -186,7 +188,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -197,7 +201,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -230,7 +236,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -252,7 +260,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -263,7 +273,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -286,11 +298,38 @@
     },
     {
       "type": "metaresource",
+      "kind": "metrics-field",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "llm-pricing-rule",
+      "verbs": [
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "ttl-setting",
       "verbs": [
         "read",
         "update",
         "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "deployment-host",
+      "verbs": [
+        "list",
+        "update"
       ]
     },
     {
@@ -359,6 +398,14 @@
   "signoz-editor": [
     {
       "type": "metaresource",
+      "kind": "cloud-integration",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "dashboard",
       "verbs": [
         "create",
@@ -387,7 +434,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -398,7 +447,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -442,7 +493,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -461,7 +514,9 @@
       "kind": "notification-channel",
       "verbs": [
         "read",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -490,9 +545,33 @@
     },
     {
       "type": "metaresource",
+      "kind": "metrics-field",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "llm-pricing-rule",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "ttl-setting",
       "verbs": [
         "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "deployment-host",
+      "verbs": [
         "list"
       ]
     },
@@ -555,6 +634,14 @@
   "signoz-viewer": [
     {
       "type": "metaresource",
+      "kind": "cloud-integration",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "dashboard",
       "verbs": [
         "read",
@@ -646,9 +733,32 @@
     },
     {
       "type": "metaresource",
+      "kind": "metrics-field",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "llm-pricing-rule",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "ttl-setting",
       "verbs": [
         "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "deployment-host",
+      "verbs": [
         "list"
       ]
     },

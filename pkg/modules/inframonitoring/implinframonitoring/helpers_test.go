@@ -446,3 +446,22 @@ func TestIntersectRankedGroups(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildPageGroupsFilterExprQuotesValues(t *testing.T) {
+	testCases := []struct {
+		name       string
+		pageGroups []map[string]string
+		expected   string
+	}{
+		{name: "SingleQuote", pageGroups: []map[string]string{{"host.name": `h'1`}}, expected: `host.name IN ('h\'1')`},
+		{name: "TrailingBackslash", pageGroups: []map[string]string{{"host.name": `h\`}}, expected: `host.name IN ('h\\')`},
+		{name: "Injection", pageGroups: []map[string]string{{"host.name": `h') OR 1=1 --`}}, expected: `host.name IN ('h\') OR 1=1 --')`},
+		{name: "MultipleGroups", pageGroups: []map[string]string{{"host.name": `h'1`}, {"host.name": `h'2`}}, expected: `host.name IN ('h\'1', 'h\'2')`},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expected, buildPageGroupsFilterExpr(testCase.pageGroups))
+		})
+	}
+}

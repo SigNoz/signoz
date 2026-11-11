@@ -71,6 +71,7 @@ function OneClickIntegrations(props: OneClickIntegrationsProps): JSX.Element {
 							<div
 								className="one-click-integrations-list-item"
 								key={integration.id}
+								data-testid={`one-click-integration-${integration.id}`}
 								onClick={(): void => handleSelectedIntegration(integration)}
 							>
 								<div className="one-click-integrations-list-item-title">
@@ -82,7 +83,7 @@ function OneClickIntegrations(props: OneClickIntegrationsProps): JSX.Element {
 									</div>
 									{integration.is_new && (
 										<div className="one-click-integrations-list-item-new-tag">
-											<Badge color="robin" variant="default">
+											<Badge color="primary" variant="solid">
 												NEW
 											</Badge>
 										</div>

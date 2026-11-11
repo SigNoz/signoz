@@ -6,7 +6,7 @@ import {
 	getAllEndpointsWidgetData,
 	getGroupByFiltersFromGroupByValues,
 } from 'container/ApiMonitoring/utils';
-import GridCard from 'container/GridCardLayout/GridCard';
+import GridCard from 'container/WidgetCard/Card';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { isEqual } from 'lodash-es';

@@ -16,15 +16,14 @@ import (
 
 // resourceFilterStatementBuilder builds resource fingerprint filter CTEs.
 type resourceFilterStatementBuilder[T any] struct {
-	logger           *slog.Logger
-	dbName           string
-	tableName        string
-	fieldMapper      qbtypes.FieldMapper
-	conditionBuilder qbtypes.ConditionBuilder
-	metadataStore    telemetrytypes.MetadataStore
-	signal           telemetrytypes.Signal
-	source           telemetrytypes.Source
-	flagger          flagger.Flagger
+	logger        *slog.Logger
+	dbName        string
+	tableName     string
+	storage       qbtypes.Storage
+	metadataStore telemetrytypes.MetadataStore
+	signal        telemetrytypes.Signal
+	source        telemetrytypes.Source
+	flagger       flagger.Flagger
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
 }
@@ -46,19 +45,16 @@ func New[T any](
 	fl flagger.Flagger,
 ) *resourceFilterStatementBuilder[T] {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/statementbuilder/resourcefilter")
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm, fl)
 	return &resourceFilterStatementBuilder[T]{
-		logger:           set.Logger(),
-		dbName:           dbName,
-		tableName:        tableName,
-		fieldMapper:      fm,
-		conditionBuilder: cb,
-		metadataStore:    metadataStore,
-		signal:           signal,
-		source:           source,
-		flagger:          fl,
-		fullTextColumn:   fullTextColumn,
+		logger:         set.Logger(),
+		dbName:         dbName,
+		tableName:      tableName,
+		storage:        newStorage(),
+		metadataStore:  metadataStore,
+		signal:         signal,
+		source:         source,
+		flagger:        fl,
+		fullTextColumn: fullTextColumn,
 	}
 }
 
@@ -163,19 +159,15 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 		// warnings would be encountered as part of the main condition already
 		filterWhereClause, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
 			Context:            ctx,
-			OrgID:              orgID,
-			Flagger:            b.flagger,
+			Query:              querybuilder.NewQueryInfo(ctx, orgID, b.flagger, b.signal, nil, start, end),
+			Storage:            b.storage,
 			Logger:             b.logger,
-			FieldMapper:        b.fieldMapper,
-			ConditionBuilder:   b.conditionBuilder,
 			FieldKeys:          keys,
 			FullTextColumn:     b.fullTextColumn,
 			SkipFullTextFilter: true,
-			// the resource-filter condition builder ignores keys it can't resolve (and
+			// the resource-filter storage ignores keys it can't resolve (and
 			// skips function calls), so no "key not found" error arises here.
 			Variables: variables,
-			StartNs:   start,
-			EndNs:     end,
 		})
 
 		if err != nil {

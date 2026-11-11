@@ -1,7 +1,3 @@
-import DashboardPageV2 from 'pages/DashboardPageV2';
+import DashboardPage from './DashboardPage';
 
-function DashboardPageEntry(): JSX.Element {
-	return <DashboardPageV2 />;
-}
-
-export default DashboardPageEntry;
+export default DashboardPage;

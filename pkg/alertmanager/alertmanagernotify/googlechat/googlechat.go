@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
@@ -186,18 +185,7 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 		}
 	}
 
-	// Thread same-rule alerts together: threadKey is a stable hash of the
-	// alert group key. Changing a rule's grouping starts a new thread.
-	u, err := url.Parse(n.conf.WebhookURL.String())
-	if err != nil {
-		return false, errors.WrapInternalf(err, errors.CodeInternal, "parse google chat webhook url")
-	}
-	q := u.Query()
-	q.Set("threadKey", key.Hash())
-	q.Set("messageReplyOption", "REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD")
-	u.RawQuery = q.Encode()
-
-	resp, err := notify.PostJSON(ctx, n.client, u.String(), buf) //nolint:bodyclose
+	resp, err := notify.PostJSON(ctx, n.client, n.conf.WebhookURL.String(), buf) //nolint:bodyclose
 	if err != nil {
 		return true, notify.RedactURL(err)
 	}

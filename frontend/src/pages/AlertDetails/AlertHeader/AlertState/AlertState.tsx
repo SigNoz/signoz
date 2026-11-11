@@ -8,11 +8,13 @@ import './AlertState.styles.scss';
 type AlertStateProps = {
 	state: RuletypesAlertStateDTO | string;
 	showLabel?: boolean;
+	testId?: string;
 };
 
 export default function AlertState({
 	state,
 	showLabel,
+	testId,
 }: AlertStateProps): JSX.Element {
 	let icon;
 	let label;
@@ -64,7 +66,7 @@ export default function AlertState({
 	}
 
 	return (
-		<div className="alert-state">
+		<div className="alert-state" data-testid={testId}>
 			{icon} {showLabel && <div className="alert-state__label">{label}</div>}
 		</div>
 	);
@@ -72,4 +74,5 @@ export default function AlertState({
 
 AlertState.defaultProps = {
 	showLabel: false,
+	testId: undefined,
 };

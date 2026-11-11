@@ -245,7 +245,7 @@ func TestGoogleChatMessageSizeLimit(t *testing.T) {
 	assert.LessOrEqual(t, bodyLen, maxMessageBytes, "posted body must be within the size limit")
 }
 
-func TestGoogleChatThreading(t *testing.T) {
+func TestGoogleChatWebhookURLVerbatim(t *testing.T) {
 	var query url.Values
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query = r.URL.Query()
@@ -253,25 +253,11 @@ func TestGoogleChatThreading(t *testing.T) {
 	}))
 	defer server.Close()
 
-	cases := []struct{ name, groupKey string }{
-		{"rule a", "{ruleId=\"aaa\"}"},
-		{"rule b", "{ruleId=\"bbb\"}"},
-	}
-	seen := map[string]string{}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			n := newTestNotifier(t, server.URL, "T", "")
-			ctx := notify.WithGroupKey(context.Background(), c.groupKey)
-			_, err := n.Notify(ctx, newTestAlerts("X")...)
-			require.NoError(t, err)
+	n := newTestNotifier(t, server.URL+"?key=abc&token=xyz", "T", "")
+	_, err := n.Notify(newTestContext(), newTestAlerts("X")...)
+	require.NoError(t, err)
 
-			assert.Equal(t, "REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD", query.Get("messageReplyOption"))
-			threadKey := query.Get("threadKey")
-			assert.Equal(t, notify.Key(c.groupKey).Hash(), threadKey, "threadKey must be the group key hash")
-			seen[c.name] = threadKey
-		})
-	}
-	assert.NotEqual(t, seen["rule a"], seen["rule b"], "distinct group keys must yield distinct threadKeys")
+	assert.Equal(t, url.Values{"key": {"abc"}, "token": {"xyz"}}, query, "configured webhook URL must be posted verbatim, with no params added")
 }
 
 func TestGoogleChatCustomTemplateMarkdown(t *testing.T) {

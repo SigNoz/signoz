@@ -14,3 +14,6 @@ export const buildDefaultLegendFromGroupBy = (
 
 	return segments.join(', ');
 };
+
+export const hasValue = (value: unknown): boolean =>
+	value != null && value !== '' && !(Array.isArray(value) && value.length === 0);

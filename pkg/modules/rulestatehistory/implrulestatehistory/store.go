@@ -25,18 +25,15 @@ const (
 type store struct {
 	telemetryStore         telemetrystore.TelemetryStore
 	telemetryMetadataStore telemetrytypes.MetadataStore
-	fieldMapper            qbtypes.FieldMapper
-	conditionBuilder       qbtypes.ConditionBuilder
+	storage                qbtypes.Storage
 	logger                 *slog.Logger
 }
 
 func NewStore(telemetryStore telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, logger *slog.Logger) rulestatehistorytypes.Store {
-	fm := newFieldMapper()
 	return &store{
 		telemetryStore:         telemetryStore,
 		telemetryMetadataStore: telemetryMetadataStore,
-		fieldMapper:            fm,
-		conditionBuilder:       newConditionBuilder(fm),
+		storage:                newStorage(),
 		logger:                 logger,
 	}
 }
@@ -500,15 +497,13 @@ func (s *store) buildFilterClause(ctx context.Context, orgID valuer.UUID, filter
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
-		Logger:           s.logger,
-		FieldMapper:      s.fieldMapper,
-		ConditionBuilder: s.conditionBuilder,
-		FieldKeys:        fieldKeys,
-		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels", FieldContext: telemetrytypes.FieldContextAttribute},
+		Context:        ctx,
+		Query:          querybuilder.NewQueryInfo(ctx, orgID, nil, telemetrytypes.SignalUnspecified, nil, querybuilder.ToNanoSecs(uint64(startMillis)), querybuilder.ToNanoSecs(uint64(endMillis))),
+		Storage:        s.storage,
+		Logger:         s.logger,
+		FieldKeys:      fieldKeys,
+		FullTextColumn: &telemetrytypes.TelemetryFieldKey{Name: "labels", FieldContext: telemetrytypes.FieldContextAttribute},
 	}
-
-	opts.StartNs = querybuilder.ToNanoSecs(uint64(startMillis))
-	opts.EndNs = querybuilder.ToNanoSecs(uint64(endMillis))
 	prepared, err := querybuilder.PrepareWhereClause(expression, opts)
 	if err != nil {
 		return nil, err

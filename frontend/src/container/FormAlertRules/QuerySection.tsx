@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -21,8 +20,8 @@ import { EQueryType } from 'types/common/dashboard';
 
 import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
-import { FormContainer, StepHeading } from './styles';
 
+import styles from './QuerySection.module.scss';
 import './QuerySection.styles.scss';
 
 const ANOMALY_QUERY_SUPPORT_CLICKHOUSE_ISSUE =
@@ -41,11 +40,8 @@ function QuerySection({
 	alertDef,
 	panelType,
 	ruleId,
-	hideTitle,
 	isAnomalyDetection,
 }: QuerySectionProps): JSX.Element {
-	// init namespace for translations
-	const { t } = useTranslation('alerts');
 	const [currentTab, setCurrentTab] = useState(queryCategory);
 	const [signalSource, setSignalSource] = useState<string>('metrics');
 
@@ -105,7 +101,7 @@ function QuerySection({
 		{
 			label: (
 				<Tooltip title="Query Builder">
-					<Button className="nav-btns">
+					<Button className="nav-btns" data-testid="query-builder-tab">
 						<Atom size={14} />
 						<Typography.Text>Query Builder</Typography.Text>
 					</Button>
@@ -122,7 +118,11 @@ function QuerySection({
 							: 'ClickHouse'
 					}
 				>
-					<Button className="nav-btns" disabled={isAnomalyDetection}>
+					<Button
+						className="nav-btns"
+						disabled={isAnomalyDetection}
+						data-testid="clickhouse-tab"
+					>
 						<Terminal size={14} />
 						<Typography.Text>ClickHouse Query</Typography.Text>
 					</Button>
@@ -162,7 +162,11 @@ function QuerySection({
 								: 'ClickHouse'
 						}
 					>
-						<Button className="nav-btns" disabled={isAnomalyDetection}>
+						<Button
+							className="nav-btns"
+							disabled={isAnomalyDetection}
+							data-testid="clickhouse-tab"
+						>
 							<Terminal size={14} />
 							<Typography.Text>ClickHouse Query</Typography.Text>
 						</Button>
@@ -180,7 +184,11 @@ function QuerySection({
 								: 'PromQL'
 						}
 					>
-						<Button className="nav-btns" disabled={isAnomalyDetection}>
+						<Button
+							className="nav-btns"
+							disabled={isAnomalyDetection}
+							data-testid="promql-tab"
+						>
 							<PromQLIcon
 								fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
 							/>
@@ -278,18 +286,11 @@ function QuerySection({
 		return null;
 	};
 
-	const step2Label = alertDef.alertType === 'METRIC_BASED_ALERT' ? '2' : '1';
-
 	return (
-		<>
-			{!hideTitle && (
-				<StepHeading> {t('alert_form_step2', { step: step2Label })}</StepHeading>
-			)}
-			<FormContainer className="alert-query-section-container">
-				<div>{renderTabs(alertType)}</div>
-				{renderQuerySection(currentTab)}
-			</FormContainer>
-		</>
+		<div className={styles.container}>
+			<div>{renderTabs(alertType)}</div>
+			{renderQuerySection(currentTab)}
+		</div>
 	);
 }
 
@@ -303,12 +304,10 @@ interface QuerySectionProps {
 	alertDef: AlertDef;
 	panelType: PANEL_TYPES;
 	ruleId: string;
-	hideTitle?: boolean;
 	isAnomalyDetection?: boolean;
 }
 
 QuerySection.defaultProps = {
-	hideTitle: false,
 	isAnomalyDetection: false,
 };
 

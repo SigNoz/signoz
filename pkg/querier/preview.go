@@ -50,7 +50,7 @@ func (q *querier) QueryRangePreview(
 		env := []qbtypes.QueryEnvelope{req.CompositeQuery.Queries[idx]}
 		ps.Warnings = append(ps.Warnings, q.adjustStepInterval(env, req.Start, req.End)...)
 
-		missingMetricQueries, metricWarnings, mErr := q.resolveMetricMetadata(ctx, orgID, env, req.Start, req.End)
+		missingMetricQueries, metricWarnings, mErr := q.resolveMetricMetadata(ctx, orgID, env, req.Start, req.End, req.RequestType)
 		if mErr != nil {
 			// Report this query's error but keep previewing the rest.
 			ps.Error = mErr
@@ -170,6 +170,13 @@ func (q *querier) QueryRangePreview(
 
 	q.runPreviewTasks(ctx, previewTasks, results)
 
+	// a filter and a column on the same unknown key report the same warning;
+	// QueryRange dedupes before it builds its response too
+	for name, ps := range results {
+		ps.Warnings = orEmpty(dedupeWarnings(ps.Warnings))
+		results[name] = ps
+	}
+
 	return &qbtypes.QueryRangePreviewResponse{
 		CompositeQuery: results,
 	}, nil
@@ -231,7 +238,7 @@ func (q *querier) buildPreviewProviders(
 			sub.CompositeQuery = qbtypes.CompositeQuery{Queries: []qbtypes.QueryEnvelope{query}}
 		}
 
-		built, _, bErr := q.buildQueries(orgID, &sub, deps, missingMetricQuerySet, event, promqlOptions{})
+		built, _, bErr := q.buildQueries(orgID, &sub, deps, missingMetricQuerySet, event)
 		if bErr != nil {
 			errs[name] = bErr
 			continue

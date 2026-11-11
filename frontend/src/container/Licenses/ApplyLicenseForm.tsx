@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@signozhq/ui/input';
 import { Button, Form } from 'antd';
-import apply from 'api/v3/licenses/post';
+import { activateLicense } from 'api/generated/services/licenses';
 import { useNotifications } from 'hooks/useNotifications';
-import APIError from 'types/api/error';
+import { toAPIError } from 'utils/errorUtils';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 import {
@@ -26,7 +26,7 @@ function ApplyLicenseForm({
 
 	const isDisabled = isLoading || !key;
 
-	const onFinish = async (values: unknown | { key: string }): Promise<void> => {
+	const onFinish = async (values: unknown): Promise<void> => {
 		const params = values as { key: string };
 		if (params.key === '' || !params.key) {
 			notifications.error({
@@ -38,18 +38,19 @@ function ApplyLicenseForm({
 
 		setIsLoading(true);
 		try {
-			await apply({
+			await activateLicense({
 				key: params.key,
 			});
-			await Promise.all([licenseRefetch()]);
+			licenseRefetch();
 			notifications.success({
 				message: 'Success',
 				description: t('license_applied'),
 			});
 		} catch (e) {
+			const apiError = toAPIError(e as Parameters<typeof toAPIError>[0]);
 			notifications.error({
-				message: (e as APIError).getErrorCode(),
-				description: (e as APIError).getErrorMessage(),
+				message: apiError.getErrorCode(),
+				description: apiError.getErrorMessage(),
 			});
 		}
 		setIsLoading(false);

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { SolidAlertTriangle } from '@signozhq/icons';
 import { Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -21,6 +21,7 @@ import { getTotalRPS } from 'utils/services';
 
 import { getColumns } from '../Columns/ServiceColumn';
 import { ServiceMetricsTableProps } from '../types';
+import { useServicesStripInfo } from '../useServicesStripInfo';
 import { getServiceListFromQuery } from '../utils';
 
 function ServiceMetricTable({
@@ -67,7 +68,9 @@ function ServiceMetricTable({
 		[isLoading, queries, topLevelOperations],
 	);
 
-	const { search } = useLocation();
+	useServicesStripInfo(services.length);
+
+	const { search } = useAppLocation();
 	const tableColumns = useMemo(() => getColumns(search, true), [search]);
 	const [RPS, setRPS] = useState(0);
 
@@ -99,7 +102,7 @@ function ServiceMetricTable({
 			`${range[0]}-${range[1]} of ${total} items`,
 	};
 	return (
-		<div className="service-metric-table-container">
+		<div className="service-metric-table-container" data-testid="services-table">
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
 					<Typography.Title level={5} color="warning" style={{ marginTop: 0 }}>

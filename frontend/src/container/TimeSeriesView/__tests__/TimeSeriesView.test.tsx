@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import { DataSource } from 'types/common/queryBuilder';
 
 import TimeSeriesView from '../TimeSeriesView';
@@ -39,12 +39,11 @@ jest.mock('lib/uPlotLib/utils/getUplotChartData', () => ({
 	],
 }));
 
-jest.mock(
-	'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils',
-	() => ({ stackSeries: (): unknown => ({ data: [], bands: [] }) }),
-);
+jest.mock('lib/visualization/charts/utils/stackSeriesUtils', () => ({
+	stackSeries: (): unknown => ({ data: [], bands: [] }),
+}));
 
-jest.mock('container/GridCardLayout/GridCard/utils', () => ({
+jest.mock('container/WidgetCard/Card/utils', () => ({
 	getLocalStorageGraphVisibilityState: (): unknown => ({
 		graphVisibilityStates: [],
 	}),
@@ -89,7 +88,7 @@ function renderView(props: {
 	const { allowExport, withRawV5 = true, onYAxisUnitChange } = props;
 	return render(
 		<Provider store={mockStore}>
-			<MemoryRouter>
+			<TestRouter>
 				<TimeSeriesView
 					isLoading={false}
 					isError={false}
@@ -99,7 +98,7 @@ function renderView(props: {
 					allowExport={allowExport}
 					onYAxisUnitChange={onYAxisUnitChange}
 				/>
-			</MemoryRouter>
+			</TestRouter>
 		</Provider>,
 	);
 }
@@ -132,7 +131,7 @@ describe('TimeSeriesView header gating', () => {
 	});
 
 	it('renders no header row when neither export nor unit selector is enabled', () => {
-		const { container } = renderView({ withRawV5: false });
-		expect(container.querySelector('.time-series-view__header')).toBeNull();
+		const { queryByTestId } = renderView({ withRawV5: false });
+		expect(queryByTestId('time-series-view-header')).toBeNull();
 	});
 });

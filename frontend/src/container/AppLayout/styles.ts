@@ -12,8 +12,12 @@ export const Layout = styled(LayoutComponent)`
 	}
 `;
 
+// Takes the height left in `.app-content` after the bottom strip.
+// `min-height: 0` is not needed right now, overlayscrollbars already sets
+// `overflow: auto` here. Kept so this does not break if that goes away.
 export const LayoutContent = styled(LayoutComponent.Content)`
-	height: 100%;
+	flex: 1;
+	min-height: 0;
 	&::-webkit-scrollbar {
 		width: 0.1rem;
 	}

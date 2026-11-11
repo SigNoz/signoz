@@ -22,7 +22,7 @@ jobs:
     with:
       PRIMUS_REF: main
       GO_TEST_CONTEXT: ./...
-      GO_VERSION: 1.24
+      GO_VERSION: 1.25
   fmt:
     if: |
       github.event_name == 'merge_group' ||
@@ -32,7 +32,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
-      GO_VERSION: 1.24
+      GO_VERSION: 1.25
   lint:
     if: |
       github.event_name == 'merge_group' ||
@@ -42,7 +42,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
-      GO_VERSION: 1.24
+      GO_VERSION: 1.25
   deps:
     if: |
       github.event_name == 'merge_group' ||
@@ -52,7 +52,7 @@ jobs:
     secrets: inherit
     with:
       PRIMUS_REF: main
-      GO_VERSION: 1.24
+      GO_VERSION: 1.25
   semconv-generated:
     if: |
       github.event_name == 'merge_group' ||
@@ -65,9 +65,9 @@ jobs:
       - name: go-install
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.25"
       - name: check-semconv-generated-files
-        run: go run ./scripts/semconv -check
+        run: make semconv-check
   build:
     if: |
       github.event_name == 'merge_group' ||
@@ -80,7 +80,7 @@ jobs:
       - name: go-install
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.25"
       - name: qemu-install
         uses: docker/setup-qemu-action@v3
       - name: aarch64-install
@@ -116,7 +116,7 @@ jobs:
       - name: go-install
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.25"
       - name: generate-openapi
         run: |
           go run cmd/enterprise/*.go generate openapi
@@ -133,7 +133,7 @@ jobs:
       - name: go-install
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.25"
       - name: generate-authz
         run: |
           go run cmd/enterprise/*.go generate authz
@@ -150,7 +150,7 @@ jobs:
       - name: go-install
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.25"
       - name: generate-web-settings
         run: |
           go run cmd/enterprise/*.go generate config web-settings
@@ -167,7 +167,7 @@ jobs:
       - name: go-install
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.25"
       - name: generate-transaction-groups
         run: |
           go run cmd/enterprise/*.go generate config transaction-groups

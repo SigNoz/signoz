@@ -138,6 +138,7 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 						<div
 							className="integrations-list-item"
 							key={integration.id}
+							data-testid={`integration-row-${integration.id}`}
 							onClick={(): void => handleSelectedIntegration(integration)}
 						>
 							<div className="integrations-list-item-column title-column">
@@ -157,11 +158,14 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 								<div className="integrations-list-item-published-by">SigNoz</div>
 							</div>
 							<div className="integrations-list-item-column">
-								<div className="integrations-list-item-installation-status">
+								<div
+									className="integrations-list-item-installation-status"
+									data-testid="integration-row-status"
+								>
 									<Badge
-										color={integration.is_installed ? 'forest' : 'amber'}
-										variant="outline"
-										capitalize
+										color={integration.is_installed ? 'success' : 'warning'}
+										variant="outlined"
+										textTransform="capitalize"
 									>
 										{integration.is_installed ? 'Installed' : 'Not Installed'}
 									</Badge>

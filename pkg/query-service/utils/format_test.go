@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 
@@ -480,6 +481,24 @@ func TestGetEpochNanoSecs(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.Result) {
 				t.Errorf("ClickHouseFormattedValue() = %v, want %v", got, tt.Result)
 			}
+		})
+	}
+}
+
+// The legacy readers redirect an old metric name to its current name.
+func TestClickHouseFormattedMetricNames(t *testing.T) {
+	testCases := []struct {
+		name     string
+		metric   string
+		expected string
+	}{
+		{name: "OldName_RedirectsToCurrent", metric: "k8s.pod.cpu.utilization", expected: "['k8s.pod.cpu.usage']"},
+		{name: "CurrentName_Unchanged", metric: "k8s.pod.cpu.usage", expected: "['k8s.pod.cpu.usage']"},
+		{name: "OutsideFamily_Unchanged", metric: "http.server.duration", expected: "['http.server.duration']"},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expected, ClickHouseFormattedMetricNames(testCase.metric))
 		})
 	}
 }

@@ -22,11 +22,12 @@ function SuccessScreen({ onBackToLogin }: SuccessScreenProps): JSX.Element {
 
 				<div className="login-form-actions forgot-password-actions">
 					<Button
+						size="md"
 						variant="solid"
 						color="primary"
 						type="button"
-						data-testid="back-to-login"
-						className="login-submit-btn"
+						testId="back-to-login"
+						width="100%"
 						onClick={onBackToLogin}
 						prefix={<ArrowLeft size={12} />}
 					>

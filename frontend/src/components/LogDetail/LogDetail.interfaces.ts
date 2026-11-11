@@ -1,7 +1,5 @@
 import { DrawerProps } from 'antd';
-import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
-import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
-import { ActionItemProps } from 'container/LogDetailedView/ActionItem';
+import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
@@ -19,9 +17,8 @@ export type LogDetailProps = {
 	onScrollToLog?: (logId: string) => void;
 	handleOpenInExplorer?: MouseEventHandler;
 	getContainer?: DrawerProps['getContainer'];
-} & Pick<AddToQueryHOCProps, 'onAddToQuery'> &
-	Partial<Pick<ActionItemProps, 'onClickActionItem'>> &
-	Pick<DrawerProps, 'onClose'>;
+	onApplyLogFilter?: (expression: string) => void;
+} & Pick<DrawerProps, 'onClose'>;
 
 export type LogDetailInnerProps = LogDetailProps & {
 	log: NonNullable<LogDetailProps['log']>;

@@ -23,6 +23,16 @@ import (
 type Receiver struct {
 	*config.Receiver
 	GoogleChatConfigs []*GoogleChatReceiverConfig `json:"googlechat_configs,omitempty" yaml:"googlechat_configs,omitempty"`
+	// Shadows upstream's jira_configs so our custom notifier (rich ADF, deep-links,
+	// lifecycle comments) handles it instead of upstream's plain Jira notifier.
+	JiraConfigs []*JiraReceiverConfig `json:"jira_configs,omitempty" yaml:"jira_configs,omitempty"`
+	// JSM Ops (ex-Opsgenie alert API); delivered by reusing the Opsgenie notifier.
+	JSMOpsConfigs []*JSMOpsReceiverConfig `json:"jsmops_configs,omitempty" yaml:"jsmops_configs,omitempty"`
+	// Shadows upstream's incidentio_configs so our custom notifier (templater,
+	// group-key dedup, label metadata) handles it instead of upstream's.
+	IncidentIOConfigs []*IncidentIOReceiverConfig `json:"incidentio_configs,omitempty" yaml:"incidentio_configs,omitempty"`
+	// Shadows upstream's telegram_configs to carry a title alongside the message.
+	TelegramConfigs []*TelegramReceiverConfig `json:"telegram_configs,omitempty" yaml:"telegram_configs,omitempty"`
 }
 
 // NewReceiver builds a Receiver from its JSON input, applying each notifier
@@ -33,6 +43,10 @@ func NewReceiver(input string) (*Receiver, error) {
 		return nil, err
 	}
 
+	return newDefaultedReceiver(receiver)
+}
+
+func newDefaultedReceiver(receiver *Receiver) (*Receiver, error) {
 	withDefaults, err := defaultedBaseReceiver(receiver.Receiver)
 	if err != nil {
 		return nil, err
@@ -49,6 +63,38 @@ func NewReceiver(input string) (*Receiver, error) {
 			return nil, err
 		}
 		receiver.GoogleChatConfigs[i] = defaulted
+	}
+
+	for i, jc := range receiver.JiraConfigs {
+		defaulted, err := defaultedNotifierConfig(jc)
+		if err != nil {
+			return nil, err
+		}
+		receiver.JiraConfigs[i] = defaulted
+	}
+
+	for i, jc := range receiver.JSMOpsConfigs {
+		defaulted, err := defaultedNotifierConfig(jc)
+		if err != nil {
+			return nil, err
+		}
+		receiver.JSMOpsConfigs[i] = defaulted
+	}
+
+	for i, ic := range receiver.IncidentIOConfigs {
+		defaulted, err := defaultedNotifierConfig(ic)
+		if err != nil {
+			return nil, err
+		}
+		receiver.IncidentIOConfigs[i] = defaulted
+	}
+
+	for i, tc := range receiver.TelegramConfigs {
+		defaulted, err := defaultedNotifierConfig(tc)
+		if err != nil {
+			return nil, err
+		}
+		receiver.TelegramConfigs[i] = defaulted
 	}
 
 	return receiver, nil

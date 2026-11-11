@@ -1,6 +1,9 @@
 package ruletypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import (
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
 
 type AlertState struct {
 	valuer.String
@@ -26,6 +29,15 @@ func (AlertState) Enum() []any {
 	}
 }
 
+func (a AlertState) Validate() error {
+	switch a {
+	case StateInactive, StatePending, StateRecovering, StateFiring, StateNoData, StateDisabled:
+		return nil
+	default:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "state: unsupported value %q; must be one of inactive, pending, recovering, firing, nodata, disabled", a.StringValue())
+	}
+}
+
 var alertStateSeverity = map[AlertState]int{
 	StateInactive:   0,
 	StatePending:    1,
@@ -37,4 +49,19 @@ var alertStateSeverity = map[AlertState]int{
 
 func (a AlertState) Severity() int {
 	return alertStateSeverity[a]
+}
+
+// Display priority for list sorting, worst first from a user's view; deliberately
+// NOT Severity(), which ranks disabled/nodata above firing for overall-state computation.
+var alertStateDisplayRank = map[AlertState]int{
+	StateFiring:     5,
+	StateNoData:     4,
+	StatePending:    3,
+	StateRecovering: 2,
+	StateInactive:   1,
+	StateDisabled:   0,
+}
+
+func (a AlertState) DisplayRank() int {
+	return alertStateDisplayRank[a]
 }

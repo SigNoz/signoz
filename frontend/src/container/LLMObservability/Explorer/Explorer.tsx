@@ -1,13 +1,295 @@
-import styles from './Explorer.module.scss';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
+import { useAppSearchParams } from 'lib/router/useAppSearchParams';
+import * as Sentry from '@sentry/react';
+import logEvent from 'api/common/logEvent';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
+import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
+import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
+import WarningPopover from 'components/WarningPopover/WarningPopover';
+import { initialQueryAIWithType } from 'constants/queryBuilder';
+import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
+import {
+	defaultOptionsQuery,
+	URL_OPTIONS,
+} from 'container/OptionsMenu/constants';
+import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
+import Toolbar from 'container/Toolbar/Toolbar';
+import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import {
+	ICurrentQueryData,
+	useHandleExplorerTabChange,
+} from 'hooks/useHandleExplorerTabChange';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { isEmpty } from 'lodash-es';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { ExplorerViews } from 'pages/LogsExplorer/utils';
+import {
+	tracesAddFilterAction,
+	tracesChangeViewAction,
+	tracesRunQueryAction,
+	tracesSaveViewAction,
+} from './aiActions';
+import { Warning } from 'types/api';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
+import {
+	explorerViewToPanelType,
+	getExplorerViewFromUrl,
+} from 'utils/explorerUtils';
 
-// Shell for the AI Observability Explorer tab. Owns the
-// /ai-observability/explorer route and is intentionally empty for now: the
-// query builder + results surface land in a follow-up.
+import LeftToolbarActions from '../ToolbarActions/LeftToolbarActions';
+import { DEFAULT_PANEL_TYPE, TOOLBAR_VIEWS } from './constants';
+import ListView from './ListView/ListView';
+import QuerySection from './QuerySection/QuerySection';
+import TableView from './TableView/TableView';
+import TimeSeriesView from './TimeSeriesView/TimeSeriesView';
+import TracesView from './TracesView/TracesView';
+
+import './Explorer.styles.scss';
+
 function Explorer(): JSX.Element {
+	const {
+		updateAllQueriesOperators,
+		handleRunQuery,
+		stagedQuery,
+		handleSetConfig,
+		currentQuery,
+		handleSetQueryData,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
+
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+
+	const [searchParams] = useAppSearchParams();
+	const queryClient = useQueryClient();
+	const listQueryKeyRef = useRef<any>();
+
+	// Get panel type from URL
+	const panelTypesFromUrl = useGetPanelTypesQueryParam(DEFAULT_PANEL_TYPE);
+	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingQueries) {
+			setIsCancelled(false);
+		}
+	}, [isLoadingQueries]);
+
+	const handleCancelQuery = useCallback(() => {
+		if (listQueryKeyRef.current) {
+			queryClient.cancelQueries(listQueryKeyRef.current);
+		}
+		setIsCancelled(true);
+		// Reset loading state — the active view unmounts when cancelled, so no
+		// child will call setIsLoadingQueries(false) otherwise.
+		setIsLoadingQueries(false);
+	}, [queryClient]);
+
+	const selectedView = useMemo(
+		() => getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
+		[searchParams, panelTypesFromUrl],
+	);
+
+	const [warning, setWarning] = useState<Warning | undefined>();
+	const [isOpen, setOpen] = useState<boolean>(true);
+
+	const { startUnixMilli, endUnixMilli } = useSignalFieldApis();
+	// existingQuery is left unset so related values auto-extract from the current query
+	const quickFiltersFieldApis = useMemo(
+		() => ({ startUnixMilli, endUnixMilli }),
+		[startUnixMilli, endUnixMilli],
+	);
+
+	const defaultQuery = useMemo(
+		(): Query =>
+			updateAllQueriesOperators(
+				initialQueryAIWithType,
+				DEFAULT_PANEL_TYPE,
+				DataSource.TRACES,
+			),
+		[updateAllQueriesOperators],
+	);
+
+	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+
+	const handleChangeSelectedView = useCallback(
+		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
+			const panelType = explorerViewToPanelType[view];
+			handleSetConfig(panelType, DataSource.TRACES);
+
+			// Drop the left panel's url columns; each panel loads its own.
+			handleExplorerTabChange(
+				panelType,
+				querySearchParameters,
+				undefined,
+				undefined,
+				{ [URL_OPTIONS]: defaultOptionsQuery },
+			);
+		},
+		[handleExplorerTabChange, handleSetConfig],
+	);
+	//TODO: check if we need to enable AI Assistant page actions on LLM o11y
+	// ─── AI Assistant page actions (only when license feature is on) ───────────
+	const aiActions = useMemo(
+		() =>
+			isAIAssistantEnabled
+				? [
+						tracesRunQueryAction({
+							currentQuery,
+							handleSetQueryData,
+							redirectWithQueryBuilderData,
+						}),
+						tracesAddFilterAction({
+							currentQuery,
+							handleSetQueryData,
+							redirectWithQueryBuilderData,
+						}),
+						tracesChangeViewAction({
+							onChangeView: (view) => handleChangeSelectedView(view as ExplorerViews),
+						}),
+						tracesSaveViewAction({
+							// POC stub — logs a save request; wire to real API when available
+							onSaveView: async (name) => {
+								// eslint-disable-next-line no-console
+								console.info('[AI Assistant] Save view requested:', name);
+							},
+						}),
+					]
+				: [],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[
+			isAIAssistantEnabled,
+			currentQuery,
+			handleSetQueryData,
+			redirectWithQueryBuilderData,
+			handleChangeSelectedView,
+		],
+	);
+	usePageActions('traces-explorer', aiActions);
+	// ───────────────────────────────────────────────────────────────────────────
+
+	useShareBuilderUrl({ defaultValue: defaultQuery });
+
+	const logEventCalledRef = useRef(false);
+
+	useEffect(() => {
+		if (!logEventCalledRef.current) {
+			logEvent('AI Observability Explorer: Page visited', {});
+			logEventCalledRef.current = true;
+		}
+	}, []);
+
+	const isFilterApplied = useMemo(() => {
+		// if any of the non-disabled queries has filters applied, return true
+		const result = stagedQuery?.builder?.queryData?.filter(
+			(item) => !isEmpty(item.filters?.items) && !item.disabled,
+		);
+		return !!result?.length;
+	}, [stagedQuery]);
+
 	return (
-		<div className={styles.explorer} data-testid="llm-observability-explorer">
-			<div className={styles.placeholder}>Explorer coming soon.</div>
-		</div>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
+			<QuickFiltersLayout
+				className="trace-explorer-page"
+				testId="llm-observability-explorer"
+				showFilters={isOpen}
+				onToggleFilters={(): void => setOpen(!isOpen)}
+				savedViewProps={{ source: SavedviewtypesSourceDTO.ai_observability }}
+				quickFilterProps={{
+					className: 'qf-traces-explorer',
+					quickFilterSource: QuickFiltersSource.AI_OBSERVABILITY,
+					useFieldApis: quickFiltersFieldApis,
+				}}
+			>
+				<div className="trace-explorer">
+					<div className="trace-explorer-header">
+						<Toolbar
+							showAutoRefresh
+							leftActions={
+								<LeftToolbarActions
+									showFilter={isOpen}
+									handleFilterVisibilityChange={(): void => setOpen(!isOpen)}
+									items={TOOLBAR_VIEWS}
+									selectedView={selectedView}
+									onChangeSelectedView={handleChangeSelectedView}
+								/>
+							}
+							warningElement={
+								!isEmpty(warning) ? <WarningPopover warningData={warning} /> : <div />
+							}
+							rightActions={
+								<RightToolbarActions
+									onStageRunQuery={(): void => {
+										setIsCancelled(false);
+										handleRunQuery();
+									}}
+									isLoadingQueries={isLoadingQueries}
+									handleCancelQuery={handleCancelQuery}
+								/>
+							}
+						/>
+					</div>
+					<div className="query-section-container">
+						<QuerySection />
+					</div>
+
+					<div className="traces-explorer-views">
+						{isCancelled && (
+							<QueryCancelledPlaceholder subText='Click "Run Query" to load traces.' />
+						)}
+
+						{!isCancelled && selectedView === ExplorerViews.LIST && (
+							<div className="trace-explorer-list-view">
+								<ListView
+									isFilterApplied={isFilterApplied}
+									setWarning={setWarning}
+									setIsLoadingQueries={setIsLoadingQueries}
+									queryKeyRef={listQueryKeyRef}
+								/>
+							</div>
+						)}
+
+						{!isCancelled && selectedView === ExplorerViews.TRACE && (
+							<div className="trace-explorer-traces-view">
+								<TracesView
+									isFilterApplied={isFilterApplied}
+									setWarning={setWarning}
+									setIsLoadingQueries={setIsLoadingQueries}
+									queryKeyRef={listQueryKeyRef}
+								/>
+							</div>
+						)}
+
+						{!isCancelled && selectedView === ExplorerViews.TIMESERIES && (
+							<div className="trace-explorer-time-series-view">
+								<TimeSeriesView
+									dataSource={DataSource.TRACES}
+									isFilterApplied={isFilterApplied}
+									setWarning={setWarning}
+									setIsLoadingQueries={setIsLoadingQueries}
+									queryKeyRef={listQueryKeyRef}
+								/>
+							</div>
+						)}
+
+						{!isCancelled && selectedView === ExplorerViews.TABLE && (
+							<div className="trace-explorer-table-view">
+								<TableView
+									setWarning={setWarning}
+									setIsLoadingQueries={setIsLoadingQueries}
+									queryKeyRef={listQueryKeyRef}
+								/>
+							</div>
+						)}
+					</div>
+				</div>
+			</QuickFiltersLayout>
+		</Sentry.ErrorBoundary>
 	);
 }
 

@@ -1,0 +1,36 @@
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+
+import type { PanelKind } from '../../Panels/types/panelKind';
+import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
+import type { TableColumnOption } from '../hooks/useTableColumns';
+import { EQueryType } from 'types/common/dashboard';
+
+/**
+ * Context `SectionSlot` forwards to every section editor (not spec-slice fields — those
+ * come from `SectionEditorProps<K>`); each editor `Pick`s what it consumes. All optional:
+ * editors resolve through the kind-erased descriptor, so receipt isn't type-guaranteed.
+ */
+export interface SectionEditorContext {
+	legendSeries?: LegendSeries[];
+	tableColumns?: TableColumnOption[];
+	/** Group-by labels of the joined scalar result; the colour-by options. */
+	groupColumns?: string[];
+	/** Scatter Plot's size column label, if bound. */
+	sizeColumnLabel?: string;
+	/** Name of the column each Scatter Plot axis plots, for its label's placeholder. */
+	axisColumnNames?: { x?: string; y?: string };
+	/** Unit of the column each Scatter Plot axis plots. */
+	axisColumnUnits?: { x?: string; y?: string };
+	signal?: TelemetrytypesSignalDTO;
+	panelKind?: PanelKind;
+	onChangePanelKind?: (kind: PanelKind) => void;
+	/** Kind the panel was opened with, offered as a revert target. */
+	originalPanelKind?: PanelKind;
+	yAxisUnit?: string;
+	queryType?: EQueryType;
+	stepInterval?: number;
+	/** Unit the selected metric was sent with; drives the unit selector's mismatch warning. */
+	metricUnit?: string;
+	/** An editor registers the handler its header action (e.g. a quick-add "+") triggers; `null` to clear. */
+	registerHeaderAction?: (handler: (() => void) | null) => void;
+}

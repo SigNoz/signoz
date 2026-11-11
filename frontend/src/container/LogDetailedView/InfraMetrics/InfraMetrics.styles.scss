@@ -5,16 +5,11 @@
 	height: 100%;
 }
 
-.infra-metrics-container {
-	.views-tabs {
-		margin-bottom: 1rem;
-	}
-}
-
 .infra-metrics-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 	gap: 24px;
+	padding-top: var(--spacing-8);
 }
 
 .infra-metrics-card {

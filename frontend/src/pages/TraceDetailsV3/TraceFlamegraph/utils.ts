@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
+import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
 import {
 	ColorPair,
@@ -80,7 +80,7 @@ export function getFlamegraphRowMetrics(
 export function getFlamegraphServiceName(
 	span: Partial<Pick<FlamegraphSpan, 'resource' | 'attributes'>>,
 ): string {
-	return getSpanAttribute(span, 'service.name') || '';
+	return String(getSpanAttribute(span, 'service.name') ?? '');
 }
 
 /**
@@ -92,7 +92,7 @@ export function getFlamegraphSpanGroupValue(
 	span: Partial<Pick<FlamegraphSpan, 'resource' | 'attributes'>>,
 	field: TelemetryFieldKey,
 ): string {
-	return getSpanAttribute(span, field.name) || 'unknown';
+	return String(getSpanAttribute(span, field.name) ?? 'unknown');
 }
 
 interface GetSpanColorArgs {

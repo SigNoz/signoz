@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -33,10 +34,6 @@ type BaseRule struct {
 	ruleCondition *ruletypes.RuleCondition
 
 	Threshold ruletypes.RuleThreshold
-	// evalWindow is the time window used for evaluating the rule
-	// i.e. each time we lookback from the current time, we look at data for the last
-	// evalWindow duration
-	evalWindow valuer.TextDuration
 	// holdDuration is the duration for which the alert waits before firing
 	holdDuration valuer.TextDuration
 
@@ -48,10 +45,7 @@ type BaseRule struct {
 	// these are the same for all alerts created for this rule
 	labels      ruletypes.Labels
 	annotations ruletypes.Labels
-	// preferredChannels is the list of channels to send the alert to
-	// if the rule is triggered
-	preferredChannels []string
-	mtx               sync.Mutex
+	mtx         sync.Mutex
 	// the time it took to evaluate the rule (most recent evaluation)
 	evaluationDuration time.Duration
 	// the timestamp of the last evaluation
@@ -150,35 +144,32 @@ func NewBaseRule(
 	if err != nil {
 		return nil, err
 	}
+	if err := threshold.Validate(); err != nil {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid rule threshold spec: %v", err)
+	}
 	evaluation, err := p.Evaluation.GetEvaluation()
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to get evaluation: %v", err)
 	}
 
 	baseRule := &BaseRule{
-		id:                id,
-		orgID:             orgID,
-		externalURL:       externalURL,
-		name:              p.AlertName,
-		typ:               p.AlertType,
-		ruleCondition:     p.RuleCondition,
-		evalWindow:        p.EvalWindow,
-		labels:            ruletypes.FromMap(p.Labels),
-		annotations:       ruletypes.FromMap(p.Annotations),
-		preferredChannels: p.PreferredChannels,
-		health:            ruletypes.HealthUnknown,
-		Active:            map[uint64]*ruletypes.Alert{},
-		Threshold:         threshold,
-		evaluation:        evaluation,
+		id:            id,
+		orgID:         orgID,
+		externalURL:   externalURL,
+		name:          p.AlertName.StringValue(),
+		typ:           p.AlertType,
+		ruleCondition: p.RuleCondition,
+		labels:        ruletypes.FromMap(p.Labels),
+		annotations:   ruletypes.FromMap(p.Annotations),
+		health:        ruletypes.HealthUnknown,
+		Active:        map[uint64]*ruletypes.Alert{},
+		Threshold:     threshold,
+		evaluation:    evaluation,
 	}
 
 	// Store newGroupEvalDelay and groupBy keys from NotificationSettings
 	if p.NotificationSettings != nil {
 		baseRule.newGroupEvalDelay = p.NotificationSettings.NewGroupEvalDelay
-	}
-
-	if baseRule.evalWindow.IsZero() {
-		baseRule.evalWindow = valuer.MustParseTextDuration("5m")
 	}
 
 	for _, opt := range opts {
@@ -231,10 +222,6 @@ func (r *BaseRule) EvalDelay() valuer.TextDuration {
 	return r.evalDelay
 }
 
-func (r *BaseRule) EvalWindow() valuer.TextDuration {
-	return r.evalWindow
-}
-
 func (r *BaseRule) HoldDuration() valuer.TextDuration {
 	return r.holdDuration
 }
@@ -245,12 +232,29 @@ func (r *BaseRule) Name() string                        { return r.name }
 func (r *BaseRule) Condition() *ruletypes.RuleCondition { return r.ruleCondition }
 func (r *BaseRule) Labels() ruletypes.Labels            { return r.labels }
 func (r *BaseRule) Annotations() ruletypes.Labels       { return r.annotations }
-func (r *BaseRule) PreferredChannels() []string         { return r.preferredChannels }
 
 func (r *BaseRule) GeneratorURL() string {
 	params := url.Values{}
 	params.Set("ruleId", r.id)
 	return r.ExternalURL("alerts/overview", params)
+}
+
+// ExpandAnnotations runs expand over the rule's annotations, leaving private
+// ones as they are. Those carry templates the notifier expands against its own
+// data model, and the ruler's expander rewrites every $-ref into a label
+// lookup, which blanks the ones that are not labels.
+func (r *BaseRule) ExpandAnnotations(expand func(string) string) ruletypes.Labels {
+	annotations := make(ruletypes.Labels, 0, len(r.annotations.Map()))
+	for name, value := range r.annotations.Map() {
+		if alertmanagertypes.IsPrivateAnnotation(name) {
+			annotations = append(annotations, ruletypes.Label{Name: name, Value: value})
+			continue
+		}
+
+		annotations = append(annotations, ruletypes.Label{Name: name, Value: expand(value)})
+	}
+
+	return annotations
 }
 
 func (r *BaseRule) ExternalURL(path string, params url.Values) string {
@@ -420,7 +424,7 @@ func (r *BaseRule) ShouldSkipNewGroups() bool {
 func (r *BaseRule) isFilterNewSeriesSupported() bool {
 	if r.ruleCondition.CompositeQuery.QueryType == ruletypes.QueryTypeBuilder {
 		for _, query := range r.ruleCondition.CompositeQuery.Queries {
-			if query.Type != qbtypes.QueryTypeBuilder {
+			if query.Type != qbtypes.QueryTypeBuilder && query.Type != qbtypes.QueryTypeBuilderAI {
 				continue
 			}
 			switch query.Spec.(type) {

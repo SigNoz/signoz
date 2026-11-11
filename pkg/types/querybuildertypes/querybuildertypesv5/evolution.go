@@ -13,6 +13,7 @@ import (
 
 // SelectEvolutionsForColumns selects the appropriate evolution entries for each column based on the time range.
 // Logic:
+//   - Ignores evolutions of columns outside the candidate columns
 //   - Finds the latest base evolution (<= tsStartTime) across ALL columns
 //   - Rejects all evolutions before this latest base evolution
 //   - For duplicate evolutions it considers the oldest one (first in ReleaseTime)
@@ -23,8 +24,26 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		return columns, nil, nil
 	}
 
-	sortedEvolutions := make([]*telemetrytypes.EvolutionEntry, len(evolutions))
-	copy(sortedEvolutions, evolutions)
+	columnLookUpMap := make(map[string]*schema.Column, len(columns))
+	for _, column := range columns {
+		columnLookUpMap[column.Name] = column
+	}
+
+	// Derive the base column from the candidate columns.
+	seen := make(map[string]struct{}, len(evolutions))
+	for _, e := range evolutions {
+		seen[e.ColumnName] = struct{}{}
+	}
+
+	// never modify evolutions in place, it may be cached and shared across queries.
+	sortedEvolutions := make([]*telemetrytypes.EvolutionEntry, 0, len(evolutions)+len(columns))
+	sortedEvolutions = append(sortedEvolutions, evolutions...)
+	for _, c := range columns {
+		if _, ok := seen[c.Name]; ok {
+			continue
+		}
+		sortedEvolutions = append(sortedEvolutions, &telemetrytypes.EvolutionEntry{ColumnName: c.Name, ReleaseTime: time.Unix(0, 0)})
+	}
 
 	// sort the evolutions by ReleaseTime ascending
 	sort.Slice(sortedEvolutions, func(i, j int) bool {
@@ -51,17 +70,15 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		if evolution.ReleaseTime.After(tsStartTime) {
 			break
 		}
+		if _, exists := columnLookUpMap[evolution.ColumnName]; !exists {
+			continue
+		}
 		latestBaseEvolutionAcrossAll = evolution
 	}
 
 	// We shouldn't reach this, it basically means there is something wrong with the evolutions data
 	if latestBaseEvolutionAcrossAll == nil {
 		return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no base evolution found for columns %v", columns)
-	}
-
-	columnLookUpMap := make(map[string]*schema.Column)
-	for _, column := range columns {
-		columnLookUpMap[column.Name] = column
 	}
 
 	// Collect column-evolution pairs
@@ -82,7 +99,7 @@ func SelectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 		}
 
 		if _, exists := columnLookUpMap[evolution.ColumnName]; !exists {
-			return nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "evolution column %s not found in columns %v", evolution.ColumnName, columns)
+			continue
 		}
 
 		pairs = append(pairs, colEvoPair{columnLookUpMap[evolution.ColumnName], evolution})

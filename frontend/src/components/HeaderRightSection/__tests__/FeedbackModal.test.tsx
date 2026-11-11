@@ -1,5 +1,5 @@
 // Mock dependencies before imports
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { toast } from '@signozhq/ui/sonner';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -9,9 +9,8 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 
 import FeedbackModal from '../FeedbackModal';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: jest.fn(),
+jest.mock('lib/router/useAppLocation', () => ({
+	useAppLocation: jest.fn(),
 }));
 
 jest.mock('@signozhq/ui/sonner', () => ({
@@ -30,7 +29,7 @@ jest.mock('container/Integrations/utils', () => ({
 	handleContactSupport: jest.fn(),
 }));
 
-const mockUseLocation = useLocation as jest.Mock;
+const mockUseAppLocation = useAppLocation as jest.Mock;
 const mockUseGetTenantLicense = useGetTenantLicense as jest.Mock;
 const mockHandleContactSupport = handleContactSupport as jest.Mock;
 const mockToast = toast as jest.Mocked<typeof toast>;
@@ -45,7 +44,7 @@ describe('FeedbackModal', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		logEventMock.mockReturnValue(Promise.resolve() as never);
-		mockUseLocation.mockReturnValue(mockLocation);
+		mockUseAppLocation.mockReturnValue(mockLocation);
 		mockUseGetTenantLicense.mockReturnValue({
 			isCloudUser: false,
 		});
@@ -69,23 +68,23 @@ describe('FeedbackModal', () => {
 		const user = userEvent.setup();
 		render(<FeedbackModal onClose={mockOnClose} />);
 
-		// Initially, feedback radio should be active
-		const feedbackRadio = screen.getByRole('radio', { name: 'Feedback' });
-		expect(feedbackRadio).toBeChecked();
+		// Initially, feedback button should be active
+		const feedbackButton = screen.getByRole('button', { name: 'Feedback' });
+		expect(feedbackButton).toHaveAttribute('aria-pressed', 'true');
 
 		const bugTab = screen.getByText('Report a bug');
 		await user.click(bugTab);
 
-		// Bug radio should now be active
-		const bugRadio = screen.getByRole('radio', { name: 'Report a bug' });
-		expect(bugRadio).toBeChecked();
+		// Bug button should now be active
+		const bugButton = screen.getByRole('button', { name: 'Report a bug' });
+		expect(bugButton).toHaveAttribute('aria-pressed', 'true');
 
 		const featureTab = screen.getByText('Feature request');
 		await user.click(featureTab);
 
-		// Feature radio should now be active
-		const featureRadio = screen.getByRole('radio', { name: 'Feature request' });
-		expect(featureRadio).toBeChecked();
+		// Feature button should now be active
+		const featureButton = screen.getByRole('button', { name: 'Feature request' });
+		expect(featureButton).toHaveAttribute('aria-pressed', 'true');
 	});
 
 	it('should update feedback text when typing in textarea', async () => {
@@ -133,9 +132,9 @@ describe('FeedbackModal', () => {
 		const bugTab = screen.getByText('Report a bug');
 		await user.click(bugTab);
 
-		// Verify bug report radio is now active
-		const bugRadio = screen.getByRole('radio', { name: 'Report a bug' });
-		expect(bugRadio).toBeChecked();
+		// Verify bug report button is now active
+		const bugButton = screen.getByRole('button', { name: 'Report a bug' });
+		expect(bugButton).toHaveAttribute('aria-pressed', 'true');
 
 		const textarea = screen.getByPlaceholderText('Write your feedback here...');
 		const submitButton = screen.getByRole('button', { name: /submit/i });
@@ -166,9 +165,9 @@ describe('FeedbackModal', () => {
 		const featureTab = screen.getByText('Feature request');
 		await user.click(featureTab);
 
-		// Verify feature request radio is now active
-		const featureRadio = screen.getByRole('radio', { name: 'Feature request' });
-		expect(featureRadio).toBeChecked();
+		// Verify feature request button is now active
+		const featureButton = screen.getByRole('button', { name: 'Feature request' });
+		expect(featureButton).toHaveAttribute('aria-pressed', 'true');
 
 		const textarea = screen.getByPlaceholderText('Write your feedback here...');
 		const submitButton = screen.getByRole('button', { name: /submit/i });
@@ -262,8 +261,8 @@ describe('FeedbackModal', () => {
 		);
 		expect(newTextArea).toHaveValue(''); // Should be empty
 
-		// Verify active radio is reset to default (Feedback radio)
-		const feedbackRadio = screen.getByRole('radio', { name: 'Feedback' });
-		expect(feedbackRadio).toBeChecked();
+		// Verify active button is reset to default (Feedback button)
+		const feedbackButton = screen.getByRole('button', { name: 'Feedback' });
+		expect(feedbackButton).toHaveAttribute('aria-pressed', 'true');
 	});
 });

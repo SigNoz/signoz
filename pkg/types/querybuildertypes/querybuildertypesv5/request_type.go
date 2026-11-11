@@ -19,11 +19,12 @@ func (r *RequestType) UnmarshalJSON(data []byte) error {
 	}
 	v := RequestType{valuer.NewString(s)}
 	switch v {
-	case RequestTypeScalar, RequestTypeTimeSeries, RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeDistribution:
+	case RequestTypeScalar, RequestTypeTimeSeries, RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeDistribution, RequestTypeHeatmap:
 		*r = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown request type %q; allowed values: %s", s, "`scalar`, `time_series`, `raw`, `raw_stream`, `trace`, `distribution`")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown request type %q", s).
+			WithSuggestions(errors.NewValidReferences(errors.NounRequestTypes, RequestType{}.Enum()...))
 	}
 }
 
@@ -39,8 +40,12 @@ var (
 	RequestTypeRawStream = RequestType{valuer.NewString("raw_stream")}
 	// [][]any, Specialized SQL result set, paginated.
 	RequestTypeTrace = RequestType{valuer.NewString("trace")}
-	// []Bucket (struct{Lower,Upper,Count float64}), example: histogram.
+	// DistributionData: a heatmap summed over its steps, one set of counts per
+	// group against the aggregation's bucket upper bounds, example: histogram.
 	RequestTypeDistribution = RequestType{valuer.NewString("distribution")}
+	// TimeSeriesData carrying one count per histogram bucket at each timestamp,
+	// with the shared bucket upper bounds on the aggregation's meta.
+	RequestTypeHeatmap = RequestType{valuer.NewString("heatmap")}
 )
 
 // IsAggregation returns true for request types that produce aggregated results
@@ -49,7 +54,15 @@ var (
 // For non-aggregation types (raw, raw_stream, trace), those fields are ignored
 // and don't need to be validated.
 func (r RequestType) IsAggregation() bool {
-	return r == RequestTypeTimeSeries || r == RequestTypeScalar || r == RequestTypeDistribution
+	return r == RequestTypeTimeSeries || r == RequestTypeScalar || r == RequestTypeDistribution || r == RequestTypeHeatmap
+}
+
+func (requestType RequestType) CountsIntoBuckets() bool {
+	return requestType == RequestTypeHeatmap || requestType == RequestTypeDistribution
+}
+
+func (requestType RequestType) IsBuiltFromTimeSeries() bool {
+	return requestType == RequestTypeTimeSeries || requestType.CountsIntoBuckets()
 }
 
 // Enum implements jsonschema.Enum; returns the acceptable values for RequestType.
@@ -60,6 +73,7 @@ func (RequestType) Enum() []any {
 		RequestTypeRaw,
 		RequestTypeRawStream,
 		RequestTypeTrace,
-		// RequestTypeDistribution,
+		RequestTypeHeatmap,
+		RequestTypeDistribution,
 	}
 }

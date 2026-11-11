@@ -1,13 +1,13 @@
 import React from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
@@ -37,13 +37,6 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	}),
 }));
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.DASHBOARD}/`,
-	}),
-}));
-
 jest.mock('react-redux', () => ({
 	...jest.requireActual('react-redux'),
 	useSelector: (): any => ({
@@ -55,16 +48,6 @@ jest.mock('react-redux', () => ({
 			maxTime: 1713738000000,
 			minTime: 1713734400000,
 		},
-	}),
-}));
-
-jest.mock('container/QueryTable/Drilldown/useDashboardVarConfig', () => ({
-	__esModule: true,
-	default: (): any => ({
-		dashbaordVariablesConfig: {
-			items: <>items</>,
-		},
-		// contextItems: <></>,
 	}),
 }));
 
@@ -129,9 +112,9 @@ const renderWithProviders = (
 ): ReturnType<typeof render> =>
 	render(
 		<MockQueryClientProvider>
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>{component}</Provider>
-			</MemoryRouter>
+			</TestRouter>
 		</MockQueryClientProvider>,
 	);
 

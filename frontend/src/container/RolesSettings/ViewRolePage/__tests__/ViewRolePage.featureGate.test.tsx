@@ -64,7 +64,10 @@ describe('ViewRolePage - Feature Gate', () => {
 			});
 
 			await waitFor(() => {
-				expect(screen.getByTestId('cancel-button')).not.toBeDisabled();
+				expect(screen.getByTestId('cancel-button')).not.toHaveAttribute(
+					'aria-disabled',
+					'true',
+				);
 			});
 		});
 	});

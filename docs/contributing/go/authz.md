@@ -43,6 +43,25 @@ type Resource interface {
 
 All resources are registered in [pkg/types/coretypes/registry_resource.go](/pkg/types/coretypes/registry_resource.go) using constructors like `NewResourceMetaResource(KindDashboard)` or `NewResourceTelemetryResource(KindLogs)`.
 
+### Telemetry resources and metaresources
+
+Almost every feature resource is one of these two types, and they answer different questions.
+
+- A **telemetry resource** (`logs`, `traces`, `metrics`, `meter-metrics`, `audit-logs`) is the data itself. It only supports `read`. Its selector is not an ID but the query: the route wires a `TelemetryResourceDef` whose extractor turns the caller's filter into `<query_type>/<key>/<value>` IDs, and the check ladders each one through `<query_type>/<key>/*`, `<query_type>/*` and `*`. A grant such as `builder_query/signoz.workspace.key.id/key-a` therefore decides which rows a role may read; a query that does not pin a granted key resolves to `<query_type>/*` and is denied for key-scoped roles. Managed roles hold `*`.
+- A **metaresource** (`dashboard`, `rule`, `logs-field`, ...) is an object that describes or configures the system. It supports whichever of `create`, `read`, `update`, `delete` and `list` the resource declares, its selectors are object IDs or `*`, and routes wire a `BasicResourceDef`. It says nothing about rows: `dashboard:read` on `*` does not grant the telemetry a dashboard's panels query.
+
+The metrics explorer uses both on one surface:
+
+| Route | Resource | Why |
+|---|---|---|
+| `POST /api/v2/metrics/stats` | `metrics:read` (telemetry) | Returns sample and series counts, i.e. the data. The selector comes from `filter.expression`, so a role scoped to a workspace key sees only its own samples. |
+| `GET /api/v2/metrics` | `metrics-field:list` (meta) | Lists metric names, types and units: the catalogue, not the samples. |
+| `POST /api/v2/metrics/metadata` | `metrics-field:update` (meta) | Edits a metric's type, unit and description. |
+
+The two are independent: a role holding `metrics-field` `list` and `read` can browse the catalogue but cannot read a sample, and a role scoped to `builder_query/signoz.workspace.key.id/key-a` on `metrics` can query its samples but cannot list the catalogue.
+
+For a new route, ask what it returns. Rows or aggregates over them go on the signal's telemetry resource with an extractor; anything that names, describes or configures telemetry goes on a metaresource.
+
 ### Selector
 
 A `Selector` identifies *which* instance(s) of a resource a check is about — a UUID, a role name, or the wildcard `*`. A `SelectorFunc` maps the extracted resource ID to selectors at request time. Two prebuilt ones cover most routes ([pkg/types/coretypes/selector.go](/pkg/types/coretypes/selector.go)):
@@ -121,7 +140,7 @@ The pieces:
 - **`ResourceDef`** — declares the resource, verb, audit category, how to extract the instance ID, and how to turn that ID into selectors. ID extractors live in [pkg/types/coretypes/extractor.go](/pkg/types/coretypes/extractor.go): `PathParam("id")`, `BodyJSONPath("data.id")`, `BodyJSONArray("ids")`, and `ResponseJSONPath("data.id")` for IDs only known after the handler runs (e.g. `create`).
 - **`SecuritySchemes`** — advertises the required scope (`resource.Scope(verb)`, e.g. `serviceaccount:create`) in the OpenAPI spec.
 
-For routes that link two resources, use `AttachDetachSiblingResourceDef` (both sides are authz-checked, e.g. attaching a role to a service account requires `attach` on **both** the service account and the role). For parent-child routes (e.g. creating an API key under a service account), both sides are checked too, but with different verbs: declare a `BasicResourceDef` checking the child with `create`/`delete`, alongside an `AttachDetachParentChildResourceDef` checking the parent with `attach`/`detach` (within that def the child is only recorded for audit) — see the `/api/v1/service_accounts/{id}/keys` route in [pkg/apiserver/signozapiserver/serviceaccount.go](/pkg/apiserver/signozapiserver/serviceaccount.go).
+For routes that link two resources, use `AttachDetachSiblingResourceDef` (both sides are authz-checked, e.g. attaching a role to a service account requires `attach` on **both** the service account and the role). When a side's ids come from a list extractor (`BodyJSONArray` or a custom `ResourceIDsExtractor`) and that list resolves to nothing at request time, there is nothing to link: the def resolves to no resources, so no check runs and no audit event is emitted (e.g. inviting a user with an empty `userRoles`). A single-id side (`OneID`) always resolves to exactly one id and fails closed when it is empty. For parent-child routes (e.g. creating an API key under a service account), both sides are checked too, but with different verbs: declare a `BasicResourceDef` checking the child with `create`/`delete`, alongside an `AttachDetachParentChildResourceDef` checking the parent with `attach`/`detach` (within that def the child is only recorded for audit) — see the `/api/v1/service_accounts/{id}/keys` route in [pkg/apiserver/signozapiserver/serviceaccount.go](/pkg/apiserver/signozapiserver/serviceaccount.go).
 
 Prefer `CheckResources` with a `ResourceDef` for anything resource-shaped. The older coarse gates `ViewAccess`/`EditAccess`/`AdminAccess` only check "does the caller hold one of these roles" and give up per-resource granularity; `OpenAccess` performs no authorization (authentication still applies); `CheckWithoutClaims` serves anonymous routes such as public dashboards.
 
@@ -142,6 +161,7 @@ Because both paths go through the same middleware and the same `ResourceDef` dec
 ## What should I remember?
 
 - Declare authz in the registries ([pkg/types/coretypes](/pkg/types/coretypes)), not in migrations — tuples for new organizations are derived from code at bootstrap.
+- Telemetry resources are the data: `read` only, selector derived from the query. Metaresources are objects about the data: CRUD and list, ID or wildcard selectors. A route that returns rows or aggregates is telemetry; one that names or configures them is meta, as `metrics` versus `metrics-field` shows.
 - A new kind never needs an OpenFGA schema change; only a new type does, and then **both** [pkg/authz/openfgaschema/base.fga](/pkg/authz/openfgaschema/base.fga) and [ee/authz/openfgaschema/base.fga](/ee/authz/openfgaschema/base.fga) must be updated together.
 - Prefer `CheckResources` + `ResourceDef` over the coarse `ViewAccess`/`EditAccess`/`AdminAccess` gates for new routes.
 - Use `WildcardSelector` for `create`/`list`, `IDSelector` for instance operations, and a custom `SelectorFunc` when the request ID is not the FGA selector.

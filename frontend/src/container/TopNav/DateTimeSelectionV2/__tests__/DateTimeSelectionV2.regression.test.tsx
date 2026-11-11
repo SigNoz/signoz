@@ -1,6 +1,5 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter, Route } from 'react-router-dom';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import {
@@ -18,13 +17,13 @@ import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import store from 'store';
 import { getAppContextMock } from 'tests/test-utils';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import { TestRouter } from 'tests/router';
 
 import DateTimeSelection from '../index';
 import {
 	__resetSearchParamsGetter,
 	__setSearchParamsGetterForTest,
-} from '../utils/getUnstableCurrentSearchParams';
+} from 'utils/getUnstableCurrentSearchParams';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -59,11 +58,6 @@ jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 			</button>
 		</div>
 	),
-}));
-
-jest.mock('container/NewExplorerCTA', () => ({
-	__esModule: true,
-	default: (): null => null,
 }));
 
 function NuqsParamSetter({ paramValue }: { paramValue: string }): JSX.Element {
@@ -120,26 +114,22 @@ function TestWrapper({
 	});
 
 	return (
-		<MemoryRouter initialEntries={[initialEntry]}>
-			<CompatRouter>
-				<NuqsTestingAdapter
-					searchParams={initialSearchParams}
-					onUrlUpdate={onUrlUpdate}
-				>
-					<QueryClientProvider client={queryClient}>
-						<Provider store={mockedStore}>
-							<AppContext.Provider value={getAppContextMock('ADMIN')}>
-								<TimezoneProvider>
-									<QueryBuilderProvider>
-										<Route path="*">{children}</Route>
-									</QueryBuilderProvider>
-								</TimezoneProvider>
-							</AppContext.Provider>
-						</Provider>
-					</QueryClientProvider>
-				</NuqsTestingAdapter>
-			</CompatRouter>
-		</MemoryRouter>
+		<TestRouter initialRoute={initialEntry}>
+			<NuqsTestingAdapter
+				searchParams={initialSearchParams}
+				onUrlUpdate={onUrlUpdate}
+			>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={mockedStore}>
+						<AppContext.Provider value={getAppContextMock('ADMIN')}>
+							<TimezoneProvider>
+								<QueryBuilderProvider>{children}</QueryBuilderProvider>
+							</TimezoneProvider>
+						</AppContext.Provider>
+					</Provider>
+				</QueryClientProvider>
+			</NuqsTestingAdapter>
+		</TestRouter>
 	);
 }
 

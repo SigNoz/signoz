@@ -82,7 +82,7 @@ In the module implementation, implement the new method. A typical implementation
 - Uses the `render` package to write responses or errors
 
 ```go
-func (h *handler) CreateThing(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) CreateThing(rw http.ResponseWriter, req *http.Request) {
     // Extract authentication and organization context from req.Context()
     claims, err := authtypes.ClaimsFromContext(req.Context())
     if err != nil {
@@ -98,7 +98,7 @@ func (h *handler) CreateThing(rw http.ResponseWriter, req *http.Request) {
     }
     
     // Call module functions
-    out, err := h.module.CreateThing(req.Context(), claims.OrgID, &in)
+    out, err := handler.module.CreateThing(req.Context(), claims.OrgID, &in)
     if err != nil {
         render.Error(rw, err)
         return
@@ -179,6 +179,7 @@ The `handler.New` function ties the HTTP handler to OpenAPI metadata via `OpenAP
 - **SuccessStatusCode**: The HTTP status for successful responses (for example, `http.StatusOK`, `http.StatusCreated`, `http.StatusNoContent`).
 - **ErrorStatusCodes**: Additional error status codes beyond the standard ones automatically added by `handler.New`.
 - **SecuritySchemes**: Auth mechanisms and scopes required by the operation.
+- **Stability**: Maturity marker (`handler.StabilityDevelopment`, `handler.StabilityAlpha`, `handler.StabilityBeta`, `handler.StabilityStable`, the OpenTelemetry Collector levels) emitted as the `x-signoz-stability` extension on every operation. Unset is emitted as `alpha`.
 
 The generic handler:
 

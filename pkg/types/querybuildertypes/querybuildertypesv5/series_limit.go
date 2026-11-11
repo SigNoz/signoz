@@ -13,9 +13,8 @@ const (
 	DefaultOrderByKey = "__result"
 )
 
-// ApplyLimit applies limit and ordering to a list of time series
-// This function sorts the series based on the provided order criteria and applies the limit.
-func ApplySeriesLimit(series []*TimeSeries, orderBy []OrderBy, limit int) []*TimeSeries {
+// ApplySeriesLimit sorts the series by the order criteria, skips the first offset of them and keeps at most limit.
+func ApplySeriesLimit(series []*TimeSeries, orderBy []OrderBy, limit, offset int) []*TimeSeries {
 	if len(series) == 0 {
 		return series
 	}
@@ -64,6 +63,10 @@ func ApplySeriesLimit(series []*TimeSeries, orderBy []OrderBy, limit int) []*Tim
 		}
 		return 0
 	})
+
+	if offset > 0 {
+		series = series[min(offset, len(series)):]
+	}
 
 	// Apply limit if specified
 	if limit > 0 && len(series) > limit {
@@ -127,7 +130,7 @@ func calculateSeriesValue(series *TimeSeries) float64 {
 
 	// For single-point series, return that value directly
 	if len(series.Values) == 1 {
-		value := series.Values[0].Value
+		value := calculatePointValue(series.Values[0])
 		if math.IsNaN(value) || math.IsInf(value, 0) {
 			return 0.0
 		}
@@ -139,10 +142,11 @@ func calculateSeriesValue(series *TimeSeries) float64 {
 	var count float64
 
 	for _, point := range series.Values {
-		if math.IsNaN(point.Value) || math.IsInf(point.Value, 0) {
+		value := calculatePointValue(point)
+		if math.IsNaN(value) || math.IsInf(value, 0) {
 			continue
 		}
-		sum += point.Value
+		sum += value
 		count++
 	}
 
@@ -152,6 +156,25 @@ func calculateSeriesValue(series *TimeSeries) float64 {
 	}
 
 	return sum / count
+}
+
+// calculatePointValue returns what a point contributes to its series' rank.
+// Heatmap points carry one count per bucket in Values and leave Value at zero,
+// so they rank on the total across buckets.
+func calculatePointValue(point *TimeSeriesValue) float64 {
+	if len(point.Values) == 0 {
+		return point.Value
+	}
+
+	var total float64
+	for _, value := range point.Values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			continue
+		}
+		total += value
+	}
+
+	return total
 }
 
 // convertValueToString converts various types to string for comparison.

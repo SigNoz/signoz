@@ -22,9 +22,10 @@ function AttributeWithExpandablePopover({
 		<div className={popoverStyles.popover}>
 			<pre className={popoverStyles.preview}>{attributeValue}</pre>
 			<Button
+				variant="solid"
+				color="primary"
 				onClick={(): void => onExpand(attributeKey, attributeValue)}
 				size="sm"
-				className={popoverStyles.expandButton}
 				prefix={<Fullscreen size={14} />}
 			>
 				Expand

@@ -240,12 +240,7 @@ func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmana
 }
 
 func (service *Service) compareAndSelectConfig(ctx context.Context, incomingConfig *alertmanagertypes.Config) (*alertmanagertypes.Config, error) {
-	channels, err := service.configStore.ListChannels(ctx, incomingConfig.StoreableConfig().OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	matchers, err := service.configStore.GetMatchers(ctx, incomingConfig.StoreableConfig().OrgID)
+	channels, _, err := service.configStore.ListChannels(ctx, incomingConfig.StoreableConfig().OrgID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -255,15 +250,8 @@ func (service *Service) compareAndSelectConfig(ctx context.Context, incomingConf
 		return nil, err
 	}
 
-	for ruleID, receivers := range matchers {
-		err = config.CreateRuleIDMatcher(ruleID, receivers)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	if incomingConfig.StoreableConfig().Hash != config.StoreableConfig().Hash {
-		service.settings.Logger().InfoContext(ctx, "mismatch found, updating config to match channels and matchers")
+		service.settings.Logger().InfoContext(ctx, "mismatch found, updating config to match channels")
 		return config, nil
 	}
 

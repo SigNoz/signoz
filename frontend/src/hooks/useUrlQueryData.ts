@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 
 import { useSafeNavigate } from './useSafeNavigate';
 import useUrlQuery from './useUrlQuery';
@@ -8,7 +8,7 @@ const useUrlQueryData = <T>(
 	queryKey: string,
 	defaultData?: T,
 ): UseUrlQueryData<T> => {
-	const location = useLocation();
+	const location = useAppLocation();
 	const urlQuery = useUrlQuery();
 	const { safeNavigate } = useSafeNavigate();
 

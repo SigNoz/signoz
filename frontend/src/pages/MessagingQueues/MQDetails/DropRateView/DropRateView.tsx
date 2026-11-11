@@ -11,6 +11,7 @@ import axios from 'axios';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import ROUTES from 'constants/routes';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { useNotifications } from 'hooks/useNotifications';
 import { isNumber } from 'lodash-es';
 import {
@@ -37,12 +38,10 @@ export function getTableData(data: DropRateResponse[]): RowData[] {
 	}
 
 	const tableData: RowData[] =
-		data?.map(
-			(row: DropRateResponse, index: number): RowData => ({
-				...(row.data as any), // todo-sagar
-				key: index,
-			}),
-		) || [];
+		data?.map((row: DropRateResponse, index: number): RowData => ({
+			...(row.data as any), // todo-sagar
+			key: index,
+		})) || [];
 
 	return tableData;
 }
@@ -95,7 +94,7 @@ export function getColumns(
 											key={item}
 											className="traceid-text"
 											onClick={(): void => {
-												openInNewTab(`${ROUTES.TRACE}/${item}`);
+												openInNewTab(buildRoutePath(ROUTES.TRACE_DETAIL, { id: item }));
 												logEvent(`MQ Kafka: Drop Rate - traceid navigation`, {
 													item,
 												});
@@ -257,6 +256,7 @@ function DropRateView(): JSX.Element {
 				<EvaluationTimeSelector setInterval={setInterval} />
 			</div>
 			<Table
+				data-testid="mq-drop-rate-table"
 				className={cx('mq-table', 'pagination-left')}
 				pagination={paginationConfig}
 				size="middle"

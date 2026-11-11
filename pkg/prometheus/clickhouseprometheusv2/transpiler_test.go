@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/prometheus/prometheus/model/labels"
-	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,9 +26,15 @@ func newTestClient(t *testing.T) (*client, *telemetrystoretest.Provider) {
 	return newClient(settings, store, prometheus.Config{}), store
 }
 
-var seriesCols = []cmock.ColumnType{
-	{Name: "fingerprint", Type: "UInt64"},
-	{Name: "labels", Type: "String"},
+var unitCols = []cmock.ColumnType{
+	{Name: "gkey", Type: "String"},
+	{Name: "grid", Type: "Array(Nullable(Float64))"},
+}
+
+// anyArgs matches a bound-argument list by count alone: the mock treats a
+// nil expected argument as a wildcard.
+func anyArgs(n int) []any {
+	return make([]any, n)
 }
 
 func parse(t *testing.T, q string) parser.Expr {
@@ -553,7 +558,7 @@ func TestTryExecuteRange_WindowedGateFallsBack(t *testing.T) {
 
 	// 1m range at 5m step: the windows are disjoint slivers — no
 	// divisibility or width requirement, so this transpiles.
-	store.Mock().ExpectQuery("SELECT fingerprint, any\\(labels\\)").WithArgs("up", int64(1_699_999_200_000), int64(1_700_003_600_000)).WillReturnRows(cmock.NewRows(seriesCols, [][]any{}))
+	store.Mock().ExpectQuery("FROM signoz_metrics\\.distributed_samples_v4").WithArgs(anyArgs(9)...).WillReturnRows(cmock.NewRows(unitCols, [][]any{}))
 	_, ok, err = e.TryExecuteRange(context.Background(), `avg_over_time(up[1m])`, start, end, 5*time.Minute)
 	require.NoError(t, err)
 	assert.True(t, ok, "range below step is the disjoint form and must transpile")
@@ -637,12 +642,12 @@ func TestTryExecuteRange_LastStyleWindowBelowStepTranspiles(t *testing.T) {
 	start := time.UnixMilli(1_700_000_000_000)
 	end := time.UnixMilli(1_700_003_600_000)
 
-	store.Mock().ExpectQuery("SELECT fingerprint, any\\(labels\\)").WithArgs("up", int64(1_699_999_200_000), int64(1_700_003_600_000)).WillReturnRows(cmock.NewRows(seriesCols, [][]any{}))
+	store.Mock().ExpectQuery("timeSeriesLastToGrid").WithArgs(anyArgs(10)...).WillReturnRows(cmock.NewRows(unitCols, [][]any{}))
 	_, ok, err := e.TryExecuteRange(context.Background(), `sum by (pod) (up)`, start, end, time.Hour)
 	require.NoError(t, err)
 	assert.True(t, ok, "instant selection at step > lookback must transpile")
 
-	store.Mock().ExpectQuery("SELECT fingerprint, any\\(labels\\)").WithArgs("up", int64(1_699_999_200_000), int64(1_700_003_600_000)).WillReturnRows(cmock.NewRows(seriesCols, [][]any{}))
+	store.Mock().ExpectQuery("timeSeriesLastToGrid").WithArgs(anyArgs(9)...).WillReturnRows(cmock.NewRows(unitCols, [][]any{}))
 	_, ok, err = e.TryExecuteRange(context.Background(), `last_over_time(up[10m])`, start, end, time.Hour)
 	require.NoError(t, err)
 	assert.True(t, ok, "last_over_time at range < step must transpile")
@@ -671,28 +676,5 @@ func TestMergeSameLabelsetSeries(t *testing.T) {
 		{lset: api, values: []*float64{f(2), nil}},
 	})
 	require.Error(t, err, "two values on one evaluation timestamp is the engine's duplicate error")
-	assert.True(t, errors.Ast(err, errors.TypeInvalidInput))
-}
-
-// Hybrid twin case: stripping the synthetic __name__ can leave two engine
-// output series distinguishable only by those names (-metric_a or -metric_b:
-// both {} once real names are dropped). Pinned by conformance cases
-// name_label_dropping.test:137 and operators.test:1016.
-func TestMergeMatrixByLabelset(t *testing.T) {
-	empty := labels.EmptyLabels()
-
-	out, err := mergeMatrixByLabelset(promql.Matrix{
-		{Metric: empty, Floats: []promql.FPoint{{T: 0, F: -1}}},
-		{Metric: empty, Floats: []promql.FPoint{{T: 600_000, F: -4}}},
-	})
-	require.NoError(t, err)
-	require.Len(t, out, 1)
-	assert.Equal(t, []promql.FPoint{{T: 0, F: -1}, {T: 600_000, F: -4}}, out[0].Floats)
-
-	_, err = mergeMatrixByLabelset(promql.Matrix{
-		{Metric: empty, Floats: []promql.FPoint{{T: 0, F: -1}}},
-		{Metric: empty, Floats: []promql.FPoint{{T: 0, F: -3}}},
-	})
-	require.Error(t, err)
 	assert.True(t, errors.Ast(err, errors.TypeInvalidInput))
 }
