@@ -749,9 +749,11 @@ describe('EditMemberDrawer', () => {
 
 			renderDrawer();
 
-			await user.click(
-				screen.getByRole('button', { name: /generate password reset link/i }),
+			const resetBtn = await screen.findByTestId('member-reset-link-btn');
+			await waitFor(() =>
+				expect(resetBtn).not.toHaveAttribute('aria-disabled', 'true'),
 			);
+			await user.click(resetBtn);
 
 			const dialog = await screen.findByRole('dialog', {
 				name: /password reset link/i,
