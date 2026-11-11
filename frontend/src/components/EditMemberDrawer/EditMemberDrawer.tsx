@@ -41,6 +41,7 @@ import ResetLinkDialog from './ResetLinkDialog';
 import './EditMemberDrawer.styles.scss';
 import { AuthZGuardContent } from '@/lib/authz/components/AuthZGuard/AuthZGuardContent';
 import {
+	buildResetPasswordPermission,
 	buildUserDeletePermission,
 	buildUserReadPermission,
 	buildUserUpdatePermission,
@@ -650,7 +651,6 @@ function EditMemberDrawer({
 							size="md"
 							onClick={(): void => setShowDeleteConfirm(true)}
 							testId="member-delete-btn"
-							disabled={isRootUser || isSelf}
 							variant="link"
 							color="danger"
 							checks={member ? [buildUserDeletePermission(member.id)] : []}
@@ -660,15 +660,15 @@ function EditMemberDrawer({
 						</AuthZButton>
 
 						<div className="edit-member-drawer__footer-divider" />
-						<Button
-							disabledTooltip={ROOT_USER_TOOLTIP}
+						<AuthZButton
+							disabledTooltip={isRootUser ? ROOT_USER_TOOLTIP : undefined}
 							size="md"
 							onClick={handleGenerateResetLink}
 							testId="member-reset-link-btn"
-							disabled={isRootUser}
 							loading={isGeneratingLink || isLoadingTokenStatus}
 							variant="link"
 							color="warning"
+							checks={member ? buildResetPasswordPermission(member.id) : []}
 							prefix={<RefreshCw size={12} />}
 						>
 							{isGeneratingLink
@@ -681,7 +681,7 @@ function EditMemberDrawer({
 											tokenNotFound,
 										)
 									: 'Generate Password Reset Link'}
-						</Button>
+						</AuthZButton>
 					</div>
 
 					<div className="edit-member-drawer__footer-right">

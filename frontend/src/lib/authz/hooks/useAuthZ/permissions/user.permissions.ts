@@ -10,7 +10,7 @@ export const buildUserUpdatePermission = (id: string): BrandedPermission =>
 	buildPermission('update', `user:${id}`);
 export const buildUserDeletePermission = (id: string): BrandedPermission =>
 	buildPermission('delete', `user:${id}`);
-export const buildUserAttachPermission = (id: string): BrandedPermission =>
+const buildUserAttachPermission = (id: string): BrandedPermission =>
 	buildPermission('attach', `user:${id}`);
 export const buildUserDetachPermission = (id: string): BrandedPermission =>
 	buildPermission('detach', `user:${id}`);
