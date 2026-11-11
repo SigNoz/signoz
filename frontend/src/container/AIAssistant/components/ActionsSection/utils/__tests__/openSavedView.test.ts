@@ -2,7 +2,7 @@ import {
 	ApplyFilterSignalDTO,
 	MessageActionKindDTO,
 	SavedViewEntityDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import {
 	getSavedView,
 	listSavedViews,

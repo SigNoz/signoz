@@ -15,7 +15,7 @@ import { Tooltip } from '@signozhq/ui/tooltip';
 import type {
 	ApprovalEventDTO,
 	ApprovalEventDTODiff,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import {
 	Check,
 	Columns2,

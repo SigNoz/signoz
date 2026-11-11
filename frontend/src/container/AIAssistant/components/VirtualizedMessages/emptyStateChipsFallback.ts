@@ -1,4 +1,4 @@
-import type { ChipDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import type { ChipDTO } from '@signozhq/noz-client';
 
 /** Static empty-state chips used when the contextual chips API is unavailable. */
 export const EMPTY_STATE_CHIPS_FALLBACK: ChipDTO[] = [

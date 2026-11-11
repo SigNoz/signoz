@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { PageTypeDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { PageTypeDTO } from '@signozhq/noz-client';
 import type { AIAssistantVariant } from 'container/AIAssistant/VariantContext';
 import ROUTES from 'constants/routes';
 import { mockAppLocation } from 'tests/router-mocks';

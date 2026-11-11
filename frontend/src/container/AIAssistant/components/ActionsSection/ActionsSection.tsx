@@ -14,11 +14,11 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import type { MessageActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import type { MessageActionDTO } from '@signozhq/noz-client';
 import {
 	ApplyFilterSignalDTO,
 	MessageActionKindDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import {
 	restoreExecution,
 	revertExecution,

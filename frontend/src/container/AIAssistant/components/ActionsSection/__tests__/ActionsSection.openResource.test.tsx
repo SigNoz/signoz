@@ -1,7 +1,4 @@
-import {
-	MessageActionDTO,
-	MessageActionKindDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { MessageActionDTO, MessageActionKindDTO } from '@signozhq/noz-client';
 import logEvent from 'api/common/logEvent';
 import { getCurrentLocation, navigate } from 'lib/router/navigation';
 import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';

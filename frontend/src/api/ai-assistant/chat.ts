@@ -11,7 +11,7 @@
  * to resume, which each return a new executionId to open a fresh SSE stream.
  *
  * Types in this file re-use the OpenAPI-generated DTOs in
- * `src/api/ai-assistant/sigNozAIAssistantAPI.schemas.ts`.
+ * `@signozhq/noz-client`.
  * Local types are defined only when the UI needs a different shape — for
  * example, the SSE event union adds a literal `type` discriminator that the
  * generated event DTOs leave loose.
@@ -60,7 +60,7 @@ import type {
 	PageTypeDTO,
 	ToolCallEventDTO,
 	ToolResultEventDTO,
-} from './sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
 import {

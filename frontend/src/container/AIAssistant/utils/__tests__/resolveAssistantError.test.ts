@@ -1,8 +1,5 @@
 import { AxiosError } from 'axios';
-import {
-	ErrorCodeDTO,
-	RetryActionDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { ErrorCodeDTO, RetryActionDTO } from '@signozhq/noz-client';
 
 import { resolveAssistantError } from '../resolveAssistantError';
 

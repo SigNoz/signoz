@@ -11,7 +11,7 @@ import type {
 	MessageSummaryDTO,
 	ThreadDetailResponseDTO,
 	ThreadListResponseDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import {
 	ApplyFilterSignalDTO,
 	ApprovalActionTypeDTO,
@@ -22,7 +22,7 @@ import {
 	MessageActionKindDTO,
 	MessageContentTypeDTO,
 	MessageRoleDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import type {
 	Conversation,
 	ConversationStreamState,

@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { Button } from '@signozhq/ui/button';
 import { RotateCw, TriangleAlert } from '@signozhq/icons';
 
-import { RetryActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { RetryActionDTO } from '@signozhq/noz-client';
 
 // Side-effect: registers all built-in block types into the BlockRegistry
 import '../blocks';

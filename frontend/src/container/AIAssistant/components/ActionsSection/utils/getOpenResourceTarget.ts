@@ -1,7 +1,7 @@
 import {
 	type MessageActionDTO,
 	MessageActionKindDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 
 import {
 	isSavedViewOpenAction,
