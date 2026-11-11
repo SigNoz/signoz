@@ -168,7 +168,6 @@ function renderDrawer(
 	return render(
 		<EditMemberDrawer
 			member={activeMember}
-			open
 			onClose={jest.fn()}
 			onComplete={jest.fn()}
 			{...props}

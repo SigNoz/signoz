@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
@@ -39,6 +39,10 @@ import DeleteMemberDialog from './DeleteMemberDialog';
 import ResetLinkDialog from './ResetLinkDialog';
 
 import './EditMemberDrawer.styles.scss';
+import { AuthZGuardContent } from '@/lib/authz/components/AuthZGuard/AuthZGuardContent';
+import { buildUserReadPermission } from '@/lib/authz/hooks/useAuthZ/permissions/user.permissions';
+import AuthZButton from '@/lib/authz/components/AuthZButton/AuthZButton';
+import { useAuthZ } from '@/lib/authz/hooks/useAuthZ/useAuthZ';
 
 const ROOT_USER_TOOLTIP = 'This operation is not supported for the root user';
 const SELF_DELETE_TOOLTIP =
@@ -87,7 +91,6 @@ function toSaveApiError(err: unknown): APIError {
 
 export interface EditMemberDrawerProps {
 	member: MemberRow | null;
-	open: boolean;
 	onClose: () => void;
 	onComplete: () => void;
 }
@@ -95,7 +98,6 @@ export interface EditMemberDrawerProps {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function EditMemberDrawer({
 	member,
-	open,
 	onClose,
 	onComplete,
 }: EditMemberDrawerProps): JSX.Element {
@@ -119,16 +121,26 @@ function EditMemberDrawer({
 	const isDeleted = member?.status === MemberStatus.Deleted;
 	const isSelf = !!member?.id && member.id === currentUser?.id;
 
+	const requestPermission = useMemo(() => {
+		if (member) {
+			return [buildUserReadPermission(member.id)];
+		}
+		return [];
+	}, [member]);
+
+	const { permissions: authZPermission } = useAuthZ(requestPermission);
+
+	const canReadUser = member
+		? (authZPermission?.[buildUserReadPermission(member.id)]?.isGranted ?? false)
+		: false;
+
 	const { showErrorModal } = useErrorModal();
 
 	const {
 		data: fetchedUser,
 		isLoading: isFetchingUser,
 		refetch: refetchUser,
-	} = useGetUser(
-		{ id: member?.id ?? '' },
-		{ query: { enabled: open && !!member?.id } },
-	);
+	} = useGetUser({ id: member?.id ?? '' }, { query: { enabled: canReadUser } });
 
 	const isRootUser = !!fetchedUser?.data?.isRoot;
 
@@ -144,7 +156,7 @@ function EditMemberDrawer({
 		currentRoles: currentMemberRoles,
 		isLoading: isMemberRolesLoading,
 		applyDiff,
-	} = useMemberRoleManager(member?.id ?? '', open && !!member?.id);
+	} = useMemberRoleManager(member?.id ?? '', canReadUser);
 
 	// Token status query for invited users
 	const {
@@ -153,7 +165,7 @@ function EditMemberDrawer({
 		isError: tokenNotFound,
 	} = useGetResetPasswordToken(
 		{ id: member?.id ?? '' },
-		{ query: { enabled: open && !!member?.id && isInvited } },
+		{ query: { enabled: !!member?.id && isInvited } },
 	);
 
 	const existingToken = tokenQueryData?.data;
@@ -669,18 +681,25 @@ function EditMemberDrawer({
 							Cancel
 						</Button>
 
-						<Button
-							disabledTooltip={isRootUser ? ROOT_USER_TOOLTIP : 'No changes to save'}
+						<AuthZButton
+							disabledTooltip={
+								isRootUser
+									? ROOT_USER_TOOLTIP
+									: !canReadUser
+										? undefined
+										: 'No changes to save'
+							}
 							size="md"
 							variant="solid"
 							color="primary"
 							disabled={!isDirty || isRootUser}
 							onClick={handleSave}
+							checks={member ? [buildUserReadPermission(member?.id)] : []}
 							testId="member-save-btn"
 							loading={isSaving}
 						>
 							{isSaving ? 'Saving...' : 'Save Member Details'}
-						</Button>
+						</AuthZButton>
 					</div>
 				</>
 			)}
@@ -690,7 +709,7 @@ function EditMemberDrawer({
 	return (
 		<>
 			<DrawerWrapper
-				open={open}
+				open={member !== null}
 				onOpenChange={(isOpen): void => {
 					if (!isOpen) {
 						handleClose();
@@ -703,7 +722,12 @@ function EditMemberDrawer({
 				footer={footer}
 				width="wide"
 			>
-				{drawerContent}
+				<AuthZGuardContent
+					checks={member ? [buildUserReadPermission(member?.id)] : []}
+					fallbackOnLoading={<Skeleton active paragraph={{ rows: 6 }} />}
+				>
+					{drawerContent}
+				</AuthZGuardContent>
 			</DrawerWrapper>
 
 			<ResetLinkDialog
