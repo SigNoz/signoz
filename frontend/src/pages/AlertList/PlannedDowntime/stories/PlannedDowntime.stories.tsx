@@ -1,15 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import { plannedDowntimeMocks } from './PlannedDowntime.stories.mocks';
 import {
-	clickFirstRowAction,
-	plannedDowntimeMocks,
-	untilLoaded,
-} from './PlannedDowntime.stories.mocks';
-import { FIRST_DOWNTIME_NAME } from './__story_mockdata__/plannedDowntime';
+	openDeleteConfirm,
+	openEditDowntime,
+	openFromRow,
+	openNewDowntime,
+	openRecurringNewDowntime,
+	searchWithNoResults,
+	submitEmptyForm,
+} from './__story_mockdata__/plannedDowntime.play';
 
 import AlertList from '../../index';
 
@@ -19,13 +22,14 @@ const pageStory = storyMocks(plannedDowntimeMocks, { layout: 'app' });
 
 /**
  * Windows that silence rules on a schedule, one off or recurring, with the rules
- * each window covers.
+ * each window covers. Gated on authz permissions for planned downtime and the
+ * alert rules it silences.
  *
  * Route: `/alerts?tab=Configuration&subTab=planned-downtime`.
  */
 const meta = {
-	title: 'Pages/Alerts/Planned Downtime',
-	tags: ['role-gated', 'play'],
+	title: 'Pages/Alerts/Planned Downtime/Overview',
+	tags: ['authz', 'play'],
 	component: AlertList,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -47,46 +51,34 @@ export const NoDowntimes: Story = {
 };
 
 /**
- * A viewer: the edit and delete actions on a row are gone and New downtime is
- * disabled.
+ * A viewer, who may list and read downtimes and rules but not change them: New
+ * downtime is locked, and a row's Edit and Delete are locked in its menu.
  */
 export const Viewer: Story = {
-	args: { access: 'viewer' },
+	args: {
+		access: 'viewer',
+		permissions: [
+			'list:planned-maintenance',
+			'read:planned-maintenance',
+			'list:rule',
+			'read:rule',
+		],
+	},
 };
 
 /** A downtime opened from its row: the form prefilled with its window and rules. */
 export const OpenFromRow: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		const canvas = within(canvasElement);
-
-		await userEvent.click(
-			await canvas.findByText(FIRST_DOWNTIME_NAME, undefined, untilLoaded),
-		);
-		await screen.findByText(/edit planned downtime/i);
-	},
+	play: openFromRow,
 };
 
 /** The form a downtime is scheduled in: the window, the repeat and the rules. */
 export const NewDowntime: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByText(
-				/new downtime/i,
-				undefined,
-				untilLoaded,
-			),
-		);
-		await screen.findByText(/new planned downtime/i);
-	},
+	play: openNewDowntime,
 };
 
 /** The deletion confirmation opened from the first schedule's real row action. */
 export const DeleteDowntimeConfirm: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickFirstRowAction(canvasElement, 'delete');
-		// The modal titles itself and its confirm button the same.
-		await screen.findByRole('button', { name: 'Delete Schedule' });
-	},
+	play: openDeleteConfirm,
 };
 
 /**
@@ -94,40 +86,17 @@ export const DeleteDowntimeConfirm: Story = {
  * above the rule picker, each with its own remove button.
  */
 export const EditDowntime: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickFirstRowAction(canvasElement, 'edit');
-		await screen.findByText(/edit planned downtime/i);
-		await within(await screen.findByRole('dialog')).findByText(
-			/^Postgres connections/,
-		);
-	},
+	play: openEditDowntime,
 };
 
 /** The new-downtime form set to repeat weekly, which adds the days and duration. */
 export const NewDowntimeRecurring: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await NewDowntime.play?.({ canvasElement } as never);
-		await userEvent.click(
-			await screen.findByRole('combobox', { name: 'Repeats every' }),
-		);
-		await userEvent.click(await screen.findByText('Weekly'));
-		await within(await screen.findByRole('dialog')).findByText('Duration');
-	},
+	play: openRecurringNewDowntime,
 };
 
 /** A client-side search with no matching downtime schedule. */
 export const SearchNoResults: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		const canvas = within(canvasElement);
-		const search = await canvas.findByPlaceholderText(
-			'Search by name',
-			undefined,
-			untilLoaded,
-		);
-
-		await userEvent.type(search, 'no matching downtime');
-		await canvas.findByText('No matching planned downtime');
-	},
+	play: searchWithNoResults,
 };
 
 /** The schedule list request failed. */
@@ -144,7 +113,7 @@ export const RulesLoadError: Story = {
 	// The mocked rules request intentionally fails; the resulting console error is
 	// the point of the story, not a regression.
 	parameters: { allowConsoleErrors: true },
-	play: NewDowntime.play,
+	play: openNewDowntime,
 };
 
 /** A recurring schedule exposes its recurrence and duration treatment. */
@@ -159,11 +128,5 @@ export const ActiveNow: Story = {
 
 /** Native form validation after attempting to save an empty downtime. */
 export const FormValidationError: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await NewDowntime.play?.({ canvasElement } as never);
-		await userEvent.click(
-			await screen.findByRole('button', { name: 'Add downtime schedule' }),
-		);
-		await screen.findByText('Please enter Name');
-	},
+	play: submitEmptyForm,
 };
