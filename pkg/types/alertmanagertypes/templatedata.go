@@ -107,6 +107,7 @@ type RuleInfo struct {
 	ID        string    `json:"id"        mapstructure:"id"`
 	URL       string    `json:"url"       mapstructure:"url"`
 	Severity  string    `json:"severity"  mapstructure:"severity"`
+	Type      string    `json:"type"      mapstructure:"type"`
 	MatchType string    `json:"matchType" mapstructure:"match_type"`
 	Threshold Threshold `json:"threshold" mapstructure:"threshold"`
 }

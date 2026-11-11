@@ -286,6 +286,9 @@ func (r *BaseRule) AlertAnnotations(expand func(string) string, smpl ruletypes.S
 		if op := smpl.CompareOperator.Literal(); op != "" {
 			annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationCompareOp, Value: op})
 		}
+		if matchType := smpl.MatchType.Literal(); matchType != "" {
+			annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationMatchType, Value: matchType})
+		}
 		if smpl.RecoveryTarget != nil {
 			recovery := units.FormatterFromUnit(r.Unit()).Format(*smpl.RecoveryTarget, smpl.TargetUnit)
 			annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRecoveryThreshold, Value: recovery})
@@ -293,6 +296,9 @@ func (r *BaseRule) AlertAnnotations(expand func(string) string, smpl ruletypes.S
 	}
 	if smpl.IsRecovering {
 		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationIsRecovering, Value: "true"})
+	}
+	if signal := r.typ.Signal(); signal != "" {
+		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRuleType, Value: signal})
 	}
 
 	return annotations

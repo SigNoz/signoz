@@ -312,6 +312,22 @@ Description: Request rate exceeded 10k/s`},
 			wantBody:  []string{"above 500 (recovers at 400), annotations: 0"},
 		},
 		{
+			name: "rule type and match type read their private annotations",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighErrors", "type": "from-label"},
+					map[string]string{ruletypes.AnnotationRuleType: "logs", ruletypes.AnnotationMatchType: "on_average"},
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "$rule.type: $rule.name",
+				BodyTemplate:  "$rule.type $rule.match_type | $type | annotations: {{ len $annotations }}",
+			},
+			wantTitle: "logs: HighErrors",
+			wantBody:  []string{"logs on_average | from-label | annotations: 0"},
+		},
+		{
 			name: "recovering annotation sets status, flags and counts with firing winning the title",
 			alerts: []*types.Alert{
 				createAlert(

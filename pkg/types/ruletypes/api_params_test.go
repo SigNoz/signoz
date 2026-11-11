@@ -1352,3 +1352,24 @@ func TestVersionDefaultsToV5(t *testing.T) {
 	assert.Equal(t, "v5", rule.Version)
 	assert.NoError(t, rule.Validate())
 }
+
+func TestAlertTypeSignal(t *testing.T) {
+	testCases := []struct {
+		name      string
+		alertType AlertType
+		want      string
+	}{
+		{name: "Metric", alertType: AlertTypeMetric, want: "metrics"},
+		{name: "Logs", alertType: AlertTypeLogs, want: "logs"},
+		{name: "Traces", alertType: AlertTypeTraces, want: "traces"},
+		{name: "Exceptions", alertType: AlertTypeExceptions, want: "exceptions"},
+		{name: "AITraces", alertType: AlertTypeAITraces, want: "ai_traces"},
+		{name: "Unknown_Empty", alertType: "", want: ""},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.want, testCase.alertType.Signal())
+		})
+	}
+}

@@ -889,9 +889,10 @@ func TestExpandAnnotations(t *testing.T) {
 func TestAlertAnnotations(t *testing.T) {
 	recoveryTarget := 400.0
 	testCases := []struct {
-		name string
-		smpl ruletypes.Sample
-		want map[string]string
+		name      string
+		alertType ruletypes.AlertType
+		smpl      ruletypes.Sample
+		want      map[string]string
 	}{
 		{
 			name: "Firing_AddsValueAndThreshold",
@@ -909,15 +910,22 @@ func TestAlertAnnotations(t *testing.T) {
 			want: map[string]string{"summary": "high errors", ruletypes.AnnotationValue: "523 ms", ruletypes.AnnotationThresholdValue: "500 ms", ruletypes.AnnotationCompareOp: "above", ruletypes.AnnotationRecoveryThreshold: "400 ms"},
 		},
 		{
-			name: "MissingData_OmitsValueAndThreshold",
-			smpl: ruletypes.Sample{IsMissing: true, CompareOperator: ruletypes.ValueIsAbove, RecoveryTarget: &recoveryTarget},
-			want: map[string]string{"summary": "high errors"},
+			name:      "MatchTypeAndAlertType_AddsLiteralMatchTypeAndSignal",
+			alertType: ruletypes.AlertTypeLogs,
+			smpl:      ruletypes.Sample{MatchType: ruletypes.OnAverageShort},
+			want:      map[string]string{"summary": "high errors", ruletypes.AnnotationValue: "523 ms", ruletypes.AnnotationThresholdValue: "500 ms", ruletypes.AnnotationMatchType: "on_average", ruletypes.AnnotationRuleType: "logs"},
+		},
+		{
+			name:      "MissingData_OmitsValueAndThreshold_KeepsRuleType",
+			alertType: ruletypes.AlertTypeMetric,
+			smpl:      ruletypes.Sample{IsMissing: true, CompareOperator: ruletypes.ValueIsAbove, MatchType: ruletypes.AtleastOnce, RecoveryTarget: &recoveryTarget},
+			want:      map[string]string{"summary": "high errors", ruletypes.AnnotationRuleType: "metrics"},
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			rule := &BaseRule{annotations: ruletypes.FromMap(map[string]string{"summary": "high errors"}), ruleCondition: &ruletypes.RuleCondition{CompositeQuery: &ruletypes.AlertCompositeQuery{Unit: "ms"}}}
+			rule := &BaseRule{typ: testCase.alertType, annotations: ruletypes.FromMap(map[string]string{"summary": "high errors"}), ruleCondition: &ruletypes.RuleCondition{CompositeQuery: &ruletypes.AlertCompositeQuery{Unit: "ms"}}}
 			expand := func(text string) string { return text }
 
 			assert.Equal(t, testCase.want, rule.AlertAnnotations(expand, testCase.smpl, "523 ms", "500 ms").Map())

@@ -306,6 +306,7 @@ func buildRuleInfo(labels, annotations template.KV) alertmanagertypes.RuleInfo {
 		ID:        labels[ruletypes.LabelRuleID],
 		URL:       labels[ruletypes.LabelRuleSource],
 		Severity:  labels[ruletypes.LabelSeverityName],
+		Type:      annotations[ruletypes.AnnotationRuleType],
 		MatchType: annotations[ruletypes.AnnotationMatchType],
 		Threshold: alertmanagertypes.Threshold{
 			Value:         annotations[ruletypes.AnnotationThresholdValue],

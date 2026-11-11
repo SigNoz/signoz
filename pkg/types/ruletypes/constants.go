@@ -23,12 +23,13 @@ const (
 // surfaces by alertmanagertypes.FilterPublicAnnotations before rendering.
 // The raw template strings, the breached value ($alert.value), the configured
 // threshold ($rule.threshold.value), its comparator ($rule.threshold.op), the
-// recovery threshold ($rule.threshold.recovery_value) and the recovering flag
+// recovery threshold ($rule.threshold.recovery_value), the match type
+// ($rule.match_type), the rule's signal ($rule.type) and the recovering flag
 // ($alert.is_recovering) are private.
 //
-// The rest are public: they describe the firing alert (the match type, and
-// deep links to relevant logs/traces) and users may reference them directly
-// as {{ .Annotations.match_type }}, etc. in their channel templates.
+// The rest are public: they are deep links to relevant logs/traces and users
+// may reference them directly as {{ .Annotations.related_logs }}, etc. in
+// their channel templates.
 const (
 	AnnotationTitleTemplate     = "_title_template"
 	AnnotationBodyTemplate      = "_body_template"
@@ -39,5 +40,6 @@ const (
 	AnnotationThresholdValue    = "_threshold"
 	AnnotationRecoveryThreshold = "_recovery_threshold"
 	AnnotationCompareOp         = "_compare_op"
-	AnnotationMatchType         = "match_type"
+	AnnotationMatchType         = "_match_type"
+	AnnotationRuleType          = "_rule_type"
 )
