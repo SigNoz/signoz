@@ -176,6 +176,16 @@ function renderDrawer(
 	);
 }
 
+async function clickDeleteButton(
+	user: ReturnType<typeof userEvent.setup>,
+): Promise<void> {
+	const deleteBtn = await screen.findByTestId('member-delete-btn');
+	await waitFor(() =>
+		expect(deleteBtn).not.toHaveAttribute('aria-disabled', 'true'),
+	);
+	await user.click(deleteBtn);
+}
+
 describe('EditMemberDrawer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -386,7 +396,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onComplete });
 
-		await user.click(screen.getByRole('button', { name: /delete member/i }));
+		await clickDeleteButton(user);
 
 		await expect(
 			screen.findByText(/are you sure you want to delete/i),
@@ -468,7 +478,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ member: invitedMember, onComplete });
 
-		await user.click(screen.getByRole('button', { name: /revoke invite/i }));
+		await clickDeleteButton(user);
 
 		await expect(
 			screen.findByText(/Are you sure you want to revoke the invite/i),
@@ -582,7 +592,7 @@ describe('EditMemberDrawer', () => {
 
 			renderDrawer();
 
-			await user.click(screen.getByRole('button', { name: /delete member/i }));
+			await clickDeleteButton(user);
 			const confirmBtns = screen.getAllByRole('button', {
 				name: /delete member/i,
 			});
@@ -613,7 +623,7 @@ describe('EditMemberDrawer', () => {
 
 			renderDrawer({ member: invitedMember });
 
-			await user.click(screen.getByRole('button', { name: /revoke invite/i }));
+			await clickDeleteButton(user);
 			const confirmBtns = screen.getAllByRole('button', {
 				name: /revoke invite/i,
 			});

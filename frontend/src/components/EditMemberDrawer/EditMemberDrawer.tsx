@@ -41,6 +41,7 @@ import ResetLinkDialog from './ResetLinkDialog';
 import './EditMemberDrawer.styles.scss';
 import { AuthZGuardContent } from '@/lib/authz/components/AuthZGuard/AuthZGuardContent';
 import {
+	buildUserDeletePermission,
 	buildUserReadPermission,
 	buildUserUpdatePermission,
 } from '@/lib/authz/hooks/useAuthZ/permissions/user.permissions';
@@ -644,7 +645,7 @@ function EditMemberDrawer({
 			{!isDeleted && (
 				<>
 					<div className="edit-member-drawer__footer-left">
-						<Button
+						<AuthZButton
 							disabledTooltip={getDeleteTooltip(isRootUser, isSelf)}
 							size="md"
 							onClick={(): void => setShowDeleteConfirm(true)}
@@ -652,10 +653,11 @@ function EditMemberDrawer({
 							disabled={isRootUser || isSelf}
 							variant="link"
 							color="danger"
+							checks={member ? [buildUserDeletePermission(member.id)] : []}
 							prefix={<Trash2 size={12} />}
 						>
 							{isInvited ? 'Revoke Invite' : 'Delete Member'}
-						</Button>
+						</AuthZButton>
 
 						<div className="edit-member-drawer__footer-divider" />
 						<Button
