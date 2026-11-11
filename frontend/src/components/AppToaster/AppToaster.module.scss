@@ -1,9 +1,3 @@
-// Clears the pagination bars and footers that sit above the bottom strip, and the 56px footer of
-// a drawer or dialog panel, which sits 16px from the edge of the window.
-.toaster[data-slot='toaster'][data-position^='bottom'] {
-	bottom: calc(var(--bottom-strip-height, 0px) + var(--spacing-48));
-}
-
 // Clears the header of a drawer or dialog panel, 16px from the edge plus 48px or 56px.
 :global(body):has([data-slot='drawer-popup'], [data-slot='dialog-popup'])
 	.toaster[data-slot='toaster'][data-position^='top'] {
