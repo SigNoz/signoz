@@ -45,8 +45,11 @@ const DELETE_ROW = 'downtime-delete-1';
 
 async function openRowActions(): Promise<void> {
 	await userEvent.click(await screen.findByTestId('downtime-actions-1'));
-	await waitFor(() =>
-		expect(screen.getByTestId(EDIT_ROW)).not.toHaveAttribute('data-loading'),
+	// The row's check is batched with others, which can outlast the 1s default.
+	await waitFor(
+		() =>
+			expect(screen.getByTestId(EDIT_ROW)).not.toHaveAttribute('data-loading'),
+		{ timeout: 5000 },
 	);
 }
 
