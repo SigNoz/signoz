@@ -3,11 +3,12 @@ package signozapiserver
 import (
 	"net/http"
 
+	"github.com/gorilla/mux"
+
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
-	"github.com/gorilla/mux"
 )
 
 func (provider *provider) addSpanMapperRoutes(router *mux.Router) error {
