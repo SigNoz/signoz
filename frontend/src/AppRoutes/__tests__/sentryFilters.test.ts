@@ -1,7 +1,9 @@
 import type { ErrorEvent, StackFrame } from '@sentry/react';
+import { AxiosError, AxiosHeaders } from 'axios';
 
 import {
 	hasNoAppFrames,
+	isExpectedRequestFailure,
 	isExternalIntegrationError,
 	SENTRY_IGNORE_ERRORS,
 } from '../sentryFilters';
@@ -136,5 +138,38 @@ describe('SENTRY_IGNORE_ERRORS', () => {
 				),
 			),
 		).toBe(true);
+	});
+});
+
+describe('isExpectedRequestFailure', () => {
+	function axiosErrorWithStatus(status: number): AxiosError {
+		const config = { headers: new AxiosHeaders() };
+		return new AxiosError(
+			`Request failed with status code ${status}`,
+			AxiosError.ERR_BAD_REQUEST,
+			config,
+			undefined,
+			{ status, statusText: '', headers: {}, config, data: {} },
+		);
+	}
+
+	it.each([401, 403])('drops a %i response', (status) => {
+		expect(isExpectedRequestFailure(axiosErrorWithStatus(status))).toBe(true);
+	});
+
+	it('drops a network error', () => {
+		expect(
+			isExpectedRequestFailure(
+				new AxiosError('Network Error', AxiosError.ERR_NETWORK),
+			),
+		).toBe(true);
+	});
+
+	it.each([400, 404, 500, 503])('keeps a %i response', (status) => {
+		expect(isExpectedRequestFailure(axiosErrorWithStatus(status))).toBe(false);
+	});
+
+	it('keeps an error that is not from axios', () => {
+		expect(isExpectedRequestFailure(new Error('Network Error'))).toBe(false);
 	});
 });
