@@ -4,11 +4,7 @@ import { TableColumnType as ColumnType, Tooltip } from 'antd';
 import { Progress } from '@signozhq/ui/progress';
 import { Badge } from '@signozhq/ui/badge';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import {
-	convertExpressionToFilters,
-	formatValueForExpression,
-	removeKeysFromExpression,
-} from 'components/QueryBuilderV2/utils';
+import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import {
 	FiltersType,
 	IQuickFiltersConfig,
@@ -65,33 +61,10 @@ export const getDomainNameFilterExpression = (domainName: string): string =>
 
 export const clientKindExpression = `kind_string = 'Client'`;
 
-// Only an `http_url =` clause selects the endpoint; other operators stay user filters.
-export const getHttpUrlFromExpression = (expression: string): string => {
-	const item = convertExpressionToFilters(expression).find(
-		(filter) => filter.key?.key === SPAN_ATTRIBUTES.HTTP_URL && filter.op === '=',
-	);
-	return item?.value === undefined ? '' : String(item.value);
-};
-
-export const removeHttpUrlFromExpression = (expression: string): string =>
-	removeKeysFromExpression(expression, [SPAN_ATTRIBUTES.HTTP_URL], false, [
-		'=',
-	]).trim();
-
-export const setHttpUrlInExpression = (
-	expression: string,
-	endPointName: string,
-): string => {
-	const rest = removeHttpUrlFromExpression(expression);
-	if (!endPointName) {
-		return rest;
-	}
-	const clause = `${SPAN_ATTRIBUTES.HTTP_URL} = ${formatValueForExpression(
-		endPointName,
-		'=',
-	)}`;
-	return combineInitialAndUserExpression(clause, rest);
-};
+export const getHttpUrlExpression = (endPointName: string): string =>
+	endPointName
+		? `${SPAN_ATTRIBUTES.HTTP_URL} = ${formatValueForExpression(endPointName, '=')}`
+		: '';
 
 export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
@@ -1383,10 +1356,9 @@ export const createFiltersForSelectedRowData = (
 
 // First query payload for endpoint metrics
 // Second query payload for endpoint status code table
-// Third query payload for endpoint dropdown selection
-// Fourth query payload for endpoint dependant services
-// Fifth query payload for endpoint response status count bar chart
-// Sixth query payload for endpoint response status code latency bar chart
+// Third query payload for endpoint dependant services
+// Fourth query payload for endpoint response status count bar chart
+// Fifth query payload for endpoint response status code latency bar chart
 export const getEndPointDetailsQueryPayload = (
 	domainName: string,
 	start: number,
@@ -1698,77 +1670,6 @@ export const getEndPointDetailsQueryPayload = (
 							},
 						],
 						legend: 'rate',
-						reduceTo: ReduceOperators.AVG,
-					},
-				],
-				queryFormulas: [],
-				queryTraceOperator: [],
-			},
-			clickhouse_sql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
-			promql: [
-				{
-					disabled: false,
-					legend: '',
-					name: 'A',
-					query: '',
-				},
-			],
-			queryType: EQueryType.QUERY_BUILDER,
-		},
-		variables: {},
-		formatForWeb: true,
-		start,
-		end,
-		step: 60,
-	},
-	{
-		selectedTime: 'GLOBAL_TIME',
-		graphType: PANEL_TYPES.TABLE,
-		query: {
-			builder: {
-				queryData: [
-					{
-						dataSource: DataSource.TRACES,
-						queryName: 'A',
-						aggregateOperator: 'count',
-						aggregations: [
-							{
-								expression: 'count()',
-							},
-						],
-						timeAggregation: 'count',
-						spaceAggregation: 'sum',
-						functions: [],
-						filter: {
-							expression: combineInitialAndUserExpression(
-								`${getDomainNameFilterExpression(
-									domainName,
-								)} AND ${clientKindExpression} AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
-								filterExpression,
-							),
-						},
-						expression: 'A',
-						disabled: false,
-						stepInterval: null,
-						having: [],
-						legend: '',
-						limit: null,
-						orderBy: [],
-						groupBy: [
-							{
-								key: SPAN_ATTRIBUTES.HTTP_URL,
-								dataType: DataTypes.String,
-								type: 'attribute',
-							},
-						],
 						reduceTo: ReduceOperators.AVG,
 					},
 				],
@@ -2134,6 +2035,83 @@ export const getEndPointDetailsQueryPayload = (
 	},
 ];
 
+export const getEndPointDropDownQueryPayload = (
+	domainName: string,
+	start: number,
+	end: number,
+	filterExpression: string,
+): GetQueryResultsProps => ({
+	selectedTime: 'GLOBAL_TIME',
+	graphType: PANEL_TYPES.TABLE,
+	query: {
+		builder: {
+			queryData: [
+				{
+					dataSource: DataSource.TRACES,
+					queryName: 'A',
+					aggregateOperator: 'count',
+					aggregations: [
+						{
+							expression: 'count()',
+						},
+					],
+					timeAggregation: 'count',
+					spaceAggregation: 'sum',
+					functions: [],
+					filter: {
+						expression: combineInitialAndUserExpression(
+							`${getDomainNameFilterExpression(
+								domainName,
+							)} AND ${clientKindExpression} AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS`,
+							filterExpression,
+						),
+					},
+					expression: 'A',
+					disabled: false,
+					stepInterval: null,
+					having: [],
+					legend: '',
+					limit: null,
+					orderBy: [],
+					groupBy: [
+						{
+							key: SPAN_ATTRIBUTES.HTTP_URL,
+							dataType: DataTypes.String,
+							type: 'attribute',
+						},
+					],
+					reduceTo: ReduceOperators.AVG,
+				},
+			],
+			queryFormulas: [],
+			queryTraceOperator: [],
+		},
+		clickhouse_sql: [
+			{
+				disabled: false,
+				legend: '',
+				name: 'A',
+				query: '',
+			},
+		],
+		id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
+		promql: [
+			{
+				disabled: false,
+				legend: '',
+				name: 'A',
+				query: '',
+			},
+		],
+		queryType: EQueryType.QUERY_BUILDER,
+	},
+	variables: {},
+	formatForWeb: true,
+	start,
+	end,
+	step: 60,
+});
+
 interface EndPointMetricsResponseRow {
 	data: {
 		A: number | string;
@@ -2290,8 +2268,8 @@ export const statusCodeWidgetInfo = [
 
 interface EndPointDropDownResponseRow {
 	data: {
-		[SPAN_ATTRIBUTES.HTTP_URL]: string;
-		A: number;
+		[SPAN_ATTRIBUTES.HTTP_URL]?: string;
+		A?: number;
 	};
 }
 
@@ -2736,7 +2714,6 @@ export const getFormattedEndPointStatusCodeChartData = (
 export const END_POINT_DETAILS_QUERY_KEYS_ARRAY = [
 	REACT_QUERY_KEY.GET_ENDPOINT_METRICS_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_DATA,
-	REACT_QUERY_KEY.GET_ENDPOINT_DROPDOWN_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_DEPENDENT_SERVICES_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_BAR_CHARTS_DATA,
 	REACT_QUERY_KEY.GET_ENDPOINT_STATUS_CODE_LATENCY_BAR_CHARTS_DATA,

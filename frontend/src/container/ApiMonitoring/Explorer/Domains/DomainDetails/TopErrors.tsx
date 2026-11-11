@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { QueryFunctionContext, useQueries, useQuery } from 'react-query';
+import { QueryFunctionContext, useQuery } from 'react-query';
 import { Spin, Table, Tooltip } from 'antd';
 import { Info, Loader } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
@@ -7,26 +7,23 @@ import { Typography } from '@signozhq/ui/typography';
 import { getQueryRangeV5 } from 'api/v5/queryRange/getQueryRange';
 import { MetricRangePayloadV5, ScalarData } from 'api/v5/v5';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
+import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { withErrorBoundary } from 'components/ErrorBoundaryHOC';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
-	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
 	formatTopErrorsDataForTable,
-	getEndPointDetailsQueryPayload,
+	getHttpUrlExpression,
 	getTopErrorsColumnsConfig,
 	getTopErrorsCoRelationQueryFilters,
 	getTopErrorsQueryPayload,
-	setHttpUrlInExpression,
 } from 'container/ApiMonitoring/utils';
-import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { SuccessResponse, SuccessResponseV2 } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { SuccessResponseV2 } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
-import EndPointsDropDown from './components/EndPointsDropDown';
+import EndPointPicker from './components/EndPointPicker';
 import ErrorState from './components/ErrorState';
 
 function TopErrors({
@@ -53,9 +50,10 @@ function TopErrors({
 				domainName,
 				minTime,
 				maxTime,
-				endPointName
-					? setHttpUrlInExpression(initialFilterExpression, endPointName)
-					: initialFilterExpression,
+				combineInitialAndUserExpression(
+					getHttpUrlExpression(endPointName),
+					initialFilterExpression,
+				),
 				showStatusCodeErrors,
 			),
 		[
@@ -100,30 +98,6 @@ function TopErrors({
 		[topErrorsData],
 	);
 
-	const endPointDropDownQueryPayload = useMemo(
-		() => [getEndPointDetailsQueryPayload(domainName, minTime, maxTime, '')[2]],
-		[domainName, minTime, maxTime],
-	);
-
-	const endPointDropDownDataQueries = useQueries(
-		endPointDropDownQueryPayload.map((payload) => ({
-			queryKey: [
-				END_POINT_DETAILS_QUERY_KEYS_ARRAY[2],
-				payload,
-				ENTITY_VERSION_V5,
-			],
-			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
-			enabled: !!payload,
-			staleTime: 60 * 1000,
-		})),
-	);
-
-	const [endPointDropDownDataQuery] = useMemo(
-		() => [endPointDropDownDataQueries[0]],
-		[endPointDropDownDataQueries],
-	);
-
 	const navigateToExplorer = useNavigateToExplorer();
 
 	if (isError) {
@@ -137,14 +111,13 @@ function TopErrors({
 	return (
 		<div className="all-endpoints-container">
 			<div className="top-errors-dropdown-container">
-				<div className="endpoint-details-filters-container-dropdown">
-					<EndPointsDropDown
-						selectedEndPointName={endPointName}
-						setSelectedEndPointName={setSelectedEndPointName}
-						endPointDropDownDataQuery={endPointDropDownDataQuery}
-						parentContainerDiv=".endpoint-details-filters-container"
-					/>
-				</div>
+				<EndPointPicker
+					domainName={domainName}
+					timeRange={timeRange}
+					filterExpression=""
+					value={endPointName}
+					onChange={setSelectedEndPointName}
+				/>
 				<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 					<Switch
 						color="primary"

@@ -1,8 +1,8 @@
 /**
  * V5 Migration Tests for Endpoint Dropdown Query
  *
- * These tests validate the migration from V4 to V5 format for the third payload
- * in getEndPointDetailsQueryPayload (endpoint dropdown data):
+ * These tests validate the migration from V4 to V5 format for
+ * getEndPointDropDownQueryPayload (endpoint picker options):
  * - Filter format change: filters.items[] → filter.expression
  * - Domain handling: http_host = '${domainName}'
  * - Kind filter: kind_string = 'Client'
@@ -10,7 +10,7 @@
  * - Aggregation: count() expression
  * - GroupBy: http_url with type 'attribute'
  */
-import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
+import { getEndPointDropDownQueryPayload } from 'container/ApiMonitoring/utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
@@ -23,15 +23,12 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 
 	describe('1. V5 Format Migration - Structure and Base Filters', () => {
 		it('migrates to V5 format with correct filter expression structure, aggregations, and groupBy', () => {
-			const payload = getEndPointDetailsQueryPayload(
+			const dropdownQuery = getEndPointDropDownQueryPayload(
 				mockDomainName,
 				mockStartTime,
 				mockEndTime,
 				emptyFilters,
 			);
-
-			// Third payload is the endpoint dropdown query (index 2)
-			const dropdownQuery = payload[2];
 			const queryA = dropdownQuery.query.builder.queryData[0];
 
 			// CRITICAL V5 MIGRATION: filter.expression (not filters.items)
@@ -76,14 +73,12 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 			const customFilters =
 				"service.name = 'user-service' AND deployment.environment = 'production'";
 
-			const payload = getEndPointDetailsQueryPayload(
+			const dropdownQuery = getEndPointDropDownQueryPayload(
 				mockDomainName,
 				mockStartTime,
 				mockEndTime,
 				customFilters,
 			);
-
-			const dropdownQuery = payload[2];
 			const expression =
 				dropdownQuery.query.builder.queryData[0].filter?.expression;
 

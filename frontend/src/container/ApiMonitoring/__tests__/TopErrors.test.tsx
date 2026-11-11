@@ -1,24 +1,35 @@
 import { BuilderQuery } from 'api/v5/v5';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { rest, server } from 'mocks-server/server';
-import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
 import TopErrors from '../Explorer/Domains/DomainDetails/TopErrors';
 import { getTopErrorsQueryPayload } from '../utils';
 
-// Mock the EndPointsDropDown component to avoid issues
+interface QueryRangeRequestBody {
+	compositeQuery: { queries: { spec: { filter: { expression: string } } }[] };
+}
+
+// Mock the EndPointPicker component to avoid issues
 jest.mock(
-	'../Explorer/Domains/DomainDetails/components/EndPointsDropDown',
+	'../Explorer/Domains/DomainDetails/components/EndPointPicker',
 	() => ({
 		__esModule: true,
 		default: jest.fn().mockImplementation(
-			({ setSelectedEndPointName }): JSX.Element => (
+			({ onChange }): JSX.Element => (
 				<div data-testid="endpoints-dropdown-mock">
 					<select
 						data-testid="endpoints-select"
-						onChange={(e): void => setSelectedEndPointName(e.target.value)}
+						onChange={(e): void => onChange(e.target.value)}
 					>
 						<option value="/api/test">/api/test</option>
 						<option value="/api/new-endpoint">/api/new-endpoint</option>
@@ -224,22 +235,30 @@ describe('TopErrors', () => {
 		});
 	});
 
-	it('updates endpoint filter when dropdown value changes', async () => {
+	it('scopes the query to the endpoint picked in the picker', async () => {
+		const user = userEvent.setup({ delay: null });
+		const expressions: string[] = [];
+		server.use(
+			rest.post(V5_QUERY_RANGE_API_PATH, async (req) => {
+				const body: QueryRangeRequestBody = await req.json();
+				expressions.push(body.compositeQuery.queries[0].spec.filter.expression);
+			}),
+		);
+
 		render(<TopErrors {...mockProps} />);
+		await waitFor(() => expect(expressions).toHaveLength(1));
+		expect(expressions[0]).not.toContain(`${SPAN_ATTRIBUTES.HTTP_URL} =`);
 
-		// Wait for initial load
+		await user.selectOptions(
+			screen.getByTestId('endpoints-select'),
+			'/api/new-endpoint',
+		);
+
 		await waitFor(() => {
-			expect(screen.getByRole('combobox')).toBeInTheDocument();
+			expect(expressions[expressions.length - 1]).toContain(
+				`${SPAN_ATTRIBUTES.HTTP_URL} = '/api/new-endpoint'`,
+			);
 		});
-
-		// Find the dropdown
-		const dropdown = screen.getByRole('combobox');
-
-		// Mock the change
-		fireEvent.change(dropdown, { target: { value: '/api/new-endpoint' } });
-
-		// Component should re-render with new filter
-		expect(dropdown).toBeInTheDocument();
 	});
 
 	it('handles status message toggle correctly', async () => {

@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
+import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
 	extractPortAndEndpoint,
 	getEndPointDetailsQueryPayload,
-	getHttpUrlFromExpression,
+	getHttpUrlExpression,
 	getLatencyOverTimeWidgetData,
 	getRateOverTimeWidgetData,
-	removeHttpUrlFromExpression,
-	setHttpUrlInExpression,
 } from 'container/ApiMonitoring/utils';
 import {
 	CustomTimeType,
@@ -25,7 +24,7 @@ import { extractQueryPairs } from 'utils/queryContextUtils';
 
 import DependentServices from './components/DependentServices';
 import EndPointMetrics from './components/EndPointMetrics';
-import EndPointsDropDown from './components/EndPointsDropDown';
+import EndPointPicker from './components/EndPointPicker';
 import MetricOverTimeGraph from './components/MetricOverTimeGraph';
 import StatusCodeBarCharts from './components/StatusCodeBarCharts';
 import StatusCodeTable from './components/StatusCodeTable';
@@ -55,43 +54,24 @@ function EndPointDetails({
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 	const [params, setParams] = useApiMonitoringParams();
 
-	// Local state for filters, combining endpoint filter and search filters
-	const [filterExpression, setFilterExpression] = useState<string>(() =>
-		setHttpUrlInExpression(
-			params.endPointDetailsFilterExpression ?? initialFilterExpression,
-			endPointName,
-		),
+	// Local state for the search filters; the endpoint filter is combined in at query time
+	const [filterExpression, setFilterExpression] = useState<string>(
+		() => params.endPointDetailsFilterExpression ?? initialFilterExpression,
 	);
-
-	// Effect to synchronize local filters when the endPointName prop changes (e.g., from dropdown)
-	useEffect(() => {
-		setFilterExpression((current) =>
-			getHttpUrlFromExpression(current) === endPointName
-				? current
-				: setHttpUrlInExpression(current, endPointName),
-		);
-	}, [endPointName]);
 
 	// Separate effect to update params when filters change
 	useEffect(() => {
-		setParams({
-			endPointDetailsFilterExpression:
-				removeHttpUrlFromExpression(filterExpression),
-		});
+		setParams({ endPointDetailsFilterExpression: filterExpression });
 	}, [filterExpression, setParams]);
 
-	// Handler for changes from the QuerySearch component
-	const handleFilterChange = useCallback(
-		(expression: string): void => {
-			setFilterExpression(expression);
+	const httpUrlExpression = useMemo(
+		() => getHttpUrlExpression(endPointName),
+		[endPointName],
+	);
 
-			// The search change may have modified the effective endpoint; notify the parent.
-			const derivedEndPointName = getHttpUrlFromExpression(expression);
-			if (derivedEndPointName !== endPointName) {
-				setSelectedEndPointName(derivedEndPointName);
-			}
-		},
-		[endPointName, setSelectedEndPointName],
+	const scopedExpression = useMemo(
+		() => combineInitialAndUserExpression(httpUrlExpression, filterExpression),
+		[httpUrlExpression, filterExpression],
 	);
 
 	const {
@@ -101,7 +81,7 @@ function EndPointDetails({
 		onBlur: handleFilterBlur,
 	} = useFilterExpression({
 		expression: filterExpression,
-		onExpressionChange: handleFilterChange,
+		onExpressionChange: setFilterExpression,
 	});
 
 	const isServicesFilterApplied = useMemo(
@@ -118,9 +98,9 @@ function EndPointDetails({
 				domainName,
 				minTime,
 				maxTime,
-				filterExpression,
+				scopedExpression,
 			),
-		[domainName, filterExpression, minTime, maxTime],
+		[domainName, scopedExpression, minTime, maxTime],
 	);
 
 	const endPointDetailsDataQueries = useQueries(
@@ -139,7 +119,6 @@ function EndPointDetails({
 	const [
 		endPointMetricsDataQuery,
 		endPointStatusCodeDataQuery,
-		endPointDropDownDataQuery,
 		endPointDependentServicesDataQuery,
 		endPointStatusCodeBarChartsDataQuery,
 		endPointStatusCodeLatencyBarChartsDataQuery,
@@ -150,7 +129,6 @@ function EndPointDetails({
 			endPointDetailsDataQueries[2],
 			endPointDetailsDataQueries[3],
 			endPointDetailsDataQueries[4],
-			endPointDetailsDataQueries[5],
 		],
 		[endPointDetailsDataQueries],
 	);
@@ -162,10 +140,10 @@ function EndPointDetails({
 
 	const [rateOverTimeWidget, latencyOverTimeWidget] = useMemo(
 		() => [
-			getRateOverTimeWidgetData(domainName, endPointName, filterExpression),
-			getLatencyOverTimeWidgetData(domainName, endPointName, filterExpression),
+			getRateOverTimeWidgetData(domainName, endPointName, scopedExpression),
+			getLatencyOverTimeWidgetData(domainName, endPointName, scopedExpression),
 		],
-		[domainName, endPointName, filterExpression],
+		[domainName, endPointName, scopedExpression],
 	);
 
 	// // [TODO] Fix this later
@@ -185,23 +163,19 @@ function EndPointDetails({
 	return (
 		<div className="endpoint-details-container">
 			<div className="endpoint-details-filters-container">
-				<div className="endpoint-details-filters-container-dropdown">
-					<EndPointsDropDown
-						selectedEndPointName={endPointName}
-						setSelectedEndPointName={setSelectedEndPointName}
-						endPointDropDownDataQuery={endPointDropDownDataQuery}
-						parentContainerDiv=".endpoint-details-filters-container"
-						dropdownStyle={{ width: 'calc(100% - 36px)' }}
-					/>
-				</div>
-				<div
-					className="endpoint-details-filters-container-search"
-					onBlur={handleFilterBlur}
-				>
+				<EndPointPicker
+					domainName={domainName}
+					timeRange={timeRange}
+					filterExpression={filterExpression}
+					value={endPointName}
+					onChange={setSelectedEndPointName}
+				/>
+				<div onBlur={handleFilterBlur}>
 					<QuerySearch
 						queryData={queryData}
 						onChange={onDraftChange}
 						onRun={onRun}
+						showRunButton
 						dataSource={DataSource.TRACES}
 						placeholder="Search for filters..."
 					/>
@@ -232,7 +206,7 @@ function EndPointDetails({
 					endPointStatusCodeLatencyBarChartsDataQuery
 				}
 				domainName={domainName}
-				filterExpression={filterExpression}
+				filterExpression={scopedExpression}
 				timeRange={timeRange}
 				onDragSelect={onDragSelect}
 			/>

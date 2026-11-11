@@ -140,6 +140,7 @@ function AllEndPoints({
 						queryData={queryData}
 						onChange={onDraftChange}
 						onRun={onRun}
+						showRunButton
 						dataSource={DataSource.TRACES}
 						placeholder="Search for filters..."
 					/>

@@ -1,5 +1,7 @@
 import { useQueries } from 'react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
+import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
+import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
 	extractPortAndEndpoint,
@@ -13,6 +15,7 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/types';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
+import EndPointPicker from '../Explorer/Domains/DomainDetails/components/EndPointPicker';
 import EndPointDetails from '../Explorer/Domains/DomainDetails/EndPointDetails';
 
 // Mock dependencies
@@ -43,19 +46,13 @@ jest.mock('container/ApiMonitoring/utils', () => ({
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY: [
 		'endPointMetricsData',
 		'endPointStatusCodeData',
-		'endPointDropDownData',
 		'endPointDependentServicesData',
 		'endPointStatusCodeBarChartsData',
 		'endPointStatusCodeLatencyBarChartsData',
 	],
 	extractPortAndEndpoint: jest.fn(),
-	getHttpUrlFromExpression: jest.requireActual('container/ApiMonitoring/utils')
-		.getHttpUrlFromExpression,
-	setHttpUrlInExpression: jest.requireActual('container/ApiMonitoring/utils')
-		.setHttpUrlInExpression,
-	removeHttpUrlFromExpression: jest.requireActual(
-		'container/ApiMonitoring/utils',
-	).removeHttpUrlFromExpression,
+	getHttpUrlExpression: jest.requireActual('container/ApiMonitoring/utils')
+		.getHttpUrlExpression,
 	getEndPointDetailsQueryPayload: jest.fn(),
 	getLatencyOverTimeWidgetData: jest.fn(),
 	getRateOverTimeWidgetData: jest.fn(),
@@ -90,15 +87,15 @@ jest.mock(
 );
 
 jest.mock(
-	'../Explorer/Domains/DomainDetails/components/EndPointsDropDown',
+	'../Explorer/Domains/DomainDetails/components/EndPointPicker',
 	() => ({
 		__esModule: true,
-		default: jest.fn().mockImplementation(({ setSelectedEndPointName }) => (
+		default: jest.fn().mockImplementation(({ onChange }) => (
 			<div data-testid="endpoints-dropdown">
 				<button
 					type="button"
 					data-testid="select-endpoint-button"
-					onClick={(): void => setSelectedEndPointName('/api/new-endpoint')}
+					onClick={(): void => onChange('/api/new-endpoint')}
 				>
 					Select Endpoint
 				</button>
@@ -156,7 +153,7 @@ jest.mock(
 );
 
 describe('EndPointDetails Component', () => {
-	const mockQueryResults = Array(6).fill({
+	const mockQueryResults = Array(5).fill({
 		data: { data: [] },
 		isLoading: false,
 		isError: false,
@@ -192,7 +189,6 @@ describe('EndPointDetails Component', () => {
 			{ id: 'query3', label: 'Query 3' },
 			{ id: 'query4', label: 'Query 4' },
 			{ id: 'query5', label: 'Query 5' },
-			{ id: 'query6', label: 'Query 6' },
 		]);
 
 		(getRateOverTimeWidgetData as jest.Mock).mockReturnValue({
@@ -251,6 +247,7 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('updates filters when the search expression is run', () => {
+		const [, setParams] = (useApiMonitoringParams as jest.Mock)();
 		render(<EndPointDetails {...mockProps} />);
 
 		// Trigger filter change
@@ -262,7 +259,35 @@ describe('EndPointDetails Component', () => {
 			expect.anything(),
 			expect.anything(),
 			expect.anything(),
-			expect.stringContaining("test.key = 'test-value'"),
+			`${SPAN_ATTRIBUTES.HTTP_URL} = '/api/test' AND (test.key = 'test-value')`,
+		);
+		expect(setParams).toHaveBeenLastCalledWith({
+			endPointDetailsFilterExpression: "test.key = 'test-value'",
+		});
+	});
+
+	it('keeps the endpoint out of the editor and the picker options', () => {
+		render(
+			<EndPointDetails
+				{...mockProps}
+				initialFilterExpression="service.name = 'checkout'"
+			/>,
+		);
+
+		expect(QuerySearch).toHaveBeenLastCalledWith(
+			expect.objectContaining({
+				queryData: expect.objectContaining({
+					filter: { expression: "service.name = 'checkout'" },
+				}),
+			}),
+			expect.anything(),
+		);
+		expect(EndPointPicker).toHaveBeenLastCalledWith(
+			expect.objectContaining({
+				filterExpression: "service.name = 'checkout'",
+				value: '/api/test',
+			}),
+			expect.anything(),
 		);
 	});
 

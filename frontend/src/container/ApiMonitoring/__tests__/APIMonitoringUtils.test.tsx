@@ -2,8 +2,6 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
 import {
-	getHttpUrlFromExpression,
-	setHttpUrlInExpression,
 	endPointStatusCodeColumns,
 	extractPortAndEndpoint,
 	formatDataForTable,
@@ -12,6 +10,7 @@ import {
 	getFormattedEndPointStatusCodeChartData,
 	getFormattedEndPointStatusCodeData,
 	getGroupByExpressionFromRowData,
+	getHttpUrlExpression,
 	getStatusCodeBarChartWidgetData,
 	getTopErrorsColumnsConfig,
 	getTopErrorsCoRelationQueryFilters,
@@ -798,27 +797,16 @@ describe('API Monitoring Utils', () => {
 		});
 	});
 
-	describe('http_url expression helpers', () => {
-		it('keeps a top-level OR in the user filter scoped to the endpoint', () => {
-			expect(
-				setHttpUrlInExpression("service.name = 'a' OR service.name = 'b'", '/x'),
-			).toBe("http_url = '/x' AND (service.name = 'a' OR service.name = 'b')");
+	describe('getHttpUrlExpression', () => {
+		it('returns no clause when no endpoint is picked', () => {
+			expect(getHttpUrlExpression('')).toBe('');
 		});
 
-		it('replaces only the endpoint clause and keeps other http_url operators', () => {
-			expect(
-				setHttpUrlInExpression(
-					"http_url = '/a' AND http_url CONTAINS '/api'",
-					'/b',
-				),
-			).toBe("http_url = '/b' AND (http_url CONTAINS '/api')");
-			expect(getHttpUrlFromExpression("http_url CONTAINS '/api'")).toBe('');
-		});
-
-		it('round-trips an endpoint name with an apostrophe', () => {
-			const expression = setHttpUrlInExpression('', "/users/o'brien");
-
-			expect(getHttpUrlFromExpression(expression)).toBe("/users/o'brien");
+		it('quotes the endpoint and escapes apostrophes', () => {
+			expect(getHttpUrlExpression('/x')).toBe("http_url = '/x'");
+			expect(getHttpUrlExpression("/users/o'brien")).toBe(
+				"http_url = '/users/o\\'brien'",
+			);
 		});
 	});
 });
