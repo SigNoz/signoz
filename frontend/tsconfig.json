@@ -80,6 +80,7 @@
 		"./babel.config.cjs",
 		"./jest.config.ts",
 		"./jest.setup.ts",
-		"./vite.config.ts"
+		"./vite.config.ts",
+		"./commitlint.config.ts"
 	]
 }

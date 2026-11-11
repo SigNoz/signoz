@@ -1,64 +1,24 @@
 #!/bin/sh
-# Enforces the conventional commit rules of @commitlint/config-conventional.
 
 set -e
 
-types='build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test'
-max_length=100
+msg_file="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
 
-# Drop comments and everything below the `git commit -v` scissors line.
-msg="$(sed -e '/^# -\{24\} >8 -\{24\}$/,$d' -e '/^#/d' "$1")"
-header="$(printf '%s\n' "$msg" | sed -n '/[^[:space:]]/{p;q;}')"
-
-case "$header" in
-Merge\ * | Merged\ * | Revert\ * | revert\ * | fixup!* | squash!* | amend!* | Auto-merged\ * | Automatic\ merge*) ignored=1 ;;
-*) ignored=0 ;;
-esac
-
-if [ "$ignored" -eq 0 ]; then
-	errors=""
-	fail() {
-		errors="$errors
-  - $1"
-	}
-
-	if [ "$header" != "$(printf '%s' "$header" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')" ]; then
-		fail "header must not have leading or trailing whitespace"
-	fi
-	if [ "${#header}" -gt "$max_length" ]; then
-		fail "header must be at most $max_length characters"
-	fi
-
-	if ! printf '%s\n' "$header" | grep -Eq "^($types)(\([^)]*\))?!?: "; then
-		fail "header must be '<type>(<scope>): <subject>' with type one of: $(echo "$types" | sed 's/|/, /g')"
-	else
-		subject="$(printf '%s\n' "$header" | sed -n 's/^[^:]*: //p')"
-		case "$subject" in
-		*[![:space:]]*) ;;
-		*) fail "subject must not be empty" ;;
-		esac
-		case "$subject" in
-		*.) fail "subject must not end with a full stop" ;;
-		esac
-		case "$subject" in
-		[ABCDEFGHIJKLMNOPQRSTUVWXYZ]*) fail "subject must start with a lowercase letter" ;;
-		esac
-	fi
-
-	rest="$(printf '%s\n' "$msg" | sed -n '/[^[:space:]]/,$p' | sed 1d)"
-	if [ -n "$(printf '%s' "$rest" | tr -d '[:space:]')" ]; then
-		if [ -n "$(printf '%s\n' "$rest" | sed -n 1p)" ]; then
-			echo "commit-msg: warning: body must have a leading blank line" >&2
+if [ -d frontend/node_modules ] && command -v pnpm >/dev/null 2>&1; then
+	(cd frontend && pnpm exec commitlint --edit "$msg_file")
+else
+	# Header-only fallback for @commitlint/config-conventional when node_modules is absent.
+	header="$(grep -v '^#' "$msg_file" | grep -m1 -v '^[[:space:]]*$' || true)"
+	case "$header" in
+	Merge\ * | Revert\ * | fixup!\ * | squash!\ * | amend!\ *) ;;
+	*)
+		if ! printf '%s\n' "$header" | grep -Eq '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([^)]+\))?!?: [^ ].*$' ||
+			[ "${#header}" -gt 100 ]; then
+			echo "commit-msg: header must be '<type>(<scope>): <subject>', at most 100 chars" >&2
+			exit 1
 		fi
-		if printf '%s\n' "$rest" | grep -v '://' | grep -Eq ".{$((max_length + 1))}"; then
-			fail "body and footer lines must be at most $max_length characters"
-		fi
-	fi
-
-	if [ -n "$errors" ]; then
-		printf 'commit-msg: invalid message "%s"%s\n' "$header" "$errors" >&2
-		exit 1
-	fi
+		;;
+	esac
 fi
 
 branch="$(git rev-parse --abbrev-ref HEAD)"
