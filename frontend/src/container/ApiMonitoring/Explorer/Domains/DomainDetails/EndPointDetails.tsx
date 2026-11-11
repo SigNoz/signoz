@@ -3,6 +3,7 @@ import { useQueries } from 'react-query';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { ENTITY_VERSION_V5 } from 'constants/app';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
 	extractPortAndEndpoint,
@@ -100,6 +101,10 @@ function EndPointDetails({
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
 			enabled: !!payload,
+			// Keeps the table's rows, and so its height, while a new filter loads
+			keepPreviousData:
+				END_POINT_DETAILS_QUERY_KEYS_ARRAY[index] ===
+				REACT_QUERY_KEY.GET_ENDPOINT_DEPENDENT_SERVICES_DATA,
 		})),
 	);
 

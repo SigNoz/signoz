@@ -1,5 +1,6 @@
 import { useQueries } from 'react-query';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { ENDPOINT_STATS_EXPRESSION_KEY } from 'container/ApiMonitoring/filterParamKeys';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
@@ -27,13 +28,9 @@ jest.mock('react-query', () => ({
 }));
 
 jest.mock('container/ApiMonitoring/utils', () => ({
-	END_POINT_DETAILS_QUERY_KEYS_ARRAY: [
-		'endPointMetricsData',
-		'endPointStatusCodeData',
-		'endPointDependentServicesData',
-		'endPointStatusCodeBarChartsData',
-		'endPointStatusCodeLatencyBarChartsData',
-	],
+	END_POINT_DETAILS_QUERY_KEYS_ARRAY: jest.requireActual(
+		'container/ApiMonitoring/utils',
+	).END_POINT_DETAILS_QUERY_KEYS_ARRAY,
 	extractPortAndEndpoint: jest.fn(),
 	getHttpUrlExpression: jest.requireActual('container/ApiMonitoring/utils')
 		.getHttpUrlExpression,
@@ -321,6 +318,23 @@ describe('EndPointDetails Component', () => {
 			'test-domain',
 			'/api/test',
 			expect.stringContaining(`${SPAN_ATTRIBUTES.HTTP_URL} = '/api/test'`),
+		);
+	});
+
+	it('keeps the previous dependent services while a new filter loads', () => {
+		renderStats(<EndPointDetails {...mockProps} />);
+
+		const queries = jest.mocked(useQueries).mock.calls[0][0];
+		expect(
+			queries.map(({ queryKey, keepPreviousData }) => [
+				(queryKey as unknown[])[0],
+				keepPreviousData,
+			]),
+		).toStrictEqual(
+			END_POINT_DETAILS_QUERY_KEYS_ARRAY.map((key) => [
+				key,
+				key === REACT_QUERY_KEY.GET_ENDPOINT_DEPENDENT_SERVICES_DATA,
+			]),
 		);
 	});
 
