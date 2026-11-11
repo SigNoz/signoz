@@ -12,3 +12,9 @@ export const buildRoleUpdatePermission = (id: string): BrandedPermission =>
 	buildPermission('update', `role:${id}`);
 export const buildRoleDeletePermission = (id: string): BrandedPermission =>
 	buildPermission('delete', `role:${id}`);
+
+// Wildcard role permissions — used alongside SA-level checks for role assign/revoke guards.
+// Backend requires both serviceaccount:attach AND role:attach to assign a role to a SA,
+// and serviceaccount:detach AND role:detach to remove a role from a SA.
+export const RoleAttachWildcardPermission = buildPermission('attach', 'role:*');
+export const RoleDetachWildcardPermission = buildPermission('detach', 'role:*');
