@@ -54,6 +54,6 @@ func traceAggregate(name string) telemetrytypes.TelemetryFieldKey {
 		Name:          name,
 		Signal:        telemetrytypes.SignalTraces,
 		FieldContext:  telemetrytypes.FieldContextTrace,
-		FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+		FieldDataType: telemetrytypes.FieldDataTypeNumber,
 	}
 }

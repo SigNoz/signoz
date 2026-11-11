@@ -260,7 +260,7 @@ func (s *FieldKeySelector) MatchesKey(key *TelemetryFieldKey) bool {
 		return false
 	}
 
-	if s.FieldDataType != FieldDataTypeUnspecified && s.FieldDataType != key.FieldDataType {
+	if s.FieldDataType != FieldDataTypeUnspecified && !sameDataTypeFamily(s.FieldDataType, key.FieldDataType) {
 		return false
 	}
 
