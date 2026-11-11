@@ -12967,22 +12967,9 @@ export interface RuletypesRuleConditionDTO {
 	 */
 	alertOnAbsent?: boolean;
 	/**
-	 * @type string
-	 * @description anomaly_rule only: the anomaly detection algorithm. The supported value is standard.
-	 */
-	algorithm?: string;
-	/**
 	 * @description The queries whose result is compared against the thresholds.
 	 */
 	compositeQuery: RuletypesAlertCompositeQueryDTO;
-	/**
-	 * @description schemaVersion v1 only: which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the legacy codes as strings, '1' to '5'. Required for v1; v2alpha1 sets matchType on each threshold.
-	 */
-	matchType?: RuletypesMatchTypeDTO;
-	/**
-	 * @description schemaVersion v1 only: how the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the legacy codes as strings, '1' to '7'. Required for v1; v2alpha1 sets op on each threshold.
-	 */
-	op?: RuletypesCompareOperatorDTO;
 	/**
 	 * @type boolean
 	 * @description Whether a series is skipped until it has at least requiredNumPoints points in the window. Defaults to false.
@@ -13002,17 +12989,6 @@ export interface RuletypesRuleConditionDTO {
 	 * @description The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery.
 	 */
 	selectedQueryName: string;
-	/**
-	 * @type number,null
-	 * @format double
-	 * @description schemaVersion v1 only: the value compared against, in targetUnit. Required for v1; v2alpha1 sets target on each threshold.
-	 */
-	target?: number | null;
-	/**
-	 * @type string
-	 * @description schemaVersion v1 only: the unit of target, such as percent or ms. Converted to compositeQuery.unit before comparison when the two differ.
-	 */
-	targetUnit?: string;
 	/**
 	 * @description The thresholds to evaluate, as a kind and spec.
 	 */
@@ -13049,19 +13025,9 @@ export interface RuletypesPostableRuleDTO {
 	 */
 	disabled?: boolean;
 	/**
-	 * @type string
-	 * @description The lookback window as a Go duration such as 5m. Only read when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	evalWindow?: string;
-	/**
 	 * @description The evaluation window, as a kind and spec.
 	 */
 	evaluation: RuletypesEvaluationEnvelopeDTO;
-	/**
-	 * @type string
-	 * @description How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	frequency?: string;
 	/**
 	 * @type object
 	 * @description Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
@@ -13071,11 +13037,6 @@ export interface RuletypesPostableRuleDTO {
 	 * @description Grouping, re-notification and routing behaviour.
 	 */
 	notificationSettings: RuletypesNotificationSettingsDTO;
-	/**
-	 * @type array
-	 * @description The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
-	 */
-	preferredChannels?: string[];
 	/**
 	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries.
 	 */
@@ -13161,19 +13122,9 @@ export interface RuletypesRuleDTO {
 	 */
 	disabled?: boolean;
 	/**
-	 * @type string
-	 * @description The lookback window as a Go duration such as 5m. Only read when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	evalWindow?: string;
-	/**
 	 * @description The evaluation window, as a kind and spec.
 	 */
 	evaluation: RuletypesEvaluationEnvelopeDTO;
-	/**
-	 * @type string
-	 * @description How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	frequency?: string;
 	/**
 	 * @type string
 	 * @description The unique identifier of the rule.
@@ -13188,11 +13139,6 @@ export interface RuletypesRuleDTO {
 	 * @description Grouping, re-notification and routing behaviour.
 	 */
 	notificationSettings: RuletypesNotificationSettingsDTO;
-	/**
-	 * @type array
-	 * @description The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
-	 */
-	preferredChannels?: string[];
 	/**
 	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries.
 	 */
@@ -16777,17 +16723,6 @@ export type UpdateRuleViewPathParameters = {
 };
 export type UpdateRuleView200 = {
 	data: RuletypesRuleViewDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type ListRules200 = {
-	/**
-	 * @type array
-	 */
-	data: RuletypesRuleDTO[];
 	/**
 	 * @type string
 	 */

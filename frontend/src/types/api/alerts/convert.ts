@@ -79,10 +79,6 @@ export function toPostableRuleDTO(
 		condition: local.condition,
 		annotations: local.annotations,
 		labels: stripUndefinedLabels(local.labels),
-		evalWindow: (local as unknown as RuletypesPostableRuleDTO).evalWindow,
-		frequency: (local as unknown as RuletypesPostableRuleDTO).frequency,
-		preferredChannels: (local as unknown as RuletypesPostableRuleDTO)
-			.preferredChannels,
 		notificationSettings: local.notificationSettings,
 		evaluation: local.evaluation,
 		schemaVersion: local.schemaVersion,
