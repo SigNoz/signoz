@@ -38,8 +38,7 @@ JS_BUILD_CONTEXT 				= $(SRC)/frontend
 ##############################################################
 # git hooks
 ##############################################################
-# Hooks live outside the working tree, so they cannot be checked in. Expanded
-# while this file is parsed, which wires them up on any make invocation.
+# Expanded at parse time, so any make target installs the hooks.
 GITHOOKS_INSTALL := $(shell sh $(SRC)/.githooks/install >/dev/null 2>&1 || true)
 
 ##############################################################

@@ -2,21 +2,32 @@
 
 set -e
 
-staged_go_files=$(git diff --cached --name-only --diff-filter=ACM -- '*.go')
-if [ -n "$staged_go_files" ]; then
-	if command -v gofmt >/dev/null 2>&1; then
-		echo "$staged_go_files" | xargs gofmt -l -w
-		echo "$staged_go_files" | xargs git add
-	else
-		echo "pre-commit: gofmt not found, skipping go formatting" >&2
+IFS='
+'
+
+go_files=$(git diff --cached --name-only --diff-filter=ACM -- '*.go')
+if [ -n "$go_files" ] && command -v gofmt >/dev/null 2>&1; then
+	partially_staged=""
+	for f in $go_files; do
+		[ -n "$(git show ":$f" | gofmt -l)" ] || continue
+		if git diff --quiet -- "$f"; then
+			gofmt -w "$f"
+			git add -- "$f"
+		else
+			partially_staged="$partially_staged
+  $f"
+		fi
+	done
+	if [ -n "$partially_staged" ]; then
+		echo "pre-commit: unformatted and partially staged, run gofmt -w and restage:$partially_staged" >&2
+		exit 1
 	fi
 fi
 
-staged_web_files=$(git diff --cached --name-only --diff-filter=ACM -- 'frontend/*')
-if [ -n "$staged_web_files" ]; then
-	if [ -d frontend/node_modules ] && command -v pnpm >/dev/null 2>&1; then
-		cd frontend && pnpm lint-staged
-	else
-		echo "pre-commit: frontend dependencies not installed, skipping lint-staged" >&2
+if [ -n "$(git diff --cached --name-only --diff-filter=ACM -- frontend/)" ]; then
+	if [ ! -d frontend/node_modules ] || ! command -v pnpm >/dev/null 2>&1; then
+		echo "pre-commit: frontend changes need dependencies, run: cd frontend && pnpm install" >&2
+		exit 1
 	fi
+	(cd frontend && pnpm exec lint-staged)
 fi

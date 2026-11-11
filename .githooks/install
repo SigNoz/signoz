@@ -1,20 +1,18 @@
 #!/bin/sh
-# Installs dispatcher stubs into the repository's hooks directory. Safe to run
-# repeatedly; invoked automatically from the Makefile and from the frontend
-# postinstall so no manual setup is required.
+# Idempotent; run by make and the frontend postinstall.
 
 set -e
 
 git rev-parse --git-dir >/dev/null 2>&1 || exit 0
 
-# core.hooksPath shadows the hooks directory git would otherwise use, and an
-# absolute value leaks one worktree's path into every other worktree.
-if [ -n "$(git config --get core.hooksPath 2>/dev/null || true)" ]; then
-	git config --unset-all core.hooksPath 2>/dev/null || true
+git config --local --unset-all core.hooksPath 2>/dev/null || true
+
+# A global/system core.hooksPath would receive the stubs and shadow .git/hooks.
+if global_path="$(git config --get core.hooksPath)"; then
+	echo "githooks: core.hooksPath=$global_path is set outside this repo; hooks not installed" >&2
+	exit 0
 fi
 
-# Resolves to the common directory for linked worktrees, which is where git
-# looks for hooks regardless of which worktree the commit happens in.
 hooks_dir="$(git rev-parse --git-path hooks)"
 mkdir -p "$hooks_dir"
 

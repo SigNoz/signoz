@@ -2,10 +2,23 @@
 
 set -e
 
+msg_file="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+
 if [ -d frontend/node_modules ] && command -v pnpm >/dev/null 2>&1; then
-	(cd frontend && pnpm run commitlint --edit "$1")
+	(cd frontend && pnpm exec commitlint --edit "$msg_file")
 else
-	echo "commit-msg: frontend dependencies not installed, skipping commitlint" >&2
+	# Header-only fallback for @commitlint/config-conventional when node_modules is absent.
+	header="$(grep -v '^#' "$msg_file" | grep -m1 -v '^[[:space:]]*$' || true)"
+	case "$header" in
+	Merge\ * | Revert\ * | fixup!\ * | squash!\ * | amend!\ *) ;;
+	*)
+		if ! printf '%s\n' "$header" | grep -Eq '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([^)]+\))?!?: [^ ].*$' ||
+			[ "${#header}" -gt 100 ]; then
+			echo "commit-msg: header must be '<type>(<scope>): <subject>', at most 100 chars" >&2
+			exit 1
+		fi
+		;;
+	esac
 fi
 
 branch="$(git rev-parse --abbrev-ref HEAD)"
