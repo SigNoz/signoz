@@ -58,7 +58,7 @@ func newTestEvent(resource coretypes.Resource, action coretypes.Verb, body strin
 	return audittypes.AuditEvent{
 		Timestamp: time.Now(),
 		Body:      body,
-		EventName: audittypes.NewEventName(resource.Kind(), action),
+		EventName: audittypes.NewEventName(action),
 		AuditAttributes: audittypes.AuditAttributes{
 			Action:  action,
 			Outcome: audittypes.OutcomeSuccess,
