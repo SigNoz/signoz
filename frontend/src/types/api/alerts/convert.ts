@@ -76,10 +76,6 @@ export function toPostableRuleDTO(
 		condition: local.condition,
 		annotations: local.annotations,
 		labels: stripUndefinedLabels(local.labels),
-		evalWindow: (local as unknown as RuletypesPostableRuleDTO).evalWindow,
-		frequency: (local as unknown as RuletypesPostableRuleDTO).frequency,
-		preferredChannels: (local as unknown as RuletypesPostableRuleDTO)
-			.preferredChannels,
 		notificationSettings: local.notificationSettings,
 		evaluation: local.evaluation,
 		schemaVersion: local.schemaVersion,
@@ -101,9 +97,6 @@ export function toPostableRuleDTOFromAlertDef(
 		condition: local.condition,
 		annotations: local.annotations,
 		labels: stripUndefinedLabels(local.labels),
-		evalWindow: local.evalWindow,
-		frequency: local.frequency,
-		preferredChannels: local.preferredChannels,
 		notificationSettings: (local as unknown as RuletypesPostableRuleDTO)
 			.notificationSettings,
 		evaluation: (local as unknown as RuletypesPostableRuleDTO).evaluation,
