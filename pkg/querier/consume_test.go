@@ -100,7 +100,7 @@ func TestUnwrapVariant(t *testing.T) {
 	scopeCol := jsonColumn(map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": scopeAttrs})
 	resourceAttrs := chcol.NewJSON()
 	resourceAttrs.SetValueAtPath("service.name", "signoz")
-	resourceAttrs.SetValueAtPath("signoz.audit.resource.kind", "role")
+	resourceAttrs.SetValueAtPath("signoz.resource.kind", "role")
 	resourceCol := jsonColumn(map[string]any{"attributes": resourceAttrs})
 
 	testCases := []struct {
@@ -116,7 +116,7 @@ func TestUnwrapVariant(t *testing.T) {
 		{name: "AttributesColumnFlat", column: "attributes", input: jsonCol, want: map[string]any{"level": "error", "attrs.code": float64(500)}},
 		{name: "AttributesColumnDropsNullPaths", column: "attributes", input: nullCol, want: map[string]any{"level": "error"}},
 		{name: "ScopeColumnFlat", column: "scope", input: scopeCol, want: map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": map[string]any{"lib.lang": "go"}}},
-		{name: "ResourceColumnFlat", column: "resource", input: resourceCol, want: map[string]any{"attributes": map[string]any{"service.name": "signoz", "signoz.audit.resource.kind": "role"}}},
+		{name: "ResourceColumnFlat", column: "resource", input: resourceCol, want: map[string]any{"attributes": map[string]any{"service.name": "signoz", "signoz.resource.kind": "role"}}},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {

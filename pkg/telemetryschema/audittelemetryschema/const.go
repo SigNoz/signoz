@@ -84,14 +84,11 @@ var (
 
 	// ResourceFields are the resource keys the audit writer emits, so a bare name resolves to resource.
 	ResourceFields = map[string]telemetrytypes.TelemetryFieldKey{
-		"service.name":                        newResourceField("service.name"),
-		"service.version":                     newResourceField("service.version"),
-		"signoz.audit.resource.kind":          newResourceField("signoz.audit.resource.kind"),
-		"signoz.audit.resource.id":            newResourceField("signoz.audit.resource.id"),
-		"signoz.audit.resource.object":        newResourceField("signoz.audit.resource.object"),
-		"signoz.audit.resource.target.kind":   newResourceField("signoz.audit.resource.target.kind"),
-		"signoz.audit.resource.target.id":     newResourceField("signoz.audit.resource.target.id"),
-		"signoz.audit.resource.target.object": newResourceField("signoz.audit.resource.target.object"),
+		"service.name":           newResourceField("service.name"),
+		"service.version":        newResourceField("service.version"),
+		"signoz.resource.kind":   newResourceField("signoz.resource.kind"),
+		"signoz.resource.id":     newResourceField("signoz.resource.id"),
+		"signoz.resource.object": newResourceField("signoz.resource.object"),
 	}
 
 	DefaultSortingOrder = []qbtypes.OrderBy{

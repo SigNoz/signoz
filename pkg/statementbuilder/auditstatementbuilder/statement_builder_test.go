@@ -34,16 +34,15 @@ func auditFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 
 	return map[string][]*telemetrytypes.TelemetryFieldKey{
 		"service.name":                 {key("service.name", res, str)},
-		"signoz.audit.action":          {key("signoz.audit.action", attr, str)},
+		"signoz.audit.verb":            {key("signoz.audit.verb", attr, str)},
 		"signoz.audit.outcome":         {key("signoz.audit.outcome", attr, str)},
-		"signoz.audit.principal.email": {key("signoz.audit.principal.email", attr, str)},
-		"signoz.audit.principal.id":    {key("signoz.audit.principal.id", attr, str)},
-		"signoz.audit.principal.type":  {key("signoz.audit.principal.type", attr, str)},
-		"signoz.audit.resource.kind":   {key("signoz.audit.resource.kind", res, str)},
-		"signoz.audit.resource.id":     {key("signoz.audit.resource.id", res, str)},
+		"signoz.principal.email":       {key("signoz.principal.email", attr, str)},
+		"signoz.principal.id":          {key("signoz.principal.id", attr, str)},
+		"signoz.principal.type":        {key("signoz.principal.type", attr, str)},
+		"signoz.resource.kind":         {key("signoz.resource.kind", res, str)},
+		"signoz.resource.id":           {key("signoz.resource.id", res, str)},
 		"signoz.audit.action_category": {key("signoz.audit.action_category", attr, str)},
-		"signoz.audit.error.type":      {key("signoz.audit.error.type", attr, str)},
-		"signoz.audit.error.code":      {key("signoz.audit.error.code", attr, str)},
+		"exception.type":               {key("exception.type", attr, str)},
 		"http.request.method":          {key("http.request.method", attr, str)},
 		"http.response.status_code":    {key("http.response.status_code", attr, i64)},
 	}
@@ -87,12 +86,12 @@ func TestStatementBuilder(t *testing.T) {
 				Signal: telemetrytypes.SignalLogs,
 				Source: telemetrytypes.SourceAudit,
 				Filter: &qbtypes.Filter{
-					Expression: "signoz.audit.principal.id = '019a-1234-abcd-5678'",
+					Expression: "signoz.principal.id = '019a-1234-abcd-5678'",
 				},
 				Limit: 100,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE (attributes.`signoz.audit.principal.id`::String = ? AND attributes.`signoz.audit.principal.id` IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE (attributes.`signoz.principal.id`::String = ? AND attributes.`signoz.principal.id` IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"019a-1234-abcd-5678", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
@@ -121,13 +120,13 @@ func TestStatementBuilder(t *testing.T) {
 				Signal: telemetrytypes.SignalLogs,
 				Source: telemetrytypes.SourceAudit,
 				Filter: &qbtypes.Filter{
-					Expression: "signoz.audit.resource.kind = 'dashboard' AND signoz.audit.resource.id = '019b-5678-efgh-9012'",
+					Expression: "signoz.resource.kind = 'dashboard' AND signoz.resource.id = '019b-5678-efgh-9012'",
 				},
 				Limit: 100,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE ((simpleJSONExtractString(labels, 'signoz.audit.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?) AND (simpleJSONExtractString(labels, 'signoz.audit.resource.id') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"dashboard", "%signoz.audit.resource.kind%", "%signoz.audit.resource.kind\":\"dashboard%", "019b-5678-efgh-9012", "%signoz.audit.resource.id%", "%signoz.audit.resource.id\":\"019b-5678-efgh-9012%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE ((simpleJSONExtractString(labels, 'signoz.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?) AND (simpleJSONExtractString(labels, 'signoz.resource.id') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"dashboard", "%signoz.resource.kind%", "%signoz.resource.kind\":\"dashboard%", "019b-5678-efgh-9012", "%signoz.resource.id%", "%signoz.resource.id\":\"019b-5678-efgh-9012%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
 		// List: all dashboard deletions (compliance — resource.kind + action AND)
@@ -138,13 +137,13 @@ func TestStatementBuilder(t *testing.T) {
 				Signal: telemetrytypes.SignalLogs,
 				Source: telemetrytypes.SourceAudit,
 				Filter: &qbtypes.Filter{
-					Expression: "signoz.audit.resource.kind = 'dashboard' AND signoz.audit.action = 'delete'",
+					Expression: "signoz.resource.kind = 'dashboard' AND signoz.audit.verb = 'delete'",
 				},
 				Limit: 100,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE (simpleJSONExtractString(labels, 'signoz.audit.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (attributes.`signoz.audit.action`::String = ? AND attributes.`signoz.audit.action` IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"dashboard", "%signoz.audit.resource.kind%", "%signoz.audit.resource.kind\":\"dashboard%", uint64(1747945619), uint64(1747983448), "delete", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE (simpleJSONExtractString(labels, 'signoz.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (attributes.`signoz.audit.verb`::String = ? AND attributes.`signoz.audit.verb` IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"dashboard", "%signoz.resource.kind%", "%signoz.resource.kind\":\"dashboard%", uint64(1747945619), uint64(1747983448), "delete", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
 		// List: all actions by service accounts
@@ -155,12 +154,12 @@ func TestStatementBuilder(t *testing.T) {
 				Signal: telemetrytypes.SignalLogs,
 				Source: telemetrytypes.SourceAudit,
 				Filter: &qbtypes.Filter{
-					Expression: "signoz.audit.principal.type = 'service_account'",
+					Expression: "signoz.principal.type = 'service_account'",
 				},
 				Limit: 100,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE (attributes.`signoz.audit.principal.type`::String = ? AND attributes.`signoz.audit.principal.type` IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE (attributes.`signoz.principal.type`::String = ? AND attributes.`signoz.principal.type` IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"service_account", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
@@ -173,14 +172,14 @@ func TestStatementBuilder(t *testing.T) {
 				Source:       telemetrytypes.SourceAudit,
 				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
 				Filter: &qbtypes.Filter{
-					Expression: "signoz.audit.outcome = 'failure' AND signoz.audit.action = 'update'",
+					Expression: "signoz.audit.outcome = 'failure' AND signoz.audit.verb = 'update'",
 				},
 				Aggregations: []qbtypes.LogAggregation{
 					{Expression: "count()"},
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT count() AS __result_0 FROM signoz_audit.distributed_logs WHERE ((attributes.`signoz.audit.outcome`::String = ? AND attributes.`signoz.audit.outcome` IS NOT NULL) AND (attributes.`signoz.audit.action`::String = ? AND attributes.`signoz.audit.action` IS NOT NULL)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY __result_0 DESC",
+				Query: "SELECT count() AS __result_0 FROM signoz_audit.distributed_logs WHERE ((attributes.`signoz.audit.outcome`::String = ? AND attributes.`signoz.audit.outcome` IS NOT NULL) AND (attributes.`signoz.audit.verb`::String = ? AND attributes.`signoz.audit.verb` IS NOT NULL)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY __result_0 DESC",
 				Args:  []any{"failure", "update", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
@@ -199,12 +198,12 @@ func TestStatementBuilder(t *testing.T) {
 					Expression: "signoz.audit.outcome = 'failure'",
 				},
 				GroupBy: []qbtypes.GroupByKey{
-					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.audit.principal.email"}},
+					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.principal.email"}},
 				},
 				Limit: 5,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __limit_cte AS (SELECT toString(multiIf(attributes.`signoz.audit.principal.email` IS NOT NULL, attributes.`signoz.audit.principal.email`::String, NULL)) AS `signoz.audit.principal.email`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE (attributes.`signoz.audit.outcome`::String = ? AND attributes.`signoz.audit.outcome` IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `signoz.audit.principal.email` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toString(multiIf(attributes.`signoz.audit.principal.email` IS NOT NULL, attributes.`signoz.audit.principal.email`::String, NULL)) AS `signoz.audit.principal.email`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE (attributes.`signoz.audit.outcome`::String = ? AND attributes.`signoz.audit.outcome` IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`signoz.audit.principal.email`) GLOBAL IN (SELECT `signoz.audit.principal.email` FROM __limit_cte) GROUP BY ts, `signoz.audit.principal.email`",
+				Query: "WITH __limit_cte AS (SELECT toString(multiIf(attributes.`signoz.principal.email` IS NOT NULL, attributes.`signoz.principal.email`::String, NULL)) AS `signoz.principal.email`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE (attributes.`signoz.audit.outcome`::String = ? AND attributes.`signoz.audit.outcome` IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `signoz.principal.email` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toString(multiIf(attributes.`signoz.principal.email` IS NOT NULL, attributes.`signoz.principal.email`::String, NULL)) AS `signoz.principal.email`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE (attributes.`signoz.audit.outcome`::String = ? AND attributes.`signoz.audit.outcome` IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`signoz.principal.email`) GLOBAL IN (SELECT `signoz.principal.email` FROM __limit_cte) GROUP BY ts, `signoz.principal.email`",
 				Args:  []any{"failure", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 5, "failure", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
@@ -257,11 +256,11 @@ func TestStatementBuilder_WithoutMetadata(t *testing.T) {
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
 				Source: telemetrytypes.SourceAudit,
-				Filter: &qbtypes.Filter{Expression: "resource.signoz.audit.resource.kind = 'dashboard'"},
+				Filter: &qbtypes.Filter{Expression: "resource.signoz.resource.kind = 'dashboard'"},
 				Limit:  20,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE (resource.attributes.`signoz.audit.resource.kind`::String = ? AND resource.attributes.`signoz.audit.resource.kind` IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE (resource.attributes.`signoz.resource.kind`::String = ? AND resource.attributes.`signoz.resource.kind` IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"dashboard", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 20},
 			},
 		},
@@ -313,14 +312,14 @@ func TestStatementBuilder_WithoutMetadata(t *testing.T) {
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
 				Source: telemetrytypes.SourceAudit,
-				Filter: &qbtypes.Filter{Expression: "signoz.audit.error.code EXISTS"},
+				Filter: &qbtypes.Filter{Expression: "exception.type EXISTS"},
 				Order: []qbtypes.OrderBy{
 					{Key: qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp"}}, Direction: qbtypes.OrderDirectionDesc},
 				},
 				Limit: 60,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE attributes.`signoz.audit.error.code` IS NOT NULL AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY timestamp desc LIMIT ?",
+				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE attributes.`exception.type` IS NOT NULL AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY timestamp desc LIMIT ?",
 				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 60},
 			},
 		},
@@ -331,14 +330,14 @@ func TestStatementBuilder_WithoutMetadata(t *testing.T) {
 				Signal: telemetrytypes.SignalLogs,
 				Source: telemetrytypes.SourceAudit,
 				SelectFields: []telemetrytypes.TelemetryFieldKey{
-					{Name: "signoz.audit.principal.email", FieldContext: telemetrytypes.FieldContextAttribute},
+					{Name: "signoz.principal.email", FieldContext: telemetrytypes.FieldContextAttribute},
 					{Name: "service.name", FieldContext: telemetrytypes.FieldContextResource},
 					{Name: "body"},
 				},
 				Limit: 70,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT timestamp, id, multiIf(attributes.`signoz.audit.principal.email` IS NOT NULL, attributes.`signoz.audit.principal.email`::String, NULL) AS `signoz.audit.principal.email`, multiIf(resource.attributes.`service.name` IS NOT NULL, resource.attributes.`service.name`::String, NULL) AS `service.name`, body.message AS `body` FROM signoz_audit.distributed_logs WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "SELECT timestamp, id, multiIf(attributes.`signoz.principal.email` IS NOT NULL, attributes.`signoz.principal.email`::String, NULL) AS `signoz.principal.email`, multiIf(resource.attributes.`service.name` IS NOT NULL, resource.attributes.`service.name`::String, NULL) AS `service.name`, body.message AS `body` FROM signoz_audit.distributed_logs WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 70},
 			},
 		},
@@ -350,11 +349,11 @@ func TestStatementBuilder_WithoutMetadata(t *testing.T) {
 				Source:       telemetrytypes.SourceAudit,
 				Aggregations: []qbtypes.LogAggregation{{Expression: "count()"}},
 				GroupBy: []qbtypes.GroupByKey{
-					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.audit.action"}},
+					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.audit.verb"}},
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT toString(multiIf(attributes.`signoz.audit.action` IS NOT NULL, attributes.`signoz.audit.action`::String, NULL)) AS `signoz.audit.action`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `signoz.audit.action` ORDER BY __result_0 DESC",
+				Query: "SELECT toString(multiIf(attributes.`signoz.audit.verb` IS NOT NULL, attributes.`signoz.audit.verb`::String, NULL)) AS `signoz.audit.verb`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `signoz.audit.verb` ORDER BY __result_0 DESC",
 				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
@@ -390,12 +389,12 @@ func TestStatementBuilder_KnownResourceFields(t *testing.T) {
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
 				Source: telemetrytypes.SourceAudit,
-				Filter: &qbtypes.Filter{Expression: "signoz.audit.resource.kind = 'role'"},
+				Filter: &qbtypes.Filter{Expression: "signoz.resource.kind = 'role'"},
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE (simpleJSONExtractString(labels, 'signoz.audit.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{"role", "%signoz.audit.resource.kind%", "%signoz.audit.resource.kind\":\"role%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE (simpleJSONExtractString(labels, 'signoz.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body, event_name, attributes, resource, scope FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"role", "%signoz.resource.kind%", "%signoz.resource.kind\":\"role%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -406,11 +405,11 @@ func TestStatementBuilder_KnownResourceFields(t *testing.T) {
 				Source:       telemetrytypes.SourceAudit,
 				Aggregations: []qbtypes.LogAggregation{{Expression: "count()"}},
 				GroupBy: []qbtypes.GroupByKey{
-					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.audit.resource.kind"}},
+					{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.resource.kind"}},
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT toString(multiIf(resource.attributes.`signoz.audit.resource.kind` IS NOT NULL, resource.attributes.`signoz.audit.resource.kind`::String, NULL)) AS `signoz.audit.resource.kind`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `signoz.audit.resource.kind` ORDER BY __result_0 DESC",
+				Query: "SELECT toString(multiIf(resource.attributes.`signoz.resource.kind` IS NOT NULL, resource.attributes.`signoz.resource.kind`::String, NULL)) AS `signoz.resource.kind`, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `signoz.resource.kind` ORDER BY __result_0 DESC",
 				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
@@ -444,13 +443,13 @@ func TestStatementBuilderHeatmap(t *testing.T) {
 				Source:        telemetrytypes.SourceAudit,
 				StepInterval:  qbtypes.Step{Duration: 60 * time.Second},
 				Aggregations:  []qbtypes.LogAggregation{{Expression: "http.response.status_code"}},
-				Filter:        &qbtypes.Filter{Expression: "signoz.audit.resource.kind = 'dashboard'"},
-				GroupBy:       []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.audit.action"}}},
+				Filter:        &qbtypes.Filter{Expression: "signoz.resource.kind = 'dashboard'"},
+				GroupBy:       []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.audit.verb"}}},
 				BucketOptions: &qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLinear, Spec: qbtypes.LinearBucketsSpec{MaxValue: 500, NumBuckets: 5}},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE ((simpleJSONExtractString(labels, 'signoz.audit.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), ifNull(toFloat64OrNull(attributes.`http.response.status_code`::String), 0) AS __bucket_value SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toString(multiIf(attributes.`signoz.audit.action` IS NOT NULL, attributes.`signoz.audit.action`::String, NULL)) AS `signoz.audit.action`, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value > 500, toFloat64(500), (least(greatest(ceil(__bucket_value * 5 / 500), 1), 5) - 1) * 500 / 5) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value > 500, toFloat64('+Inf'), least(greatest(ceil(__bucket_value * 5 / 500), 1), 5) * 500 / 5) AS __bucket_max, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND toFloat64OrNull(attributes.`http.response.status_code`::String) IS NOT NULL AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, `signoz.audit.action`, __bucket_min, __bucket_max",
-				Args:  []any{"dashboard", "%signoz.audit.resource.kind%", "%signoz.audit.resource.kind\":\"dashboard%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE ((simpleJSONExtractString(labels, 'signoz.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), ifNull(toFloat64OrNull(attributes.`http.response.status_code`::String), 0) AS __bucket_value SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toString(multiIf(attributes.`signoz.audit.verb` IS NOT NULL, attributes.`signoz.audit.verb`::String, NULL)) AS `signoz.audit.verb`, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value > 500, toFloat64(500), (least(greatest(ceil(__bucket_value * 5 / 500), 1), 5) - 1) * 500 / 5) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value > 500, toFloat64('+Inf'), least(greatest(ceil(__bucket_value * 5 / 500), 1), 5) * 500 / 5) AS __bucket_max, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND toFloat64OrNull(attributes.`http.response.status_code`::String) IS NOT NULL AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, `signoz.audit.verb`, __bucket_min, __bucket_max",
+				Args:  []any{"dashboard", "%signoz.resource.kind%", "%signoz.resource.kind\":\"dashboard%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
 		{
@@ -461,13 +460,13 @@ func TestStatementBuilderHeatmap(t *testing.T) {
 				Source:        telemetrytypes.SourceAudit,
 				StepInterval:  qbtypes.Step{Duration: 60 * time.Second},
 				Aggregations:  []qbtypes.LogAggregation{{Expression: "http.response.status_code"}},
-				Filter:        &qbtypes.Filter{Expression: "signoz.audit.resource.kind = 'dashboard'"},
-				GroupBy:       []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.audit.action"}}},
+				Filter:        &qbtypes.Filter{Expression: "signoz.resource.kind = 'dashboard'"},
+				GroupBy:       []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "signoz.audit.verb"}}},
 				BucketOptions: &qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLinear, Spec: qbtypes.LinearBucketsSpec{MaxValue: 500, NumBuckets: 5}},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE ((simpleJSONExtractString(labels, 'signoz.audit.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), ifNull(toFloat64OrNull(attributes.`http.response.status_code`::String), 0) AS __bucket_value SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toString(multiIf(attributes.`signoz.audit.action` IS NOT NULL, attributes.`signoz.audit.action`::String, NULL)) AS `signoz.audit.action`, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value > 500, toFloat64(500), (least(greatest(ceil(__bucket_value * 5 / 500), 1), 5) - 1) * 500 / 5) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value > 500, toFloat64('+Inf'), least(greatest(ceil(__bucket_value * 5 / 500), 1), 5) * 500 / 5) AS __bucket_max, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND toFloat64OrNull(attributes.`http.response.status_code`::String) IS NOT NULL AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, `signoz.audit.action`, __bucket_min, __bucket_max",
-				Args:  []any{"dashboard", "%signoz.audit.resource.kind%", "%signoz.audit.resource.kind\":\"dashboard%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE ((simpleJSONExtractString(labels, 'signoz.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), ifNull(toFloat64OrNull(attributes.`http.response.status_code`::String), 0) AS __bucket_value SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toString(multiIf(attributes.`signoz.audit.verb` IS NOT NULL, attributes.`signoz.audit.verb`::String, NULL)) AS `signoz.audit.verb`, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value > 500, toFloat64(500), (least(greatest(ceil(__bucket_value * 5 / 500), 1), 5) - 1) * 500 / 5) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value > 500, toFloat64('+Inf'), least(greatest(ceil(__bucket_value * 5 / 500), 1), 5) * 500 / 5) AS __bucket_max, count() AS __result_0 FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND toFloat64OrNull(attributes.`http.response.status_code`::String) IS NOT NULL AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, `signoz.audit.verb`, __bucket_min, __bucket_max",
+				Args:  []any{"dashboard", "%signoz.resource.kind%", "%signoz.resource.kind\":\"dashboard%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
 	}
