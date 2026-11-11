@@ -296,6 +296,22 @@ Description: Request rate exceeded 10k/s`},
 			wantBody:  []string{"500 | 500 | 500 | from-label | annotations: 0"},
 		},
 		{
+			name: "rule threshold op and recovery value read their private annotations",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighErrors"},
+					map[string]string{ruletypes.AnnotationThresholdValue: "500", ruletypes.AnnotationCompareOp: "above", ruletypes.AnnotationRecoveryThreshold: "400"},
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "$rule.name $rule.threshold.op $rule.threshold.value",
+				BodyTemplate:  "$rule.threshold.op $rule.threshold.value (recovers at $rule.threshold.recovery_value), annotations: {{ len $annotations }}",
+			},
+			wantTitle: "HighErrors above 500",
+			wantBody:  []string{"above 500 (recovers at 400), annotations: 0"},
+		},
+		{
 			name: "recovering annotation sets status, flags and counts with firing winning the title",
 			alerts: []*types.Alert{
 				createAlert(

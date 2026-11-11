@@ -113,8 +113,9 @@ type RuleInfo struct {
 
 // Threshold describes the breach condition.
 type Threshold struct {
-	Value string `json:"value" mapstructure:"value"`
-	Op    string `json:"op"    mapstructure:"op"`
+	Value         string `json:"value"         mapstructure:"value"`
+	Op            string `json:"op"            mapstructure:"op"`
+	RecoveryValue string `json:"recoveryValue" mapstructure:"recovery_value"`
 }
 
 // LinkInfo groups a single URL so templates can reference $log.url and

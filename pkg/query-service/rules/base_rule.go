@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/units"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -282,6 +283,13 @@ func (r *BaseRule) AlertAnnotations(expand func(string) string, smpl ruletypes.S
 			ruletypes.Label{Name: ruletypes.AnnotationValue, Value: value},
 			ruletypes.Label{Name: ruletypes.AnnotationThresholdValue, Value: threshold},
 		)
+		if op := smpl.CompareOperator.Literal(); op != "" {
+			annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationCompareOp, Value: op})
+		}
+		if smpl.RecoveryTarget != nil {
+			recovery := units.FormatterFromUnit(r.Unit()).Format(*smpl.RecoveryTarget, smpl.TargetUnit)
+			annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRecoveryThreshold, Value: recovery})
+		}
 	}
 	if smpl.IsRecovering {
 		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationIsRecovering, Value: "true"})

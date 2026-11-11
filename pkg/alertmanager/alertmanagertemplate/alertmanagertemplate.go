@@ -308,8 +308,9 @@ func buildRuleInfo(labels, annotations template.KV) alertmanagertypes.RuleInfo {
 		Severity:  labels[ruletypes.LabelSeverityName],
 		MatchType: annotations[ruletypes.AnnotationMatchType],
 		Threshold: alertmanagertypes.Threshold{
-			Value: annotations[ruletypes.AnnotationThresholdValue],
-			Op:    annotations[ruletypes.AnnotationCompareOp],
+			Value:         annotations[ruletypes.AnnotationThresholdValue],
+			Op:            annotations[ruletypes.AnnotationCompareOp],
+			RecoveryValue: annotations[ruletypes.AnnotationRecoveryThreshold],
 		},
 	}
 }

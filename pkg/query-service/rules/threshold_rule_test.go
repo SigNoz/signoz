@@ -696,6 +696,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 				threshold := item.Annotations.Get(ruletypes.AnnotationThresholdValue)
 				assert.NotEmpty(t, threshold, "case %d", idx)
 				assert.Contains(t, item.Annotations.Get("summary"), threshold, "case %d", idx)
+				assert.Equal(t, c.compareOperator.Literal(), item.Annotations.Get(ruletypes.AnnotationCompareOp), "case %d", idx)
 				for _, summary := range c.summaryAny {
 					if strings.Contains(item.Annotations.Get("summary"), summary) {
 						foundCount++
