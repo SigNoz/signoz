@@ -86,6 +86,12 @@ export function toOrderBy(
 		: null;
 }
 
+export function isSameStates(a: string[], b: string[]): boolean {
+	return (
+		a.length === b.length && [...a].sort().join(',') === [...b].sort().join(',')
+	);
+}
+
 export function isSameRuleListFilter(
 	a: RuleListFilter,
 	b: RuleListFilter,
@@ -94,8 +100,7 @@ export function isSameRuleListFilter(
 		a.query.trim() === b.query.trim() &&
 		a.sort === b.sort &&
 		a.order === b.order &&
-		a.states.length === b.states.length &&
-		[...a.states].sort().join(',') === [...b.states].sort().join(',')
+		isSameStates(a.states, b.states)
 	);
 }
 
