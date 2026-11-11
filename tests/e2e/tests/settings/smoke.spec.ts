@@ -127,7 +127,7 @@ test.describe('settings — smoke', () => {
 test.describe('settings — smoke as a viewer', () => {
 	test.use({ as: 'viewer' });
 
-	test('TC-11 the settings nav shows a viewer only what the backend grants', async ({
+	test('TC-11 the settings nav shows a viewer Members and only what else the backend grants', async ({
 		settings,
 	}) => {
 		await settings.shell.goto('/settings');
@@ -135,20 +135,26 @@ test.describe('settings — smoke as a viewer', () => {
 
 		const keys = await settings.shell.navKeys();
 		expect(keys).toEqual(
-			expect.arrayContaining(['roles', 'service-accounts', 'keyboard-shortcuts']),
+			expect.arrayContaining([
+				'members',
+				'roles',
+				'service-accounts',
+				'keyboard-shortcuts',
+			]),
 		);
-		expect(keys).not.toContain('members');
 		expect(keys).not.toContain('sso');
 	});
 
-	test('TC-12 a viewer on /settings/members gets no members page', async ({
+	test('TC-12 a viewer on /settings/members gets the page without the list or invite', async ({
 		settings,
 	}) => {
-		// The members route sits inside the settings route, which every role may
-		// open, so the guard does not redirect: the settings page simply mounts
-		// no members tab for a viewer.
 		await settings.shell.goto('/settings/members');
-		await expect(settings.members.heading()).toHaveCount(0);
+		await expect(settings.members.heading()).toBeVisible();
+		await expect(settings.members.row('')).toHaveCount(0);
+		await expect(settings.members.inviteButton()).toHaveAttribute(
+			'data-denied-permissions',
+			/.+/,
+		);
 		expect(settings.pathname()).toBe('/settings/members');
 		await expect(settings.errorBoundary()).toHaveCount(0);
 	});

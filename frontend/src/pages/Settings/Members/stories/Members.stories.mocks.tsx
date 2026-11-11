@@ -5,7 +5,7 @@
 
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -180,6 +180,17 @@ export const membersMocks = defineStoryMocks({
 /** The table fetches before it renders a row, which outlasts the 1s default. */
 export const untilLoaded = { timeout: 15_000 };
 
+/** A permission-gated control ignores a click until its check has resolved. */
+export const clickWhenEnabled = async (element: HTMLElement): Promise<void> => {
+	const control = element.closest('button') ?? element;
+
+	await waitFor(
+		() => expect(control).not.toHaveAttribute('aria-disabled', 'true'),
+		untilLoaded,
+	);
+	await userEvent.click(element);
+};
+
 /**
  * The click handler sits on the row rather than the cell, and the header row
  * resolves before the body has one: wait on a cell, then click the row it is in.
@@ -222,7 +233,7 @@ export const sendInvites = async (
 	canvasElement: HTMLElement,
 	emails: string[],
 ): Promise<void> => {
-	await userEvent.click(
+	await clickWhenEnabled(
 		await within(canvasElement).findByText(
 			/invite member/i,
 			undefined,
@@ -239,8 +250,12 @@ export const sendInvites = async (
 		await userEvent.type(fields[index], email);
 		await pickRole(index);
 	}
-	await userEvent.click(
-		await screen.findByRole('button', { name: 'Invite Team Members' }),
+	await clickWhenEnabled(
+		await screen.findByRole(
+			'button',
+			{ name: 'Invite Team Members' },
+			untilLoaded,
+		),
 	);
 };
 
@@ -248,7 +263,7 @@ export const openResetLink = async (
 	canvasElement: HTMLElement,
 ): Promise<void> => {
 	await openMember(canvasElement, /jon snow/i);
-	await userEvent.click(
+	await clickWhenEnabled(
 		await screen.findByRole(
 			'button',
 			{ name: 'Generate Password Reset Link' },
