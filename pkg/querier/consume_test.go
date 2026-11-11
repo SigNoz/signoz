@@ -3,11 +3,14 @@ package querier
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
@@ -247,5 +250,65 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 				assert.False(t, present, "%s should be removed", removed)
 			}
 		})
+	}
+}
+
+func seriesByLabels(t *testing.T, data *qbtypes.TimeSeriesData) map[string][]*qbtypes.TimeSeriesValue {
+	t.Helper()
+	require.Len(t, data.Aggregations, 1)
+	got := map[string][]*qbtypes.TimeSeriesValue{}
+	for _, series := range data.Aggregations[0].Series {
+		got[qbtypes.GetUniqueSeriesKey(series.Labels)] = series.Values
+	}
+	return got
+}
+
+func TestReadAsTimeSeriesKeepsSwappedGroupByValuesApart(t *testing.T) {
+	ts := time.UnixMilli(1_700_000_040_000).UTC()
+	cols := []cmock.ColumnType{
+		{Name: "ts", Type: "DateTime"},
+		{Name: "client", Type: "String"},
+		{Name: "server", Type: "String"},
+		{Name: "__result_0", Type: "Float64"},
+	}
+	rows := cmock.NewRows(cols, [][]any{
+		{ts, "frontend", "cart", float64(10)},
+		{ts, "cart", "frontend", float64(99)},
+	})
+
+	data, err := readAsTimeSeries(rows, &qbtypes.TimeRange{From: 1_700_000_000_000, To: 1_700_000_100_000}, qbtypes.Step{Duration: time.Minute}, "A")
+	require.NoError(t, err)
+
+	got := seriesByLabels(t, data)
+	require.Len(t, got, 2)
+	for key, want := range map[string]float64{"client=frontend,server=cart,": 10, "client=cart,server=frontend,": 99} {
+		require.Len(t, got[key], 1, key)
+		assert.Equal(t, want, got[key][0].Value, key)
+	}
+}
+
+func TestReadAsHeatmapKeepsSwappedGroupByValuesApart(t *testing.T) {
+	ts := time.UnixMilli(1_700_000_040_000).UTC()
+	cols := []cmock.ColumnType{
+		{Name: "ts", Type: "DateTime"},
+		{Name: "client", Type: "String"},
+		{Name: "server", Type: "String"},
+		{Name: qbtypes.HeatmapBucketMinColumn, Type: "Float64"},
+		{Name: qbtypes.HeatmapBucketMaxColumn, Type: "Float64"},
+		{Name: "__result_0", Type: "Float64"},
+	}
+	rows := cmock.NewRows(cols, [][]any{
+		{ts, "frontend", "cart", float64(0), float64(1), float64(10)},
+		{ts, "cart", "frontend", float64(0), float64(1), float64(99)},
+	})
+
+	data, err := readAsHeatmap(rows, &qbtypes.TimeRange{From: 1_700_000_000_000, To: 1_700_000_100_000}, qbtypes.Step{Duration: time.Minute}, "A")
+	require.NoError(t, err)
+
+	got := seriesByLabels(t, data)
+	require.Len(t, got, 2)
+	for key, want := range map[string]float64{"client=frontend,server=cart,": 10, "client=cart,server=frontend,": 99} {
+		require.Len(t, got[key], 1, key)
+		assert.Contains(t, got[key][0].Values, want, key)
 	}
 }
