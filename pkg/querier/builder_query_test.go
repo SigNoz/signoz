@@ -121,6 +121,28 @@ func TestBuilderQueryFingerprintQueryType(t *testing.T) {
 	assert.Empty(t, ai.Fingerprint())
 }
 
+func TestBuilderQueryFingerprintVariableOrder(t *testing.T) {
+	query := &builderQuery[qbtypes.MetricAggregation]{
+		queryType: qbtypes.QueryTypeBuilder,
+		kind:      qbtypes.RequestTypeTimeSeries,
+		spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+			Signal: telemetrytypes.SignalMetrics,
+			Filter: &qbtypes.Filter{Expression: "service.name = $service AND deployment.environment = $env AND host.name IN $host AND k8s.namespace.name = $namespace"},
+		},
+		variables: map[string]qbtypes.VariableItem{
+			"service":   {Value: "frontend"},
+			"env":       {Value: "prod"},
+			"host":      {Value: []any{"host-1", "host-2"}},
+			"namespace": {Value: "default"},
+		},
+	}
+
+	expected := query.Fingerprint()
+	for range 100 {
+		assert.Equal(t, expected, query.Fingerprint())
+	}
+}
+
 func TestBuilderQueryFingerprintHeatmapBucketing(t *testing.T) {
 	coarseLogScale := 1
 
