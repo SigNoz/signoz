@@ -13,6 +13,8 @@ import {
 	CHANNEL_ACTION_OUTCOMES,
 	channelActionError,
 	CHANNEL_TYPES,
+	JIRA_DEPLOYMENTS,
+	type JiraDeploymentChoice,
 	notificationChannelResponse,
 	type ChannelActionOutcome,
 	type ChannelType,
@@ -47,6 +49,13 @@ export const channelsEditMocks = defineStoryMocks({
 			options: WEBHOOK_AUTHS,
 			value: 'basic',
 		}),
+		jiraDeployment: choiceControl<JiraDeploymentChoice>('Jira deployment', {
+			group: CHANNEL,
+			description:
+				'Whether the saved Jira channel points at Jira Cloud (email + API token) or a self-hosted Jira (personal access token). Only read when the channel type is jira.',
+			options: JIRA_DEPLOYMENTS,
+			value: 'cloud',
+		}),
 		saveOutcome: choiceControl<ChannelActionOutcome>('Saving the channel', {
 			group: ACTIONS,
 			options: CHANNEL_ACTION_OUTCOMES,
@@ -66,6 +75,7 @@ export const channelsEditMocks = defineStoryMocks({
 					String(req.params.id),
 					values.channelType,
 					values.webhookAuth,
+					values.jiraDeployment,
 				),
 			),
 		),

@@ -526,7 +526,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 	}
 }
 
-// TestHeatmapPanelQueryKinds pins the panel allowlist to what validateHeatmap
+// TestHeatmapPanelQueryKinds pins the panel allowlist to what validateBucketCounting
 // accepts in querybuildertypesv5: everything but a trace operator.
 func TestHeatmapPanelQueryKinds(t *testing.T) {
 	testCases := []struct {

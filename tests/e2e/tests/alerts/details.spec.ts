@@ -4,6 +4,7 @@ import {
 	ALERTS_LIST_PATH,
 	DEFAULT_RELATIVE_TIME,
 	expect,
+	nameContains,
 	test,
 } from '../../drivers/alerts';
 
@@ -57,7 +58,7 @@ test.describe('Alert details', () => {
 		await expect(page).toHaveURL(new RegExp(ALERT_OVERVIEW_PATH));
 		await expect(page).toHaveURL(/[?&]ruleId=/);
 
-		await alerts.shell.goto({ search: name });
+		await alerts.shell.goto({ query: nameContains(name) });
 		await expect(alerts.list.ruleName(`${name} - Copy`)).toBeVisible();
 	});
 
@@ -82,7 +83,7 @@ test.describe('Alert details', () => {
 		]);
 
 		await expect(page).toHaveURL(new RegExp(`${ALERTS_LIST_PATH}$`));
-		await alerts.shell.goto({ search: name });
+		await alerts.shell.goto({ query: nameContains(name) });
 		await expect(alerts.list.ruleName(name, { exact: true })).toHaveCount(0);
 	});
 
@@ -173,7 +174,7 @@ test.describe('Alert details', () => {
 			alerts.details.footerSaveButton().click(),
 		]);
 
-		await alerts.shell.goto({ search: renamed });
+		await alerts.shell.goto({ query: nameContains(renamed) });
 		await expect(alerts.list.ruleName(renamed)).toBeVisible();
 
 		// The History tab renders the same name input with no save button, so an
@@ -182,7 +183,7 @@ test.describe('Alert details', () => {
 		await alerts.details.nameInput().fill(`${renamed}-unsaved`);
 		await expect(alerts.details.footerSaveButton()).toHaveCount(0);
 
-		await alerts.shell.goto({ search: renamed });
+		await alerts.shell.goto({ query: nameContains(renamed) });
 		await expect(alerts.list.ruleName(renamed)).toBeVisible();
 		await expect(alerts.list.ruleName(`${renamed}-unsaved`)).toHaveCount(0);
 	});

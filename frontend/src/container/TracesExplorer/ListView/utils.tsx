@@ -14,6 +14,7 @@ import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter'
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { ILog } from 'types/api/logs/log';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 export function BlockLink({
@@ -177,4 +178,24 @@ export const transformSpanRows = (data: QueryDataV3[]): TracesTableRow[] => {
 			id: row.span_id,
 		};
 	}) as TracesTableRow[];
+};
+
+export const getListLimit = (query: Query): number | null =>
+	query.builder.queryTraceOperator?.[0]?.limit ??
+	query.builder.queryData[0]?.limit ??
+	null;
+
+/** Offset of the next page, or undefined once a short page or the limit ends the list. */
+export const getNextPageOffset = (
+	pageLengths: number[],
+	pageSize: number,
+	limit: number | null,
+): number | undefined => {
+	const loaded = pageLengths.reduce((sum, length) => sum + length, 0);
+	const lastLength = pageLengths[pageLengths.length - 1] ?? 0;
+
+	if (lastLength < pageSize || (limit && loaded >= limit)) {
+		return undefined;
+	}
+	return loaded;
 };

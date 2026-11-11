@@ -861,6 +861,35 @@ const webhookSpec = (auth: WebhookAuthChoice): Record<string, unknown> => ({
 	sendResolved: true,
 });
 
+export const JIRA_DEPLOYMENTS = ['cloud', 'selfhosted'] as const;
+
+export type JiraDeploymentChoice = (typeof JIRA_DEPLOYMENTS)[number];
+
+const JIRA_CONNECTIONS: Record<
+	JiraDeploymentChoice,
+	Record<string, unknown>
+> = {
+	cloud: {
+		site: 'https://story.atlassian.net',
+		auth: { email: 'story@signoz.io', apiToken: 'story-jira-token' },
+	},
+	selfhosted: {
+		site: 'https://jira.story.internal',
+		auth: { pat: 'story-jira-pat' },
+	},
+};
+
+const jiraSpec = (
+	deployment: JiraDeploymentChoice,
+): Record<string, unknown> => ({
+	deployment,
+	...JIRA_CONNECTIONS[deployment],
+	project: 'OPS',
+	issueType: 'Task',
+	summary: '{{ .CommonLabels.alertname }}',
+	sendResolved: true,
+});
+
 /**
  * The v2 spec each kind is fetched with, so the edit form renders populated
  * fields. Keys mirror the generated channel spec schemas.
@@ -919,15 +948,7 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 		text: 'Story channel',
 		sendResolved: true,
 	},
-	jira: {
-		site: 'https://story.atlassian.net',
-		project: 'OPS',
-		issueType: 'Task',
-		email: 'story@signoz.io',
-		apiToken: 'story-jira-token',
-		summary: '{{ .CommonLabels.alertname }}',
-		sendResolved: true,
-	},
+	jira: jiraSpec('cloud'),
 	jsmops: {
 		apiKey: 'story-jsm-key',
 		message: '{{ .CommonLabels.alertname }}',
@@ -949,11 +970,26 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 	},
 };
 
+const channelSpec = (
+	type: ChannelType,
+	webhookAuth: WebhookAuthChoice,
+	jiraDeployment: JiraDeploymentChoice,
+): Record<string, unknown> => {
+	if (type === 'webhook') {
+		return webhookSpec(webhookAuth);
+	}
+	if (type === 'jira') {
+		return jiraSpec(jiraDeployment);
+	}
+	return CHANNEL_SPECS[type];
+};
+
 /** The v2 fetch by id, which is what the redesigned screens read. */
 export const notificationChannelResponse = (
 	id: string,
 	type: ChannelType,
 	webhookAuth: WebhookAuthChoice = 'basic',
+	jiraDeployment: JiraDeploymentChoice = 'cloud',
 ): {
 	status: string;
 	data: AlertmanagertypesGettableNotificationChannelDTO;
@@ -974,7 +1010,7 @@ export const notificationChannelResponse = (
 			updatedAt: ago((index + 1) * DAY),
 			config: {
 				kind: type,
-				spec: type === 'webhook' ? webhookSpec(webhookAuth) : CHANNEL_SPECS[type],
+				spec: channelSpec(type, webhookAuth, jiraDeployment),
 			} as unknown as AlertmanagertypesChannelConfigDTO,
 		},
 	};

@@ -10,6 +10,7 @@ require (
 	github.com/SigNoz/clickhouse-go-mock v0.14.0
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
 	github.com/SigNoz/signoz-otel-collector v0.144.6
+	github.com/SigNoz/signoz-semantic-conventions/gen/go v0.0.1
 	github.com/antlr4-go/antlr/v4 v4.13.1
 	github.com/antonmedv/expr v1.15.3
 	github.com/cespare/xxhash/v2 v2.3.0
@@ -61,6 +62,9 @@ require (
 	github.com/swaggest/jsonschema-go v0.3.78
 	github.com/swaggest/rest v0.2.75
 	github.com/tidwall/gjson v1.18.0
+	github.com/twmb/franz-go v1.21.7
+	github.com/twmb/franz-go/pkg/kfake v0.0.0-20260421215025-4e7a1e1569ac
+	github.com/twmb/franz-go/plugin/kslog v1.0.0
 	github.com/uptrace/bun v1.2.9
 	github.com/uptrace/bun/dialect/pgdialect v1.2.9
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.9
@@ -144,6 +148,7 @@ require (
 	github.com/swaggest/refl v1.4.0 // indirect
 	github.com/swaggest/usecase v1.3.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
+	github.com/twmb/franz-go/pkg/kmsg v1.13.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
 	github.com/uptrace/opentelemetry-go-extra/otelsql v0.3.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
@@ -243,7 +248,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
-	github.com/klauspost/compress v1.18.5 // indirect
+	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
@@ -272,7 +277,7 @@ require (
 	github.com/openfga/openfga v1.14.1
 	github.com/paulmach/orb v0.12.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
-	github.com/pierrec/lz4/v4 v4.1.25 // indirect
+	github.com/pierrec/lz4/v4 v4.1.26 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/pressly/goose/v3 v3.27.0 // indirect

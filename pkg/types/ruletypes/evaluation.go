@@ -29,11 +29,21 @@ func (EvaluationKind) Enum() []any {
 type Evaluation interface {
 	NextWindowFor(curr time.Time) (time.Time, time.Time)
 	GetFrequency() valuer.TextDuration
+	// validateDurationText runs on the write path only; a stored window may
+	// hold a bare number and still evaluate.
+	validateDurationText() error
 }
 
 type RollingWindow struct {
 	EvalWindow valuer.TextDuration `json:"evalWindow" required:"true" description:"The sliding lookback window each evaluation queries, as a Go duration such as 5m."`
 	Frequency  valuer.TextDuration `json:"frequency" required:"true" description:"How often the rule is evaluated, as a Go duration such as 1m. Must be positive."`
+}
+
+func (rollingWindow RollingWindow) validateDurationText() error {
+	if err := validateDurationText("evaluation.spec.evalWindow", rollingWindow.EvalWindow); err != nil {
+		return err
+	}
+	return validateDurationText("evaluation.spec.frequency", rollingWindow.Frequency)
 }
 
 func (rollingWindow RollingWindow) Validate() error {
@@ -58,6 +68,10 @@ type CumulativeWindow struct {
 	Schedule  CumulativeSchedule  `json:"schedule" required:"true" description:"The boundary the accumulation window starts from. Each evaluation queries from the most recent boundary to now."`
 	Frequency valuer.TextDuration `json:"frequency" required:"true" description:"How often the rule is evaluated, as a Go duration such as 1m. Must be positive."`
 	Timezone  string              `json:"timezone" required:"true" description:"The IANA time zone the schedule is resolved in, such as UTC or Asia/Kolkata."`
+}
+
+func (cumulativeWindow CumulativeWindow) validateDurationText() error {
+	return validateDurationText("evaluation.spec.frequency", cumulativeWindow.Frequency)
 }
 
 type CumulativeSchedule struct {

@@ -148,7 +148,8 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	))
 	info := querybuilder.NewQueryInfo(ctx, orgID, nil, telemetrytypes.SignalMetrics, &telemetrytypes.MetricContext{MetricName: query.Aggregations[0].MetricName}, start, end)
 	for i, g := range query.GroupBy {
-		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		// the meter path returns no warnings, filter warnings included
+		col, _, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -235,7 +236,8 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 
 	info := querybuilder.NewQueryInfo(ctx, orgID, nil, telemetrytypes.SignalMetrics, &telemetrytypes.MetricContext{MetricName: query.Aggregations[0].MetricName}, start, end)
 	for i, g := range query.GroupBy {
-		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		// the meter path returns no warnings, filter warnings included
+		col, _, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -311,7 +313,8 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	))
 	info := querybuilder.NewQueryInfo(ctx, orgID, nil, telemetrytypes.SignalMetrics, &telemetrytypes.MetricContext{MetricName: query.Aggregations[0].MetricName}, start, end)
 	for i, g := range query.GroupBy {
-		col, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
+		// the meter path returns no warnings, filter warnings included
+		col, _, err := querybuilder.ResolveColumn(ctx, info, b.storage, &g.TelemetryFieldKey, telemetrytypes.FieldDataTypeString, keys)
 		if err != nil {
 			return "", nil, err
 		}

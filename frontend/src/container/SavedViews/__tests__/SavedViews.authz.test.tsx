@@ -339,6 +339,45 @@ describe('SavedViews - AuthZ', () => {
 		).resolves.not.toHaveAttribute('data-disabled');
 	});
 
+	it('disables save as new without create, keeping update', async () => {
+		mockSavedViewsApi([errors]);
+		server.use(setupAuthzDeny(SavedViewCreatePermission));
+		const { history } = renderHeader(viewUrl(PATH, errors));
+		await waitFor(() =>
+			expect(screen.getByTestId('saved-views-name')).toHaveTextContent('Errors'),
+		);
+
+		history.push(
+			explorerUrl(PATH, {
+				query: queryWith(DataSource.TRACES, 'has_error = false'),
+				panelType: PANEL_TYPES.LIST,
+				viewKey: errors.id,
+			}),
+		);
+		await userEvent.click(await screen.findByTestId('saved-views-save-changes'));
+
+		await expect(
+			settledRow('saved-views-save-changes-item-save-as-new'),
+		).resolves.toHaveAttribute('data-disabled');
+		await expect(
+			settledRow('saved-views-save-changes-item-update'),
+		).resolves.not.toHaveAttribute('data-disabled');
+	});
+
+	it('offers clear on a view it cannot read', async () => {
+		mockSavedViewsApi([errors]);
+		server.use(setupAuthzDeny(buildSavedViewReadPermission(errors.id)));
+		renderHeader(viewUrl(PATH, errors));
+
+		await waitFor(() =>
+			expect(screen.getByTestId('saved-views-name')).toHaveTextContent(
+				'No view access',
+			),
+		);
+
+		expect(screen.getByTestId('saved-views-clear')).toBeInTheDocument();
+	});
+
 	it('says no access when the check denies read, even if the server returns the view', async () => {
 		mockSavedViewsApi([errors]);
 		server.use(setupAuthzDeny(buildSavedViewReadPermission(errors.id)));

@@ -311,6 +311,7 @@ export type InfraControls = {
 	drawer: MockControl<boolean>;
 	drawerTab: MockControl<VIEWS>;
 	telemetryRows: MockControl<number>;
+	eventJsonBody: MockControl<boolean>;
 };
 
 const infraControls = (entity: InfraEntity): InfraControls => ({
@@ -360,6 +361,12 @@ const infraControls = (entity: InfraEntity): InfraControls => ({
 		group: DRAWER,
 		value: 12,
 		max: 20,
+	}),
+	eventJsonBody: toggleControl('Event JSON body', {
+		group: DRAWER,
+		description:
+			'`use_json_body`: the events tab’s bodies arrive as objects, a warning with its reason and object beside `message`, an info line with `message` alone.',
+		value: false,
 	}),
 });
 
@@ -435,7 +442,12 @@ export const infraStoryMocks = (
 							}
 
 							return isEventsQuery(body)
-								? entityEventRows(start, end, values.telemetryRows)
+								? entityEventRows(
+										start,
+										end,
+										values.telemetryRows,
+										values.eventJsonBody,
+									)
 								: entityLogRows(start, end, values.telemetryRows);
 						})();
 

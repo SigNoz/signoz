@@ -1,6 +1,7 @@
 import type { Browser, Page, TestType } from '@playwright/test';
 
 import { onAdminPage, seeded, type Layer, type WorkerLayer } from '../kit';
+import type { RuletypesRuleViewDataDTO } from '../schemas';
 
 type Fixtures = Record<string, unknown>;
 
@@ -466,3 +467,46 @@ export const withOwnedRules: Layer<{ ownedRules: OwnedRules }> = ((
 			);
 		},
 	}) as never) as Layer<{ ownedRules: OwnedRules }>;
+
+// ─── Views a single test owns ────────────────────────────────────────────────
+
+export interface OwnedViews {
+	/** Seed a saved view this test owns. */
+	create(name: string, data: RuletypesRuleViewDataDTO): Promise<string>;
+	/** Track a view the *app* created, so teardown removes it too. */
+	register(id: string): void;
+}
+
+/** Test-scoped: views are shared across the org, so each test removes its own. */
+export const withOwnedViews: Layer<{ ownedViews: OwnedViews }> = ((
+	test: TestType<Fixtures, Fixtures>,
+) =>
+	test.extend({
+		ownedViews: async (
+			{ browser }: { browser: Browser },
+			use: (value: OwnedViews) => Promise<void>,
+		) => {
+			const ids = new Set<string>();
+
+			await use({
+				create: async (name, data) => {
+					const id = await onAdminPage(browser, (page) =>
+						alertsDriver(page).seed.view({ name, data }),
+					);
+					ids.add(id);
+					return id;
+				},
+				register: (id) => {
+					ids.add(id);
+				},
+			});
+
+			await onAdminPage(browser, async (page) => {
+				const { seed } = alertsDriver(page);
+				for (const id of ids) {
+					// eslint-disable-next-line no-await-in-loop
+					await seed.deleteView(id);
+				}
+			});
+		},
+	}) as never) as Layer<{ ownedViews: OwnedViews }>;
