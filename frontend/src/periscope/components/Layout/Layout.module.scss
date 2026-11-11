@@ -1,0 +1,78 @@
+.layout,
+.header,
+.footer,
+.content {
+	box-sizing: border-box;
+
+	&::before,
+	&::after {
+		box-sizing: border-box;
+	}
+}
+
+.layout,
+.header,
+.footer {
+	--layout-body-bg: var(--background);
+	--layout-header-bg: #001529;
+	--layout-header-height: var(--spacing-32);
+	--layout-padding-inline: 50px;
+	--layout-text-color: rgba(255, 255, 255, 0.85);
+}
+
+:global(body.lightMode) {
+	.layout,
+	.header,
+	.footer {
+		--layout-text-color: rgba(0, 0, 0, 0.88);
+	}
+}
+
+.layout {
+	display: flex;
+	flex: auto;
+	flex-direction: column;
+	min-height: 0;
+	background: var(--layout-body-bg);
+
+	* {
+		box-sizing: border-box;
+	}
+
+	&.hasSider {
+		flex-direction: row;
+
+		> .layout,
+		> .content {
+			width: 0;
+		}
+	}
+
+	.header {
+		flex: 0 0 auto;
+	}
+}
+
+.header {
+	height: var(--layout-header-height);
+	padding: 0 var(--layout-padding-inline);
+	color: var(--layout-text-color);
+	line-height: var(--layout-header-height);
+	background: var(--layout-header-bg);
+
+	:global(.ant-menu) {
+		line-height: inherit;
+	}
+}
+
+.footer {
+	padding: var(--spacing-12) var(--layout-padding-inline);
+	color: var(--layout-text-color);
+	font-size: var(--periscope-font-size-base);
+	background: var(--layout-body-bg);
+}
+
+.content {
+	flex: auto;
+	min-height: 0;
+}
