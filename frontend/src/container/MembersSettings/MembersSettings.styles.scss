@@ -47,6 +47,10 @@
 		flex: 1;
 		min-width: 0;
 	}
+
+	&__search-trigger {
+		width: 100%;
+	}
 }
 
 .members-filter-trigger__chevron {
