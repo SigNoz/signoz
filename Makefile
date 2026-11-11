@@ -39,7 +39,7 @@ JS_BUILD_CONTEXT 				= $(SRC)/frontend
 # git hooks
 ##############################################################
 # Expanded at parse time, so any make target installs the hooks.
-GITHOOKS_INSTALL := $(shell sh $(SRC)/.githooks/install >/dev/null 2>&1 || true)
+GITHOOKS_INSTALL := $(shell git -C $(SRC) config core.hooksPath .githooks 2>/dev/null)
 
 ##############################################################
 # directories
