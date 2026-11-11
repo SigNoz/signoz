@@ -264,6 +264,22 @@ Description: Request rate exceeded 10k/s`},
 			wantBody:  []string{"Value: 523, annotations: 1"},
 		},
 		{
+			name: "value shortcut resolves bare and in braces and wins over a label named value",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighErrors", "value": "from-label"},
+					map[string]string{ruletypes.AnnotationValue: "523"},
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "$rule.name",
+				BodyTemplate:  "$value | {{ $value }} | {{ if $value }}set{{ end }} | $labels.value",
+			},
+			wantTitle: "HighErrors",
+			wantBody:  []string{"523 | 523 | set | from-label"},
+		},
+		{
 			name: "recovering annotation sets status, flags and counts with firing winning the title",
 			alerts: []*types.Alert{
 				createAlert(

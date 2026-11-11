@@ -293,6 +293,7 @@ func buildAlertData(a *types.Alert, receiver string) alertmanagertypes.AlertData
 		// Strip private annotations once the structured fields above have
 		// been populated from the raw map.
 		Annotations: alertmanagertypes.FilterPublicAnnotations(annotations),
+		Value:       annotations[ruletypes.AnnotationValue],
 	}
 }
 

@@ -403,7 +403,7 @@ func TestPrepareContent(t *testing.T) {
 				Annotations: model.LabelSet{
 					ruletypes.AnnotationTitleTemplate: model.LabelValue(titleTemplate),
 					ruletypes.AnnotationBodyTemplate:  model.LabelValue(bodyTemplate),
-					"value":                           "100",
+					ruletypes.AnnotationValue:         "100",
 					"threshold.value":                 "200",
 				},
 			},
@@ -416,7 +416,7 @@ func TestPrepareContent(t *testing.T) {
 				Annotations: model.LabelSet{
 					ruletypes.AnnotationTitleTemplate: model.LabelValue(titleTemplate),
 					ruletypes.AnnotationBodyTemplate:  model.LabelValue(bodyTemplate),
-					"value":                           "50",
+					ruletypes.AnnotationValue:         "50",
 					"threshold.value":                 "200",
 				},
 			},

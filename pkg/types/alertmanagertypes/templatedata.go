@@ -78,6 +78,9 @@ type AlertData struct {
 	Trace       LinkInfo    `json:"trace"       mapstructure:"trace"`
 	Labels      template.KV `json:"labels"      mapstructure:"labels"`
 	Annotations template.KV `json:"annotations" mapstructure:"annotations"`
+
+	// Value backs the $value shortcut for $alert.value.
+	Value string `json:"value" mapstructure:"value"`
 }
 
 // AlertInfo holds the per-alert state and timing data.
