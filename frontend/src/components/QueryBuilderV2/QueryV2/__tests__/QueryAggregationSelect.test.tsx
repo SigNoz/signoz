@@ -60,12 +60,12 @@ const aiKeysResponse = (
 	},
 });
 
-// Mirrors the backend: the trace context returns only the aggregates.
+// Assumes the AI endpoint's number filter also returns the float64 trace aggregates.
 const aiKeysFor = (
 	params: URLSearchParams,
 ): TelemetrytypesTelemetryFieldKeyDTO[] =>
-	params.get('fieldContext') === TelemetrytypesFieldContextDTO.trace
-		? [totalTokens]
+	params.get('fieldDataType') === TelemetrytypesFieldDataTypeDTO.number
+		? [durationNano, totalTokens]
 		: [durationNano, serviceName, totalTokens];
 
 const keysResponse: GetFieldsKeys200 = {
@@ -135,15 +135,25 @@ function suggestionLabels(): string[] {
 }
 
 describe('QueryAggregationSelect field suggestions for an AI query', () => {
-	it.each(['avg(', 'count_distinct('])(
-		'suggests only the trace aggregates, as trace.<name>, for %s',
-		async (aggregation) => {
+	it.each([
+		{
+			aggregation: 'avg(',
+			fieldDataType: TelemetrytypesFieldDataTypeDTO.number,
+			labels: ['duration_nano', 'trace.total_tokens'],
+		},
+		{
+			aggregation: 'count_distinct(',
+			fieldDataType: null,
+			labels: ['duration_nano', 'service.name', 'trace.total_tokens'],
+		},
+	])(
+		'suggests keys from the AI keys endpoint, with trace aggregates as trace.<name>, for $aggregation',
+		async ({ aggregation, fieldDataType, labels }) => {
 			await enterAggregation(aggregation);
 
-			await waitFor(
-				() => expect(suggestionLabels()).toStrictEqual(['trace.total_tokens']),
-				{ timeout: SUGGESTIONS_TIMEOUT_MS },
-			);
+			await waitFor(() => expect(suggestionLabels()).toStrictEqual(labels), {
+				timeout: SUGGESTIONS_TIMEOUT_MS,
+			});
 			expect(keysRequests).toHaveLength(0);
 			expect(
 				aiKeysRequests.map((params) => ({
@@ -151,9 +161,7 @@ describe('QueryAggregationSelect field suggestions for an AI query', () => {
 					fieldDataType: params.get('fieldDataType'),
 					fieldContext: params.get('fieldContext'),
 				})),
-			).toStrictEqual([
-				{ signal: 'traces', fieldDataType: null, fieldContext: 'trace' },
-			]);
+			).toStrictEqual([{ signal: 'traces', fieldDataType, fieldContext: null }]);
 		},
 		TEST_TIMEOUT_MS,
 	);

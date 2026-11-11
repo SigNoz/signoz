@@ -23,10 +23,7 @@ import CodeMirror, {
 	ViewUpdate,
 } from '@uiw/react-codemirror';
 import { Button, Popover, Tooltip } from 'antd';
-import {
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesFieldDataTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -324,28 +321,20 @@ function QueryAggregationSelect({
 		functionContextForFetch &&
 		OPERATORS_WITHOUT_DATA_TYPE.includes(functionContextForFetch)
 	);
-	const fetchesFieldKeys =
-		!!functionContextForFetch &&
-		!!operatorArgMeta[functionContextForFetch]?.acceptsArgs;
-	const keysSignal = DATA_SOURCE_TO_SIGNAL[queryData.dataSource];
-
 	const { data: fieldKeys, isLoading: isLoadingFields } = useFieldKeysSuggestion(
-		// AI aggregations suggest only the per-trace aggregates.
-		queryData.builderQueryType === 'builder_ai_query'
-			? {
-					signal: keysSignal,
-					searchText: '',
-					fieldContext: TelemetrytypesFieldContextDTO.trace,
-				}
-			: {
-					signal: keysSignal,
-					searchText: '',
-					fieldDataType: numericKeysOnly
-						? TelemetrytypesFieldDataTypeDTO.number
-						: undefined,
-				},
+		{
+			signal: DATA_SOURCE_TO_SIGNAL[queryData.dataSource],
+			searchText: '',
+			fieldDataType: numericKeysOnly
+				? TelemetrytypesFieldDataTypeDTO.number
+				: undefined,
+		},
 		queryData.builderQueryType,
-		{ enabled: fetchesFieldKeys },
+		{
+			enabled:
+				!!functionContextForFetch &&
+				!!operatorArgMeta[functionContextForFetch]?.acceptsArgs,
+		},
 	);
 
 	// Memoized chipPlugin that highlights valid function calls like count(), max(arg), min(arg)
