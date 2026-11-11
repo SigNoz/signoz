@@ -990,17 +990,18 @@ def insert_attribute_evolution_to_clickhouse(conn, signal: str, release_time: da
     """Seed the `attributes` JSON column-evolution row for a signal at release_time. Unlike the
     resource row (seeded by the migrator at install), the attribute JSON rollout is install-specific
     and not migrator-seeded, so tests insert it to gate map-vs-JSON resolution across a window."""
-    # insert_deduplicate=0: successive tests seed a byte-identical row (release_time is
+    # Unique deduplication token: successive tests seed a byte-identical row (release_time is
     # minute-aligned), and ReplicatedMergeTree would drop the re-insert as a duplicate even
     # after the prior test's teardown deleted it, leaving the querier to fall back to the Map.
+    # ClickHouse 26.8 ignores insert_deduplicate=0 under its default deduplicate_insert.
     conn.command(
         """
         INSERT INTO signoz_metadata.distributed_column_evolution_metadata
             (signal, column_name, column_type, field_context, field_name, version, release_time)
-        SETTINGS insert_deduplicate = 0
+        SETTINGS insert_deduplication_token = %(token)s
         VALUES (%(signal)s, 'attributes', 'JSON()', 'attribute', '__all__', 1, %(release_time_ns)s)
         """,
-        parameters={"signal": signal, "release_time_ns": int(release_time.timestamp() * 1e9)},
+        parameters={"signal": signal, "release_time_ns": int(release_time.timestamp() * 1e9), "token": uuid.uuid4().hex},
     )
 
 
