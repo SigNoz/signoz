@@ -16,7 +16,7 @@
 	flex-direction: column;
 	gap: var(--spacing-6);
 	flex-shrink: 0;
-	padding: 0 var(--spacing-8) var(--spacing-6) var(--spacing-8);
+	padding: var(--spacing-6) var(--spacing-8) var(--spacing-6) var(--spacing-8);
 }
 
 /* Title and count on the left, the create action at the far end, the way the
