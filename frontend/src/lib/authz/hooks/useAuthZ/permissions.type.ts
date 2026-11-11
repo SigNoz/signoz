@@ -14,6 +14,19 @@ export default {
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
 			},
 			{
+				kind: 'factor-password',
+				type: 'metaresource',
+				allowedVerbs: [
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
+			},
+			{
 				kind: 'license',
 				type: 'metaresource',
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
@@ -106,13 +119,7 @@ export default {
 					'update',
 				],
 			},
-			{
-				kind: 'factor-password',
-				type: 'metaresource',
-				allowedVerbs: ['create'],
-			},
 		],
-
 		relations: {
 			assignee: ['role'],
 			attach: ['metaresource', 'role', 'serviceaccount', 'user'],
