@@ -1,13 +1,19 @@
 import { ChangeEvent, useCallback, useMemo } from 'react';
 import { Plus, Search } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { ColumnSelector } from 'components/TanStackTableView';
 import TextToolTip from 'components/TextToolTip';
-import { useAppContext } from 'providers/App/App';
+import { Skeleton } from 'antd';
+import {
+	ROUTE_POLICY_CREATE_CHECKS,
+	ROUTE_POLICY_LIST_CHECKS,
+	useRoutePolicyCollectionPermissions,
+} from 'hooks/routingPolicies/useRoutePolicyCollectionPermissions';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
 import { useTimezone } from 'providers/Timezone';
-import { USER_ROLES } from 'types/roles';
 
 import DeleteRoutingPolicy from './DeleteRoutingPolicy';
 import styles from './RoutingPolicies.module.scss';
@@ -23,7 +29,6 @@ import './styles.scss';
 const COLUMNS_STORAGE_KEY = 'routing-policies-columns';
 
 function RoutingPolicies(): JSX.Element {
-	const { user } = useAppContext();
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	const {
 		// Routing Policies
@@ -58,7 +63,7 @@ function RoutingPolicies(): JSX.Element {
 	const { containerRef, calculatedPageSize, pagedPolicies, setPage, setLimit } =
 		useRoutingPoliciesTable(routingPoliciesData);
 
-	const canEdit = user?.role !== USER_ROLES.VIEWER;
+	const { canList } = useRoutePolicyCollectionPermissions();
 
 	const columns = useMemo(
 		() => getRoutingPolicyColumns(formatTimezoneAdjustedTimestamp),
@@ -114,18 +119,17 @@ function RoutingPolicies(): JSX.Element {
 							testId="routing-policies-columns"
 						/>
 					)}
-					<Button
+					<AuthZButton
+						checks={ROUTE_POLICY_CREATE_CHECKS}
 						variant="solid"
 						color="primary"
 						size="sm"
 						prefix={<Plus size={14} />}
 						onClick={handleCreate}
-						disabled={!canEdit}
-						disabledTooltip="You need edit permissions to create a routing policy"
 						testId="routing-policies-create"
 					>
 						New Routing Policy
-					</Button>
+					</AuthZButton>
 					<TextToolTip
 						text="More details on how to configure routing policies"
 						url="https://signoz.io/docs/alerts-management/routing-policy"
@@ -139,6 +143,7 @@ function RoutingPolicies(): JSX.Element {
 						placeholder="Search by name or description"
 						value={searchTerm}
 						onChange={handleSearch}
+						disabled={!canList}
 						suffix={<Search size={14} className={styles.searchIcon} />}
 						testId="routing-policies-search"
 					/>
@@ -146,22 +151,36 @@ function RoutingPolicies(): JSX.Element {
 			</header>
 
 			<div ref={containerRef} className={styles.tableContainer}>
-				<RoutingPolicyList
-					columns={columns}
-					routingPolicies={routingPoliciesData}
-					pagedPolicies={pagedPolicies}
-					calculatedPageSize={calculatedPageSize}
-					onLimitChange={setLimit}
-					isFetching={isFetching}
-					isError={isErrorRoutingPolicies}
-					refetch={refetchRoutingPolicies}
-					canEdit={canEdit}
-					onEdit={handleEdit}
-					onDelete={handleDeleteModalOpen}
-					onCreate={handleCreate}
-					hasSearchTerm={hasSearchTerm}
-					onClearSearch={handleClearSearch}
-				/>
+				<AuthZGuardContent
+					checks={ROUTE_POLICY_LIST_CHECKS}
+					fallback={({ deniedPermissions }): JSX.Element => (
+						<PermissionDeniedCallout
+							deniedPermissions={deniedPermissions}
+							className={styles.guardInset}
+						/>
+					)}
+					fallbackOnLoading={
+						<div className={styles.guardInset}>
+							<Skeleton active paragraph={{ rows: 6 }} />
+						</div>
+					}
+				>
+					<RoutingPolicyList
+						columns={columns}
+						routingPolicies={routingPoliciesData}
+						pagedPolicies={pagedPolicies}
+						calculatedPageSize={calculatedPageSize}
+						onLimitChange={setLimit}
+						isFetching={isFetching}
+						isError={isErrorRoutingPolicies}
+						refetch={refetchRoutingPolicies}
+						onEdit={handleEdit}
+						onDelete={handleDeleteModalOpen}
+						onCreate={handleCreate}
+						hasSearchTerm={hasSearchTerm}
+						onClearSearch={handleClearSearch}
+					/>
+				</AuthZGuardContent>
 			</div>
 
 			{policyDetailsModalState.isOpen && (

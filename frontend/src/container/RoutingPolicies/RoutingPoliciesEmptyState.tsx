@@ -1,18 +1,17 @@
 import { Plus, Route } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { ROUTE_POLICY_CREATE_CHECKS } from 'hooks/routingPolicies/useRoutePolicyCollectionPermissions';
 
 import styles from './RoutingPolicies.module.scss';
 
 const DOCS_URL = 'https://signoz.io/docs/alerts-management/routing-policy';
 
 interface RoutingPoliciesEmptyStateProps {
-	canCreate: boolean;
 	onCreate: () => void;
 }
 
 function RoutingPoliciesEmptyState({
-	canCreate,
 	onCreate,
 }: RoutingPoliciesEmptyStateProps): JSX.Element {
 	return (
@@ -25,18 +24,17 @@ function RoutingPoliciesEmptyState({
 				A routing policy sends alerts matching an expression to the channels you
 				pick, without editing each alert rule.
 			</Typography.Text>
-			{canCreate && (
-				<Button
-					variant="solid"
-					color="primary"
-					size="md"
-					prefix={<Plus size={14} />}
-					onClick={onCreate}
-					testId="routing-policies-empty-create"
-				>
-					New routing policy
-				</Button>
-			)}
+			<AuthZButton
+				checks={ROUTE_POLICY_CREATE_CHECKS}
+				variant="solid"
+				color="primary"
+				size="md"
+				prefix={<Plus size={14} />}
+				onClick={onCreate}
+				testId="routing-policies-empty-create"
+			>
+				New routing policy
+			</AuthZButton>
 			<a
 				className={styles.docsLink}
 				href={DOCS_URL}
