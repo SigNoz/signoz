@@ -669,11 +669,13 @@ describe('EditMemberDrawer', () => {
 			).resolves.not.toBeDisabled();
 		});
 
-		it('keeps Reset Link button enabled when viewing own profile', () => {
+		it('keeps Reset Link button enabled when viewing own profile', async () => {
 			renderDrawer({ member: selfMember });
-			expect(
-				screen.getByRole('button', { name: /generate password reset link/i }),
-			).not.toHaveAttribute('aria-disabled', 'true');
+
+			const resetBtn = await screen.findByTestId('member-reset-link-btn');
+			await waitFor(() =>
+				expect(resetBtn).not.toHaveAttribute('aria-disabled', 'true'),
+			);
 		});
 	});
 
@@ -768,9 +770,11 @@ describe('EditMemberDrawer', () => {
 
 			renderDrawer();
 
-			await user.click(
-				screen.getByRole('button', { name: /generate password reset link/i }),
+			const resetBtn = await screen.findByTestId('member-reset-link-btn');
+			await waitFor(() =>
+				expect(resetBtn).not.toHaveAttribute('aria-disabled', 'true'),
 			);
+			await user.click(resetBtn);
 
 			const dialog = await screen.findByRole('dialog', {
 				name: /password reset link/i,
