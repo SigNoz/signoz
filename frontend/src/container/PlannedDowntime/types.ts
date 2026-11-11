@@ -24,7 +24,6 @@ export interface PlannedDowntimeListProps {
 	isFetching: boolean;
 	isError: boolean;
 	refetch: () => void;
-	canEdit: boolean;
 	onEdit: (downtime: DowntimeSchedulesTableData) => void;
 	onDelete: (downtime: DowntimeSchedulesTableData) => void;
 	onCreate: () => void;

@@ -18,7 +18,6 @@ function PlannedDowntimeList({
 	isFetching,
 	isError,
 	refetch,
-	canEdit,
 	onEdit,
 	onDelete,
 	onCreate,
@@ -27,10 +26,6 @@ function PlannedDowntimeList({
 }: PlannedDowntimeListProps): JSX.Element {
 	const columnsWithActions =
 		useMemo((): TableColumnDef<DowntimeSchedulesTableData>[] => {
-			if (!canEdit) {
-				return columns;
-			}
-
 			return [
 				...columns,
 				{
@@ -54,7 +49,7 @@ function PlannedDowntimeList({
 					),
 				},
 			];
-		}, [canEdit, columns, onEdit, onDelete]);
+		}, [columns, onEdit, onDelete]);
 
 	const isEmpty = !isFetching && downtimes.length === 0;
 
@@ -79,7 +74,7 @@ function PlannedDowntimeList({
 	}
 
 	if (isEmpty) {
-		return <PlannedDowntimeEmptyState canCreate={canEdit} onCreate={onCreate} />;
+		return <PlannedDowntimeEmptyState onCreate={onCreate} />;
 	}
 
 	return (
@@ -92,7 +87,7 @@ function PlannedDowntimeList({
 			getRowTestId={(row): string => `downtime-row-${row.id}`}
 			columnStorageKey="planned-downtime-columns"
 			enableQueryParams={PLANNED_DOWNTIME_QUERY_PARAMS}
-			onRowClick={canEdit ? onEdit : undefined}
+			onRowClick={onEdit}
 			pagination={{
 				total: downtimes.length,
 				calculatedPageSize,
