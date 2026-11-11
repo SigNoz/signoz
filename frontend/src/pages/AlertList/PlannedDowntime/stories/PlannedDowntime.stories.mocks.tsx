@@ -4,7 +4,7 @@
  */
 
 import { rest } from 'msw';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
@@ -118,7 +118,18 @@ export const clickFirstRowAction = async (
 			untilLoaded,
 		),
 	);
-	await userEvent.click(
-		await screen.findByText(action === 'edit' ? 'Edit' : 'Delete'),
+	const row = await screen.findByRole(
+		'menuitem',
+		{ name: action === 'edit' ? 'Edit' : 'Delete' },
+		untilLoaded,
 	);
+	// A gated row stays inert until its permission check answers.
+	await waitFor(
+		() =>
+			expect(
+				row.hasAttribute('data-loading') || row.hasAttribute('data-disabled'),
+			).toBe(false),
+		untilLoaded,
+	);
+	await userEvent.click(row);
 };
