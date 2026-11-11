@@ -3,6 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { DEFAULT_RULE_VIEW } from 'container/ListAlertRules/list.config';
 import { expect, screen, userEvent, within } from 'storybook/test';
 
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -113,7 +114,16 @@ export const openColumnPicker = async ({
 
 export const openStatesFilter = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (
+		args.rules === 0 &&
+		args.view === DEFAULT_RULE_VIEW &&
+		args.dataState === 'loaded'
+	) {
+		return;
+	}
+
 	const filter = await within(canvasElement).findByTestId(
 		'alert-rules-filter-states',
 		undefined,
