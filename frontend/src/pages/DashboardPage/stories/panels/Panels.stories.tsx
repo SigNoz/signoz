@@ -16,6 +16,7 @@ import DashboardPage from '../../DashboardPage';
 
 import { panelsMocks } from './Panels.stories.mocks';
 import {
+	playDistributionTooltip,
 	playLegendRight,
 	playListJsonBody,
 	playListPaginated,
@@ -124,19 +125,19 @@ export const HeatmapCountRange: Story = {
  */
 export const Distribution: Story = {
 	args: { kind: 'Distribution', stack: StackMode.normal },
-	play,
+	play: playPanel,
 };
 
 /** Each bucket split between the services, their bars side by side. */
 export const DistributionSideBySide: Story = {
 	args: { kind: 'Distribution', stack: StackMode.none },
-	play,
+	play: playPanel,
 };
 
 /** Each bucket stacked to 100%, every band its service's share of that bucket. */
 export const DistributionPercent: Story = {
 	args: { kind: 'Distribution', stack: StackMode.percent },
-	play,
+	play: playPanel,
 };
 
 /** Buckets outside 10–1000 hidden, counts on a log axis. */
@@ -147,13 +148,22 @@ export const DistributionClampedLog: Story = {
 		distributionXRange: 'clamped',
 		yScale: 'log',
 	},
-	play,
+	play: playPanel,
+};
+
+/**
+ * The tooltip over a bucket: its total, then each service's count, share of its
+ * own total, and running share up to the bucket's upper bound.
+ */
+export const DistributionTooltip: Story = {
+	args: { kind: 'Distribution', stack: StackMode.normal },
+	play: playDistributionTooltip,
 };
 
 /** Fourteen services: the top nine drawn, the other five summed into Other. */
 export const DistributionOther: Story = {
 	args: { kind: 'Distribution', stack: StackMode.normal, series: 14 },
-	play,
+	play: playPanel,
 };
 
 /**
@@ -162,7 +172,7 @@ export const DistributionOther: Story = {
  */
 export const DistributionSideBySideOther: Story = {
 	args: { kind: 'Distribution', stack: StackMode.none, series: 14 },
-	play,
+	play: playPanel,
 };
 
 /**
@@ -171,7 +181,7 @@ export const DistributionSideBySideOther: Story = {
  */
 export const DistributionOverflow: Story = {
 	args: { kind: 'Distribution', stack: StackMode.normal, overflow: 'high' },
-	play,
+	play: playPanel,
 };
 
 /** Each service's share of traffic as a donut, with the total in the middle. */

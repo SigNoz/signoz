@@ -3,7 +3,6 @@ import {
 	resolveDistributionBars,
 	resolveDistributionXAxis,
 } from 'lib/visualization/charts/Distribution/layout';
-import { computeDistributionPercentiles } from 'lib/visualization/charts/Distribution/percentiles';
 import { render, screen } from 'tests/test-utils';
 import type uPlot from 'uplot';
 
@@ -40,15 +39,10 @@ function renderTooltip(uPlotInstance: uPlot): void {
 			dismiss={jest.fn()}
 			xAxis={xAxis}
 			layout={layout}
-			labels={['cart', 'checkout']}
+			labels={['{service.name="cart"}', '{service.name="checkout"}']}
 			colors={['#f00', '#0f0']}
 			counts={counts}
 			visible={visible}
-			markers={computeDistributionPercentiles({
-				xAxis,
-				totals: [1, 10, 3, 1],
-				percentiles: [50],
-			})}
 			formatBound={(value): string => `${value} ms`}
 		/>,
 	);
@@ -59,29 +53,31 @@ describe('DistributionTooltip', () => {
 		renderTooltip(plotAt(1.5, 2));
 
 		expect(screen.getByTestId('distribution-tooltip-range')).toHaveTextContent(
-			'(10 ms, 20 ms]',
+			'10 ms – 20 ms',
 		);
 		expect(screen.getByTestId('distribution-tooltip-total')).toHaveTextContent(
 			'10',
 		);
 	});
 
-	it('lists each group, the hovered one highlighted', () => {
+	it('heads the columns with the group-by key and the bucket bound', () => {
+		renderTooltip(plotAt(1.5, 2));
+
+		expect(screen.getByText('service.name')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('distribution-tooltip-cumulative-heading'),
+		).toHaveTextContent('≤ 20 ms');
+	});
+
+	it('lists every group in legend order, the hovered one active', () => {
 		renderTooltip(plotAt(1.5, 2));
 
 		const rows = screen.getAllByTestId('distribution-tooltip-row');
 		expect(rows).toHaveLength(2);
-		expect(rows[0]).toHaveTextContent('cart');
-		expect(rows[0]).toHaveAttribute('data-hovered', 'true');
-		expect(rows[1]).toHaveAttribute('data-hovered', 'false');
-	});
-
-	it('lists the percentile estimates', () => {
-		renderTooltip(plotAt(1.5, 2));
-
-		expect(
-			screen.getByTestId('distribution-tooltip-percentiles'),
-		).toHaveTextContent('p50~16.5 ms');
+		expect(rows[0]).toHaveTextContent('cart457%71%');
+		expect(rows[0]).toHaveAttribute('data-is-active', 'true');
+		expect(rows[1]).toHaveTextContent('checkout675%75%');
+		expect(rows[1]).toHaveAttribute('data-is-active', 'false');
 	});
 
 	it('renders nothing off the plot', () => {

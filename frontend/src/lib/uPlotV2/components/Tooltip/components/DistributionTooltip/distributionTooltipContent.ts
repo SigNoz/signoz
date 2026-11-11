@@ -1,18 +1,6 @@
-import { DistributionBucket, DistributionTooltipRow } from './types';
+import { DistributionGroupColumn, DistributionTooltipRow } from './types';
 
-/** `(250 ms, 500 ms]`; the open-ended buckets name their one real bound. */
-export function formatBucketRange(
-	bucket: DistributionBucket,
-	formatBound: (value: number) => string,
-): string {
-	if (bucket.isOverflow) {
-		return `> ${formatBound(bucket.lower)}`;
-	}
-	if (bucket.isUnderflow) {
-		return `≤ ${formatBound(bucket.upper)}`;
-	}
-	return `(${formatBound(bucket.lower)}, ${formatBound(bucket.upper)}]`;
-}
+const SINGLE_LABEL = /^\{([^=,]+)="([^"]*)"\}$/;
 
 /** `<1%` rather than `0%`, so a share that exists never reads as none. */
 export function formatPercent(share: number): string {
@@ -22,7 +10,26 @@ export function formatPercent(share: number): string {
 	return `${Math.round(share * 100)}%`;
 }
 
-/** One row per visible group with its count in `bucket`. */
+/**
+ * Names the group column after the one group-by key every label shares, showing just
+ * its values; anything else (several keys, Other) keeps the full labels.
+ */
+export function resolveGroupColumn(labels: string[]): DistributionGroupColumn {
+	const keys = new Set<string>();
+	labels.forEach((label) => {
+		keys.add(SINGLE_LABEL.exec(label)?.[1] ?? '');
+	});
+	const [key] = [...keys];
+	if (keys.size !== 1 || !key) {
+		return { heading: 'Group', format: (label) => label };
+	}
+	return {
+		heading: key,
+		format: (label) => SINGLE_LABEL.exec(label)?.[2] ?? label,
+	};
+}
+
+/** One row per visible group, in legend order, with its count in `bucket`. */
 export function buildDistributionTooltipRows({
 	labels,
 	colors,
@@ -30,13 +37,16 @@ export function buildDistributionTooltipRows({
 	visible,
 	bucket,
 	hoveredSeries,
+	formatLabel,
 }: {
 	labels: string[];
 	colors: string[];
+	/** `counts[series][bucket]`. */
 	counts: number[][];
 	visible: boolean[];
 	bucket: number;
 	hoveredSeries: number | null;
+	formatLabel: (label: string) => string;
 }): DistributionTooltipRow[] {
 	return labels.flatMap((label, series) => {
 		if (!visible[series]) {
@@ -54,7 +64,7 @@ export function buildDistributionTooltipRows({
 		const count = seriesCounts[bucket] ?? 0;
 		return [
 			{
-				label,
+				label: formatLabel(label),
 				color: colors[series],
 				count,
 				share: total > 0 ? count / total : 0,

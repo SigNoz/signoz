@@ -215,20 +215,11 @@ export default function Distribution({
 				colors={drawn.colors}
 				counts={drawn.counts}
 				visible={drawnVisible}
-				markers={markers}
 				formatBound={formatBound}
 				renderTooltipFooter={renderTooltipFooter}
 			/>
 		),
-		[
-			xAxis,
-			layout,
-			drawn,
-			drawnVisible,
-			markers,
-			formatBound,
-			renderTooltipFooter,
-		],
+		[xAxis, layout, drawn, drawnVisible, formatBound, renderTooltipFooter],
 	);
 
 	const onBarClickRef = useRef(onBarClick);

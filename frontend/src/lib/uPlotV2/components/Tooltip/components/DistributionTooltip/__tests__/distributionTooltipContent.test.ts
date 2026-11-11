@@ -1,29 +1,8 @@
 import {
 	buildDistributionTooltipRows,
-	formatBucketRange,
 	formatPercent,
+	resolveGroupColumn,
 } from '../distributionTooltipContent';
-
-const formatBound = (value: number): string => `${value} ms`;
-
-describe('formatBucketRange', () => {
-	it('names a finite bucket by both bounds and the open ones by their one', () => {
-		const base = {
-			lower: 250,
-			upper: 500,
-			isUnderflow: false,
-			isOverflow: false,
-		};
-
-		expect(formatBucketRange(base, formatBound)).toBe('(250 ms, 500 ms]');
-		expect(formatBucketRange({ ...base, isUnderflow: true }, formatBound)).toBe(
-			'≤ 500 ms',
-		);
-		expect(formatBucketRange({ ...base, isOverflow: true }, formatBound)).toBe(
-			'> 250 ms',
-		);
-	});
-});
 
 describe('formatPercent', () => {
 	it('rounds, and never shows a real share as 0%', () => {
@@ -33,28 +12,48 @@ describe('formatPercent', () => {
 	});
 });
 
-describe('buildDistributionTooltipRows', () => {
-	const args = {
-		labels: ['cart', 'checkout', 'search'],
-		colors: ['#f00', '#0f0', '#00f'],
-		counts: [
-			[2, 6, 2],
-			[5, 0, 5],
-			[1, 1, 8],
-		],
-		visible: [true, true, false],
-		bucket: 1,
-		hoveredSeries: 0,
-	};
+describe('resolveGroupColumn', () => {
+	it('names the column after a shared single key and shows its values', () => {
+		const column = resolveGroupColumn([
+			'{service.name="cart"}',
+			'{service.name="checkout"}',
+		]);
 
-	it("gives each visible group's count, share and cumulative share", () => {
+		expect(column.heading).toBe('service.name');
+		expect(column.format('{service.name="cart"}')).toBe('cart');
+	});
+
+	it('keeps full labels for several keys or mixed labels', () => {
+		const several = resolveGroupColumn(['{env="prod", service.name="cart"}']);
+		const mixed = resolveGroupColumn(['{service.name="cart"}', 'Other']);
+
+		expect(several.heading).toBe('Group');
+		expect(several.format('{env="prod", service.name="cart"}')).toBe(
+			'{env="prod", service.name="cart"}',
+		);
+		expect(mixed.heading).toBe('Group');
+	});
+});
+
+describe('buildDistributionTooltipRows', () => {
+	it('gives each visible group, in legend order, its count, share and cumulative share', () => {
 		const rows = buildDistributionTooltipRows({
-			...args,
+			labels: ['cart', 'checkout', 'search'],
+			colors: ['#f00', '#0f0', '#00f'],
+			counts: [
+				[2, 6, 2],
+				[5, 0, 5],
+				[1, 1, 8],
+			],
+			visible: [true, true, false],
+			bucket: 1,
+			hoveredSeries: 0,
+			formatLabel: (label) => label.toUpperCase(),
 		});
 
 		expect(rows).toStrictEqual([
 			{
-				label: 'cart',
+				label: 'CART',
 				color: '#f00',
 				count: 6,
 				share: 0.6,
@@ -62,7 +61,7 @@ describe('buildDistributionTooltipRows', () => {
 				isHovered: true,
 			},
 			{
-				label: 'checkout',
+				label: 'CHECKOUT',
 				color: '#0f0',
 				count: 0,
 				share: 0,
@@ -70,11 +69,5 @@ describe('buildDistributionTooltipRows', () => {
 				isHovered: false,
 			},
 		]);
-	});
-
-	it('lists every visible group, whatever the stacking', () => {
-		const rows = buildDistributionTooltipRows(args);
-
-		expect(rows.map(({ label }) => label)).toStrictEqual(['cart', 'checkout']);
 	});
 });

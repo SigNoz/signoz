@@ -1,14 +1,10 @@
-import type { HeatmapRow } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import type { DistributionBarsLayout } from 'lib/visualization/charts/Distribution/layout';
-import type { DistributionPercentile } from 'lib/visualization/charts/Distribution/percentiles';
 import type { DistributionXAxis } from 'lib/visualization/charts/Distribution/types';
 
 import type {
 	IRenderTooltipFooterArgs,
 	TooltipRenderArgs,
 } from '../../../types';
-
-export type DistributionBucket = HeatmapRow;
 
 export interface DistributionTooltipRow {
 	label: string;
@@ -19,6 +15,11 @@ export interface DistributionTooltipRow {
 	/** Of the group's total, at or below this bucket. */
 	cumulativeShare: number;
 	isHovered: boolean;
+}
+
+export interface DistributionGroupColumn {
+	heading: string;
+	format: (label: string) => string;
 }
 
 export interface DistributionTooltipProps extends Pick<
@@ -32,7 +33,6 @@ export interface DistributionTooltipProps extends Pick<
 	/** `counts[series][bucket]`. */
 	counts: number[][];
 	visible: boolean[];
-	markers: DistributionPercentile[];
 	formatBound: (value: number) => string;
 	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;
 }
