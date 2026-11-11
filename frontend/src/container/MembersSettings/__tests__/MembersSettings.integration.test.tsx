@@ -1,7 +1,8 @@
 import type { TypesUserDTO } from 'api/generated/services/sigNoz.schemas';
 import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
-import { fireEvent, render, screen } from 'tests/test-utils';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import MembersSettings from '../MembersSettings';
 
@@ -57,6 +58,7 @@ describe('MembersSettings (integration)', () => {
 			rest.get(USERS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: mockUsers })),
 			),
+			setupAuthzAdmin(),
 		);
 	});
 
@@ -126,7 +128,11 @@ describe('MembersSettings (integration)', () => {
 	it('opens InviteMembersModal when "Invite member" button is clicked', async () => {
 		render(<MembersSettings />);
 
-		fireEvent.click(screen.getByRole('button', { name: /invite member/i }));
+		const inviteBtn = await screen.findByTestId('invite-member-btn');
+		await waitFor(() =>
+			expect(inviteBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
+		fireEvent.click(inviteBtn);
 
 		await expect(
 			screen.findAllByPlaceholderText('e.g. john@signoz.io'),

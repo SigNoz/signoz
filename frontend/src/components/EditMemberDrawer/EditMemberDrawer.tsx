@@ -40,9 +40,13 @@ import ResetLinkDialog from './ResetLinkDialog';
 
 import './EditMemberDrawer.styles.scss';
 import { AuthZGuardContent } from '@/lib/authz/components/AuthZGuard/AuthZGuardContent';
-import { buildUserReadPermission } from '@/lib/authz/hooks/useAuthZ/permissions/user.permissions';
+import {
+	buildUserReadPermission,
+	buildUserUpdatePermission,
+} from '@/lib/authz/hooks/useAuthZ/permissions/user.permissions';
 import AuthZButton from '@/lib/authz/components/AuthZButton/AuthZButton';
 import { useAuthZ } from '@/lib/authz/hooks/useAuthZ/useAuthZ';
+import AuthZTooltip from '@/lib/authz/components/AuthZTooltip/AuthZTooltip';
 
 const ROOT_USER_TOOLTIP = 'This operation is not supported for the root user';
 const SELF_DELETE_TOOLTIP =
@@ -199,13 +203,17 @@ function EditMemberDrawer({
 	useEffect(() => {
 		if (!member?.id) {
 			roleSessionRef.current = null;
-		} else if (member.id !== roleSessionRef.current && !isMemberRolesLoading) {
+		} else if (
+			canReadUser &&
+			member.id !== roleSessionRef.current &&
+			!isMemberRolesLoading
+		) {
 			setLocalRoles(
 				currentMemberRoles.map((r) => r.id).filter(Boolean) as string[],
 			);
 			roleSessionRef.current = member.id;
 		}
-	}, [member?.id, currentMemberRoles, isMemberRolesLoading]);
+	}, [member?.id, canReadUser, currentMemberRoles, isMemberRolesLoading]);
 
 	const isDirty =
 		member !== null &&
@@ -483,7 +491,11 @@ function EditMemberDrawer({
 				<label className="edit-member-drawer__label" htmlFor="member-name">
 					Name
 				</label>
-				<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
+
+				<AuthZTooltip
+					checks={member ? [buildUserUpdatePermission(member.id)] : []}
+					disabledTooltip={isRootUser ? ROOT_USER_TOOLTIP : undefined}
+				>
 					<Input
 						id="member-name"
 						value={localDisplayName}
@@ -496,7 +508,7 @@ function EditMemberDrawer({
 						placeholder="Enter name"
 						disabled={isRootUser || isDeleted}
 					/>
-				</Tooltip>
+				</AuthZTooltip>
 			</div>
 
 			<div className="edit-member-drawer__field">
@@ -685,16 +697,23 @@ function EditMemberDrawer({
 							disabledTooltip={
 								isRootUser
 									? ROOT_USER_TOOLTIP
-									: !canReadUser
-										? undefined
-										: 'No changes to save'
+									: !isDirty
+										? 'No changes to save'
+										: undefined
 							}
 							size="md"
 							variant="solid"
 							color="primary"
 							disabled={!isDirty || isRootUser}
 							onClick={handleSave}
-							checks={member ? [buildUserReadPermission(member?.id)] : []}
+							checks={
+								member
+									? [
+											buildUserReadPermission(member.id),
+											buildUserUpdatePermission(member.id),
+										]
+									: []
+							}
 							testId="member-save-btn"
 							loading={isSaving}
 						>

@@ -17,6 +17,7 @@ import {
 	managedRoles,
 } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
@@ -185,6 +186,7 @@ describe('EditMemberDrawer', () => {
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
 			),
+			setupAuthzAdmin(),
 		);
 		(useGetUser as jest.Mock).mockReturnValue({
 			data: mockFetchedUser,
@@ -242,15 +244,19 @@ describe('EditMemberDrawer', () => {
 		server.resetHandlers();
 	});
 
-	it('renders active member details and disables Save when form is not dirty', () => {
+	it('renders active member details and disables Save when form is not dirty', async () => {
 		renderDrawer();
 
-		expect(screen.getByDisplayValue('Alice Smith')).toBeInTheDocument();
+		await expect(
+			screen.findByDisplayValue('Alice Smith'),
+		).resolves.toBeInTheDocument();
 		expect(screen.getByText('alice@signoz.io')).toBeInTheDocument();
 		expect(screen.getByText('ACTIVE')).toBeInTheDocument();
-		expect(
-			screen.getByRole('button', { name: /save member details/i }),
-		).toHaveAttribute('aria-disabled', 'true');
+		await waitFor(() =>
+			expect(
+				screen.getByRole('button', { name: /save member details/i }),
+			).toHaveAttribute('aria-disabled', 'true'),
+		);
 	});
 
 	it('enables Save after editing name and calls updateUser on confirm', async () => {
@@ -265,7 +271,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onComplete });
 
-		const nameInput = screen.getByDisplayValue('Alice Smith');
+		const nameInput = await screen.findByDisplayValue('Alice Smith');
 		await user.clear(nameInput);
 		await user.type(nameInput, 'Alice Updated');
 
@@ -291,7 +297,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onClose });
 
-		const nameInput = screen.getByDisplayValue('Alice Smith');
+		const nameInput = await screen.findByDisplayValue('Alice Smith');
 		await user.clear(nameInput);
 		await user.type(nameInput, 'Alice Updated');
 
@@ -322,7 +328,7 @@ describe('EditMemberDrawer', () => {
 		renderDrawer({ onComplete });
 
 		// signoz-admin is already selected; add signoz-editor on top
-		await user.click(screen.getByLabelText('Roles'));
+		await user.click(await screen.findByLabelText('Roles'));
 		await user.click(await screen.findByTitle('signoz-editor'));
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
@@ -397,8 +403,10 @@ describe('EditMemberDrawer', () => {
 		});
 	});
 
-	it('shows revoke invite and copy invite link for invited members; hides Last Modified', () => {
+	it('shows revoke invite and copy invite link for invited members; hides Last Modified', async () => {
 		renderDrawer({ member: invitedMember });
+
+		await screen.findByText('Invited On');
 
 		expect(
 			screen.getByRole('button', { name: /revoke invite/i }),
@@ -507,7 +515,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ member: { ...invitedMember, name: 'Bob' }, onComplete });
 
-		const nameInput = screen.getByDisplayValue('Bob');
+		const nameInput = await screen.findByDisplayValue('Bob');
 		await user.clear(nameInput);
 		await user.type(nameInput, 'Bob Updated');
 
@@ -545,7 +553,7 @@ describe('EditMemberDrawer', () => {
 
 			renderDrawer();
 
-			const nameInput = screen.getByDisplayValue('Alice Smith');
+			const nameInput = await screen.findByDisplayValue('Alice Smith');
 			await user.clear(nameInput);
 			await user.type(nameInput, 'Alice Updated');
 
@@ -644,9 +652,11 @@ describe('EditMemberDrawer', () => {
 			).not.toBeInTheDocument();
 		});
 
-		it('keeps name input enabled when viewing own profile', () => {
+		it('keeps name input enabled when viewing own profile', async () => {
 			renderDrawer({ member: selfMember });
-			expect(screen.getByDisplayValue('Alice Smith')).not.toBeDisabled();
+			await expect(
+				screen.findByDisplayValue('Alice Smith'),
+			).resolves.not.toBeDisabled();
 		});
 
 		it('keeps Reset Link button enabled when viewing own profile', () => {
@@ -666,9 +676,11 @@ describe('EditMemberDrawer', () => {
 			});
 		});
 
-		it('disables name input for root user', () => {
+		it('disables name input for root user', async () => {
 			renderDrawer();
-			expect(screen.getByDisplayValue('Alice Smith')).toBeDisabled();
+			await expect(
+				screen.findByDisplayValue('Alice Smith'),
+			).resolves.toBeDisabled();
 		});
 
 		it('disables Delete button for root user', () => {
