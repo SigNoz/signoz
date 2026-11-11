@@ -3,6 +3,7 @@ import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { userEvent } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
 import SavedViewsHeader from '../SavedViewsHeader';
@@ -74,5 +75,40 @@ describe('SavedViewsHeader last used view', () => {
 		await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
 		expect(chip()).toHaveTextContent('My view');
 		expect(urlParam(history, QueryParams.viewKey)).toBeNull();
+	});
+
+	it('does not bring the view back once it is cleared', async () => {
+		mockSavedViewsApi([errors]);
+		const { history } = renderHeader(explorerUrl(PATH, {}));
+		await waitForView('Errors');
+
+		await userEvent.click(screen.getByTestId('saved-views-clear'));
+		await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
+
+		expect(chip()).toHaveTextContent('My view');
+		expect(urlParam(history, QueryParams.viewKey)).toBeNull();
+	});
+
+	it('forgets a last used view that no longer loads', async () => {
+		mockSavedViewsApi([]);
+		renderHeader(explorerUrl(PATH, {}));
+
+		await waitFor(() =>
+			expect(
+				JSON.parse(
+					localStorage.getItem(LOCALSTORAGE.LAST_USED_SAVED_VIEWS) ?? '{}',
+				),
+			).toStrictEqual({}),
+		);
+		expect(chip()).toHaveTextContent('My view');
+	});
+
+	it('starts on a bare explorer when the stored last used views are unreadable', async () => {
+		localStorage.setItem(LOCALSTORAGE.LAST_USED_SAVED_VIEWS, '{not json');
+		mockSavedViewsApi([errors]);
+		renderHeader(explorerUrl(PATH, {}));
+
+		await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
+		expect(chip()).toHaveTextContent('My view');
 	});
 });

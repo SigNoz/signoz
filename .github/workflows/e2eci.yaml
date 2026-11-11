@@ -2,6 +2,9 @@ name: e2eci
 
 on:
   pull_request:
+  merge_group:
+    types:
+      - checks_requested
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -13,14 +16,18 @@ jobs:
     outputs:
       e2e: ${{ steps.changes.outputs.e2e }}
     steps:
+      - name: merge-queue-pass
+        if: github.event_name == 'merge_group'
+        run: echo "::notice::Merge queue run. E2E already gated the PR, so the required e2e check auto-passes."
       - name: changes
         id: changes
+        if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           FORCE: ${{ contains(github.event.pull_request.labels.*.name, 'safe-to-e2e') }}
         run: |
-          CHANGED_FILES=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename | select(startswith("tests/integration/") | not)')
+          CHANGED_FILES=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename | select((startswith("tests/integration/") or startswith("frontend/src/api/generated/")) | not)')
           PATTERN='^(frontend/|tests/|\.github/workflows/e2eci\.yaml$|cmd/enterprise/Dockerfile\.with-web\.integration$)'
 
           if [ "$FORCE" = "true" ]; then
@@ -40,7 +47,7 @@ jobs:
       - name: node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: "22"
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -60,7 +67,7 @@ jobs:
       matrix:
         project:
           - chromium
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     needs: changes
     if: needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
@@ -98,7 +105,7 @@ jobs:
       - name: node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: "22"
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -155,7 +162,7 @@ jobs:
       - name: playwright-test
         run: |
           cd tests/e2e && \
-            pnpm playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/4
+            pnpm playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/10
       - name: teardown-stack
         if: always()
         run: |

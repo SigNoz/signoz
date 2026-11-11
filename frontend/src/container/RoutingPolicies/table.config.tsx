@@ -1,11 +1,13 @@
-import { Badge } from '@signozhq/ui/badge';
 import type { TableColumnDef } from 'components/TanStackTableView';
+import OverflowBadges from 'components/OverflowBadges/OverflowBadges';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { toRelativeTime } from 'pages/AlertList/NotificationChannels/utils/relativeTime';
 
 import styles from './RoutingPolicies.module.scss';
 import { RoutingPolicy } from './types';
+
+const COLUMN_WIDTH = { default: 'auto', min: '120px' };
 
 export function getRoutingPolicyColumns(
 	formatTimezoneAdjustedTimestamp: (date: string, format: string) => string,
@@ -42,7 +44,7 @@ export function getRoutingPolicyColumns(
 			id: 'name',
 			header: 'Routing Policy',
 			accessorKey: 'name',
-			width: { default: '100%', min: '220px' },
+			width: COLUMN_WIDTH,
 			enableSort: true,
 			enableResize: true,
 			enableRemove: false,
@@ -57,10 +59,30 @@ export function getRoutingPolicyColumns(
 			),
 		},
 		{
+			id: 'channels',
+			header: 'Channels',
+			accessorKey: 'channels',
+			width: COLUMN_WIDTH,
+			enableSort: false,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element =>
+				row.channels?.length ? (
+					<OverflowBadges
+						items={row.channels.map((channel) => ({
+							key: channel,
+							label: channel,
+						}))}
+					/>
+				) : (
+					<TanStackTable.Text>-</TanStackTable.Text>
+				),
+		},
+		{
 			id: 'expression',
 			header: 'Expression',
 			accessorKey: 'expression',
-			width: { default: '260px', min: '160px' },
+			width: COLUMN_WIDTH,
 			enableSort: false,
 			enableResize: true,
 			enableMove: false,
@@ -71,36 +93,10 @@ export function getRoutingPolicyColumns(
 			),
 		},
 		{
-			id: 'channels',
-			header: 'Channels',
-			accessorKey: 'channels',
-			width: { default: '220px', min: '140px' },
-			enableSort: false,
-			enableResize: true,
-			enableMove: false,
-			cell: ({ row }): JSX.Element =>
-				row.channels?.length ? (
-					<div className={styles.badges} title={row.channels.join(', ')}>
-						{row.channels.map((channel) => (
-							<Badge
-								key={channel}
-								textTransform="none"
-								variant="solid"
-								color="secondary"
-							>
-								{channel}
-							</Badge>
-						))}
-					</div>
-				) : (
-					<TanStackTable.Text>-</TanStackTable.Text>
-				),
-		},
-		{
 			id: 'createdBy',
 			header: 'Created By',
 			accessorKey: 'createdBy',
-			width: { default: '180px', min: '120px' },
+			width: COLUMN_WIDTH,
 			defaultVisibility: false,
 			enableSort: false,
 			enableResize: true,
@@ -111,7 +107,7 @@ export function getRoutingPolicyColumns(
 			id: 'createdAt',
 			header: 'Created At',
 			accessorKey: 'createdAt',
-			width: { default: '150px', min: '120px' },
+			width: COLUMN_WIDTH,
 			defaultVisibility: false,
 			enableSort: true,
 			enableResize: true,
@@ -122,7 +118,7 @@ export function getRoutingPolicyColumns(
 			id: 'updatedBy',
 			header: 'Updated By',
 			accessorKey: 'updatedBy',
-			width: { default: '180px', min: '120px' },
+			width: COLUMN_WIDTH,
 			defaultVisibility: false,
 			enableSort: false,
 			enableResize: true,
@@ -133,7 +129,7 @@ export function getRoutingPolicyColumns(
 			id: 'updatedAt',
 			header: 'Updated At',
 			accessorKey: 'updatedAt',
-			width: { default: '150px', min: '120px' },
+			width: COLUMN_WIDTH,
 			defaultVisibility: false,
 			enableSort: true,
 			enableResize: true,

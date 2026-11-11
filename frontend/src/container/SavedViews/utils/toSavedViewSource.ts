@@ -3,8 +3,8 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { SavedViewSourcePage } from '../types';
 
-// The views API files each view under a source page, but callers only know the
-// signal they query: a builder query's dataSource, or the AI assistant's hint.
+// The AI assistant names a view's source by DataSource (the signal), the api
+// keys views by source page.
 // TODO: remove in a follow-up once callers pass the source page directly.
 const SAVED_VIEW_SOURCE: Record<SavedViewSourcePage, SavedviewtypesSourceDTO> =
 	{

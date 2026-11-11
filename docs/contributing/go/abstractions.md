@@ -28,7 +28,7 @@ func ConvertConfig(src ExternalConfig) (InternalConfig, error)
 // Over this:
 type ConfigAdapter struct { ... }
 func NewConfigAdapter(src ExternalConfig) *ConfigAdapter
-func (a *ConfigAdapter) ToInternal() (InternalConfig, error)
+func (adapter *ConfigAdapter) ToInternal() (InternalConfig, error)
 ```
 
 The two-step version is only justified when `ConfigAdapter` has multiple distinct consumers that use it in different ways.
@@ -66,10 +66,10 @@ A method on a structured type should not strip meaning from the structure it bel
 
 ```go
 // Problematic: callers cannot distinguish how items were related.
-func (o *Order) AllLineItems() []LineItem { ... }
+func (order *Order) AllLineItems() []LineItem { ... }
 
 // Better: the validation logic operates on the full structure.
-func ValidateOrder(o *Order) error { ... }
+func ValidateOrder(order *Order) error { ... }
 ```
 
 Public methods shape how a type is used. Once a lossy accessor exists, callers will depend on it, and the lost information becomes unrecoverable at those call sites.

@@ -47,9 +47,9 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { QueryParams } from 'constants/query';
 import { initialQueryMeterWithType } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { INITIAL_ALERT_THRESHOLD_STATE } from 'container/CreateAlertV2/context/constants';
-import { EvaluationWindowPreset } from 'container/CreateAlertV2/context/resolveUrlAlertPrefill';
-import { AlertThresholdMatchType } from 'container/CreateAlertV2/context/types';
+import { INITIAL_ALERT_THRESHOLD_STATE } from 'container/CreateAlert/context/constants';
+import { EvaluationWindowPreset } from 'container/CreateAlert/context/resolveUrlAlertPrefill';
+import { AlertThresholdMatchType } from 'container/CreateAlert/context/types';
 import dayjs from 'dayjs';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetGlobalConfig } from 'api/generated/services/global';
@@ -1705,6 +1705,7 @@ function MultiIngestionSettings(): JSX.Element {
 						prefix={<Plus size={14} />}
 						onClick={showAddModal}
 						width="200px"
+						testId="ingestion-key-add-btn"
 					>
 						New Ingestion key
 					</Button>

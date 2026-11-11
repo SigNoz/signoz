@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import UTC, datetime
 from http import HTTPStatus
 
 import requests
@@ -16,6 +17,7 @@ from fixtures.types import Operation, SigNoz, TestContainerDocker
 
 V2_RULES_URL = "/api/v2/rules"
 V3_RULES_URL = "/api/v3/rules"
+RULE_VIEWS_URL = "/api/v2/rule_views"
 DOWNTIME_URL = "/api/v1/downtime_schedules"
 ROUTE_POLICIES_URL = "/api/v1/route_policies"
 
@@ -28,6 +30,7 @@ _ACTOR_PASSWORD = "password123Z$"
 _ACTOR_ROLE_NAME = "alert-authz-actor"
 
 _TARGET_RULE = "alert authz target"
+_VIEW_NAME = "alert-authz-view"
 _DOWNTIME_NAME = "alert-authz-downtime"
 _ACTOR_DOWNTIME_NAME = "alert-authz-actor-downtime"
 _ROUTE_POLICY_NAME = "alert-authz-route-policy"
@@ -400,6 +403,45 @@ def test_viewer_allowed_on_downtime_reads_and_forbidden_on_writes(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
 
+def test_viewer_allowed_on_rule_views(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        json={"name": _VIEW_NAME, "data": {"version": "v1", "sort": "updated_at", "order": "desc"}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    view_id = response.json()["data"]["id"]
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"{RULE_VIEWS_URL}/{view_id}"),
+        json={"name": _VIEW_NAME, "data": {"version": "v1", "sort": "updated_at", "order": "asc"}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{RULE_VIEWS_URL}/{view_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
 def test_apply_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -504,6 +546,37 @@ def test_downtime_managed_role_tuples_enforced_with_license(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, f"editor delete must pass on the migrated planned-maintenance delete tuple: {response.text}"
+
+
+def test_rule_view_managed_role_tuples_enforced_with_license(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    viewer_token = get_token(_VIEWER_EMAIL, _VIEWER_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, f"viewer list must pass on the migrated rule list tuple: {response.text}"
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        json={"name": _VIEW_NAME, "data": {"version": "v1", "sort": "updated_at", "order": "desc"}},
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, f"viewer create must pass, rule views are gated on rule list like dashboard views: {response.text}"
+    view_id = response.json()["data"]["id"]
+
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"{RULE_VIEWS_URL}/{view_id}"),
+        headers={"Authorization": f"Bearer {viewer_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"viewer delete must pass on the migrated rule list tuple: {response.text}"
 
 
 def test_setup_channel_scoped_actor(
@@ -628,6 +701,29 @@ def test_route_policy_channel_changes_follow_channel_attach_and_detach(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_rule_views_forbidden_without_rule_list(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(RULE_VIEWS_URL),
+        json={"name": _VIEW_NAME, "data": {"version": "v1", "sort": "updated_at", "order": "desc"}},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
 
 
 def test_downtime_naming_rule_forbidden_without_rule_attach(
@@ -801,6 +897,156 @@ def test_downtime_widening_to_all_rules_forbidden_without_wildcard_attach(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+
+def test_history_labels_need_telemetry_and_field_grants(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    role_id = find_role_by_name(signoz, admin_token, _ACTOR_ROLE_NAME)
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
+        json={"description": "", "transactionGroups": _ACTOR_BASE_TRANSACTION_GROUPS + [transaction_group("read", "metaresource", "rule", ["*"])]},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V3_RULES_URL}?limit=200"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    target_id = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}[_TARGET_RULE]
+
+    end_ms = int(datetime.now(tz=UTC).timestamp() * 1000)
+    start_ms = end_ms - 30 * 60 * 1000
+    history_url = f"{V2_RULES_URL}/{target_id}/history"
+    rule_scoped = (
+        (f"{history_url}/stats", {"start": start_ms, "end": end_ms}),
+        (f"{history_url}/overall_status", {"start": start_ms, "end": end_ms}),
+    )
+    rule_and_telemetry_scoped = (
+        (f"{history_url}/timeline", {"start": start_ms, "end": end_ms}),
+        (f"{history_url}/top_contributors", {"start": start_ms, "end": end_ms}),
+    )
+    field_scoped = (
+        (f"{history_url}/filter_keys", {"startUnixMilli": start_ms, "endUnixMilli": end_ms}),
+        (f"{history_url}/filter_values", {"startUnixMilli": start_ms, "endUnixMilli": end_ms, "name": "severity"}),
+    )
+    label_scoped = rule_and_telemetry_scoped + field_scoped
+
+    for path, params in rule_scoped:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(path),
+            params=params,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, f"GET {path}: expected 200, got {response.status_code}: {response.text}"
+
+    for path, params in label_scoped:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(path),
+            params=params,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.FORBIDDEN, f"GET {path}: expected 403, got {response.status_code}: {response.text}"
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
+        json={
+            "description": "",
+            "transactionGroups": _ACTOR_BASE_TRANSACTION_GROUPS
+            + [
+                transaction_group("read", "telemetryresource", "metrics", ["builder_query/*"]),
+                transaction_group("list", "metaresource", "metrics-field", ["*"]),
+                transaction_group("read", "metaresource", "metrics-field", ["*"]),
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+    for path, params in label_scoped:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(path),
+            params=params,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.FORBIDDEN, f"GET {path}: expected 403, got {response.status_code}: {response.text}"
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
+        json={
+            "description": "",
+            "transactionGroups": _ACTOR_BASE_TRANSACTION_GROUPS
+            + [
+                transaction_group("read", "metaresource", "rule", ["*"]),
+                transaction_group("read", "telemetryresource", "logs", ["builder_query/*"]),
+                transaction_group("list", "metaresource", "metrics-field", ["*"]),
+                transaction_group("read", "metaresource", "metrics-field", ["*"]),
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+    for path, params in rule_and_telemetry_scoped:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(path),
+            params=params,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.FORBIDDEN, f"GET {path}: expected 403, got {response.status_code}: {response.text}"
+
+    for path, params in field_scoped:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(path),
+            params=params,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, f"GET {path}: expected 200, got {response.status_code}: {response.text}"
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"),
+        json={
+            "description": "",
+            "transactionGroups": _ACTOR_BASE_TRANSACTION_GROUPS
+            + [
+                transaction_group("read", "metaresource", "rule", ["*"]),
+                transaction_group("read", "telemetryresource", "metrics", ["builder_query/*"]),
+                transaction_group("list", "metaresource", "metrics-field", ["*"]),
+                transaction_group("read", "metaresource", "metrics-field", ["*"]),
+            ],
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.text
+
+    token = get_token(_ACTOR_EMAIL, _ACTOR_PASSWORD)
+    for path, params in label_scoped:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(path),
+            params=params,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, f"GET {path}: expected 200, got {response.status_code}: {response.text}"
 
 
 def test_alert_authz_cleanup(
