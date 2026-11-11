@@ -12,7 +12,10 @@ import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
-import { UserListPermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
+import {
+	UserCreatePermission,
+	UserListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { parseAsBoolean, useQueryState } from 'nuqs';
 import { toISOString } from 'utils/app';
@@ -21,6 +24,7 @@ import { toAPIError } from 'utils/errorUtils';
 import { FilterMode, MemberStatus, toMemberStatus } from './utils';
 
 import './MembersSettings.styles.scss';
+import AuthZButton from '@/lib/authz/components/AuthZButton/AuthZButton';
 
 const PAGE_SIZE = 20;
 
@@ -246,16 +250,17 @@ function MembersSettings(): JSX.Element {
 						</AuthZTooltip>
 					</div>
 
-					<Button
+					<AuthZButton
 						size="md"
 						variant="solid"
 						color="primary"
+						checks={[UserCreatePermission]}
 						onClick={(): void => void setIsInviteModalOpen(true)}
 						prefix={<Plus size={12} />}
 						testId="invite-member-btn"
 					>
 						Invite member
-					</Button>
+					</AuthZButton>
 				</div>
 			</div>
 			<AuthZGuardContent checks={[UserListPermission]}>
