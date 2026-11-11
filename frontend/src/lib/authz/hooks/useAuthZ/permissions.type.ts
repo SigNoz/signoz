@@ -37,6 +37,19 @@ export default {
 				allowedVerbs: ['list', 'read', 'update'],
 			},
 			{
+				kind: 'rule',
+				type: 'metaresource',
+				allowedVerbs: [
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
+			},
+			{
 				kind: 'saved-view',
 				type: 'metaresource',
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
