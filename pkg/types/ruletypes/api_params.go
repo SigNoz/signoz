@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/swaggest/jsonschema-go"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -49,7 +51,6 @@ func (t AlertType) BuilderQueryType() qbtypes.QueryType {
 }
 
 const (
-	DefaultSchemaVersion  = "v1"
 	SchemaVersionV2Alpha1 = "v2alpha1"
 )
 
@@ -61,12 +62,10 @@ const (
 
 // PostableRule is used to create alerting rule from HTTP api.
 type PostableRule struct {
-	AlertName   valuer.DisplayName  `json:"alert" required:"true" description:"The display name of the alert rule."`
-	AlertType   AlertType           `json:"alertType" required:"true" description:"The signal the rule evaluates: METRIC_BASED_ALERT, TRACES_BASED_ALERT, LOGS_BASED_ALERT, EXCEPTIONS_BASED_ALERT or AI_TRACES_BASED_ALERT."`
-	Description string              `json:"description,omitempty" description:"A human readable description of what the rule monitors."`
-	RuleType    RuleType            `json:"ruleType" required:"true" description:"The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries."`
-	EvalWindow  valuer.TextDuration `json:"evalWindow,omitzero" description:"The lookback window as a Go duration such as 5m. Only read when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec instead."`
-	Frequency   valuer.TextDuration `json:"frequency,omitzero" description:"How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead."`
+	AlertName   valuer.DisplayName `json:"alert" required:"true" description:"The display name of the alert rule."`
+	AlertType   AlertType          `json:"alertType" required:"true" description:"The signal the rule evaluates: METRIC_BASED_ALERT, TRACES_BASED_ALERT, LOGS_BASED_ALERT, EXCEPTIONS_BASED_ALERT or AI_TRACES_BASED_ALERT."`
+	Description string             `json:"description,omitempty" description:"A human readable description of what the rule monitors."`
+	RuleType    RuleType           `json:"ruleType" required:"true" description:"The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries."`
 
 	RuleCondition *RuleCondition    `json:"condition" required:"true" description:"The query to evaluate and the thresholds applied to its result."`
 	Labels        map[string]string `json:"labels,omitempty" description:"Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label."`
@@ -76,14 +75,12 @@ type PostableRule struct {
 
 	Source string `json:"source,omitempty" description:"The URL of the page the rule was created from. Informational; it is not used for evaluation."`
 
-	PreferredChannels []string `json:"preferredChannels,omitempty" description:"The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels."`
-
 	Version string `json:"version" description:"The query payload version. Nothing reads it."`
 
-	Evaluation    *EvaluationEnvelope `json:"evaluation,omitempty" required:"true" description:"The evaluation window, as a kind and spec."`
-	SchemaVersion string              `json:"schemaVersion,omitempty" required:"true" enum:"v2alpha1" description:"The rule payload schema."`
+	Evaluation    *EvaluationEnvelope `json:"evaluation" required:"true" description:"The evaluation window, as a kind and spec."`
+	SchemaVersion string              `json:"schemaVersion" required:"true" enum:"v2alpha1" description:"The rule payload schema."`
 
-	NotificationSettings *NotificationSettings `json:"notificationSettings,omitempty" required:"true" description:"Grouping, re-notification and routing behaviour."`
+	NotificationSettings *NotificationSettings `json:"notificationSettings" required:"true" description:"Grouping, re-notification and routing behaviour."`
 }
 
 type NotificationSettings struct {
@@ -228,101 +225,15 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 // processRuleDefaults applies the default values
 // for the rule options that are blank or unset.
 func (r *PostableRule) processRuleDefaults() {
-	if r.SchemaVersion == "" {
-		r.SchemaVersion = DefaultSchemaVersion
-	}
-
-	// TODO(srikanthccv): remove as this is now a legacy field
-	if r.Version == "" {
-		r.Version = "v5"
-	}
-
-	// v2alpha1 uses the Evaluation envelope for window/frequency;
-	// only default top-level fields for v1.
-	if r.SchemaVersion != SchemaVersionV2Alpha1 {
-		if r.EvalWindow.IsZero() {
-			r.EvalWindow = valuer.MustParseTextDuration("5m")
-		}
-
-		if r.Frequency.IsZero() {
-			r.Frequency = valuer.MustParseTextDuration("1m")
-		}
-	}
-
 	if r.RuleCondition != nil && r.RuleCondition.CompositeQuery != nil {
 		switch r.RuleCondition.CompositeQuery.QueryType {
-		case QueryTypeBuilder:
+		case QueryTypeBuilder, QueryTypeClickHouseSQL:
 			if r.RuleType.IsZero() {
 				r.RuleType = RuleTypeThreshold
 			}
 		case QueryTypePromQL:
 			r.RuleType = RuleTypeProm
 		}
-
-		if r.SchemaVersion == DefaultSchemaVersion {
-			thresholdName := CriticalThresholdName
-			if r.Labels != nil {
-				if severity, ok := r.Labels["severity"]; ok {
-					thresholdName = severity
-				}
-			}
-
-			// For anomaly detection with ValueIsBelow, negate the target
-			targetValue := r.RuleCondition.Target
-			if r.RuleType == RuleTypeAnomaly && r.RuleCondition.CompareOperator == ValueIsBelow && targetValue != nil {
-				negated := -1 * *targetValue
-				targetValue = &negated
-			}
-
-			thresholdData := RuleThresholdData{
-				Kind: BasicThresholdKind,
-				Spec: BasicRuleThresholds{{
-					Name:            thresholdName,
-					TargetUnit:      r.RuleCondition.TargetUnit,
-					TargetValue:     targetValue,
-					MatchType:       r.RuleCondition.MatchType,
-					CompareOperator: r.RuleCondition.CompareOperator,
-					Channels:        r.PreferredChannels,
-				}},
-			}
-			r.RuleCondition.Thresholds = &thresholdData
-			r.Evaluation = &EvaluationEnvelope{RollingEvaluation, RollingWindow{EvalWindow: r.EvalWindow, Frequency: r.Frequency}}
-			r.NotificationSettings = &NotificationSettings{
-				Renotify: &Renotify{
-					Enabled:          true,
-					ReNotifyInterval: valuer.MustParseTextDuration("4h"),
-					AlertStates:      []AlertState{StateFiring},
-				},
-			}
-			if r.RuleCondition.AlertOnAbsent {
-				r.NotificationSettings.Renotify.AlertStates = append(r.NotificationSettings.Renotify.AlertStates, StateNoData)
-			}
-		}
-	}
-}
-
-func (r *PostableRule) MarshalJSON() ([]byte, error) {
-	type Alias PostableRule
-
-	switch r.SchemaVersion {
-	case DefaultSchemaVersion:
-		copyStruct := *r
-		aux := Alias(copyStruct)
-		if aux.RuleCondition != nil {
-			aux.RuleCondition.Thresholds = nil
-		}
-		aux.Evaluation = nil
-		aux.SchemaVersion = ""
-		aux.NotificationSettings = nil
-		return json.Marshal(aux)
-	case SchemaVersionV2Alpha1:
-		copyStruct := *r
-		aux := Alias(copyStruct)
-		return json.Marshal(aux)
-	default:
-		copyStruct := *r
-		aux := Alias(copyStruct)
-		return json.Marshal(aux)
 	}
 }
 
@@ -334,6 +245,20 @@ func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	}
 	r.processRuleDefaults()
 	return r.validate()
+}
+
+func (r *PostableRule) DecodeStrict(ruleStr string) error {
+	err := json.Unmarshal([]byte(ruleStr), r)
+	if err == nil {
+		// the alias has no UnmarshalJSON, so a strict pass sees every key the rule has no field for
+		type plainRule PostableRule
+		return binding.JSON.BindBody(strings.NewReader(ruleStr), new(plainRule), binding.WithDisallowUnknownFields(true), binding.WithUnknownFieldContext("alert rule"))
+	}
+	if errors.Ast(err, errors.TypeInvalidInput) {
+		return err
+	}
+	// a syntax error is raised before any UnmarshalJSON runs, so it is the one untyped error
+	return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse json: %v", err)
 }
 
 var _ jsonschema.Preparer = PostableRule{}
@@ -374,10 +299,6 @@ func (r *PostableRule) validate() error {
 
 	if r.RuleCondition == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition: field is required")
-	}
-
-	if r.Version != "v5" {
-		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "version: only v5 is supported, got %q", r.Version))
 	}
 
 	for k, v := range r.Labels {
@@ -423,11 +344,9 @@ func (r *PostableRule) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition: field is required")
 	}
 
-	if r.Version != "v5" {
-		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "version: only v5 is supported, got %q", r.Version))
-	}
-
-	if r.AlertType != "" {
+	if r.AlertType == "" {
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "alertType: field is required"))
+	} else {
 		switch r.AlertType {
 		case AlertTypeMetric, AlertTypeTraces, AlertTypeLogs, AlertTypeExceptions, AlertTypeAITraces:
 		default:
@@ -452,6 +371,12 @@ func (r *PostableRule) Validate() error {
 	if r.RuleCondition.CompositeQuery == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery: field is required"))
 	} else {
+		if err := r.RuleCondition.CompositeQuery.QueryType.Validate(); err != nil {
+			errs = append(errs, err)
+		}
+		if err := r.RuleCondition.CompositeQuery.PanelType.Validate(); err != nil {
+			errs = append(errs, err)
+		}
 		if len(r.RuleCondition.CompositeQuery.Queries) == 0 {
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery.queries: must have at least one query"))
 		} else {
@@ -462,7 +387,9 @@ func (r *PostableRule) Validate() error {
 		}
 	}
 
-	if r.RuleCondition.SelectedQuery != "" && r.RuleCondition.CompositeQuery != nil && len(r.RuleCondition.CompositeQuery.Queries) > 0 {
+	if r.RuleCondition.SelectedQuery == "" {
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.selectedQueryName: field is required"))
+	} else if r.RuleCondition.CompositeQuery != nil && len(r.RuleCondition.CompositeQuery.Queries) > 0 {
 		found := false
 		for _, query := range r.RuleCondition.CompositeQuery.Queries {
 			if query.GetQueryName() == r.RuleCondition.SelectedQuery {
@@ -514,74 +441,43 @@ func (r *PostableRule) Validate() error {
 
 func (r *PostableRule) validateSchemaVersion() []error {
 	switch r.SchemaVersion {
-	case DefaultSchemaVersion:
-		return r.validateV1()
 	case SchemaVersionV2Alpha1:
 		return r.validateV2Alpha1()
 	default:
 		return []error{errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"schemaVersion: unsupported value %q; must be one of %q, %q",
-			r.SchemaVersion, DefaultSchemaVersion, SchemaVersionV2Alpha1)}
+			"schemaVersion: unsupported value %q; must be %q",
+			r.SchemaVersion, SchemaVersionV2Alpha1)}
 	}
-}
-
-func (r *PostableRule) validateV1() []error {
-	var errs []error
-
-	if r.RuleCondition.Target == nil {
-		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"condition.target: field is required for schemaVersion %q", DefaultSchemaVersion))
-	}
-	if r.RuleCondition.CompareOperator.IsZero() {
-		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"condition.op: field is required for schemaVersion %q", DefaultSchemaVersion))
-	} else if err := r.RuleCondition.CompareOperator.Validate(); err != nil {
-		errs = append(errs, err)
-	}
-	if r.RuleCondition.MatchType.IsZero() {
-		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
-			"condition.matchType: field is required for schemaVersion %q", DefaultSchemaVersion))
-	} else if err := r.RuleCondition.MatchType.Validate(); err != nil {
-		errs = append(errs, err)
-	}
-
-	return errs
 }
 
 func (r *PostableRule) validateV2Alpha1() []error {
 	var errs []error
 
-	// TODO(srikanthccv): reject v1-only fields?
-	// if r.RuleCondition.Target != nil {
-	// 	errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
-	// 		"condition.target: field is not used in schemaVersion %q; set target in condition.thresholds entries instead",
-	// 		SchemaVersionV2Alpha1))
-	// }
-	// if !r.RuleCondition.CompareOperator.IsZero() {
-	// 	errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
-	// 		"condition.op: field is not used in schemaVersion %q; set op in condition.thresholds entries instead",
-	// 		SchemaVersionV2Alpha1))
-	// }
-	// if !r.RuleCondition.MatchType.IsZero() {
-	// 	errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
-	// 		"condition.matchType: field is not used in schemaVersion %q; set matchType in condition.thresholds entries instead",
-	// 		SchemaVersionV2Alpha1))
-	// }
-	// if len(r.PreferredChannels) > 0 {
-	// 	errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
-	// 		"preferredChannels: field is not used in schemaVersion %q; set channels in condition.thresholds entries instead",
-	// 		SchemaVersionV2Alpha1))
-	// }
-
 	// Require v2alpha1-specific fields
 	if r.RuleCondition.Thresholds == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"condition.thresholds: field is required for schemaVersion %q", SchemaVersionV2Alpha1))
+	} else if threshold, err := r.RuleCondition.Thresholds.GetRuleThreshold(); err == nil {
+		if err := threshold.Validate(); err != nil {
+			errs = append(errs, err)
+		}
+		if thresholds, ok := threshold.(BasicRuleThresholds); ok {
+			if err := thresholds.validateUniqueNames(); err != nil {
+				errs = append(errs, err)
+			}
+			if err := thresholds.validateRecoveryTargets(); err != nil {
+				errs = append(errs, err)
+			}
+		}
 	}
 
 	if r.Evaluation == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"evaluation: field is required for schemaVersion %q", SchemaVersionV2Alpha1))
+	} else if evaluation, err := r.Evaluation.GetEvaluation(); err == nil {
+		if err := evaluation.validateDurationText(); err != nil {
+			errs = append(errs, err)
+		}
 	}
 	if r.NotificationSettings == nil {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
@@ -591,9 +487,22 @@ func (r *PostableRule) validateV2Alpha1() []error {
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"notificationSettings.renotify.interval: must be a positive duration when renotify is enabled"))
 		}
+		if r.NotificationSettings.Renotify != nil {
+			if err := validateDurationText("notificationSettings.renotify.interval", r.NotificationSettings.Renotify.ReNotifyInterval); err != nil {
+				errs = append(errs, err)
+			}
+		}
 	}
 
 	return errs
+}
+
+// validateDurationText rejects a bare number, which decodes as nanoseconds.
+func validateDurationText(field string, duration valuer.TextDuration) error {
+	if duration.IsZero() || duration.HasText() {
+		return nil
+	}
+	return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s: must be a duration string such as \"5m\"", field)
 }
 
 func testTemplateParsing(rl *PostableRule) (errs []error) {
@@ -656,31 +565,6 @@ type GettableRule struct {
 	UpdatedBy *string   `json:"updateBy" nullable:"true" description:"The identifier of the user who last updated the rule."`
 }
 
-func (g *GettableRule) MarshalJSON() ([]byte, error) {
-	type Alias GettableRule
-
-	switch g.SchemaVersion {
-	case DefaultSchemaVersion:
-		copyStruct := *g
-		aux := Alias(copyStruct)
-		if aux.RuleCondition != nil {
-			aux.RuleCondition.Thresholds = nil
-		}
-		aux.Evaluation = nil
-		aux.SchemaVersion = ""
-		aux.NotificationSettings = nil
-		return json.Marshal(aux)
-	case SchemaVersionV2Alpha1:
-		copyStruct := *g
-		aux := Alias(copyStruct)
-		return json.Marshal(aux)
-	default:
-		copyStruct := *g
-		aux := Alias(copyStruct)
-		return json.Marshal(aux)
-	}
-}
-
 // Rule is the v2 API read model for an alerting rule. It aligns audit fields
 // with the canonical types.TimeAuditable / types.UserAuditable shape used by
 // PlannedMaintenance and other entities. v1 handlers keep serializing
@@ -708,29 +592,4 @@ func NewRule(g *GettableRule) *Rule {
 		r.UpdatedBy = *g.UpdatedBy
 	}
 	return r
-}
-
-func (r *Rule) MarshalJSON() ([]byte, error) {
-	type Alias Rule
-
-	switch r.SchemaVersion {
-	case DefaultSchemaVersion:
-		copyStruct := *r
-		aux := Alias(copyStruct)
-		if aux.RuleCondition != nil {
-			aux.RuleCondition.Thresholds = nil
-		}
-		aux.Evaluation = nil
-		aux.SchemaVersion = ""
-		aux.NotificationSettings = nil
-		return json.Marshal(aux)
-	case SchemaVersionV2Alpha1:
-		copyStruct := *r
-		aux := Alias(copyStruct)
-		return json.Marshal(aux)
-	default:
-		copyStruct := *r
-		aux := Alias(copyStruct)
-		return json.Marshal(aux)
-	}
 }

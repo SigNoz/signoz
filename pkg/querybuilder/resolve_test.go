@@ -76,7 +76,7 @@ func TestResolveColumn_UnknownKey(t *testing.T) {
 			t.Run(testCase.name+"_"+fieldContext.StringValue(), func(t *testing.T) {
 				key := telemetrytypes.TelemetryFieldKey{Name: "unknown.key", FieldContext: fieldContext, Signal: testCase.query.Signal}
 
-				_, err := querybuilder.ResolveColumn(context.Background(), testCase.query, testCase.storage, &key, telemetrytypes.FieldDataTypeUnspecified, map[string][]*telemetrytypes.TelemetryFieldKey{})
+				_, _, err := querybuilder.ResolveColumn(context.Background(), testCase.query, testCase.storage, &key, telemetrytypes.FieldDataTypeUnspecified, map[string][]*telemetrytypes.TelemetryFieldKey{})
 				if err != nil {
 					assert.True(t, errors.Ast(err, errors.TypeInvalidInput), "%v", err)
 				}

@@ -54,9 +54,6 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompareOperator: ruletypes.ValueIsAbove,
-			MatchType:       ruletypes.AtleastOnce,
-			Target:          &target,
 			CompositeQuery: &ruletypes.AlertCompositeQuery{
 				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{{
@@ -157,10 +154,7 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompareOperator: ruletypes.ValueIsAbove,
-			MatchType:       ruletypes.AtleastOnce,
-			AlertOnAbsent:   true,
-			Target:          &target,
+			AlertOnAbsent: true,
 			CompositeQuery: &ruletypes.AlertCompositeQuery{
 				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{{

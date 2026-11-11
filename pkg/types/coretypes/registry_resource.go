@@ -40,6 +40,7 @@ var Resources = []Resource{
 	ResourceMetaResourceLogsField,
 	ResourceMetaResourceTracesField,
 	ResourceMetaResourceMetricsField,
+	ResourceMetaResourceLLMPricingRule,
 }
 
 var (
@@ -82,4 +83,5 @@ var (
 	ResourceMetaResourceLogsField                        = NewResourceMetaResource(KindLogsField)
 	ResourceMetaResourceTracesField                      = NewResourceMetaResource(KindTracesField)
 	ResourceMetaResourceMetricsField                     = NewResourceMetaResource(KindMetricsField, VerbList, VerbRead, VerbUpdate)
+	ResourceMetaResourceLLMPricingRule                   = NewResourceMetaResource(KindLLMPricingRule, VerbList, VerbRead, VerbUpdate, VerbDelete)
 )

@@ -25,7 +25,6 @@ import {
 	type AlertmanagertypesDeprecatedGettableAlertDTO,
 	type GetAlerts200,
 	type GetRuleByID200,
-	type ListRules200,
 	type RenderErrorResponseDTO,
 	type Querybuildertypesv5FunctionDTO,
 	type RuletypesAlertCompositeQueryDTO,
@@ -69,10 +68,6 @@ export type RuleState = (typeof RULE_STATES)[number];
 export const RULE_STATE_CHOICES = ['mixed', ...RULE_STATES] as const;
 
 export type RuleStateChoice = (typeof RULE_STATE_CHOICES)[number];
-
-export const ALERT_SCHEMAS = ['v2', 'classic'] as const;
-
-export type AlertSchema = (typeof ALERT_SCHEMAS)[number];
 
 export const RULE_KINDS = ['threshold', 'anomaly'] as const;
 
@@ -133,9 +128,8 @@ const compositeQuery = (
 
 /**
  * An anomaly rule fires on the z-score of each point against the seasonal
- * forecast, so its targets are deviations: the classic form stores `below 3`, the
- * current schema the signed `-3`. The `anomaly` function on the query is what
- * makes the preview draw the forecast band.
+ * forecast, so its targets are signed deviations (`-3`). The `anomaly` function
+ * on the query is what makes the preview draw the forecast band.
  */
 const anomalyCondition = (seed: RuleSeed): RuletypesRuleConditionDTO => {
 	return {
@@ -149,11 +143,6 @@ const anomalyCondition = (seed: RuleSeed): RuletypesRuleConditionDTO => {
 				],
 			},
 		]),
-		op: RuletypesCompareOperatorDTO.below,
-		matchType: RuletypesMatchTypeDTO.all_the_times,
-		target: 3,
-		targetUnit: '',
-		algorithm: 'standard',
 		seasonality: RuletypesSeasonalityDTO.daily,
 		thresholds: {
 			kind: RuletypesThresholdBasicDTOKind.basic,
@@ -181,11 +170,7 @@ const anomalyCondition = (seed: RuleSeed): RuletypesRuleConditionDTO => {
 
 const condition = (seed: RuleSeed): RuletypesRuleConditionDTO => ({
 	compositeQuery: compositeQuery(seed),
-	op: RuletypesCompareOperatorDTO.above,
-	matchType: RuletypesMatchTypeDTO.at_least_once,
 	selectedQueryName: 'A',
-	target: seed.target,
-	targetUnit: seed.unit,
 	alertOnAbsent: false,
 	requireMinPoints: false,
 	thresholds: {
@@ -355,7 +340,6 @@ const ruleName = (index: number): string => {
 export interface RuleShape {
 	severity: SeverityChoice;
 	state: RuleStateChoice;
-	schema?: AlertSchema;
 	kind?: RuleKind;
 }
 
@@ -386,8 +370,6 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 			description:
 				'The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}',
 		},
-		evalWindow: isAnomaly ? '1h0m0s' : '5m0s',
-		frequency: '1m0s',
 		evaluation: {
 			kind: RuletypesEvaluationRollingDTOKind.rolling,
 			spec: { evalWindow: isAnomaly ? '1h0m0s' : '5m0s', frequency: '1m0s' },
@@ -396,13 +378,9 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 		updatedAt: ago((index + 1) * HOUR),
 		createdBy: 'ada@signoz.io',
 		updatedBy: 'grace@signoz.io',
-		// classic rows predate schemaVersion, which the spec now requires
-		schemaVersion: (shape.schema === 'classic'
-			? undefined
-			: RuletypesRuleDTOSchemaVersion.v2alpha1) as RuletypesRuleDTOSchemaVersion,
+		schemaVersion: RuletypesRuleDTOSchemaVersion.v2alpha1,
 		version: 'v5',
 		source: 'http://localhost/alerts',
-		preferredChannels: ['ops-slack'],
 		notificationSettings: {
 			groupBy: ['alertname'],
 			usePolicy: false,
@@ -414,7 +392,7 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 export const alertRulesResponse = (
 	count: number,
 	shape: RuleShape,
-): ListRules200 => ({
+): { status: string; data: RuletypesRuleDTO[] } => ({
 	status: 'success',
 	data: Array.from({ length: count }, (_unused, index) =>
 		buildRule(index, shape),
