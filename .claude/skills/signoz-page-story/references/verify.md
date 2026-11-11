@@ -59,6 +59,13 @@ That is one run, for checking the story you just wrote. Comparing two branches i
 - **Console silent.** `[storybook] no msw handler`, a 501 from the catch-all, an msw unhandled-request warning, a React key or state warning: assume the story is wrong first. A warning that survives is sometimes the app's. Prove it by turning off the control that renders the widget and watching the warning go with it, and by finding the same component elsewhere doing it right. Then report the app bug in the PR. Never invent a field the API does not return to silence a warning.
 - **No navigation overlay on mount.** "Navigation blocked in Storybook" on load means the page is trying to leave: wrong `route`, or a guard denying on a permission the controls did not grant.
 - **Every control moves something.** Sweep them one at a time from the URL and diff the page text. A control with no diff is either wired to nothing or aimed at a widget that is not rendering. Some only show their effect after an interaction, such as a tab that has to be clicked or a select that has to be opened. Drive that interaction rather than calling the control unobservable.
+- **Every play passes on every control value.** Run the sweep from the repo root against the running server:
+
+  ```bash
+  node .claude/skills/signoz-page-story/scripts/play-sweep.mjs 'Pages/Alerts/Rules' --url http://localhost:6006
+  ```
+
+  It runs each story that has a play once with its own args, then once per edge value of each control: every option, both booleans, a number's min and max. Multi-select and text controls keep the story's value. It exits 1 and lists the runs whose play threw. A failure means the play is missing a branch on that arg, so add the branch rather than dropping the control. Storybook still reports a play that threw as finished, so a page that looks right proves nothing. A page with many plays takes a while: the alert rules tab is about 970 runs and 25 minutes. Pass `--story <id part>` to run only the stories you touched, and run it whenever a play or a control changes.
 - **Both themes render styled.** An unstyled page means the story is not inside the provider decorator, or `<body data-theme>` was lost.
 - **Roles agree.** `<body data-signoz-story-role>` and `<body data-signoz-context-role>` disagreeing means the page reads a different `AppContext` than the story config fills.
 - **The page's own navigation works.** Tabs, filters and pagination that write query params should re-render the page in place; only leaving the page belongs in the overlay.

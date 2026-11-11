@@ -143,7 +143,7 @@ await expect(toggle.getAttribute('aria-checked')).toBe(before);
 - [ ] a page tagged `authz` has its `Authz` folder: one story per permission it reads, each reached by `revoked`, none of them a role preset, and each one checked by the `disabled` state of what the permission gates
 - [ ] the mocks module and every `__story_mockdata__` file carry the AI-owned banner
 - [ ] every control flipped once, its effect seen on screen
-- [ ] every play passes with each control value its story exposes, and the story file holds no play body
+- [ ] every play passes with each control value its story exposes (`scripts/play-sweep.mjs` exits 0, see [references/verify.md](references/verify.md)), and the story file holds no play body
 - [ ] every request a reachable state makes (a selected row, an opened view, a switched tab) has a handler
 - [ ] console clean: no `[storybook] no msw handler`, no 501, no msw unhandled request, no React warning
 - [ ] no navigation overlay on mount
