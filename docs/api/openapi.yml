@@ -18587,8 +18587,10 @@ paths:
       security:
       - api_key:
         - span-mapper:update
+        - span-mapper-group:update
       - tokenizer:
         - span-mapper:update
+        - span-mapper-group:update
       summary: Update a span mapper
       tags:
       - spanmapper

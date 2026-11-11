@@ -183,12 +183,9 @@ def test_setup_scoped_actor(
     assert response.status_code == HTTPStatus.OK, response.text
     target_a = {group["name"]: group["id"] for group in response.json()["data"]["items"]}[_TARGET_A]
 
-    response = requests.get(signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{target_a}/span_mappers"), headers=headers, timeout=5)
-    assert response.status_code == HTTPStatus.OK, response.text
-    mapper_a = response.json()["data"]["items"][0]["id"]
-
     # Adding a mapper needs create on the collection plus attach on the group;
-    # removing one needs delete on the mapper plus detach on the group.
+    # removing one needs delete on the mapper plus detach on the group; editing
+    # one needs update on both.
     response = requests.get(signoz.self.host_configs["8080"].get("/api/v1/roles"), headers=headers, timeout=5)
     assert response.status_code == HTTPStatus.OK, response.text
     if not any(role["name"] == _ACTOR_ROLE_NAME for role in response.json()["data"]):
@@ -203,7 +200,7 @@ def test_setup_scoped_actor(
                 transaction_group("detach", "metaresource", "span-mapper-group", [target_a]),
                 transaction_group("create", "metaresource", "span-mapper", ["*"]),
                 transaction_group("delete", "metaresource", "span-mapper", ["*"]),
-                transaction_group("update", "metaresource", "span-mapper", [mapper_a]),
+                transaction_group("update", "metaresource", "span-mapper", ["*"]),
             ],
         )
 
@@ -267,8 +264,6 @@ def test_access_scoped_to_granted_group_and_mapper(
     )
     assert response.status_code == HTTPStatus.FORBIDDEN, f"create mapper in other group: expected 403, got {response.status_code}: {response.text}"
 
-    # Mapper update is checked on the mapper itself, so the grant on A's mapper
-    # does not extend to B's.
     response = requests.patch(signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{ids[_TARGET_A]}/span_mappers/{mapper_a}"), json={"enabled": True}, headers=headers, timeout=5)
     assert response.status_code == HTTPStatus.NO_CONTENT, f"update granted mapper: {response.text}"
 
@@ -279,6 +274,9 @@ def test_access_scoped_to_granted_group_and_mapper(
 
     response = requests.patch(signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{ids[_TARGET_B]}/span_mappers/{mapper_b}"), json={"enabled": True}, headers=headers, timeout=5)
     assert response.status_code == HTTPStatus.FORBIDDEN, f"update other mapper: expected 403, got {response.status_code}: {response.text}"
+
+    response = requests.patch(signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{ids[_TARGET_A]}/span_mappers/{mapper_b}"), json={"enabled": True}, headers=headers, timeout=5)
+    assert response.status_code == HTTPStatus.NOT_FOUND, f"update B's mapper via A: expected 404, got {response.status_code}: {response.text}"
 
     response = requests.delete(signoz.self.host_configs["8080"].get(f"{GROUPS_PATH}/{ids[_TARGET_B]}/span_mappers/{mapper_b}"), headers=headers, timeout=5)
     assert response.status_code == HTTPStatus.FORBIDDEN, f"delete other mapper: expected 403, got {response.status_code}: {response.text}"

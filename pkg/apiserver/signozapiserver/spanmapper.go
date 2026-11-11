@@ -221,15 +221,24 @@ func (provider *provider) addSpanMapperRoutes(router *mux.Router) error {
 			SuccessStatusCode:  http.StatusNoContent,
 			ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusNotFound},
 			Deprecated:         false,
-			SecuritySchemes:    newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceSpanMapper.Scope(coretypes.VerbUpdate)}),
+			SecuritySchemes:    newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceSpanMapper.Scope(coretypes.VerbUpdate), coretypes.ResourceMetaResourceSpanMapperGroup.Scope(coretypes.VerbUpdate)}),
 		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceSpanMapper,
-			Verb:     coretypes.VerbUpdate,
-			Category: coretypes.ActionCategoryConfigurationChange,
-			ID:       coretypes.PathParam("mapperId"),
-			Selector: coretypes.IDSelector,
-		}),
+		handler.WithResourceDefs(
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceSpanMapper,
+				Verb:     coretypes.VerbUpdate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.PathParam("mapperId"),
+				Selector: coretypes.IDSelector,
+			},
+			handler.BasicResourceDef{
+				Resource: coretypes.ResourceMetaResourceSpanMapperGroup,
+				Verb:     coretypes.VerbUpdate,
+				Category: coretypes.ActionCategoryConfigurationChange,
+				ID:       coretypes.PathParam("groupId"),
+				Selector: coretypes.IDSelector,
+			},
+		),
 	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
