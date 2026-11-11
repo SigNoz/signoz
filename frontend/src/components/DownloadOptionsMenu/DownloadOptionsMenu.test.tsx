@@ -1,13 +1,20 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { message } from 'antd';
 import configureStore from 'redux-mock-store';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import store from 'store';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import '@testing-library/jest-dom';
 
@@ -35,6 +42,12 @@ const mockUseQueryBuilder = jest.fn();
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): any => mockUseQueryBuilder(),
 }));
+
+const statusColumn: TelemetryFieldKey = {
+	name: 'http.status',
+	fieldDataType: 'int64',
+	fieldContext: 'attribute',
+};
 
 const mockStore = configureStore([]);
 const createMockReduxStore = (): any =>
@@ -79,11 +92,21 @@ const createMockStagedQuery = (dataSource: DataSource): Query => ({
 	clickhouse_sql: [],
 });
 
-const renderWithStore = (dataSource: DataSource): void => {
+const renderWithStore = (
+	dataSource: DataSource,
+	{
+		panelType,
+		selectedColumns,
+	}: { panelType?: PANEL_TYPES; selectedColumns?: TelemetryFieldKey[] } = {},
+): void => {
 	const mockReduxStore = createMockReduxStore();
 	render(
 		<Provider store={mockReduxStore}>
-			<DownloadOptionsMenu dataSource={dataSource} />
+			<DownloadOptionsMenu
+				dataSource={dataSource}
+				panelType={panelType}
+				selectedColumns={selectedColumns}
+			/>
 		</Provider>,
 	);
 };
@@ -118,11 +141,7 @@ describe.each([
 		expect(screen.getByText('FORMAT')).toBeInTheDocument();
 		expect(screen.getByText('Number of Rows')).toBeInTheDocument();
 
-		if (dataSource === DataSource.TRACES) {
-			expect(screen.queryByText('Columns')).not.toBeInTheDocument();
-		} else {
-			expect(screen.getByText('Columns')).toBeInTheDocument();
-		}
+		expect(screen.getByTestId('export-columns-scope-item-all')).toBeChecked();
 	});
 
 	it('allows changing export format', () => {
@@ -152,17 +171,6 @@ describe.each([
 	});
 
 	it('allows changing columns scope', () => {
-		if (dataSource === DataSource.TRACES) {
-			renderWithStore(dataSource);
-			fireEvent.click(screen.getByTestId(testId));
-
-			expect(screen.queryByRole('radio', { name: 'All' })).not.toBeInTheDocument();
-			expect(
-				screen.queryByRole('radio', { name: 'Selected' }),
-			).not.toBeInTheDocument();
-			return;
-		}
-
 		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 
@@ -239,20 +247,14 @@ describe.each([
 
 	it('keeps selectColumns when column scope is Selected', async () => {
 		const mockQuery = createMockStagedQuery(dataSource);
-		mockQuery.builder.queryData[0].selectColumns = [
-			{ name: 'http.status', fieldDataType: 'int64', fieldContext: 'attribute' },
-		] as any;
+		mockQuery.builder.queryData[0].selectColumns = [statusColumn];
 
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		mockUseQueryBuilder.mockReturnValue({ stagedQuery: mockQuery });
 		renderWithStore(dataSource);
-		fireEvent.click(screen.getByTestId(testId));
-
-		// For traces, column scope is always Selected and the radio is hidden
-		if (dataSource !== DataSource.TRACES) {
-			fireEvent.click(screen.getByRole('radio', { name: 'Selected' }));
-		}
-
-		fireEvent.click(screen.getByText('Export'));
+		await user.click(screen.getByTestId(testId));
+		await user.click(screen.getByTestId('export-columns-scope-item-selected'));
+		await user.click(screen.getByTestId('export-options-submit'));
 
 		await waitFor(() => {
 			expect(mockDownloadExportData).toHaveBeenCalledTimes(1);
@@ -268,15 +270,15 @@ describe.each([
 	});
 
 	it('sends no selectFields when column scope is All', async () => {
-		// For traces, column scope is always Selected — this test only applies to other sources
-		if (dataSource === DataSource.TRACES) {
-			return;
-		}
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const mockQuery = createMockStagedQuery(dataSource);
+		mockQuery.builder.queryData[0].selectColumns = [statusColumn];
 
+		mockUseQueryBuilder.mockReturnValue({ stagedQuery: mockQuery });
 		renderWithStore(dataSource);
-		fireEvent.click(screen.getByTestId(testId));
-		fireEvent.click(screen.getByRole('radio', { name: 'All' }));
-		fireEvent.click(screen.getByText('Export'));
+		await user.click(screen.getByTestId(testId));
+		await user.click(screen.getByTestId('export-columns-scope-item-all'));
+		await user.click(screen.getByTestId('export-options-submit'));
 
 		await waitFor(() => {
 			expect(mockDownloadExportData).toHaveBeenCalledTimes(1);
@@ -284,6 +286,37 @@ describe.each([
 			const query = callArgs.body.compositeQuery.queries[0];
 			expect(query.spec.selectFields).toBeUndefined();
 		});
+	});
+
+	it('exports all fields by default when the view has columns selected', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderWithStore(dataSource, { selectedColumns: [statusColumn] });
+		await user.click(screen.getByTestId(testId));
+		await user.click(screen.getByTestId('export-options-submit'));
+
+		await waitFor(() => {
+			expect(mockDownloadExportData).toHaveBeenCalledTimes(1);
+		});
+		const query =
+			mockDownloadExportData.mock.calls[0][0].body.compositeQuery.queries[0];
+		expect(query.spec.selectFields).toBeUndefined();
+	});
+
+	it("exports the view's selected columns when column scope is Selected", async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderWithStore(dataSource, { selectedColumns: [statusColumn] });
+		await user.click(screen.getByTestId(testId));
+		await user.click(screen.getByTestId('export-columns-scope-item-selected'));
+		await user.click(screen.getByTestId('export-options-submit'));
+
+		await waitFor(() => {
+			expect(mockDownloadExportData).toHaveBeenCalledTimes(1);
+		});
+		const query =
+			mockDownloadExportData.mock.calls[0][0].body.compositeQuery.queries[0];
+		expect(query.spec.selectFields).toStrictEqual([
+			expect.objectContaining({ name: 'http.status', fieldDataType: 'int64' }),
+		]);
 	});
 
 	it('handles successful export with success message', async () => {
@@ -337,6 +370,44 @@ describe.each([
 				'true',
 			);
 		});
+	});
+});
+
+describe('DownloadOptionsMenu in the trace view', () => {
+	const testId = `periscope-btn-download-${DataSource.TRACES}`;
+
+	beforeEach(() => {
+		mockDownloadExportData.mockReset().mockResolvedValue(undefined);
+	});
+
+	it('hides columns scope', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		mockUseQueryBuilder.mockReturnValue({
+			stagedQuery: createMockStagedQuery(DataSource.TRACES),
+		});
+		renderWithStore(DataSource.TRACES, { panelType: PANEL_TYPES.TRACE });
+		await user.click(screen.getByTestId(testId));
+
+		expect(screen.queryByTestId('export-columns-scope')).not.toBeInTheDocument();
+	});
+
+	it("keeps the query's stored columns", async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const query = createMockStagedQuery(DataSource.TRACES);
+		query.builder.queryData[0].selectColumns = [statusColumn];
+		mockUseQueryBuilder.mockReturnValue({ stagedQuery: query });
+		renderWithStore(DataSource.TRACES, { panelType: PANEL_TYPES.TRACE });
+		await user.click(screen.getByTestId(testId));
+		await user.click(screen.getByTestId('export-options-submit'));
+
+		await waitFor(() => {
+			expect(mockDownloadExportData).toHaveBeenCalledTimes(1);
+		});
+		const exported =
+			mockDownloadExportData.mock.calls[0][0].body.compositeQuery.queries[0];
+		expect(exported.spec.selectFields).toStrictEqual([
+			expect.objectContaining({ name: 'http.status', fieldDataType: 'int64' }),
+		]);
 	});
 });
 
