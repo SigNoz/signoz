@@ -572,6 +572,7 @@ func New(
 		cloudIntegrationModule,
 		modules.LogsPipeline,
 		modules.InfraMonitoring,
+		modules.LLMPricingRule,
 		querier,
 		authz,
 	}

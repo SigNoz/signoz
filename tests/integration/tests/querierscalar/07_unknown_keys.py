@@ -10,8 +10,8 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 
 # Unknown-key resolution in the scalar shape (group-by -> one value per bucket). Logs/traces
 # synthesize an unknown key (attribute maps + body). Observed here: the *filter* path emits a
-# key-not-found warning and matches nothing (count 0); the *group-by* path silently buckets
-# every record into a single NULL bucket and emits no warning.
+# key-not-found warning and matches nothing (count 0); the *group-by* path buckets every record
+# into a single NULL bucket and emits the same warning.
 UNKNOWN = "totally.unknown.key"
 
 
@@ -84,7 +84,7 @@ def test_logs_scalar_group_by_unknown_key_null_bucket(
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """Grouping a scalar count() by an unknown bare key synthesizes a NULL column: all records
-    collapse into one bucket (200), and — unlike the filter path — no key-not-found warning."""
+    collapse into one bucket (200), with the same key-not-found warning as the filter path."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "scalar-unknown-gb-logs"
     insert_logs([Logs(timestamp=now - timedelta(seconds=i + 1), resources={"service.name": service}, body=f"log {i}") for i in range(4)])
@@ -106,7 +106,7 @@ def test_logs_scalar_group_by_unknown_key_null_bucket(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     messages = [w.get("message", "") for w in get_all_warnings(response.json())]
-    assert not any(UNKNOWN in m for m in messages), messages
+    assert any(UNKNOWN in m and "not found" in m for m in messages), messages
     data = get_scalar_table_data(response.json())
     assert len(data) == 1, data
     assert data[0][-1] == 4, data
@@ -163,7 +163,7 @@ def test_traces_scalar_group_by_unknown_key_null_bucket(
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """Grouping a scalar count() by an unknown bare key synthesizes a NULL column: all spans
-    collapse into one bucket (200), and — unlike the filter path — no key-not-found warning."""
+    collapse into one bucket (200), with the same key-not-found warning as the filter path."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "scalar-unknown-gb-traces"
     insert_traces(
@@ -198,7 +198,7 @@ def test_traces_scalar_group_by_unknown_key_null_bucket(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     messages = [w.get("message", "") for w in get_all_warnings(response.json())]
-    assert not any(UNKNOWN in m for m in messages), messages
+    assert any(UNKNOWN in m and "not found" in m for m in messages), messages
     data = get_scalar_table_data(response.json())
     assert len(data) == 1, data
     assert data[0][-1] == 4, data

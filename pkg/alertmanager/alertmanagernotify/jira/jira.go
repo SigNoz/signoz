@@ -19,7 +19,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/adf"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/wikimarkup"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/notify"
@@ -135,16 +137,65 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 
 func (n *Notifier) buildFields(groupID, summary, descText string, alerts []*types.Alert, firing bool) *issueFields {
 	f := &issueFields{
-		Project:     &idKey{Key: n.conf.Project},
-		Issuetype:   &idName{Name: n.conf.IssueType},
-		Summary:     summary,
-		Labels:      n.labels(groupID),
-		Description: n.buildBoundedDescription(descText, alerts, firing),
+		Project:   &idKey{Key: n.conf.Project},
+		Issuetype: &idName{Name: n.conf.IssueType},
+		Summary:   summary,
+		Labels:    n.labels(groupID),
+	}
+	if n.conf.IsSelfHosted() {
+		f.Description = n.buildWikiDescription(descText, alerts, firing)
+	} else {
+		f.Description = n.buildBoundedDescription(descText, alerts, firing)
 	}
 	if n.conf.Priority != "" {
 		f.Priority = &idName{Name: n.conf.Priority}
 	}
 	return f
+}
+
+// buildWikiDescription builds the self-hosted (v2) issue body as a wiki markup
+// string: a firing/resolved status panel, the rendered markdown body, and the
+// SigNoz deep-links. v2 counts the description limit in plain characters, so a
+// rune cut is enough.
+func (n *Notifier) buildWikiDescription(descText string, alerts []*types.Alert, firing bool) string {
+	body, err := markdownrenderer.RenderJiraWikiMarkup(descText)
+	if err != nil {
+		body = wikimarkup.Escape(descText)
+	}
+	parts := []string{wikiStatusPanel(firing)}
+	if body != "" {
+		parts = append(parts, body)
+	}
+	if links := wikiDeepLinks(alerts); links != "" {
+		parts = append(parts, links)
+	}
+	return truncateRunes(strings.Join(parts, "\n\n"), maxDescriptionLenRunes)
+}
+
+func wikiStatusPanel(firing bool) string {
+	if firing {
+		return "{panel:bgColor=#ffebe6}*🔴 FIRING*{panel}"
+	}
+	return "{panel:bgColor=#e3fcef}*🟢 RESOLVED*{panel}"
+}
+
+// wikiDeepLinks renders the same links deepLinks does, as [label|url] joined by
+// a middle dot; empty when none are present.
+func wikiDeepLinks(alerts []*types.Alert) string {
+	if len(alerts) == 0 {
+		return ""
+	}
+	a := alerts[0]
+	var parts []string
+	add := func(label, url string) {
+		if url != "" {
+			parts = append(parts, fmt.Sprintf("[%s|%s]", label, url))
+		}
+	}
+	add("Open in SigNoz", string(a.Labels[ruletypes.LabelRuleSource]))
+	add("View Related Logs", string(a.Annotations[ruletypes.AnnotationRelatedLogs]))
+	add("View Related Traces", string(a.Annotations[ruletypes.AnnotationRelatedTraces]))
+	return strings.Join(parts, " · ")
 }
 
 // buildBoundedDescription builds the ADF issue body and keeps it within Jira's
@@ -287,7 +338,7 @@ func (n *Notifier) searchIssue(ctx context.Context, baseURL, groupID string, fir
 	}
 	fmt.Fprintf(&jql, `project=%q and labels=%q order by status ASC, resolutiondate DESC`, n.conf.Project, fmt.Sprintf("ALERT{%s}", groupID))
 
-	body, retry, err := n.callAPI(ctx, http.MethodPost, baseURL+"/search/jql", searchRequest{
+	body, retry, err := n.callAPI(ctx, http.MethodPost, baseURL+n.conf.SearchPath(), searchRequest{
 		JQL: jql.String(), MaxResults: 2, Fields: []string{"status", "labels"},
 	})
 	if err != nil {
@@ -418,9 +469,10 @@ func (n *Notifier) callAPI(ctx context.Context, method, url string, reqBody any)
 }
 
 // resolveAPIBaseURL resolves the service-account cloud id per notification (it
-// is never persisted); personal API tokens use the site host directly.
+// is never persisted); personal API tokens and self-hosted sites use the site
+// host directly.
 func (n *Notifier) resolveAPIBaseURL(ctx context.Context) (string, bool, error) {
-	if !n.conf.IsServiceAccount() {
+	if !n.conf.IsCloudServiceAccount() {
 		return n.conf.APIBaseURL(""), false, nil
 	}
 	cloudID, retry, err := n.resolveCloudID(ctx)
