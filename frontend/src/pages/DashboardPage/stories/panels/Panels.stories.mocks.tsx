@@ -4,8 +4,8 @@
  */
 
 import { rest } from 'msw';
-import { generatePath } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import {
 	DashboardtypesHeatmapPaletteDTO as HeatmapPalette,
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
@@ -38,6 +38,7 @@ import {
 	PANEL_KINDS,
 	PANEL_RESULTS,
 	PANELS_DASHBOARD_ID,
+	PIE_SLICES,
 	SPAN_GAPS,
 	STACK_MODES,
 	TEXT_ALIGNS,
@@ -63,6 +64,7 @@ import type {
 	PanelKind,
 	PanelResult,
 	PanelUnit,
+	PieSlices,
 	SpanGaps,
 	TextSample,
 	YScale,
@@ -199,6 +201,13 @@ export const panelsMocks = defineStoryMocks({
 			value: 4,
 			max: MAX_SERIES,
 		}),
+		pieSlices: choiceControl<PieSlices>('Pie slices', {
+			group: DATA,
+			description:
+				'`even` steps down per service (Series sets how many); `long-tail` answers 24 services, the smallest 10 folding into Other.',
+			options: PIE_SLICES,
+			value: 'even',
+		}),
 		gaps: choiceControl<Gaps>('Gaps', {
 			group: DATA,
 			description:
@@ -212,6 +221,12 @@ export const panelsMocks = defineStoryMocks({
 				'Log rows the List panel can page through, 25 a page; more than 25 enables Next.',
 			value: 20,
 			max: 80,
+		}),
+		listJsonBody: toggleControl('List JSON body', {
+			group: DATA,
+			description:
+				'`use_json_body`: the List panel’s log bodies arrive as objects, every third one with keys beside `message`.',
+			value: false,
 		}),
 	},
 	handlers: (values, response) => {
@@ -259,14 +274,16 @@ export const panelsMocks = defineStoryMocks({
 						result: values.result,
 						series: values.series,
 						listRows: values.listRows,
+						listJsonBody: values.listJsonBody,
 						gaps: values.gaps,
+						pieSlices: values.pieSlices,
 					});
 				}),
 			),
 		];
 	},
 	config: () => ({
-		route: generatePath(ROUTES.DASHBOARD, { dashboardId: PANELS_DASHBOARD_ID }),
+		route: buildRoutePath(ROUTES.DASHBOARD, { dashboardId: PANELS_DASHBOARD_ID }),
 	}),
 	effect: (values) => {
 		seedPanelsDocument(values);

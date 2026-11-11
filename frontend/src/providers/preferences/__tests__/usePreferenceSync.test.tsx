@@ -1,40 +1,31 @@
-import { renderHook } from '@testing-library/react';
 import { useGetSavedView } from 'api/generated/services/saved-view';
 import {
+	SavedviewtypesPanelTypeDTO,
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { TRACE_VIEW_DEFAULT_COLUMNS } from 'container/LLMObservability/Explorer/constants';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,
 	ensureLogsRequiredColumns,
 } from 'container/OptionsMenu/constants';
-import { DataSource } from 'types/common/queryBuilder';
+import { renderHook } from 'tests/test-utils';
 
+import { usePreferenceLoader } from '../loader/usePreferenceLoader';
 import { usePreferenceSync } from '../sync/usePreferenceSync';
-import { PreferenceMode } from '../types';
+import { PreferenceMode, Preferences } from '../types';
+import { usePreferenceUpdater } from '../updater/usePreferenceUpdater';
 
 jest.mock('api/generated/services/saved-view');
 
-const loaderPreferences = { columns: [{ name: 'from-loader' }] };
-jest.mock('../loader/usePreferenceLoader', () => ({
-	usePreferenceLoader: jest.fn(() => ({
-		preferences: loaderPreferences,
-		loading: false,
-		error: null,
-	})),
-}));
+jest.mock('../loader/usePreferenceLoader');
+jest.mock('../updater/usePreferenceUpdater');
 
-jest.mock('../updater/usePreferenceUpdater', () => ({
-	usePreferenceUpdater: jest.fn(() => ({
-		updateColumns: jest.fn(),
-		updateFormatting: jest.fn(),
-	})),
-}));
+const loaderPreferences: Preferences = { columns: [{ name: 'from-loader' }] };
 
-const mockedUseGetSavedView = useGetSavedView as jest.MockedFunction<
-	typeof useGetSavedView
->;
+const mockedUseGetSavedView = jest.mocked(useGetSavedView);
 
 function makeView(
 	id: string,
@@ -76,6 +67,19 @@ function mockViews(views: SavedviewtypesSavedViewDTO[]): void {
 describe('usePreferenceSync in saved view mode', () => {
 	beforeEach(() => {
 		mockedUseGetSavedView.mockReset();
+		jest.mocked(usePreferenceLoader).mockReturnValue({
+			preferences: loaderPreferences,
+			loading: false,
+			error: null,
+		});
+		jest.mocked(usePreferenceUpdater).mockReturnValue({
+			updateColumns: jest.fn() as jest.MockedFunction<
+				ReturnType<typeof usePreferenceUpdater>['updateColumns']
+			>,
+			updateFormatting: jest.fn() as jest.MockedFunction<
+				ReturnType<typeof usePreferenceUpdater>['updateFormatting']
+			>,
+		});
 	});
 
 	it('fetches the view only in saved view mode with a view id', () => {
@@ -84,7 +88,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.DIRECT,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: undefined,
 			}),
 		);
@@ -101,7 +105,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		const { result } = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.DIRECT,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: undefined,
 			}),
 		);
@@ -120,7 +124,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		const { result } = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: 'view-1',
 			}),
 		);
@@ -147,7 +151,7 @@ describe('usePreferenceSync in saved view mode', () => {
 		const { result } = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: 'view-1',
 			}),
 		);
@@ -174,14 +178,14 @@ describe('usePreferenceSync in saved view mode', () => {
 		const withFields = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.TRACES,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				savedViewId: 'with-fields',
 			}),
 		);
 		const withoutFields = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.TRACES,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				savedViewId: 'without-fields',
 			}),
 		);
@@ -196,13 +200,71 @@ describe('usePreferenceSync in saved view mode', () => {
 		);
 	});
 
+	it('adds trace_id to AI trace selectedFields and uses the defaults when absent', () => {
+		mockViews([
+			makeView('ai-with-fields', SavedviewtypesSourceDTO.ai_observability, {
+				panelType: SavedviewtypesPanelTypeDTO.trace,
+				selectedFields: [{ name: 'total_tokens' }],
+			}),
+			makeView('ai-without-fields', SavedviewtypesSourceDTO.ai_observability, {
+				panelType: SavedviewtypesPanelTypeDTO.trace,
+			}),
+		]);
+
+		const withFields = renderHook(() =>
+			usePreferenceSync({
+				mode: PreferenceMode.SAVED_VIEW,
+				sourcePage: SavedviewtypesSourceDTO.ai_observability,
+				savedViewId: 'ai-with-fields',
+			}),
+		);
+		const withoutFields = renderHook(() =>
+			usePreferenceSync({
+				mode: PreferenceMode.SAVED_VIEW,
+				sourcePage: SavedviewtypesSourceDTO.ai_observability,
+				savedViewId: 'ai-without-fields',
+			}),
+		);
+
+		expect(withFields.result.current.preferences).toStrictEqual({
+			columns: [{ name: 'trace_id' }, { name: 'total_tokens' }],
+			panelType: PANEL_TYPES.TRACE,
+		});
+		expect(withoutFields.result.current.preferences).toStrictEqual({
+			columns: TRACE_VIEW_DEFAULT_COLUMNS,
+			panelType: PANEL_TYPES.TRACE,
+		});
+	});
+
+	it('gives the open panel its defaults when the AI view was saved on another panel', () => {
+		mockViews([
+			makeView('ai-graph', SavedviewtypesSourceDTO.ai_observability, {
+				panelType: SavedviewtypesPanelTypeDTO.graph,
+			}),
+		]);
+
+		const { result } = renderHook(() =>
+			usePreferenceSync({
+				mode: PreferenceMode.SAVED_VIEW,
+				sourcePage: SavedviewtypesSourceDTO.ai_observability,
+				panelType: PANEL_TYPES.TRACE,
+				savedViewId: 'ai-graph',
+			}),
+		);
+
+		expect(result.current.preferences).toStrictEqual({
+			columns: TRACE_VIEW_DEFAULT_COLUMNS,
+			panelType: PANEL_TYPES.TRACE,
+		});
+	});
+
 	it('uses defaults while the saved view is not loaded', () => {
 		mockViews([makeView('other', SavedviewtypesSourceDTO.logs, {})]);
 
 		const { result } = renderHook(() =>
 			usePreferenceSync({
 				mode: PreferenceMode.SAVED_VIEW,
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				savedViewId: 'missing',
 			}),
 		);
@@ -210,5 +272,22 @@ describe('usePreferenceSync in saved view mode', () => {
 		expect(result.current.preferences?.columns).toStrictEqual(
 			ensureLogsRequiredColumns(defaultLogsSelectedColumns),
 		);
+	});
+	it('uses the AI trace defaults while the saved view is not loaded', () => {
+		mockViews([]);
+
+		const { result } = renderHook(() =>
+			usePreferenceSync({
+				mode: PreferenceMode.SAVED_VIEW,
+				sourcePage: SavedviewtypesSourceDTO.ai_observability,
+				panelType: PANEL_TYPES.TRACE,
+				savedViewId: 'missing',
+			}),
+		);
+
+		expect(result.current.preferences).toStrictEqual({
+			columns: TRACE_VIEW_DEFAULT_COLUMNS,
+			panelType: PANEL_TYPES.TRACE,
+		});
 	});
 });

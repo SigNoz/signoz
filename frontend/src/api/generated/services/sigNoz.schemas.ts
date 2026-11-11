@@ -829,6 +829,37 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind {
 	jira = 'jira',
 }
+export interface AlertmanagertypesChannelJiraCloudAuthDTO {
+	/**
+	 * @type string
+	 * @format password
+	 * @description The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list.
+	 */
+	apiToken: string;
+	/**
+	 * @type string
+	 * @description The Atlassian account email used for basic auth.
+	 */
+	email: string;
+}
+
+export interface AlertmanagertypesChannelJiraSelfHostedAuthDTO {
+	/**
+	 * @type string
+	 * @format password
+	 * @description The Jira personal access token, sent as a Bearer header. A secret; returned by create, update and fetch by ID, never by list.
+	 */
+	pat: string;
+}
+
+export type AlertmanagertypesChannelJiraAuthDTO =
+	| AlertmanagertypesChannelJiraCloudAuthDTO
+	| AlertmanagertypesChannelJiraSelfHostedAuthDTO;
+
+export enum AlertmanagertypesJiraDeploymentDTO {
+	cloud = 'cloud',
+	selfhosted = 'selfhosted',
+}
 /**
  * Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
  */
@@ -844,26 +875,23 @@ export type AlertmanagertypesChannelJiraConfigDTOCustomFields = Alertmanagertype
 
 export interface AlertmanagertypesChannelJiraConfigDTO {
 	/**
-	 * @type string
-	 * @format password
-	 * @description The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list.
+	 * @description The credentials: email and apiToken when deployment is cloud, pat when deployment is selfhosted.
 	 */
-	apiToken: string;
+	auth: AlertmanagertypesChannelJiraAuthDTO;
 	/**
 	 * @type object,null
 	 * @description Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
 	 */
 	customFields?: AlertmanagertypesChannelJiraConfigDTOCustomFields;
 	/**
+	 * @description The Jira edition: cloud for an Atlassian-hosted site, selfhosted for Jira Server or Data Center.
+	 */
+	deployment: AlertmanagertypesJiraDeploymentDTO;
+	/**
 	 * @type string
 	 * @description Alertmanager template for the issue description, rendered as markdown; defaults to the SigNoz Jira default.
 	 */
 	description?: string;
-	/**
-	 * @type string
-	 * @description The Atlassian account email used for basic auth.
-	 */
-	email: string;
 	/**
 	 * @type string
 	 * @description The issue type name, such as Bug.
@@ -906,7 +934,7 @@ export interface AlertmanagertypesChannelJiraConfigDTO {
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
-	 * @description The base URL of the Jira Cloud site, for example https://example.atlassian.net. Only Jira Cloud is supported.
+	 * @description The base URL of the Jira site, for example https://example.atlassian.net or https://jira.example.com.
 	 */
 	site: string;
 	/**
@@ -1717,12 +1745,16 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	 */
 	custom_fields?: AlertmanagertypesJiraReceiverConfigDTOCustomFields;
 	/**
+	 * @description The Jira edition, cloud or selfhosted; defaults to cloud.
+	 */
+	deployment?: AlertmanagertypesJiraDeploymentDTO;
+	/**
 	 * @type string
 	 * @description Alertmanager template for the issue description.
 	 */
 	description?: string;
 	/**
-	 * @description HTTP client settings; basic auth carries the account email and API token.
+	 * @description HTTP client settings; basic auth carries the account email and API token on cloud, authorization carries the Bearer personal access token on self-hosted.
 	 */
 	http_config?: ConfigHTTPClientConfigDTO;
 	/**
@@ -1765,7 +1797,7 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	send_resolved?: boolean;
 	/**
 	 * @type string
-	 * @description The Jira Cloud base URL.
+	 * @description The Jira base URL.
 	 */
 	site?: string;
 	/**
@@ -3579,6 +3611,7 @@ export enum CoretypesKindDTO {
 	'logs-field' = 'logs-field',
 	'traces-field' = 'traces-field',
 	'metrics-field' = 'metrics-field',
+	'llm-pricing-rule' = 'llm-pricing-rule',
 	'span-mapper-group' = 'span-mapper-group',
 	'span-mapper' = 'span-mapper',
 }
@@ -3938,7 +3971,7 @@ export interface CloudintegrationtypesAWSConnectionArtifactDTO {
 	/**
 	 * @type string
 	 */
-	connectionUrl: string;
+	cliCommand: string;
 }
 
 export interface CloudintegrationtypesAWSLogsCollectionStrategyDTO {
@@ -4148,10 +4181,6 @@ export interface CloudintegrationtypesAzureConnectionArtifactDTO {
 	 * @type string
 	 */
 	cliCommand: string;
-	/**
-	 * @type string
-	 */
-	cloudPowerShellCommand: string;
 }
 
 export interface CloudintegrationtypesAzureLogsCollectionStrategyDTO {
@@ -5279,7 +5308,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
 	 */
 	cursor?: string;
 	/**
@@ -5312,7 +5341,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw and trace requests, or of series or rows for grouped scalar and time_series requests, keeping the top entries by order. When 0, scalar and time_series requests are unlimited, raw requests ordered by timestamp return a page of 10000 rows to continue with nextCursor, and other raw and trace requests return 100 rows.
 	 */
 	limit?: number;
 	/**
@@ -5326,7 +5355,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5586,6 +5615,12 @@ export interface DashboardtypesAreaChartPanelSpecDTO {
 	visualization?: DashboardtypesAreaChartVisualizationDTO;
 }
 
+export enum DashboardtypesAxisScaleDTO {
+	auto = 'auto',
+	linear = 'linear',
+	log = 'log',
+	symlog = 'symlog',
+}
 export interface DashboardtypesBarChartVisualizationDTO {
 	/**
 	 * @type boolean
@@ -5665,7 +5700,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
 	 */
 	cursor?: string;
 	/**
@@ -5698,7 +5733,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw and trace requests, or of series or rows for grouped scalar and time_series requests, keeping the top entries by order. When 0, scalar and time_series requests are unlimited, raw requests ordered by timestamp return a page of 10000 rows to continue with nextCursor, and other raw and trace requests return 100 rows.
 	 */
 	limit?: number;
 	/**
@@ -5712,7 +5747,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5845,7 +5880,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
 	 */
 	cursor?: string;
 	/**
@@ -5878,7 +5913,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw and trace requests, or of series or rows for grouped scalar and time_series requests, keeping the top entries by order. When 0, scalar and time_series requests are unlimited, raw requests ordered by timestamp return a page of 10000 rows to continue with nextCursor, and other raw and trace requests return 100 rows.
 	 */
 	limit?: number;
 	/**
@@ -5892,7 +5927,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5944,7 +5979,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
 	 */
 	cursor?: string;
 	/**
@@ -5977,7 +6012,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw and trace requests, or of series or rows for grouped scalar and time_series requests, keeping the top entries by order. When 0, scalar and time_series requests are unlimited, raw requests ordered by timestamp return a page of 10000 rows to continue with nextCursor, and other raw and trace requests return 100 rows.
 	 */
 	limit?: number;
 	/**
@@ -5991,7 +6026,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -6718,6 +6753,205 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesHeatmapPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTOKind {
+	'signoz/ScatterPlotPanel' = 'signoz/ScatterPlotPanel',
+}
+export interface DashboardtypesScatterPlotAxisDTO {
+	/**
+	 * @type string
+	 * @description Axis title. Empty draws none; the tooltip still names the column.
+	 */
+	label?: string;
+	/**
+	 * @description auto (default) uses log, or symlog when values include zero or negatives, when that spreads the dots clearly more than linear does; otherwise linear. log cannot place a value at or below zero and leaves that dot out; symlog is log-like but places it.
+	 */
+	scale?: DashboardtypesAxisScaleDTO;
+	/**
+	 * @type number,null
+	 * @description The highest value the axis always shows; data above it still extends the axis, as does a threshold on it. Null fits the data.
+	 */
+	softMax?: number | null;
+	/**
+	 * @type number,null
+	 * @description The lowest value the axis always shows; data below it still extends the axis, as does a threshold on it. Null fits the data. A log axis ignores a bound at or below zero.
+	 */
+	softMin?: number | null;
+}
+
+export interface DashboardtypesScatterPlotAxesDTO {
+	/**
+	 * @description The axis dimensions.x is plotted along.
+	 */
+	x?: DashboardtypesScatterPlotAxisDTO;
+	/**
+	 * @description The axis dimensions.y is plotted along.
+	 */
+	y?: DashboardtypesScatterPlotAxisDTO;
+}
+
+/**
+ * @minimum 2
+ * @maximum 40
+ * @nullable
+ */
+export type DashboardtypesPointDiameterDTO = number | null;
+
+/**
+ * @minimum 0.1
+ * @maximum 1
+ * @nullable
+ */
+export type DashboardtypesPointOpacityDTO = number | null;
+
+/**
+ * Diameter of the largest dot when dimensions.sizeBy is set, in CSS pixels from 2 to 40. Null means 24.
+ */
+export type DashboardtypesScatterPlotPointsDTOMaxSize = DashboardtypesPointDiameterDTO | null;
+
+/**
+ * Diameter of the smallest dot when dimensions.sizeBy is set, in CSS pixels from 2 to 40. Null means 4.
+ */
+export type DashboardtypesScatterPlotPointsDTOMinSize = DashboardtypesPointDiameterDTO | null;
+
+/**
+ * Fill opacity of every dot, from 0.1 to 1. Null means 0.7.
+ */
+export type DashboardtypesScatterPlotPointsDTOOpacity = DashboardtypesPointOpacityDTO | null;
+
+/**
+ * Diameter of every dot when dimensions.sizeBy is unset, in CSS pixels from 2 to 40. Null means 6.
+ */
+export type DashboardtypesScatterPlotPointsDTOSize = DashboardtypesPointDiameterDTO | null;
+
+export interface DashboardtypesScatterPlotPointsDTO {
+	/**
+	 * @description Diameter of the largest dot when dimensions.sizeBy is set, in CSS pixels from 2 to 40. Null means 24.
+	 */
+	maxSize?: DashboardtypesScatterPlotPointsDTOMaxSize;
+	/**
+	 * @description Diameter of the smallest dot when dimensions.sizeBy is set, in CSS pixels from 2 to 40. Null means 4.
+	 */
+	minSize?: DashboardtypesScatterPlotPointsDTOMinSize;
+	/**
+	 * @description Fill opacity of every dot, from 0.1 to 1. Null means 0.7.
+	 */
+	opacity?: DashboardtypesScatterPlotPointsDTOOpacity;
+	/**
+	 * @description Diameter of every dot when dimensions.sizeBy is unset, in CSS pixels from 2 to 40. Null means 6.
+	 */
+	size?: DashboardtypesScatterPlotPointsDTOSize;
+}
+
+export interface DashboardtypesScatterPlotChartAppearanceDTO {
+	/**
+	 * @description Dot size and opacity.
+	 */
+	points?: DashboardtypesScatterPlotPointsDTO;
+}
+
+export interface DashboardtypesScatterPlotDimensionsDTO {
+	/**
+	 * @type array,null
+	 * @description Group-by label names (e.g. k8s.namespace.name) whose combined values color the dots and drive the legend. Empty colors by every group-by label.
+	 */
+	colorBy?: string[] | null;
+	/**
+	 * @type string
+	 * @description Value column key that scales each dot's area between chartAppearance.points.minSize and maxSize. Empty draws every dot at chartAppearance.points.size, as does a dot with no value.
+	 */
+	sizeBy?: string;
+	/**
+	 * @type string
+	 * @description Value column key (queryName, or queryName.expression for a multi-aggregation query) plotted on the x axis. Empty, or a key the result lacks, uses the first value column.
+	 */
+	x?: string;
+	/**
+	 * @type string
+	 * @description Value column key plotted on the y axis. Empty, or a key the result lacks, uses the first value column x does not use.
+	 */
+	y?: string;
+}
+
+export enum DashboardtypesThresholdAxisDTO {
+	x = 'x',
+	y = 'y',
+}
+export interface DashboardtypesScatterPlotThresholdDTO {
+	/**
+	 * @description The axis the line marks: y (default) draws it horizontally, x vertically. Unit converts against that axis's column unit, and the axis extends to keep the line in view.
+	 */
+	axis?: DashboardtypesThresholdAxisDTO;
+	/**
+	 * @type string
+	 * @description The CSS color of the line, for example #F1575F, which matches the SigNoz red preset; CSS named colors such as red also work.
+	 */
+	color: string;
+	/**
+	 * @type string
+	 * @description The caption shown on the line.
+	 */
+	label?: string;
+	/**
+	 * @type string
+	 * @description The unit id of value, such as ms or percent. Empty means the panel's unit, or the column's unit for a table threshold. Prefer the panel's unit; a different unit works only when it converts to it, such as s against a panel in ms.
+	 */
+	unit?: string;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The value the line is drawn at, in unit.
+	 */
+	value: number;
+}
+
+export interface DashboardtypesScatterPlotPanelSpecDTO {
+	/**
+	 * @description Title, bounds and scale of each axis.
+	 */
+	axes?: DashboardtypesScatterPlotAxesDTO;
+	/**
+	 * @description Dot drawing options.
+	 */
+	chartAppearance?: DashboardtypesScatterPlotChartAppearanceDTO;
+	/**
+	 * @description Which result columns place, size and color the dots. Each dot is one row of the joined scalar result: one group.
+	 */
+	dimensions?: DashboardtypesScatterPlotDimensionsDTO;
+	/**
+	 * @description Per-column units and decimal precision. The x and y columns' units label their axes; every bound column's unit shows in the tooltip.
+	 */
+	formatting?: DashboardtypesTableFormattingDTO;
+	/**
+	 * @description Legend placement and series colors. A series is one color group, labeled by its colorBy values joined with a comma, or All when nothing is grouped.
+	 */
+	legend?: DashboardtypesLegendDTO;
+	/**
+	 * @type array,null
+	 * @description Reference lines drawn at fixed values across the x or y axis.
+	 */
+	thresholds?: DashboardtypesScatterPlotThresholdDTO[] | null;
+	/**
+	 * @description The time range the groups are computed over.
+	 */
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO {
+	/**
+	 * @enum signoz/ScatterPlotPanel
+	 * @type string
+	 * @description The panel kind.
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTOKind;
+	/**
+	 * @description The options for this panel kind. {} accepts every default.
+	 */
+	spec: DashboardtypesScatterPlotPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -6728,7 +6962,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -6737,6 +6972,7 @@ export enum Querybuildertypesv5RequestTypeDTO {
 	raw_stream = 'raw_stream',
 	trace = 'trace',
 	heatmap = 'heatmap',
+	distribution = 'distribution',
 }
 /**
  * The query kind.
@@ -6846,7 +7082,7 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	 */
 	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
-	 * @description Accepted but currently ignored; the computed values are returned unfiltered.
+	 * @description A filter on the formula values, referencing the formula by its name or as __result, for example F1 > 0. A time series keeps only the points that match and drops a series with none left; a scalar result keeps only the rows that match.
 	 */
 	having?: Querybuildertypesv5HavingDTO;
 	/**
@@ -6864,6 +7100,11 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	 * @description The unique name of the formula, such as F1, used by selectedQueryName and by panels. Referencing a formula from another formula is not reliable.
 	 */
 	name?: string;
+	/**
+	 * @type integer
+	 * @description The number of ordered series or rows to skip before the page starts. Requires limit.
+	 */
+	offset?: number;
 	/**
 	 * @type array,null
 	 * @description The sort order of the formula result.
@@ -6946,7 +7187,7 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of raw results to skip before returning. Aggregation requests ignore it.
+	 * @description The number of raw or trace rows, or of ordered series or rows for time_series and scalar requests, to skip before the page starts. Requires limit.
 	 */
 	offset?: number;
 	/**
@@ -8008,6 +8249,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/ListPanel' = 'signoz/ListPanel',
 	'signoz/TextPanel' = 'signoz/TextPanel',
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
+	'signoz/ScatterPlotPanel' = 'signoz/ScatterPlotPanel',
 }
 /**
  * The RFC 6902 operations, applied in order against the dashboard's postable shape.
@@ -10772,7 +11014,7 @@ export interface Querybuildertypesv5TimeSeriesValueDTO {
 	value?: number;
 	/**
 	 * @type array
-	 * @description The per-band counts for heatmap results, in the order of meta.buckets plus a trailing overflow count.
+	 * @description The per-bucket counts for heatmap results, in the order of meta.buckets plus a trailing overflow count.
 	 */
 	values?: number[];
 }
@@ -11393,7 +11635,7 @@ export interface PromotetypesPostableIndexMaterializedPathsDTO {
 export interface Querybuildertypesv5AggregationMetaDTO {
 	/**
 	 * @type array
-	 * @description The ascending upper bounds of the value bands, set only for heatmap results; each point then carries one count per bound plus a trailing overflow count in values.
+	 * @description The ascending upper bounds of the value buckets, set for heatmap and distribution results; each point then carries one count per bound plus a trailing overflow count in values. The first bucket starts at -Inf when its bound is at or under zero, else at zero.
 	 */
 	buckets?: number[];
 	/**
@@ -11512,6 +11754,91 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	 * @description Unit of the field values, present only for well-known fields.
 	 */
 	unit?: string;
+}
+
+export interface Querybuildertypesv5DistributionDTO {
+	/**
+	 * @type array,null
+	 * @description One count per bound in meta.buckets plus a trailing overflow count, summed over every step of the requested time range.
+	 */
+	counts: number[] | null;
+	/**
+	 * @type array
+	 * @description The group-by field values that identify this distribution.
+	 */
+	labels?: Querybuildertypesv5LabelDTO[];
+}
+
+export interface Querybuildertypesv5DistributionPercentilesDTO {
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 50th percentile.
+	 */
+	p50: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 75th percentile.
+	 */
+	p75: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 90th percentile.
+	 */
+	p90: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 95th percentile.
+	 */
+	p95: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 99th percentile.
+	 */
+	p99: number;
+}
+
+export interface Querybuildertypesv5DistributionAggregationDTO {
+	/**
+	 * @type string
+	 * @description The alias of the aggregation, or the internal name __result_N, with N its index, when no alias was given.
+	 */
+	alias: string;
+	/**
+	 * @type array,null
+	 * @description One distribution per group-by combination.
+	 */
+	distributions: Querybuildertypesv5DistributionDTO[] | null;
+	/**
+	 * @type integer
+	 * @description The zero-based position of the aggregation in the query.
+	 */
+	index: number;
+	/**
+	 * @description Display metadata for the aggregation, including the bucket upper bounds the counts are positional against.
+	 */
+	meta?: Querybuildertypesv5AggregationMetaDTO;
+	/**
+	 * @description Percentiles over the counts of every distribution added together, estimated the way histogram_quantile does by interpolating linearly within the bucket each rank falls in. Omitted when nothing was counted or meta.buckets is empty.
+	 */
+	percentiles?: Querybuildertypesv5DistributionPercentilesDTO;
+}
+
+export interface Querybuildertypesv5DistributionDataDTO {
+	/**
+	 * @type array,null
+	 * @description One entry per aggregation of the query. The order is not guaranteed; match entries to aggregations by index.
+	 */
+	aggregations: Querybuildertypesv5DistributionAggregationDTO[] | null;
+	/**
+	 * @type string
+	 * @description The name of the query that produced this result.
+	 */
+	queryName: string;
 }
 
 /**
@@ -11769,21 +12096,28 @@ export type Querybuildertypesv5QueryDataDTO =
 	| (Querybuildertypesv5TimeSeriesDataDTO & {
 			/**
 			 * @type array,null
-			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests.
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
 			 */
 			results?: unknown[] | null;
 	  })
 	| (Querybuildertypesv5ScalarDataDTO & {
 			/**
 			 * @type array,null
-			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests.
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
 			 */
 			results?: unknown[] | null;
 	  })
 	| (Querybuildertypesv5RawDataDTO & {
 			/**
 			 * @type array,null
-			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests.
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
+			 */
+			results?: unknown[] | null;
+	  })
+	| (Querybuildertypesv5DistributionDataDTO & {
+			/**
+			 * @type array,null
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
 			 */
 			results?: unknown[] | null;
 	  });
@@ -11917,7 +12251,7 @@ export interface Querybuildertypesv5QueryRangeRequestDTO {
 }
 
 /**
- * Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series, ScalarData for scalar, or RawData for raw requests.
+ * Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, or DistributionData for distribution requests.
  */
 export interface Querybuildertypesv5QueryRangeResponseDTO {
 	/**
@@ -12636,22 +12970,9 @@ export interface RuletypesRuleConditionDTO {
 	 */
 	alertOnAbsent?: boolean;
 	/**
-	 * @type string
-	 * @description anomaly_rule only: the anomaly detection algorithm. The supported value is standard.
-	 */
-	algorithm?: string;
-	/**
 	 * @description The queries whose result is compared against the thresholds.
 	 */
 	compositeQuery: RuletypesAlertCompositeQueryDTO;
-	/**
-	 * @description schemaVersion v1 only: which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the legacy codes as strings, '1' to '5'. Required for v1; v2alpha1 sets matchType on each threshold.
-	 */
-	matchType?: RuletypesMatchTypeDTO;
-	/**
-	 * @description schemaVersion v1 only: how the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the legacy codes as strings, '1' to '7'. Required for v1; v2alpha1 sets op on each threshold.
-	 */
-	op?: RuletypesCompareOperatorDTO;
 	/**
 	 * @type boolean
 	 * @description Whether a series is skipped until it has at least requiredNumPoints points in the window. Defaults to false.
@@ -12671,17 +12992,6 @@ export interface RuletypesRuleConditionDTO {
 	 * @description The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery.
 	 */
 	selectedQueryName: string;
-	/**
-	 * @type number,null
-	 * @format double
-	 * @description schemaVersion v1 only: the value compared against, in targetUnit. Required for v1; v2alpha1 sets target on each threshold.
-	 */
-	target?: number | null;
-	/**
-	 * @type string
-	 * @description schemaVersion v1 only: the unit of target, such as percent or ms. Converted to compositeQuery.unit before comparison when the two differ.
-	 */
-	targetUnit?: string;
 	/**
 	 * @description The thresholds to evaluate, as a kind and spec.
 	 */
@@ -12718,19 +13028,9 @@ export interface RuletypesPostableRuleDTO {
 	 */
 	disabled?: boolean;
 	/**
-	 * @type string
-	 * @description The lookback window as a Go duration such as 5m. Only read when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	evalWindow?: string;
-	/**
 	 * @description The evaluation window, as a kind and spec.
 	 */
 	evaluation: RuletypesEvaluationEnvelopeDTO;
-	/**
-	 * @type string
-	 * @description How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	frequency?: string;
 	/**
 	 * @type object
 	 * @description Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
@@ -12740,11 +13040,6 @@ export interface RuletypesPostableRuleDTO {
 	 * @description Grouping, re-notification and routing behaviour.
 	 */
 	notificationSettings: RuletypesNotificationSettingsDTO;
-	/**
-	 * @type array
-	 * @description The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
-	 */
-	preferredChannels?: string[];
 	/**
 	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries.
 	 */
@@ -12830,19 +13125,9 @@ export interface RuletypesRuleDTO {
 	 */
 	disabled?: boolean;
 	/**
-	 * @type string
-	 * @description The lookback window as a Go duration such as 5m. Only read when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	evalWindow?: string;
-	/**
 	 * @description The evaluation window, as a kind and spec.
 	 */
 	evaluation: RuletypesEvaluationEnvelopeDTO;
-	/**
-	 * @type string
-	 * @description How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	frequency?: string;
 	/**
 	 * @type string
 	 * @description The unique identifier of the rule.
@@ -12857,11 +13142,6 @@ export interface RuletypesRuleDTO {
 	 * @description Grouping, re-notification and routing behaviour.
 	 */
 	notificationSettings: RuletypesNotificationSettingsDTO;
-	/**
-	 * @type array
-	 * @description The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
-	 */
-	preferredChannels?: string[];
 	/**
 	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries.
 	 */
@@ -13266,6 +13546,23 @@ export type SpantypesFlamegraphSpanDTOAttributes = { [key: string]: unknown };
 
 export type SpantypesFlamegraphSpanDTOResource = { [key: string]: string };
 
+export type SpantypesScopeDTOAttributes = { [key: string]: unknown };
+
+export interface SpantypesScopeDTO {
+	/**
+	 * @type object
+	 */
+	attributes?: SpantypesScopeDTOAttributes;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	version?: string;
+}
+
 export interface SpantypesFlamegraphSpanDTO {
 	/**
 	 * @type object
@@ -13301,6 +13598,7 @@ export interface SpantypesFlamegraphSpanDTO {
 	 * @type object
 	 */
 	resource: SpantypesFlamegraphSpanDTOResource;
+	scope: SpantypesScopeDTO;
 	/**
 	 * @type string
 	 */
@@ -13846,6 +14144,7 @@ export interface SpantypesWaterfallSpanDTO {
 	 * @type string
 	 */
 	response_status_code?: string;
+	scope?: SpantypesScopeDTO;
 	/**
 	 * @type string
 	 */
@@ -16427,17 +16726,6 @@ export type UpdateRuleViewPathParameters = {
 };
 export type UpdateRuleView200 = {
 	data: RuletypesRuleViewDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type ListRules200 = {
-	/**
-	 * @type array
-	 */
-	data: RuletypesRuleDTO[];
 	/**
 	 * @type string
 	 */

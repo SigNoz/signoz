@@ -4,10 +4,13 @@ import { toast } from '@signozhq/ui/sonner';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
+import { NANO_SECOND_MULTIPLIER } from 'store/globalTime';
 
 import SavedViewsHeader from '../SavedViewsHeader';
 import SavedViewsPanel from '../SavedViewsPanel';
-import { mockSavedViewsApi } from './savedViewsApiMock';
+import { API, mockSavedViewsApi } from './savedViewsApiMock';
 import {
 	expectRowUsable,
 	explorerUrl,
@@ -16,6 +19,7 @@ import {
 	renderWithExplorerProviders,
 	urlParam,
 	viewUrl,
+	withGlobalTime,
 } from './savedViewsTestUtils';
 
 const mockCopy = jest.fn();
@@ -32,6 +36,8 @@ jest.mock('@signozhq/ui/sonner', () => ({
 }));
 
 const PATH = ROUTES.TRACES_EXPLORER;
+const START_MS = 1700000000000;
+const END_MS = 1700003600000;
 
 const errors = makeView({ id: 'view-1', displayName: 'Errors' });
 const slow = makeView({
@@ -119,9 +125,22 @@ describe('SavedViewsPanel row menu', () => {
 		);
 	});
 
-	it('copies a link that opens the view with its query and tab', async () => {
+	it('copies a link that opens the view with its query, tab and time range', async () => {
 		mockSavedViewsApi([errors, slow]);
-		renderPanelWithHeader();
+		renderWithExplorerProviders(
+			withGlobalTime(
+				<SavedViewsPanel
+					source={SavedviewtypesSourceDTO.traces}
+					onClose={jest.fn()}
+				/>,
+				{
+					selectedTime: 'custom',
+					minTime: START_MS * NANO_SECOND_MULTIPLIER,
+					maxTime: END_MS * NANO_SECOND_MULTIPLIER,
+				},
+			),
+			explorerUrl(PATH, {}),
+		);
 
 		await chooseFromRowMenu('Slow spans', 'Copy link');
 
@@ -137,6 +156,9 @@ describe('SavedViewsPanel row menu', () => {
 		expect(
 			decodeURIComponent(link.searchParams.get(QueryParams.compositeQuery) ?? ''),
 		).toContain('duration_nano > 1000');
+		expect(link.searchParams.get(QueryParams.startTime)).toBe(String(START_MS));
+		expect(link.searchParams.get(QueryParams.endTime)).toBe(String(END_MS));
+		expect(link.searchParams.has(QueryParams.relativeTime)).toBe(false);
 		expect(toast.success).toHaveBeenCalledWith('Link copied', expect.anything());
 	});
 
@@ -159,6 +181,87 @@ describe('SavedViewsPanel row menu', () => {
 		});
 		expect(toast.success).toHaveBeenCalledWith('View updated', expect.anything());
 		await waitFor(() => expect(row('Slow checkout spans')).toBeInTheDocument());
+	});
+
+	it('renames from the stored view, not a stale list row', async () => {
+		const views = [errors, slow];
+		const requests = mockSavedViewsApi(views);
+		renderPanelWithHeader();
+		await screen.findByTestId('saved-views-list');
+		const stored = makeView({
+			id: slow.id,
+			displayName: 'Slow spans',
+			expression: 'duration_nano > 5000',
+		});
+		views[1] = stored;
+
+		await chooseFromRowMenu('Slow spans', 'Edit details');
+		const name = screen.getByTestId('save-view-name');
+		await userEvent.clear(name);
+		await userEvent.type(name, 'Slow checkout spans');
+		await userEvent.click(screen.getByTestId('save-view-submit'));
+
+		await waitFor(() => expect(requests.updated).toHaveLength(1));
+		expect(requests.updated[0].body).toMatchObject({
+			spec: { ...stored.spec, displayName: 'Slow checkout spans' },
+		});
+	});
+
+	it('renames from the list row when the view cannot be read', async () => {
+		const requests = mockSavedViewsApi([errors, slow]);
+		server.use(
+			rest.get(`${API}/:id`, (_req, res, ctx) =>
+				res(ctx.status(403), ctx.json({ status: 'error' })),
+			),
+		);
+		renderPanelWithHeader();
+
+		await chooseFromRowMenu('Slow spans', 'Edit details');
+		const name = screen.getByTestId('save-view-name');
+		await userEvent.clear(name);
+		await userEvent.type(name, 'Slow checkout spans');
+		await userEvent.click(screen.getByTestId('save-view-submit'));
+
+		await waitFor(() => expect(requests.updated).toHaveLength(1));
+		expect(requests.updated[0].body).toMatchObject({
+			spec: { ...slow.spec, displayName: 'Slow checkout spans' },
+		});
+	});
+
+	it('does not rename when the stored view fails to load', async () => {
+		const requests = mockSavedViewsApi([errors, slow]);
+		server.use(
+			rest.get(`${API}/:id`, (_req, res, ctx) =>
+				res(ctx.status(500), ctx.json({ status: 'error' })),
+			),
+		);
+		renderPanelWithHeader();
+
+		await chooseFromRowMenu('Slow spans', 'Edit details');
+		const name = screen.getByTestId('save-view-name');
+		await userEvent.type(name, ' 2');
+		await userEvent.click(screen.getByTestId('save-view-submit'));
+
+		await waitFor(() => expect(toast.error).toHaveBeenCalled());
+		expect(requests.updated).toHaveLength(0);
+	});
+
+	it('ignores Enter while the stored view loads', async () => {
+		const requests = mockSavedViewsApi([errors, slow], { getDelay: 300 });
+		renderPanelWithHeader();
+
+		await chooseFromRowMenu('Slow spans', 'Edit details');
+		const name = screen.getByTestId('save-view-name');
+		await userEvent.type(name, ' 2{enter}');
+		await userEvent.type(name, '{enter}');
+
+		await waitFor(() =>
+			expect(toast.success).toHaveBeenCalledWith(
+				'View updated',
+				expect.anything(),
+			),
+		);
+		expect(requests.updated).toHaveLength(1);
 	});
 
 	it('shows the new name in the header when the open view is renamed', async () => {
@@ -215,5 +318,20 @@ describe('SavedViewsPanel row menu', () => {
 			expect(urlParam(history, QueryParams.viewKey)).toBeNull(),
 		);
 		await waitFor(() => expect(chip()).toHaveTextContent('My view'));
+	});
+
+	it('keeps the open view when another view is deleted', async () => {
+		mockSavedViewsApi([errors, slow]);
+		const { history } = renderPanelWithHeader(viewUrl(PATH, errors));
+		await waitFor(() => expect(chip()).toHaveTextContent('Errors'));
+
+		await chooseFromRowMenu('Slow spans', 'Delete');
+		await userEvent.click(screen.getByTestId('delete-saved-view-confirm'));
+
+		await waitFor(() => expect(row('Slow spans')).toBeUndefined());
+		expect(urlParam(history, QueryParams.viewKey)).toBe(
+			JSON.stringify(errors.id),
+		);
+		expect(chip()).toHaveTextContent('Errors');
 	});
 });

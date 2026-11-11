@@ -15,11 +15,16 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 
-jest.mock('hooks/useSafeNavigate', () =>
-	jest
-		.requireActual('tests/browser-history-safe-navigate')
-		.createBrowserHistorySafeNavigateMock(),
-);
+jest.mock('hooks/useSafeNavigate', () => {
+	const { navigate } = jest.requireActual('lib/router/navigation');
+	return {
+		useSafeNavigate: (): unknown => ({
+			safeNavigate: (to: string, opts?: { replace?: boolean }): void => {
+				navigate(to, { replace: opts?.replace });
+			},
+		}),
+	};
+});
 
 const builderlessUrlQuery = {
 	queryType: 'clickhouse_sql',

@@ -53,6 +53,7 @@ exports[`PipelinePage container test should render PipelinePageLayout section 1`
   >
     <div
       class="logs-pipelines-empty-state-centered-container"
+      data-testid="pipelines-empty-state"
     >
       <div
         class="ant-card ant-card-bordered ant-card-small css-dev-only-do-not-override-2i2tap"

@@ -21,14 +21,15 @@ import {
 	useListDashboardsForUserV2,
 } from 'api/generated/services/dashboard';
 import {
-	getListRulesQueryKey,
-	useListRules,
+	getListRulesV3QueryKey,
+	useListRulesV3,
 } from 'api/generated/services/rules';
 import type {
 	DashboardtypesListedDashboardForUserV2DTO,
 	ListDashboardsForUserV2200,
 	ListDashboardsForUserV2Params,
-	ListRules200,
+	ListRulesV3200,
+	ListRulesV3Params,
 } from 'api/generated/services/sigNoz.schemas';
 import logEvent from 'api/common/logEvent';
 import { useQueryService } from 'hooks/useQueryService';
@@ -179,6 +180,9 @@ const VOICE_UNAVAILABLE_KEY = 'ai-assistant-voice-unavailable';
  */
 const DASHBOARD_LIST_PARAMS: ListDashboardsForUserV2Params = { limit: 1000 };
 
+/** Same as dashboards. 200 is the most the rules list returns per call. */
+const ALERT_RULE_LIST_PARAMS: ListRulesV3Params = { limit: 200 };
+
 function dashboardTitle(
 	dashboard: DashboardtypesListedDashboardForUserV2DTO,
 ): string {
@@ -298,7 +302,8 @@ export default function ChatInput({
 		(value: string, caret: number) => {
 			const beforeCaret = value.slice(0, caret);
 			const atIndex = beforeCaret.lastIndexOf('@');
-			if (atIndex < 0) {
+			// `@` only triggers at a word start, so words containing `@` stay plain text.
+			if (atIndex < 0 || /\S/.test(beforeCaret.charAt(atIndex - 1))) {
 				setIsContextPickerOpen(false);
 				setMentionRange(null);
 				return;
@@ -754,7 +759,7 @@ export default function ChatInput({
 		data: alertsResponse,
 		isLoading: isAlertsLoading,
 		isError: isAlertsError,
-	} = useListRules({
+	} = useListRulesV3(ALERT_RULE_LIST_PARAMS, {
 		query: {
 			enabled: isContextPickerOpen && activeContextCategory === 'Alerts',
 			staleTime: Infinity,
@@ -803,10 +808,10 @@ export default function ChatInput({
 				}
 			}
 			if (ctx.type === 'alert' && ctx.resourceId) {
-				const cached = queryClient.getQueryData<ListRules200>(
-					getListRulesQueryKey(),
+				const cached = queryClient.getQueryData<ListRulesV3200>(
+					getListRulesV3QueryKey(ALERT_RULE_LIST_PARAMS),
 				);
-				const rule = cached?.data?.find((r) => r.id === ctx.resourceId);
+				const rule = cached?.data.rules.find((r) => r.id === ctx.resourceId);
 				if (rule?.alert) {
 					return rule.alert;
 				}
@@ -834,8 +839,8 @@ export default function ChatInput({
 					value: dashboardTitle(dashboard),
 				})) ?? [],
 			Alerts:
-				alertsResponse?.data
-					?.filter((alertRule) => Boolean(alertRule.alert))
+				alertsResponse?.data.rules
+					.filter((alertRule) => Boolean(alertRule.alert))
 					.map((alertRule) => ({
 						id: alertRule.id,
 						value: alertRule.alert,
@@ -1058,6 +1063,7 @@ export default function ChatInput({
 												color="secondary"
 												size="sm"
 												id={`ai-context-tab-${category}`}
+												testId={`ai-context-tab-${category}`}
 												// Single stable panel id shared by every tab: only the
 												// active category's tabpanel is rendered, so per-category
 												// `aria-controls` ids would point at nonexistent nodes

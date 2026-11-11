@@ -23,7 +23,7 @@ test.describe('Dashboards — edge cases', () => {
 		await dashboards.visit(`/dashboard/${id}${FAR_PAST}`);
 
 		const target = panels.panel(SINGLE_PANEL_ID);
-		await target.scrollIntoView();
+		await target.wheelIntoView();
 		await expect(target.noData()).toBeVisible();
 		expect(collected.errors).toEqual([]);
 	});

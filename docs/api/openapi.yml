@@ -552,25 +552,46 @@ components:
       required:
       - apiKey
       type: object
-    AlertmanagertypesChannelJiraConfig:
+    AlertmanagertypesChannelJiraAuth:
+      oneOf:
+      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraCloudAuth'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraSelfHostedAuth'
+      type: object
+    AlertmanagertypesChannelJiraCloudAuth:
       properties:
         apiToken:
           description: The Atlassian API token paired with email. A secret; returned
             by create, update and fetch by ID, never by list.
           format: password
           type: string
+        email:
+          description: The Atlassian account email used for basic auth.
+          type: string
+      required:
+      - email
+      - apiToken
+      type: object
+    AlertmanagertypesChannelJiraConfig:
+      properties:
+        auth:
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelJiraAuth'
+          description: 'The credentials: email and apiToken when deployment is cloud,
+            pat when deployment is selfhosted.'
         customFields:
           additionalProperties: {}
           description: Extra issue fields keyed by Jira field ID. Stored, but not
             currently included in the issue Jira receives.
           nullable: true
           type: object
+        deployment:
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesJiraDeployment'
+          description: 'The Jira edition: cloud for an Atlassian-hosted site, selfhosted
+            for Jira Server or Data Center.'
         description:
           description: Alertmanager template for the issue description, rendered as
             markdown; defaults to the SigNoz Jira default.
-          type: string
-        email:
-          description: The Atlassian account email used for basic auth.
           type: string
         issueType:
           description: The issue type name, such as Bug.
@@ -604,8 +625,8 @@ components:
           nullable: true
           type: boolean
         site:
-          description: The base URL of the Jira Cloud site, for example https://example.atlassian.net.
-            Only Jira Cloud is supported.
+          description: The base URL of the Jira site, for example https://example.atlassian.net
+            or https://jira.example.com.
           type: string
         summary:
           description: Alertmanager template for the issue summary; defaults to the
@@ -615,11 +636,21 @@ components:
           description: The resolution name that stops an issue from being reopened.
           type: string
       required:
+      - deployment
       - site
       - project
       - issueType
-      - email
-      - apiToken
+      - auth
+      type: object
+    AlertmanagertypesChannelJiraSelfHostedAuth:
+      properties:
+        pat:
+          description: The Jira personal access token, sent as a Bearer header. A
+            secret; returned by create, update and fetch by ID, never by list.
+          format: password
+          type: string
+      required:
+      - pat
       type: object
     AlertmanagertypesChannelKind:
       enum:
@@ -1155,6 +1186,11 @@ components:
           description: Comma-separated tags attached to the alert.
           type: string
       type: object
+    AlertmanagertypesJiraDeployment:
+      enum:
+      - cloud
+      - selfhosted
+      type: string
     AlertmanagertypesJiraReceiverConfig:
       properties:
         custom_fields:
@@ -1162,6 +1198,10 @@ components:
           description: Extra issue fields keyed by Jira field ID. Stored, but not
             currently included in the issue Jira receives.
           type: object
+        deployment:
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesJiraDeployment'
+          description: The Jira edition, cloud or selfhosted; defaults to cloud.
         description:
           description: Alertmanager template for the issue description.
           type: string
@@ -1169,7 +1209,8 @@ components:
           allOf:
           - $ref: '#/components/schemas/ConfigHTTPClientConfig'
           description: HTTP client settings; basic auth carries the account email
-            and API token.
+            and API token on cloud, authorization carries the Bearer personal access
+            token on self-hosted.
         issue_type:
           description: The issue type name.
           type: string
@@ -1199,7 +1240,7 @@ components:
         send_resolved:
           type: boolean
         site:
-          description: The Jira Cloud base URL.
+          description: The Jira base URL.
           type: string
         summary:
           description: Alertmanager template for the issue summary.
@@ -2205,10 +2246,10 @@ components:
       type: object
     CloudintegrationtypesAWSConnectionArtifact:
       properties:
-        connectionUrl:
+        cliCommand:
           type: string
       required:
-      - connectionUrl
+      - cliCommand
       type: object
     CloudintegrationtypesAWSIntegrationConfig:
       properties:
@@ -2364,11 +2405,8 @@ components:
       properties:
         cliCommand:
           type: string
-        cloudPowerShellCommand:
-          type: string
       required:
       - cliCommand
-      - cloudPowerShellCommand
       type: object
     CloudintegrationtypesAzureIntegrationConfig:
       properties:
@@ -3932,6 +3970,7 @@ components:
       - logs-field
       - traces-field
       - metrics-field
+      - llm-pricing-rule
       - span-mapper-group
       - span-mapper
       type: string
@@ -4032,7 +4071,9 @@ components:
             the query they draw.
         cursor:
           description: The opaque nextCursor value from a previous raw result, used
-            to fetch the next page.
+            to fetch the next page. Honored only by raw requests whose order starts
+            with timestamp, for logs followed by id in the same direction; every other
+            request ignores it.
           type: string
         disabled:
           description: When true, the result is excluded from the response; the query
@@ -4069,10 +4110,11 @@ components:
             are replaced by group-by label values.
           type: string
         limit:
-          description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. When
-            0, aggregations are unlimited while raw requests ordered by timestamp
-            return a page of 10000 rows; follow nextCursor for the rest.
+          description: The maximum number of rows for raw and trace requests, or of
+            series or rows for grouped scalar and time_series requests, keeping the
+            top entries by order. When 0, scalar and time_series requests are unlimited,
+            raw requests ordered by timestamp return a page of 10000 rows to continue
+            with nextCursor, and other raw and trace requests return 100 rows.
           type: integer
         limitBy:
           allOf:
@@ -4084,8 +4126,11 @@ components:
             operators and selectedQueryName refer to it.
           type: string
         offset:
-          description: The number of rows to skip before returning results. Prefer
-            cursor for raw requests.
+          description: The number of rows for raw and trace requests, or of ordered
+            series or rows for scalar and time_series requests, to skip before the
+            page starts. Requires limit. On raw requests the skip counts from where
+            a cursor resumes, and the skipped rows are still read, so prefer cursor
+            for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -4226,6 +4271,13 @@ components:
           nullable: true
           type: number
       type: object
+    DashboardtypesAxisScale:
+      enum:
+      - auto
+      - linear
+      - log
+      - symlog
+      type: string
     DashboardtypesBarChartPanelSpec:
       properties:
         axes:
@@ -5252,6 +5304,7 @@ components:
           signoz/ListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
           signoz/NumberPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
           signoz/PieChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec'
+          signoz/ScatterPlotPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec'
           signoz/TablePanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
           signoz/TextPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
           signoz/TimeSeriesPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
@@ -5267,6 +5320,7 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
       enum:
@@ -5280,6 +5334,7 @@ components:
       - signoz/ListPanel
       - signoz/TextPanel
       - signoz/HeatmapPanel
+      - signoz/ScatterPlotPanel
       type: string
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
       properties:
@@ -5381,6 +5436,21 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesPieChartPanelSpec'
+          description: The options for this panel kind. {} accepts every default.
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec:
+      properties:
+        kind:
+          description: The panel kind.
+          enum:
+          - signoz/ScatterPlotPanel
+          type: string
+        spec:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotPanelSpec'
           description: The options for this panel kind. {} accepts every default.
       required:
       - kind
@@ -5496,6 +5566,16 @@ components:
           - $ref: '#/components/schemas/DashboardtypesBasicVisualization'
           description: The time range the slices are computed over.
       type: object
+    DashboardtypesPointDiameter:
+      maximum: 40
+      minimum: 2
+      nullable: true
+      type: integer
+    DashboardtypesPointOpacity:
+      maximum: 1
+      minimum: 0.1
+      nullable: true
+      type: number
     DashboardtypesPostableDashboardV2:
       properties:
         generateName:
@@ -5750,6 +5830,161 @@ components:
       required:
       - queryValue
       type: object
+    DashboardtypesScatterPlotAxes:
+      properties:
+        x:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotAxis'
+          description: The axis dimensions.x is plotted along.
+        "y":
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotAxis'
+          description: The axis dimensions.y is plotted along.
+      type: object
+    DashboardtypesScatterPlotAxis:
+      properties:
+        label:
+          description: Axis title. Empty draws none; the tooltip still names the column.
+          type: string
+        scale:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesAxisScale'
+          description: auto (default) uses log, or symlog when values include zero
+            or negatives, when that spreads the dots clearly more than linear does;
+            otherwise linear. log cannot place a value at or below zero and leaves
+            that dot out; symlog is log-like but places it.
+        softMax:
+          description: The highest value the axis always shows; data above it still
+            extends the axis, as does a threshold on it. Null fits the data.
+          nullable: true
+          type: number
+        softMin:
+          description: The lowest value the axis always shows; data below it still
+            extends the axis, as does a threshold on it. Null fits the data. A log
+            axis ignores a bound at or below zero.
+          nullable: true
+          type: number
+      type: object
+    DashboardtypesScatterPlotChartAppearance:
+      properties:
+        points:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotPoints'
+          description: Dot size and opacity.
+      type: object
+    DashboardtypesScatterPlotDimensions:
+      properties:
+        colorBy:
+          description: Group-by label names (e.g. k8s.namespace.name) whose combined
+            values color the dots and drive the legend. Empty colors by every group-by
+            label.
+          items:
+            type: string
+          nullable: true
+          type: array
+        sizeBy:
+          description: Value column key that scales each dot's area between chartAppearance.points.minSize
+            and maxSize. Empty draws every dot at chartAppearance.points.size, as
+            does a dot with no value.
+          type: string
+        x:
+          description: Value column key (queryName, or queryName.expression for a
+            multi-aggregation query) plotted on the x axis. Empty, or a key the result
+            lacks, uses the first value column.
+          type: string
+        "y":
+          description: Value column key plotted on the y axis. Empty, or a key the
+            result lacks, uses the first value column x does not use.
+          type: string
+      type: object
+    DashboardtypesScatterPlotPanelSpec:
+      properties:
+        axes:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotAxes'
+          description: Title, bounds and scale of each axis.
+        chartAppearance:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotChartAppearance'
+          description: Dot drawing options.
+        dimensions:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesScatterPlotDimensions'
+          description: 'Which result columns place, size and color the dots. Each
+            dot is one row of the joined scalar result: one group.'
+        formatting:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTableFormatting'
+          description: Per-column units and decimal precision. The x and y columns'
+            units label their axes; every bound column's unit shows in the tooltip.
+        legend:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegend'
+          description: Legend placement and series colors. A series is one color group,
+            labeled by its colorBy values joined with a comma, or All when nothing
+            is grouped.
+        thresholds:
+          description: Reference lines drawn at fixed values across the x or y axis.
+          items:
+            $ref: '#/components/schemas/DashboardtypesScatterPlotThreshold'
+          nullable: true
+          type: array
+        visualization:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          description: The time range the groups are computed over.
+      type: object
+    DashboardtypesScatterPlotPoints:
+      properties:
+        maxSize:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPointDiameter'
+          description: Diameter of the largest dot when dimensions.sizeBy is set,
+            in CSS pixels from 2 to 40. Null means 24.
+        minSize:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPointDiameter'
+          description: Diameter of the smallest dot when dimensions.sizeBy is set,
+            in CSS pixels from 2 to 40. Null means 4.
+        opacity:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPointOpacity'
+          description: Fill opacity of every dot, from 0.1 to 1. Null means 0.7.
+        size:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPointDiameter'
+          description: Diameter of every dot when dimensions.sizeBy is unset, in CSS
+            pixels from 2 to 40. Null means 6.
+      type: object
+    DashboardtypesScatterPlotThreshold:
+      properties:
+        axis:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesThresholdAxis'
+          description: 'The axis the line marks: y (default) draws it horizontally,
+            x vertically. Unit converts against that axis''s column unit, and the
+            axis extends to keep the line in view.'
+        color:
+          description: 'The CSS color of the line, for example #F1575F, which matches
+            the SigNoz red preset; CSS named colors such as red also work.'
+          type: string
+        label:
+          description: The caption shown on the line.
+          type: string
+        unit:
+          description: The unit id of value, such as ms or percent. Empty means the
+            panel's unit, or the column's unit for a table threshold. Prefer the panel's
+            unit; a different unit works only when it converts to it, such as s against
+            a panel in ms.
+          type: string
+        value:
+          description: The value the line is drawn at, in unit.
+          format: double
+          type: number
+      required:
+      - value
+      - color
+      type: object
     DashboardtypesSource:
       enum:
       - user
@@ -5916,6 +6151,11 @@ components:
       - value
       - name
       type: object
+    DashboardtypesThresholdAxis:
+      enum:
+      - x
+      - "y"
+      type: string
     DashboardtypesThresholdFormat:
       enum:
       - text
@@ -9372,9 +9612,10 @@ components:
     Querybuildertypesv5AggregationMeta:
       properties:
         buckets:
-          description: The ascending upper bounds of the value bands, set only for
-            heatmap results; each point then carries one count per bound plus a trailing
-            overflow count in values.
+          description: The ascending upper bounds of the value buckets, set for heatmap
+            and distribution results; each point then carries one count per bound
+            plus a trailing overflow count in values. The first bucket starts at -Inf
+            when its bound is at or under zero, else at zero.
           items:
             format: double
             type: number
@@ -9528,6 +9769,101 @@ components:
             $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
           nullable: true
           type: array
+      type: object
+    Querybuildertypesv5Distribution:
+      properties:
+        counts:
+          description: One count per bound in meta.buckets plus a trailing overflow
+            count, summed over every step of the requested time range.
+          items:
+            format: double
+            type: number
+          nullable: true
+          type: array
+        labels:
+          description: The group-by field values that identify this distribution.
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Label'
+          type: array
+      required:
+      - counts
+      type: object
+    Querybuildertypesv5DistributionAggregation:
+      properties:
+        alias:
+          description: The alias of the aggregation, or the internal name __result_N,
+            with N its index, when no alias was given.
+          type: string
+        distributions:
+          description: One distribution per group-by combination.
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Distribution'
+          nullable: true
+          type: array
+        index:
+          description: The zero-based position of the aggregation in the query.
+          type: integer
+        meta:
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5AggregationMeta'
+          description: Display metadata for the aggregation, including the bucket
+            upper bounds the counts are positional against.
+        percentiles:
+          allOf:
+          - $ref: '#/components/schemas/Querybuildertypesv5DistributionPercentiles'
+          description: Percentiles over the counts of every distribution added together,
+            estimated the way histogram_quantile does by interpolating linearly within
+            the bucket each rank falls in. Omitted when nothing was counted or meta.buckets
+            is empty.
+      required:
+      - index
+      - alias
+      - distributions
+      type: object
+    Querybuildertypesv5DistributionData:
+      properties:
+        aggregations:
+          description: One entry per aggregation of the query. The order is not guaranteed;
+            match entries to aggregations by index.
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5DistributionAggregation'
+          nullable: true
+          type: array
+        queryName:
+          description: The name of the query that produced this result.
+          type: string
+      required:
+      - queryName
+      - aggregations
+      type: object
+    Querybuildertypesv5DistributionPercentiles:
+      properties:
+        p50:
+          description: The 50th percentile.
+          format: double
+          type: number
+        p75:
+          description: The 75th percentile.
+          format: double
+          type: number
+        p90:
+          description: The 90th percentile.
+          format: double
+          type: number
+        p95:
+          description: The 95th percentile.
+          format: double
+          type: number
+        p99:
+          description: The 99th percentile.
+          format: double
+          type: number
+      required:
+      - p50
+      - p75
+      - p90
+      - p95
+      - p99
       type: object
     Querybuildertypesv5ExecStats:
       description: 'Execution cost of the request: rows and bytes scanned and execution
@@ -9898,8 +10234,10 @@ components:
         having:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5Having'
-          description: Accepted but currently ignored; the computed values are returned
-            unfiltered.
+          description: A filter on the formula values, referencing the formula by
+            its name or as __result, for example F1 > 0. A time series keeps only
+            the points that match and drops a series with none left; a scalar result
+            keeps only the rows that match.
         legend:
           description: The display name template for each series; {{field}} placeholders
             are replaced by label values.
@@ -9912,6 +10250,10 @@ components:
           description: The unique name of the formula, such as F1, used by selectedQueryName
             and by panels. Referencing a formula from another formula is not reliable.
           type: string
+        offset:
+          description: The number of ordered series or rows to skip before the page
+            starts. Requires limit.
+          type: integer
         order:
           description: The sort order of the formula result.
           items:
@@ -9937,7 +10279,9 @@ components:
             the query they draw.
         cursor:
           description: The opaque nextCursor value from a previous raw result, used
-            to fetch the next page.
+            to fetch the next page. Honored only by raw requests whose order starts
+            with timestamp, for logs followed by id in the same direction; every other
+            request ignores it.
           type: string
         disabled:
           description: When true, the result is excluded from the response; the query
@@ -9973,10 +10317,11 @@ components:
             are replaced by group-by label values.
           type: string
         limit:
-          description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. When
-            0, aggregations are unlimited while raw requests ordered by timestamp
-            return a page of 10000 rows; follow nextCursor for the rest.
+          description: The maximum number of rows for raw and trace requests, or of
+            series or rows for grouped scalar and time_series requests, keeping the
+            top entries by order. When 0, scalar and time_series requests are unlimited,
+            raw requests ordered by timestamp return a page of 10000 rows to continue
+            with nextCursor, and other raw and trace requests return 100 rows.
           type: integer
         limitBy:
           allOf:
@@ -9988,8 +10333,11 @@ components:
             operators and selectedQueryName refer to it.
           type: string
         offset:
-          description: The number of rows to skip before returning results. Prefer
-            cursor for raw requests.
+          description: The number of rows for raw and trace requests, or of ordered
+            series or rows for scalar and time_series requests, to skip before the
+            page starts. Requires limit. On raw requests the skip counts from where
+            a cursor resumes, and the skipped rows are still read, so prefer cursor
+            for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10051,7 +10399,9 @@ components:
             the query they draw.
         cursor:
           description: The opaque nextCursor value from a previous raw result, used
-            to fetch the next page.
+            to fetch the next page. Honored only by raw requests whose order starts
+            with timestamp, for logs followed by id in the same direction; every other
+            request ignores it.
           type: string
         disabled:
           description: When true, the result is excluded from the response; the query
@@ -10088,10 +10438,11 @@ components:
             are replaced by group-by label values.
           type: string
         limit:
-          description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. When
-            0, aggregations are unlimited while raw requests ordered by timestamp
-            return a page of 10000 rows; follow nextCursor for the rest.
+          description: The maximum number of rows for raw and trace requests, or of
+            series or rows for grouped scalar and time_series requests, keeping the
+            top entries by order. When 0, scalar and time_series requests are unlimited,
+            raw requests ordered by timestamp return a page of 10000 rows to continue
+            with nextCursor, and other raw and trace requests return 100 rows.
           type: integer
         limitBy:
           allOf:
@@ -10103,8 +10454,11 @@ components:
             operators and selectedQueryName refer to it.
           type: string
         offset:
-          description: The number of rows to skip before returning results. Prefer
-            cursor for raw requests.
+          description: The number of rows for raw and trace requests, or of ordered
+            series or rows for scalar and time_series requests, to skip before the
+            page starts. Requires limit. On raw requests the skip counts from where
+            a cursor resumes, and the skipped rows are still read, so prefer cursor
+            for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10166,7 +10520,9 @@ components:
             the query they draw.
         cursor:
           description: The opaque nextCursor value from a previous raw result, used
-            to fetch the next page.
+            to fetch the next page. Honored only by raw requests whose order starts
+            with timestamp, for logs followed by id in the same direction; every other
+            request ignores it.
           type: string
         disabled:
           description: When true, the result is excluded from the response; the query
@@ -10203,10 +10559,11 @@ components:
             are replaced by group-by label values.
           type: string
         limit:
-          description: The maximum number of rows for raw requests, or of series or
-            rows for grouped aggregations, keeping the top entries by order. When
-            0, aggregations are unlimited while raw requests ordered by timestamp
-            return a page of 10000 rows; follow nextCursor for the rest.
+          description: The maximum number of rows for raw and trace requests, or of
+            series or rows for grouped scalar and time_series requests, keeping the
+            top entries by order. When 0, scalar and time_series requests are unlimited,
+            raw requests ordered by timestamp return a page of 10000 rows to continue
+            with nextCursor, and other raw and trace requests return 100 rows.
           type: integer
         limitBy:
           allOf:
@@ -10218,8 +10575,11 @@ components:
             operators and selectedQueryName refer to it.
           type: string
         offset:
-          description: The number of rows to skip before returning results. Prefer
-            cursor for raw requests.
+          description: The number of rows for raw and trace requests, or of ordered
+            series or rows for scalar and time_series requests, to skip before the
+            page starts. Requires limit. On raw requests the skip counts from where
+            a cursor resumes, and the skipped rows are still read, so prefer cursor
+            for paging.
           type: integer
         order:
           description: The sort order of the result. Order by a group-by field, an
@@ -10320,8 +10680,9 @@ components:
           description: The unique name of the trace operator query.
           type: string
         offset:
-          description: The number of raw results to skip before returning. Aggregation
-            requests ignore it.
+          description: The number of raw or trace rows, or of ordered series or rows
+            for time_series and scalar requests, to skip before the page starts. Requires
+            limit.
           type: integer
         order:
           description: The sort order of the matched traces; only span_count and trace_duration
@@ -10352,10 +10713,12 @@ components:
       - $ref: '#/components/schemas/Querybuildertypesv5TimeSeriesData'
       - $ref: '#/components/schemas/Querybuildertypesv5ScalarData'
       - $ref: '#/components/schemas/Querybuildertypesv5RawData'
+      - $ref: '#/components/schemas/Querybuildertypesv5DistributionData'
       properties:
         results:
           description: 'One result per enabled query, typed by the request type: TimeSeriesData
-            for time_series, ScalarData for scalar and RawData for raw requests.'
+            for time_series and heatmap, ScalarData for scalar, RawData for raw and
+            DistributionData for distribution requests.'
           items: {}
           nullable: true
           type: array
@@ -10545,8 +10908,9 @@ components:
       type: object
     Querybuildertypesv5QueryRangeResponse:
       description: 'Response from the v5 query range endpoint. The data.results array
-        contains typed results depending on the requestType: TimeSeriesData for time_series,
-        ScalarData for scalar, or RawData for raw requests.'
+        contains typed results depending on the requestType: TimeSeriesData for time_series
+        and heatmap, ScalarData for scalar, RawData for raw, or DistributionData for
+        distribution requests.'
       properties:
         data:
           allOf:
@@ -10643,6 +11007,7 @@ components:
       - raw_stream
       - trace
       - heatmap
+      - distribution
       type: string
     Querybuildertypesv5ScalarData:
       properties:
@@ -10754,8 +11119,8 @@ components:
           format: double
           type: number
         values:
-          description: The per-band counts for heatmap results, in the order of meta.buckets
-            plus a trailing overflow count.
+          description: The per-bucket counts for heatmap results, in the order of
+            meta.buckets plus a trailing overflow count.
           items:
             format: double
             type: number
@@ -11383,20 +11748,10 @@ components:
           description: Whether the rule is paused. A disabled rule is neither evaluated
             nor notifies. Defaults to false.
           type: boolean
-        evalWindow:
-          description: The lookback window as a Go duration such as 5m. Only read
-            when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec
-            instead.
-          type: string
         evaluation:
           allOf:
           - $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
           description: The evaluation window, as a kind and spec.
-        frequency:
-          description: How often the rule is evaluated, as a Go duration such as 1m.
-            Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set
-            it in evaluation.spec instead.
-          type: string
         labels:
           additionalProperties:
             type: string
@@ -11408,13 +11763,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/RuletypesNotificationSettings'
           description: Grouping, re-notification and routing behaviour.
-        preferredChannels:
-          description: The displayName of each notification channel to notify, for
-            schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries
-            its own channels.
-          items:
-            type: string
-          type: array
         ruleType:
           allOf:
           - $ref: '#/components/schemas/RuletypesRuleType'
@@ -11524,20 +11872,10 @@ components:
           description: Whether the rule is paused. A disabled rule is neither evaluated
             nor notifies. Defaults to false.
           type: boolean
-        evalWindow:
-          description: The lookback window as a Go duration such as 5m. Only read
-            when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec
-            instead.
-          type: string
         evaluation:
           allOf:
           - $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
           description: The evaluation window, as a kind and spec.
-        frequency:
-          description: How often the rule is evaluated, as a Go duration such as 1m.
-            Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set
-            it in evaluation.spec instead.
-          type: string
         id:
           description: The unique identifier of the rule.
           type: string
@@ -11552,13 +11890,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/RuletypesNotificationSettings'
           description: Grouping, re-notification and routing behaviour.
-        preferredChannels:
-          description: The displayName of each notification channel to notify, for
-            schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries
-            its own channels.
-          items:
-            type: string
-          type: array
         ruleType:
           allOf:
           - $ref: '#/components/schemas/RuletypesRuleType'
@@ -11612,28 +11943,10 @@ components:
           description: Whether to fire a nodata alert when the query returns no data.
             Defaults to false.
           type: boolean
-        algorithm:
-          description: 'anomaly_rule only: the anomaly detection algorithm. The supported
-            value is standard.'
-          type: string
         compositeQuery:
           allOf:
           - $ref: '#/components/schemas/RuletypesAlertCompositeQuery'
           description: The queries whose result is compared against the thresholds.
-        matchType:
-          allOf:
-          - $ref: '#/components/schemas/RuletypesMatchType'
-          description: 'schemaVersion v1 only: which points in the window must satisfy
-            op. Accepted as at_least_once, all_the_times, on_average, in_total or
-            last, their aliases avg and sum, or the legacy codes as strings, ''1''
-            to ''5''. Required for v1; v2alpha1 sets matchType on each threshold.'
-        op:
-          allOf:
-          - $ref: '#/components/schemas/RuletypesCompareOperator'
-          description: 'schemaVersion v1 only: how the value is compared with target.
-            Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal
-            or outside_bounds, their symbols, or the legacy codes as strings, ''1''
-            to ''7''. Required for v1; v2alpha1 sets op on each threshold.'
         requireMinPoints:
           description: Whether a series is skipped until it has at least requiredNumPoints
             points in the window. Defaults to false.
@@ -11650,17 +11963,6 @@ components:
         selectedQueryName:
           description: The name of the query whose result is evaluated, such as A
             or F1. Must match a query in compositeQuery.
-          type: string
-        target:
-          description: 'schemaVersion v1 only: the value compared against, in targetUnit.
-            Required for v1; v2alpha1 sets target on each threshold.'
-          format: double
-          nullable: true
-          type: number
-        targetUnit:
-          description: 'schemaVersion v1 only: the unit of target, such as percent
-            or ms. Converted to compositeQuery.unit before comparison when the two
-            differ.'
           type: string
         thresholds:
           allOf:
@@ -12133,6 +12435,8 @@ components:
           additionalProperties:
             type: string
           type: object
+        scope:
+          $ref: '#/components/schemas/SpantypesScope'
         spanId:
           type: string
         timestamp:
@@ -12149,6 +12453,7 @@ components:
       - event
       - attributes
       - resource
+      - scope
       type: object
     SpantypesGettableFlamegraphTrace:
       properties:
@@ -12388,6 +12693,16 @@ components:
             type: string
           nullable: true
           type: array
+      type: object
+    SpantypesScope:
+      properties:
+        attributes:
+          additionalProperties: {}
+          type: object
+        name:
+          type: string
+        version:
+          type: string
       type: object
     SpantypesSpanAggregation:
       properties:
@@ -12758,6 +13073,8 @@ components:
           type: object
         response_status_code:
           type: string
+        scope:
+          $ref: '#/components/schemas/SpantypesScope'
         span_id:
           type: string
         status_code:
@@ -15066,9 +15383,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - planned-maintenance:list
       - tokenizer:
-        - VIEWER
+        - planned-maintenance:list
       summary: List downtime schedules
       tags:
       - downtimeschedules
@@ -15123,9 +15440,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - planned-maintenance:create
+        - planned-maintenance:attach
+        - rule:attach
       - tokenizer:
-        - EDITOR
+        - planned-maintenance:create
+        - planned-maintenance:attach
+        - rule:attach
       summary: Create downtime schedule
       tags:
       - downtimeschedules
@@ -15170,9 +15491,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - planned-maintenance:delete
       - tokenizer:
-        - EDITOR
+        - planned-maintenance:delete
       summary: Delete downtime schedule
       tags:
       - downtimeschedules
@@ -15228,9 +15549,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - planned-maintenance:read
       - tokenizer:
-        - VIEWER
+        - planned-maintenance:read
       summary: Get downtime schedule by ID
       tags:
       - downtimeschedules
@@ -15285,9 +15606,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - planned-maintenance:update
+        - planned-maintenance:attach
+        - planned-maintenance:detach
+        - rule:attach
+        - rule:detach
       - tokenizer:
-        - EDITOR
+        - planned-maintenance:update
+        - planned-maintenance:attach
+        - planned-maintenance:detach
+        - rule:attach
+        - rule:detach
       summary: Update downtime schedule
       tags:
       - downtimeschedules
@@ -15761,9 +16090,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - llm-pricing-rule:list
       - tokenizer:
-        - VIEWER
+        - llm-pricing-rule:list
       summary: List pricing rules
       tags:
       - llmpricingrules
@@ -15808,9 +16137,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - llm-pricing-rule:update
       - tokenizer:
-        - ADMIN
+        - llm-pricing-rule:update
       summary: Create or update pricing rules
       tags:
       - llmpricingrules
@@ -15856,9 +16185,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - llm-pricing-rule:delete
       - tokenizer:
-        - ADMIN
+        - llm-pricing-rule:delete
       summary: Delete a pricing rule
       tags:
       - llmpricingrules
@@ -15914,9 +16243,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - llm-pricing-rule:read
       - tokenizer:
-        - VIEWER
+        - llm-pricing-rule:read
       summary: Get a pricing rule
       tags:
       - llmpricingrules
@@ -15969,9 +16298,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - llm-pricing-rule:list
+        - traces:read
       - tokenizer:
-        - VIEWER
+        - llm-pricing-rule:list
+        - traces:read
       summary: List unmapped models
       tags:
       - llmpricingrules
@@ -16698,9 +17029,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - route-policy:list
       - tokenizer:
-        - VIEWER
+        - route-policy:list
       summary: List route policies
       tags:
       - routepolicies
@@ -16755,9 +17086,13 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - route-policy:create
+        - route-policy:attach
+        - notification-channel:attach
       - tokenizer:
-        - ADMIN
+        - route-policy:create
+        - route-policy:attach
+        - notification-channel:attach
       summary: Create route policy
       tags:
       - routepolicies
@@ -16802,9 +17137,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - route-policy:delete
       - tokenizer:
-        - ADMIN
+        - route-policy:delete
       summary: Delete route policy
       tags:
       - routepolicies
@@ -16860,9 +17195,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - route-policy:read
       - tokenizer:
-        - VIEWER
+        - route-policy:read
       summary: Get route policy by ID
       tags:
       - routepolicies
@@ -16929,9 +17264,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - route-policy:update
+        - route-policy:attach
+        - route-policy:detach
+        - notification-channel:attach
+        - notification-channel:detach
       - tokenizer:
-        - ADMIN
+        - route-policy:update
+        - route-policy:attach
+        - route-policy:detach
+        - notification-channel:attach
+        - notification-channel:detach
       summary: Update route policy
       tags:
       - routepolicies
@@ -23826,14 +24169,16 @@ paths:
               jira:
                 description: Creates one Jira Cloud issue per alert group and reopens
                   it if the alert fires again within `reopenDuration`. Authenticates
-                  with an Atlassian account email and API token.
+                  with an Atlassian account email and API token under `auth`.
                 summary: Jira Cloud issues
                 value:
                   config:
                     kind: jira
                     spec:
-                      apiToken: XXXXXXXXXXXXXXXXXXXXXXXX
-                      email: oncall@example.com
+                      auth:
+                        apiToken: XXXXXXXXXXXXXXXXXXXXXXXX
+                        email: oncall@example.com
+                      deployment: cloud
                       issueType: Bug
                       labels:
                       - signoz
@@ -23843,6 +24188,23 @@ paths:
                       site: https://example.atlassian.net
                   displayName: Jira platform
                   name: jira-platform
+              jira-selfhosted:
+                description: Creates issues on a Jira Data Center or Server site.
+                  Authenticates with a personal access token under `auth`, sent as
+                  a Bearer header.
+                summary: Self-hosted Jira issues
+                value:
+                  config:
+                    kind: jira
+                    spec:
+                      auth:
+                        pat: XXXXXXXXXXXXXXXXXXXXXXXX
+                      deployment: selfhosted
+                      issueType: Bug
+                      project: OPS
+                      site: https://jira.example.com
+                  displayName: Jira Data Center
+                  name: jira-datacenter
               jsmops:
                 description: Creates JSM Ops alerts through an integration API key.
                   JSM Ops speaks the Opsgenie alert API, so `priority` takes P1 to
@@ -24926,9 +25288,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: List rule saved views
       tags:
       - rules
@@ -24984,9 +25346,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: Create rule saved view
       tags:
       - rules
@@ -25038,9 +25400,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: Delete rule saved view
       tags:
       - rules
@@ -25107,64 +25469,14 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: Update rule saved view
       tags:
       - rules
       x-signoz-stability: alpha
   /api/v2/rules:
-    get:
-      deprecated: true
-      description: 'This endpoint lists all alert rules with their current evaluation
-        state. Deprecated: use ListRulesV3, which supports filtering, sorting and
-        pagination.'
-      operationId: ListRules
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/RuletypesRule'
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: List alert rules
-      tags:
-      - rules
-      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a new alert rule
@@ -28063,6 +28375,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -28071,9 +28389,15 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
+        - logs-field:list
+        - traces-field:list
+        - metrics-field:list
       - tokenizer:
-        - VIEWER
+        - rule:read
+        - logs-field:list
+        - traces-field:list
+        - metrics-field:list
       summary: Get rule history filter keys
       tags:
       - rules
@@ -28241,6 +28565,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -28249,9 +28579,15 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
+        - logs-field:read
+        - traces-field:read
+        - metrics-field:read
       - tokenizer:
-        - VIEWER
+        - rule:read
+        - logs-field:read
+        - traces-field:read
+        - metrics-field:read
       summary: Get rule history filter values
       tags:
       - rules
@@ -28324,9 +28660,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get rule overall status timeline
       tags:
       - rules
@@ -28396,9 +28732,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get rule history stats
       tags:
       - rules
@@ -28480,6 +28816,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -28488,9 +28830,19 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - rule:read
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Get rule history timeline
       tags:
       - rules
@@ -28555,6 +28907,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -28563,9 +28921,19 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - rule:read
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Get top contributors to rule firing
       tags:
       - rules
@@ -32255,6 +32623,305 @@ paths:
                     - spec:
                         expression: A / B * 100
                         name: error_rate
+                      type: builder_formula
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_anomaly_request_rate:
+                description: 'anomaly is the one function with named arguments. seasonality
+                  says which past periods predict the current value: hourly, daily
+                  or weekly, daily when absent. z_score_threshold is how many standard
+                  deviations from the prediction count as an anomaly. It has no default:
+                  a request without it gets bounds of zero width, so send it. 3 is
+                  the value the UI sends. The response carries, next to the values,
+                  a predicted series, an upper and a lower bound series and an anomaly
+                  score series. The scoring runs in the enterprise build; the community
+                  build returns the series unchanged.'
+                summary: 'anomaly: request rate scored against its daily pattern'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: http.server.duration.count
+                          spaceAggregation: sum
+                          timeAggregation: rate
+                        functions:
+                        - args:
+                          - name: seasonality
+                            value: daily
+                          - name: z_score_threshold
+                            value: 3
+                          name: anomaly
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 300s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_cumulativesum_errors_so_far:
+                description: cumulativeSum replaces each point with the sum of every
+                  point up to and including it, so a per-step count becomes a running
+                  total whose first point is the first count. It takes no arguments.
+                  The total resets with the window, so a longer time range gives a
+                  larger final value; it is a view of the window, not a counter.
+                summary: 'cumulativeSum: 5xx responses since the start of the window'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - alias: server_errors
+                          expression: count()
+                        filter:
+                          expression: http.response.status_code >= 500
+                        functions:
+                        - name: cumulativeSum
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: A
+                        signal: traces
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_cutoffmin_hide_idle_hosts:
+                description: The four threshold functions take one number. cutOffMin
+                  and cutOffMax remove the points below or above the threshold, so
+                  an idle host disappears from the chart instead of drawing a line
+                  along the bottom. clampMin and clampMax keep the points and replace
+                  the value with the threshold, which caps spikes without hiding them.
+                  system.cpu.utilization is a ratio, so 0.05 is 5%.
+                summary: 'cutOffMin: drop hosts below 5% CPU from the chart'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: system.cpu.utilization
+                          spaceAggregation: avg
+                          timeAggregation: avg
+                        functions:
+                        - args:
+                          - value: 0.05
+                          name: cutOffMin
+                        groupBy:
+                        - fieldContext: resource
+                          name: host.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_ewma_smoothed_latency:
+                description: 'ewma3, ewma5 and ewma7 replace each point with an exponentially
+                  weighted average of the point and the points before it. The number
+                  in the name is the window the default weight is derived from: alpha
+                  = 2 / (n + 1), so 0.5, 0.333 and 0.25. One optional argument overrides
+                  alpha; a value close to 1 follows the raw series, a value close
+                  to 0 smooths harder. 0.3 here smooths a little more than ewma5''s
+                  default.'
+                summary: 'ewma5: smoothed p95 latency'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: http.server.duration.bucket
+                          spaceAggregation: p95
+                        functions:
+                        - args:
+                          - value: 0.3
+                          name: ewma5
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_fillzero_sparse_errors:
+                description: A count over sparse events returns a point only for steps
+                  that had a match, so a chart of failed spans has gaps where nothing
+                  failed. fillZero adds a zero at every missing step. With no arguments
+                  the server fills the request window at the query's step, which is
+                  the common case. The three optional arguments are start, end and
+                  step in milliseconds, for callers that want to fill a different
+                  grid.
+                summary: 'fillZero: a zero at every step with no failed spans'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - alias: failed_spans
+                          expression: count()
+                        filter:
+                          expression: has_error = true
+                        functions:
+                        - name: fillZero
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: A
+                        signal: traces
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_log10_network_bytes:
+                description: log2 and log10 replace each value with its logarithm,
+                  so a loopback device moving kilobytes and an uplink moving gigabytes
+                  fit on one chart. They take no arguments. Zero and negative values
+                  have no logarithm and are not drawn. absolute, also without arguments,
+                  is the usual companion for a signed series before a logarithm.
+                summary: 'log10: network throughput across devices that differ by
+                  orders of magnitude'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: system.network.io
+                          spaceAggregation: sum
+                          timeAggregation: rate
+                        filter:
+                          expression: direction = 'transmit'
+                        functions:
+                        - name: log10
+                        groupBy:
+                        - fieldContext: attribute
+                          name: device
+                        name: A
+                        signal: metrics
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_median_despiked_request_rate:
+                description: median3, median5 and median7 replace each point with
+                  the median of the surrounding 3, 5 or 7 points. A spike that lasts
+                  one step vanishes, a shift that lasts longer than half the window
+                  stays. The first and last half window, 2 points each for median5,
+                  have no full window and keep their values, so the newest spike stays
+                  visible; a series shorter than the window is returned unchanged.
+                  They take no arguments. Use them when the raw series is noisy and
+                  the chart is for a trend, not for catching the spike.
+                summary: 'median5: request rate without one-step spikes'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: http.server.duration.count
+                          spaceAggregation: sum
+                          timeAggregation: rate
+                        functions:
+                        - name: median5
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_runningdiff_disk_growth:
+                description: 'runningDiff turns a gauge into the change between consecutive
+                  points, so a filesystem usage gauge becomes bytes written per step.
+                  It takes no arguments and drops the first point of the window, since
+                  that point has nothing to difference against; the server reads one
+                  step before the window to keep the first interval. Functions apply
+                  in order: clampMin with 0 runs on the differences and replaces the
+                  negative value a cleanup or a volume reset produces with zero.'
+                summary: 'runningDiff then clampMin: bytes written to disk per step'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: system.filesystem.usage
+                          spaceAggregation: sum
+                          timeAggregation: latest
+                        filter:
+                          expression: state = 'used'
+                        functions:
+                        - name: runningDiff
+                        - args:
+                          - value: 0
+                          name: clampMin
+                        groupBy:
+                        - fieldContext: resource
+                          name: host.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_timeshift_week_over_week:
+                description: timeShift moves every point of its query forward by the
+                  argument, in seconds, so a series read from the past lands on the
+                  current timestamps. B here reads the hour exactly seven days (604800
+                  s) before the requested window and comes back on this week's timestamps,
+                  so it overlays A on a chart and the formula can subtract it point
+                  by point. The argument is positive; it says how far back to read.
+                summary: 'timeShift: this week''s error logs next to last week''s'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - alias: errors
+                          expression: count()
+                        filter:
+                          expression: severity_text = 'ERROR'
+                        name: A
+                        signal: logs
+                        stepInterval: 60s
+                      type: builder_query
+                    - spec:
+                        aggregations:
+                        - alias: errors
+                          expression: count()
+                        filter:
+                          expression: severity_text = 'ERROR'
+                        functions:
+                        - args:
+                          - value: 604800
+                          name: timeShift
+                        name: B
+                        signal: logs
+                        stepInterval: 60s
+                      type: builder_query
+                    - spec:
+                        expression: A - B
+                        name: F1
                       type: builder_formula
                   end: 1640998800000
                   requestType: time_series

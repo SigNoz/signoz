@@ -75,6 +75,7 @@
         "logs-field",
         "traces-field",
         "metrics-field",
+        "llm-pricing-rule",
         "span-mapper-group",
         "span-mapper"
       ],

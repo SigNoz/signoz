@@ -9,7 +9,7 @@ describe('ListAlertRules — row click navigation', () => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 	});
 
-	it('clicking a row calls safeNavigate to alerts/overview with composite query + ruleId', async () => {
+	it('clicking a row calls safeNavigate to alerts/overview with ruleId', async () => {
 		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
@@ -26,8 +26,7 @@ describe('ListAlertRules — row click navigation', () => {
 		const [url] = safeNavigateMock.mock.calls[0];
 		expect(url).toContain('/alerts/overview?');
 		expect(url).toContain('ruleId=rule-1');
-		expect(url).toContain('panelTypes=graph');
-		expect(url).toContain('compositeQuery=');
+		expect(url).not.toContain('compositeQuery=');
 	});
 
 	it('ctrl+click on a row navigates with newTab option', async () => {

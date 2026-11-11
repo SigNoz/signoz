@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect } from 'react-redux';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { Card } from 'antd';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
@@ -39,7 +38,7 @@ const Container = styled.div`
 	}
 `;
 
-interface ServiceMapProps extends RouteComponentProps<any> {
+interface ServiceMapProps {
 	serviceMap: ServiceMapStore;
 	globalTime: GlobalTime;
 	getDetailedServiceMapItems: (
@@ -94,14 +93,14 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 		}
 
 		if (serviceMap.items.length === 0) {
-			return <Card>No Service Found</Card>;
+			return <Card data-testid="service-map-empty">No Service Found</Card>;
 		}
 
 		return <Map fgRef={fgRef} serviceMap={serviceMap} />;
 	};
 
 	return (
-		<Container className="service-map-container">
+		<Container className="service-map-container" data-testid="service-map">
 			<ResourceAttributesFilter
 				suffixIcon={
 					<TextToolTip
@@ -129,8 +128,6 @@ const mapStateToProps = (
 	globalTime: state.globalTime,
 });
 
-export default withRouter(
-	connect(mapStateToProps, {
-		getDetailedServiceMapItems,
-	})(ServiceMap),
-);
+export default connect(mapStateToProps, {
+	getDetailedServiceMapItems,
+})(ServiceMap);

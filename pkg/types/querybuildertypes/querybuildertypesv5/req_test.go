@@ -1903,3 +1903,72 @@ func TestQueryRangeRequest_StepIntervalForQuery(t *testing.T) {
 		})
 	}
 }
+
+func TestCompositeQueryCollectResultColumnKeys(t *testing.T) {
+	testCases := []struct {
+		name          string
+		composite     CompositeQuery
+		expectedKeys  ResultColumnKeys
+		expectedKnown bool
+	}{
+		{
+			name: "SingleAggregation_KeyedByQueryName",
+			composite: CompositeQuery{Queries: []QueryEnvelope{{Type: QueryTypeBuilder, Spec: QueryBuilderQuery[TraceAggregation]{
+				Name:         "A",
+				Aggregations: []TraceAggregation{{Expression: "count()"}},
+				GroupBy:      []GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}}},
+			}}}},
+			expectedKeys:  ResultColumnKeys{Aggregations: map[string]struct{}{"A": {}}, Groups: map[string]struct{}{"service.name": {}}},
+			expectedKnown: true,
+		},
+		{
+			name: "SeveralAggregations_KeyedByQueryNameAndExpression",
+			composite: CompositeQuery{Queries: []QueryEnvelope{{Type: QueryTypeBuilder, Spec: QueryBuilderQuery[LogAggregation]{
+				Name:         "A",
+				Aggregations: []LogAggregation{{Expression: "count()"}, {Expression: "p99(duration_nano)"}},
+			}}}},
+			expectedKeys:  ResultColumnKeys{Aggregations: map[string]struct{}{"A.count()": {}, "A.p99(duration_nano)": {}}, Groups: map[string]struct{}{}},
+			expectedKnown: true,
+		},
+		{
+			name: "SeveralMetricAggregations_KeyedByQueryName",
+			composite: CompositeQuery{Queries: []QueryEnvelope{{Type: QueryTypeBuilder, Spec: QueryBuilderQuery[MetricAggregation]{
+				Name:         "A",
+				Aggregations: []MetricAggregation{{MetricName: "http.server.request.count"}, {MetricName: "http.server.request.duration"}},
+			}}}},
+			expectedKeys:  ResultColumnKeys{Aggregations: map[string]struct{}{"A": {}}, Groups: map[string]struct{}{}},
+			expectedKnown: true,
+		},
+		{
+			name: "DisabledQuery_NoAggregation_GroupsKeptForFormula",
+			composite: CompositeQuery{Queries: []QueryEnvelope{
+				{Type: QueryTypeBuilder, Spec: QueryBuilderQuery[MetricAggregation]{
+					Name:         "A",
+					Disabled:     true,
+					Aggregations: []MetricAggregation{{MetricName: "http.server.request.count"}},
+					GroupBy:      []GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}}},
+				}},
+				{Type: QueryTypeFormula, Spec: QueryBuilderFormula{Name: "F1", Expression: "A * 2"}},
+			}},
+			expectedKeys:  ResultColumnKeys{Aggregations: map[string]struct{}{"F1": {}}, Groups: map[string]struct{}{"service.name": {}}},
+			expectedKnown: true,
+		},
+		{
+			name: "ClickHouseQuery_ColumnsUnknownUntilRunTime",
+			composite: CompositeQuery{Queries: []QueryEnvelope{{Type: QueryTypeClickHouseSQL, Spec: ClickHouseQuery{
+				Name:  "A",
+				Query: "SELECT 1",
+			}}}},
+			expectedKeys:  ResultColumnKeys{},
+			expectedKnown: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			keys, known := testCase.composite.CollectResultColumnKeys()
+			assert.Equal(t, testCase.expectedKnown, known)
+			assert.Equal(t, testCase.expectedKeys, keys)
+		})
+	}
+}

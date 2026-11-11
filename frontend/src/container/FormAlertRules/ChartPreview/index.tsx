@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import Spinner from 'components/Spinner';
@@ -12,8 +13,8 @@ import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
-import { INITIAL_CRITICAL_THRESHOLD } from 'container/CreateAlertV2/context/constants';
-import { Threshold } from 'container/CreateAlertV2/context/types';
+import { INITIAL_CRITICAL_THRESHOLD } from 'container/CreateAlert/context/constants';
+import { Threshold } from 'container/CreateAlert/context/types';
 import { populateMultipleResults } from 'lib/query/populateMultipleResults';
 import { getFormatNameByOptionId } from 'constants/formats/alertFormatCategories';
 import { timePreferenceType } from 'constants/timePreference';
@@ -28,10 +29,10 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { isEmpty } from 'lodash-es';
-import { useIsAnomalyDetectionAvailable } from 'container/CreateAlertV2/useIsAnomalyDetectionAvailable';
+import { useIsAnomalyDetectionAvailable } from 'container/CreateAlert/useIsAnomalyDetectionAvailable';
 import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -45,11 +46,10 @@ import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
-import { AlertDetectionTypes } from '..';
 import ChartContent from './ChartContent';
-import { ChartContainer } from './styles';
 import { getThresholds } from './utils';
 
+import styles from './ChartPreview.module.scss';
 import './ChartPreview.styles.scss';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 
@@ -223,7 +223,7 @@ function ChartPreview({
 
 	const isDarkMode = useIsDarkMode();
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const optionName =
 		getFormatNameByOptionId(alertDef?.condition.targetUnit || '') || '';
@@ -245,7 +245,7 @@ function ChartPreview({
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 		},
 		[dispatch, location.pathname, urlQuery],
 	);
@@ -279,7 +279,7 @@ function ChartPreview({
 	const hasResultData = !!queryResponse?.data?.payload?.data?.result?.length;
 
 	const isAnomalyDetectionAlert =
-		alertDef?.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT;
+		alertDef?.ruleType === RuletypesRuleTypeDTO.anomaly_rule;
 
 	const chartDataAvailable =
 		chartData &&
@@ -300,57 +300,59 @@ function ChartPreview({
 
 	return (
 		<div className="alert-chart-container" ref={graphRef}>
-			<ChartContainer>
-				<div className="chart-preview-header">
-					{headline}
-					{isWarning && (
-						<WarningPopover warningData={queryResponse.data?.warning as Warning} />
-					)}
-				</div>
+			<div className={styles.chartCard}>
+				<div className={styles.chartCardBody}>
+					<div className="chart-preview-header">
+						{headline}
+						{isWarning && (
+							<WarningPopover warningData={queryResponse.data?.warning as Warning} />
+						)}
+					</div>
 
-				<div className="threshold-alert-uplot-chart-container">
-					{queryResponse.isLoading && (
-						<Spinner size="large" tip="Loading..." height="100%" />
-					)}
-					{(queryResponse?.isError || queryResponse?.error) && !isCancelled && (
-						<ErrorInPlace error={queryResponse.error as APIError} />
-					)}
+					<div className="threshold-alert-uplot-chart-container">
+						{queryResponse.isLoading && (
+							<Spinner size="large" tip="Loading..." height="100%" />
+						)}
+						{(queryResponse?.isError || queryResponse?.error) && !isCancelled && (
+							<ErrorInPlace error={queryResponse.error as APIError} />
+						)}
 
-					{isCancelled && !queryResponse.isLoading && !hasResultData && (
-						<QueryCancelledPlaceholder subText='Click "Run Query" to load the chart preview.' />
-					)}
+						{isCancelled && !queryResponse.isLoading && !hasResultData && (
+							<QueryCancelledPlaceholder subText='Click "Run Query" to load the chart preview.' />
+						)}
 
-					{chartDataAvailable && !isAnomalyDetectionAlert && (
-						<ChartContent
-							panelType={graphType}
-							alertId={alertDef?.id}
-							query={query || currentQuery}
-							apiResponse={queryResponse.data?.payload}
-							data={chartData}
-							thresholds={resolvedThresholds}
-							yAxisUnit={yAxisUnit}
-							legendPosition={legendPosition}
-							isDarkMode={isDarkMode}
-							timezone={timezone}
-							width={chartWidth}
-							height={chartHeight}
-							minTimeScale={minTimeScale}
-							maxTimeScale={maxTimeScale}
-							onDragSelect={onDragSelect}
-						/>
-					)}
-
-					{chartDataAvailable &&
-						isAnomalyDetectionAlert &&
-						isAnomalyDetectionEnabled &&
-						queryResponse?.data?.payload?.data?.resultType === 'time_series' && (
-							<AnomalyAlertEvaluationView
-								data={queryResponse?.data?.payload}
+						{chartDataAvailable && !isAnomalyDetectionAlert && (
+							<ChartContent
+								panelType={graphType}
+								alertId={alertDef?.id}
+								query={query || currentQuery}
+								apiResponse={queryResponse.data?.payload}
+								data={chartData}
+								thresholds={resolvedThresholds}
 								yAxisUnit={yAxisUnit}
+								legendPosition={legendPosition}
+								isDarkMode={isDarkMode}
+								timezone={timezone}
+								width={chartWidth}
+								height={chartHeight}
+								minTimeScale={minTimeScale}
+								maxTimeScale={maxTimeScale}
+								onDragSelect={onDragSelect}
 							/>
 						)}
+
+						{chartDataAvailable &&
+							isAnomalyDetectionAlert &&
+							isAnomalyDetectionEnabled &&
+							queryResponse?.data?.payload?.data?.resultType === 'time_series' && (
+								<AnomalyAlertEvaluationView
+									data={queryResponse?.data?.payload}
+									yAxisUnit={yAxisUnit}
+								/>
+							)}
+					</div>
 				</div>
-			</ChartContainer>
+			</div>
 		</div>
 	);
 }

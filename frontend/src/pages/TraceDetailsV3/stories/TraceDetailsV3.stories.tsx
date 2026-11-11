@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '@/storybook/renderAtRoute';
 import {
 	expect,
 	fireEvent,
@@ -17,7 +17,6 @@ import {
 	focusSpanIndex,
 	scenarioSpanCount,
 	spanIdAt,
-	STORY_TRACE_ID,
 } from './__story_mockdata__/traceDetails';
 import {
 	openRowMenu,
@@ -44,9 +43,7 @@ const meta = {
 	component: TraceDetailsV3,
 	// The page reads the trace id out of the pathname, so it renders under its
 	// own route rather than being mounted on its own.
-	render: (): JSX.Element => (
-		<Route path={ROUTES.TRACE_DETAIL} component={TraceDetailsV3} />
-	),
+	render: renderAtRoute(ROUTES.TRACE_DETAIL, TraceDetailsV3),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<TraceDetailsArgs>;
@@ -251,18 +248,35 @@ export const SpanPercentileOpen: Story = {
 	},
 };
 
-/** The span's trace id clicked in the panel, which copies it. */
-export const TraceIdCopiedToast: Story = {
+/** The span has no logs of its own but its trace does, so the Logs tab points to the trace's. */
+export const SpanPanelTraceOnlyLogs: Story = {
+	args: { traceOnlyLogs: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole('tab', { name: /Logs/ }, untilLoaded),
+		);
+		await expect(
+			await within(canvasElement).findByText(
+				'No logs found for selected span. View logs for the current trace.',
+				undefined,
+				untilLoaded,
+			),
+		).toBeVisible();
+	},
+};
+
+/** The span panel's trace id copied with its copy button, which turns into a check. */
+export const TraceIdCopied: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await userEvent.click(
 			await within(canvasElement).findByRole(
 				'button',
-				{ name: STORY_TRACE_ID },
+				{ name: 'Copy trace ID' },
 				untilLoaded,
 			),
 		);
 		await expect(
-			await screen.findByText('Trace ID copied to clipboard'),
+			await within(canvasElement).findByRole('button', { name: 'Copied' }),
 		).toBeVisible();
 	},
 };

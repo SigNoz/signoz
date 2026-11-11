@@ -58,24 +58,37 @@ function normalizeLogLimit(
 	return logBase ** exp;
 }
 
+export const DEFAULT_ASINH_THRESHOLD = 1;
+
 /**
- * Returns uPlot scale distribution options for the Y axis.
- * Time (X) scale gets no distr/log; Y scale gets distr 1 (linear) or 3 (log) and log base 2 or 10.
+ * Returns uPlot scale distribution options for a value axis.
+ * Time scales get no distr/log; value scales get distr 1 (linear), 3 (log) or
+ * 4 (arcsinh, uPlot's symmetric log) and log base 2 or 10.
  */
 export function getDistributionConfig({
 	time,
 	distr,
 	logBase,
+	asinhThreshold,
 }: {
 	time: ScaleProps['time'];
 	distr?: DistributionType;
 	logBase?: number;
+	asinhThreshold?: number;
 }): Partial<Scale> {
 	if (time) {
 		return {};
 	}
 
 	const resolvedLogBase = (logBase ?? 10) === 2 ? 2 : 10;
+
+	if (distr === DistributionType.SymmetricLog) {
+		return {
+			distr: 4,
+			log: resolvedLogBase,
+			asinh: asinhThreshold ?? DEFAULT_ASINH_THRESHOLD,
+		};
+	}
 
 	return {
 		distr: distr === DistributionType.Logarithmic ? 3 : 1,

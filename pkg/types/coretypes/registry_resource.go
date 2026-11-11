@@ -40,6 +40,7 @@ var Resources = []Resource{
 	ResourceMetaResourceLogsField,
 	ResourceMetaResourceTracesField,
 	ResourceMetaResourceMetricsField,
+	ResourceMetaResourceLLMPricingRule,
 	ResourceMetaResourceSpanMapperGroup,
 	ResourceMetaResourceSpanMapper,
 }
@@ -50,7 +51,7 @@ var (
 	ResourceRole                                         = NewResourceRole()
 	ResourceServiceAccount                               = NewResourceServiceAccount()
 	ResourceUser                                         = NewResourceUser()
-	ResourceMetaResourceNotificationChannel              = NewResourceMetaResource(KindNotificationChannel, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
+	ResourceMetaResourceNotificationChannel              = NewResourceMetaResource(KindNotificationChannel)
 	ResourceMetaResourceRoutePolicy                      = NewResourceMetaResource(KindRoutePolicy)
 	ResourceMetaResourceApdexSetting                     = NewResourceMetaResource(KindApdexSetting)
 	ResourceMetaResourceAuthDomain                       = NewResourceMetaResource(KindAuthDomain)
@@ -84,6 +85,7 @@ var (
 	ResourceMetaResourceLogsField                        = NewResourceMetaResource(KindLogsField)
 	ResourceMetaResourceTracesField                      = NewResourceMetaResource(KindTracesField)
 	ResourceMetaResourceMetricsField                     = NewResourceMetaResource(KindMetricsField, VerbList, VerbRead, VerbUpdate)
+	ResourceMetaResourceLLMPricingRule                   = NewResourceMetaResource(KindLLMPricingRule, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceSpanMapperGroup                  = NewResourceMetaResource(KindSpanMapperGroup)
 	ResourceMetaResourceSpanMapper                       = NewResourceMetaResource(KindSpanMapper, VerbCreate, VerbUpdate, VerbDelete)
 )
