@@ -35,7 +35,11 @@ import {
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
+import { useRuleCollectionPermissions } from 'hooks/alerts/useRuleCollectionPermissions';
 import { useNotifications } from 'hooks/useNotifications';
+import { formatDeniedMessage } from 'lib/authz/components/formatDeniedMessage';
+import { RuleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { useAppContext } from 'providers/App/App';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { defaultTo, isEmpty } from 'lodash-es';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -152,6 +156,13 @@ export function PlannedDowntimeForm(
 			isAllRules: alertRuleScope === 'all',
 			selectedRules: selectedTags,
 		});
+
+	const { user } = useAppContext();
+	const ruleCollection = useRuleCollectionPermissions();
+	const isRuleListDenied =
+		!ruleCollection.isLoading &&
+		!ruleCollection.hasError &&
+		!ruleCollection.canList;
 
 	const gatedAlertOptions = useMemo(
 		() =>
@@ -540,7 +551,11 @@ export function PlannedDowntimeForm(
 											?.includes(input.toLowerCase())
 									}
 									notFoundContent={
-										isLoading ? (
+										isRuleListDenied ? (
+											<span data-testid="downtime-rules-denied">
+												{formatDeniedMessage([RuleListPermission], user.id)}
+											</span>
+										) : isLoading ? (
 											<span>
 												<Spin size="small" /> Loading...
 											</span>
