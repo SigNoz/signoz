@@ -55,8 +55,11 @@ async function openActions(): Promise<void> {
 			`routing-policy-actions-${MOCK_ROUTING_POLICY_1.id}`,
 		),
 	);
-	await waitFor(() =>
-		expect(screen.getByTestId(EDIT_ROW)).not.toHaveAttribute('data-loading'),
+	// The row's check is batched with others, which can outlast the 1s default.
+	await waitFor(
+		() =>
+			expect(screen.getByTestId(EDIT_ROW)).not.toHaveAttribute('data-loading'),
+		{ timeout: 5000 },
 	);
 }
 
