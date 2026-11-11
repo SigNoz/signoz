@@ -58,6 +58,29 @@ CLUSTER_USERS_CONFIG = """
 """
 
 
+# 26.8 rejects AggregatingMergeTree tables with plain columns outside the
+# sorting key, which the schema migrator still creates.
+MERGE_TREE_CONFIG = """
+<clickhouse>
+    <merge_tree>
+        <allow_dimensions_outside_sorting_key>1</allow_dimensions_outside_sorting_key>
+    </merge_tree>
+</clickhouse>
+"""
+
+
+def with_merge_tree_config(container: ClickHouseContainer, tmp_dir: str, clickhouse_version: str) -> None:
+    try:
+        if tuple(int(part) for part in clickhouse_version.split(".")[:2]) < (26, 8):
+            return
+    except ValueError:
+        return
+    path = os.path.join(tmp_dir, "merge-tree.xml")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(MERGE_TREE_CONFIG)
+    container.with_volume_mapping(path, "/etc/clickhouse-server/config.d/merge-tree.xml")
+
+
 def render_remote_servers(shard_hosts: list[tuple[str, int]], secret: str | None = None) -> str:
     """Render the <remote_servers> block for a cluster named `cluster` with one
     single-replica shard per (host, port).
@@ -236,6 +259,7 @@ def create_clickhouse(  # pylint: disable=too-many-arguments,too-many-positional
             custom_function_file_path,
             "/etc/clickhouse-server/custom-function.xml",
         )
+        with_merge_tree_config(container, tmp_dir, clickhouse_version)
         container.with_network(network)
         container.start()
 
@@ -426,6 +450,7 @@ def create_clickhouse_cluster(  # pylint: disable=too-many-arguments,too-many-po
                 container.with_volume_mapping(cluster_config_file_path, "/etc/clickhouse-server/config.d/cluster.xml")
                 container.with_volume_mapping(custom_function_file_path, "/etc/clickhouse-server/custom-function.xml")
                 container.with_volume_mapping(users_config_file_path, "/etc/clickhouse-server/users.d/integration-cluster.xml")
+                with_merge_tree_config(container, tmp_dir, clickhouse_version)
                 container.with_network(network)
                 container.with_network_aliases(alias)
                 container.start()
