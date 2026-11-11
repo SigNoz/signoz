@@ -1,5 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { FeatureKeys } from 'constants/features';
+import {
+	LicensePlatform,
+	LicenseResModel,
+} from 'types/api/licensesV3/getActive';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
 import * as appHooks from 'providers/App/App';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -7,6 +10,10 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 import SelectAlertType from '..';
 
 const useAppContextSpy = jest.spyOn(appHooks, 'useAppContext');
+
+const CLOUD_LICENSE = {
+	platform: LicensePlatform.CLOUD,
+} as LicenseResModel;
 
 describe('SelectAlertType', () => {
 	const mockOnSelect = jest.fn();
@@ -19,15 +26,7 @@ describe('SelectAlertType', () => {
 	it('should render all alert type options when anomaly detection is enabled', () => {
 		useAppContextSpy.mockReturnValue({
 			...getAppContextMockState({}),
-			featureFlags: [
-				{
-					name: FeatureKeys.ANOMALY_DETECTION,
-					active: true,
-					usage: 0,
-					usage_limit: -1,
-					route: '',
-				},
-			],
+			activeLicense: CLOUD_LICENSE,
 		});
 
 		render(<SelectAlertType onSelect={mockOnSelect} />);
@@ -36,6 +35,19 @@ describe('SelectAlertType', () => {
 		expect(screen.getByText('log_based_alert')).toBeInTheDocument();
 		expect(screen.getByText('traces_based_alert')).toBeInTheDocument();
 		expect(screen.getByText('exceptions_based_alert')).toBeInTheDocument();
+		expect(screen.getByText('anomaly_based_alert')).toBeInTheDocument();
+	});
+
+	it('should offer the anomaly based alert on an enterprise self-hosted license', () => {
+		useAppContextSpy.mockReturnValue({
+			...getAppContextMockState({}),
+			activeLicense: {
+				platform: LicensePlatform.SELF_HOSTED,
+			} as LicenseResModel,
+		});
+
+		render(<SelectAlertType onSelect={mockOnSelect} />);
+
 		expect(screen.getByText('anomaly_based_alert')).toBeInTheDocument();
 	});
 
@@ -62,15 +74,7 @@ describe('SelectAlertType', () => {
 	it('should call onSelect with anomaly based alert type', () => {
 		useAppContextSpy.mockReturnValue({
 			...getAppContextMockState({}),
-			featureFlags: [
-				{
-					name: FeatureKeys.ANOMALY_DETECTION,
-					active: true,
-					usage: 0,
-					usage_limit: -1,
-					route: '',
-				},
-			],
+			activeLicense: CLOUD_LICENSE,
 		});
 
 		render(<SelectAlertType onSelect={mockOnSelect} />);

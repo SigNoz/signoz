@@ -5,6 +5,7 @@ import { useTimezone } from 'providers/Timezone';
 import type uPlot from 'uplot';
 import { formatTimestampOmittingTodaysDate } from 'utils/timeUtils';
 
+import type { ExtendedSeries } from '../../../../config/types';
 import { TooltipContentItem } from '../../../types';
 import TooltipItem from '../TooltipItem/TooltipItem';
 import TooltipPinnedBadge from '../TooltipPinnedBadge/TooltipPinnedBadge';
@@ -34,7 +35,7 @@ export default function TooltipHeader({
 	const { timezone: userTimezone } = useTimezone();
 	const resolvedTimezone = timezone?.value ?? userTimezone.value;
 
-	const headerTitle = useMemo(() => {
+	const header = useMemo(() => {
 		if (!showTooltipHeader) {
 			return null;
 		}
@@ -46,14 +47,21 @@ export default function TooltipHeader({
 		if (timestamp == null) {
 			return null;
 		}
-		return formatTimestampOmittingTodaysDate(
-			timestamp * 1000,
-			resolvedTimezone,
-			dateFormat,
-		);
+		return {
+			title: formatTimestampOmittingTodaysDate(
+				timestamp * 1000,
+				resolvedTimezone,
+				dateFormat,
+			),
+			isPartial: (uPlotInstance.series ?? []).some(
+				(series: ExtendedSeries) =>
+					series.show && series.partialTimestamps?.has(timestamp),
+			),
+		};
 	}, [
 		resolvedTimezone,
 		uPlotInstance.data,
+		uPlotInstance.series,
 		uPlotInstance.cursor.idx,
 		showTooltipHeader,
 		dateFormat,
@@ -64,10 +72,22 @@ export default function TooltipHeader({
 			className={Styles.headerContainer}
 			data-testid="uplot-tooltip-header-container"
 		>
-			{showTooltipHeader && headerTitle && (
+			{showTooltipHeader && header && (
 				<div className={cx(Styles.headerRow, headerRowClassName)}>
-					<span>{headerTitle}</span>
-					{isPinned && <TooltipPinnedBadge />}
+					<span>{header.title}</span>
+					{(header.isPartial || isPinned) && (
+						<span className={Styles.headerEnd}>
+							{header.isPartial && (
+								<span
+									className={Styles.partialLabel}
+									data-testid="uplot-tooltip-header-partial"
+								>
+									(partial)
+								</span>
+							)}
+							{isPinned && <TooltipPinnedBadge />}
+						</span>
+					)}
 				</div>
 			)}
 

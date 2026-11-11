@@ -107,7 +107,7 @@ func newTestBuilderWithKeys(t *testing.T, keysMap map[string][]*telemetrytypes.T
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = keysMap
 
-	stmtBuilder, err := NewFactory(nil, mockMetadataStore, flaggertest.New(t)).
+	stmtBuilder, err := NewFactory(nil, mockMetadataStore, nil, flaggertest.New(t)).
 		New(context.Background(), settings, statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Threshold: 100000}})
 	require.NoError(t, err)
 	return stmtBuilder
@@ -676,7 +676,7 @@ SELECT timestamp AS __SELECT_KEY_0_timestamp, trace_id AS __SELECT_KEY_1_trace_i
     http_url AS __SELECT_KEY_17_http_url, external_http_method AS __SELECT_KEY_18_external_http_method,
     http_method AS __SELECT_KEY_19_http_method, http_host AS __SELECT_KEY_20_http_host, db_name AS __SELECT_KEY_21_db_name,
     db_operation AS __SELECT_KEY_22_db_operation, has_error AS __SELECT_KEY_23_has_error, is_remote AS __SELECT_KEY_24_is_remote,
-    attributes_string, attributes_number, attributes_bool, resources_string, attributes
+    attributes_string, attributes_number, attributes_bool, resources_string, attributes, scope
 FROM signoz_traces.distributed_signoz_index_v3
 WHERE (((mapContains(attributes_string, 'gen_ai.request.model')
         OR mapContains(attributes_string, 'gen_ai.tool.name')

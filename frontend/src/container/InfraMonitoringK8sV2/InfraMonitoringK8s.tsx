@@ -47,8 +47,6 @@ import {
 } from './hooks';
 
 import styles from './InfraMonitoringK8s.module.scss';
-import { InfraMonitoringEvents } from 'constants/events';
-import logEvent from 'api/common/logEvent';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import {
@@ -120,13 +118,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	}, [compositeQuery, redirectWithQueryBuilderData]);
 
 	useEffect(() => {
-		void logEvent(InfraMonitoringEvents.FilterApplied, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.ListPage,
-			category: selectedCategory,
-			view: InfraMonitoringEvents.QuickFiltersView,
-		});
-
 		// The category query param is a plain string; entities are validated by
 		// getEntityConfig before rendering
 		logInfraMonitoringListViewedEvent(selectedCategory as InfraMonitoringEntity);
@@ -257,6 +248,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								size="sm"
 								icon
 								color="secondary"
+								testId="quick-filters-toggle"
 								onClick={handleFilterVisibilityChange}
 							>
 								<Filter size={14} />
@@ -287,6 +279,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 													style={{ transform: 'rotate(270deg)' }}
 													onClick={handleFilterVisibilityChange}
 													size="md"
+													data-testid="quick-filters-toggle"
 												/>
 											</Tooltip>
 										</div>
@@ -321,7 +314,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 										</div>
 										{selectedCategoryConfig && (
 											<QuickFilters
-												source={QuickFiltersSource.INFRA_MONITORING}
+												quickFilterSource={QuickFiltersSource.INFRA_MONITORING}
 												config={selectedCategoryConfig}
 												handleFilterVisibilityChange={handleFilterVisibilityChange}
 												useFieldApis={selectedCategoryUseFieldApis}

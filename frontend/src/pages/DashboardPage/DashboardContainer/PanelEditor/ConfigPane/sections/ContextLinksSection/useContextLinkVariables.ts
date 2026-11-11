@@ -39,12 +39,14 @@ export function useContextLinkVariables(): VariableItem[] {
 	return useMemo(
 		() => [
 			...GLOBAL_TIMESTAMP_VARIABLES,
-			...fieldVariableNames.map(
-				(name): VariableItem => ({ name, source: 'Query variable' }),
-			),
-			...dashboardVariableNames.map(
-				(name): VariableItem => ({ name, source: 'Dashboard variable' }),
-			),
+			...fieldVariableNames.map((name): VariableItem => ({
+				name,
+				source: 'Query variable',
+			})),
+			...dashboardVariableNames.map((name): VariableItem => ({
+				name,
+				source: 'Dashboard variable',
+			})),
 		],
 		[fieldVariableNames, dashboardVariableNames],
 	);

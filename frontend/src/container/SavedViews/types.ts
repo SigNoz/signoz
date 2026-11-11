@@ -1,5 +1,6 @@
 import { ReactElement, ReactNode } from 'react';
 import type { Link } from '@signozhq/icons';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
@@ -8,6 +9,8 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+
+import { SavedViewCreatedFrom } from './events';
 
 export type SavedViewSourcePage = DataSource | 'meter';
 
@@ -29,6 +32,7 @@ export interface HasUnsavedViewChangesArgs {
 	stagedQuery: Query | null;
 	panelType: PANEL_TYPES;
 	options?: SavedViewOptions;
+	sourcePage: SavedviewtypesSourceDTO;
 }
 
 export interface UseLastUsedViewResult {
@@ -41,6 +45,8 @@ export interface UseActiveSavedViewResult {
 	view: SavedviewtypesSavedViewDTO | undefined;
 	isLoading: boolean;
 	isError: boolean;
+	isReadDenied: boolean;
+	errorMessage: string | undefined;
 	hasUnsavedChanges: boolean;
 }
 
@@ -48,7 +54,12 @@ export interface UseSavedViewActionsResult {
 	selectView: (view: SavedviewtypesSavedViewDTO) => void;
 	revertView: (view: SavedviewtypesSavedViewDTO) => void;
 	clearView: () => void;
-	createView: (displayName: string) => Promise<string | undefined>;
+	/** Clears the open view without logging it, for flows that are not a clear. */
+	resetView: () => void;
+	createView: (
+		displayName: string,
+		from: SavedViewCreatedFrom,
+	) => Promise<string | undefined>;
 	updateView: (view: SavedviewtypesSavedViewDTO) => Promise<boolean>;
 	isSaving: boolean;
 }
@@ -70,6 +81,7 @@ export interface SaveViewModalProps {
 }
 
 export interface SaveChangesMenuProps {
+	viewId: string;
 	disabled: boolean;
 	onSaveAsNew: () => void;
 	onUpdate: () => void;
@@ -82,6 +94,7 @@ export interface SavedViewsIconButtonProps {
 	color?: 'secondary' | 'warning';
 	disabled?: boolean;
 	disabledTooltip?: ReactNode;
+	checks?: BrandedPermission[];
 	onClick?: () => void;
 }
 
@@ -116,7 +129,16 @@ export interface SavedViewsListRowProps {
 	hover: SavedViewsListRowHoverProps;
 }
 
-export type SavedViewRowActionKey = 'copyLink' | 'editDetails' | 'delete';
+export type SavedViewsRowLinkProps = Pick<
+	SavedViewsListRowProps,
+	'view' | 'isActive' | 'onSelect'
+>;
+
+export type SavedViewRowActionKey =
+	| 'copyLink'
+	| 'copyId'
+	| 'editDetails'
+	| 'delete';
 
 export interface SavedViewRowActionConfig {
 	key: SavedViewRowActionKey;
@@ -124,10 +146,11 @@ export interface SavedViewRowActionConfig {
 	icon: typeof Link;
 	danger?: boolean;
 	hasDividerBefore?: boolean;
+	buildPermission?: (id: string) => BrandedPermission;
 }
 
 export interface PendingSavedViewAction {
-	key: Exclude<SavedViewRowActionKey, 'copyLink'>;
+	key: Exclude<SavedViewRowActionKey, 'copyLink' | 'copyId'>;
 	view: SavedviewtypesSavedViewDTO;
 }
 
@@ -140,6 +163,7 @@ export interface SavedViewsRowButtonProps {
 }
 
 export interface SavedViewsRowMenuProps {
+	viewId: string;
 	onAction: (key: SavedViewRowActionKey) => void;
 	onOpen: () => void;
 }
@@ -152,6 +176,7 @@ export interface DeleteSavedViewDialogProps {
 
 export interface UseSavedViewRowActionsResult {
 	copyViewLink: (view: SavedviewtypesSavedViewDTO) => void;
+	copyViewId: (view: SavedviewtypesSavedViewDTO) => void;
 	renameView: (
 		view: SavedviewtypesSavedViewDTO,
 		displayName: string,
@@ -162,7 +187,7 @@ export interface UseSavedViewRowActionsResult {
 }
 
 export interface SavedViewHoverCardTarget {
-	view: SavedviewtypesSavedViewDTO;
+	viewId: string;
 	anchorTop: number;
 	anchorHeight: number;
 }
@@ -183,8 +208,14 @@ export interface SavedViewHoverCardProps {
 	onClose: () => void;
 }
 
+export interface SavedViewHoverCardDetailsProps {
+	viewId: string;
+	/** `read` is granted on every view, so the view needs no check of its own. */
+	canReadAll: boolean;
+}
+
 export interface SavedViewsListRowHoverProps {
-	onRowEnter: (view: SavedviewtypesSavedViewDTO, row: HTMLElement) => void;
+	onRowEnter: (viewId: string, row: HTMLElement) => void;
 	onRowLeave: () => void;
 	onMenuOpen: () => void;
 }
@@ -206,3 +237,20 @@ export interface SavedViewsEmptyStateProps {
 	isSaving: boolean;
 	onSave: (displayName: string) => Promise<boolean>;
 }
+
+export enum PreservedViewsTypes {
+	LOGS = 'logs',
+	TRACES = 'traces',
+	METRICS = 'metrics',
+	METER = 'meter',
+}
+
+export type PreservedViewType =
+	| PreservedViewsTypes.LOGS
+	| PreservedViewsTypes.TRACES
+	| PreservedViewsTypes.METRICS
+	| PreservedViewsTypes.METER;
+
+export type PreservedViewsInLocalStorage = Partial<
+	Record<PreservedViewType, { key: string; value: string }>
+>;

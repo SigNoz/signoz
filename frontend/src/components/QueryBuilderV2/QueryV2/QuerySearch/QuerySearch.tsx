@@ -1629,6 +1629,7 @@ function QuerySearch({
 						onChange={handleChange}
 						onUpdate={handleUpdate}
 						onCreateEditor={handleEditorCreate}
+						data-testid="query-where-clause-editor"
 						className={cx('query-where-clause-editor', {
 							isValid: validation.isValid === true,
 							hasErrors: validation.errors.length > 0,
@@ -1695,6 +1696,7 @@ function QuerySearch({
 							className={cx('query-status-container', {
 								hasErrors: validation.errors.length > 0,
 							})}
+							data-testid="query-validation-status"
 						>
 							<Popover
 								placement="bottomRight"

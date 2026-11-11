@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
 import { Color } from '@signozhq/design-tokens';
 import { Popover } from 'antd';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
@@ -26,7 +26,7 @@ function PopoverContent({
 	return (
 		<div className="contributor-row-popover-buttons">
 			{!!relatedLogsLink && (
-				<Link
+				<AppLink
 					to={`${ROUTES.LOGS_EXPLORER}?${relatedLogsLink}`}
 					className="contributor-row-popover-buttons__button"
 					data-testid="alert-popover-view-logs"
@@ -35,10 +35,10 @@ function PopoverContent({
 						<LogsIcon />
 					</div>
 					<div className="text">View Logs</div>
-				</Link>
+				</AppLink>
 			)}
 			{!!relatedTracesLink && (
-				<Link
+				<AppLink
 					to={`${ROUTES.TRACES_EXPLORER}?${relatedTracesLink}`}
 					className="contributor-row-popover-buttons__button"
 					data-testid="alert-popover-view-traces"
@@ -50,7 +50,7 @@ function PopoverContent({
 						/>
 					</div>
 					<div className="text">View Traces</div>
-				</Link>
+				</AppLink>
 			)}
 		</div>
 	);

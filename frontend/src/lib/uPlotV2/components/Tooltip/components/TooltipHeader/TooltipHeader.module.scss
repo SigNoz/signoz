@@ -13,6 +13,17 @@
 	gap: var(--spacing-2);
 }
 
+.headerEnd {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+}
+
+.partialLabel {
+	font-style: italic;
+	opacity: 0.7;
+}
+
 .pinnedItem {
 	padding: var(--spacing-4);
 }

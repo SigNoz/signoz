@@ -39,6 +39,8 @@ var Resources = []Resource{
 	ResourceTelemetryResourceMeterMetrics,
 	ResourceMetaResourceLogsField,
 	ResourceMetaResourceTracesField,
+	ResourceMetaResourceMetricsField,
+	ResourceMetaResourceLLMPricingRule,
 }
 
 var (
@@ -47,7 +49,7 @@ var (
 	ResourceRole                                         = NewResourceRole()
 	ResourceServiceAccount                               = NewResourceServiceAccount()
 	ResourceUser                                         = NewResourceUser()
-	ResourceMetaResourceNotificationChannel              = NewResourceMetaResource(KindNotificationChannel, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
+	ResourceMetaResourceNotificationChannel              = NewResourceMetaResource(KindNotificationChannel)
 	ResourceMetaResourceRoutePolicy                      = NewResourceMetaResource(KindRoutePolicy)
 	ResourceMetaResourceApdexSetting                     = NewResourceMetaResource(KindApdexSetting)
 	ResourceMetaResourceAuthDomain                       = NewResourceMetaResource(KindAuthDomain)
@@ -80,4 +82,6 @@ var (
 	ResourceTelemetryResourceMeterMetrics                = NewResourceTelemetryResource(KindMeterMetrics)
 	ResourceMetaResourceLogsField                        = NewResourceMetaResource(KindLogsField)
 	ResourceMetaResourceTracesField                      = NewResourceMetaResource(KindTracesField)
+	ResourceMetaResourceMetricsField                     = NewResourceMetaResource(KindMetricsField, VerbList, VerbRead, VerbUpdate)
+	ResourceMetaResourceLLMPricingRule                   = NewResourceMetaResource(KindLLMPricingRule, VerbList, VerbRead, VerbUpdate, VerbDelete)
 )

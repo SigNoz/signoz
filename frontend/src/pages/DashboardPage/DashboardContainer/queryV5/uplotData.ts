@@ -41,6 +41,19 @@ export function prepareAlignedData(series: PanelSeries[]): uPlot.AlignedData {
 	return [timestamps, ...yValues] as uPlot.AlignedData;
 }
 
+/** Epoch-second x values of the series' partial buckets; `undefined` when none are partial. */
+export function getPartialTimestamps(
+	values: PanelSeriesPoint[],
+): Set<number> | undefined {
+	const timestamps = new Set<number>();
+	values.forEach((point) => {
+		if (point.partial) {
+			timestamps.add(Math.floor(point.timestamp / 1000));
+		}
+	});
+	return timestamps.size ? timestamps : undefined;
+}
+
 /**
  * True when the series has at most one finite point — can't draw a line, so renderers degrade to
  * points (V1 `hasSingleVisiblePoint` parity).

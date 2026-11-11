@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Flex } from 'antd';
 import { SolidAlertTriangle } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
@@ -18,7 +18,7 @@ function ServiceTraceTable({
 	services,
 	loading,
 }: ServiceTableProps): JSX.Element {
-	const { search } = useLocation();
+	const { search } = useAppLocation();
 	const [RPS, setRPS] = useState(0);
 	const { t: getText } = useTranslation(['services']);
 
@@ -54,7 +54,7 @@ function ServiceTraceTable({
 			`${range[0]}-${range[1]} of ${total} items`,
 	};
 	return (
-		<div className="service-traces-table-container">
+		<div className="service-traces-table-container" data-testid="services-table">
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
 					<Typography.Title level={5} color="warning" style={{ marginTop: 0 }}>

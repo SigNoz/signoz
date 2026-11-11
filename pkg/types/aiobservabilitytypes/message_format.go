@@ -24,7 +24,10 @@ const (
 	FormatterGeneric         = "generic"
 )
 
-var dataURL = regexp.MustCompile(`^data:([^;,]+);base64,(.+)$`)
+var (
+	dataURL   = regexp.MustCompile(`^data:([^;,]+);base64,(.+)$`)
+	urlScheme = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9+.-]*:`)
+)
 
 // Provider spellings of the finish reasons; the enum values themselves pass through. tool_calls and
 // function_call are OpenAI's, completed, failed, cancelled, incomplete and max_output_tokens the Responses
@@ -77,6 +80,7 @@ func FormatMessages(attributes map[string]any) FormattedMessages {
 	}
 	f.prependSystemInstructions()
 	f.fillFinishReasons()
+	f.genericMedia()
 	return f.out
 }
 
@@ -117,10 +121,13 @@ func (f *formatting) messages() {
 
 // OpenRouter's answer object or an Anthropic response beside the OpenAI chat request it answers is one
 // format, not a mix: an Anthropic request without system and without Anthropic-only blocks reads as an
-// OpenAI chat request.
+// OpenAI chat request. A side kept as generic already warned, and a side read from OpenInference's
+// buckets beside the raw payload of the other is the documented fallback.
 func (f *formatting) warnMixedFormats(inputLabel, outputLabel string) {
 	switch {
 	case inputLabel == "" || outputLabel == "" || outputLabel == inputLabel:
+	case inputLabel == FormatterGeneric || outputLabel == FormatterGeneric:
+	case inputLabel == FormatterOpenInference || outputLabel == FormatterOpenInference:
 	case inputLabel == FormatterOpenAIChat && (outputLabel == FormatterOpenRouter || outputLabel == FormatterAnthropic):
 	default:
 		f.warn("output formatted as %s, input as %s", outputLabel, inputLabel)
@@ -179,11 +186,16 @@ func (f *formatting) side(value any, role Role) (OutputMessages, string) {
 				return f.semconv(v), FormatterSemconv
 			case isAnthropicMessages(v):
 				return f.anthropicMessages(v), FormatterAnthropic
+			case isResponsesItems(v):
+				return foldAssistant(f.responsesItems(v)), FormatterOpenAIResponses
 			case first["role"] != nil:
 				return f.openAIChatMessages(v), FormatterOpenAIChat
 			}
 		}
 	case map[string]any:
+		if inner, ok := superJSON(v); ok {
+			return f.side(decode(inner), role)
+		}
 		switch {
 		case isLangChainRun(v):
 			return f.langChainRun(v), FormatterLangChain
@@ -209,6 +221,9 @@ func (f *formatting) side(value any, role Role) (OutputMessages, string) {
 		}
 		if messages, ok := v["messages"].([]any); ok {
 			return f.openAIChatMessages(messages), FormatterOpenAIChat
+		}
+		if (v["role"] != nil && hasKeys(v, "content")) || v["tool_calls"] != nil {
+			return OutputMessages{f.openAIChatSingle(v)}, FormatterOpenAIChat
 		}
 	case string:
 		if v == "" {
@@ -268,12 +283,6 @@ func indexed(doc map[string]any, key string) []map[string]any {
 	return out
 }
 
-// indexedAt reads one entry of a flattened list by its index.
-func indexedAt(doc map[string]any, key string, i int) map[string]any {
-	m, _ := attribute(doc, key+"."+strconv.Itoa(i)).(map[string]any)
-	return m
-}
-
 func firstObject(list []any) (map[string]any, bool) {
 	if len(list) == 0 {
 		return nil, false
@@ -309,6 +318,23 @@ func foldAssistant(msgs OutputMessages) OutputMessages {
 		out = append(out, msg)
 	}
 	return out
+}
+
+// superJSON unwraps {json, meta?}, the envelope superjson, the transformer tRPC apps serialise with,
+// puts around a value; a Langfuse generation records it around the request when the app passes the
+// serialised form:
+// https://github.com/flightcontrolhq/superjson/blob/aaa65e36e8e31da740265a56b27c965ca1c7b754/README.md
+func superJSON(m map[string]any) (any, bool) {
+	inner, ok := m["json"]
+	if !ok {
+		return nil, false
+	}
+	for key := range m {
+		if key != "json" && key != "meta" {
+			return nil, false
+		}
+	}
+	return inner, true
 }
 
 // decode parses a JSON-encoded attribute value, twice when an SDK encoded the string again.
@@ -388,6 +414,24 @@ func part(value any) Part {
 
 func textPart(content string) TextPart {
 	return TextPart{Type: PartTypeText, Content: content}
+}
+
+func hasToolCall(parts Parts) bool {
+	for _, p := range parts {
+		if _, ok := p.Value.(ToolCallRequestPart); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func onlyText(parts Parts) bool {
+	for _, p := range parts {
+		if _, ok := p.Value.(TextPart); !ok {
+			return false
+		}
+	}
+	return true
 }
 
 // textOf joins the text parts, for comparing a system message with gen_ai.system_instructions.
@@ -513,12 +557,44 @@ func modalityOf(mimeType string) Modality {
 	return ModalityDocument
 }
 
-// mediaPart places a data URL in a BlobPart, any other URL in a UriPart.
+// mediaPart places a data URL in a BlobPart and any other URL in a UriPart. A value without a URL scheme,
+// such as a redaction placeholder, is kept as media without a URL.
 func mediaPart(url string, modality Modality) any {
 	if m := dataURL.FindStringSubmatch(url); m != nil {
 		return BlobPart{Type: PartTypeBlob, Modality: modality, MimeType: &m[1], Content: m[2]}
 	}
+	if !urlScheme.MatchString(url) {
+		return mediaWithoutURL{"type": FormatterGeneric, "modality": modality.StringValue(), "content": url}
+	}
 	return UriPart{Type: PartTypeURI, Modality: modality, URI: url}
+}
+
+// mediaWithoutURL is a generic part that FormatMessages warns about once the converters ran.
+type mediaWithoutURL GenericPart
+
+// genericMedia turns media without a URL into generic parts, with one warning.
+func (f *formatting) genericMedia() {
+	found := false
+	for i := range f.out.Input {
+		found = genericMediaParts(f.out.Input[i].Parts) || found
+	}
+	for i := range f.out.Output {
+		found = genericMediaParts(f.out.Output[i].Parts) || found
+	}
+	if found {
+		f.warn("media without a URL kept as generic")
+	}
+}
+
+func genericMediaParts(parts Parts) bool {
+	found := false
+	for i, p := range parts {
+		if media, ok := p.Value.(mediaWithoutURL); ok {
+			parts[i] = part(GenericPart(media))
+			found = true
+		}
+	}
+	return found
 }
 
 // stringOf renders nil as "" and non-strings as compact JSON.

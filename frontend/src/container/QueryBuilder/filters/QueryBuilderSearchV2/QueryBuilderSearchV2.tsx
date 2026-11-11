@@ -8,7 +8,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { Select, Spin } from 'antd';
+import { type RefSelectProps, Select, Spin } from 'antd';
 import { Pill } from '@signozhq/ui/pill';
 import cx from 'classnames';
 import {
@@ -28,6 +28,7 @@ import { useGetAttributeSuggestions } from 'hooks/queryBuilder/useGetAttributeSu
 import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useRunQueryWithFilterItems } from 'hooks/queryBuilder/useRunQueryWithFilterItems';
 import useDebounceValue from 'hooks/useDebounce';
 import {
 	cloneDeep,
@@ -39,7 +40,6 @@ import {
 	unset,
 } from 'lodash-es';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
-import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -157,9 +157,10 @@ function QueryBuilderSearchV2(
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const { handleRunQuery, currentQuery } = useQueryBuilder();
+	const { currentQuery } = useQueryBuilder();
+	const runQuery = useRunQueryWithFilterItems();
 
-	const selectRef = useRef<BaseSelectRef>(null);
+	const selectRef = useRef<RefSelectProps>(null);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -462,11 +463,11 @@ function QueryBuilderSearchV2(
 			if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
 				event.preventDefault();
 				event.stopPropagation();
-				handleRunQuery();
+				runQuery();
 				setIsOpen(false);
 			}
 		},
-		[handleRunQuery, searchValue],
+		[runQuery, searchValue],
 	);
 
 	const handleOnBlur = useCallback((): void => {

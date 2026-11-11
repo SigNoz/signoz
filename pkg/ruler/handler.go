@@ -3,10 +3,10 @@ package ruler
 import "net/http"
 
 type Handler interface {
-	ListRules(http.ResponseWriter, *http.Request)
 	ListRulesV3(http.ResponseWriter, *http.Request)
 	GetRuleByID(http.ResponseWriter, *http.Request)
 	CreateRule(http.ResponseWriter, *http.Request)
+	CloneRuleByID(http.ResponseWriter, *http.Request)
 	UpdateRuleByID(http.ResponseWriter, *http.Request)
 	DeleteRuleByID(http.ResponseWriter, *http.Request)
 	PatchRuleByID(http.ResponseWriter, *http.Request)

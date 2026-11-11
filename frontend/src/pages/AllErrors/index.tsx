@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useLocation } from 'react-router-dom';
 import { Filter } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -8,14 +7,14 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
-import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import RouteTab from 'components/RouteTab';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import ResourceAttributesFilterV2 from 'container/ResourceAttributeFilterV2/ResourceAttributesFilterV2';
 import Toolbar from 'container/Toolbar/Toolbar';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import history from 'lib/history';
+import { useRunQueryWithFilterItems } from 'hooks/queryBuilder/useRunQueryWithFilterItems';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { isNull } from 'lodash-es';
 
 import { routes } from './config';
@@ -24,8 +23,8 @@ import { useAllErrorsQueryState } from './QueryStateContext';
 import './AllErrors.styles.scss';
 
 function AllErrors(): JSX.Element {
-	const { pathname } = useLocation();
-	const { handleRunQuery } = useQueryBuilder();
+	const { pathname } = useAppLocation();
+	const handleRunQuery = useRunQueryWithFilterItems();
 	const queryClient = useQueryClient();
 
 	const isLoadingQueries = useAllErrorsQueryState((s) => s.isFetching);
@@ -64,8 +63,7 @@ function AllErrors(): JSX.Element {
 			onToggleFilters={handleFilterVisibilityChange}
 			quickFilterProps={{
 				className: 'qf-exceptions',
-				source: QuickFiltersSource.EXCEPTIONS,
-				signal: SignalType.EXCEPTIONS,
+				quickFilterSource: QuickFiltersSource.EXCEPTIONS,
 				useFieldApis: quickFilterFieldApis,
 			}}
 		>
@@ -96,12 +94,7 @@ function AllErrors(): JSX.Element {
 				}
 			/>
 			<ResourceAttributesFilterV2 />
-			<RouteTab
-				routes={routes}
-				activeKey={pathname}
-				history={history}
-				showRightSection={false}
-			/>
+			<RouteTab routes={routes} activeKey={pathname} showRightSection={false} />
 		</QuickFiltersLayout>
 	);
 }

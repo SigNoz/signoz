@@ -51,6 +51,7 @@ export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 		case PANEL_TYPES.BAR:
 			return 'time_series';
 		case PANEL_TYPES.TABLE:
+		case PANEL_TYPES.SCATTER:
 		case PANEL_TYPES.PIE:
 		case PANEL_TYPES.VALUE:
 			return 'scalar';
@@ -165,17 +166,15 @@ function createBaseSpec(
 		filter: getFilter(queryData),
 		groupBy:
 			queryData.groupBy?.length > 0
-				? queryData.groupBy.map(
-						(item: any): GroupByKey => ({
-							name: item.key,
-							fieldDataType: item?.dataType || '',
-							fieldContext: item?.type || '',
-							description: item?.description,
-							unit: item?.unit,
-							signal: item?.signal,
-							materialized: item?.materialized,
-						}),
-					)
+				? queryData.groupBy.map((item: any): GroupByKey => ({
+						name: item.key,
+						fieldDataType: item?.dataType || '',
+						fieldContext: item?.type || '',
+						description: item?.description,
+						unit: item?.unit,
+						signal: item?.signal,
+						materialized: item?.materialized,
+					}))
 				: undefined,
 		limit:
 			panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.LIST
@@ -187,14 +186,12 @@ function createBaseSpec(
 				: undefined,
 		order:
 			queryData.orderBy?.length > 0
-				? queryData.orderBy.map(
-						(order: any): OrderBy => ({
-							key: {
-								name: order.columnName,
-							},
-							direction: order.order,
-						}),
-					)
+				? queryData.orderBy.map((order: any): OrderBy => ({
+						key: {
+							name: order.columnName,
+						},
+						direction: order.order,
+					}))
 				: undefined,
 		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
 		having: normalizeHaving(queryData.having),
@@ -278,6 +275,7 @@ export function createAggregation(
 		queryData.dataSource === DataSource.METRICS &&
 		panelType &&
 		(panelType === PANEL_TYPES.TABLE ||
+			panelType === PANEL_TYPES.SCATTER ||
 			panelType === PANEL_TYPES.PIE ||
 			panelType === PANEL_TYPES.VALUE);
 
@@ -397,17 +395,15 @@ function createTraceOperatorBaseSpec(
 		stepInterval: stepInterval || undefined,
 		groupBy:
 			groupBy?.length > 0
-				? groupBy.map(
-						(item: any): GroupByKey => ({
-							name: item.key,
-							fieldDataType: item?.dataType,
-							fieldContext: item?.type,
-							description: item?.description,
-							unit: item?.unit,
-							signal: item?.signal,
-							materialized: item?.materialized,
-						}),
-					)
+				? groupBy.map((item: any): GroupByKey => ({
+						name: item.key,
+						fieldDataType: item?.dataType,
+						fieldContext: item?.type,
+						description: item?.description,
+						unit: item?.unit,
+						signal: item?.signal,
+						materialized: item?.materialized,
+					}))
 				: undefined,
 		limit:
 			panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.LIST
@@ -416,28 +412,24 @@ function createTraceOperatorBaseSpec(
 		offset: requestType === 'raw' || requestType === 'trace' ? offset : undefined,
 		order:
 			orderBy?.length > 0
-				? orderBy.map(
-						(order: any): OrderBy => ({
-							key: {
-								name: order.columnName,
-							},
-							direction: order.order,
-						}),
-					)
+				? orderBy.map((order: any): OrderBy => ({
+						key: {
+							name: order.columnName,
+						},
+						direction: order.order,
+					}))
 				: undefined,
 		legend: isEmpty(legend) ? undefined : legend,
 		having: normalizeHaving(having),
 		selectFields: isEmpty(nonEmptySelectColumns)
 			? undefined
-			: nonEmptySelectColumns?.map(
-					(column: any): TelemetryFieldKey => ({
-						name: column.name ?? column.key,
-						fieldDataType:
-							column?.fieldDataType ?? (column?.dataType as FieldDataType),
-						fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
-						signal: column?.signal ?? undefined,
-					}),
-				),
+			: nonEmptySelectColumns?.map((column: any): TelemetryFieldKey => ({
+					name: column.name ?? column.key,
+					fieldDataType:
+						column?.fieldDataType ?? (column?.dataType as FieldDataType),
+					fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
+					signal: column?.signal ?? undefined,
+				})),
 	};
 }
 
@@ -610,14 +602,12 @@ export const prepareQueryRangePayloadV5 = (
 						disabled: formulaData.disabled,
 						limit: formulaData.limit ?? undefined,
 						legend: isEmpty(formulaData.legend) ? undefined : formulaData.legend,
-						order: formulaData.orderBy?.map(
-							(order: any): OrderBy => ({
-								key: {
-									name: order.columnName,
-								},
-								direction: order.order,
-							}),
-						),
+						order: formulaData.orderBy?.map((order: any): OrderBy => ({
+							key: {
+								name: order.columnName,
+							},
+							direction: order.order,
+						})),
 					},
 				}),
 			);

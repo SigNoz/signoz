@@ -7,7 +7,7 @@ import { QueryParams } from 'constants/query';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import heatmapPlugin from 'lib/uPlotLib/plugins/heatmapPlugin';
 import timelinePlugin from 'lib/uPlotLib/plugins/timelinePlugin';
 import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
@@ -103,7 +103,7 @@ function HorizontalTimelineGraph({
 								urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 								urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 
-								history.push({
+								navigate({
 									search: urlQuery.toString(),
 								});
 							}

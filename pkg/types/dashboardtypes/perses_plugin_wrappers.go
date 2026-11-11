@@ -19,8 +19,8 @@ import (
 // ══════════════════════════════════════════════
 
 type PanelPlugin struct {
-	Kind PanelPluginKind `json:"kind" required:"true"`
-	Spec any             `json:"spec" required:"true"`
+	Kind PanelPluginKind `json:"kind" required:"true" description:"The panel kind. It decides the shape of spec and which query kinds the panel accepts."`
+	Spec any             `json:"spec" required:"true" description:"The options for this panel kind. {} accepts every default."`
 }
 
 // PrepareJSONSchema marks the envelope with x-signoz-discriminator;
@@ -28,16 +28,17 @@ type PanelPlugin struct {
 // (and strips the duplicate parent properties) after reflection.
 func (PanelPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return markDiscriminator(s, "kind", map[string]string{
-		string(PanelKindTimeSeries): schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec"),
-		string(PanelKindBarChart):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec"),
-		string(PanelKindAreaChart):  schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec"),
-		string(PanelKindNumber):     schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec"),
-		string(PanelKindPieChart):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec"),
-		string(PanelKindTable):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec"),
-		string(PanelKindHistogram):  schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec"),
-		string(PanelKindList):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec"),
-		string(PanelKindText):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec"),
-		string(PanelKindHeatmap):    schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec"),
+		string(PanelKindTimeSeries):  schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec"),
+		string(PanelKindBarChart):    schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec"),
+		string(PanelKindAreaChart):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec"),
+		string(PanelKindNumber):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec"),
+		string(PanelKindPieChart):    schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec"),
+		string(PanelKindTable):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec"),
+		string(PanelKindHistogram):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec"),
+		string(PanelKindList):        schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec"),
+		string(PanelKindText):        schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec"),
+		string(PanelKindHeatmap):     schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec"),
+		string(PanelKindScatterPlot): schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec"),
 	})
 }
 
@@ -71,12 +72,13 @@ func (PanelPlugin) JSONSchemaOneOf() []any {
 		PanelPluginVariant[ListPanelSpec]{Kind: string(PanelKindList)},
 		PanelPluginVariant[TextPanelSpec]{Kind: string(PanelKindText)},
 		PanelPluginVariant[HeatmapPanelSpec]{Kind: string(PanelKindHeatmap)},
+		PanelPluginVariant[ScatterPlotPanelSpec]{Kind: string(PanelKindScatterPlot)},
 	}
 }
 
 type PanelPluginVariant[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
+	Kind string `json:"kind" required:"true" description:"The panel kind."`
+	Spec S      `json:"spec" required:"true" description:"The options for this panel kind. {} accepts every default."`
 }
 
 func (v PanelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -88,8 +90,8 @@ func (v PanelPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // ══════════════════════════════════════════════
 
 type QueryPlugin struct {
-	Kind QueryPluginKind `json:"kind" required:"true"`
-	Spec any             `json:"spec" required:"true"`
+	Kind QueryPluginKind `json:"kind" required:"true" description:"The query kind. It decides the shape of spec."`
+	Spec any             `json:"spec" required:"true" description:"The kind-specific query spec. A builder query's shape depends on its signal."`
 }
 
 func (QueryPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -168,8 +170,8 @@ func wrapEnvelope(queryType qb.QueryType, spec any) qb.CompositeQuery {
 }
 
 type QueryPluginVariant[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
+	Kind string `json:"kind" required:"true" description:"The query kind."`
+	Spec S      `json:"spec" required:"true" description:"The kind-specific query spec."`
 }
 
 func (v QueryPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -181,8 +183,8 @@ func (v QueryPluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // ══════════════════════════════════════════════
 
 type VariablePlugin struct {
-	Kind VariablePluginKind `json:"kind" required:"true"`
-	Spec any                `json:"spec" required:"true"`
+	Kind VariablePluginKind `json:"kind" required:"true" description:"The value source kind. It decides the shape of spec."`
+	Spec any                `json:"spec" required:"true" description:"The kind-specific value source spec."`
 }
 
 func (VariablePlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -220,8 +222,8 @@ func (VariablePlugin) JSONSchemaOneOf() []any {
 }
 
 type VariablePluginVariant[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
+	Kind string `json:"kind" required:"true" description:"The value source kind."`
+	Spec S      `json:"spec" required:"true" description:"The kind-specific value source spec."`
 }
 
 func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -234,16 +236,17 @@ func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error 
 
 var (
 	panelPluginSpecs = map[PanelPluginKind]func() any{
-		PanelKindTimeSeries: func() any { return new(TimeSeriesPanelSpec) },
-		PanelKindBarChart:   func() any { return new(BarChartPanelSpec) },
-		PanelKindAreaChart:  func() any { return new(AreaChartPanelSpec) },
-		PanelKindNumber:     func() any { return new(NumberPanelSpec) },
-		PanelKindPieChart:   func() any { return new(PieChartPanelSpec) },
-		PanelKindTable:      func() any { return new(TablePanelSpec) },
-		PanelKindHistogram:  func() any { return new(HistogramPanelSpec) },
-		PanelKindList:       func() any { return new(ListPanelSpec) },
-		PanelKindText:       func() any { return new(TextPanelSpec) },
-		PanelKindHeatmap:    func() any { return new(HeatmapPanelSpec) },
+		PanelKindTimeSeries:  func() any { return new(TimeSeriesPanelSpec) },
+		PanelKindBarChart:    func() any { return new(BarChartPanelSpec) },
+		PanelKindAreaChart:   func() any { return new(AreaChartPanelSpec) },
+		PanelKindNumber:      func() any { return new(NumberPanelSpec) },
+		PanelKindPieChart:    func() any { return new(PieChartPanelSpec) },
+		PanelKindTable:       func() any { return new(TablePanelSpec) },
+		PanelKindHistogram:   func() any { return new(HistogramPanelSpec) },
+		PanelKindList:        func() any { return new(ListPanelSpec) },
+		PanelKindText:        func() any { return new(TextPanelSpec) },
+		PanelKindHeatmap:     func() any { return new(HeatmapPanelSpec) },
+		PanelKindScatterPlot: func() any { return new(ScatterPlotPanelSpec) },
 	}
 	queryPluginSpecs = map[QueryPluginKind]func() any{
 		QueryKindBuilder:       func() any { return new(BuilderQuerySpec) },
@@ -260,16 +263,17 @@ var (
 		VariableKindCustom:  func() any { return new(CustomVariableSpec) },
 	}
 	allowedQueryKinds = map[PanelPluginKind][]QueryPluginKind{
-		PanelKindTimeSeries: {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindBarChart:   {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindAreaChart:  {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindNumber:     {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindHistogram:  {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindPieChart:   {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
-		PanelKindTable:      {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
-		PanelKindList:       {QueryKindBuilder, QueryKindAIBuilder},
-		PanelKindText:       {},
-		PanelKindHeatmap:    {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindTimeSeries:  {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindBarChart:    {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindAreaChart:   {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindNumber:      {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindHistogram:   {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindPieChart:    {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
+		PanelKindTable:       {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
+		PanelKindList:        {QueryKindBuilder, QueryKindAIBuilder},
+		PanelKindText:        {},
+		PanelKindHeatmap:     {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindScatterPlot: {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindClickHouseSQL},
 	}
 )
 

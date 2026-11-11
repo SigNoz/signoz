@@ -188,7 +188,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -199,7 +201,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -256,7 +260,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -267,7 +273,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -285,6 +293,25 @@
       "verbs": [
         "read",
         "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "metrics-field",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "llm-pricing-rule",
+      "verbs": [
+        "read",
+        "update",
+        "delete",
         "list"
       ]
     },
@@ -407,7 +434,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -418,7 +447,9 @@
         "read",
         "update",
         "delete",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -483,7 +514,9 @@
       "kind": "notification-channel",
       "verbs": [
         "read",
-        "list"
+        "list",
+        "attach",
+        "detach"
       ]
     },
     {
@@ -505,6 +538,23 @@
     {
       "type": "metaresource",
       "kind": "quick-filter",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "metrics-field",
+      "verbs": [
+        "read",
+        "update",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "llm-pricing-rule",
       "verbs": [
         "read",
         "list"
@@ -676,6 +726,22 @@
     {
       "type": "metaresource",
       "kind": "quick-filter",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "metrics-field",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "llm-pricing-rule",
       "verbs": [
         "read",
         "list"

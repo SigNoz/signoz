@@ -26,7 +26,7 @@ import (
 
 func TestThresholdRuleEvalWithoutRecoveryTarget(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Eval test without recovery target",
+		AlertName: valuer.NewDisplayName("Eval test without recovery target"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -63,6 +63,7 @@ func TestThresholdRuleEvalWithoutRecoveryTarget(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
+					Name:            "critical",
 					TargetValue:     &c.target,
 					MatchType:       c.matchType,
 					CompareOperator: c.compareOperator,
@@ -145,7 +146,7 @@ func TestNormalizeLabelName(t *testing.T) {
 
 func TestPrepareParamsForLogs(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Tricky Condition Tests",
+		AlertName: valuer.NewDisplayName("Tricky Condition Tests"),
 		AlertType: ruletypes.AlertTypeLogs,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -171,10 +172,7 @@ func TestPrepareParamsForLogs(t *testing.T) {
 					},
 				},
 			},
-			CompareOperator: ruletypes.ValueIsNotEq,
-			MatchType:       ruletypes.AtleastOnce,
-			Target:          &[]float64{0.0}[0],
-			SelectedQuery:   "A",
+			SelectedQuery: "A",
 		},
 	}
 
@@ -183,9 +181,10 @@ func TestPrepareParamsForLogs(t *testing.T) {
 		Kind: ruletypes.BasicThresholdKind,
 		Spec: ruletypes.BasicRuleThresholds{
 			{
-				TargetValue:     postableRule.RuleCondition.Target,
-				MatchType:       postableRule.RuleCondition.MatchType,
-				CompareOperator: postableRule.RuleCondition.CompareOperator,
+				Name:            "critical",
+				TargetValue:     &[]float64{0.0}[0],
+				MatchType:       ruletypes.AtleastOnce,
+				CompareOperator: ruletypes.ValueIsNotEq,
 			},
 		},
 	}
@@ -210,7 +209,7 @@ func TestPrepareParamsForLogs(t *testing.T) {
 
 func TestPrepareParamsForLogsFilterExpression(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Tricky Condition Tests",
+		AlertName: valuer.NewDisplayName("Tricky Condition Tests"),
 		AlertType: ruletypes.AlertTypeLogs,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -239,10 +238,7 @@ func TestPrepareParamsForLogsFilterExpression(t *testing.T) {
 					},
 				},
 			},
-			CompareOperator: ruletypes.ValueIsNotEq,
-			MatchType:       ruletypes.AtleastOnce,
-			Target:          &[]float64{0.0}[0],
-			SelectedQuery:   "A",
+			SelectedQuery: "A",
 		},
 		Version: "v5",
 	}
@@ -252,9 +248,10 @@ func TestPrepareParamsForLogsFilterExpression(t *testing.T) {
 		Kind: ruletypes.BasicThresholdKind,
 		Spec: ruletypes.BasicRuleThresholds{
 			{
-				TargetValue:     postableRule.RuleCondition.Target,
-				MatchType:       postableRule.RuleCondition.MatchType,
-				CompareOperator: postableRule.RuleCondition.CompareOperator,
+				Name:            "critical",
+				TargetValue:     &[]float64{0.0}[0],
+				MatchType:       ruletypes.AtleastOnce,
+				CompareOperator: ruletypes.ValueIsNotEq,
 			},
 		},
 	}
@@ -275,7 +272,7 @@ func TestPrepareParamsForLogsFilterExpression(t *testing.T) {
 
 func TestPrepareParamsForTracesFilterExpression(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Tricky Condition Tests",
+		AlertName: valuer.NewDisplayName("Tricky Condition Tests"),
 		AlertType: ruletypes.AlertTypeTraces,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -304,10 +301,7 @@ func TestPrepareParamsForTracesFilterExpression(t *testing.T) {
 					},
 				},
 			},
-			CompareOperator: ruletypes.ValueIsNotEq,
-			MatchType:       ruletypes.AtleastOnce,
-			Target:          &[]float64{0.0}[0],
-			SelectedQuery:   "A",
+			SelectedQuery: "A",
 		},
 		Version: "v5",
 	}
@@ -317,9 +311,10 @@ func TestPrepareParamsForTracesFilterExpression(t *testing.T) {
 		Kind: ruletypes.BasicThresholdKind,
 		Spec: ruletypes.BasicRuleThresholds{
 			{
-				TargetValue:     postableRule.RuleCondition.Target,
-				MatchType:       postableRule.RuleCondition.MatchType,
-				CompareOperator: postableRule.RuleCondition.CompareOperator,
+				Name:            "critical",
+				TargetValue:     &[]float64{0.0}[0],
+				MatchType:       ruletypes.AtleastOnce,
+				CompareOperator: ruletypes.ValueIsNotEq,
 			},
 		},
 	}
@@ -340,7 +335,7 @@ func TestPrepareParamsForTracesFilterExpression(t *testing.T) {
 
 func TestPrepareParamsForTraces(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Links to traces test",
+		AlertName: valuer.NewDisplayName("Links to traces test"),
 		AlertType: ruletypes.AlertTypeTraces,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -366,10 +361,7 @@ func TestPrepareParamsForTraces(t *testing.T) {
 					},
 				},
 			},
-			CompareOperator: ruletypes.ValueIsNotEq,
-			MatchType:       ruletypes.AtleastOnce,
-			Target:          &[]float64{0.0}[0],
-			SelectedQuery:   "A",
+			SelectedQuery: "A",
 		},
 	}
 
@@ -378,9 +370,10 @@ func TestPrepareParamsForTraces(t *testing.T) {
 		Kind: ruletypes.BasicThresholdKind,
 		Spec: ruletypes.BasicRuleThresholds{
 			{
-				TargetValue:     postableRule.RuleCondition.Target,
-				MatchType:       postableRule.RuleCondition.MatchType,
-				CompareOperator: postableRule.RuleCondition.CompareOperator,
+				Name:            "critical",
+				TargetValue:     &[]float64{0.0}[0],
+				MatchType:       ruletypes.AtleastOnce,
+				CompareOperator: ruletypes.ValueIsNotEq,
 			},
 		},
 	}
@@ -406,7 +399,7 @@ func TestPrepareParamsForTraces(t *testing.T) {
 
 func TestThresholdRuleLabelNormalization(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Tricky Condition Tests",
+		AlertName: valuer.NewDisplayName("Tricky Condition Tests"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -470,6 +463,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
+					Name:            "critical",
 					TargetValue:     &c.target,
 					MatchType:       c.matchType,
 					CompareOperator: c.compareOperator,
@@ -511,7 +505,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 
 func TestThresholdRuleUnitCombinations(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Units test",
+		AlertName: valuer.NewDisplayName("Units test"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -653,16 +647,12 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			ExpectQuery(queryString).
 			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
-		postableRule.RuleCondition.CompareOperator = c.compareOperator
-		postableRule.RuleCondition.MatchType = c.matchType
-		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
-		postableRule.RuleCondition.TargetUnit = c.targetUnit
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:            postableRule.AlertName,
+					Name:            postableRule.AlertName.StringValue(),
 					TargetValue:     &c.target,
 					TargetUnit:      c.targetUnit,
 					MatchType:       c.matchType,
@@ -704,7 +694,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 
 func TestThresholdRuleNoData(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "No data test",
+		AlertName: valuer.NewDisplayName("No data test"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -771,7 +761,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:            postableRule.AlertName,
+					Name:            postableRule.AlertName.StringValue(),
 					TargetValue:     &target,
 					MatchType:       ruletypes.AtleastOnce,
 					CompareOperator: ruletypes.ValueIsEq,
@@ -808,7 +798,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 
 func TestThresholdRuleTracesLink(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Traces link test",
+		AlertName: valuer.NewDisplayName("Traces link test"),
 		AlertType: ruletypes.AlertTypeTraces,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -867,16 +857,12 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 
 		querier := prepareQuerierForTraces(t, telemetryStore, keysMap)
 
-		postableRule.RuleCondition.CompareOperator = c.compareOperator
-		postableRule.RuleCondition.MatchType = c.matchType
-		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
-		postableRule.RuleCondition.TargetUnit = c.targetUnit
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:            postableRule.AlertName,
+					Name:            postableRule.AlertName.StringValue(),
 					TargetValue:     &c.target,
 					TargetUnit:      c.targetUnit,
 					MatchType:       c.matchType,
@@ -918,7 +904,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 
 func TestThresholdRuleAITracesLink(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "AI traces link test",
+		AlertName: valuer.NewDisplayName("AI traces link test"),
 		AlertType: ruletypes.AlertTypeAITraces,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -975,16 +961,12 @@ func TestThresholdRuleAITracesLink(t *testing.T) {
 
 		querier := prepareQuerierForAITraces(t, telemetryStore, keysMap)
 
-		postableRule.RuleCondition.CompareOperator = c.compareOperator
-		postableRule.RuleCondition.MatchType = c.matchType
-		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
-		postableRule.RuleCondition.TargetUnit = c.targetUnit
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:            postableRule.AlertName,
+					Name:            postableRule.AlertName.StringValue(),
 					TargetValue:     &c.target,
 					TargetUnit:      c.targetUnit,
 					MatchType:       c.matchType,
@@ -1016,7 +998,7 @@ func TestThresholdRuleAITracesLink(t *testing.T) {
 
 func TestThresholdRuleLogsLink(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Logs link test",
+		AlertName: valuer.NewDisplayName("Logs link test"),
 		AlertType: ruletypes.AlertTypeLogs,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1083,16 +1065,12 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 
 		querier := prepareQuerierForLogs(t, telemetryStore, keysMap)
 
-		postableRule.RuleCondition.CompareOperator = c.compareOperator
-		postableRule.RuleCondition.MatchType = c.matchType
-		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
-		postableRule.RuleCondition.TargetUnit = c.targetUnit
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:            postableRule.AlertName,
+					Name:            postableRule.AlertName.StringValue(),
 					TargetValue:     &c.target,
 					TargetUnit:      c.targetUnit,
 					MatchType:       c.matchType,
@@ -1134,7 +1112,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 
 func TestMultipleThresholdRule(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Multiple threshold test",
+		AlertName: valuer.NewDisplayName("Multiple threshold test"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1256,11 +1234,7 @@ func TestMultipleThresholdRule(t *testing.T) {
 		querier, mockMetadataStore := prepareQuerierForMetrics(t, telemetryStore)
 		mockMetadataStore.TypeMap["signoz_calls_total"] = metrictypes.SumType
 
-		postableRule.RuleCondition.CompareOperator = c.compareOperator
-		postableRule.RuleCondition.MatchType = c.matchType
-		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
-		postableRule.RuleCondition.TargetUnit = c.targetUnit
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
@@ -1315,7 +1289,7 @@ func TestMultipleThresholdRule(t *testing.T) {
 
 func TestThresholdRuleEval_BasicCases(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Eval Recovery Threshold Test",
+		AlertName: valuer.NewDisplayName("Eval Recovery Threshold Test"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1349,7 +1323,7 @@ func TestThresholdRuleEval_BasicCases(t *testing.T) {
 
 func TestThresholdRuleEval_MatchPlusCompareOps(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Eval Match Plus Compare Ops Threshold Test",
+		AlertName: valuer.NewDisplayName("Eval Match Plus Compare Ops Threshold Test"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1389,7 +1363,7 @@ func TestThresholdRuleEval_SendUnmatchedBypassesRecovery(t *testing.T) {
 	recovery := 4.0
 
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Send unmatched bypass recovery",
+		AlertName: valuer.NewDisplayName("Send unmatched bypass recovery"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1476,7 +1450,7 @@ func TestThresholdRuleEval_SendUnmatchedVariants(t *testing.T) {
 	target := 10.0
 	recovery := 5.0
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Send unmatched variants",
+		AlertName: valuer.NewDisplayName("Send unmatched variants"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1588,7 +1562,7 @@ func TestThresholdRuleEval_RecoveryNotMetSendUnmatchedFalse(t *testing.T) {
 
 	now := time.Now()
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Recovery not met sendUnmatched false",
+		AlertName: valuer.NewDisplayName("Recovery not met sendUnmatched false"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1888,7 +1862,7 @@ func runMultiThresholdEvalTests(t *testing.T, postableRule ruletypes.PostableRul
 // where each threshold can be in a different state (firing, recovering, resolved)
 func TestThresholdRuleEval_MultiThreshold(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Multi-Threshold Recovery Test",
+		AlertName: valuer.NewDisplayName("Multi-Threshold Recovery Test"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1922,7 +1896,7 @@ func TestThresholdRuleEval_MultiThreshold(t *testing.T) {
 
 func TestThresholdEval_RequireMinPoints(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
-		AlertName: "Unit test",
+		AlertName: valuer.NewDisplayName("Unit test"),
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
@@ -1930,8 +1904,6 @@ func TestThresholdEval_RequireMinPoints(t *testing.T) {
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompareOperator: ruletypes.ValueIsAbove,
-			MatchType:       ruletypes.AtleastOnce,
 			CompositeQuery: &ruletypes.AlertCompositeQuery{
 				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{{
@@ -2050,17 +2022,16 @@ func TestThresholdEval_RequireMinPoints(t *testing.T) {
 		mockMetadataStore.TypeMap["signoz_calls_total"] = metrictypes.SumType
 
 		rc := postableRule.RuleCondition
-		rc.Target = &c.target
 		rc.RequireMinPoints = c.requireMinPoints
 		rc.RequiredNumPoints = c.requiredNumPoints
 		rc.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:            postableRule.AlertName,
+					Name:            postableRule.AlertName.StringValue(),
 					TargetValue:     &c.target,
-					MatchType:       rc.MatchType,
-					CompareOperator: rc.CompareOperator,
+					MatchType:       ruletypes.AtleastOnce,
+					CompareOperator: ruletypes.ValueIsAbove,
 				},
 			},
 		}

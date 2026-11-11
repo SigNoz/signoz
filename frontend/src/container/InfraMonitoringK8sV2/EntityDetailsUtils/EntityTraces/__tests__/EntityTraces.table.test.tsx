@@ -1,4 +1,6 @@
-import { act, screen, within } from 'tests/test-utils';
+import logEvent from 'api/common/logEvent';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import { act, screen, userEvent, within } from 'tests/test-utils';
 
 import { renderEntityTraces } from './testUtils';
 import { mockQueryRangeV5WithTracesResponse } from '__tests__/query_range_v5.util';
@@ -19,6 +21,11 @@ jest.spyOn(window, 'matchMedia').mockImplementation(
 			dispatchEvent: jest.fn(),
 		}) as unknown as MediaQueryList,
 );
+
+jest.mock('api/common/logEvent', () => ({
+	__esModule: true,
+	default: jest.fn(() => Promise.resolve()),
+}));
 
 describe('EntityTraces - Table Rendering', () => {
 	it('should render table with all column headers', async () => {
@@ -181,5 +188,24 @@ describe('EntityTraces - Table Rendering', () => {
 			'backend',
 			'database',
 		]);
+	});
+
+	it('should log the drawer trace clicked event when a trace row is clicked', async () => {
+		mockQueryRangeV5WithTracesResponse({
+			customTraces: [{ serviceName: 'frontend' }],
+		});
+
+		renderEntityTraces();
+
+		const user = userEvent.setup();
+		const cell = await screen.findByTestId('serviceName');
+		await user.click(cell.closest('tr') as HTMLElement);
+
+		expect(logEvent).toHaveBeenCalledWith(
+			'Infra Monitoring: Drawer trace clicked',
+			{
+				entityType: InfraMonitoringEntity.PODS,
+			},
+		);
 	});
 });

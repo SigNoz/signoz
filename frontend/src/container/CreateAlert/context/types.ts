@@ -1,0 +1,301 @@
+import { Dispatch } from 'react';
+import { UseMutateFunction } from 'react-query';
+import type {
+	CreateRule201,
+	RenderErrorResponseDTO,
+	RuletypesPostableRuleDTO,
+	TestRule200,
+	UpdateRuleByIDPathParameters,
+} from 'api/generated/services/sigNoz.schemas';
+import type { BodyType, ErrorType } from 'api/generatedAPIInstance';
+import { Dayjs } from 'dayjs';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { Labels } from 'types/api/alerts/def';
+
+export interface ICreateAlertContextProps {
+	alertState: AlertState;
+	setAlertState: Dispatch<CreateAlertAction>;
+	alertType: AlertTypes;
+	setAlertType: Dispatch<AlertTypes>;
+	thresholdState: AlertThresholdState;
+	setThresholdState: Dispatch<AlertThresholdAction>;
+	advancedOptions: AdvancedOptionsState;
+	setAdvancedOptions: Dispatch<AdvancedOptionsAction>;
+	evaluationWindow: EvaluationWindowState;
+	setEvaluationWindow: Dispatch<EvaluationWindowAction>;
+	notificationSettings: NotificationSettingsState;
+	setNotificationSettings: Dispatch<NotificationSettingsAction>;
+	isCreatingAlertRule: boolean;
+	createAlertRule: UseMutateFunction<
+		CreateRule201,
+		ErrorType<RenderErrorResponseDTO>,
+		{ data?: BodyType<RuletypesPostableRuleDTO> },
+		unknown
+	>;
+	isTestingAlertRule: boolean;
+	testAlertRule: UseMutateFunction<
+		TestRule200,
+		ErrorType<RenderErrorResponseDTO>,
+		{ data?: BodyType<RuletypesPostableRuleDTO> },
+		unknown
+	>;
+	discardAlertRule: () => void;
+	isUpdatingAlertRule: boolean;
+	updateAlertRule: UseMutateFunction<
+		Awaited<
+			ReturnType<typeof import('api/generated/services/rules').updateRuleByID>
+		>,
+		ErrorType<RenderErrorResponseDTO>,
+		{
+			pathParams: UpdateRuleByIDPathParameters;
+			data?: BodyType<RuletypesPostableRuleDTO>;
+		},
+		unknown
+	>;
+	isEditMode: boolean;
+	ruleId: string;
+}
+
+export interface ICreateAlertProviderProps {
+	children: React.ReactNode;
+	initialAlertType: AlertTypes;
+	initialAlertState?: CreateAlertState;
+	isEditMode?: boolean;
+	ruleId?: string;
+}
+
+export enum AlertCreationStep {
+	ALERT_DEFINITION = 0,
+	ALERT_CONDITION = 1,
+	EVALUATION_SETTINGS = 2,
+	NOTIFICATION_SETTINGS = 3,
+}
+
+export interface AlertState {
+	name: string;
+	labels: Labels;
+	yAxisUnit: string | undefined;
+}
+
+export type CreateAlertAction =
+	| { type: 'SET_ALERT_NAME'; payload: string }
+	| { type: 'SET_ALERT_LABELS'; payload: Labels }
+	| { type: 'SET_Y_AXIS_UNIT'; payload: string | undefined }
+	| { type: 'SET_INITIAL_STATE'; payload: AlertState }
+	| { type: 'RESET' };
+
+export interface Threshold {
+	id: string;
+	label: string;
+	thresholdValue: number;
+	recoveryThresholdValue: number | null;
+	unit: string;
+	channels: string[];
+	color: string;
+}
+
+export enum AlertThresholdOperator {
+	IS_ABOVE = 'above',
+	IS_BELOW = 'below',
+	IS_EQUAL_TO = 'equal',
+	IS_NOT_EQUAL_TO = 'not_equal',
+	IS_ABOVE_OR_EQUAL_TO = 'above_or_equal',
+	IS_BELOW_OR_EQUAL_TO = 'below_or_equal',
+	ABOVE_BELOW = 'outside_bounds',
+}
+
+export enum AlertThresholdMatchType {
+	AT_LEAST_ONCE = 'at_least_once',
+	ALL_THE_TIME = 'all_the_times',
+	ON_AVERAGE = 'on_average',
+	IN_TOTAL = 'in_total',
+	LAST = 'last',
+}
+
+export interface AlertThresholdState {
+	selectedQuery: string;
+	// Stored as a raw string so backend aliases ("1", ">", "above_or_eq", ...)
+	// survive a load/save round-trip. User edits from the UI write the
+	// canonical enum value.
+	operator: AlertThresholdOperator | string;
+	matchType: AlertThresholdMatchType | string;
+	algorithm: string;
+	seasonality: string;
+	thresholds: Threshold[];
+}
+
+export enum Algorithm {
+	STANDARD = 'standard',
+}
+
+export enum Seasonality {
+	HOURLY = 'hourly',
+	DAILY = 'daily',
+	WEEKLY = 'weekly',
+}
+
+export type AlertThresholdAction =
+	| { type: 'SET_SELECTED_QUERY'; payload: string }
+	| { type: 'SET_OPERATOR'; payload: AlertThresholdOperator }
+	| { type: 'SET_MATCH_TYPE'; payload: AlertThresholdMatchType }
+	| { type: 'SET_ALGORITHM'; payload: string }
+	| { type: 'SET_SEASONALITY'; payload: string }
+	| { type: 'SET_THRESHOLDS'; payload: Threshold[] }
+	| { type: 'SET_INITIAL_STATE'; payload: AlertThresholdState }
+	| { type: 'RESET' };
+
+export interface AdvancedOptionsState {
+	sendNotificationIfDataIsMissing: {
+		toleranceLimit: number;
+		timeUnit: string;
+		enabled: boolean;
+	};
+	enforceMinimumDatapoints: {
+		minimumDatapoints: number;
+		enabled: boolean;
+	};
+	delayEvaluation: {
+		delay: number;
+		timeUnit: string;
+	};
+	evaluationCadence: {
+		mode: EvaluationCadenceMode;
+		default: {
+			value: number;
+			timeUnit: string;
+		};
+		custom: {
+			repeatEvery: string;
+			startAt: string;
+			occurence: string[];
+			timezone: string;
+		};
+		rrule: {
+			date: Dayjs | null;
+			startAt: string;
+			rrule: string;
+		};
+	};
+}
+
+export type AdvancedOptionsAction =
+	| {
+			type: 'SET_SEND_NOTIFICATION_IF_DATA_IS_MISSING';
+			payload: { toleranceLimit: number; timeUnit: string };
+	  }
+	| {
+			type: 'TOGGLE_SEND_NOTIFICATION_IF_DATA_IS_MISSING';
+			payload: boolean;
+	  }
+	| {
+			type: 'SET_ENFORCE_MINIMUM_DATAPOINTS';
+			payload: { minimumDatapoints: number };
+	  }
+	| {
+			type: 'TOGGLE_ENFORCE_MINIMUM_DATAPOINTS';
+			payload: boolean;
+	  }
+	| {
+			type: 'SET_DELAY_EVALUATION';
+			payload: { delay: number; timeUnit: string };
+	  }
+	| {
+			type: 'SET_EVALUATION_CADENCE';
+			payload: {
+				default: { value: number; timeUnit: string };
+				custom: {
+					repeatEvery: string;
+					startAt: string;
+					timezone: string;
+					occurence: string[];
+				};
+				rrule: { date: Dayjs | null; startAt: string; rrule: string };
+			};
+	  }
+	| { type: 'SET_EVALUATION_CADENCE_MODE'; payload: EvaluationCadenceMode }
+	| { type: 'SET_INITIAL_STATE'; payload: AdvancedOptionsState }
+	| { type: 'RESET' };
+
+export interface EvaluationWindowState {
+	windowType: 'rolling' | 'cumulative';
+	timeframe: string;
+	startingAt: {
+		time: string;
+		number: string;
+		timezone: string;
+		unit: string;
+	};
+}
+
+export type EvaluationWindowAction =
+	| { type: 'SET_WINDOW_TYPE'; payload: 'rolling' | 'cumulative' }
+	| { type: 'SET_TIMEFRAME'; payload: string }
+	| {
+			type: 'SET_STARTING_AT';
+			payload: { time: string; number: string; timezone: string; unit: string };
+	  }
+	| { type: 'SET_EVALUATION_CADENCE_MODE'; payload: EvaluationCadenceMode }
+	| { type: 'SET_INITIAL_STATE'; payload: EvaluationWindowState }
+	| { type: 'SET_INITIAL_STATE_FOR_METER' }
+	| { type: 'RESET' };
+
+export type EvaluationCadenceMode = 'default' | 'custom' | 'rrule';
+
+export interface NotificationSettingsState {
+	multipleNotifications: string[] | null;
+	reNotification: {
+		enabled: boolean;
+		value: number;
+		unit: string;
+		conditions: ('firing' | 'nodata')[];
+	};
+	description: string;
+	routingPolicies: boolean;
+}
+
+export type NotificationSettingsAction =
+	| {
+			type: 'SET_MULTIPLE_NOTIFICATIONS';
+			payload: string[] | null;
+	  }
+	| {
+			type: 'SET_RE_NOTIFICATION';
+			payload: {
+				enabled: boolean;
+				value: number;
+				unit: string;
+				conditions: ('firing' | 'nodata')[];
+			};
+	  }
+	| { type: 'SET_DESCRIPTION'; payload: string }
+	| { type: 'SET_ROUTING_POLICIES'; payload: boolean }
+	| { type: 'SET_INITIAL_STATE'; payload: NotificationSettingsState }
+	| { type: 'RESET' };
+
+export type CreateAlertState = {
+	basic: AlertState;
+	threshold: AlertThresholdState;
+	advancedOptions: AdvancedOptionsState;
+	evaluationWindow: EvaluationWindowState;
+	notificationSettings: NotificationSettingsState;
+};
+
+export enum CreateAlertSlice {
+	BASIC = 'basic',
+	THRESHOLD = 'threshold',
+	ADVANCED_OPTIONS = 'advancedOptions',
+	EVALUATION_WINDOW = 'evaluationWindow',
+	NOTIFICATION_SETTINGS = 'notificationSettings',
+}
+
+export type CreateAlertReducerAction =
+	| { slice: CreateAlertSlice.BASIC; action: CreateAlertAction }
+	| { slice: CreateAlertSlice.THRESHOLD; action: AlertThresholdAction }
+	| { slice: CreateAlertSlice.ADVANCED_OPTIONS; action: AdvancedOptionsAction }
+	| { slice: CreateAlertSlice.EVALUATION_WINDOW; action: EvaluationWindowAction }
+	| {
+			slice: CreateAlertSlice.NOTIFICATION_SETTINGS;
+			action: NotificationSettingsAction;
+	  }
+	| { type: 'RESET' }
+	| { type: 'SET_INITIAL_STATE'; payload: CreateAlertState };

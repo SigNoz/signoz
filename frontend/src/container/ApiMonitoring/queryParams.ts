@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
+import { getCurrentLocation, navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 // --- Types for all API Monitoring query params ---
@@ -88,7 +89,6 @@ export function getApiMonitoringParams(search: string): ApiMonitoringParams {
 export function setApiMonitoringParams(
 	newParams: Partial<ApiMonitoringParams>,
 	search: string,
-	history: ReturnType<typeof useHistory>,
 	replace = false,
 ): void {
 	const urlParams = new URLSearchParams(search);
@@ -96,11 +96,7 @@ export function setApiMonitoringParams(
 	const merged = { ...current, ...newParams };
 	urlParams.set(PARAM_KEY, encodeParams(merged));
 	const newSearch = `?${urlParams.toString()}`;
-	if (replace) {
-		history.replace({ search: newSearch });
-	} else {
-		history.push({ search: newSearch });
-	}
+	navigate({ search: newSearch }, { replace });
 }
 
 // --- React hook to use query params in a component ---
@@ -108,16 +104,15 @@ export function useApiMonitoringParams(): [
 	ApiMonitoringParams,
 	(newParams: Partial<ApiMonitoringParams>, replace?: boolean) => void,
 ] {
-	const location = useLocation();
-	const history = useHistory();
+	const location = useAppLocation();
 	const params = getApiMonitoringParams(location.search);
 
 	// Read the live URL: several writes can land before the next render.
 	const setParams = useCallback(
 		(newParams: Partial<ApiMonitoringParams>, replace = false) => {
-			setApiMonitoringParams(newParams, history.location.search, history, replace);
+			setApiMonitoringParams(newParams, getCurrentLocation().search, replace);
 		},
-		[history],
+		[],
 	);
 
 	return [params, setParams];

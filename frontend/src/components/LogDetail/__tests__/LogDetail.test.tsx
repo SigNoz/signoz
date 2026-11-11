@@ -46,8 +46,6 @@ function renderDrawer(props: Partial<LogDetailProps> = {}): void {
 		<LogDetail
 			log={mockLog}
 			selectedTab={VIEW_TYPES.OVERVIEW}
-			onAddToQuery={jest.fn()}
-			onClickActionItem={jest.fn()}
 			onClose={jest.fn()}
 			{...props}
 		/>,

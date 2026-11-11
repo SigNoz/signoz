@@ -13,7 +13,7 @@ import type { SpantypesPostableTraceAggregationsDTO } from 'api/generated/servic
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import { screen, userEvent, within } from 'storybook/test';
-import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import type { QueryRangeRequestV5, RawRow } from 'types/api/v5/queryRange';
 
 import {
 	choiceControl,
@@ -46,6 +46,8 @@ import {
 	traceDetailFieldValues,
 	traceFlamegraphResponse,
 	traceSummaryResponse,
+	TRACE_SCENARIOS,
+	type TraceScenario,
 	traceWaterfallResponse,
 } from './__story_mockdata__/traceDetails';
 
@@ -103,6 +105,13 @@ const spanLogScopeOf = (body: QueryRangeRequestV5): SpanLogScope => {
 
 export const traceDetailsMocks = defineStoryMocks({
 	controls: {
+		scenario: choiceControl<TraceScenario>('Scenario', {
+			group: TRACE,
+			description:
+				'The spans the trace is built from: a checkout, one span per HTTP status badge, or an agent run with LLM, tool and agent spans and the AI totals in the header.',
+			options: TRACE_SCENARIOS,
+			value: 'checkout',
+		}),
 		spans: countControl('Spans', {
 			group: TRACE,
 			description:
@@ -141,6 +150,12 @@ export const traceDetailsMocks = defineStoryMocks({
 			value: 8,
 			max: 20,
 		}),
+		traceOnlyLogs: toggleControl('Logs only on the trace', {
+			group: PANEL,
+			description:
+				'The span has no logs of its own but the trace does, which is the Logs tab\'s "view logs for the current trace" state.',
+			value: false,
+		}),
 		exportState: choiceControl<ExportState>('Trace export', {
 			group: EXPORT,
 			description:
@@ -151,9 +166,16 @@ export const traceDetailsMocks = defineStoryMocks({
 	},
 	handlers: (values, response) => {
 		const trace = {
+			scenario: values.scenario,
 			spans: values.spans,
 			errors: values.errors,
 			traceStart: traceStartOf(),
+		};
+		const spanLogRowsFor = (body: QueryRangeRequestV5): RawRow[] => {
+			const scope = spanLogScopeOf(body);
+			const count =
+				values.traceOnlyLogs && scope !== 'trace' ? 0 : values.spanLogs;
+			return spanLogRows(count, trace, scope);
 		};
 
 		return [
@@ -256,9 +278,7 @@ export const traceDetailsMocks = defineStoryMocks({
 
 					if (requestType === 'raw') {
 						return queryRangeV5RawResponse(
-							signalOf(body) === 'logs'
-								? spanLogRows(values.spanLogs, trace, spanLogScopeOf(body))
-								: spanMatchRows(trace),
+							signalOf(body) === 'logs' ? spanLogRowsFor(body) : spanMatchRows(trace),
 						);
 					}
 
@@ -288,7 +308,7 @@ export const traceDetailsMocks = defineStoryMocks({
 	},
 	config: (values) => ({
 		route: values.spanPanel
-			? `/trace/${STORY_TRACE_ID}?spanId=${spanIdAt(focusSpanIndex(values.spans))}`
+			? `/trace/${STORY_TRACE_ID}?spanId=${spanIdAt(focusSpanIndex(values.scenario, values.spans))}`
 			: `/trace/${STORY_TRACE_ID}`,
 	}),
 	effect: (values) => {

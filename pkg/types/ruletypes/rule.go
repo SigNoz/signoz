@@ -48,6 +48,15 @@ func NewStatsFromRules(rules []*StorableRule) map[string]any {
 	return stats
 }
 
+func (rule *StorableRule) ToPostableRuleForCloning() (*PostableRule, error) {
+	postable := &PostableRule{}
+	if err := json.Unmarshal([]byte(rule.Data), postable); err != nil {
+		return nil, err
+	}
+	postable.AlertName = postable.AlertName.GenerateCloneName()
+	return postable, nil
+}
+
 // RuleAlert represents an alert associated with a rule, used when filtering by metric name.
 type RuleAlert struct {
 	AlertName string

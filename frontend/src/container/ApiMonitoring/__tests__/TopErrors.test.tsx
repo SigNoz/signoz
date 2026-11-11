@@ -24,19 +24,17 @@ jest.mock(
 	'../Explorer/Domains/DomainDetails/components/EndPointPicker',
 	() => ({
 		__esModule: true,
-		default: jest.fn().mockImplementation(
-			({ onChange }): JSX.Element => (
-				<div data-testid="endpoints-dropdown-mock">
-					<select
-						data-testid="endpoints-select"
-						onChange={(e): void => onChange(e.target.value)}
-					>
-						<option value="/api/test">/api/test</option>
-						<option value="/api/new-endpoint">/api/new-endpoint</option>
-					</select>
-				</div>
-			),
-		),
+		default: jest.fn().mockImplementation(({ onChange }): JSX.Element => (
+			<div data-testid="endpoints-dropdown-mock">
+				<select
+					data-testid="endpoints-select"
+					onChange={(e): void => onChange(e.target.value)}
+				>
+					<option value="/api/test">/api/test</option>
+					<option value="/api/new-endpoint">/api/new-endpoint</option>
+				</select>
+			</div>
+		)),
 	}),
 );
 

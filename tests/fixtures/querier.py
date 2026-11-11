@@ -3,6 +3,7 @@ from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from typing import Any
 
+import pytest
 import requests
 
 from fixtures import types
@@ -34,6 +35,7 @@ class RequestType:
     SCALAR = "scalar"
     TABLE = "table"
     HEATMAP = "heatmap"
+    DISTRIBUTION = "distribution"
 
 
 @dataclass
@@ -300,6 +302,9 @@ def build_builder_query(
     functions: list[dict] | None = None,
     bucket_options: dict | None = None,
     disabled: bool = False,
+    order: list[dict] | None = None,
+    limit: int | None = None,
+    offset: int | None = None,
 ) -> dict:
     spec: dict[str, Any] = {
         "name": name,
@@ -336,6 +341,15 @@ def build_builder_query(
     if functions:
         spec["functions"] = functions
 
+    if order:
+        spec["order"] = order
+
+    if limit is not None:
+        spec["limit"] = limit
+
+    if offset is not None:
+        spec["offset"] = offset
+
     return {"type": "builder_query", "spec": spec}
 
 
@@ -348,6 +362,8 @@ def build_formula_query(
     disabled: bool = False,
     order: list[dict] | None = None,
     limit: int | None = None,
+    offset: int | None = None,
+    having_expression: str | None = None,
 ) -> dict:
     spec: dict[str, Any] = {
         "name": name,
@@ -362,6 +378,10 @@ def build_formula_query(
         spec["order"] = order
     if limit is not None:
         spec["limit"] = limit
+    if offset is not None:
+        spec["offset"] = offset
+    if having_expression:
+        spec["having"] = {"expression": having_expression}
     return {"type": "builder_formula", "spec": spec}
 
 
@@ -413,9 +433,9 @@ def get_all_series(response_json: dict, query_name: str) -> list[dict]:
     return aggregations[0].get("series", [])
 
 
-def get_heatmap_buckets(response_json: dict, query_name: str) -> list[float]:
-    """The ascending bucket upper bounds a heatmap result's counts are positional against.
-    Each point holds one more count than there are bounds: the trailing one is the open-above overflow."""
+def get_buckets(response_json: dict, query_name: str) -> list[float]:
+    """The ascending bucket upper bounds a heatmap or distribution result's counts are positional against.
+    A point or distribution holds one more count than there are bounds: the trailing one is the open-above overflow."""
     results = response_json.get("data", {}).get("data", {}).get("results", [])
     result = find_named_result(results, query_name)
     if not result:
@@ -668,6 +688,7 @@ def build_scalar_query(
     group_by: list[dict] | None = None,
     order: list[dict] | None = None,
     limit: int | None = None,
+    offset: int | None = None,
     filter_expression: str | None = None,
     having_expression: str | None = None,
     step_interval: int = DEFAULT_STEP_INTERVAL,
@@ -694,6 +715,9 @@ def build_scalar_query(
     if limit is not None:
         spec["limit"] = limit
 
+    if offset is not None:
+        spec["offset"] = offset
+
     if filter_expression:
         spec["filter"] = {"expression": filter_expression}
 
@@ -702,6 +726,44 @@ def build_scalar_query(
 
     if functions:
         spec["functions"] = functions
+
+    return {"type": "builder_query", "spec": spec}
+
+
+def build_heatmap_query(
+    name: str,
+    signal: str,
+    expression: str,
+    *,
+    source: str | None = None,
+    group_by: list[dict] | None = None,
+    order: list[dict] | None = None,
+    filter_expression: str | None = None,
+    bucket_options: dict | None = None,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+) -> dict:
+    """Omitting bucket_options leaves the server's default log axis."""
+    spec: dict[str, Any] = {
+        "name": name,
+        "signal": signal,
+        "stepInterval": step_interval,
+        "aggregations": [{"expression": expression}],
+    }
+
+    if source:
+        spec["source"] = source
+
+    if group_by:
+        spec["groupBy"] = group_by
+
+    if order:
+        spec["order"] = order
+
+    if filter_expression:
+        spec["filter"] = {"expression": filter_expression}
+
+    if bucket_options is not None:
+        spec["bucketOptions"] = bucket_options
 
     return {"type": "builder_query", "spec": spec}
 
@@ -886,6 +948,71 @@ def assert_identical_query_response(response1: requests.Response, response2: req
     if response1.status_code == HTTPStatus.OK:
         assert response1.json()["status"] == response2.json()["status"], "Response statuses do not match"
         assert response1.json()["data"]["data"]["results"] == response2.json()["data"]["data"]["results"], "Response data do not match"
+
+
+def assert_distribution_sums_heatmap(
+    signoz: types.SigNoz,
+    token: str,
+    start_ms: int,
+    end_ms: int,
+    queries: list[dict],
+    heatmap: requests.Response,
+    *,
+    no_cache: bool = True,
+) -> None:
+    """A distribution request over the queries a heatmap was drawn from answers with that heatmap's
+    columns added up: the same aggregations and buckets, and for each series one count per bucket
+    plus the overflow under the same labels, and the percentiles every series' counts rank to
+    together, with nothing time-shaped."""
+    response = make_query_request(signoz, token, start_ms, end_ms, queries, request_type=RequestType.DISTRIBUTION, no_cache=no_cache)
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()
+    assert data["data"]["type"] == RequestType.DISTRIBUTION, f"response type: {data['data']['type']}"
+
+    def labels_of(item: dict) -> tuple:
+        return tuple(sorted((label["key"]["name"], str(label["value"])) for label in item.get("labels") or []))
+
+    heatmap_results = {result["queryName"]: result for result in heatmap.json()["data"]["data"]["results"]}
+    distribution_results = {result["queryName"]: result for result in data["data"]["data"]["results"]}
+    assert set(distribution_results) == set(heatmap_results), f"distribution results {sorted(distribution_results)}, heatmap results {sorted(heatmap_results)}"
+
+    for name, heatmap_result in heatmap_results.items():
+        heatmap_aggregations = heatmap_result.get("aggregations") or []
+        distribution_aggregations = distribution_results[name].get("aggregations") or []
+        assert [(aggregation["index"], aggregation["alias"], aggregation.get("meta", {})) for aggregation in distribution_aggregations] == [(aggregation["index"], aggregation["alias"], aggregation.get("meta", {})) for aggregation in heatmap_aggregations], (
+            f"{name}: distribution and heatmap aggregations differ in index, alias or meta"
+        )
+
+        for heatmap_aggregation, distribution_aggregation in zip(heatmap_aggregations, distribution_aggregations):
+            buckets = heatmap_aggregation.get("meta", {}).get("buckets", [])
+            series_by_labels = {labels_of(series): series for series in heatmap_aggregation.get("series") or []}
+            distributions_by_labels = {labels_of(distribution): distribution for distribution in distribution_aggregation.get("distributions") or []}
+            assert set(distributions_by_labels) == set(series_by_labels), f"{name}: distribution groups {sorted(distributions_by_labels)}, heatmap series {sorted(series_by_labels)}"
+
+            for labels, series in series_by_labels.items():
+                distribution = distributions_by_labels[labels]
+                assert set(distribution) <= {"labels", "counts"}, f"{name} {dict(labels)}: distribution fields {sorted(distribution)}"
+                summed = [sum(column["values"][slot] for column in series.get("values") or [] if slot < len(column.get("values") or [])) for slot in range(len(buckets) + 1)]
+                assert distribution["counts"] == pytest.approx(summed), f"{name} {dict(labels)}: distribution counts {distribution['counts']}, heatmap columns add up to {summed}"
+
+            # histogram_quantile over every series' counts added together: interpolated inside the
+            # bucket the rank falls in, the last bound past it, the bound itself at or under zero
+            totals = [sum(column["values"][slot] for series in series_by_labels.values() for column in series.get("values") or [] if slot < len(column.get("values") or [])) for slot in range(len(buckets) + 1)]
+            if sum(totals) == 0 or not buckets:
+                assert "percentiles" not in distribution_aggregation, f"{name}: percentiles {distribution_aggregation.get('percentiles')} with nothing to rank"
+                continue
+            expected = {}
+            for percentile, q in (("p50", 0.5), ("p75", 0.75), ("p90", 0.9), ("p95", 0.95), ("p99", 0.99)):
+                rank, cumulative, value = q * sum(totals), 0.0, buckets[-1]
+                for slot, upper in enumerate(buckets):
+                    if cumulative + totals[slot] < rank:
+                        cumulative += totals[slot]
+                        continue
+                    lower = buckets[slot - 1] if slot > 0 else 0.0
+                    value = upper if slot == 0 and upper <= 0 else lower + (upper - lower) * (rank - cumulative) / totals[slot]
+                    break
+                expected[percentile] = value
+            assert distribution_aggregation["percentiles"] == pytest.approx(expected), f"{name}: percentiles {distribution_aggregation['percentiles']}, counts rank to {expected}"
 
 
 # we already create the evolution for resource during schema migration

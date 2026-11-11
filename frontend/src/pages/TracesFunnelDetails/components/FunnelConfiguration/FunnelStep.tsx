@@ -80,6 +80,7 @@ function FunnelStep({
 
 	return (
 		<div
+			data-testid={`funnel-step-${index}`}
 			className={cx('funnel-step', {
 				'funnel-step--readonly': !hasEditPermission,
 			})}
@@ -140,7 +141,10 @@ function FunnelStep({
 				<div className="funnel-step__content">
 					<div className="filters">
 						<div className="filters__service-and-span">
-							<div className="service">
+							<div
+								className="service"
+								data-testid={`funnel-step-service-select-${index}`}
+							>
 								<Form.Item name={['steps', stepData.id, 'service_name']}>
 									<FilterSelect
 										placeholder="Select Service"
@@ -159,7 +163,7 @@ function FunnelStep({
 									/>
 								</Form.Item>
 							</div>
-							<div className="span">
+							<div className="span" data-testid={`funnel-step-span-select-${index}`}>
 								<Form.Item name={['steps', stepData.id, 'span_name']}>
 									<FilterSelect
 										placeholder="Select Span name"
@@ -200,6 +204,7 @@ function FunnelStep({
 					<div className="error">
 						<Switch
 							color="primary"
+							testId={`funnel-step-errors-switch-${index}`}
 							textPlacement="right"
 							disabledTooltip="You need edit permissions to change this step"
 							value={stepData.has_errors}

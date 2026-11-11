@@ -11,6 +11,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // TestNotification prepares a dummy rule for given rule parameters and
@@ -23,7 +24,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, error) {
 	}
 
 	parsedRule := opts.Rule
-	var alertname = parsedRule.AlertName
+	var alertname = parsedRule.AlertName.StringValue()
 	if alertname == "" {
 		// alertname is not mandatory for testing, so picking
 		// a random string here
@@ -31,7 +32,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, error) {
 	}
 
 	// append name to indicate this is test alert
-	parsedRule.AlertName = fmt.Sprintf("%s%s", alertname, ruletypes.TestAlertPostFix)
+	parsedRule.AlertName = valuer.NewDisplayName(fmt.Sprintf("%s%s", alertname, ruletypes.TestAlertPostFix))
 
 	var rule Rule
 	var err error

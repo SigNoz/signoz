@@ -73,7 +73,7 @@ func TestNewModules(t *testing.T) {
 	require.NoError(t, err)
 	spanMapperModule := implspanmapper.NewModule(implspanmapper.NewStore(sqlstore), spanMapperRegistry, providerSettings)
 
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, serviceAccount, serviceAccountGetter, implcloudintegration.NewModule(), retentionGetter, flagger, tagModule, implmetricreductionrule.NewModule(), spanMapperModule)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, serviceAccount, serviceAccountGetter, implcloudintegration.NewModule(), retentionGetter, flagger, tagModule, implmetricreductionrule.NewModule(), spanMapperModule)
 
 	reflectVal := reflect.ValueOf(modules)
 	for i := 0; i < reflectVal.NumField(); i++ {

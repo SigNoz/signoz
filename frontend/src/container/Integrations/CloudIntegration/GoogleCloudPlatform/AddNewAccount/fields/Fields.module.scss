@@ -1,0 +1,19 @@
+.mono {
+	composes: mono from '../shared.module.scss';
+}
+
+.fullWidth {
+	width: 100%;
+}
+
+.regionSelect {
+	// Selected region value: bright, like every other field's text.
+	[data-slot='combobox-value'] {
+		color: var(--l1-foreground);
+	}
+
+	// Empty trigger (.regionEmpty, set from the RHF value): dull the placeholder text.
+	&.regionEmpty [data-slot='combobox-value'] {
+		color: var(--l3-foreground);
+	}
+}

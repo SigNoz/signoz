@@ -18,6 +18,8 @@ import type {
 } from 'react-query';
 
 import type {
+	CloneRuleByID201,
+	CloneRuleByIDPathParameters,
 	CreateRule201,
 	CreateRuleView201,
 	DeleteRuleByIDPathParameters,
@@ -43,7 +45,6 @@ import type {
 	GetRuleHistoryTopContributorsParams,
 	GetRuleHistoryTopContributorsPathParameters,
 	ListRuleViews200,
-	ListRules200,
 	ListRulesV3200,
 	ListRulesV3Params,
 	PatchRuleByID200,
@@ -425,85 +426,6 @@ export const useUpdateRuleView = <
 > => {
 	return useMutation(getUpdateRuleViewMutationOptions(options));
 };
-/**
- * This endpoint lists all alert rules with their current evaluation state. Deprecated: use ListRulesV3, which supports filtering, sorting and pagination.
- * @deprecated
- * @summary List alert rules
- */
-export const listRules = (signal?: AbortSignal) => {
-	return GeneratedAPIInstance<ListRules200>({
-		url: `/api/v2/rules`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getListRulesQueryKey = () => {
-	return [`/api/v2/rules`] as const;
-};
-
-export const getListRulesQueryOptions = <
-	TData = Awaited<ReturnType<typeof listRules>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<Awaited<ReturnType<typeof listRules>>, TError, TData>;
-}) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey = queryOptions?.queryKey ?? getListRulesQueryKey();
-
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof listRules>>> = ({
-		signal,
-	}) => listRules(signal);
-
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof listRules>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type ListRulesQueryResult = NonNullable<
-	Awaited<ReturnType<typeof listRules>>
->;
-export type ListRulesQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @deprecated
- * @summary List alert rules
- */
-
-export function useListRules<
-	TData = Awaited<ReturnType<typeof listRules>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<Awaited<ReturnType<typeof listRules>>, TError, TData>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListRulesQueryOptions(options);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	return withQueryKey(query, queryOptions.queryKey);
-}
-
-/**
- * @deprecated
- * @summary List alert rules
- */
-export const invalidateListRules = async (
-	queryClient: QueryClient,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getListRulesQueryKey() },
-		options,
-	);
-
-	return queryClient;
-};
-
 /**
  * This endpoint creates a new alert rule
  * @summary Create alert rule
@@ -962,6 +884,85 @@ export const useUpdateRuleByID = <
 	TContext
 > => {
 	return useMutation(getUpdateRuleByIDMutationOptions(options));
+};
+/**
+ * This endpoint creates a new alert rule from the stored definition of an existing one. The clone keeps every modeled field of the source, including its enabled/disabled state, and gets the source's name suffixed with " - Copy" (or a bumped " - Copy (n)" counter when the source is itself a copy). The clone is owned by the caller.
+ * @summary Clone alert rule
+ */
+export const cloneRuleByID = (
+	{ id }: CloneRuleByIDPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CloneRuleByID201>({
+		url: `/api/v2/rules/${id}/clone`,
+		method: 'POST',
+		signal,
+	});
+};
+
+export const getCloneRuleByIDMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof cloneRuleByID>>,
+		TError,
+		{ pathParams: CloneRuleByIDPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof cloneRuleByID>>,
+	TError,
+	{ pathParams: CloneRuleByIDPathParameters },
+	TContext
+> => {
+	const mutationKey = ['cloneRuleByID'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof cloneRuleByID>>,
+		{ pathParams: CloneRuleByIDPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return cloneRuleByID(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CloneRuleByIDMutationResult = NonNullable<
+	Awaited<ReturnType<typeof cloneRuleByID>>
+>;
+
+export type CloneRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Clone alert rule
+ */
+export const useCloneRuleByID = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof cloneRuleByID>>,
+		TError,
+		{ pathParams: CloneRuleByIDPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof cloneRuleByID>>,
+	TError,
+	{ pathParams: CloneRuleByIDPathParameters },
+	TContext
+> => {
+	return useMutation(getCloneRuleByIDMutationOptions(options));
 };
 /**
  * Returns distinct label keys from rule history entries for the selected range.

@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/expr-lang/expr"
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -219,8 +218,9 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 		return matchedChannels, nil
 	}
 
+	env := r.convertLabelSetToEnv(ctx, set)
 	for _, route := range expressionRoutes {
-		evaluateExpr, err := r.evaluateExpr(ctx, route.Expression, set)
+		evaluateExpr, err := alertmanagertypes.EvalExpression(route.Expression, env)
 		if err != nil {
 			//nolint:sloglint
 			r.settings.Logger().WarnContext(ctx, "failed to evaluate route policy expression", errors.Attr(err), slog.String("rule.id", ruleID))
@@ -242,24 +242,4 @@ func (r *provider) convertLabelSetToEnv(ctx context.Context, labelSet model.Labe
 		r.settings.Logger().InfoContext(ctx, "found label set with conflicting prefix dotted keys", slog.Any("labels", labelSet))
 	}
 	return env
-}
-
-func (r *provider) evaluateExpr(ctx context.Context, expression string, labelSet model.LabelSet) (bool, error) {
-	env := r.convertLabelSetToEnv(ctx, labelSet)
-
-	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables())
-	if err != nil {
-		return false, errors.NewInternalf(errors.CodeInternal, "error compiling route policy %s: %v", expression, err)
-	}
-
-	output, err := expr.Run(program, env)
-	if err != nil {
-		return false, errors.NewInternalf(errors.CodeInternal, "error running route policy %s: %v", expression, err)
-	}
-
-	if boolVal, ok := output.(bool); ok {
-		return boolVal, nil
-	}
-
-	return false, errors.NewInternalf(errors.CodeInternal, "error in evaluating route policy %s: %v", expression, err)
 }

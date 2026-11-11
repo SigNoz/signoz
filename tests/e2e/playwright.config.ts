@@ -36,11 +36,6 @@ for (const file of ['.env', '.env.local']) {
 export default defineConfig({
 	testDir: './tests',
 
-	// Temporarily excluded: the V1 -> V2 dashboard migration changes the
-	// behaviour the dashboards specs assert against, so they fail as written.
-	// Remove this once they are updated for the V2 dashboard.
-	testIgnore: ['**/tests/dashboards/**'],
-
 	// All Playwright output lands under artifacts/. One subdir per reporter
 	// plus results/ for per-test artifacts (traces/screenshots/videos).
 	// CI can archive the whole dir with `tar czf artifacts.tgz tests/e2e/artifacts`.
@@ -55,20 +50,17 @@ export default defineConfig({
 	// Retry on CI only
 	retries: process.env.CI ? 2 : 0,
 
-	// Workers. Playwright's local default is `cpus / 2`, which on a 32-core box is
-	// 16 — and 16 is strictly worse than 6 here, because every worker's browser
-	// shares one SigNoz container: measured on `tests/alerts/{create,edit}` at
-	// `--repeat-each=3` (224 tests), 16 workers took 128 s with 3 failures while 6
-	// took 119 s with none. Past ~6 the extra workers only add queueing, which shows
-	// up as 4-6 s app mounts and save requests that outlive the test timeout — i.e.
-	// as flakes that look like product bugs. Capped rather than fixed at 6 so a
-	// 4-core laptop still gets `cpus / 2`.
+	// Capped at 6 rather than fixed, so a four-core laptop still gets `cpus / 2`.
+	// Past six, extra workers only queue behind the one shared SigNoz container —
+	// measured in `docs/flake-notes.md`.
 	workers: process.env.CI
 		? 2
 		: Math.max(1, Math.min(6, Math.floor(os.cpus().length / 2))),
 
-	// The SPA hydrates slowly on CI, so the 5s expect default fires mid-load.
-	expect: { timeout: 15_000 },
+	// The SPA hydrates slowly on CI, so the 5s expect default fires mid-load, and
+	// `toPass` needs its own budget because it reads `expect.toPass.timeout`
+	// rather than `expect.timeout` — see `docs/flake-notes.md`.
+	expect: { timeout: 15_000, toPass: { timeout: 20_000 } },
 	timeout: process.env.CI ? 60_000 : 30_000,
 
 	// Reporter

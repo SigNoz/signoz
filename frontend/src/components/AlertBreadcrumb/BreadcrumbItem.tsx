@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isModifierKeyPressed } from 'utils/app';
@@ -10,7 +11,7 @@ export type BreadcrumbItemConfig =
 			route?: string;
 	  }
 	| {
-			title: string | null;
+			title: ReactNode;
 			isLast?: true;
 	  };
 
