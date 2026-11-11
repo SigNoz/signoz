@@ -20,8 +20,6 @@ import {
 // Mock the dependencies
 jest.mock('container/ApiMonitoring/utils', () => ({
 	getAllEndpointsWidgetData: jest.fn(),
-	getDomainScopeClauses: jest.requireActual('container/ApiMonitoring/utils')
-		.getDomainScopeClauses,
 	getGroupByExpressionFromRowData: jest.fn(),
 }));
 

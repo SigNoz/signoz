@@ -4,8 +4,6 @@ import { TableColumnType as ColumnType, Tooltip } from 'antd';
 import { Progress } from '@signozhq/ui/progress';
 import { Badge } from '@signozhq/ui/badge';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { ScopeClause } from 'components/QueryBuilderV2/QueryV2/QuerySearch/ScopeChip/types';
-import { formatScopeClauses } from 'components/QueryBuilderV2/QueryV2/QuerySearch/ScopeChip/utils';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import {
 	FiltersType,
@@ -58,35 +56,29 @@ export const isEmptyFilterValue = (value: unknown): boolean =>
 export const getDisplayValue = (value: unknown): string =>
 	isEmptyFilterValue(value) ? '-' : String(value);
 
-const clientKindClause: ScopeClause = { key: 'kind_string', value: 'Client' };
-
-const getDomainClause = (domainName: string): ScopeClause => ({
-	key: SPAN_ATTRIBUTES.SERVER_NAME,
-	value: domainName,
-});
-
 export const getDomainNameFilterExpression = (domainName: string): string =>
-	formatScopeClauses([getDomainClause(domainName)]);
+	`${SPAN_ATTRIBUTES.SERVER_NAME} = ${formatValueForExpression(domainName)}`;
 
-export const clientKindExpression = formatScopeClauses([clientKindClause]);
-
-// The domain (and endpoint) the drawer is locked to, built from the same
-// clauses as the requests' filters so the chip shows what runs.
-export const getDomainScopeClauses = (
-	domainName: string,
-	endPointName = '',
-): ScopeClause[] => [
-	clientKindClause,
-	getDomainClause(domainName),
-	...(endPointName
-		? [{ key: SPAN_ATTRIBUTES.HTTP_URL, value: endPointName }]
-		: []),
-];
+export const clientKindExpression = "kind_string = 'Client'";
 
 export const getHttpUrlExpression = (endPointName: string): string =>
 	endPointName
 		? `${SPAN_ATTRIBUTES.HTTP_URL} = ${formatValueForExpression(endPointName, '=')}`
 		: '';
+
+// The domain (and endpoint) the drawer is locked to, built from the same
+// expressions as the requests' filters so the chip shows what runs.
+export const getDomainScopeExpression = (
+	domainName: string,
+	endPointName = '',
+): string =>
+	[
+		clientKindExpression,
+		getDomainNameFilterExpression(domainName),
+		getHttpUrlExpression(endPointName),
+	]
+		.filter(Boolean)
+		.join(' AND ');
 
 export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{

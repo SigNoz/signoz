@@ -4,7 +4,6 @@ import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/Query
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import {
 	getAllEndpointsWidgetData,
-	getDomainScopeClauses,
 	getGroupByExpressionFromRowData,
 } from 'container/ApiMonitoring/utils';
 import GridCard from 'container/WidgetCard/Card';
@@ -56,11 +55,6 @@ function AllEndPoints({
 	} = useFilterExpression({
 		groupBy,
 	});
-
-	const scopeClauses = useMemo(
-		() => getDomainScopeClauses(domainName),
-		[domainName],
-	);
 
 	const allEndpointsWidgetData = useMemo(
 		() => getAllEndpointsWidgetData(groupBy, domainName, filterExpression),
@@ -129,7 +123,7 @@ function AllEndPoints({
 						showRunButton
 						isLoadingQueries={isFetchingTable}
 						initialExpression={scopeExpression}
-						scopeClauses={scopeClauses}
+						showScopeChip
 						dataSource={DataSource.TRACES}
 						placeholder="Search for filters..."
 					/>

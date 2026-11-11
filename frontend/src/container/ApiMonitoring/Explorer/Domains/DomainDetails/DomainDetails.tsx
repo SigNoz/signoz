@@ -7,7 +7,6 @@ import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import { QuerySearchV2Provider } from 'components/QueryBuilderV2';
-import { formatScopeClauses } from 'components/QueryBuilderV2/QueryV2/QuerySearch/ScopeChip/utils';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
@@ -24,7 +23,7 @@ import {
 	ENDPOINT_STATS_EXPRESSION_KEY,
 } from '../../../filterParamKeys';
 import { useApiMonitoringParams } from '../../../queryParams';
-import { getDomainScopeClauses } from '../../../utils';
+import { getDomainScopeExpression } from '../../../utils';
 import AllEndPoints from './AllEndPoints';
 import DomainMetrics from './components/DomainMetrics';
 import { VIEW_TYPES, VIEWS } from './constants';
@@ -63,12 +62,11 @@ function DomainDetails({
 
 	const domainName = domainData?.domainName ?? '';
 	const allEndpointsScope = useMemo(
-		() => formatScopeClauses(getDomainScopeClauses(domainName)),
+		() => getDomainScopeExpression(domainName),
 		[domainName],
 	);
 	const endPointStatsScope = useMemo(
-		() =>
-			formatScopeClauses(getDomainScopeClauses(domainName, selectedEndPointName)),
+		() => getDomainScopeExpression(domainName, selectedEndPointName),
 		[domainName, selectedEndPointName],
 	);
 

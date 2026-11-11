@@ -67,7 +67,6 @@ import {
 	SUGGESTIONS_SECTION,
 } from './constants';
 import { ScopeChip } from './ScopeChip/ScopeChip';
-import { ScopeClause } from './ScopeChip/types';
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,
@@ -120,8 +119,8 @@ interface QuerySearchProps {
 	showFilterSuggestionsWithoutMetric?: boolean;
 	/** When set, the editor shows only the user expression; API/filter uses `initial AND (user)`. */
 	initialExpression?: string;
-	/** Clauses `initialExpression` is built from; when set, it shows as a locked chip in the field. */
-	scopeClauses?: ScopeClause[];
+	/** Shows `initialExpression` as a locked chip in the field instead of the scope icon. */
+	showScopeChip?: boolean;
 	/** When set, replaces the generic value-suggestion API with a custom fetcher. */
 	valueSuggestionsOverride?: (
 		key: string,
@@ -145,7 +144,7 @@ function QuerySearch({
 	hardcodedAttributeKeys,
 	showFilterSuggestionsWithoutMetric,
 	initialExpression,
-	scopeClauses,
+	showScopeChip: showScopeChipProp,
 	metricNamespace,
 	valueSuggestionsOverride,
 }: QuerySearchProps): JSX.Element {
@@ -165,7 +164,7 @@ function QuerySearch({
 	const editorRef = useRef<EditorView | null>(null);
 
 	const isScopedFilter = initialExpression !== undefined;
-	const showScopeChip = isScopedFilter && !!scopeClauses?.length;
+	const showScopeChip = !!showScopeChipProp && !!initialExpression;
 
 	const validateExpressionForEditor = useCallback(
 		(editorDoc: string): void => {
@@ -1593,12 +1592,7 @@ function QuerySearch({
 						hasScopeChip: showScopeChip,
 					})}
 				>
-					{showScopeChip && (
-						<ScopeChip
-							clauses={scopeClauses ?? []}
-							expression={initialExpression ?? ''}
-						/>
-					)}
+					{showScopeChip && <ScopeChip expression={initialExpression ?? ''} />}
 					{isScopedFilter && !showScopeChip ? (
 						<Tooltip title={initialExpression || ''} placement="left">
 							<div className="query-search-initial-scope-label">
@@ -1869,7 +1863,7 @@ QuerySearch.defaultProps = {
 		"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
 	showFilterSuggestionsWithoutMetric: false,
 	initialExpression: undefined,
-	scopeClauses: undefined,
+	showScopeChip: false,
 };
 
 export default QuerySearch;
