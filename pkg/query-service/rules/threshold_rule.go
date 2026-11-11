@@ -285,7 +285,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		lb.Set(ruletypes.AlertRuleIDLabel, r.ID())
 		lb.Set(ruletypes.RuleSourceLabel, r.GeneratorURL())
 
-		annotations := r.AlertAnnotations(expand, smpl, value)
+		annotations := r.AlertAnnotations(expand, smpl, value, threshold)
 		if smpl.IsMissing {
 			lb.Set(ruletypes.AlertNameLabel, "[No data] "+r.Name())
 			lb.Set(ruletypes.NoDataLabel, "true")

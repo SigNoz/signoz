@@ -893,17 +893,17 @@ func TestAlertAnnotations(t *testing.T) {
 		want map[string]string
 	}{
 		{
-			name: "Firing_AddsValue",
+			name: "Firing_AddsValueAndThreshold",
 			smpl: ruletypes.Sample{},
-			want: map[string]string{"summary": "high errors", ruletypes.AnnotationValue: "523 ms"},
+			want: map[string]string{"summary": "high errors", ruletypes.AnnotationValue: "523 ms", ruletypes.AnnotationThresholdValue: "500 ms"},
 		},
 		{
-			name: "Recovering_AddsValueAndRecoveringFlag",
+			name: "Recovering_AddsValueThresholdAndRecoveringFlag",
 			smpl: ruletypes.Sample{IsRecovering: true},
-			want: map[string]string{"summary": "high errors", ruletypes.AnnotationValue: "523 ms", ruletypes.AnnotationIsRecovering: "true"},
+			want: map[string]string{"summary": "high errors", ruletypes.AnnotationValue: "523 ms", ruletypes.AnnotationThresholdValue: "500 ms", ruletypes.AnnotationIsRecovering: "true"},
 		},
 		{
-			name: "MissingData_OmitsValue",
+			name: "MissingData_OmitsValueAndThreshold",
 			smpl: ruletypes.Sample{IsMissing: true},
 			want: map[string]string{"summary": "high errors"},
 		},
@@ -914,7 +914,7 @@ func TestAlertAnnotations(t *testing.T) {
 			rule := &BaseRule{annotations: ruletypes.FromMap(map[string]string{"summary": "high errors"})}
 			expand := func(text string) string { return text }
 
-			assert.Equal(t, testCase.want, rule.AlertAnnotations(expand, testCase.smpl, "523 ms").Map())
+			assert.Equal(t, testCase.want, rule.AlertAnnotations(expand, testCase.smpl, "523 ms", "500 ms").Map())
 		})
 	}
 }

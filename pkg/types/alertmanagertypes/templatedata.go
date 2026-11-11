@@ -79,8 +79,10 @@ type AlertData struct {
 	Labels      template.KV `json:"labels"      mapstructure:"labels"`
 	Annotations template.KV `json:"annotations" mapstructure:"annotations"`
 
-	// Value backs the $value shortcut for $alert.value.
-	Value string `json:"value" mapstructure:"value"`
+	// Value and Threshold back the $value and $threshold shortcuts for
+	// $alert.value and $rule.threshold.value.
+	Value     string `json:"value"     mapstructure:"value"`
+	Threshold string `json:"threshold" mapstructure:"threshold"`
 }
 
 // AlertInfo holds the per-alert state and timing data.

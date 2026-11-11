@@ -134,12 +134,13 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 			assert.Equal(t, c.expectAlerts, alertsFound)
 			for _, item := range rule.Active {
 				assert.Empty(t, item.Annotations.Get(ruletypes.AnnotationValue))
+				assert.Empty(t, item.Annotations.Get(ruletypes.AnnotationThresholdValue))
 			}
 		})
 	}
 }
 
-func TestAnomalyRule_ValueAnnotation(t *testing.T) {
+func TestAnomalyRule_ValueAndThresholdAnnotations(t *testing.T) {
 	baseTime := time.Unix(1700000000, 0)
 	evalTime := baseTime.Add(5 * time.Minute)
 
@@ -180,7 +181,8 @@ func TestAnomalyRule_ValueAnnotation(t *testing.T) {
 			},
 		},
 		Annotations: map[string]string{
-			"summary": "{{$value}}",
+			"summary":     "{{$value}}",
+			"description": "{{$threshold}}",
 		},
 	}
 
@@ -214,6 +216,10 @@ func TestAnomalyRule_ValueAnnotation(t *testing.T) {
 		value := item.Annotations.Get(ruletypes.AnnotationValue)
 		assert.NotEmpty(t, value)
 		assert.Equal(t, item.Annotations.Get("summary"), value)
+
+		threshold := item.Annotations.Get(ruletypes.AnnotationThresholdValue)
+		assert.NotEmpty(t, threshold)
+		assert.Equal(t, item.Annotations.Get("description"), threshold)
 	}
 }
 

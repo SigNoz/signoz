@@ -294,6 +294,7 @@ func buildAlertData(a *types.Alert, receiver string) alertmanagertypes.AlertData
 		// been populated from the raw map.
 		Annotations: alertmanagertypes.FilterPublicAnnotations(annotations),
 		Value:       annotations[ruletypes.AnnotationValue],
+		Threshold:   annotations[ruletypes.AnnotationThresholdValue],
 	}
 }
 

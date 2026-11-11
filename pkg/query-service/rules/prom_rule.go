@@ -212,7 +212,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		lb.Set(ruletypes.AlertRuleIDLabel, r.ID())
 		lb.Set(ruletypes.RuleSourceLabel, r.GeneratorURL())
 
-		annotations := r.AlertAnnotations(expand, result, value)
+		annotations := r.AlertAnnotations(expand, result, value, threshold)
 		if result.IsMissing {
 			lb.Set(ruletypes.AlertNameLabel, "[No data] "+r.Name())
 			lb.Set(ruletypes.NoDataLabel, "true")

@@ -693,6 +693,9 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 				value := item.Annotations.Get(ruletypes.AnnotationValue)
 				assert.NotEmpty(t, value, "case %d", idx)
 				assert.Contains(t, item.Annotations.Get("summary"), value, "case %d", idx)
+				threshold := item.Annotations.Get(ruletypes.AnnotationThresholdValue)
+				assert.NotEmpty(t, threshold, "case %d", idx)
+				assert.Contains(t, item.Annotations.Get("summary"), threshold, "case %d", idx)
 				for _, summary := range c.summaryAny {
 					if strings.Contains(item.Annotations.Get("summary"), summary) {
 						foundCount++
@@ -803,6 +806,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 			if c.expectNoData {
 				assert.True(t, strings.Contains(item.Labels.Get(ruletypes.AlertNameLabel), "[No data]"), "case %d", idx)
 				assert.Empty(t, item.Annotations.Get(ruletypes.AnnotationValue), "case %d", idx)
+				assert.Empty(t, item.Annotations.Get(ruletypes.AnnotationThresholdValue), "case %d", idx)
 			} else {
 				assert.False(t, strings.Contains(item.Labels.Get(ruletypes.AlertNameLabel), "[No data]"), "case %d", idx)
 			}

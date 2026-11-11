@@ -280,6 +280,22 @@ Description: Request rate exceeded 10k/s`},
 			wantBody:  []string{"523 | 523 | set | from-label"},
 		},
 		{
+			name: "threshold shortcut and rule.threshold.value read the threshold annotation and win over a label named threshold",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighErrors", "threshold": "from-label"},
+					map[string]string{ruletypes.AnnotationThresholdValue: "500"},
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "$rule.name above $rule.threshold.value",
+				BodyTemplate:  "$threshold | {{ $threshold }} | $rule.threshold.value | $labels.threshold | annotations: {{ len $annotations }}",
+			},
+			wantTitle: "HighErrors above 500",
+			wantBody:  []string{"500 | 500 | 500 | from-label | annotations: 0"},
+		},
+		{
 			name: "recovering annotation sets status, flags and counts with firing winning the title",
 			alerts: []*types.Alert{
 				createAlert(
