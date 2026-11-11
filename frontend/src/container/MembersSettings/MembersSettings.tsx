@@ -293,7 +293,6 @@ function MembersSettings(): JSX.Element {
 
 			<EditMemberDrawer
 				member={selectedMember}
-				open={selectedMember !== null}
 				onClose={handleDrawerClose}
 				onComplete={handleMemberEditComplete}
 			/>
