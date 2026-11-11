@@ -29,14 +29,14 @@ const pageStory = storyMocks(alertRulesMocks, { layout: 'app' });
 /**
  * The rule list tab: the views rail beside every rule with its severity, state
  * and channels, filtered server-side by a DSL query, a state set and the table
- * sort, which org-shared saved views capture and restore. Creating and editing
- * follow the legacy editor role.
+ * sort, which org-shared saved views capture and restore. Gated on authz
+ * permissions for alert rules.
  *
  * Route: `/alerts?tab=AlertRules`.
  */
 const meta = {
-	title: 'Pages/Alerts/Rules',
-	tags: ['role-gated', 'play'],
+	title: 'Pages/Alerts/Rules/Overview',
+	tags: ['authz', 'play'],
 	component: AlertList,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -157,11 +157,11 @@ export const Paginated: Story = {
 };
 
 /**
- * A viewer: the row actions and the New Alert button are gone, so the tab is
- * read-only.
+ * A viewer, who may list and read rules but not change them: New Alert is
+ * locked, and a row's actions are locked in its menu.
  */
 export const Viewer: Story = {
-	args: { access: 'viewer' },
+	args: { access: 'viewer', permissions: ['list:rule', 'read:rule'] },
 };
 
 /** The per-rule actions: enable or disable, edit, clone and delete. */

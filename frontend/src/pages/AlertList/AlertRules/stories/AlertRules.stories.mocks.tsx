@@ -5,7 +5,7 @@
 
 import { rest, type ResponseComposition, type RestContext } from 'msw';
 import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import {
 	choiceControl,
@@ -283,7 +283,16 @@ export const runRowAction = async (
 	);
 
 	await userEvent.click(actions);
-	await userEvent.click(await screen.findByRole('menuitem', { name }));
+	const item = await screen.findByRole('menuitem', { name }, untilLoaded);
+	// A gated row stays inert until its permission check answers.
+	await waitFor(
+		() =>
+			expect(
+				item.hasAttribute('data-loading') || item.hasAttribute('data-disabled'),
+			).toBe(false),
+		untilLoaded,
+	);
+	await userEvent.click(item);
 };
 
 export type AlertRulesArgs = PageStoryArgs<typeof alertRulesMocks>;
