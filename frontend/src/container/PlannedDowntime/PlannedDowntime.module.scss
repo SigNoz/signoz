@@ -84,6 +84,10 @@
 	justify-content: flex-end;
 }
 
+.guardInset {
+	margin-inline: var(--spacing-8);
+}
+
 .tableContainer {
 	flex: 1;
 	min-height: 0;

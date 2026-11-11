@@ -1,6 +1,7 @@
 import { CalendarClock, Plus } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import { PLANNED_MAINTENANCE_CREATE_CHECKS } from 'hooks/plannedDowntime/usePlannedMaintenanceCollectionPermissions';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 
 import styles from './PlannedDowntime.module.scss';
 
@@ -8,12 +9,10 @@ const DOCS_URL =
 	'https://signoz.io/docs/alerts-management/planned-maintenance/';
 
 interface PlannedDowntimeEmptyStateProps {
-	canCreate: boolean;
 	onCreate: () => void;
 }
 
 function PlannedDowntimeEmptyState({
-	canCreate,
 	onCreate,
 }: PlannedDowntimeEmptyStateProps): JSX.Element {
 	return (
@@ -26,18 +25,17 @@ function PlannedDowntimeEmptyState({
 				A planned downtime silences alert rules for a window you schedule, once or
 				on repeat, so maintenance does not page anyone.
 			</Typography.Text>
-			{canCreate && (
-				<Button
-					variant="solid"
-					color="primary"
-					size="md"
-					prefix={<Plus size={14} />}
-					onClick={onCreate}
-					testId="planned-downtime-empty-create"
-				>
-					New downtime
-				</Button>
-			)}
+			<AuthZButton
+				checks={PLANNED_MAINTENANCE_CREATE_CHECKS}
+				variant="solid"
+				color="primary"
+				size="md"
+				prefix={<Plus size={14} />}
+				onClick={onCreate}
+				testId="planned-downtime-empty-create"
+			>
+				New downtime
+			</AuthZButton>
 			<a
 				className={styles.docsLink}
 				href={DOCS_URL}
