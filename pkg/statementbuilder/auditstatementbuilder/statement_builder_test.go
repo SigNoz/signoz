@@ -129,9 +129,9 @@ func TestStatementBuilder(t *testing.T) {
 				Args:  []any{"dashboard", "%signoz.resource.kind%", "%signoz.resource.kind\":\"dashboard%", "019b-5678-efgh-9012", "%signoz.resource.id%", "%signoz.resource.id\":\"019b-5678-efgh-9012%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
-		// List: all dashboard deletions (compliance — resource.kind + action AND)
+		// List: all dashboard deletions (compliance — resource.kind + verb AND)
 		{
-			name:        "ListByResourceKindAndAction",
+			name:        "ListByResourceKindAndVerb",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
@@ -163,9 +163,9 @@ func TestStatementBuilder(t *testing.T) {
 				Args:  []any{"service_account", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
-		// Scalar: alert — count forbidden errors (outcome + action AND)
+		// Scalar: alert — count forbidden errors (outcome + verb AND)
 		{
-			name:        "ScalarCountByOutcomeAndAction",
+			name:        "ScalarCountByOutcomeAndVerb",
 			requestType: qbtypes.RequestTypeScalar,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal:       telemetrytypes.SignalLogs,

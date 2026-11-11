@@ -2,8 +2,11 @@ package audittelemetryschema
 
 import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz-semantic-conventions/gen/go/sigsemconv"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
 const (
@@ -83,13 +86,13 @@ var (
 	}
 
 	// ResourceFields are the resource keys the audit writer emits, so a bare name resolves to resource.
-	ResourceFields = map[string]telemetrytypes.TelemetryFieldKey{
-		"service.name":           newResourceField("service.name"),
-		"service.version":        newResourceField("service.version"),
-		"signoz.resource.kind":   newResourceField("signoz.resource.kind"),
-		"signoz.resource.id":     newResourceField("signoz.resource.id"),
-		"signoz.resource.object": newResourceField("signoz.resource.object"),
-	}
+	ResourceFields = newResourceFields(
+		semconv.ServiceNameKey,
+		semconv.ServiceVersionKey,
+		sigsemconv.SigNozResourceKindKey,
+		sigsemconv.SigNozResourceIDKey,
+		sigsemconv.SigNozResourceObjectKey,
+	)
 
 	DefaultSortingOrder = []qbtypes.OrderBy{
 		{
@@ -140,11 +143,15 @@ const (
 	LogsResourceTableName       = "distributed_logs_resource"
 )
 
-func newResourceField(name string) telemetrytypes.TelemetryFieldKey {
-	return telemetrytypes.TelemetryFieldKey{
-		Name:          name,
-		Signal:        telemetrytypes.SignalLogs,
-		FieldContext:  telemetrytypes.FieldContextResource,
-		FieldDataType: telemetrytypes.FieldDataTypeString,
+func newResourceFields(keys ...attribute.Key) map[string]telemetrytypes.TelemetryFieldKey {
+	fields := make(map[string]telemetrytypes.TelemetryFieldKey, len(keys))
+	for _, key := range keys {
+		fields[string(key)] = telemetrytypes.TelemetryFieldKey{
+			Name:          string(key),
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  telemetrytypes.FieldContextResource,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
+		}
 	}
+	return fields
 }
