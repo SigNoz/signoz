@@ -18,6 +18,7 @@ import { ENDPOINT_STATS_EXPRESSION_KEY } from '../../../filterParamKeys';
 import { useApiMonitoringParams } from '../../../queryParams';
 import { SPAN_ATTRIBUTES, VIEWS } from './constants';
 import { useFilterExpression } from './hooks/useFilterExpression';
+import { useIsFetchingWidgets } from './hooks/useIsFetchingWidgets';
 
 function AllEndPoints({
 	domainName,
@@ -58,6 +59,8 @@ function AllEndPoints({
 		() => getAllEndpointsWidgetData(groupBy, domainName, filterExpression),
 		[groupBy, domainName, filterExpression],
 	);
+
+	const isFetchingTable = useIsFetchingWidgets([allEndpointsWidgetData]);
 
 	// --- GROUP BY STATE SYNC (existing) ---
 	const handleGroupByChange = useCallback(
@@ -117,6 +120,7 @@ function AllEndPoints({
 						onChange={onDraftChange}
 						onRun={onRun}
 						showRunButton
+						isLoadingQueries={isFetchingTable}
 						dataSource={DataSource.TRACES}
 						placeholder="Search for filters..."
 					/>

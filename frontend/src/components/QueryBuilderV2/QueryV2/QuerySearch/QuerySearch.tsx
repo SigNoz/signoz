@@ -113,6 +113,8 @@ interface QuerySearchProps {
 	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
 	onRun?: (query: string) => void;
 	showRunButton?: boolean;
+	/** Shows the Run button busy while the page's queries fetch. */
+	isLoadingQueries?: boolean;
 	showFilterSuggestionsWithoutMetric?: boolean;
 	/** When set, the editor shows only the user expression; API/filter uses `initial AND (user)`. */
 	initialExpression?: string;
@@ -134,6 +136,7 @@ function QuerySearch({
 	dataSource,
 	onRun,
 	showRunButton,
+	isLoadingQueries,
 	signalSource,
 	hardcodedAttributeKeys,
 	showFilterSuggestionsWithoutMetric,
@@ -1743,6 +1746,7 @@ function QuerySearch({
 						color="secondary"
 						size="md"
 						prefix={<Play size={14} />}
+						loading={isLoadingQueries}
 						onClick={handleRun}
 						testId="query-search-run-button"
 					>
@@ -1842,6 +1846,7 @@ function QuerySearch({
 QuerySearch.defaultProps = {
 	onRun: undefined,
 	showRunButton: false,
+	isLoadingQueries: false,
 	signalSource: '',
 	hardcodedAttributeKeys: undefined,
 	placeholder:

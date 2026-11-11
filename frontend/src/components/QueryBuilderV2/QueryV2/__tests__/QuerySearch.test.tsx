@@ -266,6 +266,24 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		expect(onRun).toHaveBeenCalledWith(SAMPLE_STATUS_QUERY);
 	});
 
+	it('shows the run button busy while the queries load', () => {
+		render(
+			<QuerySearch
+				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+				queryData={initialQueriesMap.logs.builder.queryData[0]}
+				dataSource={DataSource.LOGS}
+				onRun={jest.fn()}
+				showRunButton
+				isLoadingQueries
+			/>,
+		);
+
+		expect(screen.getByTestId('query-search-run-button')).toHaveAttribute(
+			'aria-busy',
+			'true',
+		);
+	});
+
 	it('runs the locked scope combined with the editor text', async () => {
 		const onRun = jest.fn() as jest.MockedFunction<(q: string) => void>;
 		const scope = "kind_string = 'Client'";

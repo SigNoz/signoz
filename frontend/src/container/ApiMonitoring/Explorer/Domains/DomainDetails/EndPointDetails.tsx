@@ -28,6 +28,7 @@ import MetricOverTimeGraph from './components/MetricOverTimeGraph';
 import StatusCodeBarCharts from './components/StatusCodeBarCharts';
 import StatusCodeTable from './components/StatusCodeTable';
 import { useFilterExpression } from './hooks/useFilterExpression';
+import { useIsFetchingWidgets } from './hooks/useIsFetchingWidgets';
 
 function EndPointDetails({
 	domainName,
@@ -131,6 +132,14 @@ function EndPointDetails({
 		[domainName, endPointName, scopedExpression],
 	);
 
+	const isFetchingGraphs = useIsFetchingWidgets([
+		rateOverTimeWidget,
+		latencyOverTimeWidget,
+	]);
+	const isFetchingQueries =
+		isFetchingGraphs ||
+		endPointDetailsDataQueries.some((query) => query.isFetching);
+
 	// // [TODO] Fix this later
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {
@@ -161,6 +170,7 @@ function EndPointDetails({
 						onChange={onDraftChange}
 						onRun={onRun}
 						showRunButton
+						isLoadingQueries={isFetchingQueries}
 						dataSource={DataSource.TRACES}
 						placeholder="Search for filters..."
 					/>
