@@ -1,5 +1,16 @@
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { server } from 'mocks-server/server';
+import {
+	setupAuthzAdmin,
+	setupAuthzAllow,
+	setupAuthzDenyAll,
+} from 'lib/authz/utils/authz-test-utils';
+import {
+	buildRoutePolicyDeletePermission,
+	RoutePolicyAttachPermission,
+	RoutePolicyCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/route-policy.permissions';
 
 import RoutingPolicyList from '../RoutingPolicyList';
 import { getRoutingPolicyColumns } from '../table.config';
@@ -20,7 +31,6 @@ function renderList(
 		isFetching: false,
 		isError: false,
 		refetch: jest.fn(),
-		canEdit: true,
 		onEdit: jest.fn(),
 		onDelete: jest.fn(),
 		onCreate: jest.fn(),
@@ -36,7 +46,25 @@ function renderList(
 	return props;
 }
 
+const EDIT_ROW = `routing-policy-edit-${MOCK_ROUTING_POLICY_1.id}`;
+const DELETE_ROW = `routing-policy-delete-${MOCK_ROUTING_POLICY_1.id}`;
+
+async function openActions(): Promise<void> {
+	await userEvent.click(
+		await screen.findByTestId(
+			`routing-policy-actions-${MOCK_ROUTING_POLICY_1.id}`,
+		),
+	);
+	await waitFor(() =>
+		expect(screen.getByTestId(EDIT_ROW)).not.toHaveAttribute('data-loading'),
+	);
+}
+
 describe('RoutingPolicyList', () => {
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
 	it('renders the key policy fields and hides audit columns by default', async () => {
 		renderList();
 
@@ -90,32 +118,44 @@ describe('RoutingPolicyList', () => {
 		);
 	});
 
-	it('edits and deletes from the actions menu', async () => {
+	it('edits and deletes from the actions menu when granted', async () => {
+		server.use(setupAuthzAdmin());
 		const { onEdit, onDelete } = renderList();
-		const actions = `routing-policy-actions-${MOCK_ROUTING_POLICY_1.id}`;
 
-		await userEvent.click(await screen.findByTestId(actions));
-		await userEvent.click(await screen.findByText('Edit'));
+		await openActions();
+		await userEvent.click(screen.getByTestId(EDIT_ROW));
 		expect(onEdit).toHaveBeenCalledWith(MOCK_ROUTING_POLICY_1);
 
-		await userEvent.click(screen.getByTestId(actions));
-		await userEvent.click(await screen.findByText('Delete'));
+		await openActions();
+		await userEvent.click(screen.getByTestId(DELETE_ROW));
 		expect(onDelete).toHaveBeenCalledWith(MOCK_ROUTING_POLICY_1);
 	});
 
-	it('hides actions and row click for viewers', async () => {
-		const { onEdit } = renderList({ canEdit: false });
+	it('disables Edit and Delete when denied', async () => {
+		server.use(setupAuthzDenyAll());
+		const { onEdit } = renderList();
 
-		await userEvent.click(
-			await screen.findByTestId(
-				`routing-policy-row-${MOCK_ROUTING_POLICY_1.id}-name`,
-			),
+		await openActions();
+		await waitFor(() =>
+			expect(screen.getByTestId(EDIT_ROW)).toHaveAttribute('data-disabled'),
 		);
+		expect(screen.getByTestId(DELETE_ROW)).toHaveAttribute('data-disabled');
 
-		expect(
-			screen.queryByTestId(`routing-policy-actions-${MOCK_ROUTING_POLICY_1.id}`),
-		).not.toBeInTheDocument();
+		await userEvent.click(screen.getByTestId(EDIT_ROW));
 		expect(onEdit).not.toHaveBeenCalled();
+	});
+
+	it('gates Edit and Delete on that policy separately', async () => {
+		server.use(
+			setupAuthzAllow(buildRoutePolicyDeletePermission(MOCK_ROUTING_POLICY_1.id)),
+		);
+		renderList();
+
+		await openActions();
+		await waitFor(() =>
+			expect(screen.getByTestId(EDIT_ROW)).toHaveAttribute('data-disabled'),
+		);
+		expect(screen.getByTestId(DELETE_ROW)).not.toHaveAttribute('data-disabled');
 	});
 
 	it('renders the error state with a refresh', async () => {
@@ -139,21 +179,35 @@ describe('RoutingPolicyList', () => {
 		expect(onClearSearch).toHaveBeenCalled();
 	});
 
-	it('renders the empty state with a create action', async () => {
+	it('renders the empty state with a create action when granted', async () => {
+		server.use(setupAuthzAdmin());
 		const { onCreate } = renderList({ routingPolicies: [], pagedPolicies: [] });
 
 		expect(
 			screen.getByTestId('routing-policies-empty-state'),
 		).toBeInTheDocument();
+		await waitFor(() =>
+			expect(
+				screen.getByTestId('routing-policies-empty-create'),
+			).not.toHaveAttribute('aria-busy'),
+		);
 		await userEvent.click(screen.getByTestId('routing-policies-empty-create'));
 		expect(onCreate).toHaveBeenCalled();
 	});
 
-	it('hides the empty-state create action for viewers', () => {
-		renderList({ routingPolicies: [], pagedPolicies: [], canEdit: false });
+	it('disables the empty-state create action without attach', async () => {
+		server.use(setupAuthzAllow(RoutePolicyCreatePermission));
+		renderList({ routingPolicies: [], pagedPolicies: [] });
 
-		expect(
-			screen.queryByTestId('routing-policies-empty-create'),
-		).not.toBeInTheDocument();
+		await waitFor(() =>
+			expect(screen.getByTestId('routing-policies-empty-create')).toHaveAttribute(
+				'data-denied-permissions',
+				RoutePolicyAttachPermission,
+			),
+		);
+		expect(screen.getByTestId('routing-policies-empty-create')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 });
