@@ -150,6 +150,21 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		docsAnchor: 'meter-metrics',
 		selectorType: 'telemetryBuilder',
 	},
+	user: {
+		label: 'User',
+		description: 'Users of the workspace, including their roles and permissions.',
+		icon: Bot,
+		selectorPlaceholder: 'Type user ID, separate multiple with comma or space',
+		docsAnchor: 'user',
+	},
+	'factor-password': {
+		label: 'Passwords',
+		description: 'Passwords of the workspace users.',
+		icon: Key,
+		selectorPlaceholder:
+			'Type password ID, separate multiple with comma or space',
+		docsAnchor: 'factor-password',
+	},
 };
 
 export const RESOURCE_ORDER = (
