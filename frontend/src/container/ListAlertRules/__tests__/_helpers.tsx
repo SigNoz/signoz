@@ -15,7 +15,11 @@ import {
 	RenderResult,
 	screen,
 	type userEvent,
+	waitFor,
 } from 'tests/test-utils';
+import type { RestHandler } from 'msw';
+import { server } from 'mocks-server/server';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 // NuqsTestingAdapter resets its update queue on every render, not only on mount,
 // dropping writes queued just before it re-renders.
@@ -46,12 +50,15 @@ function UrlAdapter({
 interface RenderOptions {
 	role?: string;
 	initialRoute?: string;
+	/** Answers the permission checks; grants everything by default. */
+	authz?: RestHandler;
 }
 
 export function renderListAlertRules(
 	options: RenderOptions = {},
 ): RenderResult {
-	const { role = 'ADMIN', initialRoute = '/' } = options;
+	const { role = 'ADMIN', initialRoute = '/', authz } = options;
+	server.use(authz ?? setupAuthzAdmin());
 
 	const initialSearch = initialRoute.includes('?')
 		? initialRoute.slice(initialRoute.indexOf('?'))
@@ -110,4 +117,13 @@ export function getSearchDraft(): string {
 export async function runSearchQuery(user: User, value: string): Promise<void> {
 	setSearchDraft(value);
 	await user.click(screen.getByTestId('alert-rules-list-search-submit'));
+}
+
+/** A permission-gated button is inert until its check answers. */
+export async function waitForAuthZButton(testId: string): Promise<HTMLElement> {
+	const button = await screen.findByTestId(testId);
+	await waitFor(() => expect(button).toHaveAttribute('aria-disabled', 'false'), {
+		timeout: 5000,
+	});
+	return button;
 }

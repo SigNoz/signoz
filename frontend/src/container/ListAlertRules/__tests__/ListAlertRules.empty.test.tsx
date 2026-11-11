@@ -10,7 +10,7 @@ import { rest } from 'msw';
 import { getCurrentNuqsSearchParams } from 'tests/nuqs-helpers';
 import { screen, waitFor } from 'tests/test-utils';
 
-import { renderListAlertRules } from './_helpers';
+import { renderListAlertRules, waitForAuthZButton } from './_helpers';
 
 describe('ListAlertRules — empty states', () => {
 	beforeEach(() => {
@@ -41,7 +41,7 @@ describe('ListAlertRules — empty states', () => {
 		).not.toBeInTheDocument();
 
 		// New Alert Rule button is visible and triggers safeNavigate to ALERTS_NEW.
-		await user.click(screen.getByTestId('add-alert'));
+		await user.click(await waitForAuthZButton('add-alert'));
 		expect(safeNavigateMock).toHaveBeenCalledWith(
 			ROUTES.ALERTS_NEW,
 			expect.objectContaining({ newTab: false }),
