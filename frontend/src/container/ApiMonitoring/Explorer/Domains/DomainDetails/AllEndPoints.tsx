@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -10,9 +10,11 @@ import GridCard from 'container/WidgetCard/Card';
 import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/GroupByFilter';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { isEqual } from 'lodash-es';
+import { parseAsString, useQueryState } from 'nuqs';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { ENDPOINT_STATS_EXPRESSION_KEY } from '../../../filterParamKeys';
 import { useApiMonitoringParams } from '../../../queryParams';
 import { SPAN_ATTRIBUTES, VIEWS } from './constants';
 import { useFilterExpression } from './hooks/useFilterExpression';
@@ -24,8 +26,6 @@ function AllEndPoints({
 	groupBy,
 	setGroupBy,
 	timeRange,
-	initialFilterExpression,
-	setInitialFilterExpressionEndPointStats,
 }: {
 	domainName: string;
 	setSelectedEndPointName: (name: string) => void;
@@ -36,45 +36,22 @@ function AllEndPoints({
 		startTime: number;
 		endTime: number;
 	};
-	initialFilterExpression: string;
-	setInitialFilterExpressionEndPointStats: (expression: string) => void;
 }): JSX.Element {
 	const [params, setParams] = useApiMonitoringParams();
+	const [, setEndPointStatsExpression] = useQueryState(
+		ENDPOINT_STATS_EXPRESSION_KEY,
+		parseAsString,
+	);
 
 	// --- FILTERS STATE SYNC ---
-	const [filterExpression, setFilterExpression] = useState<string>(
-		() => params.allEndpointsFilterExpression ?? initialFilterExpression,
-	);
-
-	// Sync params to local filters state on param change
-	useEffect(() => {
-		if (
-			params.allEndpointsFilterExpression !== undefined &&
-			params.allEndpointsFilterExpression !== filterExpression
-		) {
-			setFilterExpression(params.allEndpointsFilterExpression);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [params.allEndpointsFilterExpression]);
-
-	// Handler for changes from the QuerySearch component
-	const handleFilterChange = useCallback(
-		(expression: string): void => {
-			setFilterExpression(expression);
-			setParams({ allEndpointsFilterExpression: expression });
-		},
-		[setParams],
-	);
-
 	const {
+		expression: filterExpression,
 		queryData,
 		onDraftChange,
 		onRun,
 		onBlur: handleFilterBlur,
 	} = useFilterExpression({
-		expression: filterExpression,
 		groupBy,
-		onExpressionChange: handleFilterChange,
 	});
 
 	const allEndpointsWidgetData = useMemo(
@@ -116,16 +93,15 @@ function AllEndPoints({
 				getGroupByExpressionFromRowData(props),
 				filterExpression,
 			);
-			setInitialFilterExpressionEndPointStats(statsExpression);
+			void setEndPointStatsExpression(statsExpression || null);
 			setParams({
 				selectedEndPointName: props[SPAN_ATTRIBUTES.HTTP_URL] as string,
 				selectedView: VIEWS.ENDPOINT_STATS,
-				endPointDetailsFilterExpression: statsExpression,
 			});
 		},
 		[
 			filterExpression,
-			setInitialFilterExpressionEndPointStats,
+			setEndPointStatsExpression,
 			setSelectedEndPointName,
 			setSelectedView,
 			setParams,

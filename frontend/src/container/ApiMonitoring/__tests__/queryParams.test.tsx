@@ -2,6 +2,7 @@ import {
 	ApiMonitoringParams,
 	DEFAULT_PARAMS,
 	getApiMonitoringParams,
+	getLegacyFilterExpressions,
 	setApiMonitoringParams,
 } from 'container/ApiMonitoring/queryParams';
 import { mockNavigate } from 'tests/router-mocks';
@@ -85,14 +86,14 @@ describe('API Monitoring Query Params', () => {
 				encodeURIComponent(JSON.stringify(legacyParams)),
 			);
 
-			const result = getApiMonitoringParams(`?${urlParams.toString()}`);
+			const search = `?${urlParams.toString()}`;
 
-			expect(result.allEndpointsFilterExpression).toBe(
-				"service.name = 'frontend'",
-			);
-			expect(result.endPointDetailsFilterExpression).toBe(
-				"http.status_code = '500'",
-			);
+			expect(getLegacyFilterExpressions(search)).toStrictEqual({
+				allEndpoints: "service.name = 'frontend'",
+				endPointDetails: "http.status_code = '500'",
+			});
+			const result = getApiMonitoringParams(search);
+			expect(result.selectedDomain).toBe('test-domain');
 			expect(result).not.toHaveProperty('allEndpointsLocalFilters');
 			expect(result).not.toHaveProperty('endPointDetailsLocalFilters');
 		});

@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQueries } from 'react-query';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
 	extractPortAndEndpoint,
@@ -34,14 +33,12 @@ function EndPointDetails({
 	domainName,
 	endPointName,
 	setSelectedEndPointName,
-	initialFilterExpression,
 	timeRange,
 	handleTimeChange,
 }: {
 	domainName: string;
 	endPointName: string;
 	setSelectedEndPointName: (value: string) => void;
-	initialFilterExpression: string;
 	timeRange: {
 		startTime: number;
 		endTime: number;
@@ -52,17 +49,15 @@ function EndPointDetails({
 	) => void;
 }): JSX.Element {
 	const { startTime: minTime, endTime: maxTime } = timeRange;
-	const [params, setParams] = useApiMonitoringParams();
 
-	// Local state for the search filters; the endpoint filter is combined in at query time
-	const [filterExpression, setFilterExpression] = useState<string>(
-		() => params.endPointDetailsFilterExpression ?? initialFilterExpression,
-	);
-
-	// Separate effect to update params when filters change
-	useEffect(() => {
-		setParams({ endPointDetailsFilterExpression: filterExpression });
-	}, [filterExpression, setParams]);
+	// Search filters; the endpoint filter is combined in at query time
+	const {
+		expression: filterExpression,
+		queryData,
+		onDraftChange,
+		onRun,
+		onBlur: handleFilterBlur,
+	} = useFilterExpression();
 
 	const httpUrlExpression = useMemo(
 		() => getHttpUrlExpression(endPointName),
@@ -73,16 +68,6 @@ function EndPointDetails({
 		() => combineInitialAndUserExpression(httpUrlExpression, filterExpression),
 		[httpUrlExpression, filterExpression],
 	);
-
-	const {
-		queryData,
-		onDraftChange,
-		onRun,
-		onBlur: handleFilterBlur,
-	} = useFilterExpression({
-		expression: filterExpression,
-		onExpressionChange: setFilterExpression,
-	});
 
 	const isServicesFilterApplied = useMemo(
 		() =>

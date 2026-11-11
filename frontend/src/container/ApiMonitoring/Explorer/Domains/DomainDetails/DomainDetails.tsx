@@ -6,6 +6,7 @@ import { Button, Drawer } from 'antd';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
+import { QuerySearchV2Provider } from 'components/QueryBuilderV2';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
@@ -17,6 +18,10 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import {
+	ALL_ENDPOINTS_EXPRESSION_KEY,
+	ENDPOINT_STATS_EXPRESSION_KEY,
+} from '../../../filterParamKeys';
 import { useApiMonitoringParams } from '../../../queryParams';
 import AllEndPoints from './AllEndPoints';
 import DomainMetrics from './components/DomainMetrics';
@@ -53,10 +58,6 @@ function DomainDetails({
 	const [endPointsGroupBy, setEndPointsGroupBy] = useState<
 		IBuilderQuery['groupBy']
 	>([]);
-	const [
-		initialFilterExpressionEndPointStats,
-		setInitialFilterExpressionEndPointStats,
-	] = useState<string>(domainListFilterExpression);
 
 	const handleTabChange = (value: string): void => {
 		setSelectedView(value as VIEWS);
@@ -255,29 +256,34 @@ function DomainDetails({
 						/>
 					</div>
 					{selectedView === VIEW_TYPES.ALL_ENDPOINTS && (
-						<AllEndPoints
-							domainName={domainData.domainName}
-							setSelectedEndPointName={handleEndPointChange}
-							setSelectedView={setSelectedView}
-							groupBy={endPointsGroupBy}
-							setGroupBy={setEndPointsGroupBy}
-							timeRange={modalTimeRange}
-							initialFilterExpression={domainListFilterExpression}
-							setInitialFilterExpressionEndPointStats={
-								setInitialFilterExpressionEndPointStats
-							}
-						/>
+						<QuerySearchV2Provider
+							queryParamKey={ALL_ENDPOINTS_EXPRESSION_KEY}
+							persistOnUnmount
+						>
+							<AllEndPoints
+								domainName={domainData.domainName}
+								setSelectedEndPointName={handleEndPointChange}
+								setSelectedView={setSelectedView}
+								groupBy={endPointsGroupBy}
+								setGroupBy={setEndPointsGroupBy}
+								timeRange={modalTimeRange}
+							/>
+						</QuerySearchV2Provider>
 					)}
 
 					{selectedView === VIEW_TYPES.ENDPOINT_STATS && (
-						<EndPointDetails
-							domainName={domainData.domainName}
-							endPointName={selectedEndPointName}
-							setSelectedEndPointName={handleEndPointChange}
-							initialFilterExpression={initialFilterExpressionEndPointStats}
-							timeRange={modalTimeRange}
-							handleTimeChange={handleTimeChange}
-						/>
+						<QuerySearchV2Provider
+							queryParamKey={ENDPOINT_STATS_EXPRESSION_KEY}
+							persistOnUnmount
+						>
+							<EndPointDetails
+								domainName={domainData.domainName}
+								endPointName={selectedEndPointName}
+								setSelectedEndPointName={handleEndPointChange}
+								timeRange={modalTimeRange}
+								handleTimeChange={handleTimeChange}
+							/>
+						</QuerySearchV2Provider>
 					)}
 
 					{selectedView === VIEW_TYPES.TOP_ERRORS && (

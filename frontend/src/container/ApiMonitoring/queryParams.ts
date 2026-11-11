@@ -1,8 +1,10 @@
 import { useCallback } from 'react';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
-import { getCurrentLocation, navigate } from 'lib/router/navigation';
+import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
+import { omit } from 'lodash-es';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 // --- Types for all API Monitoring query params ---
 export interface ApiMonitoringParams {
@@ -11,8 +13,6 @@ export interface ApiMonitoringParams {
 	selectedView?: string;
 	selectedEndPointName?: string;
 	groupBy?: string[];
-	allEndpointsFilterExpression?: string;
-	endPointDetailsFilterExpression?: string;
 	modalTimeRange?: { startTime: number; endTime: number };
 	selectedInterval?: string;
 	// Add more params as needed
@@ -24,8 +24,6 @@ export const DEFAULT_PARAMS: ApiMonitoringParams = {
 	selectedView: 'all_endpoints',
 	selectedEndPointName: '',
 	groupBy: [],
-	allEndpointsFilterExpression: undefined,
-	endPointDetailsFilterExpression: undefined,
 	modalTimeRange: undefined,
 	selectedInterval: undefined,
 };
@@ -43,40 +41,44 @@ type LegacyApiMonitoringParams = ApiMonitoringParams & {
 	endPointDetailsLocalFilters?: TagFilter;
 };
 
-function migrateLegacyFilters({
-	allEndpointsLocalFilters,
-	endPointDetailsLocalFilters,
-	...params
-}: LegacyApiMonitoringParams): ApiMonitoringParams {
-	const migrated: ApiMonitoringParams = { ...params };
-	if (
-		migrated.allEndpointsFilterExpression === undefined &&
-		allEndpointsLocalFilters
-	) {
-		migrated.allEndpointsFilterExpression = convertFiltersToExpression(
-			allEndpointsLocalFilters,
-		).expression;
-	}
-	if (
-		migrated.endPointDetailsFilterExpression === undefined &&
-		endPointDetailsLocalFilters
-	) {
-		migrated.endPointDetailsFilterExpression = convertFiltersToExpression(
-			endPointDetailsLocalFilters,
-		).expression;
-	}
-	return migrated;
-}
-
-function decodeParams(value: string | null): ApiMonitoringParams {
+function parseParams(value: string | null): LegacyApiMonitoringParams | null {
 	if (!value) {
-		return DEFAULT_PARAMS;
+		return null;
 	}
 	try {
-		return migrateLegacyFilters(JSON.parse(decodeURIComponent(value)));
+		return JSON.parse(decodeURIComponent(value));
 	} catch {
+		return null;
+	}
+}
+
+// Drops the legacy filters, so the next write leaves them out of the URL.
+function decodeParams(value: string | null): ApiMonitoringParams {
+	const parsed = parseParams(value);
+	if (!parsed) {
 		return DEFAULT_PARAMS;
 	}
+	return omit(parsed, [
+		'allEndpointsLocalFilters',
+		'endPointDetailsLocalFilters',
+	]);
+}
+
+export interface LegacyFilterExpressions {
+	allEndpoints?: string;
+	endPointDetails?: string;
+}
+
+export function getLegacyFilterExpressions(
+	search: string,
+): LegacyFilterExpressions {
+	const parsed = parseParams(new URLSearchParams(search).get(PARAM_KEY));
+	const toExpression = (filters?: TagFilter): string | undefined =>
+		filters ? convertFiltersToExpression(filters).expression : undefined;
+	return {
+		allEndpoints: toExpression(parsed?.allEndpointsLocalFilters),
+		endPointDetails: toExpression(parsed?.endPointDetailsLocalFilters),
+	};
 }
 
 // --- Read query params from URL ---
@@ -107,10 +109,16 @@ export function useApiMonitoringParams(): [
 	const location = useAppLocation();
 	const params = getApiMonitoringParams(location.search);
 
-	// Read the live URL: several writes can land before the next render.
+	// Read the browser's URL, not the router's: several writes can land before
+	// the next render, and the drawer filters are written by nuqs, which the
+	// router's location does not see.
 	const setParams = useCallback(
 		(newParams: Partial<ApiMonitoringParams>, replace = false) => {
-			setApiMonitoringParams(newParams, getCurrentLocation().search, replace);
+			setApiMonitoringParams(
+				newParams,
+				`?${getUnstableCurrentSearchParams().toString()}`,
+				replace,
+			);
 		},
 		[],
 	);

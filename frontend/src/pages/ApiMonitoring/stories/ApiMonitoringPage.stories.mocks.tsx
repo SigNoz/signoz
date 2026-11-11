@@ -12,6 +12,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { VIEWS } from 'container/ApiMonitoring/Explorer/Domains/DomainDetails/constants';
+import { ENDPOINT_STATS_EXPRESSION_KEY } from 'container/ApiMonitoring/filterParamKeys';
 import { DEFAULT_PARAMS } from 'container/ApiMonitoring/queryParams';
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { rest } from 'msw';
@@ -150,14 +151,14 @@ const apiMonitoringRoute = ({
 		selectedView: VIEW_OF[drawer],
 		selectedEndPointName:
 			drawer === 'endpoint-stats' ? endpointUrl(domainName, 0) : '',
-		...(serviceFilter
-			? { endPointDetailsFilterExpression: serviceFilterExpression }
-			: {}),
 	};
+	const filterParam = serviceFilter
+		? `&${ENDPOINT_STATS_EXPRESSION_KEY}=${encodeURIComponent(serviceFilterExpression)}`
+		: '';
 
 	return `${ROUTES.API_MONITORING}?apiMonitoringParams=${encodeURIComponent(
 		JSON.stringify(params),
-	)}`;
+	)}${filterParam}`;
 };
 
 /** The parts of a query spec the handler tells the page's requests apart by. */

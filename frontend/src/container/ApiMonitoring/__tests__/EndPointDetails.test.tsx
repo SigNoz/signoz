@@ -1,7 +1,6 @@
 import { useQueries } from 'react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
-import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
+import { ENDPOINT_STATS_EXPRESSION_KEY } from 'container/ApiMonitoring/filterParamKeys';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
 	extractPortAndEndpoint,
@@ -13,33 +12,18 @@ import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
+import { getCurrentNuqsSearchParams, resetNuqsState } from 'tests/nuqs-helpers';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
 import EndPointPicker from '../Explorer/Domains/DomainDetails/components/EndPointPicker';
 import EndPointDetails from '../Explorer/Domains/DomainDetails/EndPointDetails';
+import { FilterProviders } from './FilterProviders';
 
 // Mock dependencies
 jest.mock('react-query', () => ({
 	...jest.requireActual('react-query'),
 	useQueries: jest.fn(),
-}));
-
-// Mock useApiMonitoringParams hook
-jest.mock('container/ApiMonitoring/queryParams', () => ({
-	useApiMonitoringParams: jest.fn().mockReturnValue([
-		{
-			showIP: true,
-			selectedDomain: '',
-			selectedView: 'all_endpoints',
-			selectedEndPointName: '',
-			groupBy: [],
-			allEndpointsFilterExpression: undefined,
-			endPointDetailsFilterExpression: undefined,
-			modalTimeRange: undefined,
-			selectedInterval: undefined,
-		},
-		jest.fn(),
-	]),
 }));
 
 jest.mock('container/ApiMonitoring/utils', () => ({
@@ -152,6 +136,21 @@ jest.mock(
 	}),
 );
 
+function renderStats(ui: JSX.Element, linkFilter = ''): void {
+	render(
+		<FilterProviders
+			queryParamKey={ENDPOINT_STATS_EXPRESSION_KEY}
+			searchParams={
+				linkFilter
+					? `${ENDPOINT_STATS_EXPRESSION_KEY}=${encodeURIComponent(linkFilter)}`
+					: ''
+			}
+		>
+			{ui}
+		</FilterProviders>,
+	);
+}
+
 describe('EndPointDetails Component', () => {
 	const mockQueryResults = Array(5).fill({
 		data: { data: [] },
@@ -164,7 +163,6 @@ describe('EndPointDetails Component', () => {
 		domainName: 'test-domain',
 		endPointName: '/api/test',
 		setSelectedEndPointName: jest.fn(),
-		initialFilterExpression: '',
 		timeRange: {
 			startTime: 1609459200000,
 			endTime: 1609545600000,
@@ -177,6 +175,7 @@ describe('EndPointDetails Component', () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		resetNuqsState();
 
 		(extractPortAndEndpoint as jest.Mock).mockReturnValue({
 			port: '8080',
@@ -205,7 +204,7 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('renders the component correctly', () => {
-		render(<EndPointDetails {...mockProps} />);
+		renderStats(<EndPointDetails {...mockProps} />);
 
 		// Check all major components are rendered
 		expect(screen.getByTestId('query-builder-search')).toBeInTheDocument();
@@ -225,7 +224,7 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('calls getEndPointDetailsQueryPayload with correct parameters', () => {
-		render(<EndPointDetails {...mockProps} />);
+		renderStats(<EndPointDetails {...mockProps} />);
 
 		expect(getEndPointDetailsQueryPayload).toHaveBeenCalledWith(
 			'test-domain',
@@ -236,7 +235,7 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('adds endpoint filter to initial filters', () => {
-		render(<EndPointDetails {...mockProps} />);
+		renderStats(<EndPointDetails {...mockProps} />);
 
 		expect(getEndPointDetailsQueryPayload).toHaveBeenCalledWith(
 			expect.anything(),
@@ -246,9 +245,8 @@ describe('EndPointDetails Component', () => {
 		);
 	});
 
-	it('updates filters when the search expression is run', () => {
-		const [, setParams] = (useApiMonitoringParams as jest.Mock)();
-		render(<EndPointDetails {...mockProps} />);
+	it('updates filters when the search expression is run', async () => {
+		renderStats(<EndPointDetails {...mockProps} />);
 
 		// Trigger filter change
 		fireEvent.click(screen.getByTestId('filter-change-button'));
@@ -261,18 +259,15 @@ describe('EndPointDetails Component', () => {
 			expect.anything(),
 			`${SPAN_ATTRIBUTES.HTTP_URL} = '/api/test' AND (test.key = 'test-value')`,
 		);
-		expect(setParams).toHaveBeenLastCalledWith({
-			endPointDetailsFilterExpression: "test.key = 'test-value'",
-		});
+		await waitFor(() =>
+			expect(getCurrentNuqsSearchParams().get(ENDPOINT_STATS_EXPRESSION_KEY)).toBe(
+				"test.key = 'test-value'",
+			),
+		);
 	});
 
 	it('keeps the endpoint out of the editor and the picker options', () => {
-		render(
-			<EndPointDetails
-				{...mockProps}
-				initialFilterExpression="service.name = 'checkout'"
-			/>,
-		);
+		renderStats(<EndPointDetails {...mockProps} />, "service.name = 'checkout'");
 
 		expect(QuerySearch).toHaveBeenLastCalledWith(
 			expect.objectContaining({
@@ -292,7 +287,7 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('handles endpoint dropdown selection', () => {
-		render(<EndPointDetails {...mockProps} />);
+		renderStats(<EndPointDetails {...mockProps} />);
 
 		// Trigger endpoint selection
 		fireEvent.click(screen.getByTestId('select-endpoint-button'));
@@ -304,19 +299,17 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('does not display dependent services when service filter is applied', () => {
-		const propsWithServiceFilter = {
-			...mockProps,
-			initialFilterExpression: "service.name = 'test-service'",
-		};
-
-		render(<EndPointDetails {...propsWithServiceFilter} />);
+		renderStats(
+			<EndPointDetails {...mockProps} />,
+			"service.name = 'test-service'",
+		);
 
 		// Dependent services should not be displayed
 		expect(screen.queryByTestId('dependent-services')).not.toBeInTheDocument();
 	});
 
 	it('passes the correct parameters to widget data generators', () => {
-		render(<EndPointDetails {...mockProps} />);
+		renderStats(<EndPointDetails {...mockProps} />);
 
 		expect(getRateOverTimeWidgetData).toHaveBeenCalledWith(
 			'test-domain',
@@ -332,7 +325,7 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('generates correct query parameters for useQueries', () => {
-		render(<EndPointDetails {...mockProps} />);
+		renderStats(<EndPointDetails {...mockProps} />);
 
 		// Check if useQueries was called with correct parameters
 		expect(useQueries).toHaveBeenCalledWith(

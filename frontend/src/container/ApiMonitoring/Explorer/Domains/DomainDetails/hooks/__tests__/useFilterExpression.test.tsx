@@ -1,21 +1,40 @@
-import { act, render, renderHook, screen, userEvent } from 'tests/test-utils';
+import { FilterProviders } from 'container/ApiMonitoring/__tests__/FilterProviders';
+import { getCurrentNuqsSearchParams, resetNuqsState } from 'tests/nuqs-helpers';
+import {
+	act,
+	render,
+	renderHook,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import { useFilterExpression } from '../useFilterExpression';
 
-const expression = "service.name = 'frontend'";
+const PARAM_KEY = 'testExpression';
+const linkExpression = "service.name = 'frontend'";
+const linkSearch = `${PARAM_KEY}=${encodeURIComponent(linkExpression)}`;
 
-function FilterBox({
-	onExpressionChange,
-}: {
-	onExpressionChange: (expression: string) => void;
-}): JSX.Element {
-	const { onDraftChange, onBlur } = useFilterExpression({
-		expression,
-		onExpressionChange,
+function renderFilterHook(
+	searchParams = '',
+): ReturnType<
+	typeof renderHook<ReturnType<typeof useFilterExpression>, unknown>
+> {
+	return renderHook(() => useFilterExpression(), {
+		wrapper: ({ children }) => (
+			<FilterProviders queryParamKey={PARAM_KEY} searchParams={searchParams}>
+				{children}
+			</FilterProviders>
+		),
 	});
+}
+
+function FilterBox(): JSX.Element {
+	const { expression, onDraftChange, onBlur } = useFilterExpression();
 
 	return (
 		<div onBlur={onBlur}>
+			<span data-testid="applied">{expression}</span>
 			<input
 				data-testid="filter-input"
 				onChange={(e): void => onDraftChange(e.target.value)}
@@ -28,54 +47,53 @@ function FilterBox({
 }
 
 describe('useFilterExpression', () => {
-	it('builds a traces query that carries the expression', () => {
-		const { result } = renderHook(() =>
-			useFilterExpression({ expression, onExpressionChange: jest.fn() }),
-		);
+	beforeEach(() => {
+		resetNuqsState();
+	});
 
+	it('reads the filter from the link', async () => {
+		const { result } = renderFilterHook(linkSearch);
+
+		await waitFor(() => expect(result.current.expression).toBe(linkExpression));
 		expect(result.current.queryData.dataSource).toBe('traces');
-		expect(result.current.queryData.filter?.expression).toBe(expression);
+		expect(result.current.queryData.filter?.expression).toBe(linkExpression);
 	});
 
-	it('commits a changed expression on run', () => {
-		const onExpressionChange = jest.fn();
-		const { result } = renderHook(() =>
-			useFilterExpression({ expression, onExpressionChange }),
-		);
+	it('applies a valid expression on run and ignores an invalid one', async () => {
+		const { result } = renderFilterHook(linkSearch);
+		await waitFor(() => expect(result.current.expression).toBe(linkExpression));
 
 		act(() => {
-			result.current.onRun(`${expression} AND http.status_code = 500`);
-		});
-
-		expect(onExpressionChange).toHaveBeenCalledWith(
-			`${expression} AND http.status_code = 500`,
-		);
-	});
-
-	it('ignores an unchanged or invalid expression', () => {
-		const onExpressionChange = jest.fn();
-		const { result } = renderHook(() =>
-			useFilterExpression({ expression, onExpressionChange }),
-		);
-
-		act(() => {
-			result.current.onRun(expression);
 			result.current.onRun('service.name =');
 		});
+		expect(result.current.expression).toBe(linkExpression);
 
-		expect(onExpressionChange).not.toHaveBeenCalled();
+		act(() => {
+			result.current.onRun('http.status_code = 500');
+		});
+		expect(result.current.expression).toBe('http.status_code = 500');
+		await waitFor(() =>
+			expect(getCurrentNuqsSearchParams().get(PARAM_KEY)).toBe(
+				'http.status_code = 500',
+			),
+		);
 	});
 
-	it('commits the draft on blur only when focus leaves the container', async () => {
+	it('applies the draft on blur only when focus leaves the container', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onExpressionChange = jest.fn();
-		render(<FilterBox onExpressionChange={onExpressionChange} />);
+		render(
+			<FilterProviders queryParamKey={PARAM_KEY}>
+				<FilterBox />
+			</FilterProviders>,
+		);
 
 		await user.type(screen.getByTestId('filter-input'), "service.name = 'cart'");
 		await user.click(screen.getByTestId('inside-button'));
-		expect(onExpressionChange).not.toHaveBeenCalled();
+		expect(screen.getByTestId('applied')).toHaveTextContent('');
 
 		await user.click(document.body);
-		expect(onExpressionChange).toHaveBeenCalledWith("service.name = 'cart'");
+		expect(screen.getByTestId('applied')).toHaveTextContent(
+			"service.name = 'cart'",
+		);
 	});
 });

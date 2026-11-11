@@ -1,10 +1,17 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import {
 	getAllEndpointsWidgetData,
 	getGroupByExpressionFromRowData,
 } from 'container/ApiMonitoring/utils';
 
+import {
+	ALL_ENDPOINTS_EXPRESSION_KEY,
+	ENDPOINT_STATS_EXPRESSION_KEY,
+} from 'container/ApiMonitoring/filterParamKeys';
+import { getCurrentNuqsSearchParams, resetNuqsState } from 'tests/nuqs-helpers';
+import { cleanup, fireEvent, render, screen, waitFor } from 'tests/test-utils';
+
 import AllEndPoints from '../Explorer/Domains/DomainDetails/AllEndPoints';
+import { FilterProviders } from './FilterProviders';
 import {
 	SPAN_ATTRIBUTES,
 	VIEWS,
@@ -73,6 +80,7 @@ jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
 
 // Mock useApiMonitoringParams hook
 jest.mock('container/ApiMonitoring/queryParams', () => ({
+	...jest.requireActual('container/ApiMonitoring/queryParams'),
 	useApiMonitoringParams: jest.fn().mockReturnValue([
 		{
 			showIP: true,
@@ -80,8 +88,6 @@ jest.mock('container/ApiMonitoring/queryParams', () => ({
 			selectedView: 'all_endpoints',
 			selectedEndPointName: '',
 			groupBy: [],
-			allEndpointsFilterExpression: undefined,
-			endPointDetailsFilterExpression: undefined,
 			modalTimeRange: undefined,
 			selectedInterval: undefined,
 		},
@@ -100,12 +106,19 @@ describe('AllEndPoints', () => {
 			startTime: 1609459200000,
 			endTime: 1609545600000,
 		},
-		initialFilterExpression: '',
-		setInitialFilterExpressionEndPointStats: jest.fn(),
+	};
+
+	const renderAllEndPoints = (): void => {
+		render(
+			<FilterProviders queryParamKey={ALL_ENDPOINTS_EXPRESSION_KEY}>
+				<AllEndPoints {...mockProps} />
+			</FilterProviders>,
+		);
 	};
 
 	beforeEach(() => {
 		jest.clearAllMocks();
+		resetNuqsState();
 
 		// Setup mock implementations
 		(getAllEndpointsWidgetData as jest.Mock).mockReturnValue({
@@ -127,7 +140,7 @@ describe('AllEndPoints', () => {
 	});
 
 	it('renders component correctly', () => {
-		render(<AllEndPoints {...mockProps} />);
+		renderAllEndPoints();
 
 		// Verify basic component rendering
 		expect(screen.getByText('Group by')).toBeInTheDocument();
@@ -137,7 +150,7 @@ describe('AllEndPoints', () => {
 	});
 
 	it('handles filter changes', () => {
-		render(<AllEndPoints {...mockProps} />);
+		renderAllEndPoints();
 
 		// Trigger filter change
 		fireEvent.click(screen.getByTestId('filter-change-button'));
@@ -151,7 +164,7 @@ describe('AllEndPoints', () => {
 	});
 
 	it('handles group by changes', () => {
-		render(<AllEndPoints {...mockProps} />);
+		renderAllEndPoints();
 
 		// Trigger group by change
 		fireEvent.click(screen.getByTestId('select-change-button'));
@@ -163,7 +176,7 @@ describe('AllEndPoints', () => {
 	});
 
 	it('handles row click in grid card', async () => {
-		render(<AllEndPoints {...mockProps} />);
+		renderAllEndPoints();
 
 		// Trigger row click
 		fireEvent.click(screen.getByTestId('row-click-button'));
@@ -171,9 +184,11 @@ describe('AllEndPoints', () => {
 		// Check if proper functions were called
 		expect(mockProps.setSelectedEndPointName).toHaveBeenCalledWith('/api/test');
 		expect(mockProps.setSelectedView).toHaveBeenCalledWith(VIEWS.ENDPOINT_STATS);
-		expect(
-			mockProps.setInitialFilterExpressionEndPointStats,
-		).toHaveBeenCalledWith("status = '200'");
 		expect(getGroupByExpressionFromRowData).toHaveBeenCalled();
+		await waitFor(() =>
+			expect(getCurrentNuqsSearchParams().get(ENDPOINT_STATS_EXPRESSION_KEY)).toBe(
+				"status = '200'",
+			),
+		);
 	});
 });

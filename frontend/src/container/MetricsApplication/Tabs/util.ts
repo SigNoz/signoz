@@ -3,6 +3,7 @@ import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { ENDPOINT_STATS_EXPRESSION_KEY } from 'container/ApiMonitoring/filterParamKeys';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -135,8 +136,8 @@ const generateAPIMonitoringPath = (
 				endTime,
 			},
 			selectedInterval: 'custom',
-			endPointDetailsFilterExpression: filterExpression,
 		}),
+		[ENDPOINT_STATS_EXPRESSION_KEY]: filterExpression,
 	})}`;
 };
 export function onViewAPIMonitoringPopupClick({
