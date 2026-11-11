@@ -4,6 +4,7 @@ import { fireEvent, screen } from '@testing-library/react';
 import type {
 	ListDowntimeSchedules200,
 	RenderErrorResponseDTO,
+	RuletypesListableRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	AlertmanagertypesRepeatOnDTO,
@@ -126,19 +127,19 @@ jest.mock('api/generated/services/downtimeschedules', () => ({
 }));
 
 let mockRulesState: {
-	data?: { data: Array<{ id: number | string; alert: string }> };
+	data?: Pick<RuletypesListableRuleDTO, 'id' | 'alert'>[];
 	isError: boolean;
 	isLoading: boolean;
 	isFetching: boolean;
 } = {
-	data: { data: [] },
+	data: [],
 	isError: false,
 	isLoading: false,
 	isFetching: false,
 };
 
-jest.mock('api/generated/services/rules', () => ({
-	useListRules: (): typeof mockRulesState => mockRulesState,
+jest.mock('hooks/alerts/useListAllRules', () => ({
+	useListAllRules: (): typeof mockRulesState => mockRulesState,
 }));
 
 describe('PlannedDowntime Component', () => {
@@ -151,7 +152,7 @@ describe('PlannedDowntime Component', () => {
 		});
 		mockDowntimeQueryResult.data = MOCK_DOWNTIME_RESPONSE;
 		mockRulesState = {
-			data: { data: [] },
+			data: [],
 			isError: false,
 			isLoading: false,
 			isFetching: false,
@@ -362,7 +363,7 @@ describe('PlannedDowntime Component', () => {
 
 	it('shows "Unknown rule" when scoped rule IDs cannot be resolved (Bug 56)', async () => {
 		mockRulesState = {
-			data: { data: [] },
+			data: [],
 			isError: false,
 			isLoading: false,
 			isFetching: false,
@@ -387,14 +388,7 @@ describe('PlannedDowntime Component', () => {
 
 	it('shows resolved alert rule name when scoped rule ID exists', async () => {
 		mockRulesState = {
-			data: {
-				data: [
-					{
-						id: 'rule-42',
-						alert: 'Disk Space High',
-					} as any,
-				],
-			},
+			data: [{ id: 'rule-42', alert: 'Disk Space High' }],
 			isError: false,
 			isLoading: false,
 			isFetching: false,
