@@ -44,10 +44,10 @@ export const WAIT_NODATA_TIMELINE_TIMEOUT = 180_000;
 export const FIXTURE_ALERT_LIST_TIMEOUT = 120_000;
 
 /**
- * alertHistory: seeds 25 logs + 2 rules, waits for ruler evaluation.
+ * alertHistory: seeds 25 logs + 1 rule, waits for ruler evaluation.
  *
- * Breakdown: createChannel(2s) + seedLogs(10s) + 2×createRule(4s) +
- *            2×waitForEntries(70s) + 2×disableRule(4s) = ~90s.
+ * Breakdown: createChannel(2s) + seedLogs(10s) + createRule(2s) +
+ *            waitForEntries(35s) + disableRule(2s) = ~51s.
  * Timeout: 240s (~2.5x headroom).
  */
 export const FIXTURE_ALERT_HISTORY_TIMEOUT = 240_000;

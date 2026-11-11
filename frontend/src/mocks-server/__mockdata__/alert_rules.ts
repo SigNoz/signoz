@@ -41,8 +41,6 @@ const make = (
 	labels: { severity: 'info' },
 	annotations: {},
 	source: '',
-	evalWindow: '5m0s',
-	frequency: '1m0s',
 	ruleType: RuletypesRuleTypeDTO.threshold_rule,
 	schemaVersion: RuletypesRuleDTOSchemaVersion.v2alpha1,
 	evaluation: {
