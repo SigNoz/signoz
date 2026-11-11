@@ -107,6 +107,7 @@ func runGenerateAuthz(_ context.Context) error {
 		coretypes.NewResourceRef(coretypes.ResourceMetaResourceSavedView).String():           true,
 		coretypes.NewResourceRef(coretypes.ResourceMetaResourceNotificationChannel).String(): true,
 		coretypes.NewResourceRef(coretypes.ResourceMetaResourceRule).String():                true,
+		coretypes.NewResourceRef(coretypes.ResourceMetaResourceRoutePolicy).String():         true,
 	}
 
 	allowedTypes := map[string]bool{}
