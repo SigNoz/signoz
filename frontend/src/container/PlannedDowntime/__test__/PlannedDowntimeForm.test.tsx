@@ -25,6 +25,7 @@ import {
 import {
 	buildRuleAttachPermission,
 	buildRuleDetachPermission,
+	RuleListPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 
 import { PlannedDowntimeForm } from '../PlannedDowntimeForm';
@@ -45,15 +46,17 @@ const RULE_PICKER_PLACEHOLDER = 'Search for alert rules or groups...';
 function FormHarness({
 	initialValues,
 	isEditMode = true,
+	alertOptions = ALERT_OPTIONS,
 }: {
 	initialValues: Partial<AlertmanagertypesPlannedMaintenanceDTO>;
 	isEditMode?: boolean;
+	alertOptions?: typeof ALERT_OPTIONS;
 }): JSX.Element {
 	const [form] = Form.useForm();
 	return (
 		<PlannedDowntimeForm
 			initialValues={initialValues}
-			alertOptions={ALERT_OPTIONS}
+			alertOptions={alertOptions}
 			isError={false}
 			isLoading={false}
 			isOpen
@@ -260,6 +263,23 @@ describe('PlannedDowntimeForm authz', () => {
 			.find(Boolean);
 		await new Promise((resolve) => setTimeout(resolve, 100));
 		expect(option).not.toHaveClass('ant-select-item-option-disabled');
+	});
+
+	it('explains an empty picker without rule:list', async () => {
+		server.use(setupAuthzDeny(RuleListPermission));
+		render(
+			<FormHarness
+				initialValues={{ alertIds: [] }}
+				isEditMode={false}
+				alertOptions={[]}
+			/>,
+		);
+		const picker = await screen.findByTestId('downtime-alert-rules');
+		fireEvent.mouseDown(picker.querySelector('.ant-select-selector') ?? picker);
+
+		await expect(
+			screen.findByTestId('downtime-rules-denied'),
+		).resolves.toHaveTextContent('list:rule:*');
 	});
 
 	it('keeps a linked rule removable with detach', async () => {
