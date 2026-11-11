@@ -80,10 +80,14 @@ const expectLocked = async (
 	element: HTMLElement,
 	locked = true,
 ): Promise<void> => {
-	await waitFor(() => {
-		expect(element).not.toHaveAttribute('aria-busy', 'true');
-		expect(element).not.toHaveAttribute('data-loading');
-	}, untilLoaded);
+	await waitFor(
+		() =>
+			expect(
+				element.getAttribute('aria-busy') !== 'true' &&
+					!element.hasAttribute('data-loading'),
+			).toBe(true),
+		untilLoaded,
+	);
 	await expectDisabled(element, locked);
 };
 
