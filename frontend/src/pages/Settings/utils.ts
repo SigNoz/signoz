@@ -67,17 +67,13 @@ export const getRoutes = (
 
 	// Visible to all authenticated users
 	settings.push(
+		...membersSettings(t),
 		...serviceAccountsSettings(t),
 		...rolesSettings(t),
 		...roleCreate(t),
 		...roleDetails(t),
 		...roleEdit(t),
 	);
-
-	// Admin-only: members management
-	if (isAdmin) {
-		settings.push(...membersSettings(t));
-	}
 
 	if (isCloudUser || isEnterpriseSelfHostedUser) {
 		settings.push(...billingSettings(t));

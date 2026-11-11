@@ -82,7 +82,8 @@ function SettingsPage(): JSX.Element {
 						item.key === ROUTES.ROLE_CREATE ||
 						item.key === ROUTES.ROLE_DETAILS ||
 						item.key === ROUTES.ROLE_EDIT ||
-						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
+						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
+						item.key === ROUTES.MEMBERS_SETTINGS
 							? true
 							: item.isEnabled,
 				}));
@@ -133,7 +134,8 @@ function SettingsPage(): JSX.Element {
 						item.key === ROUTES.ROLE_CREATE ||
 						item.key === ROUTES.ROLE_DETAILS ||
 						item.key === ROUTES.ROLE_EDIT ||
-						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
+						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
+						item.key === ROUTES.MEMBERS_SETTINGS
 							? true
 							: item.isEnabled,
 				}));
@@ -181,7 +183,8 @@ function SettingsPage(): JSX.Element {
 						item.key === ROUTES.ROLE_CREATE ||
 						item.key === ROUTES.ROLE_DETAILS ||
 						item.key === ROUTES.ROLE_EDIT ||
-						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
+						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
+						item.key === ROUTES.MEMBERS_SETTINGS
 							? true
 							: item.isEnabled,
 				}));
