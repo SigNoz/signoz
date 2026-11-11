@@ -556,8 +556,6 @@ describe('Footer utils', () => {
 				},
 				ruleType: 'threshold_rule',
 				schemaVersion: 'v2alpha1',
-				source: 'http://localhost/',
-				version: 'v5',
 			});
 		});
 

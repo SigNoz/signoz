@@ -92,30 +92,17 @@
 	.chart-preview-container {
 		margin-right: 4px;
 		.alert-chart-container {
-			.ant-card {
-				border: 1px solid var(--l1-border);
-				.ant-card-body {
-					background-color: var(--l1-background);
+			.chart-preview-headline {
+				display: flex;
+				align-items: flex-start;
+				justify-content: space-between;
+				gap: 8px;
+				width: 100%;
 
-					.chart-preview-headline {
-						display: flex;
-						align-items: flex-start;
-						justify-content: space-between;
-						gap: 8px;
-						width: 100%;
-
-						.y-axis-unit-selector-component {
-							margin-top: 0;
-						}
-					}
+				.y-axis-unit-selector-component {
+					margin-top: 0;
 				}
 			}
 		}
-	}
-
-	.alert-query-section-container {
-		margin: 0;
-		background-color: var(--l1-background);
-		border: 1px solid var(--l1-border);
 	}
 }

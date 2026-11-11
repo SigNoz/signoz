@@ -1,4 +1,3 @@
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import {
 	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
@@ -39,7 +38,6 @@ const defaultEvaluation: PostableAlertRuleV2['evaluation'] = {
 
 export const defaultPostableAlertRuleV2: PostableAlertRuleV2 = {
 	alertType: AlertTypes.METRICS_BASED_ALERT,
-	version: ENTITY_VERSION_V5,
 	schemaVersion: NEW_ALERT_SCHEMA_VERSION,
 	condition: {
 		compositeQuery: {

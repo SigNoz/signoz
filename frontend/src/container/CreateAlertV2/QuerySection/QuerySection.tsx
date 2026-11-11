@@ -179,7 +179,6 @@ function QuerySection(): JSX.Element {
 				isAnomalyDetection={isAnomalyDetection}
 				key={currentQuery.queryType}
 				ruleId=""
-				hideTitle
 			/>
 		</div>
 	);

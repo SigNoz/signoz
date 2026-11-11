@@ -1,4 +1,4 @@
-import { AlertDetectionTypes } from 'container/FormAlertRules';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 
@@ -18,8 +18,8 @@ export function buildAlertDefForChartPreview({
 		...initialAlertDef,
 		ruleType:
 			alertType === AlertTypes.ANOMALY_BASED_ALERT
-				? AlertDetectionTypes.ANOMALY_DETECTION_ALERT
-				: AlertDetectionTypes.THRESHOLD_ALERT,
+				? RuletypesRuleTypeDTO.anomaly_rule
+				: RuletypesRuleTypeDTO.threshold_rule,
 		condition: {
 			...initialAlertDef.condition,
 			targetUnit: thresholdState.thresholds?.[0].unit,
