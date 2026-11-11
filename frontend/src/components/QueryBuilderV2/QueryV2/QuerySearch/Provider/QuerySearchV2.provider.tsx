@@ -47,38 +47,58 @@ export function QuerySearchV2Provider({
 		store.getState().setInitialExpression(initialExpression);
 	}, [initialExpression, store]);
 
-	// What this provider last wrote, so its own write coming back is not taken
-	// for a change from outside (Back, Forward, a link). Undefined until mount.
-	const lastWrittenRef = useRef<string | null | undefined>(undefined);
+	const isInitialized = useRef(false);
+	const lastCommittedRef = useRef(committedExpression);
 	useEffect(() => {
-		const isMount = lastWrittenRef.current === undefined;
-		if (urlExpression === lastWrittenRef.current) {
+		if (isInitialized.current || !urlExpression) {
 			return;
 		}
-		lastWrittenRef.current = urlExpression;
-		if (urlExpression) {
-			store
-				.getState()
-				.initializeFromUrl(
-					getUserExpressionFromCombined(initialExpression, urlExpression),
-				);
-		} else if (!isMount) {
-			store.getState().resetExpression();
-		}
+		isInitialized.current = true;
+		store
+			.getState()
+			.initializeFromUrl(
+				getUserExpressionFromCombined(initialExpression, urlExpression),
+			);
 	}, [urlExpression, initialExpression, store]);
 
+	// Back and Forward. Reads the browser's URL: after a write, nuqs can briefly
+	// report the value it replaced.
+	useEffect(() => {
+		const onPopState = (): void => {
+			isInitialized.current = true;
+			const urlValue = new URLSearchParams(window.location.search).get(
+				queryParamKey,
+			);
+			const expression = urlValue
+				? getUserExpressionFromCombined(initialExpression, urlValue)
+				: '';
+			// Another param changed; keep any text typed but not run.
+			if (expression === store.getState().committedExpression) {
+				return;
+			}
+			// Already in the URL, so the write below must not run for it.
+			lastCommittedRef.current = expression;
+			if (expression) {
+				store.getState().initializeFromUrl(expression);
+			} else {
+				store.getState().resetExpression();
+			}
+		};
+		window.addEventListener('popstate', onPopState);
+		return (): void => window.removeEventListener('popstate', onPopState);
+	}, [queryParamKey, initialExpression, store]);
+
 	// Write only when the committed filter changes, never in reply to a URL change.
-	const lastCommittedRef = useRef(committedExpression);
 	useEffect(() => {
 		if (committedExpression === lastCommittedRef.current) {
 			return;
 		}
 		lastCommittedRef.current = committedExpression;
+		isInitialized.current = true;
 		const next = committedExpression || null;
 		if (next === urlExpression) {
 			return;
 		}
-		lastWrittenRef.current = next;
 		void setUrlExpression(next);
 	}, [committedExpression, urlExpression, setUrlExpression]);
 
