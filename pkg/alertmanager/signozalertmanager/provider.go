@@ -192,20 +192,20 @@ func (provider *provider) UpdateChannelByReceiverAndID(ctx context.Context, orgI
 		return err
 	}
 
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return err
-	}
-
-	if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
-		return err
-	}
-
-	if err := config.UpdateReceiver(receiver); err != nil {
-		return err
-	}
-
 	return provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return err
+		}
+
+		if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
+			return err
+		}
+
+		if err := config.UpdateReceiver(receiver); err != nil {
+			return err
+		}
+
 		return provider.configStore.Set(ctx, config)
 	}))
 }
@@ -231,40 +231,40 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 			channel.DisplayName, names)
 	}
 
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return err
-	}
-
-	if err := config.DeleteReceiver(channel.DisplayName); err != nil {
-		return err
-	}
-
 	return provider.configStore.DeleteChannelByID(ctx, orgID, channelID, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return err
+		}
+
+		if err := config.DeleteReceiver(channel.DisplayName); err != nil {
+			return err
+		}
+
 		return provider.configStore.Set(ctx, config)
 	}))
 }
 
 func (provider *provider) CreateChannel(ctx context.Context, orgID string, receiver *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
-		return nil, err
-	}
-
-	if err := config.CreateReceiver(receiver); err != nil {
-		return nil, err
-	}
-
 	channel, err := alertmanagertypes.NewChannelFromReceiver(receiver, orgID)
 	if err != nil {
 		return nil, err
 	}
 
 	err = provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return err
+		}
+
+		if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
+			return err
+		}
+
+		if err := config.CreateReceiver(receiver); err != nil {
+			return err
+		}
+
 		return provider.configStore.Set(ctx, config)
 	}))
 	if err != nil {
@@ -280,20 +280,20 @@ func (provider *provider) CreateNotificationChannel(ctx context.Context, orgID s
 		return nil, err
 	}
 
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
-		return nil, err
-	}
-
-	if err := config.CreateReceiverV2(receiver); err != nil {
-		return nil, err
-	}
-
 	err = provider.configStore.CreateChannel(ctx, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return err
+		}
+
+		if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
+			return err
+		}
+
+		if err := config.CreateReceiverV2(receiver); err != nil {
+			return err
+		}
+
 		return provider.configStore.Set(ctx, config)
 	}))
 	if err != nil {
@@ -317,20 +317,20 @@ func (provider *provider) UpdateNotificationChannel(ctx context.Context, orgID s
 		return nil, err
 	}
 
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
-		return nil, err
-	}
-
-	if err := config.UpdateReceiver(receiver); err != nil {
-		return nil, err
-	}
-
 	if err := provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return err
+		}
+
+		if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
+			return err
+		}
+
+		if err := config.UpdateReceiver(receiver); err != nil {
+			return err
+		}
+
 		return provider.configStore.Set(ctx, config)
 	})); err != nil {
 		return nil, err
@@ -404,14 +404,6 @@ func (provider *provider) splitChannel(ctx context.Context, orgID string, channe
 		return repair, nil
 	}
 
-	config, err := provider.configStore.Get(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-	if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
-		return nil, err
-	}
-
 	receivers := make([]*alertmanagertypes.Receiver, 0, len(channels))
 	for _, split := range channels {
 		receiver, err := alertmanagertypes.NewReceiver(split.Data)
@@ -420,21 +412,30 @@ func (provider *provider) splitChannel(ctx context.Context, orgID string, channe
 		}
 		receivers = append(receivers, receiver)
 	}
-	if err := config.UpdateReceiver(receivers[0]); err != nil {
-		return nil, err
-	}
-	for _, receiver := range receivers[1:] {
-		if err := config.CreateReceiverV2(receiver); err != nil {
-			return nil, err
-		}
-	}
 
-	for _, split := range channels[1:] {
-		if err := provider.configStore.CreateChannel(ctx, split); err != nil {
-			return nil, err
-		}
-	}
 	if err := provider.configStore.UpdateChannel(ctx, orgID, channel, alertmanagertypes.WithCb(func(ctx context.Context) error {
+		config, err := provider.configStore.Get(ctx, orgID)
+		if err != nil {
+			return err
+		}
+		if err := config.SetGlobalConfig(provider.config.Signoz.Global); err != nil {
+			return err
+		}
+
+		if err := config.UpdateReceiver(receivers[0]); err != nil {
+			return err
+		}
+		for _, receiver := range receivers[1:] {
+			if err := config.CreateReceiverV2(receiver); err != nil {
+				return err
+			}
+		}
+
+		for _, split := range channels[1:] {
+			if err := provider.configStore.CreateChannel(ctx, split); err != nil {
+				return err
+			}
+		}
 		return provider.configStore.Set(ctx, config)
 	})); err != nil {
 		return nil, err
