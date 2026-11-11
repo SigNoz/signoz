@@ -69,11 +69,16 @@ MERGE_TREE_CONFIG = """
 """
 
 
-def with_merge_tree_config(container: ClickHouseContainer, tmp_dir: str, clickhouse_version: str) -> None:
+def clickhouse_version_at_least(clickhouse_version: str, minimum: tuple[int, int]) -> bool:
+    """False for a tag that is not numeric, such as `latest`."""
     try:
-        if tuple(int(part) for part in clickhouse_version.split(".")[:2]) < (26, 8):
-            return
+        return tuple(int(part) for part in clickhouse_version.split(".")[:2]) >= minimum
     except ValueError:
+        return False
+
+
+def with_merge_tree_config(container: ClickHouseContainer, tmp_dir: str, clickhouse_version: str) -> None:
+    if not clickhouse_version_at_least(clickhouse_version, (26, 8)):
         return
     path = os.path.join(tmp_dir, "merge-tree.xml")
     with open(path, "w", encoding="utf-8") as f:
