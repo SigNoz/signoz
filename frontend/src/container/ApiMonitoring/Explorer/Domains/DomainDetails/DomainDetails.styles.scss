@@ -355,6 +355,7 @@
 .top-errors-dropdown-container {
 	display: flex;
 	flex-direction: row;
+	justify-content: space-between;
 	gap: 10px;
 	align-items: center;
 }
