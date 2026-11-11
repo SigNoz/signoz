@@ -7,10 +7,8 @@ export type ComponentTypes =
 	| 'create_new_dashboards'
 	| 'import_dashboard'
 	| 'export_dashboard'
-	| 'add_new_alert'
 	| 'add_new_channel'
 	| 'set_retention_period'
-	| 'action'
 	| 'save_layout'
 	| 'edit_dashboard'
 	| 'delete_widget'
@@ -34,10 +32,8 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	create_new_dashboards: ['ADMIN', 'EDITOR'],
 	import_dashboard: ['ADMIN', 'EDITOR'],
 	export_dashboard: ['ADMIN', 'EDITOR', 'VIEWER'],
-	add_new_alert: ['ADMIN', 'EDITOR'],
 	add_new_channel: ['ADMIN'],
 	set_retention_period: ['ADMIN'],
-	action: ['ADMIN', 'EDITOR'],
 	save_layout: ['ADMIN', 'EDITOR', 'AUTHOR'],
 	edit_dashboard: ['ADMIN', 'EDITOR', 'AUTHOR'],
 	delete_widget: ['ADMIN', 'EDITOR', 'AUTHOR'],
