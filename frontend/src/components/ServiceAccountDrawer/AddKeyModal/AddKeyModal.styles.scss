@@ -63,10 +63,11 @@
 		display: flex;
 		align-items: center;
 		height: 32px;
-		background: var(--l2-background);
-		border: 1px solid var(--l1-border);
+		background: var(--l3-background);
+		border: 1px solid var(--l3-border);
 		border-radius: 2px;
 		overflow: hidden;
+		padding-right: 8px;
 	}
 
 	&__key-text {
