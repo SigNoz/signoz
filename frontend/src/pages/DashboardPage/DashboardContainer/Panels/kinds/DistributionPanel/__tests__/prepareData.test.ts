@@ -16,7 +16,9 @@ function result({
 } = {}): Querybuildertypesv5DistributionDataDTO {
 	return {
 		queryName,
-		aggregations: [{ index: 0, meta: { buckets }, distributions }],
+		aggregations: [
+			{ alias: '__result_0', index: 0, meta: { buckets }, distributions },
+		],
 	};
 }
 
@@ -111,8 +113,18 @@ describe('prepareDistributionData', () => {
 				{
 					queryName: 'A',
 					aggregations: [
-						{ index: 0, meta: {}, distributions: [{ counts: [1] }] },
-						{ index: 1, meta: { buckets: [10, 20] }, distributions: [] },
+						{
+							alias: '__result_0',
+							index: 0,
+							meta: {},
+							distributions: [{ counts: [1] }],
+						},
+						{
+							alias: '__result_1',
+							index: 1,
+							meta: { buckets: [10, 20] },
+							distributions: [],
+						},
 					],
 				},
 			],
