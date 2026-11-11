@@ -5,7 +5,10 @@ import {
 	useQuerySearchOnRun,
 	useUserExpression,
 } from 'components/QueryBuilderV2';
-import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
+import {
+	combineInitialAndUserExpression,
+	getUserExpressionFromCombined,
+} from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -21,7 +24,8 @@ interface UseFilterExpressionReturn {
 	initialExpression: string | undefined;
 	queryData: IBuilderQuery;
 	onDraftChange: (value: string) => void;
-	onRun: (value: string) => void;
+	/** `onUnchanged` runs instead when the filter is already applied. */
+	onRun: (value: string, onUnchanged?: () => void) => void;
 	onBlur: (event: FocusEvent<HTMLDivElement>) => void;
 }
 
@@ -45,12 +49,17 @@ export function useFilterExpression({
 	);
 
 	const onRun = useCallback(
-		(value: string): void => {
-			if (validateQuery(value).isValid) {
-				querySearchOnRun(value);
+		(value: string, onUnchanged?: () => void): void => {
+			if (!validateQuery(value).isValid) {
+				return;
 			}
+			if (getUserExpressionFromCombined(scope, value) === expression) {
+				onUnchanged?.();
+				return;
+			}
+			querySearchOnRun(value);
 		},
-		[querySearchOnRun],
+		[querySearchOnRun, scope, expression],
 	);
 
 	// A ref, not the provider's draft, so typing does not re-render the page.

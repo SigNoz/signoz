@@ -18,7 +18,7 @@ import { ENDPOINT_STATS_EXPRESSION_KEY } from '../../../filterParamKeys';
 import { useApiMonitoringParams } from '../../../queryParams';
 import { SPAN_ATTRIBUTES, VIEWS } from './constants';
 import { useFilterExpression } from './hooks/useFilterExpression';
-import { useIsFetchingWidgets } from './hooks/useIsFetchingWidgets';
+import { useWidgetQueries } from './hooks/useWidgetQueries';
 
 function AllEndPoints({
 	domainName,
@@ -61,7 +61,17 @@ function AllEndPoints({
 		[groupBy, domainName, filterExpression],
 	);
 
-	const isFetchingTable = useIsFetchingWidgets([allEndpointsWidgetData]);
+	const tableWidgets = useMemo(
+		() => [allEndpointsWidgetData],
+		[allEndpointsWidgetData],
+	);
+	const { isFetching: isFetchingTable, refetch: refetchTable } =
+		useWidgetQueries(tableWidgets);
+
+	const handleRun = useCallback(
+		(value: string): void => onRun(value, refetchTable),
+		[onRun, refetchTable],
+	);
 
 	// --- GROUP BY STATE SYNC (existing) ---
 	const handleGroupByChange = useCallback(
@@ -119,7 +129,7 @@ function AllEndPoints({
 					<QuerySearch
 						queryData={queryData}
 						onChange={onDraftChange}
-						onRun={onRun}
+						onRun={handleRun}
 						showRunButton
 						isLoadingQueries={isFetchingTable}
 						initialExpression={scopeExpression}

@@ -1,3 +1,4 @@
+import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { FilterProviders } from 'container/ApiMonitoring/__tests__/FilterProviders';
 import { getCurrentNuqsSearchParams, resetNuqsState } from 'tests/nuqs-helpers';
 import {
@@ -77,6 +78,40 @@ describe('useFilterExpression', () => {
 				'http.status_code = 500',
 			),
 		);
+	});
+
+	it('runs again instead of applying when the filter is already applied', async () => {
+		const scope = "http_host = 'api.example.com'";
+		const { result } = renderHook(() => useFilterExpression(), {
+			wrapper: ({ children }) => (
+				<FilterProviders
+					queryParamKey={PARAM_KEY}
+					initialExpression={scope}
+					searchParams={linkSearch}
+				>
+					{children}
+				</FilterProviders>
+			),
+		});
+		await waitFor(() => expect(result.current.expression).toBe(linkExpression));
+		const onUnchanged = jest.fn() as jest.MockedFunction<() => void>;
+
+		act(() => {
+			result.current.onRun(
+				combineInitialAndUserExpression(scope, linkExpression),
+				onUnchanged,
+			);
+		});
+		expect(onUnchanged).toHaveBeenCalledTimes(1);
+
+		act(() => {
+			result.current.onRun(
+				combineInitialAndUserExpression(scope, 'http.status_code = 500'),
+				onUnchanged,
+			);
+		});
+		expect(onUnchanged).toHaveBeenCalledTimes(1);
+		expect(result.current.expression).toBe('http.status_code = 500');
 	});
 
 	it('applies the draft on blur only when focus leaves the container', async () => {

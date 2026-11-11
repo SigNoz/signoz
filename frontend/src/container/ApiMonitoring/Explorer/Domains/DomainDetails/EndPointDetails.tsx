@@ -28,7 +28,7 @@ import MetricOverTimeGraph from './components/MetricOverTimeGraph';
 import StatusCodeBarCharts from './components/StatusCodeBarCharts';
 import StatusCodeTable from './components/StatusCodeTable';
 import { useFilterExpression } from './hooks/useFilterExpression';
-import { useIsFetchingWidgets } from './hooks/useIsFetchingWidgets';
+import { useWidgetQueries } from './hooks/useWidgetQueries';
 
 function EndPointDetails({
 	domainName,
@@ -133,13 +133,27 @@ function EndPointDetails({
 		[domainName, endPointName, scopedExpression],
 	);
 
-	const isFetchingGraphs = useIsFetchingWidgets([
-		rateOverTimeWidget,
-		latencyOverTimeWidget,
-	]);
+	const graphWidgets = useMemo(
+		() => [rateOverTimeWidget, latencyOverTimeWidget],
+		[rateOverTimeWidget, latencyOverTimeWidget],
+	);
+	const { isFetching: isFetchingGraphs, refetch: refetchGraphs } =
+		useWidgetQueries(graphWidgets);
 	const isFetchingQueries =
 		isFetchingGraphs ||
 		endPointDetailsDataQueries.some((query) => query.isFetching);
+
+	const refetchQueries = useCallback((): void => {
+		refetchGraphs();
+		endPointDetailsDataQueries.forEach((query) => {
+			void query.refetch();
+		});
+	}, [refetchGraphs, endPointDetailsDataQueries]);
+
+	const handleRun = useCallback(
+		(value: string): void => onRun(value, refetchQueries),
+		[onRun, refetchQueries],
+	);
 
 	// // [TODO] Fix this later
 	const onDragSelect = useCallback(
@@ -169,7 +183,7 @@ function EndPointDetails({
 					<QuerySearch
 						queryData={queryData}
 						onChange={onDraftChange}
-						onRun={onRun}
+						onRun={handleRun}
 						showRunButton
 						isLoadingQueries={isFetchingQueries}
 						initialExpression={scopeExpression}
