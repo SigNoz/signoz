@@ -47,23 +47,40 @@ export function QuerySearchV2Provider({
 		store.getState().setInitialExpression(initialExpression);
 	}, [initialExpression, store]);
 
-	const isInitialized = useRef(false);
+	// What this provider last wrote, so its own write coming back is not taken
+	// for a change from outside (Back, Forward, a link). Undefined until mount.
+	const lastWrittenRef = useRef<string | null | undefined>(undefined);
 	useEffect(() => {
-		if (!isInitialized.current && urlExpression) {
-			const cleanedExpression = getUserExpressionFromCombined(
-				initialExpression,
-				urlExpression,
-			);
-			store.getState().initializeFromUrl(cleanedExpression);
-			isInitialized.current = true;
+		const isMount = lastWrittenRef.current === undefined;
+		if (urlExpression === lastWrittenRef.current) {
+			return;
+		}
+		lastWrittenRef.current = urlExpression;
+		if (urlExpression) {
+			store
+				.getState()
+				.initializeFromUrl(
+					getUserExpressionFromCombined(initialExpression, urlExpression),
+				);
+		} else if (!isMount) {
+			store.getState().resetExpression();
 		}
 	}, [urlExpression, initialExpression, store]);
 
+	// Write only when the committed filter changes, never in reply to a URL change.
+	const lastCommittedRef = useRef(committedExpression);
 	useEffect(() => {
-		if (isInitialized.current || !urlExpression) {
-			setUrlExpression(committedExpression || null);
+		if (committedExpression === lastCommittedRef.current) {
+			return;
 		}
-	}, [committedExpression, setUrlExpression, urlExpression]);
+		lastCommittedRef.current = committedExpression;
+		const next = committedExpression || null;
+		if (next === urlExpression) {
+			return;
+		}
+		lastWrittenRef.current = next;
+		void setUrlExpression(next);
+	}, [committedExpression, urlExpression, setUrlExpression]);
 
 	useEffect(() => {
 		return (): void => {

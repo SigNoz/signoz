@@ -110,6 +110,49 @@ describe('QuerySearchExpressionProvider', () => {
 		expect(result.current.expression).toBe('status = 500');
 	});
 
+	it('follows a URL change after mount, as on Back or Forward', () => {
+		mockUrlValue = 'status = 500';
+		const { result, rerender } = renderHook(() => useTestHooks(), {
+			wrapper: createWrapper(),
+		});
+
+		mockUrlValue = 'status = 404';
+		rerender();
+
+		expect(result.current.userExpression).toBe('status = 404');
+		expect(mockSetQueryState).not.toHaveBeenCalled();
+	});
+
+	it('clears the filter when the URL param goes away', () => {
+		mockUrlValue = 'status = 500';
+		const { result, rerender } = renderHook(() => useTestHooks(), {
+			wrapper: createWrapper(),
+		});
+
+		mockUrlValue = null;
+		rerender();
+
+		expect(result.current.userExpression).toBe('');
+	});
+
+	it('writes a run filter to the URL once and ignores it coming back', () => {
+		const { result, rerender } = renderHook(() => useTestHooks(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.onRun('status = 500');
+		});
+		expect(mockSetQueryState).toHaveBeenCalledTimes(1);
+		expect(mockSetQueryState).toHaveBeenLastCalledWith('status = 500');
+
+		mockUrlValue = 'status = 500';
+		rerender();
+
+		expect(result.current.userExpression).toBe('status = 500');
+		expect(mockSetQueryState).toHaveBeenCalledTimes(1);
+	});
+
 	it('should throw error when used outside provider', () => {
 		expect(() => {
 			renderHook(() => useExpression());
