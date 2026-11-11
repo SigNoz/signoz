@@ -1,6 +1,7 @@
 import {
 	BellDot,
 	Bot,
+	CalendarClock,
 	Cable,
 	ChartLine,
 	DraftingCompass,
@@ -115,6 +116,14 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		selectorPlaceholder:
 			'Type notification channel ID, separate multiple with comma or space',
 		docsAnchor: 'notification-channel',
+	},
+	'planned-maintenance': {
+		label: 'Planned Downtime',
+		description: 'Schedules that silence alert rules during maintenance windows.',
+		icon: CalendarClock,
+		selectorPlaceholder:
+			'Type planned downtime ID, separate multiple with comma or space',
+		docsAnchor: 'planned-maintenance',
 	},
 	rule: {
 		label: 'Alert Rules',
