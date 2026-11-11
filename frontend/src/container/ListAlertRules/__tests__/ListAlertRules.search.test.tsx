@@ -129,7 +129,7 @@ describe('ListAlertRules — search', () => {
 		});
 	});
 
-	it('sends each selected state as a repeated states= param', async () => {
+	it('sends the selected states once, as repeated states= params, when the dropdown closes', async () => {
 		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
@@ -148,12 +148,18 @@ describe('ListAlertRules — search', () => {
 		await user.click(within(dropdown).getByText('Firing'));
 		await user.click(within(dropdown).getByText('Disabled'));
 
+		expect(requests.some((r) => r.has('states'))).toBe(false);
+		expect(getCurrentNuqsSearchParams().has('states')).toBe(false);
+
+		await user.click(document.body);
+
 		await waitFor(() => {
 			expect(lastRequest(requests).getAll('states')).toStrictEqual([
 				'firing',
 				'disabled',
 			]);
 		});
+		expect(requests.filter((r) => r.has('states'))).toHaveLength(1);
 		expect(lastRequest(requests).has('states[]')).toBe(false);
 		await waitFor(() => {
 			expect(getCurrentNuqsSearchParams().get('states')).toBe('firing,disabled');
