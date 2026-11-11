@@ -38,7 +38,7 @@ VALID_RULE = {
     "annotations": {"summary": "s", "description": "d"},
     "disabled": True,
     "evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m", "frequency": "1m"}},
-    "notificationSettings": {"usePolicy": False, "renotify": {"enabled": False}},
+    "notificationSettings": {"usePolicy": True, "renotify": {"enabled": False}},
     "schemaVersion": "v2alpha1",
 }
 
