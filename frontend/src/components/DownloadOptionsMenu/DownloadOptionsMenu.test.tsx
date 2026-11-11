@@ -1,7 +1,5 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { message } from 'antd';
 import configureStore from 'redux-mock-store';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -10,6 +8,13 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import '@testing-library/jest-dom';
 
