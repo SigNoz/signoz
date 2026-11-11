@@ -112,11 +112,12 @@ export function useApiMonitoringParams(): [
 	const history = useHistory();
 	const params = getApiMonitoringParams(location.search);
 
+	// Read the live URL: several writes can land before the next render.
 	const setParams = useCallback(
 		(newParams: Partial<ApiMonitoringParams>, replace = false) => {
-			setApiMonitoringParams(newParams, location.search, history, replace);
+			setApiMonitoringParams(newParams, history.location.search, history, replace);
 		},
-		[location.search, history],
+		[history],
 	);
 
 	return [params, setParams];

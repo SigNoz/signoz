@@ -1,9 +1,13 @@
+import { useHistory, useLocation } from 'react-router-dom';
+import { act, renderHook } from '@testing-library/react';
 import {
 	ApiMonitoringParams,
 	DEFAULT_PARAMS,
 	getApiMonitoringParams,
 	setApiMonitoringParams,
+	useApiMonitoringParams,
 } from 'container/ApiMonitoring/queryParams';
+import { createMemoryHistory } from 'history';
 
 // Mock react-router-dom hooks
 jest.mock('react-router-dom', () => {
@@ -314,6 +318,26 @@ describe('API Monitoring Query Params', () => {
 			expect(decoded.showIP).toBe(initialParams.showIP);
 			expect(decoded.selectedDomain).toBe(initialParams.selectedDomain);
 			expect(decoded.selectedView).toBe('new-view');
+		});
+	});
+
+	describe('useApiMonitoringParams', () => {
+		it('keeps every write made before the next render', () => {
+			const history = createMemoryHistory();
+			jest.mocked(useHistory).mockReturnValue(history);
+			jest.mocked(useLocation).mockReturnValue(history.location);
+			const { result } = renderHook(() => useApiMonitoringParams());
+
+			act(() => {
+				const [, setParams] = result.current;
+				setParams({ allEndpointsFilterExpression: "service.name = 'cart'" });
+				setParams({ selectedInterval: '15m' });
+			});
+
+			expect(getApiMonitoringParams(history.location.search)).toMatchObject({
+				allEndpointsFilterExpression: "service.name = 'cart'",
+				selectedInterval: '15m',
+			});
 		});
 	});
 });
