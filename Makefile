@@ -36,12 +36,6 @@ DOCKER_REGISTRY_ENTERPRISE 		?= docker.io/signoz/signoz
 JS_BUILD_CONTEXT 				= $(SRC)/frontend
 
 ##############################################################
-# git hooks
-##############################################################
-# Expanded at parse time, so any make target installs the hooks.
-GITHOOKS_INSTALL := $(shell git -C $(SRC) config core.hooksPath .githooks 2>/dev/null)
-
-##############################################################
 # directories
 ##############################################################
 $(TARGET_DIR):
@@ -53,6 +47,10 @@ $(TARGET_DIR):
 .PHONY: help
 help: ## Displays help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-z0-9A-Z_-]+:.*?##/ { printf "  \033[36m%-40s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+
+.PHONY: hooks
+hooks: ## Installs the git hooks from .githooks
+	@git config core.hooksPath .githooks
 
 ##############################################################
 # devenv commands
