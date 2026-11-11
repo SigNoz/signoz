@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/tidwall/gjson"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 )
 
 type config struct {
@@ -25,13 +26,21 @@ func NewConfigStore(sqlstore sqlstore.SQLStore) alertmanagertypes.ConfigStore {
 func (store *config) Get(ctx context.Context, orgID string) (*alertmanagertypes.Config, error) {
 	storeableConfig := new(alertmanagertypes.StoreableConfig)
 
-	err := store.
+	query := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(storeableConfig).
-		Where("org_id = ?", orgID).
-		Scan(ctx)
+		Where("org_id = ?", orgID)
+
+	// Channel writes run Get inside a transaction (see WithCb). On Postgres,
+	// lock the config row so concurrent updates cannot each apply a change
+	// to a stale snapshot and overwrite one another.
+	if _, ok := store.sqlstore.BunDBCtx(ctx).(bun.Tx); ok && store.sqlstore.BunDB().Dialect().Name() == dialect.PG {
+		query = query.For("UPDATE")
+	}
+
+	err := query.Scan(ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.Newf(errors.TypeNotFound, alertmanagertypes.ErrCodeAlertmanagerConfigNotFound, "cannot find alertmanager config for orgID %s", orgID)
