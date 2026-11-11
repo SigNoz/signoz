@@ -1,8 +1,11 @@
 import { FocusEvent, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
+	useInitialExpression,
+	useQuerySearchInitialExpressionProp,
 	useQuerySearchOnRun,
 	useUserExpression,
 } from 'components/QueryBuilderV2';
+import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -14,6 +17,8 @@ interface UseFilterExpressionParams {
 
 interface UseFilterExpressionReturn {
 	expression: string;
+	/** The provider's locked scope, for `QuerySearch`'s `initialExpression` */
+	initialExpression: string | undefined;
 	queryData: IBuilderQuery;
 	onDraftChange: (value: string) => void;
 	onRun: (value: string) => void;
@@ -25,6 +30,8 @@ export function useFilterExpression({
 	groupBy,
 }: UseFilterExpressionParams = {}): UseFilterExpressionReturn {
 	const expression = useUserExpression();
+	const scope = useInitialExpression();
+	const initialExpression = useQuerySearchInitialExpressionProp();
 	const querySearchOnRun = useQuerySearchOnRun();
 
 	const queryData = useMemo(
@@ -61,10 +68,17 @@ export function useFilterExpression({
 			if (event.currentTarget.contains(event.relatedTarget as Node | null)) {
 				return;
 			}
-			onRun(draftRef.current);
+			onRun(combineInitialAndUserExpression(scope, draftRef.current));
 		},
-		[onRun],
+		[onRun, scope],
 	);
 
-	return { expression, queryData, onDraftChange, onRun, onBlur };
+	return {
+		expression,
+		initialExpression,
+		queryData,
+		onDraftChange,
+		onRun,
+		onBlur,
+	};
 }

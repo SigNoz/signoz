@@ -6,6 +6,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
 	extractPortAndEndpoint,
+	getDomainScopeClauses,
 	getEndPointDetailsQueryPayload,
 	getHttpUrlExpression,
 	getLatencyOverTimeWidgetData,
@@ -54,11 +55,17 @@ function EndPointDetails({
 	// Search filters; the endpoint filter is combined in at query time
 	const {
 		expression: filterExpression,
+		initialExpression: scopeExpression,
 		queryData,
 		onDraftChange,
 		onRun,
 		onBlur: handleFilterBlur,
 	} = useFilterExpression();
+
+	const scopeClauses = useMemo(
+		() => getDomainScopeClauses(domainName, endPointName),
+		[domainName, endPointName],
+	);
 
 	const httpUrlExpression = useMemo(
 		() => getHttpUrlExpression(endPointName),
@@ -171,6 +178,8 @@ function EndPointDetails({
 						onRun={onRun}
 						showRunButton
 						isLoadingQueries={isFetchingQueries}
+						initialExpression={scopeExpression}
+						scopeClauses={scopeClauses}
 						dataSource={DataSource.TRACES}
 						placeholder="Search for filters..."
 					/>

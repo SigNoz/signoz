@@ -96,4 +96,27 @@ describe('useFilterExpression', () => {
 			"service.name = 'cart'",
 		);
 	});
+
+	it('keeps only the user text when the scope is set', async () => {
+		const scope = "http_host = 'api.example.com'";
+		const { result } = renderHook(() => useFilterExpression(), {
+			wrapper: ({ children }) => (
+				<FilterProviders queryParamKey={PARAM_KEY} initialExpression={scope}>
+					{children}
+				</FilterProviders>
+			),
+		});
+		await waitFor(() => expect(result.current.initialExpression).toBe(scope));
+
+		act(() => {
+			result.current.onRun(`${scope} AND (service.name = 'cart')`);
+		});
+
+		expect(result.current.expression).toBe("service.name = 'cart'");
+		await waitFor(() =>
+			expect(getCurrentNuqsSearchParams().get(PARAM_KEY)).toBe(
+				"service.name = 'cart'",
+			),
+		);
+	});
 });

@@ -266,6 +266,46 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		expect(onRun).toHaveBeenCalledWith(SAMPLE_STATUS_QUERY);
 	});
 
+	it('shows the locked scope as a chip in place of the scope icon', () => {
+		const { container } = render(
+			<QuerySearch
+				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+				queryData={initialQueriesMap.traces.builder.queryData[0]}
+				dataSource={DataSource.TRACES}
+				initialExpression="kind_string = 'Client' AND http_host = 'api.example.com'"
+				scopeClauses={[
+					{ key: 'kind_string', value: 'Client' },
+					{ key: 'http_host', value: 'api.example.com' },
+				]}
+			/>,
+		);
+
+		const chip = screen.getByTestId('query-search-scope-chip');
+		expect(chip).toHaveTextContent("http_host = 'api.example.com'");
+		expect(chip).toHaveTextContent('+1');
+		expect(
+			container.querySelector('.query-search-initial-scope-label'),
+		).not.toBeInTheDocument();
+	});
+
+	it('keeps the scope icon when no clauses are given', () => {
+		const { container } = render(
+			<QuerySearch
+				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
+				queryData={initialQueriesMap.traces.builder.queryData[0]}
+				dataSource={DataSource.TRACES}
+				initialExpression="kind_string = 'Client'"
+			/>,
+		);
+
+		expect(
+			screen.queryByTestId('query-search-scope-chip'),
+		).not.toBeInTheDocument();
+		expect(
+			container.querySelector('.query-search-initial-scope-label'),
+		).toBeInTheDocument();
+	});
+
 	it('shows the run button busy while the queries load', () => {
 		render(
 			<QuerySearch

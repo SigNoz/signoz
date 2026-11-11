@@ -33,6 +33,23 @@ $max-recents-shown: 5;
 		display: flex;
 		flex-direction: row;
 
+		// The field draws one outline around the scope chip and the editor, so
+		// the editor inside draws none
+		&.hasScopeChip {
+			align-items: center;
+			gap: var(--spacing-3);
+			padding-left: var(--spacing-3);
+			border: 1px solid var(--l2-border);
+			border-radius: 2px;
+			background: var(--l1-background);
+			--query-builder-v2-border-color: transparent;
+			--query-builder-v2-background-color: transparent;
+
+			.query-where-clause-editor {
+				min-width: 0;
+			}
+		}
+
 		.query-search-initial-scope-label {
 			position: absolute;
 			left: 8px;

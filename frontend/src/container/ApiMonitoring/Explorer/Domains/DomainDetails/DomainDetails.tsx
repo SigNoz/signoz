@@ -7,6 +7,7 @@ import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import { QuerySearchV2Provider } from 'components/QueryBuilderV2';
+import { formatScopeClauses } from 'components/QueryBuilderV2/QueryV2/QuerySearch/ScopeChip/utils';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
@@ -23,6 +24,7 @@ import {
 	ENDPOINT_STATS_EXPRESSION_KEY,
 } from '../../../filterParamKeys';
 import { useApiMonitoringParams } from '../../../queryParams';
+import { getDomainScopeClauses } from '../../../utils';
 import AllEndPoints from './AllEndPoints';
 import DomainMetrics from './components/DomainMetrics';
 import { VIEW_TYPES, VIEWS } from './constants';
@@ -58,6 +60,17 @@ function DomainDetails({
 	const [endPointsGroupBy, setEndPointsGroupBy] = useState<
 		IBuilderQuery['groupBy']
 	>([]);
+
+	const domainName = domainData?.domainName ?? '';
+	const allEndpointsScope = useMemo(
+		() => formatScopeClauses(getDomainScopeClauses(domainName)),
+		[domainName],
+	);
+	const endPointStatsScope = useMemo(
+		() =>
+			formatScopeClauses(getDomainScopeClauses(domainName, selectedEndPointName)),
+		[domainName, selectedEndPointName],
+	);
 
 	const handleTabChange = (value: string): void => {
 		setSelectedView(value as VIEWS);
@@ -258,6 +271,7 @@ function DomainDetails({
 					{selectedView === VIEW_TYPES.ALL_ENDPOINTS && (
 						<QuerySearchV2Provider
 							queryParamKey={ALL_ENDPOINTS_EXPRESSION_KEY}
+							initialExpression={allEndpointsScope}
 							persistOnUnmount
 						>
 							<AllEndPoints
@@ -274,6 +288,7 @@ function DomainDetails({
 					{selectedView === VIEW_TYPES.ENDPOINT_STATS && (
 						<QuerySearchV2Provider
 							queryParamKey={ENDPOINT_STATS_EXPRESSION_KEY}
+							initialExpression={endPointStatsScope}
 							persistOnUnmount
 						>
 							<EndPointDetails

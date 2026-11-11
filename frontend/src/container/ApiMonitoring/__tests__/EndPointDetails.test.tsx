@@ -35,6 +35,8 @@ jest.mock('container/ApiMonitoring/utils', () => ({
 		'endPointStatusCodeLatencyBarChartsData',
 	],
 	extractPortAndEndpoint: jest.fn(),
+	getDomainScopeClauses: jest.requireActual('container/ApiMonitoring/utils')
+		.getDomainScopeClauses,
 	getHttpUrlExpression: jest.requireActual('container/ApiMonitoring/utils')
 		.getHttpUrlExpression,
 	getEndPointDetailsQueryPayload: jest.fn(),

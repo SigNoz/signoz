@@ -6,10 +6,12 @@ import { onNuqsUrlUpdate } from 'tests/nuqs-helpers';
 /** Mounts a drawer tab's filter provider over an in-memory URL. */
 export function FilterProviders({
 	queryParamKey,
+	initialExpression,
 	searchParams = '',
 	children,
 }: {
 	queryParamKey: string;
+	initialExpression?: string;
 	searchParams?: string;
 	children: ReactNode;
 }): JSX.Element {
@@ -20,7 +22,11 @@ export function FilterProviders({
 			rateLimitFactor={0}
 			hasMemory
 		>
-			<QuerySearchV2Provider queryParamKey={queryParamKey} persistOnUnmount>
+			<QuerySearchV2Provider
+				queryParamKey={queryParamKey}
+				initialExpression={initialExpression}
+				persistOnUnmount
+			>
 				{children}
 			</QuerySearchV2Provider>
 		</NuqsTestingAdapter>

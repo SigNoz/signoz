@@ -1,0 +1,53 @@
+.scopeChip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	flex: 0 1 auto;
+	min-width: 0;
+	max-width: 420px;
+	padding: var(--spacing-1) var(--spacing-3);
+	border-radius: 2px;
+	background: var(--l3-background);
+	color: var(--l2-foreground);
+	font-size: 12px;
+	line-height: 20px;
+	cursor: default;
+}
+
+.scopeMore {
+	flex: none;
+	color: var(--l3-foreground);
+}
+
+// The editor beside it is CodeMirror on the copilot theme in dark and
+// githubLight in light; the chip borrows those token colours so one filter
+// does not read as two
+.scopeKey {
+	color: #939da5;
+}
+
+.scopeOperator {
+	color: #939da5;
+}
+
+.scopeValue {
+	color: #5bec95;
+}
+
+:global(.lightMode) {
+	.scopeKey,
+	.scopeOperator {
+		color: #005cc5;
+	}
+
+	.scopeValue {
+		color: #032f62;
+	}
+}
+
+.scopeExpression {
+	font-family: var(--font-mono, monospace);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

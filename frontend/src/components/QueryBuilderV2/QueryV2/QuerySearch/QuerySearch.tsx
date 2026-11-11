@@ -66,6 +66,8 @@ import {
 	SUGGESTION_FETCH_DEBOUNCE_MS,
 	SUGGESTIONS_SECTION,
 } from './constants';
+import { ScopeChip } from './ScopeChip/ScopeChip';
+import { ScopeClause } from './ScopeChip/types';
 import {
 	combineInitialAndUserExpression,
 	dedupeOptionsByLabel,
@@ -118,6 +120,8 @@ interface QuerySearchProps {
 	showFilterSuggestionsWithoutMetric?: boolean;
 	/** When set, the editor shows only the user expression; API/filter uses `initial AND (user)`. */
 	initialExpression?: string;
+	/** Clauses `initialExpression` is built from; when set, it shows as a locked chip in the field. */
+	scopeClauses?: ScopeClause[];
 	/** When set, replaces the generic value-suggestion API with a custom fetcher. */
 	valueSuggestionsOverride?: (
 		key: string,
@@ -141,6 +145,7 @@ function QuerySearch({
 	hardcodedAttributeKeys,
 	showFilterSuggestionsWithoutMetric,
 	initialExpression,
+	scopeClauses,
 	metricNamespace,
 	valueSuggestionsOverride,
 }: QuerySearchProps): JSX.Element {
@@ -160,6 +165,7 @@ function QuerySearch({
 	const editorRef = useRef<EditorView | null>(null);
 
 	const isScopedFilter = initialExpression !== undefined;
+	const showScopeChip = isScopedFilter && !!scopeClauses?.length;
 
 	const validateExpressionForEditor = useCallback(
 		(editorDoc: string): void => {
@@ -1582,8 +1588,18 @@ function QuerySearch({
 			)}
 
 			<div className="query-where-clause-row">
-				<div className="query-where-clause-editor-container">
-					{isScopedFilter ? (
+				<div
+					className={cx('query-where-clause-editor-container', {
+						hasScopeChip: showScopeChip,
+					})}
+				>
+					{showScopeChip && (
+						<ScopeChip
+							clauses={scopeClauses ?? []}
+							expression={initialExpression ?? ''}
+						/>
+					)}
+					{isScopedFilter && !showScopeChip ? (
 						<Tooltip title={initialExpression || ''} placement="left">
 							<div className="query-search-initial-scope-label">
 								<Filter
@@ -1636,7 +1652,7 @@ function QuerySearch({
 						className={cx('query-where-clause-editor', {
 							isValid: validation.isValid === true,
 							hasErrors: validation.errors.length > 0,
-							hasInitialExpression: isScopedFilter,
+							hasInitialExpression: isScopedFilter && !showScopeChip,
 						})}
 						extensions={[
 							autocompletion({
@@ -1853,6 +1869,7 @@ QuerySearch.defaultProps = {
 		"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
 	showFilterSuggestionsWithoutMetric: false,
 	initialExpression: undefined,
+	scopeClauses: undefined,
 };
 
 export default QuerySearch;
