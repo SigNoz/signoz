@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
-import CreateAlertV2Header from 'container/CreateAlertV2/CreateAlertHeader';
+import CreateAlertHeader from 'container/CreateAlert/CreateAlertHeader';
 import { useAlertRule } from 'providers/Alert';
-import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
+import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
 
 import AlertActionButtons from './ActionButtons/ActionButtons';
 
@@ -25,7 +25,7 @@ function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 
 	return (
 		<div className="alert-info">
-			<CreateAlertV2Header />
+			<CreateAlertHeader />
 			<div className="alert-info__action-buttons">
 				<AlertActionButtons
 					alertDetails={alertDetails}

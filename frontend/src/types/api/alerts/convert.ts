@@ -13,8 +13,7 @@ import {
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
-import { AlertTypes } from './alertTypes';
-import { PostableAlertRuleV2 } from './alertTypesV2';
+import { AlertTypes, PostableAlertRuleV2 } from './alertTypes';
 import { ICompositeMetricQuery } from './compositeQuery';
 import { Labels } from './def';
 
