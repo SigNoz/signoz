@@ -52,8 +52,11 @@ async function findEnabledSearch(): Promise<HTMLElement> {
 
 async function openRowActions(user: User): Promise<void> {
 	await user.click(await screen.findByTestId('downtime-actions-1'));
-	await waitFor(() =>
-		expect(screen.getByTestId(EDIT_ROW)).not.toHaveAttribute('data-loading'),
+	// The row's check is batched with others, which can outlast the 1s default.
+	await waitFor(
+		() =>
+			expect(screen.getByTestId(EDIT_ROW)).not.toHaveAttribute('data-loading'),
+		{ timeout: 5000 },
 	);
 }
 
