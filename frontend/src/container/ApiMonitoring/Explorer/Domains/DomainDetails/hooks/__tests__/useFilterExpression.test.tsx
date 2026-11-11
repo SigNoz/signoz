@@ -1,9 +1,31 @@
-import { act, renderHook } from '@testing-library/react';
-import { FocusEvent } from 'react';
+import { act, render, renderHook, screen, userEvent } from 'tests/test-utils';
 
 import { useFilterExpression } from '../useFilterExpression';
 
 const expression = "service.name = 'frontend'";
+
+function FilterBox({
+	onExpressionChange,
+}: {
+	onExpressionChange: (expression: string) => void;
+}): JSX.Element {
+	const { onDraftChange, onBlur } = useFilterExpression({
+		expression,
+		onExpressionChange,
+	});
+
+	return (
+		<div onBlur={onBlur}>
+			<input
+				data-testid="filter-input"
+				onChange={(e): void => onDraftChange(e.target.value)}
+			/>
+			<button type="button" data-testid="inside-button">
+				Run
+			</button>
+		</div>
+	);
+}
 
 describe('useFilterExpression', () => {
 	it('builds a traces query that carries the expression', () => {
@@ -44,30 +66,16 @@ describe('useFilterExpression', () => {
 		expect(onExpressionChange).not.toHaveBeenCalled();
 	});
 
-	it('commits the draft on blur only when focus leaves the container', () => {
+	it('commits the draft on blur only when focus leaves the container', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onExpressionChange = jest.fn();
-		const { result } = renderHook(() =>
-			useFilterExpression({ expression, onExpressionChange }),
-		);
-		const container = document.createElement('div');
-		const inside = document.createElement('input');
-		container.appendChild(inside);
+		render(<FilterBox onExpressionChange={onExpressionChange} />);
 
-		act(() => {
-			result.current.onDraftChange("service.name = 'cart'");
-			result.current.onBlur({
-				currentTarget: container,
-				relatedTarget: inside,
-			} as unknown as FocusEvent<HTMLDivElement>);
-		});
+		await user.type(screen.getByTestId('filter-input'), "service.name = 'cart'");
+		await user.click(screen.getByTestId('inside-button'));
 		expect(onExpressionChange).not.toHaveBeenCalled();
 
-		act(() => {
-			result.current.onBlur({
-				currentTarget: container,
-				relatedTarget: null,
-			} as unknown as FocusEvent<HTMLDivElement>);
-		});
+		await user.click(document.body);
 		expect(onExpressionChange).toHaveBeenCalledWith("service.name = 'cart'");
 	});
 });
