@@ -52,7 +52,7 @@
 	.ant-collapse {
 		.ant-collapse-item {
 			.ant-collapse-header {
-				background-color: var(--card);
+				background-color: var(--surface-2);
 				border: 1px solid var(--l1-border);
 
 				.ant-collapse-header-text {
@@ -62,7 +62,7 @@
 
 			.ant-collapse-content {
 				.ant-collapse-content-box {
-					background-color: var(--card);
+					background-color: var(--surface-2);
 				}
 			}
 		}
@@ -74,7 +74,7 @@
 }
 
 .ant-popover-content {
-	background-color: var(--card);
+	background-color: var(--surface-2);
 	border: 1px solid var(--l1-border);
 	border-radius: 4px;
 	padding: 0;

@@ -138,8 +138,8 @@ $max-recents-shown: 5;
 			border: 0px;
 			background: linear-gradient(
 				139deg,
-				color-mix(in srgb, var(--card) 80%, transparent) 0%,
-				color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+				color-mix(in srgb, var(--surface-2) 80%, transparent) 0%,
+				color-mix(in srgb, var(--surface-2) 90%, transparent) 98.68%
 			) !important;
 			backdrop-filter: blur(20px);
 			box-sizing: border-box;

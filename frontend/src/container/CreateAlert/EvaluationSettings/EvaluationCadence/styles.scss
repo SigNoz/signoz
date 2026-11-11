@@ -215,7 +215,7 @@
 					align-items: center;
 					gap: 8px;
 					padding: 8px 0;
-					background-color: var(--card);
+					background-color: var(--surface-2);
 					position: sticky;
 					top: 0;
 					z-index: 1;
@@ -387,7 +387,7 @@
 
 				.schedule-preview {
 					.schedule-preview-header {
-						background-color: var(--card);
+						background-color: var(--surface-2);
 						border-bottom: 1px solid var(--l1-border);
 						padding: 12px 16px;
 						margin: -12px -12px 16px -12px;

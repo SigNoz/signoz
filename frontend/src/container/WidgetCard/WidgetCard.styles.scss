@@ -10,7 +10,7 @@
 
 		.row-panel {
 			border-radius: 4px;
-			background: color-mix(in srgb, var(--card) 40%, transparent);
+			background: color-mix(in srgb, var(--surface-2) 40%, transparent);
 			padding: 8px;
 			display: flex;
 			gap: 6px;
@@ -122,8 +122,8 @@
 		border: 1px solid var(--l1-border);
 		background: linear-gradient(
 			139deg,
-			color-mix(in srgb, var(--card) 80%, transparent) 0%,
-			color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+			color-mix(in srgb, var(--surface-2) 80%, transparent) 0%,
+			color-mix(in srgb, var(--surface-2) 90%, transparent) 98.68%
 		);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 		backdrop-filter: blur(20px);

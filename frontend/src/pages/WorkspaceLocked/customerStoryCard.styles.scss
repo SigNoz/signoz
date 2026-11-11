@@ -10,12 +10,12 @@ $light-theme: 'lightMode';
 	transition:
 		transform 0.3s ease,
 		box-shadow 0.3s ease;
-	background-color: var(--card);
+	background-color: var(--surface-2);
 	border: 1px solid var(--l1-border);
 
 	.#{$light-theme} & {
 		border: 1px solid var(--l1-border);
-		background: var(--card);
+		background: var(--surface-2);
 	}
 
 	.#{$ant-card-override}-meta-avatar {
@@ -33,7 +33,7 @@ $light-theme: 'lightMode';
 
 		.#{$light-theme} & {
 			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-			background-color: var(--card);
+			background-color: var(--surface-2);
 		}
 	}
 }

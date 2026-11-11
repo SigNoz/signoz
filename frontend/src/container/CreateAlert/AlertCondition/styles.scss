@@ -146,7 +146,7 @@
 					flex-wrap: wrap;
 
 					.ant-input {
-						background-color: var(--card);
+						background-color: var(--surface-2);
 						border: 1px solid var(--l1-border);
 						color: var(--l1-foreground);
 						height: 32px;
@@ -167,7 +167,7 @@
 
 					.ant-select {
 						.ant-select-selector {
-							background-color: var(--card);
+							background-color: var(--surface-2);
 							border: 1px solid var(--l1-border);
 							color: var(--l1-foreground);
 							height: 32px;
@@ -221,7 +221,7 @@
 					pointer-events: none;
 					cursor: default;
 					color: var(--muted-foreground);
-					background-color: var(--card) !important;
+					background-color: var(--surface-2) !important;
 					border: 1px solid var(--l1-border);
 					border-radius: 4px;
 					display: flex;
@@ -230,7 +230,7 @@
 				}
 
 				.ant-input {
-					background-color: var(--card);
+					background-color: var(--surface-2);
 					border: 1px solid var(--l1-border);
 					color: var(--l1-foreground);
 					height: 32px;
