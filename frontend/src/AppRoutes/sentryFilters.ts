@@ -1,4 +1,5 @@
 import type { ErrorEvent } from '@sentry/react';
+import { AxiosError, isAxiosError } from 'axios';
 
 export const SENTRY_IGNORE_ERRORS = [
 	// A tab that outlived a deploy requests hashed assets the new build no longer
@@ -13,6 +14,18 @@ export const SENTRY_IGNORE_ERRORS = [
 	// its frames point at our own bundle and the URL check below misses it.
 	/Called on script loaded before session recording is available/,
 ];
+
+// Not UI bugs: 401/403 come from the session or role, ERR_NETWORK from a
+// dropped connection or a closing tab.
+export function isExpectedRequestFailure(error: unknown): boolean {
+	if (!isAxiosError(error)) {
+		return false;
+	}
+	const status = error.response?.status;
+	return (
+		error.code === AxiosError.ERR_NETWORK || status === 401 || status === 403
+	);
+}
 
 const APP_ASSETS_PATH = '/assets/';
 
