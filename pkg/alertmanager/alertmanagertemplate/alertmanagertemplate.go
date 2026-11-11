@@ -207,7 +207,9 @@ func (at *templater) buildNotificationTemplateData(
 
 	// count the number of firing, recovering and resolved alerts
 	var firing, recovering, resolved int
+	var isTest bool
 	for _, ad := range alertDataSlice {
+		isTest = isTest || ad.Alert.IsTest
 		switch {
 		case ad.Alert.IsFiring:
 			firing++
@@ -240,6 +242,7 @@ func (at *templater) buildNotificationTemplateData(
 			TotalFiring:     firing,
 			TotalRecovering: recovering,
 			TotalResolved:   resolved,
+			IsTest:          isTest,
 		},
 		Rule:              buildRuleInfo(commonLabels, rawCommonAnnotations),
 		GroupLabels:       gl,
@@ -285,6 +288,7 @@ func buildAlertData(a *types.Alert, receiver string) alertmanagertypes.AlertData
 			IsResolved:    status == string(model.AlertResolved),
 			IsMissingData: labels[ruletypes.LabelNoData] == "true",
 			IsRecovering:  status == ruletypes.StateRecovering.StringValue(),
+			IsTest:        labels[ruletypes.LabelTestAlert] == "true",
 		},
 		Rule:   buildRuleInfo(labels, annotations),
 		Log:    alertmanagertypes.LinkInfo{URL: annotations[ruletypes.AnnotationRelatedLogs]},

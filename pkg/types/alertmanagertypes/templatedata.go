@@ -98,6 +98,7 @@ type AlertInfo struct {
 	IsResolved    bool      `json:"isResolved"    mapstructure:"is_resolved"`
 	IsMissingData bool      `json:"isMissingData" mapstructure:"is_missing_data"`
 	IsRecovering  bool      `json:"isRecovering"  mapstructure:"is_recovering"`
+	IsTest        bool      `json:"isTest"        mapstructure:"is_test"`
 }
 
 // RuleInfo holds the rule metadata extracted from well-known labels and
@@ -149,4 +150,5 @@ type NotificationAlert struct {
 	TotalFiring     int    `json:"totalFiring"     mapstructure:"total_firing"`
 	TotalRecovering int    `json:"totalRecovering" mapstructure:"total_recovering"`
 	TotalResolved   int    `json:"totalResolved"   mapstructure:"total_resolved"`
+	IsTest          bool   `json:"isTest"          mapstructure:"is_test"`
 }

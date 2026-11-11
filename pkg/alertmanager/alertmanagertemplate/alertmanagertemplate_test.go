@@ -328,6 +328,34 @@ Description: Request rate exceeded 10k/s`},
 			wantBody:  []string{"logs on_average | from-label | annotations: 0"},
 		},
 		{
+			name: "test label sets is_test on the title and each alert",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighErrors", ruletypes.LabelTestAlert: "true"},
+					nil,
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "{{ if $alert.is_test }}[TEST] {{ end }}$rule.name",
+				BodyTemplate:  "is_test=$alert.is_test",
+			},
+			wantTitle: "[TEST] HighErrors",
+			wantBody:  []string{"is_test=true"},
+		},
+		{
+			name: "alert without test label is not a test",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "HighErrors"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "{{ if $alert.is_test }}[TEST] {{ end }}$rule.name",
+				BodyTemplate:  "is_test=$alert.is_test",
+			},
+			wantTitle: "HighErrors",
+			wantBody:  []string{"is_test=false"},
+		},
+		{
 			name: "recovering annotation sets status, flags and counts with firing winning the title",
 			alerts: []*types.Alert{
 				createAlert(

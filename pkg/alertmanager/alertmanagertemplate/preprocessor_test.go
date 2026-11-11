@@ -234,6 +234,7 @@ func TestPreProcessTemplateAndData(t *testing.T) {
 					"total_firing":     3,
 					"total_recovering": 0,
 					"total_resolved":   0,
+					"is_test":          false,
 				},
 				"severity":            "critical",
 				"http.request.method": "GET",
