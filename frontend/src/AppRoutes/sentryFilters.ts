@@ -16,7 +16,7 @@ export const SENTRY_IGNORE_ERRORS = [
 ];
 
 // Not UI bugs: 401/403 come from the session or role, ERR_NETWORK from a
-// dropped connection or a closing tab.
+// dropped connection.
 export function isExpectedRequestFailure(error: unknown): boolean {
 	if (!isAxiosError(error)) {
 		return false;
