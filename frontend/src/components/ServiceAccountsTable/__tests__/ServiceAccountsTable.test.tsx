@@ -23,6 +23,7 @@ const mockDisabledAccount: ServiceAccountRow = {
 };
 
 const defaultProps = {
+	total: 1,
 	loading: false,
 	onRowClick: jest.fn(),
 };
@@ -70,6 +71,33 @@ describe('ServiceAccountsTable', () => {
 		expect(onRowClick).toHaveBeenCalledWith(
 			expect.objectContaining({ id: 'sa-1', email: 'ci-bot@signoz.io' }),
 		);
+	});
+
+	it('paginates on the total the API reports, not on the rows it holds', () => {
+		render(
+			<NuqsTestingAdapter>
+				<ServiceAccountsTable
+					{...defaultProps}
+					data={[mockActiveAccount]}
+					total={45}
+				/>
+			</NuqsTestingAdapter>,
+		);
+
+		expect(screen.getByText('of 45')).toBeInTheDocument();
+		expect(screen.getByTitle('3')).toBeInTheDocument();
+	});
+
+	it('hides the paginator when the total fits on one page', () => {
+		render(
+			<ServiceAccountsTable
+				{...defaultProps}
+				data={[mockActiveAccount]}
+				total={3}
+			/>,
+		);
+
+		expect(screen.queryByText('of 3')).not.toBeInTheDocument();
 	});
 
 	it('shows "No service accounts" empty state when data is empty and no search query', () => {

@@ -5,6 +5,7 @@ import {
 	createdByClause,
 	isQueryEmpty,
 	parseReflectedClauses,
+	reflectedEqualityValue,
 	spliceClause,
 	updatedWindowFromTimestamp,
 } from './filterQuery';
@@ -59,6 +60,24 @@ describe('parseReflectedClauses', () => {
 	it('falls back to any for an unrecognised updated_at cutoff', () => {
 		const iso = dayjs().subtract(400, 'day').toISOString();
 		expect(parseReflectedClauses(`updated_at >= '${iso}'`).updated).toBe('any');
+	});
+});
+
+describe('reflectedEqualityValue', () => {
+	it('reads the unquoted value of a top-level equality', () => {
+		expect(reflectedEqualityValue("status = 'active'", 'status')).toBe('active');
+		expect(reflectedEqualityValue('status = deleted AND x', 'status')).toBe(
+			'deleted',
+		);
+	});
+
+	it('is null when the key is absent, nested, repeated or not an equality', () => {
+		expect(reflectedEqualityValue('name = x', 'status')).toBeNull();
+		expect(reflectedEqualityValue("(status = 'active')", 'status')).toBeNull();
+		expect(
+			reflectedEqualityValue('status = active OR status = deleted', 'status'),
+		).toBeNull();
+		expect(reflectedEqualityValue('status != active', 'status')).toBeNull();
 	});
 });
 

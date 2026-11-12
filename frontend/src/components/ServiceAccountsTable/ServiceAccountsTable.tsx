@@ -1,7 +1,14 @@
 import React from 'react';
 import { Table } from 'antd';
-import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
-import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
+import {
+	SA_PAGE_SIZE,
+	SA_QUERY_PARAMS,
+} from 'container/ServiceAccountsSettings/constants';
+import { SERVICE_ACCOUNTS_DEFAULT_QUERY } from 'container/ServiceAccountsSettings/list.config';
+import {
+	freeTextOfQuery,
+	ServiceAccountRow,
+} from 'container/ServiceAccountsSettings/utils';
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
 
 import {
@@ -12,16 +19,16 @@ import {
 
 import './ServiceAccountsTable.styles.scss';
 
-export const PAGE_SIZE = 20;
-
 interface ServiceAccountsTableProps {
 	data: ServiceAccountRow[];
+	total: number;
 	loading: boolean;
 	onRowClick?: (row: ServiceAccountRow) => void;
 }
 
 function ServiceAccountsTable({
 	data,
+	total,
 	loading,
 	onRowClick,
 }: ServiceAccountsTableProps): JSX.Element {
@@ -31,7 +38,7 @@ function ServiceAccountsTable({
 	);
 	const [searchQuery] = useQueryState(
 		SA_QUERY_PARAMS.SEARCH,
-		parseAsString.withDefault(''),
+		parseAsString.withDefault(SERVICE_ACCOUNTS_DEFAULT_QUERY),
 	);
 
 	return (
@@ -43,11 +50,11 @@ function ServiceAccountsTable({
 				rowKey="id"
 				loading={loading}
 				pagination={
-					data.length > PAGE_SIZE
+					total > SA_PAGE_SIZE
 						? {
 								current: currentPage,
-								pageSize: PAGE_SIZE,
-								total: data.length,
+								pageSize: SA_PAGE_SIZE,
+								total,
 								showTotal: showPaginationTotal,
 								showSizeChanger: false,
 								onChange: (page: number): void => void setPage(page),
@@ -60,7 +67,9 @@ function ServiceAccountsTable({
 				}
 				showSorterTooltip={false}
 				locale={{
-					emptyText: <ServiceAccountsEmptyState searchQuery={searchQuery} />,
+					emptyText: (
+						<ServiceAccountsEmptyState searchQuery={freeTextOfQuery(searchQuery)} />
+					),
 				}}
 				className="sa-table"
 				onRow={(
