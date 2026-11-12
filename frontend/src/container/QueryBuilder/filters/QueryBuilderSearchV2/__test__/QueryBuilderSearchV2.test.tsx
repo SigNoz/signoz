@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { render, RenderResult, screen, within } from '@testing-library/react';
+import {
+	render,
+	RenderResult,
+	screen,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
 	initialQueriesMap,
@@ -8,6 +14,7 @@ import {
 import { TelemetrytypesTelemetryFieldValuesDTO } from 'api/generated/services/sigNoz.schemas';
 import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
+import { useFieldValuesSuggestion } from 'hooks/querySuggestions/useFieldValuesSuggestion';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FieldDataType, TelemetryFieldKey } from 'types/api/v5/queryRange';
@@ -94,6 +101,7 @@ const getSearchCombobox = (): HTMLElement =>
 const mockFieldKeys: TelemetryFieldKey[] = [
 	{ name: 'http.status', fieldContext: 'attribute', fieldDataType: 'string' },
 	{ name: 'service.name', fieldContext: 'attribute', fieldDataType: 'string' },
+	{ name: 'name', fieldContext: 'span', fieldDataType: 'string' },
 	{
 		name: 'unmapped.attribute',
 		fieldContext: 'attribute',
@@ -340,6 +348,44 @@ describe('Key fetch context', () => {
 			expect.objectContaining({ fieldContext: undefined }),
 			undefined,
 			expect.anything(),
+		);
+	});
+});
+
+describe('Span field keys', () => {
+	it('marks span fields as columns and looks up their values in the span context', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderWithContext();
+
+		const combobox = getSearchCombobox();
+		await user.click(combobox);
+		await user.type(combobox, 'nam');
+		await screen.findByRole('listbox');
+		await user.click(await screen.findByText('name'));
+		await user.click(screen.getByText('='));
+
+		await waitFor(() =>
+			expect(jest.mocked(useFieldValuesSuggestion)).toHaveBeenLastCalledWith(
+				expect.objectContaining({ name: 'name', fieldContext: 'span' }),
+				undefined,
+				expect.anything(),
+			),
+		);
+
+		await user.click(screen.getByText('200'));
+
+		expect(mockOnChange).toHaveBeenLastCalledWith(
+			expect.objectContaining({
+				items: expect.arrayContaining([
+					expect.objectContaining({
+						key: expect.objectContaining({
+							key: 'name',
+							type: 'span',
+							isColumn: true,
+						}),
+					}),
+				]),
+			}),
 		);
 	});
 });

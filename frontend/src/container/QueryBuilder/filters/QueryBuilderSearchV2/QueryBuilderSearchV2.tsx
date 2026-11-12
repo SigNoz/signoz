@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { type RefSelectProps, Select, Spin } from 'antd';
 import { Pill } from '@signozhq/ui/pill';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import {
 	OperatorConfigKeys,
@@ -223,8 +224,15 @@ function QueryBuilderSearchV2(
 		},
 	);
 
+	// The legacy traces builder checks `exists` on the column only for keys marked as columns.
 	const attributeKeys = useMemo(
-		() => (fieldKeys ?? []).map(toAttributeKey),
+		() =>
+			(fieldKeys ?? []).map((fieldKey) => ({
+				...toAttributeKey(fieldKey),
+				isColumn:
+					fieldKey.fieldContext === TelemetrytypesFieldContextDTO.span ||
+					fieldKey.fieldContext === TelemetrytypesFieldContextDTO.log,
+			})),
 		[fieldKeys],
 	);
 
