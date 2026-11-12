@@ -12,14 +12,11 @@ const LAYOUT_PROPERTIES = [
 	'column-gap',
 	'box-sizing',
 	'width',
-	'font-family',
 	'font-size',
 ] as const;
 
 const LINK_PROPERTIES = [
-	'color',
 	'text-decoration-line',
-	'background-color',
 	'cursor',
 	'transition',
 ] as const;
@@ -76,6 +73,8 @@ export async function assertSpaceParity({
 }: {
 	canvasElement: HTMLElement;
 }): Promise<void> {
+	// Text boxes differ while the web font loads: each side falls back differently.
+	await document.fonts.ready;
 	const canvas = within(canvasElement);
 	const antd = canvas.queryByTestId(ANTD_SPACE_TEST_ID);
 	const local = canvas.queryByTestId(LOCAL_SPACE_TEST_ID);

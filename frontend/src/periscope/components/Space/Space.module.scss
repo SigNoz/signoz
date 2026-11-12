@@ -7,20 +7,20 @@
 }
 
 :where(.space) a {
-	color: var(--theme-color-link);
+	color: var(--primary-link);
 	text-decoration: none;
 	background-color: transparent;
 	outline: none;
 	cursor: pointer;
-	transition: color var(--theme-motion-duration-slow);
+	transition: color 0.3s;
 	-webkit-text-decoration-skip: objects;
 
 	&:hover {
-		color: var(--theme-color-link-hover);
+		color: var(--primary-link-hover);
 	}
 
 	&:active {
-		color: var(--theme-color-link-active);
+		color: var(--primary-link-hover);
 	}
 
 	&:active,
@@ -35,7 +35,7 @@
 	}
 
 	&[disabled] {
-		color: var(--theme-color-text-disabled);
+		color: var(--l3-foreground);
 		cursor: not-allowed;
 	}
 }
@@ -89,20 +89,20 @@
 }
 
 :where(.compact) a {
-	color: var(--theme-color-link);
+	color: var(--primary-link);
 	text-decoration: none;
 	background-color: transparent;
 	outline: none;
 	cursor: pointer;
-	transition: color var(--theme-motion-duration-slow);
+	transition: color 0.3s;
 	-webkit-text-decoration-skip: objects;
 
 	&:hover {
-		color: var(--theme-color-link-hover);
+		color: var(--primary-link-hover);
 	}
 
 	&:active {
-		color: var(--theme-color-link-active);
+		color: var(--primary-link-hover);
 	}
 
 	&:active,
@@ -117,7 +117,7 @@
 	}
 
 	&[disabled] {
-		color: var(--theme-color-text-disabled);
+		color: var(--l3-foreground);
 		cursor: not-allowed;
 	}
 }
