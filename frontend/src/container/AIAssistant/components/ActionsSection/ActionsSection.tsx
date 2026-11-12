@@ -362,15 +362,22 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 		normalized.builder.queryData.forEach((q, i) => {
 			deps.handleSetQueryData(i, q);
 		});
-		deps.redirectWithQueryBuilderData(normalized, {
-			[QueryParams.panelTypes]: panelType,
-			...(timeRange && {
-				[QueryParams.startTime]: timeRange.start,
-				[QueryParams.endTime]: timeRange.end,
-				// relativeTime outranks startTime/endTime in the time picker, so drop it.
-				[QueryParams.relativeTime]: null,
-			}),
-		});
+		deps.redirectWithQueryBuilderData(
+			normalized,
+			{
+				[QueryParams.panelTypes]: panelType,
+				...(timeRange && {
+					[QueryParams.startTime]: timeRange.start,
+					[QueryParams.endTime]: timeRange.end,
+					// relativeTime outranks startTime/endTime in the time picker, so drop it.
+					[QueryParams.relativeTime]: null,
+				}),
+			},
+			undefined,
+			undefined,
+			// New params like startTime would otherwise make safeNavigate replace the entry.
+			{ replace: false },
+		);
 		return;
 	}
 	const base = explorerRouteForSignal(action.signal);

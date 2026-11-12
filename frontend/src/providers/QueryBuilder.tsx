@@ -949,7 +949,7 @@ export function QueryBuilderProvider({
 			searchParams?: Record<string, unknown>,
 			redirectingUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 			shouldNotStringify?: boolean,
-			newTab?: boolean,
+			navigateOptions?: { newTab?: boolean; replace?: boolean },
 		) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
@@ -1021,7 +1021,7 @@ export function QueryBuilderProvider({
 				? `${redirectingUrl}?${urlQuery}`
 				: `${location.pathname}?${urlQuery}`;
 
-			safeNavigate(generatedUrl, { newTab });
+			safeNavigate(generatedUrl, navigateOptions);
 		},
 		[location.pathname, safeNavigate],
 	);

@@ -208,6 +208,9 @@ describe('ActionsSection apply_filter', () => {
 		expect(redirectWithQueryBuilderData).toHaveBeenCalledWith(
 			expect.objectContaining({ builder: expect.anything() }),
 			{ [QueryParams.panelTypes]: PANEL_TYPES.TABLE },
+			undefined,
+			undefined,
+			{ replace: false },
 		);
 	});
 
@@ -246,6 +249,9 @@ describe('ActionsSection apply_filter', () => {
 				[QueryParams.endTime]: END_MS,
 				[QueryParams.relativeTime]: null,
 			},
+			undefined,
+			undefined,
+			{ replace: false },
 		);
 		expect(mockUpdateTimeInterval).toHaveBeenCalledWith('custom', [
 			START_MS,

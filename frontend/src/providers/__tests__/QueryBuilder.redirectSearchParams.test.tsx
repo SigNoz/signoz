@@ -28,4 +28,26 @@ describe('redirectWithQueryBuilderData search params', () => {
 		expect(url).not.toContain(`${QueryParams.relativeTime}=`);
 		expect(url).toContain(`${QueryParams.viewName}=kept`);
 	});
+
+	it('passes navigate options to safeNavigate', () => {
+		const { result } = renderHook(() => useQueryBuilder(), {
+			wrapper: ({ children }): JSX.Element => (
+				<AllTheProviders initialRoute="/unconstrained">{children}</AllTheProviders>
+			),
+		});
+
+		act(() => {
+			result.current.redirectWithQueryBuilderData(
+				initialQueriesMap.logs,
+				{ [QueryParams.startTime]: 1000 },
+				undefined,
+				undefined,
+				{ replace: false },
+			);
+		});
+
+		expect(safeNavigateMock).toHaveBeenLastCalledWith(expect.any(String), {
+			replace: false,
+		});
+	});
 });

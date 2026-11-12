@@ -312,7 +312,7 @@ export type QueryBuilderContextType = {
 		searchParams?: Record<string, unknown>,
 		redirectToUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 		shallStringify?: boolean,
-		newTab?: boolean,
+		navigateOptions?: { newTab?: boolean; replace?: boolean },
 	) => void;
 	handleRunQuery: () => void;
 	resetQuery: (newCurrentQuery?: QueryState) => void;
