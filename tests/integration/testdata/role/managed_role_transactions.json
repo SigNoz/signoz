@@ -307,6 +307,16 @@
     },
     {
       "type": "metaresource",
+      "kind": "llm-pricing-rule",
+      "verbs": [
+        "read",
+        "update",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "ttl-setting",
       "verbs": [
         "read",
@@ -544,6 +554,14 @@
     },
     {
       "type": "metaresource",
+      "kind": "llm-pricing-rule",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
       "kind": "ttl-setting",
       "verbs": [
         "read",
@@ -716,6 +734,14 @@
     {
       "type": "metaresource",
       "kind": "metrics-field",
+      "verbs": [
+        "read",
+        "list"
+      ]
+    },
+    {
+      "type": "metaresource",
+      "kind": "llm-pricing-rule",
       "verbs": [
         "read",
         "list"

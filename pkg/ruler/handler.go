@@ -3,7 +3,6 @@ package ruler
 import "net/http"
 
 type Handler interface {
-	ListRules(http.ResponseWriter, *http.Request)
 	ListRulesV3(http.ResponseWriter, *http.Request)
 	GetRuleByID(http.ResponseWriter, *http.Request)
 	CreateRule(http.ResponseWriter, *http.Request)
