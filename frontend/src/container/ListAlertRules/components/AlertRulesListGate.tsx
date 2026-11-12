@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { useRuleCollectionPermissions } from 'hooks/alerts/useRuleCollectionPermissions';
 import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
 import { RuleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
 const LIST_CHECKS = [RuleListPermission];
 
@@ -19,9 +19,9 @@ function AlertRulesListGate({
 	className,
 	children,
 }: AlertRulesListGateProps): JSX.Element {
-	const { canList, isLoading, hasError } = useRuleCollectionPermissions();
+	const { isGranted, isLoading, error } = useAuthZ(LIST_CHECKS);
 
-	if (!isLoading && !hasError && !canList) {
+	if (!isLoading && !error && !isGranted(RuleListPermission)) {
 		return (
 			<PermissionDeniedCallout
 				deniedPermissions={LIST_CHECKS}
