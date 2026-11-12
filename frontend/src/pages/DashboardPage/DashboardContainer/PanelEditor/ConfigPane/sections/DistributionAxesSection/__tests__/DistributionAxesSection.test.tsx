@@ -1,5 +1,5 @@
 import { DashboardtypesDistributionYScaleDTO } from 'api/generated/services/sigNoz.schemas';
-import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import DistributionAxesSection from '../DistributionAxesSection';
 
@@ -17,7 +17,8 @@ describe('DistributionAxesSection', () => {
 		).toBeInTheDocument();
 	});
 
-	it('writes the x min without dropping the max or the y scale', () => {
+	it('writes the x min without dropping the max or the y scale', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onChange = jest.fn();
 		render(
 			<DistributionAxesSection
@@ -29,9 +30,8 @@ describe('DistributionAxesSection', () => {
 			/>,
 		);
 
-		fireEvent.change(screen.getByTestId('panel-editor-v2-distribution-x-min'), {
-			target: { value: '10' },
-		});
+		await user.click(screen.getByTestId('panel-editor-v2-distribution-x-min'));
+		await user.paste('10');
 
 		expect(onChange).toHaveBeenCalledWith({
 			x: { min: 10, max: 100 },
@@ -53,10 +53,11 @@ describe('DistributionAxesSection', () => {
 	});
 
 	it('writes the y scale', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onChange = jest.fn();
 		render(<DistributionAxesSection value={undefined} onChange={onChange} />);
 
-		await userEvent.click(screen.getByText('Logarithmic'));
+		await user.click(screen.getByText('Logarithmic'));
 
 		expect(onChange).toHaveBeenCalledWith({
 			y: { scale: DashboardtypesDistributionYScaleDTO.log },
