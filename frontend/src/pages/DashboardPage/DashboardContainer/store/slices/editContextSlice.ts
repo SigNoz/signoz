@@ -1,7 +1,13 @@
+import { isEqual } from 'lodash-es';
 import type { QueryKey } from 'react-query';
 import type { StateCreator } from 'zustand';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
+import { resolveControls } from '../../controls/dashboardControls';
+import type {
+	DashboardControls,
+	DashboardControlsInput,
+} from '../../controls/types';
 import type { DashboardStore } from '../useDashboardStore';
 
 /**
@@ -26,11 +32,14 @@ export interface EditContextSlice {
 	dashboardQuerySource: DashboardQuerySource | null;
 	refetch: () => void;
 	readOnly: boolean;
+	/** Resolved: the host's `controls` over the defaults, writing ones off when read-only. */
+	controls: DashboardControls;
 	setEditContext: (ctx: {
 		dashboardId: string;
 		refetch: () => void;
 		source?: DashboardQuerySource;
 		readOnly?: boolean;
+		controls?: DashboardControlsInput;
 	}) => void;
 }
 
@@ -44,16 +53,20 @@ export const createEditContextSlice: StateCreator<
 	dashboardQuerySource: null,
 	refetch: (): void => undefined,
 	readOnly: false,
+	controls: resolveControls(undefined, false),
 	// Idempotent (no-op when unchanged) so it's safe to call during render.
 	setEditContext: (ctx): void => {
 		const prev = get();
 		const source = ctx.source ?? null;
 		const readOnly = ctx.readOnly ?? false;
+		// Hosts pass `controls` inline, so compare by value, not reference.
+		const controls = resolveControls(ctx.controls, readOnly);
 		if (
 			prev.dashboardId === ctx.dashboardId &&
 			prev.refetch === ctx.refetch &&
 			prev.readOnly === readOnly &&
-			prev.dashboardQuerySource === source
+			prev.dashboardQuerySource === source &&
+			isEqual(prev.controls, controls)
 		) {
 			return;
 		}
@@ -62,6 +75,7 @@ export const createEditContextSlice: StateCreator<
 			dashboardQuerySource: source,
 			refetch: ctx.refetch,
 			readOnly,
+			controls,
 		});
 	},
 });

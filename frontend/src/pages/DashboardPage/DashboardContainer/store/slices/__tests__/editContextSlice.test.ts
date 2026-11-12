@@ -63,4 +63,31 @@ describe('editContextSlice.setEditContext', () => {
 		expect(listener).not.toHaveBeenCalled();
 		unsubscribe();
 	});
+
+	it('is a no-op for an equal inline controls object', () => {
+		store().setEditContext({
+			dashboardId: 'dash-1',
+			refetch,
+			controls: { header: false },
+		});
+		const listener = jest.fn();
+		const unsubscribe = useDashboardStore.subscribe(listener);
+
+		store().setEditContext({
+			dashboardId: 'dash-1',
+			refetch,
+			controls: { header: false },
+		});
+
+		expect(listener).not.toHaveBeenCalled();
+		expect(store().controls.header.share).toBe(false);
+		unsubscribe();
+	});
+
+	it('resolves controls against read-only', () => {
+		store().setEditContext({ dashboardId: 'dash-1', refetch, readOnly: true });
+
+		expect(store().controls.panelActions.edit).toBe(false);
+		expect(store().controls.panelActions.view).toBe(true);
+	});
 });
