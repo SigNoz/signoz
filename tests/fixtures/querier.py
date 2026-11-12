@@ -363,6 +363,7 @@ def build_formula_query(
     order: list[dict] | None = None,
     limit: int | None = None,
     offset: int | None = None,
+    having_expression: str | None = None,
 ) -> dict:
     spec: dict[str, Any] = {
         "name": name,
@@ -379,6 +380,8 @@ def build_formula_query(
         spec["limit"] = limit
     if offset is not None:
         spec["offset"] = offset
+    if having_expression:
+        spec["having"] = {"expression": having_expression}
     return {"type": "builder_formula", "spec": spec}
 
 
@@ -723,6 +726,44 @@ def build_scalar_query(
 
     if functions:
         spec["functions"] = functions
+
+    return {"type": "builder_query", "spec": spec}
+
+
+def build_heatmap_query(
+    name: str,
+    signal: str,
+    expression: str,
+    *,
+    source: str | None = None,
+    group_by: list[dict] | None = None,
+    order: list[dict] | None = None,
+    filter_expression: str | None = None,
+    bucket_options: dict | None = None,
+    step_interval: int = DEFAULT_STEP_INTERVAL,
+) -> dict:
+    """Omitting bucket_options leaves the server's default log axis."""
+    spec: dict[str, Any] = {
+        "name": name,
+        "signal": signal,
+        "stepInterval": step_interval,
+        "aggregations": [{"expression": expression}],
+    }
+
+    if source:
+        spec["source"] = source
+
+    if group_by:
+        spec["groupBy"] = group_by
+
+    if order:
+        spec["order"] = order
+
+    if filter_expression:
+        spec["filter"] = {"expression": filter_expression}
+
+    if bucket_options is not None:
+        spec["bucketOptions"] = bucket_options
 
     return {"type": "builder_query", "spec": spec}
 

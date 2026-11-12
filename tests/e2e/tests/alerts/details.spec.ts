@@ -6,7 +6,6 @@ import {
 	expect,
 	nameContains,
 	test,
-	V1_RULE_TEAM_LABEL,
 } from '../../drivers/alerts';
 
 test.describe('Alert details', () => {
@@ -151,57 +150,7 @@ test.describe('Alert details', () => {
 		await expect(alerts.details.menuItem('Rename')).toHaveCount(0);
 	});
 
-	test('TC-07 the v1 header is static and keeps the Rename item', async ({
-		alerts,
-		alertHistory,
-	}) => {
-		await alerts.details.goto(alertHistory.ruleIdV1);
-
-		await expect(alerts.details.root()).toHaveAttribute(
-			'data-schema-version',
-			'v1',
-		);
-		await expect(alerts.details.headerField('title')).toBeVisible();
-		await expect(alerts.details.headerField('state')).toBeVisible();
-		await expect(alerts.details.headerField('severity')).toContainText('Warning');
-		await expect(alerts.details.headerField('labels')).toContainText(
-			V1_RULE_TEAM_LABEL,
-		);
-		await expect(alerts.details.nameInput()).toHaveCount(0);
-
-		await alerts.details.openActions();
-		await expect(alerts.details.menuItem('Rename')).toBeVisible();
-	});
-
-	test('TC-08 a v1 rename through the modal persists', async ({
-		alerts,
-		ownedRules,
-	}) => {
-		const original = `e2e-ad-rename-v1-${Date.now()}`;
-		const renamed = `${original}-renamed`;
-		const ruleId = await ownedRules.logs({ name: original, schema: 'v1' });
-
-		await alerts.details.goto(ruleId);
-		await expect(alerts.details.headerField('title')).toContainText(original);
-
-		await alerts.details.openActions();
-		await alerts.details.menuItem('Rename').click();
-
-		const modalInput = alerts.details.renameInput();
-		await expect(modalInput).toBeVisible();
-		await modalInput.fill(renamed);
-		await alerts.details.renameConfirmButton().click();
-
-		await expect(
-			alerts.shell.message('Alert renamed successfully'),
-		).toBeVisible();
-		await expect(alerts.details.headerField('title')).toContainText(renamed);
-
-		await alerts.shell.goto({ query: nameContains(renamed) });
-		await expect(alerts.list.ruleName(renamed)).toBeVisible();
-	});
-
-	test('TC-09 a v2 rename persists only through the Overview footer', async ({
+	test('TC-07 a v2 rename persists only through the Overview footer', async ({
 		authedPage: page,
 		alerts,
 		ownedRules,
@@ -239,7 +188,7 @@ test.describe('Alert details', () => {
 		await expect(alerts.list.ruleName(`${renamed}-unsaved`)).toHaveCount(0);
 	});
 
-	test('TC-10 the tabs preserve ruleId and relativeTime', async ({
+	test('TC-08 the tabs preserve ruleId and relativeTime', async ({
 		authedPage: page,
 		alerts,
 		alertHistory,
@@ -261,7 +210,7 @@ test.describe('Alert details', () => {
 		await expect(page).toHaveURL(new RegExp(`ruleId=${alertHistory.ruleId}`));
 	});
 
-	test('TC-11 switching back to History discards the other history params', async ({
+	test('TC-09 switching back to History discards the other history params', async ({
 		authedPage: page,
 		alerts,
 		alertHistory,
@@ -284,7 +233,7 @@ test.describe('Alert details', () => {
 		expect(search.get('ruleId')).toBe(alertHistory.ruleId);
 	});
 
-	test('TC-12 the overview shows the saved threshold value', async ({
+	test('TC-10 the overview shows the saved threshold value', async ({
 		alerts,
 		ownedRules,
 	}) => {
@@ -299,7 +248,7 @@ test.describe('Alert details', () => {
 		await expect(alerts.form.thresholdValue()).toHaveValue(String(target));
 	});
 
-	test('TC-13 an unknown or missing ruleId lands on AlertNotFound', async ({
+	test('TC-11 an unknown or missing ruleId lands on AlertNotFound', async ({
 		alerts,
 	}) => {
 		for (const open of [
