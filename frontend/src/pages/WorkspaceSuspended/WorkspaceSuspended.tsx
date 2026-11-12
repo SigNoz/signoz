@@ -128,8 +128,6 @@ function WorkspaceSuspended(): JSX.Element {
 											as="span"
 											display="inline-block"
 											align="center"
-											width="80%"
-											marginX="auto"
 											textOverflow="wrap"
 										>
 											{t('actionDescription')}

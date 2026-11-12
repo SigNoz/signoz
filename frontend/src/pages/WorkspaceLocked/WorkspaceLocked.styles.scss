@@ -152,6 +152,11 @@ $dark-theme: 'darkMode';
 		-webkit-text-fill-color: transparent;
 		animation: gradientFlow 24s ease infinite;
 		margin-bottom: 18px;
+		/* stylelint-disable property-disallowed-list -- hero heading is larger than the largest Typography size */
+		font-size: 30px;
+		font-weight: 600;
+		line-height: 38px;
+		/* stylelint-enable property-disallowed-list */
 	}
 
 	&__faq-container {
