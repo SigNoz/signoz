@@ -22,8 +22,12 @@ import {
 } from './layout';
 import {
 	DistributionPercentile,
-	formatPercentileMarker,
+	formatPercentileBadge,
+	formatPercentileValue,
+	groupPercentileMarkers,
 	layoutMarkerLabels,
+	PercentileMarkerHitArea,
+	resolveHoveredMarker,
 	resolveNearestSeries,
 } from './percentiles';
 import { DistributionXAxis } from './types';
@@ -36,7 +40,6 @@ const OVERFLOW_BAR_OPACITY = 0.4;
 /** Every group but the hovered one fades to this. */
 const DIMMED_BAR_OPACITY = 0.25;
 const DIMMED_OVERFLOW_BAR_OPACITY = 0.12;
-const OVERFLOW_DASH: [number, number] = [4, 3];
 const OVERFLOW_AXIS_LABEL = '∞';
 /** Headroom above the tallest bar: a fraction on linear, a factor on log. Marker
  *  labels sit at the top of the plot, so they take more. */
@@ -45,10 +48,18 @@ const LINEAR_HEADROOM_WITH_MARKERS = 1.3;
 const LOG_HEADROOM = 2;
 const LOG_HEADROOM_WITH_MARKERS = 6;
 const MARKER_DASH: [number, number] = [3, 3];
-const MARKER_FONT_SIZE_PX = 10;
-const MARKER_LABEL_ROW_PX = 13;
-const MARKER_LABEL_GAP_PX = 6;
-const MARKER_LABEL_OFFSET_PX = 3;
+const MARKER_FONT_SIZE_PX = 9;
+/** Space between a badge's name and its diamond's edges. */
+const MARKER_BADGE_PADDING_PX = 2;
+const MARKER_BADGE_GAP_PX = 2;
+const MARKER_VALUE_FONT_SIZE_PX = 11;
+/** How far from a marker line the cursor still hovers it, in CSS pixels. */
+const MARKER_HIT_PX = 4;
+const MARKER_PILL_PADDING_X_PX = 6;
+const MARKER_PILL_PADDING_Y_PX = 3;
+const MARKER_PILL_RADIUS_PX = 4;
+/** Height of the pill's notch pointing up at the line; also its gap from the axis. */
+const MARKER_PILL_POINTER_PX = 4;
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 function withOpacity(color: string, opacity: number): string {
@@ -123,83 +134,154 @@ function resolveYRange({
 	return [0, yMax > 0 ? yMax * headroom : 1];
 }
 
-/** Dashed lines across the plot, labels stacked in rows at the top so none overlap. */
+/** A diamond centred on `(x, y)` with half-diagonals `rx` and `ry`, filled then outlined. */
+function drawDiamond(
+	ctx: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	rx: number,
+	ry: number,
+	fill: string,
+	stroke: string,
+): void {
+	ctx.beginPath();
+	ctx.moveTo(x, y - ry);
+	ctx.lineTo(x + rx, y);
+	ctx.lineTo(x, y + ry);
+	ctx.lineTo(x - rx, y);
+	ctx.closePath();
+	ctx.fillStyle = fill;
+	ctx.fill();
+	ctx.strokeStyle = stroke;
+	ctx.stroke();
+}
+
+/**
+ * Dashed lines across the plot with a diamond badge at each end naming the
+ * percentile, one per group on the same spot; badges stack into rows so none overlap. The hovered marker is
+ * emphasised and shows its value on the x axis. Returns each marker's hover targets.
+ */
 function drawPercentileMarkers(
 	u: uPlot,
-	markers: DistributionPercentile[],
+	markers: DistributionPercentile[][],
 	formatBound: (value: number) => string,
 	isDarkMode: boolean,
-): void {
+	hovered: number | null,
+): PercentileMarkerHitArea[] {
 	if (markers.length === 0) {
-		return;
+		return [];
 	}
 	const { ctx, bbox } = u;
 	const { pxRatio } = uPlot;
 	const color = isDarkMode ? themeColors.white : themeColors.black;
+	const background = isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100;
+	const bottom = bbox.top + bbox.height;
 
 	ctx.save();
-	ctx.font = `500 ${MARKER_FONT_SIZE_PX * pxRatio}px Inter, sans-serif`;
-	ctx.textBaseline = 'top';
+	ctx.font = `600 ${MARKER_FONT_SIZE_PX * pxRatio}px Inter, sans-serif`;
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'middle';
 
-	const labels = markers.map((marker) => {
-		const text = formatPercentileMarker(marker, formatBound);
-		const x = u.valToPos(marker.axisValue, 'x', true);
-		return { text, x, width: ctx.measureText(text).width };
+	const named = markers.map((group) => {
+		const text = formatPercentileBadge(group);
+		return { text, width: ctx.measureText(text).width };
 	});
+	// One square diamond for all, fitting the widest name's box: |dx| + |dy| ≤ r at
+	// its corners. Cap height stands in for the text's height.
+	const r =
+		(Math.max(...named.map(({ width }) => width)) +
+			MARKER_FONT_SIZE_PX * pxRatio * 0.7) /
+			2 +
+		MARKER_BADGE_PADDING_PX * pxRatio;
+	const [rx, ry] = [r, r];
+	const badges = markers.map((group, index) => ({
+		text: named[index].text,
+		x: u.valToPos(group[0].axisValue, 'x', true),
+	}));
 	const rows = layoutMarkerLabels(
-		labels.map(({ x, width }) => ({
-			x: x + MARKER_LABEL_OFFSET_PX * pxRatio,
-			width,
-		})),
-		MARKER_LABEL_GAP_PX * pxRatio,
+		badges.map(({ x }) => ({ x: x - rx, width: 2 * rx })),
+		MARKER_BADGE_GAP_PX * pxRatio,
 	);
+	const rowStep = 2 * ry + MARKER_BADGE_GAP_PX * pxRatio;
+	const badgeCentres = (index: number): [number, number] => {
+		const offset = ry + rows[index] * rowStep;
+		return [bbox.top + offset, bottom - offset];
+	};
 
-	labels.forEach(({ text, x }, index) => {
-		ctx.globalAlpha = 0.55;
+	const drawMarker = (index: number): void => {
+		const { text, x } = badges[index];
+		const isHovered = index === hovered;
+
+		ctx.globalAlpha = isHovered ? 1 : 0.55;
 		ctx.strokeStyle = color;
 		ctx.lineWidth = pxRatio;
 		ctx.setLineDash(MARKER_DASH.map((dash) => dash * pxRatio));
 		ctx.beginPath();
 		ctx.moveTo(x, bbox.top);
-		ctx.lineTo(x, bbox.top + bbox.height);
+		ctx.lineTo(x, bottom);
 		ctx.stroke();
 
-		ctx.globalAlpha = 0.85;
-		ctx.fillStyle = color;
-		ctx.fillText(
-			text,
-			x + MARKER_LABEL_OFFSET_PX * pxRatio,
-			bbox.top + rows[index] * MARKER_LABEL_ROW_PX * pxRatio,
-		);
-	});
-	ctx.restore();
-}
+		ctx.globalAlpha = 1;
+		ctx.setLineDash([]);
+		badgeCentres(index).forEach((y) => {
+			drawDiamond(ctx, x, y, rx, ry, isHovered ? color : background, color);
+			ctx.fillStyle = isHovered ? background : color;
+			ctx.fillText(text, x, y);
+		});
 
-function drawOverflowBoundary(
-	u: uPlot,
-	xAxis: DistributionXAxis,
-	isDarkMode: boolean,
-): void {
-	const boundary = xAxis.edges[xAxis.edges.length - 2];
-	if (
-		xAxis.overflowSplit === null ||
-		xAxis.edges.length < 3 ||
-		boundary <= xAxis.min
-	) {
-		return;
+		if (!isHovered) {
+			return;
+		}
+		// The value sits on the x axis under the line, over the tick labels, in a pill
+		// whose notch points up at the line.
+		ctx.font = `500 ${MARKER_VALUE_FONT_SIZE_PX * pxRatio}px Inter, sans-serif`;
+		const value = formatPercentileValue(markers[index], formatBound);
+		const padX = MARKER_PILL_PADDING_X_PX * pxRatio;
+		const padY = MARKER_PILL_PADDING_Y_PX * pxRatio;
+		const pointer = MARKER_PILL_POINTER_PX * pxRatio;
+		const width = ctx.measureText(value).width + 2 * padX;
+		const height = MARKER_VALUE_FONT_SIZE_PX * pxRatio + 2 * padY;
+		const left = Math.min(Math.max(x - width / 2, 0), ctx.canvas.width - width);
+		const top = bottom + 2 * pointer;
+		const notchX = Math.min(
+			Math.max(x, left + pointer + MARKER_PILL_RADIUS_PX * pxRatio),
+			left + width - pointer - MARKER_PILL_RADIUS_PX * pxRatio,
+		);
+		// A halo in the chart's background hides the tick labels it overlaps.
+		ctx.fillStyle = background;
+		ctx.fillRect(left - padX, top, width + 2 * padX, height + 2 * padY);
+		ctx.fillStyle = isDarkMode ? Color.BG_SLATE_400 : Color.BG_INK_400;
+		ctx.beginPath();
+		ctx.roundRect(left, top, width, height, MARKER_PILL_RADIUS_PX * pxRatio);
+		ctx.moveTo(notchX - pointer, top);
+		ctx.lineTo(notchX, top - pointer);
+		ctx.lineTo(notchX + pointer, top);
+		ctx.closePath();
+		ctx.fill();
+		ctx.fillStyle = Color.BG_VANILLA_100;
+		ctx.fillText(value, left + width / 2, top + height / 2);
+	};
+
+	// The hovered one last, so it draws over its neighbours.
+	badges.forEach((_, index) => index !== hovered && drawMarker(index));
+	if (hovered !== null && hovered < badges.length) {
+		drawMarker(hovered);
 	}
-	const x = u.valToPos(boundary, 'x', true);
-	const { ctx, bbox } = u;
-	ctx.save();
-	ctx.strokeStyle = isDarkMode ? themeColors.white : themeColors.black;
-	ctx.globalAlpha = 0.35;
-	ctx.lineWidth = uPlot.pxRatio;
-	ctx.setLineDash(OVERFLOW_DASH.map((dash) => dash * uPlot.pxRatio));
-	ctx.beginPath();
-	ctx.moveTo(x, bbox.top);
-	ctx.lineTo(x, bbox.top + bbox.height);
-	ctx.stroke();
 	ctx.restore();
+
+	return badges.map(({ x }, index) => {
+		const toPlot = (value: number, origin: number): number =>
+			(value - origin) / pxRatio;
+		return {
+			x: toPlot(x, bbox.left),
+			badges: badgeCentres(index).map((y) => ({
+				left: toPlot(x - rx, bbox.left),
+				right: toPlot(x + rx, bbox.left),
+				top: toPlot(y - ry, bbox.top),
+				bottom: toPlot(y + ry, bbox.top),
+			})),
+		};
+	});
 }
 
 export interface BuildDistributionConfigArgs {
@@ -327,10 +409,17 @@ export function buildDistributionConfig({
 	};
 
 	// Read by every series' fill on each draw; a change redraws the paths.
-	const hover: { series: number | null; focused: number | null } = {
-		series: null,
-		focused: null,
-	};
+	const hover: {
+		series: number | null;
+		focused: number | null;
+		marker: number | null;
+	} = { series: null, focused: null, marker: null };
+	const plotMarkers = groupPercentileMarkers(
+		markers.filter(
+			({ axisValue }) => axisValue >= xAxis.min && axisValue <= xAxis.max,
+		),
+	);
+	let markerHitAreas: PercentileMarkerHitArea[] = [];
 	const isDimmed = (seriesIndex: number): boolean =>
 		hover.series !== null && hover.series !== seriesIndex;
 
@@ -368,14 +457,12 @@ export function buildDistributionConfig({
 	});
 
 	builder.addHook('draw', (u: uPlot): void => {
-		drawOverflowBoundary(u, xAxis, isDarkMode);
-		drawPercentileMarkers(
+		markerHitAreas = drawPercentileMarkers(
 			u,
-			markers.filter(
-				({ axisValue }) => axisValue >= xAxis.min && axisValue <= xAxis.max,
-			),
+			plotMarkers,
 			formatBound,
 			isDarkMode,
+			hover.marker,
 		);
 	});
 
@@ -386,19 +473,35 @@ export function buildDistributionConfig({
 		const isOnPlot = left >= 0 && top >= 0;
 		const x = isOnPlot ? u.posToVal(left, 'x') : Number.NaN;
 		const bucket = isOnPlot ? resolveRowIndex(xAxis.edges, x) : null;
+		const marker = isOnPlot
+			? resolveHoveredMarker(markerHitAreas, left, top, MARKER_HIT_PX)
+			: null;
+		// Over a marker, the bars neither dim nor show their tooltip.
 		const hovered =
-			bucket === null
+			bucket === null || marker !== null
 				? null
 				: resolveNearestSeries(layout, bucket, x, u.posToVal(top, 'y'));
 		// An empty bucket still gets a tooltip, as a bar chart's zero column does.
-		const focused = bucket === null || hovered !== null ? hovered : FIRST_SERIES;
+		const focused =
+			bucket === null || marker !== null || hovered !== null
+				? hovered
+				: FIRST_SERIES;
 
 		if (focused !== hover.focused) {
 			hover.focused = focused;
 			u.setSeries(focused === null ? null : focused + 1, { focus: true });
 		}
-		if (hovered !== hover.series) {
+		if (marker !== hover.marker) {
+			// The crosshair would cut through the marker's badges.
+			u.root
+				.querySelectorAll<HTMLElement>('.u-cursor-x, .u-cursor-y')
+				.forEach((line) => {
+					line.style.visibility = marker === null ? '' : 'hidden';
+				});
+		}
+		if (hovered !== hover.series || marker !== hover.marker) {
 			hover.series = hovered;
+			hover.marker = marker;
 			u.redraw(true, false);
 		}
 	});

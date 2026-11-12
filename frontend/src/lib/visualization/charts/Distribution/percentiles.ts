@@ -70,15 +70,88 @@ export function formatPercentileName(percentile: number): string {
 	return `p${Number(percentile.toFixed(3))}`;
 }
 
-/** `~p99` for an estimate; `p99 > 10 s` where only the overflow bound is known. */
-export function formatPercentileMarker(
-	marker: DistributionPercentile,
+/**
+ * Markers that fall on the same spot, sharing one badge: the percentiles landing
+ * in overflow all sit on its edge. Each group is in ascending percentile order.
+ */
+export function groupPercentileMarkers(
+	markers: DistributionPercentile[],
+): DistributionPercentile[][] {
+	const groups = new Map<number, DistributionPercentile[]>();
+	markers.forEach((marker) => {
+		groups.set(marker.axisValue, [
+			...(groups.get(marker.axisValue) ?? []),
+			marker,
+		]);
+	});
+	return [...groups.values()].map((group) =>
+		[...group].sort((a, b) => a.percentile - b.percentile),
+	);
+}
+
+/** `p90` for one marker; `p90+` for a group, starting at its lowest percentile. */
+export function formatPercentileBadge(group: DistributionPercentile[]): string {
+	const name = formatPercentileName(group[0].percentile);
+	return group.length > 1 ? `${name}+` : name;
+}
+
+/**
+ * `p99 ≈ 412 ms` for an estimate; `p90, p99 > 5 s` where only the overflow bound is
+ * known. A group shares one spot, so one value and overflow flag.
+ */
+export function formatPercentileValue(
+	group: DistributionPercentile[],
 	formatBound: (value: number) => string,
 ): string {
-	const name = formatPercentileName(marker.percentile);
-	return marker.isOverflow
-		? `${name} > ${formatBound(marker.value)}`
-		: `~${name}`;
+	const names = group
+		.map(({ percentile }) => formatPercentileName(percentile))
+		.join(', ');
+	const [{ value, isOverflow }] = group;
+	return `${names} ${isOverflow ? '>' : '≈'} ${formatBound(value)}`;
+}
+
+interface HitRect {
+	left: number;
+	right: number;
+	top: number;
+	bottom: number;
+}
+
+/** A drawn marker's hover targets, in CSS pixels relative to the plot. */
+export interface PercentileMarkerHitArea {
+	x: number;
+	badges: HitRect[];
+}
+
+/**
+ * The marker under `(x, y)`: one whose badge it is over, else the line nearest
+ * `x` within `tolerance`. `null` when none is.
+ */
+export function resolveHoveredMarker(
+	areas: PercentileMarkerHitArea[],
+	x: number,
+	y: number,
+	tolerance: number,
+): number | null {
+	const overBadge = areas.findIndex(({ badges }) =>
+		badges.some(
+			(badge) =>
+				x >= badge.left && x <= badge.right && y >= badge.top && y <= badge.bottom,
+		),
+	);
+	if (overBadge !== -1) {
+		return overBadge;
+	}
+	let nearest: number | null = null;
+	let nearestDistance = tolerance;
+	areas.forEach((area, index) => {
+		const distance = Math.abs(area.x - x);
+		if (distance <= nearestDistance) {
+			nearest = index;
+			nearestDistance = distance;
+		}
+	});
+	return nearest;
 }
 
 /**
@@ -110,8 +183,8 @@ export function resolveNearestSeries(
 }
 
 /**
- * Stacks marker labels into rows so none overlap: each goes in the first row whose
- * last label ends before it starts. Input and output are in the same pixel space.
+ * Stacks marker badges into rows so none overlap: each goes in the first row whose
+ * last badge ends before it starts. Input and output are in the same pixel space.
  */
 export function layoutMarkerLabels(
 	labels: Array<{ x: number; width: number }>,
