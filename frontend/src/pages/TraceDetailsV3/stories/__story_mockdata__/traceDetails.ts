@@ -383,6 +383,13 @@ const eventsOf = (span: BuiltSpan): SpantypesWaterfallSpanDTO['events'] =>
 					attributeMap: {
 						'exception.type': 'UpstreamUnavailable',
 						'exception.message': `${span.template.service} refused the request`,
+						'exception.stacktrace': [
+							`UpstreamUnavailable: ${span.template.service} refused the request`,
+							'    at Client.send (/app/src/client.ts:88:11)',
+							'    at Handler.call (/app/src/handler.ts:42:7)',
+							'Caused by: ConnectionRefused: connect ECONNREFUSED 10.0.1.7:443',
+							'    at TCPConnectWrap.afterConnect (node:net:1555:16)',
+						].join('\n'),
 					},
 					isError: true,
 				},
