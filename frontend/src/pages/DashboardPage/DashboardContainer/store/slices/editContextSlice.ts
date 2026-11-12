@@ -1,7 +1,11 @@
 import { isEqual } from 'lodash-es';
 import type { QueryKey } from 'react-query';
 import type { StateCreator } from 'zustand';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesGettableDashboardV2DTO,
+	Querybuildertypesv5QueryRangeRequestDTO,
+	QueryRangeV5200,
+} from 'api/generated/services/sigNoz.schemas';
 
 import { resolveControls } from '../../controls/dashboardControls';
 import type {
@@ -21,6 +25,19 @@ export interface DashboardQuerySource {
 }
 
 /**
+ * Runs a panel's query, when not via `POST /api/v5/query_range`. `key` joins
+ * every panel cache key, so results from different runners never mix.
+ */
+export interface QueryRunner {
+	key: string;
+	run: (request: {
+		panelId: string;
+		requestPayload: Querybuildertypesv5QueryRangeRequestDTO;
+		signal?: AbortSignal;
+	}) => Promise<QueryRangeV5200>;
+}
+
+/**
  * The page context the subtree can't derive for itself: which dashboard is open,
  * where its cached copy lives, how to refetch it, and whether the host forces it
  * view-only. Editability is deliberately absent — `useDashboardEditContext`
@@ -34,12 +51,15 @@ export interface EditContextSlice {
 	readOnly: boolean;
 	/** Resolved: the host's `controls` over the defaults, writing ones off when read-only. */
 	controls: DashboardControls;
+	/** `null` runs panel queries on `query_range`. */
+	queryRunner: QueryRunner | null;
 	setEditContext: (ctx: {
 		dashboardId: string;
 		refetch: () => void;
 		source?: DashboardQuerySource;
 		readOnly?: boolean;
 		controls?: DashboardControlsInput;
+		queryRunner?: QueryRunner;
 	}) => void;
 }
 
@@ -54,6 +74,7 @@ export const createEditContextSlice: StateCreator<
 	refetch: (): void => undefined,
 	readOnly: false,
 	controls: resolveControls(undefined, false),
+	queryRunner: null,
 	// Idempotent (no-op when unchanged) so it's safe to call during render.
 	setEditContext: (ctx): void => {
 		const prev = get();
@@ -61,12 +82,15 @@ export const createEditContextSlice: StateCreator<
 		const readOnly = ctx.readOnly ?? false;
 		// Hosts pass `controls` inline, so compare by value, not reference.
 		const controls = resolveControls(ctx.controls, readOnly);
+		const queryRunner = ctx.queryRunner ?? null;
 		if (
 			prev.dashboardId === ctx.dashboardId &&
 			prev.refetch === ctx.refetch &&
 			prev.readOnly === readOnly &&
 			prev.dashboardQuerySource === source &&
-			isEqual(prev.controls, controls)
+			isEqual(prev.controls, controls) &&
+			// The key identifies a runner, so an inline one doesn't re-seed on every render.
+			prev.queryRunner?.key === queryRunner?.key
 		) {
 			return;
 		}
@@ -76,6 +100,7 @@ export const createEditContextSlice: StateCreator<
 			refetch: ctx.refetch,
 			readOnly,
 			controls,
+			queryRunner,
 		});
 	},
 });

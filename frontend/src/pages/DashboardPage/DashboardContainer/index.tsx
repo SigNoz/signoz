@@ -9,7 +9,10 @@ import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
 import { useResolvedVariables } from './hooks/useResolvedVariables';
 import { useSyncVariablesForSuggestions } from './hooks/useSyncVariablesForSuggestions';
 import { useDashboardStore } from './store/useDashboardStore';
-import type { DashboardQuerySource } from './store/slices/editContextSlice';
+import type {
+	DashboardQuerySource,
+	QueryRunner,
+} from './store/slices/editContextSlice';
 import type { DashboardControlsInput } from './controls/types';
 import { useDashboardControlGroup } from './controls/useDashboardControlGroup';
 import styles from './DashboardContainer.module.scss';
@@ -28,6 +31,8 @@ interface DashboardContainerProps {
 	readOnly?: boolean;
 	/** What renders; omitted controls are shown. Writing controls are off when read-only. */
 	controls?: DashboardControlsInput;
+	/** Runs panel queries; omitted runs them on `query_range`. */
+	queryRunner?: QueryRunner;
 }
 
 function DashboardContainer({
@@ -36,6 +41,7 @@ function DashboardContainer({
 	source,
 	readOnly = false,
 	controls,
+	queryRunner,
 }: DashboardContainerProps): JSX.Element {
 	const spec = dashboard.spec;
 	const image = resolveDashboardImage(dashboard.image);
@@ -61,6 +67,7 @@ function DashboardContainer({
 		source,
 		readOnly,
 		controls,
+		queryRunner,
 	});
 
 	// Resolve the variable selection into the V5 query payload and publish it to
