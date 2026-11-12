@@ -54,7 +54,7 @@ const (
 	SchemaVersionV2Alpha1 = "v2alpha1"
 )
 
-// legacyRuleKeys are accepted from older clients but kept out of the schema; nothing reads them
+// legacyRuleKeys are accepted from older clients but kept out of the schema; nothing reads them.
 var legacyRuleKeys = []string{"source", "version"}
 
 type RuleDataKind string
