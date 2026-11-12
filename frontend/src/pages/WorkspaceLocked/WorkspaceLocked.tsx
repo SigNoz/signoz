@@ -3,16 +3,8 @@ import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import type { TabsProps } from 'antd';
-import {
-	Button,
-	Col,
-	Collapse,
-	List,
-	Modal,
-	Skeleton,
-	Space,
-	Tabs,
-} from 'antd';
+import { Button, Collapse, List, Modal, Skeleton, Space, Tabs } from 'antd';
+import Col from 'periscope/components/Col/Col';
 import Row from 'periscope/components/Row/Row';
 import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';

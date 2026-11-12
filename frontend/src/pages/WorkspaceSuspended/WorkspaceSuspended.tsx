@@ -1,7 +1,8 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { Button, Col, Modal, Skeleton, Space } from 'antd';
+import { Button, Modal, Skeleton, Space } from 'antd';
+import Col from 'periscope/components/Col/Col';
 import Row from 'periscope/components/Row/Row';
 import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';

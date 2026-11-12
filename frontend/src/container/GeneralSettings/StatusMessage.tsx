@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { green, orange, volcano } from '@ant-design/colors';
 import { SolidInfoCircle } from '@signozhq/icons';
-import { Card, Col } from 'antd';
+import { Card } from 'antd';
+import Col from 'periscope/components/Col/Col';
 import { TStatus } from 'types/api/settings/getRetention';
 
 import { convertHoursValueToRelevantUnitString } from './utils';

@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
-import { Col } from 'antd';
+import Col from 'periscope/components/Col/Col';
 import Row from 'periscope/components/Row/Row';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
