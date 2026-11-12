@@ -19,7 +19,7 @@ import {
 	serviceAt,
 } from '../__story_mockdata__/panelResponses';
 
-import { PANEL_LOAD, type PanelPlayArgs } from './args';
+import { hasData, PANEL_LOAD, type PanelPlayArgs } from './args';
 import { findPlot, toRgb, waitForPlot } from './plot';
 
 const isMultipleOf = (value: number, width: number): boolean =>
@@ -172,6 +172,7 @@ const expectTooltipFor = async (
 	bucket: number,
 	cumulativeHeading: string,
 ): Promise<void> => {
+	const drawnGroups = plot.series.length - 1;
 	hoverBucket(plot, bucket);
 	const total = bucketCounts(args, bucket).reduce(
 		(sum, count) => sum + count,
@@ -194,11 +195,14 @@ const expectTooltipFor = async (
 		within(tooltip).getByTestId('distribution-tooltip-cumulative-heading'),
 	).toHaveTextContent(cumulativeHeading);
 
-	// Every group, in legend order, named by its service alone.
+	// One row a drawn group, named by its service alone; past the cap the rest sit in
+	// Other, so only an uncapped panel has every service in legend order.
 	const rows = within(tooltip).getAllByTestId('distribution-tooltip-row');
-	await expect(rows).toHaveLength(args.series);
+	await expect(rows).toHaveLength(drawnGroups);
 	for (const [group, row] of rows.entries()) {
-		await expect(row).toHaveTextContent(serviceAt(group));
+		if (drawnGroups === args.series) {
+			await expect(row).toHaveTextContent(serviceAt(group));
+		}
 		await expect(row).not.toHaveTextContent('service.name');
 	}
 	await expect(
@@ -208,19 +212,34 @@ const expectTooltipFor = async (
 
 /**
  * Hovers the (100 ms, 250 ms] bucket, then the overflow one, whose running share
- * covers every observation.
+ * covers every observation. Only a drawn Distribution has a tooltip to check.
  */
 export const expectDistributionTooltip = async (
 	root: HTMLElement,
 	args: PanelPlayArgs,
 ): Promise<void> => {
-	const plot = await waitForPlot(root, args.series);
+	if (
+		args.kind !== 'Distribution' ||
+		args.dataState !== 'loaded' ||
+		!hasData(args)
+	) {
+		return;
+	}
+	let plot: uPlot | undefined;
+	await waitFor(async () => {
+		plot = findPlot(root);
+		await expect(plot).toBeDefined();
+	}, PANEL_LOAD);
+	const drawn = plot as uPlot;
 
 	await expectTooltipFor(
-		plot,
+		drawn,
 		args,
 		DISTRIBUTION_BUCKETS.indexOf(250),
 		'≤ 250 ms',
 	);
-	await expectTooltipFor(plot, args, DISTRIBUTION_BUCKETS.length, 'All');
+	// A clamped range ends at 1000 ms, before the overflow bucket.
+	if (args.distributionXRange !== 'clamped') {
+		await expectTooltipFor(drawn, args, DISTRIBUTION_BUCKETS.length, 'All');
+	}
 };
