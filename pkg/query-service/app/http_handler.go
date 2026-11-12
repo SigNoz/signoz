@@ -499,21 +499,6 @@ func prepareQuery(r *http.Request) (string, error) {
 		return "", fmt.Errorf("query is required")
 	}
 
-	notAllowedOps := []string{
-		"alter table",
-		"drop table",
-		"truncate table",
-		"drop database",
-		"drop view",
-		"drop function",
-	}
-
-	for _, op := range notAllowedOps {
-		if strings.Contains(strings.ToLower(query), op) {
-			return "", fmt.Errorf("operation %s is not allowed", op)
-		}
-	}
-
 	vars := make(map[string]string)
 	for k, v := range postData.Variables {
 		vars[k] = metrics.FormattedValue(v)
@@ -548,6 +533,12 @@ func prepareQuery(r *http.Request) (string, error) {
 		newQuery = strings.ReplaceAll(newQuery, placeholder, v)
 	}
 
+	// Fail closed: only a single SELECT (parser allowlist) may be executed.
+	// This runs after template / $var expansion so injected statements are also caught.
+	if err := clickhousesql.ErrIfStatementIsNotValid(newQuery); err != nil {
+		return "", err
+	}
+
 	return newQuery, nil
 }
 
@@ -558,7 +549,12 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	clickhousesql.LogIfStatementIsNotValid(r.Context(), aH.logger, query)
+	// prepareQuery already enforces the allowlist; check again so this
+	// handler stays fail-closed if a later change skips that step.
+	if err := clickhousesql.ErrIfStatementIsNotValid(query); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
 
 	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
 	if err != nil {
