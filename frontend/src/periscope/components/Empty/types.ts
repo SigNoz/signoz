@@ -7,9 +7,3 @@ export interface EmptyProps extends HTMLAttributes<HTMLDivElement> {
 	/** Defaults to "No data"; a falsy value hides it. */
 	description?: ReactNode;
 }
-
-export interface SimpleImageColors {
-	border: string;
-	shadow: string;
-	content: string;
-}

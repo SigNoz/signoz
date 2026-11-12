@@ -1,13 +1,9 @@
-import { useIsDarkMode } from 'hooks/useDarkMode';
-
-import { DARK_DEFAULT_IMAGE_STYLE } from './constants';
+import styles from './Empty.module.scss';
 
 function DefaultEmptyImage(): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-
 	return (
 		<svg
-			style={isDarkMode ? DARK_DEFAULT_IMAGE_STYLE : {}}
+			className={styles.defaultImage}
 			width="184"
 			height="152"
 			viewBox="0 0 184 152"
