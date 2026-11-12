@@ -163,7 +163,7 @@ func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64,
 }
 
 func (store *store) List(ctx context.Context, orgID valuer.UUID, params *serviceaccounttypes.ListServiceAccountsParams) ([]*serviceaccounttypes.ServiceAccount, int64, error) {
-	compiled, err := compileListFilter(params.Query, store.sqlstore.Formatter())
+	compiled, err := store.compileListFilter(params.Query)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -472,8 +472,8 @@ func (store *store) RunInTx(ctx context.Context, cb func(context.Context) error)
 	})
 }
 
-func compileListFilter(query string, formatter sqlstore.SQLFormatter) (*sqlcompiler.Compiled, error) {
-	compiled, errs := sqlcompiler.Compile(query, formatter, newServiceAccountFieldResolver())
+func (store *store) compileListFilter(query string) (*sqlcompiler.Compiled, error) {
+	compiled, errs := sqlcompiler.Compile(query, store.sqlstore.Formatter(), newServiceAccountFieldResolver())
 	if len(errs) > 0 {
 		return nil, errors.NewInvalidInputf(serviceaccounttypes.ErrCodeServiceAccountListFilterInvalid, "invalid filter query: %s", strings.Join(errs, "; "))
 	}
