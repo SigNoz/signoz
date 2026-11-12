@@ -32,6 +32,22 @@ describe('toLegacyLogsFilter', () => {
 			toLegacyLogsFilter(filter).items.map((filterItem) => filterItem.key?.type),
 		).toStrictEqual(['tag', 'resource', 'scope', '', '', 'tag', '']);
 	});
+
+	it('sends the scope name and version as top-level fields', () => {
+		const filter: TagFilter = {
+			op: 'AND',
+			items: ['scope_name', 'scope_version', 'scope.attr'].map((key) => ({
+				id: key,
+				key: { key, dataType: DataTypes.String, type: 'scope' },
+				op: '=',
+				value: 'v',
+			})),
+		};
+
+		expect(
+			toLegacyLogsFilter(filter).items.map((filterItem) => filterItem.key?.type),
+		).toStrictEqual(['', '', 'scope']);
+	});
 });
 
 describe('attributeTypeToFieldContext', () => {

@@ -27,6 +27,9 @@ const LEGACY_LOGS_KEY_TYPE: Record<string, string> = {
 	[TelemetrytypesFieldContextDTO.scope]: 'scope',
 };
 
+// Top-level log columns that v5 files under the scope context.
+const LEGACY_LOGS_TOP_LEVEL_SCOPE_FIELDS = ['scope_name', 'scope_version'];
+
 export const fieldContextToAttributeType = (fieldContext?: string): string =>
 	(fieldContext && FIELD_CONTEXT_TO_ATTRIBUTE_TYPE[fieldContext]) || '';
 
@@ -42,7 +45,9 @@ export const toLegacyLogsFilter = (filter: TagFilter): TagFilter =>
 			...item,
 			key: item.key && {
 				...item.key,
-				type: LEGACY_LOGS_KEY_TYPE[item.key.type ?? ''] ?? '',
+				type: LEGACY_LOGS_TOP_LEVEL_SCOPE_FIELDS.includes(item.key.key)
+					? ''
+					: (LEGACY_LOGS_KEY_TYPE[item.key.type ?? ''] ?? ''),
 			},
 		})),
 	};
