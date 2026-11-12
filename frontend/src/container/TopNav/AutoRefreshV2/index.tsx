@@ -175,6 +175,7 @@ function AutoRefresh({
 			}
 		>
 			<ButtonContainer
+				data-testid="auto-refresh-trigger"
 				title="Set auto refresh"
 				type={showAutoRefreshBtnPrimary ? 'primary' : 'default'}
 			>

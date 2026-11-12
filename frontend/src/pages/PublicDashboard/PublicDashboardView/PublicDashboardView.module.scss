@@ -44,27 +44,7 @@
 	color: var(--text-vanilla-400);
 }
 
-.headerRight {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-}
-
 .content {
 	flex: 1;
 	overflow-y: auto;
-	padding: 8px;
-}
-
-.section {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	margin-bottom: 8px;
-}
-
-.sectionTitle {
-	padding: 8px 4px 0;
-	font-weight: 600;
-	color: var(--text-vanilla-400);
 }
