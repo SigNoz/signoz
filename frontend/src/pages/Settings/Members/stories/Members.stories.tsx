@@ -37,8 +37,8 @@ const pageStory = storyMocks(membersMocks, { layout: 'app' });
  * Route: `/settings/members`.
  */
 const meta = {
-	title: 'Pages/Settings/Members',
-	tags: ['play'],
+	title: 'Pages/Settings/Members/Overview',
+	tags: ['authz', 'play'],
 	component: SettingsPage,
 	...pageStory,
 	parameters: { ...pageStory.parameters },

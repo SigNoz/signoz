@@ -192,6 +192,7 @@ const preview: Preview = {
 							'Role Details',
 							'Role Editor',
 							'Members',
+							['Overview', 'Authz'],
 							'Service Accounts',
 							'Ingestion',
 							'Single Sign-on',
