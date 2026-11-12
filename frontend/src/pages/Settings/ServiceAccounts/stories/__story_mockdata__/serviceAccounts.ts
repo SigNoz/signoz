@@ -13,7 +13,12 @@ import type {
 	ServiceaccounttypesServiceAccountDTO,
 	ServiceaccounttypesServiceAccountRoleDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { ServiceAccountStatus } from 'container/ServiceAccountsSettings/utils';
+import { ServiceaccounttypesServiceAccountStatusDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	reflectedEqualityValue,
+	spliceClause,
+} from 'components/ListFilter/dsl/filterQuery';
+import { SA_PAGE_SIZE } from 'container/ServiceAccountsSettings/constants';
 import { RoleType } from 'types/roles';
 
 /** Past the table's own page size of 20, so a story can reach the second page. */
@@ -61,7 +66,7 @@ const CREATED_AT = Date.UTC(2026, 1, 20, 13, 45);
 
 const account = (
 	index: number,
-	status: ServiceAccountStatus,
+	status: ServiceaccounttypesServiceAccountStatusDTO,
 ): ServiceaccounttypesServiceAccountDTO => {
 	const name = ACCOUNT_NAMES[index % ACCOUNT_NAMES.length];
 
@@ -76,20 +81,64 @@ const account = (
 	};
 };
 
-export const serviceAccountsResponse = (
+const SORTABLE: Record<
+	string,
+	(row: ServiceaccounttypesServiceAccountDTO) => string
+> = {
+	created_at: (row) => row.createdAt ?? '',
+	updated_at: (row) => row.updatedAt ?? '',
+	name: (row) => row.name,
+};
+
+/**
+ * The list as the API answers it: the filter, sort and paging are applied on
+ * the server, so the story has to narrow the rows rather than hand back all of
+ * them. Of the DSL only a top-level `status = x` clause and free text are
+ * honoured, which is what the page's dropdown and search box produce.
+ */
+export const serviceAccountsPage = (
 	active: number,
 	deleted: number,
-): ListServiceAccounts200 => ({
-	status: 'success',
-	data: [
+	params: URLSearchParams,
+): ListServiceAccounts200 => {
+	const dsl = params.get('query') ?? '';
+	const status = reflectedEqualityValue(dsl, 'status') ?? '';
+	const query = spliceClause(dsl, 'status', null)
+		.replace(/^'(.*)'$/, '$1')
+		.trim()
+		.toLowerCase();
+	const sortBy =
+		SORTABLE[params.get('sort') ?? 'created_at'] ?? SORTABLE.created_at;
+	const direction = params.get('order') === 'asc' ? 1 : -1;
+	const limit = Number(params.get('limit')) || SA_PAGE_SIZE;
+	const offset = Number(params.get('offset')) || 0;
+
+	const matched = [
 		...Array.from({ length: active }, (_, index) =>
-			account(index, ServiceAccountStatus.Active),
+			account(index, ServiceaccounttypesServiceAccountStatusDTO.active),
 		),
 		...Array.from({ length: deleted }, (_, index) =>
-			account(index + active, ServiceAccountStatus.Deleted),
+			account(index + active, ServiceaccounttypesServiceAccountStatusDTO.deleted),
 		),
-	],
-});
+	]
+		.filter(
+			(row) =>
+				(!status || row.status === status) &&
+				(!query ||
+					row.name.toLowerCase().includes(query) ||
+					row.email.toLowerCase().includes(query)),
+		)
+		.sort((a, b) => sortBy(a).localeCompare(sortBy(b)) * direction);
+
+	return {
+		status: 'success',
+		data: {
+			serviceAccounts: matched.slice(offset, offset + limit),
+			total: matched.length,
+			reservedKeywords: ['created_at', 'email', 'name', 'status', 'updated_at'],
+		},
+	};
+};
 
 const serviceAccountRole = (
 	id: string,
@@ -116,7 +165,9 @@ export const serviceAccountDetailResponse = (
 	const index = Number.parseInt(id.split('-').pop() ?? '0', 10);
 	const base = account(
 		index,
-		deleted ? ServiceAccountStatus.Deleted : ServiceAccountStatus.Active,
+		deleted
+			? ServiceaccounttypesServiceAccountStatusDTO.deleted
+			: ServiceaccounttypesServiceAccountStatusDTO.active,
 	);
 
 	return {

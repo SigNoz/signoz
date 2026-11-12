@@ -22,7 +22,7 @@ import {
 	serviceAccountDetailResponse,
 	serviceAccountKeysResponse,
 	serviceAccountSaveError,
-	serviceAccountsResponse,
+	serviceAccountsPage,
 } from './__story_mockdata__/serviceAccounts';
 
 import {
@@ -56,7 +56,8 @@ export const serviceAccountsMocks = defineStoryMocks({
 	controls: {
 		accounts: countControl('Active accounts', {
 			group: LIST,
-			description: 'The table paginates past 20.',
+			description:
+				'The table paginates past 20. Search, the status filter and paging are answered the way the API does, one page at a time.',
 			value: 5,
 			max: ACTIVE_ACCOUNT_MAX,
 		}),
@@ -118,8 +119,8 @@ export const serviceAccountsMocks = defineStoryMocks({
 	handlers: (values, response) => [
 		rest.get(
 			'http://localhost/api/v1/service_accounts',
-			response.json(() =>
-				serviceAccountsResponse(values.accounts, values.deleted),
+			response.json((req) =>
+				serviceAccountsPage(values.accounts, values.deleted, req.url.searchParams),
 			),
 		),
 
