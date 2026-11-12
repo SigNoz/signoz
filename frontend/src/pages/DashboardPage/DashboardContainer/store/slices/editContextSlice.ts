@@ -8,7 +8,6 @@ import type {
 	DashboardControls,
 	DashboardControlsInput,
 } from '../../controls/types';
-import type { SelectedVariableValue } from '../../VariablesBar/selectionTypes';
 import type { DashboardStore } from '../useDashboardStore';
 
 /**
@@ -35,19 +34,14 @@ export interface EditContextSlice {
 	readOnly: boolean;
 	/** Resolved: the host's `controls` over the defaults, writing ones off when read-only. */
 	controls: DashboardControls;
-	/** Values the host sets by variable name: fixed, and hidden from the variables bar. */
-	pageVariables: Record<string, SelectedVariableValue>;
 	setEditContext: (ctx: {
 		dashboardId: string;
 		refetch: () => void;
 		source?: DashboardQuerySource;
 		readOnly?: boolean;
 		controls?: DashboardControlsInput;
-		variables?: Record<string, SelectedVariableValue>;
 	}) => void;
 }
-
-const NO_PAGE_VARIABLES: Record<string, SelectedVariableValue> = {};
 
 export const createEditContextSlice: StateCreator<
 	DashboardStore,
@@ -60,7 +54,6 @@ export const createEditContextSlice: StateCreator<
 	refetch: (): void => undefined,
 	readOnly: false,
 	controls: resolveControls(undefined, false),
-	pageVariables: {},
 	// Idempotent (no-op when unchanged) so it's safe to call during render.
 	setEditContext: (ctx): void => {
 		const prev = get();
@@ -68,14 +61,12 @@ export const createEditContextSlice: StateCreator<
 		const readOnly = ctx.readOnly ?? false;
 		// Hosts pass `controls` inline, so compare by value, not reference.
 		const controls = resolveControls(ctx.controls, readOnly);
-		const pageVariables = ctx.variables ?? NO_PAGE_VARIABLES;
 		if (
 			prev.dashboardId === ctx.dashboardId &&
 			prev.refetch === ctx.refetch &&
 			prev.readOnly === readOnly &&
 			prev.dashboardQuerySource === source &&
-			isEqual(prev.controls, controls) &&
-			isEqual(prev.pageVariables, pageVariables)
+			isEqual(prev.controls, controls)
 		) {
 			return;
 		}
@@ -85,7 +76,6 @@ export const createEditContextSlice: StateCreator<
 			refetch: ctx.refetch,
 			readOnly,
 			controls,
-			pageVariables,
 		});
 	},
 });

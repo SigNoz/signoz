@@ -11,7 +11,6 @@ import { useSyncVariablesForSuggestions } from './hooks/useSyncVariablesForSugge
 import { useDashboardStore } from './store/useDashboardStore';
 import type { DashboardQuerySource } from './store/slices/editContextSlice';
 import type { DashboardControlsInput } from './controls/types';
-import type { SelectedVariableValue } from './VariablesBar/selectionTypes';
 import { useDashboardControlGroup } from './controls/useDashboardControlGroup';
 import styles from './DashboardContainer.module.scss';
 import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
@@ -29,8 +28,6 @@ interface DashboardContainerProps {
 	readOnly?: boolean;
 	/** What renders; omitted controls are shown. Writing controls are off when read-only. */
 	controls?: DashboardControlsInput;
-	/** Variable values the host sets by name; those variables are fixed and hidden from the bar. */
-	variables?: Record<string, SelectedVariableValue>;
 }
 
 function DashboardContainer({
@@ -39,7 +36,6 @@ function DashboardContainer({
 	source,
 	readOnly = false,
 	controls,
-	variables,
 }: DashboardContainerProps): JSX.Element {
 	const spec = dashboard.spec;
 	const image = resolveDashboardImage(dashboard.image);
@@ -65,7 +61,6 @@ function DashboardContainer({
 		source,
 		readOnly,
 		controls,
-		variables,
 	});
 
 	// Resolve the variable selection into the V5 query payload and publish it to
