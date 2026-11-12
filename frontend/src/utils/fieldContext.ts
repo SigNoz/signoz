@@ -13,6 +13,9 @@ const ATTRIBUTE_TYPE_TO_FIELD_CONTEXT: Record<
 	tag: TelemetrytypesFieldContextDTO.attribute,
 	attribute: TelemetrytypesFieldContextDTO.attribute,
 	resource: TelemetrytypesFieldContextDTO.resource,
+	scope: TelemetrytypesFieldContextDTO.scope,
+	span: TelemetrytypesFieldContextDTO.span,
+	log: TelemetrytypesFieldContextDTO.log,
 };
 
 // The legacy logs builders read `tag` as attributes and an empty type as a top-level field;
