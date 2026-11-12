@@ -134,13 +134,13 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	listable, err := handler.module.List(ctx, valuer.MustNewUUID(claims.OrgID), params)
+	serviceAccounts, total, err := handler.module.List(ctx, valuer.MustNewUUID(claims.OrgID), params)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, listable)
+	render.Success(rw, http.StatusOK, serviceaccounttypes.NewListableServiceAccount(serviceAccounts, total))
 }
 
 func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {

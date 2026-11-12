@@ -6,14 +6,15 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypesv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-const (
-	DSLKeyName      DSLKey = "name"
-	DSLKeyEmail     DSLKey = "email"
-	DSLKeyStatus    DSLKey = "status"
-	DSLKeyCreatedAt DSLKey = "created_at"
-	DSLKeyUpdatedAt DSLKey = "updated_at"
+var (
+	DSLKeyName      = DSLKey{valuer.NewString("name")}
+	DSLKeyEmail     = DSLKey{valuer.NewString("email")}
+	DSLKeyStatus    = DSLKey{valuer.NewString("status")}
+	DSLKeyCreatedAt = DSLKey{valuer.NewString("created_at")}
+	DSLKeyUpdatedAt = DSLKey{valuer.NewString("updated_at")}
 )
 
 var ErrCodeServiceAccountListFilterInvalid = errors.MustNewCode("service_account_list_filter_invalid")
@@ -26,7 +27,11 @@ var ReservedOps = map[DSLKey]map[qbtypesv5.FilterOperator]struct{}{
 	DSLKeyUpdatedAt: numericRangeOps(),
 }
 
-type DSLKey string
+type DSLKey struct{ valuer.String }
+
+func (DSLKey) Enum() []any {
+	return []any{DSLKeyCreatedAt, DSLKeyEmail, DSLKeyName, DSLKeyStatus, DSLKeyUpdatedAt}
+}
 
 func ReservedFilterKeys() []DSLKey {
 	keys := make([]DSLKey, 0, len(ReservedOps))
@@ -34,7 +39,7 @@ func ReservedFilterKeys() []DSLKey {
 		keys = append(keys, key)
 	}
 	slices.SortFunc(keys, func(a, b DSLKey) int {
-		return strings.Compare(string(a), string(b))
+		return strings.Compare(a.StringValue(), b.StringValue())
 	})
 
 	return keys

@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/parser/filterquery/sqlcompiler"
 	qbtypesv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type serviceAccountFieldResolver struct{}
@@ -16,7 +17,7 @@ func newServiceAccountFieldResolver() sqlcompiler.FieldResolver {
 }
 
 func (serviceAccountFieldResolver) ResolveComparison(visitor *sqlcompiler.Visitor, rawKey string, operation qbtypesv5.FilterOperator, ctx *grammar.ComparisonContext) string {
-	key := serviceaccounttypes.DSLKey(strings.ToLower(rawKey))
+	key := serviceaccounttypes.DSLKey{String: valuer.NewString(strings.ToLower(rawKey))}
 
 	allowedOperations, isReserved := serviceaccounttypes.ReservedOps[key]
 	if !isReserved {
@@ -31,11 +32,11 @@ func (serviceAccountFieldResolver) ResolveComparison(visitor *sqlcompiler.Visito
 
 	switch key {
 	case serviceaccounttypes.DSLKeyName:
-		return visitor.BuildStringOperation(visitor.Sb, ctx, operation, "service_account.name", string(key))
+		return visitor.BuildStringOperation(visitor.Sb, ctx, operation, "service_account.name", key.StringValue())
 	case serviceaccounttypes.DSLKeyEmail:
-		return visitor.BuildStringOperation(visitor.Sb, ctx, operation, "service_account.email", string(key))
+		return visitor.BuildStringOperation(visitor.Sb, ctx, operation, "service_account.email", key.StringValue())
 	case serviceaccounttypes.DSLKeyStatus:
-		return visitor.BuildStringOperation(visitor.Sb, ctx, operation, "service_account.status", string(key))
+		return visitor.BuildStringOperation(visitor.Sb, ctx, operation, "service_account.status", key.StringValue())
 	case serviceaccounttypes.DSLKeyCreatedAt:
 		return visitor.BuildTimestampComparison(ctx, operation, "service_account.created_at")
 	case serviceaccounttypes.DSLKeyUpdatedAt:
