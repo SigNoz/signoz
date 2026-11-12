@@ -1,6 +1,6 @@
 .empty {
-	font-family: var(--theme-font-family);
-	font-size: var(--theme-font-size);
+	font-family: var(--periscope-font-family-sans);
+	font-size: var(--periscope-font-size-base);
 
 	box-sizing: border-box;
 	margin-inline: var(--spacing-4);
@@ -14,20 +14,20 @@
 }
 
 :where(.empty) a {
-	color: var(--theme-color-link);
+	color: var(--primary-link);
 	text-decoration: none;
 	background-color: transparent;
 	outline: none;
 	cursor: pointer;
-	transition: color var(--theme-motion-duration-slow);
+	transition: color 0.3s;
 	-webkit-text-decoration-skip: objects;
 
 	&:hover {
-		color: var(--theme-color-link-hover);
+		color: var(--primary-link-hover);
 	}
 
 	&:active {
-		color: var(--theme-color-link-active);
+		color: var(--primary-link-hover);
 	}
 
 	&:active,
@@ -42,7 +42,7 @@
 	}
 
 	&[disabled] {
-		color: var(--theme-color-text-disabled);
+		color: var(--l3-foreground);
 		cursor: not-allowed;
 	}
 }
@@ -71,7 +71,7 @@
 
 .description {
 	box-sizing: border-box;
-	color: var(--theme-color-text);
+	color: var(--l1-foreground);
 
 	&::before,
 	&::after {
@@ -91,10 +91,10 @@
 
 .normal {
 	margin-block: var(--spacing-16);
-	color: var(--theme-color-text-disabled);
+	color: var(--l3-foreground);
 
 	.description {
-		color: var(--theme-color-text-disabled);
+		color: var(--l3-foreground);
 	}
 
 	.image {
@@ -103,17 +103,21 @@
 }
 
 .defaultImage {
-	opacity: var(--theme-empty-image-opacity);
+	opacity: 0.65;
+}
+
+:global(.lightMode) .defaultImage {
+	opacity: 1;
 }
 
 .simpleShadow {
-	fill: var(--theme-empty-simple-shadow);
+	fill: var(--l3-background);
 }
 
 .simpleBorder {
-	stroke: var(--theme-empty-simple-border);
+	stroke: var(--l3-border);
 }
 
 .simpleContent {
-	fill: var(--theme-empty-simple-content);
+	fill: var(--l2-background);
 }
