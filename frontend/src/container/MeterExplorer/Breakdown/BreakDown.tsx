@@ -8,7 +8,10 @@ import SystemDashboard from 'container/SystemDashboard/SystemDashboard';
 import { createSystemDashboardHost } from 'container/SystemDashboard/systemDashboardHost';
 import dayjs from 'dayjs';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import type { DashboardControlsInput } from 'pages/DashboardPage/DashboardContainer/controls/types';
+import {
+	CHARTS_ONLY,
+	withControls,
+} from 'pages/DashboardPage/DashboardContainer/controls/presets';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -19,13 +22,9 @@ const COST_METER = createSystemDashboardHost(
 	'cost-meter-breakdown',
 );
 
-const CONTROLS: DashboardControlsInput = {
-	header: false,
-	title: false,
-	dashboardActions: false,
+const CONTROLS = withControls(CHARTS_ONLY, {
 	toolbar: { autoRefresh: false },
-	panelActions: false,
-};
+});
 
 function BreakDown(): JSX.Element {
 	const { isCloudUser } = useGetTenantLicense();
