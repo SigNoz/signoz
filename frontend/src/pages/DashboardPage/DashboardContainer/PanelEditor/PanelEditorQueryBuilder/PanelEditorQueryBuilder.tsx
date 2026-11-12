@@ -196,7 +196,7 @@ function PanelEditorQueryBuilder({
 						[styles.stickyNav]: stickyHeader,
 					})}
 					activeKey={currentQuery.queryType}
-					onChange={onChangeQueryType}
+					onChange={(key): void => onChangeQueryType(key as EQueryType)}
 					tabBarExtraContent={
 						<span className={styles.runQueryBtnContainer}>
 							<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />

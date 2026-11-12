@@ -21,7 +21,7 @@ const GLOBAL_TIMESTAMP_VARIABLES: VariableItem[] = [
  */
 export function useContextLinkVariables(): VariableItem[] {
 	const { currentQuery } = useQueryBuilder();
-	const activeQueryData = currentQuery
+	const activeBuilderQueryData = currentQuery
 		? getActiveBuilder(currentQuery).queryData
 		: undefined;
 
@@ -30,7 +30,7 @@ export function useContextLinkVariables(): VariableItem[] {
 	// `_`-prefixed to match V1 and avoid colliding with dashboard-variable names.
 	const fieldVariableNames = useMemo(() => {
 		const names = new Set<string>();
-		(activeQueryData ?? []).forEach((query) => {
+		(activeBuilderQueryData ?? []).forEach((query) => {
 			(query.groupBy ?? []).forEach((field) => {
 				if (field.key) {
 					names.add(`_${field.key}`);
@@ -38,7 +38,7 @@ export function useContextLinkVariables(): VariableItem[] {
 			});
 		});
 		return Array.from(names);
-	}, [activeQueryData]);
+	}, [activeBuilderQueryData]);
 
 	return useMemo(
 		() => [

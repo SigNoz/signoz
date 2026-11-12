@@ -24,11 +24,15 @@ export function isBuilderQueryType(queryType: EQueryType): boolean {
 	);
 }
 
+export function isAIQueryType(queryType: EQueryType): boolean {
+	return queryType === EQueryType.AI_QUERY_BUILDER;
+}
+
 /** The `Query` slot builder edits land in; non-builder types keep `builder`, as they always have. */
 export function getBuilderSlotKeyForQueryType(
 	queryType: EQueryType,
 ): BuilderSlotKey {
-	return queryType === EQueryType.AI_QUERY_BUILDER
+	return isAIQueryType(queryType)
 		? EQueryType.AI_QUERY_BUILDER
 		: EQueryType.QUERY_BUILDER;
 }
@@ -38,7 +42,7 @@ export function getBuilderSlotKeyForQueryType(
  * `builderQueryType: builder_ai_query`, the tag set from the slot so a stale one can't leak.
  */
 export function toRequestQuery(query: Query): Query {
-	if (query.queryType !== EQueryType.AI_QUERY_BUILDER) {
+	if (!isAIQueryType(query.queryType)) {
 		return query;
 	}
 	const aiBuilder = getActiveBuilder(query);
@@ -52,6 +56,19 @@ export function toRequestQuery(query: Query): Query {
 				builderQueryType: Querybuildertypesv5QueryTypeDTO.builder_ai_query,
 			})),
 		},
+	};
+}
+
+/** Undoes `toRequestQuery` for `slotQuery`: builder edits made on the request shape land back in its slot. */
+export function toSlotQuery(requestQuery: Query, slotQuery: Query): Query {
+	if (!isAIQueryType(slotQuery.queryType)) {
+		return requestQuery;
+	}
+	return {
+		...requestQuery,
+		queryType: slotQuery.queryType,
+		builder: slotQuery.builder,
+		builder_ai_query: requestQuery.builder,
 	};
 }
 
