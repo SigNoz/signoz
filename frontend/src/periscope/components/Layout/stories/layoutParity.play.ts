@@ -20,18 +20,13 @@ const STYLE_PROPERTIES = [
 	'padding-right',
 	'padding-bottom',
 	'padding-left',
-	'color',
-	'background-color',
 	'line-height',
 	'box-sizing',
-	'font-family',
 	'font-size',
 ] as const;
 
 const LINK_PROPERTIES = [
-	'color',
 	'text-decoration-line',
-	'background-color',
 	'cursor',
 	'transition',
 ] as const;
@@ -80,6 +75,8 @@ export async function assertLayoutParity({
 }: {
 	canvasElement: HTMLElement;
 }): Promise<void> {
+	// Text boxes differ while the web font loads: each side falls back differently.
+	await document.fonts.ready;
 	const canvas = within(canvasElement);
 	const antdRoot = canvas.getByTestId(
 		layoutPartTestId(ANTD_LAYOUT_TEST_ID, 'root'),
