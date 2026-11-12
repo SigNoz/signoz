@@ -8,7 +8,7 @@ import (
 var (
 	ActionCategoryAccessControl       = ActionCategory{valuer.NewString(sigsemconv.SigNozAuditActionCategoryAccessControl.Value.AsString())}
 	ActionCategoryConfigurationChange = ActionCategory{valuer.NewString(sigsemconv.SigNozAuditActionCategoryConfigurationChanges.Value.AsString())}
-	ActionCategoryDataAccess          = ActionCategory{valuer.NewString("data_access")}
+	ActionCategoryDataAccess          = ActionCategory{valuer.NewString(sigsemconv.SigNozAuditActionCategoryDataAccess.Value.AsString())}
 	ActionCategorySystemEvent         = ActionCategory{valuer.NewString("system_event")}
 )
 
