@@ -1,7 +1,12 @@
+@use '../../../styles/antdReset';
+
 .layout,
 .header,
 .footer,
 .content {
+	@include antdReset.antd-font-reset;
+	@include antdReset.antd-link-reset;
+
 	box-sizing: border-box;
 
 	&::before,
