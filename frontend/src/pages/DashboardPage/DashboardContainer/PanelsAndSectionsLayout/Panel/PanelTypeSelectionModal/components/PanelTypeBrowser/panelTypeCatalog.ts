@@ -50,7 +50,7 @@ const PANEL_TYPE_META: Record<PanelKind, PanelTypeMeta> = {
 	},
 	'signoz/HistogramPanel': {
 		group: 'distributions',
-		description: 'Distribution of values into buckets',
+		description: 'Bins query results in the browser',
 	},
 	'signoz/HeatmapPanel': {
 		group: 'distributions',
