@@ -1,5 +1,3 @@
-@use '../../../styles/antdReset';
-
 @mixin border-box {
 	box-sizing: border-box;
 
@@ -14,8 +12,8 @@
 	--list-line-height-lg: calc(22 / 14);
 
 	@include border-box;
-	@include antdReset.antd-font-reset;
-	@include antdReset.antd-link-reset;
+	font-family: var(--theme-font-family);
+	font-size: var(--theme-font-size);
 
 	position: relative;
 	margin: 0;
@@ -29,6 +27,40 @@
 	}
 }
 
+:where(.list) a {
+	color: var(--theme-color-link);
+	text-decoration: none;
+	background-color: transparent;
+	outline: none;
+	cursor: pointer;
+	transition: color var(--theme-motion-duration-slow);
+	-webkit-text-decoration-skip: objects;
+
+	&:hover {
+		color: var(--theme-color-link-hover);
+	}
+
+	&:active {
+		color: var(--theme-color-link-active);
+	}
+
+	&:active,
+	&:hover {
+		text-decoration: none;
+		outline: 0;
+	}
+
+	&:focus {
+		text-decoration: none;
+		outline: 0;
+	}
+
+	&[disabled] {
+		color: var(--theme-color-text-disabled);
+		cursor: not-allowed;
+	}
+}
+
 .header,
 .footer {
 	@include border-box;
@@ -39,7 +71,8 @@
 
 .nestedLoading {
 	@include border-box;
-	@include antdReset.antd-font-reset;
+	font-family: var(--theme-font-family);
+	font-size: var(--theme-font-size);
 
 	position: relative;
 }
