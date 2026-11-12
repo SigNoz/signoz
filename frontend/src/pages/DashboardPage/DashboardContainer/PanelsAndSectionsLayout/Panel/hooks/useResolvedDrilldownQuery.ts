@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useReplaceVariables } from 'api/generated/services/querier';
 import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas';
 import { buildQueryRangeRequest } from 'pages/DashboardPage/DashboardContainer/queryV5/buildQueryRangeRequest';
-import { toWireQuery } from 'lib/query/builderSlot';
+import { toRequestQuery } from 'lib/query/builderSlot';
 import { envelopesToQuery } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import { selectResolvedVariables } from 'pages/DashboardPage/DashboardContainer/store/slices/variableSelectionSlice';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
@@ -91,7 +91,7 @@ export function useResolvedDrilldownQuery({
 		}
 		// View-in-X navigates to a V1 explorer, so the resolved query crosses back into the
 		// V1 `Query` shape — the one place this hook still needs a legacy panel type.
-		return toWireQuery(
+		return toRequestQuery(
 			envelopesToQuery(
 				data.data.compositeQuery?.queries ?? [],
 				toPanelType(panelKind),

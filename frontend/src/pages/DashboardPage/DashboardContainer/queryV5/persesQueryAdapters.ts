@@ -27,9 +27,9 @@ import {
 	isBuilderEnvelope,
 } from 'lib/query/builderEnvelope';
 import {
-	getBuilderAt,
-	getBuilderSlotKey,
-	withBuilderAt,
+	getBuilderBySlotKey,
+	getBuilderSlotKeyForQueryType,
+	replaceBuilderBySlotKey,
 } from 'lib/query/builderSlot';
 import { toQueryEnvelopes } from './buildQueryRangeRequest';
 
@@ -60,9 +60,9 @@ const toGeneratedEnvelopes = (
  * pager. Dropped here, `limit` reflects only a real user limit and List panels page by default.
  */
 const withoutExplorerPaging = (query: Query): Query => {
-	const slot = getBuilderSlotKey(query.queryType);
-	const builder = getBuilderAt(query, slot);
-	return withBuilderAt(query, slot, {
+	const slotKey = getBuilderSlotKeyForQueryType(query.queryType);
+	const builder = getBuilderBySlotKey(query, slotKey);
+	return replaceBuilderBySlotKey(query, slotKey, {
 		...builder,
 		queryData: builder.queryData.map((data) => ({
 			...data,
