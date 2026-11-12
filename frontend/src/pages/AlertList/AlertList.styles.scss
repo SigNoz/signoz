@@ -56,15 +56,10 @@
 	}
 
 	.alert-rules-container {
-		margin-top: 10px;
 		flex: 1;
 		min-height: 0;
 		display: flex;
 		flex-direction: column;
-
-		&--flush {
-			margin-top: 0;
-		}
 	}
 
 	.alert-configuration-container {
@@ -137,10 +132,6 @@
 			display: flex;
 			flex-direction: column;
 			overflow: hidden;
-
-			> .alert-rules-container {
-				margin-top: 0;
-			}
 		}
 	}
 }
