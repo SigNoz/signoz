@@ -520,11 +520,13 @@ describe('selecting a metric type updates the aggregation options', () => {
 		fireEvent.blur(input);
 
 		expect(getOptionLabels('time-agg-options')).toStrictEqual([
+			'Latest',
 			'Max',
 			'Min',
 			'Sum',
 			'Avg',
 			'Count',
+			'Count Distinct',
 			'Rate',
 			'Increase',
 		]);
