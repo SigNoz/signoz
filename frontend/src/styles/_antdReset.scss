@@ -1,40 +1,29 @@
-// antd 5.11's shared resets, with the values antd computes from the app theme
-// (`useThemeConfig`). `:where()` keeps the link rules at antd's specificity, so
-// styles that beat antd's resets still beat these.
+// antd 5.11's shared resets. Values come from the `--antd-*` variables
+// `app/AntdThemeCssVariables` publishes from the app theme. `:where()` keeps
+// the link rules at antd's specificity, so styles that beat antd's resets
+// still beat these.
 
 @mixin antd-font-reset {
-	font-family: Inter;
-	font-size: var(--periscope-font-size-base);
+	font-family: var(--antd-font-family);
+	font-size: var(--antd-font-size);
 }
 
 @mixin antd-link-reset {
-	--antd-link-color: #4566d6;
-	--antd-link-hover-color: #2e3f7b;
-	--antd-link-active-color: #3a52a8;
-	--antd-link-disabled-color: rgba(255, 255, 255, 0.25);
-
-	:global(body.lightMode) & {
-		--antd-link-color: #4e74f8;
-		--antd-link-hover-color: #a1bbff;
-		--antd-link-active-color: #3653d1;
-		--antd-link-disabled-color: rgba(0, 0, 0, 0.25);
-	}
-
 	@at-root :where(#{&}) a {
-		color: var(--antd-link-color);
+		color: var(--antd-color-link);
 		text-decoration: none;
 		background-color: transparent;
 		outline: none;
 		cursor: pointer;
-		transition: color 0.3s;
+		transition: color var(--antd-motion-duration-slow);
 		-webkit-text-decoration-skip: objects;
 
 		&:hover {
-			color: var(--antd-link-hover-color);
+			color: var(--antd-color-link-hover);
 		}
 
 		&:active {
-			color: var(--antd-link-active-color);
+			color: var(--antd-color-link-active);
 		}
 
 		&:active,
@@ -49,7 +38,7 @@
 		}
 
 		&[disabled] {
-			color: var(--antd-link-disabled-color);
+			color: var(--antd-color-text-disabled);
 			cursor: not-allowed;
 		}
 	}
