@@ -273,6 +273,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddRuleTuplesFactory(sqlstore),
 		sqlmigration.NewRestructureJiraChannelSpecFactory(sqlstore),
 		sqlmigration.NewMigrateRulesV1ToV2Alpha1Factory(sqlstore),
+		sqlmigration.NewAddLLMPricingRuleTuplesFactory(sqlstore),
+		sqlmigration.NewRemoveUnsupportedQuickFiltersFactory(),
 	)
 }
 
