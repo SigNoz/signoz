@@ -24,7 +24,18 @@ import styles from './AIAssistantPanel.module.scss';
 const PANEL_WIDTH = 420;
 const PANEL_HEIGHT = 601;
 const PANEL_MIN_WIDTH = 380;
+const PANEL_MIN_HEIGHT = 500;
 const PANEL_MARGIN = 8;
+const PANEL_RESIZE_EDGES = {
+	top: true,
+	right: true,
+	bottom: true,
+	left: true,
+	topRight: false,
+	bottomRight: false,
+	bottomLeft: false,
+	topLeft: false,
+};
 
 export default function AIAssistantPanel(): JSX.Element | null {
 	const { pathname } = useAppLocation();
@@ -80,22 +91,25 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		return null;
 	}
 
-	const panelHeight = Math.min(
-		PANEL_HEIGHT,
+	const availableHeight = Math.max(
+		0,
 		window.innerHeight - BOTTOM_STRIP_HEIGHT - 2 * PANEL_MARGIN,
 	);
+	const panelHeight = Math.min(PANEL_HEIGHT, availableHeight);
 
 	return (
 		<VariantContext.Provider value="panel">
 			<FloatingPanel
 				isOpen
-				keepInViewport
 				width={PANEL_WIDTH}
 				height={panelHeight}
 				minWidth={PANEL_MIN_WIDTH}
+				minHeight={Math.min(PANEL_MIN_HEIGHT, availableHeight)}
+				enableResizing={PANEL_RESIZE_EDGES}
+				keepInViewport
 				defaultPosition={{
 					x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN,
-					y: window.innerHeight - BOTTOM_STRIP_HEIGHT - PANEL_MARGIN - panelHeight,
+					y: PANEL_MARGIN + availableHeight - panelHeight,
 				}}
 			>
 				<div className={`${styles.header} floating-panel__drag-handle`}>
