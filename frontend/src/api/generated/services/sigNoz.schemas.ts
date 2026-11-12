@@ -13048,16 +13048,6 @@ export interface RuletypesPostableRuleDTO {
 	 * @description The rule payload schema.
 	 */
 	schemaVersion: RuletypesPostableRuleDTOSchemaVersion;
-	/**
-	 * @type string
-	 * @description The URL of the page the rule was created from. Informational; it is not used for evaluation.
-	 */
-	source?: string;
-	/**
-	 * @type string
-	 * @description The query payload version. Nothing reads it.
-	 */
-	version?: string;
 }
 
 export interface RuletypesPostableRuleViewDTO {
@@ -13151,11 +13141,6 @@ export interface RuletypesRuleDTO {
 	 */
 	schemaVersion: RuletypesRuleDTOSchemaVersion;
 	/**
-	 * @type string
-	 * @description The URL of the page the rule was created from. Informational; it is not used for evaluation.
-	 */
-	source?: string;
-	/**
 	 * @description The current evaluation state: inactive, pending, recovering, firing, nodata or disabled.
 	 */
 	state: RuletypesAlertStateDTO;
@@ -13168,11 +13153,6 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 */
 	updatedBy?: string;
-	/**
-	 * @type string
-	 * @description The query payload version. Nothing reads it.
-	 */
-	version?: string;
 }
 
 export enum RuletypesThresholdKindDTO {

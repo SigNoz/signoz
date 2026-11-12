@@ -11773,15 +11773,6 @@ components:
           enum:
           - v2alpha1
           type: string
-        source:
-          deprecated: true
-          description: The URL of the page the rule was created from. Informational;
-            it is not used for evaluation.
-          type: string
-        version:
-          deprecated: true
-          description: The query payload version. Nothing reads it.
-          type: string
       required:
       - alert
       - alertType
@@ -11900,11 +11891,6 @@ components:
           enum:
           - v2alpha1
           type: string
-        source:
-          deprecated: true
-          description: The URL of the page the rule was created from. Informational;
-            it is not used for evaluation.
-          type: string
         state:
           allOf:
           - $ref: '#/components/schemas/RuletypesAlertState'
@@ -11914,10 +11900,6 @@ components:
           format: date-time
           type: string
         updatedBy:
-          type: string
-        version:
-          deprecated: true
-          description: The query payload version. Nothing reads it.
           type: string
       required:
       - id
@@ -25559,7 +25541,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               logs_threshold:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
@@ -25626,7 +25607,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_anomaly:
                 description: Wraps a builder query in the `anomaly` function with
                   daily seasonality, so SigNoz compares each point against the forecast
@@ -25699,7 +25679,6 @@ paths:
                       interval: 4h
                   ruleType: anomaly_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
@@ -25755,7 +25734,6 @@ paths:
                       interval: 1h
                   ruleType: promql_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_formula:
                 description: Computes disk utilization as (1 - available/capacity)
                   * 100 by combining two disabled base queries with a builder_formula.
@@ -25847,7 +25825,6 @@ paths:
                       interval: 2h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
                   CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
@@ -25916,7 +25893,6 @@ paths:
                       interval: 4h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               notification_settings:
                 description: 'Demonstrates the full notificationSettings surface:
                   `groupBy` merges alerts across labels to cut noise, `newGroupEvalDelay`
@@ -26015,7 +25991,6 @@ paths:
                     usePolicy: false
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
                   with its own target, op, matchType, and channels so warnings and
@@ -26115,7 +26090,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_error_rate_formula:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
@@ -26205,7 +26179,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
@@ -26274,7 +26247,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
             schema:
               $ref: '#/components/schemas/RuletypesPostableRule'
       responses:
@@ -26525,7 +26497,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               logs_threshold:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
@@ -26592,7 +26563,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_anomaly:
                 description: Wraps a builder query in the `anomaly` function with
                   daily seasonality, so SigNoz compares each point against the forecast
@@ -26665,7 +26635,6 @@ paths:
                       interval: 4h
                   ruleType: anomaly_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
@@ -26721,7 +26690,6 @@ paths:
                       interval: 1h
                   ruleType: promql_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_formula:
                 description: Computes disk utilization as (1 - available/capacity)
                   * 100 by combining two disabled base queries with a builder_formula.
@@ -26813,7 +26781,6 @@ paths:
                       interval: 2h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
                   CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
@@ -26882,7 +26849,6 @@ paths:
                       interval: 4h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               notification_settings:
                 description: 'Demonstrates the full notificationSettings surface:
                   `groupBy` merges alerts across labels to cut noise, `newGroupEvalDelay`
@@ -26981,7 +26947,6 @@ paths:
                     usePolicy: false
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
                   with its own target, op, matchType, and channels so warnings and
@@ -27081,7 +27046,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_error_rate_formula:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
@@ -27171,7 +27135,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
@@ -27240,7 +27203,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
             schema:
               $ref: '#/components/schemas/RuletypesPostableRule'
       responses:
@@ -27392,7 +27354,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               logs_threshold:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
@@ -27459,7 +27420,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_anomaly:
                 description: Wraps a builder query in the `anomaly` function with
                   daily seasonality, so SigNoz compares each point against the forecast
@@ -27532,7 +27492,6 @@ paths:
                       interval: 4h
                   ruleType: anomaly_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
@@ -27588,7 +27547,6 @@ paths:
                       interval: 1h
                   ruleType: promql_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_formula:
                 description: Computes disk utilization as (1 - available/capacity)
                   * 100 by combining two disabled base queries with a builder_formula.
@@ -27680,7 +27638,6 @@ paths:
                       interval: 2h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
                   CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
@@ -27749,7 +27706,6 @@ paths:
                       interval: 4h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               notification_settings:
                 description: 'Demonstrates the full notificationSettings surface:
                   `groupBy` merges alerts across labels to cut noise, `newGroupEvalDelay`
@@ -27848,7 +27804,6 @@ paths:
                     usePolicy: false
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
                   with its own target, op, matchType, and channels so warnings and
@@ -27948,7 +27903,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_error_rate_formula:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
@@ -28038,7 +27992,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
@@ -28107,7 +28060,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
             schema:
               $ref: '#/components/schemas/RuletypesPostableRule'
       responses:
@@ -29021,7 +28973,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               logs_threshold:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
@@ -29088,7 +29039,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_anomaly:
                 description: Wraps a builder query in the `anomaly` function with
                   daily seasonality, so SigNoz compares each point against the forecast
@@ -29161,7 +29111,6 @@ paths:
                       interval: 4h
                   ruleType: anomaly_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
@@ -29217,7 +29166,6 @@ paths:
                       interval: 1h
                   ruleType: promql_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_formula:
                 description: Computes disk utilization as (1 - available/capacity)
                   * 100 by combining two disabled base queries with a builder_formula.
@@ -29309,7 +29257,6 @@ paths:
                       interval: 2h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
                   CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
@@ -29378,7 +29325,6 @@ paths:
                       interval: 4h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               notification_settings:
                 description: 'Demonstrates the full notificationSettings surface:
                   `groupBy` merges alerts across labels to cut noise, `newGroupEvalDelay`
@@ -29477,7 +29423,6 @@ paths:
                     usePolicy: false
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
                   with its own target, op, matchType, and channels so warnings and
@@ -29577,7 +29522,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_error_rate_formula:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
@@ -29667,7 +29611,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
@@ -29736,7 +29679,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
             schema:
               $ref: '#/components/schemas/RuletypesPostableRule'
       responses:
