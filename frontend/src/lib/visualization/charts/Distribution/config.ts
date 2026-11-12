@@ -99,7 +99,12 @@ export function buildDistributionConfig({
 	// setCursor hook focuses the one under the cursor itself. Alpha 1 leaves the
 	// dimming to the bar fills.
 	builder.setFocus({ alpha: 1 });
-	builder.setCursor({ focus: { prox: -1 }, points: { show: false } });
+	// The x range is pinned to the buckets, so a drag-zoom would only flash a box.
+	builder.setCursor({
+		focus: { prox: -1 },
+		points: { show: false },
+		drag: { x: false, y: false },
+	});
 
 	const formatBound = createBoundFormatter(xAxisUnit, decimalPrecision);
 
