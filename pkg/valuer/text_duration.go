@@ -54,6 +54,12 @@ func (d TextDuration) IsPositive() bool {
 	return d.value > 0
 }
 
+// HasText reports whether the duration came as text; a bare JSON number
+// decodes to nanoseconds and keeps none.
+func (d TextDuration) HasText() bool {
+	return d.text != ""
+}
+
 // String implements the [fmt.Stringer] interface.
 func (d TextDuration) String() string {
 	if len(d.text) > 0 {

@@ -9,12 +9,13 @@ import (
 // NewValidReferences / NewSuggestionsOnLevenshteinDistance to phrase the
 // "valid <noun> are ..." list consistently across the codebase.
 const (
-	NounFields     = "fields"
-	NounKeys       = "keys"
-	NounServices   = "services"
-	NounQueryTypes = "query types"
-	NounSignals    = "signals"
-	NounReferences = "references"
+	NounFields       = "fields"
+	NounKeys         = "keys"
+	NounServices     = "services"
+	NounQueryTypes   = "query types"
+	NounRequestTypes = "request types"
+	NounSignals      = "signals"
+	NounReferences   = "references"
 )
 
 const (

@@ -77,7 +77,7 @@ func newBuilderQuery[T any](
 func (q *builderQuery[T]) Fingerprint() string {
 
 	if (q.spec.Signal == telemetrytypes.SignalTraces ||
-		q.spec.Signal == telemetrytypes.SignalLogs) && q.kind != qbtypes.RequestTypeTimeSeries {
+		q.spec.Signal == telemetrytypes.SignalLogs) && !q.kind.IsBuiltFromTimeSeries() {
 		// No caching for non-timeseries queries
 		return ""
 	}
@@ -85,6 +85,13 @@ func (q *builderQuery[T]) Fingerprint() string {
 	// AI trace aggregations qualify and rank traces on whole-window per-trace
 	// values, which do not decompose into cacheable time buckets.
 	if q.queryType == qbtypes.QueryTypeBuilderAI {
+		return ""
+	}
+
+	// A limit ranks the groups over the statement window, so the pieces of a
+	// window rank differently from the window. Such a query is never served
+	// from the cache.
+	if (q.spec.Signal == telemetrytypes.SignalLogs || q.spec.Signal == telemetrytypes.SignalTraces) && len(q.spec.GroupBy) > 0 && q.spec.Limit > 0 {
 		return ""
 	}
 
@@ -141,6 +148,12 @@ func (q *builderQuery[T]) Fingerprint() string {
 			}
 		}
 		parts = append(parts, fmt.Sprintf("aggs=[%s]", strings.Join(aggParts, ",")))
+	}
+
+	// A metrics heatmap carries its axis on the aggregation, which the loop above
+	// already fingerprinted. Logs and traces carry it on the spec.
+	if q.kind.CountsIntoBuckets() && q.spec.Signal != telemetrytypes.SignalMetrics {
+		parts = append(parts, "buckets="+fingerprintHeatmapBucketing(q.spec.BucketOptions.ToHeatmapBucketing()))
 	}
 
 	// Add filter if present
