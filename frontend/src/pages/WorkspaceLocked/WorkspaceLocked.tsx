@@ -373,6 +373,8 @@ export default function WorkspaceBlocked(): JSX.Element {
 												weight="regular"
 												color="inherit"
 												as="span"
+												display="inline-block"
+												align="center"
 												textOverflow="wrap"
 											>
 												{t('upgradeNow')}
