@@ -93,7 +93,7 @@ export function clampDistributionXAxis(
 export interface DistributionBarsLayout {
 	/** One list per series, in series order. */
 	rects: DistributionBarRect[][];
-	/** Top of the tallest bar, for the count axis range. */
+	/** Top of the tallest bar inside the axis window, for the count axis range. */
 	yMax: number;
 }
 
@@ -121,6 +121,8 @@ export function resolveDistributionBars({
 	rows.forEach((row, bucketIndex) => {
 		const x0 = edges[bucketIndex];
 		const x1 = edges[bucketIndex + 1];
+		// Buckets outside the window are off the plot and mustn't set its height.
+		const isInWindow = x0 >= xAxis.min && x1 <= xAxis.max;
 		const total = counts.reduce(
 			(sum, seriesCounts) => sum + (seriesCounts[bucketIndex] ?? 0),
 			0,
@@ -147,7 +149,9 @@ export function resolveDistributionBars({
 					y0: base,
 					y1: count,
 				});
-				yMax = Math.max(yMax, count);
+				if (isInWindow) {
+					yMax = Math.max(yMax, count);
+				}
 				return;
 			}
 
@@ -165,7 +169,9 @@ export function resolveDistributionBars({
 				y0: Math.max(y0, base),
 				y1,
 			});
-			yMax = Math.max(yMax, y1);
+			if (isInWindow) {
+				yMax = Math.max(yMax, y1);
+			}
 		});
 	});
 
