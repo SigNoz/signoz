@@ -112,13 +112,15 @@ CI runs each play once, with its story's own args. Anyone can flip a control in 
 
 Before writing the clicks, list what has to be on screen for the play's target to exist, and return early when the args take it away. These are the cases plays have missed:
 
-- The controls every story has. `State` on loading or error renders no rows. `Access`, `Permissions` and `Revoked` remove row actions and gated buttons. `Hold tooltips open` shows a label a second time, inside its tooltip.
+- The controls every story has. `State` on loading or error renders no rows and no filter suggestions. `Access`, `Permissions` and `Revoked` remove rows, row actions and gated buttons, and the `editor` and `viewer` presets grant telemetry reads only, so a page gated on its own resource shows them nothing. `Check state` on loading disables every gated control, and on error an `AuthZButton` stays enabled while an `AuthZGuardContent` set to fail closed hides what it wraps. `License` and `Banner` decide the plan, so a cloud-only form is gone on the others. `Hold tooltips open` shows a label a second time, inside its tooltip.
 - A count at 0. The page can swap its whole list for an empty state, and the header, filters and column picker go with it.
 - A view, filter or invalid query that leaves no rows, even when the count is above 0.
+- A tab without the widget. A filter box that one tab has is not on the next.
 - A second list beside the main one, such as saved views. At 0, loading or failed, its actions are gone.
-- Text that depends on an arg. A disabled rule offers Enable, not Disable, so pick the expected text from the args.
+- Text that depends on an arg. A disabled rule offers Enable, not Disable. A write that fails raises a different toast from one that lands, and one left loading raises none. Pick the expected text from the args.
+- Rows that move. A view, a sort or pinning changes which row is locked, pinned or legacy, so find the row by what it is, not by its index.
 
-Make those checks with the page's own code instead of restating a condition. Build the rows with the builder the handler uses, and check the role against the constant the page gates on, such as `componentPermission.action`. Export the checks from the mocks module, next to the handlers, so a handler change moves them too. The alert rules page has `listedRules`, `hasRowMenu`, `showsNoRulesPage` and `listsSavedViews`.
+Make those checks with the page's own code instead of restating a condition. Build the rows with the builder the handler uses and the view's own filter, and check a permission with the page's own check through `accessFor(...).allows(...)`, or the role against the constant the page gates on, such as `componentPermission.action`. Export the checks from the mocks module, next to the handlers, so a handler change moves them too. The alert rules page has `listedRules`, `hasRowMenu`, `showsNoRulesPage` and `listsSavedViews`; the dashboards list has `listedDashboards`, `canList`, `canCreate` and `canUpdate`.
 
 Two habits cover the rest:
 
