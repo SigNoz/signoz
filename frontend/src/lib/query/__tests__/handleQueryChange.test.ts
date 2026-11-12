@@ -49,8 +49,23 @@ describe('handleQueryChange bucket options', () => {
 		);
 	});
 
-	// The request rejects an axis on any type but heatmap, so a switch has to shed it
-	// from the query (via the field allowlist) and from the formula (by hand).
+	it('keeps both axes when a heatmap switches to a distribution', () => {
+		const result = handleQueryChange(
+			PANEL_TYPES.DISTRIBUTION,
+			queryWithFormulaAxis(),
+			PANEL_TYPES.HEATMAP,
+		);
+
+		expect(result.builder.queryData[0].bucketOptions).toStrictEqual(
+			bucketOptions,
+		);
+		expect(result.builder.queryFormulas[0].bucketOptions).toStrictEqual(
+			bucketOptions,
+		);
+	});
+
+	// The request rejects an axis on any type but heatmap and distribution, so a switch
+	// has to shed it from the query (via the field allowlist) and from the formula (by hand).
 	it('drops both axes when switching to another panel type', () => {
 		const result = handleQueryChange(
 			PANEL_TYPES.TIME_SERIES,

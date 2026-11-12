@@ -336,6 +336,7 @@ export enum PANEL_TYPES {
 	PIE = 'pie',
 	HISTOGRAM = 'histogram',
 	HEATMAP = 'heatmap',
+	DISTRIBUTION = 'distribution',
 	GEO_MAP = 'geo_map',
 	TOP_LIST = 'top_list',
 	TEXT = 'text',

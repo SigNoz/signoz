@@ -6,7 +6,7 @@ import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import BucketOptions from 'components/QueryBuilderV2/QueryV2/QueryAddOns/BucketOptions/BucketOptions';
 import { parseLimit, sanitizeLimit } from 'components/QueryBuilderV2/utils';
 import { LEGEND } from 'constants/global';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { isBucketCountingPanelType } from 'lib/query/bucketCountingPanelTypes';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -186,9 +186,9 @@ export function Formula({
 							</div>
 						</Col>
 					)}
-					{/* A heatmap draws its one enabled query, which is the formula when its
-					    inputs are disabled — so the formula states its own bucket axis. */}
-					{isQBV2 && panelType === PANEL_TYPES.HEATMAP && (
+					{/* A heatmap or distribution draws its one enabled query, which is the formula
+					    when its inputs are disabled — so the formula states its own bucket axis. */}
+					{isQBV2 && isBucketCountingPanelType(panelType) && (
 						<Col span={24} className="formula-item">
 							<BucketOptions
 								bucketOptions={formula.bucketOptions}
