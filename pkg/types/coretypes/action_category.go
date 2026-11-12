@@ -9,7 +9,6 @@ var (
 	ActionCategoryAccessControl       = ActionCategory{valuer.NewString(sigsemconv.SigNozAuditActionCategoryAccessControl.Value.AsString())}
 	ActionCategoryConfigurationChange = ActionCategory{valuer.NewString(sigsemconv.SigNozAuditActionCategoryConfigurationChanges.Value.AsString())}
 	ActionCategoryDataAccess          = ActionCategory{valuer.NewString(sigsemconv.SigNozAuditActionCategoryDataAccess.Value.AsString())}
-	ActionCategorySystemEvent         = ActionCategory{valuer.NewString("system_event")}
 )
 
 // ActionCategory classifies an audited action per IEC 62443.
@@ -21,6 +20,5 @@ func (ActionCategory) Enum() []any {
 		ActionCategoryAccessControl,
 		ActionCategoryConfigurationChange,
 		ActionCategoryDataAccess,
-		ActionCategorySystemEvent,
 	}
 }
