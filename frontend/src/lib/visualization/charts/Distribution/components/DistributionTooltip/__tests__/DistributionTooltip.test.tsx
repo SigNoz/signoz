@@ -61,7 +61,9 @@ describe('DistributionTooltip', () => {
 	it('heads the columns with the group-by key and the bucket bound', () => {
 		renderTooltip(plotAt(1.5, 2));
 
-		expect(screen.getByText('service.name')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('distribution-tooltip-group-heading'),
+		).toHaveTextContent('service.name');
 		expect(
 			screen.getByTestId('distribution-tooltip-cumulative-heading'),
 		).toHaveTextContent('≤ 20 ms');
