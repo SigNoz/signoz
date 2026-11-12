@@ -1,3 +1,4 @@
+import type { EQueryType } from 'types/common/dashboard';
 import { useCallback, useEffect, useMemo } from 'react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'lib/visualization/panels/types';
@@ -32,7 +33,7 @@ interface QueryViewModalBodyProps {
 	/** Kind switch, owned by the shell (its cache must survive the fork swap). */
 	onChangePanelKind: (kind: PanelKind) => void;
 	/** Tab switch, owned by the shell alongside the kind switch it shares memory with. */
-	onChangeQueryMode: (key: string) => void;
+	onChangeQueryMode: (queryType: EQueryType) => void;
 }
 
 /**

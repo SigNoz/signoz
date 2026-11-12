@@ -29,7 +29,7 @@ export function useQueryModeChange({
 	panelType,
 	supportedQueryTypesKindMap,
 	parkedBuilders,
-}: UseQueryModeChangeArgs): (key: string) => void {
+}: UseQueryModeChangeArgs): (targetMode: EQueryType) => void {
 	const {
 		currentQuery,
 		redirectWithQueryBuilderData,
@@ -37,8 +37,7 @@ export function useQueryModeChange({
 	} = useQueryBuilder();
 
 	return useCallback(
-		(key: string): void => {
-			const targetMode = key as EQueryType;
+		(targetMode: EQueryType): void => {
 			const targetVariant = toBuilderVariant(targetMode);
 			const heldVariant = getBuilderVariant(currentQuery.builder);
 

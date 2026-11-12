@@ -83,7 +83,7 @@ interface UsePanelKindAndQueryModeSwitchApi {
 	/** Switch the panel to `newKind`, transforming/restoring its query + spec. */
 	onChangePanelKind: (newKind: PanelKind) => void;
 	/** Switch authoring tab; shares the off-screen builder stash with the kind switch. */
-	onChangeQueryMode: (key: string) => void;
+	onChangeQueryMode: (queryType: EQueryType) => void;
 }
 
 /**

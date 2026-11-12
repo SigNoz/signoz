@@ -1,3 +1,4 @@
+import type { EQueryType } from 'types/common/dashboard';
 import { useCallback, useMemo } from 'react';
 import { toast } from '@signozhq/ui/sonner';
 import { ConfigProvider } from 'antd';
@@ -73,7 +74,7 @@ interface QueryEditorBodyProps {
 	onChangePanelKind: (kind: PanelKind) => void;
 	originalPanelKind?: PanelKind;
 	/** Tab switch, owned by the shell alongside the kind switch it shares memory with. */
-	onChangeQueryMode: (key: string) => void;
+	onChangeQueryMode: (queryType: EQueryType) => void;
 }
 
 /**
