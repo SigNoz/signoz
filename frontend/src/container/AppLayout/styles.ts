@@ -1,4 +1,4 @@
-import { Layout as LayoutComponent } from 'antd';
+import LayoutComponent from 'periscope/components/Layout/Layout';
 import styled from 'styled-components';
 
 export const Layout = styled(LayoutComponent)`
