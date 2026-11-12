@@ -34,15 +34,8 @@ def test_traces_list_filter_by_trace_id(
     noise: str,
 ) -> None:
     """
-    Setup:
-    A target trace (one root span) and an unrelated trace.
-
-    Tests filtering a raw list by trace_id:
-    1. A narrow window (single bucket) returns just the target span.
-    2. A wide window (>1 h, multiple exponential buckets) returns it exactly once
-       (no duplicate-span regression).
-    3. A window that does not contain the trace returns nothing and warns that it
-       lies outside the selected time range.
+    A window wider than an hour spans several exponential buckets, so the span must
+    come back exactly once.
     """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
@@ -130,14 +123,8 @@ def test_traces_aggregation_filter_by_trace_id(
     noise: str,
 ) -> None:
     """
-    Setup:
-    A target trace with two spans (root + child).
-
-    Tests the trace_id time-range optimization for aggregation (time_series):
-    1. A wide window containing the trace returns the correct count (both spans).
-    2. A window outside the trace short-circuits to empty and warns.
-    3. A trace_id with no row in trace_summary short-circuits to empty with no
-       outside-range warning (trace_summary is authoritative).
+    trace_summary is authoritative: a trace_id with no row there short-circuits to
+    empty without the outside-range warning.
     """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)

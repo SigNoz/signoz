@@ -30,13 +30,8 @@ def test_domain_list_last_seen_is_the_span_instant(
     noise: str,
 ) -> None:
     """
-    Setup:
-    Two client spans to api.stripe.com, 3 and 1 minutes ago.
-
-    Tests:
-    Last Seen resolves to the newer span's instant (#5824). A numeric coercion of the
-    DateTime64 column would yield seconds since epoch (~1.7e9), which lands in
-    January 1970 once read as milliseconds.
+    A numeric coercion of the DateTime64 column would give seconds since epoch,
+    which reads as January 1970 once taken as milliseconds.
     """
     extra_attrs = {"timestamp": 1.0} if noise == "timestamp_attr" else {}
     now = datetime.now(tz=UTC).replace(microsecond=0)
@@ -92,12 +87,7 @@ def test_domain_list_groups_by_domain_and_counts_endpoints(
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
-    Setup:
-    api.github.com with 2 distinct URLs (one called twice); api.openai.com with 1.
-
-    Tests:
-    One row per domain, endpoint counts are distinct-URL counts, and the columns
-    used only to feed the error-rate formula are stripped from the response.
+    The columns that only feed the error-rate formula are stripped from the response.
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     specs = [
@@ -162,14 +152,6 @@ def test_domain_list_excludes_non_client_and_urlless_spans(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Setup:
-    A client span with an http.url, a server span with one, and a client span without.
-
-    Tests:
-    The base filter (`http_url EXISTS AND kind_string = 'Client'`) keeps only the
-    first domain; the other two never reach the response.
-    """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     specs = [
         ("included.example.com", TracesKind.SPAN_KIND_CLIENT, "https://included.example.com/a"),
@@ -221,11 +203,7 @@ def test_domain_list_show_ip_masks_ip_domains(
     show_ip: bool,
 ) -> None:
     """
-    Setup:
-    One client span each to a hostname, a bare IPv4 and a bare IPv6 address.
-
-    Tests:
-    show_ip gates both IP forms (net.ParseIP accepts either); the hostname always shows.
+    net.ParseIP accepts both IP forms, so show_ip gates IPv4 and IPv6 alike.
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     specs = [
@@ -273,12 +251,7 @@ def test_domain_list_latency_and_rate_values(
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
-    Setup:
-    3 client spans of 250ms on one domain, 1 on another.
-
-    Tests:
-    p99 is duration_nano in nanoseconds, and rps is rate() over the scalar window
-    (count / (end - start) seconds), so the busier domain's rate is 3x the other's.
+    rps is rate() over the scalar window, so the busier domain's rate is 3x the other's.
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     busy, quiet = "busy.example.com", "quiet.example.com"
@@ -334,14 +307,6 @@ def test_domain_list_error_rate_is_a_percentage_of_spans(
     total: int,
     expected: float,
 ) -> None:
-    """
-    Setup:
-    `total` client spans on one domain, `errors` of them failed.
-
-    Tests:
-    error_rate is (error/total_span)*100 across the range, including the all-failed and
-    none-failed edges.
-    """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     domain = f"errors-{label}.example.com"
     statuses = [TracesStatusCode.STATUS_CODE_ERROR] * errors + [TracesStatusCode.STATUS_CODE_OK] * (total - errors)
@@ -384,14 +349,6 @@ def test_domain_list_user_filter_narrows_the_base_filter(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Setup:
-    Two client spans to the same domain from different services.
-
-    Tests:
-    A caller filter is ANDed onto the base filter, so only the named service's span
-    contributes.
-    """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     domain = "filtered.example.com"
     insert_traces(
@@ -434,14 +391,6 @@ def test_domain_list_caller_group_by_adds_a_dimension(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Setup:
-    Two client spans to one domain, from two services.
-
-    Tests:
-    A caller groupBy is merged after the domain key, so the domain splits into one row
-    per group value and the extra key gets its own column.
-    """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     domain = "grouped.example.com"
     insert_traces(
@@ -491,10 +440,6 @@ def test_domain_list_is_empty_outside_the_seeded_window(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    Tests:
-    A window with no matching spans answers 200 with no rows, not an error.
-    """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     long_ago = now - timedelta(days=400)
     response = make_third_party_apis_request(
@@ -509,10 +454,6 @@ def test_domain_list_is_empty_outside_the_seeded_window(
 
 
 def test_domain_list_requires_authentication(signoz: types.SigNoz) -> None:
-    """
-    Tests:
-    The route sits behind ViewAccess, so an unauthenticated call is rejected.
-    """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     response = make_third_party_apis_request(
         signoz,
@@ -529,11 +470,6 @@ def test_domain_list_rejects_inverted_time_range(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    Tests:
-    The request is validated before any query is built, so start >= end is a client
-    error rather than an empty result.
-    """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     response = make_third_party_apis_request(
         signoz,

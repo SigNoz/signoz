@@ -77,14 +77,7 @@ def test_traces_aggregate_order_by_count(
     expected_status: HTTPStatus,
 ) -> None:
     """
-    Setup:
-    Insert 4 spans of a single service.
-
-    Tests:
-    An aggregation can be referenced in `order by` by its expression (count()),
-    its `span.`-prefixed expression, or its alias — with or without an explicit
-    fieldContext. Only the combinations that double-specify the context are a bad
-    request; the rest resolve and return the span count.
+    Only the forms that specify the context twice are a bad request.
     """
     use_attribute_backend(attribute_backend)
 
@@ -149,20 +142,6 @@ def test_traces_aggregate_functions(
     attribute_backend: str,
     noise: str,
 ) -> None:
-    """
-    Setup:
-    svc-a: 3 spans (durations 1s/2s/3s; one ERROR; one 4XX via
-    http.response.status_code); svc-b: 1 span (duration 4s). A number attribute
-    `latency_ms` rides along on every span.
-
-    Tests:
-    A grouped scalar query computes count / sum / avg / min / max / p50 / p90 over
-    duration_nano, countIf over the intrinsic status_code and the calculated
-    response_status_code, rate and rate_sum over the query window, and avg over a
-    numeric attribute — all matching values derived from the inserted spans. Under
-    the corrupt variant the same-named colliding attributes must not change any of
-    these.
-    """
     use_attribute_backend(attribute_backend)
 
     extra_attrs, extra_resources = trace_noise(noise)
@@ -256,14 +235,6 @@ def test_traces_aggregate_calculated_range_countif(
     use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
 ) -> None:
-    """
-    Setup:
-    3 spans whose derived response_status_code is 200 / 503 / 404.
-
-    Tests:
-    countIf(response_status_code >= 400 AND response_status_code < 500) counts the
-    single 4XX span (404).
-    """
     use_attribute_backend(attribute_backend)
 
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
@@ -311,14 +282,6 @@ def test_traces_aggregate_having(
     attribute_backend: str,
     noise: str,
 ) -> None:
-    """
-    Setup:
-    svc-a: 3 spans, svc-b: 1 span.
-
-    Tests:
-    A grouped scalar query with `having count() > 2` returns only the groups
-    whose count qualifies (svc-a), derived from the inserted spans.
-    """
     use_attribute_backend(attribute_backend)
 
     extra_attrs, extra_resources = trace_noise(noise)
@@ -385,16 +348,6 @@ def test_traces_aggregate_time_series_limit(
     limit: int,
     direction: str,
 ) -> None:
-    """
-    Setup:
-    Four services with distinct span counts (a=5, b=3, c=7, d=1).
-
-    Tests:
-    A time_series group-by with a limit returns only the N series that the
-    ordered aggregation keeps — top-N for desc, bottom-N for asc — each series
-    summing to that service's span count. Under the corrupt variant the grouping
-    (resource.service.name) and count are unaffected by the colliding attributes.
-    """
     use_attribute_backend(attribute_backend)
 
     extra_attrs, extra_resources = trace_noise(noise)
@@ -468,14 +421,6 @@ def test_traces_aggregate_unknown_key(
     expression: str,
     expected_value: Any,
 ) -> None:
-    """
-    Setup:
-    Insert 3 spans.
-
-    Tests:
-    Aggregating a bare unknown key synthesizes a null column: count() of it is 0
-    (no non-null values) and sum()/avg() are null — the query never errors.
-    """
     use_attribute_backend(attribute_backend)
 
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)

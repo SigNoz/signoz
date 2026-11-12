@@ -37,17 +37,6 @@ def test_logs_aggregate_functions(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    svc-a: 3 logs (latency_ms 10/20/30, endpoints /x /x /y); svc-b: 1 log
-    (latency_ms 40, endpoint /z).
-
-    Tests:
-    A grouped scalar query computes count / sum / avg / min / max / p50 / p90 /
-    p95 / p99 over latency_ms, countIf over a numeric threshold, rate and
-    rate_sum over the query window, and count_distinct over a string attribute —
-    all matching values derived from the inserted logs, ordered by count() desc.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     # A scalar rate divides by the whole query window, so both sides agree on it.
     lookback_minutes = 5
@@ -134,16 +123,6 @@ def test_logs_aggregate_if_predicates_use_filter_syntax(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    svc-a: 3 logs, two with a k8s.pod.name and an x-request-id header, two
-    with "timeout" in the body; svc-b: 1 log without either, with "timeout".
-
-    Tests:
-    countIf predicates accept the filter-only operators EXISTS, NOT EXISTS,
-    CONTAINS and NOT CONTAINS, a combination of them, and a key with hyphens;
-    two predicates in one expression each keep their own values.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     # (service, k8s.pod.name, x-request-id header, body)
     specs = [
@@ -209,16 +188,6 @@ def test_logs_aggregate_arguments_are_field_names(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    svc-a: 3 logs, svc-b: 1 log, each with a body size under a key with a
-    hyphen and an app label under a key with slashes.
-
-    Tests:
-    Aggregation arguments are read as field names, so keys with hyphens,
-    slashes and a type suffix resolve, count(*) counts every log, and DISTINCT
-    keeps its meaning.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     # (service, http.response.body-size, k8s.pod.labels.app.kubernetes.io/name)
     specs = [
@@ -311,15 +280,6 @@ def test_logs_aggregate_having(
     aggregations: list[str],
     expected_services: set[str],
 ) -> None:
-    """
-    Setup:
-    svc-a: 3 logs (latency_ms 10/20/30, sum 60); svc-b: 1 log (latency_ms 40).
-
-    Tests:
-    A grouped scalar query with `having` keeps only the qualifying groups, for a
-    count() predicate (both directions) and a sum() predicate — extending logs
-    HAVING coverage beyond the single count() case in querierscalar/04_having.py.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     specs = [("svc-a", 10), ("svc-a", 20), ("svc-a", 30), ("svc-b", 40)]
     logs = [

@@ -75,14 +75,6 @@ def test_traces_filter_operators(
     expression: str,
     expected_names: set[str],
 ) -> None:
-    """
-    Setup:
-    Five spans across services / environments / methods / statuses, with a
-    numeric `latency_ms` attribute and an `error.type` attribute present on one.
-
-    Tests:
-    Each production-shaped filter operator selects exactly the expected spans.
-    """
     use_attribute_backend(attribute_backend)
 
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)

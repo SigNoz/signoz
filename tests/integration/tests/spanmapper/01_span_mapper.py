@@ -14,22 +14,6 @@ def test_create_groups_and_simulate_with_backfill(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    Setup:
-    Create a mapping group and a mapper through the CRUD API, then hit the
-    simulate endpoint with two groups: the saved one referenced by name only
-    (server backfills its mappers from the store) and a second, unsaved group
-    sent with inline mappers.
-
-    Tests:
-    1. Create a group (POST /span_mapper_groups) and read back its id
-    2. Create a mapper in that group (POST .../{groupId}/span_mappers)
-    3. List groups and mappers and verify what we created is persisted
-    4. Simulate spans against both groups: a matching span gets the saved
-       group's mappers (backfilled, copy) and the inline group's mappers
-       (move) applied, while a span matching no condition passes through
-    5. Delete the group and verify it (and its mappers) are gone
-    """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     create_group = requests.post(

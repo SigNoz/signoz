@@ -19,17 +19,6 @@ def test_logs_time_series_count(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Insert 17 logs with service.name attribute set to "java" and severity_text attribute set to "DEBUG", 23 logs with service.name attribute set to "erlang" and severity_text attribute set to "ERROR", 29 logs with service.name attribute set to "go" and severity_text attribute set to "WARNING".
-    All logs have incrementing code.line attribute, modulo 2 for host.name and cloud.account.id.
-
-    Tests:
-    1. count() of all logs for the last 5 minutes
-    2. count() of all logs where code.line = 7 for last 5 minutes
-    3. count() of all logs where service.name = "erlang" OR cloud.account.id = "000" for last 5 minutes
-    4. count() of all logs grouped by host.name for the last 5 minutes
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs: list[Logs] = []
 
@@ -441,16 +430,6 @@ def test_datatype_collision(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Insert logs with data type collision scenarios to test DataTypeCollisionHandledFieldName function
-
-    Tests:
-    1. severity_number comparison with string value
-    2. http.status_code with mixed string/number values
-    3. response.time with string values in numeric field
-    4. Edge cases: empty strings
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs: list[Logs] = []
 

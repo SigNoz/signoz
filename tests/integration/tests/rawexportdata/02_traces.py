@@ -24,10 +24,6 @@ def test_export_raw_data_get_not_allowed(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    Tests:
-    1. GET request to export_raw_data is rejected with 405 Method Not Allowed
-    """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
@@ -47,16 +43,6 @@ def test_export_traces_csv(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Setup:
-    Insert 3 traces with different attributes.
-
-    Tests:
-    1. Export traces as CSV format
-    2. Verify CSV structure and content
-    3. Validate headers are present
-    4. Check trace data is correctly formatted
-    """
     http_service_trace_id = TraceIdGenerator.trace_id()
     http_service_span_id = TraceIdGenerator.span_id()
     http_service_db_span_id = TraceIdGenerator.span_id()
@@ -190,16 +176,6 @@ def test_export_traces_jsonl(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Setup:
-    Insert 2 traces with different attributes.
-
-    Tests:
-    1. Export traces as JSONL format
-    2. Verify JSONL structure and content
-    3. Check each line is valid JSON
-    4. Validate trace data is correctly formatted
-    """
     http_service_trace_id = TraceIdGenerator.trace_id()
     http_service_span_id = TraceIdGenerator.span_id()
     topic_service_trace_id = TraceIdGenerator.trace_id()
@@ -307,14 +283,6 @@ def test_export_traces_with_filter(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Setup:
-    Insert traces with different service names.
-
-    Tests:
-    1. Export traces with filter applied
-    2. Verify only filtered traces are returned
-    """
     service_a_trace_id = TraceIdGenerator.trace_id()
     service_a_span_id = TraceIdGenerator.span_id()
     service_b_trace_id = TraceIdGenerator.trace_id()
@@ -406,14 +374,6 @@ def test_export_traces_with_limit(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Setup:
-    Insert 5 traces.
-
-    Tests:
-    1. Export traces with limit applied
-    2. Verify only limited number of traces are returned
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     traces = []
@@ -477,11 +437,6 @@ def test_export_traces_multiple_queries_rejected(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    Tests:
-    1. POST with multiple builder queries but no trace operator is rejected
-    2. Verify 400 error is returned
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
@@ -528,14 +483,6 @@ def test_export_traces_with_composite_query_trace_operator(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Setup:
-    Insert multiple traces with parent-child relationships.
-
-    Tests:
-    1. Export traces using trace operator in composite query (POST)
-    2. Verify trace operator query works correctly
-    """
     parent_trace_id = TraceIdGenerator.trace_id()
     parent_span_id = TraceIdGenerator.span_id()
     child_span_id_1 = TraceIdGenerator.span_id()
@@ -667,14 +614,6 @@ def test_export_traces_with_select_fields(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Setup:
-    Insert traces with various attributes.
-
-    Tests:
-    1. Export traces with specific select fields via POST
-    2. Verify only specified fields are returned in the output
-    """
     trace_id = TraceIdGenerator.trace_id()
     span_id = TraceIdGenerator.span_id()
 

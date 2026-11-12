@@ -427,12 +427,6 @@ def test_logs_list_query_timestamp_expectations(
     query: BuilderQuery,
     result: Callable[[list[Logs]], list[Any]],
 ) -> None:
-    """
-    Setup:
-    Insert logs with corrupt data
-
-    Tests:
-    """
     logs = generate_logs_with_corrupt_metadata()
     insert_logs(logs)
 
@@ -723,15 +717,8 @@ def test_logs_list_query_trace_id_expectations(
     results: Callable[[list[Logs]], list[Any]],
 ) -> None:
     """
-    Justification for expected rows and ordering:
-    Four logs differ by where trace_id is set: top-level (x[0]), attribute (x[1]),
-    resource (x[2]), or only in body text (x[3]). Each parametrized case documents
-    which column AdjustKeys/field mapping reads and why DESC ties break in storage order.
-
-    Setup:
-    Insert logs with corrupt trace_id
-
-    Tests:
+    The four logs differ by where trace_id is set: top level, attribute, resource,
+    or only in the body text. DESC ties break in storage order.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 

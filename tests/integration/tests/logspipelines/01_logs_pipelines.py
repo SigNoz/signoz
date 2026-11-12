@@ -12,16 +12,6 @@ def test_create_logs_pipeline_success(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    Setup:
-    Create a new log parsing pipeline with a simple regex parser.
-
-    Tests:
-    1. Create a pipeline with valid configuration
-    2. Verify the pipeline is created successfully
-    3. Verify the response contains version information
-    4. Verify the pipeline is returned in the response
-    """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     pipeline_payload = {
@@ -99,15 +89,6 @@ def test_list_logs_pipelines_success(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    Setup:
-    Create a pipeline first, then list all pipelines.
-
-    Tests:
-    1. Create a pipeline
-    2. List all pipelines and verify the created pipeline is present
-    3. Verify the response structure
-    """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create a pipeline first
@@ -188,16 +169,6 @@ def test_list_logs_pipelines_by_version(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    Setup:
-    Create multiple pipeline versions and list by specific version.
-
-    Tests:
-    1. Create initial pipeline (version 1)
-    2. Create updated pipeline (version 2)
-    3. List pipelines by version 1 and verify it returns the original
-    4. List pipelines by version 2 and verify it returns the updated version
-    """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create version 1
@@ -350,14 +321,6 @@ def test_preview_logs_pipelines_success(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    Setup:
-    Preview a json_parser pipeline with one JSON log and one plain-text log.
-
-    Tests:
-    1. JSON body gets parsed into attributes
-    2. Non-JSON body passes through unchanged instead of being dropped
-    """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     empty_log_fields = {
@@ -454,15 +417,6 @@ def test_create_multiple_pipelines_success(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    Setup:
-    Create multiple pipelines in a single request.
-
-    Tests:
-    1. Create multiple pipelines with different configurations
-    2. Verify all pipelines are created
-    3. Verify pipelines are ordered correctly
-    """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     multi_pipeline_payload = {
@@ -568,16 +522,6 @@ def test_delete_all_pipelines_success(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    Setup:
-    Create a pipeline first, then delete all pipelines by sending empty array.
-
-    Tests:
-    1. Create a pipeline
-    2. Delete all pipelines by sending empty pipelines array
-    3. Verify pipelines are deleted
-    4. Verify new version is created
-    """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create a pipeline first

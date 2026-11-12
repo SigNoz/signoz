@@ -18,10 +18,6 @@ def test_export_raw_data_get_not_allowed(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """
-    Tests:
-    1. GET request to export_raw_data is rejected with 405 Method Not Allowed
-    """
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
@@ -41,16 +37,6 @@ def test_export_logs_csv(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Insert 3 logs with different severity levels and attributes.
-
-    Tests:
-    1. Export logs as CSV format
-    2. Verify CSV structure and content
-    3. Validate headers are present
-    4. Check log data is correctly formatted
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_logs(
@@ -154,16 +140,6 @@ def test_export_logs_jsonl(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Insert 2 logs with different attributes.
-
-    Tests:
-    1. Export logs as JSONL format
-    2. Verify JSONL structure and content
-    3. Check each line is valid JSON
-    4. Validate log data is correctly formatted
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_logs(
@@ -250,14 +226,6 @@ def test_export_logs_with_filter(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Insert logs with different severity levels.
-
-    Tests:
-    1. Export logs with filter applied
-    2. Verify only filtered logs are returned
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_logs(
@@ -335,14 +303,6 @@ def test_export_logs_with_limit(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Insert 5 logs.
-
-    Tests:
-    1. Export logs with limit applied
-    2. Verify only limited number of logs are returned
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     logs = []
@@ -403,14 +363,6 @@ def test_export_logs_with_columns(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Insert logs with various attributes.
-
-    Tests:
-    1. Export logs with specific columns
-    2. Verify only specified columns are returned
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_logs(
@@ -489,14 +441,6 @@ def test_export_logs_with_order_by(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Insert logs at different timestamps.
-
-    Tests:
-    1. Export logs with ascending timestamp order
-    2. Verify logs are returned in correct order
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_logs(
@@ -580,14 +524,6 @@ def test_export_logs_with_complex_filter(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    Insert logs with various service names and severity levels.
-
-    Tests:
-    1. Export logs with complex filter (multiple conditions)
-    2. Verify only logs matching all conditions are returned
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_logs(

@@ -68,12 +68,8 @@ def test_timestamp_order_aggregations_return_the_instant(
     bound: str,
 ) -> None:
     """
-    Setup:
-    Two spans for one service, 3 and 1 minutes ago.
-
-    Tests:
-    max/min answer with the extreme span's instant. Coerced to Float64 the value would be
-    ~1.7e9 seconds, which reads as January 1970 when a consumer treats it as milliseconds.
+    Coerced to Float64 the value would be about 1.7e9 seconds, which reads as
+    January 1970 when a consumer takes it as milliseconds.
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     oldest, newest = now - timedelta(minutes=3), now - timedelta(minutes=1)
@@ -98,9 +94,7 @@ def test_timestamp_quantile_returns_an_instant_within_range(
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
-    Tests:
-    ClickHouse computes quantiles over DateTime64 natively, so p99 lands inside the
-    seeded range rather than erroring or collapsing to epoch.
+    ClickHouse computes quantiles over DateTime64 natively.
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     oldest, newest = now - timedelta(minutes=3), now - timedelta(minutes=1)
@@ -125,11 +119,6 @@ def test_timestamp_counting_aggregations_are_numeric(
     expression: str,
     expected: int | None,
 ) -> None:
-    """
-    Tests:
-    count and rate count rows rather than reading the column's value, so they stay
-    numeric for a time column.
-    """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     seed_two_spans(insert_traces, now - timedelta(minutes=3), now - timedelta(minutes=1))
 
@@ -165,11 +154,6 @@ def test_timestamp_arithmetic_aggregations_are_unsupported(
     insert_traces: Callable[[list[Traces]], None],
     expression: str,
 ) -> None:
-    """
-    Tests:
-    Aggregations that cannot produce a time from a time column fail rather than
-    answering with a rescaled number.
-    """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     seed_two_spans(insert_traces, now - timedelta(minutes=3), now - timedelta(minutes=1))
 

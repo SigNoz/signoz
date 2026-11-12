@@ -38,14 +38,6 @@ def test_logs_list_select_field_types(
     expected: Any,
     expected_type: type,
 ) -> None:
-    """
-    Setup:
-    One log carrying typed attributes (string / number / bool) and severity ERROR.
-
-    Tests:
-    Projecting a string / number / bool attribute or the severity_text intrinsic
-    returns the value with the right Python type under its short-name key.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     insert_logs(
         [
@@ -93,15 +85,6 @@ def test_logs_list_select_projects_columns(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
 ) -> None:
-    """
-    Setup:
-    One log with a string attribute plus body and resources.
-
-    Tests:
-    Projecting a single field returns it as a top-level key and drops the default
-    row payload — the resources_string / attributes_* maps and body are no longer
-    present when a selectFields list is given.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     insert_logs(
         [
@@ -153,17 +136,9 @@ def test_logs_list_unknown_log_context_synthesizes(
     surface: str,
 ) -> None:
     """
-    Setup:
-    One log.
-
-    Tests:
-    The intrinsic `log.` context is forgiving, like bare / `attribute.` /
-    `resource.` keys (and the traces `span.` context): an unknown key there
-    synthesizes against the log attribute maps (and the body path) rather than
-    erroring, because existence is a property of the data, not of metadata. A
-    filter reference matches nothing and surfaces a not-found warning (under the
-    stripped name); a select projects a null column; an order clause succeeds
-    and returns the log.
+    An unknown key under the `log.` context synthesizes against the attribute maps
+    and the body path instead of erroring: existence is a property of the data,
+    not of the metadata.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     service = "log-forgiving-ctx-svc"

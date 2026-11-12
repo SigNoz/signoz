@@ -40,14 +40,6 @@ def test_metrics_scalar_space_aggregations(
     space_aggregation: str,
     expected: float,
 ) -> None:
-    """
-    Setup:
-    Four gauge series with latest values 50 / 30 / 70 / 10.
-
-    Tests:
-    An ungrouped scalar query combines the four series with the given space
-    aggregation: sum=160, avg=40, min=10, max=70, count=4.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     insert_metrics([Metrics(metric_name="test.metric", labels={"service.name": service}, timestamp=now - timedelta(seconds=1), temporality="Unspecified", type_="Gauge", is_monotonic=False, value=value) for service, value in METRIC_VALUES.items()])
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -81,14 +73,6 @@ def test_metrics_scalar_having(
     having_expression: str,
     expected_services: set[str],
 ) -> None:
-    """
-    Setup:
-    Four gauge series (per service.name) with latest values 50 / 30 / 70 / 10.
-
-    Tests:
-    A grouped metrics scalar query with `having` on the space-aggregated value keeps
-    only the qualifying services — HAVING was previously logs-only.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     insert_metrics([Metrics(metric_name="test.metric", labels={"service.name": service}, timestamp=now - timedelta(seconds=1), temporality="Unspecified", type_="Gauge", is_monotonic=False, value=value) for service, value in METRIC_VALUES.items()])
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)

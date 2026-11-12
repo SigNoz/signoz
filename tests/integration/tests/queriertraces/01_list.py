@@ -49,20 +49,6 @@ def test_traces_list(
     insert_traces: Callable[[list[Traces]], None],
     noise: str,
 ) -> None:
-    """
-    Setup:
-    Insert 4 spans across two services.
-    http-service: POST /integration -> SELECT, HTTP PATCH
-    topic-service: topic publish
-
-    Tests:
-    1. A raw list ordered by timestamp desc returns the spans in order with the
-       projected intrinsic / calculated / resource columns (field context and
-       datatype specified inline in the key name).
-    2. isRoot = 'true' returns only the two root spans.
-    Under the corrupt variant the projected columns still resolve to the real
-    intrinsic/calculated/resource values (never the colliding attributes).
-    """
     extra_attrs, extra_resources = trace_noise(noise)
     http_service_trace_id = TraceIdGenerator.trace_id()
     http_service_span_id = TraceIdGenerator.span_id()
@@ -227,17 +213,8 @@ def test_traces_list_select_fields(
     events_links: str,
 ) -> None:
     """
-    Setup:
-    Insert a root span with no events/links and a child span carrying two
-    events and one user-supplied link.
-
-    Tests:
-    1. Empty selectFields returns all fields, and the `events` / `links` columns
-       arrive parsed into structured objects (events carry `attributes`, links
-       carry only `traceId`/`spanId` — refType is dropped at the consume layer).
-    2. A non-empty selectField returns that field along with timestamp, trace_id
-       and span_id.
-    The returned key set is invariant to the corrupt-variant collisions.
+    Events arrive parsed, and links carry only traceId and spanId: refType is
+    dropped at the consume layer.
     """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
@@ -358,17 +335,6 @@ def test_traces_list_select_field_types(
     expected: Callable[[Traces], Any],
     expected_type: type,
 ) -> None:
-    """
-    Setup:
-    Insert one span carrying typed attributes and db attributes.
-
-    Tests:
-    Projecting a string / number / bool span attribute, a calculated column, an
-    intrinsic column and its deprecated alias returns the value (derived from
-    the inserted span) with the right Python type; a bare non-existent attribute
-    projects as null. Under the corrupt variant the same-named colliding
-    attributes must not shadow the intrinsic/calculated columns.
-    """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     span = Traces(
@@ -417,13 +383,6 @@ def test_traces_list_select_field_dedup(
     insert_traces: Callable[[list[Traces]], None],
     noise: str,
 ) -> None:
-    """
-    Setup:
-    Insert one span.
-
-    Tests:
-    Selecting the same field twice collapses to a single key in the response.
-    """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     span = Traces(
@@ -478,16 +437,8 @@ def test_traces_list_select_calculated_field_collision(
     expected: Callable[[Traces], Any],
 ) -> None:
     """
-    Setup:
-    Insert one span whose derived calculated columns (db_name from db.name,
-    http_method from http.request.method) collide with literal attributes of the
-    same name.
-
-    Tests:
-    Selecting a calculated field by its bare name or `span.` context returns the
-    derived column value (the same-named attribute is shadowed); the explicit
-    `attribute.` prefix reaches the colliding attribute value instead. Every form
-    projects under the calculated field's name.
+    A bare name or the `span.` context returns the derived column and shadows the
+    same-named attribute; the `attribute.` prefix reaches the attribute.
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     span = Traces(
@@ -528,19 +479,6 @@ def test_traces_list_response_shape_values(
     insert_traces: Callable[[list[Traces]], None],
     noise: str,
 ) -> None:
-    """
-    Setup:
-    Insert a curated set of spans exercising every derived/intrinsic response
-    field: an error span, a client span with HTTP url/method, a db span, a
-    host span, and remote/kind variants.
-
-    Tests:
-    With empty selectFields every intrinsic/calculated column (has_error,
-    is_remote, external_http_url, db_name, http_host, status_code_string,
-    kind_string, ...) round-trips with its populated value, and the merged
-    `attributes` map preserves string / number / bool types. Under the corrupt
-    variant these columns keep winning over the same-named colliding attributes.
-    """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
@@ -662,17 +600,6 @@ def test_traces_list_ordering(
     sort_value: Callable[[dict[str, Any]], Any],
     direction: str,
 ) -> None:
-    """
-    Setup:
-    Insert 4 spans whose fields are permuted so that each order key produces a
-    distinct ordering.
-
-    Tests:
-    Ordering by an intrinsic (timestamp, duration_nano, name, kind), a
-    calculated column (response_status_code), a resource attribute and a number
-    span attribute all sort correctly in both directions — including when
-    same-named corrupt attributes collide with those columns.
-    """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
@@ -733,14 +660,6 @@ def test_traces_list_order_multi_key_tiebreak(
     insert_traces: Callable[[list[Traces]], None],
     noise: str,
 ) -> None:
-    """
-    Setup:
-    Insert 3 spans sharing the same timestamp with distinct durations.
-
-    Tests:
-    A secondary order key (duration_nano) breaks the timestamp tie
-    deterministically, and flipping its direction flips the tie-break.
-    """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
@@ -795,12 +714,7 @@ def test_traces_list_no_default_order(
     noise: str,
 ) -> None:
     """
-    Setup:
-    Insert 4 spans.
-
-    Tests:
-    A raw list query with no order clause succeeds and returns every matching
-    span (the builder adds no default ORDER BY, so only membership is pinned).
+    The builder adds no default ORDER BY, so only membership is pinned.
     """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
@@ -862,14 +776,6 @@ def test_traces_list_pagination(
     limit: int | None,
     offset: int,
 ) -> None:
-    """
-    Setup:
-    Insert 5 spans with strictly increasing timestamps.
-
-    Tests:
-    Ordered by timestamp desc, limit caps the row count and offset pages
-    through the result; an offset past the end returns no rows.
-    """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
@@ -931,13 +837,8 @@ def test_traces_list_time_boundaries(
     noise: str,
 ) -> None:
     """
-    Setup:
-    Insert spans exactly at the query start, in the middle, and exactly at the
-    query end (all second-aligned so the ms->ns conversion lands exactly).
-
-    Tests:
-    The query window is [start, end): the span at start is included and the
-    span at end is excluded.
+    The spans are second-aligned, so the ms to ns conversion lands exactly on the
+    window edges.
     """
     extra_attrs, extra_resources = trace_noise(noise)
     start_dt = datetime.now(tz=UTC).replace(microsecond=0) - timedelta(seconds=30)
@@ -978,14 +879,6 @@ def test_traces_list_empty_result(
     insert_traces: Callable[[list[Traces]], None],
     noise: str,
 ) -> None:
-    """
-    Setup:
-    Insert one span.
-
-    Tests:
-    A filter matching no span, and a time window that excludes the span, both
-    return zero rows (rows is null, surfaced as an empty list).
-    """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     insert_traces(
@@ -1045,14 +938,7 @@ def test_traces_list_span_scope(
     noise: str,
 ) -> None:
     """
-    Setup:
-    Insert a root span, a non-root entry-point span (its (name, service) is
-    seeded into top_level_operations) and a non-root internal span.
-
-    Tests:
-    1. isRoot = 'true' returns only the root span.
-    2. isEntryPoint = 'true' returns only the non-root span whose operation is
-       registered in top_level_operations.
+    isEntryPoint reads top_level_operations, so the entry-point span is seeded there.
     """
     extra_attrs, extra_resources = trace_noise(noise)
     now = datetime.now(tz=UTC).replace(microsecond=0)
@@ -1262,17 +1148,6 @@ def test_traces_list_with_corrupt_data(
     status_code: HTTPStatus,
     expected: Callable[[list[Traces]], dict[str, Any]],
 ) -> None:
-    """
-    Setup:
-    Insert 4 spans whose metadata carries intrinsic/calculated field names as
-    attributes (e.g. attribute.timestamp, attribute.duration_nano).
-
-    Tests:
-    Ordering / selecting a name that exists both as an intrinsic column and as
-    an attribute resolves to the intrinsic column, while the explicit
-    `attribute.` prefix reaches the attribute value. Each expected row is derived
-    from the inserted span objects.
-    """
     traces = generate_traces_with_corrupt_metadata()
     insert_traces(traces)
     # traces[i] occurred before traces[j] where i < j.
@@ -1346,24 +1221,10 @@ def test_traces_list_with_scope_filter(
     expected_indices: list[int],
 ) -> None:
     """
-    Setup three spans with different scope key resolution:
-    - x[0]: scope.name/version 'io.signoz.checkout'/'2.3.1'; span attribute
-      env.tier='gold'.
-    - x[1]: scope.name/version 'io.signoz.payment'/'4.5.6'; scope attributes
-      telemetry.sdk.language='python', env.tier='gold', and a `name` scope
-      attribute colliding with x[0]'s scope.name value.
-    - x[2]: span name 'io.signoz.checkout' (colliding with x[0]'s scope.name
-      value) and a span attribute literally named `scope.name`.
-
-    Tests:
-    - Filtering on scope.name / scope.version / a scope attribute.
-    - An unprefixed key is resolved across contexts (scope checked alongside
-      attribute / intrinsic), while a `scope.`-prefixed key is scope-only.
-    - `scope.name`/`scope.version` name every home they resolve to: the declared JSON
-      sub-column and a same-named `name`/`version` scope attribute. The explicit
-      `scope.attribute.` prefix addresses the attribute alone.
-    - a bare `name` reaches the span `name` column and a `name` scope attribute, but
-      never the declared scope.name field.
+    `scope.name` and `scope.version` resolve to the declared JSON sub-column and to
+    a same-named scope attribute; `scope.attribute.` addresses the attribute alone.
+    A bare `name` reaches the span name column and a `name` scope attribute, never
+    the declared scope.name.
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
@@ -1465,18 +1326,8 @@ def test_traces_list_unknown_span_context_synthesizes(
     surface: str,
 ) -> None:
     """
-    Setup:
-    Insert one span.
-
-    Tests:
-    The intrinsic `span.` context is forgiving, like bare / `attribute.` /
-    `resource.` keys (and the logs `log.` context): an unknown key there
-    synthesizes against the span attribute maps rather than erroring, because
-    existence is a property of the data, not of metadata. A filter reference
-    matches nothing and surfaces a not-found warning (under the stripped name);
-    a select projects a null column; an order clause succeeds and returns the
-    span. (See test_traces_list_unknown_other_context_synthesizes for the
-    `attribute.`/`resource.` contexts.)
+    An unknown key under the `span.` context synthesizes against the attribute maps
+    instead of erroring: existence is a property of the data, not of the metadata.
     """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     span = Traces(
@@ -1535,17 +1386,6 @@ def test_traces_list_unknown_other_context_synthesizes(
     context: str,
     surface: str,
 ) -> None:
-    """
-    Setup:
-    Insert 3 spans.
-
-    Tests:
-    Like the intrinsic `span.` context (see
-    test_traces_list_unknown_span_context_synthesizes), the `attribute.`
-    and `resource.` contexts synthesize an unknown key (existence is a property
-    of the data, not metadata): a filter reference matches nothing, a select
-    projects a null column, and an order clause succeeds and returns every span.
-    """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     spans = [
@@ -1601,15 +1441,6 @@ def test_traces_list_order_unknown_key_synthesizes(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """
-    Setup:
-    Insert 3 spans.
-
-    Tests:
-    Ordering by a bare (context-less) unknown key synthesizes a null column and
-    succeeds, returning every matching span — the ordering counterpart of the
-    bare-select-null case and the unknown-filter synthesis in 09_unknown_keys.
-    """
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     spans = [

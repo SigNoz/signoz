@@ -62,14 +62,8 @@ def test_logs_unknown_key_collision_groupby_parity(
     insert_logs_with_unknown_keys: Callable[[list[Logs], set[str]], None],
 ) -> None:
     """
-    Setup:
-    8 logs sharing a value under known_key (in metadata) and unknown_key (stripped
-    from metadata); the value is a string / number / bool depending on the record, so
-    the shared value spans attributes_string / attributes_number / attributes_bool.
-
-    Tests:
-    Grouping by unknown_key (synthesized multiIf) yields the same buckets and counts
-    as grouping by known_key (metadata-driven), across all three attribute maps.
+    The shared value is a string, a number or a bool depending on the record, so
+    it spans all three attribute maps.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs = [
@@ -130,16 +124,6 @@ def test_logs_unknown_key_collision_filter_parity(
     predicate: str,
     expected_bodies: set[str],
 ) -> None:
-    """
-    Setup:
-    The same collision dataset as the group-by parity test.
-
-    Tests:
-    Filtering unknown_key (synthesized) selects the same records as filtering known_key
-    (metadata-driven) across operators: typed equality (the operand type picks the
-    matching attribute map), `exists` (fans out across all three maps), and a
-    mixed-type `IN` list (string + number operands union their maps).
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs = [
         Logs(
@@ -180,15 +164,6 @@ def test_logs_unknown_key_collision_aggregation_parity(
     get_token: Callable[[str, str], str],
     insert_logs_with_unknown_keys: Callable[[list[Logs], set[str]], None],
 ) -> None:
-    """
-    Setup:
-    The same collision dataset as the group-by parity test.
-
-    Tests:
-    Aggregating over unknown_key (synthesized) matches aggregating over known_key
-    (metadata-driven): count() sees every record (all 8 carry the key across the three
-    attribute maps) and count_distinct() sees the 6 distinct stringified values.
-    """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs = [
         Logs(

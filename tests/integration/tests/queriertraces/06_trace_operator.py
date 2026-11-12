@@ -587,10 +587,9 @@ def test_trace_operator_with_adjusted_keys(
     assert_result: Callable[[requests.Response, list[Traces]], None],
 ) -> None:
     """
-    Trace operators build a CTE per referenced builder query and an outer
-    query on top. Both layers need the same key adjustment as regular trace
-    queries, otherwise deprecated keys and context-prefixed aliases don't
-    resolve.
+    A trace operator builds a CTE per referenced query and an outer query on top.
+    Both layers need the same key adjustment as a regular trace query, or deprecated
+    keys and context-prefixed aliases do not resolve.
     """
     use_attribute_backend(attribute_backend)
 
@@ -648,24 +647,8 @@ def test_trace_operator_select_fields(
     expansion: str,
 ) -> None:
     """
-    Setup:
-    Insert a parent (operation.type = 'parent') with one event and one
-    user-supplied link, plus a child span (operation.type = 'child').
-
-    Tests:
-    1. With selectFields=[], the `A => B` trace_operator returns every column
-       in ALL_SELECT_FIELDS, mirroring the builder_query path. Events arrive
-       as {name, timeUnixNano, attributes} and links as {traceId, spanId}
-       with refType dropped at the consume layer.
-    2. With an explicit selectFields=[{"name": "service.name"}], only the 6
-       hardcoded core columns plus service.name come back — no auto-expansion
-       to the full set.
-
-    See:
-    - pkg/telemetrytraces/trace_operator_cte_builder.go::buildFinalQuery for
-      the expansion gate.
-    - pkg/telemetrytraces/trace_operator_cte_builder.go::buildListQuery for
-      the per-row SELECT.
+    An explicit selectFields returns only the core columns plus the named fields,
+    with no expansion to the full set.
     """
     use_attribute_backend(attribute_backend)
 
@@ -795,14 +778,6 @@ def test_trace_operator_scalar_limit(
     use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
 ) -> None:
-    """
-    Setup:
-    Insert 4, 3, 2 and 1 spans for services limit-a..limit-d.
-
-    Tests:
-    1. A scalar trace operator grouped by service.name with limit=2 returns
-       only the top two groups by count.
-    """
     use_attribute_backend(attribute_backend)
 
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
