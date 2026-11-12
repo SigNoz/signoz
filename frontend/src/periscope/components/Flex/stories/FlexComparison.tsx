@@ -30,6 +30,14 @@ function FlexComparison({
 			className={cx(styles.item, ITEM_SIZES[index % ITEM_SIZES.length])}
 		/>
 	));
+	if (itemCount > 0) {
+		items.push(
+			<span key="text">text</span>,
+			<a key="link" href="#flex">
+				link
+			</a>,
+		);
+	}
 
 	return (
 		<div className={styles.comparison}>
