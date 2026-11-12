@@ -70,7 +70,7 @@ func (k *PanelKind) UnmarshalJSON(data []byte) error {
 
 type PanelSpec struct {
 	Display Display     `json:"display" required:"true" description:"The panel title and description."`
-	Plugin  PanelPlugin `json:"plugin" required:"true" description:"The visualization: kind is one of signoz/TimeSeriesPanel, signoz/BarChartPanel, signoz/AreaChartPanel, signoz/NumberPanel, signoz/PieChartPanel, signoz/TablePanel, signoz/HistogramPanel, signoz/ListPanel, signoz/TextPanel or signoz/HeatmapPanel, and spec holds that kind's options ({} accepts every default)."`
+	Plugin  PanelPlugin `json:"plugin" required:"true" description:"The visualization: kind is one of signoz/TimeSeriesPanel, signoz/BarChartPanel, signoz/AreaChartPanel, signoz/NumberPanel, signoz/PieChartPanel, signoz/TablePanel, signoz/HistogramPanel, signoz/ListPanel, signoz/TextPanel, signoz/HeatmapPanel or signoz/DistributionPanel, and spec holds that kind's options ({} accepts every default)."`
 	Queries []Query     `json:"queries" required:"true" nullable:"false" description:"The queries the panel runs. Use exactly one entry for a data panel and [] for signoz/TextPanel. To run several named queries or formulas, use one entry whose spec.plugin.kind is signoz/CompositeQuery and put the constituent queries in its plugin spec."`
 	Links   []Link      `json:"links,omitzero" description:"Context links offered in the data point drilldown menu of the panel, with dashboard variables resolved in the URL."`
 }
@@ -92,13 +92,13 @@ type Link struct {
 // ══════════════════════════════════════════════
 
 type Query struct {
-	Kind qb.RequestType `json:"kind" required:"true" description:"The result shape the panel requests: time_series for time series, bar, area and histogram panels, scalar for number, table and pie panels, raw for list panels, heatmap for heatmap panels, trace for trace panels."`
+	Kind qb.RequestType `json:"kind" required:"true" description:"The result shape the panel requests: time_series for time series, bar, area and histogram panels, scalar for number, table and pie panels, raw for list panels, heatmap for heatmap panels, distribution for distribution panels, trace for trace panels."`
 	Spec QuerySpec      `json:"spec" required:"true" description:"The query content: an optional name and the query plugin."`
 }
 
 type QuerySpec struct {
 	Name   string      `json:"name,omitempty" description:"An optional label for the query. The name queries refer to each other by lives in the plugin spec."`
-	Plugin QueryPlugin `json:"plugin" required:"true" description:"The query: kind is one of signoz/BuilderQuery, signoz/AIBuilderQuery (builder query over AI observability traces), signoz/CompositeQuery (several named queries and formulas), signoz/Formula, signoz/PromQLQuery, signoz/ClickHouseSQL or signoz/TraceOperator, and spec holds that kind's query. Pie and table panels reject signoz/PromQLQuery; heatmap panels reject signoz/AIBuilderQuery and signoz/TraceOperator; list panels accept only signoz/BuilderQuery and signoz/AIBuilderQuery."`
+	Plugin QueryPlugin `json:"plugin" required:"true" description:"The query: kind is one of signoz/BuilderQuery, signoz/AIBuilderQuery (builder query over AI observability traces), signoz/CompositeQuery (several named queries and formulas), signoz/Formula, signoz/PromQLQuery, signoz/ClickHouseSQL or signoz/TraceOperator, and spec holds that kind's query. Pie and table panels reject signoz/PromQLQuery; heatmap and distribution panels reject signoz/AIBuilderQuery and signoz/TraceOperator; list panels accept only signoz/BuilderQuery and signoz/AIBuilderQuery."`
 }
 
 // ══════════════════════════════════════════════
