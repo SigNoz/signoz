@@ -1,12 +1,42 @@
-@use '../../../styles/antdReset';
-
 .space {
-	@include antdReset.antd-link-reset;
-
 	display: inline-flex;
 
 	.item:empty {
 		display: none;
+	}
+}
+
+:where(.space) a {
+	color: var(--theme-color-link);
+	text-decoration: none;
+	background-color: transparent;
+	outline: none;
+	cursor: pointer;
+	transition: color var(--theme-motion-duration-slow);
+	-webkit-text-decoration-skip: objects;
+
+	&:hover {
+		color: var(--theme-color-link-hover);
+	}
+
+	&:active {
+		color: var(--theme-color-link-active);
+	}
+
+	&:active,
+	&:hover {
+		text-decoration: none;
+		outline: 0;
+	}
+
+	&:focus {
+		text-decoration: none;
+		outline: 0;
+	}
+
+	&[disabled] {
+		color: var(--theme-color-text-disabled);
+		cursor: not-allowed;
 	}
 }
 
@@ -55,9 +85,41 @@
 }
 
 .compact {
-	@include antdReset.antd-link-reset;
-
 	display: inline-flex;
+}
+
+:where(.compact) a {
+	color: var(--theme-color-link);
+	text-decoration: none;
+	background-color: transparent;
+	outline: none;
+	cursor: pointer;
+	transition: color var(--theme-motion-duration-slow);
+	-webkit-text-decoration-skip: objects;
+
+	&:hover {
+		color: var(--theme-color-link-hover);
+	}
+
+	&:active {
+		color: var(--theme-color-link-active);
+	}
+
+	&:active,
+	&:hover {
+		text-decoration: none;
+		outline: 0;
+	}
+
+	&:focus {
+		text-decoration: none;
+		outline: 0;
+	}
+
+	&[disabled] {
+		color: var(--theme-color-text-disabled);
+		cursor: not-allowed;
+	}
 }
 
 .compactBlock {
