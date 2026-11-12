@@ -5,8 +5,6 @@ import { NotificationProvider } from 'hooks/useNotifications';
 import { CmdKProvider } from 'providers/cmdKProvider';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 
-import ThemeCssVariables from './ThemeCssVariables';
-
 export interface AppShellProps {
 	children: ReactNode;
 	/** Mounted beside the routed content: the command palette and its siblings. */
@@ -30,7 +28,6 @@ function AppShell({ children, overlays }: AppShellProps): JSX.Element {
 
 	return (
 		<ConfigProvider theme={themeConfig}>
-			<ThemeCssVariables />
 			<CmdKProvider>
 				<NotificationProvider>
 					<ErrorModalProvider>
