@@ -189,8 +189,10 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID, params *service
 		query = query.Where(compiled.SQL, compiled.Args...)
 	}
 
+	direction := strings.ToUpper(params.Order.StringValue())
 	query = query.
-		OrderExpr(params.Sort.StringValue() + " " + strings.ToUpper(params.Order.StringValue())).
+		OrderExpr(params.Sort.StringValue() + " " + direction).
+		OrderExpr("id " + direction).
 		Limit(params.Limit).
 		Offset(params.Offset)
 
