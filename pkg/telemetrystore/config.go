@@ -3,6 +3,7 @@ package telemetrystore
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
@@ -37,6 +38,15 @@ type ClickhouseConfig struct {
 
 	// QuerySettings is the query settings for clickhouse.
 	QuerySettings QuerySettings `mapstructure:"settings"`
+
+	// Profiles maps a settings profile name (NewContextWithProfile) to the connection that runs its
+	// queries. The native protocol sets the profile at login, so each DSN logs in as a user whose
+	// default profile is that one.
+	Profiles map[string]ProfileConfig `mapstructure:"profiles"`
+}
+
+type ProfileConfig struct {
+	DSN string `mapstructure:"dsn"`
 }
 
 type QuerySettings struct {
@@ -69,5 +79,10 @@ func newConfig() factory.Config {
 }
 
 func (c Config) Validate() error {
+	for name, profile := range c.Clickhouse.Profiles {
+		if profile.DSN == "" {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetrystore.clickhouse.profiles.%s.dsn is required", name)
+		}
+	}
 	return nil
 }

@@ -2,6 +2,7 @@ package clickhousetelemetrystore
 
 import (
 	"context"
+	"log/slog"
 
 	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -26,6 +27,7 @@ var (
 	ErrCodeNotAnAggregate            = errors.MustNewCode("not_an_aggregate")
 	ErrCodeIllegalAggregation        = errors.MustNewCode("illegal_aggregation")
 	ErrCodeInvalidRegexp             = errors.MustNewCode("invalid_regexp")
+	ErrCodeSettingNotAllowed         = errors.MustNewCode("setting_not_allowed")
 
 	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
 	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
@@ -111,11 +113,17 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 		return errors.WrapInvalidInputf(cause, ErrCodeInvalidRegexp, "regular expression does not compile: %s", ex.Message).
 			WithSuggestions("write the pattern in RE2 syntax, which has no lookaround or backreferences, and escape a backslash that is meant literally")
 	},
+	// A SETTINGS clause went past a constraint of the query's settings profile.
+	chproto.ErrSettingConstraintViolation: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeSettingNotAllowed, "setting not allowed: %s", ex.Message).
+			WithSuggestions("remove the setting from the SETTINGS clause of the query")
+	},
 }
 
 type provider struct {
 	settings       factory.ScopedProviderSettings
 	clickHouseConn clickhouse.Conn
+	profileConns   map[string]clickhouse.Conn
 	cluster        string
 	hooks          []telemetrystore.TelemetryStoreHook
 }
@@ -129,21 +137,17 @@ func NewFactory(hookFactories ...factory.ProviderFactory[telemetrystore.Telemetr
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config, hookFactories ...factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]) (telemetrystore.TelemetryStore, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore")
 
-	options, err := clickhouse.ParseDSN(config.Clickhouse.DSN)
+	chConn, err := open(config.Clickhouse.DSN, config.Connection)
 	if err != nil {
 		return nil, err
 	}
-	options.MaxIdleConns = config.Connection.MaxIdleConns
-	options.MaxOpenConns = config.Connection.MaxOpenConns
-	options.DialTimeout = config.Connection.DialTimeout
-	// Read JSON columns natively: the driver mis-decodes JSON(max_dynamic_paths=0) columns without
-	// the flattened serialization, and reading them as a string collapses a key stored at both a
-	// scalar and an object path.
-	options.Settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
 
-	chConn, err := clickhouse.Open(options)
-	if err != nil {
-		return nil, err
+	profileConns := make(map[string]clickhouse.Conn, len(config.Clickhouse.Profiles))
+	for name, profile := range config.Clickhouse.Profiles {
+		profileConns[name], err = open(profile.DSN, config.Connection)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	hooks := make([]telemetrystore.TelemetryStoreHook, len(hookFactories))
@@ -175,6 +179,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	p := &provider{
 		settings:       settings,
 		clickHouseConn: chConn,
+		profileConns:   profileConns,
 		cluster:        config.Clickhouse.Cluster,
 		hooks:          hooks,
 	}
@@ -202,6 +207,11 @@ func (p *provider) Cluster() string {
 }
 
 func (p *provider) Close() error {
+	for _, conn := range p.profileConns {
+		if err := conn.Close(); err != nil {
+			return err
+		}
+	}
 	return p.clickHouseConn.Close()
 }
 
@@ -214,10 +224,12 @@ func (p *provider) Stats() driver.Stats {
 }
 
 func (p *provider) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
+	conn := p.connFor(ctx)
+
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	rows, err := p.clickHouseConn.Query(ctx, query, args...)
+	rows, err := conn.Query(ctx, query, args...)
 	if err != nil {
 		event.Err = err
 		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -233,10 +245,12 @@ func (p *provider) Query(ctx context.Context, query string, args ...interface{})
 }
 
 func (p *provider) QueryRow(ctx context.Context, query string, args ...interface{}) driver.Row {
+	conn := p.connFor(ctx)
+
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	row := p.clickHouseConn.QueryRow(ctx, query, args...)
+	row := conn.QueryRow(ctx, query, args...)
 
 	if row == nil {
 		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -250,10 +264,12 @@ func (p *provider) QueryRow(ctx context.Context, query string, args ...interface
 }
 
 func (p *provider) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+	conn := p.connFor(ctx)
+
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err := p.clickHouseConn.Select(ctx, dest, query, args...)
+	err := conn.Select(ctx, dest, query, args...)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -262,10 +278,12 @@ func (p *provider) Select(ctx context.Context, dest interface{}, query string, a
 }
 
 func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) error {
+	conn := p.connFor(ctx)
+
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err := p.clickHouseConn.Exec(ctx, query, args...)
+	err := conn.Exec(ctx, query, args...)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -274,10 +292,12 @@ func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) 
 }
 
 func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
+	conn := p.connFor(ctx)
+
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err := p.clickHouseConn.Exec(clickhouse.Context(ctx, clickhouse.WithAsync(wait)), query, args...)
+	err := conn.Exec(clickhouse.Context(ctx, clickhouse.WithAsync(wait)), query, args...)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -286,10 +306,12 @@ func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, arg
 }
 
 func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
+	conn := p.connFor(ctx)
+
 	event := telemetrystore.NewQueryEvent(query, nil)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	batch, err := p.clickHouseConn.PrepareBatch(ctx, query, opts...)
+	batch, err := conn.PrepareBatch(ctx, query, opts...)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -306,6 +328,35 @@ func (p *provider) ServerVersion() (*driver.ServerVersion, error) {
 
 func (p *provider) Contributors() []string {
 	return p.clickHouseConn.Contributors()
+}
+
+func open(dsn string, connection telemetrystore.ConnectionConfig) (clickhouse.Conn, error) {
+	options, err := clickhouse.ParseDSN(dsn)
+	if err != nil {
+		return nil, err
+	}
+	options.MaxIdleConns = connection.MaxIdleConns
+	options.MaxOpenConns = connection.MaxOpenConns
+	options.DialTimeout = connection.DialTimeout
+	// Read JSON columns natively: the driver mis-decodes JSON(max_dynamic_paths=0) columns without
+	// the flattened serialization, and reading them as a string collapses a key stored at both a
+	// scalar and an object path.
+	options.Settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
+
+	return clickhouse.Open(options)
+}
+
+// connFor falls back to the default connection, which has no profile, when the profile of ctx is not configured.
+func (p *provider) connFor(ctx context.Context) clickhouse.Conn {
+	profile := telemetrystore.ProfileFromContext(ctx)
+	if profile == "" {
+		return p.clickHouseConn
+	}
+	if conn, ok := p.profileConns[profile]; ok {
+		return conn
+	}
+	p.settings.Logger().WarnContext(ctx, "clickhouse settings profile is not configured, running the query without it", slog.String("profile", profile))
+	return p.clickHouseConn
 }
 
 func castError(err error) error {
