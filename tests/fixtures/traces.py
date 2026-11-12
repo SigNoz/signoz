@@ -986,10 +986,15 @@ def insert_traces(
     )
 
 
+ATTRIBUTE_EVOLUTION_COLUMNS = ["signal", "column_name", "column_type", "field_context", "field_name", "version", "release_time"]
+
+ATTRIBUTE_EVOLUTION_FILTER = "column_name = 'attributes' AND field_context = 'attribute' AND field_name = '__all__'"
+
+
 def insert_attribute_evolution_to_clickhouse(conn, signal: str, release_time: datetime.datetime) -> None:
-    """Seed the `attributes` JSON column-evolution row for a signal at release_time. Unlike the
-    resource row (seeded by the migrator at install), the attribute JSON rollout is install-specific
-    and not migrator-seeded, so tests insert it to gate map-vs-JSON resolution across a window."""
+    """Seed the `attributes` JSON column-evolution row for a signal at release_time, to gate
+    map-vs-JSON resolution across a window. Rows merge on min(release_time), so clear the
+    signal's existing rollout first."""
     # insert_deduplicate=0: successive tests seed a byte-identical row (release_time is
     # minute-aligned), and ReplicatedMergeTree would drop the re-insert as a duplicate even
     # after the prior test's teardown deleted it, leaving the querier to fall back to the Map.
@@ -1004,17 +1009,37 @@ def insert_attribute_evolution_to_clickhouse(conn, signal: str, release_time: da
     )
 
 
+def delete_attribute_evolution_from_clickhouse(conn, cluster: str, signal: str | None = None) -> None:
+    """Remove the `attributes` JSON rollout of a signal, or of every signal when none is given,
+    so the querier reads the legacy maps."""
+    signal_filter = f" AND signal = '{signal}'" if signal else ""
+    conn.query(f"ALTER TABLE signoz_metadata.column_evolution_metadata ON CLUSTER '{cluster}' DELETE WHERE {ATTRIBUTE_EVOLUTION_FILTER}{signal_filter} SETTINGS mutations_sync = 1")
+
+
 @pytest.fixture(name="seed_attribute_evolution", scope="function")
 def seed_attribute_evolution(
     clickhouse: types.TestContainerClickhouse,
 ) -> Generator[Callable[[str, datetime.datetime], None], Any]:
+    """Replaces a signal's `attributes` JSON rollout with one at release_time. The migrator seeds
+    the traces rollout at install; teardown restores it."""
+    cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
+    installed = clickhouse.conn.query(f"SELECT {', '.join(ATTRIBUTE_EVOLUTION_COLUMNS)} FROM signoz_metadata.distributed_column_evolution_metadata WHERE {ATTRIBUTE_EVOLUTION_FILTER}").result_rows
+
     def _seed(signal: str, release_time: datetime.datetime) -> None:
+        delete_attribute_evolution_from_clickhouse(clickhouse.conn, cluster, signal)
         insert_attribute_evolution_to_clickhouse(clickhouse.conn, signal, release_time)
 
     yield _seed
 
-    cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
-    clickhouse.conn.query(f"ALTER TABLE signoz_metadata.column_evolution_metadata ON CLUSTER '{cluster}' DELETE WHERE column_name = 'attributes' AND field_context = 'attribute' AND field_name = '__all__' SETTINGS mutations_sync = 1")
+    delete_attribute_evolution_from_clickhouse(clickhouse.conn, cluster)
+    if installed:
+        clickhouse.conn.insert(
+            database="signoz_metadata",
+            table="distributed_column_evolution_metadata",
+            column_names=ATTRIBUTE_EVOLUTION_COLUMNS,
+            data=installed,
+            settings={"insert_deduplicate": 0},
+        )
 
 
 # A rollout far before any test's query window, so seeding it makes the querier read span
@@ -1024,11 +1049,12 @@ ATTRIBUTE_JSON_ROLLOUT_TIME = datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC)
 
 @pytest.fixture(name="use_attribute_backend")
 def use_attribute_backend(
+    clickhouse: types.TestContainerClickhouse,
     seed_attribute_evolution: Callable[[str, datetime.datetime], None],
 ) -> Callable[[str], None]:
-    """Applies the physical attribute layout a test runs under. "map" leaves the querier on the
-    legacy attributes_{string,number,bool} maps; "json" seeds the column-evolution row so it reads
-    the native `attributes` JSON column instead. Pair with
+    """Applies the physical attribute layout a test runs under. "map" removes the column-evolution
+    row so the querier reads the legacy attributes_{string,number,bool} maps; "json" seeds it before
+    any query window so it reads the native `attributes` JSON column instead. Pair with
     @pytest.mark.parametrize("attribute_backend", ["map", "json"]) and call it once in the body;
     insert_traces dual-writes both layouts, so a test that passes under both has strict Map/JSON
     parity."""
@@ -1036,6 +1062,8 @@ def use_attribute_backend(
     def _apply(backend: str) -> None:
         if backend == "json":
             seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
+        else:
+            delete_attribute_evolution_from_clickhouse(clickhouse.conn, clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"], "traces")
 
     return _apply
 
