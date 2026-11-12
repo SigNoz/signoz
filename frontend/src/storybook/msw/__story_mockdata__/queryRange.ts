@@ -13,6 +13,7 @@ import type { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import type {
 	ColumnDescriptor,
 	MetricRangePayloadV5,
+	RawRow,
 	RequestType,
 	TimeSeries,
 	TimeSeriesValue,
@@ -131,7 +132,7 @@ export const queryRangeV5EmptyResponse = (
 	},
 });
 
-export const queryRangeV5RawResponse = <T>(
+export const queryRangeV5RawResponse = <T extends RawRow['data']>(
 	rows: Array<{ timestamp: string; data: T }>,
 	options: ResponseOptions & {
 		hasMore?: boolean;

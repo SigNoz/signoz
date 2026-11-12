@@ -906,6 +906,10 @@ describe('prepareQueryRangePayloadV5', () => {
 });
 
 describe('mapPanelTypeToRequestType', () => {
+	it('sends a histogram as time_series, which it bins in the browser', () => {
+		expect(mapPanelTypeToRequestType(PANEL_TYPES.HISTOGRAM)).toBe('time_series');
+	});
+
 	it('sends a scatter plot as scalar, like a table', () => {
 		expect(mapPanelTypeToRequestType(PANEL_TYPES.SCATTER)).toBe('scalar');
 	});
