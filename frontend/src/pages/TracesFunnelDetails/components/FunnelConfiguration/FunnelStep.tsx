@@ -228,7 +228,10 @@ function FunnelStep({
 								align="end"
 								side="bottom"
 							>
-								<Space data-testid={`funnel-step-latency-pointer-${index}`}>
+								<Space
+									className="latency-pointer__trigger"
+									data-testid={`funnel-step-latency-pointer-${index}`}
+								>
 									{
 										LatencyPointers.find(
 											(option) => option.value === stepData.latency_pointer,
@@ -238,7 +241,7 @@ function FunnelStep({
 								</Space>
 							</Dropdown>
 						) : (
-							<Space>
+							<Space className="latency-pointer__trigger">
 								{
 									LatencyPointers.find(
 										(option) => option.value === stepData.latency_pointer,
