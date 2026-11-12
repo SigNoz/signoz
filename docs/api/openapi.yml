@@ -4425,7 +4425,8 @@ components:
           description: The dashboard title and description.
         duration:
           description: The default time range, as a Prometheus duration such as 1h
-            or 7d. Stored, but not applied by the UI.
+            or 7d. The UI opens the dashboard on it, rounded up to whole minutes,
+            when neither the URL nor the viewer's last pick sets a time range.
           type: string
         layouts:
           description: The Grid layouts that place panels, at most 500. Each panel

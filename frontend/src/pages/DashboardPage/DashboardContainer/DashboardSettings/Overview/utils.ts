@@ -1,4 +1,7 @@
 import type { TagtypesPostableTagDTO } from 'api/generated/services/sigNoz.schemas';
+import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
+
+import { toPickerRelativeTime } from '../../utils/dashboardDuration';
 
 export { parseKeyValueTag } from 'components/TagKeyValueInput/utils';
 
@@ -21,4 +24,42 @@ export function stringsToTags(tagStrings: string[]): TagtypesPostableTagDTO[] {
 			return { key, value: value || key };
 		})
 		.filter((t) => t.key.length > 0);
+}
+
+// Radix rejects an empty option value, so "not set" travels through the select
+// under a sentinel and is mapped back to '' on the way out.
+export const DEFAULT_TIME_RANGE_UNSET = '__unset__';
+
+// The default entry represents 30m; the API rejects `1month`, which is not a
+// Prometheus duration.
+const SELECTABLE_DURATIONS = RelativeDurationOptions.filter(
+	(option) => option.value !== '1month' && option.value !== '30m',
+);
+
+function storedDurationLabel(value: string): string {
+	const relativeTime = toPickerRelativeTime(value);
+	if (!relativeTime) {
+		return `${value} (not applied)`;
+	}
+	return relativeTime === value
+		? `Last ${value}`
+		: `Last ${value} (opens as ${relativeTime})`;
+}
+
+// A window set through the API or the JSON editor may sit outside the list;
+// it's appended so the select shows it instead of rendering blank.
+export function buildDefaultTimeRangeItems(
+	value: string,
+): { value: string; label: string }[] {
+	const items = [
+		{ value: DEFAULT_TIME_RANGE_UNSET, label: 'Default (Last 30 minutes)' },
+		...SELECTABLE_DURATIONS.map((option) => ({
+			value: option.value,
+			label: option.label,
+		})),
+	];
+	if (value && value !== '30m' && !items.some((item) => item.value === value)) {
+		items.push({ value, label: storedDurationLabel(value) });
+	}
+	return items;
 }
