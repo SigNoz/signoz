@@ -1,4 +1,6 @@
 import {
+	DashboardtypesPanelKindDTO,
+	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpecDTOKind as DistributionKind,
 	type DashboardtypesDistributionPanelSpecDTO,
 	type Querybuildertypesv5DistributionDataDTO,
 	Querybuildertypesv5RequestTypeDTO,
@@ -36,10 +38,14 @@ function dataWith(buckets: number[], counts: number[][]): PanelQueryData {
 function panelWith(
 	spec: Partial<DashboardtypesDistributionPanelSpecDTO> = {},
 ): PanelOfKind<'signoz/DistributionPanel'> {
-	// Only the plugin spec is read; the rest of the panel is irrelevant here.
 	return {
-		spec: { plugin: { kind: 'signoz/DistributionPanel', spec } },
-	} as unknown as PanelOfKind<'signoz/DistributionPanel'>;
+		kind: DashboardtypesPanelKindDTO.Panel,
+		spec: {
+			display: { name: '' },
+			plugin: { kind: DistributionKind['signoz/DistributionPanel'], spec },
+			queries: [],
+		},
+	};
 }
 
 describe('getDistributionDataWarning', () => {

@@ -23,7 +23,9 @@ describe('DistributionPercentilesField', () => {
 			/>,
 		);
 
-		await userEvent.click(screen.getByRole('switch'));
+		await userEvent
+			.setup({ pointerEventsCheck: 0 })
+			.click(screen.getByTestId('panel-editor-v2-percentile-markers'));
 
 		expect(onChange).toHaveBeenCalledWith({ enabled: false, values: [75] });
 	});

@@ -1,6 +1,8 @@
-import type {
-	DashboardtypesPanelSpecDTO,
-	QueryRangeV5200,
+import {
+	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpecDTOKind as DistributionKind,
+	type DashboardtypesPanelSpecDTO,
+	type Querybuildertypesv5DistributionDataDTO,
+	Querybuildertypesv5RequestTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { resolveSeriesColor } from 'lib/visualization/charts/Distribution/colors';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
@@ -9,37 +11,42 @@ import { resolveDistributionLegendSeries } from '../legendSeries';
 
 describe('resolveDistributionLegendSeries', () => {
 	it('keys each group by the label and default colour the chart draws it with', () => {
-		const data = {
-			response: {
-				data: {
-					type: 'distribution',
-					data: {
-						results: [
-							{
-								queryName: 'A',
-								aggregations: [
-									{
-										index: 0,
-										meta: { buckets: [1] },
-										distributions: [
-											{
-												labels: [{ key: { name: 'service' }, value: 'cart' }],
-												counts: [1, 2],
-											},
-										],
-									},
-								],
-							},
-						],
-					},
+		const result: Querybuildertypesv5DistributionDataDTO = {
+			queryName: 'A',
+			aggregations: [
+				{
+					alias: '__result_0',
+					index: 0,
+					meta: { buckets: [1] },
+					distributions: [
+						{
+							labels: [{ key: { name: 'service' }, value: 'cart' }],
+							counts: [1, 2],
+						},
+					],
 				},
-			} as unknown as QueryRangeV5200,
+			],
+		};
+		const data: PanelQueryData = {
+			response: {
+				status: 'success',
+				data: {
+					type: Querybuildertypesv5RequestTypeDTO.distribution,
+					data: { results: [result] },
+				},
+			},
+			requestPayload: undefined,
 			legendMap: { A: '{{service}}' },
-		} as unknown as PanelQueryData;
+		};
+		const spec: DashboardtypesPanelSpecDTO = {
+			display: { name: '' },
+			plugin: { kind: DistributionKind['signoz/DistributionPanel'], spec: {} },
+			queries: [],
+		};
 
 		expect(
 			resolveDistributionLegendSeries({
-				spec: {} as DashboardtypesPanelSpecDTO,
+				spec,
 				queries: [],
 				data,
 				isDarkMode: true,
