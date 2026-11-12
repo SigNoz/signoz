@@ -37,71 +37,7 @@ class AuditResource(ABC):
         )
 
 
-class AuditResourceOrAttributeKeys(ABC):
-    name: str
-    datatype: str
-
-    def __init__(self, name: str, datatype: str) -> None:
-        self.name = name
-        self.datatype = datatype
-
-    def np_arr(self) -> np.array:
-        return np.array([self.name, self.datatype])
-
-
-class AuditTagAttributes(ABC):
-    unix_milli: np.int64
-    tag_key: str
-    tag_type: str
-    tag_data_type: str
-    string_value: str
-    int64_value: np.int64 | None
-    float64_value: np.float64 | None
-
-    def __init__(
-        self,
-        timestamp: datetime.datetime,
-        tag_key: str,
-        tag_type: str,
-        tag_data_type: str,
-        string_value: str | None,
-        int64_value: np.int64 | None,
-        float64_value: np.float64 | None,
-    ) -> None:
-        self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
-        self.tag_key = tag_key
-        self.tag_type = tag_type
-        self.tag_data_type = tag_data_type
-        self.string_value = string_value or ""
-        self.int64_value = int64_value
-        self.float64_value = float64_value
-
-    def np_arr(self) -> np.array:
-        return np.array(
-            [
-                self.unix_milli,
-                self.tag_key,
-                self.tag_type,
-                self.tag_data_type,
-                self.string_value,
-                self.int64_value,
-                self.float64_value,
-            ]
-        )
-
-
 class AuditLog(ABC):
-    """Represents a single audit log event in signoz_audit.
-
-    Matches the ClickHouse DDL from the schema migration (ticket #1936):
-    - Database: signoz_audit
-    - Local table: logs
-    - Distributed table: distributed_logs
-    - No resources_string column (resource JSON only)
-    - Has event_name column
-    - 7 materialized columns auto-populated from attributes_string at INSERT time
-    """
-
     ts_bucket_start: np.uint64
     resource_fingerprint: str
     timestamp: np.uint64
@@ -112,20 +48,13 @@ class AuditLog(ABC):
     trace_flags: np.uint32
     severity_text: str
     severity_number: np.uint8
-    body: str
-    scope_name: str
-    scope_version: str
-    scope_string: dict[str, str]
-    attributes_string: dict[str, str]
-    attributes_number: dict[str, np.float64]
-    attributes_bool: dict[str, bool]
-    resource_json: dict[str, str]
+    body: dict[str, str]
+    scope: dict[str, Any]
+    attributes: dict[str, Any]
+    resource_json: dict[str, Any]
     event_name: str
 
     resource: list[AuditResource]
-    tag_attributes: list[AuditTagAttributes]
-    resource_keys: list[AuditResourceOrAttributeKeys]
-    attribute_keys: list[AuditResourceOrAttributeKeys]
 
     def __init__(
         self,
@@ -143,9 +72,6 @@ class AuditLog(ABC):
     ) -> None:
         if timestamp is None:
             timestamp = datetime.datetime.now()
-        self.tag_attributes = []
-        self.attribute_keys = []
-        self.resource_keys = []
 
         self.timestamp = np.uint64(int(timestamp.timestamp() * 1e9))
         self.observed_timestamp = self.timestamp
@@ -164,97 +90,19 @@ class AuditLog(ABC):
         self.severity_text = severity_text
         self.severity_number = np.uint8(9 if severity_text == "INFO" else 17)
 
-        self.body = body
+        self.body = {"message": body}
         self.event_name = event_name
 
-        # Resources — JSON column only (no resources_string in audit DDL)
-        self.resource_json = {k: str(v) for k, v in resources.items()}
-        for k, v in self.resource_json.items():
-            self.tag_attributes.append(
-                AuditTagAttributes(
-                    timestamp=timestamp,
-                    tag_key=k,
-                    tag_type="resource",
-                    tag_data_type="string",
-                    string_value=str(v),
-                    int64_value=None,
-                    float64_value=None,
-                )
-            )
-            self.resource_keys.append(AuditResourceOrAttributeKeys(name=k, datatype="string"))
+        resource_attributes = {k: str(v) for k, v in resources.items()}
+        self.resource_json = {"attributes": resource_attributes}
+        self.resource_fingerprint = LogsOrTracesFingerprint(resource_attributes).calculate()
 
-        self.resource_fingerprint = LogsOrTracesFingerprint(self.resource_json).calculate()
-
-        # Process attributes by type
-        self.attributes_string = {}
-        self.attributes_number = {}
-        self.attributes_bool = {}
-
-        for k, v in attributes.items():
-            if isinstance(v, bool):
-                self.attributes_bool[k] = v
-                self.tag_attributes.append(
-                    AuditTagAttributes(
-                        timestamp=timestamp,
-                        tag_key=k,
-                        tag_type="tag",
-                        tag_data_type="bool",
-                        string_value=None,
-                        int64_value=None,
-                        float64_value=None,
-                    )
-                )
-                self.attribute_keys.append(AuditResourceOrAttributeKeys(name=k, datatype="bool"))
-            elif isinstance(v, int):
-                self.attributes_number[k] = np.float64(v)
-                self.tag_attributes.append(
-                    AuditTagAttributes(
-                        timestamp=timestamp,
-                        tag_key=k,
-                        tag_type="tag",
-                        tag_data_type="int64",
-                        string_value=None,
-                        int64_value=np.int64(v),
-                        float64_value=None,
-                    )
-                )
-                self.attribute_keys.append(AuditResourceOrAttributeKeys(name=k, datatype="int64"))
-            elif isinstance(v, float):
-                self.attributes_number[k] = np.float64(v)
-                self.tag_attributes.append(
-                    AuditTagAttributes(
-                        timestamp=timestamp,
-                        tag_key=k,
-                        tag_type="tag",
-                        tag_data_type="float64",
-                        string_value=None,
-                        int64_value=None,
-                        float64_value=np.float64(v),
-                    )
-                )
-                self.attribute_keys.append(AuditResourceOrAttributeKeys(name=k, datatype="float64"))
-            else:
-                self.attributes_string[k] = str(v)
-                self.tag_attributes.append(
-                    AuditTagAttributes(
-                        timestamp=timestamp,
-                        tag_key=k,
-                        tag_type="tag",
-                        tag_data_type="string",
-                        string_value=str(v),
-                        int64_value=None,
-                        float64_value=None,
-                    )
-                )
-                self.attribute_keys.append(AuditResourceOrAttributeKeys(name=k, datatype="string"))
-
-        self.scope_name = scope_name
-        self.scope_version = scope_version
-        self.scope_string = {}
+        self.attributes = dict(attributes)
+        self.scope = {"name": scope_name, "version": scope_version, "attributes": {}}
 
         self.resource = [
             AuditResource(
-                labels=self.resource_json,
+                labels=resource_attributes,
                 fingerprint=self.resource_fingerprint,
                 seen_at_ts_bucket_start=self.ts_bucket_start,
             )
@@ -274,15 +122,12 @@ class AuditLog(ABC):
                 self.severity_text,
                 self.severity_number,
                 self.body,
-                self.scope_name,
-                self.scope_version,
-                self.scope_string,
-                self.attributes_string,
-                self.attributes_number,
-                self.attributes_bool,
+                self.scope,
+                self.attributes,
                 self.resource_json,
                 self.event_name,
-            ]
+            ],
+            dtype=object,
         )
 
 
@@ -307,50 +152,6 @@ def insert_audit_logs(
                 ],
             )
 
-        tag_attributes: list[AuditTagAttributes] = []
-        for log in logs:
-            tag_attributes.extend(log.tag_attributes)
-
-        if len(tag_attributes) > 0:
-            clickhouse.conn.insert(
-                database="signoz_audit",
-                table="distributed_tag_attributes",
-                data=[ta.np_arr() for ta in tag_attributes],
-                column_names=[
-                    "unix_milli",
-                    "tag_key",
-                    "tag_type",
-                    "tag_data_type",
-                    "string_value",
-                    "int64_value",
-                    "float64_value",
-                ],
-            )
-
-        attribute_keys: list[AuditResourceOrAttributeKeys] = []
-        for log in logs:
-            attribute_keys.extend(log.attribute_keys)
-
-        if len(attribute_keys) > 0:
-            clickhouse.conn.insert(
-                database="signoz_audit",
-                table="distributed_logs_attribute_keys",
-                data=[ak.np_arr() for ak in attribute_keys],
-                column_names=["name", "datatype"],
-            )
-
-        resource_keys: list[AuditResourceOrAttributeKeys] = []
-        for log in logs:
-            resource_keys.extend(log.resource_keys)
-
-        if len(resource_keys) > 0:
-            clickhouse.conn.insert(
-                database="signoz_audit",
-                table="distributed_logs_resource_keys",
-                data=[rk.np_arr() for rk in resource_keys],
-                column_names=["name", "datatype"],
-            )
-
         clickhouse.conn.insert(
             database="signoz_audit",
             table="distributed_logs",
@@ -367,12 +168,8 @@ def insert_audit_logs(
                 "severity_text",
                 "severity_number",
                 "body",
-                "scope_name",
-                "scope_version",
-                "scope_string",
-                "attributes_string",
-                "attributes_number",
-                "attributes_bool",
+                "scope",
+                "attributes",
                 "resource",
                 "event_name",
             ],
@@ -381,11 +178,5 @@ def insert_audit_logs(
     yield _insert_audit_logs
 
     cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
-    for table in [
-        "logs",
-        "logs_resource",
-        "tag_attributes",
-        "logs_attribute_keys",
-        "logs_resource_keys",
-    ]:
+    for table in ["logs", "logs_resource"]:
         clickhouse.conn.query(f"TRUNCATE TABLE signoz_audit.{table} ON CLUSTER '{cluster}' SYNC")
