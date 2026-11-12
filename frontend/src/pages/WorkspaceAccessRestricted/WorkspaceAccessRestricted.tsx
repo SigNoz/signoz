@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Button, Col, Modal, Skeleton, Space } from 'antd';
+import { Button, Modal, Skeleton, Space } from 'antd';
+import Col from 'periscope/components/Col/Col';
 import Row from 'periscope/components/Row/Row';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
