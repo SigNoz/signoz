@@ -84,6 +84,7 @@ class BuilderQuery:
     query_type: str = "builder_query"
     limit: int | None = None
     offset: int | None = None
+    cursor: str | None = None
     filter_expression: str | None = None
     having_expression: str | None = None
     select_fields: list[TelemetryFieldKey] | None = None
@@ -103,6 +104,8 @@ class BuilderQuery:
             spec["limit"] = self.limit
         if self.offset is not None:
             spec["offset"] = self.offset
+        if self.cursor:
+            spec["cursor"] = self.cursor
         if self.filter_expression:
             spec["filter"] = {"expression": self.filter_expression}
         if self.having_expression:

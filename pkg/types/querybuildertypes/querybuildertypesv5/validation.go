@@ -441,6 +441,13 @@ func (q *QueryBuilderQuery[T]) validateLimitAndPagination(cfg validationConfig) 
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset requires a limit")
 	}
 
+	// the cursor already starts after the last row returned, so an offset
+	// would skip rows nobody has seen
+	if q.Cursor != "" && q.Offset > 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be combined with cursor, got offset %d", q.Offset).
+			WithSuggestions("send offset 0 with the cursor; the cursor continues after the last row of the previous page")
+	}
+
 	return nil
 }
 

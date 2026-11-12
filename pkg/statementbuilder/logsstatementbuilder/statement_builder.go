@@ -397,6 +397,19 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		return nil, err
 	}
 
+	if after := query.StartAfter; after != nil {
+		// an OR, not a tuple comparison, so ClickHouse can use it to skip granules
+		compare := sb.G
+		if query.Order[0].Direction == qbtypes.OrderDirectionDesc {
+			compare = sb.L
+		}
+		timestamp := fmt.Sprintf("%d", after.TimeUnixNano)
+		sb.Where(sb.Or(
+			compare(logstelemetryschema.LogsV2TimestampColumn, timestamp),
+			sb.And(sb.E(logstelemetryschema.LogsV2TimestampColumn, timestamp), compare(logstelemetryschema.LogsV2IDColumn, after.ID)),
+		))
+	}
+
 	// Add order by
 	for _, orderBy := range query.Order {
 

@@ -5299,7 +5299,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Cannot be combined with offset. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; any other raw request rejects it, and other request types ignore it.
 	 */
 	cursor?: string;
 	/**
@@ -5346,7 +5346,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit, and cannot be combined with cursor. On raw requests the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5691,7 +5691,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Cannot be combined with offset. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; any other raw request rejects it, and other request types ignore it.
 	 */
 	cursor?: string;
 	/**
@@ -5738,7 +5738,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit, and cannot be combined with cursor. On raw requests the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5871,7 +5871,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Cannot be combined with offset. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; any other raw request rejects it, and other request types ignore it.
 	 */
 	cursor?: string;
 	/**
@@ -5918,7 +5918,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit, and cannot be combined with cursor. On raw requests the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5970,7 +5970,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Cannot be combined with offset. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; any other raw request rejects it, and other request types ignore it.
 	 */
 	cursor?: string;
 	/**
@@ -6017,7 +6017,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit, and cannot be combined with cursor. On raw requests the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
