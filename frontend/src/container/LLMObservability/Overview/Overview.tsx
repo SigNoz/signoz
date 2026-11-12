@@ -4,7 +4,10 @@ import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import DashboardContainer from 'pages/DashboardPage/DashboardContainer';
 
-import { useSystemDashboard } from './hooks/useSystemDashboard';
+import {
+	SYSTEM_DASHBOARD_SOURCE,
+	useSystemDashboard,
+} from './hooks/useSystemDashboard';
 import styles from './Overview.module.scss';
 
 function Overview(): JSX.Element {
@@ -34,7 +37,8 @@ function Overview(): JSX.Element {
 			<DashboardContainer
 				dashboard={dashboard}
 				refetch={refetch}
-				canEditDashboardOverride={false}
+				source={SYSTEM_DASHBOARD_SOURCE}
+				readOnly
 			/>
 		);
 	};

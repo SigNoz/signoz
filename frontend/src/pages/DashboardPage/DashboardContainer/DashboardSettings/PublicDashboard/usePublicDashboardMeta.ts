@@ -26,9 +26,13 @@ const PUBLIC_META_STALE_TIME = 5 * 60 * 1000;
  */
 export function usePublicDashboardMeta(
 	dashboardId: string,
+	options?: { enabled?: boolean },
 ): UsePublicDashboardMetaReturn {
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
-	const enabled = !!dashboardId && (isCloudUser || isEnterpriseSelfHostedUser);
+	const enabled =
+		(options?.enabled ?? true) &&
+		!!dashboardId &&
+		(isCloudUser || isEnterpriseSelfHostedUser);
 
 	const { data, isLoading, isFetching, error, refetch } = useGetPublicDashboard(
 		{ id: dashboardId },

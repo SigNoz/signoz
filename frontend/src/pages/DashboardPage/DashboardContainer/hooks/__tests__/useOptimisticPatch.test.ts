@@ -19,10 +19,12 @@ jest.mock('api/generated/services/dashboard', () => ({
 	getGetDashboardV2QueryKey: jest.fn(() => ['/api/v2/dashboards/dash-1']),
 }));
 
+let mockReadOnly = false;
+
 jest.mock('../../store/useDashboardStore', () => ({
 	useDashboardStore: jest.fn(
-		(selector: (s: { dashboardId: string; isEditable: boolean }) => unknown) =>
-			selector({ dashboardId: 'dash-1', isEditable: true }),
+		(selector: (s: { dashboardId: string; readOnly: boolean }) => unknown) =>
+			selector({ dashboardId: 'dash-1', readOnly: mockReadOnly }),
 	),
 }));
 
@@ -35,6 +37,7 @@ const queryClient = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let captured: { fn: (ops: any) => unknown; options: any };
+let mockMutateAsync: jest.Mock;
 
 function dashboardEnvelope(name: string): GetDashboardV2200 {
 	return {
@@ -50,10 +53,12 @@ const replaceNameOp = {
 
 beforeEach(() => {
 	jest.clearAllMocks();
+	mockReadOnly = false;
+	mockMutateAsync = jest.fn().mockResolvedValue(undefined);
 	(useQueryClient as jest.Mock).mockReturnValue(queryClient);
 	(useMutation as jest.Mock).mockImplementation((fn, options) => {
 		captured = { fn, options };
-		return { mutateAsync: jest.fn(), isLoading: false };
+		return { mutateAsync: mockMutateAsync, isLoading: false };
 	});
 	renderHook(() => useOptimisticPatch());
 });
@@ -118,5 +123,23 @@ describe('useOptimisticPatch', () => {
 		).toStrictEqual({ data: { spec: { display: { name: 'B' } } }, foo: 1 });
 		// No follow-up GET (that could read stale data and flicker the UI back).
 		expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+	});
+
+	it('patchAsync rejects without sending on a read-only mount', async () => {
+		mockReadOnly = true;
+		const { result } = renderHook(() => useOptimisticPatch());
+
+		await expect(result.current.patchAsync([replaceNameOp])).rejects.toThrow(
+			'dashboard_read_only_here',
+		);
+		expect(mockMutateAsync).not.toHaveBeenCalled();
+	});
+
+	it('patchAsync sends the ops when the mount is editable', async () => {
+		const { result } = renderHook(() => useOptimisticPatch());
+
+		await result.current.patchAsync([replaceNameOp]);
+
+		expect(mockMutateAsync).toHaveBeenCalledWith([replaceNameOp]);
 	});
 });
