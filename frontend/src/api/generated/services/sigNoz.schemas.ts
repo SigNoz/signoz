@@ -829,32 +829,25 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind {
 	jira = 'jira',
 }
-export interface AlertmanagertypesChannelJiraCloudAuthDTO {
+export interface AlertmanagertypesChannelJiraAuthDTO {
 	/**
 	 * @type string
 	 * @format password
-	 * @description The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list.
+	 * @description The Atlassian API token paired with email. Required when deployment is cloud. A secret; returned by create, update and fetch by ID, never by list.
 	 */
-	apiToken: string;
+	apiToken?: string;
 	/**
 	 * @type string
-	 * @description The Atlassian account email used for basic auth.
+	 * @description The Atlassian account email used for basic auth. Required when deployment is cloud.
 	 */
-	email: string;
-}
-
-export interface AlertmanagertypesChannelJiraSelfHostedAuthDTO {
+	email?: string;
 	/**
 	 * @type string
 	 * @format password
-	 * @description The Jira personal access token, sent as a Bearer header. A secret; returned by create, update and fetch by ID, never by list.
+	 * @description The Jira personal access token, sent as a Bearer header. Required when deployment is selfhosted. A secret; returned by create, update and fetch by ID, never by list.
 	 */
-	pat: string;
+	pat?: string;
 }
-
-export type AlertmanagertypesChannelJiraAuthDTO =
-	| AlertmanagertypesChannelJiraCloudAuthDTO
-	| AlertmanagertypesChannelJiraSelfHostedAuthDTO;
 
 export enum AlertmanagertypesJiraDeploymentDTO {
 	cloud = 'cloud',
@@ -13048,16 +13041,6 @@ export interface RuletypesPostableRuleDTO {
 	 * @description The rule payload schema.
 	 */
 	schemaVersion: RuletypesPostableRuleDTOSchemaVersion;
-	/**
-	 * @type string
-	 * @description The URL of the page the rule was created from. Informational; it is not used for evaluation.
-	 */
-	source?: string;
-	/**
-	 * @type string
-	 * @description The query payload version. Nothing reads it.
-	 */
-	version?: string;
 }
 
 export interface RuletypesPostableRuleViewDTO {
@@ -13151,11 +13134,6 @@ export interface RuletypesRuleDTO {
 	 */
 	schemaVersion: RuletypesRuleDTOSchemaVersion;
 	/**
-	 * @type string
-	 * @description The URL of the page the rule was created from. Informational; it is not used for evaluation.
-	 */
-	source?: string;
-	/**
 	 * @description The current evaluation state: inactive, pending, recovering, firing, nodata or disabled.
 	 */
 	state: RuletypesAlertStateDTO;
@@ -13168,11 +13146,6 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 */
 	updatedBy?: string;
-	/**
-	 * @type string
-	 * @description The query payload version. Nothing reads it.
-	 */
-	version?: string;
 }
 
 export enum RuletypesThresholdKindDTO {
