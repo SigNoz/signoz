@@ -200,7 +200,11 @@ function AllAlertList(): JSX.Element {
 			),
 			key: AlertListTabs.ALERT_RULES,
 			children: (
-				<div className="alert-rules-container">
+				<div
+					className={cx('alert-rules-container', {
+						'alert-rules-container--flush': !isAlertHistory && !isAlertOverview,
+					})}
+				>
 					{isAlertHistory || isAlertOverview ? <AlertDetails /> : <AllAlertRules />}
 				</div>
 			),

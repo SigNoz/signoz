@@ -61,6 +61,10 @@
 		min-height: 0;
 		display: flex;
 		flex-direction: column;
+
+		&--flush {
+			margin-top: 0;
+		}
 	}
 
 	.alert-configuration-container {
