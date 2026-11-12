@@ -90,4 +90,30 @@ describe('editContextSlice.setEditContext', () => {
 		expect(store().controls.panelActions.edit).toBe(false);
 		expect(store().controls.panelActions.view).toBe(true);
 	});
+
+	it('treats a runner with the same key as unchanged, a new key as a change', () => {
+		const run = jest.fn();
+		store().setEditContext({
+			dashboardId: 'dash-1',
+			refetch,
+			queryRunner: { key: 'public:a', run },
+		});
+		const listener = jest.fn();
+		const unsubscribe = useDashboardStore.subscribe(listener);
+
+		store().setEditContext({
+			dashboardId: 'dash-1',
+			refetch,
+			queryRunner: { key: 'public:a', run: jest.fn() },
+		});
+		expect(listener).not.toHaveBeenCalled();
+
+		store().setEditContext({
+			dashboardId: 'dash-1',
+			refetch,
+			queryRunner: { key: 'public:b', run },
+		});
+		expect(store().queryRunner?.key).toBe('public:b');
+		unsubscribe();
+	});
 });

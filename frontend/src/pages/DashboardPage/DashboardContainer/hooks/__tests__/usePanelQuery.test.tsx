@@ -11,6 +11,7 @@ import {
 	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 } from 'constants/queryCacheTime';
 
+import { useDashboardStore } from '../../store/useDashboardStore';
 import { usePanelQuery } from '../usePanelQuery';
 import { useGetQueryRangeV5 } from '../useGetQueryRangeV5';
 
@@ -597,5 +598,59 @@ describe('usePanelQuery', () => {
 			const [{ cacheTime }] = mockUseGetQueryRangeV5.mock.calls[0];
 			expect(cacheTime).toBe(DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED);
 		});
+	});
+
+	describe('with a host query runner', () => {
+		const runner = {
+			key: 'public:abc',
+			run: jest.fn().mockResolvedValue({ status: 'success', data: {} }),
+		};
+
+		beforeEach(() => {
+			useDashboardStore.getState().setEditContext({
+				dashboardId: 'd1',
+				refetch: jest.fn(),
+				queryRunner: runner,
+			});
+		});
+
+		afterEach(() => {
+			useDashboardStore
+				.getState()
+				.setEditContext({ dashboardId: '', refetch: jest.fn() });
+		});
+
+		it('keys the cache by the runner and runs the query through it with the panel id', async () => {
+			renderHook(() =>
+				usePanelQuery({
+					panel: builderPanel(),
+					panelId: 'p1',
+					queryCapabilities: TIME_SERIES_CAPABILITIES,
+				}),
+			);
+			const [{ queryKey, fetch, requestPayload }] =
+				mockUseGetQueryRangeV5.mock.calls[0];
+
+			expect(queryKey).toContain('public:abc');
+			await fetch(requestPayload);
+			expect(runner.run).toHaveBeenCalledWith({
+				panelId: 'p1',
+				requestPayload,
+				signal: undefined,
+			});
+		});
+	});
+
+	it('runs on query_range when no host runner is set', () => {
+		renderHook(() =>
+			usePanelQuery({
+				panel: builderPanel(),
+				panelId: 'p1',
+				queryCapabilities: TIME_SERIES_CAPABILITIES,
+			}),
+		);
+		const [{ fetch }] = mockUseGetQueryRangeV5.mock.calls[0];
+
+		expect(fetch).toBeUndefined();
 	});
 });
