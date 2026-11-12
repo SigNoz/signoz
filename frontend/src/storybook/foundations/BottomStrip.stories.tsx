@@ -72,6 +72,25 @@ export const NozAwaitingYou: Story = {
 	args: { noz: true, nozAwaiting: 2, support: 'pylon' },
 };
 
+/** The Noz chat opened from Ask Noz, floating above the strip; its header drags it. */
+export const NozPanel: Story = {
+	args: { noz: true, support: 'pylon' },
+	play: async ({ args }): Promise<void> => {
+		// Ask Noz is not rendered with Noz off, so there is no panel to open.
+		if (!args.noz) {
+			return;
+		}
+		await userEvent.click(
+			await screen.findByTestId(
+				'bottom-strip-ask-noz-button',
+				undefined,
+				untilLoaded,
+			),
+		);
+		await screen.findByTestId('ai-assistant-panel-close');
+	},
+};
+
 /** Every tooltip the strip carries, held open. */
 export const Tooltips: Story = {
 	args: { noz: true, support: 'pylon', tooltipsOpen: true },

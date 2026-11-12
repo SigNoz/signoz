@@ -3,6 +3,7 @@ import { AI_API_PATH } from 'api/AIAPIInstance';
 import type { ThreadListResponse } from 'api/ai-assistant/chat';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import type { ConversationStreamState } from 'container/AIAssistant/types';
+import { chipsResponse } from 'pages/AIAssistantPage/stories/__story_mockdata__/aiAssistant';
 
 import { countControl, toggleControl } from '../controls/controls';
 import { defineStoryMocks } from '../controls/defineStoryMocks';
@@ -57,6 +58,10 @@ export const nozMocks = defineStoryMocks({
 						`${nozGlobalConfigResponse.data.ai_assistant_url}${AI_API_PATH}/threads`,
 						(_req, res, ctx) => res(ctx.status(200), ctx.json(noThreads)),
 					),
+					rest.get(
+						`${nozGlobalConfigResponse.data.ai_assistant_url}${AI_API_PATH}/empty-state/chips`,
+						(_req, res, ctx) => res(ctx.status(200), ctx.json(chipsResponse())),
+					),
 				]
 			: [],
 	effect: ({ nozAwaiting }) => {
@@ -72,6 +77,9 @@ export const nozMocks = defineStoryMocks({
 			for (let index = 0; index < nozAwaiting; index += 1) {
 				state.streams[`${AWAITING_PREFIX}${index}`] = awaitingStream();
 			}
+
+			// Persisted, so a panel one story opened would hide Ask Noz in the next.
+			state.isDrawerOpen = false;
 		});
 	},
 });

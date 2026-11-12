@@ -72,6 +72,7 @@ function AskNoz(): JSX.Element | null {
 						color="secondary"
 						size="sm"
 						prefix={<Noz size={16} />}
+						testId="bottom-strip-ask-noz-button"
 						onClick={handleOpen}
 						aria-label={
 							showPendingBadge

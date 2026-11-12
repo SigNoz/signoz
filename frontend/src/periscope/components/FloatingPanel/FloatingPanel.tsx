@@ -1,8 +1,9 @@
-import { ComponentProps } from 'react';
+import { ComponentProps, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Rnd } from 'react-rnd';
 
 import './FloatingPanel.styles.scss';
+import { useKeepInViewport } from './useKeepInViewport';
 
 type EnableResizing = ComponentProps<typeof Rnd>['enableResizing'];
 
@@ -16,6 +17,8 @@ export interface FloatingPanelProps {
 	minHeight?: number;
 	enableResizing?: EnableResizing;
 	className?: string;
+	/** Moves and shrinks the panel back into view when the window resizes. */
+	keepInViewport?: boolean;
 }
 
 function FloatingPanel({
@@ -28,7 +31,11 @@ function FloatingPanel({
 	minHeight = 300,
 	enableResizing,
 	className,
+	keepInViewport = false,
 }: FloatingPanelProps): JSX.Element | null {
+	const rndRef = useRef<Rnd>(null);
+	const viewport = useKeepInViewport(rndRef, isOpen && keepInViewport);
+
 	if (!isOpen) {
 		return null;
 	}
@@ -40,6 +47,7 @@ function FloatingPanel({
 
 	return createPortal(
 		<Rnd
+			ref={rndRef}
 			default={{
 				x: initialPosition.x,
 				y: initialPosition.y,
@@ -47,8 +55,8 @@ function FloatingPanel({
 				height,
 			}}
 			dragHandleClassName="floating-panel__drag-handle"
-			minWidth={minWidth}
-			minHeight={minHeight}
+			minWidth={keepInViewport ? Math.min(minWidth, viewport.width) : minWidth}
+			minHeight={keepInViewport ? Math.min(minHeight, viewport.height) : minHeight}
 			onDrag={(_e, d): void | false => {
 				const HEADER_HEIGHT = 40;
 				// Top: don't allow header to go above viewport
