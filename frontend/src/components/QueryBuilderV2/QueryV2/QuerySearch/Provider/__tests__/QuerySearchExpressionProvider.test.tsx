@@ -1,9 +1,10 @@
 import { ReactNode } from 'react';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook } from 'tests/test-utils';
 
 import {
 	useExpression,
 	useInitialExpression,
+	useInputExpression,
 	useQuerySearchInitialExpressionProp,
 	useQuerySearchOnChange,
 	useQuerySearchOnRun,
@@ -34,10 +35,22 @@ function createWrapper(
 	};
 }
 
+// Back or Forward. nuqs has not caught up yet, so its value is still the old one.
+function goTo(expression: string | null): void {
+	act(() => {
+		const search = expression
+			? `?${new URLSearchParams({ testExpression: expression })}`
+			: '';
+		window.history.pushState(null, '', `/${search}`);
+		window.dispatchEvent(new PopStateEvent('popstate'));
+	});
+}
+
 function useTestHooks(): {
 	expression: string;
 	userExpression: string;
 	initialExpression: string;
+	inputExpression: string;
 	querySearchInitialExpressionProp: string | undefined;
 	onChange: (expr: string) => void;
 	onRun: (expr: string) => void;
@@ -46,6 +59,7 @@ function useTestHooks(): {
 		expression: useExpression(),
 		userExpression: useUserExpression(),
 		initialExpression: useInitialExpression(),
+		inputExpression: useInputExpression(),
 		querySearchInitialExpressionProp: useQuerySearchInitialExpressionProp(),
 		onChange: useQuerySearchOnChange(),
 		onRun: useQuerySearchOnRun(),
@@ -56,6 +70,7 @@ describe('QuerySearchExpressionProvider', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockUrlValue = null;
+		window.history.replaceState(null, '', '/');
 	});
 
 	it('should provide initial context values', () => {
@@ -108,6 +123,96 @@ describe('QuerySearchExpressionProvider', () => {
 
 		expect(result.current.userExpression).toBe('status = 500');
 		expect(result.current.expression).toBe('status = 500');
+	});
+
+	it('follows Back and Forward from the browser URL', () => {
+		mockUrlValue = 'status = 500';
+		const { result } = renderHook(() => useTestHooks(), {
+			wrapper: createWrapper(),
+		});
+
+		goTo('status = 404');
+
+		expect(result.current.userExpression).toBe('status = 404');
+		expect(mockSetQueryState).not.toHaveBeenCalled();
+	});
+
+	it('clears the filter on Back to a URL without the param', () => {
+		mockUrlValue = 'status = 500';
+		const { result } = renderHook(() => useTestHooks(), {
+			wrapper: createWrapper(),
+		});
+
+		goTo(null);
+
+		expect(result.current.userExpression).toBe('');
+		expect(mockSetQueryState).not.toHaveBeenCalled();
+	});
+
+	it('keeps text typed but not run when Back changes another param', () => {
+		mockUrlValue = 'status = 500';
+		const { result } = renderHook(() => useTestHooks(), {
+			wrapper: createWrapper(),
+		});
+		act(() => {
+			result.current.onChange('status = 404');
+		});
+
+		goTo('status = 500');
+
+		expect(result.current.inputExpression).toBe('status = 404');
+	});
+
+	it('writes a run filter to the URL once and ignores it coming back', () => {
+		const { result, rerender } = renderHook(() => useTestHooks(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.onRun('status = 500');
+		});
+		expect(mockSetQueryState).toHaveBeenCalledTimes(1);
+		expect(mockSetQueryState).toHaveBeenLastCalledWith('status = 500');
+
+		mockUrlValue = 'status = 500';
+		rerender();
+
+		expect(result.current.userExpression).toBe('status = 500');
+		expect(mockSetQueryState).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps a run filter when the URL briefly reports the value it replaced', () => {
+		mockUrlValue = 'status = 500';
+		const { result, rerender } = renderHook(() => useTestHooks(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.onRun('status = 404');
+		});
+		mockUrlValue = 'status = 404';
+		rerender();
+		mockUrlValue = 'status = 500';
+		rerender();
+
+		expect(result.current.userExpression).toBe('status = 404');
+	});
+
+	it('keeps a newer run when a late URL value arrives after an empty mount', () => {
+		const { result, rerender } = renderHook(() => useTestHooks(), {
+			wrapper: createWrapper(),
+		});
+
+		act(() => {
+			result.current.onRun('status = 500');
+		});
+		act(() => {
+			result.current.onRun('status = 404');
+		});
+		mockUrlValue = 'status = 500';
+		rerender();
+
+		expect(result.current.userExpression).toBe('status = 404');
 	});
 
 	it('should throw error when used outside provider', () => {
