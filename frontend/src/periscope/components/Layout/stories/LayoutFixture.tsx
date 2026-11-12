@@ -48,9 +48,20 @@ function LayoutFixture({
 		<Layout data-testid={testId('root')} hasSider={hasSider}>
 			{hasSider && <div className={styles.aside} data-testid={testId('aside')} />}
 			<Layout data-testid={testId('inner')}>
-				{showHeader && <Header data-testid={testId('header')}>Header</Header>}
-				<Content data-testid={testId('content')}>{lines}</Content>
-				{showFooter && <Footer data-testid={testId('footer')}>Footer</Footer>}
+				{showHeader && (
+					<Header data-testid={testId('header')}>
+						Header <a href="#layout-header">link</a>
+					</Header>
+				)}
+				<Content data-testid={testId('content')}>
+					<a href="#layout-content">link</a>
+					{lines}
+				</Content>
+				{showFooter && (
+					<Footer data-testid={testId('footer')}>
+						Footer <a href="#layout-footer">link</a>
+					</Footer>
+				)}
 			</Layout>
 			{hasSider && <Content data-testid={testId('side-content')}>Side</Content>}
 		</Layout>

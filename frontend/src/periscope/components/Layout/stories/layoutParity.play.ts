@@ -24,15 +24,17 @@ const STYLE_PROPERTIES = [
 	'background-color',
 	'line-height',
 	'box-sizing',
+	'font-family',
+	'font-size',
 ] as const;
 
-// antd's shared reset sets every part's font, which is out of scope; only the
-// footer sets its own size.
-function propertiesOf(part: string): readonly string[] {
-	return part === 'footer'
-		? [...STYLE_PROPERTIES, 'font-size']
-		: STYLE_PROPERTIES;
-}
+const LINK_PROPERTIES = [
+	'color',
+	'text-decoration-line',
+	'background-color',
+	'cursor',
+	'transition',
+] as const;
 
 interface Box {
 	x: number;
@@ -51,7 +53,28 @@ function boxOf(element: HTMLElement, origin: DOMRect): Box {
 	};
 }
 
-/** Fails unless every part of both renders computes the same styles and box. */
+async function expectSameLinks(local: Element, antd: Element): Promise<void> {
+	const antdLinks = Array.from(antd.querySelectorAll('a'));
+	const localLinks = Array.from(local.querySelectorAll('a'));
+	await expect(localLinks.length).toBe(antdLinks.length);
+	for (const [index, antdLink] of antdLinks.entries()) {
+		const antdStyle = getComputedStyle(antdLink);
+		const localStyle = getComputedStyle(localLinks[index]);
+		for (const property of LINK_PROPERTIES) {
+			await expect({
+				link: index,
+				property,
+				value: localStyle.getPropertyValue(property),
+			}).toEqual({
+				link: index,
+				property,
+				value: antdStyle.getPropertyValue(property),
+			});
+		}
+	}
+}
+
+/** Fails unless both renders compute the same styles for every part and link, and the same boxes. */
 export async function assertLayoutParity({
 	canvasElement,
 }: {
@@ -64,6 +87,8 @@ export async function assertLayoutParity({
 	const localRoot = canvas.getByTestId(
 		layoutPartTestId(LOCAL_LAYOUT_TEST_ID, 'root'),
 	);
+	await expectSameLinks(localRoot, antdRoot);
+
 	const antdOrigin = antdRoot.getBoundingClientRect();
 	const localOrigin = localRoot.getBoundingClientRect();
 
@@ -82,7 +107,7 @@ export async function assertLayoutParity({
 		await expect(local.tagName).toBe(antd.tagName);
 		const antdStyle = getComputedStyle(antd);
 		const localStyle = getComputedStyle(local);
-		for (const property of propertiesOf(part)) {
+		for (const property of STYLE_PROPERTIES) {
 			await expect({
 				part,
 				property,
