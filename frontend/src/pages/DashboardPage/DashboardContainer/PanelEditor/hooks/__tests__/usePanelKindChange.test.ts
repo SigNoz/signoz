@@ -1,9 +1,15 @@
 import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	initialQueriesMap,
+	initialQueryAIWithType,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { handleQueryChange } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { resolveQueryType } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getBuilderQueries } from '../../../Panels/utils/getBuilderQueries';
@@ -355,17 +361,16 @@ describe('usePanelKindChange', () => {
 	});
 
 	describe('AI query slot', () => {
-		const QB_BUILDER = { queryData: [{ dataSource: 'logs' }] };
-		const AI_BUILDER = {
-			queryData: [{ dataSource: 'traces', builderQueryType: 'builder_ai_query' }],
-		};
-		const withBothSlots = (id: string, queryType: string): Query =>
-			({
-				id,
-				queryType,
-				builder: QB_BUILDER,
-				builder_ai_query: AI_BUILDER,
-			}) as unknown as Query;
+		const logsQuery = initialQueriesMap[DataSource.LOGS];
+		const QB_BUILDER = logsQuery.builder;
+		const AI_BUILDER = initialQueryAIWithType.builder;
+		const withBothSlots = (id: string, queryType: EQueryType): Query => ({
+			...logsQuery,
+			id,
+			queryType,
+			builder: QB_BUILDER,
+			builder_ai_query: AI_BUILDER,
+		});
 		const lastRedirect = (state: ReturnType<typeof builderState>): Query =>
 			state.redirectWithQueryBuilderData.mock.calls[
 				state.redirectWithQueryBuilderData.mock.calls.length - 1
@@ -379,7 +384,7 @@ describe('usePanelKindChange', () => {
 
 		it('rebuilds both builder slots for the new kind on a first visit', () => {
 			const setSpec = jest.fn();
-			const state = builderState(withBothSlots('q', 'builder_ai_query'));
+			const state = builderState(withBothSlots('q', EQueryType.AI_QUERY_BUILDER));
 			mockUseQueryBuilder.mockReturnValue(state);
 			mockResolveQueryType.mockReturnValue('builder_ai_query');
 
@@ -404,7 +409,7 @@ describe('usePanelKindChange', () => {
 
 		it('falls back to Query Builder, keeping the AI query, when the new kind has no AI', () => {
 			const setSpec = jest.fn();
-			const state = builderState(withBothSlots('q', 'builder_ai_query'));
+			const state = builderState(withBothSlots('q', EQueryType.AI_QUERY_BUILDER));
 			mockUseQueryBuilder.mockReturnValue(state);
 			mockResolveQueryType.mockReturnValue('builder');
 
@@ -425,7 +430,9 @@ describe('usePanelKindChange', () => {
 
 		it('restores a revisited kind on the tab in use, regenerating its preview queries', () => {
 			const setSpec = jest.fn();
-			let state = builderState(withBothSlots('table', 'builder_ai_query'));
+			let state = builderState(
+				withBothSlots('table', EQueryType.AI_QUERY_BUILDER),
+			);
 			mockUseQueryBuilder.mockImplementation(() => state);
 			mockResolveQueryType.mockReturnValue('builder_ai_query');
 
@@ -436,7 +443,7 @@ describe('usePanelKindChange', () => {
 			);
 			// Leave Table on AI; on List the user moves to Query Builder, then returns.
 			act(() => result.current.onChangePanelKind('signoz/ListPanel'));
-			state = builderState(withBothSlots('list', 'builder'));
+			state = builderState(withBothSlots('list', EQueryType.QUERY_BUILDER));
 			mockResolveQueryType.mockReturnValue('builder');
 			rerender({ spec: listSpec, panelType: PANEL_TYPES.LIST });
 			act(() => result.current.onChangePanelKind('signoz/TablePanel'));
@@ -464,7 +471,7 @@ describe('usePanelKindChange', () => {
 			);
 			// Leave Table on Query Builder; on List the user writes an AI query, then returns.
 			act(() => result.current.onChangePanelKind('signoz/ListPanel'));
-			state = builderState(withBothSlots('list', 'builder_ai_query'));
+			state = builderState(withBothSlots('list', EQueryType.AI_QUERY_BUILDER));
 			mockResolveQueryType.mockReturnValue('builder_ai_query');
 			rerender({ spec: listSpec, panelType: PANEL_TYPES.LIST });
 			act(() => result.current.onChangePanelKind('signoz/TablePanel'));
