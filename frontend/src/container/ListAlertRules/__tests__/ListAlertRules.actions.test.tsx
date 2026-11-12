@@ -40,6 +40,10 @@ async function clickMenuItem(
 	await user.click(item);
 }
 
+// Rendering the list, opening a row menu and waiting on its permission check
+// outlasts the 5s default when the full suite runs in parallel.
+jest.setTimeout(15_000);
+
 describe('ListAlertRules — actions menu', () => {
 	beforeEach(() => {
 		server.use(setupAuthzAdmin());
