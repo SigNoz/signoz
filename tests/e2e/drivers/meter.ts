@@ -26,6 +26,13 @@ export const METER_EXPLORER_PATH = '/meter/explorer';
 
 export type MeterSection = 'total' | 'logs' | 'traces' | 'metrics';
 
+const SECTION_TITLES: Record<MeterSection, string> = {
+	total: 'Total',
+	logs: 'Logs',
+	traces: 'Traces',
+	metrics: 'Metrics',
+};
+
 export interface MeterBreakdown {
 	/** Open `/meter` and return the `query_range` responses its widgets fire. */
 	goto(): Promise<Response[]>;
@@ -58,7 +65,13 @@ export function meterDriver(page: Page): Meter {
 			page.off('response', collect);
 			return responses;
 		},
-		section: (name) => page.getByTestId(`meter-breakdown-section-${name}`),
+		// The breakdown is a system dashboard: section ids derive from panel ids, so match the title.
+		section: (name) =>
+			page.locator('[data-testid^="dashboard-section-sec-"]').filter({
+				has: page
+					.locator('[data-testid^="dashboard-section-toggle-"]')
+					.filter({ hasText: SECTION_TITLES[name] }),
+			}),
 	};
 
 	return {

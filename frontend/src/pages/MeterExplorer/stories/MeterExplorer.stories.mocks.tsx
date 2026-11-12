@@ -39,6 +39,7 @@ import {
 	METER_VOLUMES,
 	meterAttributeKeys,
 	meterExplorerQuery,
+	meterSystemDashboardResponse,
 	meterFieldKeys,
 	meterFieldValues,
 	meterMetricSignal,
@@ -179,6 +180,10 @@ export const meterMocks = defineStoryMocks({
 		}),
 	},
 	handlers: (values, response) => [
+		rest.get(
+			'http://localhost/api/v2/dashboards/system/cost-meter-breakdown',
+			response.json(meterSystemDashboardResponse),
+		),
 		rest.post(
 			'http://localhost/api/v5/query_range',
 			response.json(async (req) => {

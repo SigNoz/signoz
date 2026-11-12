@@ -1,121 +1,31 @@
-import { useCallback } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { useDispatch, useSelector } from 'react-redux';
-import { useAppLocation } from 'lib/router/useAppLocation';
-import { navigate } from 'lib/router/navigation';
+import { useSelector } from 'react-redux';
 import { Alert } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import GridCard from 'container/WidgetCard/Card';
-import { Card, CardContainer } from 'container/WidgetCard/styles';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import SystemDashboard from 'container/SystemDashboard/SystemDashboard';
+import { createSystemDashboardHost } from 'container/SystemDashboard/systemDashboardHost';
 import dayjs from 'dayjs';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { UpdateTimeInterval } from 'store/actions';
+import type { DashboardControlsInput } from 'pages/DashboardPage/DashboardContainer/controls/types';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/widgets/widget';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { v4 as uuid } from 'uuid';
-
-import {
-	getLogCountWidgetData,
-	getLogSizeWidgetData,
-	getMetricCountWidgetData,
-	getSpanCountWidgetData,
-	getSpanSizeWidgetData,
-	getTotalLogSizeWidgetData,
-	getTotalMetricDatapointCountWidgetData,
-	getTotalTraceSizeWidgetData,
-} from './graphs';
 
 import './BreakDown.styles.scss';
 
-type MetricSection = {
-	id: string;
-	title: string;
-	graphs: Widgets[];
+const COST_METER = createSystemDashboardHost(
+	'cost-meter-breakdown',
+	'cost-meter-breakdown',
+);
+
+const CONTROLS: DashboardControlsInput = {
+	header: false,
+	title: false,
+	dashboardActions: false,
+	toolbar: { autoRefresh: false },
+	panelActions: false,
 };
-
-const sections: MetricSection[] = [
-	{
-		id: uuid(),
-		title: 'Total',
-		graphs: [
-			getTotalLogSizeWidgetData(),
-			getTotalTraceSizeWidgetData(),
-			getTotalMetricDatapointCountWidgetData(),
-		],
-	},
-	{
-		id: uuid(),
-		title: 'Logs',
-		graphs: [getLogCountWidgetData(), getLogSizeWidgetData()],
-	},
-	{
-		id: uuid(),
-		title: 'Traces',
-		graphs: [getSpanCountWidgetData(), getSpanSizeWidgetData()],
-	},
-	{
-		id: uuid(),
-		title: 'Metrics',
-		graphs: [getMetricCountWidgetData()],
-	},
-];
-
-function Section(section: MetricSection): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-	const { title, graphs } = section;
-	const { pathname } = useAppLocation();
-	const dispatch = useDispatch();
-	const urlQuery = useUrlQuery();
-
-	const onDragSelect = useCallback(
-		(start: number, end: number) => {
-			const startTimestamp = Math.trunc(start);
-			const endTimestamp = Math.trunc(end);
-
-			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
-			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
-			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			navigate(generatedUrl);
-
-			if (startTimestamp !== endTimestamp) {
-				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
-			}
-		},
-		[dispatch, pathname, urlQuery],
-	);
-
-	return (
-		<div
-			className="meter-column-graph"
-			data-testid={`meter-breakdown-section-${title.toLowerCase()}`}
-		>
-			<CardContainer className="row-card" isDarkMode={isDarkMode}>
-				<Typography.Text className="section-title">{title}</Typography.Text>
-			</CardContainer>
-			<div className="meter-page-grid">
-				{graphs.map((widget) => (
-					<Card
-						key={widget?.id}
-						isDarkMode={isDarkMode}
-						$panelType={PANEL_TYPES.BAR}
-						className="meter-graph"
-					>
-						<GridCard widget={widget} onDragSelect={onDragSelect} version="v5" />
-					</Card>
-				))}
-			</div>
-		</div>
-	);
-}
 
 function BreakDown(): JSX.Element {
 	const { isCloudUser } = useGetTenantLicense();
@@ -133,10 +43,7 @@ function BreakDown(): JSX.Element {
 
 	return (
 		<div className="meter-explorer-breakdown">
-			<section className="meter-explorer-date-time">
-				<DateTimeSelectionV2 showAutoRefresh={false} />
-			</section>
-			<section className="meter-explorer-graphs">
+			<section className="meter-explorer-notices">
 				{showInfo && (
 					<Alert
 						type="info"
@@ -179,28 +86,8 @@ function BreakDown(): JSX.Element {
 						}
 					/>
 				)}
-				<section className="total">
-					<Section
-						id={sections[0].id}
-						title={sections[0].title}
-						graphs={sections[0].graphs}
-					/>
-				</section>
-				{sections.map((section, idx) => {
-					if (idx === 0) {
-						return;
-					}
-
-					return (
-						<Section
-							key={section.id}
-							id={section.id}
-							title={section.title}
-							graphs={section.graphs}
-						/>
-					);
-				})}
 			</section>
+			<SystemDashboard host={COST_METER} controls={CONTROLS} />
 		</div>
 	);
 }
