@@ -112,6 +112,9 @@ export const REACT_QUERY_KEY = {
 	// Field Values Suggestion Query Keys
 	FIELD_VALUES_SUGGESTION: 'FIELD_VALUES_SUGGESTION',
 
+	// Celery Query Keys
+	GET_CELERY_WORKER_COUNT: 'GET_CELERY_WORKER_COUNT',
+
 	// AI Assistant Query Keys
 	AI_ASSISTANT_EMPTY_STATE_CHIPS: 'AI_ASSISTANT_EMPTY_STATE_CHIPS',
 } as const;

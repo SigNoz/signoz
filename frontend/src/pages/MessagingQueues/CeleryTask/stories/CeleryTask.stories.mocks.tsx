@@ -10,6 +10,7 @@ import type { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
+import { queryRangeV5ScalarTableResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 import {
 	attributeValuesResponse,
@@ -76,6 +77,20 @@ export const celeryTaskMocks = defineStoryMocks({
 		return [
 			rest.post('http://localhost/api/v3/query_range', queryRange),
 			rest.post('http://localhost/api/v4/query_range', queryRange),
+			rest.post(
+				'http://localhost/api/v5/query_range',
+				response.json(() =>
+					queryRangeV5ScalarTableResponse({
+						groupBy: ['worker'],
+						aggregations: ['A'],
+						rows: (
+							attributeValuesResponse('worker', '').data.stringAttributeValues ?? []
+						)
+							.slice(0, values.workers)
+							.map((worker) => [worker, 12]),
+					}),
+				),
+			),
 
 			rest.get(
 				'http://localhost/api/v1/fields/values',
