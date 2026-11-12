@@ -3,13 +3,12 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	GetQuickFilters200,
-	ListMetrics200,
-	ListSavedViews200,
-	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
 import {
+	type GetQuickFilters200,
+	type GetSystemDashboard200,
+	type ListMetrics200,
+	type ListSavedViews200,
+	type TelemetrytypesTelemetryFieldKeyDTO,
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
@@ -22,16 +21,15 @@ import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSourceDTO,
+	DashboardtypesSourceDTO,
+	type DashboardtypesGettableSystemDashboardDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { EQueryType } from 'types/common/dashboard';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
+// The backend's own definition, so the story renders what the server serves.
+import costMeterDefinition from '../../../../../../pkg/modules/dashboard/impldashboard/fs/definitions/cost-meter-breakdown.json';
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
-import {
-	getLogCountWidgetData,
-	getLogSizeWidgetData,
-	getMetricCountWidgetData,
-	getSpanCountWidgetData,
-	getSpanSizeWidgetData,
-} from 'container/MeterExplorer/Breakdown/graphs';
-import type { Widgets } from 'types/api/widgets/widget';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import type { TimeSeries } from 'types/api/v5/queryRange';
 
@@ -248,20 +246,66 @@ export const meterTimeWindow = (range: MeterTimeRange): MeterTimeWindow => {
 	return relativeWindow(24 * HOUR_IN_MS, '1d');
 };
 
-const EXPLORER_WIDGETS: Record<MeterVolume, () => Widgets> = {
-	'log-count': getLogCountWidgetData,
-	'log-size': getLogSizeWidgetData,
-	'span-count': getSpanCountWidgetData,
-	'span-size': getSpanSizeWidgetData,
-	'metric-datapoints': getMetricCountWidgetData,
+/** The query the explorer starts on: the metric's hourly increase, summed. */
+export const meterExplorerQuery = (volume: MeterVolume): Query => {
+	const metricName = VOLUME_METRICS[volume];
+
+	return {
+		queryType: EQueryType.QUERY_BUILDER,
+		promql: [],
+		clickhouse_sql: [],
+		id: `meter-explorer-${volume}`,
+		builder: {
+			queryFormulas: [],
+			queryTraceOperator: [],
+			queryData: [
+				{
+					aggregateAttribute: {
+						dataType: DataTypes.Float64,
+						key: metricName,
+						id: `${metricName}--float64--Sum--true`,
+						type: 'Sum',
+					},
+					aggregateOperator: 'increase',
+					dataSource: DataSource.METRICS,
+					source: 'meter',
+					disabled: false,
+					expression: 'A',
+					filters: { items: [], op: 'AND' },
+					functions: [],
+					groupBy: [],
+					having: [],
+					legend: METRICS[metricName].unit === 'bytes' ? 'size' : 'count',
+					limit: null,
+					orderBy: [],
+					queryName: 'A',
+					reduceTo: ReduceOperators.SUM,
+					spaceAggregation: 'sum',
+					stepInterval: null,
+					timeAggregation: 'increase',
+				},
+			],
+		},
+	};
 };
 
-/**
- * The query the explorer starts on, taken from the breakdown widget for the
- * same metric so the story asks for what the page itself would build.
- */
-export const meterExplorerQuery = (volume: MeterVolume): Query =>
-	EXPLORER_WIDGETS[volume]().query;
+/** The breakdown tab's system dashboard, as `GET /api/v2/dashboards/system/:name` serves it. */
+export const meterSystemDashboardResponse = (): GetSystemDashboard200 => {
+	const { definition } = costMeterDefinition;
+
+	return {
+		status: 'success',
+		data: {
+			orgId: 'storybook-org',
+			locked: true,
+			source: DashboardtypesSourceDTO.system,
+			name: definition.name,
+			schemaVersion: definition.schemaVersion,
+			tags: [],
+			spec: definition.spec as DashboardtypesGettableSystemDashboardDTO['spec'],
+		},
+	};
+};
 
 /** The metric picker in the query builder lists what the meter reports. */
 export const meterMetricsListResponse = (
