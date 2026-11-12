@@ -34,6 +34,7 @@ import type {
 	ListServiceAccountKeys200,
 	ListServiceAccountKeysPathParameters,
 	ListServiceAccounts200,
+	ListServiceAccountsParams,
 	RenderErrorResponseDTO,
 	RevokeServiceAccountKeyPathParameters,
 	ServiceaccounttypesPostableFactorAPIKeyDTO,
@@ -334,38 +335,48 @@ export const invalidateGetServiceAccountRole = async (
 };
 
 /**
- * This endpoint lists the service accounts for an organisation
+ * Returns a page of the service accounts for an organisation. Supports a case-insensitive search on name or email (`query`), a status filter (`status`), sorting (`sort`/`order`) and offset-based pagination (`limit`/`offset`).
  * @summary List service accounts
  */
-export const listServiceAccounts = (signal?: AbortSignal) => {
+export const listServiceAccounts = (
+	params?: ListServiceAccountsParams,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<ListServiceAccounts200>({
 		url: `/api/v1/service_accounts`,
 		method: 'GET',
+		params,
 		signal,
 	});
 };
 
-export const getListServiceAccountsQueryKey = () => {
-	return [`/api/v1/service_accounts`] as const;
+export const getListServiceAccountsQueryKey = (
+	params?: ListServiceAccountsParams,
+) => {
+	return [`/api/v1/service_accounts`, ...(params ? [params] : [])] as const;
 };
 
 export const getListServiceAccountsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listServiceAccounts>>,
 	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listServiceAccounts>>,
-		TError,
-		TData
-	>;
-}) => {
+>(
+	params?: ListServiceAccountsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listServiceAccounts>>,
+			TError,
+			TData
+		>;
+	},
+) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getListServiceAccountsQueryKey();
+	const queryKey =
+		queryOptions?.queryKey ?? getListServiceAccountsQueryKey(params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof listServiceAccounts>>
-	> = ({ signal }) => listServiceAccounts(signal);
+	> = ({ signal }) => listServiceAccounts(params, signal);
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof listServiceAccounts>>,
@@ -386,14 +397,17 @@ export type ListServiceAccountsQueryError = ErrorType<RenderErrorResponseDTO>;
 export function useListServiceAccounts<
 	TData = Awaited<ReturnType<typeof listServiceAccounts>>,
 	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listServiceAccounts>>,
-		TError,
-		TData
-	>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListServiceAccountsQueryOptions(options);
+>(
+	params?: ListServiceAccountsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listServiceAccounts>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListServiceAccountsQueryOptions(params, options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -407,10 +421,11 @@ export function useListServiceAccounts<
  */
 export const invalidateListServiceAccounts = async (
 	queryClient: QueryClient,
+	params?: ListServiceAccountsParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getListServiceAccountsQueryKey() },
+		{ queryKey: getListServiceAccountsQueryKey(params) },
 		options,
 	);
 
