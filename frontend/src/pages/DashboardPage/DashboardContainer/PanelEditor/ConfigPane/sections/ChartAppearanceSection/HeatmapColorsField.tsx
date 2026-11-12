@@ -6,11 +6,11 @@ import {
 import ConfigField from '../../controls/ConfigField/ConfigField';
 import ConfigTiles from '../../controls/ConfigTiles/ConfigTiles';
 import { createFieldResetter } from '../../utils/changes';
-import HeatmapColorStepsField from './HeatmapColorStepsField';
+import ColorRampStepsField from './ColorRampStepsField';
 import HeatmapCountRangeField from './HeatmapCountRangeField';
-import HeatmapFillField from './HeatmapFillField';
-import HeatmapPaletteGrid from './HeatmapPaletteGrid';
-import HeatmapRampPreview from './HeatmapRampPreview';
+import ColorRampFillField from './ColorRampFillField';
+import ColorRampPaletteGrid from './ColorRampPaletteGrid';
+import ColorRampPreview from './ColorRampPreview';
 import {
 	COLOR_MODE_HELP,
 	COLOR_MODE_OPTIONS,
@@ -19,7 +19,7 @@ import {
 	DEFAULT_COLOR_MODE,
 	DEFAULT_COLOR_SCALE,
 	DEFAULT_PALETTE,
-} from './heatmapColorOptions';
+} from './colorRampOptions';
 
 interface HeatmapColorsFieldProps {
 	value: DashboardtypesHeatmapColorsDTO | undefined;
@@ -44,7 +44,7 @@ function HeatmapColorsField({
 
 	return (
 		<>
-			<HeatmapRampPreview colors={value} />
+			<ColorRampPreview colors={value} />
 
 			<ConfigField
 				label="Color mode"
@@ -61,14 +61,14 @@ function HeatmapColorsField({
 			</ConfigField>
 
 			{mode === DashboardtypesHeatmapColorModeDTO.opacity ? (
-				<HeatmapFillField
+				<ColorRampFillField
 					value={value?.fill}
 					{...reset('fill')}
 					onChange={(fill): void => onChange({ ...value, fill })}
 				/>
 			) : (
 				<ConfigField label="Palette" {...reset('palette')}>
-					<HeatmapPaletteGrid
+					<ColorRampPaletteGrid
 						value={value?.palette ?? DEFAULT_PALETTE}
 						onChange={(palette): void => onChange({ ...value, palette })}
 					/>
@@ -89,7 +89,7 @@ function HeatmapColorsField({
 				/>
 			</ConfigField>
 
-			<HeatmapColorStepsField
+			<ColorRampStepsField
 				value={value?.steps || undefined}
 				{...reset('steps')}
 				onChange={(steps): void => onChange({ ...value, steps })}

@@ -1,0 +1,32 @@
+.controls {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 120ms ease;
+}
+
+// Shown while the map is hovered, or a control has keyboard focus.
+:global([data-geo-map]:hover) .controls,
+.controls:focus-within {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+// Touch screens have no hover to reveal them.
+@media (hover: none) {
+	.controls {
+		opacity: 1;
+		pointer-events: auto;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.controls {
+		transition: none;
+	}
+}
