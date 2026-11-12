@@ -1,5 +1,6 @@
 import React from 'react';
 import SettingsPage from 'pages/Settings/Settings';
+import type { IAppContext } from 'providers/App/types';
 import { render, screen, within } from 'tests/test-utils';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { USER_ROLES } from 'types/roles';
@@ -106,9 +107,16 @@ describe('SettingsPage nav sections', () => {
 	});
 
 	describe('Workspace blocked', () => {
-		const blockedOverrides = (): any => ({
+		const blockedOverrides = (): Partial<IAppContext> => ({
 			...getCloudAdminOverrides(),
-			trialInfo: { workSpaceBlock: true },
+			trialInfo: {
+				trialStart: -1,
+				trialEnd: -1,
+				onTrial: false,
+				workSpaceBlock: true,
+				trialConvertedToSubscription: false,
+				gracePeriodEnd: -1,
+			},
 		});
 
 		it('shows Members and Billing but not Roles to a viewer', () => {

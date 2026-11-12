@@ -1,10 +1,12 @@
 import ROUTES from 'constants/routes';
-import { TFunction } from 'i18next';
+import { createInstance } from 'i18next';
 import { ROLES, USER_ROLES } from 'types/roles';
 
 import { getRoutes } from '../utils';
 
-const t = ((key: string): string => key) as unknown as TFunction;
+const i18n = createInstance();
+void i18n.init({ lng: 'en', initImmediate: false, resources: {} });
+const { t } = i18n;
 
 const routeKeys = (role: ROLES, isWorkspaceBlocked: boolean): string[] =>
 	getRoutes(role, false, false, isWorkspaceBlocked, true, false, t).map(
