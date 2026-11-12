@@ -335,7 +335,7 @@ export const invalidateGetServiceAccountRole = async (
 };
 
 /**
- * Returns a page of the service accounts for an organisation. Supports a case-insensitive search on name or email (`query`), a status filter (`status`), sorting (`sort`/`order`) and offset-based pagination (`limit`/`offset`).
+ * Returns a page of the service accounts for an organisation. `query` is a filter expression over name, email, status, created_at and updated_at, for example `status = 'active'`; `sort`/`order` pick the ordering and `limit`/`offset` the page.
  * @summary List service accounts
  */
 export const listServiceAccounts = (
