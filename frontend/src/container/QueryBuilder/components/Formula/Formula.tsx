@@ -115,7 +115,11 @@ export function Formula({
 	);
 
 	return (
-		<Row gutter={[0, 15]} data-testid={`formula-${formula.queryName}`}>
+		<Row
+			gutter={[0, 15]}
+			className="formula-row"
+			data-testid={`formula-${formula.queryName}`}
+		>
 			<QBEntityOptions
 				isCollapsed={isCollapse}
 				showFunctions={false}
@@ -129,7 +133,7 @@ export function Formula({
 
 			{!isCollapse && (
 				<Row gutter={[0, 15]} className="formula-container">
-					<Col span={24}>
+					<Col span={24} className="formula-item">
 						<Input.TextArea
 							name="expression"
 							className="formula-expression"
@@ -141,7 +145,7 @@ export function Formula({
 							rows={2}
 						/>
 					</Col>
-					<Col span={24}>
+					<Col span={24} className="formula-item">
 						<Input
 							name="legend"
 							className="formula-legend"
@@ -153,7 +157,7 @@ export function Formula({
 						/>
 					</Col>
 					{isQBV2 && (
-						<Col span={24}>
+						<Col span={24} className="formula-item">
 							<div className="formula-qbv2-container">
 								<div className="periscope-input-with-label">
 									<div className="label">Order By</div>
@@ -185,7 +189,7 @@ export function Formula({
 					{/* A heatmap draws its one enabled query, which is the formula when its
 					    inputs are disabled — so the formula states its own bucket axis. */}
 					{isQBV2 && panelType === PANEL_TYPES.HEATMAP && (
-						<Col span={24}>
+						<Col span={24} className="formula-item">
 							<BucketOptions
 								bucketOptions={formula.bucketOptions}
 								unit={currentQuery.unit}
