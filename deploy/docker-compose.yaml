@@ -1,0 +1,243 @@
+# =============================================================================
+# SigNoz PT-BR - Stack de Observabilidade
+# Deploy de Produção via Coolify (Docker Compose)
+# =============================================================================
+
+networks:
+  tiktickets-observability:
+    driver: bridge
+  coolify:
+    external: true
+
+volumes:
+  signoz_data: {}
+
+services:
+  # ClickHouse Init Client (Connects to external DB to create databases)
+  clickhouse-init:
+    image: clickhouse/clickhouse-server:24.8-alpine
+    restart: on-failure:5
+    networks:
+      - tiktickets-observability
+      - coolify
+    environment:
+      - CLICKHOUSE_HOST=${CLICKHOUSE_HOST:-clickhouse}
+      - CLICKHOUSE_PORT=${CLICKHOUSE_PORT:-9000}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        echo "Init: Waiting for ClickHouse at $${CLICKHOUSE_HOST}...";  until wget --spider -q http://$${CLICKHOUSE_HOST}:8123/ping; do echo "Waiting..."; sleep 2; done;  echo "Connected! Running init...";  echo "CREATE DATABASE IF NOT EXISTS signoz_traces; CREATE DATABASE IF NOT EXISTS signoz_logs; CREATE DATABASE IF NOT EXISTS signoz_metrics; CREATE DATABASE IF NOT EXISTS signoz_metadata; CREATE DATABASE IF NOT EXISTS signoz_analytics;" | clickhouse-client --host $${CLICKHOUSE_HOST} --port $${CLICKHOUSE_PORT} --user $${CLICKHOUSE_USER} --password $${CLICKHOUSE_PASSWORD} --multiquery;  echo "Done!"
+
+  # SigNoz Schema Migrator
+  signoz-schema-migrator:
+    image: signoz/signoz-schema-migrator:0.111.24
+    user: "0:0"
+    restart: on-failure:10
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        echo "Migrator: Waiting for ClickHouse at $${CLICKHOUSE_HOST}...";  until wget --spider -q http://$${CLICKHOUSE_HOST}:8123/ping; do echo "Waiting..."; sleep 2; done;  echo "Running migrations...";  exec /signoz-schema-migrator sync --dsn "tcp://$${CLICKHOUSE_USER:-default}:$${CLICKHOUSE_PASSWORD}@$${CLICKHOUSE_HOST:-clickhouse}:$${CLICKHOUSE_PORT:-9000}"
+    environment:
+      - CLICKHOUSE_HOST=${CLICKHOUSE_HOST:-clickhouse}
+      - CLICKHOUSE_PORT=${CLICKHOUSE_PORT:-9000}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+      - CLUSTER_NAME=
+    depends_on:
+      clickhouse-init:
+        condition: service_completed_successfully
+    networks:
+      - tiktickets-observability
+      - coolify
+
+  # ClickHouse Views (Cria Views APÓS migração)
+  clickhouse-views:
+    image: clickhouse/clickhouse-server:24.8-alpine
+    restart: on-failure:5
+    depends_on:
+      signoz-schema-migrator:
+        condition: service_completed_successfully
+    networks:
+      - tiktickets-observability
+      - coolify
+    environment:
+      - CLICKHOUSE_HOST=${CLICKHOUSE_HOST:-clickhouse}
+      - CLICKHOUSE_PORT=${CLICKHOUSE_PORT:-9000}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        echo "Views: Quick check..."; sleep 5; echo "Creating Views (optional)..."; clickhouse-client --host $${CLICKHOUSE_HOST:-clickhouse} --user $${CLICKHOUSE_USER:-default} --password $${CLICKHOUSE_PASSWORD} --query 'CREATE VIEW IF NOT EXISTS signoz_traces.distributed_tag_attributes_v2 AS SELECT * FROM signoz_traces.tag_attributes_v2;' 2>/dev/null || echo "Skipped traces view"; clickhouse-client --host $${CLICKHOUSE_HOST:-clickhouse} --user $${CLICKHOUSE_USER:-default} --password $${CLICKHOUSE_PASSWORD} --query 'CREATE VIEW IF NOT EXISTS signoz_logs.distributed_tag_attributes_v2 AS SELECT * FROM signoz_logs.tag_attributes_v2;' 2>/dev/null || echo "Skipped logs view"; echo "Done!"
+
+  # SigNoz Query Service
+  signoz-query-service:
+    image: signoz/query-service:0.60.0
+    restart: always
+    user: "0:0"
+    environment:
+      - ClickHouseUrl=tcp://${CLICKHOUSE_USER:-default}:${CLICKHOUSE_PASSWORD}@${CLICKHOUSE_HOST:-clickhouse}:${CLICKHOUSE_PORT:-9000}/signoz_traces?secure=false
+      - CLICKHOUSE_HOST=${CLICKHOUSE_HOST:-clickhouse}
+      - CLICKHOUSE_PORT=${CLICKHOUSE_PORT:-9000}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+      - GODEBUG=netdns=go
+      - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
+      - STORAGE=clickhouse
+      - DASHBOARDS_PATH=/root/dashboards
+      - JWT_SECRET=${SIGNOZ_JWT_SECRET:-tiktickets_signoz_secret_key_change_me_in_prod}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /root/config /root/dashboards
+        if [ ! -f /root/config/prometheus.yml ]; then
+        cat <<EOF > /root/config/prometheus.yml
+        global: {scrape_interval: 60s}
+        EOF
+        fi
+        exec /root/query-service
+    volumes:
+      - signoz_data:/var/lib/signoz
+    networks:
+      - tiktickets-observability
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.signoz-api.rule=Host(`signoz.autotick.com.br`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.signoz-api.entrypoints=https"
+      - "traefik.http.routers.signoz-api.priority=100"
+      - "traefik.http.routers.signoz-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.signoz-api.loadbalancer.server.port=8080"
+      - "traefik.docker.network=coolify"
+    depends_on:
+      clickhouse-init:
+        condition: service_completed_successfully
+      clickhouse-views:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8080/api/v1/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # SigNoz Frontend
+  signoz-frontend:
+    image: signoz/frontend:0.60.0
+    restart: always
+    user: "0:0"
+    environment:
+      - FRONTEND_API_ENDPOINT=https://signoz.autotick.com.br
+    networks:
+      - tiktickets-observability
+      - coolify
+    depends_on:
+      signoz-query-service:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.signoz-fe.rule=Host(`signoz.autotick.com.br`)"
+      - "traefik.http.routers.signoz-fe.entrypoints=https"
+      - "traefik.http.routers.signoz-fe.priority=10"
+      - "traefik.http.routers.signoz-fe.tls.certresolver=letsencrypt"
+      - "traefik.http.services.signoz-fe.loadbalancer.server.port=3301"
+      - "traefik.docker.network=coolify"
+
+  # OpenTelemetry Collector
+  otel-collector:
+    image: signoz/signoz-otel-collector:0.111.24
+    restart: always
+    user: "0:0"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        echo "Generating Otel Config..."
+        cat <<EOF > /tmp/otel-config.yml
+        receivers:
+          otlp:
+            protocols:
+              grpc:
+                endpoint: 0.0.0.0:4317
+              http:
+                endpoint: 0.0.0.0:4318
+          hostmetrics:
+            collection_interval: 60s
+            scrapers:
+              cpu: {}
+              load: {}
+              memory: {}
+              disk: {}
+              network: {}
+              filesystem: {}
+        processors:
+          batch:
+            send_batch_size: 1000
+            timeout: 10s
+          resourcedetection:
+            detectors: [env, system]
+            timeout: 2s
+            system:
+              hostname_sources: [os]
+        exporters:
+          clickhousetraces:
+            datasource: "tcp://${CLICKHOUSE_USER:-default}:${CLICKHOUSE_PASSWORD}@${CLICKHOUSE_HOST:-clickhouse}:${CLICKHOUSE_PORT:-9000}/signoz_traces?secure=false"
+          clickhousemetricswrite:
+            endpoint: "tcp://${CLICKHOUSE_USER:-default}:${CLICKHOUSE_PASSWORD}@${CLICKHOUSE_HOST:-clickhouse}:${CLICKHOUSE_PORT:-9000}/signoz_metrics?secure=false"
+            resource_to_telemetry_conversion:
+              enabled: true
+          clickhouselogsexporter:
+            dsn: "tcp://${CLICKHOUSE_USER:-default}:${CLICKHOUSE_PASSWORD}@${CLICKHOUSE_HOST:-clickhouse}:${CLICKHOUSE_PORT:-9000}/signoz_logs?secure=false"
+            timeout: 10s
+        extensions:
+          health_check:
+            endpoint: 0.0.0.0:13133
+          zpages: {}
+        service:
+          extensions: [health_check, zpages]
+          pipelines:
+            traces:
+              receivers: [otlp]
+              processors: [batch]
+              exporters: [clickhousetraces]
+            metrics:
+              receivers: [otlp, hostmetrics]
+              processors: [resourcedetection, batch]
+              exporters: [clickhousemetricswrite]
+            logs:
+              receivers: [otlp]
+              processors: [batch]
+              exporters: [clickhouselogsexporter]
+        EOF
+        echo "Starting OTel Collector..."
+        exec /signoz-collector --config=/tmp/otel-config.yml
+    environment:
+      - CLICKHOUSE_HOST=${CLICKHOUSE_HOST:-clickhouse}
+      - CLICKHOUSE_PORT=${CLICKHOUSE_PORT:-9000}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+      - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-otel
+      - DOCKER_MULTI_NODE_CLUSTER=false
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+    networks:
+      - tiktickets-observability
+      - coolify
+    depends_on:
+      clickhouse-init:
+        condition: service_completed_successfully
+      clickhouse-views:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:13133/ || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
