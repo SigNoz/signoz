@@ -10,13 +10,6 @@
 }
 
 .list {
-	--list-text-color: rgba(255, 255, 255, 0.85);
-	--list-text-description-color: rgba(255, 255, 255, 0.45);
-	--list-text-disabled-color: rgba(255, 255, 255, 0.25);
-	--list-split-color: rgba(198, 219, 248, 0.2);
-	--list-border-color: #454c58;
-	--list-primary-color: #4566d6;
-	--list-container-background: #121317;
 	--list-line-height: calc(21 / 13);
 	--list-line-height-lg: calc(22 / 14);
 
@@ -27,23 +20,13 @@
 	position: relative;
 	margin: 0;
 	padding: 0;
-	color: var(--list-text-color);
+	color: var(--antd-color-text);
 	line-height: var(--list-line-height);
 	list-style: none;
 
 	* {
 		outline: none;
 	}
-}
-
-:global(.lightMode) .list {
-	--list-text-color: rgba(0, 0, 0, 0.88);
-	--list-text-description-color: rgba(0, 0, 0, 0.45);
-	--list-text-disabled-color: rgba(0, 0, 0, 0.25);
-	--list-split-color: rgba(5, 5, 5, 0.06);
-	--list-border-color: #d9d9d9;
-	--list-primary-color: #4e74f8;
-	--list-container-background: #fff;
 }
 
 .header,
@@ -65,7 +48,7 @@
 	@include border-box;
 
 	position: relative;
-	transition: opacity 0.3s;
+	transition: opacity var(--antd-motion-duration-slow);
 
 	&::after {
 		content: '';
@@ -74,9 +57,9 @@
 		z-index: 10;
 		width: 100%;
 		height: 100%;
-		background: var(--list-container-background);
+		background: var(--antd-color-bg-container);
 		opacity: 0;
-		transition: all 0.3s;
+		transition: all var(--antd-motion-duration-slow);
 		pointer-events: none;
 	}
 }
@@ -96,7 +79,7 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: var(--spacing-6) 0;
-	color: var(--list-text-color);
+	color: var(--antd-color-text);
 }
 
 .itemNoFlex {
@@ -123,23 +106,23 @@
 
 	flex: 1 0;
 	width: 0;
-	color: var(--list-text-color);
+	color: var(--antd-color-text);
 }
 
 .itemMetaTitle {
 	@include border-box;
 
 	margin: 0 0 var(--spacing-2) 0;
-	color: var(--list-text-color);
+	color: var(--antd-color-text);
 	font-size: var(--periscope-font-size-base);
 	line-height: var(--list-line-height);
 
 	> a {
-		color: var(--list-text-color);
-		transition: all 0.3s;
+		color: var(--antd-color-text);
+		transition: all var(--antd-motion-duration-slow);
 
 		&:hover {
-			color: var(--list-primary-color);
+			color: var(--antd-color-primary);
 		}
 	}
 }
@@ -147,7 +130,7 @@
 .itemMetaDescription {
 	@include border-box;
 
-	color: var(--list-text-description-color);
+	color: var(--antd-color-text-description);
 	font-size: var(--periscope-font-size-base);
 	line-height: var(--list-line-height);
 }
@@ -166,7 +149,7 @@
 	position: relative;
 	display: inline-block;
 	padding: 0 var(--spacing-4);
-	color: var(--list-text-description-color);
+	color: var(--antd-color-text-description);
 	font-size: var(--periscope-font-size-base);
 	line-height: var(--list-line-height);
 	text-align: center;
@@ -184,7 +167,7 @@
 	inset-inline-end: 0;
 	width: 1px;
 	height: 13px;
-	background-color: var(--list-split-color);
+	background-color: var(--antd-color-split);
 	transform: translateY(-50%);
 }
 
@@ -192,7 +175,7 @@
 	@include border-box;
 
 	padding: var(--spacing-8);
-	color: var(--list-text-disabled-color);
+	color: var(--antd-color-text-disabled);
 	font-size: var(--periscope-font-size-base);
 	text-align: center;
 }
@@ -221,7 +204,7 @@
 
 	.itemMetaTitle {
 		margin-block: 0 var(--spacing-6);
-		color: var(--list-text-color);
+		color: var(--antd-color-text);
 		font-size: 14px;
 		line-height: var(--list-line-height-lg);
 	}
@@ -242,11 +225,11 @@
 
 .split {
 	.header {
-		border-block-end: 1px solid var(--list-split-color);
+		border-block-end: 1px solid var(--antd-color-split);
 	}
 
 	.item {
-		border-block-end: 1px solid var(--list-split-color);
+		border-block-end: 1px solid var(--antd-color-split);
 
 		&:last-child {
 			border-block-end: none;
@@ -254,7 +237,7 @@
 	}
 
 	&.somethingAfterLastItem .items > .item:last-child {
-		border-block-end: 1px solid var(--list-split-color);
+		border-block-end: 1px solid var(--antd-color-split);
 	}
 }
 
@@ -271,7 +254,7 @@
 }
 
 .bordered {
-	border: 1px solid var(--list-border-color);
+	border: 1px solid var(--antd-color-border);
 	border-radius: var(--radius-1);
 
 	.header,
