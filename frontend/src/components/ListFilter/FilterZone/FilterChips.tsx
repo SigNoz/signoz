@@ -11,7 +11,8 @@ import styles from './FilterZone.module.scss';
 interface Props {
 	createdBy: string[];
 	updated: UpdatedWindow;
-	creatorOptions: CreatorOption[];
+	// Omitted when the entity has no creator, which drops the Created-by chip.
+	creatorOptions?: CreatorOption[];
 	onCreatedByChange: (emails: string[]) => void;
 	onUpdatedChange: (window: UpdatedWindow) => void;
 	// Run the staged draft — fired when a dropdown closes.
@@ -34,7 +35,7 @@ function FilterChips({
 	testIdPrefix,
 	disabled = false,
 }: Props): JSX.Element {
-	const creatorOptionsData = creatorOptions.map((o) => ({
+	const creatorOptionsData = creatorOptions?.map((o) => ({
 		value: o.email,
 		label: o.label,
 	}));
@@ -47,16 +48,18 @@ function FilterChips({
 
 	return (
 		<div className={styles.chips}>
-			<MultiSelectFilter
-				value={createdBy}
-				options={creatorOptionsData}
-				placeholder="Created by"
-				testId={`${testIdPrefix}-filter-created-by`}
-				disabled={disabled}
-				onClear={onClearCreatedBy}
-				onChange={onCreatedByChange}
-				onDropdownVisibleChange={runOnClose}
-			/>
+			{creatorOptionsData && (
+				<MultiSelectFilter
+					value={createdBy}
+					options={creatorOptionsData}
+					placeholder="Created by"
+					testId={`${testIdPrefix}-filter-created-by`}
+					disabled={disabled}
+					onClear={onClearCreatedBy}
+					onChange={onCreatedByChange}
+					onDropdownVisibleChange={runOnClose}
+				/>
+			)}
 			<Select
 				showSearch
 				className={cx(styles.select, styles.selectNarrow)}

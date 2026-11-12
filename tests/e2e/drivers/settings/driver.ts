@@ -7,7 +7,7 @@ import type {
 	CoretypesKindDTO,
 	CoretypesTypeDTO,
 	ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO,
-	ServiceaccounttypesServiceAccountDTO,
+	ServiceaccounttypesListableServiceAccountDTO,
 	ServiceaccounttypesServiceAccountWithRolesDTO,
 	TypesOrganizationDTO,
 } from '../schemas';
@@ -565,7 +565,15 @@ export function settingsDriver(page: Page): Settings {
 				page.getByRole('heading', { name: 'Service Accounts', exact: true }),
 			newButton: () => page.getByTestId('new-sa-btn'),
 			search: async (text) => {
-				await page.getByTestId('sa-search-input').fill(text);
+				const search = page.getByTestId('sa-list-search').locator('.cm-content');
+				await search.click();
+				await page.keyboard.press('ControlOrMeta+A');
+				await page.keyboard.insertText(text);
+				await expect(search).toHaveText(text);
+				await page.getByTestId('sa-list-search-submit').click();
+				await page.waitForURL(
+					(url) => (url.searchParams.get('search') ?? '') === text.trim(),
+				);
 			},
 			row: (name) =>
 				page.getByRole('button', { name: `View service account ${name}` }),
@@ -677,10 +685,10 @@ export function settingsDriver(page: Page): Settings {
 			removeApi: (id) => api.tryDel(`/api/v1/service_accounts/${id}`),
 			removeByName: async (name) => {
 				const list = await api.get<
-					Envelope<ServiceaccounttypesServiceAccountDTO[]>
-				>('/api/v1/service_accounts');
+					Envelope<ServiceaccounttypesListableServiceAccountDTO>
+				>(`/api/v1/service_accounts?query=${encodeURIComponent(name)}`);
 				await Promise.all(
-					list.data
+					list.data.serviceAccounts
 						.filter((account) => account.name === name)
 						.map((account) => settings.serviceAccounts.removeApi(account.id)),
 				);

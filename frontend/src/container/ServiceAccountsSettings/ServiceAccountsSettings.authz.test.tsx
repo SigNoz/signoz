@@ -23,7 +23,10 @@ describe('ServiceAccountsSettings — FGA', () => {
 	beforeEach(() => {
 		server.use(
 			rest.get(SA_LIST_URL, (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json({ data: [] })),
+				res(
+					ctx.status(200),
+					ctx.json({ status: 'success', data: { serviceAccounts: [], total: 0 } }),
+				),
 			),
 		);
 	});
@@ -77,8 +80,12 @@ describe('ServiceAccountsSettings — FGA', () => {
 
 		expect(screen.getByText('Service Accounts')).toBeInTheDocument();
 		expect(
-			screen.getByPlaceholderText('Search by name or email...'),
-		).toBeDisabled();
+			screen.getByTestId('sa-list-search').querySelector('.cm-content'),
+		).toHaveAttribute('contenteditable', 'false');
+		expect(screen.getByTestId('sa-list-search-submit')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('shows table when list permission is granted', async () => {

@@ -179,6 +179,35 @@ export const parseReflectedClauses = (query: string): ReflectedClauses => {
 	return { createdBy, updated };
 };
 
+// The unquoted value of the one top-level `key = value` term, or null when the
+// key is absent, repeated, nested or compared with another operator.
+export const reflectedEqualityValue = (
+	query: string,
+	key: string,
+): string | null => {
+	const target = key.toLowerCase();
+	let value: string | null = null;
+	let count = 0;
+
+	splitTopLevelTerms(query).forEach((term) => {
+		const trimmed = term.text.trim();
+		if (!trimmed || trimmed.startsWith('(')) {
+			return;
+		}
+		const scan = scanTerm(term.text);
+		if (!scan.key || !scan.operator || !scan.value) {
+			return;
+		}
+		if (scan.key.text.toLowerCase() !== target) {
+			return;
+		}
+		count += 1;
+		value = scan.operator.canonical === '=' ? unquote(scan.value.text) : null;
+	});
+
+	return count === 1 ? value : null;
+};
+
 // Add / replace / remove a top-level simple clause for `key`, leaving every other
 // (incl. nested/OR) term intact. Never corrupts hand-typed structure.
 export const spliceClause = (
