@@ -10,13 +10,13 @@ import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
-import { useRuleCollectionPermissions } from 'hooks/alerts/useRuleCollectionPermissions';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
 import {
 	RuleCreatePermission,
 	RuleListPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
 import beaconUrl from '@/assets/Icons/beacon.svg';
 
@@ -33,17 +33,27 @@ export default function AlertRules({
 	onUpdateChecklistDoneItem: (itemKey: string) => void;
 	loadingUserPreferences: boolean;
 }): JSX.Element {
-	const rulePermissions = useRuleCollectionPermissions();
-	const isSettled = !rulePermissions.isLoading && !rulePermissions.hasError;
-	const isListDenied = isSettled && !rulePermissions.canList;
-	const isCreateDenied = isSettled && !rulePermissions.canCreate;
-
 	const location = useAppLocation();
 	const params = new URLSearchParams(location.search);
 
 	// Fetch Alerts
 	const { rules: alertRules, isError, isLoading } = useHomeAlertRules();
 	const rulesExist = alertRules.length > 0;
+
+	const listCheck = useAuthZ(LIST_CHECKS);
+	const isListDenied =
+		!listCheck.isLoading &&
+		!listCheck.error &&
+		!listCheck.isGranted(RuleListPermission);
+	// Create is only offered by the empty state, so it is only checked there.
+	const createCheck = useAuthZ(CREATE_CHECKS, {
+		enabled: !isLoading && !rulesExist,
+	});
+	const isCreateDenied =
+		!createCheck.isLoading &&
+		!createCheck.error &&
+		!!createCheck.permissions &&
+		!createCheck.isGranted(RuleCreatePermission);
 
 	useEffect(() => {
 		if (rulesExist && !loadingUserPreferences) {
