@@ -1,4 +1,8 @@
+@use '../../../styles/antdReset';
+
 .space {
+	@include antdReset.antd-link-reset;
+
 	display: inline-flex;
 
 	.item:empty {
@@ -51,6 +55,8 @@
 }
 
 .compact {
+	@include antdReset.antd-link-reset;
+
 	display: inline-flex;
 }
 
