@@ -189,11 +189,11 @@
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			.ant-space {
+			.latency-pointer__trigger {
 				display: flex;
 				align-items: center;
 				cursor: pointer;
-				&-item {
+				> div {
 					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 14px;
