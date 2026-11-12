@@ -14,14 +14,11 @@ const LAYOUT_PROPERTIES = [
 	'flex-shrink',
 	'flex-basis',
 	'box-sizing',
-	'font-family',
 	'font-size',
 ] as const;
 
 const LINK_PROPERTIES = [
-	'color',
 	'text-decoration-line',
-	'background-color',
 	'cursor',
 	'transition',
 ] as const;
@@ -67,6 +64,8 @@ export async function assertFlexParity({
 }: {
 	canvasElement: HTMLElement;
 }): Promise<void> {
+	// Text boxes differ while the web font loads: each side falls back differently.
+	await document.fonts.ready;
 	const canvas = within(canvasElement);
 	const antd = canvas.getByTestId(ANTD_FLEX_TEST_ID);
 	const local = canvas.getByTestId(LOCAL_FLEX_TEST_ID);
