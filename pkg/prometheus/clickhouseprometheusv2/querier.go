@@ -43,6 +43,16 @@ func (q *querier) Select(ctx context.Context, sortSeries bool, hints *storage.Se
 		return storage.EmptySeriesSet()
 	}
 
+	// The caller only wants the label sets (e.g. the /series API): skip the
+	// samples fetch entirely rather than pulling and discarding sample data.
+	if hints != nil && hints.Func == "series" {
+		list := make([]*series, 0, len(lookup.fingerprints))
+		for _, lset := range lookup.fingerprints {
+			list = append(list, &series{lset: lset})
+		}
+		return newSeriesSet(sortAndMerge(list))
+	}
+
 	list, err := q.fetchSamples(ctx, start, end, matchers, lookup, q.lastSamplePerStepFor(ctx, hints))
 	if err != nil {
 		return storage.ErrSeriesSet(err)
