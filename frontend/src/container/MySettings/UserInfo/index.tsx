@@ -14,6 +14,11 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import { ErrorV2Resp } from 'types/api';
 import { AxiosError } from 'axios';
+import { hashPassword } from 'utils/hashPassword';
+import {
+	isPasswordComplex,
+	PASSWORD_POLICY_MESSAGE,
+} from 'utils/passwordPolicy';
 
 import '../MySettings.styles.scss';
 import './UserInfo.styles.scss';
@@ -54,12 +59,24 @@ function UserInfo(): JSX.Element {
 	};
 
 	const onChangePasswordClickHandler = async (): Promise<void> => {
+		if (!isPasswordComplex(updatePassword)) {
+			toast.error('Weak password', {
+				description: PASSWORD_POLICY_MESSAGE,
+			});
+			return;
+		}
+
 		try {
 			setIsLoading(true);
 
+			const [hashedOldPassword, hashedNewPassword] = await Promise.all([
+				hashPassword(currentPassword),
+				hashPassword(updatePassword),
+			]);
+
 			await updateMyPassword({
-				newPassword: updatePassword,
-				oldPassword: currentPassword,
+				newPassword: hashedNewPassword,
+				oldPassword: hashedOldPassword,
 			});
 			toast.success('Password updated successfully');
 			hideResetPasswordModal();
