@@ -1,7 +1,6 @@
 package alertmanagertypes
 
 import (
-	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
@@ -12,7 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/config"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
-	"github.com/swaggest/jsonschema-go"
 )
 
 const defaultJiraReopenDuration = model.Duration(3 * 24 * time.Hour)
@@ -82,114 +80,60 @@ type ChannelJiraConfig struct {
 	WontFixResolution string                       `json:"wontFixResolution" description:"The resolution name that stops an issue from being reopened."`
 	CustomFields      map[string]any               `json:"customFields,omitzero" description:"Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives."`
 
-	Auth ChannelJiraAuth `json:"auth" required:"true" description:"The credentials: email and apiToken when deployment is cloud, pat when deployment is selfhosted."`
+	Auth *ChannelJiraAuth `json:"auth" required:"true" description:"The credentials: email and apiToken when deployment is cloud, pat when deployment is selfhosted."`
 }
 
-type JiraAuth interface {
-	deployment() JiraDeployment
-	validate() error
-	fillHTTPConfig(httpConfig *commoncfg.HTTPClientConfig)
-}
-
-// ChannelJiraAuth wraps the JiraAuth value because the OpenAPI reflector
-// renders an interface-typed field as an empty component.
 type ChannelJiraAuth struct {
-	JiraAuth
+	Email    string `json:"email,omitempty" description:"The Atlassian account email used for basic auth. Required when deployment is cloud."`
+	APIToken string `json:"apiToken,omitempty" format:"password" description:"The Atlassian API token paired with email. Required when deployment is cloud. A secret; returned by create, update and fetch by ID, never by list."`
+	PAT      string `json:"pat,omitempty" format:"password" description:"The Jira personal access token, sent as a Bearer header. Required when deployment is selfhosted. A secret; returned by create, update and fetch by ID, never by list."`
 }
 
-var (
-	_ jsonschema.Preparer = ChannelJiraAuth{}
-	_ json.Marshaler      = ChannelJiraAuth{}
-)
-
-// One flat object, because deployment sits outside auth and cannot discriminate a oneOf.
-func (ChannelJiraAuth) PrepareJSONSchema(schema *jsonschema.Schema) error {
-	email := jsonschema.Schema{}
-	email.WithType(jsonschema.String.Type())
-	email.WithDescription("The Atlassian account email used for basic auth. Required when deployment is cloud.")
-
-	apiToken := jsonschema.Schema{}
-	apiToken.WithType(jsonschema.String.Type())
-	apiToken.WithFormat("password")
-	apiToken.WithDescription("The Atlassian API token paired with email. Required when deployment is cloud. A secret; returned by create, update and fetch by ID, never by list.")
-
-	pat := jsonschema.Schema{}
-	pat.WithType(jsonschema.String.Type())
-	pat.WithFormat("password")
-	pat.WithDescription("The Jira personal access token, sent as a Bearer header. Required when deployment is selfhosted. A secret; returned by create, update and fetch by ID, never by list.")
-
-	schema.Properties = nil
-	schema.Required = nil
-	schema.WithPropertiesItem("email", email.ToSchemaOrBool())
-	schema.WithPropertiesItem("apiToken", apiToken.ToSchemaOrBool())
-	schema.WithPropertiesItem("pat", pat.ToSchemaOrBool())
-	return nil
-}
-
-func (a ChannelJiraAuth) MarshalJSON() ([]byte, error) {
-	if a.JiraAuth == nil {
-		return []byte("null"), nil
+func (a ChannelJiraAuth) validate(deployment JiraDeployment) error {
+	if deployment == JiraDeploymentSelfHosted {
+		if a.PAT == "" {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth.pat is required for a self-hosted jira channel")
+		}
+		if a.Email != "" {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth.email is not supported for a self-hosted jira channel")
+		}
+		if a.APIToken != "" {
+			return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth.apiToken is not supported for a self-hosted jira channel")
+		}
+		return nil
 	}
-	return json.Marshal(a.JiraAuth)
-}
 
-type ChannelJiraCloudAuth struct {
-	Email    string `json:"email"`
-	APIToken string `json:"apiToken"`
-}
-
-func (ChannelJiraCloudAuth) deployment() JiraDeployment {
-	return JiraDeploymentCloud
-}
-
-func (a ChannelJiraCloudAuth) validate() error {
 	if a.Email == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth.email is required for a jira cloud channel")
 	}
 	if a.APIToken == "" {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth.apiToken is required for a jira cloud channel")
 	}
+	if a.PAT != "" {
+		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth.pat is not supported for a jira cloud channel")
+	}
 	return nil
 }
 
-func (a ChannelJiraCloudAuth) fillHTTPConfig(httpConfig *commoncfg.HTTPClientConfig) {
+func (a ChannelJiraAuth) fillHTTPConfig(deployment JiraDeployment, httpConfig *commoncfg.HTTPClientConfig) {
+	if deployment == JiraDeploymentSelfHosted {
+		httpConfig.Authorization = &commoncfg.Authorization{
+			Type:        jiraBearerAuthorizationType,
+			Credentials: commoncfg.Secret(a.PAT),
+		}
+		return
+	}
+
 	httpConfig.BasicAuth = &commoncfg.BasicAuth{
 		Username: a.Email,
 		Password: commoncfg.Secret(a.APIToken),
 	}
 }
 
-type ChannelJiraSelfHostedAuth struct {
-	PAT string `json:"pat"`
-}
-
-func (ChannelJiraSelfHostedAuth) deployment() JiraDeployment {
-	return JiraDeploymentSelfHosted
-}
-
-func (a ChannelJiraSelfHostedAuth) validate() error {
-	if a.PAT == "" {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth.pat is required for a self-hosted jira channel")
-	}
-	return nil
-}
-
-func (a ChannelJiraSelfHostedAuth) fillHTTPConfig(httpConfig *commoncfg.HTTPClientConfig) {
-	httpConfig.Authorization = &commoncfg.Authorization{
-		Type:        jiraBearerAuthorizationType,
-		Credentials: commoncfg.Secret(a.PAT),
-	}
-}
-
-// UnmarshalJSON seeds send_resolved off, as JiraReceiverConfig does. The auth
-// bytes are held back until deployment is known, which picks their type.
+// UnmarshalJSON seeds send_resolved off, as JiraReceiverConfig does.
 func (c *ChannelJiraConfig) UnmarshalJSON(data []byte) error {
 	type alias ChannelJiraConfig
-	envelope := struct {
-		*alias
-		Auth json.RawMessage `json:"auth"`
-	}{alias: (*alias)(c)}
-	if err := decodeStrict(data, &envelope); err != nil {
+	if err := decodeStrict(data, (*alias)(c)); err != nil {
 		return err
 	}
 
@@ -197,15 +141,6 @@ func (c *ChannelJiraConfig) UnmarshalJSON(data []byte) error {
 	c.Summary.SetIfUnset(DefaultJiraSummaryTemplate)
 	c.Description.SetIfUnset(DefaultJiraDescriptionTemplate)
 	c.ReopenDuration.SetIfUnset(defaultJiraReopenDuration.String())
-
-	if err := c.validateDeployment(); err != nil {
-		return err
-	}
-	auth, err := decodeJiraAuth(c.Deployment, envelope.Auth)
-	if err != nil {
-		return err
-	}
-	c.Auth = ChannelJiraAuth{JiraAuth: auth}
 
 	return c.Validate()
 }
@@ -228,13 +163,10 @@ func (c ChannelJiraConfig) Validate() error {
 		}
 	}
 
-	if c.Auth.JiraAuth == nil {
+	if c.Auth == nil {
 		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth is required for a jira channel")
 	}
-	if c.Auth.deployment() != c.Deployment {
-		return errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth does not match deployment %q", c.Deployment.StringValue())
-	}
-	if err := c.Auth.validate(); err != nil {
+	if err := c.Auth.validate(c.Deployment); err != nil {
 		return err
 	}
 
@@ -270,10 +202,10 @@ func (c ChannelJiraConfig) toUndefaultedReceiver(displayName string) (*Receiver,
 	// and EnableHTTP2 marshal unconditionally, so a zero value would persist them
 	// as false and read back as a config ChannelJiraConfig cannot represent.
 	httpConfig := commoncfg.DefaultHTTPClientConfig
-	if c.Auth.JiraAuth == nil {
+	if c.Auth == nil {
 		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth is required for a jira channel")
 	}
-	c.Auth.fillHTTPConfig(&httpConfig)
+	c.Auth.fillHTTPConfig(c.Deployment, &httpConfig)
 
 	jira := &JiraReceiverConfig{
 		// JiraReceiverConfig seeds no send_resolved of its own, so unset means off.
@@ -349,7 +281,7 @@ func newChannelJiraConfigFromReceiver(name string, receiver *Receiver) (ChannelS
 			if !strings.EqualFold(authorization.Type, jiraBearerAuthorizationType) || authorization.CredentialsFile != "" || authorization.CredentialsRef != "" {
 				return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q must set http_config.authorization with type Bearer and inline credentials", name)
 			}
-			spec.Auth = ChannelJiraAuth{JiraAuth: ChannelJiraSelfHostedAuth{PAT: string(authorization.Credentials)}}
+			spec.Auth = &ChannelJiraAuth{PAT: string(authorization.Credentials)}
 		}
 		return spec, nil
 	}
@@ -358,7 +290,7 @@ func newChannelJiraConfigFromReceiver(name string, receiver *Receiver) (ChannelS
 		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "channel %q sets http_config.authorization, which is not supported", name)
 	}
 	if jira.HTTPConfig.BasicAuth != nil {
-		spec.Auth = ChannelJiraAuth{JiraAuth: ChannelJiraCloudAuth{Email: jira.HTTPConfig.BasicAuth.Username, APIToken: string(jira.HTTPConfig.BasicAuth.Password)}}
+		spec.Auth = &ChannelJiraAuth{Email: jira.HTTPConfig.BasicAuth.Username, APIToken: string(jira.HTTPConfig.BasicAuth.Password)}
 	}
 
 	return spec, nil
@@ -475,27 +407,4 @@ func (c *JiraReceiverConfig) SearchPath() string {
 		return "/search"
 	}
 	return "/search/jql"
-}
-
-func decodeJiraAuth(deployment JiraDeployment, data json.RawMessage) (JiraAuth, error) {
-	if len(data) == 0 || string(data) == "null" {
-		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth is required for a jira channel")
-	}
-
-	var auth JiraAuth
-	var err error
-	switch deployment {
-	case JiraDeploymentSelfHosted:
-		var selfHosted ChannelJiraSelfHostedAuth
-		err = decodeStrict(data, &selfHosted)
-		auth = selfHosted
-	default:
-		var cloud ChannelJiraCloudAuth
-		err = decodeStrict(data, &cloud)
-		auth = cloud
-	}
-	if err != nil {
-		return nil, errors.NewInvalidInputf(ErrCodeAlertmanagerChannelInvalid, "config.spec.auth for a %s jira channel: %s", deployment.StringValue(), err.Error())
-	}
-	return auth, nil
 }

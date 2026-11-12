@@ -178,9 +178,13 @@ func TestChannelJiraConfigUnmarshal(t *testing.T) {
 		{"RootCredentials_Rejected", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","email":"e","apiToken":"t"}`, `unknown field "email"`, JiraDeploymentCloud},
 		{"Cloud_MissingEmail", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":{"apiToken":"t"}}`, "config.spec.auth.email is required for a jira cloud channel", JiraDeploymentCloud},
 		{"Cloud_MissingAPIToken", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":{"email":"e"}}`, "config.spec.auth.apiToken is required for a jira cloud channel", JiraDeploymentCloud},
-		{"Cloud_WithPAT_Rejected", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":{"email":"e","apiToken":"t","pat":"p"}}`, `unknown field "pat"`, JiraDeploymentCloud},
+		{"Cloud_WithPAT_Rejected", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":{"email":"e","apiToken":"t","pat":"p"}}`, "config.spec.auth.pat is not supported for a jira cloud channel", JiraDeploymentCloud},
+		{"Cloud_WithBlankPAT", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":{"email":"e","apiToken":"t","pat":""}}`, "", JiraDeploymentCloud},
 		{"SelfHosted_MissingPAT", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{}}`, "config.spec.auth.pat is required for a self-hosted jira channel", JiraDeploymentSelfHosted},
-		{"SelfHosted_WithEmail_Rejected", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p","email":"e"}}`, `unknown field "email"`, JiraDeploymentSelfHosted},
+		{"SelfHosted_WithEmail_Rejected", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p","email":"e"}}`, "config.spec.auth.email is not supported for a self-hosted jira channel", JiraDeploymentSelfHosted},
+		{"SelfHosted_WithAPIToken_Rejected", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p","apiToken":"t"}}`, "config.spec.auth.apiToken is not supported for a self-hosted jira channel", JiraDeploymentSelfHosted},
+		{"SelfHosted_WithBlankEmail", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p","email":""}}`, "", JiraDeploymentSelfHosted},
+		{"NullAuth_Rejected", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":null}`, "config.spec.auth is required for a jira channel", JiraDeploymentCloud},
 		{"UnknownDeployment", `{"deployment":"onprem","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p"}}`, `config.spec.deployment "onprem" is not supported`, JiraDeployment{}},
 		{"EmptyDeployment_Rejected", `{"deployment":"","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p"}}`, "string must not be empty", JiraDeployment{}},
 	}
@@ -209,13 +213,13 @@ func TestChannelJiraConfigReceiverAuth(t *testing.T) {
 	}{
 		{
 			name:          "Cloud_BasicAuth",
-			spec:          ChannelJiraConfig{Deployment: JiraDeploymentCloud, Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Task", Auth: ChannelJiraAuth{JiraAuth: ChannelJiraCloudAuth{Email: "e@acme.com", APIToken: "t"}}},
+			spec:          ChannelJiraConfig{Deployment: JiraDeploymentCloud, Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Task", Auth: &ChannelJiraAuth{Email: "e@acme.com", APIToken: "t"}},
 			expectBasic:   &commoncfg.BasicAuth{Username: "e@acme.com", Password: "t"},
 			expectJSONKey: `"basic_auth"`,
 		},
 		{
 			name:          "SelfHosted_BearerAuthorization",
-			spec:          ChannelJiraConfig{Deployment: JiraDeploymentSelfHosted, Site: "https://jira.acme.com", Project: "OPS", IssueType: "Task", Auth: ChannelJiraAuth{JiraAuth: ChannelJiraSelfHostedAuth{PAT: "p"}}},
+			spec:          ChannelJiraConfig{Deployment: JiraDeploymentSelfHosted, Site: "https://jira.acme.com", Project: "OPS", IssueType: "Task", Auth: &ChannelJiraAuth{PAT: "p"}},
 			expectBearer:  "p",
 			expectJSONKey: `"deployment":"selfhosted"`,
 		},
