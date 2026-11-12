@@ -141,7 +141,7 @@ describe('InviteMembersModal', () => {
 			const { unmount } = renderComponent();
 			unmount();
 
-			const { getByRole } = render(
+			const { getByTestId } = render(
 				mockInviteMembersProps?.renderFooter({
 					submit: mockSubmit,
 					canSubmit: true,
@@ -149,7 +149,7 @@ describe('InviteMembersModal', () => {
 				}) as JSX.Element,
 			);
 
-			const submit = getByRole('button', { name: /invite team members/i });
+			const submit = getByTestId('invite-submit-btn');
 			await waitFor(() =>
 				expect(submit).not.toHaveAttribute('aria-disabled', 'true'),
 			);

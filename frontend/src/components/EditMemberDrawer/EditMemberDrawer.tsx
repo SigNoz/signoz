@@ -134,10 +134,12 @@ function EditMemberDrawer({
 		return [];
 	}, [member]);
 
-	const { permissions: authZPermission } = useAuthZ(requestPermission);
+	const { permissions: authZPermission, error: authZError } =
+		useAuthZ(requestPermission);
 
 	const canReadUser = member
-		? (authZPermission?.[buildUserReadPermission(member.id)]?.isGranted ?? false)
+		? !!authZError ||
+			(authZPermission?.[buildUserReadPermission(member.id)]?.isGranted ?? false)
 		: false;
 
 	const { showErrorModal } = useErrorModal();

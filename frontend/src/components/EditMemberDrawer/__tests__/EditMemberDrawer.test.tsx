@@ -17,7 +17,10 @@ import {
 	managedRoles,
 } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
-import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
+import {
+	AUTHZ_CHECK_URL,
+	setupAuthzAdmin,
+} from 'lib/authz/utils/authz-test-utils';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
@@ -266,6 +269,19 @@ describe('EditMemberDrawer', () => {
 			expect(screen.getByTestId('member-save-btn')).toHaveAttribute(
 				'aria-disabled',
 				'true',
+			),
+		);
+	});
+
+	it('still fetches the member when the permission check fails', async () => {
+		server.use(rest.post(AUTHZ_CHECK_URL, (_, res, ctx) => res(ctx.status(500))));
+
+		renderDrawer();
+
+		await waitFor(() =>
+			expect(useGetUser).toHaveBeenLastCalledWith(
+				{ id: 'user-1' },
+				{ query: { enabled: true } },
 			),
 		);
 	});
