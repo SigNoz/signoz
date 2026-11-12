@@ -11,7 +11,7 @@ from fixtures.querier import (
     build_aggregation,
     build_group_by_field,
     build_order_by,
-    build_traces_scalar_query,
+    build_traces_aggregation_query,
     get_scalar_table_data,
     make_scalar_query_request,
 )
@@ -73,7 +73,7 @@ def test_traces_aggregate_percentiles(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     percentiles = [25, 50, 90, 95, 99]
-    query = build_traces_scalar_query(
+    query = build_traces_aggregation_query(
         aggregations=[build_aggregation(f"p{p}(duration_nano)", f"p{p}") for p in percentiles],
     )
     response = make_scalar_query_request(signoz, token, now, [query])
@@ -138,7 +138,7 @@ def test_traces_aggregate_group_by_non_resource(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_traces_scalar_query(
+    query = build_traces_aggregation_query(
         aggregations=[build_aggregation("count()")],
         group_by=[build_group_by_field(group_key, field_data_type="", field_context="")],
         filter_expression="resource.service.name = 'gb-svc'",
@@ -193,7 +193,7 @@ def test_traces_aggregate_multi_group_by(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_traces_scalar_query(
+    query = build_traces_aggregation_query(
         aggregations=[build_aggregation("count()")],
         group_by=[
             build_group_by_field("service.name", "string", "resource"),
@@ -262,7 +262,7 @@ def test_traces_aggregate_having_breadth(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_traces_scalar_query(
+    query = build_traces_aggregation_query(
         aggregations=[build_aggregation("count()"), build_aggregation("sum(duration_nano)")],
         group_by=[build_group_by_field("service.name", "string", "resource")],
         order=[build_order_by("count()", "desc")],
@@ -325,7 +325,7 @@ def test_traces_duration_nano_qol_filter_with_collision(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_traces_scalar_query(
+    query = build_traces_aggregation_query(
         aggregations=[build_aggregation("count()", "cnt")],
         filter_expression=duration_filter,
     )

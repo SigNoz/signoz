@@ -7,7 +7,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.querier import RequestType, build_aggregation, build_traces_scalar_query, get_preview_statements, make_preview_query_request
+from fixtures.querier import RequestType, build_aggregation, build_traces_aggregation_query, get_preview_statements, make_preview_query_request
 from fixtures.traces import ATTRIBUTE_JSON_ROLLOUT_TIME, Traces
 
 PROMOTED_PATHS = "/api/v1/promoted_paths"
@@ -72,7 +72,7 @@ def test_traces_filters_use_skip_indexes(
                 end_ms=int(now.timestamp() * 1000),
                 request_type=RequestType.SCALAR,
                 # count() over primary-key filters is answered by the exact count projection, which reads no index
-                queries=[build_traces_scalar_query(aggregations=[build_aggregation("sum(duration_nano)")], filter_expression=filter_expression)],
+                queries=[build_traces_aggregation_query(aggregations=[build_aggregation("sum(duration_nano)")], filter_expression=filter_expression)],
             ),
             "A",
         )

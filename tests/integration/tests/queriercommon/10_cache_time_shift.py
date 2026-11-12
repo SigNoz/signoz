@@ -7,10 +7,11 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
+    RequestType,
     build_aggregation,
+    build_aggregation_query,
     build_function,
     build_group_by_field,
-    build_scalar_query,
     get_all_series,
     index_series_by_label,
     make_query_request,
@@ -58,7 +59,7 @@ def test_time_shift_partial_hit_matches_no_cache(
         ]
     )
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    query = build_scalar_query(
+    query = build_aggregation_query(
         name="A",
         signal="logs",
         aggregations=[build_aggregation("count()")],
@@ -71,11 +72,11 @@ def test_time_shift_partial_hit_matches_no_cache(
     first_end_ms = int((now - 30 * MINUTE).timestamp() * 1000)
     second_end_ms = int((now - 10 * MINUTE).timestamp() * 1000)
 
-    warm = make_query_request(signoz, token, start_ms, first_end_ms, [query], no_cache=False)
+    warm = make_query_request(signoz, token, start_ms, first_end_ms, [query], no_cache=False, request_type=RequestType.TIME_SERIES)
     assert warm.status_code == HTTPStatus.OK, warm.text
-    cached = make_query_request(signoz, token, start_ms, second_end_ms, [query], no_cache=False)
+    cached = make_query_request(signoz, token, start_ms, second_end_ms, [query], no_cache=False, request_type=RequestType.TIME_SERIES)
     assert cached.status_code == HTTPStatus.OK, cached.text
-    fresh = make_query_request(signoz, token, start_ms, second_end_ms, [query], no_cache=True)
+    fresh = make_query_request(signoz, token, start_ms, second_end_ms, [query], no_cache=True, request_type=RequestType.TIME_SERIES)
     assert fresh.status_code == HTTPStatus.OK, fresh.text
 
     fresh_points = {service: {point["timestamp"]: point["value"] for point in series["values"]} for service, series in index_series_by_label(get_all_series(fresh.json(), "A"), "service.name").items()}

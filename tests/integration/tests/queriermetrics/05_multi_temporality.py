@@ -10,6 +10,7 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
 from fixtures.metrics import Metrics
 from fixtures.querier import (
+    RequestType,
     build_builder_query,
     get_all_series,
     get_series_values,
@@ -59,7 +60,7 @@ def test_with_steady_values_and_reset(
         filter_expression='endpoint = "/orders"',
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
@@ -118,7 +119,7 @@ def test_group_by_endpoint(
         group_by=["endpoint"],
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
@@ -242,7 +243,7 @@ def test_for_service_with_switch(
         filter_expression='service = "api"',
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
@@ -294,7 +295,7 @@ def test_for_week_long_time_range(
         "sum",
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
     data = response.json()
     result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
@@ -338,7 +339,7 @@ def test_for_month_long_time_range(
         "sum",
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
     data = response.json()
     result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])

@@ -7,6 +7,7 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
 from fixtures.querier import (
+    RequestType,
     assert_results_equal,
     build_builder_query,
     get_series_values,
@@ -56,16 +57,16 @@ def test_builder_shortening_the_time_range_at_the_end(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    base_query = make_query_request(signoz, token, start_time_ms, end_time_ms_base_query, query, no_cache=False)
+    base_query = make_query_request(signoz, token, start_time_ms, end_time_ms_base_query, query, no_cache=False, request_type=RequestType.TIME_SERIES)
     assert base_query.status_code == HTTPStatus.OK, base_query.text
     points = sorted(get_series_values(base_query.json(), "A"), key=lambda point: point["timestamp"])
     returned_points = [(point["value"], point.get("partial", False)) for point in points]
     assert returned_points == [(16, False), (4096, False)]
 
-    from_cache = make_query_request(signoz, token, start_time_ms, end_time_ms_shortened_query, query, no_cache=False)
+    from_cache = make_query_request(signoz, token, start_time_ms, end_time_ms_shortened_query, query, no_cache=False, request_type=RequestType.TIME_SERIES)
     assert from_cache.status_code == HTTPStatus.OK, from_cache.text
 
-    uncached = make_query_request(signoz, token, start_time_ms, end_time_ms_shortened_query, query, no_cache=True)
+    uncached = make_query_request(signoz, token, start_time_ms, end_time_ms_shortened_query, query, no_cache=True, request_type=RequestType.TIME_SERIES)
     assert uncached.status_code == HTTPStatus.OK, uncached.text
 
     assert_results_equal(from_cache.json(), uncached.json(), "A", "shortened end")
@@ -116,16 +117,16 @@ def test_builder_shortening_the_time_range_at_the_start(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    base_query = make_query_request(signoz, token, start_time_ms_base_query, end_time_ms, query, no_cache=False)
+    base_query = make_query_request(signoz, token, start_time_ms_base_query, end_time_ms, query, no_cache=False, request_type=RequestType.TIME_SERIES)
     assert base_query.status_code == HTTPStatus.OK, base_query.text
     points = sorted(get_series_values(base_query.json(), "A"), key=lambda point: point["timestamp"])
     returned_points = [(point["value"], point.get("partial", False)) for point in points]
     assert returned_points == [(65536, False), (4096, False)]
 
-    from_cache = make_query_request(signoz, token, start_time_ms_shortened_query, end_time_ms, query, no_cache=False)
+    from_cache = make_query_request(signoz, token, start_time_ms_shortened_query, end_time_ms, query, no_cache=False, request_type=RequestType.TIME_SERIES)
     assert from_cache.status_code == HTTPStatus.OK, from_cache.text
 
-    uncached = make_query_request(signoz, token, start_time_ms_shortened_query, end_time_ms, query, no_cache=True)
+    uncached = make_query_request(signoz, token, start_time_ms_shortened_query, end_time_ms, query, no_cache=True, request_type=RequestType.TIME_SERIES)
     assert uncached.status_code == HTTPStatus.OK, uncached.text
 
     assert_results_equal(from_cache.json(), uncached.json(), "A", "shortened start")
@@ -178,16 +179,16 @@ def test_builder_time_range_shorter_than_the_step(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    base_query = make_query_request(signoz, token, start_time_ms, end_time_ms_base_query, query, no_cache=False)
+    base_query = make_query_request(signoz, token, start_time_ms, end_time_ms_base_query, query, no_cache=False, request_type=RequestType.TIME_SERIES)
     assert base_query.status_code == HTTPStatus.OK, base_query.text
     points = sorted(get_series_values(base_query.json(), "A"), key=lambda point: point["timestamp"])
     returned_points = [(point["value"], point.get("partial", False)) for point in points]
     assert returned_points == [(16, False), (4096, False)]
 
-    from_cache = make_query_request(signoz, token, start_time_ms_short_query, end_time_ms_short_query, query, no_cache=False)
+    from_cache = make_query_request(signoz, token, start_time_ms_short_query, end_time_ms_short_query, query, no_cache=False, request_type=RequestType.TIME_SERIES)
     assert from_cache.status_code == HTTPStatus.OK, from_cache.text
 
-    uncached = make_query_request(signoz, token, start_time_ms_short_query, end_time_ms_short_query, query, no_cache=True)
+    uncached = make_query_request(signoz, token, start_time_ms_short_query, end_time_ms_short_query, query, no_cache=True, request_type=RequestType.TIME_SERIES)
     assert uncached.status_code == HTTPStatus.OK, uncached.text
 
     assert_results_equal(from_cache.json(), uncached.json(), "A", "range shorter than the step")
@@ -238,10 +239,10 @@ def test_promql_running_the_same_query_twice(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    first = make_query_request(signoz, token, start_time_ms, end_time_ms, query, no_cache=False)
+    first = make_query_request(signoz, token, start_time_ms, end_time_ms, query, no_cache=False, request_type=RequestType.TIME_SERIES)
     assert first.status_code == HTTPStatus.OK, first.text
 
-    second = make_query_request(signoz, token, start_time_ms, end_time_ms, query, no_cache=False)
+    second = make_query_request(signoz, token, start_time_ms, end_time_ms, query, no_cache=False, request_type=RequestType.TIME_SERIES)
     assert second.status_code == HTTPStatus.OK, second.text
 
     assert_results_equal(first.json(), second.json(), "A", "the same query twice")
@@ -296,7 +297,7 @@ def test_promql_shifting_the_time_range(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    aligned_and_cached = make_query_request(signoz, token, aligned_start_time_ms, aligned_end_time_ms, query, no_cache=False)
+    aligned_and_cached = make_query_request(signoz, token, aligned_start_time_ms, aligned_end_time_ms, query, no_cache=False, request_type=RequestType.TIME_SERIES)
     assert aligned_and_cached.status_code == HTTPStatus.OK, aligned_and_cached.text
 
     ## at each timestamp t, promql takes the highest sample in (t-2minutes, t],
@@ -312,7 +313,7 @@ def test_promql_shifting_the_time_range(
 
     # an unaligned range is rounded down to the step, so this asks for the same
     # instants as the aligned query and gets the same answer
-    unaligned_and_cached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=False)
+    unaligned_and_cached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, no_cache=False, request_type=RequestType.TIME_SERIES)
     assert unaligned_and_cached.status_code == HTTPStatus.OK, unaligned_and_cached.text
     points = sorted(get_series_values(unaligned_and_cached.json(), "A"), key=lambda point: point["timestamp"])
     assert [(point["timestamp"], point["value"]) for point in points] == aligned_points, "unaligned query, rounded to the step"
@@ -329,7 +330,7 @@ def test_promql_shifting_the_time_range(
         (unaligned_end_time_ms, 1100),  # t = 3m30s
     ]
     for run in ("first", "second"):
-        unaligned_as_asked = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, unaligned_query, no_cache=False)
+        unaligned_as_asked = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, unaligned_query, no_cache=False, request_type=RequestType.TIME_SERIES)
         assert unaligned_as_asked.status_code == HTTPStatus.OK, unaligned_as_asked.text
         points = sorted(get_series_values(unaligned_as_asked.json(), "A"), key=lambda point: point["timestamp"])
         assert [(point["timestamp"], point["value"]) for point in points] == unaligned_points, f"unaligned query as asked, {run} run"
@@ -371,17 +372,17 @@ def test_promql_time_range_shorter_than_the_step(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    base_query = make_query_request(signoz, token, start_time_ms, end_time_ms_base_query, query, no_cache=False)
+    base_query = make_query_request(signoz, token, start_time_ms, end_time_ms_base_query, query, no_cache=False, request_type=RequestType.TIME_SERIES)
     assert base_query.status_code == HTTPStatus.OK, base_query.text
     points = sorted(get_series_values(base_query.json(), "A"), key=lambda point: point["timestamp"])
     assert [(point["timestamp"], point["value"]) for point in points] == [(start_time_ms, 100), (end_time_ms_base_query, 1100)]
 
     # a range shorter than the step rounds down to the single instant at minute
     # 10, the instant the base query closed on
-    from_cache = make_query_request(signoz, token, start_time_ms_short_query, end_time_ms_short_query, query, no_cache=False)
+    from_cache = make_query_request(signoz, token, start_time_ms_short_query, end_time_ms_short_query, query, no_cache=False, request_type=RequestType.TIME_SERIES)
     assert from_cache.status_code == HTTPStatus.OK, from_cache.text
 
-    uncached = make_query_request(signoz, token, start_time_ms_short_query, end_time_ms_short_query, query, no_cache=True)
+    uncached = make_query_request(signoz, token, start_time_ms_short_query, end_time_ms_short_query, query, no_cache=True, request_type=RequestType.TIME_SERIES)
     assert uncached.status_code == HTTPStatus.OK, uncached.text
 
     assert_results_equal(from_cache.json(), uncached.json(), "A", "range shorter than the step")
@@ -427,7 +428,7 @@ def test_builder_refreshing_a_sliding_time_range(
     # a dashboard left open on a one hour range, re-running a minute later each time
     for refresh in range(20):
         refresh_start_ms = start_time_ms + refresh * MINUTE_MS
-        from_cache = make_query_request(signoz, token, refresh_start_ms, refresh_start_ms + 60 * MINUTE_MS, query, no_cache=False)
+        from_cache = make_query_request(signoz, token, refresh_start_ms, refresh_start_ms + 60 * MINUTE_MS, query, no_cache=False, request_type=RequestType.TIME_SERIES)
         assert from_cache.status_code == HTTPStatus.OK, from_cache.text
 
         # each refresh is stitched out of overlapping cached ranges, so this catches
@@ -438,7 +439,7 @@ def test_builder_refreshing_a_sliding_time_range(
         assert returned_points == expected_points, f"refresh {refresh} did not return the minutes it covers"
 
     last_refresh_start_ms = start_time_ms + 19 * MINUTE_MS
-    uncached = make_query_request(signoz, token, last_refresh_start_ms, last_refresh_start_ms + 60 * MINUTE_MS, query, no_cache=True)
+    uncached = make_query_request(signoz, token, last_refresh_start_ms, last_refresh_start_ms + 60 * MINUTE_MS, query, no_cache=True, request_type=RequestType.TIME_SERIES)
     assert uncached.status_code == HTTPStatus.OK, uncached.text
 
     assert_results_equal(from_cache.json(), uncached.json(), "A", "the twentieth refresh")

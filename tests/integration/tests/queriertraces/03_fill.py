@@ -12,7 +12,7 @@ from fixtures.querier import (
     build_aggregation,
     build_formula_query,
     build_group_by_field,
-    build_traces_scalar_query,
+    build_traces_aggregation_query,
     find_named_result,
     get_all_series,
     index_series_by_label,
@@ -72,7 +72,7 @@ def test_traces_fill_plain(
         start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
         end_ms=int(now.timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
-        queries=[build_traces_scalar_query(aggregations=[build_aggregation("count()")], functions=functions)],
+        queries=[build_traces_aggregation_query(aggregations=[build_aggregation("count()")], functions=functions)],
         format_options=format_options,
     )
 
@@ -138,7 +138,7 @@ def test_traces_fill_group_by(
         end_ms=int(now.timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_traces_scalar_query(
+            build_traces_aggregation_query(
                 aggregations=[build_aggregation("count()")],
                 group_by=[build_group_by_field("service.name", "string", "resource")],
                 functions=functions,
@@ -212,8 +212,8 @@ def test_traces_fill_formula(
         end_ms=int(now.timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_traces_scalar_query(aggregations=[build_aggregation("count()")], filter_expression="resource.service.name = 'test'", disabled=True),
-            build_traces_scalar_query(name="B", aggregations=[build_aggregation("count()")], filter_expression="resource.service.name = 'another-test'", disabled=True),
+            build_traces_aggregation_query(aggregations=[build_aggregation("count()")], filter_expression="resource.service.name = 'test'", disabled=True),
+            build_traces_aggregation_query(name="B", aggregations=[build_aggregation("count()")], filter_expression="resource.service.name = 'another-test'", disabled=True),
             build_formula_query("F1", "A + B", functions=functions),
         ],
         format_options=format_options,
@@ -284,8 +284,8 @@ def test_traces_fill_formula_group_by(
         end_ms=int(now.timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_traces_scalar_query(aggregations=[build_aggregation("count()")], group_by=group_by, disabled=True),
-            build_traces_scalar_query(name="B", aggregations=[build_aggregation("count()")], group_by=group_by, disabled=True),
+            build_traces_aggregation_query(aggregations=[build_aggregation("count()")], group_by=group_by, disabled=True),
+            build_traces_aggregation_query(name="B", aggregations=[build_aggregation("count()")], group_by=group_by, disabled=True),
             build_formula_query("F1", "A + B", functions=functions),
         ],
         format_options=format_options,

@@ -9,7 +9,7 @@ from fixtures.querier import (
     assert_grouped_series,
     build_aggregation,
     build_group_by_field,
-    build_traces_scalar_query,
+    build_traces_aggregation_query,
     get_resource_evolution_time,
     index_series_by_label,
     make_query_request,
@@ -99,7 +99,7 @@ def test_traces_resource_evolution(
         end_ms=int((before_1 + timedelta(minutes=1)).timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_traces_scalar_query(
+            build_traces_aggregation_query(
                 aggregations=[build_aggregation("count()")],
                 group_by=[build_group_by_field("service.name")],
             )
@@ -131,7 +131,7 @@ def test_traces_resource_evolution(
         end_ms=int((after_2 + timedelta(minutes=1)).timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_traces_scalar_query(
+            build_traces_aggregation_query(
                 aggregations=[build_aggregation("count()")],
                 group_by=[build_group_by_field("service.name")],
             )
@@ -163,7 +163,7 @@ def test_traces_resource_evolution(
         end_ms=int((after_2 + timedelta(minutes=1)).timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_traces_scalar_query(
+            build_traces_aggregation_query(
                 aggregations=[build_aggregation("count()")],
                 group_by=[build_group_by_field("service.name")],
             )
@@ -202,7 +202,7 @@ def test_traces_resource_evolution(
         end_ms=int((after_2 + timedelta(minutes=1)).timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_traces_scalar_query(
+            build_traces_aggregation_query(
                 aggregations=[build_aggregation("count_distinct(service.name)")],
                 group_by=[build_group_by_field("deployment.environment")],
             )

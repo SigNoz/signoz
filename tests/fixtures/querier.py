@@ -173,7 +173,7 @@ def make_query_request(
     end_ms: int,
     queries: list[dict],
     *,
-    request_type: str = RequestType.TIME_SERIES,
+    request_type: str,
     format_options: dict | None = None,
     variables: dict | None = None,
     no_cache: bool = True,
@@ -209,7 +209,7 @@ def make_preview_query_request(
     end_ms: int,
     queries: list[dict],
     *,
-    request_type: str = RequestType.TIME_SERIES,
+    request_type: str,
     format_options: dict | None = None,
     variables: dict | None = None,
     verbose: bool = True,
@@ -282,6 +282,7 @@ def query_metric_values(  # pylint: disable=too-many-arguments,too-many-position
         start_ms=start_epoch * 1000,
         end_ms=end_epoch * 1000,
         queries=[build_builder_query("A", metric_name, time_agg, space_agg, step_interval=step_interval)],
+        request_type=RequestType.TIME_SERIES,
     )
     assert response.status_code == HTTPStatus.OK, response.text
     return sorted(get_series_values(response.json(), "A"), key=lambda v: v["timestamp"])
@@ -679,7 +680,7 @@ def assert_raw_row_subset(
     assert expected.items() <= data.items(), f"expected subset {expected}, got data {data}"
 
 
-def build_scalar_query(
+def build_aggregation_query(
     name: str,
     signal: str,
     aggregations: list[dict],
@@ -768,7 +769,7 @@ def build_heatmap_query(
     return {"type": "builder_query", "spec": spec}
 
 
-def build_traces_scalar_query(
+def build_traces_aggregation_query(
     aggregations: list[dict],
     *,
     name: str = "A",
@@ -781,8 +782,7 @@ def build_traces_scalar_query(
     disabled: bool = False,
     functions: list[dict] | None = None,
 ) -> dict:
-    """build_scalar_query pinned to the traces signal, with name defaulting to 'A'."""
-    return build_scalar_query(
+    return build_aggregation_query(
         name=name,
         signal="traces",
         aggregations=aggregations,
@@ -1321,7 +1321,7 @@ def run_query_case(signoz: types.SigNoz, token: str, now: datetime, case: dict[s
             aggregations = aggregation
         else:
             aggregations = []
-        query = build_scalar_query(
+        query = build_aggregation_query(
             name=case["name"],
             signal="logs",
             aggregations=aggregations,

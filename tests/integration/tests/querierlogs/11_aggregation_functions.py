@@ -10,9 +10,9 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
     build_aggregation,
+    build_aggregation_query,
     build_group_by_field,
     build_order_by,
-    build_scalar_query,
     get_scalar_table_data,
     make_scalar_query_request,
 )
@@ -72,7 +72,7 @@ def test_logs_aggregate_functions(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_scalar_query(
+    query = build_aggregation_query(
         name="A",
         signal="logs",
         aggregations=[
@@ -165,7 +165,7 @@ def test_logs_aggregate_if_predicates_use_filter_syntax(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_scalar_query(
+    query = build_aggregation_query(
         name="A",
         signal="logs",
         aggregations=[
@@ -240,7 +240,7 @@ def test_logs_aggregate_arguments_are_field_names(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_scalar_query(
+    query = build_aggregation_query(
         name="A",
         signal="logs",
         aggregations=[
@@ -288,7 +288,7 @@ def test_logs_aggregate_invalid_expression_is_bad_request(
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_scalar_query(name="A", signal="logs", aggregations=[build_aggregation(expression)])
+    query = build_aggregation_query(name="A", signal="logs", aggregations=[build_aggregation(expression)])
     response = make_scalar_query_request(signoz, token, now, [query])
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
@@ -335,7 +335,7 @@ def test_logs_aggregate_having(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_scalar_query(
+    query = build_aggregation_query(
         name="A",
         signal="logs",
         aggregations=[build_aggregation(expr) for expr in aggregations],

@@ -7,6 +7,7 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.fs import get_testdata_file_path
 from fixtures.metrics import Metrics
 from fixtures.querier import (
+    RequestType,
     build_builder_query,
     get_all_warnings,
     make_query_request,
@@ -50,12 +51,12 @@ def test_histogram_p90_returns_warning_outside_data_window(
     end_ms = int(now.timestamp() * 1000)
 
     start_4h = int((now - timedelta(hours=4)).timestamp() * 1000)
-    response = make_query_request(signoz, token, start_4h, end_ms, [query])
+    response = make_query_request(signoz, token, start_4h, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
     start_15m = int((now - timedelta(minutes=15)).timestamp() * 1000)
-    response = make_query_request(signoz, token, start_15m, end_ms, [query])
+    response = make_query_request(signoz, token, start_15m, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
     data = response.json()
     warnings = get_all_warnings(data)
@@ -83,7 +84,7 @@ def test_non_existent_metrics_returns_warning(
     end_ms = int(now.timestamp() * 1000)
 
     start_2h = int((now - timedelta(hours=2)).timestamp() * 1000)
-    response = make_query_request(signoz, token, start_2h, end_ms, [query])
+    response = make_query_request(signoz, token, start_2h, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
@@ -111,7 +112,7 @@ def test_non_existent_internal_metrics_returns_no_warning(
     end_ms = int(now.timestamp() * 1000)
 
     start_2h = int((now - timedelta(hours=2)).timestamp() * 1000)
-    response = make_query_request(signoz, token, start_2h, end_ms, [query])
+    response = make_query_request(signoz, token, start_2h, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert get_all_warnings(data) == []
@@ -172,6 +173,7 @@ def test_variable_in_filter_returns_no_warning(
         end_ms,
         [query],
         variables={"tag": {"type": "query", "value": "service-a"}},
+        request_type=RequestType.TIME_SERIES,
     )
 
     assert response.status_code == HTTPStatus.OK

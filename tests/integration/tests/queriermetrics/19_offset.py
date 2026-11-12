@@ -7,7 +7,7 @@ import pytest
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
-from fixtures.querier import build_builder_query, get_all_series, make_query_request
+from fixtures.querier import RequestType, build_builder_query, get_all_series, make_query_request
 
 
 @pytest.mark.parametrize(
@@ -62,6 +62,7 @@ def test_metrics_time_series_offset_skips_series_in_order(
                 offset=offset,
             )
         ],
+        request_type=RequestType.TIME_SERIES,
     )
 
     assert response.status_code == HTTPStatus.OK, response.text

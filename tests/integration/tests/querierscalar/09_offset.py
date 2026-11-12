@@ -11,11 +11,11 @@ from fixtures.metrics import Metrics
 from fixtures.querier import (
     RequestType,
     build_aggregation,
+    build_aggregation_query,
     build_formula_query,
     build_group_by_field,
     build_metrics_aggregation,
     build_order_by,
-    build_scalar_query,
     find_named_result,
     get_scalar_table_data,
     make_query_request,
@@ -62,7 +62,7 @@ def test_logs_scalar_offset_skips_rows_in_order(
         token,
         now,
         [
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="logs",
                 aggregations=[build_aggregation("count()")],
@@ -117,7 +117,7 @@ def test_traces_scalar_offset_skips_rows_in_order(
         token,
         now,
         [
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="traces",
                 aggregations=[build_aggregation("count()")],
@@ -162,7 +162,7 @@ def test_metrics_scalar_offset_skips_rows_in_order(
         token,
         now,
         [
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="metrics",
                 aggregations=[build_metrics_aggregation("offset.gauge", "latest", "sum", "unspecified", reduce_to="last")],
@@ -205,7 +205,7 @@ def test_formula_scalar_offset_skips_rows_in_order(
         end_ms=int(now.timestamp() * 1000),
         request_type=RequestType.SCALAR,
         queries=[
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="logs",
                 aggregations=[build_aggregation("count()")],
@@ -240,7 +240,7 @@ def test_negative_offset_is_rejected(
         signoz,
         token,
         datetime.now(tz=UTC).replace(second=0, microsecond=0),
-        [build_scalar_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], offset=-1)],
+        [build_aggregation_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], offset=-1)],
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
@@ -257,7 +257,7 @@ def test_offset_without_limit_is_rejected(
         signoz,
         token,
         datetime.now(tz=UTC).replace(second=0, microsecond=0),
-        [build_scalar_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], offset=1)],
+        [build_aggregation_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], offset=1)],
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text

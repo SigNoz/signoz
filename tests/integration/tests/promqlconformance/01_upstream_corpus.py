@@ -8,7 +8,7 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
 from fixtures.promqltestcorpus import ingest_promqltest_corpus
-from fixtures.querier import get_all_series, make_query_request
+from fixtures.querier import RequestType, get_all_series, make_query_request
 
 TESTDATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "testdata")
 # The corpus (see fixtures/promqltestcorpus.py) is frozen from Prometheus' own
@@ -57,7 +57,7 @@ def test_upstream_promqltest_corpus(
         }
         case_id = f"{case['source']}[{case['variant']}]"
 
-        response = make_query_request(signoz, token, req_start_ms, end_ms, [query])
+        response = make_query_request(signoz, token, req_start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
         if response.status_code != HTTPStatus.OK:
             failures.append(f"{case_id}: HTTP {response.status_code} for {case['expr']!r}: {response.text[:200]}")
             continue

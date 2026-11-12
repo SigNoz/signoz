@@ -8,6 +8,7 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
 from fixtures.querier import (
+    RequestType,
     build_builder_query,
     get_all_series,
     get_series_values,
@@ -46,7 +47,7 @@ def test_rate_with_steady_values_and_reset(
         filter_expression='endpoint = "/orders"',
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
@@ -90,7 +91,7 @@ def test_rate_group_by_endpoint(
         group_by=["endpoint"],
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()

@@ -10,9 +10,9 @@ from fixtures.logs import Logs
 from fixtures.querier import (
     RequestType,
     build_aggregation,
+    build_aggregation_query,
     build_group_by_field,
     build_raw_query,
-    build_scalar_query,
     get_rows,
     get_scalar_table_data,
     make_query_request,
@@ -92,7 +92,7 @@ def test_logs_unknown_key_collision_groupby_parity(
             token,
             now,
             [
-                build_scalar_query(
+                build_aggregation_query(
                     "A",
                     "logs",
                     [build_aggregation("count()")],
@@ -210,7 +210,7 @@ def test_logs_unknown_key_collision_aggregation_parity(
             token,
             now,
             [
-                build_scalar_query(
+                build_aggregation_query(
                     "A",
                     "logs",
                     [build_aggregation(f"count({key})", "cnt"), build_aggregation(f"count_distinct({key})", "distinct")],

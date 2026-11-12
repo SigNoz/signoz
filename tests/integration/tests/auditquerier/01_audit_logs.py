@@ -10,8 +10,8 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
     BuilderQuery,
     build_aggregation,
+    build_aggregation_query,
     build_order_by,
-    build_scalar_query,
     make_query_request,
 )
 
@@ -362,7 +362,7 @@ def test_audit_scalar_count_failures(
         start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
         end_ms=int(now.timestamp() * 1000),
         queries=[
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="logs",
                 source="audit",

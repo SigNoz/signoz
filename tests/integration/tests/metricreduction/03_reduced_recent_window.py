@@ -6,6 +6,7 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metricreduction import build_recent_gauge_data
 from fixtures.querier import (
+    RequestType,
     aligned_epoch,
     build_builder_query,
     get_all_series,
@@ -59,6 +60,7 @@ def test_recent_queries_group_by_full_labels(
         start_ms=base_epoch * 1000,
         end_ms=(base_epoch + MINUTES * 60) * 1000,
         queries=[build_builder_query("A", metric_name, "sum", "sum", step_interval=300, group_by=["service"])],
+        request_type=RequestType.TIME_SERIES,
     )
     assert response.status_code == HTTPStatus.OK, response.text
 

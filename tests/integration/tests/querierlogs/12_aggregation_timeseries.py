@@ -10,9 +10,9 @@ from fixtures.logs import Logs
 from fixtures.querier import (
     RequestType,
     build_aggregation,
+    build_aggregation_query,
     build_group_by_field,
     build_order_by,
-    build_scalar_query,
     get_all_series,
     get_scalar_table_data,
     index_series_by_label,
@@ -64,7 +64,7 @@ def test_logs_aggregate_min_max(
         end_ms=int((now + timedelta(seconds=5)).timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="logs",
                 aggregations=[
@@ -135,7 +135,7 @@ def test_logs_aggregate_time_series_limit(
         end_ms=int(now.timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
-            build_scalar_query(
+            build_aggregation_query(
                 name="A",
                 signal="logs",
                 aggregations=[build_aggregation("count()")],
@@ -187,7 +187,7 @@ def test_logs_aggregate_multi_group_by(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_scalar_query(
+    query = build_aggregation_query(
         name="A",
         signal="logs",
         aggregations=[build_aggregation("count()")],

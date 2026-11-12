@@ -9,10 +9,10 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
 from fixtures.querier import (
     assert_scalar_result_order,
+    build_aggregation_query,
     build_group_by_field,
     build_metrics_aggregation,
     build_order_by,
-    build_scalar_query,
     get_scalar_table_data,
     make_scalar_query_request,
 )
@@ -59,7 +59,7 @@ def test_metrics_scalar_reduce_to_modes(
 
     aggregation = build_metrics_aggregation("test.reduce.metric", "latest", "sum", "unspecified")
     aggregation["reduceTo"] = reduce_to
-    query = build_scalar_query(
+    query = build_aggregation_query(
         name="A",
         signal="metrics",
         aggregations=[aggregation],
@@ -118,7 +118,7 @@ def test_metrics_scalar_limit_ranks_by_reduced_value(
     )
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_scalar_query(
+    query = build_aggregation_query(
         name="A",
         signal="metrics",
         aggregations=[build_metrics_aggregation(metric_name, "latest", "sum", "unspecified", reduce_to=reduce_to)],
@@ -175,7 +175,7 @@ def test_metrics_scalar_limit_ranks_after_functions(
     )
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_scalar_query(
+    query = build_aggregation_query(
         name="A",
         signal="metrics",
         aggregations=[build_metrics_aggregation(metric_name, "latest", "sum", "unspecified", reduce_to="max")],
@@ -200,7 +200,7 @@ def test_metrics_scalar_missing_reduce_to_rejected(
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = build_scalar_query(
+    query = build_aggregation_query(
         name="A",
         signal="metrics",
         aggregations=[build_metrics_aggregation("test.reduce.metric", "latest", "sum", "unspecified")],
@@ -221,7 +221,7 @@ def test_metrics_scalar_invalid_reduce_to_rejected(
 
     aggregation = build_metrics_aggregation("test.reduce.metric", "latest", "sum", "unspecified")
     aggregation["reduceTo"] = "p99"
-    query = build_scalar_query(name="A", signal="metrics", aggregations=[aggregation])
+    query = build_aggregation_query(name="A", signal="metrics", aggregations=[aggregation])
     response = make_scalar_query_request(signoz, token, now, [query])
 
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text

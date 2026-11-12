@@ -6,7 +6,7 @@ from uuid import uuid4
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
-from fixtures.querier import get_all_series, make_query_request
+from fixtures.querier import RequestType, get_all_series, make_query_request
 
 MINUTE_MS = 60_000
 
@@ -41,7 +41,7 @@ def test_promql_subquery_without_step_evaluates(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     query = {"type": "promql", "spec": {"name": "A", "query": f"max_over_time({metric}[5m:])", "skipStepAlignment": True}}
-    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query], request_type=RequestType.TIME_SERIES)
     assert response.status_code == HTTPStatus.OK, response.text[:300]
     series = get_all_series(response.json(), "A")
     assert series, "the subquery must return the inserted series"
@@ -55,5 +55,6 @@ def test_promql_subquery_without_step_evaluates(
         start_ms,
         end_ms,
         [{"type": "promql", "spec": {"name": "A", "query": metric, "skipStepAlignment": True}}],
+        request_type=RequestType.TIME_SERIES,
     )
     assert response.status_code == HTTPStatus.OK, response.text[:300]

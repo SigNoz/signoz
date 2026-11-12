@@ -32,7 +32,7 @@ def test_logs_scalar_filter_unknown_key_synthesizes(
         token,
         now,
         [
-            querier.build_scalar_query(
+            querier.build_aggregation_query(
                 name="A",
                 signal="logs",
                 aggregations=[querier.build_aggregation("count()")],
@@ -64,7 +64,7 @@ def test_logs_scalar_group_by_over_empty_filter_returns_no_rows(
         token,
         now,
         [
-            querier.build_scalar_query(
+            querier.build_aggregation_query(
                 name="A",
                 signal="logs",
                 aggregations=[querier.build_aggregation("count()")],
@@ -95,7 +95,7 @@ def test_logs_scalar_group_by_unknown_key_null_bucket(
         token,
         now,
         [
-            querier.build_scalar_query(
+            querier.build_aggregation_query(
                 name="A",
                 signal="logs",
                 aggregations=[querier.build_aggregation("count()")],
@@ -142,7 +142,7 @@ def test_traces_scalar_filter_unknown_key_synthesizes(
         token,
         now,
         [
-            querier.build_scalar_query(
+            querier.build_aggregation_query(
                 name="A",
                 signal="traces",
                 aggregations=[querier.build_aggregation("count()")],
@@ -187,7 +187,7 @@ def test_traces_scalar_group_by_unknown_key_null_bucket(
         token,
         now,
         [
-            querier.build_scalar_query(
+            querier.build_aggregation_query(
                 name="A",
                 signal="traces",
                 aggregations=[querier.build_aggregation("count()")],
