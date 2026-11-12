@@ -32,6 +32,19 @@ export default {
 				],
 			},
 			{
+				kind: 'planned-maintenance',
+				type: 'metaresource',
+				allowedVerbs: [
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
+			},
+			{
 				kind: 'quick-filter',
 				type: 'metaresource',
 				allowedVerbs: ['list', 'read', 'update'],
