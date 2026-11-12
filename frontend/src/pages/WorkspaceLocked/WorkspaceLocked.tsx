@@ -167,11 +167,16 @@ export default function WorkspaceBlocked(): JSX.Element {
 										<Typography>{t('observabilityDescription')}</Typography>
 									</Flex>
 									<List
+										className="workspace-locked__list"
 										itemLayout="horizontal"
 										dataSource={enterpriseGradeValuesData}
 										renderItem={(item, index): React.ReactNode => (
-											<List.Item key={index}>
-												<List.Item.Meta avatar={<CircleArrowRight />} title={item.title} />
+											<List.Item key={index} className="workspace-locked__list-item">
+												<List.Item.Meta
+													className="workspace-locked__list-meta"
+													avatar={<CircleArrowRight />}
+													title={item.title}
+												/>
 											</List.Item>
 										)}
 									/>
