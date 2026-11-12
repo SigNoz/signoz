@@ -1,14 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-	Button,
-	Empty,
-	Input,
-	InputRef,
-	Menu,
-	MenuRef,
-	Popover,
-	Spin,
-} from 'antd';
+import { Button, Input, InputRef, Menu, MenuRef, Popover, Spin } from 'antd';
+import Empty from 'periscope/components/Empty/Empty';
 import {
 	getListMetricsQueryKey,
 	useListMetrics,
