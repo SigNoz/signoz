@@ -104,6 +104,18 @@ describe('resolveDistributionBars', () => {
 		[1, 3, 2],
 	];
 
+	it('sizes the count axis by the buckets left in the window', () => {
+		// Buckets ≤ 1, (1, 2], > 2; a max of 1 keeps only the first.
+		const { yMax } = resolveDistributionBars({
+			xAxis: clampDistributionXAxis(xAxis, undefined, 1),
+			counts: [[4, 1000, 0]],
+			stack: StackMode.Normal,
+			isLogY: false,
+		});
+
+		expect(yMax).toBe(4);
+	});
+
 	it('stacks series in each bucket under normal', () => {
 		const { rects, yMax } = resolveDistributionBars({
 			xAxis,
