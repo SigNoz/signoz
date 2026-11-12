@@ -28,6 +28,8 @@ LOGS_DATA = "ruler/test_scenarios/threshold_below_at_least_once/alert_data.jsonl
 LOGS_RULE = "ruler/test_scenarios/threshold_below_at_least_once/rule.json"
 TRACES_DATA = "ruler/test_scenarios/threshold_above_average/alert_data.jsonl"
 TRACES_RULE = "ruler/test_scenarios/threshold_above_average/rule.json"
+AI_TRACES_DATA = "ruler/test_scenarios/rule_state_history_ai_traces/alert_data.jsonl"
+AI_TRACES_RULE = "ruler/test_scenarios/rule_state_history_ai_traces/rule.json"
 
 
 GOOGLECHAT_CASES = [
@@ -91,6 +93,29 @@ GOOGLECHAT_CASES = [
                         "json_body": googlechat_card_subset(
                             "threshold_above_average",
                             [("View Related Traces", r"traces-explorer\?"), ("Open in SigNoz", r"/alerts/overview\?ruleId=")],
+                        ),
+                    },
+                ),
+            ],
+        ),
+    ),
+    types.AlertManagerNotificationTestCase(
+        name="googlechat_rich_card_ai_traces",
+        rule_path=AI_TRACES_RULE,
+        alert_data=[types.AlertData(type="traces", data_path=AI_TRACES_DATA)],
+        channel_config=googlechat_config("gc-ai-traces"),
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=60,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": "/v1/spaces/gc-ai-traces/messages",
+                        "count": 1,
+                        "json_body": googlechat_card_subset(
+                            "rule_state_history_ai_traces",
+                            [("View Related AI Traces", r"/ai-observability/explorer\?"), ("Open in SigNoz", r"/alerts/overview\?ruleId=")],
                         ),
                     },
                 ),

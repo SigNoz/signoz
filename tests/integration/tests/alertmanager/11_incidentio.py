@@ -27,6 +27,8 @@ METRICS_DATA = "ruler/test_scenarios/threshold_above_at_least_once/alert_data.js
 METRICS_RULE = "ruler/test_scenarios/threshold_above_at_least_once/rule.json"
 LOGS_DATA = "ruler/test_scenarios/threshold_below_at_least_once/alert_data.jsonl"
 LOGS_RULE = "ruler/test_scenarios/threshold_below_at_least_once/rule.json"
+AI_TRACES_DATA = "ruler/test_scenarios/rule_state_history_ai_traces/alert_data.jsonl"
+AI_TRACES_RULE = "ruler/test_scenarios/rule_state_history_ai_traces/rule.json"
 
 
 INCIDENTIO_CASES = [
@@ -67,6 +69,29 @@ INCIDENTIO_CASES = [
                         "json_body": incidentio_event_subset(
                             "threshold_below_at_least_once",
                             [("View in SigNoz", r"/alerts/overview\?ruleId="), ("View related logs", r"/logs/logs-explorer\?")],
+                        ),
+                    },
+                ),
+            ],
+        ),
+    ),
+    types.AlertManagerNotificationTestCase(
+        name="incidentio_rich_event_ai_traces",
+        rule_path=AI_TRACES_RULE,
+        alert_data=[types.AlertData(type="traces", data_path=AI_TRACES_DATA)],
+        channel_config=incidentio_config("inc-ai-traces"),
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=60,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": incidentio_path("inc-ai-traces"),
+                        "count": 1,
+                        "json_body": incidentio_event_subset(
+                            "rule_state_history_ai_traces",
+                            [("View in SigNoz", r"/alerts/overview\?ruleId="), ("View related AI traces", r"/ai-observability/explorer\?")],
                         ),
                     },
                 ),

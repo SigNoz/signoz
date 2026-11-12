@@ -21,7 +21,7 @@ export const SlackInitialConfig: Partial<AlertmanagertypesChannelSlackConfigDTO>
      *Summary:* {{ .Annotations.summary }}
      *Description:* {{ .Annotations.description }}
      *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}
-     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}
+     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}}{{ if match "^https?://[^?#]*/ai-observability/" .Annotations.related_traces -}} View in <{{ .Annotations.related_traces }}|ai traces explorer> {{- else -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end }}{{- end}}
 
      *Details:*
        {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
@@ -143,7 +143,7 @@ export const JsmOpsInitialConfig: Partial<AlertmanagertypesChannelJSMOpsConfigDT
 
 {{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
 
-{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})
+{{ end }}{{ if .Annotations.related_traces }}{{ if match "^https?://[^?#]*/ai-observability/" .Annotations.related_traces }}[View related AI traces]{{ else }}[View related traces]{{ end }}({{ .Annotations.related_traces }})
 
 {{ end }}{{ end }}`,
 		priority:
@@ -170,7 +170,7 @@ export const IncidentIOInitialConfig: Partial<AlertmanagertypesChannelIncidentIO
 
 {{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
 
-{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})
+{{ end }}{{ if .Annotations.related_traces }}{{ if match "^https?://[^?#]*/ai-observability/" .Annotations.related_traces }}[View related AI traces]{{ else }}[View related traces]{{ end }}({{ .Annotations.related_traces }})
 
 {{ end }}{{ end }}`,
 	};
