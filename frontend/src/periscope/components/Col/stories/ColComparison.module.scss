@@ -20,13 +20,18 @@
 	padding: var(--spacing-8);
 	overflow: hidden;
 	border: 1px dashed var(--l3-border);
+
+	// Beats antd Row's font reset, so the columns' own reset shows.
+	.row {
+		font-family: monospace;
+		font-size: var(--periscope-font-size-small);
+	}
 }
 
 .subject,
 .sibling {
 	height: var(--spacing-20);
 	overflow: hidden;
-	font-size: var(--periscope-font-size-small);
 	white-space: nowrap;
 	color: var(--l1-foreground);
 	border: 1px solid var(--l2-border);

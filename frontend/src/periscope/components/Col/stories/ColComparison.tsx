@@ -44,8 +44,34 @@ function ColComparison({
 	wrap,
 	siblingSpan,
 	siblingCount,
-	...colProps
+	span,
+	order,
+	offset,
+	push,
+	pull,
+	flex,
+	xs,
+	sm,
+	md,
+	lg,
+	xl,
+	xxl,
 }: ColComparisonProps): JSX.Element {
+	// Picked one by one: Storybook also passes its global args to the story.
+	const colProps = {
+		span,
+		order,
+		offset,
+		push,
+		pull,
+		flex,
+		xs,
+		sm,
+		md,
+		lg,
+		xl,
+		xxl,
+	};
 	const rowContext = useMemo(
 		(): RowContextState => ({ gutter: [gutterX, gutterY], wrap }),
 		[gutterX, gutterY, wrap],
@@ -63,11 +89,13 @@ function ColComparison({
 				<div className={styles.frame}>
 					<AntdRow
 						data-testid={ANTD_ROW_TEST_ID}
+						className={styles.row}
 						gutter={[gutterX, gutterY]}
 						wrap={wrap}
 					>
 						<AntdCol data-testid={ANTD_COL_TEST_ID} {...colProps}>
 							<div className={styles.subject}>col</div>
+							<span>text</span> <a href="#col">link</a>
 						</AntdCol>
 						{siblingKeys.map((key) => (
 							<AntdCol key={key} span={siblingSpanProp}>
@@ -82,12 +110,14 @@ function ColComparison({
 				<div className={styles.frame}>
 					<AntdRow
 						data-testid={LOCAL_ROW_TEST_ID}
+						className={styles.row}
 						gutter={[gutterX, gutterY]}
 						wrap={wrap}
 					>
 						<RowContext.Provider value={rowContext}>
 							<Col data-testid={LOCAL_COL_TEST_ID} {...colProps}>
 								<div className={styles.subject}>col</div>
+								<span>text</span> <a href="#col">link</a>
 							</Col>
 							{siblingKeys.map((key) => (
 								<Col key={key} span={siblingSpanProp}>
