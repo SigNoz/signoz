@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { Col, Row } from 'antd';
+import { Col } from 'antd';
+import Row from 'periscope/components/Row/Row';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import logEvent from 'api/common/logEvent';

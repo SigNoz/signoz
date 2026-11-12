@@ -6,7 +6,8 @@ import {
 	EyeOpen,
 	Trash2,
 } from '@signozhq/icons';
-import { Button, Row } from 'antd';
+import { Button } from 'antd';
+import Row from 'periscope/components/Row/Row';
 
 import { QueryWrapper } from 'container/QueryBuilder/rawQueryEditors/styles';
 

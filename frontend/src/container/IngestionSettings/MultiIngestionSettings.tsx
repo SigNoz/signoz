@@ -13,13 +13,13 @@ import {
 	Form,
 	InputNumber,
 	Modal,
-	Row,
 	Select,
 	Table,
 	TablePaginationConfig,
 	TableProps as AntDTableProps,
 	Tooltip,
 } from 'antd';
+import Row from 'periscope/components/Row/Row';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { NotificationInstance } from 'antd/es/notification/interface';
