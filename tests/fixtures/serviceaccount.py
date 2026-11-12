@@ -99,8 +99,9 @@ def find_service_account_by_name(signoz: types.SigNoz, token: str, name: str) ->
     """Find a service account by name from the list endpoint."""
     list_resp = requests.get(
         signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
+        params={"query": name},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
     assert list_resp.status_code == HTTPStatus.OK, list_resp.text
-    return next(service_account for service_account in list_resp.json()["data"] if service_account["name"] == name)
+    return next(service_account for service_account in list_resp.json()["data"]["serviceAccounts"] if service_account["name"] == name)

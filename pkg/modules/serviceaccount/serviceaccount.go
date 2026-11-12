@@ -32,8 +32,8 @@ type Module interface {
 	// Gets a service account by id
 	Get(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.ServiceAccount, error)
 
-	// List all service accounts for an organization.
-	List(context.Context, valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error)
+	// Lists one page of service accounts for an organization.
+	List(context.Context, valuer.UUID, *serviceaccounttypes.ListServiceAccountsParams) (*serviceaccounttypes.ListableServiceAccount, error)
 
 	// Updates an existing service account
 	Update(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error
