@@ -189,13 +189,6 @@ def insert_audit_logs(
 
 
 def sample_audit_logs(now: datetime.datetime) -> list[AuditLog]:
-    """Five events in the last five seconds, bodies named by the constants above.
-
-    alice creates then updates dash-001 (fields_changed 3 and 8), a viewer fails to
-    delete it (exception.type forbidden, ERROR), a service account creates alert-001
-    (fields_changed 12), and alice updates user-020 under scope version 2.0.0; the
-    rest carry scope version 1.0.0.
-    """
     return [
         AuditLog(
             timestamp=now - datetime.timedelta(seconds=5),
