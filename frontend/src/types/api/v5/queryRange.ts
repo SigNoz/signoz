@@ -411,11 +411,6 @@ export interface RawData {
 	rows: RawRow[];
 }
 
-export interface DistributionData {
-	// Structure to be defined based on requirements
-	[key: string]: any;
-}
-
 // Response data structures with results array
 export interface TimeSeriesResponseData {
 	results: TimeSeriesData[];
@@ -429,15 +424,10 @@ export interface RawResponseData {
 	results: RawData[];
 }
 
-export interface DistributionResponseData {
-	results: DistributionData[];
-}
-
 export type QueryRangeDataV5 =
 	| TimeSeriesResponseData
 	| ScalarResponseData
-	| RawResponseData
-	| DistributionResponseData;
+	| RawResponseData;
 
 export interface QueryRangeResponseV5 {
 	type: RequestType;
