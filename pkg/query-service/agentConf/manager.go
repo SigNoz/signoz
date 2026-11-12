@@ -105,6 +105,17 @@ func (m *Manager) RecommendAgentConfig(orgId valuer.UUID, currentConfYaml []byte
 	configId string,
 	err error,
 ) {
+	return m.recommendAgentConfig(orgId, currentConfYaml, true)
+}
+
+// Implements opamp.AgentConfigProvider
+func (m *Manager) PreviewAgentConfig(orgId valuer.UUID, currentConfYaml []byte) ([]byte, error) {
+	recommendation, _, err := m.recommendAgentConfig(orgId, currentConfYaml, false)
+	return recommendation, err
+}
+
+func (m *Manager) recommendAgentConfig(orgId valuer.UUID, currentConfYaml []byte, recordDeployment bool) ([]byte, string, error) {
+	var configId string
 	recommendation := currentConfYaml
 	settingVersionsUsed := []string{}
 
@@ -134,6 +145,9 @@ func (m *Manager) RecommendAgentConfig(orgId valuer.UUID, currentConfYaml []byte
 
 		settingVersionsUsed = append(settingVersionsUsed, configId)
 
+		if !recordDeployment {
+			continue
+		}
 		_ = m.updateDeployStatus(
 			context.Background(),
 			orgId,
