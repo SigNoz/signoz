@@ -776,7 +776,7 @@ describe('PrivateRoute', () => {
 			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
 		});
 
-		it('should redirect VIEWER to workspace locked when trying to access members settings', async () => {
+		it('should allow VIEWER to access members settings when workspace is blocked', () => {
 			renderPrivateRoute({
 				initialRoute: ROUTES.MEMBERS_SETTINGS,
 				appContext: {
@@ -789,7 +789,7 @@ describe('PrivateRoute', () => {
 				isCloudUser: true,
 			});
 
-			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
+			assertStaysOnRoute(ROUTES.MEMBERS_SETTINGS);
 		});
 
 		it('should redirect VIEWER to workspace locked when trying to access my-settings', async () => {
