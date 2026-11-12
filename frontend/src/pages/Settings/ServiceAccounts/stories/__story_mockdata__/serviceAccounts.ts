@@ -13,7 +13,10 @@ import type {
 	ServiceaccounttypesServiceAccountDTO,
 	ServiceaccounttypesServiceAccountRoleDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { ServiceaccounttypesServiceAccountStatusDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	ServiceaccounttypesDSLKeyDTO,
+	ServiceaccounttypesServiceAccountStatusDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	reflectedEqualityValue,
 	spliceClause,
@@ -135,7 +138,7 @@ export const serviceAccountsPage = (
 		data: {
 			serviceAccounts: matched.slice(offset, offset + limit),
 			total: matched.length,
-			reservedKeywords: ['created_at', 'email', 'name', 'status', 'updated_at'],
+			reservedKeywords: Object.values(ServiceaccounttypesDSLKeyDTO),
 		},
 	};
 };

@@ -126,7 +126,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 		server.use(listServiceAccountsHandler(onRequest));
 
 		render(
-			<NuqsTestingAdapter>
+			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />
 			</NuqsTestingAdapter>,
 		);
@@ -145,7 +145,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 		server.use(listServiceAccountsHandler(onRequest));
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(
-			<NuqsTestingAdapter>
+			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />
 			</NuqsTestingAdapter>,
 		);
@@ -169,7 +169,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 		server.use(listServiceAccountsHandler(onRequest));
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(
-			<NuqsTestingAdapter>
+			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />
 			</NuqsTestingAdapter>,
 		);
@@ -228,7 +228,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 		);
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(
-			<NuqsTestingAdapter>
+			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />
 			</NuqsTestingAdapter>,
 		);
@@ -275,7 +275,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 		);
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(
-			<NuqsTestingAdapter>
+			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />
 			</NuqsTestingAdapter>,
 		);
@@ -293,7 +293,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 	it('clicking a row opens the drawer with account details visible', async () => {
 		render(
-			<NuqsTestingAdapter hasMemory>
+			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />
 			</NuqsTestingAdapter>,
 		);
@@ -322,7 +322,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 		);
 
 		render(
-			<NuqsTestingAdapter hasMemory>
+			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />
 			</NuqsTestingAdapter>,
 		);
@@ -355,7 +355,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 	it('"New Service Account" button opens the Create Service Account modal', async () => {
 		render(
-			<NuqsTestingAdapter hasMemory>
+			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />
 			</NuqsTestingAdapter>,
 		);
@@ -383,7 +383,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 		);
 
 		render(
-			<NuqsTestingAdapter>
+			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />
 			</NuqsTestingAdapter>,
 		);
