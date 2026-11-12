@@ -16,6 +16,8 @@ import type { PanelWindow } from '../../__story_mockdata__/panelData';
 
 import type {
 	BUCKET_WIDTHS,
+	DISTRIBUTION_OVERFLOWS,
+	DISTRIBUTION_X_RANGES,
 	GAPS,
 	HEATMAP_COUNT_RANGES,
 	HEATMAP_SOURCES,
@@ -52,6 +54,9 @@ export type SpanGaps = (typeof SPAN_GAPS)[number];
 export type TopListAggregation = (typeof TOP_LIST_AGGREGATIONS)[number];
 
 export type PieSlices = (typeof PIE_SLICES)[number];
+export type DistributionOverflow = (typeof DISTRIBUTION_OVERFLOWS)[number];
+
+export type DistributionXRange = (typeof DISTRIBUTION_X_RANGES)[number];
 
 /** The controls that shape the dashboard document. */
 export interface PanelArgs {
@@ -73,6 +78,8 @@ export interface PanelArgs {
 	showPoints: boolean;
 	spanGaps: SpanGaps;
 	columnUnits: boolean;
+	distributionXRange: DistributionXRange;
+	percentiles: boolean;
 	showRank: boolean;
 	showShare: boolean;
 	topListAggregation: TopListAggregation;
@@ -94,4 +101,5 @@ export interface PanelResponseArgs extends PanelRequest {
 	listWideRows: boolean;
 	gaps: Gaps;
 	pieSlices: PieSlices;
+	overflow: DistributionOverflow;
 }
