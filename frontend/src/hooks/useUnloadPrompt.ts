@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { holdUnsavedChanges } from 'hooks/useUnsavedChangesStore';
+import { holdUnsavedChanges } from 'store/unsavedChanges/unsavedChangesStore';
 
 /**
  * While `enabled`, a refresh or tab close asks the browser to confirm leaving,

@@ -1,7 +1,7 @@
 import { renderHook } from 'tests/test-utils';
 
 import { useUnloadPrompt } from '../useUnloadPrompt';
-import { useUnsavedChangesStore } from '../useUnsavedChangesStore';
+import { useUnsavedChangesStore } from 'store/unsavedChanges/unsavedChangesStore';
 
 function fireBeforeUnload(): Event {
 	const event = new Event('beforeunload', { cancelable: true });

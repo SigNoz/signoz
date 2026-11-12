@@ -2,16 +2,20 @@ import { toast } from '@signozhq/ui/sonner';
 import {
 	holdUnsavedChanges,
 	useUnsavedChangesStore,
-} from 'hooks/useUnsavedChangesStore';
+} from 'store/unsavedChanges/unsavedChangesStore';
 import { getCurrentLocation, navigate } from 'lib/router/navigation';
 import { rest, server } from 'mocks-server/server';
 import { act, fireEvent, render, waitFor } from 'tests/test-utils';
 import { Info } from 'types/api/v1/version/get';
 import { consumeAppReload, markAppReload, reloadApp } from 'utils/appReload';
 
-import { NEW_VERSION_TOAST_ID, SERVER_VERSION_HEADER } from '../constants';
+import { NEW_VERSION_TOAST_ID } from '../constants';
 import NewVersionPrompt from '../NewVersionPrompt';
-import { reportServerVersion, useAppVersionStore } from '../useAppVersionStore';
+import {
+	reportServerVersion,
+	SERVER_VERSION_HEADER,
+	useAppVersionStore,
+} from 'store/appVersion/appVersionStore';
 
 jest.mock('@signozhq/ui/sonner', () => ({
 	...jest.requireActual('@signozhq/ui/sonner'),

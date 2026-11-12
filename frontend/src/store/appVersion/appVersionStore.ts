@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+export const SERVER_VERSION_HEADER = 'x-signoz-version';
+
 interface AppVersionState {
 	isNewVersionAvailable: boolean;
 }

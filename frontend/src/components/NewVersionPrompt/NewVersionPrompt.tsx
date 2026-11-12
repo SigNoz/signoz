@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { toast } from '@signozhq/ui/sonner';
-import { useUnsavedChangesStore } from 'hooks/useUnsavedChangesStore';
+import { useUnsavedChangesStore } from 'store/unsavedChanges/unsavedChangesStore';
 import { reloadApp } from 'utils/appReload';
 
 import { NEW_VERSION_TOAST_ID } from './constants';
 import { useAppReloadNotice } from './useAppReloadNotice';
-import { useAppVersionStore } from './useAppVersionStore';
+import { useAppVersionStore } from 'store/appVersion/appVersionStore';
 import { useCheckVersionOnTabReturn } from './useCheckVersionOnTabReturn';
 import { useLoadNewVersionOnNavigation } from './useLoadNewVersionOnNavigation';
 

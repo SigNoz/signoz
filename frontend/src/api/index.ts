@@ -3,8 +3,10 @@ import { QueryClient } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import post from 'api/v2/sessions/rotate/post';
 import afterLogin from 'AppRoutes/utils';
-import { SERVER_VERSION_HEADER } from 'components/NewVersionPrompt/constants';
-import { reportServerVersion } from 'components/NewVersionPrompt/useAppVersionStore';
+import {
+	reportServerVersion,
+	SERVER_VERSION_HEADER,
+} from 'store/appVersion/appVersionStore';
 import axios, {
 	AxiosError,
 	AxiosResponse,
