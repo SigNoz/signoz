@@ -8,6 +8,7 @@ import {
 	CREATE_PASSWORD,
 	CREATE_USER,
 	DELETE_USER,
+	LIST_PASSWORD,
 	LIST_USER,
 	READ_USER,
 	UPDATE_USER,
@@ -17,6 +18,7 @@ import {
 	expectInviteDenied,
 	expectInviteLinkDenied,
 	expectInviteOpen,
+	expectPasswordListDenied,
 	expectListDenied,
 	expectReadDenied,
 	expectResetLinkDenied,
@@ -99,6 +101,15 @@ export const NoUserAttach: Story = {
 export const NoInviteLink: Story = {
 	args: { revoked: [CREATE_PASSWORD] },
 	play: expectInviteLinkDenied,
+};
+
+/**
+ * A pending member's invite link also needs `factor-password` list to look up
+ * its status, so the button stays locked without it.
+ */
+export const NoPasswordList: Story = {
+	args: { revoked: [LIST_PASSWORD] },
+	play: expectPasswordListDenied,
 };
 
 /**

@@ -78,6 +78,21 @@ export const expectInviteLinkDenied = async ({
 	await expectDenied(await findInDrawer('member-reset-link-btn'));
 };
 
+export const expectPasswordListDenied = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await openMemberDrawer(canvasElement, /podrick payne/i);
+	const button = await findInDrawer('member-reset-link-btn');
+	await waitFor(
+		() =>
+			expect(button.getAttribute('data-denied-permissions')).toContain(
+				'list||__||factor-password',
+			),
+		untilLoaded,
+	);
+	await expectDenied(button);
+};
+
 export const expectInviteOpen = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {

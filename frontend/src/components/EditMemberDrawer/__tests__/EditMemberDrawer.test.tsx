@@ -17,9 +17,11 @@ import {
 	managedRoles,
 } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
+import { PasswordListPermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
 import {
 	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
+	setupAuthzDeny,
 } from 'lib/authz/utils/authz-test-utils';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
@@ -480,6 +482,67 @@ describe('EditMemberDrawer', () => {
 		expect(
 			screen.getByRole('button', { name: /generate invite link/i }),
 		).toBeInTheDocument();
+	});
+
+	it('looks up the invite link when factor-password list is granted', async () => {
+		renderDrawer({ member: invitedMember });
+
+		await waitFor(() =>
+			expect(useGetResetPasswordToken).toHaveBeenLastCalledWith(
+				{ id: invitedMember.id },
+				{ query: { enabled: true } },
+			),
+		);
+		expect(screen.getByTestId('member-reset-link-btn')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+	});
+
+	it('skips the invite link lookup and disables the button without factor-password list', async () => {
+		server.use(setupAuthzDeny(PasswordListPermission));
+
+		renderDrawer({ member: invitedMember });
+
+		await waitFor(() =>
+			expect(screen.getByTestId('member-reset-link-btn')).toHaveAttribute(
+				'data-denied-permissions',
+				PasswordListPermission,
+			),
+		);
+		expect(screen.getByTestId('member-reset-link-btn')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+		expect(useGetResetPasswordToken).toHaveBeenLastCalledWith(
+			{ id: invitedMember.id },
+			{ query: { enabled: false } },
+		);
+	});
+
+	it('still looks up the invite link when the permission check fails', async () => {
+		server.use(rest.post(AUTHZ_CHECK_URL, (_, res, ctx) => res(ctx.status(500))));
+
+		renderDrawer({ member: invitedMember });
+
+		await waitFor(() =>
+			expect(useGetResetPasswordToken).toHaveBeenLastCalledWith(
+				{ id: invitedMember.id },
+				{ query: { enabled: true } },
+			),
+		);
+	});
+
+	it('keeps the reset link enabled for an active member without factor-password list', async () => {
+		server.use(setupAuthzDeny(PasswordListPermission));
+
+		renderDrawer();
+
+		await screen.findByDisplayValue('Alice Smith');
+		expect(screen.getByTestId('member-reset-link-btn')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('calls deleteUser after confirming revoke invite for invited members', async () => {
