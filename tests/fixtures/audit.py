@@ -11,6 +11,12 @@ from ksuid import KsuidMs
 from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
 
+ALICE_CREATED_DASHBOARD = "alice@acme.com (user-001) created dashboard (dash-001)"
+ALICE_UPDATED_DASHBOARD = "alice@acme.com (user-001) updated dashboard (dash-001)"
+VIEWER_FAILED_DELETE_DASHBOARD = "viewer@acme.com (user-002) failed to delete dashboard (dash-001): forbidden"
+SA_CREATED_ALERT_RULE = "sa-001 created alert-rule (alert-001)"
+ALICE_UPDATED_USER = "alice@acme.com (user-001) updated user (user-020)"
+
 
 class AuditResource(ABC):
     labels: str
@@ -180,3 +186,90 @@ def insert_audit_logs(
     cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
     for table in ["logs", "logs_resource"]:
         clickhouse.conn.query(f"TRUNCATE TABLE signoz_audit.{table} ON CLUSTER '{cluster}' SYNC")
+
+
+def sample_audit_logs(now: datetime.datetime) -> list[AuditLog]:
+    """Five events in the last five seconds, bodies named by the constants above.
+
+    alice creates then updates dash-001 (fields_changed 3 and 8), a viewer fails to
+    delete it (exception.type forbidden, ERROR), a service account creates alert-001
+    (fields_changed 12), and alice updates user-020 under scope version 2.0.0; the
+    rest carry scope version 1.0.0.
+    """
+    return [
+        AuditLog(
+            timestamp=now - datetime.timedelta(seconds=5),
+            resources={"service.name": "signoz", "signoz.resource.kind": "dashboard", "signoz.resource.id": "dash-001"},
+            attributes={
+                "signoz.principal.id": "user-001",
+                "signoz.principal.email": "alice@acme.com",
+                "signoz.principal.type": "user",
+                "signoz.audit.verb": "create",
+                "signoz.audit.outcome": "success",
+                "signoz.audit.fields_changed": 3,
+            },
+            body=ALICE_CREATED_DASHBOARD,
+            event_name="signoz.audit.create",
+            scope_version="1.0.0",
+        ),
+        AuditLog(
+            timestamp=now - datetime.timedelta(seconds=4),
+            resources={"service.name": "signoz", "signoz.resource.kind": "dashboard", "signoz.resource.id": "dash-001"},
+            attributes={
+                "signoz.principal.id": "user-001",
+                "signoz.principal.email": "alice@acme.com",
+                "signoz.principal.type": "user",
+                "signoz.audit.verb": "update",
+                "signoz.audit.outcome": "success",
+                "signoz.audit.fields_changed": 8,
+            },
+            body=ALICE_UPDATED_DASHBOARD,
+            event_name="signoz.audit.update",
+            scope_version="1.0.0",
+        ),
+        AuditLog(
+            timestamp=now - datetime.timedelta(seconds=3),
+            resources={"service.name": "signoz", "signoz.resource.kind": "dashboard", "signoz.resource.id": "dash-001"},
+            attributes={
+                "signoz.principal.id": "user-002",
+                "signoz.principal.email": "viewer@acme.com",
+                "signoz.principal.type": "user",
+                "signoz.audit.verb": "delete",
+                "signoz.audit.outcome": "failure",
+                "exception.type": "forbidden",
+            },
+            body=VIEWER_FAILED_DELETE_DASHBOARD,
+            event_name="signoz.audit.delete",
+            severity_text="ERROR",
+            scope_version="1.0.0",
+        ),
+        AuditLog(
+            timestamp=now - datetime.timedelta(seconds=2),
+            resources={"service.name": "signoz", "signoz.resource.kind": "alert-rule", "signoz.resource.id": "alert-001"},
+            attributes={
+                "signoz.principal.id": "sa-001",
+                "signoz.principal.type": "service_account",
+                "signoz.audit.verb": "create",
+                "signoz.audit.outcome": "success",
+                "signoz.audit.fields_changed": 12,
+            },
+            body=SA_CREATED_ALERT_RULE,
+            event_name="signoz.audit.create",
+            scope_version="1.0.0",
+        ),
+        AuditLog(
+            timestamp=now - datetime.timedelta(seconds=1),
+            resources={"service.name": "signoz", "signoz.resource.kind": "user", "signoz.resource.id": "user-020"},
+            attributes={
+                "signoz.principal.id": "user-001",
+                "signoz.principal.email": "alice@acme.com",
+                "signoz.principal.type": "user",
+                "signoz.audit.verb": "update",
+                "signoz.audit.action_category": "access_control",
+                "signoz.audit.outcome": "success",
+            },
+            body=ALICE_UPDATED_USER,
+            event_name="signoz.audit.update",
+            scope_version="2.0.0",
+        ),
+    ]
