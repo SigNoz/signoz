@@ -80,24 +80,24 @@ $dark-theme: 'darkMode';
 			background: transparent;
 		}
 
-		.ant-list {
-			&-item {
+		.workspace-locked__list {
+			.workspace-locked__list-item {
 				border-color: var(--l1-border);
 
 				.#{$light-theme} & {
 					border-color: var(--l1-border);
 				}
+			}
 
-				&-meta {
-					align-items: center !important;
+			.workspace-locked__list-meta {
+				align-items: center !important;
 
-					&-title {
-						margin-bottom: 0 !important;
-					}
+				> :first-child {
+					display: flex;
+				}
 
-					&-avatar {
-						display: flex;
-					}
+				h4 {
+					margin-bottom: 0 !important;
 				}
 			}
 		}
