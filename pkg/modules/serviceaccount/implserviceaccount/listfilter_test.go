@@ -12,7 +12,7 @@ import (
 )
 
 func TestCompileListFilter(t *testing.T) {
-	formatter := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual).Formatter()
+	store := &store{sqlstore: sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)}
 
 	testCases := []struct {
 		name         string
@@ -69,7 +69,7 @@ func TestCompileListFilter(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			compiled, err := compileListFilter(testCase.query, formatter)
+			compiled, err := store.compileListFilter(testCase.query)
 			if testCase.wantErr {
 				assert.Error(t, err)
 				return

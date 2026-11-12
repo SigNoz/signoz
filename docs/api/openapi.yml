@@ -17483,9 +17483,10 @@ paths:
   /api/v1/service_accounts:
     get:
       deprecated: false
-      description: Returns a page of the service accounts for an organisation. Supports
-        a case-insensitive search on name or email (`query`), a status filter (`status`),
-        sorting (`sort`/`order`) and offset-based pagination (`limit`/`offset`).
+      description: Returns a page of the service accounts for an organisation. `query`
+        is a filter expression over name, email, status, created_at and updated_at,
+        for example `status = 'active'`; `sort`/`order` pick the ordering and `limit`/`offset`
+        the page.
       operationId: ListServiceAccounts
       parameters:
       - description: 'A filter expression over the reserved keys name, email, status,
