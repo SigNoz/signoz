@@ -12,10 +12,20 @@ func (*throughputConverter) Name() string {
 	return "throughput"
 }
 
+// FromThroughputUnit returns how many seconds one unit of the rate spans,
+// so per-minute rates can be converted to and from per-second rates.
+func FromThroughputUnit(u Unit) float64 {
+	switch u {
+	case "cpm", "opm", "rpm", "wpm", "{count}/min", "{ops}/min", "{read}/min", "{write}/min":
+		return 60
+	default:
+		return 1
+	}
+}
+
 func (c *throughputConverter) Convert(v Value, to Unit) Value {
-	// There is no conversion to be done for throughput
 	return Value{
-		F: v.F,
+		F: v.F / FromThroughputUnit(v.U) * FromThroughputUnit(to),
 		U: to,
 	}
 }
