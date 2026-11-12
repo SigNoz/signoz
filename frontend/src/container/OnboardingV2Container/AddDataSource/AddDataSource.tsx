@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowRight, Check, Goal, Search, UserPlus, X } from '@signozhq/icons';
-import { Button, Input, Layout, Modal, Skeleton, Space, Steps } from 'antd';
+import { Button, Input, Layout, Modal, Skeleton, Steps } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import Flex from 'periscope/components/Flex/Flex';
 import { Button as SignozButton } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';

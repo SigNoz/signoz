@@ -1,4 +1,5 @@
-import { Select, SelectProps, Space } from 'antd';
+import { Select, SelectProps } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import { Typography } from '@signozhq/ui/typography';
 import { getCategorySelectOptionByName } from 'constants/formats/alertFormatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

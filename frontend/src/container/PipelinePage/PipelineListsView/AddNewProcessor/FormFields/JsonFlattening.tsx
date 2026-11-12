@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Info } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
-import { Form, Space, Tooltip } from 'antd';
+import { Form, Tooltip } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import Flex from 'periscope/components/Flex/Flex';
 import { ProcessorData } from 'types/api/pipeline/def';
 
