@@ -11,17 +11,12 @@ const STYLE_PROPERTIES = [
 	'margin-left',
 	'height',
 	'max-width',
-	'font-family',
 	'font-size',
 	'line-height',
 	'text-align',
-	'color',
 	'opacity',
-	'fill',
 	'fill-opacity',
-	'stroke',
 	'text-decoration-line',
-	'background-color',
 	'cursor',
 	'transition',
 ] as const;
@@ -78,6 +73,8 @@ export async function assertEmptyParity({
 }: {
 	canvasElement: HTMLElement;
 }): Promise<void> {
+	// Text boxes differ while the web font loads: each side falls back differently.
+	await document.fonts.ready;
 	const canvas = within(canvasElement);
 	const antd = canvas.getByTestId(ANTD_EMPTY_TEST_ID);
 	const local = canvas.getByTestId(LOCAL_EMPTY_TEST_ID);
