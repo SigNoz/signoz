@@ -160,6 +160,42 @@ describe('carryOverListFilters', () => {
 		).toBe("k8s.namespace.name NOT IN ['kube-system']");
 	});
 
+	it('keeps a clause whose quoted value reads as a keyword', () => {
+		expect(
+			carryOverListFilters(
+				"k8s.namespace.name = 'or not' AND k8s.cluster.name = 'cluster-a'",
+				InfraMonitoringEntity.PODS,
+			),
+		).toBe("k8s.namespace.name = 'or not' AND k8s.cluster.name = 'cluster-a'");
+	});
+
+	it('carries nothing from a filter with an OR', () => {
+		expect(
+			carryOverListFilters(
+				"k8s.namespace.name = 'shop' OR k8s.cluster.name = 'cluster-a'",
+				InfraMonitoringEntity.PODS,
+			),
+		).toBe('');
+	});
+
+	it('leaves out a clause with a leading NOT and keeps the rest', () => {
+		expect(
+			carryOverListFilters(
+				"NOT k8s.namespace.name = 'shop' AND k8s.cluster.name = 'cluster-a'",
+				InfraMonitoringEntity.PODS,
+			),
+		).toBe("k8s.cluster.name = 'cluster-a'");
+	});
+
+	it('carries nothing from a filter with a NOT over a group', () => {
+		expect(
+			carryOverListFilters(
+				"NOT (k8s.namespace.name = 'shop' AND k8s.cluster.name = 'cluster-a')",
+				InfraMonitoringEntity.PODS,
+			),
+		).toBe('');
+	});
+
 	it('leaves out a dropped clause that comes before a kept one', () => {
 		expect(
 			carryOverListFilters(

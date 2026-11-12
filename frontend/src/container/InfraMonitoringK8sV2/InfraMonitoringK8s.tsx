@@ -9,6 +9,7 @@ import {
 	QuickFilterCheckboxUseFieldApis,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
+import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -18,6 +19,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { CategoryIcon } from './Base/categoryIcons';
 import { K8sDynamicList } from './Base/K8sDynamicList';
+import { carryOverListFilters } from './Base/relations';
 import EntityStatusFilter from './Base/components/EntityStatusFilter/EntityStatusFilter';
 import {
 	GetClustersQuickFiltersConfig,
@@ -212,6 +214,11 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 	const handleCategorySelect = (key: string): void => {
 		if (key !== selectedCategory) {
+			const carriedExpression = carryOverListFilters(
+				currentQuery.builder.queryData[0]?.filter?.expression || '',
+				key as InfraMonitoringEntity,
+			);
+
 			void setSelectedCategory(key as string);
 			void setOrderBy(null);
 			void setGroupBy(null);
@@ -227,8 +234,11 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					queryData: [
 						{
 							...(currentQuery.builder.queryData[0] || {}),
-							filter: { expression: '' },
-							filters: { items: [], op: 'AND' as const },
+							filter: { expression: carriedExpression },
+							filters: {
+								items: convertExpressionToFilters(carriedExpression),
+								op: 'AND' as const,
+							},
 						},
 					],
 				},
