@@ -19,7 +19,7 @@ jest.mock('../../hooks/useDashboardEditContext', () => ({
 }));
 jest.mock('../hooks/useVariableSelection', () => ({
 	useVariableSelection: (): unknown => ({
-		variables: [{ name: 'env' }],
+		variables: [{ name: 'env' }, { name: 'service' }],
 		selection: {},
 		setSelection: jest.fn(),
 		autoSelect: jest.fn(),
@@ -27,15 +27,22 @@ jest.mock('../hooks/useVariableSelection', () => ({
 }));
 jest.mock('../components/VariableSelector/VariableSelector', () => ({
 	__esModule: true,
-	default: (): JSX.Element => <div data-testid="variable-selector" />,
+	default: ({ variable }: { variable: { name: string } }): JSX.Element => (
+		<div data-testid={`variable-selector-${variable.name}`} />
+	),
 }));
 
-function renderBar(readOnly: boolean, controls?: DashboardControlsInput): void {
+function renderBar(
+	readOnly: boolean,
+	controls?: DashboardControlsInput,
+	variables?: Record<string, string>,
+): void {
 	useDashboardStore.getState().setEditContext({
 		dashboardId: 'dash-1',
 		refetch: jest.fn(),
 		readOnly,
 		controls,
+		variables,
 	});
 	render(<VariablesBar dashboard={dashboard} />);
 }
@@ -56,7 +63,7 @@ describe('VariablesBar - controls', () => {
 	it('renders the selectors but no add-variable trigger', () => {
 		renderBar(true);
 
-		expect(screen.getByTestId('variable-selector')).toBeInTheDocument();
+		expect(screen.getByTestId('variable-selector-env')).toBeInTheDocument();
 		expect(
 			screen.queryByTestId('dashboard-variables-add'),
 		).not.toBeInTheDocument();
@@ -67,6 +74,15 @@ describe('VariablesBar - controls', () => {
 
 		expect(
 			screen.queryByTestId('dashboard-variables-add'),
+		).not.toBeInTheDocument();
+	});
+
+	it('renders no selector for a variable the page sets', () => {
+		renderBar(false, undefined, { service: 'frontend' });
+
+		expect(screen.getByTestId('variable-selector-env')).toBeInTheDocument();
+		expect(
+			screen.queryByTestId('variable-selector-service'),
 		).not.toBeInTheDocument();
 	});
 });

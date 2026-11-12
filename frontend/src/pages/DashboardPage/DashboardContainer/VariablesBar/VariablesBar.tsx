@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { ChevronLeft } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -35,8 +36,18 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 	const dashboardId = dashboard.id ?? '';
 	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
-	const { variables, selection, setSelection, autoSelect } =
-		useVariableSelection(dashboard);
+	const {
+		variables: allVariables,
+		selection,
+		setSelection,
+		autoSelect,
+	} = useVariableSelection(dashboard);
+	const pageVariables = useDashboardStore((s) => s.pageVariables);
+	// Page-set variables stay in `allVariables`, so dependants still see them.
+	const variables = useMemo(
+		() => allVariables.filter((variable) => !(variable.name in pageVariables)),
+		[allVariables, pageVariables],
+	);
 	// Persisted per dashboard so the full/collapsed view survives reloads.
 	const expanded = useDashboardStore(selectVariablesExpanded(dashboardId));
 	const setVariablesExpanded = useDashboardStore((s) => s.setVariablesExpanded);
@@ -98,7 +109,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 					>
 						<VariableSelector
 							variable={variable}
-							variables={variables}
+							variables={allVariables}
 							selections={selection}
 							// Until the seed commits a selection, stand in the same default it will
 							// commit, through the one resolver — an empty stand-in reads as "nothing

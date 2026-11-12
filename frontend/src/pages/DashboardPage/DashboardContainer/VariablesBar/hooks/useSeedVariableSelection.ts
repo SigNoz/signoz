@@ -95,7 +95,18 @@ export function useSeedVariableSelection(
 		() => (specVariables ?? []).map(dtoToFormModel),
 		[specVariables],
 	);
-	const fetchContext = useMemo(() => deriveFetchContext(variables), [variables]);
+	const pageVariables = useDashboardStore((s) => s.pageVariables);
+	// A page-set value is fixed and its selector never mounts, so the fetch engine
+	// treats it like text: nothing to fetch, nothing to wait on.
+	const fetchContext = useMemo(
+		() =>
+			deriveFetchContext(
+				variables.map((variable) =>
+					variable.name in pageVariables ? { ...variable, type: 'TEXT' } : variable,
+				),
+			),
+		[variables, pageVariables],
+	);
 
 	const selection = useDashboardStore(selectVariableValues(dashboardId));
 	const setVariableValues = useDashboardStore((s) => s.setVariableValues);
@@ -112,6 +123,14 @@ export function useSeedVariableSelection(
 		}
 		const seeded: VariableSelectionMap = {};
 		variables.forEach((variable) => {
+			if (variable.name in pageVariables) {
+				// Set by the page: taken as given, never reconciled against options.
+				seeded[variable.name] = {
+					value: pageVariables[variable.name],
+					allSelected: false,
+				};
+				return;
+			}
 			const urlValue = urlValues?.[variable.name];
 			const stored = selection[variable.name];
 			const seed = (value: VariableSelection): void => {
@@ -147,7 +166,7 @@ export function useSeedVariableSelection(
 			void setUrlValues(null);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- seed once per dashboard/variable set; the URL is read as of that moment
-	}, [dashboardId, variables]);
+	}, [dashboardId, variables, pageVariables]);
 
 	// Always init the context (even with no variables) so panels can tell "ready, none"
 	// from "not ready yet"; also clears it when the last variable is removed.

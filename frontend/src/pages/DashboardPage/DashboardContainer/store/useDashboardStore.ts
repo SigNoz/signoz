@@ -35,6 +35,23 @@ export type DashboardStore = EditContextSlice &
  * - collapse: per-section open state (frontend-only, persisted to localStorage).
  * - variable-selection: runtime variable values (frontend-only, persisted).
  */
+/** A page re-supplies its values on every mount, so they're never saved. */
+function withoutPageVariables(
+	state: DashboardStore,
+): DashboardStore['variableValues'] {
+	const names = Object.keys(state.pageVariables);
+	const current = state.variableValues[state.dashboardId];
+	if (names.length === 0 || !current) {
+		return state.variableValues;
+	}
+	return {
+		...state.variableValues,
+		[state.dashboardId]: Object.fromEntries(
+			Object.entries(current).filter(([name]) => !names.includes(name)),
+		),
+	};
+}
+
 export const useDashboardStore = create<DashboardStore>()(
 	persist(
 		(...a) => ({
@@ -50,7 +67,7 @@ export const useDashboardStore = create<DashboardStore>()(
 			partialize: (state) => ({
 				collapsed: state.collapsed,
 				variablesExpanded: state.variablesExpanded,
-				variableValues: state.variableValues,
+				variableValues: withoutPageVariables(state),
 			}),
 		},
 	),

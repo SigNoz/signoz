@@ -2,6 +2,7 @@ import { Typography } from '@signozhq/ui/typography';
 import Spinner from 'components/Spinner';
 import DashboardContainer from 'pages/DashboardPage/DashboardContainer';
 import type { DashboardControlsInput } from 'pages/DashboardPage/DashboardContainer/controls/types';
+import type { SelectedVariableValue } from 'pages/DashboardPage/DashboardContainer/VariablesBar/selectionTypes';
 
 import type { SystemDashboardHost } from './systemDashboardHost';
 import { useSystemDashboard } from './useSystemDashboard';
@@ -10,12 +11,14 @@ import styles from './SystemDashboard.module.scss';
 interface SystemDashboardProps {
 	host: SystemDashboardHost;
 	controls?: DashboardControlsInput;
+	variables?: Record<string, SelectedVariableValue>;
 }
 
 /** A shipped, read-only system dashboard, embedded in a feature page. */
 function SystemDashboard({
 	host,
 	controls,
+	variables,
 }: SystemDashboardProps): JSX.Element {
 	const { dashboard, isLoading, isError, error, refetch } =
 		useSystemDashboard(host);
@@ -42,6 +45,7 @@ function SystemDashboard({
 			source={host.source}
 			readOnly
 			controls={controls}
+			variables={variables}
 		/>
 	);
 }

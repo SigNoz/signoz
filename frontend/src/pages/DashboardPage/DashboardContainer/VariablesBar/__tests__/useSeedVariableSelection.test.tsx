@@ -255,4 +255,77 @@ describe('useSeedVariableSelection', () => {
 		expect(state.variableValues).toStrictEqual({});
 		expect(state.variableFetchContext).toBeNull();
 	});
+
+	describe('page-set variables', () => {
+		afterEach(() => {
+			useDashboardStore.setState({ pageVariables: {} });
+		});
+
+		it('takes the page value over the URL, the stored value and the default', () => {
+			mockUrlValues = { service: 'from-url' };
+			useDashboardStore.getState().setVariableValues('d1', {
+				service: { value: 'stored', allSelected: false },
+			});
+			useDashboardStore.setState({ pageVariables: { service: 'frontend' } });
+			const dash = dashboard('d1', [
+				model({ name: 'service', type: 'TEXT', textValue: 'default' }),
+			]);
+
+			renderHook(() => useSeedVariableSelection(dash));
+
+			expect(seededValue('d1', 'service')).toStrictEqual({
+				value: 'frontend',
+				allSelected: false,
+			});
+		});
+
+		it('keeps a page value a custom variable does not offer', () => {
+			useDashboardStore.setState({
+				pageVariables: { operation: ['GET /cart', 'POST /checkout'] },
+			});
+			const dash = dashboard('d1', [
+				model({
+					name: 'operation',
+					type: 'CUSTOM',
+					customValue: 'a,b',
+					multiSelect: true,
+				}),
+			]);
+
+			renderHook(() => useSeedVariableSelection(dash));
+
+			expect(seededValue('d1', 'operation')).toStrictEqual({
+				value: ['GET /cart', 'POST /checkout'],
+				allSelected: false,
+			});
+		});
+
+		it('gives the fetch engine nothing to fetch or wait on for a page-set query variable', () => {
+			useDashboardStore.setState({ pageVariables: { service: 'frontend' } });
+			const dash = dashboard('d1', [
+				model({ name: 'service', type: 'QUERY' }),
+				model({ name: 'env', type: 'QUERY' }),
+			]);
+
+			renderHook(() => useSeedVariableSelection(dash));
+
+			expect(
+				useDashboardStore.getState().variableFetchContext?.variableTypes,
+			).toStrictEqual({ service: 'TEXT', env: 'QUERY' });
+		});
+
+		it('re-seeds when the page value changes', () => {
+			useDashboardStore.setState({ pageVariables: { service: 'frontend' } });
+			const dash = dashboard('d1', [model({ name: 'service', type: 'TEXT' })]);
+			const { rerender } = renderHook(() => useSeedVariableSelection(dash));
+
+			useDashboardStore.setState({ pageVariables: { service: 'checkout' } });
+			rerender();
+
+			expect(seededValue('d1', 'service')).toStrictEqual({
+				value: 'checkout',
+				allSelected: false,
+			});
+		});
+	});
 });
