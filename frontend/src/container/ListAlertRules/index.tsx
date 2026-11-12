@@ -240,7 +240,6 @@ function ListAlertRules(): JSX.Element {
 								showTotalCount: true,
 							}}
 							paginationClassname={styles.paginationContainer}
-							enableAlternatingRowColors
 							plainTextCellLineClamp={2}
 						/>
 					)}
