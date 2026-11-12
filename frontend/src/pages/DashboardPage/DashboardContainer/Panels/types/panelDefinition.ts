@@ -1,3 +1,4 @@
+import type { EQueryType } from 'types/common/dashboard';
 import type { ComponentType } from 'react';
 import {
 	type DashboardtypesPanelDTO,
@@ -100,7 +101,7 @@ export interface QueryEditorPaneProps {
 	signal: TelemetrytypesSignalDTO;
 	isLoadingQueries: boolean;
 	/** Switch authoring tab (Query Builder / AI / ClickHouse / PromQL), owned by the host. */
-	onChangeQueryMode: (key: string) => void;
+	onChangeQueryMode: (queryType: EQueryType) => void;
 	onStageRunQuery: () => void;
 	onCancelQuery: () => void;
 	/** Pin the tabs row to the pane top; the View modal opts out. */

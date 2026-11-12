@@ -38,7 +38,7 @@ interface PanelEditorQueryBuilderProps {
 	 *  builder may be pointed at, and how it narrows the builder's fields. */
 	panelDefinition: RenderableQueryPanelDefinition;
 	/** Switch authoring tab; owned by the host, which remembers the Query Builder query. */
-	onChangeQueryMode: (key: string) => void;
+	onChangeQueryMode: (queryType: EQueryType) => void;
 	/** Preview fetch in flight — drives the Stage & Run button's loading/cancel state. */
 	isLoadingQueries: boolean;
 	/** Run the current query (Stage & Run button / ⌘↵). Always re-runs. */
@@ -194,7 +194,7 @@ function PanelEditorQueryBuilder({
 						[styles.stickyNav]: stickyHeader,
 					})}
 					activeKey={getQueryMode(currentQuery)}
-					onChange={onChangeQueryMode}
+					onChange={(key): void => onChangeQueryMode(key as EQueryType)}
 					tabBarExtraContent={
 						<span className={styles.runQueryBtnContainer}>
 							<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
