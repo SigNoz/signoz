@@ -1,14 +1,12 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
 import {
 	LegendPosition,
 	type TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
-import type { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { StackMode } from 'lib/uPlotV2/config/types';
 import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
-import { resolveRowIndex } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import { resolveBoundaryPrecision } from 'lib/visualization/charts/Heatmap/utils';
 import { DistributionChartProps } from 'lib/visualization/charts/types';
 import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
@@ -22,16 +20,12 @@ import {
 	cropDistributionXAxis,
 	resolveDistributionBars,
 	resolveDistributionXAxis,
-	resolveNearestSeries,
 	sumVisibleCounts,
 } from './layout';
 import { computeDistributionPercentiles } from './percentiles';
-import {
-	groupIntoOther,
-	resolveClickedGroup,
-	resolveMaxDrawnGroups,
-} from './topGroups';
+import { groupIntoOther, resolveMaxDrawnGroups } from './topGroups';
 import { DistributionYScale } from './types';
+import { useDistributionBarClick } from './useDistributionBarClick';
 
 import styles from './Distribution.module.scss';
 import { createBoundFormatter, prepareDistributionChartData } from './utils';
@@ -212,33 +206,13 @@ export default function Distribution({
 		[xAxis, layout, drawn, formatBound, renderTooltipFooter],
 	);
 
-	const onBarClickRef = useRef(onBarClick);
-	onBarClickRef.current = onBarClick;
-
-	const handleClick = useCallback(
-		({
-			xValue,
-			yValue,
-			absoluteMouseX,
-			absoluteMouseY,
-		}: ChartClickData): void => {
-			const bucket = resolveRowIndex(xAxis.edges, xValue);
-			const clicked = resolveClickedGroup(
-				drawn,
-				bucket === null
-					? null
-					: resolveNearestSeries(layout, bucket, xValue, yValue),
-				series,
-			);
-			if (clicked) {
-				onBarClickRef.current?.({
-					...clicked,
-					coordinates: { x: absoluteMouseX, y: absoluteMouseY },
-				});
-			}
-		},
-		[xAxis, layout, drawn, series],
-	);
+	const handleClick = useDistributionBarClick({
+		xAxis,
+		layout,
+		drawn,
+		series,
+		onBarClick,
+	});
 
 	const data = useMemo(
 		() => prepareDistributionChartData(xAxis, drawn.counts),
@@ -287,7 +261,7 @@ export default function Distribution({
 			canPinTooltip={canPinTooltip}
 			decimalPrecision={decimalPrecision}
 			customTooltip={renderTooltip}
-			onClick={onBarClick ? handleClick : undefined}
+			onClick={handleClick}
 			contentFooter={
 				drawn.otherGroupCount > 0 && (
 					<div className={styles.notice} data-testid="distribution-other-notice">
