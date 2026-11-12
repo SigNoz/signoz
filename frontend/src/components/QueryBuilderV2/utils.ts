@@ -11,7 +11,7 @@ import {
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import {
 	getActiveBuilder,
-	getBuilderSlotKey,
+	getBuilderSlotKeyForQueryType,
 	isBuilderQueryType,
 } from 'lib/query/builderSlot';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
@@ -1077,7 +1077,7 @@ export const adjustQueryForV5 = (currentQuery: Query): Query => {
 
 		return {
 			...currentQuery,
-			[getBuilderSlotKey(currentQuery.queryType)]: {
+			[getBuilderSlotKeyForQueryType(currentQuery.queryType)]: {
 				...activeBuilder,
 				queryData: newQueryData,
 			},

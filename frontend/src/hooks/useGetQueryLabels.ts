@@ -8,26 +8,24 @@ export const useGetQueryLabels = (
 	currentQuery: Query,
 ): { label: string; value: string }[] =>
 	useMemo(() => {
-		if (currentQuery && isBuilderQueryType(currentQuery.queryType)) {
+		if (isBuilderQueryType(currentQuery.queryType)) {
 			const activeBuilder = getActiveBuilder(currentQuery);
 			const queryLabels = getQueryLabelWithAggregation(
-				activeBuilder?.queryData || [],
+				activeBuilder.queryData ?? [],
 			);
-			const formulaLabels = (activeBuilder?.queryFormulas ?? []).map(
-				(formula) => ({
-					label: formula.queryName,
-					value: formula.queryName,
-				}),
-			);
+			const formulaLabels = (activeBuilder.queryFormulas ?? []).map((formula) => ({
+				label: formula.queryName,
+				value: formula.queryName,
+			}));
 			return [...queryLabels, ...formulaLabels];
 		}
-		if (currentQuery?.queryType === EQueryType.CLICKHOUSE) {
-			return (currentQuery?.clickhouse_sql ?? []).map((q) => ({
+		if (currentQuery.queryType === EQueryType.CLICKHOUSE) {
+			return (currentQuery.clickhouse_sql ?? []).map((q) => ({
 				label: q.name,
 				value: q.name,
 			}));
 		}
-		return (currentQuery?.promql ?? []).map((q) => ({
+		return (currentQuery.promql ?? []).map((q) => ({
 			label: q.name,
 			value: q.name,
 		}));
