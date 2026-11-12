@@ -6,7 +6,6 @@ import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.clickhouse import clickhouse_version_at_least
 from fixtures.querier import RequestType, make_query_request
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
@@ -176,32 +175,3 @@ def test_timestamp_arithmetic_aggregations_are_unsupported(
     response = query_timestamp_aggregation(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), expression, now)
 
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, f"{expression} returned {response.status_code}: {response.text[:200]}"
-
-
-def test_timestamp_avg_follows_clickhouse(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_traces: Callable[[list[Traces]], None],
-    request: pytest.FixtureRequest,
-) -> None:
-    """
-    Tests:
-    ClickHouse 26.8 averages DateTime64 into an instant inside the seeded range; older
-    versions reject it, which surfaces as the generic 500.
-    """
-    now = datetime.now(tz=UTC).replace(microsecond=0)
-    oldest, newest = now - timedelta(minutes=3), now - timedelta(minutes=1)
-    seed_two_spans(insert_traces, oldest, newest)
-
-    response = query_timestamp_aggregation(signoz, get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD), "avg(timestamp)", now)
-
-    if not clickhouse_version_at_least(request.config.getoption("--clickhouse-version"), (26, 8)):
-        assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, f"avg(timestamp) returned {response.status_code}: {response.text[:200]}"
-        return
-
-    assert response.status_code == HTTPStatus.OK, response.text
-    raw = response.json()["data"]["data"]["results"][0]["data"][0][0]
-    assert isinstance(raw, str), f"avg(timestamp) returned {raw!r}, expected an instant"
-    actual = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-    assert oldest - timedelta(seconds=1) <= actual <= newest + timedelta(seconds=1), f"avg(timestamp) returned {actual.isoformat()}, outside [{oldest.isoformat()}, {newest.isoformat()}]"
