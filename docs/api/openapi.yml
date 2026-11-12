@@ -4328,6 +4328,11 @@ components:
             last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a
             fixed window.'
       type: object
+    DashboardtypesBubbleRadius:
+      maximum: 64
+      minimum: 1
+      nullable: true
+      type: integer
     DashboardtypesBuilderQuerySpec:
       discriminator:
         mapping:
@@ -4560,6 +4565,231 @@ components:
       minimum: 0
       nullable: true
       type: number
+    DashboardtypesGeoMapBubbles:
+      properties:
+        maxRadius:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBubbleRadius'
+          description: Radius of the largest circle, in CSS pixels from 1 to 64. Null
+            means 8 on the points layer, 28 otherwise.
+        minRadius:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBubbleRadius'
+          description: Radius of the smallest circle, in CSS pixels from 1 to 64.
+            Null means 2 on the points layer, 3 otherwise.
+      type: object
+    DashboardtypesGeoMapChartAppearance:
+      properties:
+        bubbles:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapBubbles'
+          description: The circle radius range of the bubbles and points layers.
+        colors:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapColors'
+          description: The color scale applied to the colorBy values.
+        labels:
+          description: Shows country and state names once each fits inside its shape.
+            Null shows them.
+          nullable: true
+          type: boolean
+      type: object
+    DashboardtypesGeoMapColors:
+      properties:
+        fill:
+          description: The hex color varied in opacity mode. Empty uses the default
+            fill.
+          type: string
+        max:
+          description: The value mapped to the highest color. Null uses the highest
+            value in the data.
+          nullable: true
+          type: number
+        min:
+          description: The value mapped to the lowest color. Null uses the lowest
+            value in the data. Must not exceed max.
+          nullable: true
+          type: number
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapColorMode'
+          description: 'How values are colored: palette (default) picks a hue from
+            palette, opacity varies the opacity of fill.'
+        palette:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapPalette'
+          description: The named color ramp used in palette mode, such as lava (default),
+            ice or ember.
+        scale:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesHeatmapColorScale'
+          description: 'How values map onto the color range: log (default), sqrt or
+            linear.'
+        steps:
+          description: The number of distinct color steps, 2 to 128. 0 uses the chart
+            default.
+          type: integer
+      type: object
+    DashboardtypesGeoMapCountryFormat:
+      enum:
+      - auto
+      - alpha2
+      - alpha3
+      - name
+      type: string
+    DashboardtypesGeoMapLayer:
+      enum:
+      - regions
+      - bubbles
+      - points
+      type: string
+    DashboardtypesGeoMapLocation:
+      properties:
+        country:
+          description: Group-by key holding the country, for the country and subdivision
+            modes. Empty detects it by name, such as geo.country.iso_code.
+          type: string
+        countryFormat:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapCountryFormat'
+          description: 'How country values are written: auto (default) detects it,
+            alpha2, alpha3 or name.'
+        lat:
+          description: Group-by key holding the latitude, for the coordinates mode.
+            Empty detects it by name.
+          type: string
+        lon:
+          description: Group-by key holding the longitude, for the coordinates mode.
+            Empty detects it by name.
+          type: string
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapLocationMode'
+          description: 'How rows are placed: auto (default) detects it from the group-by
+            keys, country, subdivision or coordinates.'
+        region:
+          description: Group-by key holding the ISO 3166-2 region code (e.g. geo.region.iso_code),
+            for the subdivision mode. Empty detects it by name.
+          type: string
+      required:
+      - mode
+      - countryFormat
+      type: object
+    DashboardtypesGeoMapLocationMode:
+      enum:
+      - auto
+      - country
+      - subdivision
+      - coordinates
+      type: string
+    DashboardtypesGeoMapPanelSpec:
+      properties:
+        chartAppearance:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapChartAppearance'
+          description: Color scale, bubble size and labels.
+        formatting:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTableFormatting'
+          description: Per-column units and decimal precision.
+        legend:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegend'
+          description: Legend placement.
+        location:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapLocation'
+          description: The group-by columns that place each row on the map.
+        map:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapSettings'
+          description: Layer, view, projection and the value columns drawn.
+        thresholds:
+          description: Rules that recolor a shape, bubble or point when its value
+            compares to a threshold as specified.
+          items:
+            $ref: '#/components/schemas/DashboardtypesGeoMapThreshold'
+          nullable: true
+          type: array
+        visualization:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          description: The time range the values are computed over.
+      type: object
+    DashboardtypesGeoMapProjection:
+      enum:
+      - mercator
+      - equal_earth
+      - natural_earth
+      type: string
+    DashboardtypesGeoMapSettings:
+      properties:
+        colorBy:
+          description: Value column key, as in a Table panel, that sets the color.
+            Empty uses the first value column.
+          type: string
+        layer:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapLayer'
+          description: 'What is drawn: regions (default) fills each shape, bubbles
+            draws a circle per region, points a circle per coordinate.'
+        projection:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapProjection'
+          description: 'The map projection: mercator (default), equal_earth or natural_earth.'
+        sizeBy:
+          description: Value column key, as in a Table panel, that sets the bubble
+            or point size. Empty uses colorBy.
+          type: string
+        view:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapView'
+          description: 'The area shown: world (default), fit to the data, a continent,
+            or country with viewCountry.'
+        viewCountry:
+          description: Uppercase ISO 3166-1 alpha-2 code of the country the country
+            view shows.
+          type: string
+      required:
+      - layer
+      - view
+      - projection
+      type: object
+    DashboardtypesGeoMapThreshold:
+      properties:
+        color:
+          description: 'The CSS color of the shape, bubble or point while the threshold
+            is active, for example #F1575F; CSS named colors such as red also work.'
+          type: string
+        operator:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesComparisonOperator'
+          description: 'The comparison that activates the threshold: above (default),
+            below, above_or_equal, below_or_equal, equal or not_equal.'
+        unit:
+          description: The unit id of value, such as ms or percent. Empty means the
+            colorBy column's unit.
+          type: string
+        value:
+          description: The value compared against, in unit.
+          format: double
+          type: number
+      required:
+      - value
+      - color
+      type: object
+    DashboardtypesGeoMapView:
+      enum:
+      - world
+      - fit
+      - africa
+      - asia
+      - europe
+      - north_america
+      - south_america
+      - oceania
+      - country
+      type: string
     DashboardtypesGettableDashboardV2:
       properties:
         createdAt:
@@ -5297,6 +5527,7 @@ components:
         mapping:
           signoz/AreaChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec'
           signoz/BarChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
+          signoz/GeoMapPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec'
           signoz/HeatmapPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
           signoz/HistogramPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
           signoz/ListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
@@ -5319,6 +5550,7 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
       enum:
@@ -5333,6 +5565,7 @@ components:
       - signoz/TextPanel
       - signoz/HeatmapPanel
       - signoz/ScatterPlotPanel
+      - signoz/GeoMapPanel
       type: string
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
       properties:
@@ -5359,6 +5592,21 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
+          description: The options for this panel kind. {} accepts every default.
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec:
+      properties:
+        kind:
+          description: The panel kind.
+          enum:
+          - signoz/GeoMapPanel
+          type: string
+        spec:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesGeoMapPanelSpec'
           description: The options for this panel kind. {} accepts every default.
       required:
       - kind

@@ -66,9 +66,10 @@ export function useDrilldownBreakout({
 				groupBy,
 				aggregateData.filters ?? [],
 			);
-			// A regrouped query no longer joins the scatter's others; show it as a table.
+			// A regrouped query no longer joins the scatter's others, nor places a
+			// geo map's rows; show it as a table.
 			const breakoutPanelType =
-				panelType === PANEL_TYPES.SCATTER
+				panelType === PANEL_TYPES.SCATTER || panelType === PANEL_TYPES.GEO_MAP
 					? PANEL_TYPES.TABLE
 					: getBreakoutPanelType(panelType);
 			openViewWithQuery(panelId, breakoutQuery, breakoutPanelType);
