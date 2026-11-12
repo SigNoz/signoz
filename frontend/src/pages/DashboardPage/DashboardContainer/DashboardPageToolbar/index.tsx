@@ -17,6 +17,7 @@ import { getAbsoluteUrl } from 'utils/basePath';
 
 import { useCreatePanel } from '../hooks/useCreatePanel';
 import { useOptimisticPatch } from '../hooks/useOptimisticPatch';
+import { useDashboardStore } from '../store/useDashboardStore';
 import { usePublicDashboardMeta } from '../DashboardSettings/PublicDashboard/usePublicDashboardMeta';
 import PanelTypeSelectionModal from '../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import DashboardActions from './DashboardActions/DashboardActions';
@@ -56,6 +57,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		[dashboard.tags],
 	);
 
+	const readOnly = useDashboardStore((s) => s.readOnly);
 	const { showErrorModal } = useErrorModal();
 	const { patchAsync } = useOptimisticPatch();
 	const {
@@ -71,10 +73,13 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		useDashboardLockPermission({
 			dashboardId: id,
 			source: dashboard.source,
+			enabled: !readOnly,
 		});
 
 	// Public-sharing meta (deduped react-query read); drives the header globe.
-	const { isPublic, publicMeta } = usePublicDashboardMeta(id);
+	const { isPublic, publicMeta } = usePublicDashboardMeta(id, {
+		enabled: !readOnly,
+	});
 	const publicUrl = getAbsoluteUrl(publicMeta?.publicPath ?? '');
 
 	// Shared with the list's row menu — it owns the API call, the toast and the
@@ -164,7 +169,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 					isPublicDashboard={isPublic}
 					publicUrl={publicUrl}
 					isDashboardLocked={isDashboardLocked}
-					showLockToggle={showLockToggle}
+					showLockToggle={showLockToggle && !readOnly}
 					onToggleLock={
 						canToggleLock
 							? (): void => handleLockDashboardToggle('header')

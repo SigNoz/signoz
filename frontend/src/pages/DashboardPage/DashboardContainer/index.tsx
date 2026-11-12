@@ -9,6 +9,7 @@ import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
 import { useResolvedVariables } from './hooks/useResolvedVariables';
 import { useSyncVariablesForSuggestions } from './hooks/useSyncVariablesForSuggestions';
 import { useDashboardStore } from './store/useDashboardStore';
+import type { DashboardQuerySource } from './store/slices/editContextSlice';
 import styles from './DashboardContainer.module.scss';
 import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
 import LockedIndicator from './components/LockedIndicator/LockedIndicator';
@@ -19,20 +20,17 @@ import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/da
 interface DashboardContainerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 	refetch: () => void;
-	/**
-	 * @deprecated
-	 * `canEditDashboardOverride` is a temporary solution to allow the dashboard to be view only.
-	 * This is only used for LLM Observability.
-	 * It will be removed in the future.
-	 *  TODO: @Ashwin / @Abhi — remove when the final solution is implemented.
-	 */
-	canEditDashboardOverride?: boolean;
+	/** Where the host cached `dashboard`; defaults to the dashboards API entry. */
+	source?: DashboardQuerySource;
+	/** View-only mount: no edit affordance, no write, no server freshness probe. */
+	readOnly?: boolean;
 }
 
 function DashboardContainer({
 	dashboard,
 	refetch,
-	canEditDashboardOverride,
+	source,
+	readOnly = false,
 }: DashboardContainerProps): JSX.Element {
 	const spec = dashboard.spec;
 	const image = resolveDashboardImage(dashboard.image);
@@ -55,7 +53,8 @@ function DashboardContainer({
 	setEditContext({
 		dashboardId: dashboard.id,
 		refetch,
-		canEditDashboardOverride,
+		source,
+		readOnly,
 	});
 
 	// Resolve the variable selection into the V5 query payload and publish it to
@@ -66,7 +65,7 @@ function DashboardContainer({
 	// suggests them ($variable) in the panel editor and dashboards-page builder.
 	useSyncVariablesForSuggestions(dashboard);
 
-	const staleCheck = useDashboardStaleCheck(dashboard, refetch);
+	const staleCheck = useDashboardStaleCheck(dashboard, refetch, !readOnly);
 
 	// In full screen show only the sections and panels — the header/toolbar chrome
 	// is hidden for a clean presentation view (exit with Esc).
@@ -83,7 +82,7 @@ function DashboardContainer({
 					</>
 				)}
 				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
-				{!!dashboard.locked && <LockedIndicator />}
+				{!!dashboard.locked && !readOnly && <LockedIndicator />}
 				<DashboardChangedDialog
 					open={staleCheck.showPrompt}
 					onReload={staleCheck.reload}
