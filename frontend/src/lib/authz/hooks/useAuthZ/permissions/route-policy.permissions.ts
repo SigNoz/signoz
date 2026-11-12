@@ -32,3 +32,9 @@ export const buildRoutePolicyAttachPermission = (
 export const buildRoutePolicyDetachPermission = (
 	id: string,
 ): BrandedPermission => buildPermission('detach', `route-policy:${id}`);
+
+/** A policy always links its channels, so creating one needs both. */
+export const RoutePolicyCreateChecks = [
+	RoutePolicyCreatePermission,
+	RoutePolicyAttachPermission,
+];

@@ -1,7 +1,7 @@
 import { Plus, Route } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
-import { ROUTE_POLICY_CREATE_CHECKS } from 'hooks/routingPolicies/useRoutePolicyCollectionPermissions';
+import { RoutePolicyCreateChecks } from 'lib/authz/hooks/useAuthZ/permissions/route-policy.permissions';
 
 import styles from './RoutingPolicies.module.scss';
 
@@ -25,7 +25,7 @@ function RoutingPoliciesEmptyState({
 				pick, without editing each alert rule.
 			</Typography.Text>
 			<AuthZButton
-				checks={ROUTE_POLICY_CREATE_CHECKS}
+				checks={RoutePolicyCreateChecks}
 				variant="solid"
 				color="primary"
 				size="md"
