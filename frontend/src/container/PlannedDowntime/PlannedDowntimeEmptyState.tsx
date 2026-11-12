@@ -1,6 +1,6 @@
 import { CalendarClock, Plus } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
-import { PLANNED_MAINTENANCE_CREATE_CHECKS } from 'hooks/plannedDowntime/usePlannedMaintenanceCollectionPermissions';
+import { PlannedMaintenanceCreateChecks } from 'lib/authz/hooks/useAuthZ/permissions/planned-maintenance.permissions';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 
 import styles from './PlannedDowntime.module.scss';
@@ -41,7 +41,7 @@ function PlannedDowntimeEmptyState({
 				on repeat, so maintenance does not page anyone.
 			</Typography>
 			<AuthZButton
-				checks={PLANNED_MAINTENANCE_CREATE_CHECKS}
+				checks={PlannedMaintenanceCreateChecks}
 				variant="solid"
 				color="primary"
 				size="md"
