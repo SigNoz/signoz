@@ -553,23 +553,23 @@ components:
       - apiKey
       type: object
     AlertmanagertypesChannelJiraAuth:
-      oneOf:
-      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraCloudAuth'
-      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraSelfHostedAuth'
-      type: object
-    AlertmanagertypesChannelJiraCloudAuth:
       properties:
         apiToken:
-          description: The Atlassian API token paired with email. A secret; returned
-            by create, update and fetch by ID, never by list.
+          description: The Atlassian API token paired with email. Required when deployment
+            is cloud. A secret; returned by create, update and fetch by ID, never
+            by list.
           format: password
           type: string
         email:
-          description: The Atlassian account email used for basic auth.
+          description: The Atlassian account email used for basic auth. Required when
+            deployment is cloud.
           type: string
-      required:
-      - email
-      - apiToken
+        pat:
+          description: The Jira personal access token, sent as a Bearer header. Required
+            when deployment is selfhosted. A secret; returned by create, update and
+            fetch by ID, never by list.
+          format: password
+          type: string
       type: object
     AlertmanagertypesChannelJiraConfig:
       properties:
@@ -641,16 +641,6 @@ components:
       - project
       - issueType
       - auth
-      type: object
-    AlertmanagertypesChannelJiraSelfHostedAuth:
-      properties:
-        pat:
-          description: The Jira personal access token, sent as a Bearer header. A
-            secret; returned by create, update and fetch by ID, never by list.
-          format: password
-          type: string
-      required:
-      - pat
       type: object
     AlertmanagertypesChannelKind:
       enum:
