@@ -82,8 +82,8 @@ $breakpoints: (
 }
 
 .col {
-	font-family: var(--theme-font-family);
-	font-size: var(--theme-font-size);
+	font-family: var(--periscope-font-family-sans);
+	font-size: var(--periscope-font-size-base);
 
 	position: relative;
 	box-sizing: border-box;
@@ -97,20 +97,20 @@ $breakpoints: (
 }
 
 :where(.col) a {
-	color: var(--theme-color-link);
+	color: var(--primary-link);
 	text-decoration: none;
 	background-color: transparent;
 	outline: none;
 	cursor: pointer;
-	transition: color var(--theme-motion-duration-slow);
+	transition: color 0.3s;
 	-webkit-text-decoration-skip: objects;
 
 	&:hover {
-		color: var(--theme-color-link-hover);
+		color: var(--primary-link-hover);
 	}
 
 	&:active {
-		color: var(--theme-color-link-active);
+		color: var(--primary-link-hover);
 	}
 
 	&:active,
@@ -125,7 +125,7 @@ $breakpoints: (
 	}
 
 	&[disabled] {
-		color: var(--theme-color-text-disabled);
+		color: var(--l3-foreground);
 		cursor: not-allowed;
 	}
 }
