@@ -1,12 +1,15 @@
 import { rangeUtil } from '@grafana/data';
 import {
 	type DashboardtypesAreaFillModeDTO,
+	type DashboardtypesDistributionPercentilesDTO,
+	type DashboardtypesDistributionYScaleDTO,
 	DashboardtypesHeatmapYScaleDTO,
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesPrecisionOptionDTO,
 	Querybuildertypesv5BucketOptionsLinearDTOKind,
 	type DashboardtypesHeatmapColorsDTO,
 	type DashboardtypesSpanGapsDTO,
+	type DashboardtypesDistributionStackModeDTO,
 	type DashboardtypesStackModeDTO,
 	type Querybuildertypesv5BucketOptionsDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -16,9 +19,12 @@ import { FillMode, StackMode } from 'lib/uPlotV2/config/types';
 import { clampColorSteps } from 'lib/visualization/colorRamp/colorScale';
 import { HeatmapAxisScale } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import type { ColorRampOptions } from 'lib/visualization/colorRamp/types';
+import { DistributionYScale } from 'lib/visualization/charts/Distribution/types';
 
 import {
 	AREA_FILL_MODE_MAP,
+	DISTRIBUTION_STACK_MODE_MAP,
+	DISTRIBUTION_Y_SCALE_MAP,
 	HEATMAP_COLOR_MODE_MAP,
 	HEATMAP_COLOR_SCALE_MAP,
 	HEATMAP_PALETTE_MAP,
@@ -102,6 +108,35 @@ export function resolveStackMode(
 		return STACK_MODE_MAP[stack];
 	}
 	return StackMode.None;
+}
+
+/** Missing/unknown falls back to `Normal`, where Distribution's stacking starts. */
+export function resolveDistributionStackMode(
+	stack: DashboardtypesDistributionStackModeDTO | undefined,
+): StackMode {
+	return stack && stack in DISTRIBUTION_STACK_MODE_MAP
+		? DISTRIBUTION_STACK_MODE_MAP[stack]
+		: StackMode.Normal;
+}
+
+export const DEFAULT_DISTRIBUTION_PERCENTILES = [50, 90, 99];
+
+/** The percentiles to mark; on with p50/p90/p99 unless the spec turns them off. */
+export function resolveDistributionPercentiles(
+	percentiles: DashboardtypesDistributionPercentilesDTO | undefined,
+): number[] {
+	if (percentiles?.enabled === false) {
+		return [];
+	}
+	return percentiles?.values ?? DEFAULT_DISTRIBUTION_PERCENTILES;
+}
+
+export function resolveDistributionYScale(
+	scale: DashboardtypesDistributionYScaleDTO | undefined,
+): DistributionYScale {
+	return scale && scale in DISTRIBUTION_Y_SCALE_MAP
+		? DISTRIBUTION_Y_SCALE_MAP[scale]
+		: DistributionYScale.Linear;
 }
 
 /**

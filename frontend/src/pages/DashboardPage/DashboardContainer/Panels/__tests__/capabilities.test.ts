@@ -24,7 +24,8 @@ import type { PanelKind } from '../types/panelKind';
 
 const { QUERY_BUILDER, CLICKHOUSE, PROM } = EQueryType;
 const { logs, traces, metrics } = TelemetrytypesSignalDTO;
-const { time_series, scalar, raw, heatmap } = Querybuildertypesv5RequestTypeDTO;
+const { time_series, scalar, raw, heatmap, distribution } =
+	Querybuildertypesv5RequestTypeDTO;
 
 const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/TimeSeriesPanel': [
@@ -58,6 +59,7 @@ const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 		EQueryType.AI_QUERY_BUILDER,
 	],
 	'signoz/HeatmapPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
+	'signoz/DistributionPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/PieChartPanel': [
 		QUERY_BUILDER,
 		CLICKHOUSE,
@@ -78,6 +80,8 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	'signoz/NumberPanel': [metrics, logs, traces],
 	'signoz/HistogramPanel': [metrics, logs, traces],
 	'signoz/HeatmapPanel': [metrics, logs, traces],
+	// A distribution needs a bucket axis, which only a metric carries.
+	'signoz/DistributionPanel': [metrics],
 	'signoz/PieChartPanel': [metrics, logs, traces],
 	'signoz/GeoMapPanel': [metrics, logs, traces],
 	'signoz/TopListPanel': [metrics, logs, traces],
@@ -130,6 +134,13 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		requestType: heatmap,
 		formatTableResultForUI: false,
 		bucketedStepInterval: true,
+		orderTiebreaker: false,
+		serverPaginated: false,
+	},
+	'signoz/DistributionPanel': {
+		requestType: distribution,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},

@@ -1,5 +1,7 @@
 import {
 	DashboardtypesAreaFillModeDTO,
+	DashboardtypesDistributionStackModeDTO,
+	DashboardtypesDistributionYScaleDTO,
 	DashboardtypesFillModeDTO,
 	DashboardtypesHeatmapColorModeDTO,
 	DashboardtypesHeatmapColorScaleDTO,
@@ -24,6 +26,7 @@ import {
 	ColorRampPalette,
 	ColorRampScale,
 } from 'lib/visualization/colorRamp/types';
+import { DistributionYScale } from 'lib/visualization/charts/Distribution/types';
 
 /**
  * Bridges the V2 wire-format enums to the uPlotV2 chart enums. String values
@@ -57,6 +60,15 @@ export const AREA_FILL_MODE_MAP: Record<
 	DashboardtypesAreaFillModeDTO,
 	FillMode
 > = omit(FILL_MODE_MAP, DashboardtypesFillModeDTO.none);
+
+export const DISTRIBUTION_STACK_MODE_MAP: Record<
+	DashboardtypesDistributionStackModeDTO,
+	StackMode
+> = {
+	[DashboardtypesDistributionStackModeDTO.none]: StackMode.None,
+	[DashboardtypesDistributionStackModeDTO.normal]: StackMode.Normal,
+	[DashboardtypesDistributionStackModeDTO.percent]: StackMode.Percent,
+};
 
 export const STACK_MODE_MAP: Record<DashboardtypesStackModeDTO, StackMode> = {
 	[DashboardtypesStackModeDTO.none]: StackMode.None,
@@ -113,4 +125,12 @@ export const HEATMAP_Y_SCALE_MAP: Record<
 	[DashboardtypesHeatmapYScaleDTO.linear]: HeatmapAxisScale.Linear,
 	[DashboardtypesHeatmapYScaleDTO.log]: HeatmapAxisScale.Log,
 	[DashboardtypesHeatmapYScaleDTO.symlog]: HeatmapAxisScale.Symlog,
+};
+
+export const DISTRIBUTION_Y_SCALE_MAP: Record<
+	DashboardtypesDistributionYScaleDTO,
+	DistributionYScale
+> = {
+	[DashboardtypesDistributionYScaleDTO.linear]: DistributionYScale.Linear,
+	[DashboardtypesDistributionYScaleDTO.log]: DistributionYScale.Log,
 };

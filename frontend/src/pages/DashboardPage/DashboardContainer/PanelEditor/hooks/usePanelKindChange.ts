@@ -14,6 +14,7 @@ import {
 	toDistributionAggregation,
 } from 'lib/query/distributionField';
 import { rebuildBuilderForPanelType } from 'lib/query/panelQuery';
+import { isBucketCountingPanelType } from 'lib/query/bucketCountingPanelTypes';
 import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
@@ -193,7 +194,7 @@ export function usePanelKindChange({
 						isHeatmap ? toDistributionAggregation : fromDistributionAggregation,
 					),
 				};
-				return isHeatmap
+				return isBucketCountingPanelType(newPanelType)
 					? withSingleHeatmapQuery(converted)
 					: withPercentileHistogramAggregation(converted);
 			};

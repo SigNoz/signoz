@@ -29,6 +29,7 @@ export const PANEL_KIND_TO_PANEL_TYPE: Record<PanelKind, PANEL_TYPES> = {
 	'signoz/TopListPanel': PANEL_TYPES.TOP_LIST,
 	'signoz/TextPanel': PANEL_TYPES.TEXT,
 	'signoz/ScatterPlotPanel': PANEL_TYPES.SCATTER,
+	'signoz/DistributionPanel': PANEL_TYPES.DISTRIBUTION,
 };
 
 /**
