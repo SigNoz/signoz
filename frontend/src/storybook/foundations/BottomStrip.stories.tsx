@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
 import { toast } from '@signozhq/ui/sonner';
-import { screen, userEvent } from 'storybook/test';
+import { screen, userEvent, within } from 'storybook/test';
 
 import type { GlobalMockArgs } from '../globals';
 
@@ -70,6 +70,19 @@ export const AddCardModal: Story = {
  */
 export const NozAwaitingYou: Story = {
 	args: { noz: true, nozAwaiting: 2, support: 'pylon' },
+};
+
+/** The Noz chat opened from Ask Noz, floating above the strip; its header drags it. */
+export const NozPanel: Story = {
+	args: { noz: true, support: 'pylon' },
+	play: async (): Promise<void> => {
+		await userEvent.click(
+			within(
+				await screen.findByTestId('bottom-strip-ask-noz', undefined, untilLoaded),
+			).getByRole('button'),
+		);
+		await screen.findByRole('button', { name: 'Close panel' });
+	},
 };
 
 /** Every tooltip the strip carries, held open. */
