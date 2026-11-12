@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { Input } from '@signozhq/ui/input';
-import { Form, Input as AntdInput } from 'antd';
+import { Form } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import signUpApi from 'api/v1/register/post';
@@ -163,12 +163,12 @@ function SignUp(): JSX.Element {
 									validateTrigger="onBlur"
 									rules={[{ required: true, message: 'Please enter password!' }]}
 								>
-									<AntdInput.Password
+									<Input.Password
 										required
 										id="currentPassword"
 										placeholder="Enter new password"
 										disabled={loading}
-										className="signup-antd-input"
+										disabledTooltip="Creating your account"
 									/>
 								</FormContainer.Item>
 							</div>
@@ -186,13 +186,14 @@ function SignUp(): JSX.Element {
 									}
 									rules={[{ required: true, message: 'Please enter confirm password!' }]}
 								>
-									<AntdInput.Password
+									<Input.Password
 										required
 										id="confirmPassword"
 										placeholder="Confirm your new password"
 										disabled={loading}
-										className="signup-antd-input"
-										onBlur={() => setConfirmPasswordTouched(true)}
+										disabledTooltip="Creating your account"
+										status={showPasswordMismatchError ? 'danger' : undefined}
+										onBlur={(): void => setConfirmPasswordTouched(true)}
 									/>
 								</FormContainer.Item>
 							</div>

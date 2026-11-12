@@ -55,37 +55,6 @@
 				flex-direction: column;
 				gap: 12px;
 			}
-
-			.signup-antd-input {
-				height: 32px;
-				width: 100%;
-				border-radius: 2px;
-
-				&.ant-input,
-				&.ant-input-password,
-				&.ant-input-affix-wrapper {
-					height: 32px;
-					border-radius: 2px;
-					background: var(--l2-background);
-					border-color: var(--l2-border);
-					color: var(--l2-foreground);
-				}
-
-				&.ant-input-affix-wrapper {
-					.ant-input {
-						height: auto;
-						background: transparent;
-					}
-				}
-
-				&::placeholder {
-					color: var(--l2-foreground);
-				}
-
-				&:focus {
-					border-color: var(--primary);
-				}
-			}
 		}
 
 		.signup-error-callout,
