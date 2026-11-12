@@ -1,4 +1,5 @@
 import cx from 'classnames';
+import { DashboardtypesStackModeDTO } from 'api/generated/services/sigNoz.schemas';
 import { resolveFillOpacity } from 'lib/uPlotV2/utils/fillOpacity';
 import type {
 	SectionEditorProps,
@@ -13,9 +14,12 @@ import { SWITCH_SKETCHES } from '../../controls/drawings/switchSketches';
 import type { SectionEditorContext } from '../../sectionContext';
 import { createFieldResetter } from '../../utils/changes';
 import DisconnectValuesField from './DisconnectValuesField';
+import DistributionPercentilesField from './DistributionPercentilesField';
 import HeatmapColorsField from './HeatmapColorsField';
 import PointsFields from './PointsFields';
 import {
+	BUCKET_STACK_HELP,
+	BUCKET_STACK_OPTIONS,
 	FILL_MODE_OPTIONS,
 	FILLED_FILL_MODE_OPTIONS,
 	LINE_INTERPOLATION_HELP,
@@ -45,9 +49,34 @@ function ChartAppearanceSection({
 	Pick<SectionEditorContext, 'stepInterval' | 'sizeColumnLabel'>): JSX.Element {
 	const reset = createFieldResetter(value, savedValue, onChange);
 	const interpolation = value?.lineInterpolation;
+	const stack = value?.stack ?? DashboardtypesStackModeDTO.normal;
 
 	return (
 		<>
+			{controls.stack && (
+				<ConfigField
+					label="Groups in a bucket"
+					help={BUCKET_STACK_HELP[stack]}
+					{...reset('stack')}
+				>
+					<ConfigTiles
+						testId="panel-editor-v2-bucket-stack"
+						aria-label="Groups in a bucket"
+						value={stack}
+						items={BUCKET_STACK_OPTIONS}
+						onChange={(next): void => onChange({ ...value, stack: next })}
+					/>
+				</ConfigField>
+			)}
+
+			{controls.percentiles && (
+				<DistributionPercentilesField
+					value={value?.percentiles}
+					savedValue={savedValue?.percentiles}
+					onChange={(percentiles): void => onChange({ ...value, percentiles })}
+				/>
+			)}
+
 			{controls.lineStyle && (
 				<ConfigField label="Line" {...reset('lineStyle')}>
 					<ConfigTiles
