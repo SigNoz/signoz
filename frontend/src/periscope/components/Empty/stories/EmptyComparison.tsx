@@ -11,7 +11,7 @@ export type EmptyComparisonImage = 'default' | 'simple';
 
 export interface EmptyComparisonProps {
 	image: EmptyComparisonImage;
-	/** Unset shows antd's default text. */
+	/** Unset shows antd's default text; set, it ends with a link. */
 	description?: string;
 	hideDescription: boolean;
 	withFooter: boolean;
@@ -24,11 +24,19 @@ function EmptyComparison({
 	hideDescription,
 	withFooter,
 }: EmptyComparisonProps): JSX.Element {
-	const resolvedDescription = hideDescription ? false : description;
+	const customDescription = description ? (
+		<>
+			{description} <a href="#empty-description">Learn more</a>
+		</>
+	) : undefined;
+	const resolvedDescription = hideDescription ? false : customDescription;
 	const footer = withFooter ? (
-		<Button size="md" variant="solid" color="primary">
-			Create
-		</Button>
+		<>
+			<Button size="md" variant="solid" color="primary">
+				Create
+			</Button>
+			<a href="#empty-footer">Docs</a>
+		</>
 	) : null;
 
 	return (

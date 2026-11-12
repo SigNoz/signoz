@@ -1,10 +1,14 @@
+@use '../../../styles/antdReset';
+
 .empty {
 	--empty-text-color: rgba(255, 255, 255, 0.85);
 	--empty-text-disabled-color: rgba(255, 255, 255, 0.25);
 
+	@include antdReset.antd-font-reset;
+	@include antdReset.antd-link-reset;
+
 	box-sizing: border-box;
 	margin-inline: var(--spacing-4);
-	font-size: var(--periscope-font-size-base);
 	line-height: calc(21 / 13);
 	text-align: center;
 

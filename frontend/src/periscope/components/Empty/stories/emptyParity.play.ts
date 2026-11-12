@@ -11,6 +11,7 @@ const STYLE_PROPERTIES = [
 	'margin-left',
 	'height',
 	'max-width',
+	'font-family',
 	'font-size',
 	'line-height',
 	'text-align',
@@ -19,6 +20,10 @@ const STYLE_PROPERTIES = [
 	'fill',
 	'fill-opacity',
 	'stroke',
+	'text-decoration-line',
+	'background-color',
+	'cursor',
+	'transition',
 ] as const;
 
 /** SVG shapes pick up sub-pixel noise from where each panel sits on the page. */
@@ -67,7 +72,7 @@ function stylesOf(root: HTMLElement): Record<string, string>[] {
 	});
 }
 
-/** Fails unless both renders compute the same styles and boxes, SVG paint included. */
+/** Fails unless both renders compute the same styles and boxes, SVG paint and links included. */
 export async function assertEmptyParity({
 	canvasElement,
 }: {
