@@ -11,9 +11,9 @@ import { OPERATORS } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { cloneDeep, isArray } from 'lodash-es';
 import {
-	getBuilderAt,
-	getBuilderSlotKey,
-	withBuilderAt,
+	getBuilderBySlotKey,
+	getBuilderSlotKeyForQueryType,
+	replaceBuilderBySlotKey,
 } from 'lib/query/builderSlot';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
@@ -162,8 +162,8 @@ export function applyCheckboxToggle({
 	previousState?: CheckedState;
 	sectionType?: SectionType;
 }): Query {
-	const slot = getBuilderSlotKey(currentQuery.queryType);
-	const builder = getBuilderAt(currentQuery, slot);
+	const slotKey = getBuilderSlotKeyForQueryType(currentQuery.queryType);
+	const builder = getBuilderBySlotKey(currentQuery, slotKey);
 	const activeItems = builder.queryData?.[activeQueryIndex]?.filters?.items;
 
 	const isSomeFilterPresentForCurrentAttribute = !!activeItems?.some((item) =>
@@ -436,7 +436,7 @@ export function applyCheckboxToggle({
 		query.filters = synced.filters;
 	}
 
-	return withBuilderAt(currentQuery, slot, {
+	return replaceBuilderBySlotKey(currentQuery, slotKey, {
 		...builder,
 		queryData: [
 			...builder.queryData.map((q, idx) => {

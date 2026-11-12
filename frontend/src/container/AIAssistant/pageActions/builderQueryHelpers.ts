@@ -14,9 +14,9 @@ import {
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
-	getBuilderAt,
-	getBuilderSlotKey,
-	withBuilderAt,
+	getBuilderBySlotKey,
+	getBuilderSlotKeyForQueryType,
+	replaceBuilderBySlotKey,
 } from 'lib/query/builderSlot';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -61,11 +61,11 @@ export function replaceFirstQueryData(
 	query: Query,
 	updated: IBuilderQuery,
 ): Query {
-	const slot = getBuilderSlotKey(query.queryType);
-	const builder = getBuilderAt(query, slot);
+	const slotKey = getBuilderSlotKeyForQueryType(query.queryType);
+	const builder = getBuilderBySlotKey(query, slotKey);
 	const queryData = [...builder.queryData];
 	queryData[0] = updated;
-	return withBuilderAt(query, slot, { ...builder, queryData });
+	return replaceBuilderBySlotKey(query, slotKey, { ...builder, queryData });
 }
 
 /** Page-state deps required by the runQuery / addFilter actions. */

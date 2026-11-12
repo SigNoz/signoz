@@ -1,8 +1,8 @@
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import {
-	getBuilderAt,
-	getBuilderSlotKey,
-	withBuilderAt,
+	getBuilderBySlotKey,
+	getBuilderSlotKeyForQueryType,
+	replaceBuilderBySlotKey,
 } from 'lib/query/builderSlot';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -25,9 +25,9 @@ export function clearFilterFromQuery({
 	activeQueryIndex: number;
 	operators?: string[];
 }): Query {
-	const slot = getBuilderSlotKey(currentQuery.queryType);
-	const builder = getBuilderAt(currentQuery, slot);
-	return withBuilderAt(currentQuery, slot, {
+	const slotKey = getBuilderSlotKeyForQueryType(currentQuery.queryType);
+	const builder = getBuilderBySlotKey(currentQuery, slotKey);
+	return replaceBuilderBySlotKey(currentQuery, slotKey, {
 		...builder,
 		queryData: builder.queryData.map((item, idx) => {
 			if (idx !== activeQueryIndex) {

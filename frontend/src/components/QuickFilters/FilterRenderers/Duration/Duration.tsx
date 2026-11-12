@@ -11,9 +11,9 @@ import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQue
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	getActiveBuilder,
-	getBuilderAt,
-	getBuilderSlotKey,
-	withBuilderAt,
+	getBuilderBySlotKey,
+	getBuilderSlotKeyForQueryType,
+	replaceBuilderBySlotKey,
 } from 'lib/query/builderSlot';
 import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
 import {
@@ -190,9 +190,9 @@ function Duration({
 	};
 
 	const removeFilterItemIds = (query: Query): Query => {
-		const slot = getBuilderSlotKey(query.queryType);
-		const builder = getBuilderAt(query, slot);
-		return withBuilderAt(cloneDeep(query), slot, {
+		const slotKey = getBuilderSlotKeyForQueryType(query.queryType);
+		const builder = getBuilderBySlotKey(query, slotKey);
+		return replaceBuilderBySlotKey(cloneDeep(query), slotKey, {
 			...builder,
 			queryData: builder.queryData.map((data) => ({
 				...data,
@@ -211,9 +211,9 @@ function Duration({
 
 	const handleRun = useCallback(
 		(props?: HandleRunProps): void => {
-			const slot = getBuilderSlotKey(currentQuery.queryType);
-			const builder = getBuilderAt(currentQuery, slot);
-			const preparedQuery: Query = withBuilderAt(currentQuery, slot, {
+			const slotKey = getBuilderSlotKeyForQueryType(currentQuery.queryType);
+			const builder = getBuilderBySlotKey(currentQuery, slotKey);
+			const preparedQuery: Query = replaceBuilderBySlotKey(currentQuery, slotKey, {
 				...builder,
 				queryData: builder.queryData.map((item, idx) => {
 					if (idx !== activeQueryIndex) {
