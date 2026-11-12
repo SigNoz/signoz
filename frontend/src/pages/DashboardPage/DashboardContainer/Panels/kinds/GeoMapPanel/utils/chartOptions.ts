@@ -57,6 +57,19 @@ export function resolveBubbleRadius(
 	return [min, Math.max(min, max)];
 }
 
+/** Pins a one-sided range that the layer's default would invert, as the API rejects it. */
+export function fitBubbleRadius(
+	bubbles: DashboardtypesGeoMapChartAppearanceDTO['bubbles'],
+	layer: GeoMapLayer,
+): DashboardtypesGeoMapChartAppearanceDTO['bubbles'] {
+	const [defaultMin, defaultMax] = DEFAULT_RADIUS[layer];
+	if ((bubbles?.minRadius ?? defaultMin) <= (bubbles?.maxRadius ?? defaultMax)) {
+		return bubbles;
+	}
+	const [minRadius, maxRadius] = resolveBubbleRadius(bubbles, layer);
+	return { minRadius, maxRadius };
+}
+
 const OPERATOR_LABEL: Record<string, string> = {
 	'>=': '≥',
 	'<=': '≤',

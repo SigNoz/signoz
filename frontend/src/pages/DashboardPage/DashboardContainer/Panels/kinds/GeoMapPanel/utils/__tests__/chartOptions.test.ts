@@ -1,4 +1,5 @@
 import {
+	fitBubbleRadius,
 	resolveBubbleRadius,
 	resolveColors,
 	toColorKeys,
@@ -54,5 +55,26 @@ describe('toColorKeys', () => {
 				'ms',
 			).map(({ label }) => label),
 		).toStrictEqual(['> 200 ms', '< 1 s']);
+	});
+});
+
+describe('fitBubbleRadius', () => {
+	it('keeps a range the layer default does not invert', () => {
+		const bubbles = { minRadius: 5 };
+		expect(fitBubbleRadius(bubbles, 'points')).toBe(bubbles);
+	});
+
+	it('pins a min above the points default max', () => {
+		expect(fitBubbleRadius({ minRadius: 10 }, 'points')).toStrictEqual({
+			minRadius: 10,
+			maxRadius: 10,
+		});
+	});
+
+	it('pins a max below the regions default min', () => {
+		expect(fitBubbleRadius({ maxRadius: 2 }, 'regions')).toStrictEqual({
+			minRadius: 3,
+			maxRadius: 3,
+		});
 	});
 });

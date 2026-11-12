@@ -1,6 +1,8 @@
 import type { ComponentType } from 'react';
-import type {
-	DashboardtypesGeoMapLocationDTO,
+import {
+	type DashboardtypesGeoMapChartAppearanceDTO,
+	DashboardtypesGeoMapLayerDTO,
+	type DashboardtypesGeoMapLocationDTO,
 	DashboardtypesGeoMapSettingsDTO,
 	DashboardtypesLinkDTO,
 	DashboardtypesHistogramBucketsDTO,
@@ -20,6 +22,7 @@ import {
 	type SectionEditorProps,
 	type SectionSpecMap,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
+import { fitBubbleRadius } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/utils/chartOptions';
 import type { SeededPluginSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/buildPluginSpec';
 
 import type { SectionEditorContext } from './sectionContext';
@@ -115,8 +118,24 @@ export const SECTION_REGISTRY: {
 			location: getPluginSlice<DashboardtypesGeoMapLocationDTO>(spec, 'location'),
 			map: getPluginSlice<DashboardtypesGeoMapSettingsDTO>(spec, 'map'),
 		}),
-		update: (spec, { location, map }): PanelSpec =>
-			updatePluginSlice(updatePluginSlice(spec, 'location', location), 'map', map),
+		update: (spec, { location, map }): PanelSpec => {
+			const next = updatePluginSlice(
+				updatePluginSlice(spec, 'location', location),
+				'map',
+				map,
+			);
+			const appearance = getPluginSlice<DashboardtypesGeoMapChartAppearanceDTO>(
+				spec,
+				'chartAppearance',
+			);
+			const bubbles = fitBubbleRadius(
+				appearance?.bubbles,
+				map?.layer ?? DashboardtypesGeoMapLayerDTO.regions,
+			);
+			return bubbles === appearance?.bubbles
+				? next
+				: updatePluginSlice(next, 'chartAppearance', { ...appearance, bubbles });
+		},
 	},
 	[SectionKind.Legend]: {
 		Component: LegendSection,
