@@ -14,6 +14,16 @@ const LAYOUT_PROPERTIES = [
 	'flex-shrink',
 	'flex-basis',
 	'box-sizing',
+	'font-family',
+	'font-size',
+] as const;
+
+const LINK_PROPERTIES = [
+	'color',
+	'text-decoration-line',
+	'background-color',
+	'cursor',
+	'transition',
 ] as const;
 
 interface Box {
@@ -36,7 +46,22 @@ function boxesOf(container: HTMLElement): Box[] {
 	});
 }
 
-/** Fails unless both renders compute the same layout styles and boxes. */
+async function expectSameStyle(
+	local: Element,
+	antd: Element,
+	properties: readonly string[],
+): Promise<void> {
+	const localStyle = getComputedStyle(local);
+	const antdStyle = getComputedStyle(antd);
+	for (const property of properties) {
+		await expect({
+			property,
+			value: localStyle.getPropertyValue(property),
+		}).toEqual({ property, value: antdStyle.getPropertyValue(property) });
+	}
+}
+
+/** Fails unless both renders compute the same styles, link styles and boxes. */
 export async function assertFlexParity({
 	canvasElement,
 }: {
@@ -45,14 +70,14 @@ export async function assertFlexParity({
 	const canvas = within(canvasElement);
 	const antd = canvas.getByTestId(ANTD_FLEX_TEST_ID);
 	const local = canvas.getByTestId(LOCAL_FLEX_TEST_ID);
-	const antdStyle = getComputedStyle(antd);
-	const localStyle = getComputedStyle(local);
+	await expectSameStyle(local, antd, LAYOUT_PROPERTIES);
 
-	for (const property of LAYOUT_PROPERTIES) {
-		await expect({
-			property,
-			value: localStyle.getPropertyValue(property),
-		}).toEqual({ property, value: antdStyle.getPropertyValue(property) });
+	const antdLink = antd.querySelector('a');
+	const localLink = local.querySelector('a');
+	await expect(Boolean(localLink)).toBe(Boolean(antdLink));
+	if (antdLink && localLink) {
+		await expectSameStyle(localLink, antdLink, LINK_PROPERTIES);
 	}
+
 	await expect(boxesOf(local)).toEqual(boxesOf(antd));
 }

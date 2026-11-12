@@ -1,4 +1,9 @@
+@use '../../../styles/antdReset';
+
 .flex {
+	@include antdReset.antd-font-reset;
+	@include antdReset.antd-link-reset;
+
 	box-sizing: border-box;
 	display: flex;
 
