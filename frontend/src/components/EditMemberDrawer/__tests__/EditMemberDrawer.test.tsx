@@ -263,9 +263,10 @@ describe('EditMemberDrawer', () => {
 		expect(screen.getByText('alice@signoz.io')).toBeInTheDocument();
 		expect(screen.getByText('ACTIVE')).toBeInTheDocument();
 		await waitFor(() =>
-			expect(
-				screen.getByRole('button', { name: /save member details/i }),
-			).toHaveAttribute('aria-disabled', 'true'),
+			expect(screen.getByTestId('member-save-btn')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
 		);
 	});
 

@@ -4,6 +4,12 @@ import { Button } from '@signozhq/ui/button';
 import { DialogWrapper } from '@signozhq/ui/dialog';
 import { toast } from '@signozhq/ui/sonner';
 import InviteMembers from 'components/InviteMembers/InviteMembers';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { RoleAttachWildcardPermission } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
+import {
+	UserAttachWildcardPermission,
+	UserCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
 
 import './InviteMembersModal.styles.scss';
 
@@ -58,18 +64,25 @@ function InviteMembersModal({
 							Cancel
 						</Button>
 
-						<Button
+						<AuthZButton
 							size="md"
 							variant="solid"
 							color="primary"
 							onClick={submit}
 							disabled={!canSubmit}
-							disabledTooltip="Add at least one team member to invite"
+							disabledTooltip={
+								canSubmit ? undefined : 'Add at least one team member to invite'
+							}
+							checks={[
+								UserCreatePermission,
+								UserAttachWildcardPermission,
+								RoleAttachWildcardPermission,
+							]}
 							loading={isSubmitting}
 							testId="invite-submit-btn"
 						>
 							{isSubmitting ? 'Inviting...' : 'Invite Team Members'}
-						</Button>
+						</AuthZButton>
 					</div>
 				)}
 			/>
