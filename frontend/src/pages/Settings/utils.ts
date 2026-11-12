@@ -35,11 +35,13 @@ export const getRoutes = (
 
 	if (isWorkspaceBlocked) {
 		if (isAdmin) {
-			settings.push(
-				...organizationSettings(t),
-				...membersSettings(t),
-				...mySettings(t),
-			);
+			settings.push(...organizationSettings(t));
+		}
+
+		settings.push(...membersSettings(t));
+
+		if (isAdmin) {
+			settings.push(...mySettings(t));
 		}
 
 		settings.push(...billingSettings(t));

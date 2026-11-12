@@ -105,6 +105,35 @@ describe('SettingsPage nav sections', () => {
 		});
 	});
 
+	describe('Workspace blocked', () => {
+		const blockedOverrides = (): any => ({
+			...getCloudAdminOverrides(),
+			trialInfo: { workSpaceBlock: true },
+		});
+
+		it('shows Members and Billing but not Roles to a viewer', () => {
+			render(<SettingsPage />, undefined, {
+				role: USER_ROLES.VIEWER,
+				appContextOverrides: blockedOverrides(),
+				initialRoute: '/settings',
+			});
+
+			expect(screen.getByTestId('members')).toBeInTheDocument();
+			expect(screen.getByTestId('billing')).toBeInTheDocument();
+			expect(screen.queryByTestId('roles')).not.toBeInTheDocument();
+		});
+
+		it('keeps Account out of the viewer nav', () => {
+			render(<SettingsPage />, undefined, {
+				role: USER_ROLES.VIEWER,
+				appContextOverrides: blockedOverrides(),
+				initialRoute: '/settings',
+			});
+
+			expect(screen.queryByTestId('account')).not.toBeInTheDocument();
+		});
+	});
+
 	describe('section structure', () => {
 		it('renders items in correct sections for cloud admin', () => {
 			const { container } = render(<SettingsPage />, undefined, {

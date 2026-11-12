@@ -60,10 +60,10 @@ function SettingsPage(): JSX.Element {
 					...item,
 					isEnabled:
 						item.key === ROUTES.BILLING ||
+						item.key === ROUTES.MEMBERS_SETTINGS ||
 						!!(
 							isAdmin &&
 							(item.key === ROUTES.ORG_SETTINGS ||
-								item.key === ROUTES.MEMBERS_SETTINGS ||
 								item.key === ROUTES.MY_SETTINGS ||
 								item.key === ROUTES.SHORTCUTS)
 						),
