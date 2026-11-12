@@ -4,7 +4,8 @@ import type {
 	TableColumnsType as ColumnsType,
 	TableColumnType as ColumnType,
 } from 'antd';
-import { Button, Flex } from 'antd';
+import { Button } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Switch } from '@signozhq/ui/switch';
 import logEvent from 'api/common/logEvent';

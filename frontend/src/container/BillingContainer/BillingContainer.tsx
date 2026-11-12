@@ -8,12 +8,12 @@ import { CircleCheck, Landmark, MonitorDown } from '@signozhq/icons';
 import {
 	Card,
 	Col,
-	Flex,
 	Row,
 	Skeleton,
 	Table,
 	TableColumnsType as ColumnsType,
 } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import type {

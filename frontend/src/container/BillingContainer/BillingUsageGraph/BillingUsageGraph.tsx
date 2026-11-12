@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { Card, Flex } from 'antd';
+import { Card } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import BarChart from 'lib/visualization/charts/BarChart/BarChart';
 import { useIsDarkMode } from 'hooks/useDarkMode';
