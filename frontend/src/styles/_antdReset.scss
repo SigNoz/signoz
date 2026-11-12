@@ -1,29 +1,29 @@
-// antd 5.11's shared resets. Values come from the `--antd-*` variables
-// `app/AntdThemeCssVariables` publishes from the app theme. `:where()` keeps
+// antd 5.11's shared resets. Values come from the `--theme-*` variables
+// `app/ThemeCssVariables` publishes from the app theme. `:where()` keeps
 // the link rules at antd's specificity, so styles that beat antd's resets
 // still beat these.
 
 @mixin antd-font-reset {
-	font-family: var(--antd-font-family);
-	font-size: var(--antd-font-size);
+	font-family: var(--theme-font-family);
+	font-size: var(--theme-font-size);
 }
 
 @mixin antd-link-reset {
 	@at-root :where(#{&}) a {
-		color: var(--antd-color-link);
+		color: var(--theme-color-link);
 		text-decoration: none;
 		background-color: transparent;
 		outline: none;
 		cursor: pointer;
-		transition: color var(--antd-motion-duration-slow);
+		transition: color var(--theme-motion-duration-slow);
 		-webkit-text-decoration-skip: objects;
 
 		&:hover {
-			color: var(--antd-color-link-hover);
+			color: var(--theme-color-link-hover);
 		}
 
 		&:active {
-			color: var(--antd-color-link-active);
+			color: var(--theme-color-link-active);
 		}
 
 		&:active,
@@ -38,7 +38,7 @@
 		}
 
 		&[disabled] {
-			color: var(--antd-color-text-disabled);
+			color: var(--theme-color-text-disabled);
 			cursor: not-allowed;
 		}
 	}

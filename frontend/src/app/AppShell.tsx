@@ -5,7 +5,7 @@ import { NotificationProvider } from 'hooks/useNotifications';
 import { CmdKProvider } from 'providers/cmdKProvider';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 
-import AntdThemeCssVariables from './AntdThemeCssVariables';
+import ThemeCssVariables from './ThemeCssVariables';
 
 export interface AppShellProps {
 	children: ReactNode;
@@ -30,7 +30,7 @@ function AppShell({ children, overlays }: AppShellProps): JSX.Element {
 
 	return (
 		<ConfigProvider theme={themeConfig}>
-			<AntdThemeCssVariables />
+			<ThemeCssVariables />
 			<CmdKProvider>
 				<NotificationProvider>
 					<ErrorModalProvider>

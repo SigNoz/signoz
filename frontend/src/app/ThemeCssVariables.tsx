@@ -1,19 +1,19 @@
 import { useLayoutEffect } from 'react';
 import { theme } from 'antd';
 
-import { getAntdThemeCssVariables } from './antdTokenVariables';
+import { getThemeCssVariables } from './themeTokenVariables';
 
 /**
  * Publishes the antd theme tokens periscope components read as CSS variables
  * on `<html>`, so they follow the theme as antd's own components do. Must sit
  * inside `ConfigProvider`; renders nothing.
  */
-function AntdThemeCssVariables(): null {
+function ThemeCssVariables(): null {
 	const { token } = theme.useToken();
 
 	useLayoutEffect(() => {
 		const { style } = document.documentElement;
-		const variables = Object.entries(getAntdThemeCssVariables(token));
+		const variables = Object.entries(getThemeCssVariables(token));
 		variables.forEach(([name, value]) => style.setProperty(name, value));
 		return (): void => {
 			variables.forEach(([name]) => style.removeProperty(name));
@@ -23,4 +23,4 @@ function AntdThemeCssVariables(): null {
 	return null;
 }
 
-export default AntdThemeCssVariables;
+export default ThemeCssVariables;

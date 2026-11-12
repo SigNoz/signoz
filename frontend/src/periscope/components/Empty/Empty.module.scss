@@ -39,7 +39,7 @@
 
 .description {
 	box-sizing: border-box;
-	color: var(--antd-color-text);
+	color: var(--theme-color-text);
 
 	&::before,
 	&::after {
@@ -59,10 +59,10 @@
 
 .normal {
 	margin-block: var(--spacing-16);
-	color: var(--antd-color-text-disabled);
+	color: var(--theme-color-text-disabled);
 
 	.description {
-		color: var(--antd-color-text-disabled);
+		color: var(--theme-color-text-disabled);
 	}
 
 	.image {
@@ -71,17 +71,17 @@
 }
 
 .defaultImage {
-	opacity: var(--antd-empty-image-opacity);
+	opacity: var(--theme-empty-image-opacity);
 }
 
 .simpleShadow {
-	fill: var(--antd-empty-simple-shadow);
+	fill: var(--theme-empty-simple-shadow);
 }
 
 .simpleBorder {
-	stroke: var(--antd-empty-simple-border);
+	stroke: var(--theme-empty-simple-border);
 }
 
 .simpleContent {
-	fill: var(--antd-empty-simple-content);
+	fill: var(--theme-empty-simple-content);
 }
