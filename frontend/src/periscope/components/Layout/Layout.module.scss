@@ -18,19 +18,11 @@
 .layout,
 .header,
 .footer {
-	--layout-body-bg: var(--background);
+	--layout-body-bg: var(--antd-color-bg-layout);
 	--layout-header-bg: #001529;
 	--layout-header-height: var(--spacing-32);
 	--layout-padding-inline: 50px;
-	--layout-text-color: rgba(255, 255, 255, 0.85);
-}
-
-:global(body.lightMode) {
-	.layout,
-	.header,
-	.footer {
-		--layout-text-color: rgba(0, 0, 0, 0.88);
-	}
+	--layout-text-color: var(--antd-color-text);
 }
 
 .layout {
