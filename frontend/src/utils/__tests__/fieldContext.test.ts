@@ -1,7 +1,7 @@
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { toLegacyTagFilter } from '../fieldContext';
+import { toLegacyLogsFilter } from '../fieldContext';
 
 const item = (type: string): TagFilter['items'][number] => ({
 	id: type,
@@ -10,21 +10,23 @@ const item = (type: string): TagFilter['items'][number] => ({
 	value: 'v',
 });
 
-describe('toLegacyTagFilter', () => {
-	it('sends attribute keys as tag and leaves every other type as is', () => {
+describe('toLegacyLogsFilter', () => {
+	it('sends attribute keys as tag and log fields as top-level fields', () => {
 		const filter: TagFilter = {
 			op: 'AND',
 			items: [
 				item('attribute'),
 				item('resource'),
+				item('scope'),
+				item('log'),
+				item('body'),
 				item('tag'),
 				item(''),
-				item('spanSearchScope'),
 			],
 		};
 
-		expect(toLegacyTagFilter(filter).items.map((i) => i.key?.type)).toStrictEqual(
-			['tag', 'resource', 'tag', '', 'spanSearchScope'],
-		);
+		expect(
+			toLegacyLogsFilter(filter).items.map((filterItem) => filterItem.key?.type),
+		).toStrictEqual(['tag', 'resource', 'scope', '', '', 'tag', '']);
 	});
 });
