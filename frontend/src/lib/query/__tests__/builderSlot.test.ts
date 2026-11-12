@@ -4,9 +4,11 @@ import {
 } from 'constants/queryBuilder';
 import {
 	getActiveBuilder,
-	getBuilderSlotKey,
+	getBuilderSlotKeyForQueryType,
+	isAIQueryType,
 	isBuilderQueryType,
-	toWireQuery,
+	toRequestQuery,
+	toSlotQuery,
 } from 'lib/query/builderSlot';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -26,14 +28,14 @@ describe('isBuilderQueryType', () => {
 	});
 });
 
-describe('getBuilderSlotKey', () => {
+describe('getBuilderSlotKeyForQueryType', () => {
 	it.each([
-		[EQueryType.QUERY_BUILDER, 'builder'],
-		[EQueryType.CLICKHOUSE, 'builder'],
-		[EQueryType.PROM, 'builder'],
-		[EQueryType.AI_QUERY_BUILDER, 'builder_ai_query'],
-	])('maps %s to %s', (queryType, slot) => {
-		expect(getBuilderSlotKey(queryType)).toBe(slot);
+		[EQueryType.QUERY_BUILDER, EQueryType.QUERY_BUILDER],
+		[EQueryType.CLICKHOUSE, EQueryType.QUERY_BUILDER],
+		[EQueryType.PROM, EQueryType.QUERY_BUILDER],
+		[EQueryType.AI_QUERY_BUILDER, EQueryType.AI_QUERY_BUILDER],
+	])('maps %s to %s', (queryType, slotKey) => {
+		expect(getBuilderSlotKeyForQueryType(queryType)).toBe(slotKey);
 	});
 });
 
@@ -67,9 +69,9 @@ describe('getActiveBuilder', () => {
 	});
 });
 
-describe('toWireQuery', () => {
+describe('toRequestQuery', () => {
 	it('passes non-AI queries through untouched', () => {
-		expect(toWireQuery(baseQuery)).toBe(baseQuery);
+		expect(toRequestQuery(baseQuery)).toBe(baseQuery);
 	});
 
 	it('sends AI as a builder query holding the AI slot, every query tagged', () => {
@@ -83,11 +85,47 @@ describe('toWireQuery', () => {
 			builder_ai_query: { ...aiBuilder, queryData: [untagged] },
 		};
 
-		const wire = toWireQuery(query);
+		const requestQuery = toRequestQuery(query);
 
-		expect(wire.queryType).toBe(EQueryType.QUERY_BUILDER);
-		expect(wire.builder.queryData).toStrictEqual([
+		expect(requestQuery.queryType).toBe(EQueryType.QUERY_BUILDER);
+		expect(requestQuery.builder.queryData).toStrictEqual([
 			{ ...untagged, builderQueryType: 'builder_ai_query' },
 		]);
+	});
+});
+
+describe('isAIQueryType', () => {
+	it.each([
+		[EQueryType.AI_QUERY_BUILDER, true],
+		[EQueryType.QUERY_BUILDER, false],
+		[EQueryType.CLICKHOUSE, false],
+		[EQueryType.PROM, false],
+	])('%s → %s', (queryType, expected) => {
+		expect(isAIQueryType(queryType)).toBe(expected);
+	});
+});
+
+describe('toSlotQuery', () => {
+	it('returns non-AI queries unchanged', () => {
+		expect(toSlotQuery(baseQuery, baseQuery)).toBe(baseQuery);
+	});
+
+	it('moves request-shape builder edits back into the AI slot', () => {
+		const slotQuery: Query = {
+			...baseQuery,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder_ai_query: aiBuilder,
+		};
+		const requestQuery = toRequestQuery(slotQuery);
+		const refined: Query = {
+			...requestQuery,
+			builder: { ...requestQuery.builder, queryFormulas: [] },
+		};
+
+		const restored = toSlotQuery(refined, slotQuery);
+
+		expect(restored.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+		expect(restored.builder).toBe(baseQuery.builder);
+		expect(restored.builder_ai_query).toBe(refined.builder);
 	});
 });

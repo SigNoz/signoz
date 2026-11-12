@@ -133,6 +133,7 @@ export function usePanelKindChange({
 
 			const queryType = resolveQueryType(newKind, query.queryType);
 			const rebuildForNewKind = (builder: Query['builder']): Query['builder'] => {
+				// The shared transforms read only `builder`, so either slot is passed through it.
 				const transformed = handleQueryChange(
 					newPanelType as keyof PartialPanelTypes,
 					{ ...query, queryType: EQueryType.QUERY_BUILDER, builder },

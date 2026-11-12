@@ -73,7 +73,8 @@ function GridValueComponent({
 		);
 	}
 
-	const isQueryTypeBuilder = isBuilderQueryType(widget?.query?.queryType);
+	const isQueryTypeBuilder =
+		!!widget && isBuilderQueryType(widget.query.queryType);
 
 	return (
 		<>

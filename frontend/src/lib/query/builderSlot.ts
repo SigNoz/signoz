@@ -1,3 +1,4 @@
+import { Querybuildertypesv5QueryTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	Query,
 	QueryState,
@@ -5,7 +6,9 @@ import type {
 import { EQueryType } from 'types/common/dashboard';
 import type { QueryBuilderData } from 'types/common/queryBuilder';
 
-export type BuilderSlotKey = 'builder' | 'builder_ai_query';
+export type BuilderSlotKey =
+	| EQueryType.QUERY_BUILDER
+	| EQueryType.AI_QUERY_BUILDER;
 
 const EMPTY_BUILDER: QueryBuilderData = {
 	queryData: [],
@@ -14,26 +17,32 @@ const EMPTY_BUILDER: QueryBuilderData = {
 };
 
 /** Query Builder and AI Query Builder; both author builder queries, each in its own slot. */
-export function isBuilderQueryType(queryType: EQueryType | undefined): boolean {
+export function isBuilderQueryType(queryType: EQueryType): boolean {
 	return (
 		queryType === EQueryType.QUERY_BUILDER ||
 		queryType === EQueryType.AI_QUERY_BUILDER
 	);
 }
 
+export function isAIQueryType(queryType: EQueryType): boolean {
+	return queryType === EQueryType.AI_QUERY_BUILDER;
+}
+
 /** The `Query` slot builder edits land in; non-builder types keep `builder`, as they always have. */
-export function getBuilderSlotKey(queryType: EQueryType): BuilderSlotKey {
-	return queryType === EQueryType.AI_QUERY_BUILDER
-		? 'builder_ai_query'
-		: 'builder';
+export function getBuilderSlotKeyForQueryType(
+	queryType: EQueryType,
+): BuilderSlotKey {
+	return isAIQueryType(queryType)
+		? EQueryType.AI_QUERY_BUILDER
+		: EQueryType.QUERY_BUILDER;
 }
 
 /**
  * The query as the backend takes it. AI goes out as a `builder` query whose queries carry
  * `builderQueryType: builder_ai_query`, the tag set from the slot so a stale one can't leak.
  */
-export function toWireQuery(query: Query): Query {
-	if (query.queryType !== EQueryType.AI_QUERY_BUILDER) {
+export function toRequestQuery(query: Query): Query {
+	if (!isAIQueryType(query.queryType)) {
 		return query;
 	}
 	const aiBuilder = getActiveBuilder(query);
@@ -44,30 +53,46 @@ export function toWireQuery(query: Query): Query {
 			...aiBuilder,
 			queryData: aiBuilder.queryData.map((queryData) => ({
 				...queryData,
-				builderQueryType: 'builder_ai_query',
+				builderQueryType: Querybuildertypesv5QueryTypeDTO.builder_ai_query,
 			})),
 		},
 	};
 }
 
-/** The builder at `slot`; an unused AI slot holds none. */
-export function getBuilderAt(
-	state: QueryState,
-	slot: BuilderSlotKey,
-): QueryBuilderData {
-	return state[slot] ?? EMPTY_BUILDER;
+/** Undoes `toRequestQuery` for `slotQuery`: builder edits made on the request shape land back in its slot. */
+export function toSlotQuery(requestQuery: Query, slotQuery: Query): Query {
+	if (!isAIQueryType(slotQuery.queryType)) {
+		return requestQuery;
+	}
+	return {
+		...requestQuery,
+		queryType: slotQuery.queryType,
+		builder: slotQuery.builder,
+		builder_ai_query: requestQuery.builder,
+	};
 }
 
-/** `state` with the builder at `slot` replaced. */
-export function withBuilderAt<T extends QueryState>(
+/** The builder at `slotKey`; an unused AI slot holds none. */
+export function getBuilderBySlotKey(
+	state: QueryState,
+	slotKey: BuilderSlotKey,
+): QueryBuilderData {
+	return state[slotKey] ?? EMPTY_BUILDER;
+}
+
+/** `state` with the builder at `slotKey` replaced. */
+export function replaceBuilderBySlotKey<T extends QueryState>(
 	state: T,
-	slot: BuilderSlotKey,
+	slotKey: BuilderSlotKey,
 	builder: QueryBuilderData,
 ): T {
-	return { ...state, [slot]: builder };
+	return { ...state, [slotKey]: builder };
 }
 
 /** The builder queries `queryType` authors; an unused AI slot holds none. */
 export function getActiveBuilder(query: Query): QueryBuilderData {
-	return getBuilderAt(query, getBuilderSlotKey(query.queryType));
+	return getBuilderBySlotKey(
+		query,
+		getBuilderSlotKeyForQueryType(query.queryType),
+	);
 }

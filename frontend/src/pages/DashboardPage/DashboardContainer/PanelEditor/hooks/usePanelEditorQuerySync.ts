@@ -112,10 +112,10 @@ export function usePanelEditorQuerySync({
 
 	// Re-commit on a query-type/datasource switch so the preview refetches. Skip
 	// mount: the initial query is synced into the draft by the staged-query effect below.
-	const activeQueryData = getActiveBuilder(currentQuery).queryData;
+	const activeBuilderQueryData = getActiveBuilder(currentQuery).queryData;
 	const dataSources = useMemo(
-		() => (activeQueryData ?? []).map((q) => q.dataSource),
-		[activeQueryData],
+		() => (activeBuilderQueryData ?? []).map((q) => q.dataSource),
+		[activeBuilderQueryData],
 	);
 	const dataSourceSignature = dataSources.join(',');
 	const prevDataSourcesRef = useRef(dataSources);

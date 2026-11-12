@@ -23,7 +23,7 @@ interface UseQueryTypeChangeArgs {
 export function useQueryTypeChange({
 	panelType,
 	supportedQueryTypesKindMap,
-}: UseQueryTypeChangeArgs): (key: string) => void {
+}: UseQueryTypeChangeArgs): (queryType: EQueryType) => void {
 	const {
 		currentQuery,
 		redirectWithQueryBuilderData,
@@ -31,8 +31,7 @@ export function useQueryTypeChange({
 	} = useQueryBuilder();
 
 	return useCallback(
-		(key: string): void => {
-			const queryType = key as EQueryType;
+		(queryType: EQueryType): void => {
 			const builderSignals = getQueryTypeSignals(
 				supportedQueryTypesKindMap,
 				EQueryType.QUERY_BUILDER,
