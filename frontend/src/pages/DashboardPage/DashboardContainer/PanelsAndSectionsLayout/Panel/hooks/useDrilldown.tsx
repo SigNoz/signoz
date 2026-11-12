@@ -33,6 +33,7 @@ import { useDrilldownCoordinates } from './useDrilldownCoordinates';
 import { useDrilldownDashboardVariables } from './useDrilldownDashboardVariables';
 import { useDrilldownFilter } from './useDrilldownFilter';
 import { useResolvedDrilldownQuery } from './useResolvedDrilldownQuery';
+import { useDashboardControl } from 'pages/DashboardPage/DashboardContainer/controls/useDashboardControl';
 import { useViewPanel } from './useViewPanel';
 
 /** Which menu the popover shows; extend as submenus are added (e.g. dashboard variables). */
@@ -84,12 +85,14 @@ export function useDrilldown(
 
 	// Drilldown only for builder-authored panels with a query to drill into (PromQL /
 	// ClickHouse have no builder context to refine).
+	const showDrilldown = useDashboardControl('panel.drilldown');
 	const enableDrillDown = useMemo(
 		() =>
+			showDrilldown &&
 			getPanelDefinition(kind).actions.drilldown &&
 			getPanelQueryType(panel) === EQueryType.QUERY_BUILDER &&
 			getBuilderQueries(queries).length > 0,
-		[kind, panel, queries],
+		[showDrilldown, kind, panel, queries],
 	);
 
 	const v1Query = useMemo(

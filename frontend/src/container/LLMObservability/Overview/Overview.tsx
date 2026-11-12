@@ -3,12 +3,20 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import DashboardContainer from 'pages/DashboardPage/DashboardContainer';
+import type { DashboardControlsInput } from 'pages/DashboardPage/DashboardContainer/controls/types';
 
 import {
 	SYSTEM_DASHBOARD_SOURCE,
 	useSystemDashboard,
 } from './hooks/useSystemDashboard';
 import styles from './Overview.module.scss';
+
+// Embedded under the AI Observability tabs, which own the page header.
+const EMBEDDED_CONTROLS: DashboardControlsInput = {
+	header: false,
+	title: false,
+	actions: false,
+};
 
 function Overview(): JSX.Element {
 	const { dashboard, isLoading, isError, error, refetch } = useSystemDashboard();
@@ -39,6 +47,7 @@ function Overview(): JSX.Element {
 				refetch={refetch}
 				source={SYSTEM_DASHBOARD_SOURCE}
 				readOnly
+				controls={EMBEDDED_CONTROLS}
 			/>
 		);
 	};

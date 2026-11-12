@@ -25,7 +25,7 @@ function SectionActionsMenu({
 	onRename,
 	onCloneSection,
 	onDeleteSection,
-}: SectionActionsMenuProps): JSX.Element {
+}: SectionActionsMenuProps): JSX.Element | null {
 	const items = useMemo<AuthZDropdownItemType[]>(() => {
 		const gate = { checks: disabledChecks, ...blockedBy(disabledTooltip) };
 		const result: AuthZDropdownItemType[] = [];
@@ -82,6 +82,10 @@ function SectionActionsMenu({
 		onCloneSection,
 		onDeleteSection,
 	]);
+
+	if (items.length === 0) {
+		return null;
+	}
 
 	return (
 		<AuthZDropdown

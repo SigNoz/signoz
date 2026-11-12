@@ -10,6 +10,8 @@ import { useResolvedVariables } from './hooks/useResolvedVariables';
 import { useSyncVariablesForSuggestions } from './hooks/useSyncVariablesForSuggestions';
 import { useDashboardStore } from './store/useDashboardStore';
 import type { DashboardQuerySource } from './store/slices/editContextSlice';
+import type { DashboardControlsInput } from './controls/types';
+import { useDashboardControlGroup } from './controls/useDashboardControlGroup';
 import styles from './DashboardContainer.module.scss';
 import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
 import LockedIndicator from './components/LockedIndicator/LockedIndicator';
@@ -24,6 +26,8 @@ interface DashboardContainerProps {
 	source?: DashboardQuerySource;
 	/** View-only mount: no edit affordance, no write, no server freshness probe. */
 	readOnly?: boolean;
+	/** What renders; omitted controls are shown. Writing controls are off when read-only. */
+	controls?: DashboardControlsInput;
 }
 
 function DashboardContainer({
@@ -31,6 +35,7 @@ function DashboardContainer({
 	refetch,
 	source,
 	readOnly = false,
+	controls,
 }: DashboardContainerProps): JSX.Element {
 	const spec = dashboard.spec;
 	const image = resolveDashboardImage(dashboard.image);
@@ -55,6 +60,7 @@ function DashboardContainer({
 		refetch,
 		source,
 		readOnly,
+		controls,
 	});
 
 	// Resolve the variable selection into the V5 query payload and publish it to
@@ -66,6 +72,9 @@ function DashboardContainer({
 	useSyncVariablesForSuggestions(dashboard);
 
 	const staleCheck = useDashboardStaleCheck(dashboard, refetch, !readOnly);
+	const showHeader = Object.values(useDashboardControlGroup('header')).some(
+		Boolean,
+	);
 
 	// In full screen show only the sections and panels — the header/toolbar chrome
 	// is hidden for a clean presentation view (exit with Esc).
@@ -77,7 +86,7 @@ function DashboardContainer({
 					<AutoRefreshTicker />
 				) : (
 					<>
-						<DashboardPageHeader title={name} image={image} />
+						{showHeader && <DashboardPageHeader title={name} image={image} />}
 						<DashboardPageToolbar dashboard={dashboard} handle={fullScreenHandle} />
 					</>
 				)}
