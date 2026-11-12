@@ -30,6 +30,8 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotExists:       "not mapContains(%s_%s, '%s')",
 	v3.FilterOperatorILike:           "ILIKE",
 	v3.FilterOperatorNotILike:        "NOT ILIKE",
+	v3.FilterOperatorLikeAny:         "LIKE ANY",
+	v3.FilterOperatorILikeAny:        "ILIKE ANY",
 }
 
 var skipExistsFilter = map[v3.FilterOperator]struct{}{
@@ -168,18 +170,36 @@ func buildAttributeFilter(item v3.FilterItem) (string, error) {
 			} else {
 				return fmt.Sprintf("%s %s '%%%s%%'", keyName, logsOp, val), nil
 			}
-		case v3.FilterOperatorLike, v3.FilterOperatorNotLike:
-			// for body use lower for like and ilike
+		case v3.FilterOperatorLike, v3.FilterOperatorNotLike, v3.FilterOperatorILike, v3.FilterOperatorNotILike, v3.FilterOperatorLikeAny, v3.FilterOperatorILikeAny:
+			if sliceVal, ok := item.Value.([]interface{}); ok && len(sliceVal) > 0 {
+				var quoted []string
+				for _, v := range sliceVal {
+					quoted = append(quoted, fmt.Sprintf("'%s'", utils.QuoteEscapedString(fmt.Sprintf("%v", v))))
+				}
+				opStr := logsOp
+				if !strings.Contains(opStr, "ANY") {
+					opStr = opStr + " ANY"
+				}
+				return fmt.Sprintf("%s %s (%s)", keyName, opStr, strings.Join(quoted, ", ")), nil
+			}
+			if strSliceVal, ok := item.Value.([]string); ok && len(strSliceVal) > 0 {
+				var quoted []string
+				for _, v := range strSliceVal {
+					quoted = append(quoted, fmt.Sprintf("'%s'", utils.QuoteEscapedString(v)))
+				}
+				opStr := logsOp
+				if !strings.Contains(opStr, "ANY") {
+					opStr = opStr + " ANY"
+				}
+				return fmt.Sprintf("%s %s (%s)", keyName, opStr, strings.Join(quoted, ", ")), nil
+			}
 			val := utils.QuoteEscapedString(fmt.Sprintf("%s", item.Value))
-			if keyName == BODY {
+			if keyName == BODY && (op == v3.FilterOperatorLike || op == v3.FilterOperatorNotLike) {
 				logsOp = strings.Replace(logsOp, "ILIKE", "LIKE", 1) // removing i from ilike and not ilike
 				return fmt.Sprintf("lower(%s) %s lower('%s')", keyName, logsOp, val), nil
 			} else {
 				return fmt.Sprintf("%s %s '%s'", keyName, logsOp, val), nil
 			}
-		case v3.FilterOperatorILike, v3.FilterOperatorNotILike:
-			val := utils.QuoteEscapedString(fmt.Sprintf("%s", item.Value))
-			return fmt.Sprintf("%s %s '%s'", keyName, logsOp, val), nil
 		default:
 			return fmt.Sprintf("%s %s %s", keyName, logsOp, fmtVal), nil
 		}
