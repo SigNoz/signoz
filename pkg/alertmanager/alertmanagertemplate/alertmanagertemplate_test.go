@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/prometheus/alertmanager/notify"
@@ -456,4 +457,62 @@ Description: Request rate exceeded 10k/s`},
 			}
 		})
 	}
+}
+
+func TestExpandTemplateFunctions(t *testing.T) {
+	at, ctx := testSetup(t)
+	startsAt := time.Date(2026, time.November, 12, 5, 30, 0, 0, time.UTC)
+	alert := &types.Alert{Alert: model.Alert{
+		Labels:      model.LabelSet{ruletypes.LabelAlertName: "HighLatency", ruletypes.LabelSeverityName: "critical", "env": "prod-eu", "host": "web-1.example.com"},
+		Annotations: model.LabelSet{"summary": "  p99 is high  "},
+		StartsAt:    startsAt,
+		EndsAt:      startsAt.Add(time.Hour),
+	}}
+
+	testCases := []struct {
+		name     string
+		body     string
+		wantBody string
+	}{
+		{name: "ToUpper", body: "{{ $env | toUpper }}", wantBody: "PROD-EU"},
+		{name: "ToLower", body: "{{ $env | toLower }}", wantBody: "prod-eu"},
+		{name: "Title", body: "{{ $rule.severity | title }}", wantBody: "Critical"},
+		{name: "TrimSpace", body: "[{{ $annotations.summary | trimSpace }}]", wantBody: "[p99 is high]"},
+		{name: "Match", body: `{{ if $env | match "^prod" }}production{{ end }}`, wantBody: "production"},
+		{name: "ReReplaceAll", body: `{{ $host | reReplaceAll "^([^.]+)\\..*" "$1" }}`, wantBody: "web-1"},
+		{name: "StringSlice_Join", body: `{{ stringSlice $env $host | join ", " }}`, wantBody: "prod-eu, web-1.example.com"},
+		{name: "Urlescape", body: `q={{ "a b&c" | urlescape }}`, wantBody: "q=a+b%26c"},
+		{name: "Date_AlertStartsAt", body: `{{ $alert.starts_at | date "Jan 2, 15:04 MST" }}`, wantBody: "Nov 12, 05:30 UTC"},
+		{name: "Tz_Date_AlertStartsAt", body: `{{ $alert.starts_at | tz "Asia/Kolkata" | date "15:04 MST" }}`, wantBody: "11:00 IST"},
+		{name: "Date_AlertEndsAt", body: `{{ $alert.ends_at | date "15:04" }}`, wantBody: "06:30"},
+		{name: "HumanizeDuration_Seconds", body: "{{ humanizeDuration 3725 }}", wantBody: "1h 2m 5s"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result, err := at.Expand(ctx, alertmanagertypes.ExpandRequest{TitleTemplate: "$rule.name", BodyTemplate: testCase.body}, []*types.Alert{alert})
+			require.NoError(t, err)
+			require.Len(t, result.Body, 1)
+			assert.Equal(t, testCase.wantBody, result.Body[0])
+		})
+	}
+
+	t.Run("Now_Tz_Date", func(t *testing.T) {
+		result, err := at.Expand(ctx, alertmanagertypes.ExpandRequest{TitleTemplate: "$rule.name", BodyTemplate: `{{ now | tz "Asia/Kolkata" | date "2006 MST" }}`}, []*types.Alert{alert})
+		require.NoError(t, err)
+		require.Len(t, result.Body, 1)
+		assert.Equal(t, time.Now().In(time.FixedZone("IST", 5*60*60+30*60)).Format("2006 MST"), result.Body[0])
+	})
+
+	t.Run("Since_HumanizeDuration_AlertStartsAt", func(t *testing.T) {
+		recent := &types.Alert{Alert: model.Alert{
+			Labels:   model.LabelSet{ruletypes.LabelAlertName: "HighLatency"},
+			StartsAt: time.Now().Add(-time.Hour),
+			EndsAt:   time.Now().Add(time.Hour),
+		}}
+		result, err := at.Expand(ctx, alertmanagertypes.ExpandRequest{TitleTemplate: "$rule.name", BodyTemplate: "{{ $alert.starts_at | since | humanizeDuration }}"}, []*types.Alert{recent})
+		require.NoError(t, err)
+		require.Len(t, result.Body, 1)
+		assert.Regexp(t, `^1h 0m \d+s$`, result.Body[0])
+	})
 }
