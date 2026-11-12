@@ -1,4 +1,5 @@
 import {
+	BellDot,
 	Bot,
 	Cable,
 	ChartLine,
@@ -113,6 +114,15 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		selectorPlaceholder:
 			'Type notification channel ID, separate multiple with comma or space',
 		docsAnchor: 'notification-channel',
+	},
+	rule: {
+		label: 'Alert Rules',
+		description:
+			'Alert rules, the conditions they evaluate and the channels they notify.',
+		icon: BellDot,
+		selectorPlaceholder:
+			'Type alert rule ID, separate multiple with comma or space',
+		docsAnchor: 'rule',
 	},
 	logs: {
 		label: 'Logs',
