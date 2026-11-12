@@ -193,6 +193,38 @@ describe('ValueSelector', () => {
 
 			expect(onSearch).toHaveBeenLastCalledWith('pay');
 		});
+
+		it('commits ALL even when the selection holds a value outside the list', async () => {
+			const onChange = jest.fn();
+			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+			render(
+				<ValueSelector
+					options={OPTIONS}
+					variableType="dynamic"
+					multiSelect
+					showAllOption
+					selection={{ value: ['searched'], allSelected: false }}
+					onChange={onChange}
+					emptyFallback={{ value: null, allSelected: true }}
+					testId="variable-select-env"
+					dynamic={{
+						values: OPTIONS,
+						relatedValues: [],
+						complete: false,
+						onSearch: jest.fn(),
+						onSearchReset: jest.fn(),
+					}}
+				/>,
+			);
+
+			await openDropdown();
+			await user.click(screen.getByText('ALL'));
+			await user.keyboard('{Escape}');
+
+			expect(onChange).toHaveBeenLastCalledWith(
+				expect.objectContaining({ allSelected: true }),
+			);
+		});
 	});
 
 	describe('clearing', () => {

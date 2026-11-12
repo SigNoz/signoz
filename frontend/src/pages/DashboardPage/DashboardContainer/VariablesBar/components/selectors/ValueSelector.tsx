@@ -102,6 +102,7 @@ function ValueSelector({
 			values,
 			options,
 			showAllOption,
+			isDynamic: !!dynamic,
 			emptyFallback,
 		});
 
