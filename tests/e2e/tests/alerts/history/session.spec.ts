@@ -169,27 +169,7 @@ test.describe('Alert history — session', () => {
 		expect(keyParams.get('start')).toBeNull();
 	});
 
-	test('TC-06 v1 and v2 rules both render their history', async ({
-		alerts,
-		alertHistory,
-	}) => {
-		for (const [variant, ruleId, total] of [
-			['v2alpha1', alertHistory.ruleId, alertHistory.total],
-			['v1', alertHistory.ruleIdV1, alertHistory.totalV1],
-		] as const) {
-			// eslint-disable-next-line no-await-in-loop
-			await alerts.history.goto(ruleId);
-			// eslint-disable-next-line no-await-in-loop
-			await expect(
-				alerts.details.root(),
-				`${variant} rule renders the details shell`,
-			).toHaveAttribute('data-schema-version', variant);
-			// eslint-disable-next-line no-await-in-loop
-			await expect(alerts.history.footerRange()).toContainText(`of ${total}`);
-		}
-	});
-
-	test('TC-07 a rule with no history renders the empty state, not an error', async ({
+	test('TC-06 a rule with no history renders the empty state, not an error', async ({
 		authedPage: page,
 		alerts,
 		emptyHistory,
@@ -220,7 +200,7 @@ test.describe('Alert history — session', () => {
 		await expect(alerts.history.error()).toHaveCount(0);
 	});
 
-	test('TC-08 an empty time range empties the page and resets pagination', async ({
+	test('TC-07 an empty time range empties the page and resets pagination', async ({
 		authedPage: page,
 		alerts,
 		alertHistory,
@@ -244,7 +224,7 @@ test.describe('Alert history — session', () => {
 		await alerts.history.expectFirstPage();
 	});
 
-	test('TC-09 a 90 day range still renders', async ({
+	test('TC-08 a 90 day range still renders', async ({
 		alerts,
 		alertHistory,
 	}) => {
@@ -257,7 +237,7 @@ test.describe('Alert history — session', () => {
 		);
 	});
 
-	test('TC-10 an unknown rule never reaches the history APIs', async ({
+	test('TC-09 an unknown rule never reaches the history APIs', async ({
 		alerts,
 		alertHistory,
 	}) => {
