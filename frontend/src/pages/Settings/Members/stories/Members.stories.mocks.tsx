@@ -229,7 +229,7 @@ const pickRole = async (index: number): Promise<void> => {
 	await userEvent.click(await screen.findByText('Email address'));
 };
 
-export const fillInvites = async (
+export const sendInvites = async (
 	canvasElement: HTMLElement,
 	emails: string[],
 ): Promise<void> => {
@@ -250,13 +250,6 @@ export const fillInvites = async (
 		await userEvent.type(fields[index], email);
 		await pickRole(index);
 	}
-};
-
-export const sendInvites = async (
-	canvasElement: HTMLElement,
-	emails: string[],
-): Promise<void> => {
-	await fillInvites(canvasElement, emails);
 	await clickWhenEnabled(
 		await screen.findByRole(
 			'button',

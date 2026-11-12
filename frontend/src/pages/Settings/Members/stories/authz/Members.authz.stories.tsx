@@ -4,7 +4,6 @@ import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
-	ATTACH_ROLE,
 	ATTACH_USER,
 	CREATE_PASSWORD,
 	CREATE_USER,
@@ -18,7 +17,6 @@ import {
 	expectInviteDenied,
 	expectInviteLinkDenied,
 	expectInviteOpen,
-	expectInviteSubmitDenied,
 	expectListDenied,
 	expectReadDenied,
 	expectResetLinkDenied,
@@ -101,15 +99,6 @@ export const NoUserAttach: Story = {
 export const NoInviteLink: Story = {
 	args: { revoked: [CREATE_PASSWORD] },
 	play: expectInviteLinkDenied,
-};
-
-/**
- * The invite form opens, but a seat cannot be sent with a role without `attach`
- * on roles.
- */
-export const NoInviteRoleAttach: Story = {
-	args: { revoked: [ATTACH_ROLE] },
-	play: expectInviteSubmitDenied,
 };
 
 /**

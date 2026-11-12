@@ -3,7 +3,6 @@ import type { BrandedPermission } from '../types';
 
 export const UserCreatePermission = buildPermission('create', 'user:*');
 export const UserListPermission = buildPermission('list', 'user:*');
-export const UserAttachWildcardPermission = buildPermission('attach', 'user:*');
 
 export const buildUserReadPermission = (id: string): BrandedPermission =>
 	buildPermission('read', `user:${id}`);
