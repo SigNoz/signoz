@@ -33,9 +33,11 @@ function MembersSettings(): JSX.Element {
 	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
 	const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
 
-	const { permissions: authzPermissions, isLoading: isAuthZLoading } = useAuthZ([
-		UserListPermission,
-	]);
+	const {
+		permissions: authzPermissions,
+		isLoading: isAuthZLoading,
+		error: authzError,
+	} = useAuthZ([UserListPermission]);
 
 	// TODO(nuqs): Replace with nuqs once the nuqs setup and integration is done - for search
 	const [searchQuery, setSearchQuery] = useState('');
@@ -47,7 +49,7 @@ function MembersSettings(): JSX.Element {
 	const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null);
 
 	const canListUsers =
-		authzPermissions?.[UserListPermission]?.isGranted ?? false;
+		!!authzError || (authzPermissions?.[UserListPermission]?.isGranted ?? false);
 
 	const {
 		data: usersData,
