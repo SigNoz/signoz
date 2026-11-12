@@ -33,3 +33,9 @@ export const buildPlannedMaintenanceAttachPermission = (
 export const buildPlannedMaintenanceDetachPermission = (
 	id: string,
 ): BrandedPermission => buildPermission('detach', `planned-maintenance:${id}`);
+
+/** A schedule always silences rules, every rule when none are picked, so creating one needs both. */
+export const PlannedMaintenanceCreateChecks = [
+	PlannedMaintenanceCreatePermission,
+	PlannedMaintenanceAttachPermission,
+];

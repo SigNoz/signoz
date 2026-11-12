@@ -21,10 +21,10 @@ import TextToolTip from 'components/TextToolTip';
 import dayjs from 'dayjs';
 import { useListAllRules } from 'hooks/alerts/useListAllRules';
 import {
-	PLANNED_MAINTENANCE_CREATE_CHECKS,
-	PLANNED_MAINTENANCE_LIST_CHECKS,
-	usePlannedMaintenanceCollectionPermissions,
-} from 'hooks/plannedDowntime/usePlannedMaintenanceCollectionPermissions';
+	PlannedMaintenanceCreateChecks,
+	PlannedMaintenanceListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/planned-maintenance.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -51,6 +51,8 @@ import usePlannedDowntimeTable from './usePlannedDowntimeTable';
 import './PlannedDowntime.styles.scss';
 
 const COLUMNS_STORAGE_KEY = 'planned-downtime-columns';
+// Module-level so the useQueries identity stays stable across renders.
+const LIST_CHECKS = [PlannedMaintenanceListPermission];
 
 dayjs.locale('en');
 
@@ -141,7 +143,8 @@ export function PlannedDowntime(): JSX.Element {
 		setPage(1);
 	};
 
-	const { canList } = usePlannedMaintenanceCollectionPermissions();
+	const { isGranted } = useAuthZ(LIST_CHECKS);
+	const canList = isGranted(PlannedMaintenanceListPermission);
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	const isAlertsLoading = isLoading || (!alertsData && isFetchingAlerts);
 	const columns = React.useMemo(
@@ -235,7 +238,7 @@ export function PlannedDowntime(): JSX.Element {
 						/>
 					)}
 					<AuthZButton
-						checks={PLANNED_MAINTENANCE_CREATE_CHECKS}
+						checks={PlannedMaintenanceCreateChecks}
 						variant="solid"
 						color="primary"
 						size="sm"
@@ -267,7 +270,7 @@ export function PlannedDowntime(): JSX.Element {
 
 			<div ref={containerRef} className={styles.tableContainer}>
 				<AuthZGuardContent
-					checks={PLANNED_MAINTENANCE_LIST_CHECKS}
+					checks={LIST_CHECKS}
 					fallback={({ deniedPermissions }): JSX.Element => (
 						<PermissionDeniedCallout
 							deniedPermissions={deniedPermissions}

@@ -35,9 +35,9 @@ import {
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
-import { useRuleCollectionPermissions } from 'hooks/alerts/useRuleCollectionPermissions';
 import { useNotifications } from 'hooks/useNotifications';
 import { formatDeniedMessage } from 'lib/authz/components/formatDeniedMessage';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { RuleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 import { useAppContext } from 'providers/App/App';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -79,6 +79,9 @@ const TZ_OPTIONS: DefaultOptionType[] = ALL_TIME_ZONES.map(
 );
 
 type AlertRuleScope = 'all' | 'specific';
+
+// Module-level so the useQueries identity stays stable across renders.
+const RULE_LIST_CHECKS = [RuleListPermission];
 
 interface PlannedDowntimeFormData {
 	name: string;
@@ -158,11 +161,11 @@ export function PlannedDowntimeForm(
 		});
 
 	const { user } = useAppContext();
-	const ruleCollection = useRuleCollectionPermissions();
+	const ruleList = useAuthZ(RULE_LIST_CHECKS);
 	const isRuleListDenied =
-		!ruleCollection.isLoading &&
-		!ruleCollection.hasError &&
-		!ruleCollection.canList;
+		!ruleList.isLoading &&
+		!ruleList.error &&
+		!ruleList.isGranted(RuleListPermission);
 
 	const gatedAlertOptions = useMemo(
 		() =>

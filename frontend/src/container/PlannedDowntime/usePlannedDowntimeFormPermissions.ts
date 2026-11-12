@@ -1,14 +1,19 @@
 import { useCallback, useMemo } from 'react';
 import type { DefaultOptionType } from 'antd/es/select';
 import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
-import { useRuleLinkPermissions } from 'hooks/alerts/useRuleLinkPermissions';
-import { usePlannedMaintenancePermissions } from 'hooks/plannedDowntime/usePlannedMaintenancePermissions';
 import { formatDeniedMessage } from 'lib/authz/components/formatDeniedMessage';
+import {
+	buildPlannedMaintenanceAttachPermission,
+	buildPlannedMaintenanceDetachPermission,
+	buildPlannedMaintenanceReadPermission,
+	buildPlannedMaintenanceUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/planned-maintenance.permissions';
 import {
 	buildRuleAttachPermission,
 	buildRuleDetachPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useAppContext } from 'providers/App/App';
 
 import { getDowntimeSaveChecks } from './downtimeSaveChecks';
@@ -35,6 +40,11 @@ const toIds = (options: DefaultOptionType[]): string[] =>
 		.filter((value) => value !== undefined && value !== null)
 		.map(String);
 
+/**
+ * Only the checks the form shows run here: the schedule's own verbs when
+ * editing, and per rule `detach` if the schedule silences it, `attach` if not.
+ * Save is checked by its own tooltip against `saveChecks`.
+ */
 export function usePlannedDowntimeFormPermissions({
 	initialValues,
 	isEditMode,
@@ -44,22 +54,67 @@ export function usePlannedDowntimeFormPermissions({
 }: PlannedDowntimeFormPermissionsInput): PlannedDowntimeFormPermissions {
 	const { user } = useAppContext();
 	const scheduleId = isEditMode ? initialValues.id : undefined;
-	const isEdit = !!scheduleId;
-
-	const schedule = usePlannedMaintenancePermissions(scheduleId ?? '', {
-		enabled: isEdit,
-	});
-
-	const ruleIds = useMemo(() => toIds(alertOptions), [alertOptions]);
-	const link = useRuleLinkPermissions(ruleIds);
 
 	const storedIds = useMemo(
-		() => (isEdit ? (initialValues.alertIds ?? []) : []),
-		[isEdit, initialValues.alertIds],
+		() => (scheduleId ? (initialValues.alertIds ?? []) : []),
+		[scheduleId, initialValues.alertIds],
 	);
 	const incomingIds = useMemo(
 		() => (isAllRules ? [] : toIds(selectedRules)),
 		[isAllRules, selectedRules],
+	);
+
+	const scheduleChecks = useMemo(
+		() =>
+			scheduleId
+				? {
+						read: buildPlannedMaintenanceReadPermission(scheduleId),
+						update: buildPlannedMaintenanceUpdatePermission(scheduleId),
+						attach: buildPlannedMaintenanceAttachPermission(scheduleId),
+						detach: buildPlannedMaintenanceDetachPermission(scheduleId),
+					}
+				: undefined,
+		[scheduleId],
+	);
+
+	const ruleCheck = useCallback(
+		(ruleId: string): BrandedPermission =>
+			storedIds.includes(ruleId)
+				? buildRuleDetachPermission(ruleId)
+				: buildRuleAttachPermission(ruleId),
+		[storedIds],
+	);
+
+	const checks = useMemo(
+		() => [
+			...(scheduleChecks ? Object.values(scheduleChecks) : []),
+			...toIds(alertOptions).map(ruleCheck),
+		],
+		[scheduleChecks, alertOptions, ruleCheck],
+	);
+
+	const { isGranted, isLoading, error } = useAuthZ(checks, {
+		enabled: checks.length > 0,
+	});
+	const isResolved = !isLoading && !error;
+
+	const getRuleDenial = useCallback(
+		(ruleId: string): string | undefined => {
+			if (!isResolved) {
+				return undefined;
+			}
+
+			const scheduleCheck = storedIds.includes(ruleId)
+				? scheduleChecks?.detach
+				: scheduleChecks?.attach;
+			const denied = [scheduleCheck, ruleCheck(ruleId)].filter(
+				(permission): permission is BrandedPermission =>
+					!!permission && !isGranted(permission),
+			);
+
+			return denied.length > 0 ? formatDeniedMessage(denied, user.id) : undefined;
+		},
+		[isResolved, storedIds, scheduleChecks, ruleCheck, isGranted, user.id],
 	);
 
 	const saveChecks = useMemo(
@@ -72,48 +127,11 @@ export function usePlannedDowntimeFormPermissions({
 		[scheduleId, storedIds, incomingIds],
 	);
 
-	const isScheduleResolved =
-		!isEdit || (!schedule.isLoading && !schedule.hasError);
-	const isLinkResolved = !link.isLoading && !link.hasError;
-
-	const getRuleDenial = useCallback(
-		(ruleId: string): string | undefined => {
-			if (!isScheduleResolved || !isLinkResolved) {
-				return undefined;
-			}
-
-			const denied: BrandedPermission[] = [];
-			if (storedIds.includes(ruleId)) {
-				if (isEdit && !schedule.canDetach) {
-					denied.push(schedule.detachPermission);
-				}
-				if (!link.canDetach(ruleId)) {
-					denied.push(buildRuleDetachPermission(ruleId));
-				}
-			} else {
-				if (isEdit && !schedule.canAttach) {
-					denied.push(schedule.attachPermission);
-				}
-				if (!link.canAttach(ruleId)) {
-					denied.push(buildRuleAttachPermission(ruleId));
-				}
-			}
-
-			return denied.length > 0 ? formatDeniedMessage(denied, user.id) : undefined;
-		},
-		[
-			isScheduleResolved,
-			isLinkResolved,
-			storedIds,
-			isEdit,
-			schedule,
-			link,
-			user.id,
-		],
-	);
-
 	return {
-		isReadOnly: isEdit && isScheduleResolved && !schedule.canEdit,
+		isReadOnly:
+			!!scheduleChecks &&
+			isResolved &&
+			!(isGranted(scheduleChecks.read) && isGranted(scheduleChecks.update)),
 		saveChecks,
 		getRuleDenial,
 	};
