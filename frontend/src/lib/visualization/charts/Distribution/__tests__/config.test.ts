@@ -48,6 +48,29 @@ function plotAt(
 	return { u, setSeries, redraw };
 }
 
+describe('buildDistributionConfig cursor', () => {
+	it('turns off drag-to-zoom', () => {
+		const config = buildDistributionConfig({
+			id: 'panel-1',
+			xAxis,
+			layout: resolveDistributionBars({
+				xAxis,
+				counts,
+				stack: StackMode.Normal,
+				isLogY: false,
+			}),
+			labels: ['group-0', 'group-1'],
+			colors: ['#ff0000', '#ff0000'],
+			stack: StackMode.Normal,
+			isLogY: false,
+			isDarkMode: true,
+			markers: [],
+		}).getConfig();
+
+		expect(config.cursor?.drag).toMatchObject({ x: false, y: false });
+	});
+});
+
 describe('buildDistributionConfig setCursor', () => {
 	// TooltipPlugin only shows a tooltip for a focused series.
 	it('focuses the group under the cursor, 1-based as uPlot counts series', () => {
