@@ -45,6 +45,14 @@ function SpaceComparison({
 			{index + 1}
 		</div>
 	));
+	if (itemCount > 0) {
+		items.push(
+			<span key="text">text</span>,
+			<a key="link" href="#space">
+				link
+			</a>,
+		);
+	}
 	const children = withEmptyChildren
 		? items.flatMap((item, index) => [
 				null,
