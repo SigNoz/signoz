@@ -39,13 +39,13 @@ function plotAt(
 ): { u: uPlot; setSeries: jest.Mock; redraw: jest.Mock } {
 	const setSeries = jest.fn();
 	const redraw = jest.fn();
-	const u = {
+	const plot: Partial<uPlot> = {
 		cursor: { left, top },
 		posToVal: (position: number) => position,
 		setSeries,
 		redraw,
-	} as unknown as uPlot;
-	return { u, setSeries, redraw };
+	};
+	return { u: plot as uPlot, setSeries, redraw };
 }
 
 describe('buildDistributionConfig cursor', () => {

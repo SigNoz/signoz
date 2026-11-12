@@ -23,10 +23,11 @@ const layout = resolveDistributionBars({
 
 /** Pixels are values: the cursor at (1.5, 2) is over the first group in (10, 20]. */
 function plotAt(left: number, top: number): uPlot {
-	return {
+	const plot: Partial<uPlot> = {
 		cursor: { left, top },
 		posToVal: (position: number) => position,
-	} as unknown as uPlot;
+	};
+	return plot as uPlot;
 }
 
 function renderTooltip(uPlotInstance: uPlot): void {

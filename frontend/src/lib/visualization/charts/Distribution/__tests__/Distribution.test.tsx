@@ -1,7 +1,6 @@
 import type React from 'react';
-import userEvent from '@testing-library/user-event';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
-import { render, screen } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import Distribution from '../Distribution';
 import type { DistributionSeries } from '../types';
@@ -48,14 +47,15 @@ function renderDistribution(
 }
 
 describe('Distribution', () => {
-	const CART = 'service.name=cart';
-	const CHECKOUT = 'service.name=checkout';
+	// Legend items count from 1, as uPlot's data series do.
+	const CART = 1;
+	const CHECKOUT = 2;
 
 	// The selection persists under the panel id, which every case here shares.
 	beforeEach(() => localStorage.clear());
 
-	function legendItem(label: string): HTMLElement {
-		return screen.getByRole('switch', { name: label });
+	function legendItem(seriesIndex: number): HTMLElement {
+		return screen.getByTestId(`legend-item-${seriesIndex}`);
 	}
 
 	it('renders the plot container', () => {
@@ -71,25 +71,21 @@ describe('Distribution', () => {
 		expect(legendItem(CHECKOUT)).toHaveAttribute('aria-checked', 'true');
 	});
 
-	it('isolates a group when its label is clicked', async () => {
+	it('isolates a group when its row is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderDistribution();
 
-		await userEvent.click(screen.getByText(CART));
+		await user.click(legendItem(CART));
 
 		expect(legendItem(CART)).toHaveAttribute('aria-checked', 'true');
 		expect(legendItem(CHECKOUT)).toHaveAttribute('aria-checked', 'false');
 	});
 
 	it('hides only that group when its marker is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderDistribution();
 
-		const marker = legendItem(CHECKOUT).querySelector<HTMLElement>(
-			'[data-is-legend-marker]',
-		);
-		if (!marker) {
-			throw new Error('no marker for checkout');
-		}
-		await userEvent.click(marker);
+		await user.click(screen.getByTestId(`legend-marker-${CHECKOUT}`));
 
 		expect(legendItem(CHECKOUT)).toHaveAttribute('aria-checked', 'false');
 		expect(legendItem(CART)).toHaveAttribute('aria-checked', 'true');
@@ -106,7 +102,7 @@ describe('Distribution', () => {
 			'Showing top 9 of 12 groups; the rest are summed into Other.',
 		);
 		// The legend still lists every group, so any can be isolated.
-		expect(legendItem('group-0')).toBeInTheDocument();
+		expect(legendItem(1)).toHaveAttribute('aria-label', 'group-0');
 	});
 
 	it('shows no notice when every group fits', () => {
