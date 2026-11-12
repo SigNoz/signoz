@@ -14,6 +14,7 @@ export const UPDATE_USER = 'update:user';
 export const DELETE_USER = 'delete:user';
 export const ATTACH_USER = 'attach:user';
 export const CREATE_PASSWORD = 'create:factor-password';
+export const LIST_PASSWORD = 'list:factor-password';
 
 const isDisabled = (element: HTMLElement): boolean =>
 	element.hasAttribute('disabled') ||

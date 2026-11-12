@@ -45,6 +45,7 @@ import {
 	buildUserDeletePermission,
 	buildUserReadPermission,
 	buildUserUpdatePermission,
+	PasswordListPermission,
 } from '@/lib/authz/hooks/useAuthZ/permissions/user.permissions';
 import AuthZButton from '@/lib/authz/components/AuthZButton/AuthZButton';
 import { useAuthZ } from '@/lib/authz/hooks/useAuthZ/useAuthZ';
@@ -129,10 +130,12 @@ function EditMemberDrawer({
 
 	const requestPermission = useMemo(() => {
 		if (member) {
-			return [buildUserReadPermission(member.id)];
+			return isInvited
+				? [buildUserReadPermission(member.id), PasswordListPermission]
+				: [buildUserReadPermission(member.id)];
 		}
 		return [];
-	}, [member]);
+	}, [member, isInvited]);
 
 	const { permissions: authZPermission, error: authZError } =
 		useAuthZ(requestPermission);
@@ -141,6 +144,18 @@ function EditMemberDrawer({
 		? !!authZError ||
 			(authZPermission?.[buildUserReadPermission(member.id)]?.isGranted ?? false)
 		: false;
+
+	const canListPassword =
+		!!authZError ||
+		(authZPermission?.[PasswordListPermission]?.isGranted ?? false);
+
+	const resetLinkChecks = useMemo(() => {
+		if (!member) {
+			return [];
+		}
+		const checks = buildResetPasswordPermission(member.id);
+		return isInvited ? [...checks, PasswordListPermission] : checks;
+	}, [member, isInvited]);
 
 	const { showErrorModal } = useErrorModal();
 
@@ -173,7 +188,7 @@ function EditMemberDrawer({
 		isError: tokenNotFound,
 	} = useGetResetPasswordToken(
 		{ id: member?.id ?? '' },
-		{ query: { enabled: !!member?.id && isInvited } },
+		{ query: { enabled: !!member?.id && isInvited && canListPassword } },
 	);
 
 	const existingToken = tokenQueryData?.data;
@@ -487,6 +502,28 @@ function EditMemberDrawer({
 		[formatTimezoneAdjustedTimestamp],
 	);
 
+	const inviteLinkAndResetPasswordText = useMemo(() => {
+		if (isGeneratingLink) {
+			return 'Generating...';
+		}
+		if (isInvited) {
+			return getInviteButtonLabel(
+				isLoadingTokenStatus,
+				existingToken,
+				isTokenExpired,
+				tokenNotFound,
+			);
+		}
+		return 'Generate Password Reset Link';
+	}, [
+		isGeneratingLink,
+		isInvited,
+		isLoadingTokenStatus,
+		existingToken,
+		isTokenExpired,
+		tokenNotFound,
+	]);
+
 	const drawerBody = isFetchingUser ? (
 		<Skeleton active paragraph={{ rows: 6 }} />
 	) : (
@@ -670,19 +707,10 @@ function EditMemberDrawer({
 							loading={isGeneratingLink || isLoadingTokenStatus}
 							variant="link"
 							color="warning"
-							checks={member ? buildResetPasswordPermission(member.id) : []}
+							checks={resetLinkChecks}
 							prefix={<RefreshCw size={12} />}
 						>
-							{isGeneratingLink
-								? 'Generating...'
-								: isInvited
-									? getInviteButtonLabel(
-											isLoadingTokenStatus,
-											existingToken,
-											isTokenExpired,
-											tokenNotFound,
-										)
-									: 'Generate Password Reset Link'}
+							{inviteLinkAndResetPasswordText}
 						</AuthZButton>
 					</div>
 
