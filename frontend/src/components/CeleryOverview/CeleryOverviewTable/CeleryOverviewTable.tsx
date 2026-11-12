@@ -6,7 +6,6 @@ import { Loader, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
-	Flex,
 	Input,
 	InputRef,
 	Space,
@@ -15,6 +14,7 @@ import {
 	TableColumnType,
 	Tooltip,
 } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { Progress } from '@signozhq/ui/progress';
 import { Typography } from '@signozhq/ui/typography';
 import type { FilterDropdownProps } from 'antd/lib/table/interface';

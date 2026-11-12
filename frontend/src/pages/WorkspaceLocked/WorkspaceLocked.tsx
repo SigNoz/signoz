@@ -7,7 +7,6 @@ import {
 	Button,
 	Col,
 	Collapse,
-	Flex,
 	List,
 	Modal,
 	Row,
@@ -15,6 +14,7 @@ import {
 	Space,
 	Tabs,
 } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { createSubscription } from 'api/generated/services/subscriptions';

@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings } from '@signozhq/icons';
-import { Flex, Popover } from 'antd';
+import { Popover } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { OptionFormatTypes } from 'constants/optionsFormatTypes';
 
 import AddColumnField from './AddColumnField';
