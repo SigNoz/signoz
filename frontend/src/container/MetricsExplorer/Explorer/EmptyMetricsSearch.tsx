@@ -1,4 +1,4 @@
-import { Empty } from 'antd';
+import Empty from 'periscope/components/Empty/Empty';
 import { Typography } from '@signozhq/ui/typography';
 
 interface EmptyMetricsSearchProps {
