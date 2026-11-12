@@ -176,7 +176,6 @@ function ChartPreview({
 			},
 			originalGraphType: graphType,
 		},
-		// alertDef?.version || DEFAULT_ENTITY_VERSION,
 		ENTITY_VERSION_V5,
 		{
 			queryKey: [

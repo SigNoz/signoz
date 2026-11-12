@@ -72,7 +72,6 @@ RULE_TEMPLATE = {
     "annotations": {"summary": "s", "description": "d"},
     "evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m0s", "frequency": "1m"}},
     "notificationSettings": {"groupBy": [], "usePolicy": False, "renotify": {"enabled": False, "interval": "30m", "alertStates": []}},
-    "version": "v5",
     "schemaVersion": "v2alpha1",
 }
 

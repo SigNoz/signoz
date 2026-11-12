@@ -2,7 +2,7 @@
  * V5 Migration Tests for Status Code Bar Chart Queries
  *
  * These tests validate the migration to V5 format for the bar chart payloads
- * in getEndPointDetailsQueryPayload (5th and 6th payloads):
+ * in getEndPointDetailsQueryPayload (4th and 5th payloads):
  * - Number of Calls Chart (count aggregation)
  * - Latency Chart (p99 aggregation)
  *
@@ -15,16 +15,12 @@
  */
 import { TraceAggregation } from 'api/v5/v5';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 	const mockDomainName = '0.0.0.0';
 	const mockStartTime = 1762573673000;
 	const mockEndTime = 1762832873000;
-	const emptyFilters: IBuilderQuery['filters'] = {
-		items: [],
-		op: 'AND',
-	};
+	const emptyFilters = '';
 
 	describe('1. Number of Calls Chart - V5 Payload Structure', () => {
 		it('generates correct V5 payload for count aggregation grouped by status code', () => {
@@ -35,8 +31,8 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 				emptyFilters,
 			);
 
-			// 5th payload (index 4) is the number of calls bar chart
-			const callsChartQuery = payload[4];
+			// 4th payload (index 3) is the number of calls bar chart
+			const callsChartQuery = payload[3];
 			const queryA = callsChartQuery.query.builder.queryData[0];
 
 			// V5 format: filter.expression (not filters.items)
@@ -84,8 +80,8 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 				emptyFilters,
 			);
 
-			// 6th payload (index 5) is the latency bar chart
-			const latencyChartQuery = payload[5];
+			// 5th payload (index 4) is the latency bar chart
+			const latencyChartQuery = payload[4];
 			const queryA = latencyChartQuery.query.builder.queryData[0];
 
 			// V5 format: filter.expression (not filters.items)
@@ -130,31 +126,8 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 
 	describe('3. Custom Filters Integration', () => {
 		it('merges custom filters into filter expression for both charts', () => {
-			const customFilters: IBuilderQuery['filters'] = {
-				items: [
-					{
-						id: 'test-1',
-						key: {
-							key: 'service.name',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'user-service',
-					},
-					{
-						id: 'test-2',
-						key: {
-							key: 'deployment.environment',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'production',
-					},
-				],
-				op: 'AND',
-			};
+			const customFilters =
+				"service.name = 'user-service' AND deployment.environment = 'production'";
 
 			const payload = getEndPointDetailsQueryPayload(
 				mockDomainName,
@@ -163,8 +136,8 @@ describe('StatusCodeBarCharts - V5 Migration Validation', () => {
 				customFilters,
 			);
 
-			const callsChartQuery = payload[4];
-			const latencyChartQuery = payload[5];
+			const callsChartQuery = payload[3];
+			const latencyChartQuery = payload[4];
 
 			const callsExpression =
 				callsChartQuery.query.builder.queryData[0].filter?.expression;

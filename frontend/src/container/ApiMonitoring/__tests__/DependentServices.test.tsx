@@ -121,8 +121,7 @@ describe('DependentServices', () => {
 		);
 	});
 
-	it('renders loading state correctly', () => {
-		// Arrange
+	it('keeps the table in place while loading', () => {
 		const mockQuery: MockQueryResult = {
 			isLoading: true,
 			isRefetching: false,
@@ -131,16 +130,15 @@ describe('DependentServices', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
-		const { container } = render(
+		render(
 			<DependentServices
 				dependentServicesQuery={mockQuery as any}
 				timeRange={mockTimeRange}
 			/>,
 		);
 
-		// Assert
-		expect(container.querySelector('.ant-skeleton')).toBeInTheDocument();
+		expect(screen.getByTestId('dependent-services-table')).toBeInTheDocument();
+		expect(screen.getByTestId('loading-state')).toHaveTextContent('Loading');
 	});
 
 	it('renders error state correctly', () => {
@@ -225,8 +223,7 @@ describe('DependentServices', () => {
 		expect(screen.getByTestId('page-size')).toHaveTextContent('5');
 	});
 
-	it('handles refetching state correctly', () => {
-		// Arrange
+	it('shows the rows under the spinner while refetching', () => {
 		const mockQuery: MockQueryResult = {
 			isLoading: false,
 			isRefetching: true,
@@ -235,16 +232,16 @@ describe('DependentServices', () => {
 			refetch: refetchFn,
 		};
 
-		// Act
-		const { container } = render(
+		render(
 			<DependentServices
 				dependentServicesQuery={mockQuery as any}
 				timeRange={mockTimeRange}
 			/>,
 		);
 
-		// Assert
-		expect(container.querySelector('.ant-skeleton')).toBeInTheDocument();
+		expect(screen.getByTestId('loading-state')).toHaveTextContent('Loading');
+		expect(screen.getByTestId('row-count')).toHaveTextContent('2');
+		expect(screen.getByTestId('table-row-0')).toHaveTextContent('auth-service');
 	});
 
 	it('handles row click correctly', () => {
