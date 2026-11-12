@@ -9,11 +9,11 @@ import {
 	Collapse,
 	List,
 	Modal,
-	Row,
 	Skeleton,
 	Space,
 	Tabs,
 } from 'antd';
+import Row from 'periscope/components/Row/Row';
 import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';

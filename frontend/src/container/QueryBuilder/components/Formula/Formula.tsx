@@ -1,5 +1,6 @@
 import { ChangeEvent, useCallback, useMemo, useState } from 'react';
-import { Col, Input, Row, Select } from 'antd';
+import { Col, Input, Select } from 'antd';
+import Row from 'periscope/components/Row/Row';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import BucketOptions from 'components/QueryBuilderV2/QueryV2/QueryAddOns/BucketOptions/BucketOptions';
 import { parseLimit, sanitizeLimit } from 'components/QueryBuilderV2/utils';

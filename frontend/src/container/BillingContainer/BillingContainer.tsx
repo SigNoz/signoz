@@ -8,11 +8,11 @@ import { CircleCheck, Landmark, MonitorDown } from '@signozhq/icons';
 import {
 	Card,
 	Col,
-	Row,
 	Skeleton,
 	Table,
 	TableColumnsType as ColumnsType,
 } from 'antd';
+import Row from 'periscope/components/Row/Row';
 import Flex from 'periscope/components/Flex/Flex';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';

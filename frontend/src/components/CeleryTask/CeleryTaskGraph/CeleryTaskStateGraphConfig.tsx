@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
-import { Col, Row } from 'antd';
+import { Col } from 'antd';
+import Row from 'periscope/components/Row/Row';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
