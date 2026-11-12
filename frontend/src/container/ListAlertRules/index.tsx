@@ -7,7 +7,6 @@ import ViewsRail from 'components/ListViews/ViewsRail/ViewsRail';
 import TanStackTable from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
-import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 
@@ -15,6 +14,7 @@ import { AlertsEmptyState } from './AlertsEmptyState/AlertsEmptyState';
 import { ActionsMenu } from './components';
 import AlertRulesFilterZone from './components/AlertRulesFilterZone';
 import AlertRulesHeaderActions from './components/AlertRulesHeaderActions';
+import AlertRulesListGate from './components/AlertRulesListGate';
 import styles from './ListAlertRules.module.scss';
 import { getAlertRuleColumns } from './table.config';
 import type { AlertRule } from './types';
@@ -38,11 +38,6 @@ const DEFAULT_LIMIT = 10;
 
 function ListAlertRules(): JSX.Element {
 	const { user } = useAppContext();
-	const [addNewAlert, action] = useComponentPermission(
-		['add_new_alert', 'action'],
-		user.role,
-	);
-
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
@@ -120,10 +115,6 @@ function ListAlertRules(): JSX.Element {
 	});
 
 	const columnsWithActions = useMemo(() => {
-		if (!action) {
-			return columns;
-		}
-
 		return [
 			...columns,
 			{
@@ -144,7 +135,7 @@ function ListAlertRules(): JSX.Element {
 				),
 			},
 		];
-	}, [action, columns, handleEdit]);
+	}, [columns, handleEdit]);
 
 	const hasActiveFilters = filter.query.length > 0 || filter.states.length > 0;
 	const isEmptyDueToFilters =
@@ -189,7 +180,6 @@ function ListAlertRules(): JSX.Element {
 							action={
 								<AlertRulesHeaderActions
 									columns={columns}
-									canAddAlert={addNewAlert}
 									onNewAlert={handleNewAlert}
 								/>
 							}
@@ -207,43 +197,48 @@ function ListAlertRules(): JSX.Element {
 				)}
 
 				<div ref={containerRef} className={styles.tableContainer}>
-					{isError ? (
-						<ErrorEmptyState title="Failed to load alert rules" onRefresh={refetch} />
-					) : isEmptyDueToFilters ? (
-						<NoResultsEmptyState
-							title="No matching alert rules"
-							subtitle={
-								queryError
-									? 'The filter query is invalid. Fix it or clear the search.'
-									: 'No alert rules match your search. Try adjusting your search criteria.'
-							}
-							onClear={handleClearFilters}
-							clearButtonText="Clear Search"
-						/>
-					) : isEmptyNoRules ? (
-						<AlertsEmptyState onRefresh={refetch} />
-					) : (
-						<TanStackTable<AlertRule>
-							data={rules}
-							columns={columnsWithActions}
-							isLoading={isFetching}
-							getRowKey={(row): string => row.id ?? ''}
-							getItemKey={(row): string => row.id ?? ''}
-							columnStorageKey="alert-rules-columns"
-							enableQueryParams={QUERY_PARAMS_CONFIG}
-							onRowClick={handleRowClick}
-							onRowClickNewTab={handleRowClickNewTab}
-							pagination={{
-								total,
-								calculatedPageSize,
-								onLimitChange: setLimit,
-								showTotalCount: true,
-							}}
-							paginationClassname={styles.paginationContainer}
-							enableAlternatingRowColors
-							plainTextCellLineClamp={2}
-						/>
-					)}
+					<AlertRulesListGate className={styles.guardInset}>
+						{isError ? (
+							<ErrorEmptyState
+								title="Failed to load alert rules"
+								onRefresh={refetch}
+							/>
+						) : isEmptyDueToFilters ? (
+							<NoResultsEmptyState
+								title="No matching alert rules"
+								subtitle={
+									queryError
+										? 'The filter query is invalid. Fix it or clear the search.'
+										: 'No alert rules match your search. Try adjusting your search criteria.'
+								}
+								onClear={handleClearFilters}
+								clearButtonText="Clear Search"
+							/>
+						) : isEmptyNoRules ? (
+							<AlertsEmptyState onRefresh={refetch} />
+						) : (
+							<TanStackTable<AlertRule>
+								data={rules}
+								columns={columnsWithActions}
+								isLoading={isFetching}
+								getRowKey={(row): string => row.id ?? ''}
+								getItemKey={(row): string => row.id ?? ''}
+								columnStorageKey="alert-rules-columns"
+								enableQueryParams={QUERY_PARAMS_CONFIG}
+								onRowClick={handleRowClick}
+								onRowClickNewTab={handleRowClickNewTab}
+								pagination={{
+									total,
+									calculatedPageSize,
+									onLimitChange: setLimit,
+									showTotalCount: true,
+								}}
+								paginationClassname={styles.paginationContainer}
+								enableAlternatingRowColors
+								plainTextCellLineClamp={2}
+							/>
+						)}
+					</AlertRulesListGate>
 				</div>
 				<ListStatusBar
 					collapsed={railCollapsed}

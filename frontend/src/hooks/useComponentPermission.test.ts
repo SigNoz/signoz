@@ -10,10 +10,8 @@ describe('useComponentPermission', () => {
 		'create_new_dashboards',
 		'import_dashboard',
 		'export_dashboard',
-		'add_new_alert',
 		'add_new_channel',
 		'set_retention_period',
-		'action',
 		'save_layout',
 		'edit_dashboard',
 		'delete_widget',
@@ -33,10 +31,8 @@ describe('useComponentPermission', () => {
 			true, // create_new_dashboards
 			true, // import_dashboard
 			true, // export_dashboard
-			true, // add_new_alert
 			true, // add_new_channel
 			true, // set_retention_period
-			true, // action
 			true, // save_layout
 			true, // edit_dashboard
 			true, // delete_widget
@@ -58,10 +54,8 @@ describe('useComponentPermission', () => {
 			true, // create_new_dashboards
 			true, // import_dashboard
 			true, // export_dashboard
-			true, // add_new_alert
 			false, // add_new_channel
 			false, // set_retention_period
-			true, // action
 			true, // save_layout
 			true, // edit_dashboard
 			true, // delete_widget
@@ -83,10 +77,8 @@ describe('useComponentPermission', () => {
 			false, // create_new_dashboards
 			false, // import_dashboard
 			true, // export_dashboard
-			false, // add_new_alert
 			false, // add_new_channel
 			false, // set_retention_period
-			false, // action
 			false, // save_layout
 			false, // edit_dashboard
 			false, // delete_widget

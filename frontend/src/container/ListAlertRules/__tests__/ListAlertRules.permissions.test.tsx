@@ -1,71 +1,171 @@
+import userEvent from '@testing-library/user-event';
+import {
+	setupAuthzAllow,
+	setupAuthzDeny,
+	setupAuthzDenyAll,
+} from 'lib/authz/utils/authz-test-utils';
+import {
+	buildRuleDeletePermission,
+	buildRuleReadPermission,
+	buildRuleUpdatePermission,
+	RuleCreatePermission,
+	RuleListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import {
+	alertRulesFixture,
+	listRulesV3Response,
+} from 'mocks-server/__mockdata__/alert_rules';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import { screen, waitFor } from 'tests/test-utils';
-import { USER_ROLES } from 'types/roles';
 
-import { renderListAlertRules } from './_helpers';
+import { findAlertRow, renderListAlertRules } from './_helpers';
+
+const NEW_ALERT = 'list-alerts-new-alert-button';
+const RULE_ID = String(
+	alertRulesFixture.find((rule) => rule.alert === 'High CPU Alert')?.id,
+);
+
+async function openFirstRowMenu(): Promise<void> {
+	const row = await findAlertRow('High CPU Alert');
+	const trigger = row.querySelector<HTMLElement>(
+		'[data-testid="alert-actions"]',
+	);
+	expect(trigger).not.toBeNull();
+	await userEvent.setup({ delay: null }).click(trigger as HTMLElement);
+	await screen.findByRole('menu');
+}
+
+/** Waits for the row's check, then reports whether it ended up disabled. */
+async function isRowDisabled(testId: string): Promise<boolean> {
+	const item = await screen.findByTestId(testId);
+	await waitFor(() => expect(item).not.toHaveAttribute('data-loading'), {
+		timeout: 5000,
+	});
+	return item.hasAttribute('data-disabled');
+}
+
+// Rendering the list, opening a row menu and waiting on its permission check
+// outlasts the 5s default when the full suite runs in parallel.
+jest.setTimeout(15_000);
 
 describe('ListAlertRules — permissions', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 	});
 
-	it('VIEWER role hides "New Alert" button and "Actions" column', async () => {
-		renderListAlertRules({ role: USER_ROLES.VIEWER });
+	it('enables New Alert and every row action with every permission', async () => {
+		renderListAlertRules();
 
-		await screen.findByText('High CPU Alert');
-
-		expect(
-			screen.queryByTestId('list-alerts-new-alert-button'),
-		).not.toBeInTheDocument();
-		expect(
-			screen.queryByRole('button', { name: /new alert/i }),
-		).not.toBeInTheDocument();
-
-		const headers = Array.from(document.querySelectorAll('th')).map(
-			(h) => h.textContent ?? '',
+		await waitFor(
+			() =>
+				expect(screen.getByTestId(NEW_ALERT)).toHaveAttribute(
+					'aria-disabled',
+					'false',
+				),
+			{ timeout: 5000 },
 		);
-		expect(headers.some((t) => t.includes('Actions'))).toBe(false);
-		expect(screen.queryByTestId('alert-actions')).not.toBeInTheDocument();
+		await openFirstRowMenu();
+		for (const action of ['toggle', 'edit', 'edit-new-tab', 'clone', 'delete']) {
+			await expect(isRowDisabled(`alert-action-${action}`)).resolves.toBe(false);
+		}
 	});
 
-	it('ADMIN role shows "New Alert" button and "Actions" column', async () => {
-		renderListAlertRules({ role: USER_ROLES.ADMIN });
+	it('disables New Alert without create and names it', async () => {
+		renderListAlertRules({ authz: setupAuthzDeny(RuleCreatePermission) });
 
-		await screen.findByText('High CPU Alert');
-
-		expect(
-			screen.getByTestId('list-alerts-new-alert-button'),
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole('button', { name: /new alert/i }),
-		).toBeInTheDocument();
-
-		await waitFor(() => {
-			const headers = Array.from(document.querySelectorAll('th')).map(
-				(h) => h.textContent ?? '',
-			);
-			expect(headers.some((t) => t.includes('Actions'))).toBe(true);
-		});
-		expect(screen.getAllByTestId('alert-actions').length).toBeGreaterThan(0);
+		await waitFor(
+			() =>
+				expect(screen.getByTestId(NEW_ALERT)).toHaveAttribute(
+					'data-denied-permissions',
+					RuleCreatePermission,
+				),
+			{ timeout: 5000 },
+		);
+		expect(screen.getByTestId(NEW_ALERT)).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
-	it('EDITOR role behaves like ADMIN (New Alert + Actions visible)', async () => {
-		renderListAlertRules({ role: USER_ROLES.EDITOR });
+	it('disables the empty-state New Alert Rule without create', async () => {
+		server.use(
+			rest.get('http://localhost/api/v3/rules', (req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json(listRulesV3Response([], req.url.searchParams)),
+				),
+			),
+		);
+		renderListAlertRules({ authz: setupAuthzDeny(RuleCreatePermission) });
 
-		await screen.findByText('High CPU Alert');
+		await waitFor(
+			() =>
+				expect(screen.getByTestId('add-alert')).toHaveAttribute(
+					'data-denied-permissions',
+					RuleCreatePermission,
+				),
+			{ timeout: 5000 },
+		);
+	});
 
-		expect(
-			screen.getByTestId('list-alerts-new-alert-button'),
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole('button', { name: /new alert/i }),
-		).toBeInTheDocument();
+	it('shows a permission callout instead of the table without list', async () => {
+		renderListAlertRules({ authz: setupAuthzDenyAll() });
 
-		await waitFor(() => {
-			const headers = Array.from(document.querySelectorAll('th')).map(
-				(h) => h.textContent ?? '',
-			);
-			expect(headers.some((t) => t.includes('Actions'))).toBe(true);
+		await expect(
+			screen.findByText('list:rule:*', undefined, { timeout: 5000 }),
+		).resolves.toBeInTheDocument();
+		expect(screen.queryByText('High CPU Alert')).not.toBeInTheDocument();
+	});
+
+	it('keeps the table while listing is allowed', async () => {
+		renderListAlertRules({ authz: setupAuthzAllow(RuleListPermission) });
+
+		await expect(
+			screen.findByText('High CPU Alert', undefined, { timeout: 5000 }),
+		).resolves.toBeInTheDocument();
+		expect(screen.queryByText('list:rule:*')).not.toBeInTheDocument();
+	});
+
+	it('locks toggle and both edits without update; clone and delete stay', async () => {
+		renderListAlertRules({
+			authz: setupAuthzDeny(buildRuleUpdatePermission(RULE_ID)),
 		});
-		expect(screen.getAllByTestId('alert-actions').length).toBeGreaterThan(0);
+
+		await openFirstRowMenu();
+		await expect(isRowDisabled('alert-action-toggle')).resolves.toBe(true);
+		await expect(isRowDisabled('alert-action-edit')).resolves.toBe(true);
+		await expect(isRowDisabled('alert-action-edit-new-tab')).resolves.toBe(true);
+		await expect(isRowDisabled('alert-action-clone')).resolves.toBe(false);
+		await expect(isRowDisabled('alert-action-delete')).resolves.toBe(false);
+	});
+
+	it('locks edit and clone without read on the rule', async () => {
+		renderListAlertRules({
+			authz: setupAuthzDeny(buildRuleReadPermission(RULE_ID)),
+		});
+
+		await openFirstRowMenu();
+		await expect(isRowDisabled('alert-action-edit')).resolves.toBe(true);
+		await expect(isRowDisabled('alert-action-clone')).resolves.toBe(true);
+		await expect(isRowDisabled('alert-action-toggle')).resolves.toBe(false);
+	});
+
+	it('locks clone without create', async () => {
+		renderListAlertRules({ authz: setupAuthzDeny(RuleCreatePermission) });
+
+		await openFirstRowMenu();
+		await expect(isRowDisabled('alert-action-clone')).resolves.toBe(true);
+		await expect(isRowDisabled('alert-action-edit')).resolves.toBe(false);
+	});
+
+	it('locks delete without delete on the rule', async () => {
+		renderListAlertRules({
+			authz: setupAuthzDeny(buildRuleDeletePermission(RULE_ID)),
+		});
+
+		await openFirstRowMenu();
+		await expect(isRowDisabled('alert-action-delete')).resolves.toBe(true);
+		await expect(isRowDisabled('alert-action-toggle')).resolves.toBe(false);
 	});
 });

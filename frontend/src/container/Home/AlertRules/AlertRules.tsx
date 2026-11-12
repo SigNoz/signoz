@@ -10,13 +10,21 @@ import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
-import { useAppContext } from 'providers/App/App';
-import { USER_ROLES } from 'types/roles';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
+import {
+	RuleCreatePermission,
+	RuleListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
 import beaconUrl from '@/assets/Icons/beacon.svg';
 
 import { getItemIcon } from '../constants';
 import { useHomeAlertRules } from './useHomeAlertRules';
+
+const LIST_CHECKS = [RuleListPermission];
+const CREATE_CHECKS = [RuleCreatePermission];
 
 export default function AlertRules({
 	onUpdateChecklistDoneItem,
@@ -25,14 +33,27 @@ export default function AlertRules({
 	onUpdateChecklistDoneItem: (itemKey: string) => void;
 	loadingUserPreferences: boolean;
 }): JSX.Element {
-	const { user } = useAppContext();
-
 	const location = useAppLocation();
 	const params = new URLSearchParams(location.search);
 
 	// Fetch Alerts
 	const { rules: alertRules, isError, isLoading } = useHomeAlertRules();
 	const rulesExist = alertRules.length > 0;
+
+	const listCheck = useAuthZ(LIST_CHECKS);
+	const isListDenied =
+		!listCheck.isLoading &&
+		!listCheck.error &&
+		!listCheck.isGranted(RuleListPermission);
+	// Create is only offered by the empty state, so it is only checked there.
+	const createCheck = useAuthZ(CREATE_CHECKS, {
+		enabled: !isLoading && !rulesExist,
+	});
+	const isCreateDenied =
+		!createCheck.isLoading &&
+		!createCheck.error &&
+		!!createCheck.permissions &&
+		!createCheck.isGranted(RuleCreatePermission);
 
 	useEffect(() => {
 		if (rulesExist && !loadingUserPreferences) {
@@ -48,20 +69,31 @@ export default function AlertRules({
 
 					<div className="empty-title">No Alert rules yet.</div>
 
-					{user?.role !== USER_ROLES.VIEWER && (
-						<div className="empty-description">
-							Create an Alert Rule to get started
-						</div>
-					)}
+					<div className="empty-description">
+						Create an Alert Rule to get started
+					</div>
 				</div>
 
-				{user?.role !== USER_ROLES.VIEWER && (
-					<div className="empty-actions-container">
+				<div className="empty-actions-container">
+					{isCreateDenied ? (
+						// No link while denied: the tooltip's trigger would still follow it.
+						<AuthZTooltip checks={CREATE_CHECKS}>
+							<Button
+								type="default"
+								className="periscope-btn secondary"
+								icon={<Plus size={16} />}
+								data-testid="home-create-alert-rule"
+							>
+								Create Alert Rule
+							</Button>
+						</AuthZTooltip>
+					) : (
 						<AppLink to={ROUTES.ALERTS_NEW}>
 							<Button
 								type="default"
 								className="periscope-btn secondary"
 								icon={<Plus size={16} />}
+								data-testid="home-create-alert-rule"
 								onClick={(): void => {
 									void logEvent('Homepage: Create alert rule clicked', {});
 								}}
@@ -69,26 +101,26 @@ export default function AlertRules({
 								Create Alert Rule
 							</Button>
 						</AppLink>
+					)}
 
-						<Button
-							type="link"
-							className="learn-more-link"
-							onClick={(): void => {
-								void logEvent('Homepage: Learn more clicked', {
-									source: 'Alert Rules',
-								});
+					<Button
+						type="link"
+						className="learn-more-link"
+						onClick={(): void => {
+							void logEvent('Homepage: Learn more clicked', {
+								source: 'Alert Rules',
+							});
 
-								window.open(
-									'https://signoz.io/docs/alerts/',
-									'_blank',
-									'noreferrer noopener',
-								);
-							}}
-						>
-							Learn more <ArrowUpRight size={12} />
-						</Button>
-					</div>
-				)}
+							window.open(
+								'https://signoz.io/docs/alerts/',
+								'_blank',
+								'noreferrer noopener',
+							);
+						}}
+					>
+						Learn more <ArrowUpRight size={12} />
+					</Button>
+				</div>
 			</div>
 		</div>
 	);
@@ -150,6 +182,16 @@ export default function AlertRules({
 			</div>
 		</div>
 	);
+
+	if (isListDenied) {
+		return (
+			<Card className="dashboards-list-card home-data-card">
+				<Card.Content>
+					<PermissionDeniedCallout deniedPermissions={LIST_CHECKS} />
+				</Card.Content>
+			</Card>
+		);
+	}
 
 	if (isLoading) {
 		return (

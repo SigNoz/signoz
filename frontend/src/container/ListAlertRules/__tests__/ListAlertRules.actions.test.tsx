@@ -22,8 +22,20 @@ async function openActionsMenu(row: HTMLElement): Promise<void> {
 async function clickMenuItem(label: string): Promise<void> {
 	const user = userEvent.setup({ delay: null });
 	const item = await screen.findByRole('menuitem', { name: label });
+	// A gated row stays inert until its permission check answers.
+	await waitFor(
+		() =>
+			expect(
+				item.hasAttribute('data-loading') || item.hasAttribute('data-disabled'),
+			).toBe(false),
+		{ timeout: 5000 },
+	);
 	await user.click(item);
 }
+
+// Rendering the list, opening a row menu and waiting on its permission check
+// outlasts the 5s default when the full suite runs in parallel.
+jest.setTimeout(15_000);
 
 describe('ListAlertRules — actions menu', () => {
 	beforeEach(() => {
