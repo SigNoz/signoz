@@ -1,5 +1,9 @@
-import { initialQueriesMap } from 'constants/queryBuilder';
+import {
+	initialQueriesMap,
+	initialQueryAIWithType,
+} from 'constants/queryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import {
 	DEFAULT_LIST_ORDER_BY,
 	getListOrderBy,
@@ -133,5 +137,35 @@ describe('setListOrderBy', () => {
 		expect(base.builder.queryData[0].orderBy).toStrictEqual([
 			{ columnName: 'timestamp', order: 'desc' },
 		]);
+	});
+});
+
+describe('AI slot', () => {
+	const aiQuery = (orderBy: { columnName: string; order: string }[]): Query => ({
+		...initialQueriesMap.logs,
+		queryType: EQueryType.AI_QUERY_BUILDER,
+		builder_ai_query: {
+			...initialQueryAIWithType.builder,
+			queryData: initialQueryAIWithType.builder.queryData.map((item) => ({
+				...item,
+				orderBy,
+			})),
+		},
+	});
+
+	it('reads the order from the AI slot', () => {
+		expect(
+			getListOrderBy(aiQuery([{ columnName: 'duration_nano', order: 'asc' }])),
+		).toBe('duration_nano:asc');
+	});
+
+	it('writes the order into the AI slot and leaves builder alone', () => {
+		const base = aiQuery([]);
+		const next = setListOrderBy(base, 'duration_nano:desc');
+
+		expect(next.builder_ai_query?.queryData[0].orderBy).toStrictEqual([
+			{ columnName: 'duration_nano', order: 'desc' },
+		]);
+		expect(next.builder).toBe(base.builder);
 	});
 });
