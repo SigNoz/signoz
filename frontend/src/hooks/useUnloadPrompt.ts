@@ -1,6 +1,10 @@
 import { useEffect } from 'react';
+import { holdUnsavedChanges } from 'hooks/useUnsavedChangesStore';
 
-/** While `enabled`, a refresh or tab close asks the browser to confirm leaving. */
+/**
+ * While `enabled`, a refresh or tab close asks the browser to confirm leaving,
+ * and the new-version prompt waits.
+ */
 export function useUnloadPrompt(enabled: boolean): void {
 	useEffect(() => {
 		if (!enabled) {
@@ -10,8 +14,10 @@ export function useUnloadPrompt(enabled: boolean): void {
 			event.preventDefault();
 		};
 		window.addEventListener('beforeunload', handleBeforeUnload);
+		const releaseUnsavedChanges = holdUnsavedChanges();
 		return (): void => {
 			window.removeEventListener('beforeunload', handleBeforeUnload);
+			releaseUnsavedChanges();
 		};
 	}, [enabled]);
 }

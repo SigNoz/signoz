@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useUnloadPrompt } from 'hooks/useUnloadPrompt';
 import { blockNavigation } from 'lib/router/navigation';
 import type {
 	AppLocation,
@@ -88,21 +89,7 @@ export function useNavigationBlocker(
 		};
 	}, [shouldBlock]);
 
-	useEffect(() => {
-		if (!shouldBlock) {
-			return;
-		}
-
-		const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
-			event.preventDefault();
-		};
-
-		window.addEventListener('beforeunload', handleBeforeUnload);
-
-		return (): void => {
-			window.removeEventListener('beforeunload', handleBeforeUnload);
-		};
-	}, [shouldBlock]);
+	useUnloadPrompt(shouldBlock);
 
 	const confirmNavigation = useCallback((): void => {
 		if (!blockedNavigation) {
