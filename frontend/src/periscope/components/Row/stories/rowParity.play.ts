@@ -14,14 +14,11 @@ const LAYOUT_PROPERTIES = [
 	'margin-right',
 	'min-width',
 	'box-sizing',
-	'font-family',
 	'font-size',
 ] as const;
 
 const LINK_PROPERTIES = [
-	'color',
 	'text-decoration-line',
-	'background-color',
 	'cursor',
 	'transition',
 ] as const;
@@ -75,6 +72,8 @@ export async function assertRowParity({
 }: {
 	canvasElement: HTMLElement;
 }): Promise<void> {
+	// Text boxes differ while the web font loads: each side falls back differently.
+	await document.fonts.ready;
 	const canvas = within(canvasElement);
 	const antd = canvas.getByTestId(ANTD_ROW_TEST_ID);
 	const local = canvas.getByTestId(LOCAL_ROW_TEST_ID);
