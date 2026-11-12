@@ -107,7 +107,11 @@ export default function DistributionTooltip({
 
 			<div className={Styles.rows}>
 				<div className={Styles.columnHeader}>
-					<span className={Styles.columnLabel} title={groupColumn.heading}>
+					<span
+						className={Styles.columnLabel}
+						title={groupColumn.heading}
+						data-testid="distribution-tooltip-group-heading"
+					>
 						{groupColumn.heading}
 					</span>
 					<span>Count</span>
