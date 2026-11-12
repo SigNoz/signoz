@@ -17,7 +17,7 @@ const EMPTY_BUILDER: QueryBuilderData = {
 };
 
 /** Query Builder and AI Query Builder; both author builder queries, each in its own slot. */
-export function isBuilderQueryType(queryType: EQueryType | undefined): boolean {
+export function isBuilderQueryType(queryType: EQueryType): boolean {
 	return (
 		queryType === EQueryType.QUERY_BUILDER ||
 		queryType === EQueryType.AI_QUERY_BUILDER
