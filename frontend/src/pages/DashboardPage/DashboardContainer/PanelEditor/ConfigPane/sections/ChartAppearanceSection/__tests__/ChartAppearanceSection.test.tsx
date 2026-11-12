@@ -125,6 +125,41 @@ describe('ChartAppearanceSection', () => {
 		});
 	});
 
+	it('opens the bucket stack on stacked, where a distribution starts', () => {
+		render(
+			<ChartAppearanceSection
+				value={undefined}
+				controls={{ stack: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByTestId('panel-editor-v2-bucket-stack'),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(
+				'Groups sit on top of each other, so the height shows the bucket total.',
+			),
+		).toBeInTheDocument();
+	});
+
+	it('writes the chosen bucket stack', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		render(
+			<ChartAppearanceSection
+				value={undefined}
+				controls={{ stack: true }}
+				onChange={onChange}
+			/>,
+		);
+
+		await user.click(screen.getByText('Side by side'));
+
+		expect(onChange).toHaveBeenCalledWith({ stack: 'none' });
+	});
+
 	it('shows the fill opacity at the chart default when the spec omits it', () => {
 		render(
 			<ChartAppearanceSection
