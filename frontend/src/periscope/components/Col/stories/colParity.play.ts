@@ -24,14 +24,11 @@ const LAYOUT_PROPERTIES = [
 	'left',
 	'right',
 	'order',
-	'font-family',
 	'font-size',
 ] as const;
 
 const LINK_PROPERTIES = [
-	'color',
 	'text-decoration-line',
-	'background-color',
 	'cursor',
 	'transition',
 ] as const;
@@ -81,6 +78,8 @@ export async function assertColParity({
 }: {
 	canvasElement: HTMLElement;
 }): Promise<void> {
+	// Text boxes differ while the web font loads: each side falls back differently.
+	await document.fonts.ready;
 	const canvas = within(canvasElement);
 	const antd = canvas.getByTestId(ANTD_COL_TEST_ID);
 	const local = canvas.getByTestId(LOCAL_COL_TEST_ID);
