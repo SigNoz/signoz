@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
 import { renderAtRoute } from '@/storybook/renderAtRoute';
-import { screen, userEvent } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import { openAutoRefreshMenu } from './__story_mockdata__/publicDashboard.play';
 import { publicDashboardMocks } from './PublicDashboard.stories.mocks';
 
 import PublicDashboardPage from '../index';
@@ -34,9 +34,6 @@ const meta = {
 
 export default meta;
 
-/** The viewer fetches the dashboard before it renders its header. */
-const untilLoaded = { timeout: 15_000 };
-
 type Story = StoryObj<PublicDashboardArgs>;
 
 /**
@@ -63,16 +60,7 @@ export const Loading: Story = {
 
 /** The public viewer's auto-refresh popover is visibly open. */
 export const AutoRefreshMenuOpen: Story = {
-	play: async (): Promise<void> => {
-		await userEvent.click(
-			await screen.findByTestId(
-				'public-dashboard-auto-refresh',
-				undefined,
-				untilLoaded,
-			),
-		);
-		await screen.findByText('Refresh Interval', undefined, untilLoaded);
-	},
+	play: openAutoRefreshMenu,
 };
 
 /** A dashboard saved before the Perses spec, which falls back to the v1 viewer. */

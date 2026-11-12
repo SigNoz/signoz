@@ -1,4 +1,5 @@
 import type { DashboardControlsInput } from 'pages/DashboardPage/DashboardContainer/controls/types';
+import { resolveControls } from 'pages/DashboardPage/DashboardContainer/controls/dashboardControls';
 import { render, screen } from 'tests/test-utils';
 
 import type { SystemDashboardHost } from 'container/SystemDashboard/systemDashboardHost';
@@ -23,20 +24,21 @@ jest.mock('container/SystemDashboard/SystemDashboard', () => ({
 }));
 
 describe('Cost meter breakdown', () => {
-	it('mounts the cost meter system dashboard without panel actions', () => {
+	it('mounts the cost meter system dashboard as charts only, without auto-refresh', () => {
 		render(<BreakDown />);
 
 		const dashboard = screen.getByTestId('system-dashboard');
 		expect(dashboard).toHaveAttribute('data-name', 'cost-meter-breakdown');
-		expect(
+		const controls = resolveControls(
 			JSON.parse(dashboard.getAttribute('data-controls') ?? ''),
-		).toStrictEqual({
-			header: false,
-			title: false,
-			dashboardActions: false,
-			toolbar: { autoRefresh: false },
-			panelActions: false,
-		});
+			true,
+		);
+		expect(controls.header.breadcrumbs).toBe(false);
+		expect(controls.panelActions.createAlert).toBe(false);
+		expect(controls.panelActions.drilldown).toBe(false);
+		expect(controls.panelActions.zoom).toBe(true);
+		expect(controls.toolbar.autoRefresh).toBe(false);
+		expect(controls.toolbar.timeRange).toBe(true);
 	});
 
 	it('keeps the UTC billing notice above the dashboard', () => {

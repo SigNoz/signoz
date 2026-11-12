@@ -16,10 +16,19 @@ export const EMBEDDED: DashboardControlsInput = {
 	dashboardActions: false,
 };
 
-/** Embedded, and panels are just charts: no panel menu, no drilldown. */
+/** Embedded, and panels are just charts: no panel menu, no drilldown. Charts still zoom. */
 export const CHARTS_ONLY: DashboardControlsInput = {
 	...EMBEDDED,
-	panelActions: false,
+	panelActions: {
+		view: false,
+		edit: false,
+		clone: false,
+		download: false,
+		createAlert: false,
+		move: false,
+		delete: false,
+		drilldown: false,
+	},
 };
 
 type GroupInput<G extends DashboardControlGroup> =

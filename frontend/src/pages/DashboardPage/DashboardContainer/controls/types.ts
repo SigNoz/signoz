@@ -34,7 +34,8 @@ export interface DashboardControls {
 		delete: boolean;
 	};
 	// Keyed by the panel menu's own ids, so a new panel action needs a control.
-	panelActions: Record<PanelActionId | 'drilldown', boolean>;
+	// `drilldown` (click) and `zoom` (drag-select a time range) act on the chart itself.
+	panelActions: Record<PanelActionId | 'drilldown' | 'zoom', boolean>;
 	viewModal: { switchToEdit: boolean };
 }
 
