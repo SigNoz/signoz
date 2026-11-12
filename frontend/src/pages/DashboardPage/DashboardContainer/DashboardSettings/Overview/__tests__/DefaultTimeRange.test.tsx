@@ -2,13 +2,18 @@ import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/service
 import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
+import type { UseOptimisticPatch } from '../../../hooks/useOptimisticPatch';
+
 import Overview from '../index';
 
-const mockPatchAsync = jest.fn();
+const mockPatchAsync = jest.fn() as jest.MockedFunction<
+	UseOptimisticPatch['patchAsync']
+>;
 jest.mock('../../../hooks/useOptimisticPatch', () => ({
-	useOptimisticPatch: (): { patchAsync: jest.Mock; isPatching: boolean } => ({
+	useOptimisticPatch: (): UseOptimisticPatch => ({
 		patchAsync: mockPatchAsync,
 		isPatching: false,
+		error: null,
 	}),
 }));
 
@@ -64,7 +69,9 @@ describe('Dashboard settings - default time range', () => {
 
 		await selectOption('Last 1 hour');
 
-		await expect(screen.findByText('1 unsaved change')).resolves.toBeVisible();
+		await expect(
+			screen.findByTestId('unsaved-changes-count'),
+		).resolves.toHaveTextContent(/^1 unsaved change$/);
 
 		await save();
 

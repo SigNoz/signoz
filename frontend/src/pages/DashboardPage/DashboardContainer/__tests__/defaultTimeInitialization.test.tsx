@@ -3,22 +3,24 @@ import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/service
 import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { getCurrentLocation, navigate } from 'lib/router/navigation';
+import { UpdateTimeInterval } from 'store/actions';
 import { act, render, screen } from 'tests/test-utils';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import DashboardContainer from '../index';
 
-const mockUpdateTimeInterval = jest.fn();
 jest.mock('store/actions', () => ({
 	...jest.requireActual('store/actions'),
-	UpdateTimeInterval: (...args: unknown[]): (() => void) => {
-		mockUpdateTimeInterval(...args);
-		return (): void => {};
-	},
+	UpdateTimeInterval: jest.fn(() => (): void => {}),
 }));
+const mockUpdateTimeInterval = jest.mocked(UpdateTimeInterval);
 
-const mockSelectorMount = jest.fn();
-const mockPanelMount = jest.fn();
+const mockSelectorMount = jest.fn() as jest.MockedFunction<
+	(search: string) => void
+>;
+const mockPanelMount = jest.fn() as jest.MockedFunction<
+	(search: string) => void
+>;
 const mockStore = { resetVariableFetch: jest.fn(), setEditContext: jest.fn() };
 jest.mock('../store/useDashboardStore', () => ({
 	useDashboardStore: (selector: (state: typeof mockStore) => unknown): unknown =>
