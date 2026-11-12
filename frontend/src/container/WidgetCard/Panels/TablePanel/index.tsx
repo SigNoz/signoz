@@ -1,8 +1,8 @@
 import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircleAlert, Compass } from '@signozhq/icons';
-import { Space, Tooltip } from 'antd';
-import { TableColumnType as ColumnType } from 'antd';
+import { Tooltip, TableColumnType as ColumnType } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';

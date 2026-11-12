@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Button, Form, Space, Tooltip } from 'antd';
+import { Button, Form, Tooltip } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Divider } from '@signozhq/ui/divider';
 import { Switch } from '@signozhq/ui/switch';

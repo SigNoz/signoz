@@ -8,12 +8,12 @@ import {
 	Button,
 	Input,
 	InputRef,
-	Space,
 	Spin,
 	TableColumnsType,
 	TableColumnType,
 	Tooltip,
 } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import Flex from 'periscope/components/Flex/Flex';
 import { Progress } from '@signozhq/ui/progress';
 import { Typography } from '@signozhq/ui/typography';

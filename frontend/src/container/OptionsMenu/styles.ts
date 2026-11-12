@@ -1,4 +1,5 @@
-import { Card, Space } from 'antd';
+import { Card } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import { Typography } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
