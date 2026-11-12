@@ -24,9 +24,11 @@ function UnsavedChangesFooter({
 		<div className={styles.overviewSettingsFooter}>
 			<div className={styles.unsaved}>
 				<div className={styles.unsavedDot} />
-				<Typography.Text className={styles.unsavedChanges}>
-					{count} unsaved change
-					{count > 1 && 's'}
+				<Typography.Text
+					className={styles.unsavedChanges}
+					data-testid="unsaved-changes-count"
+				>
+					{`${count} unsaved change${count > 1 ? 's' : ''}`}
 				</Typography.Text>
 			</div>
 			<div className={styles.footerActionButtons}>
