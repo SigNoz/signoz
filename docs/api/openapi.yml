@@ -12207,6 +12207,14 @@ components:
       - schemaVersion
       - spec
       type: object
+    ServiceaccounttypesDSLKey:
+      enum:
+      - created_at
+      - email
+      - name
+      - status
+      - updated_at
+      type: string
     ServiceaccounttypesGettableFactorAPIKey:
       properties:
         createdAt:
@@ -12248,7 +12256,7 @@ components:
         reservedKeywords:
           description: The filter keys the query accepts.
           items:
-            type: string
+            $ref: '#/components/schemas/ServiceaccounttypesDSLKey'
           type: array
         serviceAccounts:
           description: The service accounts on this page.
