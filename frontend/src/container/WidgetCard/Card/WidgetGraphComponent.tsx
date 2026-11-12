@@ -219,7 +219,7 @@ function WidgetGraphComponent({
 					customOnDragSelect={customOnDragSelect}
 					setCurrentGraphRef={setCurrentGraphRef}
 					enableDrillDown={
-						enableDrillDown && isBuilderQueryType(widget?.query?.queryType)
+						enableDrillDown && isBuilderQueryType(widget.query.queryType)
 					}
 				/>
 			</Modal>

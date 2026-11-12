@@ -42,7 +42,7 @@ export function useGraphContextMenu({
 } {
 	const drilldownQuery = useGetCompositeQueryParam() || query;
 
-	const isQueryTypeBuilder = isBuilderQueryType(drilldownQuery?.queryType);
+	const isQueryTypeBuilder = isBuilderQueryType(drilldownQuery.queryType);
 
 	const { aggregateDrilldownConfig } = useAggregateDrilldown({
 		query: drilldownQuery,
