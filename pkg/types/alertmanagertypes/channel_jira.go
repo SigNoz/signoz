@@ -98,18 +98,31 @@ type ChannelJiraAuth struct {
 }
 
 var (
-	_ jsonschema.OneOfExposer = ChannelJiraAuth{}
-	_ jsonschema.Preparer     = ChannelJiraAuth{}
-	_ json.Marshaler          = ChannelJiraAuth{}
+	_ jsonschema.Preparer = ChannelJiraAuth{}
+	_ json.Marshaler      = ChannelJiraAuth{}
 )
 
-func (ChannelJiraAuth) JSONSchemaOneOf() []any {
-	return []any{ChannelJiraCloudAuth{}, ChannelJiraSelfHostedAuth{}}
-}
-
+// One flat object, because deployment sits outside auth and cannot discriminate a oneOf.
 func (ChannelJiraAuth) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	email := jsonschema.Schema{}
+	email.WithType(jsonschema.String.Type())
+	email.WithDescription("The Atlassian account email used for basic auth. Required when deployment is cloud.")
+
+	apiToken := jsonschema.Schema{}
+	apiToken.WithType(jsonschema.String.Type())
+	apiToken.WithFormat("password")
+	apiToken.WithDescription("The Atlassian API token paired with email. Required when deployment is cloud. A secret; returned by create, update and fetch by ID, never by list.")
+
+	pat := jsonschema.Schema{}
+	pat.WithType(jsonschema.String.Type())
+	pat.WithFormat("password")
+	pat.WithDescription("The Jira personal access token, sent as a Bearer header. Required when deployment is selfhosted. A secret; returned by create, update and fetch by ID, never by list.")
+
 	schema.Properties = nil
 	schema.Required = nil
+	schema.WithPropertiesItem("email", email.ToSchemaOrBool())
+	schema.WithPropertiesItem("apiToken", apiToken.ToSchemaOrBool())
+	schema.WithPropertiesItem("pat", pat.ToSchemaOrBool())
 	return nil
 }
 
@@ -121,8 +134,8 @@ func (a ChannelJiraAuth) MarshalJSON() ([]byte, error) {
 }
 
 type ChannelJiraCloudAuth struct {
-	Email    string `json:"email" required:"true" description:"The Atlassian account email used for basic auth."`
-	APIToken string `json:"apiToken" required:"true" format:"password" description:"The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list."`
+	Email    string `json:"email"`
+	APIToken string `json:"apiToken"`
 }
 
 func (ChannelJiraCloudAuth) deployment() JiraDeployment {
@@ -147,7 +160,7 @@ func (a ChannelJiraCloudAuth) fillHTTPConfig(httpConfig *commoncfg.HTTPClientCon
 }
 
 type ChannelJiraSelfHostedAuth struct {
-	PAT string `json:"pat" required:"true" format:"password" description:"The Jira personal access token, sent as a Bearer header. A secret; returned by create, update and fetch by ID, never by list."`
+	PAT string `json:"pat"`
 }
 
 func (ChannelJiraSelfHostedAuth) deployment() JiraDeployment {

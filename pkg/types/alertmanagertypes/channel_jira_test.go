@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/swaggest/jsonschema-go"
 )
 
 func jiraReceiverJSON(project, issueType string, withAuth bool) string {
@@ -240,6 +241,48 @@ func TestChannelJiraConfigReceiverAuth(t *testing.T) {
 			encoded, err := json.Marshal(receiver)
 			require.NoError(t, err)
 			assert.Contains(t, string(encoded), testCase.expectJSONKey)
+		})
+	}
+}
+
+func TestChannelJiraAuthJSONSchema(t *testing.T) {
+	reflector := jsonschema.Reflector{}
+	schema, err := reflector.Reflect(ChannelJiraAuth{})
+	require.NoError(t, err)
+
+	assert.Empty(t, schema.OneOf)
+	assert.Empty(t, schema.Required)
+	require.Len(t, schema.Properties, 3)
+
+	testCases := []struct {
+		name     string
+		property string
+		format   string
+	}{
+		{name: "Email_Optional_PlainString", property: "email"},
+		{name: "APIToken_Optional_Password", property: "apiToken", format: "password"},
+		{name: "PAT_Optional_Password", property: "pat", format: "password"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			property, ok := schema.Properties[testCase.property]
+			require.True(t, ok)
+			require.NotNil(t, property.TypeObject)
+
+			raw, err := json.Marshal(property.TypeObject)
+			require.NoError(t, err)
+
+			var got struct {
+				Type        string `json:"type"`
+				Format      string `json:"format"`
+				Description string `json:"description"`
+			}
+			require.NoError(t, json.Unmarshal(raw, &got))
+
+			assert.Equal(t, "string", got.Type)
+			assert.Equal(t, testCase.format, got.Format)
+			assert.NotEmpty(t, got.Description)
 		})
 	}
 }
