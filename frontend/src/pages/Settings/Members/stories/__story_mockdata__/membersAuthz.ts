@@ -13,7 +13,6 @@ export const READ_USER = 'read:user';
 export const UPDATE_USER = 'update:user';
 export const DELETE_USER = 'delete:user';
 export const ATTACH_USER = 'attach:user';
-export const ATTACH_ROLE = 'attach:role';
 export const CREATE_PASSWORD = 'create:factor-password';
 
 const isDisabled = (element: HTMLElement): boolean =>

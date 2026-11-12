@@ -11,7 +11,7 @@ import {
 	findInDrawer,
 	openMemberDrawer,
 } from './membersAuthz';
-import { fillInvites, openMember, untilLoaded } from '../Members.stories.mocks';
+import { openMember, untilLoaded } from '../Members.stories.mocks';
 
 interface PlayContext {
 	canvasElement: HTMLElement;
@@ -76,15 +76,6 @@ export const expectInviteLinkDenied = async ({
 }: PlayContext): Promise<void> => {
 	await openMemberDrawer(canvasElement, /podrick payne/i);
 	await expectDenied(await findInDrawer('member-reset-link-btn'));
-};
-
-export const expectInviteSubmitDenied = async ({
-	canvasElement,
-}: PlayContext): Promise<void> => {
-	await fillInvites(canvasElement, ['sam@nightswatch.io']);
-	await expectDenied(
-		await screen.findByTestId('invite-submit-btn', undefined, untilLoaded),
-	);
 };
 
 export const expectInviteOpen = async ({

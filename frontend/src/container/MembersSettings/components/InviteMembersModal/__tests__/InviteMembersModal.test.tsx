@@ -5,7 +5,7 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { RoleAttachWildcardPermission } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
+import { UserCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
 
 import InviteMembersModal from '../InviteMembersModal';
 
@@ -158,8 +158,8 @@ describe('InviteMembersModal', () => {
 			expect(mockSubmit).toHaveBeenCalledTimes(1);
 		});
 
-		it('disables the Invite button without role attach permission', async () => {
-			server.use(setupAuthzDeny(RoleAttachWildcardPermission));
+		it('disables the Invite button without create permission', async () => {
+			server.use(setupAuthzDeny(UserCreatePermission));
 
 			renderComponent();
 
