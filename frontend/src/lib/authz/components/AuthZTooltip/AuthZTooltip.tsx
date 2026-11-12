@@ -14,6 +14,8 @@ import { deniedTooltip } from 'lib/authz/components/deniedTooltip';
 const DISABLED_STYLE: CSSProperties = {
 	pointerEvents: 'all',
 	cursor: 'not-allowed',
+	caretColor: 'transparent',
+	userSelect: 'none',
 };
 
 const noOp = (): void => {};
