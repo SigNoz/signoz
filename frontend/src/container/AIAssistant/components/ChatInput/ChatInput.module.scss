@@ -91,12 +91,6 @@
 	white-space: nowrap;
 }
 
-.row {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
 .composer {
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
@@ -128,17 +122,6 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
-}
-
-.attachBtn {
-	color: var(--l3-foreground);
-}
-
-.contextBtn {
-	flex-shrink: 0;
-	gap: 6px;
-	border-style: dashed !important;
-	padding-inline: 12px !important;
 }
 
 .textarea {
@@ -178,20 +161,6 @@
 	background: color-mix(in srgb, var(--accent-sienna), transparent 90%);
 	border: 1px solid color-mix(in srgb, var(--accent-sienna), transparent 65%);
 	border-radius: var(--radius-2);
-}
-
-.sendBtn {
-	flex-shrink: 0;
-	border-radius: var(--radius-2);
-
-	&.stop {
-		background: var(--accent-cherry) !important;
-		border-color: var(--accent-cherry) !important;
-
-		&:hover {
-			opacity: 0.85;
-		}
-	}
 }
 
 .contextPopover {
