@@ -1,5 +1,6 @@
 import { useQuery } from 'react-query';
 import type { DefaultOptionType } from 'antd/es/select';
+import type { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -14,6 +15,7 @@ export interface Filters {
 	dataSource?: DataSource;
 	metricName?: string;
 	filterAttributeKeyDataType?: DataTypes;
+	fieldContext?: TelemetrytypesFieldContextDTO;
 }
 
 export interface GetAllFiltersResponse {
@@ -28,6 +30,7 @@ export function useGetAllFilters(props: Filters): GetAllFiltersResponse {
 		dataSource,
 		metricName,
 		filterAttributeKeyDataType,
+		fieldContext,
 	} = props;
 
 	const { data, isLoading } = useQuery(
@@ -36,6 +39,7 @@ export function useGetAllFilters(props: Filters): GetAllFiltersResponse {
 			dataSource,
 			metricName,
 			attributeKey,
+			fieldContext,
 			searchText,
 		],
 		async () => {
@@ -46,6 +50,7 @@ export function useGetAllFilters(props: Filters): GetAllFiltersResponse {
 					getFieldValueSuggestions({
 						signal: DATA_SOURCE_TO_SIGNAL[dataSource || DataSource.TRACES],
 						name: key,
+						fieldContext,
 						searchText: searchText ?? '',
 						metricName,
 					}),
