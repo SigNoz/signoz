@@ -2,7 +2,6 @@ import {
 	AlertmanagertypesChannelEmailConfigDTO,
 	AlertmanagertypesChannelGoogleChatConfigDTO,
 	AlertmanagertypesChannelIncidentIOConfigDTO,
-	AlertmanagertypesChannelJiraAuthDTO,
 	AlertmanagertypesChannelJiraConfigDTO,
 	AlertmanagertypesChannelJSMOpsConfigDTO,
 	AlertmanagertypesChannelKindDTO,
@@ -33,10 +32,14 @@ export type FlattenUnion<T> = {
 };
 
 export type JiraFormSpec = Omit<
-	AlertmanagertypesChannelJiraConfigDTO,
-	'auth'
+	FlattenUnion<AlertmanagertypesChannelJiraConfigDTO>,
+	'auth' | 'deployment'
 > & {
-	auth?: FlattenUnion<AlertmanagertypesChannelJiraAuthDTO>;
+	/** Each DTO variant pins deployment to one value; the form also holds the full enum it picks from. */
+	deployment?:
+		| JiraDeployment
+		| AlertmanagertypesChannelJiraConfigDTO['deployment'];
+	auth?: FlattenUnion<AlertmanagertypesChannelJiraConfigDTO['auth']>;
 };
 
 /** Merged so switching kind keeps the fields the kinds share. */

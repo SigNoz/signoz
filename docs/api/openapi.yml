@@ -552,11 +552,6 @@ components:
       required:
       - apiKey
       type: object
-    AlertmanagertypesChannelJiraAuth:
-      oneOf:
-      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraCloudAuth'
-      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraSelfHostedAuth'
-      type: object
     AlertmanagertypesChannelJiraCloudAuth:
       properties:
         apiToken:
@@ -571,11 +566,11 @@ components:
       - email
       - apiToken
       type: object
-    AlertmanagertypesChannelJiraConfig:
+    AlertmanagertypesChannelJiraCloudConfig:
       properties:
         auth:
           allOf:
-          - $ref: '#/components/schemas/AlertmanagertypesChannelJiraAuth'
+          - $ref: '#/components/schemas/AlertmanagertypesChannelJiraCloudAuth'
           description: 'The credentials: email and apiToken when deployment is cloud,
             pat when deployment is selfhosted.'
         customFields:
@@ -585,10 +580,11 @@ components:
           nullable: true
           type: object
         deployment:
-          allOf:
-          - $ref: '#/components/schemas/AlertmanagertypesJiraDeployment'
           description: 'The Jira edition: cloud for an Atlassian-hosted site, selfhosted
             for Jira Server or Data Center.'
+          enum:
+          - cloud
+          type: string
         description:
           description: Alertmanager template for the issue description, rendered as
             markdown; defaults to the SigNoz Jira default.
@@ -642,6 +638,16 @@ components:
       - issueType
       - auth
       type: object
+    AlertmanagertypesChannelJiraConfig:
+      discriminator:
+        mapping:
+          cloud: '#/components/schemas/AlertmanagertypesChannelJiraCloudConfig'
+          selfhosted: '#/components/schemas/AlertmanagertypesChannelJiraSelfHostedConfig'
+        propertyName: deployment
+      oneOf:
+      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraCloudConfig'
+      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraSelfHostedConfig'
+      type: object
     AlertmanagertypesChannelJiraSelfHostedAuth:
       properties:
         pat:
@@ -651,6 +657,78 @@ components:
           type: string
       required:
       - pat
+      type: object
+    AlertmanagertypesChannelJiraSelfHostedConfig:
+      properties:
+        auth:
+          allOf:
+          - $ref: '#/components/schemas/AlertmanagertypesChannelJiraSelfHostedAuth'
+          description: 'The credentials: email and apiToken when deployment is cloud,
+            pat when deployment is selfhosted.'
+        customFields:
+          additionalProperties: {}
+          description: Extra issue fields keyed by Jira field ID. Stored, but not
+            currently included in the issue Jira receives.
+          nullable: true
+          type: object
+        deployment:
+          description: 'The Jira edition: cloud for an Atlassian-hosted site, selfhosted
+            for Jira Server or Data Center.'
+          enum:
+          - selfhosted
+          type: string
+        description:
+          description: Alertmanager template for the issue description, rendered as
+            markdown; defaults to the SigNoz Jira default.
+          type: string
+        issueType:
+          description: The issue type name, such as Bug.
+          type: string
+        labels:
+          description: Labels added to every issue.
+          items:
+            type: string
+          nullable: true
+          type: array
+        priority:
+          description: The priority name assigned to new issues.
+          type: string
+        project:
+          description: The key of the project issues are created in.
+          type: string
+        reopenDuration:
+          description: How long after resolution a firing alert reopens the issue
+            instead of creating a new one, as a Prometheus duration in canonical form
+            such as 3d; defaults to 3d.
+          type: string
+        reopenTransition:
+          description: The transition applied when an alert fires again on a resolved
+            issue.
+          type: string
+        resolveTransition:
+          description: The transition applied to the issue when the alert resolves.
+          type: string
+        sendResolved:
+          description: Also notify when the alert resolves. Defaults to false.
+          nullable: true
+          type: boolean
+        site:
+          description: The base URL of the Jira site, for example https://example.atlassian.net
+            or https://jira.example.com.
+          type: string
+        summary:
+          description: Alertmanager template for the issue summary; defaults to the
+            SigNoz Jira default.
+          type: string
+        wontFixResolution:
+          description: The resolution name that stops an issue from being reopened.
+          type: string
+      required:
+      - deployment
+      - site
+      - project
+      - issueType
+      - auth
       type: object
     AlertmanagertypesChannelKind:
       enum:

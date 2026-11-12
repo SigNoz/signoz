@@ -183,7 +183,7 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 		{
 			description: "jira",
 			kind:        ChannelKindJira,
-			spec: &ChannelJiraConfig{
+			spec: &ChannelJiraConfig{JiraSpec: ChannelJiraCloudConfig{channelJiraVariant[ChannelJiraCloudAuth]{
 				SendResolved:      &sendResolved,
 				Deployment:        JiraDeploymentCloud,
 				Site:              "https://acme.atlassian.net",
@@ -198,9 +198,9 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				ReopenDuration:    valuer.MustNewUnsetOrNonEmptyString("3d"),
 				WontFixResolution: "Won't Do",
 				CustomFields:      map[string]any{"customfield_10010": "Ops"},
-				Auth:              ChannelJiraAuth{JiraAuth: ChannelJiraCloudAuth{Email: "oncall@acme.com", APIToken: "api-token"}},
-			},
-			expectedRoundTrip: &ChannelJiraConfig{
+				Auth:              ChannelJiraCloudAuth{Email: "oncall@acme.com", APIToken: "api-token"},
+			}}},
+			expectedRoundTrip: &ChannelJiraConfig{JiraSpec: ChannelJiraCloudConfig{channelJiraVariant[ChannelJiraCloudAuth]{
 				SendResolved:      &sendResolved,
 				Deployment:        JiraDeploymentCloud,
 				Site:              "https://acme.atlassian.net",
@@ -215,13 +215,13 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				ReopenDuration:    valuer.MustNewUnsetOrNonEmptyString("3d"),
 				WontFixResolution: "Won't Do",
 				CustomFields:      map[string]any{"customfield_10010": "Ops"},
-				Auth:              ChannelJiraAuth{JiraAuth: ChannelJiraCloudAuth{Email: "oncall@acme.com", APIToken: "api-token"}},
-			},
+				Auth:              ChannelJiraCloudAuth{Email: "oncall@acme.com", APIToken: "api-token"},
+			}}},
 		},
 		{
 			description: "jira self-hosted",
 			kind:        ChannelKindJira,
-			spec: &ChannelJiraConfig{
+			spec: &ChannelJiraConfig{JiraSpec: ChannelJiraSelfHostedConfig{channelJiraVariant[ChannelJiraSelfHostedAuth]{
 				SendResolved:   &sendResolved,
 				Deployment:     JiraDeploymentSelfHosted,
 				Site:           "https://jira.acme.com",
@@ -230,9 +230,9 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Summary:        valuer.MustNewUnsetOrNonEmptyString("jira summary"),
 				Description:    valuer.MustNewUnsetOrNonEmptyString("jira description"),
 				ReopenDuration: valuer.MustNewUnsetOrNonEmptyString("3d"),
-				Auth:           ChannelJiraAuth{JiraAuth: ChannelJiraSelfHostedAuth{PAT: "personal-access-token"}},
-			},
-			expectedRoundTrip: &ChannelJiraConfig{
+				Auth:           ChannelJiraSelfHostedAuth{PAT: "personal-access-token"},
+			}}},
+			expectedRoundTrip: &ChannelJiraConfig{JiraSpec: ChannelJiraSelfHostedConfig{channelJiraVariant[ChannelJiraSelfHostedAuth]{
 				SendResolved:   &sendResolved,
 				Deployment:     JiraDeploymentSelfHosted,
 				Site:           "https://jira.acme.com",
@@ -241,8 +241,8 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				Summary:        valuer.MustNewUnsetOrNonEmptyString("jira summary"),
 				Description:    valuer.MustNewUnsetOrNonEmptyString("jira description"),
 				ReopenDuration: valuer.MustNewUnsetOrNonEmptyString("3d"),
-				Auth:           ChannelJiraAuth{JiraAuth: ChannelJiraSelfHostedAuth{PAT: "personal-access-token"}},
-			},
+				Auth:           ChannelJiraSelfHostedAuth{PAT: "personal-access-token"},
+			}}},
 		},
 		{
 			description: "jsmops",

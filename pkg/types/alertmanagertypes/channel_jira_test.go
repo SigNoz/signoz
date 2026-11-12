@@ -193,7 +193,7 @@ func TestChannelJiraConfigUnmarshal(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, testCase.expectDeployment, spec.Deployment)
+			assert.Equal(t, testCase.expectDeployment, spec.deployment())
 		})
 	}
 }
@@ -208,13 +208,13 @@ func TestChannelJiraConfigReceiverAuth(t *testing.T) {
 	}{
 		{
 			name:          "Cloud_BasicAuth",
-			spec:          ChannelJiraConfig{Deployment: JiraDeploymentCloud, Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Task", Auth: ChannelJiraAuth{JiraAuth: ChannelJiraCloudAuth{Email: "e@acme.com", APIToken: "t"}}},
+			spec:          ChannelJiraConfig{JiraSpec: ChannelJiraCloudConfig{channelJiraVariant[ChannelJiraCloudAuth]{Deployment: JiraDeploymentCloud, Site: "https://acme.atlassian.net", Project: "OPS", IssueType: "Task", Auth: ChannelJiraCloudAuth{Email: "e@acme.com", APIToken: "t"}}}},
 			expectBasic:   &commoncfg.BasicAuth{Username: "e@acme.com", Password: "t"},
 			expectJSONKey: `"basic_auth"`,
 		},
 		{
 			name:          "SelfHosted_BearerAuthorization",
-			spec:          ChannelJiraConfig{Deployment: JiraDeploymentSelfHosted, Site: "https://jira.acme.com", Project: "OPS", IssueType: "Task", Auth: ChannelJiraAuth{JiraAuth: ChannelJiraSelfHostedAuth{PAT: "p"}}},
+			spec:          ChannelJiraConfig{JiraSpec: ChannelJiraSelfHostedConfig{channelJiraVariant[ChannelJiraSelfHostedAuth]{Deployment: JiraDeploymentSelfHosted, Site: "https://jira.acme.com", Project: "OPS", IssueType: "Task", Auth: ChannelJiraSelfHostedAuth{PAT: "p"}}}},
 			expectBearer:  "p",
 			expectJSONKey: `"deployment":"selfhosted"`,
 		},
@@ -227,7 +227,7 @@ func TestChannelJiraConfigReceiverAuth(t *testing.T) {
 			httpConfig := receiver.JiraConfigs[0].HTTPConfig
 			require.NotNil(t, httpConfig)
 
-			assert.Equal(t, testCase.spec.Deployment, receiver.JiraConfigs[0].Deployment)
+			assert.Equal(t, testCase.spec.deployment(), receiver.JiraConfigs[0].Deployment)
 			assert.Equal(t, testCase.expectBasic, httpConfig.BasicAuth)
 			if testCase.expectBearer == "" {
 				assert.Nil(t, httpConfig.Authorization)

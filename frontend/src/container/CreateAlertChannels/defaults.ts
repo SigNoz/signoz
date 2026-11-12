@@ -2,7 +2,6 @@ import {
 	AlertmanagertypesChannelEmailConfigDTO,
 	AlertmanagertypesChannelGoogleChatConfigDTO,
 	AlertmanagertypesChannelIncidentIOConfigDTO,
-	AlertmanagertypesChannelJiraConfigDTO,
 	AlertmanagertypesChannelJSMOpsConfigDTO,
 	AlertmanagertypesChannelOpsgenieConfigDTO,
 	AlertmanagertypesChannelPagerdutyConfigDTO,
@@ -10,7 +9,12 @@ import {
 	AlertmanagertypesChannelTelegramConfigDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { ChannelKind, ChannelSpecFormValues, JiraDeployment } from './types';
+import {
+	ChannelKind,
+	ChannelSpecFormValues,
+	JiraDeployment,
+	JiraFormSpec,
+} from './types';
 
 // shared by slack and ms teams, both render the same title / description boxes
 export const SlackInitialConfig: Partial<AlertmanagertypesChannelSlackConfigDTO> =
@@ -56,12 +60,11 @@ export const GoogleChatInitialConfig: Partial<AlertmanagertypesChannelGoogleChat
 // pkg/types/alertmanagertypes/jira.go, which the backend applies when the
 // summary / description are left empty. The description is markdown here and is
 // wrapped in the ADF status panel + deep-links server-side.
-export const JiraInitialConfig: Partial<AlertmanagertypesChannelJiraConfigDTO> =
-	{
-		deployment: JiraDeployment.cloud,
-		issueType: 'Task',
-		summary: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
-		description: `{{ range .Alerts -}}
+export const JiraInitialConfig: JiraFormSpec = {
+	deployment: JiraDeployment.cloud,
+	issueType: 'Task',
+	summary: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
+	description: `{{ range .Alerts -}}
 **Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}
 {{ if .Annotations.summary }}
 **Summary:** {{ .Annotations.summary }}
@@ -69,7 +72,7 @@ export const JiraInitialConfig: Partial<AlertmanagertypesChannelJiraConfigDTO> =
 **Description:** {{ .Annotations.description }}
 {{ end }}
 {{ end }}`,
-	};
+};
 
 export const PagerInitialConfig: Partial<AlertmanagertypesChannelPagerdutyConfigDTO> =
 	{
