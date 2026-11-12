@@ -71,7 +71,7 @@ func TestTrimResultToFluxBoundaryKeepsTheHeatmapAxis(t *testing.T) {
 		},
 	}
 
-	trimmed := cache.trimResultToFluxBoundary(result, 1710000060000)
+	trimmed := cache.trimResultToFluxBoundary(result, &mockQuery{fingerprint: "heatmap"}, 1710000060000, 60000)
 
 	tsData, ok := trimmed.Value.(*qbtypes.TimeSeriesData)
 	require.True(t, ok)
