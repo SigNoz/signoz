@@ -70,7 +70,7 @@ function DashboardActions({
 		deleteChecks,
 		deleteDisabledTooltip,
 	} = useDashboardEditContext();
-	const show = useDashboardControlGroup('actions');
+	const show = useDashboardControlGroup('dashboardActions');
 	const settingsRequest = useDashboardStore((s) => s.settingsRequest);
 	const clearSettingsRequest = useDashboardStore((s) => s.clearSettingsRequest);
 	const { safeNavigate } = useSafeNavigate();

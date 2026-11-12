@@ -67,7 +67,7 @@ export function usePanelActionItems({
 	const blocked = useMemo(() => getBlockedPanelActions(panel), [panel]);
 	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
-	const show = useDashboardControlGroup('panel');
+	const show = useDashboardControlGroup('panelActions');
 	const openPanelEditor = useOpenPanelEditor();
 	const createAlert = useCreateAlertFromPanel();
 	const { openView } = useViewPanel();

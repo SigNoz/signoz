@@ -87,7 +87,7 @@ describe('editContextSlice.setEditContext', () => {
 	it('resolves controls against read-only', () => {
 		store().setEditContext({ dashboardId: 'dash-1', refetch, readOnly: true });
 
-		expect(store().controls.panel.edit).toBe(false);
-		expect(store().controls.panel.view).toBe(true);
+		expect(store().controls.panelActions.edit).toBe(false);
+		expect(store().controls.panelActions.view).toBe(true);
 	});
 });

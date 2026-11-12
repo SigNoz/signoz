@@ -524,7 +524,7 @@ describe('usePanelActionItems', () => {
 			useDashboardStore.getState().setEditContext({
 				dashboardId: 'dash-1',
 				refetch: jest.fn(),
-				controls: { panel: { createAlert: false, delete: false } },
+				controls: { panelActions: { createAlert: false, delete: false } },
 			});
 
 			const { result } = renderHook(() => usePanelActionItems(baseArgs));

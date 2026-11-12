@@ -115,7 +115,10 @@ describe('DashboardPageToolbar - controls', () => {
 	});
 
 	it('drops the title row and actions the host hides, and their requests', () => {
-		renderToolbar({ readOnly: true, controls: { title: false, actions: false } });
+		renderToolbar({
+			readOnly: true,
+			controls: { title: false, dashboardActions: false },
+		});
 
 		expect(screen.queryByTestId('dashboard-info')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('dashboard-actions')).not.toBeInTheDocument();

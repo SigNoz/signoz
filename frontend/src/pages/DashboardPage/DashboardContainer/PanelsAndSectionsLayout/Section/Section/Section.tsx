@@ -8,12 +8,12 @@ import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { useCreatePanel } from '../../../hooks/useCreatePanel';
 import type { DashboardSection } from '../../../utils';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
-import { useCloneSection } from '../hooks/useCloneSection';
 import { useDeleteSection } from '../hooks/useDeleteSection';
 import { usePanelPickerHighlight } from '../hooks/usePanelPickerHighlight';
 import { usePanelPickerReveal } from '../hooks/usePanelPickerReveal';
 import { useRenameSection } from '../hooks/useRenameSection';
 import { useScrollIntoView } from '../hooks/useScrollIntoView';
+import { useSectionHeaderActions } from '../hooks/useSectionHeaderActions';
 import { useToggleSectionCollapse } from '../hooks/useToggleSectionCollapse';
 import SectionTitleModal from '../SectionTitleModal';
 import SectionGrid from '../SectionGrid/SectionGrid';
@@ -21,7 +21,6 @@ import SectionHeader, {
 	type SectionDragHandle,
 } from '../SectionHeader/SectionHeader';
 import styles from './Section.module.scss';
-import { useDashboardControlGroup } from '../../../controls/useDashboardControlGroup';
 import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 
 interface SectionProps {
@@ -35,7 +34,6 @@ interface SectionProps {
 function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
-	const show = useDashboardControlGroup('section');
 	const {
 		isPickerOpen,
 		openPicker,
@@ -68,7 +66,14 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 		setIsDeleteOpen(false);
 	}, [deleteSection]);
 
-	const cloneSection = useCloneSection();
+	const openRename = useCallback((): void => setIsRenaming(true), []);
+	const openDelete = useCallback((): void => setIsDeleteOpen(true), []);
+	const actions = useSectionHeaderActions({
+		section,
+		openPicker,
+		openRename,
+		openDelete,
+	});
 
 	const sectionRef = useRef<HTMLDivElement>(null);
 	useScrollIntoView(section.id, sectionRef);
@@ -118,23 +123,12 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				dragHandle={dragHandle}
 				disabledChecks={editChecks}
 				disabledTooltip={editDisabledTooltip}
-				actions={{
-					onRename: show.rename ? (): void => setIsRenaming(true) : undefined,
-					onAddPanel: show.addPanel
-						? (): void => openPicker(section.layoutIndex)
-						: undefined,
-					onCloneSection: show.clone
-						? (): void => void cloneSection(section)
-						: undefined,
-					onDeleteSection: show.delete
-						? (): void => setIsDeleteOpen(true)
-						: undefined,
-				}}
+				actions={actions}
 			/>
 			{open &&
 				(section.items.length > 0 || pickerTarget
 					? grid
-					: show.addPanel && (
+					: actions.onAddPanel && (
 							<div className={styles.emptySection}>
 								<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 									<Button

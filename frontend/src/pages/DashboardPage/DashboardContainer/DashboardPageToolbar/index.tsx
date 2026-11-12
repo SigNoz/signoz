@@ -58,7 +58,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	);
 
 	const showTitle = useDashboardControlGroup('title');
-	const showActions = useDashboardControlGroup('actions');
+	const showActions = useDashboardControlGroup('dashboardActions');
 	const showToolbar = useDashboardControlGroup('toolbar');
 	const hasTitleRow = Object.values(showTitle).some(Boolean);
 	const hasActions = Object.values(showActions).some(Boolean);

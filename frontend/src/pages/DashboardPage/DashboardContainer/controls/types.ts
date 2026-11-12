@@ -16,7 +16,7 @@ export interface DashboardControls {
 		variables: boolean;
 		addVariable: boolean;
 	};
-	actions: {
+	dashboardActions: {
 		fullscreen: boolean;
 		rename: boolean;
 		clone: boolean;
@@ -27,14 +27,14 @@ export interface DashboardControls {
 		json: boolean;
 		newPanel: boolean;
 	};
-	section: {
+	sectionActions: {
 		addPanel: boolean;
 		rename: boolean;
 		clone: boolean;
 		delete: boolean;
 	};
 	// Keyed by the panel menu's own ids, so a new panel action needs a control.
-	panel: Record<PanelActionId | 'drilldown', boolean>;
+	panelActions: Record<PanelActionId | 'drilldown', boolean>;
 	viewModal: { switchToEdit: boolean };
 }
 

@@ -85,7 +85,7 @@ export function useDrilldown(
 
 	// Drilldown only for builder-authored panels with a query to drill into (PromQL /
 	// ClickHouse have no builder context to refine).
-	const showDrilldown = useDashboardControl('panel.drilldown');
+	const showDrilldown = useDashboardControl('panelActions.drilldown');
 	const enableDrillDown = useMemo(
 		() =>
 			showDrilldown &&

@@ -15,7 +15,7 @@ import styles from './Overview.module.scss';
 const EMBEDDED_CONTROLS: DashboardControlsInput = {
 	header: false,
 	title: false,
-	actions: false,
+	dashboardActions: false,
 };
 
 function Overview(): JSX.Element {

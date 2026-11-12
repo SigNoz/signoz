@@ -25,15 +25,18 @@ describe('resolveControls', () => {
 	});
 
 	it('hides single items and keeps the rest of the group', () => {
-		const controls = resolveControls({ panel: { createAlert: false } }, false);
+		const controls = resolveControls(
+			{ panelActions: { createAlert: false } },
+			false,
+		);
 
-		expect(controls.panel.createAlert).toBe(false);
-		expect(controls.panel.download).toBe(true);
+		expect(controls.panelActions.createAlert).toBe(false);
+		expect(controls.panelActions.download).toBe(true);
 	});
 
 	it('hides every writing control on a read-only mount, whatever the host asked', () => {
 		const controls = resolveControls(
-			{ actions: true, panel: { edit: true } },
+			{ dashboardActions: true, panelActions: { edit: true } },
 			true,
 		);
 
@@ -46,9 +49,9 @@ describe('resolveControls', () => {
 	});
 
 	it('still lets the host hide non-writing controls on a read-only mount', () => {
-		const controls = resolveControls({ panel: { download: false } }, true);
+		const controls = resolveControls({ panelActions: { download: false } }, true);
 
-		expect(controls.panel.download).toBe(false);
-		expect(controls.panel.view).toBe(true);
+		expect(controls.panelActions.download).toBe(false);
+		expect(controls.panelActions.view).toBe(true);
 	});
 });
