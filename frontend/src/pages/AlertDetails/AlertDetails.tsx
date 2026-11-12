@@ -1,27 +1,26 @@
 import React, { useEffect, useMemo } from 'react';
 import { Divider } from '@signozhq/ui/divider';
 import logEvent from 'api/common/logEvent';
-import classNames from 'classnames';
 import AlertBreadcrumb from 'components/AlertBreadcrumb';
 import { Filters } from 'components/AlertDetailsFilters/Filters';
 import RouteTab from 'components/RouteTab';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { CreateAlertProvider } from 'container/CreateAlertV2/context';
+import { CreateAlertProvider } from 'container/CreateAlert/context';
 import {
 	getAlertTypeFromAlertDef,
 	getCreateAlertLocalStateFromAlertDef,
-} from 'container/CreateAlertV2/utils';
+} from 'container/CreateAlert/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAlertRule } from 'providers/Alert';
-import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 import { fromRuleDTOToPostableRuleV2 } from 'types/api/alerts/convert';
 
 import AlertHeader from './AlertHeader/AlertHeader';
 import AlertNotFound from './AlertNotFound';
-import { useGetAlertRuleDetails, useRouteTabUtils } from './hooks';
+import { useGetAlertRuleDetails } from './hooks';
+import { useRouteTabUtils } from './useRouteTabUtils';
 
 import './AlertDetails.styles.scss';
 
@@ -79,8 +78,6 @@ function AlertDetails(): JSX.Element {
 		}
 	};
 
-	const isV2Alert = alertRuleDetails?.schemaVersion === NEW_ALERT_SCHEMA_VERSION;
-
 	// Show spinner until we have alert data loaded
 	if (isLoading && !alertRuleDetails) {
 		return <Spinner />;
@@ -94,9 +91,9 @@ function AlertDetails(): JSX.Element {
 			initialAlertState={initialAlertState}
 		>
 			<div
-				className={classNames('alert-details', { 'alert-details-v2': isV2Alert })}
+				className="alert-details alert-details-v2"
 				data-testid="alert-details-root"
-				data-schema-version={isV2Alert ? NEW_ALERT_SCHEMA_VERSION : 'v1'}
+				data-schema-version={alertRuleDetails?.schemaVersion}
 			>
 				<AlertBreadcrumb
 					className="alert-details__breadcrumb"

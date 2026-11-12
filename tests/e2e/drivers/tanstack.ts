@@ -236,7 +236,6 @@ export function tanstackDriver(
 
 		dragColumn: async (columnId, ontoColumnId) => {
 			const grip = page.getByRole('button', { name: dragHandleLabel(columnId) });
-			await grip.scrollIntoViewIfNeeded();
 			const from = await boxOf(grip, `${columnId} drag grip`);
 			const to = await boxOf(headerCell(ontoColumnId), `${ontoColumnId} header`);
 

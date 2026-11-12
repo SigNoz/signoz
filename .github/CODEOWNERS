@@ -24,7 +24,7 @@ go.mod @therealpandey
 /pkg/config/ @therealpandey
 /pkg/errors/ @therealpandey
 /pkg/factory/ @therealpandey
-/pkg/types/ @therealpandey
+/pkg/types/ @therealpandey @srikanthccv
 /pkg/valuer/ @therealpandey
 /cmd/ @therealpandey
 .golangci.yml @therealpandey
@@ -136,7 +136,7 @@ go.mod @therealpandey
 
 # Integration tests
 
-/tests/integration/ @therealpandey
+/tests/integration/ @therealpandey @srikanthccv
 
 # e2e tests
 /tests/e2e/ @AshwinBhatkal
@@ -194,8 +194,8 @@ go.mod @therealpandey
 /frontend/src/pages/EditRules/ @SigNoz/pulse-frontend
 /frontend/src/container/AlertHistory/ @SigNoz/pulse-frontend
 /frontend/src/container/CreateAlertRule/ @SigNoz/pulse-frontend
-/frontend/src/container/CreateAlertV2/ @SigNoz/pulse-frontend
-/frontend/src/container/EditAlertV2/ @SigNoz/pulse-frontend
+/frontend/src/container/CreateAlert/ @SigNoz/pulse-frontend
+/frontend/src/container/EditAlert/ @SigNoz/pulse-frontend
 /frontend/src/container/FormAlertRules/ @SigNoz/pulse-frontend
 /frontend/src/container/ListAlertRules/ @SigNoz/pulse-frontend
 /frontend/src/container/TriggeredAlerts/ @SigNoz/pulse-frontend
@@ -209,6 +209,10 @@ go.mod @therealpandey
 /frontend/src/types/api/alerts/ @SigNoz/pulse-frontend
 /frontend/src/providers/Alert.tsx @SigNoz/pulse-frontend
 /frontend/src/constants/alerts.ts @SigNoz/pulse-frontend
+/frontend/src/container/PlannedDowntime/ @SigNoz/pulse-frontend
+/frontend/src/hooks/alerts/ @SigNoz/pulse-frontend
+/frontend/src/container/Home/AlertRules/ @SigNoz/pulse-frontend
+/frontend/src/container/Home/__tests__/AlertRules.test.tsx @SigNoz/pulse-frontend
 
 ## Notification Channels
 /frontend/src/pages/ChannelsEdit/ @SigNoz/pulse-frontend
@@ -216,6 +220,11 @@ go.mod @therealpandey
 /frontend/src/container/CreateAlertChannels/ @SigNoz/pulse-frontend
 /frontend/src/container/FormAlertChannels/ @SigNoz/pulse-frontend
 /frontend/src/hooks/notificationChannels/ @SigNoz/pulse-frontend
+
+## List filter + views (dashboards and alerts lists)
+/frontend/src/components/ListFilter/ @SigNoz/pulse-frontend
+/frontend/src/components/ListViews/ @SigNoz/pulse-frontend
+/frontend/src/hooks/listViews/ @SigNoz/pulse-frontend
 
 ## OpenAPI Schema - Generated
 /frontend/src/api/generated/services/ @therealpandey @vikrantgupta25 @srikanthccv

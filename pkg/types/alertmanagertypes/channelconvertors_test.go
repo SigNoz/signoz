@@ -185,6 +185,7 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 			kind:        ChannelKindJira,
 			spec: &ChannelJiraConfig{
 				SendResolved:      &sendResolved,
+				Deployment:        JiraDeploymentCloud,
 				Site:              "https://acme.atlassian.net",
 				Project:           "OPS",
 				IssueType:         "Bug",
@@ -197,11 +198,11 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				ReopenDuration:    valuer.MustNewUnsetOrNonEmptyString("3d"),
 				WontFixResolution: "Won't Do",
 				CustomFields:      map[string]any{"customfield_10010": "Ops"},
-				Email:             "oncall@acme.com",
-				APIToken:          "api-token",
+				Auth:              &ChannelJiraAuth{Email: "oncall@acme.com", APIToken: "api-token"},
 			},
 			expectedRoundTrip: &ChannelJiraConfig{
 				SendResolved:      &sendResolved,
+				Deployment:        JiraDeploymentCloud,
 				Site:              "https://acme.atlassian.net",
 				Project:           "OPS",
 				IssueType:         "Bug",
@@ -214,8 +215,33 @@ func TestDeriveChannelConfigRoundTripsEveryFieldOfEveryKind(t *testing.T) {
 				ReopenDuration:    valuer.MustNewUnsetOrNonEmptyString("3d"),
 				WontFixResolution: "Won't Do",
 				CustomFields:      map[string]any{"customfield_10010": "Ops"},
-				Email:             "oncall@acme.com",
-				APIToken:          "api-token",
+				Auth:              &ChannelJiraAuth{Email: "oncall@acme.com", APIToken: "api-token"},
+			},
+		},
+		{
+			description: "jira self-hosted",
+			kind:        ChannelKindJira,
+			spec: &ChannelJiraConfig{
+				SendResolved:   &sendResolved,
+				Deployment:     JiraDeploymentSelfHosted,
+				Site:           "https://jira.acme.com",
+				Project:        "OPS",
+				IssueType:      "Task",
+				Summary:        valuer.MustNewUnsetOrNonEmptyString("jira summary"),
+				Description:    valuer.MustNewUnsetOrNonEmptyString("jira description"),
+				ReopenDuration: valuer.MustNewUnsetOrNonEmptyString("3d"),
+				Auth:           &ChannelJiraAuth{PAT: "personal-access-token"},
+			},
+			expectedRoundTrip: &ChannelJiraConfig{
+				SendResolved:   &sendResolved,
+				Deployment:     JiraDeploymentSelfHosted,
+				Site:           "https://jira.acme.com",
+				Project:        "OPS",
+				IssueType:      "Task",
+				Summary:        valuer.MustNewUnsetOrNonEmptyString("jira summary"),
+				Description:    valuer.MustNewUnsetOrNonEmptyString("jira description"),
+				ReopenDuration: valuer.MustNewUnsetOrNonEmptyString("3d"),
+				Auth:           &ChannelJiraAuth{PAT: "personal-access-token"},
 			},
 		},
 		{
@@ -527,6 +553,20 @@ func TestDeriveChannelConfigRejectsUnrepresentableChannels(t *testing.T) {
 			channel: Channel{
 				DisplayName: "jira-bearer",
 				Data:        `{"name":"jira-bearer","jira_configs":[{"site":"https://acme.atlassian.net","project":"OPS","issue_type":"Bug","http_config":{"authorization":{"type":"Bearer","credentials":"tok"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "jira self-hosted basic auth",
+			channel: Channel{
+				DisplayName: "jira-sh-basic",
+				Data:        `{"name":"jira-sh-basic","jira_configs":[{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issue_type":"Bug","http_config":{"basic_auth":{"username":"u","password":"p"},"authorization":{"type":"Bearer","credentials":"tok"},"follow_redirects":true,"enable_http2":true}}]}`,
+			},
+		},
+		{
+			description: "jira self-hosted credentials file",
+			channel: Channel{
+				DisplayName: "jira-sh-file",
+				Data:        `{"name":"jira-sh-file","jira_configs":[{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issue_type":"Bug","http_config":{"authorization":{"type":"Bearer","credentials_file":"/run/secrets/pat"},"follow_redirects":true,"enable_http2":true}}]}`,
 			},
 		},
 		{

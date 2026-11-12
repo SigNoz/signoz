@@ -168,16 +168,17 @@ describe('TracesExplorer -', () => {
 			),
 		);
 
-		const { getByText } = renderWithTracesExplorerRouter(<TracesExplorer />);
+		renderWithTracesExplorerRouter(<TracesExplorer />);
 
 		await screen.findByText(FILTER_SERVICE_NAME);
 
 		await screen.findByText('demo-app');
-		expect(getByText('options_menu.options')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('periscope-btn-options-traces'),
+		).toBeInTheDocument();
 
-		// test if pagination is there
-		expect(getByText('Previous')).toBeInTheDocument();
-		expect(getByText('Next')).toBeInTheDocument();
+		// the list scrolls instead of paging
+		expect(screen.queryByTestId('pagination-page-size')).not.toBeInTheDocument();
 
 		// column interaction is covered in E2E tests as its a complex interaction
 	});

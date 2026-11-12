@@ -1,6 +1,7 @@
 import {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSavedViewSpecDTO,
+	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	initialQueriesMap,
@@ -120,7 +121,50 @@ describe('hasUnsavedViewChanges', () => {
 				view,
 				stagedQuery: staged,
 				panelType: PANEL_TYPES.LIST,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				options: { ...options, selectColumns: [columns[0]] },
+			}),
+		).toBe(true);
+	});
+
+	it('is clean while no query is staged', () => {
+		expect(
+			hasUnsavedViewChanges({
+				view,
+				stagedQuery: null,
+				panelType: PANEL_TYPES.LIST,
+				sourcePage: SavedviewtypesSourceDTO.traces,
+				options,
+			}),
+		).toBe(false);
+	});
+
+	it('is dirty when the columns are reordered', () => {
+		expect(
+			hasUnsavedViewChanges({
+				view,
+				stagedQuery: staged,
+				panelType: PANEL_TYPES.LIST,
+				sourcePage: SavedviewtypesSourceDTO.traces,
+				options: { ...options, selectColumns: [columns[1], columns[0]] },
+			}),
+		).toBe(true);
+	});
+
+	it('is dirty when a column is swapped for another', () => {
+		expect(
+			hasUnsavedViewChanges({
+				view,
+				stagedQuery: staged,
+				panelType: PANEL_TYPES.LIST,
+				sourcePage: SavedviewtypesSourceDTO.traces,
+				options: {
+					...options,
+					selectColumns: [
+						columns[0],
+						{ name: 'duration_nano', key: 'duration_nano' } as TelemetryFieldKey,
+					],
+				},
 			}),
 		).toBe(true);
 	});
@@ -139,6 +183,7 @@ describe('hasUnsavedViewChanges', () => {
 				view: bare,
 				stagedQuery: stagedFrom(bare, DataSource.TRACES),
 				panelType: PANEL_TYPES.LIST,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				options: { ...options, selectColumns: defaultTraceSelectedColumns },
 			}),
 		).toBe(false);
@@ -163,6 +208,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: logsView,
 					stagedQuery: logsStaged,
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 					options: { selectColumns: shownColumns, ...formatting },
 				}),
 			).toBe(false);
@@ -174,7 +220,23 @@ describe('hasUnsavedViewChanges', () => {
 					view: logsView,
 					stagedQuery: logsStaged,
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 					options: { selectColumns: shownColumns, ...formatting, maxLines: 5 },
+				}),
+			).toBe(true);
+		});
+
+		it.each([
+			['format', { format: 'table' as LogViewMode }],
+			['font size', { fontSize: FontSize.LARGE }],
+		])('is dirty when only the %s changes', (_, change) => {
+			expect(
+				hasUnsavedViewChanges({
+					view: logsView,
+					stagedQuery: logsStaged,
+					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
+					options: { selectColumns: shownColumns, ...formatting, ...change },
 				}),
 			).toBe(true);
 		});
@@ -193,6 +255,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: bare,
 					stagedQuery: stagedFrom(bare, DataSource.LOGS),
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 					options: {
 						selectColumns: defaultLogsSelectedColumns,
 						format: 'table',
@@ -236,6 +299,7 @@ describe('hasUnsavedViewChanges', () => {
 				view: olderView,
 				stagedQuery: stagedFrom(olderView, DataSource.METRICS),
 				panelType: PANEL_TYPES.TIME_SERIES,
+				sourcePage: SavedviewtypesSourceDTO.metrics,
 			}),
 		).toBe(false);
 	});
@@ -283,8 +347,140 @@ describe('hasUnsavedViewChanges', () => {
 				view: storedView,
 				stagedQuery: stagedWithTag,
 				panelType: PANEL_TYPES.TIME_SERIES,
+				sourcePage: SavedviewtypesSourceDTO.metrics,
 			}),
 		).toBe(false);
+	});
+
+	it.each([
+		['point', 'attribute'],
+		['spanfield', 'span'],
+		['logfield', 'log'],
+		['tracefield', 'trace'],
+	])(
+		'reads a group-by staged as %s and stored as %s as the same field',
+		(legacyContext, storedContext) => {
+			const base = viewFrom(
+				toSavedViewSpec({
+					query: query(DataSource.METRICS, ''),
+					panelType: PANEL_TYPES.TIME_SERIES,
+					displayName: 'By os',
+				}),
+			);
+			const [storedQuery] = base.spec.queries;
+			const storedView = {
+				...base,
+				spec: {
+					...base.spec,
+					queries: [
+						{
+							...storedQuery,
+							spec: {
+								...storedQuery.spec,
+								groupBy: [
+									{
+										name: 'os.type',
+										fieldContext: storedContext,
+										fieldDataType: 'string',
+									},
+								],
+							},
+						},
+					],
+				},
+			} as SavedviewtypesSavedViewDTO;
+			const opened = stagedFrom(storedView, DataSource.METRICS);
+			const stagedLegacy = {
+				...opened,
+				builder: {
+					...opened.builder,
+					queryData: opened.builder.queryData.map((queryData) => ({
+						...queryData,
+						groupBy: [{ key: 'os.type', dataType: 'string', type: legacyContext }],
+					})),
+				},
+			} as Query;
+
+			expect(
+				hasUnsavedViewChanges({
+					view: storedView,
+					stagedQuery: stagedLegacy,
+					panelType: PANEL_TYPES.TIME_SERIES,
+					sourcePage: SavedviewtypesSourceDTO.metrics,
+				}),
+			).toBe(false);
+		},
+	);
+
+	// The query still staged after a save keeps the builder's values, while
+	// the server returns the view without them.
+	describe('right after saving a query that carries builder defaults', () => {
+		const withPatch = (
+			dataSource: DataSource,
+			patch: Partial<Query['builder']['queryData'][number]>,
+		): Query => {
+			const base = query(dataSource, '');
+			return {
+				...base,
+				builder: {
+					...base.builder,
+					queryData: base.builder.queryData.map((queryData) => ({
+						...queryData,
+						...patch,
+					})),
+				},
+			} as Query;
+		};
+
+		it.each([
+			[
+				'a zero offset on a list',
+				DataSource.LOGS,
+				SavedviewtypesSourceDTO.logs,
+				PANEL_TYPES.LIST,
+				{ offset: 0 },
+			],
+			[
+				'an empty group-by description',
+				DataSource.TRACES,
+				SavedviewtypesSourceDTO.traces,
+				PANEL_TYPES.TIME_SERIES,
+				{
+					groupBy: [
+						{
+							key: 'service.name',
+							dataType: 'string',
+							type: 'resource',
+							description: '',
+						},
+					],
+				},
+			],
+			[
+				'a function without arguments',
+				DataSource.METRICS,
+				SavedviewtypesSourceDTO.metrics,
+				PANEL_TYPES.TIME_SERIES,
+				{ functions: [{ name: 'absolute', args: [], namedArgs: {} }] },
+			],
+		])('is clean with %s', (_, dataSource, sourcePage, panelType, patch) => {
+			const saved = withPatch(
+				dataSource,
+				patch as Partial<Query['builder']['queryData'][number]>,
+			);
+			const savedView = viewFrom(
+				toSavedViewSpec({ query: saved, panelType, displayName: 'Saved' }),
+			);
+
+			expect(
+				hasUnsavedViewChanges({
+					view: savedView,
+					stagedQuery: saved,
+					panelType,
+					sourcePage,
+				}),
+			).toBe(false);
+		});
 	});
 
 	describe('list order', () => {
@@ -322,6 +518,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: noOrder,
 					stagedQuery: stagedFrom(noOrder, DataSource.LOGS),
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 				}),
 			).toBe(false);
 		});
@@ -337,6 +534,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: noOrder,
 					stagedQuery: sorted,
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 				}),
 			).toBe(true);
 
@@ -346,6 +544,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: saved,
 					stagedQuery: stagedFrom(saved, DataSource.LOGS),
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 				}),
 			).toBe(false);
 		});
@@ -362,6 +561,7 @@ describe('hasUnsavedViewChanges', () => {
 					view: legacy,
 					stagedQuery: stagedFrom(legacy, DataSource.LOGS),
 					panelType: PANEL_TYPES.LIST,
+					sourcePage: SavedviewtypesSourceDTO.logs,
 				}),
 			).toBe(false);
 		});
@@ -373,6 +573,7 @@ describe('hasUnsavedViewChanges', () => {
 				view,
 				stagedQuery: staged,
 				panelType: PANEL_TYPES.LIST,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				options: { ...options, ...formatting, maxLines: 5 },
 			}),
 		).toBe(false);

@@ -1,12 +1,18 @@
 import { useTranslation } from 'react-i18next';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
+import { RadioGroup } from '@signozhq/ui/radio-group';
 import { Input as AntdInput, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
-import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import {
+	ChannelSpecFormValues,
+	JiraDeployment,
+} from '../../CreateAlertChannels/types';
 import FormCard from '../FormCard';
 import FormField from '../FormField';
+
+import styles from './Jira.module.scss';
 
 const { TextArea } = AntdInput;
 
@@ -17,6 +23,8 @@ function JiraSettings(): JSX.Element {
 		control,
 		formState: { errors },
 	} = useFormContext<ChannelSpecFormValues>();
+	const deployment = useWatch({ control, name: 'deployment' });
+	const selfHosted = deployment === JiraDeployment.selfhosted;
 
 	const advanced = (
 		<>
@@ -99,62 +107,132 @@ function JiraSettings(): JSX.Element {
 	return (
 		<>
 			<FormCard title={t('section_connection')}>
-				<Typography.Text
-					color="muted"
-					size="sm"
-					testId="jira-service-account-tip"
-					style={{ display: 'block', marginBottom: 16 }}
-				>
-					{t('jira_service_account_tip')}{' '}
-					<Typography.Link
-						href="https://signoz.io/docs/alerts-management/notification-channel/jira/#use-a-service-account-recommended"
-						target="_blank"
-						rel="noopener noreferrer"
+				<FormField label={t('field_jira_deployment')}>
+					<Controller
+						control={control}
+						name="deployment"
+						render={({ field }): JSX.Element => (
+							<div className={styles.deployment}>
+								<RadioGroup
+									color="primary"
+									aria-label={t('field_jira_deployment')}
+									value={deployment}
+									onChange={field.onChange}
+									testId="jira-deployment-radio"
+									items={[
+										{
+											value: JiraDeployment.cloud,
+											label: t('option_jira_deployment_cloud'),
+										},
+										{
+											value: JiraDeployment.selfhosted,
+											label: t('option_jira_deployment_selfhosted'),
+										},
+									]}
+								/>
+							</div>
+						)}
+					/>
+				</FormField>
+
+				{selfHosted ? (
+					<Typography.Text
+						color="muted"
+						size="sm"
+						testId="jira-selfhosted-tip"
+						style={{ display: 'block', marginBottom: 16 }}
 					>
-						{t('jira_service_account_tip_link')}
-					</Typography.Link>
-				</Typography.Text>
+						{t('jira_selfhosted_tip')}{' '}
+						<Typography.Link
+							href="https://signoz.io/docs/alerts-management/notification-channel/jira/#self-hosted-jira"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{t('jira_selfhosted_tip_link')}
+						</Typography.Link>
+					</Typography.Text>
+				) : (
+					<Typography.Text
+						color="muted"
+						size="sm"
+						testId="jira-service-account-tip"
+						style={{ display: 'block', marginBottom: 16 }}
+					>
+						{t('jira_service_account_tip')}{' '}
+						<Typography.Link
+							href="https://signoz.io/docs/alerts-management/notification-channel/jira/#use-a-service-account-recommended"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{t('jira_service_account_tip_link')}
+						</Typography.Link>
+					</Typography.Text>
+				)}
 
 				<FormField
 					label={t('field_jira_site')}
-					tooltip={t('tooltip_jira_site')}
+					tooltip={t(
+						selfHosted ? 'tooltip_jira_site_selfhosted' : 'tooltip_jira_site',
+					)}
 					error={errors.site?.message}
 					required
 				>
 					<Input
 						{...register('site')}
 						aria-required
-						placeholder="https://your-domain.atlassian.net"
+						placeholder={
+							selfHosted
+								? 'https://jira.your-company.com'
+								: 'https://your-domain.atlassian.net'
+						}
 						data-testid="jira-site-textbox"
 					/>
 				</FormField>
 
-				<FormField
-					label={t('field_jira_email')}
-					help={t('help_jira_email')}
-					error={errors.email?.message}
-					required
-				>
-					<Input
-						{...register('email')}
-						aria-required
-						data-testid="jira-email-textbox"
-					/>
-				</FormField>
+				{selfHosted ? (
+					<FormField
+						label={t('field_jira_pat')}
+						help={t('help_jira_pat')}
+						error={errors.auth?.pat?.message}
+						required
+					>
+						<Input
+							{...register('auth.pat')}
+							aria-required
+							type="password"
+							data-testid="jira-pat-textbox"
+						/>
+					</FormField>
+				) : (
+					<>
+						<FormField
+							label={t('field_jira_email')}
+							help={t('help_jira_email')}
+							error={errors.auth?.email?.message}
+							required
+						>
+							<Input
+								{...register('auth.email')}
+								aria-required
+								data-testid="jira-email-textbox"
+							/>
+						</FormField>
 
-				<FormField
-					label={t('field_jira_api_token')}
-					help={t('help_jira_api_token')}
-					error={errors.apiToken?.message}
-					required
-				>
-					<Input
-						{...register('apiToken')}
-						aria-required
-						type="password"
-						data-testid="jira-api-token-textbox"
-					/>
-				</FormField>
+						<FormField
+							label={t('field_jira_api_token')}
+							help={t('help_jira_api_token')}
+							error={errors.auth?.apiToken?.message}
+							required
+						>
+							<Input
+								{...register('auth.apiToken')}
+								aria-required
+								type="password"
+								data-testid="jira-api-token-textbox"
+							/>
+						</FormField>
+					</>
+				)}
 
 				<FormField
 					label={t('field_jira_project')}
@@ -203,7 +281,9 @@ function JiraSettings(): JSX.Element {
 
 				<FormField
 					label={t('field_jira_description')}
-					help={t('help_jira_description')}
+					help={t(
+						selfHosted ? 'help_jira_description_selfhosted' : 'help_jira_description',
+					)}
 					error={errors.description?.message}
 				>
 					<Controller

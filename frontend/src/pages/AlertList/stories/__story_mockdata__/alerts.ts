@@ -25,7 +25,6 @@ import {
 	type AlertmanagertypesDeprecatedGettableAlertDTO,
 	type GetAlerts200,
 	type GetRuleByID200,
-	type ListRules200,
 	type RenderErrorResponseDTO,
 	type Querybuildertypesv5FunctionDTO,
 	type RuletypesAlertCompositeQueryDTO,
@@ -69,10 +68,6 @@ export type RuleState = (typeof RULE_STATES)[number];
 export const RULE_STATE_CHOICES = ['mixed', ...RULE_STATES] as const;
 
 export type RuleStateChoice = (typeof RULE_STATE_CHOICES)[number];
-
-export const ALERT_SCHEMAS = ['v2', 'classic'] as const;
-
-export type AlertSchema = (typeof ALERT_SCHEMAS)[number];
 
 export const RULE_KINDS = ['threshold', 'anomaly'] as const;
 
@@ -133,9 +128,8 @@ const compositeQuery = (
 
 /**
  * An anomaly rule fires on the z-score of each point against the seasonal
- * forecast, so its targets are deviations: the classic form stores `below 3`, the
- * current schema the signed `-3`. The `anomaly` function on the query is what
- * makes the preview draw the forecast band.
+ * forecast, so its targets are signed deviations (`-3`). The `anomaly` function
+ * on the query is what makes the preview draw the forecast band.
  */
 const anomalyCondition = (seed: RuleSeed): RuletypesRuleConditionDTO => {
 	return {
@@ -149,11 +143,6 @@ const anomalyCondition = (seed: RuleSeed): RuletypesRuleConditionDTO => {
 				],
 			},
 		]),
-		op: RuletypesCompareOperatorDTO.below,
-		matchType: RuletypesMatchTypeDTO.all_the_times,
-		target: 3,
-		targetUnit: '',
-		algorithm: 'standard',
 		seasonality: RuletypesSeasonalityDTO.daily,
 		thresholds: {
 			kind: RuletypesThresholdBasicDTOKind.basic,
@@ -181,11 +170,7 @@ const anomalyCondition = (seed: RuleSeed): RuletypesRuleConditionDTO => {
 
 const condition = (seed: RuleSeed): RuletypesRuleConditionDTO => ({
 	compositeQuery: compositeQuery(seed),
-	op: RuletypesCompareOperatorDTO.above,
-	matchType: RuletypesMatchTypeDTO.at_least_once,
 	selectedQueryName: 'A',
-	target: seed.target,
-	targetUnit: seed.unit,
 	alertOnAbsent: false,
 	requireMinPoints: false,
 	thresholds: {
@@ -355,7 +340,6 @@ const ruleName = (index: number): string => {
 export interface RuleShape {
 	severity: SeverityChoice;
 	state: RuleStateChoice;
-	schema?: AlertSchema;
 	kind?: RuleKind;
 }
 
@@ -386,8 +370,6 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 			description:
 				'The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}',
 		},
-		evalWindow: isAnomaly ? '1h0m0s' : '5m0s',
-		frequency: '1m0s',
 		evaluation: {
 			kind: RuletypesEvaluationRollingDTOKind.rolling,
 			spec: { evalWindow: isAnomaly ? '1h0m0s' : '5m0s', frequency: '1m0s' },
@@ -396,13 +378,7 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 		updatedAt: ago((index + 1) * HOUR),
 		createdBy: 'ada@signoz.io',
 		updatedBy: 'grace@signoz.io',
-		// classic rows predate schemaVersion, which the spec now requires
-		schemaVersion: (shape.schema === 'classic'
-			? undefined
-			: RuletypesRuleDTOSchemaVersion.v2alpha1) as RuletypesRuleDTOSchemaVersion,
-		version: 'v5',
-		source: 'http://localhost/alerts',
-		preferredChannels: ['ops-slack'],
+		schemaVersion: RuletypesRuleDTOSchemaVersion.v2alpha1,
 		notificationSettings: {
 			groupBy: ['alertname'],
 			usePolicy: false,
@@ -414,7 +390,7 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 export const alertRulesResponse = (
 	count: number,
 	shape: RuleShape,
-): ListRules200 => ({
+): { status: string; data: RuletypesRuleDTO[] } => ({
 	status: 'success',
 	data: Array.from({ length: count }, (_unused, index) =>
 		buildRule(index, shape),
@@ -869,6 +845,35 @@ const webhookSpec = (auth: WebhookAuthChoice): Record<string, unknown> => ({
 	sendResolved: true,
 });
 
+export const JIRA_DEPLOYMENTS = ['cloud', 'selfhosted'] as const;
+
+export type JiraDeploymentChoice = (typeof JIRA_DEPLOYMENTS)[number];
+
+const JIRA_CONNECTIONS: Record<
+	JiraDeploymentChoice,
+	Record<string, unknown>
+> = {
+	cloud: {
+		site: 'https://story.atlassian.net',
+		auth: { email: 'story@signoz.io', apiToken: 'story-jira-token' },
+	},
+	selfhosted: {
+		site: 'https://jira.story.internal',
+		auth: { pat: 'story-jira-pat' },
+	},
+};
+
+const jiraSpec = (
+	deployment: JiraDeploymentChoice,
+): Record<string, unknown> => ({
+	deployment,
+	...JIRA_CONNECTIONS[deployment],
+	project: 'OPS',
+	issueType: 'Task',
+	summary: '{{ .CommonLabels.alertname }}',
+	sendResolved: true,
+});
+
 /**
  * The v2 spec each kind is fetched with, so the edit form renders populated
  * fields. Keys mirror the generated channel spec schemas.
@@ -927,15 +932,7 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 		text: 'Story channel',
 		sendResolved: true,
 	},
-	jira: {
-		site: 'https://story.atlassian.net',
-		project: 'OPS',
-		issueType: 'Task',
-		email: 'story@signoz.io',
-		apiToken: 'story-jira-token',
-		summary: '{{ .CommonLabels.alertname }}',
-		sendResolved: true,
-	},
+	jira: jiraSpec('cloud'),
 	jsmops: {
 		apiKey: 'story-jsm-key',
 		message: '{{ .CommonLabels.alertname }}',
@@ -957,11 +954,26 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 	},
 };
 
+const channelSpec = (
+	type: ChannelType,
+	webhookAuth: WebhookAuthChoice,
+	jiraDeployment: JiraDeploymentChoice,
+): Record<string, unknown> => {
+	if (type === 'webhook') {
+		return webhookSpec(webhookAuth);
+	}
+	if (type === 'jira') {
+		return jiraSpec(jiraDeployment);
+	}
+	return CHANNEL_SPECS[type];
+};
+
 /** The v2 fetch by id, which is what the redesigned screens read. */
 export const notificationChannelResponse = (
 	id: string,
 	type: ChannelType,
 	webhookAuth: WebhookAuthChoice = 'basic',
+	jiraDeployment: JiraDeploymentChoice = 'cloud',
 ): {
 	status: string;
 	data: AlertmanagertypesGettableNotificationChannelDTO;
@@ -982,7 +994,7 @@ export const notificationChannelResponse = (
 			updatedAt: ago((index + 1) * DAY),
 			config: {
 				kind: type,
-				spec: type === 'webhook' ? webhookSpec(webhookAuth) : CHANNEL_SPECS[type],
+				spec: channelSpec(type, webhookAuth, jiraDeployment),
 			} as unknown as AlertmanagertypesChannelConfigDTO,
 		},
 	};

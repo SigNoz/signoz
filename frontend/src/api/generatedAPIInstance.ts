@@ -11,6 +11,8 @@ import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 // generated API Instance
 const generatedAPIAxiosInstance = axios.create({
 	baseURL: ENVIRONMENT.baseURL,
+	// The backend binds repeated keys (`states=a&states=b`); axios' default sends `states[]=`.
+	paramsSerializer: { indexes: null },
 });
 
 let generatedAPIQueryKeyHeaderContext: Record<string, unknown> | undefined;
