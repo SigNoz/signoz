@@ -24,8 +24,8 @@ const (
 // The raw template strings, the breached value ($alert.value), the configured
 // threshold ($rule.threshold.value), its comparator ($rule.threshold.op), the
 // recovery threshold ($rule.threshold.recovery_value), the match type
-// ($rule.match_type), the rule's signal ($rule.type) and the recovering flag
-// ($alert.is_recovering) are private.
+// ($rule.match_type), the rule's signal ($rule.type), the exceptions page link
+// ($exception.url) and the recovering flag ($alert.is_recovering) are private.
 //
 // The rest are public: they are deep links to relevant logs/traces and users
 // may reference them directly as {{ .Annotations.related_logs }}, etc. in
@@ -35,6 +35,7 @@ const (
 	AnnotationBodyTemplate      = "_body_template"
 	AnnotationRelatedLogs       = "related_logs"
 	AnnotationRelatedTraces     = "related_traces"
+	AnnotationRelatedExceptions = "_related_exceptions"
 	AnnotationValue             = "_value"
 	AnnotationIsRecovering      = "_is_recovering"
 	AnnotationThresholdValue    = "_threshold"

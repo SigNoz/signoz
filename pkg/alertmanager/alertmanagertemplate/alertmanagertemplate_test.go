@@ -356,6 +356,22 @@ Description: Request rate exceeded 10k/s`},
 			wantBody:  []string{"is_test=false"},
 		},
 		{
+			name: "exception url reads its private annotation",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "CheckoutExceptions"},
+					map[string]string{ruletypes.AnnotationRelatedExceptions: "https://signoz.example/exceptions?serviceName=checkout"},
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "$rule.name",
+				BodyTemplate:  "[View exceptions]($exception.url), annotations: {{ len $annotations }}",
+			},
+			wantTitle: "CheckoutExceptions",
+			wantBody:  []string{"[View exceptions](https://signoz.example/exceptions?serviceName=checkout), annotations: 0"},
+		},
+		{
 			name: "recovering annotation sets status, flags and counts with firing winning the title",
 			alerts: []*types.Alert{
 				createAlert(

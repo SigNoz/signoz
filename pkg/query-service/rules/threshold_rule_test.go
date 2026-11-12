@@ -208,6 +208,60 @@ func TestPrepareParamsForLogs(t *testing.T) {
 	assert.JSONEq(t, `{"queryType":"builder","builder":{"queryData":[{"dataSource":"logs","filter":{}}],"queryFormulas":[]}}`, compositeQuery)
 }
 
+func TestPrepareParamsForExceptions(t *testing.T) {
+	postableRule := ruletypes.PostableRule{
+		AlertName: valuer.NewDisplayName("Exceptions In Checkout"),
+		AlertType: ruletypes.AlertTypeExceptions,
+		RuleType:  ruletypes.RuleTypeThreshold,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: valuer.MustParseTextDuration("5m"),
+			Frequency:  valuer.MustParseTextDuration("1m"),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeClickHouseSQL,
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypeClickHouseSQL,
+						Spec: qbtypes.ClickHouseQuery{
+							Name:  "A",
+							Query: "SELECT count() AS value, toStartOfInterval(timestamp, toIntervalMinute(1)) AS interval, serviceName FROM signoz_traces.distributed_signoz_error_index_v2 WHERE timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} GROUP BY serviceName, interval",
+						},
+					},
+				},
+			},
+			CompareOperator: ruletypes.ValueIsAbove,
+			MatchType:       ruletypes.AtleastOnce,
+			Target:          &[]float64{10.0}[0],
+			SelectedQuery:   "A",
+		},
+	}
+
+	logger := instrumentationtest.New().Logger()
+	postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
+		Kind: ruletypes.BasicThresholdKind,
+		Spec: ruletypes.BasicRuleThresholds{
+			{
+				TargetValue:     postableRule.RuleCondition.Target,
+				MatchType:       postableRule.RuleCondition.MatchType,
+				CompareOperator: postableRule.RuleCondition.CompareOperator,
+			},
+		},
+	}
+
+	externalURL := mustParseURL(t, "http://localhost:8080")
+	rule, err := NewThresholdRule("70", valuer.GenerateUUID(), &postableRule, nil, logger, externalURL, WithEvalDelay(valuer.MustParseTextDuration("2m")))
+	require.NoError(t, err)
+
+	ts := time.UnixMilli(1705469040000)
+
+	params := rule.prepareParamsForExceptions(context.Background(), ts, ruletypes.FromMap(map[string]string{"serviceName": "checkout"}))
+	assert.Equal(t, "1705468620000", params.Get("startTime"))
+	assert.Equal(t, "1705468920000", params.Get("endTime"))
+	assert.Equal(t, "checkout", params.Get("serviceName"))
+	assert.False(t, params.Has("exceptionType"))
+}
+
 func TestPrepareParamsForLogsFilterExpression(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
 		AlertName: valuer.NewDisplayName("Tricky Condition Tests"),

@@ -290,10 +290,11 @@ func buildAlertData(a *types.Alert, receiver string) alertmanagertypes.AlertData
 			IsRecovering:  status == ruletypes.StateRecovering.StringValue(),
 			IsTest:        labels[ruletypes.LabelTestAlert] == "true",
 		},
-		Rule:   buildRuleInfo(labels, annotations),
-		Log:    alertmanagertypes.LinkInfo{URL: annotations[ruletypes.AnnotationRelatedLogs]},
-		Trace:  alertmanagertypes.LinkInfo{URL: annotations[ruletypes.AnnotationRelatedTraces]},
-		Labels: labels,
+		Rule:      buildRuleInfo(labels, annotations),
+		Log:       alertmanagertypes.LinkInfo{URL: annotations[ruletypes.AnnotationRelatedLogs]},
+		Trace:     alertmanagertypes.LinkInfo{URL: annotations[ruletypes.AnnotationRelatedTraces]},
+		Exception: alertmanagertypes.LinkInfo{URL: annotations[ruletypes.AnnotationRelatedExceptions]},
+		Labels:    labels,
 		// Strip private annotations once the structured fields above have
 		// been populated from the raw map.
 		Annotations: alertmanagertypes.FilterPublicAnnotations(annotations),

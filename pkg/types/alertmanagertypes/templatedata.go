@@ -76,6 +76,7 @@ type AlertData struct {
 	Rule        RuleInfo    `json:"rule"        mapstructure:"rule"`
 	Log         LinkInfo    `json:"log"         mapstructure:"log"`
 	Trace       LinkInfo    `json:"trace"       mapstructure:"trace"`
+	Exception   LinkInfo    `json:"exception"   mapstructure:"exception"`
 	Labels      template.KV `json:"labels"      mapstructure:"labels"`
 	Annotations template.KV `json:"annotations" mapstructure:"annotations"`
 
@@ -120,8 +121,8 @@ type Threshold struct {
 	RecoveryValue string `json:"recoveryValue" mapstructure:"recovery_value"`
 }
 
-// LinkInfo groups a single URL so templates can reference $log.url and
-// $trace.url uniformly.
+// LinkInfo groups a single URL so templates can reference $log.url,
+// $trace.url and $exception.url uniformly.
 type LinkInfo struct {
 	URL string `json:"url" mapstructure:"url"`
 }
