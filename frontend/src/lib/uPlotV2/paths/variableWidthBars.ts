@@ -41,8 +41,10 @@ export function createVariableWidthBarsPathBuilder({
 		const solidFill = resolveFill(fill);
 		const overflowFill = resolveFill(hatchedFill);
 		const solidPath = new Path2D();
-		// A Map keyed by fill would let the second path overwrite the first.
-		const hatchedPath = overflowFill === solidFill ? solidPath : new Path2D();
+		// The hatch overlays only overflow bars, so they keep a path of their own even
+		// when one colour fill covers both (a Map keyed by fill holds one path a fill).
+		const hatchedPath = new Path2D();
+		const isSharedFill = overflowFill === solidFill;
 		const inset = (gapPx * uPlot.pxRatio) / 2;
 		const minWidthForGap = MIN_WIDTH_FOR_GAP_PX * uPlot.pxRatio;
 		let hasHatched = false;
@@ -54,16 +56,23 @@ export function createVariableWidthBarsPathBuilder({
 			const bottom = u.valToPos(bar.y0, 'y', true);
 			const width = right - left;
 			const gap = width > minWidthForGap ? inset : 0;
-			const path = bar.hatched ? hatchedPath : solidPath;
-			path.rect(left + gap, top, width - 2 * gap, bottom - top);
-			hasHatched ||= bar.hatched;
+			const rect = [left + gap, top, width - 2 * gap, bottom - top] as const;
+			if (!bar.hatched || isSharedFill) {
+				solidPath.rect(...rect);
+			}
+			if (bar.hatched) {
+				hatchedPath.rect(...rect);
+				hasHatched = true;
+			}
 		});
 
 		const fills = new Map<CanvasRenderingContext2D['fillStyle'], Path2D>([
 			[solidFill, solidPath],
 		]);
 		if (hasHatched) {
-			fills.set(overflowFill, hatchedPath);
+			if (!isSharedFill) {
+				fills.set(overflowFill, hatchedPath);
+			}
 			const pattern = getHatchPattern(u.ctx);
 			if (pattern) {
 				fills.set(pattern, hatchedPath);

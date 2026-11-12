@@ -118,4 +118,22 @@ describe('createVariableWidthBarsPathBuilder', () => {
 
 		expect(rectsOf(fills.get('red'))).toHaveLength(2);
 	});
+
+	it('hatches only overflow bars when both fills are the same colour', () => {
+		const pattern = {} as CanvasPattern;
+		const fills = fillsOf(
+			createVariableWidthBarsPathBuilder({
+				getBars: () => [
+					{ x0: 0, x1: 1, y0: 0, y1: 1, hatched: false },
+					{ x0: 1, x1: 2, y0: 0, y1: 1, hatched: true },
+				],
+				fill: 'red',
+				hatchedFill: 'red',
+				getHatchPattern: () => pattern,
+				gapPx: 0,
+			})(plot, 1, 0, 0),
+		);
+
+		expect(rectsOf(fills.get(pattern))).toStrictEqual([[10, 90, 10, 10]]);
+	});
 });
