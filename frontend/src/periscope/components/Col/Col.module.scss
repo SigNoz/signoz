@@ -1,5 +1,6 @@
 @use 'sass:math';
 @use 'sass:string';
+@use '../../../styles/antdReset';
 
 $grid-columns: 24;
 // antd 5.11 screen*Min tokens; xs has no media query.
@@ -82,6 +83,9 @@ $breakpoints: (
 }
 
 .col {
+	@include antdReset.antd-font-reset;
+	@include antdReset.antd-link-reset;
+
 	position: relative;
 	box-sizing: border-box;
 	max-width: 100%;

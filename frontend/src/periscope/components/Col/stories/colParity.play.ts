@@ -24,6 +24,16 @@ const LAYOUT_PROPERTIES = [
 	'left',
 	'right',
 	'order',
+	'font-family',
+	'font-size',
+] as const;
+
+const LINK_PROPERTIES = [
+	'color',
+	'text-decoration-line',
+	'background-color',
+	'cursor',
+	'transition',
 ] as const;
 
 interface Box {
@@ -50,22 +60,39 @@ function boxesOf(row: HTMLElement): (Box | null)[] {
 	});
 }
 
-/** Fails unless both columns compute the same layout styles and boxes. */
+async function expectSameStyle(
+	local: Element,
+	antd: Element,
+	properties: readonly string[],
+): Promise<void> {
+	const localStyle = getComputedStyle(local);
+	const antdStyle = getComputedStyle(antd);
+	for (const property of properties) {
+		await expect({
+			property,
+			value: localStyle.getPropertyValue(property),
+		}).toEqual({ property, value: antdStyle.getPropertyValue(property) });
+	}
+}
+
+/** Fails unless both columns compute the same styles, link styles and boxes. */
 export async function assertColParity({
 	canvasElement,
 }: {
 	canvasElement: HTMLElement;
 }): Promise<void> {
 	const canvas = within(canvasElement);
-	const antdStyle = getComputedStyle(canvas.getByTestId(ANTD_COL_TEST_ID));
-	const localStyle = getComputedStyle(canvas.getByTestId(LOCAL_COL_TEST_ID));
+	const antd = canvas.getByTestId(ANTD_COL_TEST_ID);
+	const local = canvas.getByTestId(LOCAL_COL_TEST_ID);
+	await expectSameStyle(local, antd, LAYOUT_PROPERTIES);
 
-	for (const property of LAYOUT_PROPERTIES) {
-		await expect({
-			property,
-			value: localStyle.getPropertyValue(property),
-		}).toEqual({ property, value: antdStyle.getPropertyValue(property) });
+	const antdLink = antd.querySelector('a');
+	const localLink = local.querySelector('a');
+	await expect(Boolean(localLink)).toBe(Boolean(antdLink));
+	if (antdLink && localLink) {
+		await expectSameStyle(localLink, antdLink, LINK_PROPERTIES);
 	}
+
 	await expect(boxesOf(canvas.getByTestId(LOCAL_ROW_TEST_ID))).toEqual(
 		boxesOf(canvas.getByTestId(ANTD_ROW_TEST_ID)),
 	);
