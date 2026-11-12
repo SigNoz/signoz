@@ -1,8 +1,6 @@
-@use '../../../styles/antdReset';
-
 .flex {
-	@include antdReset.antd-font-reset;
-	@include antdReset.antd-link-reset;
+	font-family: var(--theme-font-family);
+	font-size: var(--theme-font-size);
 
 	box-sizing: border-box;
 	display: flex;
@@ -14,6 +12,40 @@
 
 	&:empty {
 		display: none;
+	}
+}
+
+:where(.flex) a {
+	color: var(--theme-color-link);
+	text-decoration: none;
+	background-color: transparent;
+	outline: none;
+	cursor: pointer;
+	transition: color var(--theme-motion-duration-slow);
+	-webkit-text-decoration-skip: objects;
+
+	&:hover {
+		color: var(--theme-color-link-hover);
+	}
+
+	&:active {
+		color: var(--theme-color-link-active);
+	}
+
+	&:active,
+	&:hover {
+		text-decoration: none;
+		outline: 0;
+	}
+
+	&:focus {
+		text-decoration: none;
+		outline: 0;
+	}
+
+	&[disabled] {
+		color: var(--theme-color-text-disabled);
+		cursor: not-allowed;
 	}
 }
 
