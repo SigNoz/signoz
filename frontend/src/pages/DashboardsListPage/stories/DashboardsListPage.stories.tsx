@@ -1,46 +1,40 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	dashboardsListMocks,
+	type DashboardsListArgs,
 	longQueryRoute,
 	overflowingRows,
 } from './DashboardsListPage.stories.mocks';
 import {
 	copyLegacyDashboardId,
-	createDashboardFails,
+	createDashboard,
 	deleteDashboard,
-	deleteViewFails,
+	deleteView,
 	duplicateDashboard,
-	importCreateFails,
+	importDashboard,
 	importInvalidImage,
 	importInvalidJson,
 	lockDashboard,
 	migrateDashboard,
-	migrationFails,
 	openCreatedByFilter,
 	openEditTagsDialog,
 	openFirstRowActions,
 	openRenameDialog,
 	openSaveViewPopover,
 	openTemplateTab,
-	pinFails,
-	pinPastLimit,
+	pinDashboard,
 	renameDashboard,
-	renameViewFails,
-	saveViewFails,
+	renameView,
+	saveView,
 	submitTemplateRequest,
-	templateRequestFails,
-	templateRequestRejected,
 	unlockDashboard,
-	unpinFails,
+	unpinDashboard,
 	updateTags,
 } from './__story_mockdata__/dashboardsList.play';
 
 import DashboardsListPage from '../DashboardsListPage';
-
-type DashboardsListArgs = PageStoryArgs<typeof dashboardsListMocks>;
 
 const pageStory = storyMocks(dashboardsListMocks, { layout: 'app' });
 
@@ -182,21 +176,21 @@ export const DashboardDeletedToast: Story = {
 /** Pinning past the limit: the backend refuses with a 409. */
 export const PinLimitToast: Story = {
 	args: { pinWrite: 'limit' },
-	play: pinPastLimit,
+	play: pinDashboard,
 	parameters: { allowConsoleErrors: true },
 };
 
 /** A pin the backend failed to write. */
 export const PinFailedToast: Story = {
 	args: { pinWrite: 'error' },
-	play: pinFails,
+	play: pinDashboard,
 	parameters: { allowConsoleErrors: true },
 };
 
 /** An unpin the backend failed to write, from the first (pinned) row. */
 export const UnpinFailedToast: Story = {
 	args: { pinWrite: 'error' },
-	play: unpinFails,
+	play: unpinDashboard,
 	parameters: { allowConsoleErrors: true },
 };
 
@@ -213,14 +207,14 @@ export const DashboardMigratedToast: Story = {
 /** Retry migration of the legacy dashboard refused by the backend. */
 export const DashboardMigrationFailedToast: Story = {
 	args: { migrationWrite: 'error' },
-	play: migrationFails,
+	play: migrateDashboard,
 	parameters: { allowConsoleErrors: true },
 };
 
 /** The Blank tab's create failing: the toast raised beside the error modal. */
 export const CreateDashboardFailedToast: Story = {
 	args: { createWrite: 'error' },
-	play: createDashboardFails,
+	play: createDashboard,
 	parameters: { allowConsoleErrors: true },
 };
 
@@ -232,7 +226,7 @@ export const ImportJsonInvalidImageToast: Story = {
 /** A valid dashboard file the create endpoint refuses. */
 export const ImportJsonCreateFailedToast: Story = {
 	args: { createWrite: 'error' },
-	play: importCreateFails,
+	play: importDashboard,
 	parameters: { allowConsoleErrors: true },
 };
 
@@ -244,33 +238,33 @@ export const TemplateRequestSubmittedToast: Story = {
 /** A template request the analytics endpoint answered with a failure. */
 export const TemplateRequestFailedToast: Story = {
 	args: { templateRequest: 'error' },
-	play: templateRequestFails,
+	play: submitTemplateRequest,
 };
 
 /** A template request that threw before an answer came back. */
 export const TemplateRequestRejectedToast: Story = {
 	args: { templateRequest: 'rejected' },
-	play: templateRequestRejected,
+	play: submitTemplateRequest,
 };
 
 /** Saving the current filters as a view, refused by the backend. */
 export const SaveViewFailedToast: Story = {
 	args: { viewWrite: 'error' },
-	play: saveViewFails,
+	play: saveView,
 	parameters: { allowConsoleErrors: true },
 };
 
 /** Renaming a saved view, refused by the backend. */
 export const RenameViewFailedToast: Story = {
 	args: { viewWrite: 'error' },
-	play: renameViewFails,
+	play: renameView,
 	parameters: { allowConsoleErrors: true },
 };
 
 /** Deleting a saved view, refused by the backend. */
 export const DeleteViewFailedToast: Story = {
 	args: { viewWrite: 'error' },
-	play: deleteViewFails,
+	play: deleteView,
 	parameters: { allowConsoleErrors: true },
 };
 
