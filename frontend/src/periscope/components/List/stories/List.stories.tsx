@@ -26,6 +26,7 @@ const meta = {
 		header: { control: 'text' },
 		footer: { control: 'text' },
 		emptyText: { control: 'text' },
+		fontSize: { control: 'number' },
 		avatar: { control: 'boolean' },
 		description: { control: 'boolean' },
 		actions: { control: 'boolean' },
@@ -80,4 +81,9 @@ export const Empty: Story = {
 
 export const CustomEmptyText: Story = {
 	args: { itemCount: 0, emptyText: 'Nothing here', bordered: true },
+};
+
+/** A font size on the root reaches the header and footer only. */
+export const RootFontSize: Story = {
+	args: { fontSize: 20, header: 'Header', footer: 'Footer', description: true },
 };

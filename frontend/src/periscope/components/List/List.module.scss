@@ -1,3 +1,5 @@
+@use '../../../styles/antdReset';
+
 @mixin border-box {
 	box-sizing: border-box;
 
@@ -19,6 +21,8 @@
 	--list-line-height-lg: calc(22 / 14);
 
 	@include border-box;
+	@include antdReset.antd-font-reset;
+	@include antdReset.antd-link-reset;
 
 	position: relative;
 	margin: 0;
@@ -52,6 +56,7 @@
 
 .nestedLoading {
 	@include border-box;
+	@include antdReset.antd-font-reset;
 
 	position: relative;
 }

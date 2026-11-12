@@ -21,6 +21,8 @@ export interface ListComparisonProps
 	header?: string;
 	footer?: string;
 	emptyText?: string;
+	/** Set on the list root; antd's reset on the inner wrapper brings items back to 13px. */
+	fontSize?: number;
 }
 
 /** Renders antd's `List` and ours with the same props, side by side. */
@@ -29,6 +31,7 @@ function ListComparison({
 	header,
 	footer,
 	emptyText,
+	fontSize,
 	avatar,
 	description,
 	actions,
@@ -41,6 +44,7 @@ function ListComparison({
 		header,
 		footer,
 		locale: emptyText ? { emptyText } : undefined,
+		style: fontSize ? { fontSize } : undefined,
 		...listProps,
 	};
 

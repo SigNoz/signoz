@@ -31,7 +31,14 @@ export function getFixtureItemProps(
 ): Pick<ListItemProps, 'actions' | 'extra'> {
 	return {
 		actions: actions
-			? [<span key="edit">Edit</span>, <span key="more">More</span>]
+			? [
+					<a key="edit" href="#edit">
+						Edit
+					</a>,
+					<a key="more" href="#more">
+						More
+					</a>,
+				]
 			: undefined,
 		extra: extra ? <div className={styles.extra}>{item.key}</div> : undefined,
 	};
@@ -43,7 +50,11 @@ export function getFixtureMetaProps(
 ): Pick<ListItemMetaProps, 'avatar' | 'title' | 'description'> {
 	return {
 		avatar: avatar ? <CircleArrowRight size={16} /> : undefined,
-		title: item.title,
-		description: description ? item.description : undefined,
+		title: <a href={`#${item.key}`}>{item.title}</a>,
+		description: description ? (
+			<>
+				{item.description} <a href={`#${item.key}-docs`}>docs</a>
+			</>
+		) : undefined,
 	};
 }
