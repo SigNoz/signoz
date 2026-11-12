@@ -1,0 +1,95 @@
+{
+  "display": {
+    "name": "latency",
+    "description": "how request duration is distributed over the range"
+  },
+  "variables": [],
+  "panels": {
+    "p1": {
+      "kind": "Panel",
+      "spec": {
+        "display": {
+          "name": "request duration",
+          "description": ""
+        },
+        "plugin": {
+          "kind": "signoz/DistributionPanel",
+          "spec": {
+            "visualization": {
+              "timePreference": "global_time"
+            },
+            "formatting": {
+              "unit": "s",
+              "decimalPrecision": "3"
+            },
+            "axes": {
+              "x": {
+                "min": 10
+              },
+              "y": {
+                "scale": "log"
+              }
+            },
+            "legend": {
+              "position": "right",
+              "mode": "list"
+            },
+            "chartAppearance": {
+              "stack": "none",
+              "percentiles": {
+                "enabled": true,
+                "values": [75, 99.9]
+              }
+            }
+          }
+        },
+        "links": [],
+        "queries": [
+          {
+            "kind": "distribution",
+            "spec": {
+              "plugin": {
+                "kind": "signoz/BuilderQuery",
+                "spec": {
+                  "name": "A",
+                  "signal": "metrics",
+                  "aggregations": [
+                    {
+                      "metricName": "http.server.request.duration",
+                      "timeAggregation": "increase",
+                      "spaceAggregation": "sum"
+                    }
+                  ],
+                  "groupBy": [
+                    {
+                      "name": "service.name"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "links": [],
+  "layouts": [
+    {
+      "kind": "Grid",
+      "spec": {
+        "items": [
+          {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 8,
+            "content": {
+              "$ref": "#/spec/panels/p1"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
