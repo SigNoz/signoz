@@ -13303,6 +13303,13 @@ export interface SavedviewtypesUpdatableSavedViewDTO {
 	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
+export enum ServiceaccounttypesDSLKeyDTO {
+	created_at = 'created_at',
+	email = 'email',
+	name = 'name',
+	status = 'status',
+	updated_at = 'updated_at',
+}
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
@@ -13388,7 +13395,7 @@ export interface ServiceaccounttypesListableServiceAccountDTO {
 	 * @type array
 	 * @description The filter keys the query accepts.
 	 */
-	reservedKeywords: string[];
+	reservedKeywords: ServiceaccounttypesDSLKeyDTO[];
 	/**
 	 * @type array
 	 * @description The service accounts on this page.
