@@ -1,14 +1,19 @@
 import { useCallback, useMemo } from 'react';
 import type { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
-import { useNotificationChannelLinkPermissions } from 'hooks/notificationChannels/useNotificationChannelLinkPermissions';
+import { formatDeniedMessage } from 'lib/authz/components/formatDeniedMessage';
 import {
 	buildNotificationChannelAttachPermission,
 	buildNotificationChannelDetachPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
-import { ROUTE_POLICY_CREATE_CHECKS } from 'hooks/routingPolicies/useRoutePolicyCollectionPermissions';
-import { useRoutePolicyPermissions } from 'hooks/routingPolicies/useRoutePolicyPermissions';
-import { formatDeniedMessage } from 'lib/authz/components/formatDeniedMessage';
+import {
+	buildRoutePolicyAttachPermission,
+	buildRoutePolicyDetachPermission,
+	buildRoutePolicyReadPermission,
+	buildRoutePolicyUpdatePermission,
+	RoutePolicyCreateChecks,
+} from 'lib/authz/hooks/useAuthZ/permissions/route-policy.permissions';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useAppContext } from 'providers/App/App';
 
 import { PolicyDetailsModalMode, RoutingPolicy } from './types';
@@ -24,7 +29,8 @@ export interface RoutingPolicyFormPermissions {
 /**
  * Mirrors the route policy routes: create needs `create` and `attach` on every
  * policy; an edit needs `update`, and `attach`/`detach` on both the policy and
- * each channel it gains or loses.
+ * each channel it gains or loses. Only those checks are run: a linked channel
+ * is asked for `detach`, an unlinked one for `attach`.
  */
 export function useRoutingPolicyFormPermissions(
 	mode: PolicyDetailsModalMode,
@@ -32,64 +38,80 @@ export function useRoutingPolicyFormPermissions(
 	channels: ChannelOption[],
 ): RoutingPolicyFormPermissions {
 	const { user } = useAppContext();
-	const isEdit = mode === 'edit' && !!routingPolicy?.id;
-
-	const policy = useRoutePolicyPermissions(routingPolicy?.id ?? '', {
-		enabled: isEdit,
-	});
-
-	const channelIds = useMemo(() => channels.map((c) => c.id), [channels]);
-	const link = useNotificationChannelLinkPermissions(channelIds);
+	const policyId = mode === 'edit' ? routingPolicy?.id : undefined;
 
 	const linkedNames = useMemo(
-		() => new Set(isEdit ? (routingPolicy?.channels ?? []) : []),
-		[isEdit, routingPolicy?.channels],
+		() => new Set(policyId ? (routingPolicy?.channels ?? []) : []),
+		[policyId, routingPolicy?.channels],
 	);
 
-	const isPolicyResolved = !isEdit || (!policy.isLoading && !policy.hasError);
-	const isLinkResolved = !link.isLoading && !link.hasError;
+	const policyChecks = useMemo(
+		() =>
+			policyId
+				? {
+						read: buildRoutePolicyReadPermission(policyId),
+						update: buildRoutePolicyUpdatePermission(policyId),
+						attach: buildRoutePolicyAttachPermission(policyId),
+						detach: buildRoutePolicyDetachPermission(policyId),
+					}
+				: undefined,
+		[policyId],
+	);
+
+	const channelCheck = useCallback(
+		(channel: ChannelOption): BrandedPermission =>
+			linkedNames.has(channel.name)
+				? buildNotificationChannelDetachPermission(channel.id)
+				: buildNotificationChannelAttachPermission(channel.id),
+		[linkedNames],
+	);
+
+	const checks = useMemo(
+		() => [
+			...(policyChecks ? Object.values(policyChecks) : []),
+			...channels.map(channelCheck),
+		],
+		[policyChecks, channels, channelCheck],
+	);
+
+	const { isGranted, isLoading, error } = useAuthZ(checks, {
+		enabled: checks.length > 0,
+	});
+	const isResolved = !isLoading && !error;
 
 	const getChannelDenial = useCallback(
 		(channel: ChannelOption): string | undefined => {
-			if (!isPolicyResolved || !isLinkResolved) {
+			if (!isResolved) {
 				return undefined;
 			}
 
-			const isLinked = linkedNames.has(channel.name);
-			const denied: BrandedPermission[] = [];
-
-			if (isLinked) {
-				if (isEdit && !policy.canDetach) {
-					denied.push(policy.detachPermission);
-				}
-				if (!link.canDetach(channel.id)) {
-					denied.push(buildNotificationChannelDetachPermission(channel.id));
-				}
-			} else {
-				if (isEdit && !policy.canAttach) {
-					denied.push(policy.attachPermission);
-				}
-				if (!link.canAttach(channel.id)) {
-					denied.push(buildNotificationChannelAttachPermission(channel.id));
-				}
-			}
+			const policyCheck = linkedNames.has(channel.name)
+				? policyChecks?.detach
+				: policyChecks?.attach;
+			const denied = [policyCheck, channelCheck(channel)].filter(
+				(permission): permission is BrandedPermission =>
+					!!permission && !isGranted(permission),
+			);
 
 			return denied.length > 0 ? formatDeniedMessage(denied, user.id) : undefined;
 		},
-		[
-			isPolicyResolved,
-			isLinkResolved,
-			linkedNames,
-			isEdit,
-			policy,
-			link,
-			user.id,
-		],
+		[isResolved, linkedNames, policyChecks, channelCheck, isGranted, user.id],
+	);
+
+	const saveChecks = useMemo(
+		() =>
+			policyChecks
+				? [policyChecks.read, policyChecks.update]
+				: RoutePolicyCreateChecks,
+		[policyChecks],
 	);
 
 	return {
-		isReadOnly: isEdit && isPolicyResolved && !policy.canEdit,
-		saveChecks: isEdit ? policy.editChecks : ROUTE_POLICY_CREATE_CHECKS,
+		isReadOnly:
+			!!policyChecks &&
+			isResolved &&
+			!(isGranted(policyChecks.read) && isGranted(policyChecks.update)),
+		saveChecks,
 		getChannelDenial,
 	};
 }

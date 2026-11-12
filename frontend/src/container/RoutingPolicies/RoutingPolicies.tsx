@@ -6,10 +6,10 @@ import { ColumnSelector } from 'components/TanStackTableView';
 import TextToolTip from 'components/TextToolTip';
 import { Skeleton } from 'antd';
 import {
-	ROUTE_POLICY_CREATE_CHECKS,
-	ROUTE_POLICY_LIST_CHECKS,
-	useRoutePolicyCollectionPermissions,
-} from 'hooks/routingPolicies/useRoutePolicyCollectionPermissions';
+	RoutePolicyCreateChecks,
+	RoutePolicyListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/route-policy.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
@@ -27,6 +27,8 @@ import useRoutingPoliciesTable from './useRoutingPoliciesTable';
 import './styles.scss';
 
 const COLUMNS_STORAGE_KEY = 'routing-policies-columns';
+// Module-level so the useQueries identity stays stable across renders.
+const LIST_CHECKS = [RoutePolicyListPermission];
 
 function RoutingPolicies(): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
@@ -63,7 +65,8 @@ function RoutingPolicies(): JSX.Element {
 	const { containerRef, calculatedPageSize, pagedPolicies, setPage, setLimit } =
 		useRoutingPoliciesTable(routingPoliciesData);
 
-	const { canList } = useRoutePolicyCollectionPermissions();
+	const { isGranted } = useAuthZ(LIST_CHECKS);
+	const canList = isGranted(RoutePolicyListPermission);
 
 	const columns = useMemo(
 		() => getRoutingPolicyColumns(formatTimezoneAdjustedTimestamp),
@@ -120,7 +123,7 @@ function RoutingPolicies(): JSX.Element {
 						/>
 					)}
 					<AuthZButton
-						checks={ROUTE_POLICY_CREATE_CHECKS}
+						checks={RoutePolicyCreateChecks}
 						variant="solid"
 						color="primary"
 						size="sm"
@@ -152,7 +155,7 @@ function RoutingPolicies(): JSX.Element {
 
 			<div ref={containerRef} className={styles.tableContainer}>
 				<AuthZGuardContent
-					checks={ROUTE_POLICY_LIST_CHECKS}
+					checks={LIST_CHECKS}
 					fallback={({ deniedPermissions }): JSX.Element => (
 						<PermissionDeniedCallout
 							deniedPermissions={deniedPermissions}
