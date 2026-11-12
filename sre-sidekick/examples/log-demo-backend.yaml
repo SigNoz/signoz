@@ -1,0 +1,56 @@
+apiVersion: reliability/v1
+kind: TelemetryProfile
+
+metadata:
+  name: log-demo-backend
+  service: log-demo-backend
+  environment: demo
+
+spec:
+  data_kind: backend
+  source:
+    adapter: signoz
+    endpoint: http://localhost:8080
+
+  signals:
+    logs:
+      fields:
+        - path: body
+          type: string
+          required: true
+        - path: severity_text
+          type: string
+          required: true
+        - path: trace_id
+          type: string
+          required: true
+
+  audit_rules:
+    - id: log-body
+      type: required_field
+      signal: logs
+      field: body
+      severity: blocker
+      recommendation: Emit a non-empty log body.
+
+    - id: log-severity
+      type: required_field
+      signal: logs
+      field: severity_text
+      severity: blocker
+      recommendation: Emit a valid severity text on every log record.
+
+    - id: log-trace-correlation
+      type: required_field
+      signal: logs
+      field: trace_id
+      severity: blocker
+      recommendation: Attach the active trace ID to every application log.
+
+    - id: log-freshness
+      type: freshness
+      signal: logs
+      field: body
+      max_age: 30s
+      severity: warning
+      recommendation: Keep the log export pipeline running.
