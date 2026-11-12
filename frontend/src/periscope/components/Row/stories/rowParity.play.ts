@@ -14,6 +14,16 @@ const LAYOUT_PROPERTIES = [
 	'margin-right',
 	'min-width',
 	'box-sizing',
+	'font-family',
+	'font-size',
+] as const;
+
+const LINK_PROPERTIES = [
+	'color',
+	'text-decoration-line',
+	'background-color',
+	'cursor',
+	'transition',
 ] as const;
 
 const PSEUDO_PROPERTIES = ['display', 'box-sizing'] as const;
@@ -38,12 +48,18 @@ function boxesOf(row: HTMLElement): Box[] {
 	});
 }
 
+function stylesOf(
+	element: Element,
+	properties: readonly string[],
+): Record<string, string> {
+	const style = getComputedStyle(element);
+	return Object.fromEntries(
+		properties.map((property) => [property, style.getPropertyValue(property)]),
+	);
+}
+
 function layoutOf(row: HTMLElement): Record<string, string> {
-	const layout: Record<string, string> = {};
-	const style = getComputedStyle(row);
-	LAYOUT_PROPERTIES.forEach((property) => {
-		layout[property] = style.getPropertyValue(property);
-	});
+	const layout = stylesOf(row, LAYOUT_PROPERTIES);
 	(['::before', '::after'] as const).forEach((pseudo) => {
 		const pseudoStyle = getComputedStyle(row, pseudo);
 		PSEUDO_PROPERTIES.forEach((property) => {
@@ -53,7 +69,7 @@ function layoutOf(row: HTMLElement): Record<string, string> {
 	return layout;
 }
 
-/** Fails unless both renders compute the same layout styles and boxes. */
+/** Fails unless both renders compute the same styles, link styles and boxes. */
 export async function assertRowParity({
 	canvasElement,
 }: {
@@ -65,5 +81,15 @@ export async function assertRowParity({
 
 	// antd resolves responsive props in an effect after the first paint.
 	await waitFor(() => expect(layoutOf(local)).toEqual(layoutOf(antd)));
+
+	const antdLink = antd.querySelector('a');
+	const localLink = local.querySelector('a');
+	await expect(Boolean(localLink)).toBe(Boolean(antdLink));
+	if (antdLink && localLink) {
+		await expect(stylesOf(localLink, LINK_PROPERTIES)).toEqual(
+			stylesOf(antdLink, LINK_PROPERTIES),
+		);
+	}
+
 	await expect(boxesOf(local)).toEqual(boxesOf(antd));
 }
