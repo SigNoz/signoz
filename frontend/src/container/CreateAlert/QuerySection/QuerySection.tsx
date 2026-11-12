@@ -174,7 +174,6 @@ function QuerySection(): JSX.Element {
 				runQuery={runQueryHandler}
 				isLoadingQueries={isLoadingQueries}
 				handleCancelQuery={handleCancelQuery}
-				alertDef={alertDef}
 				panelType={PANEL_TYPES.TIME_SERIES}
 				isAnomalyDetection={isAnomalyDetection}
 				key={currentQuery.queryType}

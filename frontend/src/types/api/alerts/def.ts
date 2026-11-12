@@ -26,11 +26,9 @@ export interface AlertDef {
 	labels?: Labels;
 	annotations?: Labels;
 	evalWindow?: string;
-	source?: string;
 	disabled?: boolean;
 	preferredChannels?: string[];
 	broadcastToAll?: boolean;
-	version?: string;
 }
 
 export interface RuleCondition {
