@@ -46,12 +46,13 @@ import {
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { MessageAttachment } from '../../types';
+import { useVariant } from '../../VariantContext';
 import { MessageContext } from '../../../../api/ai-assistant/chat';
 import {
+	ArrowUp,
+	AtSign,
 	Mic,
-	Plus,
 	Search,
-	Send,
 	Square,
 	TriangleAlert,
 	X,
@@ -249,6 +250,7 @@ export default function ChatInput({
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+	const isCompact = useVariant() === 'panel';
 	const [text, setText] = useState('');
 	const [pendingFiles, setPendingFiles] = useState<UploadFile[]>([]);
 	const [selectedContexts, setSelectedContexts] = useState<
@@ -900,7 +902,10 @@ export default function ChatInput({
 	const showTextWarning = currentLength >= WARNING_THRESHOLD;
 
 	return (
-		<div className={styles.input} ref={inputRootRef}>
+		<div
+			className={cx(styles.input, { [styles.compact]: isCompact })}
+			ref={inputRootRef}
+		>
 			{pendingFiles.length > 0 && (
 				<div className={styles.attachments}>
 					{pendingFiles.map((f) => (
@@ -983,7 +988,7 @@ export default function ChatInput({
 				<textarea
 					ref={textareaRef}
 					className={styles.textarea}
-					placeholder="Ask anything… (Shift+Enter for new line)"
+					placeholder="Ask Noz…"
 					value={text}
 					onChange={(e): void => {
 						const next = capText(e.target.value);
@@ -995,7 +1000,7 @@ export default function ChatInput({
 					onKeyDown={handleKeyDown}
 					disabled={disabled}
 					maxLength={MAX_INPUT_LENGTH}
-					rows={3}
+					rows={2}
 				/>
 			</div>
 			{showTextWarning && (
@@ -1009,7 +1014,69 @@ export default function ChatInput({
 			)}
 
 			<div className={styles.footer}>
-				<div className={styles.leftActions}>
+				<div className={styles.actions}>
+					{showMic &&
+						(isListening ? (
+							<div
+								className={styles.micRecording}
+								role="status"
+								aria-live="polite"
+								aria-label="Recording voice input"
+							>
+								<Tooltip title="Discard recording">
+									<Button
+										type="button"
+										variant="ghost"
+										size="sm"
+										icon
+										color="secondary"
+										onClick={handleDiscard}
+										aria-label="Discard recording"
+									>
+										<X size={12} />
+									</Button>
+								</Tooltip>
+								<span className={styles.micWaves} aria-hidden="true">
+									<span />
+									<span />
+									<span />
+									<span />
+									<span />
+									<span />
+									<span />
+									<span />
+								</span>
+								<Tooltip title="Stop and send">
+									<Button
+										type="button"
+										variant="ghost"
+										size="sm"
+										icon
+										color="secondary"
+										onClick={handleStopAndSend}
+										aria-label="Stop and send"
+									>
+										<Square size={9} fill="currentColor" strokeWidth={0} />
+									</Button>
+								</Tooltip>
+							</div>
+						) : (
+							<Tooltip title="Voice input">
+								<Button
+									disabledTooltip={disabledTooltip}
+									color="secondary"
+									variant="ghost"
+									size="sm"
+									icon
+									onClick={(): void => startVoiceInput(VoiceInputSource.Button)}
+									disabled={disabled}
+									aria-label="Start voice input"
+								>
+									<Mic size={14} />
+								</Button>
+							</Tooltip>
+						))}
+
 					<Popover
 						open={isContextPickerOpen}
 						onOpenChange={(open): void => {
@@ -1020,22 +1087,25 @@ export default function ChatInput({
 							}
 						}}
 					>
-						<PopoverTrigger asChild>
-							<Button
-								disabledTooltip={disabledTooltip}
-								variant="solid"
-								color="secondary"
-								size="md"
-								disabled={disabled}
-								onClick={(): void => {
-									setActiveContextCategory('Dashboards');
-									setPickerSearchQuery('');
-								}}
-								prefix={<Plus size={10} />}
-							>
-								Add Context
-							</Button>
-						</PopoverTrigger>
+						<Tooltip title="Add context">
+							<PopoverTrigger asChild>
+								<Button
+									disabledTooltip={disabledTooltip}
+									variant="ghost"
+									color="secondary"
+									size="sm"
+									icon
+									disabled={disabled}
+									onClick={(): void => {
+										setActiveContextCategory('Dashboards');
+										setPickerSearchQuery('');
+									}}
+									aria-label="Add context"
+								>
+									<AtSign size={14} />
+								</Button>
+							</PopoverTrigger>
+						</Tooltip>
 						<PopoverContent
 							className={styles.contextPopover}
 							side="top"
@@ -1164,82 +1234,18 @@ export default function ChatInput({
 							</div>
 						</PopoverContent>
 					</Popover>
-				</div>
-
-				<div className={styles.rightActions}>
-					{showMic &&
-						(isListening ? (
-							<div
-								className={styles.micRecording}
-								role="status"
-								aria-live="polite"
-								aria-label="Recording voice input"
-							>
-								<Tooltip title="Discard recording">
-									<Button
-										type="button"
-										variant="ghost"
-										size="md"
-										icon
-										color="secondary"
-										onClick={handleDiscard}
-										aria-label="Discard recording"
-									>
-										<X size={12} />
-									</Button>
-								</Tooltip>
-								<span className={styles.micWaves} aria-hidden="true">
-									<span />
-									<span />
-									<span />
-									<span />
-									<span />
-									<span />
-									<span />
-									<span />
-								</span>
-								<Tooltip title="Stop and send">
-									<Button
-										type="button"
-										variant="ghost"
-										size="md"
-										icon
-										color="secondary"
-										onClick={handleStopAndSend}
-										aria-label="Stop and send"
-									>
-										<Square size={9} fill="currentColor" strokeWidth={0} />
-									</Button>
-								</Tooltip>
-							</div>
-						) : (
-							<Tooltip title="Voice input">
-								<Button
-									disabledTooltip={disabledTooltip}
-									color="secondary"
-									variant="ghost"
-									size="md"
-									icon
-									onClick={(): void => startVoiceInput(VoiceInputSource.Button)}
-									disabled={disabled}
-									aria-label="Start voice input"
-								>
-									<Mic size={14} />
-								</Button>
-							</Tooltip>
-						))}
 
 					{isStreaming && onCancel ? (
 						<Tooltip title="Stop generating">
 							<Button
 								variant="solid"
-								size="md"
+								size="sm"
 								icon
 								color="danger"
 								onClick={onCancel}
 								aria-label="Stop generating"
 							>
-								<Square size={10} fill="currentColor" strokeWidth={0} />
+								<Square size={14} fill="currentColor" />
 							</Button>
 						</Tooltip>
 					) : (
@@ -1247,14 +1253,14 @@ export default function ChatInput({
 							<Button
 								disabledTooltip={disabled ? disabledTooltip : 'Type a message first'}
 								variant="solid"
-								size="md"
+								size="sm"
 								icon
 								color="primary"
 								onClick={isListening ? handleStopAndSend : handleSend}
 								disabled={disabled || (!text.trim() && pendingFiles.length === 0)}
 								aria-label="Send message"
 							>
-								<Send size={14} />
+								<ArrowUp size={14} />
 							</Button>
 						</Tooltip>
 					)}

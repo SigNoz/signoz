@@ -3,24 +3,32 @@
 .input {
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
-	background: var(--l1-background);
-	border-radius: var(--radius-2);
-	padding: 8px;
-	border: 1px solid var(--l1-border);
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-3);
+	box-shadow: var(--shadow-dialog);
 	position: relative;
+
+	// The panel already frames it.
+	&.compact {
+		border: none;
+		border-radius: 0;
+		box-shadow: none;
+	}
 }
 
 .attachments {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 6px;
+	padding: 8px 10px 0;
 }
 
 .contextTags {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 6px;
+	padding: 8px 10px 0;
 }
 
 .contextTag {
@@ -92,54 +100,52 @@
 }
 
 .composer {
-	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
-	border-radius: var(--radius-2);
-	padding: 4px;
-	transition:
-		border-color 0.15s,
-		box-shadow 0.15s;
-
-	// Scope the focus ring to the textarea row only — the surrounding
-	// chrome (context chips, "Add Context", mic, send) sits outside this
-	// element and stays unaffected when the cursor enters the textarea.
-	&:focus-within {
-		border-color: var(--accent-primary);
-		box-shadow: 0 0 0 1px
-			color-mix(in srgb, var(--accent-primary), transparent 70%);
-	}
+	padding: 9px 16px;
 }
 
 .footer {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
+	justify-content: flex-end;
+	padding: 4px 10px 8px;
 }
 
-.leftActions,
-.rightActions {
+.actions {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	--button-height: 28px;
+	--button-width: 28px;
+	--button-max-width: 28px;
+	--button-border-radius: 9999px;
+	// Send rests grey and turns primary on hover.
+	--button-primary-background-color: var(--l3-background);
+	--button-primary-hover-background-color: var(--primary-background);
+	--button-primary-solid-foreground: var(--l2-foreground);
+
+	[data-color='primary']:hover:not([aria-disabled='true']) {
+		--button-primary-solid-foreground: var(--primary-foreground);
+	}
 }
 
 .textarea {
 	display: block;
 	width: 100%;
+	padding: 0;
 	background: transparent;
 	border: none;
 	outline: none;
 	resize: none;
 	color: var(--l1-foreground);
-	font-size: 12px;
-	line-height: 1.5;
+	font-size: 13px;
+	line-height: 20px;
+	letter-spacing: -0.005em;
 	overflow-y: auto;
 	font-family: inherit;
 	@include scrollbar(0.2rem);
 
 	&::placeholder {
-		color: var(--l3-foreground);
+		color: var(--l2-foreground);
 		opacity: 0.6;
 	}
 
@@ -153,7 +159,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	width: 100%;
+	margin: 0 10px;
 	padding: 6px 8px;
 	font-size: 11px;
 	font-weight: 500;
@@ -166,7 +172,6 @@
 .contextPopover {
 	width: 480px !important;
 	max-width: min(92vw, 480px);
-	margin-left: 16px;
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
 	background: var(--l1-background);
@@ -311,9 +316,8 @@
 .micRecording {
 	display: flex;
 	align-items: center;
-	background: var(--l2-background);
+	background: var(--l3-background);
 	border-radius: 999px;
-	padding: 2px;
 	gap: 0;
 	flex-shrink: 0;
 	overflow: hidden;

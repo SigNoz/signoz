@@ -58,7 +58,7 @@ function renderChatInput(): void {
 }
 
 function getComposer(): HTMLTextAreaElement {
-	return screen.getByPlaceholderText(/Ask anything/i) as HTMLTextAreaElement;
+	return screen.getByPlaceholderText(/Ask Noz/i) as HTMLTextAreaElement;
 }
 
 describe('ChatInput — empty-state CTA prefill flow', () => {
