@@ -436,6 +436,7 @@ auditor:
   # Specifies the auditor provider to use.
   # noop: discards all audit events (community default).
   # otlphttp: exports audit events via OTLP HTTP (enterprise).
+  # kafka: exports audit events to a Kafka topic as OTLP protobuf (enterprise).
   provider: noop
   # The async channel capacity for audit events. Events are dropped when full (fail-open).
   buffer_size: 1000
@@ -461,6 +462,18 @@ auditor:
       max_interval: 30s
       # The total maximum time spent retrying.
       max_elapsed_time: 60s
+  kafka:
+    # The seed broker addresses (host:port) used to discover the cluster.
+    brokers:
+      - localhost:9092
+    # The topic audit events are written to. It must already exist.
+    topic: ""
+    # The client id the producer reports to the brokers.
+    client_id: signoz
+    # The compression codec for produced batches: none, gzip, snappy, lz4 or zstd.
+    compression: lz4
+    # The maximum time to drain buffered events on shutdown. Undelivered events are dropped after it.
+    shutdown_timeout: 30s
 
 ##################### Cloud Integration #####################
 cloudintegration:

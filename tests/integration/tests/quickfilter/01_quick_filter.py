@@ -266,6 +266,18 @@ def test_update_quick_filters_rejects_invalid_input(
             {"filters": [{"key": "service.name", "dataType": "string", "type": "resource"}]},
         ),
         ("invalid", {"filters": []}),
+        (
+            "traces",
+            {"filters": [{"name": "trace_id", "fieldContext": "span", "fieldDataType": "string"}]},
+        ),
+        (
+            "logs",
+            {"filters": [{"name": "span_id", "fieldContext": "log", "fieldDataType": "string"}]},
+        ),
+        (
+            "ai_observability",
+            {"filters": [{"name": "gen_ai.usage.input_tokens", "fieldContext": "attribute", "fieldDataType": "number"}]},
+        ),
     ]:
         response = requests.put(
             signoz.self.host_configs["8080"].get(f"/api/v2/quick_filters/{source}"),
@@ -292,6 +304,7 @@ def test_default_traces_filters_are_served_as_the_fields_api_serves_them(
     filters = {field_key["name"]: field_key for field_key in response.json()["data"]["filters"]}
 
     assert "hasError" not in filters
+    assert "trace_id" not in filters
     assert (filters["has_error"]["fieldContext"], filters["has_error"]["fieldDataType"]) == ("span", "bool")
     assert (filters["name"]["fieldContext"], filters["name"]["fieldDataType"]) == ("span", "string")
     assert (filters["duration_nano"]["fieldContext"], filters["duration_nano"]["fieldDataType"]) == ("span", "number")

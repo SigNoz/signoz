@@ -3,6 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { DEFAULT_RULE_VIEW } from 'container/ListAlertRules/list.config';
 import { expect, screen, userEvent, within } from 'storybook/test';
 
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -109,6 +110,34 @@ export const openColumnPicker = async ({
 		),
 	);
 	await screen.findByText(/toggle columns/i);
+};
+
+export const openStatesFilter = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (
+		args.rules === 0 &&
+		args.view === DEFAULT_RULE_VIEW &&
+		args.dataState === 'loaded'
+	) {
+		return;
+	}
+
+	const filter = await within(canvasElement).findByTestId(
+		'alert-rules-filter-states',
+		undefined,
+		untilLoaded,
+	);
+
+	await userEvent.click(filter.querySelector('.ant-select-selector') ?? filter);
+	const option = (await screen.findAllByText('Firing')).find((node) =>
+		node.closest('.ant-select-dropdown'),
+	);
+	if (screen.queryAllByRole('checkbox', { checked: true }).length === 0) {
+		await userEvent.click(option ?? filter);
+	}
+	await screen.findAllByRole('checkbox', { checked: true });
 };
 
 export const toggleAlert = async ({

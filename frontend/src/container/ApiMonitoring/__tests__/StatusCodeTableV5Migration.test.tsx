@@ -13,16 +13,12 @@
  */
 import { TraceAggregation } from 'api/v5/v5';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 describe('StatusCodeTable - V5 Migration Validation', () => {
 	const mockDomainName = 'api.example.com';
 	const mockStartTime = 1000;
 	const mockEndTime = 2000;
-	const emptyFilters: IBuilderQuery['filters'] = {
-		items: [],
-		op: 'AND',
-	};
+	const emptyFilters = '';
 
 	describe('1. V5 Format Migration with Base Filters', () => {
 		it('migrates to V5 format with correct filter expression structure and base filters', () => {
@@ -109,31 +105,8 @@ describe('StatusCodeTable - V5 Migration Validation', () => {
 
 	describe('3. Custom Filters Integration', () => {
 		it('merges custom filters into filter expression with AND logic', () => {
-			const customFilters: IBuilderQuery['filters'] = {
-				items: [
-					{
-						id: 'test-1',
-						key: {
-							key: 'service.name',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'user-service',
-					},
-					{
-						id: 'test-2',
-						key: {
-							key: 'deployment.environment',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'production',
-					},
-				],
-				op: 'AND',
-			};
+			const customFilters =
+				"service.name = 'user-service' AND deployment.environment = 'production'";
 
 			const payload = getEndPointDetailsQueryPayload(
 				mockDomainName,
