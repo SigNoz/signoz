@@ -2,6 +2,15 @@ import { AxiosError, AxiosResponse, isCancel } from 'axios';
 import { ErrorResponse } from 'types/api';
 import { ErrorStatusCode } from 'types/common';
 
+function getClientErrorMessage(data: AxiosResponse['data']): string {
+	const { errors, error } = data;
+	if (Array.isArray(errors) && errors.length >= 1) {
+		return errors[0].msg;
+	}
+	// v2 endpoints send `error` as an `{ code, message }` envelope.
+	return typeof error?.message === 'string' ? error.message : error;
+}
+
 export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 	const { response, request } = error;
 	if (response) {
@@ -21,15 +30,10 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 				};
 			}
 
-			const { errors, error } = data;
-
-			const errorMessage =
-				Array.isArray(errors) && errors.length >= 1 ? errors[0].msg : error;
-
 			return {
 				statusCode,
 				payload: null,
-				error: errorMessage,
+				error: getClientErrorMessage(data),
 				message: (response.data as any)?.status,
 				body: JSON.stringify((response.data as any).data),
 			};
