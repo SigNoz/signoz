@@ -357,7 +357,7 @@ type DistributionPanelSpec struct {
 
 // UnmarshalJSON decodes over the defaults, since the stack default (normal)
 // differs from StackMode's own and percentile markers default to on.
-func (s *DistributionPanelSpec) UnmarshalJSON(data []byte) error {
+func (spec *DistributionPanelSpec) UnmarshalJSON(data []byte) error {
 	type alias DistributionPanelSpec
 	tmp := alias{ChartAppearance: DistributionChartAppearance{
 		Stack:       StackModeNormal,
@@ -368,15 +368,15 @@ func (s *DistributionPanelSpec) UnmarshalJSON(data []byte) error {
 	if err := dec.Decode(&tmp); err != nil {
 		return err
 	}
-	*s = DistributionPanelSpec(tmp)
+	*spec = DistributionPanelSpec(tmp)
 	return nil
 }
 
-func (s *DistributionPanelSpec) validate() error {
-	if err := s.Axes.X.validate(); err != nil {
+func (spec *DistributionPanelSpec) validate() error {
+	if err := spec.Axes.X.validate(); err != nil {
 		return err
 	}
-	return s.ChartAppearance.Percentiles.validate()
+	return spec.ChartAppearance.Percentiles.validate()
 }
 
 type DistributionAxes struct {
@@ -390,9 +390,9 @@ type DistributionXAxis struct {
 	Max *float64 `json:"max" description:"Buckets wholly above this value are hidden. Null shows them all."`
 }
 
-func (a DistributionXAxis) validate() error {
-	if a.Min != nil && a.Max != nil && *a.Min > *a.Max {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "axes.x.min %v is greater than axes.x.max %v", *a.Min, *a.Max)
+func (axis DistributionXAxis) validate() error {
+	if axis.Min != nil && axis.Max != nil && *axis.Min > *axis.Max {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "axes.x.min %v is greater than axes.x.max %v", *axis.Min, *axis.Max)
 	}
 	return nil
 }
@@ -413,12 +413,12 @@ type DistributionPercentiles struct {
 	Values  []float64 `json:"values" required:"true" description:"The percentiles to mark, each in (0, 100), at most 5, no duplicates. Defaults to [50, 90, 99]."`
 }
 
-func (p DistributionPercentiles) validate() error {
-	if len(p.Values) > maxDistributionPercentiles {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "chartAppearance.percentiles.values: at most %d percentiles, got %d", maxDistributionPercentiles, len(p.Values))
+func (percentiles DistributionPercentiles) validate() error {
+	if len(percentiles.Values) > maxDistributionPercentiles {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "chartAppearance.percentiles.values: at most %d percentiles, got %d", maxDistributionPercentiles, len(percentiles.Values))
 	}
-	seen := make(map[float64]struct{}, len(p.Values))
-	for _, value := range p.Values {
+	seen := make(map[float64]struct{}, len(percentiles.Values))
+	for _, value := range percentiles.Values {
 		if value <= 0 || value >= 100 {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "chartAppearance.percentiles.values: %v is not in (0, 100)", value)
 		}
@@ -1557,26 +1557,26 @@ func (DistributionYScale) Enum() []any {
 	return []any{DistributionYScaleLinear, DistributionYScaleLog}
 }
 
-func (s DistributionYScale) ValueOrDefault() string {
-	if s.IsZero() {
+func (scale DistributionYScale) ValueOrDefault() string {
+	if scale.IsZero() {
 		return DistributionYScaleLinear.StringValue()
 	}
-	return s.StringValue()
+	return scale.StringValue()
 }
 
-func (s DistributionYScale) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.ValueOrDefault())
+func (scale DistributionYScale) MarshalJSON() ([]byte, error) {
+	return json.Marshal(scale.ValueOrDefault())
 }
 
-func (s *DistributionYScale) UnmarshalJSON(data []byte) error {
+func (scale *DistributionYScale) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid distribution y scale: must be a string, one of `linear` or `log`")
 	}
-	scale := DistributionYScale{valuer.NewString(v)}
-	switch scale {
+	parsed := DistributionYScale{valuer.NewString(v)}
+	switch parsed {
 	case DistributionYScaleLinear, DistributionYScaleLog:
-		*s = scale
+		*scale = parsed
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid distribution y scale %q: must be `linear` or `log`", v)
