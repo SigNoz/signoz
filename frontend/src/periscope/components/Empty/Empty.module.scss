@@ -1,9 +1,6 @@
 @use '../../../styles/antdReset';
 
 .empty {
-	--empty-text-color: rgba(255, 255, 255, 0.85);
-	--empty-text-disabled-color: rgba(255, 255, 255, 0.25);
-
 	@include antdReset.antd-font-reset;
 	@include antdReset.antd-link-reset;
 
@@ -16,11 +13,6 @@
 	&::after {
 		box-sizing: border-box;
 	}
-}
-
-:global(.lightMode) .empty {
-	--empty-text-color: rgba(0, 0, 0, 0.88);
-	--empty-text-disabled-color: rgba(0, 0, 0, 0.25);
 }
 
 .image {
@@ -47,7 +39,7 @@
 
 .description {
 	box-sizing: border-box;
-	color: var(--empty-text-color);
+	color: var(--antd-color-text);
 
 	&::before,
 	&::after {
@@ -67,13 +59,29 @@
 
 .normal {
 	margin-block: var(--spacing-16);
-	color: var(--empty-text-disabled-color);
+	color: var(--antd-color-text-disabled);
 
 	.description {
-		color: var(--empty-text-disabled-color);
+		color: var(--antd-color-text-disabled);
 	}
 
 	.image {
 		height: var(--spacing-20);
 	}
+}
+
+.defaultImage {
+	opacity: var(--antd-empty-image-opacity);
+}
+
+.simpleShadow {
+	fill: var(--antd-empty-simple-shadow);
+}
+
+.simpleBorder {
+	stroke: var(--antd-empty-simple-border);
+}
+
+.simpleContent {
+	fill: var(--antd-empty-simple-content);
 }

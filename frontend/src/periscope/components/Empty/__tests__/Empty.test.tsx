@@ -1,6 +1,3 @@
-import type { ReactElement } from 'react';
-import { THEME_MODE } from 'hooks/useDarkMode/constant';
-import { ThemeContext } from 'hooks/useDarkMode';
 import { render, screen } from 'tests/test-utils';
 
 import Empty from '../Empty';
@@ -12,22 +9,6 @@ jest.mock('../Empty.module.scss', () => ({
 
 const TEST_ID = 'empty';
 const IMAGE_URL = 'https://example.com/empty.svg';
-
-function renderInTheme(theme: string, ui: ReactElement): void {
-	render(
-		<ThemeContext.Provider
-			value={{
-				theme,
-				toggleTheme: jest.fn(),
-				autoSwitch: false,
-				setAutoSwitch: jest.fn(),
-				setTheme: jest.fn(),
-			}}
-		>
-			{ui}
-		</ThemeContext.Provider>,
-	);
-}
 
 function partsOf(root: HTMLElement): string[] {
 	return Array.from(root.children).map((child) => child.className);
@@ -45,38 +26,33 @@ describe('Empty', () => {
 		expect(el.querySelector('.description')).toHaveTextContent(/^No data$/);
 	});
 
-	it('dims the default image only in dark mode', () => {
-		renderInTheme(THEME_MODE.DARK, <Empty data-testid="dark" />);
-		renderInTheme(THEME_MODE.LIGHT, <Empty data-testid="light" />);
+	it('themes the default image through its class, not inline style', () => {
+		render(<Empty data-testid={TEST_ID} />);
 
-		const darkSvg = screen.getByTestId('dark').querySelector('svg');
-		const lightSvg = screen.getByTestId('light').querySelector('svg');
-		expect(darkSvg?.getAttribute('style')).toBe('opacity: 0.65;');
-		expect(lightSvg?.getAttribute('style')).toBeNull();
+		const svg = screen.getByTestId(TEST_ID).querySelector('svg');
+		expect(svg).toHaveAttribute('class', 'defaultImage');
+		expect(svg).not.toHaveAttribute('style');
 	});
 
-	it('switches to the normal variant and theme colours for the simple preset', () => {
-		renderInTheme(
-			THEME_MODE.DARK,
-			<Empty data-testid="dark" image={Empty.PRESENTED_IMAGE_SIMPLE} />,
-		);
-		renderInTheme(
-			THEME_MODE.LIGHT,
-			<Empty data-testid="light" image={Empty.PRESENTED_IMAGE_SIMPLE} />,
-		);
+	it('switches to the normal variant and themes the simple image through classes', () => {
+		render(<Empty data-testid={TEST_ID} image={Empty.PRESENTED_IMAGE_SIMPLE} />);
 
-		const dark = screen.getByTestId('dark');
-		const light = screen.getByTestId('light');
-		expect(dark.className).toBe('empty normal');
-		expect(dark.querySelector('svg')).toHaveAttribute('width', '64');
-
-		const colours = (root: HTMLElement): (string | null)[] => [
-			root.querySelector('ellipse')?.getAttribute('fill') ?? null,
-			root.querySelector('g[stroke]')?.getAttribute('stroke') ?? null,
-			root.querySelector('path[fill]')?.getAttribute('fill') ?? null,
-		];
-		expect(colours(dark)).toStrictEqual(['#25262a', '#3d3d41', '#1b1c20']);
-		expect(colours(light)).toStrictEqual(['#f5f5f5', '#d9d9d9', '#fafafa']);
+		const el = screen.getByTestId(TEST_ID);
+		expect(el.className).toBe('empty normal');
+		expect(el.querySelector('svg')).toHaveAttribute('width', '64');
+		expect(
+			Array.from(el.querySelectorAll('svg [class]')).map((node) => [
+				node.tagName,
+				node.getAttribute('class'),
+			]),
+		).toStrictEqual([
+			['ellipse', 'simpleShadow'],
+			['g', 'simpleBorder'],
+			['path', 'simpleContent'],
+		]);
+		expect(
+			el.querySelectorAll('svg [stroke], ellipse[fill], path[fill]'),
+		).toHaveLength(0);
 	});
 
 	it('keeps the default variant for a custom image node', () => {
