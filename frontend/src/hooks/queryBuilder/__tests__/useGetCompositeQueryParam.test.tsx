@@ -128,6 +128,33 @@ describe('useGetCompositeQueryParam', () => {
 		});
 	});
 
+	it('converts the legacy fields of an older AI link moved into the AI slot', () => {
+		const query = renderOn(
+			JSON.stringify({
+				...initialQueriesMap.traces,
+				builder: {
+					...initialQueriesMap.traces.builder,
+					queryData: [
+						{
+							...initialQueriesMap.traces.builder.queryData[0],
+							aggregateOperator: 'avg',
+							aggregations: undefined,
+							having: [],
+						},
+					],
+				},
+			}),
+			ROUTES.AI_OBSERVABILITY_EXPLORER,
+		);
+		const [aiQuery] = getActiveBuilder(query as Query).queryData;
+
+		expect(query?.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+		expect(aiQuery.having).toStrictEqual({ expression: '' });
+		expect(aiQuery.aggregations).toStrictEqual([
+			expect.objectContaining({ expression: expect.stringContaining('avg') }),
+		]);
+	});
+
 	it('keeps the query type on a route without constraints', () => {
 		const query = renderOn(
 			JSON.stringify({
