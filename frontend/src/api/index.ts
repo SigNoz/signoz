@@ -3,6 +3,8 @@ import { QueryClient } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import post from 'api/v2/sessions/rotate/post';
 import afterLogin from 'AppRoutes/utils';
+import { SERVER_VERSION_HEADER } from 'components/NewVersionPrompt/constants';
+import { reportServerVersion } from 'components/NewVersionPrompt/useAppVersionStore';
 import axios, {
 	AxiosError,
 	AxiosResponse,
@@ -46,6 +48,11 @@ export const interceptorsResponse = (
 				`[API Warning] Request to ${value.config.url} took ${duration}ms`,
 			);
 		}
+	}
+
+	const serverVersion = value.headers?.[SERVER_VERSION_HEADER];
+	if (typeof serverVersion === 'string') {
+		reportServerVersion(serverVersion);
 	}
 
 	return Promise.resolve(value);
