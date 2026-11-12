@@ -125,7 +125,7 @@ var DefaultJSMOpsReceiverConfig = JSMOpsReceiverConfig{
 	},
 	Message:     DefaultJSMOpsMessageTemplate,
 	Description: DefaultJSMOpsDescriptionTemplate,
-	Tags:        "signoz",
+	Tags:        "signoz-alert",
 }
 
 func (c *JSMOpsReceiverConfig) UnmarshalYAML(unmarshal func(any) error) error {
