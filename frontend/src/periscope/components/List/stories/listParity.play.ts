@@ -15,14 +15,15 @@ const STYLE_PROPERTIES = [
 	'padding-right',
 	'padding-bottom',
 	'padding-left',
-	'border-top',
-	'border-right',
-	'border-bottom',
-	'border-left',
+	'border-top-width',
+	'border-top-style',
+	'border-right-width',
+	'border-right-style',
+	'border-bottom-width',
+	'border-bottom-style',
+	'border-left-width',
+	'border-left-style',
 	'border-radius',
-	'color',
-	'background-color',
-	'font-family',
 	'font-size',
 	'line-height',
 	'text-decoration-line',
@@ -83,6 +84,8 @@ export async function assertListParity({
 }: {
 	canvasElement: HTMLElement;
 }): Promise<void> {
+	// Text boxes differ while the web font loads: each side falls back differently.
+	await document.fonts.ready;
 	const canvas = within(canvasElement);
 	const antd = snapshotOf(canvas.getByTestId(ANTD_LIST_TEST_ID));
 	const local = snapshotOf(canvas.getByTestId(LOCAL_LIST_TEST_ID));

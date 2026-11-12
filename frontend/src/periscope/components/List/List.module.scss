@@ -12,13 +12,13 @@
 	--list-line-height-lg: calc(22 / 14);
 
 	@include border-box;
-	font-family: var(--theme-font-family);
-	font-size: var(--theme-font-size);
+	font-family: var(--periscope-font-family-sans);
+	font-size: var(--periscope-font-size-base);
 
 	position: relative;
 	margin: 0;
 	padding: 0;
-	color: var(--theme-color-text);
+	color: var(--l1-foreground);
 	line-height: var(--list-line-height);
 	list-style: none;
 
@@ -28,20 +28,20 @@
 }
 
 :where(.list) a {
-	color: var(--theme-color-link);
+	color: var(--primary-link);
 	text-decoration: none;
 	background-color: transparent;
 	outline: none;
 	cursor: pointer;
-	transition: color var(--theme-motion-duration-slow);
+	transition: color 0.3s;
 	-webkit-text-decoration-skip: objects;
 
 	&:hover {
-		color: var(--theme-color-link-hover);
+		color: var(--primary-link-hover);
 	}
 
 	&:active {
-		color: var(--theme-color-link-active);
+		color: var(--primary-link-hover);
 	}
 
 	&:active,
@@ -56,7 +56,7 @@
 	}
 
 	&[disabled] {
-		color: var(--theme-color-text-disabled);
+		color: var(--l3-foreground);
 		cursor: not-allowed;
 	}
 }
@@ -71,8 +71,8 @@
 
 .nestedLoading {
 	@include border-box;
-	font-family: var(--theme-font-family);
-	font-size: var(--theme-font-size);
+	font-family: var(--periscope-font-family-sans);
+	font-size: var(--periscope-font-size-base);
 
 	position: relative;
 }
@@ -81,7 +81,7 @@
 	@include border-box;
 
 	position: relative;
-	transition: opacity var(--theme-motion-duration-slow);
+	transition: opacity 0.3s;
 
 	&::after {
 		content: '';
@@ -90,9 +90,9 @@
 		z-index: 10;
 		width: 100%;
 		height: 100%;
-		background: var(--theme-color-bg-container);
+		background: var(--l2-background);
 		opacity: 0;
-		transition: all var(--theme-motion-duration-slow);
+		transition: all 0.3s;
 		pointer-events: none;
 	}
 }
@@ -112,7 +112,7 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: var(--spacing-6) 0;
-	color: var(--theme-color-text);
+	color: var(--l1-foreground);
 }
 
 .itemNoFlex {
@@ -139,23 +139,23 @@
 
 	flex: 1 0;
 	width: 0;
-	color: var(--theme-color-text);
+	color: var(--l1-foreground);
 }
 
 .itemMetaTitle {
 	@include border-box;
 
 	margin: 0 0 var(--spacing-2) 0;
-	color: var(--theme-color-text);
+	color: var(--l1-foreground);
 	font-size: var(--periscope-font-size-base);
 	line-height: var(--list-line-height);
 
 	> a {
-		color: var(--theme-color-text);
-		transition: all var(--theme-motion-duration-slow);
+		color: var(--l1-foreground);
+		transition: all 0.3s;
 
 		&:hover {
-			color: var(--theme-color-primary);
+			color: var(--primary-link-hover);
 		}
 	}
 }
@@ -163,7 +163,7 @@
 .itemMetaDescription {
 	@include border-box;
 
-	color: var(--theme-color-text-description);
+	color: var(--l2-foreground);
 	font-size: var(--periscope-font-size-base);
 	line-height: var(--list-line-height);
 }
@@ -182,7 +182,7 @@
 	position: relative;
 	display: inline-block;
 	padding: 0 var(--spacing-4);
-	color: var(--theme-color-text-description);
+	color: var(--l2-foreground);
 	font-size: var(--periscope-font-size-base);
 	line-height: var(--list-line-height);
 	text-align: center;
@@ -200,7 +200,7 @@
 	inset-inline-end: 0;
 	width: 1px;
 	height: 13px;
-	background-color: var(--theme-color-split);
+	background-color: var(--l2-border);
 	transform: translateY(-50%);
 }
 
@@ -208,7 +208,7 @@
 	@include border-box;
 
 	padding: var(--spacing-8);
-	color: var(--theme-color-text-disabled);
+	color: var(--l3-foreground);
 	font-size: var(--periscope-font-size-base);
 	text-align: center;
 }
@@ -237,7 +237,7 @@
 
 	.itemMetaTitle {
 		margin-block: 0 var(--spacing-6);
-		color: var(--theme-color-text);
+		color: var(--l1-foreground);
 		font-size: 14px;
 		line-height: var(--list-line-height-lg);
 	}
@@ -258,11 +258,11 @@
 
 .split {
 	.header {
-		border-block-end: 1px solid var(--theme-color-split);
+		border-block-end: 1px solid var(--l2-border);
 	}
 
 	.item {
-		border-block-end: 1px solid var(--theme-color-split);
+		border-block-end: 1px solid var(--l2-border);
 
 		&:last-child {
 			border-block-end: none;
@@ -270,7 +270,7 @@
 	}
 
 	&.somethingAfterLastItem .items > .item:last-child {
-		border-block-end: 1px solid var(--theme-color-split);
+		border-block-end: 1px solid var(--l2-border);
 	}
 }
 
@@ -287,7 +287,7 @@
 }
 
 .bordered {
-	border: 1px solid var(--theme-color-border);
+	border: 1px solid var(--l3-border);
 	border-radius: var(--radius-1);
 
 	.header,
