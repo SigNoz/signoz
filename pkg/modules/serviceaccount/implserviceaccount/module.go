@@ -91,13 +91,13 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	return storableServiceAccount, nil
 }
 
-func (module *module) List(ctx context.Context, orgID valuer.UUID, params *serviceaccounttypes.ListServiceAccountsParams) (*serviceaccounttypes.ListableServiceAccount, error) {
+func (module *module) List(ctx context.Context, orgID valuer.UUID, params *serviceaccounttypes.ListServiceAccountsParams) ([]*serviceaccounttypes.ServiceAccount, int64, error) {
 	serviceAccounts, total, err := module.store.List(ctx, orgID, params)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return serviceaccounttypes.NewListableServiceAccount(serviceAccounts, total), nil
+	return serviceAccounts, total, nil
 }
 
 func (module *module) Update(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
