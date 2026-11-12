@@ -1,3 +1,4 @@
+import { DashboardtypesLegendOrderDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	SectionEditorProps,
 	SectionKind,
@@ -6,17 +7,19 @@ import type {
 import ConfigField from '../../controls/ConfigField/ConfigField';
 import ConfigTiles from '../../controls/ConfigTiles/ConfigTiles';
 import LegendColors from '../../controls/LegendColors/LegendColors';
+import LegendOrder from '../../controls/LegendOrder/LegendOrder';
 import type { SectionEditorContext } from '../../sectionContext';
 import { createFieldResetter } from '../../utils/changes';
-import { POSITION_OPTIONS } from './options';
+import { ORDER_OPTIONS, POSITION_OPTIONS } from './options';
 
 type LegendSectionProps = SectionEditorProps<SectionKind.Legend> &
 	Pick<SectionEditorContext, 'legendSeries'>;
 
 /**
- * Edits the `legend` slice of a panel spec: legend position and per-series color
- * overrides. The colors control reads the panel's resolved series from context (the
- * shared preview query) and writes `customColors` keyed by series label.
+ * Edits the `legend` slice of a panel spec: legend position, per-series color
+ * overrides and series order. The colors and order controls read the panel's resolved
+ * series from context (the shared preview query) and write `customColors` and
+ * `customOrder` keyed by series label.
  */
 function LegendSection({
 	value,
@@ -27,6 +30,8 @@ function LegendSection({
 	legendSeries,
 }: LegendSectionProps): JSX.Element {
 	const reset = createFieldResetter(value, savedValue, onChange);
+	const order =
+		value?.order ?? defaultValue?.order ?? DashboardtypesLegendOrderDTO.value;
 
 	return (
 		<>
@@ -49,6 +54,34 @@ function LegendSection({
 						value={value?.customColors}
 						onChange={(customColors): void => onChange({ ...value, customColors })}
 					/>
+				</ConfigField>
+			)}
+
+			{controls.order && (
+				<ConfigField
+					label="Series order"
+					help={
+						order === DashboardtypesLegendOrderDTO.custom
+							? 'Lower indexes come first; series with the same index sort by label.'
+							: undefined
+					}
+					{...reset('order', 'customOrder')}
+				>
+					<ConfigTiles
+						testId="panel-editor-v2-legend-order-mode"
+						aria-label="Legend order"
+						compact
+						items={ORDER_OPTIONS}
+						value={order}
+						onChange={(next): void => onChange({ ...value, order: next })}
+					/>
+					{order === DashboardtypesLegendOrderDTO.custom && (
+						<LegendOrder
+							series={legendSeries ?? []}
+							value={value?.customOrder}
+							onChange={(customOrder): void => onChange({ ...value, customOrder })}
+						/>
+					)}
 				</ConfigField>
 			)}
 		</>
