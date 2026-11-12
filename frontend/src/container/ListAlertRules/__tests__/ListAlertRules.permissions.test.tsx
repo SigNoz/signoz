@@ -45,6 +45,10 @@ async function isRowDisabled(testId: string): Promise<boolean> {
 	return item.hasAttribute('data-disabled');
 }
 
+// Rendering the list, opening a row menu and waiting on its permission check
+// outlasts the 5s default when the full suite runs in parallel.
+jest.setTimeout(15_000);
+
 describe('ListAlertRules — permissions', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
@@ -65,8 +69,7 @@ describe('ListAlertRules — permissions', () => {
 		for (const action of ['toggle', 'edit', 'edit-new-tab', 'clone', 'delete']) {
 			await expect(isRowDisabled(`alert-action-${action}`)).resolves.toBe(false);
 		}
-		// Five row checks in sequence outlast the 5s default under a loaded run.
-	}, 15_000);
+	});
 
 	it('disables New Alert without create and names it', async () => {
 		renderListAlertRules({ authz: setupAuthzDeny(RuleCreatePermission) });

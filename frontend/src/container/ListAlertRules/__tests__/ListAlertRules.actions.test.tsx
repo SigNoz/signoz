@@ -33,6 +33,10 @@ async function clickMenuItem(label: string): Promise<void> {
 	await user.click(item);
 }
 
+// Rendering the list, opening a row menu and waiting on its permission check
+// outlasts the 5s default when the full suite runs in parallel.
+jest.setTimeout(15_000);
+
 describe('ListAlertRules — actions menu', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
