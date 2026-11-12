@@ -102,6 +102,8 @@ const mockFieldKeys: TelemetryFieldKey[] = [
 	{ name: 'http.status', fieldContext: 'attribute', fieldDataType: 'string' },
 	{ name: 'service.name', fieldContext: 'attribute', fieldDataType: 'string' },
 	{ name: 'name', fieldContext: 'span', fieldDataType: 'string' },
+	{ name: 'user.id', fieldContext: 'body', fieldDataType: 'string' },
+	{ name: 'isRoot', fieldContext: 'span', fieldDataType: 'bool' },
 	{
 		name: 'unmapped.attribute',
 		fieldContext: 'attribute',
@@ -349,6 +351,22 @@ describe('Key fetch context', () => {
 			undefined,
 			expect.anything(),
 		);
+	});
+});
+
+describe('Keys the legacy filter builders cannot read', () => {
+	it('does not suggest body JSON keys or span search scope selectors', async () => {
+		const user = userEvent.setup({ delay: null });
+		renderWithContext();
+
+		const combobox = getSearchCombobox();
+		await user.click(combobox);
+		await user.type(combobox, 'user');
+		await screen.findByRole('listbox');
+
+		await expect(screen.findByText('http.status')).resolves.toBeInTheDocument();
+		expect(screen.queryByText('user.id')).not.toBeInTheDocument();
+		expect(screen.queryByText('isRoot')).not.toBeInTheDocument();
 	});
 });
 

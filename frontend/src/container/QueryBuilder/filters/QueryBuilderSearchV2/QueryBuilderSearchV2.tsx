@@ -73,6 +73,8 @@ export interface ITag {
 	value: (string | number | boolean)[] | string | number | boolean;
 }
 
+const SPAN_SEARCH_SCOPE_KEYS = ['isRoot', 'isEntryPoint'];
+
 interface CustomTagProps {
 	label: React.ReactNode;
 	value: string;
@@ -225,14 +227,25 @@ function QueryBuilderSearchV2(
 	);
 
 	// The legacy traces builder checks `exists` on the column only for keys marked as columns.
+	// Body JSON keys come back as bare paths, which the legacy builders read as top-level fields,
+	// and the span search scope selectors are not columns the legacy filter builder can read.
 	const attributeKeys = useMemo(
 		() =>
-			(fieldKeys ?? []).map((fieldKey) => ({
-				...toAttributeKey(fieldKey),
-				isColumn:
-					fieldKey.fieldContext === TelemetrytypesFieldContextDTO.span ||
-					fieldKey.fieldContext === TelemetrytypesFieldContextDTO.log,
-			})),
+			(fieldKeys ?? [])
+				.filter(
+					(fieldKey) =>
+						fieldKey.fieldContext !== TelemetrytypesFieldContextDTO.body &&
+						!(
+							fieldKey.fieldContext === TelemetrytypesFieldContextDTO.span &&
+							SPAN_SEARCH_SCOPE_KEYS.includes(fieldKey.name)
+						),
+				)
+				.map((fieldKey) => ({
+					...toAttributeKey(fieldKey),
+					isColumn:
+						fieldKey.fieldContext === TelemetrytypesFieldContextDTO.span ||
+						fieldKey.fieldContext === TelemetrytypesFieldContextDTO.log,
+				})),
 		[fieldKeys],
 	);
 
