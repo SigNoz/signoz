@@ -5,7 +5,7 @@ import { NotificationProvider } from 'hooks/useNotifications';
 import { CmdKProvider } from 'providers/cmdKProvider';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 
-import AntdThemeCssVariables from './AntdThemeCssVariables';
+import ThemeCssVariables from './ThemeCssVariables';
 import { AppLayer } from './types';
 
 export interface AppShellProps {
@@ -32,7 +32,7 @@ function AppShell({ children, router, overlays }: AppShellProps): JSX.Element {
 
 	return (
 		<ConfigProvider theme={themeConfig}>
-			<AntdThemeCssVariables />
+			<ThemeCssVariables />
 			{router(
 				<CmdKProvider>
 					<NotificationProvider>

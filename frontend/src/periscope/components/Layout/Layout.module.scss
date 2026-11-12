@@ -18,11 +18,11 @@
 .layout,
 .header,
 .footer {
-	--layout-body-bg: var(--antd-color-bg-layout);
+	--layout-body-bg: var(--theme-color-bg-layout);
 	--layout-header-bg: #001529;
 	--layout-header-height: var(--spacing-32);
 	--layout-padding-inline: 50px;
-	--layout-text-color: var(--antd-color-text);
+	--layout-text-color: var(--theme-color-text);
 }
 
 .layout {

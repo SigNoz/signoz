@@ -60,35 +60,35 @@ export function getLightness(color: string): number {
  * The antd tokens periscope components read, as CSS variables. Empty's values
  * repeat the derivations antd's Empty makes from the same tokens.
  */
-export function getAntdThemeCssVariables(
+export function getThemeCssVariables(
 	token: GlobalToken,
 ): Record<string, string> {
 	return {
-		'--antd-font-family': token.fontFamily,
-		'--antd-font-size': `${token.fontSize}px`,
-		'--antd-motion-duration-slow': token.motionDurationSlow,
-		'--antd-color-link': token.colorLink,
-		'--antd-color-link-hover': token.colorLinkHover,
-		'--antd-color-link-active': token.colorLinkActive,
-		'--antd-color-primary': token.colorPrimary,
-		'--antd-color-text': token.colorText,
-		'--antd-color-text-description': token.colorTextDescription,
-		'--antd-color-text-disabled': token.colorTextDisabled,
-		'--antd-color-split': token.colorSplit,
-		'--antd-color-border': token.colorBorder,
-		'--antd-color-bg-container': token.colorBgContainer,
-		'--antd-color-bg-layout': token.colorBgLayout,
-		'--antd-empty-image-opacity':
+		'--theme-font-family': token.fontFamily,
+		'--theme-font-size': `${token.fontSize}px`,
+		'--theme-motion-duration-slow': token.motionDurationSlow,
+		'--theme-color-link': token.colorLink,
+		'--theme-color-link-hover': token.colorLinkHover,
+		'--theme-color-link-active': token.colorLinkActive,
+		'--theme-color-primary': token.colorPrimary,
+		'--theme-color-text': token.colorText,
+		'--theme-color-text-description': token.colorTextDescription,
+		'--theme-color-text-disabled': token.colorTextDisabled,
+		'--theme-color-split': token.colorSplit,
+		'--theme-color-border': token.colorBorder,
+		'--theme-color-bg-container': token.colorBgContainer,
+		'--theme-color-bg-layout': token.colorBgLayout,
+		'--theme-empty-image-opacity':
 			getLightness(token.colorBgBase) < 0.5 ? '0.65' : '1',
-		'--antd-empty-simple-border': blendOnBackground(
+		'--theme-empty-simple-border': blendOnBackground(
 			token.colorFill,
 			token.colorBgContainer,
 		),
-		'--antd-empty-simple-shadow': blendOnBackground(
+		'--theme-empty-simple-shadow': blendOnBackground(
 			token.colorFillTertiary,
 			token.colorBgContainer,
 		),
-		'--antd-empty-simple-content': blendOnBackground(
+		'--theme-empty-simple-content': blendOnBackground(
 			token.colorFillQuaternary,
 			token.colorBgContainer,
 		),
