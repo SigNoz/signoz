@@ -678,6 +678,7 @@ func TestValidateDistributionDashboard(t *testing.T) {
 
 	require.IsType(t, &DistributionPanelSpec{}, spec.Panels["p1"].Spec.Plugin.Spec)
 	panelSpec := spec.Panels["p1"].Spec.Plugin.Spec.(*DistributionPanelSpec)
+	require.NotNil(t, panelSpec.Axes.X.Min)
 	assert.Equal(t, 10.0, *panelSpec.Axes.X.Min)
 	assert.Nil(t, panelSpec.Axes.X.Max)
 	assert.Equal(t, "log", panelSpec.Axes.Y.Scale.ValueOrDefault())
