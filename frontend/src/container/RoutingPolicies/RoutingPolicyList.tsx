@@ -18,7 +18,6 @@ function RoutingPolicyList({
 	isFetching,
 	isError,
 	refetch,
-	canEdit,
 	onEdit,
 	onDelete,
 	onCreate,
@@ -26,10 +25,6 @@ function RoutingPolicyList({
 	onClearSearch,
 }: RoutingPolicyListProps): JSX.Element {
 	const columnsWithActions = useMemo((): TableColumnDef<RoutingPolicy>[] => {
-		if (!canEdit) {
-			return columns;
-		}
-
 		return [
 			...columns,
 			{
@@ -53,7 +48,7 @@ function RoutingPolicyList({
 				),
 			},
 		];
-	}, [canEdit, columns, onEdit, onDelete]);
+	}, [columns, onEdit, onDelete]);
 
 	const isEmpty = !isFetching && routingPolicies.length === 0;
 
@@ -78,7 +73,7 @@ function RoutingPolicyList({
 	}
 
 	if (isEmpty) {
-		return <RoutingPoliciesEmptyState canCreate={canEdit} onCreate={onCreate} />;
+		return <RoutingPoliciesEmptyState onCreate={onCreate} />;
 	}
 
 	return (
@@ -91,7 +86,7 @@ function RoutingPolicyList({
 			getRowTestId={(row): string => `routing-policy-row-${row.id}`}
 			columnStorageKey="routing-policies-columns"
 			enableQueryParams={ROUTING_POLICIES_QUERY_PARAMS}
-			onRowClick={canEdit ? onEdit : undefined}
+			onRowClick={onEdit}
 			pagination={{
 				total: routingPolicies.length,
 				calculatedPageSize,
