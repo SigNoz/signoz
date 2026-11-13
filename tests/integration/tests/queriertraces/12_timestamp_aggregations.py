@@ -144,14 +144,13 @@ def test_timestamp_counting_aggregations_are_numeric(
         assert raw > 0, f"{expression} returned {raw!r}, expected a positive rate"
 
 
-# KNOWN GAP, pinned deliberately: ClickHouse rejects sum/avg over DateTime64, and rate_*
+# KNOWN GAP, pinned deliberately: ClickHouse rejects sum over DateTime64, and rate_*
 # additionally divides a time by an interval; both surface as the generic 500. They returned
 # a meaningless seconds number before #5824. Flip to BAD_REQUEST once validated up front.
 @pytest.mark.parametrize(
     "expression",
     [
         "sum(timestamp)",
-        "avg(timestamp)",
         "rate_sum(timestamp)",
         "rate_avg(timestamp)",
         "rate_min(timestamp)",
