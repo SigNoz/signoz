@@ -206,6 +206,7 @@ export default function ConversationView({
 					disabledTooltip={inputDisabledTooltip}
 					isStreaming={isStreamingHere}
 					streamStartedAt={streamStartedAt}
+					showNozPeek={messages.length === 0 && !isStreamingHere}
 					autoContexts={autoContexts}
 					onDismissAutoContext={handleDismissAutoContext}
 				/>
