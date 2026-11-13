@@ -16,15 +16,7 @@ export default {
 			{
 				kind: 'factor-password',
 				type: 'metaresource',
-				allowedVerbs: [
-					'attach',
-					'create',
-					'delete',
-					'detach',
-					'list',
-					'read',
-					'update',
-				],
+				allowedVerbs: ['create', 'list', 'read'],
 			},
 			{
 				kind: 'license',
