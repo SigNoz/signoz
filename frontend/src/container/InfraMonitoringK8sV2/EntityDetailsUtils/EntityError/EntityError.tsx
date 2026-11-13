@@ -35,29 +35,20 @@ export default function EntityError(): JSX.Element {
 					Something went wrong. Please try again or contact support.
 				</Typography>
 
-				<div
-					className={styles.contactSupport}
+				<Typography.Link
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					display="inline-flex"
+					gap={4}
+					marginTop={8}
+					textOverflow="wrap"
 					onClick={handleContactSupport}
-					role="button"
-					tabIndex={0}
-					onKeyDown={(e): void => {
-						if (e.key === 'Enter') {
-							handleContactSupport();
-						}
-					}}
+					testId="entity-error-contact-support"
 				>
-					<span className={styles.contactSupportText}>
-						<Typography.Link
-							/* TODO(typography): a link with no href renders plain text: a click that does not navigate is a Button with variant="link" */ variant="paragraph"
-							size="base"
-							weight="medium"
-							textOverflow="wrap"
-						>
-							Contact Support
-						</Typography.Link>
-					</span>
+					Contact Support
 					<ArrowRight size={14} />
-				</div>
+				</Typography.Link>
 			</div>
 		</div>
 	);

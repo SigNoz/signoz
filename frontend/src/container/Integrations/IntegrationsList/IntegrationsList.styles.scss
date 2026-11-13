@@ -33,18 +33,6 @@
 					display: flex;
 					align-items: center;
 				}
-
-				.contact-support {
-					display: flex;
-					align-items: center;
-					gap: 4px;
-					cursor: pointer;
-
-					.text {
-						color: var(--callout-primary-description);
-						font-weight: 500;
-					}
-				}
 			}
 
 			.error-state-svg {

@@ -34,18 +34,20 @@ export default function LogsError(): JSX.Element {
 					try again or contact support.
 				</Typography>
 
-				<div className="contact-support" onClick={handleContactSupport}>
-					<Typography.Link
-						/* TODO(typography): a link with no href renders plain text: a click that does not navigate is a Button with variant="link" */ variant="paragraph"
-						size="base"
-						weight="medium"
-						textOverflow="wrap"
-					>
-						Contact Support{' '}
-					</Typography.Link>
-
+				<Typography.Link
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					display="inline-flex"
+					gap={4}
+					marginTop={8}
+					textOverflow="wrap"
+					onClick={handleContactSupport}
+					testId="logs-error-contact-support"
+				>
+					Contact Support
 					<ArrowRight size={14} />
-				</div>
+				</Typography.Link>
 			</div>
 		</div>
 	);

@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Color } from '@signozhq/design-tokens';
 import { Badge } from '@signozhq/ui/badge';
 import { Button, Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -74,21 +73,19 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 						>
 							Retry
 						</Button>
-						<div
-							className="contact-support"
+						<Typography.Link
+							variant="paragraph"
+							size="base"
+							weight="medium"
+							display="inline-flex"
+							gap={4}
+							textOverflow="wrap"
 							onClick={(): void => handleContactSupport(isCloudUserVal)}
+							testId="integrations-list-contact-support"
 						>
-							<Typography.Link
-								/* TODO(typography): a link with no href renders plain text: a click that does not navigate is a Button with variant="link" */ variant="paragraph"
-								size="base"
-								weight="medium"
-								textOverflow="wrap"
-							>
-								Contact Support{' '}
-							</Typography.Link>
-
-							<MoveUpRight size={14} color={Color.BG_ROBIN_400} />
-						</div>
+							Contact Support
+							<MoveUpRight size={14} />
+						</Typography.Link>
 					</div>
 				</div>
 			</div>
