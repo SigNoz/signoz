@@ -178,6 +178,8 @@ export const membersMocks = defineStoryMocks({
 });
 
 /** The table fetches before it renders a row, which outlasts the 1s default. */
+export const MEMBERS_PAGE_SIZE = 20;
+
 export const untilLoaded = { timeout: 15_000 };
 
 /** A permission-gated control ignores a click until its check has resolved. */

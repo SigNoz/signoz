@@ -713,6 +713,7 @@ function OnboardingAddDataSource(): JSX.Element {
 							<Button
 								type="default"
 								className="periscope-btn invite-teammate-btn outlined"
+								data-testid="invite-teammate-btn"
 								onClick={handleShowInviteTeamMembersModal}
 								icon={<UserPlus size={16} />}
 							>

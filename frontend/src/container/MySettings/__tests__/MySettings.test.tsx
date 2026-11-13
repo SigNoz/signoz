@@ -476,16 +476,17 @@ describe('MySettings name update and app context', () => {
 	});
 
 	it('updates the user in the app context with the new name', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const updateUser = jest.fn();
 		render(<MySettingsContainer />, undefined, {
 			appContextOverrides: { updateUser },
 		});
 
-		fireEvent.click(screen.getByText(UPDATE_NAME_BUTTON_TEXT));
-		fireEvent.change(screen.getByPlaceholderText('e.g. John Doe'), {
-			target: { value: 'New Name' },
-		});
-		fireEvent.click(screen.getByTestId(UPDATE_NAME_BUTTON_TEST_ID));
+		await user.click(screen.getByTestId('update-name-open-btn'));
+		const nameInput = screen.getByTestId('update-name-input');
+		await user.clear(nameInput);
+		await user.type(nameInput, 'New Name');
+		await user.click(screen.getByTestId(UPDATE_NAME_BUTTON_TEST_ID));
 
 		await waitFor(() =>
 			expect(updateUser).toHaveBeenCalledWith(

@@ -9,23 +9,40 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	clickWhenEnabled,
+	MEMBERS_PAGE_SIZE,
 	membersMocks,
 	openMember,
 	openResetLink,
 	sendInvites,
 	untilLoaded,
 } from '../Members.stories.mocks';
+import { memberName } from './members';
 
 interface PlayContext {
 	canvasElement: HTMLElement;
 	args: PageStoryArgs<typeof membersMocks>;
 }
 
-export const openPendingMember = async ({
+/**
+ * The first pending member is named after the active count and sits on the first
+ * page only while the active members leave room for it.
+ */
+const openFirstPendingMember = async ({
 	canvasElement,
-}: Pick<PlayContext, 'canvasElement'>): Promise<void> => {
-	await openMember(canvasElement, /podrick payne/i);
+	args,
+}: PlayContext): Promise<boolean> => {
+	if (args.invited === 0 || args.active >= MEMBERS_PAGE_SIZE) {
+		return false;
+	}
+	await openMember(canvasElement, new RegExp(memberName(args.active), 'i'));
 	await screen.findByText(/invited on/i, undefined, untilLoaded);
+	return true;
+};
+
+export const openPendingMember = async (
+	context: PlayContext,
+): Promise<void> => {
+	await openFirstPendingMember(context);
 };
 
 export const openFilterMenu = async ({
@@ -92,7 +109,11 @@ export const searchNoResults = async ({
 
 export const openEditMember = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (args.active === 0) {
+		return;
+	}
 	await openMember(canvasElement, /jon snow/i);
 	await screen.findByPlaceholderText(/enter name/i, undefined, untilLoaded);
 };
@@ -107,10 +128,12 @@ export const confirmDeleteMember = async ({
 	await screen.findByRole('dialog', { name: 'Delete Member' });
 };
 
-export const confirmRevokeInvite = async ({
-	canvasElement,
-}: PlayContext): Promise<void> => {
-	await openPendingMember({ canvasElement });
+export const confirmRevokeInvite = async (
+	context: PlayContext,
+): Promise<void> => {
+	if (!(await openFirstPendingMember(context))) {
+		return;
+	}
 	await clickWhenEnabled(
 		await screen.findByRole('button', { name: 'Revoke Invite' }, untilLoaded),
 	);
@@ -219,11 +242,14 @@ export const deleteMemberToast = async ({
 	}
 };
 
-export const revokeInviteToast = async ({
-	canvasElement,
-	args,
-}: PlayContext): Promise<void> => {
-	await openPendingMember({ canvasElement });
+export const revokeInviteToast = async (
+	context: PlayContext,
+): Promise<void> => {
+	const { args } = context;
+
+	if (!(await openFirstPendingMember(context))) {
+		return;
+	}
 	await clickWhenEnabled(
 		await screen.findByRole('button', { name: 'Revoke Invite' }, untilLoaded),
 	);
@@ -249,10 +275,10 @@ export const copyResetLink = async ({
 	await screen.findByText(/reset link copied to clipboard/i);
 };
 
-export const copyInviteLink = async ({
-	canvasElement,
-}: PlayContext): Promise<void> => {
-	await openPendingMember({ canvasElement });
+export const copyInviteLink = async (context: PlayContext): Promise<void> => {
+	if (!(await openFirstPendingMember(context))) {
+		return;
+	}
 	await clickWhenEnabled(
 		await screen.findByRole('button', { name: /invite link/i }, untilLoaded),
 	);
