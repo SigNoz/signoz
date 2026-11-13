@@ -85,7 +85,7 @@ Opens bundle analyzer visualization automatically.
 pnpm test
 
 # Type checking
-pnpm tsgo --noEmit
+pnpm tsc --noEmit
 ```
 
 ## Storybook

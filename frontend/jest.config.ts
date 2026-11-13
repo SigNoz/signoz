@@ -48,6 +48,8 @@ const config: Config.InitialOptions = {
 			{
 				useESM: true,
 				tsconfig: '<rootDir>/tsconfig.jest.json',
+				// TypeScript 7 has no JS compiler API
+				compiler: '@typescript/typescript6',
 			},
 		],
 		'^.+\\.(js|jsx)$': 'babel-jest',

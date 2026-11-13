@@ -168,4 +168,4 @@ Two habits cover the rest:
 - [ ] every request a reachable state makes (a selected row, an opened view, a switched tab) has a handler
 - [ ] console clean: no `[storybook] no msw handler`, no 501, no msw unhandled request, no React warning
 - [ ] no navigation overlay on mount
-- [ ] `pnpm tsgo --noEmit`, `pnpm exec oxlint <files>`, `pnpm exec oxfmt --check <files>` all clean. The repo has no prettier: `pnpm exec prettier` prints a pass while exiting 254
+- [ ] `pnpm tsc --noEmit`, `pnpm exec oxlint <files>`, `pnpm exec oxfmt --check <files>` all clean. The repo has no prettier: `pnpm exec prettier` prints a pass while exiting 254

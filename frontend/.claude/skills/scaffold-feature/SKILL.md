@@ -101,14 +101,14 @@ is still by hand. The generator never adds a SideNav item; do that in
    every interactive element.
 5. **Verify** before reporting done:
    ```bash
-   pnpm tsgo --noEmit
+   pnpm tsc --noEmit
    pnpm oxlint src/pages/<Feature>
    pnpm jest src/pages/<Feature>
    ```
-   `pnpm tsgo --noEmit` is the authority. A running dev server can show errors such as
+   `pnpm tsc --noEmit` is the authority. A running dev server can show errors such as
    `Property 'X_BASE' does not exist` or `has no exported member 'XPage'` right after
    generation. Its type-checker notices new files but, on some machines, not in-place edits
-   to existing ones, and the generator edits the shared files in place. If tsgo is clean,
+   to existing ones, and the generator edits the shared files in place. If tsc is clean,
    restart `pnpm dev`.
 
 ## Editing the templates

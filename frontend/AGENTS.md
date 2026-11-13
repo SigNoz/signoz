@@ -35,14 +35,14 @@ You are operating within a constrained context window and strict system prompts.
 - A payload saved under another kind or schema copies only the fields that schema accepts, and drops bindings to columns the user removed. The server rejects unknown or stale fields, so the preview works and the save fails.
 
 3. FORCED VERIFICATION: Your internal tools mark file writes as successful even if the code does not compile. Run these checks once all changes of a task are done, never after each edit. You are FORBIDDEN from reporting a task as complete until you have:
-- Run `pnpm tsgo --noEmit`
+- Run `pnpm tsc --noEmit`
 - Run `pnpm lint:js --quiet` to find critical errors
 - Run `pnpm oxlint <file1> <file2>` and fix all warnings
 - Run `pnpm build`
 - Find if the file has tests for it, or if there's `__test__` folder or the parent folder has tests, and run. Run them before coding the change or after all changes, never in between.
 - For e2e, run only the specs you added or changed: the stack is heavy. Leave the full jest and e2e suites to CI unless the user asks.
 - For every test you added or changed, revert the change it covers and confirm the test fails
-- On a stacked branch (`gh stack`), run `pnpm tsgo --noEmit` on every branch above it before pushing: a renamed prop or moved export breaks them
+- On a stacked branch (`gh stack`), run `pnpm tsc --noEmit` on every branch above it before pushing: a renamed prop or moved export breaks them
 - Fixed ALL resulting errors
 
 4. BEHAVIOR CHANGE DETECTION: When modifying existing behavior:

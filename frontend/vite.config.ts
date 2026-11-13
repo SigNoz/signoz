@@ -89,8 +89,8 @@ export default defineConfig(({ mode }): UserConfig => {
 		react(),
 		vitePluginChecker({
 			typescript: true,
-			// this doubles the build tim
-			// disabled to use Biome/tsgo (in the future) as alternative
+			// this doubles the build time
+			// disabled because CI type checks with `pnpm tsc`
 			enableBuild: false,
 		}),
 	];
