@@ -4,11 +4,13 @@ import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
+import { trackAlertEdit } from 'container/EditAlert/trackAlertEdit';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Check, Send, X } from '@signozhq/icons';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { toPostableRuleDTO } from 'types/api/alerts/convert';
+import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
 
@@ -22,7 +24,11 @@ import {
 } from 'api/generated/services/rules';
 import { useQueryClient } from 'react-query';
 
-function Footer(): JSX.Element {
+function Footer({
+	initialAlert,
+}: {
+	initialAlert?: PostableAlertRuleV2;
+}): JSX.Element {
 	const {
 		alertType,
 		alertState: basicAlertState,
@@ -136,6 +142,9 @@ function Footer(): JSX.Element {
 				},
 				{
 					onSuccess: () => {
+						if (initialAlert) {
+							trackAlertEdit(initialAlert, payload, ruleId);
+						}
 						void invalidateGetRuleByID(queryClient, { id: ruleId });
 						void invalidateListRulesV3(queryClient);
 
@@ -172,6 +181,7 @@ function Footer(): JSX.Element {
 		safeNavigate,
 		handleApiError,
 		queryClient,
+		initialAlert,
 	]);
 
 	const isSavingAlertRule = isCreatingAlertRule || isUpdatingAlertRule;

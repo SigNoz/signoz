@@ -39,7 +39,7 @@ function EditAlert({
 				<AlertCondition />
 				<NotificationSettings />
 			</div>
-			<Footer />
+			<Footer initialAlert={initialAlert} />
 		</>
 	);
 }
