@@ -122,6 +122,25 @@ export const openLogDetailsMenu = async ({
 	await screen.findByText('Copy link to log');
 };
 
+/** The format options sit in the list view's toolbar. */
+export const openFormatMenu = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (args.view !== 'list') {
+		return;
+	}
+
+	await userEvent.click(
+		await within(canvasElement).findByTestId(
+			'periscope-btn-format-options',
+			undefined,
+			untilLoaded,
+		),
+	);
+	await screen.findByTestId('max-lines-per-row', undefined, untilLoaded);
+};
+
 export const openQuickFiltersSettings = async ({
 	args,
 }: PlayContext): Promise<void> => {

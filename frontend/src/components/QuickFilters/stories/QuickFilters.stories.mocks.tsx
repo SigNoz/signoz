@@ -98,6 +98,15 @@ export const noSavedFiltersHandler = rest.get(
 		),
 );
 
+export const noSavedTracesFiltersHandler = rest.get(
+	'http://localhost/api/v2/quick_filters/traces',
+	(_req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json(quickFiltersResponse(QuickfiltertypesSourceDTO.traces, [])),
+		),
+);
+
 export const loadingFiltersHandlers = [
 	rest.get('http://localhost/api/v2/quick_filters/logs', (_req, res, ctx) =>
 		res(ctx.delay('infinite')),

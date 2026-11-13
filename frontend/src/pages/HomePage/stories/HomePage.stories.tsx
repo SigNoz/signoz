@@ -97,3 +97,12 @@ export const NavSettingsMenu: Story = {
 		await screen.findByRole('menu');
 	},
 };
+
+/** The command palette, opened with the same shortcut the shell listens for. */
+export const CommandPalette: Story = {
+	play: async (): Promise<void> => {
+		await userEvent.keyboard('{Meta>}k{/Meta}');
+		await screen.findByPlaceholderText('Search…', undefined, { timeout: 10000 });
+		await screen.findByText('Go to Home');
+	},
+};

@@ -189,3 +189,47 @@ export const showFilterSyntaxError = async ({
 
 	await showFilterErrors(canvasElement, 'has_error = true AND');
 };
+
+export const openCreateFunnel = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (args.tab !== 'funnels') {
+		return;
+	}
+
+	await userEvent.click(
+		await within(canvasElement).findByRole(
+			'button',
+			{ name: /new funnel/i },
+			untilLoaded,
+		),
+	);
+	await screen.findByRole('dialog', { name: /create new funnel/i });
+};
+
+/** Row actions exist only once the list holds a funnel. */
+export const openRenameFunnel = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (args.tab !== 'funnels' || args.funnels === 0) {
+		return;
+	}
+
+	const action = await waitFor(() => {
+		const found = canvasElement.querySelector<HTMLElement>(
+			'.funnel-item__action-icon',
+		);
+
+		if (!found) {
+			throw new Error('Funnel row actions are not rendered');
+		}
+
+		return found;
+	}, untilLoaded);
+
+	await userEvent.click(action);
+	await userEvent.click(await screen.findByRole('button', { name: 'Rename' }));
+	await screen.findByRole('dialog', { name: /rename funnel/i });
+};

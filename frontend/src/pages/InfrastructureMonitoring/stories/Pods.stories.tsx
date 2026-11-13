@@ -11,6 +11,7 @@ import {
 import {
 	copyPodMetadata,
 	copyPodName,
+	openDrawerLogDetails,
 	openDrawerLogsTab,
 	openTableOptions,
 	suggestFilterKeys,
@@ -61,6 +62,12 @@ export const PodDetailsEventsJsonBody: StoryObj<PodsArgs> = {
 export const DetailsDrawerLogsTab: StoryObj<PodsArgs> = {
 	args: { drawer: true },
 	play: openDrawerLogsTab,
+};
+
+/** A log opened from the pod's logs tab, over the details drawer. */
+export const DetailsDrawerLogDetails: StoryObj<PodsArgs> = {
+	args: { drawer: true },
+	play: openDrawerLogDetails,
 };
 
 /** The copy button beside the pod name in the drawer, which toasts the copy. */

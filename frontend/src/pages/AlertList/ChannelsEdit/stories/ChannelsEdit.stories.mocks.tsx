@@ -21,6 +21,10 @@ import {
 	WEBHOOK_AUTHS,
 	type WebhookAuthChoice,
 } from '../../stories/__story_mockdata__/alerts';
+import {
+	recordChannelTestRequest,
+	resetChannelTestRequests,
+} from './__story_mockdata__/channelsEdit';
 
 const STORY_CHANNEL_ID = '1';
 
@@ -89,10 +93,18 @@ export const channelsEditMocks = defineStoryMocks({
 
 		rest.post(
 			'http://localhost/api/v2/notification_channels/test',
+			async (req) => {
+				recordChannelTestRequest(await req.json());
+			},
+		),
+
+		rest.post(
+			'http://localhost/api/v2/notification_channels/test',
 			values.testOutcome === 'fails'
 				? rejectChannelAction
 				: resolveChannelActionSuccess,
 		),
 	],
 	config: () => ({ route: `/alerts/channels/edit/${STORY_CHANNEL_ID}` }),
+	effect: () => resetChannelTestRequests(),
 });

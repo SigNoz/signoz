@@ -10,6 +10,11 @@ export type FeedbackState =
 	| 'success-toast'
 	| 'actionable-error-toast'
 	| 'long-toast'
+	| 'promise-loading-toast'
+	| 'promise-error-toast'
+	| 'warning-toast'
+	| 'info-toast'
+	| 'danger-description-toast'
 	| 'inline-alert'
 	| 'confirmation'
 	| 'toast-over-confirmation';
@@ -20,6 +25,10 @@ interface FeedbackFixtureProps {
 
 const longMessage =
 	'We could not apply the retention policy because the selected storage tier is unavailable. Review the workspace settings, then try again.';
+
+const pendingSave = new Promise<void>(() => undefined);
+
+const dismissAction = { label: 'Dismiss', onClick: (): void => undefined };
 
 function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 	const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
@@ -37,13 +46,62 @@ function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 			return;
 		}
 
+		if (state === 'promise-loading-toast') {
+			toast.promise(pendingSave, {
+				loading: 'Enabling the alert rule',
+				success: 'Alert rule enabled',
+				error: 'Could not enable the alert rule',
+			});
+			return;
+		}
+
+		if (state === 'promise-error-toast') {
+			toast.promise(Promise.reject(new Error('failed')), {
+				loading: 'Cloning the panel',
+				success: 'Panel cloned',
+				error: { message: 'Could not clone the panel', action: dismissAction },
+				position: 'top-center',
+				duration: Infinity,
+			});
+			return;
+		}
+
+		if (state === 'warning-toast') {
+			toast.warning('Some invites failed', { duration: Infinity });
+			return;
+		}
+
+		if (state === 'info-toast') {
+			toast.info('Export cancelled', {
+				position: 'bottom-right',
+				duration: Infinity,
+			});
+			return;
+		}
+
+		if (state === 'danger-description-toast') {
+			toast.error('Failed to update account settings', {
+				description:
+					'The service account does not have permission to change this connection.',
+				action: dismissAction,
+				position: 'bottom-right',
+				duration: Infinity,
+			});
+			return;
+		}
+
 		toast.error(longMessage, { duration: Infinity });
 	};
 
 	const isToastStory =
 		state === 'success-toast' ||
 		state === 'actionable-error-toast' ||
-		state === 'long-toast';
+		state === 'long-toast' ||
+		state === 'promise-loading-toast' ||
+		state === 'promise-error-toast' ||
+		state === 'warning-toast' ||
+		state === 'info-toast' ||
+		state === 'danger-description-toast';
 	const confirmationTitle = 'Delete environment';
 
 	return (

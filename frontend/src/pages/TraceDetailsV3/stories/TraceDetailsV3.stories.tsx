@@ -24,6 +24,7 @@ import {
 	traceDetailsMocks,
 	untilLoaded,
 } from './TraceDetailsV3.stories.mocks';
+import { TraceDetailsTab } from '../constants';
 import TraceDetailsV3 from '../index';
 
 type TraceDetailsArgs = PageStoryArgs<typeof traceDetailsMocks>;
@@ -116,6 +117,22 @@ export const AiTrace: Story = {
 
 		await fireEvent.mouseOver(row);
 		await screen.findByText('Usage Breakdown', undefined, untilLoaded);
+	},
+};
+
+/**
+ * The same agent run on the Thread tab: each LLM call's messages in order, with
+ * the tool call and its response, the model's reasoning folded into a thinking
+ * block, and the span panel open on the Claude call.
+ */
+export const AiThread: Story = {
+	args: { scenario: 'ai', spans: AI_SPANS, tab: TraceDetailsTab.Thread },
+	play: async ({ canvasElement }): Promise<void> => {
+		await within(canvasElement).findAllByText(
+			/Let me check the upgrade notes/,
+			undefined,
+			untilLoaded,
+		);
 	},
 };
 
@@ -245,6 +262,60 @@ export const SpanPercentileOpen: Story = {
 			),
 		);
 		await screen.findByText(/This span duration is/);
+	},
+};
+
+/** The analytics panel the header toggle opens. */
+export const AnalyticsOpen: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: 'Analytics' },
+				untilLoaded,
+			),
+		);
+		await screen.findByTestId('trace-analytics-panel', undefined, untilLoaded);
+	},
+};
+
+/** The download progress panel, held open by an export that never answers. */
+export const TraceDownload: Story = {
+	args: { exportState: 'loading' },
+	play: async ({ canvasElement }): Promise<void> => {
+		await startDownload(canvasElement);
+		await screen.findByTestId('trace-download-panel', undefined, untilLoaded);
+	},
+};
+
+const openAddSpanToFunnel = async (
+	canvasElement: HTMLElement,
+): Promise<void> => {
+	const [button] = await within(canvasElement).findAllByTestId(
+		'span-add-to-funnel-btn',
+		undefined,
+		untilLoaded,
+	);
+
+	await fireEvent.click(button);
+	await screen.findByText('Add span to funnel', undefined, untilLoaded);
+};
+
+/** The funnel picker a span row's add-to-funnel action opens. */
+export const AddSpanToFunnel: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openAddSpanToFunnel(canvasElement);
+	},
+};
+
+/** The name field behind "Create new funnel" in that picker. */
+export const AddSpanToFunnelCreateStep: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		await openAddSpanToFunnel(canvasElement);
+		await userEvent.click(
+			await screen.findByRole('button', { name: /create new funnel/i }),
+		);
+		await screen.findByTestId('create-funnel-name-input');
 	},
 };
 

@@ -32,6 +32,8 @@ import {
 	timeSeriesPoints,
 } from '@/storybook/msw/__story_mockdata__/queryRange';
 
+import { traceFunnelsResponse } from '../../TracesModulePage/stories/__story_mockdata__/traces';
+import { TraceDetailsTab } from '../constants';
 import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
 import {
 	focusSpanIndex,
@@ -46,6 +48,7 @@ import {
 	traceDetailFieldValues,
 	traceFlamegraphResponse,
 	traceSummaryResponse,
+	traceThreadResponse,
 	TRACE_SCENARIOS,
 	type TraceScenario,
 	traceWaterfallResponse,
@@ -59,6 +62,8 @@ const EXPORT = 'Trace · export';
 const EXPORT_STATES = ['success', 'loading', 'error'] as const;
 
 type ExportState = (typeof EXPORT_STATES)[number];
+
+const TABS = [TraceDetailsTab.Overview, TraceDetailsTab.Thread] as const;
 
 const PANEL_POSITIONS = [
 	SpanDetailVariant.DOCKED_RIGHT,
@@ -124,6 +129,13 @@ export const traceDetailsMocks = defineStoryMocks({
 			description:
 				'Marks the payment and shipping spans as errored, each with an exception event, which is what the error counts and the red bars read.',
 			value: true,
+		}),
+		tab: choiceControl<TraceDetailsTab>('Tab', {
+			group: TRACE,
+			description:
+				'The tab the page opens on. `thread` lists the LLM calls as a conversation, and shows its no-AI-spans state outside the `ai` scenario.',
+			options: TABS,
+			value: TraceDetailsTab.Overview,
 		}),
 		missingSpans: toggleControl('Missing spans', {
 			group: TRACE,
@@ -207,6 +219,11 @@ export const traceDetailsMocks = defineStoryMocks({
 				),
 			),
 
+			rest.get(
+				'http://localhost/api/v1/traces/:traceId/thread',
+				response.json(() => traceThreadResponse(trace)),
+			),
+
 			rest.post(
 				'http://localhost/api/v3/traces/:traceId/flamegraph',
 				response.json(() => traceFlamegraphResponse(trace)),
@@ -219,6 +236,11 @@ export const traceDetailsMocks = defineStoryMocks({
 
 					return traceAggregationsResponse(body.aggregations ?? [], trace);
 				}),
+			),
+
+			rest.get(
+				'http://localhost/api/v1/trace-funnels/list',
+				response.json(() => traceFunnelsResponse(3)),
 			),
 
 			rest.post(
@@ -306,11 +328,28 @@ export const traceDetailsMocks = defineStoryMocks({
 			),
 		];
 	},
-	config: (values) => ({
-		route: values.spanPanel
-			? `/trace/${STORY_TRACE_ID}?spanId=${spanIdAt(focusSpanIndex(values.scenario, values.spans))}`
-			: `/trace/${STORY_TRACE_ID}`,
-	}),
+	config: (values) => {
+		const params = new URLSearchParams();
+
+		if (values.tab !== TraceDetailsTab.Overview) {
+			params.set('tab', values.tab);
+		}
+
+		if (values.spanPanel) {
+			params.set(
+				'spanId',
+				spanIdAt(focusSpanIndex(values.scenario, values.spans)),
+			);
+		}
+
+		const search = params.toString();
+
+		return {
+			route: search
+				? `/trace/${STORY_TRACE_ID}?${search}`
+				: `/trace/${STORY_TRACE_ID}`,
+		};
+	},
 	effect: (values) => {
 		set(LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION, values.panelPosition);
 	},

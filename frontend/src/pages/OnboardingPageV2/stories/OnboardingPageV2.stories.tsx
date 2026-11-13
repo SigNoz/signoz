@@ -1,81 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import OnboardingPageV2 from '../OnboardingPageV2';
+import { onboardingV2Mocks } from './OnboardingPageV2.stories.mocks';
 import {
-	onboardingV2Mocks,
-	SETUP_STEPS,
-	type SetupStep,
-} from './OnboardingPageV2.stories.mocks';
+	openAddCreditCard,
+	openInviteModal,
+	searchWithoutResults,
+	sendInvite,
+	walkToStep,
+} from './__story_mockdata__/onboardingV2.play';
 
 type OnboardingV2Args = PageStoryArgs<typeof onboardingV2Mocks>;
-
-type Canvas = ReturnType<typeof within>;
-
-/** The catalogue mounts before the first group of sources paints. */
-const untilRendered = { timeout: 15_000 };
-
-/**
- * Every option is a button wrapping its own logo, so the accessible name carries
- * the label twice and matches the other sources with the label as a prefix
- * (`Java`, `JavaScript`). The label's own text node is the one thing that is
- * exact.
- */
-const chooseOption = async (canvas: Canvas, label: string): Promise<void> => {
-	const option = await canvas.findByText(label, undefined, untilRendered);
-
-	await userEvent.click(option.closest('button') as HTMLElement);
-};
-
-const answerDataSource = (canvas: Canvas): Promise<void> =>
-	chooseOption(canvas, 'Java');
-
-const answerFramework = (canvas: Canvas): Promise<void> =>
-	chooseOption(canvas, 'Spring Boot');
-
-const answerEnvironment = (canvas: Canvas): Promise<void> =>
-	chooseOption(canvas, 'VM');
-
-const openConfigureProduct = async (canvas: Canvas): Promise<void> => {
-	await userEvent.click(
-		await canvas.findByRole(
-			'button',
-			{ name: /configure your product/i },
-			untilRendered,
-		),
-	);
-};
-
-const ANSWER_STEP = [
-	answerDataSource,
-	answerFramework,
-	answerEnvironment,
-	openConfigureProduct,
-];
-
-const advanceToSetupStep = async (
-	canvasElement: HTMLElement,
-	step: SetupStep,
-): Promise<void> => {
-	const canvas = within(canvasElement);
-
-	// A source that arrived through the param is already on the setup
-	// instructions, with no question left to answer.
-	if (!canvas.queryByText('Select your data source')) {
-		return;
-	}
-
-	const answers = ANSWER_STEP.slice(0, SETUP_STEPS.indexOf(step));
-
-	// Sequential: each answer is what renders the question the next one reads.
-	await answers.reduce(
-		(walked, answer) => walked.then(() => answer(canvas)),
-		Promise.resolve(),
-	);
-};
 
 const pageStory = storyMocks(onboardingV2Mocks, { layout: 'app' });
 
@@ -89,16 +27,7 @@ const meta = {
 	title: 'Pages/Onboarding/Add Data Source',
 	tags: ['play'],
 	component: OnboardingPageV2,
-	/**
-	 * Destructuring `mount` is what makes the step control a control: Storybook
-	 * re-runs a play function on an arg change only for a story that asks to be
-	 * remounted, and otherwise re-renders the one it already walked.
-	 */
-	play: async ({ mount, args, canvasElement }): Promise<void> => {
-		await mount();
-
-		await advanceToSetupStep(canvasElement, args.step);
-	},
+	play: walkToStep,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<OnboardingV2Args>;
@@ -137,35 +66,12 @@ export const SourcePreselected: Story = {
 
 /** The one thing the header offers besides support: bringing the team along. */
 export const InviteTeammate: Story = {
-	play: async ({ mount, args, canvasElement }): Promise<void> => {
-		await mount();
-
-		await advanceToSetupStep(canvasElement, args.step);
-
-		await userEvent.click(
-			within(canvasElement).getByRole('button', { name: /invite a teammate/i }),
-		);
-
-		// antd portals the modal out of the story root.
-		await screen.findByText('Invite a team member', undefined, untilRendered);
-	},
+	play: openInviteModal,
 };
 
 /** A search nothing answers, where the catalogue offers to add the source instead. */
 export const NoSearchResults: Story = {
-	play: async ({ mount, canvasElement }): Promise<void> => {
-		await mount();
-
-		const canvas = within(canvasElement);
-
-		await userEvent.type(
-			await canvas.findByPlaceholderText('Search', undefined, untilRendered),
-			'ledger',
-		);
-
-		// The search is debounced, so the miss lands a beat after the last keystroke.
-		await canvas.findByText(/no results for ledger/i, undefined, untilRendered);
-	},
+	play: searchWithoutResults,
 };
 
 /**
@@ -174,48 +80,14 @@ export const NoSearchResults: Story = {
  * is accepted; Invite result changes how it answers.
  */
 export const InvitesSentToast: Story = {
-	play: async ({ mount, args, canvasElement }): Promise<void> => {
-		await mount();
+	play: sendInvite,
+};
 
-		await userEvent.click(
-			await within(canvasElement).findByRole(
-				'button',
-				{ name: /invite a teammate/i },
-				untilRendered,
-			),
-		);
-
-		const dialog = await screen.findByRole('dialog', undefined, untilRendered);
-		const [email] = await within(dialog).findAllByTestId(
-			/^invite-email-/,
-			undefined,
-			untilRendered,
-		);
-
-		await userEvent.type(email, 'jon@winterfell.dev');
-		const [roles] = await within(dialog).findAllByRole('combobox');
-
-		await userEvent.click(roles);
-		const viewers = await screen.findAllByText(
-			'viewer',
-			undefined,
-			untilRendered,
-		);
-
-		await userEvent.click(
-			viewers[viewers.length - 1].closest(
-				'.ant-select-item-option',
-			) as HTMLElement,
-		);
-		await userEvent.keyboard('{Escape}');
-		await userEvent.click(
-			await within(dialog).findByRole('button', { name: /send invites/i }),
-		);
-
-		if (args.invite === 'success') {
-			await waitFor(() =>
-				expect(screen.getByText(/invites sent successfully/i)).toBeVisible(),
-			);
-		}
-	},
+/**
+ * A cloud trial without premium support, whose Contact Support in the header asks
+ * for a card to unlock chat support instead of opening the chat.
+ */
+export const FacingIssuesAddCard: Story = {
+	args: { support: 'add-card' },
+	play: openAddCreditCard,
 };
