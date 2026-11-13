@@ -4,6 +4,7 @@
  */
 
 import { rest, type ResponseComposition, type RestContext } from 'msw';
+import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import { screen, userEvent, within } from 'storybook/test';
 
 import {
@@ -12,7 +13,10 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { accessFor } from '@/storybook/access/access';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
+import { componentPermission } from 'utils/permission';
 import { DEFAULT_RULE_LIST_FILTER } from 'container/ListAlertRules/utils';
 import {
 	DEFAULT_RULE_VIEW,
@@ -281,3 +285,37 @@ export const runRowAction = async (
 	await userEvent.click(actions);
 	await userEvent.click(await screen.findByRole('menuitem', { name }));
 };
+
+export type AlertRulesArgs = PageStoryArgs<typeof alertRulesMocks>;
+
+export const listedRules = (
+	args: AlertRulesArgs,
+): RuletypesListableRuleDTO[] => {
+	const params = new URL(listRoute(args.view), 'http://localhost').searchParams;
+	if (
+		args.dataState !== 'loaded' ||
+		(args.invalidQuery !== 'off' && params.get('query'))
+	) {
+		return [];
+	}
+
+	return alertRulesPage(
+		args.rules,
+		{ severity: args.ruleSeverity, state: args.ruleState },
+		params,
+	).data.rules;
+};
+
+export const hasRowMenu = (args: AlertRulesArgs): boolean =>
+	listedRules(args).length > 0 &&
+	componentPermission.action.includes(
+		accessFor(args.access, args.permissions, args.revoked).legacyRole,
+	);
+
+export const showsNoRulesPage = (args: AlertRulesArgs): boolean =>
+	args.view === DEFAULT_RULE_VIEW &&
+	args.dataState === 'loaded' &&
+	args.rules === 0;
+
+export const listsSavedViews = (args: AlertRulesArgs): boolean =>
+	args.ruleViews > 0 && args.ruleViewsState === 'success';

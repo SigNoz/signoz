@@ -630,7 +630,6 @@ describe('Footer utils', () => {
 			expect(props.ruleType).toBe('anomaly_rule');
 			expect(props.alertType).toBe(AlertTypes.METRICS_BASED_ALERT);
 			expect(props.schemaVersion).toBe('v2alpha1');
-			expect(props.condition.algorithm).toBe('standard');
 			expect(props.condition.seasonality).toBe('daily');
 			expect(props.condition.thresholds?.spec[0]).toMatchObject({
 				target: 3,

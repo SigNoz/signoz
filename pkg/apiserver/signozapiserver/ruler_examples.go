@@ -251,7 +251,6 @@ func postableRuleExamples() []handler.OpenAPIExample {
 							},
 						},
 					},
-					"algorithm":         "standard",
 					"seasonality":       "daily",
 					"selectedQueryName": "A",
 					"requireMinPoints":  true,
