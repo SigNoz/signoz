@@ -1,0 +1,67 @@
+.caret {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 2px;
+	// Overhangs the glyph box by 1px each way, like the native caret.
+	margin: -1px 0 0 -1px;
+	padding: 1px 0;
+	border-radius: 1px;
+	pointer-events: none;
+	background: var(--accent-primary);
+	transition: transform 0.05s linear;
+	animation:
+		caretBlink 1s step-end infinite,
+		caretAccent 2s step-end infinite;
+
+	// Solid while keys are going, then blinks again from blue.
+	&.isTyping {
+		animation: none;
+	}
+}
+
+.trail {
+	position: absolute;
+	pointer-events: none;
+	opacity: 0.4;
+	background: var(--accent-primary);
+	animation: trailFade 0.3s ease-out 0.4s forwards;
+
+	&.isFaint {
+		opacity: 0.2;
+	}
+}
+
+@keyframes caretBlink {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0;
+	}
+}
+
+@keyframes caretAccent {
+	0%,
+	50% {
+		background: var(--accent-primary);
+	}
+	50.001%,
+	100% {
+		background: var(--accent-sakura);
+	}
+}
+
+@keyframes trailFade {
+	to {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.caret,
+	.trail {
+		display: none;
+	}
+}

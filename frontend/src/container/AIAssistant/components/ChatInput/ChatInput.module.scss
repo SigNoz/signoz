@@ -100,7 +100,23 @@
 }
 
 .composer {
+	position: relative;
 	padding: 9px 16px;
+
+	&:focus-within {
+		animation: selectionAccent 2s step-end infinite;
+	}
+}
+
+@keyframes selectionAccent {
+	0%,
+	50% {
+		--selection-accent: var(--accent-primary);
+	}
+	50.001%,
+	100% {
+		--selection-accent: var(--accent-sakura);
+	}
 }
 
 .footer {
@@ -141,6 +157,8 @@
 	letter-spacing: -0.005em;
 	overflow-y: auto;
 	font-family: inherit;
+	// ComposerCaret draws the caret.
+	caret-color: transparent;
 	@include scrollbar(0.2rem);
 
 	&::placeholder {
@@ -148,9 +166,24 @@
 		opacity: 0.6;
 	}
 
+	&::selection {
+		background: var(--selection-accent, var(--accent-primary));
+		color: var(--l1-background);
+	}
+
 	&:disabled {
 		opacity: 0.2;
 		cursor: not-allowed;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		caret-color: auto;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.composer:focus-within {
+		animation: none;
 	}
 }
 

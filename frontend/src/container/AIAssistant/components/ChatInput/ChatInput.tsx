@@ -47,6 +47,7 @@ import {
 } from '@signozhq/icons';
 
 import styles from './ChatInput.module.scss';
+import ComposerCaret from './ComposerCaret/ComposerCaret';
 import ContextPickerEmptyState from './ContextPickerEmptyState';
 import {
 	CONTEXT_CATEGORIES,
@@ -778,6 +779,7 @@ export default function ChatInput({
 					maxLength={MAX_INPUT_LENGTH}
 					rows={2}
 				/>
+				<ComposerCaret textareaRef={textareaRef} value={text} />
 			</div>
 			{showTextWarning && (
 				<div className={styles.charWarning} role="status">
