@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { matchRoute } from 'lib/router/matchRoute';
 import { navigate } from 'lib/router/navigation';
@@ -7,6 +7,8 @@ import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Plus, X } from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
+import { BOTTOM_STRIP_HEIGHT } from 'container/BottomStrip';
+import { FloatingPanel } from 'periscope/components/FloatingPanel';
 
 import logEvent from 'api/common/logEvent';
 
@@ -21,6 +23,22 @@ import styles from './AIAssistantPanel.module.scss';
 
 const AI_ASSISTANT_PANEL_OPEN_CLASS = 'ai-assistant-panel-open';
 const AI_ASSISTANT_PANEL_WIDTH_VAR = '--ai-assistant-panel-width';
+
+const PANEL_WIDTH = 420;
+const PANEL_HEIGHT = 601;
+const PANEL_MIN_WIDTH = 380;
+const PANEL_MIN_HEIGHT = 500;
+const PANEL_MARGIN = 8;
+const PANEL_RESIZE_EDGES = {
+	top: true,
+	right: true,
+	bottom: true,
+	left: true,
+	topRight: false,
+	bottomRight: false,
+	bottomLeft: false,
+	topLeft: false,
+};
 
 export default function AIAssistantPanel(): JSX.Element | null {
 	const { pathname } = useAppLocation();
@@ -72,11 +90,6 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		setShowHistory(false);
 	}, []);
 
-	// ── Resize logic ──────────────────────────────────────────────────────────
-	const [panelWidth, setPanelWidth] = useState(380);
-	const dragStartX = useRef(0);
-	const dragStartWidth = useRef(0);
-
 	useLayoutEffect(() => {
 		const shouldOffsetChatSupport = isOpen && !isFullScreenPage;
 
@@ -88,7 +101,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		if (shouldOffsetChatSupport) {
 			document.body.style.setProperty(
 				AI_ASSISTANT_PANEL_WIDTH_VAR,
-				`${panelWidth}px`,
+				`${PANEL_WIDTH}px`,
 			);
 		} else {
 			document.body.style.removeProperty(AI_ASSISTANT_PANEL_WIDTH_VAR);
@@ -98,46 +111,40 @@ export default function AIAssistantPanel(): JSX.Element | null {
 			document.body.classList.remove(AI_ASSISTANT_PANEL_OPEN_CLASS);
 			document.body.style.removeProperty(AI_ASSISTANT_PANEL_WIDTH_VAR);
 		};
-	}, [isFullScreenPage, isOpen, panelWidth]);
-
-	const handleResizeMouseDown = useCallback(
-		(e: React.MouseEvent) => {
-			e.preventDefault();
-			dragStartX.current = e.clientX;
-			dragStartWidth.current = panelWidth;
-
-			const onMouseMove = (ev: MouseEvent): void => {
-				// Panel is on the right; dragging left (lower clientX) increases width
-				const delta = dragStartX.current - ev.clientX;
-				const next = Math.min(Math.max(dragStartWidth.current + delta, 380), 800);
-				setPanelWidth(next);
-			};
-
-			const onMouseUp = (): void => {
-				document.removeEventListener('mousemove', onMouseMove);
-				document.removeEventListener('mouseup', onMouseUp);
-				document.body.style.cursor = '';
-				document.body.style.userSelect = '';
-			};
-
-			document.body.style.cursor = 'col-resize';
-			document.body.style.userSelect = 'none';
-			document.addEventListener('mousemove', onMouseMove);
-			document.addEventListener('mouseup', onMouseUp);
-		},
-		[panelWidth],
-	);
+	}, [isFullScreenPage, isOpen]);
 
 	if (!isOpen || isFullScreenPage) {
 		return null;
 	}
 
+	const panelHeight = Math.max(
+		PANEL_MIN_HEIGHT,
+		Math.min(
+			PANEL_HEIGHT,
+			window.innerHeight - BOTTOM_STRIP_HEIGHT - 2 * PANEL_MARGIN,
+		),
+	);
+
 	return (
 		<VariantContext.Provider value="panel">
-			<div className={styles.panel} style={{ width: panelWidth }}>
-				{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-				<div className={styles.resizeHandle} onMouseDown={handleResizeMouseDown} />
-				<div className={styles.header}>
+			<FloatingPanel
+				isOpen
+				className={styles.panel}
+				width={PANEL_WIDTH}
+				height={panelHeight}
+				minWidth={PANEL_MIN_WIDTH}
+				minHeight={PANEL_MIN_HEIGHT}
+				enableResizing={PANEL_RESIZE_EDGES}
+				defaultPosition={{
+					x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN,
+					// Never above the viewport, where the header could not be dragged back.
+					y: Math.max(
+						0,
+						window.innerHeight - BOTTOM_STRIP_HEIGHT - PANEL_MARGIN - panelHeight,
+					),
+				}}
+			>
+				<div className={`${styles.header} floating-panel__drag-handle`}>
 					<div className={`${styles.title} noz-wave`}>
 						<Noz size={18} />
 						<span>Noz</span>
@@ -207,7 +214,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 						<ConversationView conversationId={activeConversationId} />
 					)
 				)}
-			</div>
+			</FloatingPanel>
 		</VariantContext.Provider>
 	);
 }

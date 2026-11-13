@@ -1,37 +1,5 @@
-.panel {
-	display: flex;
-	flex-direction: column;
-	flex-shrink: 0;
-	height: 100%;
-	border-left: 1px solid var(--l1-border);
-	background: var(--l1-background);
-	overflow: hidden;
-	position: relative;
-}
-
-.resizeHandle {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 4px;
-	height: 100%;
-	cursor: col-resize;
-	z-index: 10;
-
-	&::after {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: 1px;
-		width: 2px;
-		height: 100%;
-		background: transparent;
-		transition: background 0.15s ease;
-	}
-
-	&:hover::after {
-		background: var(--accent-primary);
-	}
+.panel:global(.floating-panel) {
+	box-shadow: var(--shadow-dialog);
 }
 
 .header {
