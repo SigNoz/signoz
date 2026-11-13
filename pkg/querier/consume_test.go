@@ -7,8 +7,10 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/SigNoz/signoz/pkg/telemetrystore/drivertest"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
@@ -256,39 +258,6 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 	}
 }
 
-type countingColumnType struct {
-	driver.ColumnType
-	name string
-}
-
-func (c countingColumnType) Name() string           { return c.name }
-func (c countingColumnType) ScanType() reflect.Type { return reflect.TypeOf("") }
-
-// countingRows advances on Next, like clickhouse-go, and counts Scan calls.
-type countingRows struct {
-	driver.Rows
-	values []string
-	pos    int
-	scans  int
-}
-
-func (r *countingRows) Next() bool {
-	r.pos++
-	return r.pos <= len(r.values)
-}
-
-func (r *countingRows) Scan(dest ...any) error {
-	r.scans++
-	*dest[0].(*string) = r.values[r.pos-1]
-	return nil
-}
-
-func (r *countingRows) Columns() []string { return []string{"id"} }
-func (r *countingRows) ColumnTypes() []driver.ColumnType {
-	return []driver.ColumnType{countingColumnType{name: "id"}}
-}
-func (r *countingRows) Err() error { return nil }
-
 func TestReadAsRawSkipping(t *testing.T) {
 	testCases := []struct {
 		name        string
@@ -305,7 +274,25 @@ func TestReadAsRawSkipping(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			rows := &countingRows{values: testCase.values}
+			columnType := drivertest.NewMockColumnType(t)
+			columnType.EXPECT().ScanType().Return(reflect.TypeOf("")).Maybe()
+
+			// Like clickhouse-go, Next advances on its own; Scan is expected only for returned rows.
+			rows := drivertest.NewMockRows(t)
+			pos := 0
+			rows.EXPECT().Columns().Return([]string{"id"})
+			rows.EXPECT().ColumnTypes().Return([]driver.ColumnType{columnType})
+			rows.EXPECT().Next().RunAndReturn(func() bool {
+				pos++
+				return pos <= len(testCase.values)
+			})
+			if len(testCase.wantIDs) > 0 {
+				rows.EXPECT().Scan(mock.Anything).RunAndReturn(func(dest ...any) error {
+					*dest[0].(*string) = testCase.values[pos-1]
+					return nil
+				}).Times(len(testCase.wantIDs))
+			}
+			rows.EXPECT().Err().Return(nil)
 
 			data, skipped, err := readAsRawSkipping(rows, "A", testCase.skip)
 			require.NoError(t, err)
@@ -316,7 +303,6 @@ func TestReadAsRawSkipping(t *testing.T) {
 			}
 			assert.Equal(t, testCase.wantSkipped, skipped)
 			assert.Equal(t, testCase.wantIDs, ids)
-			assert.Equal(t, len(testCase.wantIDs), rows.scans)
 		})
 	}
 }
