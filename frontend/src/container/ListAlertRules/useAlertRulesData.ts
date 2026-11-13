@@ -3,13 +3,11 @@ import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useListRulesV3 } from 'api/generated/services/rules';
 import type {
-	ListRulesV3200,
 	ListRulesV3Params,
 	RenderErrorResponseDTO,
 	RuletypesLabelPairDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { AxiosError } from 'axios';
-import { GeneratedAPIInstance } from 'api/generatedAPIInstance';
 import { isUndefined } from 'lodash-es';
 
 import type { AlertRule } from './types';
@@ -35,18 +33,7 @@ export function useAlertRulesData(
 	const hasLoggedEvent = useRef(false);
 
 	const rulesResponse = useListRulesV3(params, {
-		query: {
-			keepPreviousData: true,
-			// The backend binds repeated `states=` keys; axios' default sends `states[]=`.
-			queryFn: ({ signal }) =>
-				GeneratedAPIInstance<ListRulesV3200>({
-					url: '/api/v3/rules',
-					method: 'GET',
-					params,
-					paramsSerializer: { indexes: null },
-					signal,
-				}),
-		},
+		query: { keepPreviousData: true },
 	});
 
 	const rules = useMemo(
