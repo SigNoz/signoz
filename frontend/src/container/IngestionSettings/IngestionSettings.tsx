@@ -2,9 +2,11 @@ import { useQuery } from 'react-query';
 import { Skeleton, Table, TableColumnsType as ColumnsType } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import getIngestionData from 'api/settings/getIngestionData';
+import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { useAppContext } from 'providers/App/App';
 import { IngestionDataType } from 'types/api/settings/ingestion';
 
+import styles from './IngestionSettings.module.scss';
 import './IngestionSettings.styles.scss';
 
 export default function IngestionSettings(): JSX.Element {
@@ -38,21 +40,31 @@ export default function IngestionSettings(): JSX.Element {
 			title: '',
 			dataIndex: 'value',
 			key: 'value',
-			render: (text): JSX.Element => (
-				<div>
+			render: (text, record): JSX.Element => (
+				<div className={styles.value}>
 					{isFetching ? (
 						<Skeleton.Input active style={{ height: 20 }} />
 					) : (
-						<Typography
-							/* TODO(typography): copyable={!isFetching && text !== ''} has no equivalent */ variant="paragraph"
-							size="base"
-							weight="regular"
-							color="inherit"
-							as="span"
-							textOverflow="wrap"
-						>
-							{text}
-						</Typography>
+						<>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								{text}
+							</Typography>
+							{text && (
+								<CopyButton
+									value={text}
+									size={12}
+									ariaLabel={`Copy ${record.name}`}
+									testId={`ingestion-settings-copy-${record.key}`}
+								/>
+							)}
+						</>
 					)}
 				</div>
 			),
