@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -251,6 +252,71 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 				_, present := testCase.data[removed]
 				assert.False(t, present, "%s should be removed", removed)
 			}
+		})
+	}
+}
+
+type countingColumnType struct {
+	driver.ColumnType
+	name string
+}
+
+func (c countingColumnType) Name() string           { return c.name }
+func (c countingColumnType) ScanType() reflect.Type { return reflect.TypeOf("") }
+
+// countingRows advances on Next, like clickhouse-go, and counts Scan calls.
+type countingRows struct {
+	driver.Rows
+	values []string
+	pos    int
+	scans  int
+}
+
+func (r *countingRows) Next() bool {
+	r.pos++
+	return r.pos <= len(r.values)
+}
+
+func (r *countingRows) Scan(dest ...any) error {
+	r.scans++
+	*dest[0].(*string) = r.values[r.pos-1]
+	return nil
+}
+
+func (r *countingRows) Columns() []string { return []string{"id"} }
+func (r *countingRows) ColumnTypes() []driver.ColumnType {
+	return []driver.ColumnType{countingColumnType{name: "id"}}
+}
+func (r *countingRows) Err() error { return nil }
+
+func TestReadAsRawSkipping(t *testing.T) {
+	testCases := []struct {
+		name        string
+		values      []string
+		skip        int
+		wantSkipped int
+		wantIDs     []string
+	}{
+		{name: "NoSkip", values: []string{"a", "b", "c"}, skip: 0, wantSkipped: 0, wantIDs: []string{"a", "b", "c"}},
+		{name: "SkipInsideResult", values: []string{"d", "e", "f", "g"}, skip: 2, wantSkipped: 2, wantIDs: []string{"f", "g"}},
+		{name: "SkipWholeResult", values: []string{"h", "i"}, skip: 2, wantSkipped: 2, wantIDs: nil},
+		{name: "SkipPastResult", values: []string{"j"}, skip: 5, wantSkipped: 1, wantIDs: nil},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			rows := &countingRows{values: testCase.values}
+
+			data, skipped, err := readAsRawSkipping(rows, "A", testCase.skip)
+			require.NoError(t, err)
+
+			var ids []string
+			for _, row := range data.Rows {
+				ids = append(ids, row.Data["id"].(string))
+			}
+			assert.Equal(t, testCase.wantSkipped, skipped)
+			assert.Equal(t, testCase.wantIDs, ids)
+			assert.Equal(t, len(testCase.wantIDs), rows.scans)
 		})
 	}
 }
