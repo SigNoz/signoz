@@ -592,6 +592,16 @@
 					justify-content: space-between;
 
 					margin-bottom: 0;
+					color: var(--l2-foreground);
+					transition: color 0.15s ease;
+
+					&.selected {
+						color: inherit;
+					}
+				}
+
+				.onboarding-data-source-category-item:hover .onboarding-filters-item-title {
+					color: var(--primary-background);
 				}
 
 				.line-divider {
