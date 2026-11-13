@@ -889,10 +889,12 @@ func TestExpandAnnotations(t *testing.T) {
 func TestAlertAnnotations(t *testing.T) {
 	recoveryTarget := 400.0
 	testCases := []struct {
-		name      string
-		alertType ruletypes.AlertType
-		smpl      ruletypes.Sample
-		want      map[string]string
+		name             string
+		alertType        ruletypes.AlertType
+		useTemplates     bool
+		notificationBody string
+		smpl             ruletypes.Sample
+		want             map[string]string
 	}{
 		{
 			name: "Firing_AddsValueAndThreshold",
@@ -921,11 +923,36 @@ func TestAlertAnnotations(t *testing.T) {
 			smpl:      ruletypes.Sample{IsMissing: true, CompareOperator: ruletypes.ValueIsAbove, MatchType: ruletypes.AtleastOnce, RecoveryTarget: &recoveryTarget},
 			want:      map[string]string{"summary": "high errors", ruletypes.AnnotationRuleType: "metrics"},
 		},
+		{
+			name:             "TemplatesOff_OmitsTitleAndBody",
+			notificationBody: "$alert.value errors",
+			smpl:             ruletypes.Sample{},
+			want:             map[string]string{"summary": "high errors", ruletypes.AnnotationValue: "523 ms", ruletypes.AnnotationThresholdValue: "500 ms"},
+		},
+		{
+			name:             "TemplatesOn_AddsTitleAndBody",
+			useTemplates:     true,
+			notificationBody: "$alert.value errors",
+			smpl:             ruletypes.Sample{},
+			want:             map[string]string{"summary": "high errors", ruletypes.AnnotationValue: "523 ms", ruletypes.AnnotationThresholdValue: "500 ms", ruletypes.AnnotationTitleTemplate: "High errors on $labels.service.name", ruletypes.AnnotationBodyTemplate: "$alert.value errors"},
+		},
+		{
+			name:         "TemplatesOnWithoutBody_AddsTitleOnly",
+			useTemplates: true,
+			smpl:         ruletypes.Sample{},
+			want:         map[string]string{"summary": "high errors", ruletypes.AnnotationValue: "523 ms", ruletypes.AnnotationThresholdValue: "500 ms", ruletypes.AnnotationTitleTemplate: "High errors on $labels.service.name"},
+		},
+		{
+			name:         "TemplatesOnMissingData_PrefixesTitle",
+			useTemplates: true,
+			smpl:         ruletypes.Sample{IsMissing: true},
+			want:         map[string]string{"summary": "high errors", ruletypes.AnnotationTitleTemplate: "[No data] High errors on $labels.service.name"},
+		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			rule := &BaseRule{typ: testCase.alertType, annotations: ruletypes.FromMap(map[string]string{"summary": "high errors"}), ruleCondition: &ruletypes.RuleCondition{CompositeQuery: &ruletypes.AlertCompositeQuery{Unit: "ms"}}}
+			rule := &BaseRule{name: "High errors on $labels.service.name", typ: testCase.alertType, useTemplates: testCase.useTemplates, notificationBody: testCase.notificationBody, annotations: ruletypes.FromMap(map[string]string{"summary": "high errors"}), ruleCondition: &ruletypes.RuleCondition{CompositeQuery: &ruletypes.AlertCompositeQuery{Unit: "ms"}}}
 			expand := func(text string) string { return text }
 
 			assert.Equal(t, testCase.want, rule.AlertAnnotations(expand, testCase.smpl, "523 ms", "500 ms").Map())

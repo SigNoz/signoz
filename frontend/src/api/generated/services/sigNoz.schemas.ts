@@ -12886,10 +12886,20 @@ export interface RuletypesNotificationSettingsDTO {
 	 */
 	groupBy?: string[] | null;
 	/**
+	 * @type boolean
+	 * @description Whether notifications include sample data from the alert window. Not read yet. Defaults to false.
+	 */
+	includeSamples?: boolean;
+	/**
 	 * @type string
 	 * @description A grace period, as a Go duration such as 2m, during which a newly seen label group is excluded from evaluation. Applies to metric rules only; log and trace rules are never delayed. A group whose values are not yet known is evaluated immediately.
 	 */
 	newGroupEvalDelay?: string;
+	/**
+	 * @type string
+	 * @description The notification body template, read when useTemplates is true. Channels fall back to their own body when it is empty.
+	 */
+	notificationBody?: string;
 	/**
 	 * @description Whether and how often to re-send a notification for an alert that stays active.
 	 */
@@ -12899,6 +12909,11 @@ export interface RuletypesNotificationSettingsDTO {
 	 * @description When true, alerts are routed by the organisation level notification policies instead of the channels named on the thresholds. Defaults to false.
 	 */
 	usePolicy?: boolean;
+	/**
+	 * @type boolean
+	 * @description When true, the alert name is the notification title and notificationBody the body, both rendered as templates with variables such as $labels.service.name and $alert.value. When false, channels use their own title and body. Defaults to false.
+	 */
+	useTemplates?: boolean;
 }
 
 /**

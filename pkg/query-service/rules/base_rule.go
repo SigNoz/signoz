@@ -79,6 +79,9 @@ type BaseRule struct {
 	// newGroupEvalDelay is the grace period for new alert groups
 	newGroupEvalDelay valuer.TextDuration
 
+	useTemplates     bool
+	notificationBody string
+
 	ruleStateHistoryModule rulestatehistory.Module
 
 	queryParser queryparser.QueryParser
@@ -168,9 +171,11 @@ func NewBaseRule(
 		evaluation:    evaluation,
 	}
 
-	// Store newGroupEvalDelay and groupBy keys from NotificationSettings
+	// Store newGroupEvalDelay, groupBy keys and template settings from NotificationSettings
 	if p.NotificationSettings != nil {
 		baseRule.newGroupEvalDelay = p.NotificationSettings.NewGroupEvalDelay
+		baseRule.useTemplates = p.NotificationSettings.UseTemplates
+		baseRule.notificationBody = p.NotificationSettings.NotificationBody
 	}
 
 	for _, opt := range opts {
@@ -284,6 +289,16 @@ func (r *BaseRule) AlertAnnotations(expand func(string) string, smpl ruletypes.S
 	}
 	if signal := r.typ.Signal(); signal != "" {
 		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRuleType, Value: signal})
+	}
+	if r.useTemplates {
+		title := r.name
+		if smpl.IsMissing {
+			title = "[No data] " + title
+		}
+		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationTitleTemplate, Value: title})
+		if r.notificationBody != "" {
+			annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationBodyTemplate, Value: r.notificationBody})
+		}
 	}
 
 	return annotations

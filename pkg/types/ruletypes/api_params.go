@@ -110,6 +110,9 @@ type NotificationSettings struct {
 	Renotify          *Renotify           `json:"renotify,omitempty" description:"Whether and how often to re-send a notification for an alert that stays active."`
 	UsePolicy         bool                `json:"usePolicy" description:"When true, alerts are routed by the organisation level notification policies instead of the channels named on the thresholds. Defaults to false."`
 	NewGroupEvalDelay valuer.TextDuration `json:"newGroupEvalDelay,omitzero" description:"A grace period, as a Go duration such as 2m, during which a newly seen label group is excluded from evaluation. Applies to metric rules only; log and trace rules are never delayed. A group whose values are not yet known is evaluated immediately."`
+	UseTemplates      bool                `json:"useTemplates,omitempty" description:"When true, the alert name is the notification title and notificationBody the body, both rendered as templates with variables such as $labels.service.name and $alert.value. When false, channels use their own title and body. Defaults to false."`
+	NotificationBody  string              `json:"notificationBody,omitempty" description:"The notification body template, read when useTemplates is true. Channels fall back to their own body when it is empty."`
+	IncludeSamples    bool                `json:"includeSamples,omitempty" description:"Whether notifications include sample data from the alert window. Not read yet. Defaults to false."`
 }
 
 type Renotify struct {
