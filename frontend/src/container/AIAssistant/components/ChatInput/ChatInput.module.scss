@@ -118,13 +118,12 @@
 	--button-width: 28px;
 	--button-max-width: 28px;
 	--button-border-radius: 9999px;
-	// Send rests grey and turns primary on hover.
-	--button-primary-background-color: var(--l3-background);
-	--button-primary-hover-background-color: var(--primary-background);
-	--button-primary-solid-foreground: var(--l2-foreground);
 
-	[data-color='primary']:hover:not([aria-disabled='true']) {
-		--button-primary-solid-foreground: var(--primary-foreground);
+	// Send stays a solid grey until there is something to send.
+	[data-color='primary'][aria-disabled='true'] {
+		--button-primary-background-color: var(--l3-background);
+		--button-primary-solid-foreground: var(--l2-foreground);
+		--button-disabled-opacity: 1;
 	}
 }
 
