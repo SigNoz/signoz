@@ -177,6 +177,17 @@ func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, res
 	// Convert back to map[string]any
 	finalResults := make(map[string]any)
 	for name, result := range typedResults {
+		if req.RequestType == qbtypes.RequestTypeTimeSeries {
+			if data, ok := result.Value.(*qbtypes.TimeSeriesData); ok && data != nil {
+				for _, bucket := range data.Aggregations {
+					bucket.Series = slices.DeleteFunc(bucket.Series, func(series *qbtypes.TimeSeries) bool {
+						return !slices.ContainsFunc(series.Values, func(point *qbtypes.TimeSeriesValue) bool {
+							return !math.IsNaN(point.Value) && !math.IsInf(point.Value, 0)
+						})
+					})
+				}
+			}
+		}
 		finalResults[name] = result.Value
 	}
 
