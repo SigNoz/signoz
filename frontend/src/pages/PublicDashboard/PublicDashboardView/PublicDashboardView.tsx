@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { PublicDashboardSchema } from 'hooks/dashboard/useGetResolvedPublicDashboard';
+import { noop } from 'lodash-es';
 import DashboardContainer from 'pages/DashboardPage/DashboardContainer';
 
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
@@ -14,8 +15,6 @@ interface PublicDashboardViewProps {
 	publicDashboardId: string;
 	data: DashboardtypesGettablePublicDashboardDataV2DTO;
 }
-
-const noop = (): void => undefined;
 
 /** A shared link: the SigNoz header, then the dashboard read-only on the public endpoint. */
 function PublicDashboardView({
