@@ -4,7 +4,6 @@ import { toast } from '@signozhq/ui/toast';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
 import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
-import cx from 'classnames';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { Control, Controller } from 'react-hook-form';
 
@@ -130,12 +129,9 @@ function ConnectionSecretsFields({
 										tooltip={field.tooltip}
 									/>
 									<div className={styles.readonlyField}>
-										<span
-											className={cx(styles.readonlyValue, styles.mono)}
-											title={providedValue}
-										>
+										<span className={styles.readonlyValue} title={providedValue}>
 											<Typography
-												/* TODO(typography): not lifted from className: composes: mono from './shared.module.scss' */ variant="paragraph"
+												variant="code"
 												size="base"
 												weight="regular"
 												color="secondary"
