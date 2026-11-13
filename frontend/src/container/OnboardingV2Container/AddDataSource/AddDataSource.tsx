@@ -22,6 +22,8 @@ import { useGetGlobalConfig } from 'api/generated/services/global';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { UserCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { isModifierKeyPressed } from 'utils/app';
@@ -1185,7 +1187,7 @@ function OnboardingAddDataSource(): JSX.Element {
 									>
 										Cancel
 									</SignozButton>
-									<SignozButton
+									<AuthZButton
 										size="md"
 										color="primary"
 										variant="solid"
@@ -1196,13 +1198,16 @@ function OnboardingAddDataSource(): JSX.Element {
 											);
 											void submit();
 										}}
-										disabled={!canSubmit}
-										disabledTooltip="Add at least one team member to invite"
+										disabledTooltip={
+											canSubmit ? undefined : 'Add at least one team member to invite'
+										}
+										checks={[UserCreatePermission]}
 										loading={isSubmitting}
 										suffix={<ArrowRight size={14} />}
+										testId="onboarding-send-invites-btn"
 									>
 										Send Invites
-									</SignozButton>
+									</AuthZButton>
 								</div>
 							)}
 						/>
