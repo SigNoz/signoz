@@ -1,6 +1,6 @@
 services:
   signoz-otel-collector:
-    image: signoz/signoz-otel-collector:v0.142.0
+    image: signoz/signoz-otel-collector:v0.144.15
     container_name: signoz-otel-collector-dev
     entrypoint:
       - /bin/sh
