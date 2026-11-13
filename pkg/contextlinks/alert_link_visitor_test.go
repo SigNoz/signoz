@@ -26,6 +26,16 @@ func TestPrepareFiltersV5(t *testing.T) {
 			description:  "Should return empty string for empty inputs",
 		},
 		{
+			name:        "pattern_call_kept",
+			labels:      map[string]string{},
+			whereClause: "service.name = 'serviceB' AND pattern('User <*> logged in')",
+			groupByItems: []qbtypes.GroupByKey{
+				{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}},
+			},
+			expected:    "service.name='serviceB' AND pattern('User <*> logged in')",
+			description: "pattern() has no key to rewrite, so it is kept",
+		},
+		{
 			name:        "no_label_replacement",
 			labels:      map[string]string{},
 			whereClause: "service.name = 'serviceB'",

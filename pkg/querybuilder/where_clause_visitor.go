@@ -204,6 +204,8 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitFullText(t)
 	case *grammar.SearchCallContext:
 		return v.VisitSearchCall(t)
+	case *grammar.PatternCallContext:
+		return v.VisitPatternCall(t)
 	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
 	case *grammar.FunctionParamListContext:
@@ -320,6 +322,8 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 		return v.Visit(ctx.FunctionCall())
 	} else if ctx.SearchCall() != nil {
 		return v.Visit(ctx.SearchCall())
+	} else if ctx.PatternCall() != nil {
+		return v.Visit(ctx.PatternCall())
 	} else if ctx.FullText() != nil {
 		return v.Visit(ctx.FullText())
 	}
@@ -839,6 +843,13 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 		return conds[0]
 	}
 	return v.builder.Or(conds...)
+}
+
+// VisitPatternCall handles pattern('<pattern text>'[, ...]), the log pattern
+// filter. The grammar accepts it, but no storage evaluates it yet.
+func (v *filterExpressionVisitor) VisitPatternCall(_ *grammar.PatternCallContext) any {
+	v.errors = append(v.errors, "function `pattern` is not supported yet")
+	return ErrorConditionLiteral
 }
 
 // searchParamText returns an argument's raw token text (quoted or bare) rather than its
