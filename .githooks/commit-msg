@@ -1,4 +1,12 @@
-cd frontend && pnpm run commitlint --edit $1
+#!/bin/sh
+
+set -e
+
+msg_file="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+
+if [ -d frontend/node_modules ] && command -v pnpm >/dev/null 2>&1; then
+	(cd frontend && pnpm exec commitlint --edit "$msg_file")
+fi
 
 branch="$(git rev-parse --abbrev-ref HEAD)"
 
