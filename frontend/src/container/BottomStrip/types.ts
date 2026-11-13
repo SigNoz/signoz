@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 export enum StripTone {
 	Default = 'default',
@@ -29,3 +29,14 @@ export type StripItem =
 			/** Tints the icon; the text stays neutral at every tone. */
 			tone?: StripTone;
 	  };
+
+/** One tab in `StripTabs`. */
+export interface StripTabItem {
+	/** Stable identity, passed back to `onSelect` / `onClose`. */
+	id: string;
+	label: string;
+	prefix?: ReactElement;
+	isActive?: boolean;
+	/** Accessible name when the label alone doesn't say what opening does. */
+	ariaLabel?: string;
+}

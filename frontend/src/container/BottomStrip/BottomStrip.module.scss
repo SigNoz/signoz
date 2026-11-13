@@ -33,6 +33,28 @@
 	cursor: default;
 }
 
+// Takes what the left slot leaves; `safe` overflows to the end, not over the left slot.
+.right {
+	flex: 1 1 0;
+	justify-content: safe flex-end;
+}
+
+.right > * {
+	flex-shrink: 0;
+}
+
+// The only right-side entity that shrinks: tabs give way before Ask Noz and Support.
+.chats {
+	display: flex;
+	align-items: center;
+	flex-shrink: 1;
+	min-width: 0;
+
+	&:empty {
+		display: none;
+	}
+}
+
 // separator b/w strip entities
 .left > *:not(:last-child)::after,
 .right > *:not(:last-child)::after {
