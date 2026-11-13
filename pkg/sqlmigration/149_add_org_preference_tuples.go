@@ -52,8 +52,6 @@ func (migration *addOrgPreferenceTuples) Up(ctx context.Context, db *bun.DB) err
 
 	isPG := migration.sqlstore.BunDB().Dialect().Name() == dialect.PG
 
-	// org-preference moved from the AdminAccess role gate to CheckResources, which on
-	// enterprise needs these tuples; orgs created before the grant existed never got them.
 	tuples := []migrationTuple{
 		{"signoz-admin", "metaresource", "org-preference", "read"},
 		{"signoz-admin", "metaresource", "org-preference", "update"},
