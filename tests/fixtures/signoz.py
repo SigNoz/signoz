@@ -92,7 +92,7 @@ def create_signoz(
                 "SIGNOZ_ALERTMANAGER_SIGNOZ_ROUTE_GROUP__WAIT": "1s",
                 "SIGNOZ_ALERTMANAGER_SIGNOZ_ROUTE_GROUP__INTERVAL": "5s",
                 "SIGNOZ_CLOUDINTEGRATION_AGENT_VERSION": "v0.0.8",
-                # tests reseed the attributes rollout row between cases
+                # no schema metadata caching in tests
                 "SIGNOZ_QUERIER_SCHEMAMETADATASTORE_CACHE__TTL": "1ns",
             }
             | sqlstore.env

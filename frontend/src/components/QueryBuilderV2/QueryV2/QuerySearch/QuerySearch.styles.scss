@@ -15,10 +15,40 @@ $max-recents-shown: 5;
 		Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
 		'Helvetica Neue', sans-serif;
 
+	.query-where-clause-row {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+		// single-line editor: 36px .cm-line + 1px .cm-content border on each side
+		--button-height: 38px;
+
+		.query-where-clause-editor-container {
+			flex: 1;
+			min-width: 0;
+		}
+	}
+
 	.query-where-clause-editor-container {
 		position: relative;
 		display: flex;
 		flex-direction: row;
+
+		// The field draws one outline around the scope chip and the editor, so
+		// the editor inside draws none
+		&.hasScopeChip {
+			align-items: center;
+			gap: var(--spacing-3);
+			padding-left: var(--spacing-3);
+			border: 1px solid var(--l2-border);
+			border-radius: 2px;
+			background: var(--l1-background);
+			--query-builder-v2-border-color: transparent;
+			--query-builder-v2-background-color: transparent;
+
+			.query-where-clause-editor {
+				min-width: 0;
+			}
+		}
 
 		.query-search-initial-scope-label {
 			position: absolute;

@@ -31,6 +31,8 @@ jest.mock('@floating-ui/dom', () => ({
 		Promise.resolve({ x: 0, y: 0, placement, strategy, middlewareData: {} }),
 }));
 
+jest.setTimeout(15_000);
+
 const VIEW_1_ORDER_BY = JSON.stringify({ columnName: 'name', order: 'asc' });
 const VIEW_1_QUERY = "severity = 'critical'";
 

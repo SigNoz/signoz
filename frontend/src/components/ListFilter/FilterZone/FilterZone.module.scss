@@ -86,21 +86,21 @@
 	}
 }
 
-// Created-by option: a presentational checkbox + label (antd handles the toggle).
-.creatorOption {
+// Multi-select option: a presentational checkbox + label (antd handles the toggle).
+.checkOption {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 }
 
-.creatorCheck {
+.checkOptionBox {
 	// Flex, not block: a line box would shift with the check mark's baseline.
 	display: flex;
 	flex-shrink: 0;
 	pointer-events: none;
 }
 
-.creatorLabel {
+.checkOptionLabel {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

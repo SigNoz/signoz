@@ -25,6 +25,7 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import {
 	RESPONSE_STATES,
 	type ResponseState,
@@ -312,3 +313,5 @@ export const logsMocks = defineStoryMocks({
 		);
 	},
 });
+
+export type LogsArgs = PageStoryArgs<typeof logsMocks>;
