@@ -510,7 +510,7 @@
                             "stepInterval": 0,
                             "disabled": false,
                             "filter": {
-                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment"
                             },
                             "aggregations": [
                               {
@@ -535,7 +535,7 @@
                             "stepInterval": 0,
                             "disabled": false,
                             "filter": {
-                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment"
                             },
                             "aggregations": [
                               {
@@ -560,7 +560,7 @@
                             "stepInterval": 0,
                             "disabled": false,
                             "filter": {
-                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment"
                             },
                             "aggregations": [
                               {
@@ -585,7 +585,7 @@
                             "stepInterval": 0,
                             "disabled": false,
                             "filter": {
-                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment"
                             },
                             "aggregations": [
                               {
@@ -610,7 +610,7 @@
                             "stepInterval": 0,
                             "disabled": false,
                             "filter": {
-                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment"
                             },
                             "aggregations": [
                               {
