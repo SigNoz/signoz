@@ -25613,7 +25613,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -26569,7 +26568,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -27426,7 +27424,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -29045,7 +29042,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
