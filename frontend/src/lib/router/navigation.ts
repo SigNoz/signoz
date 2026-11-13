@@ -51,6 +51,10 @@ export function getCurrentLocation(): AppLocation {
 	return toAppLocation(history.location);
 }
 
+export function getHref(location: AppLocation): string {
+	return history.createHref(location);
+}
+
 export function blockNavigation(blocker: NavigationBlocker): () => void {
 	return history.block((location, action) => {
 		const appLocation = toAppLocation(location);

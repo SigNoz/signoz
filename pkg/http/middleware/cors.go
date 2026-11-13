@@ -16,6 +16,7 @@ func NewCors() *Cors {
 			AllowedOrigins: []string{"*"},
 			AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH", "OPTIONS"},
 			AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "cache-control"},
+			ExposedHeaders: []string{versionHeader},
 		}),
 	}
 }
