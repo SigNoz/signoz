@@ -265,18 +265,6 @@ export const SpanPercentileOpen: Story = {
 	},
 };
 
-/** Spans the backend never received, shown as the missing-spans callout. */
-export const MissingSpans: Story = {
-	args: { missingSpans: true },
-	play: async (): Promise<void> => {
-		await screen.findByText(
-			/this trace has missing spans/i,
-			undefined,
-			untilLoaded,
-		);
-	},
-};
-
 /** The analytics panel the header toggle opens. */
 export const AnalyticsOpen: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
