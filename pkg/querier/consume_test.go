@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/SigNoz/signoz/pkg/telemetrystore/drivertest"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
@@ -274,11 +274,11 @@ func TestReadAsRawSkipping(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			columnType := drivertest.NewMockColumnType(t)
+			columnType := telemetrystoretest.NewMockColumnType(t)
 			columnType.EXPECT().ScanType().Return(reflect.TypeOf("")).Maybe()
 
 			// Like clickhouse-go, Next advances on its own; Scan is expected only for returned rows.
-			rows := drivertest.NewMockRows(t)
+			rows := telemetrystoretest.NewMockRows(t)
 			pos := 0
 			rows.EXPECT().Columns().Return([]string{"id"})
 			rows.EXPECT().ColumnTypes().Return([]driver.ColumnType{columnType})
