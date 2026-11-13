@@ -129,6 +129,15 @@ interface MeterQuerySpec {
 const meterSpecOf = (body: QueryRangeRequestV5): MeterQuerySpec =>
 	(body.compositeQuery?.queries?.[0]?.spec ?? {}) as MeterQuerySpec;
 
+const dashboardForbidden: Parameters<typeof rest.get>[1] = (_req, res, ctx) =>
+	res(
+		ctx.status(403),
+		ctx.json({
+			status: 'error',
+			error: { code: 'forbidden', message: 'forbidden' },
+		}),
+	);
+
 export const meterMocks = defineStoryMocks({
 	controls: {
 		tab: choiceControl<MeterTab>('Tab', {
@@ -149,6 +158,12 @@ export const meterMocks = defineStoryMocks({
 			group: VIEW,
 			description:
 				'The UTC billing note above the breakdown. Closing it is what the app persists, so a returning user does not see it.',
+			value: true,
+		}),
+		dashboardAccess: toggleControl('Dashboard read access', {
+			group: USAGE,
+			description:
+				'Whether the viewer may read the breakdown system dashboard. A role with meter access but no dashboard read gets a 403, and the breakdown says which permission is missing.',
 			value: true,
 		}),
 		signals: multiChoiceControl<MeterSignal>('Ingesting signals', {
@@ -182,7 +197,9 @@ export const meterMocks = defineStoryMocks({
 	handlers: (values, response) => [
 		rest.get(
 			'http://localhost/api/v2/dashboards/system/cost-meter-breakdown',
-			response.json(meterSystemDashboardResponse),
+			values.dashboardAccess
+				? response.json(meterSystemDashboardResponse)
+				: dashboardForbidden,
 		),
 		rest.post(
 			'http://localhost/api/v5/query_range',
