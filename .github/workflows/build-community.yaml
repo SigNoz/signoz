@@ -77,7 +77,7 @@ jobs:
         -X github.com/SigNoz/signoz/pkg/version.time=${{ needs.prepare.outputs.time }}
         -X github.com/SigNoz/signoz/pkg/version.branch=${{ needs.prepare.outputs.branch }}
         -X github.com/SigNoz/signoz/pkg/analytics.key=9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr'
-      DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.3"}'
+      DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.9"}'
       DOCKER_DOCKERFILE_PATH: ./cmd/community/Dockerfile.multi-arch
       DOCKER_MANIFEST: true
       DOCKER_PROVIDERS: dockerhub
