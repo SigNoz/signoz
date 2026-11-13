@@ -45,9 +45,11 @@ export const toLegacyLogsFilter = (filter: TagFilter): TagFilter =>
 			...item,
 			key: item.key && {
 				...item.key,
-				type: LEGACY_LOGS_TOP_LEVEL_SCOPE_FIELDS.includes(item.key.key)
-					? ''
-					: (LEGACY_LOGS_KEY_TYPE[item.key.type ?? ''] ?? ''),
+				type:
+					item.key.type === TelemetrytypesFieldContextDTO.scope &&
+					LEGACY_LOGS_TOP_LEVEL_SCOPE_FIELDS.includes(item.key.key)
+						? ''
+						: (LEGACY_LOGS_KEY_TYPE[item.key.type ?? ''] ?? ''),
 			},
 		})),
 	};
