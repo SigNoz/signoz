@@ -37,6 +37,19 @@ export default {
 				allowedVerbs: ['list', 'read', 'update'],
 			},
 			{
+				kind: 'route-policy',
+				type: 'metaresource',
+				allowedVerbs: [
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
+			},
+			{
 				kind: 'rule',
 				type: 'metaresource',
 				allowedVerbs: [

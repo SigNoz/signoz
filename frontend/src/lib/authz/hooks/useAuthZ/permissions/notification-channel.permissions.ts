@@ -23,3 +23,9 @@ export const buildNotificationChannelUpdatePermission = (
 export const buildNotificationChannelDeletePermission = (
 	id: string,
 ): BrandedPermission => buildPermission('delete', `notification-channel:${id}`);
+export const buildNotificationChannelAttachPermission = (
+	id: string,
+): BrandedPermission => buildPermission('attach', `notification-channel:${id}`);
+export const buildNotificationChannelDetachPermission = (
+	id: string,
+): BrandedPermission => buildPermission('detach', `notification-channel:${id}`);
