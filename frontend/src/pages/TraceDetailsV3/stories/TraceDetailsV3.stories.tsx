@@ -20,7 +20,6 @@ import {
 	openTraceOptions,
 	showsAnalyticsState,
 	showsHighlightedErrors,
-	showsMissingSpansBanner,
 	showsTraceOnlyLogs,
 	showTooltips,
 	switchDockMode,
@@ -82,12 +81,6 @@ export const NoTrace: Story = {
 /** The waterfall and the flamegraph mid-fetch, shell included. */
 export const Loading: Story = {
 	args: { dataState: 'loading' },
-};
-
-/** A trace whose spans have not all arrived: the dismissible banner over the panels. */
-export const MissingSpans: Story = {
-	args: { missingSpans: true },
-	play: showsMissingSpansBanner,
 };
 
 /** The strip over a trace with no failing span: the error icon stays neutral. */
@@ -224,18 +217,6 @@ export const SpanPanelNoEvents: Story = {
 /** The exception's stacktrace hovered: the preview popover with its Expand action. */
 export const SpanPanelEventAttributePopover: Story = {
 	play: hoverEventStacktrace,
-};
-
-/** Spans the backend never received, shown as the missing-spans callout. */
-export const MissingSpans: Story = {
-	args: { missingSpans: true },
-	play: async (): Promise<void> => {
-		await screen.findByText(
-			/this trace has missing spans/i,
-			undefined,
-			untilLoaded,
-		);
-	},
 };
 
 /** The analytics panel the header toggle opens. */

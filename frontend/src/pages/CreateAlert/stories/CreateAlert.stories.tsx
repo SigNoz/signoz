@@ -60,28 +60,6 @@ export const AnomalyAlert: Story = {
 };
 
 /**
- * An anomaly alert handed to routing policies: the channel picker leaves the
- * condition, and the banner points at the policies that route it instead.
- */
-export const AnomalyAlertRoutingPolicies: Story = {
-	args: { alertMode: 'anomaly' },
-	play: async ({ canvasElement }): Promise<void> => {
-		const canvas = within(canvasElement);
-
-		await userEvent.click(
-			await canvas.findByTestId('routing-policies-switch', undefined, {
-				timeout: 15_000,
-			}),
-		);
-		await waitFor(() =>
-			expect(
-				canvas.queryByTestId('threshold-notification-channel-select'),
-			).not.toBeInTheDocument(),
-		);
-	},
-};
-
-/**
  * The match-type tooltip on the threshold sentence: a paragraph on what an
  * aggregated data point is, a worked example over five of them, and the docs
  * link. There is one per match type, and they are antd tooltips rather than

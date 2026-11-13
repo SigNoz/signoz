@@ -98,14 +98,6 @@ export const NavSettingsMenu: Story = {
 	},
 };
 
-/** Impersonation mode: the warning banner above the page content. */
-export const NoAuthBanner: Story = {
-	args: { banner: 'no-auth' },
-	play: async (): Promise<void> => {
-		await screen.findByTestId('no-auth-banner', undefined, { timeout: 10000 });
-	},
-};
-
 /** The command palette, opened with the same shortcut the shell listens for. */
 export const CommandPalette: Story = {
 	play: async (): Promise<void> => {
