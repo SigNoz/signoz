@@ -147,6 +147,7 @@ const preview: Preview = {
 							'Explorer',
 							['Overview', 'Span Drawer'],
 							'Trace Details',
+							['Overview', 'Thread'],
 							'Funnel Details',
 						],
 						'Metrics',
