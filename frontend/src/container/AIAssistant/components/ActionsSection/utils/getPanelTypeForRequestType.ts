@@ -1,7 +1,7 @@
 import {
 	ApplyFilterSignalDTO,
 	type MessageActionDTOQuery,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 

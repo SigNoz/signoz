@@ -1,8 +1,5 @@
-import type { MessageActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
-import {
-	ApplyFilterSignalDTO,
-	SavedViewEntityDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import type { MessageActionDTO } from '@signozhq/noz-client';
+import { ApplyFilterSignalDTO, SavedViewEntityDTO } from '@signozhq/noz-client';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { ResourceType } from './resourceRoute';

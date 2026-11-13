@@ -79,6 +79,9 @@ importers:
       '@signozhq/icons':
         specifier: 0.4.0
         version: 0.4.0
+      '@signozhq/noz-client':
+        specifier: file:/Users/employee/Desktop/signoz-ai-assistant/clients/typescript/signozhq-noz-client-0.0.0.tgz
+        version: file:../../../signoz-ai-assistant/clients/typescript/signozhq-noz-client-0.0.0.tgz(axios@1.21.0)(react-query@3.39.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
       '@signozhq/ui':
         specifier: 0.2.0
         version: 0.2.0(@date-fns/tz@1.4.1)(@emotion/is-prop-valid@1.2.0)(@signozhq/icons@0.4.0)(@types/react-dom@18.0.10)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react-router-dom@5.3.4(react@18.2.0))(react-router@6.30.6(react@18.2.0))(react@18.2.0)
@@ -3590,6 +3593,14 @@ packages:
 
   '@signozhq/icons@0.4.0':
     resolution: {integrity: sha512-QctNvNPlQlsefFdIVmSy/P/7a1IcQ3IryKP0KPMqtoqew3q89FGUmFa5IfEJ7Z3CHhtG1zaXwBKqP72QkLyA3g==}
+
+  '@signozhq/noz-client@file:../../../signoz-ai-assistant/clients/typescript/signozhq-noz-client-0.0.0.tgz':
+    resolution: {integrity: sha512-v/nCltTD2Sa8nPRBZxrPYcls0UnYV0e7O9MNs8Hibu7M2Bxr1r7HVX/dg8qsvpVVN9W+TnXCHmFDk43dOrT/dQ==, tarball: file:../../../signoz-ai-assistant/clients/typescript/signozhq-noz-client-0.0.0.tgz}
+    version: 0.0.0
+    peerDependencies:
+      axios: ^1.20.0
+      react: ^18.2.0
+      react-query: ^3.39.3
 
   '@signozhq/ui@0.2.0':
     resolution: {integrity: sha512-j20ldiOkR150ON0BCDhlq6fXGoPN++7w6e4t2HtM2XMM4buJO7aHzPzNKvDRZ2UUf/LGPULPAW8w6sg6gUVHyw==}
@@ -13153,6 +13164,12 @@ snapshots:
   '@signozhq/design-tokens@2.2.1': {}
 
   '@signozhq/icons@0.4.0': {}
+
+  '@signozhq/noz-client@file:../../../signoz-ai-assistant/clients/typescript/signozhq-noz-client-0.0.0.tgz(axios@1.21.0)(react-query@3.39.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)':
+    dependencies:
+      axios: 1.21.0
+      react: 18.2.0
+      react-query: 3.39.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
 
   '@signozhq/ui@0.2.0(@date-fns/tz@1.4.1)(@emotion/is-prop-valid@1.2.0)(@signozhq/icons@0.4.0)(@types/react-dom@18.0.10)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react-router-dom@5.3.4(react@18.2.0))(react-router@6.30.6(react@18.2.0))(react@18.2.0)':
     dependencies:
