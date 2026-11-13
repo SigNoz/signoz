@@ -62,6 +62,7 @@
               <p style="margin:0;font-size:14px;color:#666">
                 Status: <strong>{{.Alert.Status}}</strong>
                 {{if .Alert.TotalFiring}} | Firing: <strong style="color:#e53e3e">{{.Alert.TotalFiring}}</strong>{{end}}
+                {{if .Alert.TotalRecovering}} | Recovering: <strong style="color:#dd6b20">{{.Alert.TotalRecovering}}</strong>{{end}}
                 {{if .Alert.TotalResolved}} | Resolved: <strong style="color:#38a169">{{.Alert.TotalResolved}}</strong>{{end}}
               </p>
             </td>

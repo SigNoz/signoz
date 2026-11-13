@@ -76,8 +76,14 @@ type AlertData struct {
 	Rule        RuleInfo    `json:"rule"        mapstructure:"rule"`
 	Log         LinkInfo    `json:"log"         mapstructure:"log"`
 	Trace       LinkInfo    `json:"trace"       mapstructure:"trace"`
+	Exception   LinkInfo    `json:"exception"   mapstructure:"exception"`
 	Labels      template.KV `json:"labels"      mapstructure:"labels"`
 	Annotations template.KV `json:"annotations" mapstructure:"annotations"`
+
+	// Value and Threshold back the $value and $threshold shortcuts for
+	// $alert.value and $rule.threshold.value.
+	Value     string `json:"value"     mapstructure:"value"`
+	Threshold string `json:"threshold" mapstructure:"threshold"`
 }
 
 // AlertInfo holds the per-alert state and timing data.
@@ -93,6 +99,7 @@ type AlertInfo struct {
 	IsResolved    bool      `json:"isResolved"    mapstructure:"is_resolved"`
 	IsMissingData bool      `json:"isMissingData" mapstructure:"is_missing_data"`
 	IsRecovering  bool      `json:"isRecovering"  mapstructure:"is_recovering"`
+	IsTest        bool      `json:"isTest"        mapstructure:"is_test"`
 }
 
 // RuleInfo holds the rule metadata extracted from well-known labels and
@@ -102,18 +109,20 @@ type RuleInfo struct {
 	ID        string    `json:"id"        mapstructure:"id"`
 	URL       string    `json:"url"       mapstructure:"url"`
 	Severity  string    `json:"severity"  mapstructure:"severity"`
+	Type      string    `json:"type"      mapstructure:"type"`
 	MatchType string    `json:"matchType" mapstructure:"match_type"`
 	Threshold Threshold `json:"threshold" mapstructure:"threshold"`
 }
 
 // Threshold describes the breach condition.
 type Threshold struct {
-	Value string `json:"value" mapstructure:"value"`
-	Op    string `json:"op"    mapstructure:"op"`
+	Value         string `json:"value"         mapstructure:"value"`
+	Op            string `json:"op"            mapstructure:"op"`
+	RecoveryValue string `json:"recoveryValue" mapstructure:"recovery_value"`
 }
 
-// LinkInfo groups a single URL so templates can reference $log.url and
-// $trace.url uniformly.
+// LinkInfo groups a single URL so templates can reference $log.url,
+// $trace.url and $exception.url uniformly.
 type LinkInfo struct {
 	URL string `json:"url" mapstructure:"url"`
 }
@@ -137,8 +146,10 @@ type NotificationTemplateData struct {
 // NotificationAlert holds the aggregate alert fields available to title
 // templates (counts, overall status, receiver).
 type NotificationAlert struct {
-	Receiver      string `json:"receiver"      mapstructure:"receiver"`
-	Status        string `json:"status"        mapstructure:"status"`
-	TotalFiring   int    `json:"totalFiring"   mapstructure:"total_firing"`
-	TotalResolved int    `json:"totalResolved" mapstructure:"total_resolved"`
+	Receiver        string `json:"receiver"        mapstructure:"receiver"`
+	Status          string `json:"status"          mapstructure:"status"`
+	TotalFiring     int    `json:"totalFiring"     mapstructure:"total_firing"`
+	TotalRecovering int    `json:"totalRecovering" mapstructure:"total_recovering"`
+	TotalResolved   int    `json:"totalResolved"   mapstructure:"total_resolved"`
+	IsTest          bool   `json:"isTest"          mapstructure:"is_test"`
 }

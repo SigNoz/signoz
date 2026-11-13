@@ -41,6 +41,25 @@ func (AlertType) Enum() []any {
 	}
 }
 
+// Signal returns the signal the alert type evaluates (metrics, logs, traces,
+// exceptions or ai_traces), or an empty string for an unknown type.
+func (t AlertType) Signal() string {
+	switch t {
+	case AlertTypeMetric:
+		return "metrics"
+	case AlertTypeLogs:
+		return "logs"
+	case AlertTypeTraces:
+		return "traces"
+	case AlertTypeExceptions:
+		return "exceptions"
+	case AlertTypeAITraces:
+		return "ai_traces"
+	default:
+		return ""
+	}
+}
+
 // BuilderQueryType returns the query type the alert type's builder queries
 // carry; only AI trace alerts use builder_ai_query.
 func (t AlertType) BuilderQueryType() qbtypes.QueryType {

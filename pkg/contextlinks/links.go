@@ -1,6 +1,7 @@
 package contextlinks
 
 import (
+	"cmp"
 	"encoding/json"
 	"net/url"
 	"slices"
@@ -24,6 +25,25 @@ func PrepareParamsForTracesV5(start, end time.Time, whereClause string, queryTyp
 // range and filter; the logs explorer writes its time params in milliseconds.
 func PrepareParamsForLogsV5(start, end time.Time, whereClause string) url.Values {
 	return prepareExplorerParams("logs", qbtypes.QueryTypeBuilder, start.UnixMilli(), end.UnixMilli(), whereClause)
+}
+
+// PrepareParamsForExceptions returns the exceptions page query params for the
+// given range, filtered to the service and exception type found in labels
+// (serviceName and exceptionType from SQL, or their builder keys). The page
+// writes its time params in milliseconds.
+// It doesn't reuse prepareExplorerParams: the exceptions page reads only the
+// older filters.items from compositeQuery, not filter.expression.
+func PrepareParamsForExceptions(start, end time.Time, labels map[string]string) url.Values {
+	params := url.Values{}
+	params.Set("startTime", strconv.FormatInt(start.UnixMilli(), 10))
+	params.Set("endTime", strconv.FormatInt(end.UnixMilli(), 10))
+	if serviceName := cmp.Or(labels["serviceName"], labels["service.name"]); serviceName != "" {
+		params.Set("serviceName", serviceName)
+	}
+	if exceptionType := cmp.Or(labels["exceptionType"], labels["exception.type"]); exceptionType != "" {
+		params.Set("exceptionType", exceptionType)
+	}
+	return params
 }
 
 // The end link is double encoded because otherwise a filter expression with `%` somewhere in it breaks.
