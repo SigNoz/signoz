@@ -1,8 +1,5 @@
 import { ReactNode } from 'react';
 import { Widgets } from 'types/api/widgets/widget';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-
-import { IServiceName } from './Tabs/types';
 
 export interface GetWidgetQueryBuilderProps {
 	query: Widgets['query'];
@@ -12,24 +9,4 @@ export interface GetWidgetQueryBuilderProps {
 	id?: Widgets['id'];
 	fillSpans?: Widgets['fillSpans'];
 	columnUnits?: Widgets['columnUnits'];
-}
-
-export interface NavigateToTraceProps {
-	servicename: string;
-	operation: string;
-	minTime: number;
-	maxTime: number;
-	selectedTraceTags: string;
-	apmToTraceQuery: Query;
-	safeNavigate: (path: string) => void;
-	openInNewTab: boolean;
-}
-
-export interface DatabaseCallsRPSProps extends DatabaseCallProps {
-	legend: string;
-}
-
-export interface DatabaseCallProps {
-	servicename: IServiceName['servicename'];
-	tagFilterItems: TagFilterItem[];
 }
