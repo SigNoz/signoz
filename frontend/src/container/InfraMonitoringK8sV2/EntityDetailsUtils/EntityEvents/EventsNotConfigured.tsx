@@ -1,6 +1,5 @@
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowRight } from '@signozhq/icons';
-import { openInNewTab } from 'utils/navigation';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
@@ -10,10 +9,6 @@ const K8S_EVENTS_DOCS_URL =
 	'https://signoz.io/docs/infrastructure-monitoring/k8s-metrics/';
 
 export default function EventsNotConfigured(): JSX.Element {
-	const handleLearnMore = (): void => {
-		openInNewTab(K8S_EVENTS_DOCS_URL);
-	};
-
 	return (
 		<div className={styles.container} data-testid="events-not-configured">
 			<div className={styles.content}>
@@ -31,29 +26,21 @@ export default function EventsNotConfigured(): JSX.Element {
 					Collector.
 				</Typography>
 
-				<div
-					className={styles.learnMore}
-					onClick={handleLearnMore}
-					role="button"
-					tabIndex={0}
-					onKeyDown={(e): void => {
-						if (e.key === 'Enter') {
-							handleLearnMore();
-						}
-					}}
+				<Typography.Link
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					display="inline-flex"
+					gap={4}
+					marginTop={8}
+					textOverflow="wrap"
+					href={K8S_EVENTS_DOCS_URL}
+					target="_blank"
+					testId="events-not-configured-docs-link"
 				>
-					<span className={styles.learnMoreText}>
-						<Typography.Link
-							/* TODO(typography): a link with no href renders plain text: a click that does not navigate is a Button with variant="link" */ variant="paragraph"
-							size="base"
-							weight="medium"
-							textOverflow="wrap"
-						>
-							Learn how to configure
-						</Typography.Link>
-					</span>
+					Learn how to configure
 					<ArrowRight size={14} />
-				</div>
+				</Typography.Link>
 			</div>
 		</div>
 	);
