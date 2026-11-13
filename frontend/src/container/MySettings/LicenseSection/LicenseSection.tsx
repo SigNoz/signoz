@@ -9,6 +9,7 @@ import { buildLicenseReadPermission } from 'lib/authz/hooks/useAuthZ/permissions
 import { useAppContext } from 'providers/App/App';
 import { getMaskedKey } from 'utils/maskedKey';
 
+import styles from './LicenseSection.module.scss';
 import './LicenseSection.styles.scss';
 
 function LicenseSectionContent(): JSX.Element | null {
@@ -33,16 +34,18 @@ function LicenseSectionContent(): JSX.Element | null {
 				<div className="license-section-content-item-title-action">
 					<span>License key</span>
 					<span style={{ display: 'flex', alignItems: 'center' }}>
-						<Typography
-							/* TODO(typography): code: the 0.x code box (background, border, padding) is gone */ variant="code"
-							size="base"
-							weight="regular"
-							color="inherit"
-							as="code"
-							textOverflow="wrap"
-						>
-							{getMaskedKey(licenseKey)}
-						</Typography>
+						<span className={styles.keyBox}>
+							<Typography
+								variant="code"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="code"
+								textOverflow="wrap"
+							>
+								{getMaskedKey(licenseKey)}
+							</Typography>
+						</span>
 						<Button
 							size="sm"
 							variant="outlined"
