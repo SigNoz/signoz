@@ -55,12 +55,15 @@
 
 	/* Compact badges and icons keep the tab triggers at the tab height.
 	   TODO: remove once the badges leave these tabs; tabs are not meant to hold badges. */
-	--badge-height: var(--spacing-7);
-	--badge-font-size: 11px;
-	--badge-line-height: 12px;
-	--badge-padding: 0px var(--spacing-2);
 	--tabs-trigger-secondary-icon-width: 14px;
 	--tabs-trigger-secondary-icon-height: 14px;
+
+	[data-slot='tabs-item'] {
+		--badge-height: var(--spacing-7);
+		--badge-font-size: 11px;
+		--badge-line-height: 12px;
+		--badge-padding: 0px var(--spacing-2);
+	}
 }
 
 /* Picker row (label left, tabs right); the bottom divider separates type from
