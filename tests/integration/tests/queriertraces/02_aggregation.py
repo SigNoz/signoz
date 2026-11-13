@@ -112,6 +112,8 @@ def test_traces_aggregate_order_by_count(
         start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
         end_ms=int(now.timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
+        # cases share the query, and a "map" window is old enough to be served from the cache
+        no_cache=True,
         queries=[
             BuilderQuery(
                 signal="traces",

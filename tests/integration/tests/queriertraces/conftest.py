@@ -26,8 +26,5 @@ def signoz_trace_attributes_json(
         cache_key="signoz-trace-attributes-json",
         env_overrides={
             "SIGNOZ_FLAGGER_CONFIG_BOOLEAN_USE__TRACE__ATTRIBUTES__JSON": True,
-            # map-backend windows sit an hour back, past the 5m default, where same-query cases
-            # would read each other's cached buckets
-            "SIGNOZ_QUERIER_FLUX__INTERVAL": "8760h",
         },
     )
