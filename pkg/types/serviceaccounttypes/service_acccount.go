@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -36,6 +37,14 @@ var (
 )
 
 type ServiceAccountStatus struct{ valuer.String }
+
+func (ServiceAccountStatus) Enum() []any {
+	return []any{ServiceAccountStatusActive, ServiceAccountStatusDeleted}
+}
+
+func (status ServiceAccountStatus) IsValid() bool {
+	return slices.ContainsFunc(status.Enum(), func(value any) bool { return value == status })
+}
 
 type ServiceAccount struct {
 	bun.BaseModel `bun:"table:service_account,alias:service_account"`
@@ -262,7 +271,7 @@ type Store interface {
 	GetByIDAndStatus(context.Context, valuer.UUID, ServiceAccountStatus) (*ServiceAccount, error)
 	GetServiceAccountsByOrgIDAndRoleID(context.Context, valuer.UUID, valuer.UUID) ([]*ServiceAccount, error)
 	CountByOrgID(context.Context, valuer.UUID) (int64, error)
-	List(context.Context, valuer.UUID) ([]*ServiceAccount, error)
+	List(context.Context, valuer.UUID, *ListServiceAccountsParams) ([]*ServiceAccount, int64, error)
 	Update(context.Context, valuer.UUID, *ServiceAccount) error
 
 	// Service Account Role

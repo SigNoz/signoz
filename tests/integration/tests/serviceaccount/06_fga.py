@@ -106,9 +106,9 @@ def test_list_returns_every_sa(
 
     # list is collection-scoped: list on "*" returns every SA, including the one
     # the user cannot read individually.
-    resp = requests.get(signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE), headers={"Authorization": f"Bearer {token}"}, timeout=5)
+    resp = requests.get(signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE), params={"query": "sa-fga-"}, headers={"Authorization": f"Bearer {token}"}, timeout=5)
     assert resp.status_code == HTTPStatus.OK, resp.text
-    ids = {sa["id"] for sa in resp.json()["data"]}
+    ids = {sa["id"] for sa in resp.json()["data"]["serviceAccounts"]}
     assert {target_id, other_id} <= ids
 
 
