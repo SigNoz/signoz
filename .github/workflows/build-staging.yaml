@@ -24,16 +24,16 @@ jobs:
       deployment: ${{ steps.build-info.outputs.deployment }}
     steps:
       - name: self-checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - id: token
         name: github-token-gen
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           app-id: ${{ secrets.PRIMUS_APP_ID }}
           private-key: ${{ secrets.PRIMUS_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
       - name: primus-checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: signoz/primus
           ref: main
@@ -44,11 +44,20 @@ jobs:
         env:
           LABEL: ${{ github.event.label.name }}
         run: |
-          echo "version=$($MAKE info-version)" >> $GITHUB_OUTPUT
-          echo "hash=$($MAKE info-commit-short)" >> $GITHUB_OUTPUT
-          echo "time=$($MAKE info-timestamp)" >> $GITHUB_OUTPUT
-          echo "branch=$($MAKE info-branch)" >> $GITHUB_OUTPUT
-          echo "deployment=${LABEL#staging:}" >> $GITHUB_OUTPUT
+          # the deployment names an overlay in the release path glob and is spliced into the JSON payload
+          deployment="${LABEL#staging:}"
+          if [[ ! "${deployment}" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
+            echo "::error::label ${LABEL} must be staging:<deployment>, where the deployment is lowercase letters, digits and dashes"
+            exit 1
+          fi
+
+          {
+            echo "version=$($MAKE info-version)"
+            echo "hash=$($MAKE info-commit-short)"
+            echo "time=$($MAKE info-timestamp)"
+            echo "branch=$($MAKE info-branch)"
+            echo "deployment=${deployment}"
+          } >> "${GITHUB_OUTPUT}"
       - name: create-dotenv
         run: |
           mkdir -p frontend
@@ -60,7 +69,7 @@ jobs:
           echo 'VITE_ENVIRONMENT="staging"' >> frontend/.env
           echo 'VITE_VERSION="${{ steps.build-info.outputs.version }}"' >> frontend/.env
       - name: cache-dotenv
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: frontend/.env
           key: staging-dotenv-${{ github.sha }}
@@ -113,4 +122,4 @@ jobs:
       GITHUB_SILENT: true
       GITHUB_REPOSITORY_NAME: signoz.staging.cl.gcp.deployments
       GITHUB_EVENT_NAME: release
-      GITHUB_EVENT_PAYLOAD: '{"deployment": "${{ needs.prepare.outputs.deployment }}", "image": "us-central1-docker.pkg.dev/signoz-registry/signoz/signoz", "tag": "${{ needs.prepare.outputs.version }}"}'
+      GITHUB_EVENT_PAYLOAD: '{"path": "overlays/staging/*/signoz/overlays/${{ needs.prepare.outputs.deployment }}", "image": "us-central1-docker.pkg.dev/signoz-registry/signoz/signoz", "tag": "${{ needs.prepare.outputs.version }}"}'
