@@ -19,37 +19,28 @@ def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-a
     """
     Factory function for running schema migrations. Accepts optional
     env_overrides to customize the migrator environment; the release comes
-    from the --schema-migrator-version option.
+    from the --signoz-otel-collector-version option.
     """
 
     def create() -> None:
-        migrator_version = request.config.getoption("--schema-migrator-version")
+        collector_version = request.config.getoption("--signoz-otel-collector-version")
         client = docker.from_env()
 
-        environment = dict(env_overrides) if env_overrides else {}
+        environment = {
+            "SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN": clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN"],
+            "SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_CLUSTER": "cluster",
+            "SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_REPLICATION": "true",
+            "SIGNOZ_OTEL_COLLECTOR_TIMEOUT": "10m",
+            **(env_overrides or {}),
+        }
 
         container = client.containers.run(
-            image=f"signoz/signoz-schema-migrator:{migrator_version}",
-            command=f"sync --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN']}",
-            detach=True,
-            auto_remove=False,
-            network=network.id,
-            environment=environment,
-        )
-
-        result = container.wait()
-
-        if result["StatusCode"] != 0:
-            logs = container.logs().decode(encoding="utf-8")
-            container.remove()
-            print(logs)
-            raise RuntimeError("failed to run migrations on clickhouse")
-
-        container.remove()
-
-        container = client.containers.run(
-            image=f"signoz/signoz-schema-migrator:{migrator_version}",
-            command=f"async --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN']}",
+            image=f"signoz/signoz-otel-collector:{collector_version}",
+            entrypoint="/bin/sh",
+            command=[
+                "-c",
+                "/signoz-otel-collector migrate bootstrap && /signoz-otel-collector migrate sync up && /signoz-otel-collector migrate async up",
+            ],
             detach=True,
             auto_remove=False,
             network=network.id,
