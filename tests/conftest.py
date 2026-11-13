@@ -114,8 +114,8 @@ def pytest_addoption(parser: pytest.Parser):
         help="clickhouse version",
     )
     parser.addoption(
-        "--signoz-otel-collector-version",
+        "--schema-migrator-version",
         action="store",
-        default="v0.144.16-rc.1",
-        help="signoz-otel-collector version, used to run clickhouse migrations",
+        default="v0.144.9",  # todo(nikhil): change to 0.144.10
+        help="schema migrator version",
     )

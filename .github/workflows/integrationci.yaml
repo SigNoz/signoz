@@ -40,7 +40,6 @@ jobs:
         suite:
           - alertmanager
           - alertmanagerrotation
-          - auditquerier
           - basepath
           - callbackauthn
           - cloudintegrations
@@ -84,8 +83,8 @@ jobs:
           - wal
         clickhouse-version:
           - 25.12.5
-        signoz-otel-collector-version:
-          - v0.144.16-rc.1
+        schema-migrator-version:
+          - v0.144.6
         postgres-version:
           - 15
     if: |
@@ -156,4 +155,4 @@ jobs:
             --sqlite-mode ${{matrix.sqlite-mode}} \
             --postgres-version ${{matrix.postgres-version}} \
             --clickhouse-version ${{matrix.clickhouse-version}} \
-            --signoz-otel-collector-version ${{matrix.signoz-otel-collector-version}}
+            --schema-migrator-version ${{matrix.schema-migrator-version}}

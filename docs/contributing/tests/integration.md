@@ -256,7 +256,7 @@ Tests can be configured using pytest options:
 - `--sqlite-mode` — SQLite journal mode: `delete` or `wal` (default: `delete`). Only relevant when `--sqlstore-provider=sqlite`.
 - `--postgres-version` — PostgreSQL version (default: `15`)
 - `--clickhouse-version` — ClickHouse version, also used for ClickHouse Keeper (default: `25.12.5`)
-- `--signoz-otel-collector-version`: SigNoz OTel collector version, used to run the ClickHouse migrations (default: `v0.144.16-rc.1`)
+- `--schema-migrator-version` — SigNoz schema migrator version (default: `v0.144.9`)
 - `--with-web` — Build the frontend into the SigNoz image (required for e2e)
 
 Example:

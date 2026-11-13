@@ -990,7 +990,7 @@ def insert_reduced_metrics_to_clickhouse(
 ) -> None:
     """Insert reduced series into distributed_time_series_v4_reduced and 60s
     buckets into the reduced samples tables. These tables exist only when
-    the signoz-otel-collector version includes the metrics cardinality-control
+    the schema migrator version includes the metrics cardinality-control
     migration."""
     if time_series:
         conn.insert(
