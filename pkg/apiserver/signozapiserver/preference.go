@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	"github.com/gorilla/mux"
 )
@@ -74,7 +75,12 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceOrgPreference,
+		Verb:     coretypes.VerbList,
+		Category: coretypes.ActionCategoryDataAccess,
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
@@ -91,7 +97,13 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceOrgPreference,
+		Verb:     coretypes.VerbRead,
+		Category: coretypes.ActionCategoryDataAccess,
+		ID:       coretypes.PathParam("name"),
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
@@ -108,7 +120,13 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceOrgPreference,
+		Verb:     coretypes.VerbUpdate,
+		Category: coretypes.ActionCategoryConfigurationChange,
+		ID:       coretypes.PathParam("name"),
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
