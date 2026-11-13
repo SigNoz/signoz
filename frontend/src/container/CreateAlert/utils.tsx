@@ -274,8 +274,6 @@ export function getThresholdStateFromAlertDef(
 		matchType:
 			alertDef.condition.thresholds?.spec[0].matchType ||
 			AlertThresholdMatchType.AT_LEAST_ONCE,
-		algorithm:
-			alertDef.condition.algorithm || INITIAL_ALERT_THRESHOLD_STATE.algorithm,
 		seasonality:
 			alertDef.condition.seasonality || INITIAL_ALERT_THRESHOLD_STATE.seasonality,
 	};

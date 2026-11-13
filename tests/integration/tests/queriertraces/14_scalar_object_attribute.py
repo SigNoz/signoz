@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from http import HTTPStatus
 
 from fixtures import types
@@ -9,6 +9,7 @@ from fixtures.querier import (
     OrderBy,
     RequestType,
     TelemetryFieldKey,
+    get_attribute_evolution_time,
     get_rows,
     make_query_request,
 )
@@ -20,15 +21,13 @@ def test_traces_scalar_and_object_key_both_survive(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
     """A span attribute stored as both a scalar and an object prefix (db.function and
     db.function.arg) keeps both dotted keys through the native JSON read. json_only writes only the
     JSON column, so no legacy attribute map backfills the keys."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
-    seed_attribute_evolution("traces", evolution_time)
+    evolution_time = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
 
     service = "scalar-object-service"
     span_time = evolution_time + timedelta(minutes=5)
