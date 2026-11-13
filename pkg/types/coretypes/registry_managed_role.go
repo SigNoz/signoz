@@ -88,6 +88,9 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindOrgPreference}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindOrgPreference}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindOrgPreference}, WildCardSelectorString)},
+		// organization: admin only
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeOrganization, Kind: KindOrganization}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeOrganization, Kind: KindOrganization}, WildCardSelectorString)},
 		// public-dashboard — admin manages, anonymous reads
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPublicDashboard}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPublicDashboard}, WildCardSelectorString)},

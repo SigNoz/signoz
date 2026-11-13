@@ -276,6 +276,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddLLMPricingRuleTuplesFactory(sqlstore),
 		sqlmigration.NewRemoveUnsupportedQuickFiltersFactory(),
 		sqlmigration.NewMigrateRelatedLinksTemplateFactory(),
+		sqlmigration.NewAddOrganizationTuplesFactory(sqlstore),
 	)
 }
 
