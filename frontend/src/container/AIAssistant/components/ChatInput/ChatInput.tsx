@@ -50,6 +50,7 @@ import styles from './ChatInput.module.scss';
 import ComposerCaret from './ComposerCaret/ComposerCaret';
 import ContextPickerEmptyState from './ContextPickerEmptyState';
 import EdgeSweep from './EdgeSweep/EdgeSweep';
+import NozPeek from './NozPeek/NozPeek';
 import {
 	CONTEXT_CATEGORIES,
 	CONTEXT_CATEGORY_ICONS,
@@ -68,6 +69,8 @@ interface ChatInputProps {
 	isStreaming?: boolean;
 	/** When the current stream began; drives the top-edge sweep. */
 	streamStartedAt?: number | null;
+	/** Noz peeks over the top edge; meant for an empty conversation. */
+	showNozPeek?: boolean;
 	/**
 	 * URL-derived `source: 'auto'` contexts representing the page the user is
 	 * currently looking at. Rendered as chips alongside the user's `@`-mention
@@ -235,6 +238,7 @@ export default function ChatInput({
 	disabledTooltip,
 	isStreaming = false,
 	streamStartedAt = null,
+	showNozPeek = false,
 	autoContexts,
 	onDismissAutoContext,
 }: ChatInputProps): JSX.Element {
@@ -690,6 +694,7 @@ export default function ChatInput({
 			ref={inputRootRef}
 		>
 			<EdgeSweep startedAt={streamStartedAt} />
+			{showNozPeek && <NozPeek />}
 			{pendingFiles.length > 0 && (
 				<div className={styles.attachments}>
 					{pendingFiles.map((f) => (
