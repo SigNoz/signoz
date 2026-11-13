@@ -34,7 +34,7 @@ function BuilderUnitsFilter({
 	return (
 		<Space className="builder-units-filter">
 			<Typography
-				/* TODO(typography): font-size differs by parent (12px under .meterTimeSeriesContainer) */ variant="paragraph"
+				variant="paragraph"
 				size="base"
 				weight="regular"
 				color="inherit"
