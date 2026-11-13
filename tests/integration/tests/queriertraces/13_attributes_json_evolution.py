@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from http import HTTPStatus
 
 from fixtures import types
@@ -14,6 +14,7 @@ from fixtures.querier import (
     build_group_by_field,
     build_traces_scalar_query,
     get_all_warnings,
+    get_attribute_evolution_time,
     get_preview_sql,
     get_rows,
     index_series_by_label,
@@ -28,7 +29,6 @@ def test_traces_attributes_json_evolution(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
     """`http.route` is a dotted key, so the `attributes` JSON column nests it under the path
     http.route while the legacy attributes_string map keys it verbatim. Spans before the attribute
@@ -37,8 +37,7 @@ def test_traces_attributes_json_evolution(
     map+JSON multiIf (straddling), and must return identical rows across the boundary."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
-    seed_attribute_evolution("traces", evolution_time)
+    evolution_time = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
 
     before_2 = evolution_time - timedelta(minutes=10)
     before_1 = evolution_time - timedelta(minutes=5)
@@ -162,15 +161,13 @@ def test_traces_attributes_json_typed_filters(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
     """In the JSON-only window each dotted attribute reads through the nested path with its native
     cast: string (::String), Int64 (toFloat64(...::Nullable(Float64))), Bool (::Nullable(Bool)),
     and existence via the raw path. Filters must select the same rows the Map path would."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
-    seed_attribute_evolution("traces", evolution_time)
+    evolution_time = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
 
     hit = evolution_time + timedelta(minutes=5)
     miss = evolution_time + timedelta(minutes=6)
@@ -230,7 +227,6 @@ def test_traces_attributes_json_collision_and_map_parity(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
     """A name stored under two types (`app.status` as 200 and 'teapot') is one JSON path with
     per-row types. The Map-era behavior must hold on it: group-by reads each row as its stored
@@ -239,8 +235,7 @@ def test_traces_attributes_json_collision_and_map_parity(
     across every stored type."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
-    seed_attribute_evolution("traces", evolution_time)
+    evolution_time = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
 
     hit = evolution_time + timedelta(minutes=5)
     insert_traces(
@@ -343,14 +338,12 @@ def test_traces_attributes_json_number_reads(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
     """A JSON number reads like the attributes_number map: a numeric string as its number, an
     integer above 2^53 rounded, and a non-numeric string as no number."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
-    seed_attribute_evolution("traces", evolution_time)
+    evolution_time = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
 
     hit = evolution_time + timedelta(minutes=5)
     insert_traces(
@@ -400,14 +393,12 @@ def test_traces_attributes_json_list_view(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
     """One straddling list query surfaces each row's attributes bag from its own home
     (legacy maps / dual-written / JSON-only), flattened to dotted keys with native types."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
-    seed_attribute_evolution("traces", evolution_time)
+    evolution_time = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
 
     service = "list-homes-service"
     spans = [
@@ -477,14 +468,12 @@ def test_traces_attributes_json_unreported_key(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
     """An attribute metadata does not report follows the rollout like a reported one: the legacy
     map before it, the attributes JSON column after it."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
-    seed_attribute_evolution("traces", evolution_time)
+    evolution_time = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
 
     before = evolution_time - timedelta(minutes=5)
     after = evolution_time + timedelta(minutes=5)

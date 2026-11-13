@@ -323,7 +323,6 @@ describe('CreateAlert utils', () => {
 			ruleType: 'anomaly_rule',
 			condition: {
 				...defaultPostableAlertRuleV2.condition,
-				algorithm: 'standard',
 				seasonality: 'weekly',
 				thresholds: {
 					kind: 'basic',
@@ -349,7 +348,6 @@ describe('CreateAlert utils', () => {
 			expect(getThresholdStateFromAlertDef(anomalyDef)).toMatchObject({
 				operator: AlertThresholdOperator.IS_BELOW,
 				thresholds: [{ thresholdValue: 3 }],
-				algorithm: 'standard',
 				seasonality: 'weekly',
 			});
 		});

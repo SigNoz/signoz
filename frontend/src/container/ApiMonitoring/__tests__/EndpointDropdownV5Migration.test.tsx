@@ -1,8 +1,8 @@
 /**
  * V5 Migration Tests for Endpoint Dropdown Query
  *
- * These tests validate the migration from V4 to V5 format for the third payload
- * in getEndPointDetailsQueryPayload (endpoint dropdown data):
+ * These tests validate the migration from V4 to V5 format for
+ * getEndPointDropDownQueryPayload (endpoint picker options):
  * - Filter format change: filters.items[] → filter.expression
  * - Domain handling: http_host = '${domainName}'
  * - Kind filter: kind_string = 'Client'
@@ -10,9 +10,8 @@
  * - Aggregation: count() expression
  * - GroupBy: http_url with type 'attribute'
  */
-import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
+import { getEndPointDropDownQueryPayload } from 'container/ApiMonitoring/utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';
 
@@ -20,22 +19,16 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 	const mockDomainName = 'api.example.com';
 	const mockStartTime = 1000;
 	const mockEndTime = 2000;
-	const emptyFilters: IBuilderQuery['filters'] = {
-		items: [],
-		op: 'AND',
-	};
+	const emptyFilters = '';
 
 	describe('1. V5 Format Migration - Structure and Base Filters', () => {
 		it('migrates to V5 format with correct filter expression structure, aggregations, and groupBy', () => {
-			const payload = getEndPointDetailsQueryPayload(
+			const dropdownQuery = getEndPointDropDownQueryPayload(
 				mockDomainName,
 				mockStartTime,
 				mockEndTime,
 				emptyFilters,
 			);
-
-			// Third payload is the endpoint dropdown query (index 2)
-			const dropdownQuery = payload[2];
 			const queryA = dropdownQuery.query.builder.queryData[0];
 
 			// CRITICAL V5 MIGRATION: filter.expression (not filters.items)
@@ -77,46 +70,21 @@ describe('EndpointDropdown - V5 Migration Validation', () => {
 
 	describe('2. Custom Filters Integration', () => {
 		it('merges custom filters into filter expression with AND logic', () => {
-			const customFilters: IBuilderQuery['filters'] = {
-				items: [
-					{
-						id: 'test-1',
-						key: {
-							key: 'service.name',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'user-service',
-					},
-					{
-						id: 'test-2',
-						key: {
-							key: 'deployment.environment',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'production',
-					},
-				],
-				op: 'AND',
-			};
+			const customFilters =
+				"service.name = 'user-service' AND deployment.environment = 'production'";
 
-			const payload = getEndPointDetailsQueryPayload(
+			const dropdownQuery = getEndPointDropDownQueryPayload(
 				mockDomainName,
 				mockStartTime,
 				mockEndTime,
 				customFilters,
 			);
-
-			const dropdownQuery = payload[2];
 			const expression =
 				dropdownQuery.query.builder.queryData[0].filter?.expression;
 
 			// Exact filter expression with custom filters merged
 			expect(expression).toBe(
-				`${SPAN_ATTRIBUTES.SERVER_NAME} = 'api.example.com' AND kind_string = 'Client' AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS service.name = 'user-service' AND deployment.environment = 'production'`,
+				`${SPAN_ATTRIBUTES.SERVER_NAME} = 'api.example.com' AND kind_string = 'Client' AND ${SPAN_ATTRIBUTES.HTTP_URL} EXISTS AND (service.name = 'user-service' AND deployment.environment = 'production')`,
 			);
 		});
 	});

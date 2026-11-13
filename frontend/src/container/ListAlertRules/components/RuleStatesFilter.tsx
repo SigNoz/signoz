@@ -1,10 +1,12 @@
-import { useCallback } from 'react';
-import { ComboboxSimple, type ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import { useEffect, useState } from 'react';
 import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
+import MultiSelectFilter, {
+	type MultiSelectFilterOption,
+} from 'components/ListFilter/FilterZone/MultiSelectFilter';
 
-import styles from './RuleStatesFilter.module.scss';
+import { isSameStates } from '../utils';
 
-const STATE_ITEMS: ComboboxSimpleItem[] = [
+const STATE_OPTIONS: MultiSelectFilterOption[] = [
 	{ value: RuletypesAlertStateDTO.firing, label: 'Firing' },
 	{ value: RuletypesAlertStateDTO.pending, label: 'Pending' },
 	{ value: RuletypesAlertStateDTO.recovering, label: 'Recovering' },
@@ -22,26 +24,35 @@ function RuleStatesFilter({
 	states,
 	onChange,
 }: RuleStatesFilterProps): JSX.Element {
-	const handleChange = useCallback(
-		(values: unknown): void => {
-			if (Array.isArray(values)) {
-				onChange(values as string[]);
-			}
-		},
-		[onChange],
-	);
+	const [draft, setDraft] = useState(states);
+	const [open, setOpen] = useState(false);
+
+	useEffect(() => {
+		setDraft(states);
+	}, [states]);
+
+	const handleChange = (next: string[]): void => {
+		setDraft(next);
+		if (!open) {
+			onChange(next);
+		}
+	};
+
+	const handleDropdownVisibleChange = (nextOpen: boolean): void => {
+		setOpen(nextOpen);
+		if (!nextOpen && !isSameStates(draft, states)) {
+			onChange(draft);
+		}
+	};
 
 	return (
-		<ComboboxSimple
-			className={styles.statesSelect}
-			multiple
-			value={states}
-			onChange={handleChange}
-			placeholder="Filter by state"
-			inputPlaceholder="Select one or more"
-			items={STATE_ITEMS}
-			maxDisplayedPills={2}
+		<MultiSelectFilter
+			value={draft}
+			options={STATE_OPTIONS}
+			placeholder="State"
 			testId="alert-rules-filter-states"
+			onChange={handleChange}
+			onDropdownVisibleChange={handleDropdownVisibleChange}
 		/>
 	);
 }
