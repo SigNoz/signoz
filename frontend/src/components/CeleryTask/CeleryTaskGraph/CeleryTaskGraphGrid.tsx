@@ -166,7 +166,7 @@ export default function CeleryTaskGraphGrid({
 							</div>
 							<div className="worker-count-text-container">
 								<Typography
-									/* TODO(typography): not lifted from className: font-size: 2.5vw */ variant="paragraph"
+									variant="paragraph"
 									size="base"
 									weight="regular"
 									color="inherit"
