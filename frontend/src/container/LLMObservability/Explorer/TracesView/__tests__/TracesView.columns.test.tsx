@@ -33,7 +33,7 @@ jest.mock('../../TracesTable/TracesTable', () => ({
 			<button
 				data-testid="remove-total-tokens"
 				type="button"
-				onClick={(): void => onColumnRemove?.('trace:total_tokens:float64')}
+				onClick={(): void => onColumnRemove?.('trace:total_tokens:number')}
 			>
 				remove
 			</button>
@@ -48,7 +48,7 @@ const QUERY_RANGE_URL = `${ENVIRONMENT.baseURL}/api/v5/query_range`;
 const TOTAL_TOKENS = {
 	name: 'total_tokens',
 	fieldContext: 'trace',
-	fieldDataType: 'float64',
+	fieldDataType: 'number',
 };
 
 const storedColumnNames = (): string[] | undefined => {

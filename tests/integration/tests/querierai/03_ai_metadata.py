@@ -59,6 +59,24 @@ def test_ai_fields_trace_prefix_search(
     assert trace_context_names == {"output_tokens"}, keys
 
 
+@pytest.mark.parametrize("field_data_type", ["number", "float64", "int64"])
+def test_ai_fields_numeric_data_type_lists_aggregates(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    field_data_type: str,
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = get_field_keys(signoz, token, {"fieldDataType": field_data_type}, AI_KEYS_PATH)
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    keys = response.json()["data"]["keys"]
+    trace_keys = [key for variants in keys.values() for key in variants if key["fieldContext"] == "trace"]
+    assert {key["name"] for key in trace_keys} == AI_TRACE_AGGREGATES, keys
+    assert {key["fieldDataType"] for key in trace_keys} == {"number"}, keys
+
+
 def test_ai_fields_bare_prefix_suggests_aggregate_and_attribute(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument

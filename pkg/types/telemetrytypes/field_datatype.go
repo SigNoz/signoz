@@ -198,3 +198,20 @@ func (FieldDataType) Enum() []any {
 		// FieldDataTypeArrayNumber,
 	}
 }
+
+// sameDataTypeFamily treats the numeric types as one family: static fields
+// declare "number" while callers may ask for int64 or float64.
+func sameDataTypeFamily(requested, actual FieldDataType) bool {
+	if requested == actual {
+		return true
+	}
+	return isNumericDataType(requested) && isNumericDataType(actual)
+}
+
+func isNumericDataType(dataType FieldDataType) bool {
+	switch dataType {
+	case FieldDataTypeNumber, FieldDataTypeInt64, FieldDataTypeFloat64:
+		return true
+	}
+	return false
+}

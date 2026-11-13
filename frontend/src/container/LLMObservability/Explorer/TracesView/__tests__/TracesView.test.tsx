@@ -63,7 +63,7 @@ const mockFieldKeys = (names: string[]): void => {
 									{
 										name,
 										fieldContext: TelemetrytypesFieldContextDTO.trace,
-										fieldDataType: TelemetrytypesFieldDataTypeDTO.float64,
+										fieldDataType: TelemetrytypesFieldDataTypeDTO.number,
 									},
 								],
 							]),
