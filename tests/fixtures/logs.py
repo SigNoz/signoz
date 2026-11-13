@@ -174,7 +174,7 @@ class Logs(ABC):
             self.body_v2 = body_v2
         else:
             # Try to parse body as JSON; if successful use it directly,
-            # otherwise wrap as {"message": body} matching the normalize operator behavior.
+            # otherwise wrap as {"message": body} matching signozlogsnormalizer.
             try:
                 json.loads(body)
                 self.body_v2 = body
