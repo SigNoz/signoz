@@ -100,6 +100,7 @@
 }
 
 .composer {
+	position: relative;
 	padding: calc(var(--spacing-4) + 1px) var(--spacing-8);
 }
 
@@ -141,6 +142,8 @@
 	letter-spacing: -0.005em;
 	overflow-y: auto;
 	font-family: inherit;
+	// ComposerCaret draws the caret.
+	caret-color: transparent;
 	@include scrollbar(0.2rem);
 
 	&::placeholder {
@@ -148,9 +151,18 @@
 		opacity: 0.6;
 	}
 
+	&::selection {
+		background: var(--accent-primary);
+		color: var(--l1-background);
+	}
+
 	&:disabled {
 		opacity: 0.2;
 		cursor: not-allowed;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		caret-color: auto;
 	}
 }
 
