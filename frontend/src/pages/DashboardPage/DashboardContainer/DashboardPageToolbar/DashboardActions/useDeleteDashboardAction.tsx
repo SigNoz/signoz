@@ -74,7 +74,7 @@ export function useDeleteDashboardAction({
 					Are you sure you want to delete the
 					<Typography
 						variant="paragraph"
-						size="base"
+						size="medium"
 						weight="medium"
 						color="danger"
 						as="span"
