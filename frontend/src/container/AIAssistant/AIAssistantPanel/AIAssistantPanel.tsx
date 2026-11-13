@@ -5,7 +5,7 @@ import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
-import { History, Maximize2, Plus, X } from '@signozhq/icons';
+import { History, Maximize2, Minus, Plus, X } from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
 import { BOTTOM_STRIP_HEIGHT } from 'container/BottomStrip';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
@@ -174,6 +174,19 @@ export default function AIAssistantPanel(): JSX.Element | null {
 								aria-label="New conversation"
 							>
 								<Plus size={14} />
+							</Button>
+						</Tooltip>
+
+						<Tooltip title="Minimize">
+							<Button
+								variant="ghost"
+								size="sm"
+								icon
+								color="secondary"
+								onClick={closeDrawer}
+								aria-label="Minimize panel"
+							>
+								<Minus size={14} />
 							</Button>
 						</Tooltip>
 
