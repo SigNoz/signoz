@@ -206,7 +206,7 @@ HAS         : [Hh][Aa][Ss] ;
 HASANY      : [Hh][Aa][Ss][Aa][Nn][Yy] ;
 HASALL      : [Hh][Aa][Ss][Aa][Ll][Ll] ;
 SEARCH      : [Ss][Ee][Aa][Rr][Cc][Hh] ;
-PATTERN : [Pp][Aa][Tt][Tt][Ee][Rr][Nn] [ \t]* '(' ;
+PATTERN : [Pp][Aa][Tt][Tt][Ee][Rr][Nn] [ \t\r\n]* '(' ;
 
 // Potential boolean constants
 BOOL

@@ -56,6 +56,11 @@ func TestFilterExprPattern(t *testing.T) {
 			expectedError: "function `pattern` is not supported yet",
 		},
 		{
+			name:          "NewlineBeforeParenthesis_NotSupportedYet",
+			query:         "pattern\r\n('<IP>')",
+			expectedError: "function `pattern` is not supported yet",
+		},
+		{
 			name:          "NoPattern_SyntaxError",
 			query:         "pattern()",
 			expectedError: "syntax error",
