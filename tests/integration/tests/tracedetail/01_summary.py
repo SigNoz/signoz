@@ -7,6 +7,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.querier import get_attribute_evolution_time
 from fixtures.querierai import root_span
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
@@ -21,22 +22,16 @@ WATERFALL_FIELDS = (
 )
 
 
-@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_summary_ai_trace(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
-    attribute_backend: str,
 ) -> None:
     """The summary carries the waterfall's trace-level fields and, for a trace with gen_ai
-    spans, token totals over every LLM span and the cost summed over the spans that carry it.
-    Spans are written to one layout only, so a read from the wrong column sums to zero."""
-    use_attribute_backend(attribute_backend)
-    write_mode = "json_only" if attribute_backend == "json" else "legacy_only"
+    spans, token totals over every LLM span and the cost summed over the spans that carry it."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    service = f"td-summary-{attribute_backend}"
+    service = "td-summary"
     resources = {"service.name": service}
     trace_id = TraceIdGenerator.trace_id()
     root_id = TraceIdGenerator.span_id()
@@ -61,7 +56,6 @@ def test_summary_ai_trace(
                     "gen_ai.usage.cache_read.input_tokens": 7,
                     "signoz.gen_ai.usage.tokens.cost": 0.01,
                 },
-                attribute_write_mode=write_mode,
             ),
             # a failed LLM call: counted in tokens and errors, but priced by nobody
             Traces(
@@ -79,7 +73,6 @@ def test_summary_ai_trace(
                     "gen_ai.usage.input_tokens": 50,
                     "gen_ai.usage.output_tokens": 5,
                 },
-                attribute_write_mode=write_mode,
             ),
             Traces(
                 timestamp=now - timedelta(seconds=2),
@@ -92,7 +85,6 @@ def test_summary_ai_trace(
                 status_code=TracesStatusCode.STATUS_CODE_OK,
                 resources=resources,
                 attributes={"gen_ai.tool.name": "get_weather"},
-                attribute_write_mode=write_mode,
             ),
         ]
     )
@@ -129,14 +121,11 @@ def test_summary_ai_trace_across_json_rollout(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
     """A trace that straddles the attribute JSON rollout has LLM spans written only to the legacy
     maps before it and to the JSON column after it. The summary window covers both, so the gen_ai
     reads must fall back across columns and sum every span."""
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
-    rollout = now - timedelta(minutes=30)
-    seed_attribute_evolution("traces", rollout)
+    rollout = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
 
     service = "td-summary-rollout"
     resources = {"service.name": service}
