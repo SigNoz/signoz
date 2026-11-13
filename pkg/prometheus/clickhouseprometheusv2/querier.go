@@ -28,14 +28,14 @@ type querier struct {
 
 var _ storage.Querier = (*querier)(nil)
 
-func (q *querier) Select(ctx context.Context, sortSeries bool, hints *storage.SelectHints, matchers ...*labels.Matcher) storage.SeriesSet {
-	start, end := q.window(hints)
+func (querier *querier) Select(ctx context.Context, sortSeries bool, hints *storage.SelectHints, matchers ...*labels.Matcher) storage.SeriesSet {
+	start, end := querier.window(hints)
 
 	seriesQuery, seriesArgs, err := buildSeriesQuery(start, end, matchers)
 	if err != nil {
 		return storage.ErrSeriesSet(err)
 	}
-	lookup, err := q.client.selectSeries(ctx, seriesQuery, seriesArgs)
+	lookup, err := querier.client.selectSeries(ctx, seriesQuery, seriesArgs)
 	if err != nil {
 		return storage.ErrSeriesSet(err)
 	}
@@ -43,7 +43,7 @@ func (q *querier) Select(ctx context.Context, sortSeries bool, hints *storage.Se
 		return storage.EmptySeriesSet()
 	}
 
-	list, err := q.fetchSamples(ctx, start, end, matchers, lookup, q.lastSamplePerStepFor(ctx, hints))
+	list, err := querier.fetchSamples(ctx, start, end, matchers, lookup, querier.lastSamplePerStepFor(ctx, hints))
 	if err != nil {
 		return storage.ErrSeriesSet(err)
 	}
@@ -53,16 +53,16 @@ func (q *querier) Select(ctx context.Context, sortSeries bool, hints *storage.Se
 	return newSeriesSet(list)
 }
 
-func (q *querier) LabelValues(ctx context.Context, name string, hints *storage.LabelHints, matchers ...*labels.Matcher) ([]string, annotations.Annotations, error) {
+func (querier *querier) LabelValues(ctx context.Context, name string, hints *storage.LabelHints, matchers ...*labels.Matcher) ([]string, annotations.Annotations, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	if name == metricNameLabel {
 		sb.Select("DISTINCT metric_name AS value")
 	} else {
 		sb.Select(fmt.Sprintf("DISTINCT JSONExtractString(labels, %s) AS value", sb.Var(name)))
 	}
-	adjustedStart, _, table, _ := metricstelemetryschema.WhichTSTableToUse(uint64(q.mint), uint64(q.maxt), false, nil)
+	adjustedStart, _, table, _ := metricstelemetryschema.WhichTSTableToUse(uint64(querier.mint), uint64(querier.maxt), false, nil)
 	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, table))
-	if err := applySeriesConditions(sb, int64(adjustedStart), q.maxt, matchers); err != nil {
+	if err := applySeriesConditions(sb, int64(adjustedStart), querier.maxt, matchers); err != nil {
 		return nil, nil, err
 	}
 	sb.Where("value != ''")
@@ -71,7 +71,7 @@ func (q *querier) LabelValues(ctx context.Context, name string, hints *storage.L
 	}
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	values, err := q.selectStrings(ctx, "LabelValues", query, args)
+	values, err := querier.selectStrings(ctx, "LabelValues", query, args)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -79,12 +79,12 @@ func (q *querier) LabelValues(ctx context.Context, name string, hints *storage.L
 	return values, nil, nil
 }
 
-func (q *querier) LabelNames(ctx context.Context, hints *storage.LabelHints, matchers ...*labels.Matcher) ([]string, annotations.Annotations, error) {
+func (querier *querier) LabelNames(ctx context.Context, hints *storage.LabelHints, matchers ...*labels.Matcher) ([]string, annotations.Annotations, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("DISTINCT arrayJoin(JSONExtractKeys(labels)) AS name")
-	adjustedStart, _, table, _ := metricstelemetryschema.WhichTSTableToUse(uint64(q.mint), uint64(q.maxt), false, nil)
+	adjustedStart, _, table, _ := metricstelemetryschema.WhichTSTableToUse(uint64(querier.mint), uint64(querier.maxt), false, nil)
 	sb.From(fmt.Sprintf("%s.%s", metricstelemetryschema.DBName, table))
-	if err := applySeriesConditions(sb, int64(adjustedStart), q.maxt, matchers); err != nil {
+	if err := applySeriesConditions(sb, int64(adjustedStart), querier.maxt, matchers); err != nil {
 		return nil, nil, err
 	}
 	if hints != nil && hints.Limit > 0 {
@@ -92,7 +92,7 @@ func (q *querier) LabelNames(ctx context.Context, hints *storage.LabelHints, mat
 	}
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	names, err := q.selectStrings(ctx, "LabelNames", query, args)
+	names, err := querier.selectStrings(ctx, "LabelNames", query, args)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -100,18 +100,18 @@ func (q *querier) LabelNames(ctx context.Context, hints *storage.LabelHints, mat
 	return names, nil, nil
 }
 
-func (q *querier) Close() error {
+func (querier *querier) Close() error {
 	return nil
 }
 
 // window returns the per-selector fetch window from the hints (already
 // adjusted for offset, @, range and lookback); mint/maxt span the union of
 // all selectors and are the fallback.
-func (q *querier) window(hints *storage.SelectHints) (int64, int64) {
+func (querier *querier) window(hints *storage.SelectHints) (int64, int64) {
 	if hints != nil && hints.Start != 0 && hints.End != 0 && hints.Start <= hints.End {
 		return hints.Start, hints.End
 	}
-	return q.mint, q.maxt
+	return querier.mint, querier.maxt
 }
 
 // lastSamplePerStepFor decides whether the fetch can keep only the last
@@ -122,7 +122,7 @@ func (q *querier) window(hints *storage.SelectHints) (int64, int64) {
 // arrives as QueryTraits in the context. The first evaluation timestamp is
 // recovered as hints.Start + lookback - 1ms, inverting how the engine
 // derives hints.Start.
-func (q *querier) lastSamplePerStepFor(ctx context.Context, hints *storage.SelectHints) *lastSamplePerStep {
+func (querier *querier) lastSamplePerStepFor(ctx context.Context, hints *storage.SelectHints) *lastSamplePerStep {
 	if hints == nil || hints.Range != 0 || hints.Start <= 0 {
 		return nil
 	}
@@ -130,7 +130,7 @@ func (q *querier) lastSamplePerStepFor(ctx context.Context, hints *storage.Selec
 	if !ok || !traits.SubqueryFree {
 		return nil
 	}
-	firstEval := hints.Start + q.client.lookbackMs - 1
+	firstEval := hints.Start + querier.client.lookbackMs - 1
 	if firstEval > hints.End {
 		// Defensive: never anchor a bucket past the window.
 		firstEval = hints.End
@@ -140,17 +140,17 @@ func (q *querier) lastSamplePerStepFor(ctx context.Context, hints *storage.Selec
 
 // fetchSamples runs the samples query for the matched series (see
 // buildSamplesQuery).
-func (q *querier) fetchSamples(ctx context.Context, start, end int64, matchers []*labels.Matcher, lookup *seriesLookup, lastPerStep *lastSamplePerStep) ([]*series, error) {
-	query, args, err := buildSamplesQuery(start, end, lookup.metricNames, matchers, lastPerStep)
+func (querier *querier) fetchSamples(ctx context.Context, start, end int64, matchers []*labels.Matcher, lookup *seriesLookup, lastPerStep *lastSamplePerStep) ([]*series, error) {
+	query, args, err := buildSamplesQuery(start, end, lookup.metricNames, matchers, lastPerStep, querier.client.cfg.MaxFetchedSamples)
 	if err != nil {
 		return nil, err
 	}
-	return q.client.selectSamples(ctx, query, args, lookup)
+	return querier.client.selectSamples(ctx, query, args, lookup)
 }
 
-func (q *querier) selectStrings(ctx context.Context, fn, query string, args []any) ([]string, error) {
-	ctx = q.client.withContext(ctx, fn)
-	rows, err := q.client.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+func (querier *querier) selectStrings(ctx context.Context, fn, query string, args []any) ([]string, error) {
+	ctx = querier.client.withContext(ctx, fn)
+	rows, err := querier.client.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

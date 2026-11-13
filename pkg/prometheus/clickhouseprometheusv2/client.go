@@ -7,6 +7,10 @@ import (
 	"math"
 	"slices"
 
+	chproto "github.com/ClickHouse/ch-go/proto"
+	"github.com/ClickHouse/clickhouse-go/v2"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -15,6 +19,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/prometheus/prometheus/model/labels"
 	promValue "github.com/prometheus/prometheus/model/value"
+)
+
+var (
+	CodeSeriesBudgetExceeded  = errors.MustNewCode("series_budget_exceeded")
+	CodeSamplesBudgetExceeded = errors.MustNewCode("samples_budget_exceeded")
 )
 
 // seriesLookup holds a series lookup's result: matched fingerprints with
@@ -29,6 +38,7 @@ type client struct {
 	settings       factory.ScopedProviderSettings
 	telemetryStore telemetrystore.TelemetryStore
 	lookbackMs     int64
+	cfg            prometheus.ClickhouseV2Config
 }
 
 func newClient(settings factory.ScopedProviderSettings, telemetryStore telemetrystore.TelemetryStore, cfg prometheus.Config) *client {
@@ -41,10 +51,11 @@ func newClient(settings factory.ScopedProviderSettings, telemetryStore telemetry
 		settings:       settings,
 		telemetryStore: telemetryStore,
 		lookbackMs:     lookback.Milliseconds(),
+		cfg:            cfg.ClickhouseV2,
 	}
 }
 
-func (c *client) withContext(ctx context.Context, functionName string) context.Context {
+func (client *client) withContext(ctx context.Context, functionName string) context.Context {
 	return ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
 		instrumentationtypes.CodeNamespace:    "clickhouse-prometheus-v2",
@@ -52,11 +63,43 @@ func (c *client) withContext(ctx context.Context, functionName string) context.C
 	})
 }
 
-func (c *client) selectSeries(ctx context.Context, query string, args []any) (*seriesLookup, error) {
-	ctx = c.withContext(ctx, "selectSeries")
-	rows, err := c.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+// budgetExceeded reports whether err is ClickHouse refusing a query over its
+// result limit (the budgets above).
+func budgetExceeded(err error) bool {
+	var chErr *clickhouse.Exception
+	return errors.As(err, &chErr) && chErr.Code == int32(chproto.ErrTooManyRowsOrBytes)
+}
+
+func (client *client) seriesError(err error) error {
+	if budgetExceeded(err) {
+		return errors.NewInvalidInputf(
+			CodeSeriesBudgetExceeded,
+			"promql selector matched more than %d series; narrow the label matchers",
+			client.cfg.MaxFetchedSeries,
+		)
+	}
+	return err
+}
+
+func (client *client) samplesError(err error) error {
+	if budgetExceeded(err) {
+		return errors.NewInvalidInputf(
+			CodeSamplesBudgetExceeded,
+			"promql query would fetch more than %d samples; narrow the selector or time range",
+			client.cfg.MaxFetchedSamples,
+		)
+	}
+	return err
+}
+
+func (client *client) selectSeries(ctx context.Context, query string, args []any) (*seriesLookup, error) {
+	ctx = client.withContext(ctx, "selectSeries")
+	if client.cfg.MaxFetchedSeries > 0 {
+		query += budgetSettings(int64(client.cfg.MaxFetchedSeries))
+	}
+	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, client.seriesError(err)
 	}
 	defer rows.Close()
 
@@ -79,7 +122,7 @@ func (c *client) selectSeries(ctx context.Context, query string, args []any) (*s
 		}
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, client.seriesError(err)
 	}
 
 	for name := range names {
@@ -117,11 +160,11 @@ func unmarshalLabels(s string) (labels.Labels, error) {
 // Stale flags map to the engine's StaleNaN. Duplicate
 // timestamps pass through: uniqueness is ingest's job, and v1 feeds them to
 // the engine as-is over the same dirty data.
-func (c *client) selectSamples(ctx context.Context, query string, args []any, lookup *seriesLookup) ([]*series, error) {
-	ctx = c.withContext(ctx, "selectSamples")
-	rows, err := c.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+func (client *client) selectSamples(ctx context.Context, query string, args []any, lookup *seriesLookup) ([]*series, error) {
+	ctx = client.withContext(ctx, "selectSamples")
+	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, client.samplesError(err)
 	}
 	defer rows.Close()
 
@@ -168,11 +211,11 @@ func (c *client) selectSamples(ctx context.Context, query string, args []any, lo
 		current.vs = append(current.vs, val)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, client.samplesError(err)
 	}
 
 	if unknownCount > 0 {
-		c.settings.Logger().DebugContext(ctx, "skipped samples of fingerprints missing from series lookup",
+		client.settings.Logger().DebugContext(ctx, "skipped samples of fingerprints missing from series lookup",
 			slog.Int("unknown_fingerprints", unknownCount))
 	}
 

@@ -17,17 +17,17 @@ type statementRecorder struct {
 	statements []prometheus.CapturedStatement
 }
 
-func (r *statementRecorder) record(query string, args []any) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.statements = append(r.statements, prometheus.CapturedStatement{Query: query, Args: args})
+func (recorder *statementRecorder) record(query string, args []any) {
+	recorder.mu.Lock()
+	defer recorder.mu.Unlock()
+	recorder.statements = append(recorder.statements, prometheus.CapturedStatement{Query: query, Args: args})
 }
 
-func (r *statementRecorder) Statements() []prometheus.CapturedStatement {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	out := make([]prometheus.CapturedStatement, len(r.statements))
-	copy(out, r.statements)
+func (recorder *statementRecorder) Statements() []prometheus.CapturedStatement {
+	recorder.mu.Lock()
+	defer recorder.mu.Unlock()
+	out := make([]prometheus.CapturedStatement, len(recorder.statements))
+	copy(out, recorder.statements)
 	return out
 }
 
@@ -36,10 +36,10 @@ type captureQueryable struct {
 	recorder *statementRecorder
 }
 
-func (c *captureQueryable) Querier(mint, maxt int64) (storage.Querier, error) {
+func (queryable *captureQueryable) Querier(mint, maxt int64) (storage.Querier, error) {
 	return &captureQuerier{
-		querier:  querier{mint: mint, maxt: maxt, client: c.client},
-		recorder: c.recorder,
+		querier:  querier{mint: mint, maxt: maxt, client: queryable.client},
+		recorder: queryable.recorder,
 	}, nil
 }
 
@@ -51,24 +51,24 @@ type captureQuerier struct {
 	recorder *statementRecorder
 }
 
-func (c *captureQuerier) Select(ctx context.Context, _ bool, hints *storage.SelectHints, matchers ...*labels.Matcher) storage.SeriesSet {
+func (capture *captureQuerier) Select(ctx context.Context, _ bool, hints *storage.SelectHints, matchers ...*labels.Matcher) storage.SeriesSet {
 
-	start, end := c.window(hints)
+	start, end := capture.window(hints)
 
-	samplesQuery, args, err := buildSamplesQuery(start, end, metricNamesFromMatchers(matchers), matchers, c.lastSamplePerStepFor(ctx, hints))
+	samplesQuery, args, err := buildSamplesQuery(start, end, metricNamesFromMatchers(matchers), matchers, capture.lastSamplePerStepFor(ctx, hints), capture.client.cfg.MaxFetchedSamples)
 	if err != nil {
 		return storage.ErrSeriesSet(err)
 	}
-	c.recorder.record(samplesQuery, args)
+	capture.recorder.record(samplesQuery, args)
 
 	return storage.EmptySeriesSet()
 }
 
-func (c *captureQuerier) LabelValues(context.Context, string, *storage.LabelHints, ...*labels.Matcher) ([]string, annotations.Annotations, error) {
+func (capture *captureQuerier) LabelValues(context.Context, string, *storage.LabelHints, ...*labels.Matcher) ([]string, annotations.Annotations, error) {
 	return nil, nil, nil
 }
 
-func (c *captureQuerier) LabelNames(context.Context, *storage.LabelHints, ...*labels.Matcher) ([]string, annotations.Annotations, error) {
+func (capture *captureQuerier) LabelNames(context.Context, *storage.LabelHints, ...*labels.Matcher) ([]string, annotations.Annotations, error) {
 	return nil, nil, nil
 }
 

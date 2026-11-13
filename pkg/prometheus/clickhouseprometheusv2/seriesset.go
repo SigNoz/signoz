@@ -22,17 +22,17 @@ type series struct {
 
 var _ storage.Series = (*series)(nil)
 
-func (s *series) Labels() labels.Labels {
-	return s.lset
+func (series *series) Labels() labels.Labels {
+	return series.lset
 }
 
-func (s *series) Iterator(it chunkenc.Iterator) chunkenc.Iterator {
+func (series *series) Iterator(it chunkenc.Iterator) chunkenc.Iterator {
 	if fit, ok := it.(*floatIterator); ok {
-		fit.reset(s)
+		fit.reset(series)
 		return fit
 	}
 	fit := &floatIterator{}
-	fit.reset(s)
+	fit.reset(series)
 	return fit
 }
 
@@ -44,61 +44,61 @@ type floatIterator struct {
 
 var _ chunkenc.Iterator = (*floatIterator)(nil)
 
-func (it *floatIterator) reset(s *series) {
-	it.s = s
-	it.i = -1
+func (iterator *floatIterator) reset(s *series) {
+	iterator.s = s
+	iterator.i = -1
 }
 
-func (it *floatIterator) Next() chunkenc.ValueType {
-	it.i++
-	if it.i >= len(it.s.ts) {
+func (iterator *floatIterator) Next() chunkenc.ValueType {
+	iterator.i++
+	if iterator.i >= len(iterator.s.ts) {
 		return chunkenc.ValNone
 	}
 	return chunkenc.ValFloat
 }
 
-func (it *floatIterator) Seek(t int64) chunkenc.ValueType { //nolint:govet // stdmethods flags io.Seeker; this is chunkenc.Iterator's Seek
-	if it.i < 0 {
-		it.i = 0
+func (iterator *floatIterator) Seek(t int64) chunkenc.ValueType { //nolint:govet // stdmethods flags io.Seeker; this is chunkenc.Iterator's Seek
+	if iterator.i < 0 {
+		iterator.i = 0
 	}
-	if it.i >= len(it.s.ts) {
+	if iterator.i >= len(iterator.s.ts) {
 		return chunkenc.ValNone
 	}
 	// The current position, once valid, must not move backwards.
-	if it.s.ts[it.i] >= t {
+	if iterator.s.ts[iterator.i] >= t {
 		return chunkenc.ValFloat
 	}
-	it.i += sort.Search(len(it.s.ts)-it.i, func(j int) bool {
-		return it.s.ts[it.i+j] >= t
+	iterator.i += sort.Search(len(iterator.s.ts)-iterator.i, func(j int) bool {
+		return iterator.s.ts[iterator.i+j] >= t
 	})
-	if it.i >= len(it.s.ts) {
+	if iterator.i >= len(iterator.s.ts) {
 		return chunkenc.ValNone
 	}
 	return chunkenc.ValFloat
 }
 
-func (it *floatIterator) At() (int64, float64) {
-	return it.s.ts[it.i], it.s.vs[it.i]
+func (iterator *floatIterator) At() (int64, float64) {
+	return iterator.s.ts[iterator.i], iterator.s.vs[iterator.i]
 }
 
-func (it *floatIterator) AtHistogram(*histogram.Histogram) (int64, *histogram.Histogram) {
+func (iterator *floatIterator) AtHistogram(*histogram.Histogram) (int64, *histogram.Histogram) {
 	return 0, nil
 }
 
-func (it *floatIterator) AtFloatHistogram(*histogram.FloatHistogram) (int64, *histogram.FloatHistogram) {
+func (iterator *floatIterator) AtFloatHistogram(*histogram.FloatHistogram) (int64, *histogram.FloatHistogram) {
 	return 0, nil
 }
 
-func (it *floatIterator) AtT() int64 {
-	return it.s.ts[it.i]
+func (iterator *floatIterator) AtT() int64 {
+	return iterator.s.ts[iterator.i]
 }
 
 // AtST returns the current start timestamp; not tracked by this storage.
-func (it *floatIterator) AtST() int64 {
+func (iterator *floatIterator) AtST() int64 {
 	return 0
 }
 
-func (it *floatIterator) Err() error {
+func (iterator *floatIterator) Err() error {
 	return nil
 }
 
@@ -114,20 +114,20 @@ func newSeriesSet(list []*series) *seriesSet {
 	return &seriesSet{series: list, i: -1}
 }
 
-func (s *seriesSet) Next() bool {
-	s.i++
-	return s.i < len(s.series)
+func (set *seriesSet) Next() bool {
+	set.i++
+	return set.i < len(set.series)
 }
 
-func (s *seriesSet) At() storage.Series {
-	return s.series[s.i]
+func (set *seriesSet) At() storage.Series {
+	return set.series[set.i]
 }
 
-func (s *seriesSet) Err() error {
+func (set *seriesSet) Err() error {
 	return nil
 }
 
-func (s *seriesSet) Warnings() annotations.Annotations {
+func (set *seriesSet) Warnings() annotations.Annotations {
 	return nil
 }
 

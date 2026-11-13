@@ -30,8 +30,8 @@ type executor struct {
 // path serves the rest.
 const maxWindowBuckets = 64
 
-func (e *executor) TryExecuteRange(ctx context.Context, qs string, start, end time.Time, step time.Duration) (promql.Matrix, bool, error) {
-	expr, err := e.parser.ParseExpr(qs)
+func (executor *executor) TryExecuteRange(ctx context.Context, qs string, start, end time.Time, step time.Duration) (promql.Matrix, bool, error) {
+	expr, err := executor.parser.ParseExpr(qs)
 	if err != nil {
 		// Let the engine path produce the (enhanced) parse error.
 		return nil, false, nil
@@ -71,7 +71,7 @@ func (e *executor) TryExecuteRange(ctx context.Context, qs string, start, end ti
 		case unit.core.kind == unitInstant || (unit.core.kind == unitOverTime && unit.core.overFn == "last"):
 			windowMs := unit.core.rangeMs
 			if unit.core.kind == unitInstant {
-				windowMs = e.client.lookbackMs
+				windowMs = executor.client.lookbackMs
 			}
 			if windowMs <= 0 {
 				return nil, false, nil
@@ -94,7 +94,7 @@ func (e *executor) TryExecuteRange(ctx context.Context, qs string, start, end ti
 	eg, egCtx := errgroup.WithContext(ctx)
 	for i, unit := range plan.units {
 		eg.Go(func() error {
-			res, err := e.executeUnit(egCtx, &unit.core, unit.grid)
+			res, err := executor.executeUnit(egCtx, &unit.core, unit.grid)
 			if err != nil {
 				return err
 			}
@@ -111,7 +111,7 @@ func (e *executor) TryExecuteRange(ctx context.Context, qs string, start, end ti
 		return toMatrix(results[0], g.startMs, g.stepMs), true, nil
 	}
 
-	matrix, err := e.executeHybrid(ctx, plan, results)
+	matrix, err := executor.executeHybrid(ctx, plan, results)
 	if err != nil {
 		return nil, true, err
 	}
@@ -134,11 +134,11 @@ type transpiledSeries struct {
 	values []*float64
 }
 
-func (e *executor) executeUnit(ctx context.Context, unit *coreUnit, grid gridContext) ([]transpiledSeries, error) {
+func (executor *executor) executeUnit(ctx context.Context, unit *coreUnit, grid gridContext) ([]transpiledSeries, error) {
 	startMs, endMs, stepMs := grid.startMs, grid.endMs, grid.stepMs
 	windowMs := unit.rangeMs
 	if unit.kind == unitInstant {
-		windowMs = e.client.lookbackMs
+		windowMs = executor.client.lookbackMs
 	}
 	dataStart := startMs - unit.offsetMs - windowMs
 	dataEnd := endMs - unit.offsetMs
@@ -153,7 +153,7 @@ func (e *executor) executeUnit(ctx context.Context, unit *coreUnit, grid gridCon
 		if err != nil {
 			return nil, err
 		}
-		lookup, err := e.client.selectSeries(ctx, seriesQuery, seriesArgs)
+		lookup, err := executor.client.selectSeries(ctx, seriesQuery, seriesArgs)
 		if err != nil {
 			return nil, err
 		}
@@ -163,12 +163,12 @@ func (e *executor) executeUnit(ctx context.Context, unit *coreUnit, grid gridCon
 		metricNames = lookup.metricNames
 	}
 
-	query, args, err := buildUnitSQL(unit, metricNames, dataStart, dataEnd, startMs, endMs, stepMs, e.client.lookbackMs)
+	query, args, err := buildUnitSQL(unit, metricNames, dataStart, dataEnd, startMs, endMs, stepMs, executor.client.lookbackMs)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := e.client.telemetryStore.ClickhouseDB().Query(e.client.withContext(ctx, "transpiledUnit"), query, args...)
+	rows, err := executor.client.telemetryStore.ClickhouseDB().Query(executor.client.withContext(ctx, "transpiledUnit"), query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -387,7 +387,7 @@ func toMatrix(series []transpiledSeries, startMs, stepMs int64) promql.Matrix {
 // or arms into per-unit series that a later name drop collides into the
 // duplicate-labelset error. hybridQuerier.Select resolves the selector
 // from the matcher, not from series labels.
-func (e *executor) executeHybrid(ctx context.Context, plan *transpilePlan, results [][]transpiledSeries) (promql.Matrix, error) {
+func (executor *executor) executeHybrid(ctx context.Context, plan *transpilePlan, results [][]transpiledSeries) (promql.Matrix, error) {
 	synthetic := make(map[string][]*series, len(plan.units))
 	staleMarker := math.Float64frombits(promValue.StaleNaN)
 
@@ -420,14 +420,14 @@ func (e *executor) executeHybrid(ctx context.Context, plan *transpilePlan, resul
 		synthetic[unit.name] = list
 	}
 
-	hybrid := &hybridQueryable{client: e.client, synthetic: synthetic}
+	hybrid := &hybridQueryable{client: executor.client, synthetic: synthetic}
 
 	var qry promql.Query
 	var err error
 	if queryGrid.stepMs == 0 {
-		qry, err = e.engine.NewInstantQuery(ctx, hybrid, nil, plan.rewritten, time.UnixMilli(queryGrid.endMs))
+		qry, err = executor.engine.NewInstantQuery(ctx, hybrid, nil, plan.rewritten, time.UnixMilli(queryGrid.endMs))
 	} else {
-		qry, err = e.engine.NewRangeQuery(ctx, hybrid, nil, plan.rewritten, time.UnixMilli(queryGrid.startMs), time.UnixMilli(queryGrid.endMs), time.Duration(queryGrid.stepMs)*time.Millisecond)
+		qry, err = executor.engine.NewRangeQuery(ctx, hybrid, nil, plan.rewritten, time.UnixMilli(queryGrid.startMs), time.UnixMilli(queryGrid.endMs), time.Duration(queryGrid.stepMs)*time.Millisecond)
 	}
 	if err != nil {
 		return nil, err
@@ -479,10 +479,10 @@ type hybridQueryable struct {
 	synthetic map[string][]*series
 }
 
-func (h *hybridQueryable) Querier(mint, maxt int64) (storage.Querier, error) {
+func (queryable *hybridQueryable) Querier(mint, maxt int64) (storage.Querier, error) {
 	return &hybridQuerier{
-		querier:   querier{mint: mint, maxt: maxt, client: h.client},
-		synthetic: h.synthetic,
+		querier:   querier{mint: mint, maxt: maxt, client: queryable.client},
+		synthetic: queryable.synthetic,
 	}, nil
 }
 
@@ -491,9 +491,9 @@ type hybridQuerier struct {
 	synthetic map[string][]*series
 }
 
-func (h *hybridQuerier) Select(ctx context.Context, sortSeries bool, hints *storage.SelectHints, matchers ...*labels.Matcher) storage.SeriesSet {
+func (hybrid *hybridQuerier) Select(ctx context.Context, sortSeries bool, hints *storage.SelectHints, matchers ...*labels.Matcher) storage.SeriesSet {
 	if name, ok := isSyntheticSelector(matchers); ok {
-		list := h.synthetic[name]
+		list := hybrid.synthetic[name]
 		if sortSeries {
 			sorted := make([]*series, len(list))
 			copy(sorted, list)
@@ -502,5 +502,5 @@ func (h *hybridQuerier) Select(ctx context.Context, sortSeries bool, hints *stor
 		}
 		return newSeriesSet(list)
 	}
-	return h.querier.Select(ctx, sortSeries, hints, matchers...)
+	return hybrid.querier.Select(ctx, sortSeries, hints, matchers...)
 }
