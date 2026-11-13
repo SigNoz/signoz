@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import cx from 'classnames';
 import { useAppLocation } from 'lib/router/useAppLocation';
 
@@ -110,27 +110,23 @@ export default function ConversationView({
 	);
 
 	// Wall-clock timestamp of the current streaming start, used to compute
-	// `secondsSinceStart` on Cancel clicked. Cleared whenever streaming ends.
-	const streamStartedAtRef = useRef<number | null>(null);
+	// `secondsSinceStart` on Cancel clicked and to keep the input's sweep in step
+	// across a remount. Cleared whenever streaming ends.
+	const [streamStartedAt, setStreamStartedAt] = useState<number | null>(null);
 	useEffect(() => {
-		if (!isStreamingHere) {
-			streamStartedAtRef.current = null;
-			return;
-		}
-		if (streamStartedAtRef.current === null) {
-			streamStartedAtRef.current = Date.now();
-		}
+		setStreamStartedAt((prev) => (isStreamingHere ? (prev ?? Date.now()) : null));
 	}, [isStreamingHere]);
 
 	const handleCancel = useCallback(() => {
-		const startedAt = streamStartedAtRef.current;
 		void logEvent(AIAssistantEvents.CancelClicked, {
 			threadId: analyticsCtx.threadId,
 			secondsSinceStart:
-				startedAt !== null ? Math.round((Date.now() - startedAt) / 1000) : null,
+				streamStartedAt !== null
+					? Math.round((Date.now() - streamStartedAt) / 1000)
+					: null,
 		});
 		cancelStream(conversationId);
-	}, [cancelStream, conversationId, analyticsCtx.threadId]);
+	}, [cancelStream, conversationId, analyticsCtx.threadId, streamStartedAt]);
 
 	const messages = conversation?.messages ?? [];
 	const showDisclaimer = messages.length > 0;
@@ -209,6 +205,8 @@ export default function ConversationView({
 					disabled={inputDisabled}
 					disabledTooltip={inputDisabledTooltip}
 					isStreaming={isStreamingHere}
+					streamStartedAt={streamStartedAt}
+					showNozPeek={messages.length === 0 && !isStreamingHere}
 					autoContexts={autoContexts}
 					onDismissAutoContext={handleDismissAutoContext}
 				/>

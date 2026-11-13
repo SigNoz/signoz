@@ -1,0 +1,76 @@
+// Offsets are from the input's padding box; its top edge, border or separator, sits at -1px.
+
+.edgeSweep {
+	position: absolute;
+	top: -11px;
+	left: 0;
+	right: 0;
+	height: 20px;
+	overflow: hidden;
+	opacity: 0;
+	z-index: 2;
+	pointer-events: none;
+	transition: opacity 0.3s ease;
+	mask-image: linear-gradient(
+		to right,
+		transparent 11px,
+		var(--l1-background) 60px,
+		var(--l1-background) calc(100% - 60px),
+		transparent calc(100% - 11px)
+	);
+
+	&.isVisible {
+		opacity: 1;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		display: none;
+	}
+}
+
+.line {
+	position: absolute;
+	top: 9px;
+	left: 0;
+	width: 40%;
+	height: 2px;
+	animation: edgeSweep 2s ease-in-out infinite alternate;
+
+	&::before,
+	&::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		background: linear-gradient(
+			to right,
+			transparent,
+			var(--accent-primary) 20%,
+			var(--accent-sakura) 40%,
+			var(--accent-primary) 60%,
+			var(--accent-sakura) 80%,
+			transparent
+		);
+	}
+
+	&::before {
+		top: 1px;
+		height: 1px;
+	}
+
+	&::after {
+		top: 0;
+		height: 2px;
+		filter: blur(4px);
+		opacity: 0.7;
+	}
+}
+
+@keyframes edgeSweep {
+	from {
+		transform: translateX(-50%);
+	}
+	to {
+		transform: translateX(200%);
+	}
+}
