@@ -9,7 +9,12 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
+    BuilderQuery,
+    OrderBy,
+    RequestType,
+    TelemetryFieldKey,
     assert_identical_query_response,
+    get_rows,
     make_query_request,
 )
 
@@ -498,3 +503,64 @@ def test_logs_list_with_order_by(
     ids = [row["data"]["attributes_string"].get("id", "") for row in rows]
 
     assert ids == expected_order
+
+
+@pytest.mark.parametrize(
+    "limit,offset",
+    [
+        pytest.param(2, 0, id="first_chunk"),
+        pytest.param(2, 1, id="first_into_second_chunk"),
+        pytest.param(2, 2, id="second_chunk"),
+        pytest.param(2, 3, id="second_into_third_chunk"),
+        pytest.param(2, 4, id="third_chunk"),
+        pytest.param(4, 5, id="last_partial_page"),
+        pytest.param(2, 6, id="offset_past_end"),
+    ],
+)
+def test_logs_list_offset_across_chunks(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    limit: int,
+    offset: int,
+) -> None:
+    """
+    A 4h list runs as 1h, 2h and 1h chunks, newest first. Two logs sit in each
+    chunk, so the offset lands in, or crosses into, every chunk.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    minutes_ago = [10, 20, 90, 150, 200, 220]
+    insert_logs(
+        [
+            Logs(
+                timestamp=now - timedelta(minutes=minutes),
+                resources={"service.name": "chunked-offset-service"},
+                body=f"chunked-log-{minutes}",
+            )
+            for minutes in minutes_ago
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(hours=4)).timestamp() * 1000),
+        end_ms=int((now + timedelta(seconds=1)).timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[
+            BuilderQuery(
+                signal="logs",
+                name="A",
+                limit=limit,
+                offset=offset,
+                filter_expression="service.name = 'chunked-offset-service'",
+                order=[OrderBy(TelemetryFieldKey("timestamp"), "desc"), OrderBy(TelemetryFieldKey("id"), "desc")],
+            ).to_dict()
+        ],
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    expected_bodies = [f"chunked-log-{minutes}" for minutes in minutes_ago][offset : offset + limit]
+    assert [row["data"]["body"] for row in get_rows(response)] == expected_bodies
