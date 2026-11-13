@@ -39,6 +39,11 @@ const BANNERS = [
 	'payment-failed',
 	'license-expired',
 	'license-terminated',
+	'license-cancelled',
+	'license-defaulted',
+	'evaluation-expired',
+	'license-expired-with-trial',
+	'license-expired-with-payment-failed',
 	'no-auth',
 ] as const;
 
@@ -153,56 +158,76 @@ const licensedBanner = (
 	};
 };
 
+const trialExpiryContext = (): Partial<IAppContext> => {
+	const nowInSeconds = Math.floor(Date.now() / 1000);
+
+	return {
+		trialInfo: {
+			...baseTrialInfo,
+			onTrial: true,
+			trialStart: nowInSeconds - 27 * DAY_IN_SECONDS,
+			trialEnd: nowInSeconds + 3 * DAY_IN_SECONDS,
+			workSpaceBlock: false,
+			trialConvertedToSubscription: false,
+			gracePeriodEnd: -1,
+		},
+	};
+};
+
+const withPaymentFailed = (license: LicenseResModel): LicenseResModel => ({
+	...license,
+	eventQueue: {
+		...license.eventQueue,
+		event: LicenseEvent.DEFAULT,
+		scheduledAt: new Date(Date.now() + 7 * DAY_IN_SECONDS * 1000).toISOString(),
+	},
+});
+
+// The restricted-workspace banner needs a self-hosted license; the cloud
+// platform redirects to the restricted page instead.
+const withRestricted =
+	(state: LicenseState) =>
+	(license: LicenseResModel): LicenseResModel => ({
+		...license,
+		platform: LicensePlatform.SELF_HOSTED,
+		state,
+	});
+
+const RESTRICTED_STATES: Partial<Record<Banner, LicenseState>> = {
+	'license-expired': LicenseState.EXPIRED,
+	'license-terminated': LicenseState.TERMINATED,
+	'license-cancelled': LicenseState.CANCELLED,
+	'license-defaulted': LicenseState.DEFAULTED,
+	'evaluation-expired': LicenseState.EVALUATION_EXPIRED,
+};
+
 const bannerContext = (
 	banner: Banner,
 	activeLicense: LicenseResModel | null,
 ): Partial<IAppContext> => {
-	const nowInSeconds = Math.floor(Date.now() / 1000);
-
 	switch (banner) {
 		case 'trial-expiry':
-			return {
-				trialInfo: {
-					...baseTrialInfo,
-					onTrial: true,
-					trialStart: nowInSeconds - 27 * DAY_IN_SECONDS,
-					trialEnd: nowInSeconds + 3 * DAY_IN_SECONDS,
-					workSpaceBlock: false,
-					trialConvertedToSubscription: false,
-					gracePeriodEnd: -1,
-				},
-			};
+			return trialExpiryContext();
 
 		case 'payment-failed':
-			return licensedBanner(activeLicense, (license) => ({
-				...license,
-				eventQueue: {
-					...license.eventQueue,
-					event: LicenseEvent.DEFAULT,
-					scheduledAt: new Date(
-						Date.now() + 7 * DAY_IN_SECONDS * 1000,
-					).toISOString(),
-				},
-			}));
+			return licensedBanner(activeLicense, withPaymentFailed);
 
-		// Both restricted-workspace banners need a self-hosted license; the cloud
-		// platform never reaches that branch.
-		case 'license-expired':
-			return licensedBanner(activeLicense, (license) => ({
-				...license,
-				platform: LicensePlatform.SELF_HOSTED,
-				state: LicenseState.EXPIRED,
-			}));
+		case 'license-expired-with-trial':
+			return {
+				...trialExpiryContext(),
+				...licensedBanner(activeLicense, withRestricted(LicenseState.EXPIRED)),
+			};
 
-		case 'license-terminated':
-			return licensedBanner(activeLicense, (license) => ({
-				...license,
-				platform: LicensePlatform.SELF_HOSTED,
-				state: LicenseState.TERMINATED,
-			}));
+		case 'license-expired-with-payment-failed':
+			return licensedBanner(activeLicense, (license) =>
+				withRestricted(LicenseState.EXPIRED)(withPaymentFailed(license)),
+			);
 
-		default:
-			return {};
+		default: {
+			const state = RESTRICTED_STATES[banner];
+
+			return state ? licensedBanner(activeLicense, withRestricted(state)) : {};
+		}
 	}
 };
 
@@ -254,7 +279,7 @@ export const appShellMocks = defineStoryMocks({
 		banner: choiceControl<Banner>('Banner', {
 			group: APP_SHELL,
 			description:
-				'License, trial and no-auth banners above the shell. The license ones need a license to read, so they override an unlicensed License control.',
+				'License, trial and no-auth banners above the shell. The license ones need a license to read, so they override an unlicensed License control. The `-with-` values turn two banners on at once.',
 			options: BANNERS,
 			value: 'none',
 		}),
