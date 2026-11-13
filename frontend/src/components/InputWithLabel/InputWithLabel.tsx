@@ -56,6 +56,7 @@ function InputWithLabel({
 				})}
 			>
 				<Input
+					size="sm"
 					placeholder={placeholder}
 					type={type}
 					value={inputValue}

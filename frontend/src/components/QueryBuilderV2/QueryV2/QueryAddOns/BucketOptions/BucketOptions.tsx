@@ -208,6 +208,7 @@ function BucketOptions({
 						<div className={cx(styles.field, styles.numberField)}>
 							<span className={styles.label}>Max value</span>
 							<Input.Number
+								size="sm"
 								min={0}
 								value={maxValue}
 								onChange={handleMaxValueChange}
@@ -220,6 +221,7 @@ function BucketOptions({
 						<div className={cx(styles.field, styles.numberField)}>
 							<span className={styles.label}>Buckets</span>
 							<Input.Number
+								size="sm"
 								min={1}
 								max={MAX_NUM_BUCKETS}
 								format={{ maximumFractionDigits: 0 }}
