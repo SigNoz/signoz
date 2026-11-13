@@ -1,9 +1,9 @@
 import { Spinner } from '@signozhq/ui/spinner';
 import { Tabs } from '@signozhq/ui/tabs';
-import { Typography } from '@signozhq/ui/typography';
 import { useAppParams } from 'lib/router/useAppParams';
 
 import ApdexSettings from './components/ApdexSettings/ApdexSettings';
+import ServiceBreadcrumbs from './components/ServiceBreadcrumbs/ServiceBreadcrumbs';
 import ServiceDashboard from './components/ServiceDashboard/ServiceDashboard';
 import { useServiceDashboardVariables } from './hooks/useServiceDashboardVariables';
 import { useServiceDetailsTab } from './hooks/useServiceDetailsTab';
@@ -36,9 +36,7 @@ function ServiceDetails(): JSX.Element {
 	return (
 		<div className={styles.page} data-testid="service-details">
 			<header className={styles.header}>
-				<Typography.Title level={4} testId="service-details-name">
-					{serviceName}
-				</Typography.Title>
+				<ServiceBreadcrumbs serviceName={serviceName} />
 				<ApdexSettings serviceName={serviceName} />
 			</header>
 			{isLoading ? (
@@ -53,6 +51,7 @@ function ServiceDetails(): JSX.Element {
 					value={activeTab}
 					onChange={(key): void => setActiveTab(key as typeof activeTab)}
 					items={items}
+					className={styles.tabs}
 					testId="service-details-tabs"
 				/>
 			)}

@@ -1,7 +1,8 @@
 import ROUTES from 'constants/routes';
 import type { SystemDashboardHost } from 'container/SystemDashboard/systemDashboardHost';
 import { rest, server } from 'mocks-server/server';
-import { render, screen } from 'tests/test-utils';
+import { safeNavigateMock } from '__tests__/safeNavigateMock';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import ServiceDetails from '../ServiceDetails';
 
@@ -53,6 +54,20 @@ describe('ServiceDetails', () => {
 		expect(screen.getByTestId('service-details-name')).toHaveTextContent(
 			'checkout api',
 		);
+	});
+
+	it('goes back to the services list from the breadcrumb', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<ServiceDetails />, undefined, {
+			initialRoute: '/services/checkout%20api',
+			routePath: ROUTES.SERVICE_METRICS,
+		});
+
+		await user.click(
+			await screen.findByTestId('service-details-breadcrumb-services'),
+		);
+
+		expect(safeNavigateMock).toHaveBeenCalledWith(ROUTES.APPLICATION);
 	});
 
 	it('seeds the service and its Apdex threshold before the dashboard mounts', async () => {
