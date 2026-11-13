@@ -25613,7 +25613,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -26280,9 +26279,23 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Create alert rule
       tags:
       - rules
@@ -26327,9 +26340,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:delete
       - tokenizer:
-        - EDITOR
+        - rule:delete
       summary: Delete alert rule
       tags:
       - rules
@@ -26385,9 +26398,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get alert rule by ID
       tags:
       - rules
@@ -26569,7 +26582,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -27242,9 +27254,27 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Patch alert rule
       tags:
       - rules
@@ -27426,7 +27456,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -28087,9 +28116,27 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Update alert rule
       tags:
       - rules
@@ -28156,9 +28203,25 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:read
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:read
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Clone alert rule
       tags:
       - rules
@@ -29045,7 +29108,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -29712,9 +29774,23 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Test alert rule
       tags:
       - rules
@@ -31809,9 +31885,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: List alert rules (v3)
       tags:
       - rules
