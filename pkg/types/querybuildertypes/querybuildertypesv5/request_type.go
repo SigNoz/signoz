@@ -23,7 +23,8 @@ func (r *RequestType) UnmarshalJSON(data []byte) error {
 		*r = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown request type %q; allowed values: %s", s, "`scalar`, `time_series`, `raw`, `raw_stream`, `trace`, `distribution`, `heatmap`")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown request type %q", s).
+			WithSuggestions(errors.NewValidReferences(errors.NounRequestTypes, RequestType{}.Enum()...))
 	}
 }
 

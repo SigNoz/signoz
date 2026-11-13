@@ -168,6 +168,23 @@ func MapChannelNamesToIDs(channels Channels, names []string) ([]string, error) {
 	return ids, nil
 }
 
+// MapKnownChannelNamesToIDs skips names with no matching channel instead of failing.
+func MapKnownChannelNamesToIDs(channels Channels, names []string) []string {
+	idByName := make(map[string]string, len(channels))
+	for _, channel := range channels {
+		idByName[channel.DisplayName] = channel.ID.StringValue()
+	}
+
+	ids := make([]string, 0, len(names))
+	for _, name := range names {
+		if id, ok := idByName[name]; ok {
+			ids = append(ids, id)
+		}
+	}
+
+	return ids
+}
+
 func NewStatsFromChannels(channels Channels) map[string]any {
 	stats := make(map[string]any)
 	for _, channel := range channels {

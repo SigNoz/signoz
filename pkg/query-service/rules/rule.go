@@ -20,14 +20,11 @@ type Rule interface {
 	Annotations() ruletypes.Labels
 	Condition() *ruletypes.RuleCondition
 	EvalDelay() valuer.TextDuration
-	EvalWindow() valuer.TextDuration
 	HoldDuration() valuer.TextDuration
 	State() ruletypes.AlertState
 	ActiveAlerts() []*ruletypes.Alert
 	// ActiveAlertsLabelFP returns a map of active alert labels fingerprint
 	ActiveAlertsLabelFP() map[uint64]struct{}
-
-	PreferredChannels() []string
 
 	// Eval evaluates the rule at the given timestamp and returns the number of active alerts.
 	Eval(context.Context, time.Time) (int, error)

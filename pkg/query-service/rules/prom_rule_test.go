@@ -690,13 +690,11 @@ func TestPromRuleEval(t *testing.T) {
 	logger := instrumentationtest.New().Logger()
 
 	for idx, c := range cases {
-		postableRule.RuleCondition.CompareOperator = c.compareOperator
-		postableRule.RuleCondition.MatchType = c.matchType
-		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
+					Name:            "critical",
 					TargetValue:     &c.target,
 					MatchType:       c.matchType,
 					CompareOperator: c.compareOperator,
@@ -905,11 +903,7 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 
 		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
 
-		postableRule.RuleCondition.CompareOperator = c.compareOperator
-		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
-		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
-		postableRule.RuleCondition.TargetUnit = c.targetUnit
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
@@ -1206,11 +1200,7 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 
 		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
 
-		postableRule.RuleCondition.CompareOperator = c.compareOperator
-		postableRule.RuleCondition.MatchType = c.matchType
-		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
-		postableRule.RuleCondition.TargetUnit = c.targetUnit
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
@@ -1267,6 +1257,7 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 
 func TestPromRule_NoData(t *testing.T) {
 	evalTime := time.Now()
+	target := 200.0
 
 	postableRule := ruletypes.PostableRule{
 		AlertName: valuer.NewDisplayName("Test no data"),
@@ -1277,8 +1268,6 @@ func TestPromRule_NoData(t *testing.T) {
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompareOperator: ruletypes.ValueIsAbove,
-			MatchType:       ruletypes.AtleastOnce,
 			CompositeQuery: &ruletypes.AlertCompositeQuery{
 				QueryType: ruletypes.QueryTypePromQL,
 				Queries: []qbtypes.QueryEnvelope{
@@ -1290,7 +1279,7 @@ func TestPromRule_NoData(t *testing.T) {
 			},
 			Thresholds: &ruletypes.RuleThresholdData{
 				Kind: ruletypes.BasicThresholdKind,
-				Spec: ruletypes.BasicRuleThresholds{{Name: "Test no data"}},
+				Spec: ruletypes.BasicRuleThresholds{{Name: "Test no data", TargetValue: &target, CompareOperator: ruletypes.ValueIsAbove, MatchType: ruletypes.AtleastOnce}},
 			},
 		},
 	}
@@ -1373,10 +1362,7 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompareOperator: ruletypes.ValueIsAbove,
-			MatchType:       ruletypes.AtleastOnce,
-			AlertOnAbsent:   true,
-			Target:          &target,
+			AlertOnAbsent: true,
 			CompositeQuery: &ruletypes.AlertCompositeQuery{
 				QueryType: ruletypes.QueryTypePromQL,
 				Queries: []qbtypes.QueryEnvelope{
@@ -1499,8 +1485,6 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompareOperator: ruletypes.ValueIsAbove,
-			MatchType:       ruletypes.AtleastOnce,
 			CompositeQuery: &ruletypes.AlertCompositeQuery{
 				QueryType: ruletypes.QueryTypePromQL,
 				Queries: []qbtypes.QueryEnvelope{
@@ -1570,9 +1554,9 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 	for _, c := range cases {
 		rc := postableRule.RuleCondition
 
-		rc.Target = &targetForNoAlert
+		target := &targetForNoAlert
 		if c.alertCondition {
-			rc.Target = &targetForAlert
+			target = &targetForAlert
 		}
 		rc.RequireMinPoints = c.requireMinPoints
 		rc.RequiredNumPoints = c.requiredNumPoints
@@ -1581,9 +1565,9 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 			Spec: ruletypes.BasicRuleThresholds{
 				{
 					Name:            postableRule.AlertName.StringValue(),
-					TargetValue:     rc.Target,
-					MatchType:       rc.MatchType,
-					CompareOperator: rc.CompareOperator,
+					TargetValue:     target,
+					MatchType:       ruletypes.AtleastOnce,
+					CompareOperator: ruletypes.ValueIsAbove,
 				},
 			},
 		}

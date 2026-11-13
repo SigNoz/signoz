@@ -1,0 +1,588 @@
+import { Color } from '@signozhq/design-tokens';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
+import { AlertTypes, PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
+
+import { defaultPostableAlertRuleV2 } from '../constants';
+import { INITIAL_ALERT_STATE } from '../context/constants';
+import {
+	AlertThresholdMatchType,
+	AlertThresholdOperator,
+} from '../context/types';
+import {
+	getAdvancedOptionsStateFromAlertDef,
+	getColorForThreshold,
+	getAlertTypeFromAlertDef,
+	getCreateAlertLocalStateFromAlertDef,
+	getEvaluationWindowStateFromAlertDef,
+	getNotificationSettingsStateFromAlertDef,
+	getThresholdStateFromAlertDef,
+	normalizeMatchType,
+	normalizeOperator,
+	parseGoTime,
+} from '../utils';
+
+describe('CreateAlert utils', () => {
+	describe('getColorForThreshold', () => {
+		it('should return the correct color for the pre-defined threshold', () => {
+			expect(getColorForThreshold('critical')).toBe(Color.BG_SAKURA_500);
+			expect(getColorForThreshold('warning')).toBe(Color.BG_AMBER_500);
+			expect(getColorForThreshold('info')).toBe(Color.BG_ROBIN_500);
+		});
+	});
+
+	describe('parseGoTime', () => {
+		it('should return the correct time and unit for the given input', () => {
+			expect(parseGoTime('1h')).toStrictEqual({
+				time: 1,
+				unit: UniversalYAxisUnit.HOURS,
+			});
+			expect(parseGoTime('1m')).toStrictEqual({
+				time: 1,
+				unit: UniversalYAxisUnit.MINUTES,
+			});
+			expect(parseGoTime('1s')).toStrictEqual({
+				time: 1,
+				unit: UniversalYAxisUnit.SECONDS,
+			});
+			expect(parseGoTime('1h0m')).toStrictEqual({
+				time: 1,
+				unit: UniversalYAxisUnit.HOURS,
+			});
+		});
+	});
+
+	describe('getEvaluationWindowStateFromAlertDef', () => {
+		it('for rolling window with non-custom timeframe', () => {
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				evaluation: {
+					...defaultPostableAlertRuleV2.evaluation,
+					kind: 'rolling',
+					spec: {
+						evalWindow: '5m0s',
+					},
+				},
+			};
+			const props = getEvaluationWindowStateFromAlertDef(args);
+			expect(props).toBeDefined();
+			expect(props).toMatchObject({
+				windowType: 'rolling',
+				timeframe: '5m0s',
+			});
+		});
+
+		it('for rolling window with custom timeframe', () => {
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				evaluation: {
+					...defaultPostableAlertRuleV2.evaluation,
+					kind: 'rolling',
+					spec: {
+						evalWindow: '13m0s',
+					},
+				},
+			};
+			const props = getEvaluationWindowStateFromAlertDef(args);
+			expect(props).toBeDefined();
+			expect(props).toMatchObject({
+				windowType: 'rolling',
+				timeframe: 'custom',
+				startingAt: {
+					number: '13',
+					unit: UniversalYAxisUnit.MINUTES,
+				},
+			});
+		});
+
+		it('for cumulative window with current hour', () => {
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				evaluation: {
+					kind: 'cumulative',
+					spec: {
+						schedule: {
+							type: 'hourly',
+							minute: 14,
+						},
+					},
+				},
+			};
+			const props = getEvaluationWindowStateFromAlertDef(args);
+			expect(props).toBeDefined();
+			expect(props).toMatchObject({
+				windowType: 'cumulative',
+				timeframe: 'currentHour',
+				startingAt: {
+					number: '14',
+				},
+			});
+		});
+
+		it('for cumulative window with current day', () => {
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				evaluation: {
+					...defaultPostableAlertRuleV2.evaluation,
+					kind: 'cumulative',
+					spec: {
+						schedule: {
+							type: 'daily',
+							hour: 14,
+							minute: 15,
+						},
+					},
+				},
+			};
+			const props = getEvaluationWindowStateFromAlertDef(args);
+			expect(props).toBeDefined();
+			expect(props).toMatchObject({
+				windowType: 'cumulative',
+				timeframe: 'currentDay',
+				startingAt: {
+					time: '14:15:00',
+				},
+			});
+		});
+
+		it('for cumulative window with current month', () => {
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				evaluation: {
+					...defaultPostableAlertRuleV2.evaluation,
+					kind: 'cumulative',
+					spec: {
+						schedule: {
+							type: 'monthly',
+							day: 12,
+							hour: 16,
+							minute: 34,
+						},
+						timezone: 'UTC',
+					},
+				},
+			};
+			const props = getEvaluationWindowStateFromAlertDef(args);
+			expect(props).toBeDefined();
+			expect(props).toMatchObject({
+				windowType: 'cumulative',
+				timeframe: 'currentMonth',
+				startingAt: {
+					number: '12',
+					timezone: 'UTC',
+					time: '16:34:00',
+				},
+			});
+		});
+	});
+
+	describe('getNotificationSettingsStateFromAlertDef', () => {
+		it('should return the correct notification settings state for the given alert def', () => {
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				notificationSettings: {
+					groupBy: ['email'],
+					renotify: {
+						enabled: true,
+						interval: '1m0s',
+						alertStates: ['firing'],
+					},
+					usePolicy: true,
+				},
+			};
+			const props = getNotificationSettingsStateFromAlertDef(args);
+			expect(props).toBeDefined();
+			expect(props).toMatchObject({
+				multipleNotifications: ['email'],
+				reNotification: {
+					enabled: true,
+					value: 1,
+					unit: UniversalYAxisUnit.MINUTES,
+					conditions: ['firing'],
+				},
+				description:
+					'This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})',
+				routingPolicies: true,
+			});
+		});
+
+		it('when renotification is not provided', () => {
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				notificationSettings: {
+					groupBy: ['email'],
+					usePolicy: false,
+				},
+			};
+			const props = getNotificationSettingsStateFromAlertDef(args);
+			expect(props).toBeDefined();
+			expect(props).toMatchObject({
+				multipleNotifications: ['email'],
+				reNotification: {
+					enabled: false,
+					value: 30,
+					unit: UniversalYAxisUnit.MINUTES,
+					conditions: [],
+				},
+			});
+		});
+	});
+
+	describe('getAdvancedOptionsStateFromAlertDef', () => {
+		it('should return the correct advanced options state for the given alert def', () => {
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				condition: {
+					...defaultPostableAlertRuleV2.condition,
+					compositeQuery: {
+						...defaultPostableAlertRuleV2.condition.compositeQuery,
+						unit: UniversalYAxisUnit.MINUTES,
+					},
+					requiredNumPoints: 13,
+					requireMinPoints: true,
+					alertOnAbsent: true,
+					absentFor: 12,
+				},
+				evaluation: {
+					...defaultPostableAlertRuleV2.evaluation,
+					spec: {
+						frequency: '1m0s',
+					},
+				},
+			};
+			const props = getAdvancedOptionsStateFromAlertDef(args);
+			expect(props).toBeDefined();
+			expect(props).toMatchObject({
+				sendNotificationIfDataIsMissing: {
+					enabled: true,
+					toleranceLimit: 12,
+					timeUnit: UniversalYAxisUnit.MINUTES,
+				},
+				enforceMinimumDatapoints: {
+					enabled: true,
+					minimumDatapoints: 13,
+				},
+				evaluationCadence: {
+					mode: 'default',
+					default: {
+						value: 1,
+						timeUnit: UniversalYAxisUnit.MINUTES,
+					},
+				},
+			});
+		});
+	});
+
+	it('getThresholdStateFromAlertDef maps thresholds, query, operator and match type', () => {
+		const args: PostableAlertRuleV2 = {
+			...defaultPostableAlertRuleV2,
+			annotations: {
+				summary: 'test summary',
+				description: 'test description',
+			},
+			condition: {
+				...defaultPostableAlertRuleV2.condition,
+				thresholds: {
+					kind: 'basic',
+					spec: [
+						{
+							name: 'critical',
+							target: 1,
+							targetUnit: UniversalYAxisUnit.MINUTES,
+							channels: ['email'],
+							matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
+							op: AlertThresholdOperator.IS_ABOVE,
+						},
+					],
+				},
+				selectedQueryName: 'test',
+			},
+		};
+		const props = getThresholdStateFromAlertDef(args);
+		expect(props).toBeDefined();
+		expect(props).toMatchObject({
+			selectedQuery: 'test',
+			operator: AlertThresholdOperator.IS_ABOVE,
+			matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
+			thresholds: [
+				{
+					id: expect.any(String),
+					label: 'critical',
+					thresholdValue: 1,
+					recoveryThresholdValue: null,
+					unit: UniversalYAxisUnit.MINUTES,
+					color: Color.BG_SAKURA_500,
+					channels: ['email'],
+				},
+			],
+		});
+	});
+
+	describe('getThresholdStateFromAlertDef for anomaly rules', () => {
+		const anomalyDef: PostableAlertRuleV2 = {
+			...defaultPostableAlertRuleV2,
+			ruleType: 'anomaly_rule',
+			condition: {
+				...defaultPostableAlertRuleV2.condition,
+				seasonality: 'weekly',
+				thresholds: {
+					kind: 'basic',
+					spec: [
+						{
+							name: 'critical',
+							target: -3,
+							targetUnit: '',
+							channels: ['email'],
+							matchType: AlertThresholdMatchType.ALL_THE_TIME,
+							op: AlertThresholdOperator.IS_BELOW,
+						},
+					],
+				},
+			},
+			evaluation: {
+				kind: 'rolling',
+				spec: { evalWindow: '1h0m0s', frequency: '1m' },
+			},
+		};
+
+		it('shows deviations unsigned and restores the anomaly settings', () => {
+			expect(getThresholdStateFromAlertDef(anomalyDef)).toMatchObject({
+				operator: AlertThresholdOperator.IS_BELOW,
+				thresholds: [{ thresholdValue: 3 }],
+				seasonality: 'weekly',
+			});
+		});
+
+		it('loads the anomaly window into the shared evaluation window', () => {
+			expect(getEvaluationWindowStateFromAlertDef(anomalyDef)).toMatchObject({
+				windowType: 'rolling',
+				timeframe: '1h0m0s',
+			});
+		});
+
+		it('keeps signed targets for threshold rules', () => {
+			const state = getThresholdStateFromAlertDef({
+				...anomalyDef,
+				ruleType: 'threshold_rule',
+			});
+			expect(state.thresholds[0].thresholdValue).toBe(-3);
+		});
+	});
+
+	describe('getAlertTypeFromAlertDef', () => {
+		it('maps anomaly rules to the anomaly alert type', () => {
+			expect(
+				getAlertTypeFromAlertDef({
+					...defaultPostableAlertRuleV2,
+					alertType: AlertTypes.METRICS_BASED_ALERT,
+					ruleType: 'anomaly_rule',
+				}),
+			).toBe(AlertTypes.ANOMALY_BASED_ALERT);
+		});
+
+		it('keeps the stored alert type for other rules', () => {
+			expect(
+				getAlertTypeFromAlertDef({
+					...defaultPostableAlertRuleV2,
+					alertType: AlertTypes.LOGS_BASED_ALERT,
+					ruleType: 'threshold_rule',
+				}),
+			).toBe(AlertTypes.LOGS_BASED_ALERT);
+		});
+	});
+
+	describe('getThresholdStateFromAlertDef null channels', () => {
+		it('falls back to an empty array so downstream consumers never see null', () => {
+			const def: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				condition: {
+					...defaultPostableAlertRuleV2.condition,
+					thresholds: {
+						kind: 'basic',
+						spec: [
+							{
+								name: 'critical',
+								target: 1,
+								targetUnit: UniversalYAxisUnit.MINUTES,
+								channels: null as unknown as string[],
+								matchType: AlertThresholdMatchType.AT_LEAST_ONCE,
+								op: AlertThresholdOperator.IS_ABOVE,
+							},
+						],
+					},
+				},
+			};
+
+			expect(
+				getThresholdStateFromAlertDef(def).thresholds[0].channels,
+			).toStrictEqual([]);
+		});
+	});
+
+	describe('normalizeOperator', () => {
+		it.each([
+			['1', AlertThresholdOperator.IS_ABOVE],
+			['above', AlertThresholdOperator.IS_ABOVE],
+			['>', AlertThresholdOperator.IS_ABOVE],
+			['2', AlertThresholdOperator.IS_BELOW],
+			['below', AlertThresholdOperator.IS_BELOW],
+			['<', AlertThresholdOperator.IS_BELOW],
+			['3', AlertThresholdOperator.IS_EQUAL_TO],
+			['equal', AlertThresholdOperator.IS_EQUAL_TO],
+			['eq', AlertThresholdOperator.IS_EQUAL_TO],
+			['=', AlertThresholdOperator.IS_EQUAL_TO],
+			['4', AlertThresholdOperator.IS_NOT_EQUAL_TO],
+			['not_equal', AlertThresholdOperator.IS_NOT_EQUAL_TO],
+			['not_eq', AlertThresholdOperator.IS_NOT_EQUAL_TO],
+			['!=', AlertThresholdOperator.IS_NOT_EQUAL_TO],
+			['5', AlertThresholdOperator.IS_ABOVE_OR_EQUAL_TO],
+			['above_or_equal', AlertThresholdOperator.IS_ABOVE_OR_EQUAL_TO],
+			['above_or_eq', AlertThresholdOperator.IS_ABOVE_OR_EQUAL_TO],
+			['>=', AlertThresholdOperator.IS_ABOVE_OR_EQUAL_TO],
+			['6', AlertThresholdOperator.IS_BELOW_OR_EQUAL_TO],
+			['below_or_equal', AlertThresholdOperator.IS_BELOW_OR_EQUAL_TO],
+			['below_or_eq', AlertThresholdOperator.IS_BELOW_OR_EQUAL_TO],
+			['<=', AlertThresholdOperator.IS_BELOW_OR_EQUAL_TO],
+			['7', AlertThresholdOperator.ABOVE_BELOW],
+			['outside_bounds', AlertThresholdOperator.ABOVE_BELOW],
+		])('maps backend alias %s to canonical enum', (alias, expected) => {
+			expect(normalizeOperator(alias)).toBe(expected);
+		});
+
+		it('returns undefined for unknown values', () => {
+			expect(normalizeOperator('gibberish')).toBeUndefined();
+			expect(normalizeOperator(undefined)).toBeUndefined();
+			expect(normalizeOperator('')).toBeUndefined();
+		});
+	});
+
+	describe('normalizeMatchType', () => {
+		it.each([
+			['1', AlertThresholdMatchType.AT_LEAST_ONCE],
+			['at_least_once', AlertThresholdMatchType.AT_LEAST_ONCE],
+			['2', AlertThresholdMatchType.ALL_THE_TIME],
+			['all_the_times', AlertThresholdMatchType.ALL_THE_TIME],
+			['3', AlertThresholdMatchType.ON_AVERAGE],
+			['on_average', AlertThresholdMatchType.ON_AVERAGE],
+			['avg', AlertThresholdMatchType.ON_AVERAGE],
+			['4', AlertThresholdMatchType.IN_TOTAL],
+			['in_total', AlertThresholdMatchType.IN_TOTAL],
+			['sum', AlertThresholdMatchType.IN_TOTAL],
+			['5', AlertThresholdMatchType.LAST],
+			['last', AlertThresholdMatchType.LAST],
+		])('maps backend alias %s to canonical enum', (alias, expected) => {
+			expect(normalizeMatchType(alias)).toBe(expected);
+		});
+
+		it('returns undefined for unknown values', () => {
+			expect(normalizeMatchType('gibberish')).toBeUndefined();
+			expect(normalizeMatchType(undefined)).toBeUndefined();
+			expect(normalizeMatchType('')).toBeUndefined();
+		});
+	});
+
+	describe('getThresholdStateFromAlertDef backward compatibility', () => {
+		const buildDef = (op: string, matchType: string): PostableAlertRuleV2 => ({
+			...defaultPostableAlertRuleV2,
+			condition: {
+				...defaultPostableAlertRuleV2.condition,
+				thresholds: {
+					kind: 'basic',
+					spec: [
+						{
+							name: 'critical',
+							target: 1,
+							targetUnit: UniversalYAxisUnit.MINUTES,
+							channels: [],
+							matchType,
+							op,
+						},
+					],
+				},
+			},
+		});
+
+		// Each row covers a distinct historical serialization shape the backend
+		// may have persisted. The frontend must not rewrite these on load —
+		// otherwise opening and saving an old rule silently changes its op.
+		it.each([
+			['numeric', '1', '1'],
+			['literal', 'above', 'at_least_once'],
+			['symbol', '>', 'at_least_once'],
+			['short form', 'eq', 'avg'],
+			['mixed numeric and literal', '7', 'last'],
+			['inclusive literal operator', 'above_or_equal', 'at_least_once'],
+			['inclusive numeric operator', '5', 'at_least_once'],
+		])('preserves %s op/matchType verbatim (%s / %s)', (_desc, op, matchType) => {
+			const state = getThresholdStateFromAlertDef(buildDef(op, matchType));
+			expect(state.operator).toBe(op);
+			expect(state.matchType).toBe(matchType);
+		});
+
+		it('falls back to IS_ABOVE / AT_LEAST_ONCE when op and matchType are missing', () => {
+			const def: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				condition: {
+					...defaultPostableAlertRuleV2.condition,
+					thresholds: {
+						kind: 'basic',
+						spec: [
+							{
+								name: 'critical',
+								target: 1,
+								targetUnit: UniversalYAxisUnit.MINUTES,
+								channels: [],
+								matchType: '',
+								op: '',
+							},
+						],
+					},
+				},
+			};
+			const state = getThresholdStateFromAlertDef(def);
+			expect(state.operator).toBe(AlertThresholdOperator.IS_ABOVE);
+			expect(state.matchType).toBe(AlertThresholdMatchType.AT_LEAST_ONCE);
+		});
+	});
+
+	describe('getCreateAlertLocalStateFromAlertDef', () => {
+		it('should return the correct create alert local state for the given alert def', () => {
+			const args: PostableAlertRuleV2 = {
+				...defaultPostableAlertRuleV2,
+				annotations: {
+					summary: 'test summary',
+					description: 'test description',
+				},
+				alert: 'test-alert',
+				labels: {
+					severity: 'warning',
+					team: 'test-team',
+				},
+				condition: {
+					...defaultPostableAlertRuleV2.condition,
+					compositeQuery: {
+						...defaultPostableAlertRuleV2.condition.compositeQuery,
+						unit: UniversalYAxisUnit.MINUTES,
+					},
+				},
+			};
+			const props = getCreateAlertLocalStateFromAlertDef(args);
+			expect(props).toBeDefined();
+			expect(props).toMatchObject({
+				basic: {
+					...INITIAL_ALERT_STATE,
+					name: 'test-alert',
+					labels: {
+						severity: 'warning',
+						team: 'test-team',
+					},
+					yAxisUnit: UniversalYAxisUnit.MINUTES,
+				},
+				// as we have already verified these utils in their respective tests
+				threshold: expect.any(Object),
+				advancedOptions: expect.any(Object),
+				evaluationWindow: expect.any(Object),
+				notificationSettings: expect.any(Object),
+			});
+		});
+	});
+});

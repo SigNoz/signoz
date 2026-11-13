@@ -109,10 +109,9 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	statusCode := writer.StatusCode()
 	span := trace.SpanFromContext(req.Context())
 
-	var errorType, errorCode string
+	var errorType string
 	if statusCode >= 400 {
 		errorType = render.ErrorTypeFromStatusCode(statusCode)
-		errorCode = render.ErrorCodeFromBody(writer.BodyBytes())
 	}
 
 	extractorCtx := coretypes.ExtractorContext{Request: req, ResponseBody: writer.BodyBytes()}
@@ -122,14 +121,18 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 			continue
 		}
 
-		resource.ResolveResponse(extractorCtx)
 		verb, category := resource.Verb(), resource.Category()
+		if !audittypes.IsAudited(verb) {
+			continue
+		}
+
+		resource.ResolveResponse(extractorCtx)
 
 		switch typed := resource.(type) {
 		case coretypes.ResolvedResourceWithTargetResource:
 			for _, sourceID := range typed.SourceIDs() {
 				for _, targetID := range typed.TargetIDs() {
-					attributesList := []audittypes.ResourceAttributes{
+					attributesList := []audittypes.RelatedResourceAttributes{
 						audittypes.NewRelatedResourceAttributes(
 							typed.SourceResource(),
 							sourceID,
@@ -158,9 +161,9 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 							verb,
 							category,
 							claims,
-							attributes,
+							attributes.Resource,
+							attributes.Target,
 							errorType,
-							errorCode,
 						))
 					}
 				}
@@ -179,8 +182,8 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 					category,
 					claims,
 					attributes,
+					audittypes.TargetAttributes{},
 					errorType,
-					errorCode,
 				))
 			}
 		}

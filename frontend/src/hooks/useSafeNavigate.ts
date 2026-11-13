@@ -140,7 +140,7 @@ export const useSafeNavigate = (
 
 			const navigationOptions = {
 				...options,
-				replace: isDefaultParamsNavigation || options?.replace,
+				replace: options?.replace ?? isDefaultParamsNavigation,
 			};
 
 			if (typeof to === 'string') {
