@@ -35,6 +35,8 @@
 
 	&.compact {
 		padding: 0;
+		// Same colour as the panel's outline.
+		border-top-color: var(--l2-border);
 	}
 }
 
