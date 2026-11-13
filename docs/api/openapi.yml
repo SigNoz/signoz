@@ -16319,9 +16319,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - org-preference:list
       - tokenizer:
-        - ADMIN
+        - org-preference:list
       summary: List org preferences
       tags:
       - preferences
@@ -16384,9 +16384,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - org-preference:read
       - tokenizer:
-        - ADMIN
+        - org-preference:read
       summary: Get org preference
       tags:
       - preferences
@@ -16441,9 +16441,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - org-preference:update
       - tokenizer:
-        - ADMIN
+        - org-preference:update
       summary: Update org preference
       tags:
       - preferences
