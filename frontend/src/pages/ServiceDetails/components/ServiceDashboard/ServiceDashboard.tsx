@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import SystemDashboard from 'container/SystemDashboard/SystemDashboard';
 import { variablesUrlParser } from 'pages/DashboardPage/DashboardContainer/VariablesBar/utils/variablesUrlState';
 import type { SelectedVariableValue } from 'pages/DashboardPage/DashboardContainer/VariablesBar/selectionTypes';
 
+import { hostWithApdexThreshold } from '../../apdexThreshold';
 import { useFollowServiceSelection } from '../../hooks/useFollowServiceSelection';
 import {
 	SERVICE_DASHBOARD_CONTROLS,
@@ -14,6 +15,7 @@ interface ServiceDashboardProps {
 	tab: ServiceDetailsTabConfig;
 	serviceName: string;
 	variables: Record<string, SelectedVariableValue>;
+	apdexThreshold: number | undefined;
 }
 
 /**
@@ -25,12 +27,20 @@ function ServiceDashboard({
 	tab,
 	serviceName,
 	variables,
+	apdexThreshold,
 }: ServiceDashboardProps): JSX.Element | null {
 	const [, setUrlVariables] = useQueryState(
 		'variables',
 		variablesUrlParser.withOptions({ history: 'replace' }),
 	);
 	const [isSeeded, setIsSeeded] = useState(false);
+	const host = useMemo(
+		() =>
+			apdexThreshold === undefined
+				? tab.host
+				: hostWithApdexThreshold(tab.host, apdexThreshold),
+		[tab.host, apdexThreshold],
+	);
 	useFollowServiceSelection(tab.dashboardId, serviceName);
 
 	useEffect(() => {
@@ -43,9 +53,7 @@ function ServiceDashboard({
 		return null;
 	}
 
-	return (
-		<SystemDashboard host={tab.host} controls={SERVICE_DASHBOARD_CONTROLS} />
-	);
+	return <SystemDashboard host={host} controls={SERVICE_DASHBOARD_CONTROLS} />;
 }
 
 export default ServiceDashboard;

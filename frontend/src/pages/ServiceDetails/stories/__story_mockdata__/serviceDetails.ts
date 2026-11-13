@@ -31,6 +31,14 @@ export const SERVICE_NAMES = [SERVICE_NAME, 'cart', 'payments', 'frontend'];
 
 export const ENVIRONMENTS = ['production', 'staging'];
 
+/** Values a dynamic variable reads, by field name. */
+export const fieldValuesFor = (name: string | null): readonly string[] => {
+	if (name === 'deployment.environment') {
+		return ENVIRONMENTS;
+	}
+	return SERVICE_NAMES;
+};
+
 export const SERVICE_DETAILS_TABS = [
 	'OVER_METRICS',
 	'DB_CALL_METRICS',
@@ -131,6 +139,9 @@ const baseFor = (spec: QuerySpecView): number => {
 	}
 	if (expression === 'A/B') {
 		return 24;
+	}
+	if (metric === 'signoz_latency.count') {
+		return 42;
 	}
 	return metric.includes('external') ? 6 : 15;
 };

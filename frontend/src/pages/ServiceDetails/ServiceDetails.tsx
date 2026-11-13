@@ -16,7 +16,8 @@ function ServiceDetails(): JSX.Element {
 	const { servicename } = useAppParams<'servicename'>();
 	const serviceName = decodeURIComponent(servicename ?? '');
 	const [activeTab, setActiveTab] = useServiceDetailsTab();
-	const { variables, isLoading } = useServiceDashboardVariables(serviceName);
+	const { variables, apdexThreshold, isLoading } =
+		useServiceDashboardVariables(serviceName);
 
 	const items = SERVICE_DETAILS_TABS.map((tab) => ({
 		key: tab.key,
@@ -25,10 +26,11 @@ function ServiceDetails(): JSX.Element {
 			tab.key !== activeTab || isLoading ? null : (
 				<ServiceDashboard
 					// The dashboard reads its seed once, so new values need a fresh mount.
-					key={JSON.stringify(variables)}
+					key={JSON.stringify({ variables, apdexThreshold })}
 					tab={tab}
 					serviceName={serviceName}
 					variables={variables}
+					apdexThreshold={apdexThreshold}
 				/>
 			),
 	}));

@@ -13,11 +13,11 @@ import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
 
 import {
 	apdexSettingsResponse,
-	ENVIRONMENTS,
+	fieldValuesFor,
 	isServiceDashboardName,
+	OPERATIONS,
 	SERVICE_DETAILS_TABS,
 	SERVICE_NAME,
-	SERVICE_NAMES,
 	serviceQueryRangeResponse,
 	serviceSystemDashboardResponse,
 	type ServiceDetailsTabKey,
@@ -80,11 +80,7 @@ export const serviceDetailsMocks = defineStoryMocks({
 		rest.get(
 			'http://localhost/api/v1/fields/values',
 			response.json((req) =>
-				fieldValuesResponse(
-					req.url.searchParams.get('name') === 'deployment.environment'
-						? ENVIRONMENTS
-						: SERVICE_NAMES,
-				),
+				fieldValuesResponse(fieldValuesFor(req.url.searchParams.get('name'))),
 			),
 		),
 		// The page holds the tabs until the threshold answers, so it stays up through the data states.
@@ -97,6 +93,12 @@ export const serviceDetailsMocks = defineStoryMocks({
 					),
 				),
 			),
+		),
+		rest.post(
+			'http://localhost/api/v1/service/top_level_operations',
+			response.json(() => ({
+				[SERVICE_NAME]: ['overflow_operation', ...OPERATIONS],
+			})),
 		),
 		rest.post('http://localhost/api/v1/settings/apdex', (_req, res, ctx) =>
 			res(ctx.json({ status: 'success', data: 'ok' })),

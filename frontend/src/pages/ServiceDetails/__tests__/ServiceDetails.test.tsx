@@ -14,8 +14,9 @@ jest.mock('container/SystemDashboard/SystemDashboard', () => ({
 }));
 
 const APDEX = '*/api/v1/settings/apdex';
+const TOP_LEVEL_OPERATIONS = '*/api/v1/service/top_level_operations';
 
-function seededVariables(): Record<string, string> {
+function seededVariables(): Record<string, unknown> {
 	return JSON.parse(
 		new URLSearchParams(window.location.search).get('variables') ?? '{}',
 	);
@@ -33,6 +34,9 @@ describe('ServiceDetails', () => {
 						],
 					}),
 				),
+			),
+			rest.post(TOP_LEVEL_OPERATIONS, (_req, res, ctx) =>
+				res(ctx.json({ 'checkout api': ['overflow_operation', 'POST /checkout'] })),
 			),
 		);
 	});
@@ -70,7 +74,7 @@ describe('ServiceDetails', () => {
 		expect(safeNavigateMock).toHaveBeenCalledWith(ROUTES.APPLICATION);
 	});
 
-	it('seeds the service and its Apdex threshold before the dashboard mounts', async () => {
+	it('seeds the service and its top-level operations before the dashboard mounts', async () => {
 		render(<ServiceDetails />, undefined, {
 			initialRoute: '/services/checkout%20api',
 			routePath: ROUTES.SERVICE_METRICS,
@@ -80,8 +84,7 @@ describe('ServiceDetails', () => {
 
 		expect(seededVariables()).toStrictEqual({
 			service_name: 'checkout api',
-			apdex_threshold_ns: '500000000',
-			apdex_tolerated_ns: '2000000000',
+			top_level_operations: ['overflow_operation', 'POST /checkout'],
 		});
 	});
 

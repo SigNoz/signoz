@@ -7,7 +7,7 @@
     "spec": {
       "display": {
         "name": "Service Overview",
-        "description": "Latency, rate, errors, Apdex and key operations for one service, from the spans that enter it."
+        "description": "Latency and key operations from spans; rate, errors and Apdex from span metrics over the top-level operations, as the V1 page."
       },
       "variables": [
         {
@@ -51,25 +51,22 @@
           }
         },
         {
-          "kind": "TextVariable",
+          "kind": "ListVariable",
           "spec": {
-            "name": "apdex_threshold_ns",
+            "name": "top_level_operations",
             "display": {
-              "name": "apdex_threshold_ns",
-              "description": "Apdex threshold T, in nanoseconds"
+              "name": "top_level_operations",
+              "description": "Set by the services page: the service's top-level operations, overflow_operation included."
             },
-            "value": "500000000"
-          }
-        },
-        {
-          "kind": "TextVariable",
-          "spec": {
-            "name": "apdex_tolerated_ns",
-            "display": {
-              "name": "apdex_tolerated_ns",
-              "description": "Apdex tolerated limit 4T, in nanoseconds"
-            },
-            "value": "2000000000"
+            "allowMultiple": true,
+            "allowAllValue": false,
+            "sort": "none",
+            "plugin": {
+              "kind": "signoz/CustomVariable",
+              "spec": {
+                "customValue": "overflow_operation"
+              }
+            }
           }
         }
       ],
@@ -262,15 +259,17 @@
                           "type": "builder_query",
                           "spec": {
                             "name": "A",
-                            "signal": "traces",
+                            "signal": "metrics",
                             "stepInterval": 0,
                             "disabled": false,
                             "filter": {
-                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                              "expression": "service.name = $service_name AND operation IN $top_level_operations AND deployment.environment IN $environment"
                             },
                             "aggregations": [
                               {
-                                "expression": "rate()"
+                                "metricName": "signoz_latency.count",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum"
                               }
                             ],
                             "legend": "Operations"
@@ -323,15 +322,17 @@
                           "type": "builder_query",
                           "spec": {
                             "name": "A",
-                            "signal": "traces",
+                            "signal": "metrics",
                             "stepInterval": 0,
                             "disabled": true,
                             "filter": {
-                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                              "expression": "service.name = $service_name AND operation IN $top_level_operations AND deployment.environment IN $environment"
                             },
                             "aggregations": [
                               {
-                                "expression": "count()"
+                                "metricName": "signoz_latency.count",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "sum"
                               }
                             ]
                           }
@@ -340,15 +341,21 @@
                           "type": "builder_query",
                           "spec": {
                             "name": "B",
-                            "signal": "traces",
+                            "signal": "metrics",
                             "stepInterval": 0,
                             "disabled": true,
                             "filter": {
-                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true) AND has_error = false AND duration_nano <= $apdex_threshold_ns"
+                              "expression": "service.name = $service_name AND operation IN $top_level_operations AND deployment.environment IN $environment AND status.code != 'STATUS_CODE_ERROR'"
                             },
                             "aggregations": [
                               {
-                                "expression": "count()"
+                                "metricName": "signoz_latency.bucket",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "count",
+                                "comparisonSpaceAggregationParam": {
+                                  "operator": "<=",
+                                  "threshold": 500
+                                }
                               }
                             ]
                           }
@@ -357,15 +364,21 @@
                           "type": "builder_query",
                           "spec": {
                             "name": "C",
-                            "signal": "traces",
+                            "signal": "metrics",
                             "stepInterval": 0,
                             "disabled": true,
                             "filter": {
-                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true) AND has_error = false AND duration_nano <= $apdex_tolerated_ns"
+                              "expression": "service.name = $service_name AND operation IN $top_level_operations AND deployment.environment IN $environment AND status.code != 'STATUS_CODE_ERROR'"
                             },
                             "aggregations": [
                               {
-                                "expression": "count()"
+                                "metricName": "signoz_latency.bucket",
+                                "timeAggregation": "increase",
+                                "spaceAggregation": "count",
+                                "comparisonSpaceAggregationParam": {
+                                  "operator": "<=",
+                                  "threshold": 2000
+                                }
                               }
                             ]
                           }
@@ -424,15 +437,17 @@
                           "type": "builder_query",
                           "spec": {
                             "name": "A",
-                            "signal": "traces",
+                            "signal": "metrics",
                             "stepInterval": 0,
                             "disabled": true,
                             "filter": {
-                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true) AND has_error = true"
+                              "expression": "service.name = $service_name AND operation IN $top_level_operations AND deployment.environment IN $environment AND status.code IN ['STATUS_CODE_ERROR']"
                             },
                             "aggregations": [
                               {
-                                "expression": "count()"
+                                "metricName": "signoz_calls_total",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum"
                               }
                             ]
                           }
@@ -441,15 +456,17 @@
                           "type": "builder_query",
                           "spec": {
                             "name": "B",
-                            "signal": "traces",
+                            "signal": "metrics",
                             "stepInterval": 0,
                             "disabled": true,
                             "filter": {
-                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                              "expression": "service.name = $service_name AND operation IN $top_level_operations AND deployment.environment IN $environment"
                             },
                             "aggregations": [
                               {
-                                "expression": "count()"
+                                "metricName": "signoz_calls_total",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum"
                               }
                             ]
                           }
@@ -459,7 +476,7 @@
                           "spec": {
                             "name": "F1",
                             "expression": "A*100/B",
-                            "legend": "Error %"
+                            "legend": "Error Percentage"
                           }
                         }
                       ]
@@ -488,7 +505,7 @@
                     "B": "ns",
                     "C": "ns",
                     "D": "short",
-                    "E": "short"
+                    "F1": "percent"
                   },
                   "decimalPrecision": "2"
                 }
@@ -599,7 +616,7 @@
                                 "fieldDataType": "string"
                               }
                             ],
-                            "legend": "Calls"
+                            "legend": "Number of Calls"
                           }
                         },
                         {
@@ -608,7 +625,7 @@
                             "name": "E",
                             "signal": "traces",
                             "stepInterval": 0,
-                            "disabled": false,
+                            "disabled": true,
                             "filter": {
                               "expression": "service.name = $service_name AND deployment.environment IN $environment"
                             },
@@ -625,6 +642,14 @@
                               }
                             ],
                             "legend": "Errors"
+                          }
+                        },
+                        {
+                          "type": "builder_formula",
+                          "spec": {
+                            "name": "F1",
+                            "expression": "E*100/D",
+                            "legend": "Error Rate"
                           }
                         }
                       ]
