@@ -9,6 +9,7 @@ import {
 	copyLogDetailsLink,
 	copyLogLinkFromRow,
 	dirtyQuickFiltersSettings,
+	openFormatMenu,
 	openLogContext,
 	openLogDetails,
 	openLogDetailsMenu,
@@ -85,16 +86,7 @@ export const RawFormat: Story = {
 /** The format popover: the format list, the max-lines stepper, and the font-size control. */
 export const FormatMenuOpen: Story = {
 	args: { format: 'raw' },
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'periscope-btn-format-options',
-				undefined,
-				untilLoaded,
-			),
-		);
-		await screen.findByTestId('max-lines-per-row', undefined, untilLoaded);
-	},
+	play: openFormatMenu,
 };
 
 /** An explorer with no configured quick filters. */
