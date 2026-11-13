@@ -116,6 +116,8 @@ function PanelTypeSelectionModal({
 						color="secondary"
 						size="md"
 						onClick={handleClose}
+						width={90}
+						testId="panel-type-drawer-cancel"
 					>
 						Cancel
 					</Button>

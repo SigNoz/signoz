@@ -68,6 +68,7 @@ function AddPanelSplitButton({
 				onClick={onConfirm}
 				disabled={disabled}
 				disabledTooltip="Name the new section first"
+				width={180}
 				testId="panel-type-confirm"
 			>
 				{label}
@@ -80,8 +81,8 @@ function AddPanelSplitButton({
 				contentMaxWidth={320}
 			>
 				<Button
-					variant="solid"
-					color="primary"
+					variant="link"
+					color="secondary"
 					size="md"
 					icon
 					aria-label="Choose section"

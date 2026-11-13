@@ -1,4 +1,5 @@
 import { Tooltip } from '@signozhq/ui/tooltip';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
 import type { PanelTypeItem } from '../PanelTypeBrowser/panelTypeCatalog';
@@ -36,10 +37,28 @@ function PanelTypeTile({
 			<PanelTypePreview kind={item.kind} />
 			<span className={styles.tileText}>
 				<span className={styles.tileTitle}>
-					<span className={styles.tileName}>{item.displayName}</span>
+					<Typography
+						variant="label"
+						size="base"
+						weight="medium"
+						color="main"
+						as="span"
+						textOverflow="wrap"
+					>
+						{item.displayName}
+					</Typography>
 					{item.isNew && <span className={styles.newBadge}>New</span>}
 				</span>
-				<span className={styles.tileDescription}>{item.description}</span>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
+					{item.description}
+				</Typography>
 			</span>
 		</button>
 	);
