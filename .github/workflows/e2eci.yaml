@@ -88,7 +88,7 @@ jobs:
             postgres:15 \
             clickhouse/clickhouse-server:25.12.5 \
             clickhouse/clickhouse-keeper:25.12.5 \
-            signoz/signoz-schema-migrator:v0.144.15 \
+            signoz/signoz-otel-collector:v0.144.16-rc.1 \
             wiremock/wiremock:2.35.1-1 \
             | xargs -P 0 -n 1 docker pull -q
       - name: python
