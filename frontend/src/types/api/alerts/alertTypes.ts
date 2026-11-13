@@ -36,7 +36,6 @@ export interface PostableAlertRuleV2 {
 		absentFor?: number;
 		requireMinPoints?: boolean;
 		requiredNumPoints?: number;
-		algorithm?: string;
 		seasonality?: string;
 	};
 	evaluation?: {
