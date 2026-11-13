@@ -63,6 +63,7 @@ function PanelHeaderSearch({
 	return (
 		<div className={styles.input}>
 			<Input
+				size="sm"
 				autoFocus
 				value={value}
 				placeholder="Search…"
