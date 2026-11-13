@@ -1,10 +1,14 @@
+import { createPortal } from 'react-dom';
 import { AlertStrip } from '@signozhq/ui/alert-strip';
+import { useBottomStripStore } from 'container/BottomStrip/store/useBottomStripStore';
 
 export function NoAuthBanner(): JSX.Element {
-	return (
+	const bottomSlot = useBottomStripStore((s) => s.topSlot);
+
+	const banner = (
 		<AlertStrip.CloseablePersisted
 			color="warning"
-			side="top"
+			side={bottomSlot ? 'bottom' : 'top'}
 			storageKey="no-auth-banner-v1"
 			testId="no-auth-banner"
 		>
@@ -18,6 +22,8 @@ export function NoAuthBanner(): JSX.Element {
 			</AlertStrip.Link>
 		</AlertStrip.CloseablePersisted>
 	);
+
+	return bottomSlot ? createPortal(banner, bottomSlot) : banner;
 }
 
 export default NoAuthBanner;

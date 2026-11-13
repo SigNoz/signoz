@@ -5,7 +5,6 @@
 	gap: var(--spacing-6);
 
 	flex-shrink: 0;
-	height: var(--bottom-strip-height);
 	padding: 0 var(--spacing-6);
 
 	background: var(--l2-background);
@@ -15,6 +14,12 @@
 
 	// Above page content, below the body-portalled overlays that are meant to
 	// cover the strip.
+	position: relative;
+	z-index: 1;
+}
+
+.topSlot {
+	flex-shrink: 0;
 	position: relative;
 	z-index: 1;
 }
