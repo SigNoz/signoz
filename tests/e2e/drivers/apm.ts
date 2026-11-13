@@ -7,10 +7,10 @@ import {
 	SEEDED_DATA_TIMEOUT,
 	SEEDED_TEST_BUDGET,
 	seeded,
-	type ConsoleWatch,
 	type Layer,
 	type WorkerLayer,
 } from './kit';
+import { wheelTo } from './scroll';
 import { childSpan, rootSpan, SPAN_KIND, stamp, STATUS } from './spans';
 import { seedTracesViaSeeder, type SeederSpan } from './traces';
 
@@ -18,11 +18,10 @@ import { seedTracesViaSeeder, type SeederSpan } from './traces';
  * APM: the services list, a service's detail tabs, its top-level operations
  * page and the service map.
  *
- * `use_span_metrics` is off by default, so every page here reads spans: the
- * services list and Key Operations come from `/api/v2/services` and
- * `/api/v2/service/{top,entry_point}_operations`, scoped to root spans. The
- * Rate, Error % and Apdex panels query span metrics that nothing seeds, so
- * specs assert they render, not their values.
+ * The services list reads `/api/v2/services`, scoped to root spans. Each detail
+ * tab is a read-only system dashboard: the Overview reads spans entering the
+ * service, the DB Call and External tabs read span metrics that nothing seeds,
+ * so specs assert those render, not their values.
  */
 
 export const SERVICE_TAB = {
@@ -33,53 +32,29 @@ export const SERVICE_TAB = {
 
 export type ServiceTab = keyof typeof SERVICE_TAB;
 
-/**
- * Known application defect: `/metric/metric_metadata` answers 500, not 404, for
- * a metric the stack never ingested. The Overview's Apdex panel asks for
- * `signoz_latency.bucket`, which the seeder does not emit.
- */
-export const MISSING_METADATA = '/metric/metric_metadata';
-
-/**
- * `noise` without the {@link MISSING_METADATA} 500: the failed response, its
- * failed load, and the axios error the DB Call and External tabs log for it,
- * which names no URL. The response always arrives before axios rejects.
- */
-export function withoutMissingMetadata(noise: ConsoleWatch): ConsoleWatch {
-	const known = (entry: string): boolean => entry.includes(MISSING_METADATA);
-	const failedResponses = noise.failedResponses.filter((entry) => !known(entry));
-	const seen = failedResponses.length < noise.failedResponses.length;
-	return {
-		failedResponses,
-		errors: noise.errors.filter(
-			(entry) =>
-				!known(entry) &&
-				!(seen && entry.includes('Request failed with status code 500')),
-		),
-	};
-}
-
+/** Panel titles, from the `services-*` system dashboard definitions. */
 export const OVERVIEW_PANELS = [
-	'service_latency',
-	'operations_per_sec',
-	'error_percentage_%',
-	'apdex',
+	'Latency',
+	'Rate (ops/s)',
+	'Apdex',
+	'Error Percentage',
 ] as const;
 
 export const DB_PANELS = [
-	'database_call_rps',
-	'database_call_avg_duration',
+	'Database Calls RPS',
+	'Database Calls Avg Duration',
 ] as const;
 
 export const EXTERNAL_PANELS = [
-	'external_call_error_percentage',
-	'external_call_duration',
-	'external_call_rps_by_address',
-	'external_call_duration_by_address',
+	'External Call Error Percentage',
+	'External Call duration',
+	'External Call RPS(by Address)',
+	'External Call duration(by Address)',
 ] as const;
 
+const KEY_OPERATIONS_PANEL = 'Key Operations';
+
 const RELATIVE_TIME = '15m';
-const PANEL_ERROR_TEXT = 'Something went wrong';
 
 // ─── Seed ────────────────────────────────────────────────────────────────────
 
@@ -157,15 +132,14 @@ export interface ServiceMapEdge {
 	callCount: number;
 }
 
+/** The Overview's Key Operations table panel. */
 export interface KeyOperations {
 	root(): Locator;
-	/** "Key Operations" or "Key Entrypoint Operations". */
-	title(): Locator;
+	/** Wheel the panel into view: it renders its table only once visible. */
+	reveal(): Promise<void>;
 	rows(): Locator;
 	row(opName: string): Locator;
 	cell(opName: string, header: string): Promise<string>;
-	/** Flip the Entrypoint Spans switch and resolve with the response rows. */
-	toggleEntrypoint(): Promise<unknown[]>;
 }
 
 export interface Apm {
@@ -183,11 +157,15 @@ export interface Apm {
 	gotoService(name: string, tab?: ServiceTab): Promise<void>;
 	tab(name: ServiceTab): Locator;
 	openTab(name: ServiceTab): Promise<void>;
-	panel(testId: string): Locator;
-	/** Visible, and not showing the panel's error text. */
-	expectPanelRendered(testId: string): Promise<void>;
+	/** A system dashboard panel, by its title. */
+	panel(title: string): Locator;
+	/** Visible, and not showing the panel's error state. */
+	expectPanelRendered(title: string): Promise<void>;
 	keyOps: KeyOperations;
-	/** Click an operation name; resolves once the traces explorer has loaded. */
+	/**
+	 * Drill into an operation's traces from its Calls cell; resolves once the
+	 * traces explorer has loaded, in this tab or the one it opened.
+	 */
 	openKeyOp(opName: string): Promise<void>;
 	/** Traces explorer list rows, after `openKeyOp`. */
 	explorerRows(): Locator;
@@ -222,14 +200,26 @@ export function apmDriver(page: Page): Apm {
 	const servicesTable = (): Locator => page.getByTestId('services-table');
 	const serviceRow = (name: string): Locator =>
 		servicesTable().locator(`tbody tr[data-row-key="${name}"]`);
-	const keyOpsRoot = (): Locator => page.getByTestId('top-operations');
+	const panelByTitle = (title: string): Locator =>
+		page.locator('[data-panel-root]').filter({
+			has: page.getByTestId('panel-title').getByText(title, { exact: true }),
+		});
+	const keyOpsRoot = (): Locator => panelByTitle(KEY_OPERATIONS_PANEL);
+	const keyOpRows = (): Locator =>
+		keyOpsRoot().locator('tbody tr.ant-table-row');
 	const keyOpRow = (opName: string): Locator =>
-		keyOpsRoot().locator(`tbody tr[data-row-key="${opName}"]`);
+		keyOpRows().filter({
+			has: page.getByRole('cell', { name: opName, exact: true }),
+		});
+	let explorerPage = page;
 
 	const keyOps: KeyOperations = {
 		root: keyOpsRoot,
-		title: () => keyOpsRoot().locator('.ant-table-title'),
-		rows: () => keyOpsRoot().locator('tbody tr[data-row-key]'),
+		reveal: async () => {
+			await wheelTo(keyOpsRoot());
+			await expect(keyOpsRoot()).toHaveAttribute('data-panel-visible', 'true');
+		},
+		rows: keyOpRows,
 		row: keyOpRow,
 		cell: async (opName, header) => {
 			await expect(keyOpRow(opName)).toBeVisible({
@@ -242,18 +232,6 @@ export function apmDriver(page: Page): Apm {
 				);
 			}
 			return cells[header];
-		},
-		toggleEntrypoint: async () => {
-			const response = page.waitForResponse(
-				(res) =>
-					res.url().includes('/service/entry_point_operations') &&
-					res.request().method() === 'POST',
-			);
-			await page.getByTestId('top-operations-entrypoint-toggle').click();
-			const res = await response;
-			expect(res.ok()).toBe(true);
-			const body = (await res.json()) as { data?: unknown[] | null };
-			return body.data ?? [];
 		},
 	};
 
@@ -320,20 +298,33 @@ export function apmDriver(page: Page): Apm {
 			await expect(apm.tab(name)).toHaveAttribute('aria-selected', 'true');
 		},
 
-		panel: (testId) => page.getByTestId(testId),
+		panel: panelByTitle,
 
-		expectPanelRendered: async (testId) => {
-			const panel = apm.panel(testId);
+		expectPanelRendered: async (title) => {
+			const panel = apm.panel(title);
 			await expect(panel).toBeVisible();
-			await expect(panel).not.toContainText(PANEL_ERROR_TEXT);
+			await expect(panel.getByTestId('panel-error')).toHaveCount(0);
 		},
 
 		openKeyOp: async (opName) => {
-			await keyOpRow(opName).getByTestId('top-operation-link').click();
-			await expect(page).toHaveURL(/\/traces-explorer/);
+			const cells = await cellsByHeader(keyOpsRoot(), keyOpRow(opName));
+			const callsColumn = Object.keys(cells).indexOf('Calls');
+			await keyOpRow(opName).locator('td').nth(callsColumn).click();
+			const popup = page
+				.context()
+				.waitForEvent('page', { timeout: 5_000 })
+				.catch(() => undefined);
+			await page.getByTestId('drilldown-view-traces').click();
+			explorerPage =
+				(await Promise.race([
+					popup,
+					page.waitForURL(/\/traces-explorer/).then(() => page),
+				])) ?? page;
+			await expect(explorerPage).toHaveURL(/\/traces-explorer/);
 		},
 
-		explorerRows: () => page.locator('[data-testid^="traces-table-row-"]'),
+		explorerRows: () =>
+			explorerPage.locator('[data-testid^="traces-table-row-"]'),
 		explorerRowNames: () => apm.explorerRows().getByTestId('name'),
 
 		gotoTopLevelOps: async (name) => {
