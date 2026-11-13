@@ -109,12 +109,17 @@ type TelemetryResourceDef struct {
 	Category  coretypes.ActionCategory
 	Selector  coretypes.SelectorFunc
 	Resources coretypes.ResourceExtractor
+	// Optional skips the check instead of failing when the request carries no telemetry resources.
+	Optional bool
 }
 
 func (def TelemetryResourceDef) resolveRequest(ec coretypes.ExtractorContext) []coretypes.ResolvedResource {
 	refs, err := def.Resources(ec)
 	if err != nil {
 		return []coretypes.ResolvedResource{coretypes.NewResolvedResourceWithError(def.Verb, def.Category, err)}
+	}
+	if len(refs) == 0 && def.Optional {
+		return nil
 	}
 	if len(refs) == 0 {
 		return []coretypes.ResolvedResource{coretypes.NewResolvedResourceWithError(
