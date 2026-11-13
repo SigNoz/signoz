@@ -36,7 +36,7 @@ packages:
       Rows:
       ColumnType:
     config:
-      dir: 'pkg/telemetrystore/drivertest'
+      dir: 'pkg/telemetrystore/telemetrystoretest'
       filename: "driver.go"
       structname: 'Mock{{.InterfaceName}}'
-      pkgname: '{{.SrcPackageName}}test'
+      pkgname: 'telemetrystoretest'
