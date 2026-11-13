@@ -44,6 +44,8 @@ describe('Cost meter breakdown', () => {
 	it('keeps the UTC billing notice above the dashboard', () => {
 		render(<BreakDown />);
 
-		expect(screen.getByText(/Billing is calculated in UTC/)).toBeInTheDocument();
+		expect(screen.getByTestId('cost-meter-utc-notice')).toHaveTextContent(
+			'Billing is calculated in UTC',
+		);
 	});
 });
