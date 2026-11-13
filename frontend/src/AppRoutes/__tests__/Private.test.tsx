@@ -2,9 +2,17 @@ import { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter, Route, Switch, useLocation } from 'react-router-dom';
 import { act, render, screen, waitFor } from '@testing-library/react';
+import { useListUsers } from 'api/generated/services/users';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
+import { UserListPermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
+import {
+	AUTHZ_CHECK_URL,
+	setupAuthzAdmin,
+	setupAuthzDeny,
+} from 'lib/authz/utils/authz-test-utils';
+import { rest, server } from 'mocks-server/server';
 import { AppContext } from 'providers/App/App';
 import { IAppContext, IUser } from 'providers/App/types';
 import {
@@ -1087,6 +1095,72 @@ describe('PrivateRoute', () => {
 			});
 
 			await assertRedirectsTo(ROUTES.ONBOARDING);
+		});
+
+		it('fetches the user list for a non-admin role that has list:user', async () => {
+			server.use(setupAuthzAdmin());
+			jest.mocked(useListUsers).mockClear();
+
+			renderPrivateRoute({
+				initialRoute: ROUTES.HOME,
+				appContext: {
+					isLoggedIn: true,
+					user: createMockUser({ role: USER_ROLES.VIEWER as ROLES }),
+				},
+				isCloudUser: true,
+			});
+
+			await waitFor(() =>
+				expect(useListUsers).toHaveBeenLastCalledWith({
+					query: { enabled: true },
+				}),
+			);
+		});
+
+		it('does not check list:user while logged out', async () => {
+			const authzCheck = jest.fn();
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, (_, res, ctx) => {
+					authzCheck();
+					return res(ctx.status(401));
+				}),
+			);
+
+			renderPrivateRoute({
+				initialRoute: ROUTES.HOME,
+				appContext: { isLoggedIn: false },
+				isCloudUser: true,
+			});
+
+			await act(async () => {
+				await new Promise((resolve) => {
+					setTimeout(resolve, 50);
+				});
+			});
+
+			expect(authzCheck).not.toHaveBeenCalled();
+		});
+
+		it('does not fetch the user list for an admin without list:user', async () => {
+			server.use(setupAuthzDeny(UserListPermission));
+			jest.mocked(useListUsers).mockClear();
+
+			renderPrivateRoute({
+				initialRoute: ROUTES.HOME,
+				appContext: {
+					isLoggedIn: true,
+					user: createMockUser({ role: USER_ROLES.ADMIN as ROLES }),
+				},
+				isCloudUser: true,
+			});
+
+			await act(async () => {
+				await Promise.resolve();
+			});
+
+			expect(useListUsers).not.toHaveBeenCalledWith({
+				query: { enabled: true },
+			});
 		});
 
 		it('should not redirect to onboarding when org preferences are still fetching', () => {
