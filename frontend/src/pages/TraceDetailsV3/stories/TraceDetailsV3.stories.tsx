@@ -24,6 +24,7 @@ import {
 	traceDetailsMocks,
 	untilLoaded,
 } from './TraceDetailsV3.stories.mocks';
+import { TraceDetailsTab } from '../constants';
 import TraceDetailsV3 from '../index';
 
 type TraceDetailsArgs = PageStoryArgs<typeof traceDetailsMocks>;
@@ -116,6 +117,22 @@ export const AiTrace: Story = {
 
 		await fireEvent.mouseOver(row);
 		await screen.findByText('Usage Breakdown', undefined, untilLoaded);
+	},
+};
+
+/**
+ * The same agent run on the Thread tab: each LLM call's messages in order, with
+ * the tool call and its response, the model's reasoning folded into a thinking
+ * block, and the span panel open on the Claude call.
+ */
+export const AiThread: Story = {
+	args: { scenario: 'ai', spans: AI_SPANS, tab: TraceDetailsTab.Thread },
+	play: async ({ canvasElement }): Promise<void> => {
+		await within(canvasElement).findAllByText(
+			/Let me check the upgrade notes/,
+			undefined,
+			untilLoaded,
+		);
 	},
 };
 

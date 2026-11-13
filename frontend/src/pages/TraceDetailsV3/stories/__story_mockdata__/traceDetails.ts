@@ -4,12 +4,16 @@
  */
 
 import type {
+	AiobservabilitytypesInputMessagesDTO,
+	AiobservabilitytypesOutputMessagesDTO,
 	GetFlamegraph200,
 	GetTraceAggregations200,
 	GetTraceSummary200,
+	GetTraceThread200,
 	GetWaterfallV4200,
 	SpantypesFlamegraphSpanDTO,
 	SpantypesSpanAggregationDTO,
+	SpantypesThreadSpanDTO,
 	SpantypesWaterfallSpanDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { SpantypesSpanAggregationTypeDTO } from 'api/generated/services/sigNoz.schemas';
@@ -28,7 +32,25 @@ interface SpanTemplate {
 	/** `response_status_code`; failing spans default to 503, the rest to 200. */
 	statusCode?: string;
 	attributes: Record<string, string | number | boolean>;
+	/** The LLM call's messages. Only spans that carry them are in the thread. */
+	messages?: {
+		input: AiobservabilitytypesInputMessagesDTO;
+		output: AiobservabilitytypesOutputMessagesDTO;
+	};
 }
+
+const SUPPORT_SYSTEM_PROMPT =
+	'You are the SigNoz support agent. Answer from the docs, cite the page you used, and open a ticket only when the docs do not cover the problem.';
+
+const SUPPORT_QUESTION =
+	'My checkout traces stopped showing up after I upgraded the collector to 0.110. What changed?';
+
+const SEARCH_DOCS_CALL = {
+	type: 'tool_call',
+	id: 'call_search_docs_1',
+	name: 'search_docs',
+	arguments: { query: 'otel collector 0.110 breaking changes traces', limit: 3 },
+};
 
 /** Walked in order, so the tree keeps the same services at the same depths. */
 const SPAN_TEMPLATES: SpanTemplate[] = [
@@ -182,6 +204,28 @@ const AI_TEMPLATES: SpanTemplate[] = [
 			'gen_ai.usage.cache_creation.input_tokens': 0,
 			'signoz.gen_ai.usage.tokens.cost': 0.00566,
 		},
+		messages: {
+			input: [
+				{
+					role: 'system',
+					parts: [{ type: 'text', content: SUPPORT_SYSTEM_PROMPT }],
+				},
+				{ role: 'user', parts: [{ type: 'text', content: SUPPORT_QUESTION }] },
+			],
+			output: [
+				{
+					role: 'assistant',
+					finish_reason: 'tool_call',
+					parts: [
+						{
+							type: 'text',
+							content: 'Let me check the upgrade notes for that release.',
+						},
+						SEARCH_DOCS_CALL,
+					],
+				},
+			],
+		},
 	},
 	{
 		service: 'support-agent',
@@ -201,6 +245,52 @@ const AI_TEMPLATES: SpanTemplate[] = [
 			'gen_ai.usage.cache_read.input_tokens': 4200,
 			'gen_ai.usage.cache_creation.input_tokens': 1300,
 			'signoz.gen_ai.usage.tokens.cost': 0.01853,
+		},
+		messages: {
+			input: [
+				{
+					role: 'system',
+					parts: [{ type: 'text', content: SUPPORT_SYSTEM_PROMPT }],
+				},
+				{ role: 'user', parts: [{ type: 'text', content: SUPPORT_QUESTION }] },
+				{ role: 'assistant', parts: [SEARCH_DOCS_CALL] },
+				{
+					role: 'tool',
+					parts: [
+						{
+							type: 'tool_call_response',
+							id: 'call_search_docs_1',
+							response: {
+								results: [
+									{
+										title: 'Collector 0.110 upgrade notes',
+										snippet:
+											'The otlp exporter now sends over gRPC on 4317 by default. Pipelines that pointed it at the HTTP port 4318 must set the endpoint explicitly.',
+									},
+								],
+							},
+						},
+					],
+				},
+			],
+			output: [
+				{
+					role: 'assistant',
+					finish_reason: 'stop',
+					parts: [
+						{
+							type: 'reasoning',
+							content:
+								'The traces stopped right after the upgrade, and the notes say the otlp exporter changed its default transport. If their exporter still points at 4318, every export now fails against a port that expects HTTP. That fits better than a sampling change, which would thin the traces out rather than stop them.',
+						},
+						{
+							type: 'text',
+							content:
+								'Collector 0.110 changed the default transport of the `otlp` exporter to gRPC on port **4317**. If your exporter still points at `:4318`, every export fails and no traces arrive.\n\nSet the endpoint explicitly:\n\n```yaml\nexporters:\n  otlp:\n    endpoint: ingest.example.signoz.cloud:4317\n```\n\nSource: Collector 0.110 upgrade notes.',
+						},
+					],
+				},
+			],
 		},
 	},
 	{
@@ -246,6 +336,39 @@ const AI_TEMPLATES: SpanTemplate[] = [
 			'gen_ai.usage.output_tokens': 1480,
 			'gen_ai.usage.reasoning.output_tokens': 1152,
 			'signoz.gen_ai.usage.tokens.cost': 0.007524,
+		},
+		messages: {
+			input: [
+				{
+					role: 'system',
+					parts: [
+						{
+							type: 'text',
+							content:
+								'You are the triage agent. Write a one-line summary and a priority for the support queue.',
+						},
+					],
+				},
+				{ role: 'user', parts: [{ type: 'text', content: SUPPORT_QUESTION }] },
+			],
+			output: [
+				{
+					role: 'assistant',
+					finish_reason: 'stop',
+					parts: [
+						{
+							type: 'reasoning',
+							content:
+								'No data loss beyond the gap, and the fix is a config change the docs already describe, so this is not urgent.',
+						},
+						{
+							type: 'text',
+							content:
+								'Summary: traces stopped after a collector upgrade to 0.110, caused by the otlp exporter default port. Priority: P3.',
+						},
+					],
+				},
+			],
 		},
 	},
 ];
@@ -424,6 +547,43 @@ const waterfallSpan = (span: BuiltSpan): SpantypesWaterfallSpanDTO => ({
 	is_remote: span.level === 0 ? 'true' : 'false',
 	flags: 0,
 	trace_state: '',
+});
+
+const threadSpan = (span: BuiltSpan): SpantypesThreadSpanDTO => ({
+	span_id: span.spanId,
+	trace_id: STORY_TRACE_ID,
+	parent_span_id: span.parentSpanId,
+	time_unix: Math.round(span.startMs),
+	duration_nano: Math.round(span.durationMs * 1_000_000),
+	name: span.template.name,
+	kind_string: span.template.kind,
+	has_error: span.hasError,
+	status_code_string: span.hasError ? 'Error' : 'Ok',
+	status_message: span.hasError ? 'upstream unavailable' : '',
+	attributes: span.template.attributes,
+	resource: resourceOf(span),
+	events: eventsOf(span) ?? [],
+	references: [],
+	formattedInput: span.template.messages?.input ?? [],
+	formattedOutput: span.template.messages?.output ?? [],
+	formatterWarnings: [],
+});
+
+/**
+ * The spans with messages, in start order, on one page: no cursors, so the
+ * list never asks for another. A scenario with no LLM calls answers empty,
+ * which is the tab's no-AI-spans state.
+ */
+export const traceThreadResponse = (
+	options: TraceOptions,
+): GetTraceThread200 => ({
+	status: 'success',
+	data: {
+		spans: buildSpans(options)
+			.filter(({ template }) => template.messages)
+			.sort((a, b) => a.startMs - b.startMs)
+			.map(threadSpan),
+	},
 });
 
 /**
