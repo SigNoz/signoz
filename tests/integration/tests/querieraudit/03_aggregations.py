@@ -112,7 +112,6 @@ def test_audit_scalar_distinct_principals_by_resource_kind(
     get_token: Callable[[str, str], str],
     insert_audit_logs: Callable[[list[AuditLog]], None],
 ) -> None:
-    """count_distinct(principal) grouped by a resource field: dashboards touched by two principals, alert rules by one."""
     now = datetime.now(tz=UTC)
     insert_audit_logs(
         [
@@ -162,7 +161,6 @@ def test_audit_time_series_count_by_verb(
     get_token: Callable[[str, str], str],
     insert_audit_logs: Callable[[list[AuditLog]], None],
 ) -> None:
-    """count() per minute grouped by verb: two updates two minutes ago, one update and one delete a minute ago."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     one_minute_ago = now - timedelta(minutes=1)
     two_minutes_ago = now - timedelta(minutes=2)

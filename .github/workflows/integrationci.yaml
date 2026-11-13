@@ -40,7 +40,6 @@ jobs:
         suite:
           - alertmanager
           - alertmanagerrotation
-          - auditquerier
           - basepath
           - callbackauthn
           - cloudintegrations
