@@ -41,6 +41,7 @@ export const DEFAULT_CONTROLS: DashboardControls = {
 		move: true,
 		delete: true,
 		drilldown: true,
+		zoom: true,
 	},
 	viewModal: { switchToEdit: true },
 };
@@ -85,6 +86,7 @@ export const CONTROL_WRITES: Record<DashboardControlId, boolean> = {
 	'panelActions.move': true,
 	'panelActions.delete': true,
 	'panelActions.drilldown': false,
+	'panelActions.zoom': false,
 	'viewModal.switchToEdit': true,
 };
 

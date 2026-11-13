@@ -13,6 +13,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import logEvent from 'api/common/logEvent';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { UpdateTimeInterval } from 'store/actions';
+import { useDashboardControl } from 'pages/DashboardPage/DashboardContainer/controls/useDashboardControl';
 
 export interface PanelInteractions {
 	/** Drag-select a chart range → write it to the URL + global time so every panel re-fetches the same range. */
@@ -43,8 +44,12 @@ export function usePanelInteractions(): PanelInteractions {
 		[syncMode, syncFilterMode, dashboardId],
 	);
 
+	const canZoom = useDashboardControl('panelActions.zoom');
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {
+			if (!canZoom) {
+				return;
+			}
 			const startTimestamp = Math.trunc(start);
 			const endTimestamp = Math.trunc(end);
 
@@ -57,7 +62,7 @@ export function usePanelInteractions(): PanelInteractions {
 				void logEvent(DashboardDetailEvents.PanelZoomed, { context: 'panel' });
 			}
 		},
-		[dispatch, pathname, safeNavigate, urlQuery],
+		[canZoom, dispatch, pathname, safeNavigate, urlQuery],
 	);
 
 	return { onDragSelect, dashboardPreference };
