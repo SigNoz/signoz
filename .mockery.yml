@@ -31,3 +31,12 @@ packages:
       filename: "tokenizer.go"
       structname: 'Mock{{.InterfaceName}}'
       pkgname: '{{.SrcPackageName}}test'
+  github.com/ClickHouse/clickhouse-go/v2/lib/driver:
+    interfaces:
+      Rows:
+      ColumnType:
+    config:
+      dir: 'pkg/telemetrystore/drivertest'
+      filename: "driver.go"
+      structname: 'Mock{{.InterfaceName}}'
+      pkgname: '{{.SrcPackageName}}test'
