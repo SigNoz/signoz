@@ -9,8 +9,6 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import OnboardingAddDataSource from '../AddDataSource';
 
-jest.mock('api/common/logEvent', () => jest.fn());
-
 jest.mock('components/LaunchChatSupport/LaunchChatSupport', () => ({
 	__esModule: true,
 	default: (): null => null,
@@ -35,7 +33,7 @@ jest.mock('components/InviteMembers/InviteMembers', () => {
 async function openInviteModal(): Promise<HTMLElement> {
 	const user = userEvent.setup({ pointerEventsCheck: 0 });
 	render(<OnboardingAddDataSource />);
-	await user.click(screen.getByText('Invite a teammate'));
+	await user.click(screen.getByTestId('invite-teammate-btn'));
 	return screen.findByTestId('onboarding-send-invites-btn');
 }
 

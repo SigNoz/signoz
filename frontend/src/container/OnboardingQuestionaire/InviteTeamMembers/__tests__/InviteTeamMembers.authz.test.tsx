@@ -1,4 +1,6 @@
 import { InviteMembersProps } from 'components/InviteMembers/types';
+import type { useRoles } from 'components/RolesSelect/RolesSelect';
+import type { useNotifications } from 'hooks/useNotifications';
 import { UserCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
 import {
 	setupAuthzAdmin,
@@ -9,16 +11,21 @@ import { render, screen, waitFor } from 'tests/test-utils';
 
 import InviteTeamMembers from '../InviteTeamMembers';
 
-jest.mock('api/common/logEvent', () => jest.fn());
-
 jest.mock('hooks/useNotifications', () => ({
-	useNotifications: (): any => ({
-		notifications: { success: jest.fn(), warning: jest.fn() },
+	useNotifications: (): ReturnType<typeof useNotifications> => ({
+		notifications: {
+			success: jest.fn(),
+			error: jest.fn(),
+			info: jest.fn(),
+			warning: jest.fn(),
+			open: jest.fn(),
+			destroy: jest.fn(),
+		},
 	}),
 }));
 
 jest.mock('components/RolesSelect/RolesSelect', () => ({
-	useRoles: (): any => ({
+	useRoles: (): ReturnType<typeof useRoles> => ({
 		roles: [],
 		isLoading: false,
 		isError: false,
