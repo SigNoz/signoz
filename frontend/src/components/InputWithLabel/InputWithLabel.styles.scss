@@ -8,13 +8,9 @@
 	// contract (set by e.g. FormAlertRules, WidgetFullView) so the joined
 	// group recolors as one.
 	.label {
-		// Typography.Text takes its display from this token; at its `inline` default
-		// the label blockifies as a flex item and the text rides the top of the row.
-		--typography-text-display: flex;
-
 		font-size: 12px;
 		font-style: normal;
-		font-weight: 500;
+		font-weight: 300;
 		line-height: 18px; /* 128.571% */
 		letter-spacing: 0.56px;
 
@@ -43,7 +39,11 @@
 
 		// Square corners: the input sits mid-group between label and close button.
 		--input-border-radius: 0px;
-		--input-height: 36px;
+		--input-sm-height: 36px;
+		--input-padding: 0 12px;
+		--input-font-family: 'Space Mono', monospace;
+		--input-font-size: 12px;
+		--input-letter-spacing: normal;
 		--input-border: var(--input-with-label-border-color, var(--l2-border));
 		--input-background: var(
 			--input-with-label-background-color,

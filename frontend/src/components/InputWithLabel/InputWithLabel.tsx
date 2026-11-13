@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Input } from '@signozhq/ui/input';
 import { Button } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { X } from '@signozhq/icons';
 
@@ -49,20 +48,7 @@ function InputWithLabel({
 				labelAfter,
 			})}
 		>
-			{!labelAfter && (
-				<div className="label">
-					<Typography
-						variant="paragraph"
-						size="small"
-						weight="regular"
-						color="secondary"
-						as="p"
-						textOverflow="ellipsis"
-					>
-						{label}
-					</Typography>
-				</div>
-			)}
+			{!labelAfter && <div className="label">{label}</div>}
 			<div
 				className={cx('input', {
 					'input__has-label-after': !labelAfter,
@@ -80,20 +66,7 @@ function InputWithLabel({
 					testId={`input-${label}`}
 				/>
 			</div>
-			{labelAfter && (
-				<div className="label">
-					<Typography
-						variant="paragraph"
-						size="small"
-						weight="regular"
-						color="secondary"
-						as="p"
-						textOverflow="ellipsis"
-					>
-						{label}
-					</Typography>
-				</div>
-			)}
+			{labelAfter && <div className="label">{label}</div>}
 			{onClose && (
 				<Button
 					className="periscope-btn ghost close-btn"
