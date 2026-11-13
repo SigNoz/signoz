@@ -1,0 +1,641 @@
+{
+  "version": 1,
+  "definition": {
+    "schemaVersion": "v6",
+    "name": "signoz---services-overview",
+    "tags": [],
+    "spec": {
+      "display": {
+        "name": "Service Overview",
+        "description": "Latency, rate, errors, Apdex and key operations for one service, from the spans that enter it."
+      },
+      "variables": [
+        {
+          "kind": "ListVariable",
+          "spec": {
+            "name": "service_name",
+            "display": {
+              "name": "service_name",
+              "description": "Service"
+            },
+            "allowMultiple": false,
+            "allowAllValue": false,
+            "sort": "alphabetical-asc",
+            "plugin": {
+              "kind": "signoz/DynamicVariable",
+              "spec": {
+                "name": "service.name",
+                "signal": "traces"
+              }
+            }
+          }
+        },
+        {
+          "kind": "ListVariable",
+          "spec": {
+            "name": "environment",
+            "display": {
+              "name": "environment",
+              "description": "Deployment environment"
+            },
+            "allowMultiple": true,
+            "allowAllValue": true,
+            "sort": "alphabetical-asc",
+            "plugin": {
+              "kind": "signoz/DynamicVariable",
+              "spec": {
+                "name": "deployment.environment",
+                "signal": "traces"
+              }
+            }
+          }
+        },
+        {
+          "kind": "TextVariable",
+          "spec": {
+            "name": "apdex_threshold_ns",
+            "display": {
+              "name": "apdex_threshold_ns",
+              "description": "Apdex threshold T, in nanoseconds"
+            },
+            "value": "500000000"
+          }
+        },
+        {
+          "kind": "TextVariable",
+          "spec": {
+            "name": "apdex_tolerated_ns",
+            "display": {
+              "name": "apdex_tolerated_ns",
+              "description": "Apdex tolerated limit 4T, in nanoseconds"
+            },
+            "value": "2000000000"
+          }
+        }
+      ],
+      "layouts": [
+        {
+          "kind": "Grid",
+          "spec": {
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/c603349c-1917-5703-9096-d3b9b3350b74"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/7df523f0-cdfa-5463-a903-1babcedc7fe6"
+                }
+              },
+              {
+                "x": 0,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/53ca5b4c-197e-5f3d-a0cb-d5eb47a41dfc"
+                }
+              },
+              {
+                "x": 6,
+                "y": 6,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/7b518371-d9f1-556f-96bf-cc246e59d678"
+                }
+              },
+              {
+                "x": 0,
+                "y": 12,
+                "width": 12,
+                "height": 8,
+                "content": {
+                  "$ref": "#/spec/panels/23a9f917-f292-52ba-800b-9c32a06c3e18"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "panels": {
+        "c603349c-1917-5703-9096-d3b9b3350b74": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Latency"
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "ns",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p50(duration_nano)"
+                              }
+                            ],
+                            "legend": "p50"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p90(duration_nano)"
+                              }
+                            ],
+                            "legend": "p90"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "C",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p99(duration_nano)"
+                              }
+                            ],
+                            "legend": "p99"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "7df523f0-cdfa-5463-a903-1babcedc7fe6": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Rate (ops/s)"
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "ops",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "rate()"
+                              }
+                            ],
+                            "legend": "Operations"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "53ca5b4c-197e-5f3d-a0cb-d5eb47a41dfc": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Apdex",
+              "description": "Satisfied requests plus half the tolerated ones, over all requests."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true) AND has_error = false AND duration_nano <= $apdex_threshold_ns"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "C",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true) AND has_error = false AND duration_nano <= $apdex_tolerated_ns"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_formula",
+                          "spec": {
+                            "name": "F1",
+                            "expression": "((B + C)/2)/A",
+                            "legend": "Apdex"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "7b518371-d9f1-556f-96bf-cc246e59d678": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Error Percentage"
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "percent",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true) AND has_error = true"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_formula",
+                          "spec": {
+                            "name": "F1",
+                            "expression": "A*100/B",
+                            "legend": "Error %"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "23a9f917-f292-52ba-800b-9c32a06c3e18": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Key Operations"
+            },
+            "plugin": {
+              "kind": "signoz/TablePanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "columnUnits": {
+                    "A": "ns",
+                    "B": "ns",
+                    "C": "ns",
+                    "D": "short",
+                    "E": "short"
+                  },
+                  "decimalPrecision": "2"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p50(duration_nano)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "name",
+                                "fieldContext": "span",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "P50"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p95(duration_nano)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "name",
+                                "fieldContext": "span",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "P95"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "C",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "p99(duration_nano)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "name",
+                                "fieldContext": "span",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "P99"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "D",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "name",
+                                "fieldContext": "span",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "Calls"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "E",
+                            "signal": "traces",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment AND (isRoot = true OR isEntryPoint = true)"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "countIf(has_error = true)"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "name",
+                                "fieldContext": "span",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "Errors"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
