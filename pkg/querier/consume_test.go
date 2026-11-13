@@ -5,12 +5,11 @@ import (
 	"testing"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
@@ -274,25 +273,14 @@ func TestReadAsRawSkipping(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			columnType := telemetrystoretest.NewMockColumnType(t)
-			columnType.EXPECT().ScanType().Return(reflect.TypeOf("")).Maybe()
-
-			// Like clickhouse-go, Next advances on its own; Scan is expected only for returned rows.
-			rows := telemetrystoretest.NewMockRows(t)
-			pos := 0
-			rows.EXPECT().Columns().Return([]string{"id"})
-			rows.EXPECT().ColumnTypes().Return([]driver.ColumnType{columnType})
-			rows.EXPECT().Next().RunAndReturn(func() bool {
-				pos++
-				return pos <= len(testCase.values)
-			})
-			if len(testCase.wantIDs) > 0 {
-				rows.EXPECT().Scan(mock.Anything).RunAndReturn(func(dest ...any) error {
-					*dest[0].(*string) = testCase.values[pos-1]
-					return nil
-				}).Times(len(testCase.wantIDs))
+			values := make([][]any, len(testCase.values))
+			for i, value := range testCase.values {
+				values[i] = []any{value}
 			}
-			rows.EXPECT().Err().Return(nil)
+			rows := cmock.NewRows([]cmock.ColumnType{{Name: "id", Type: "String"}}, values)
+			for i := 0; i < testCase.skip && i < len(values); i++ {
+				rows.RowError(i, errors.New(errors.TypeInternal, errors.CodeInternal, "skipped row was scanned"))
+			}
 
 			data, skipped, err := readAsRawSkipping(rows, "A", testCase.skip)
 			require.NoError(t, err)
