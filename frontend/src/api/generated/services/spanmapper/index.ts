@@ -803,7 +803,7 @@ export const useUpdateSpanMapper = <
 	return useMutation(getUpdateSpanMapperMutationOptions(options));
 };
 /**
- * Tests how span mappers would transform sample spans
+ * Tests how span mappers would transform sample spans. Groups sent without mappers are read from the store by name.
  * @summary Test span mappers against sample spans
  */
 export const testSpanMappers = (

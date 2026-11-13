@@ -81,6 +81,8 @@ func (name Kind) Enum() []any {
 		KindTracesField,
 		KindMetricsField,
 		KindLLMPricingRule,
+		KindSpanMapperGroup,
+		KindSpanMapper,
 	}
 }
 

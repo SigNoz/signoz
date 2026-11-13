@@ -41,6 +41,8 @@ var Resources = []Resource{
 	ResourceMetaResourceTracesField,
 	ResourceMetaResourceMetricsField,
 	ResourceMetaResourceLLMPricingRule,
+	ResourceMetaResourceSpanMapperGroup,
+	ResourceMetaResourceSpanMapper,
 }
 
 var (
@@ -84,4 +86,6 @@ var (
 	ResourceMetaResourceTracesField                      = NewResourceMetaResource(KindTracesField)
 	ResourceMetaResourceMetricsField                     = NewResourceMetaResource(KindMetricsField, VerbList, VerbRead, VerbUpdate)
 	ResourceMetaResourceLLMPricingRule                   = NewResourceMetaResource(KindLLMPricingRule, VerbList, VerbRead, VerbUpdate, VerbDelete)
+	ResourceMetaResourceSpanMapperGroup                  = NewResourceMetaResource(KindSpanMapperGroup)
+	ResourceMetaResourceSpanMapper                       = NewResourceMetaResource(KindSpanMapper, VerbCreate, VerbUpdate, VerbDelete)
 )
