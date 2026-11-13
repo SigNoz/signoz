@@ -204,6 +204,8 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitFullText(t)
 	case *grammar.SearchCallContext:
 		return v.VisitSearchCall(t)
+	case *grammar.PatternCallContext:
+		return v.VisitPatternCall(t)
 	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
 	case *grammar.FunctionParamListContext:
@@ -320,6 +322,8 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 		return v.Visit(ctx.FunctionCall())
 	} else if ctx.SearchCall() != nil {
 		return v.Visit(ctx.SearchCall())
+	} else if ctx.PatternCall() != nil {
+		return v.Visit(ctx.PatternCall())
 	} else if ctx.FullText() != nil {
 		return v.Visit(ctx.FullText())
 	}
@@ -839,6 +843,46 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 		return conds[0]
 	}
 	return v.builder.Or(conds...)
+}
+
+// PatternFilterer is a storage that can keep the logs of given log patterns.
+type PatternFilterer interface {
+	PatternCondition(ctx context.Context, q qbtypes.QueryInfo, patterns []string, sb *sqlbuilder.SelectBuilder) (string, error)
+}
+
+// VisitPatternCall handles pattern('<pattern text>'[, ...]): the logs whose
+// pattern is one of the given pattern texts.
+func (v *filterExpressionVisitor) VisitPatternCall(ctx *grammar.PatternCallContext) any {
+	if v.storage.Traits().Split == qbtypes.FingerprintOfSplit {
+		// the main query evaluates it
+		return SkipConditionLiteral
+	}
+	filterer, ok := v.storage.(PatternFilterer)
+	if !ok {
+		v.errors = append(v.errors, "function `pattern` is supported only for logs")
+		return ErrorConditionLiteral
+	}
+	// the pattern of every log in the time range is computed
+	v.requiresCostGuard = true
+
+	var patterns []string
+	if valueList := ctx.ValueList(); valueList != nil {
+		for _, param := range valueList.AllValue() {
+			pattern, ok := searchParamText(param)
+			if !ok {
+				v.errors = append(v.errors, "function `pattern` expects pattern texts, e.g. pattern('User <*> logged in')")
+				return ErrorConditionLiteral
+			}
+			patterns = append(patterns, pattern)
+		}
+	}
+
+	condition, err := filterer.PatternCondition(v.context, v.query, patterns, v.builder)
+	if err != nil {
+		v.recordError(err)
+		return ErrorConditionLiteral
+	}
+	return condition
 }
 
 // searchParamText returns an argument's raw token text (quoted or bare) rather than its

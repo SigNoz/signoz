@@ -42,7 +42,7 @@ type QueryWarnDataAdditional struct {
 }
 
 type QueryData struct {
-	Results []any `json:"results" description:"One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests."`
+	Results []any `json:"results" description:"One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, DistributionData for distribution and PatternsData for pattern requests."`
 }
 
 var _ jsonschema.OneOfExposer = QueryData{}
@@ -54,6 +54,7 @@ func (QueryData) JSONSchemaOneOf() []any {
 		ScalarData{},
 		RawData{},
 		DistributionData{},
+		PatternsData{},
 	}
 }
 
@@ -129,7 +130,7 @@ var _ jsonschema.Preparer = &QueryRangeResponse{}
 
 // PrepareJSONSchema adds description to the QueryRangeResponse schema.
 func (q *QueryRangeResponse) PrepareJSONSchema(schema *jsonschema.Schema) error {
-	schema.WithDescription("Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, or DistributionData for distribution requests.")
+	schema.WithDescription("Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, DistributionData for distribution, or PatternsData for pattern requests.")
 	return nil
 }
 
@@ -648,4 +649,47 @@ func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
 func (r RawData) MarshalJSON() ([]byte, error) {
 	type Alias RawData
 	return json.Marshal((*Alias)(&r))
+}
+
+// The columns of a patterns statement, which the querier reads by name.
+// Any other column is a group-by key; the first is always service.name.
+const (
+	PatternsColumnPattern      = "__pattern"
+	PatternsColumnID           = "__pattern_id"
+	PatternsColumnSampledCount = "__sampled_count"
+	PatternsColumnSampleRate   = "__sample_rate"
+	PatternsColumnTotal        = "__total"
+	PatternsColumnFirstSeen    = "__first_seen"
+	PatternsColumnLastSeen     = "__last_seen"
+	PatternsColumnSamples      = "__samples"
+	PatternsColumnSeverities   = "__severities"
+	PatternsColumnTrendTs      = "__trend_ts"
+	PatternsColumnTrendCounts  = "__trend_counts"
+)
+
+// PatternsData is the top log patterns of one logs query, counted on a
+// sample of its logs.
+type PatternsData struct {
+	QueryName  string     `json:"queryName" required:"true" description:"The name of the query that produced this result."`
+	SampleRate uint64     `json:"sampleRate" required:"true" description:"One in sampleRate of the matching logs was read and every count is scaled up by it. 1 means every log was read and the counts are exact."`
+	Total      uint64     `json:"total" required:"true" description:"The number of logs the query matched in the time range, over every pattern."`
+	Patterns   []*Pattern `json:"patterns" required:"true" description:"The patterns, most logs first."`
+}
+
+type Pattern struct {
+	ID         string               `json:"id" required:"true" description:"The pattern's ID, the decimal cityHash64 of its text."`
+	Pattern    string               `json:"pattern" required:"true" description:"The pattern text: the log message with the values that change replaced by placeholders such as <*>, <IP> or <UUID>. Filter on it with pattern('<pattern text>')."`
+	Labels     []*Label             `json:"labels,omitempty" description:"The group-by field values the pattern was counted for: always service.name first, then the query's own group by."`
+	Count      uint64               `json:"count" required:"true" description:"The estimated number of logs of the pattern in the time range: the sampled count times sampleRate."`
+	Percent    float64              `json:"percent" required:"true" description:"The pattern's count as a percentage of total."`
+	FirstSeen  int64                `json:"firstSeen" required:"true" description:"The Unix time in milliseconds of the earliest sampled log of the pattern in the time range."`
+	LastSeen   int64                `json:"lastSeen" required:"true" description:"The Unix time in milliseconds of the latest sampled log of the pattern in the time range."`
+	Samples    []string             `json:"samples" required:"true" description:"Up to three sampled log messages of the pattern."`
+	Severities []string             `json:"severities" required:"true" description:"The most common severity texts of the pattern's logs, most common first."`
+	Trend      []*PatternTrendPoint `json:"trend" required:"true" description:"The estimated number of logs of the pattern in each step of the time range, oldest first. Steps without a sampled log are left out."`
+}
+
+type PatternTrendPoint struct {
+	Timestamp int64  `json:"timestamp" required:"true" description:"The Unix time in milliseconds the step starts at."`
+	Count     uint64 `json:"count" required:"true" description:"The estimated number of logs of the pattern in the step."`
 }

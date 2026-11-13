@@ -47,6 +47,9 @@ type FilterQueryListener interface {
 	// EnterSearchCall is called when entering the searchCall production.
 	EnterSearchCall(c *SearchCallContext)
 
+	// EnterPatternCall is called when entering the patternCall production.
+	EnterPatternCall(c *PatternCallContext)
+
 	// EnterFunctionParamList is called when entering the functionParamList production.
 	EnterFunctionParamList(c *FunctionParamListContext)
 
@@ -100,6 +103,9 @@ type FilterQueryListener interface {
 
 	// ExitSearchCall is called when exiting the searchCall production.
 	ExitSearchCall(c *SearchCallContext)
+
+	// ExitPatternCall is called when exiting the patternCall production.
+	ExitPatternCall(c *PatternCallContext)
 
 	// ExitFunctionParamList is called when exiting the functionParamList production.
 	ExitFunctionParamList(c *FunctionParamListContext)

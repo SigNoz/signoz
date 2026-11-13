@@ -6964,6 +6964,7 @@ export enum Querybuildertypesv5RequestTypeDTO {
 	trace = 'trace',
 	heatmap = 'heatmap',
 	distribution = 'distribution',
+	pattern = 'pattern',
 }
 /**
  * The query kind.
@@ -11881,6 +11882,103 @@ export interface Querybuildertypesv5FormatOptionsDTO {
 	formatTableResultForUI?: boolean;
 }
 
+export interface Querybuildertypesv5PatternTrendPointDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 * @description The estimated number of logs of the pattern in the step.
+	 */
+	count: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description The Unix time in milliseconds the step starts at.
+	 */
+	timestamp: number;
+}
+
+export interface Querybuildertypesv5PatternDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 * @description The estimated number of logs of the pattern in the time range: the sampled count times sampleRate.
+	 */
+	count: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description The Unix time in milliseconds of the earliest sampled log of the pattern in the time range.
+	 */
+	firstSeen: number;
+	/**
+	 * @type string
+	 * @description The pattern's ID, the decimal cityHash64 of its text.
+	 */
+	id: string;
+	/**
+	 * @type array
+	 * @description The group-by field values the pattern was counted for: always service.name first, then the query's own group by.
+	 */
+	labels?: Querybuildertypesv5LabelDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description The Unix time in milliseconds of the latest sampled log of the pattern in the time range.
+	 */
+	lastSeen: number;
+	/**
+	 * @type string
+	 * @description The pattern text: the log message with the values that change replaced by placeholders such as <*>, <IP> or <UUID>. Filter on it with pattern('<pattern text>').
+	 */
+	pattern: string;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The pattern's count as a percentage of total.
+	 */
+	percent: number;
+	/**
+	 * @type array,null
+	 * @description Up to three sampled log messages of the pattern.
+	 */
+	samples: string[] | null;
+	/**
+	 * @type array,null
+	 * @description The most common severity texts of the pattern's logs, most common first.
+	 */
+	severities: string[] | null;
+	/**
+	 * @type array,null
+	 * @description The estimated number of logs of the pattern in each step of the time range, oldest first. Steps without a sampled log are left out.
+	 */
+	trend: Querybuildertypesv5PatternTrendPointDTO[] | null;
+}
+
+export interface Querybuildertypesv5PatternsDataDTO {
+	/**
+	 * @type array,null
+	 * @description The patterns, most logs first.
+	 */
+	patterns: Querybuildertypesv5PatternDTO[] | null;
+	/**
+	 * @type string
+	 * @description The name of the query that produced this result.
+	 */
+	queryName: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 * @description One in sampleRate of the matching logs was read and every count is scaled up by it. 1 means every log was read and the counts are exact.
+	 */
+	sampleRate: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 * @description The number of logs the query matched in the time range, over every pattern.
+	 */
+	total: number;
+}
+
 export interface TelemetrystoretypesIndexStepDTO {
 	/**
 	 * @type string
@@ -12087,28 +12185,35 @@ export type Querybuildertypesv5QueryDataDTO =
 	| (Querybuildertypesv5TimeSeriesDataDTO & {
 			/**
 			 * @type array,null
-			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, DistributionData for distribution and PatternsData for pattern requests.
 			 */
 			results?: unknown[] | null;
 	  })
 	| (Querybuildertypesv5ScalarDataDTO & {
 			/**
 			 * @type array,null
-			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, DistributionData for distribution and PatternsData for pattern requests.
 			 */
 			results?: unknown[] | null;
 	  })
 	| (Querybuildertypesv5RawDataDTO & {
 			/**
 			 * @type array,null
-			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, DistributionData for distribution and PatternsData for pattern requests.
 			 */
 			results?: unknown[] | null;
 	  })
 	| (Querybuildertypesv5DistributionDataDTO & {
 			/**
 			 * @type array,null
-			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, DistributionData for distribution and PatternsData for pattern requests.
+			 */
+			results?: unknown[] | null;
+	  })
+	| (Querybuildertypesv5PatternsDataDTO & {
+			/**
+			 * @type array,null
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, DistributionData for distribution and PatternsData for pattern requests.
 			 */
 			results?: unknown[] | null;
 	  });
@@ -12242,7 +12347,7 @@ export interface Querybuildertypesv5QueryRangeRequestDTO {
 }
 
 /**
- * Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, or DistributionData for distribution requests.
+ * Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, DistributionData for distribution, or PatternsData for pattern requests.
  */
 export interface Querybuildertypesv5QueryRangeResponseDTO {
 	/**

@@ -1461,7 +1461,7 @@ func TestRequestType_IsAggregation(t *testing.T) {
 }
 
 func TestQueryRangeRequest_ValidateRequestType(t *testing.T) {
-	validRequestTypes := []string{"valid request types are `scalar`, `time_series`, `raw`, `raw_stream`, `trace`, `heatmap`, `distribution`"}
+	validRequestTypes := []string{"valid request types are `scalar`, `time_series`, `raw`, `raw_stream`, `trace`, `heatmap`, `distribution`, `pattern`"}
 
 	testCases := []struct {
 		name        string

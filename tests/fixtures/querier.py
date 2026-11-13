@@ -36,6 +36,7 @@ class RequestType:
     TABLE = "table"
     HEATMAP = "heatmap"
     DISTRIBUTION = "distribution"
+    PATTERN = "pattern"
 
 
 @dataclass
