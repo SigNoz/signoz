@@ -42,16 +42,6 @@
 				height: 16px;
 				width: 16px;
 			}
-
-			.text {
-				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 20px;
-				letter-spacing: -0.07px;
-			}
 		}
 	}
 
@@ -60,17 +50,6 @@
 		flex-direction: column;
 		align-items: center;
 		gap: 12px;
-
-		.text {
-			color: var(--l2-foreground);
-			font-family: Inter;
-			font-size: 14px;
-			font-style: normal;
-			font-weight: 500;
-			line-height: 20px;
-			letter-spacing: -0.07px;
-			text-align: center;
-		}
 
 		.action-btns {
 			display: flex;

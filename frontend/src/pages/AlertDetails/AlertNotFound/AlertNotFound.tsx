@@ -112,9 +112,9 @@ function AlertNotFound({ isTestAlert }: AlertNotFoundProps): JSX.Element {
 			</section>
 			<section className="none-of-above">
 				<Typography
-					/* TODO(typography): not lifted from className: font-weight differs by parent (400 | 500) */ variant="paragraph"
+					variant="paragraph"
 					size="base"
-					weight="regular"
+					weight="medium"
 					color="secondary"
 					as="span"
 					display="inline-block"
