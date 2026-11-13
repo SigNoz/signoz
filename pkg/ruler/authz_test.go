@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertest"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes/alertmanagertypestest"
@@ -372,8 +373,18 @@ func TestParseRuleChannels(t *testing.T) {
 			wantChannels: nil,
 		},
 		{
-			name:    "NotJSON_Errors",
+			name:    "NotJSON_InvalidInput",
 			body:    "not json",
+			wantErr: true,
+		},
+		{
+			name:    "TruncatedJSON_InvalidInput",
+			body:    `{"alert": `,
+			wantErr: true,
+		},
+		{
+			name:    "UnknownField_InvalidInput",
+			body:    `{"preferredChannels": ["pager"]}`,
 			wantErr: true,
 		},
 	}
@@ -383,7 +394,8 @@ func TestParseRuleChannels(t *testing.T) {
 			channels, err := parseRuleChannels([]byte(testCase.body))
 
 			if testCase.wantErr {
-				assert.Error(t, err)
+				require.Error(t, err)
+				assert.True(t, errors.Ast(err, errors.TypeInvalidInput), err.Error())
 				return
 			}
 
@@ -574,7 +586,7 @@ func TestOptionalRuleBodyTelemetryResources(t *testing.T) {
 	}
 }
 
-func TestResolveStoredChannelIDs(t *testing.T) {
+func TestResolveKnownChannelIDs(t *testing.T) {
 	channels := []*alertmanagertypes.Channel{
 		{Identifiable: types.Identifiable{ID: valuer.GenerateUUID()}, Name: "slack", DisplayName: "slack"},
 	}
@@ -607,7 +619,7 @@ func TestResolveStoredChannelIDs(t *testing.T) {
 				alertmanagerService.EXPECT().ListChannels(mock.Anything, mock.Anything).Return(channels, nil)
 			}
 
-			ids, err := resolveStoredChannelIDs(context.Background(), alertmanagerService, valuer.GenerateUUID(), testCase.names)
+			ids, err := resolveKnownChannelIDs(context.Background(), alertmanagerService, valuer.GenerateUUID(), testCase.names)
 
 			require.NoError(t, err)
 			assert.Equal(t, testCase.wantIDs, ids)
