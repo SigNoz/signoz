@@ -71,7 +71,7 @@ function PanelHeaderSearch({
 				suffix={
 					<Button
 						type="button"
-						variant="ghost"
+						variant="link"
 						color="secondary"
 						size="sm"
 						icon
