@@ -280,6 +280,17 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 			expected: "hasToken(tags, 'test')",
 		},
 		{
+			name:       "pattern function kept as is",
+			expression: "service.name = $service AND pattern('User <*> logged in from <IP>', \"can't connect\")",
+			variables: map[string]qbtypes.VariableItem{
+				"service": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "auth",
+				},
+			},
+			expected: "service.name = 'auth' AND pattern('User <*> logged in from <IP>', \"can't connect\")",
+		},
+		{
 			name:       "empty array variable",
 			expression: "service.name IN $services",
 			variables: map[string]qbtypes.VariableItem{
