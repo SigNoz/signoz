@@ -1,27 +1,27 @@
 import type { FullScreenHandle } from 'react-full-screen';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
 import { render, screen } from 'tests/test-utils';
 
+import { dashboardResponse } from '../../../stories/__story_mockdata__/dashboard';
 import type { DashboardControlsInput } from '../../controls/types';
 
 import { usePublicDashboardMeta } from '../../DashboardSettings/PublicDashboard/usePublicDashboardMeta';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import DashboardPageToolbar from '../index';
 
-const dashboard = {
-	id: 'dash-1',
+const { data: dashboard } = dashboardResponse({
+	panels: 0,
+	sectioned: false,
+	variables: [],
 	locked: true,
-	source: 'user',
-	spec: {
-		display: { name: 'Checkout' },
-		panels: {},
-		layouts: [],
-		variables: [],
-	},
-} as unknown as DashboardtypesGettableDashboardV2DTO;
+});
 
-const handle = { enter: jest.fn() } as unknown as FullScreenHandle;
+const handle: FullScreenHandle = {
+	active: false,
+	enter: jest.fn(),
+	exit: jest.fn(),
+	node: { current: null },
+};
 
 jest.mock('../DashboardActions/DashboardActions', () => ({
 	__esModule: true,
@@ -80,7 +80,7 @@ function renderToolbar(
 ): void {
 	useDashboardStore
 		.getState()
-		.setEditContext({ dashboardId: 'dash-1', refetch: jest.fn(), ...ctx });
+		.setEditContext({ dashboardId: dashboard.id, refetch: jest.fn(), ...ctx });
 	render(<DashboardPageToolbar dashboard={dashboard} handle={handle} />);
 }
 
@@ -101,9 +101,12 @@ describe('DashboardPageToolbar - controls', () => {
 		expect(jest.mocked(useDashboardLockPermission)).toHaveBeenCalledWith(
 			expect.objectContaining({ enabled: true }),
 		);
-		expect(jest.mocked(usePublicDashboardMeta)).toHaveBeenCalledWith('dash-1', {
-			enabled: true,
-		});
+		expect(jest.mocked(usePublicDashboardMeta)).toHaveBeenCalledWith(
+			dashboard.id,
+			{
+				enabled: true,
+			},
+		);
 	});
 
 	it('skips the lock permission check on a read-only mount', () => {
@@ -122,9 +125,12 @@ describe('DashboardPageToolbar - controls', () => {
 
 		expect(screen.queryByTestId('dashboard-info')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('dashboard-actions')).not.toBeInTheDocument();
-		expect(jest.mocked(usePublicDashboardMeta)).toHaveBeenCalledWith('dash-1', {
-			enabled: false,
-		});
+		expect(jest.mocked(usePublicDashboardMeta)).toHaveBeenCalledWith(
+			dashboard.id,
+			{
+				enabled: false,
+			},
+		);
 	});
 
 	it('hides the time range and keeps the variables bar mounted but hidden', () => {

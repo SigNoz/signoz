@@ -1,14 +1,16 @@
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { render, screen } from 'tests/test-utils';
 
+import { dashboardResponse } from '../../../stories/__story_mockdata__/dashboard';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import VariablesBar from '../VariablesBar';
 import type { DashboardControlsInput } from '../../controls/types';
 
-const dashboard = {
-	id: 'dash-1',
-	spec: { display: { name: 'D' }, panels: {}, layouts: [], variables: [] },
-} as unknown as DashboardtypesGettableDashboardV2DTO;
+const { data: dashboard } = dashboardResponse({
+	panels: 0,
+	sectioned: false,
+	variables: [],
+	locked: false,
+});
 
 jest.mock('../../hooks/useDashboardEditContext', () => ({
 	useDashboardEditContext: (): unknown => ({
@@ -32,7 +34,7 @@ jest.mock('../components/VariableSelector/VariableSelector', () => ({
 
 function renderBar(readOnly: boolean, controls?: DashboardControlsInput): void {
 	useDashboardStore.getState().setEditContext({
-		dashboardId: 'dash-1',
+		dashboardId: dashboard.id,
 		refetch: jest.fn(),
 		readOnly,
 		controls,
