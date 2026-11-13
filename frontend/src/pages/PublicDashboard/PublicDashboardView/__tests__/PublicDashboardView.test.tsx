@@ -1,24 +1,21 @@
-import { render, screen } from '@testing-library/react';
-import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesSourceDTO,
+	DashboardtypesVariableEnvelopeGithubComSigNozSignozPkgTypesDashboardtypesTextVariableSpecDTOKind as TextVariableKind,
+	type DashboardtypesGettablePublicDashboardDataV2DTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { getCurrentLocation } from 'lib/router/navigation';
+import { render, screen } from 'tests/test-utils';
 
 import PublicDashboardView from '../PublicDashboardView';
 
-const mockGrid = jest.fn();
+const mockContainer = jest.fn();
 
-jest.mock('../PublicSectionGrid/PublicSectionGrid', () => ({
+jest.mock('pages/DashboardPage/DashboardContainer', () => ({
 	__esModule: true,
 	default: (props: unknown): JSX.Element => {
-		mockGrid(props);
-		return <div data-testid="public-section-grid" />;
+		mockContainer(props);
+		return <div data-testid="dashboard-container" />;
 	},
-}));
-jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
-	__esModule: true,
-	default: (): JSX.Element => <div data-testid="datetime-selection" />,
-}));
-jest.mock('../PublicAutoRefresh/PublicAutoRefresh', () => ({
-	__esModule: true,
-	default: (): JSX.Element => <div data-testid="auto-refresh" />,
 }));
 
 function buildData(
@@ -26,76 +23,89 @@ function buildData(
 ): DashboardtypesGettablePublicDashboardDataV2DTO {
 	return {
 		dashboard: {
+			id: 'internal-id',
+			name: 'my-v2-dashboard',
+			orgId: 'org',
+			locked: false,
+			source: DashboardtypesSourceDTO.user,
+			tags: [],
 			schemaVersion: 'v6',
 			spec: {
 				display: { name: 'My V2 Dashboard' },
-				layouts: [
+				layouts: [],
+				panels: {},
+				variables: [
 					{
-						kind: 'Grid',
-						spec: {
-							display: { title: 'Section A' },
-							items: [
-								{
-									x: 0,
-									y: 0,
-									width: 6,
-									height: 6,
-									content: { $ref: '#/spec/panels/p1' },
-								},
-							],
-						},
+						kind: TextVariableKind.TextVariable,
+						spec: { name: 'env', display: { name: 'env' }, value: 'prod' },
 					},
 				],
-				panels: {
-					p1: {
-						kind: 'Panel',
-						spec: {
-							display: { name: 'p1' },
-							plugin: { kind: 'signoz/TimeSeriesPanel', spec: {} },
-							queries: [],
-						},
-					},
-				},
-				variables: [],
 			},
 		},
-		publicDashboard: { timeRangeEnabled, defaultTimeRange: '30m' },
-	} as unknown as DashboardtypesGettablePublicDashboardDataV2DTO;
+		publicDashboard: { timeRangeEnabled, defaultTimeRange: '6h' },
+	};
+}
+
+interface ContainerProps {
+	dashboard: { id: string; spec: { variables: unknown[] } };
+	readOnly: boolean;
+	controls: { toolbar?: unknown; panelActions?: { zoom?: boolean } };
+	queryRunner: { key: string };
+}
+
+function lastContainerProps(): ContainerProps {
+	return mockContainer.mock.calls.at(-1)?.[0] as ContainerProps;
 }
 
 describe('PublicDashboardView', () => {
-	beforeEach(() => mockGrid.mockReset());
+	beforeEach(() => mockContainer.mockReset());
 
-	it('renders the dashboard title, section title, and a grid per section', () => {
+	it('mounts the shared dashboard read-only on the public endpoint, without variables', () => {
 		render(
 			<PublicDashboardView publicDashboardId="pub-1" data={buildData(true)} />,
+			undefined,
+			{ initialRoute: '/public/dashboard/pub-1' },
 		);
 
 		expect(screen.getByText('My V2 Dashboard')).toBeInTheDocument();
-		expect(screen.getByText('Section A')).toBeInTheDocument();
-		expect(screen.getByTestId('public-section-grid')).toBeInTheDocument();
-
-		const gridProps = mockGrid.mock.calls[0][0];
-		expect(gridProps.publicDashboardId).toBe('pub-1');
-		expect(gridProps.items).toHaveLength(1);
-		expect(gridProps.items[0].id).toBe('p1');
-		expect(typeof gridProps.startMs).toBe('number');
-		expect(typeof gridProps.endMs).toBe('number');
-		// Times are handed to the endpoint in milliseconds.
-		expect(gridProps.endMs).toBeGreaterThan(gridProps.startMs);
+		const props = lastContainerProps();
+		expect(props.readOnly).toBe(true);
+		expect(props.queryRunner.key).toBe('public:pub-1');
+		expect(props.dashboard.id).toBe('public:pub-1');
+		expect(props.dashboard.spec.variables).toStrictEqual([]);
+		expect(props.controls.toolbar).toStrictEqual({ variables: false });
+		expect(props.controls.panelActions?.zoom).toBeUndefined();
 	});
 
-	it('shows the time controls only when the publisher enabled the time range', () => {
-		const { rerender } = render(
+	it('starts on the shared default range', () => {
+		render(
 			<PublicDashboardView publicDashboardId="pub-1" data={buildData(true)} />,
+			undefined,
+			{ initialRoute: '/public/dashboard/pub-1' },
 		);
-		expect(screen.getByTestId('datetime-selection')).toBeInTheDocument();
-		expect(screen.getByTestId('auto-refresh')).toBeInTheDocument();
 
-		rerender(
-			<PublicDashboardView publicDashboardId="pub-1" data={buildData(false)} />,
+		expect(getCurrentLocation().search).toContain('relativeTime=6h');
+	});
+
+	it("keeps the viewer's range when the link lets them change it", () => {
+		render(
+			<PublicDashboardView publicDashboardId="pub-1" data={buildData(true)} />,
+			undefined,
+			{ initialRoute: '/public/dashboard/pub-1?relativeTime=1h' },
 		);
-		expect(screen.queryByTestId('datetime-selection')).not.toBeInTheDocument();
-		expect(screen.queryByTestId('auto-refresh')).not.toBeInTheDocument();
+
+		expect(getCurrentLocation().search).toContain('relativeTime=1h');
+	});
+
+	it('pins the shared range and hides the toolbar when the link fixes the time', () => {
+		render(
+			<PublicDashboardView publicDashboardId="pub-1" data={buildData(false)} />,
+			undefined,
+			{ initialRoute: '/public/dashboard/pub-1?relativeTime=1h' },
+		);
+
+		expect(getCurrentLocation().search).toContain('relativeTime=6h');
+		expect(lastContainerProps().controls.toolbar).toBe(false);
+		expect(lastContainerProps().controls.panelActions?.zoom).toBe(false);
 	});
 });

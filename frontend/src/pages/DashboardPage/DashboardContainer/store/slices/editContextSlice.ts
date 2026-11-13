@@ -30,6 +30,8 @@ export interface DashboardQuerySource {
  */
 export interface QueryRunner {
 	key: string;
+	/** False when `run` ignores offset and limit: list panels then fetch one unpaged result. */
+	paginates?: boolean;
 	run: (request: {
 		panelId: string;
 		requestPayload: Querybuildertypesv5QueryRangeRequestDTO;
