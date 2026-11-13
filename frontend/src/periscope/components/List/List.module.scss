@@ -28,7 +28,7 @@
 }
 
 :where(.list) a {
-	color: var(--primary-link);
+	color: var(--primary-background);
 	text-decoration: none;
 	background-color: transparent;
 	outline: none;
@@ -36,23 +36,19 @@
 	transition: color 0.3s;
 	-webkit-text-decoration-skip: objects;
 
-	&:hover {
-		color: var(--primary-link-hover);
-	}
-
-	&:active {
-		color: var(--primary-link-hover);
-	}
-
 	&:active,
 	&:hover {
-		text-decoration: none;
+		color: var(--primary-background);
 		outline: 0;
 	}
 
 	&:focus {
 		text-decoration: none;
 		outline: 0;
+	}
+
+	&:hover {
+		text-decoration: underline;
 	}
 
 	&[disabled] {
@@ -155,7 +151,7 @@
 		transition: all 0.3s;
 
 		&:hover {
-			color: var(--primary-link-hover);
+			color: var(--primary-background);
 		}
 	}
 }
