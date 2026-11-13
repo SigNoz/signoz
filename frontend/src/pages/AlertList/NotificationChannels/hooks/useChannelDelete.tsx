@@ -43,8 +43,8 @@ export function useChannelDelete(onDeleted?: () => void): ChannelDeleteState {
 					Are you sure you want to delete the
 					<span className={styles.name}>
 						<Typography
-							/* TODO(typography): not lifted from className: font-weight: 500 */ variant="paragraph"
-							size="base"
+							variant="paragraph"
+							size="medium"
 							weight="regular"
 							color="inherit"
 							as="span"
