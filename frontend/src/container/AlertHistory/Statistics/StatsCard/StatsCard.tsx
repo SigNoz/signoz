@@ -25,6 +25,10 @@ function ChangePercentage({
 	direction,
 	duration,
 }: ChangePercentageProps): JSX.Element {
+	const label = duration
+		? `${percentage}% vs Last ${duration}`
+		: `${percentage}%`;
+
 	if (direction > 0) {
 		return (
 			<div
@@ -34,9 +38,7 @@ function ChangePercentage({
 				<div className="change-percentage__icon">
 					<ArrowDownLeft size={14} color={Color.BG_FOREST_500} />
 				</div>
-				<div className="change-percentage__label">
-					{percentage}% vs Last {duration}
-				</div>
+				<div className="change-percentage__label">{label}</div>
 			</div>
 		);
 	}
@@ -49,9 +51,7 @@ function ChangePercentage({
 				<div className="change-percentage__icon">
 					<ArrowUpRight size={14} color={Color.BG_CHERRY_500} />
 				</div>
-				<div className="change-percentage__label">
-					{percentage}% vs Last {duration}
-				</div>
+				<div className="change-percentage__label">{label}</div>
 			</div>
 		);
 	}
