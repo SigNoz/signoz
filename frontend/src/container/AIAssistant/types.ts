@@ -183,4 +183,6 @@ export interface ConversationStreamState {
 	streamingActions: MessageActionDTO[] | null;
 	pendingApproval: ApprovalEventDTO | null;
 	pendingClarification: ClarificationEventDTO | null;
+	/** When the reply began; null when nothing is streaming. */
+	startedAt: number | null;
 }

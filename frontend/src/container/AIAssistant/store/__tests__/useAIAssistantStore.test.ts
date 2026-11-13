@@ -261,3 +261,53 @@ describe('useAIAssistantStore — streaming error handling', () => {
 		expect(chat.sendMessage).not.toHaveBeenCalled();
 	});
 });
+
+describe('useAIAssistantStore — resumed replies', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		useAIAssistantStore.setState((s) => {
+			s.conversations = {};
+			s.streams = {};
+			s.activeConversationId = null;
+		});
+	});
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
+	it.each([
+		[
+			'approveAction',
+			(id: string): Promise<void> =>
+				useAIAssistantStore.getState().approveAction(id, 'approval-1'),
+		],
+		[
+			'submitClarification',
+			(id: string): Promise<void> =>
+				useAIAssistantStore.getState().submitClarification(id, 'clar-1', {}),
+		],
+	])('%s stamps startedAt on a stream loaded without one', (_, resume) => {
+		chat.approveExecution.mockReturnValue(new Promise(() => {}));
+		chat.clarifyExecution.mockReturnValue(new Promise(() => {}));
+		useAIAssistantStore.setState((s) => {
+			s.streams['conv-1'] = {
+				isStreaming: false,
+				streamingContent: '',
+				streamingStatus: 'awaiting_approval',
+				streamingEvents: [],
+				streamingMessageId: null,
+				streamingActions: null,
+				pendingApproval: null,
+				pendingClarification: null,
+				startedAt: null,
+			};
+		});
+
+		jest.spyOn(Date, 'now').mockReturnValue(5000);
+
+		void resume('conv-1');
+
+		expect(useAIAssistantStore.getState().streams['conv-1'].startedAt).toBe(5000);
+	});
+});

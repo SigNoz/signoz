@@ -49,6 +49,7 @@ import {
 import styles from './ChatInput.module.scss';
 import ComposerCaret from './ComposerCaret/ComposerCaret';
 import ContextPickerEmptyState from './ContextPickerEmptyState';
+import EdgeSweep from './EdgeSweep/EdgeSweep';
 import {
 	CONTEXT_CATEGORIES,
 	CONTEXT_CATEGORY_ICONS,
@@ -65,6 +66,8 @@ interface ChatInputProps {
 	disabled?: boolean;
 	disabledTooltip?: string;
 	isStreaming?: boolean;
+	/** When the current stream began; drives the top-edge sweep. */
+	streamStartedAt?: number | null;
 	/**
 	 * URL-derived `source: 'auto'` contexts representing the page the user is
 	 * currently looking at. Rendered as chips alongside the user's `@`-mention
@@ -231,6 +234,7 @@ export default function ChatInput({
 	disabled,
 	disabledTooltip,
 	isStreaming = false,
+	streamStartedAt = null,
 	autoContexts,
 	onDismissAutoContext,
 }: ChatInputProps): JSX.Element {
@@ -685,6 +689,7 @@ export default function ChatInput({
 			className={cx(styles.input, { [styles.compact]: isCompact })}
 			ref={inputRootRef}
 		>
+			<EdgeSweep startedAt={streamStartedAt} />
 			{pendingFiles.length > 0 && (
 				<div className={styles.attachments}>
 					{pendingFiles.map((f) => (
