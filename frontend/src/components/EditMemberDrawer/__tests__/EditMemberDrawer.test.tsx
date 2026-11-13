@@ -17,7 +17,11 @@ import {
 	managedRoles,
 } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
-import { PasswordListPermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
+import {
+	buildUserReadPermission,
+	buildUserUpdatePermission,
+	PasswordListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
 import {
 	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
@@ -755,6 +759,46 @@ describe('EditMemberDrawer', () => {
 			const resetBtn = await screen.findByTestId('member-reset-link-btn');
 			await waitFor(() =>
 				expect(resetBtn).not.toHaveAttribute('aria-disabled', 'true'),
+			);
+		});
+	});
+
+	describe('self user name update', () => {
+		it('saves through the me API without update:user', async () => {
+			const updateMyUser = jest.fn().mockResolvedValue({});
+			(useUpdateMyUserV2 as jest.Mock).mockReturnValue({
+				mutateAsync: updateMyUser,
+				isLoading: false,
+			});
+			server.use(setupAuthzDeny(buildUserUpdatePermission(selfMember.id)));
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDrawer({ member: selfMember });
+
+			const input = await screen.findByDisplayValue('Alice Smith');
+			await user.clear(input);
+			await user.type(input, 'Alice Cooper');
+			await user.click(screen.getByTestId('member-save-btn'));
+
+			await waitFor(() =>
+				expect(updateMyUser).toHaveBeenCalledWith({
+					data: { displayName: 'Alice Cooper' },
+				}),
+			);
+		});
+
+		it('disables Save without read:user', async () => {
+			server.use(setupAuthzDeny(buildUserReadPermission(selfMember.id)));
+			renderDrawer({ member: selfMember });
+
+			await waitFor(() =>
+				expect(screen.getByTestId('member-save-btn')).toHaveAttribute(
+					'data-denied-permissions',
+					buildUserReadPermission(selfMember.id),
+				),
+			);
+			expect(screen.getByTestId('member-save-btn')).toHaveAttribute(
+				'aria-disabled',
+				'true',
 			);
 		});
 	});
