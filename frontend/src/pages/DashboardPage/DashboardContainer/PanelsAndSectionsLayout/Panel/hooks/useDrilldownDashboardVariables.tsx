@@ -12,6 +12,7 @@ import {
 	type VariableFormModel,
 } from 'pages/DashboardPage/DashboardContainer/DashboardSettings/Variables/variableFormModel';
 import { buildVariablesPatch } from 'pages/DashboardPage/DashboardContainer/DashboardSettings/Variables/utils/variablePatchOps';
+import { useDashboardEditContext } from 'pages/DashboardPage/DashboardContainer/hooks/useDashboardEditContext';
 import { useDashboardFetchRequired } from 'pages/DashboardPage/DashboardContainer/hooks/useDashboardFetchRequired';
 import { useOptimisticPatch } from 'pages/DashboardPage/DashboardContainer/hooks/useOptimisticPatch';
 import { selectVariableValues } from 'pages/DashboardPage/DashboardContainer/store/slices/variableSelectionSlice';
@@ -44,7 +45,7 @@ export interface DrilldownVariableAction {
 }
 
 export interface UseDrilldownDashboardVariablesApi {
-	/** Whether the clicked point exposes any field to bind to a variable (gates the base-menu entry). */
+	/** Whether the submenu has any entry to offer (gates the base-menu entry). */
 	hasFieldVariables: boolean;
 	/** Resolved menu entries, one per group-by field on the clicked point. */
 	actions: DrilldownVariableAction[];
@@ -74,6 +75,8 @@ export function useDrilldownDashboardVariables({
 	const selection = useDashboardStore(selectVariableValues(dashboardId));
 	const setVariableValue = useDashboardStore((state) => state.setVariableValue);
 	const { patchAsync } = useOptimisticPatch();
+	// Create writes the dashboard spec; Set/Unset only change this view's selection.
+	const { isEditable } = useDashboardEditContext();
 
 	const fieldVariables = useMemo<[string, string | number][]>(
 		() =>
@@ -137,51 +140,57 @@ export function useDrilldownDashboardVariables({
 
 	const actions = useMemo<DrilldownVariableAction[]>(
 		() =>
-			fieldVariables.map(([fieldName, fieldValue]) => {
-				const existing = dynamicVariables.find(
-					(v) => v.dynamicAttribute === fieldName,
-				);
-				if (!existing) {
+			fieldVariables
+				.map(([fieldName, fieldValue]) => {
+					const existing = dynamicVariables.find(
+						(v) => v.dynamicAttribute === fieldName,
+					);
+					if (!existing) {
+						if (!isEditable) {
+							return null;
+						}
+						return {
+							fieldName,
+							fieldValue,
+							kind: DrilldownVariableActionKind.Create,
+							onClick: (): void => {
+								void handleCreate(fieldName, fieldValue);
+							},
+						};
+					}
+
+					const current = selection[existing.name]?.value;
+					const isSame = Array.isArray(current)
+						? current.length === 1 && current[0] === fieldValue
+						: current === fieldValue;
+
+					// Multi-select values must be arrays (a scalar renders as empty in the selector).
+					const cleared = existing.multiSelect ? [] : '';
+					const assigned = existing.multiSelect ? [fieldValue] : fieldValue;
+
 					return {
 						fieldName,
 						fieldValue,
-						kind: DrilldownVariableActionKind.Create,
+						kind: isSame
+							? DrilldownVariableActionKind.Unset
+							: DrilldownVariableActionKind.Set,
 						onClick: (): void => {
-							void handleCreate(fieldName, fieldValue);
+							void logEvent(DashboardDetailEvents.DrilldownAction, {
+								action: 'setVariable',
+								dashboardId,
+							});
+							setSelection(existing.name, {
+								value: isSame ? cleared : assigned,
+								allSelected: false,
+							});
+							onClose();
 						},
 					};
-				}
-
-				const current = selection[existing.name]?.value;
-				const isSame = Array.isArray(current)
-					? current.length === 1 && current[0] === fieldValue
-					: current === fieldValue;
-
-				// Multi-select values must be arrays (a scalar renders as empty in the selector).
-				const cleared = existing.multiSelect ? [] : '';
-				const assigned = existing.multiSelect ? [fieldValue] : fieldValue;
-
-				return {
-					fieldName,
-					fieldValue,
-					kind: isSame
-						? DrilldownVariableActionKind.Unset
-						: DrilldownVariableActionKind.Set,
-					onClick: (): void => {
-						void logEvent(DashboardDetailEvents.DrilldownAction, {
-							action: 'setVariable',
-							dashboardId,
-						});
-						setSelection(existing.name, {
-							value: isSame ? cleared : assigned,
-							allSelected: false,
-						});
-						onClose();
-					},
-				};
-			}),
+				})
+				.filter((action): action is DrilldownVariableAction => action !== null),
 		[
 			fieldVariables,
+			isEditable,
 			dynamicVariables,
 			selection,
 			setSelection,
@@ -191,5 +200,5 @@ export function useDrilldownDashboardVariables({
 		],
 	);
 
-	return { hasFieldVariables: fieldVariables.length > 0, actions };
+	return { hasFieldVariables: actions.length > 0, actions };
 }
