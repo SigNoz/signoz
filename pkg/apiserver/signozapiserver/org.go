@@ -11,7 +11,7 @@ import (
 )
 
 func (provider *provider) addOrgRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/orgs/me", handler.New(provider.authzMiddleware.AdminAccess(provider.orgHandler.Get), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/orgs/me", handler.New(provider.authzMiddleware.CheckResources(provider.orgHandler.Get, authtypes.SigNozAdminRoleName), handler.OpenAPIDef{
 		ID:                  "GetMyOrganization",
 		Tags:                []string{"orgs"},
 		Summary:             "Get my organization",
@@ -23,7 +23,7 @@ func (provider *provider) addOrgRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceOrganization.Scope(coretypes.VerbRead)}),
 	}, handler.WithResourceDefs(handler.BasicResourceDef{
 		Resource: coretypes.ResourceOrganization,
 		Verb:     coretypes.VerbRead,
@@ -34,7 +34,7 @@ func (provider *provider) addOrgRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/orgs/me", handler.New(provider.authzMiddleware.AdminAccess(provider.orgHandler.Update), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/orgs/me", handler.New(provider.authzMiddleware.CheckResources(provider.orgHandler.Update, authtypes.SigNozAdminRoleName), handler.OpenAPIDef{
 		ID:                  "UpdateMyOrganization",
 		Tags:                []string{"orgs"},
 		Summary:             "Update my organization",
@@ -46,7 +46,7 @@ func (provider *provider) addOrgRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusConflict, http.StatusBadRequest},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceOrganization.Scope(coretypes.VerbUpdate)}),
 	}, handler.WithResourceDefs(handler.BasicResourceDef{
 		Resource: coretypes.ResourceOrganization,
 		Verb:     coretypes.VerbUpdate,
