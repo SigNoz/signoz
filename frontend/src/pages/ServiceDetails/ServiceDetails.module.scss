@@ -1,0 +1,19 @@
+.page {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	padding: var(--spacing-8);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-8);
+}
+
+.loading {
+	display: flex;
+	justify-content: center;
+	padding: var(--spacing-16);
+}
