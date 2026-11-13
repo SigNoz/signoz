@@ -19,6 +19,7 @@ import styles from './DashboardContainer.module.scss';
 import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
 import LockedIndicator from './components/LockedIndicator/LockedIndicator';
 import DashboardChangedDialog from './components/DashboardChangedDialog/DashboardChangedDialog';
+import DashboardSettingsDrawer from './components/DashboardSettingsDrawer/DashboardSettingsDrawer';
 import { useDashboardStaleCheck } from './hooks/useDashboardStaleCheck';
 import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
 
@@ -99,6 +100,7 @@ function DashboardContainer({
 				)}
 				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
 				{!!dashboard.locked && !readOnly && <LockedIndicator />}
+				{!readOnly && <DashboardSettingsDrawer dashboard={dashboard} />}
 				<DashboardChangedDialog
 					open={staleCheck.showPrompt}
 					onReload={staleCheck.reload}

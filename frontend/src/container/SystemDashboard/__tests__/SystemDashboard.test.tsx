@@ -62,6 +62,26 @@ describe('SystemDashboard', () => {
 		expect(container).toHaveAttribute('data-read-only', 'true');
 	});
 
+	it('tells a user without dashboard read access why it is missing', async () => {
+		server.use(
+			rest.get(ENDPOINT, (_req, res, ctx) =>
+				res(
+					ctx.status(403),
+					ctx.json({
+						status: 'error',
+						error: { code: 'forbidden', message: 'forbidden' },
+					}),
+				),
+			),
+		);
+
+		render(<SystemDashboard host={HOST} />);
+
+		await expect(
+			screen.findByTestId('system-dashboard-forbidden'),
+		).resolves.toHaveTextContent('is not authorized to perform read:dashboard:*');
+	});
+
 	it('shows why the dashboard failed to load', async () => {
 		server.use(
 			rest.get(ENDPOINT, (_req, res, ctx) =>

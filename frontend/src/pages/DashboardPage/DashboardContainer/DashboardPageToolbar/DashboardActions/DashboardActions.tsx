@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import {
@@ -33,11 +33,9 @@ import type {
 import { blockedBy } from 'lib/authz/components/AuthZDropdown/utils';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { DashboardCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
-import DashboardSettings from '../../DashboardSettings';
 import { useAddSection } from '../../PanelsAndSectionsLayout/Section/hooks/useAddSection';
 import SectionTitleModal from '../../PanelsAndSectionsLayout/Section/SectionTitleModal';
 import JsonEditorDrawer from '../JsonEditorDrawer/JsonEditorDrawer';
-import SettingsDrawer from '../SettingsDrawer';
 import styles from './DashboardActions.module.scss';
 import { useDeleteDashboardAction } from './useDeleteDashboardAction';
 import { useDashboardStore } from '../../store/useDashboardStore';
@@ -71,8 +69,7 @@ function DashboardActions({
 		deleteDisabledTooltip,
 	} = useDashboardEditContext();
 	const show = useDashboardControlGroup('dashboardActions');
-	const settingsRequest = useDashboardStore((s) => s.settingsRequest);
-	const clearSettingsRequest = useDashboardStore((s) => s.clearSettingsRequest);
+	const requestSettings = useDashboardStore((s) => s.requestSettings);
 	const { safeNavigate } = useSafeNavigate();
 	const { showErrorModal } = useErrorModal();
 	const { disabledTooltip: lockDisabledTooltip } = useDashboardLockPermission({
@@ -87,8 +84,6 @@ function DashboardActions({
 		[editChecks],
 	);
 
-	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] =
-		useState<boolean>(false);
 	const [isJsonEditorOpen, setIsJsonEditorOpen] = useState<boolean>(false);
 	const [isCloning, setIsCloning] = useState<boolean>(false);
 	const [isNewSectionOpen, setIsNewSectionOpen] = useState<boolean>(false);
@@ -99,14 +94,6 @@ function DashboardActions({
 			dashboardName: title,
 			panelCount: Object.keys(dashboard.spec.panels).length,
 		});
-
-	// Open the settings drawer when something in the tree requests it (e.g. the
-	// variables bar's "Add variable" button).
-	useEffect(() => {
-		if (settingsRequest) {
-			setIsSettingsDrawerOpen(true);
-		}
-	}, [settingsRequest]);
 
 	const { addSection, isSaving: isAddingSection } = useAddSection({
 		layouts: dashboard.spec.layouts,
@@ -149,8 +136,8 @@ function DashboardActions({
 		void logEvent(DashboardDetailEvents.SettingsOpened, {
 			dashboardId: dashboard.id,
 		});
-		setIsSettingsDrawerOpen(true);
-	}, [dashboard.id]);
+		requestSettings({ tab: 'Overview' });
+	}, [dashboard.id, requestSettings]);
 
 	const handleOpenJsonEditor = useCallback((): void => {
 		void logEvent(DashboardDetailEvents.JsonEditorOpened, {
@@ -330,17 +317,6 @@ function DashboardActions({
 					</Button>
 				</AuthZTooltip>
 			)}
-			<SettingsDrawer
-				drawerTitle="Dashboard Configuration"
-				isOpen={isSettingsDrawerOpen}
-				destroyOnClose
-				onClose={(): void => {
-					setIsSettingsDrawerOpen(false);
-					clearSettingsRequest();
-				}}
-			>
-				<DashboardSettings dashboard={dashboard} />
-			</SettingsDrawer>
 			{show.json && (
 				<Button
 					variant="solid"

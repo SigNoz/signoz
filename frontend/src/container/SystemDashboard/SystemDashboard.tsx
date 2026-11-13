@@ -1,5 +1,7 @@
 import { Typography } from '@signozhq/ui/typography';
 import Spinner from 'components/Spinner';
+import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
+import { buildDashboardReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 import DashboardContainer from 'pages/DashboardPage/DashboardContainer';
 import type { DashboardControlsInput } from 'pages/DashboardPage/DashboardContainer/controls/types';
 
@@ -22,6 +24,16 @@ function SystemDashboard({
 
 	if (isLoading) {
 		return <Spinner tip="Loading dashboard..." />;
+	}
+
+	if (error?.response?.status === 403) {
+		return (
+			<div className={styles.errorState} data-testid="system-dashboard-forbidden">
+				<PermissionDeniedCallout
+					deniedPermissions={[buildDashboardReadPermission('*')]}
+				/>
+			</div>
+		);
 	}
 
 	if (isError || !dashboard) {

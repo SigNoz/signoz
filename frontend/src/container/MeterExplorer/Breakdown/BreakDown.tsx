@@ -45,6 +45,7 @@ function BreakDown(): JSX.Element {
 			<section className="meter-explorer-notices">
 				{showInfo && (
 					<Alert
+						data-testid="cost-meter-utc-notice"
 						type="info"
 						showIcon
 						closable

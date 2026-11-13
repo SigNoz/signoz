@@ -34,11 +34,11 @@ const ALLOWED_TEST_ID_PREFIXES = [
 const INTERACTIVE =
 	'button, a[href], input, select, textarea, [role="button"], [role="menuitem"], [role="combobox"], [role="switch"], [role="checkbox"]';
 
-function LockdownHost(): JSX.Element | null {
+function LockdownHost({ panels }: { panels: number }): JSX.Element | null {
 	const { data } = useQuery(QUERY_KEY, () =>
 		dashboardResponse({
-			panels: 3,
-			sectioned: true,
+			panels,
+			sectioned: panels > 0,
 			variables: ['custom'],
 			locked: false,
 		}),
@@ -70,21 +70,31 @@ function describeElement(element: Element): string {
 	);
 }
 
+function leakedInteractive(): string[] {
+	return visibleInteractive()
+		.map(describeElement)
+		.filter(
+			(id) => !ALLOWED_TEST_ID_PREFIXES.some((prefix) => id.startsWith(prefix)),
+		);
+}
+
 describe('DashboardContainer lockdown', () => {
 	// A control a host can't switch off, or one read-only doesn't remove, fails here.
 	it('renders nothing interactive with every control off on a read-only mount', async () => {
-		render(<LockdownHost />);
+		render(<LockdownHost panels={3} />);
 
 		await waitFor(() =>
 			expect(screen.getAllByTestId(/^panel-/).length).toBeGreaterThan(0),
 		);
 
-		const leaked = visibleInteractive()
-			.map(describeElement)
-			.filter(
-				(id) => !ALLOWED_TEST_ID_PREFIXES.some((prefix) => id.startsWith(prefix)),
-			);
+		expect(leakedInteractive()).toStrictEqual([]);
+	});
 
-		expect(leaked).toStrictEqual([]);
+	it('renders nothing interactive on an empty dashboard', async () => {
+		render(<LockdownHost panels={0} />);
+
+		await screen.findByTestId('dashboard-empty-state');
+
+		expect(leakedInteractive()).toStrictEqual([]);
 	});
 });
