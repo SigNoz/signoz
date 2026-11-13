@@ -1,6 +1,9 @@
 name: build-staging
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     types: [labeled]
 
@@ -15,13 +18,13 @@ env:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    if: ${{ startsWith(github.event.label.name, 'staging:') }}
+    if: ${{ github.event_name == 'push' || startsWith(github.event.label.name, 'staging:') }}
     outputs:
       version: ${{ steps.build-info.outputs.version }}
       hash: ${{ steps.build-info.outputs.hash }}
       time: ${{ steps.build-info.outputs.time }}
       branch: ${{ steps.build-info.outputs.branch }}
-      deployment: ${{ steps.build-info.outputs.deployment }}
+      path: ${{ steps.build-info.outputs.path }}
     steps:
       - name: self-checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -44,11 +47,17 @@ jobs:
         env:
           LABEL: ${{ github.event.label.name }}
         run: |
-          # the deployment names an overlay in the release path glob and is spliced into the JSON payload
-          deployment="${LABEL#staging:}"
-          if [[ ! "${deployment}" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
-            echo "::error::label ${LABEL} must be staging:<deployment>, where the deployment is lowercase letters, digits and dashes"
-            exit 1
+          # merges to main release the base every overlay inherits, a staging:<deployment> label releases that overlay
+          if [[ "${GITHUB_EVENT_NAME}" == push ]]; then
+            path="overlays/staging/*/signoz/base"
+          else
+            # the deployment is spliced into the release path glob and the JSON payload
+            deployment="${LABEL#staging:}"
+            if [[ ! "${deployment}" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?$ ]]; then
+              echo "::error::label ${LABEL} must be staging:<deployment>, where the deployment is lowercase letters, digits and dashes"
+              exit 1
+            fi
+            path="overlays/staging/*/signoz/overlays/${deployment}"
           fi
 
           {
@@ -56,7 +65,7 @@ jobs:
             echo "hash=$($MAKE info-commit-short)"
             echo "time=$($MAKE info-timestamp)"
             echo "branch=$($MAKE info-branch)"
-            echo "deployment=${deployment}"
+            echo "path=${path}"
           } >> "${GITHUB_OUTPUT}"
       - name: create-dotenv
         run: |
@@ -122,4 +131,4 @@ jobs:
       GITHUB_SILENT: true
       GITHUB_REPOSITORY_NAME: signoz.staging.cl.gcp.deployments
       GITHUB_EVENT_NAME: release
-      GITHUB_EVENT_PAYLOAD: '{"path": "overlays/staging/*/signoz/overlays/${{ needs.prepare.outputs.deployment }}", "image": "us-central1-docker.pkg.dev/signoz-registry/signoz/signoz", "tag": "${{ needs.prepare.outputs.version }}"}'
+      GITHUB_EVENT_PAYLOAD: '{"path": "${{ needs.prepare.outputs.path }}", "image": "us-central1-docker.pkg.dev/signoz-registry/signoz/signoz", "tag": "${{ needs.prepare.outputs.version }}"}'
