@@ -19,20 +19,9 @@
 	text-overflow: ellipsis;
 }
 
-// A lone value, ALL, or the unset dash.
-.value {
-	--typography-text-display: block;
-	font-weight: var(--label-base-500-font-weight);
-	overflow-wrap: anywhere;
-}
-
 // One bullet per value when a variable holds several.
 .values {
 	margin: 0;
 	padding-left: 14px;
 	list-style: disc outside;
-}
-
-.valueItem {
-	overflow-wrap: anywhere;
 }

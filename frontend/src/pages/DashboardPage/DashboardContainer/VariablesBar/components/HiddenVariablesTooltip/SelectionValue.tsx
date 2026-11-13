@@ -50,15 +50,15 @@ function SelectionValue({ selection }: SelectionValueProps): JSX.Element {
 		<ul className={styles.values}>
 			{display.values.map((value) => (
 				<Typography
-					/* TODO(typography): asChild has no equivalent */ key={value}
+					key={value}
 					variant="paragraph"
 					size="small"
 					weight="medium"
 					color="inherit"
-					as="span"
+					as="li"
 					textOverflow="wrap"
 				>
-					<li>{value}</li>
+					{value}
 				</Typography>
 			))}
 		</ul>
