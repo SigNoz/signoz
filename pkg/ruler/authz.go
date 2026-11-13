@@ -103,7 +103,7 @@ func NewCreateRuleChannelAttachExtractor(alertmanagerService alertmanager.Alertm
 			return nil, err
 		}
 
-		return alertmanagerService.GetChannelIDsByNames(ctx, orgID.StringValue(), names)
+		return resolveKnownChannelIDs(ctx, alertmanagerService, orgID, names)
 	}}
 }
 
@@ -124,7 +124,7 @@ func NewCloneRuleChannelAttachExtractor(alertmanagerService alertmanager.Alertma
 			return nil, err
 		}
 
-		return alertmanagerService.GetChannelIDsByNames(ctx, orgID.StringValue(), stored.Channels())
+		return resolveKnownChannelIDs(ctx, alertmanagerService, orgID, stored.Channels())
 	}}
 }
 
@@ -168,10 +168,10 @@ func newRuleChannelDiffExtractor(alertmanagerService alertmanager.Alertmanager, 
 
 		attached, detached := diffLinks(stored.Channels(), incomingNames)
 		if side == detachedSide {
-			return resolveStoredChannelIDs(ctx, alertmanagerService, orgID, detached)
+			return resolveKnownChannelIDs(ctx, alertmanagerService, orgID, detached)
 		}
 
-		return alertmanagerService.GetChannelIDsByNames(ctx, orgID.StringValue(), attached)
+		return resolveKnownChannelIDs(ctx, alertmanagerService, orgID, attached)
 	}}
 }
 
@@ -199,7 +199,7 @@ func applyRulePatch(stored *ruletypes.GettableRule, body []byte) (*ruletypes.Pos
 
 func parseRuleChannels(body []byte) ([]string, error) {
 	rule := new(ruletypes.PostableRule)
-	if err := json.Unmarshal(body, rule); err != nil {
+	if err := rule.DecodeStrict(string(body)); err != nil {
 		return nil, err
 	}
 
@@ -278,7 +278,8 @@ func newRoutePolicyDiffExtractor(alertmanagerService alertmanager.Alertmanager, 
 	}}
 }
 
-func resolveStoredChannelIDs(ctx context.Context, alertmanagerService alertmanager.Alertmanager, orgID valuer.UUID, names []string) ([]string, error) {
+// resolveKnownChannelIDs skips unknown names, the handler rejects them with a clearer error.
+func resolveKnownChannelIDs(ctx context.Context, alertmanagerService alertmanager.Alertmanager, orgID valuer.UUID, names []string) ([]string, error) {
 	if len(names) == 0 {
 		return nil, nil
 	}
