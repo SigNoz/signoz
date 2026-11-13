@@ -1026,6 +1026,15 @@ def get_attribute_evolution_time(signoz: types.SigNoz, signal: str) -> datetime:
     return get_column_evolution_time(signoz, signal, "attributes", "attribute")
 
 
+def get_attribute_backend_now(signoz: types.SigNoz, attribute_backend: str) -> datetime:
+    """The "now" a test anchors its spans and query window to. "map" sits before the traces
+    attributes JSON rollout, where the querier reads only the legacy maps, the same SQL as with
+    use_trace_attributes_json off; "json" is the wall clock, after the rollout."""
+    if attribute_backend == "map":
+        return get_attribute_evolution_time(signoz, "traces") - timedelta(hours=1)
+    return datetime.now(tz=UTC)
+
+
 def get_column_evolution_time(signoz: types.SigNoz, signal: str, column_name: str, field_context: str) -> datetime:
     result = signoz.telemetrystore.conn.query(
         """
@@ -1141,7 +1150,7 @@ def generate_logs_with_corrupt_metadata() -> list[Logs]:
     ]
 
 
-def generate_traces_with_corrupt_metadata() -> list[Traces]:
+def generate_traces_with_corrupt_metadata(now: datetime | None = None) -> list[Traces]:
     """
     Specifically, entries with 'id', 'timestamp', 'trace_id' and 'duration_nano' fields in metadata
     """
@@ -1152,7 +1161,7 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
     topic_service_trace_id = TraceIdGenerator.trace_id()
     topic_service_span_id = TraceIdGenerator.span_id()
 
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = (now or datetime.now(tz=UTC)).replace(second=0, microsecond=0)
 
     return [
         Traces(

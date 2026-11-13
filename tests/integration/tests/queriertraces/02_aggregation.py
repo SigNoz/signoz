@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from http import HTTPStatus
 from typing import Any
 
@@ -20,6 +20,7 @@ from fixtures.querier import (
     build_order_by,
     build_traces_scalar_query,
     get_all_series,
+    get_attribute_backend_now,
     get_scalar_table_data,
     index_series_by_label,
     make_query_request,
@@ -64,11 +65,13 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
         pytest.param({"name": "span.count_", "fieldContext": "span"}, "span.count_", HTTPStatus.OK, id="span.count_span-ctx_alias_span.count_"),
     ],
 )
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_aggregate_order_by_count(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    attribute_backend: str,
     order_by: dict[str, str],
     aggregation_alias: str,
     expected_status: HTTPStatus,
@@ -83,7 +86,9 @@ def test_traces_aggregate_order_by_count(
     fieldContext. Only the combinations that double-specify the context are a bad
     request; the rest resolve and return the span count.
     """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = get_attribute_backend_now(signoz, attribute_backend)
+
+    now = now.replace(second=0, microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     spans = [
         Traces(
@@ -104,8 +109,8 @@ def test_traces_aggregate_order_by_count(
     response = make_query_request(
         signoz,
         token,
-        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
-        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
+        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
         queries=[
             BuilderQuery(
@@ -134,11 +139,13 @@ def test_traces_aggregate_order_by_count(
 
 
 @pytest.mark.parametrize("noise", ["clean", "corrupt"])
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_aggregate_functions(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    attribute_backend: str,
     noise: str,
 ) -> None:
     """
@@ -155,8 +162,10 @@ def test_traces_aggregate_functions(
     the corrupt variant the same-named colliding attributes must not change any of
     these.
     """
+    now = get_attribute_backend_now(signoz, attribute_backend)
+
     extra_attrs, extra_resources = trace_noise(noise)
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     # A scalar rate divides by the whole query window, so both sides agree on it.
     # Traces derives this separately from logs (telemetrytraces/statement_builder.go).
     lookback_minutes = 5
@@ -237,11 +246,13 @@ def test_traces_aggregate_functions(
     )
 
 
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_aggregate_calculated_range_countif(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    attribute_backend: str,
 ) -> None:
     """
     Setup:
@@ -251,7 +262,9 @@ def test_traces_aggregate_calculated_range_countif(
     countIf(response_status_code >= 400 AND response_status_code < 500) counts the
     single 4XX span (404).
     """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = get_attribute_backend_now(signoz, attribute_backend)
+
+    now = now.replace(second=0, microsecond=0)
     spans = [
         Traces(
             timestamp=now - timedelta(seconds=i + 1),
@@ -286,11 +299,13 @@ def test_traces_aggregate_calculated_range_countif(
 
 
 @pytest.mark.parametrize("noise", ["clean", "corrupt"])
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_aggregate_having(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    attribute_backend: str,
     noise: str,
 ) -> None:
     """
@@ -301,8 +316,10 @@ def test_traces_aggregate_having(
     A grouped scalar query with `having count() > 2` returns only the groups
     whose count qualifies (svc-a), derived from the inserted spans.
     """
+    now = get_attribute_backend_now(signoz, attribute_backend)
+
     extra_attrs, extra_resources = trace_noise(noise)
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     counts = {"svc-a": 3, "svc-b": 1}
     spans = [
         Traces(
@@ -353,11 +370,13 @@ def test_traces_aggregate_having(
     ],
 )
 @pytest.mark.parametrize("noise", ["clean", "corrupt"])
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_aggregate_time_series_limit(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    attribute_backend: str,
     noise: str,
     limit: int,
     direction: str,
@@ -372,8 +391,10 @@ def test_traces_aggregate_time_series_limit(
     summing to that service's span count. Under the corrupt variant the grouping
     (resource.service.name) and count are unaffected by the colliding attributes.
     """
+    now = get_attribute_backend_now(signoz, attribute_backend)
+
     extra_attrs, extra_resources = trace_noise(noise)
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     counts = {"svc-a": 5, "svc-b": 3, "svc-c": 7, "svc-d": 1}
     spans = [
         Traces(
@@ -432,11 +453,13 @@ def test_traces_aggregate_time_series_limit(
         pytest.param("avg(does_not_exist)", None, id="avg_unknown_is_null"),
     ],
 )
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_aggregate_unknown_key(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    attribute_backend: str,
     expression: str,
     expected_value: Any,
 ) -> None:
@@ -448,7 +471,9 @@ def test_traces_aggregate_unknown_key(
     Aggregating a bare unknown key synthesizes a null column: count() of it is 0
     (no non-null values) and sum()/avg() are null — the query never errors.
     """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = get_attribute_backend_now(signoz, attribute_backend)
+
+    now = now.replace(second=0, microsecond=0)
     spans = [
         Traces(
             timestamp=now - timedelta(seconds=i + 1),

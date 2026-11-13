@@ -1,12 +1,12 @@
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from http import HTTPStatus
 
 import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.querier import BuilderQuery, OrderBy, RequestType, TelemetryFieldKey, get_rows, make_query_request
+from fixtures.querier import BuilderQuery, OrderBy, RequestType, TelemetryFieldKey, get_attribute_backend_now, get_rows, make_query_request
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
 # Filter-operator coverage for traces, modelled on the shapes that dominate real
@@ -22,6 +22,10 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
 # orthogonal to field-collision (covered in 01_list.py / 02_aggregation.py). A
 # single-term `response_status_code >= 400` would additionally re-hit the known
 # calculated/numeric-attribute collision bug xfail'd in 02_aggregation.py.
+#
+# Every case runs under the attribute_backend factor (map / json): each attribute is
+# single-typed here, so no collision-driven divergence arises and both physical layouts
+# must return identical spans — the parity contract for the JSON attribute rollout.
 
 
 @pytest.mark.parametrize(
@@ -60,11 +64,13 @@ from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCo
         pytest.param("responseStatusCode >= 400", {"cart-handler", "payment-processor"}, id="deprecated_responseStatusCode"),
     ],
 )
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_traces_filter_operators(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
+    attribute_backend: str,
     expression: str,
     expected_names: set[str],
 ) -> None:
@@ -76,7 +82,9 @@ def test_traces_filter_operators(
     Tests:
     Each production-shaped filter operator selects exactly the expected spans.
     """
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = get_attribute_backend_now(signoz, attribute_backend)
+
+    now = now.replace(second=0, microsecond=0)
     # (name, service, deployment.environment, http.request.method, http.response.status_code, latency_ms, has_error_type)
     specs = [
         ("checkout-handler", "checkout", "prod", "GET", "200", 100, False),
