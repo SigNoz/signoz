@@ -8,7 +8,11 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import type { QueryBuilderV2 } from '../QueryBuilderV2';
 
@@ -17,6 +21,30 @@ type QueryBuilderProps = Parameters<typeof QueryBuilderV2>[0];
 /** The builder's provider reads its starting query from the URL, as every host seeds it. */
 export const routeWith = (path: string, query: Query): string =>
 	`${path}?compositeQuery=${encodeURIComponent(JSON.stringify(query))}`;
+
+/** `query` with its first builder query's fields replaced by `fields`. */
+export const queryWith = (
+	query: Query,
+	fields: Partial<IBuilderQuery>,
+): Query => ({
+	...query,
+	builder: {
+		...query.builder,
+		queryData: [{ ...query.builder.queryData[0], ...fields }],
+	},
+});
+
+/** A group-by key as the builder stores it: `id` is the select's option value. */
+export const groupByKey = (
+	key: string,
+	type = 'tag',
+	dataType: DataTypes = DataTypes.String,
+): BaseAutocompleteData => ({
+	key,
+	dataType,
+	type,
+	id: `${key}--${dataType}--${type}`,
+});
 
 export const meterQuery: Query = {
 	...initialQueriesMap.metrics,
