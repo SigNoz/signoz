@@ -72,7 +72,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Resource: coretypes.ResourceUser,
 		Verb:     coretypes.VerbRead,
 		Category: coretypes.ActionCategoryAccessControl,
-		ID:       userIDExtractor(),
+		ID:       provider.userIDExtractor(),
 		Selector: coretypes.IDSelector,
 	}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
@@ -138,7 +138,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Resource: coretypes.ResourceUser,
 		Verb:     coretypes.VerbUpdate,
 		Category: coretypes.ActionCategoryAccessControl,
-		ID:       userIDExtractor(),
+		ID:       provider.userIDExtractor(),
 		Selector: coretypes.IDSelector,
 	}))).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -525,7 +525,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	return nil
 }
 
-func userIDExtractor() coretypes.ResourceIDExtractor {
+func (provider *provider) userIDExtractor() coretypes.ResourceIDExtractor {
 	return coretypes.NewResourceIDExtractor(coretypes.PhaseRequest, func(ec coretypes.ExtractorContext) (string, error) {
 		if ec.Request == nil {
 			return "", nil
