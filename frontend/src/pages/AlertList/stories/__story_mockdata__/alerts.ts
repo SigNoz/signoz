@@ -379,8 +379,6 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 		createdBy: 'ada@signoz.io',
 		updatedBy: 'grace@signoz.io',
 		schemaVersion: RuletypesRuleDTOSchemaVersion.v2alpha1,
-		version: 'v5',
-		source: 'http://localhost/alerts',
 		notificationSettings: {
 			groupBy: ['alertname'],
 			usePolicy: false,

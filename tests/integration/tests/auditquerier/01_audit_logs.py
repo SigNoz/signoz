@@ -110,15 +110,25 @@ def test_audit_list_all(
 
     # Most recent first
     assert [row["data"]["event_name"] for row in rows] == ["signoz.audit.update", "signoz.audit.update", "signoz.audit.create"]
-    assert [row["data"]["body"] for row in rows] == [
+    assert [row["data"]["body"]["message"] for row in rows] == [
         "ops@acme.com (user-010) updated user (user-020)",
         "ops@acme.com (user-010) updated saved-view (view-001)",
         "ops@acme.com (user-010) created alert-rule (alert-001)",
     ]
 
     # Verify event_name and body are present
-    assert rows[0]["data"]["body"] == "ops@acme.com (user-010) updated user (user-020)"
+    assert rows[0]["data"]["body"] == {"message": "ops@acme.com (user-010) updated user (user-020)"}
     assert rows[0]["data"]["severity_text"] == "INFO"
+
+    assert rows[0]["data"]["resource"] == {
+        "attributes": {
+            "service.name": "signoz",
+            "signoz.resource.kind": "user",
+            "signoz.resource.id": "user-020",
+        }
+    }
+    assert rows[0]["data"]["attributes"]["signoz.audit.action_category"] == "access_control"
+    assert rows[0]["data"]["scope"]["name"] == "signoz.audit"
 
 
 @pytest.mark.parametrize(
@@ -153,6 +163,18 @@ def test_audit_list_all(
             1,
             {"signoz.audit.delete"},
             id="filter_by_resource_kind_and_action",
+        ),
+        pytest.param(
+            "resource.signoz.resource.id = 'sa-001'",
+            1,
+            {"signoz.audit.create"},
+            id="filter_by_resource_prefix",
+        ),
+        pytest.param(
+            "body CONTAINS 'failed'",
+            1,
+            {"signoz.audit.delete"},
+            id="filter_by_body_contains",
         ),
     ],
 )
