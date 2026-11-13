@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/preferencetypes"
 	"github.com/gorilla/mux"
@@ -62,7 +63,7 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/org/preferences", handler.New(provider.authzMiddleware.AdminAccess(provider.preferenceHandler.ListByOrg), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/org/preferences", handler.New(provider.authzMiddleware.CheckResources(provider.preferenceHandler.ListByOrg, authtypes.SigNozAdminRoleName), handler.OpenAPIDef{
 		ID:                  "ListOrgPreferences",
 		Tags:                []string{"preferences"},
 		Summary:             "List org preferences",
@@ -74,7 +75,7 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceOrgPreference.Scope(coretypes.VerbList)}),
 	}, handler.WithResourceDefs(handler.BasicResourceDef{
 		Resource: coretypes.ResourceMetaResourceOrgPreference,
 		Verb:     coretypes.VerbList,
@@ -84,7 +85,7 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/org/preferences/{name}", handler.New(provider.authzMiddleware.AdminAccess(provider.preferenceHandler.GetByOrg), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/org/preferences/{name}", handler.New(provider.authzMiddleware.CheckResources(provider.preferenceHandler.GetByOrg, authtypes.SigNozAdminRoleName), handler.OpenAPIDef{
 		ID:                  "GetOrgPreference",
 		Tags:                []string{"preferences"},
 		Summary:             "Get org preference",
@@ -96,7 +97,7 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceOrgPreference.Scope(coretypes.VerbRead)}),
 	}, handler.WithResourceDefs(handler.BasicResourceDef{
 		Resource: coretypes.ResourceMetaResourceOrgPreference,
 		Verb:     coretypes.VerbRead,
@@ -107,7 +108,7 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/org/preferences/{name}", handler.New(provider.authzMiddleware.AdminAccess(provider.preferenceHandler.UpdateByOrg), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/org/preferences/{name}", handler.New(provider.authzMiddleware.CheckResources(provider.preferenceHandler.UpdateByOrg, authtypes.SigNozAdminRoleName), handler.OpenAPIDef{
 		ID:                  "UpdateOrgPreference",
 		Tags:                []string{"preferences"},
 		Summary:             "Update org preference",
@@ -119,7 +120,7 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceOrgPreference.Scope(coretypes.VerbUpdate)}),
 	}, handler.WithResourceDefs(handler.BasicResourceDef{
 		Resource: coretypes.ResourceMetaResourceOrgPreference,
 		Verb:     coretypes.VerbUpdate,
