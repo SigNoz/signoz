@@ -107,9 +107,7 @@ export function getAlertRuleColumns(
 					return <TanStackTable.Text>-</TanStackTable.Text>;
 				}
 
-				return (
-					<LabelColumn labels={tagKeys} value={labels} color="highlight-danger" />
-				);
+				return <LabelColumn labels={tagKeys} value={labels} color="secondary" />;
 			},
 		},
 		{
