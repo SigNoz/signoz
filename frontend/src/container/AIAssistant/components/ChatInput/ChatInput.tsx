@@ -11,11 +11,8 @@ import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
-import { toast } from '@signozhq/ui/sonner';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import type { UploadFile } from 'antd';
-import getSessionStorage from 'api/browser/sessionstorage/get';
-import setSessionStorage from 'api/browser/sessionstorage/set';
 import {
 	getListDashboardsForUserV2QueryKey,
 	useListDashboardsForUserV2,
@@ -31,27 +28,18 @@ import type {
 	ListRulesV3200,
 	ListRulesV3Params,
 } from 'api/generated/services/sigNoz.schemas';
-import logEvent from 'api/common/logEvent';
 import { useQueryService } from 'hooks/useQueryService';
 // eslint-disable-next-line
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import {
-	AIAssistantEvents,
-	VoiceInputSource,
-	getBrowserInfo,
-} from '../../events';
-import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
-import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { MessageAttachment } from '../../types';
 import { useVariant } from '../../VariantContext';
 import { MessageContext } from '../../../../api/ai-assistant/chat';
 import {
 	ArrowUp,
 	AtSign,
-	Mic,
 	Search,
 	Square,
 	TriangleAlert,
@@ -172,8 +160,6 @@ const WARNING_THRESHOLD = 15000;
 // squeezed in tighter container variants (e.g. the floating panel).
 const TEXTAREA_MAX_HEIGHT_PX = 200;
 const HOME_SERVICES_INTERVAL = 30 * 60 * 1000;
-/** sessionStorage key for the "voice input failed this tab" flag. */
-const VOICE_UNAVAILABLE_KEY = 'ai-assistant-voice-unavailable';
 /**
  * The picker filters client-side, so it pulls one large page instead of
  * paginating. Shared with `getQueryData` below — the params are part of the
@@ -290,8 +276,6 @@ export default function ChatInput({
 			endTime: now,
 		};
 	});
-	// Stores the already-committed final text so interim results don't overwrite it
-	const committedTextRef = useRef('');
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const inputRootRef = useRef<HTMLDivElement>(null);
 
@@ -345,7 +329,6 @@ export default function ChatInput({
 				const next =
 					text.slice(0, mentionRange.start) + text.slice(mentionRange.end);
 				setText(next);
-				committedTextRef.current = next;
 				setMentionRange(null);
 			}
 		},
@@ -358,7 +341,6 @@ export default function ChatInput({
 		(prompt: string) => {
 			const next = capText(prompt);
 			setText(next);
-			committedTextRef.current = next;
 			setMentionRange(null);
 			setPickerSearchQuery('');
 			setIsContextPickerOpen(false);
@@ -499,7 +481,6 @@ export default function ChatInput({
 			contexts.length > 0 ? contexts : undefined,
 		);
 		setText('');
-		committedTextRef.current = '';
 		setPendingFiles([]);
 		setSelectedContexts([]);
 		textareaRef.current?.focus();
@@ -533,209 +514,6 @@ export default function ChatInput({
 		},
 		[],
 	);
-
-	// ── Voice input ────────────────────────────────────────────────────────────
-
-	const analyticsCtx = useAIAssistantAnalyticsContext();
-	// Captured at the start of a voice session, consumed when it ends.
-	// Tracks both the trigger (button vs. PTT shortcut) and the wall-clock
-	// start time so we can attribute `durationMs` on the Voice input used
-	// event regardless of which control ended the session.
-	const voiceStartedAtRef = useRef<number | null>(null);
-	const voiceSourceRef = useRef<VoiceInputSource | null>(null);
-	// Set to true after a `network`, `not-allowed`, or `not-supported` failure
-	// so we hide the mic button for the rest of the tab session — silent
-	// retries don't help, and Chromium derivatives without the Google Speech
-	// API key always fail with `network` no matter how many times the user
-	// clicks. Persisted to sessionStorage so a page reload doesn't surface the
-	// button again (closing the tab still resets, in case the user fixed
-	// permissions or switched browsers).
-	const [voiceUnavailable, setVoiceUnavailable] = useState(
-		() => getSessionStorage(VOICE_UNAVAILABLE_KEY) === 'true',
-	);
-	const markVoiceUnavailable = useCallback((): void => {
-		setVoiceUnavailable(true);
-		setSessionStorage(VOICE_UNAVAILABLE_KEY, 'true');
-	}, []);
-
-	const {
-		isListening,
-		isSupported,
-		permission: micPermission,
-		start,
-		discard,
-	} = useSpeechRecognition({
-		onTranscript: (transcriptText, isFinal) => {
-			if (isFinal) {
-				// Commit: append to whatever the user has already typed
-				const separator = committedTextRef.current ? ' ' : '';
-				const next = capText(committedTextRef.current + separator + transcriptText);
-				committedTextRef.current = next;
-				setText(next);
-			} else {
-				// Interim: live preview appended to committed text, not yet persisted
-				const separator = committedTextRef.current ? ' ' : '';
-				setText(capText(committedTextRef.current + separator + transcriptText));
-			}
-		},
-		onError: (error) => {
-			// Guard against double-fire: Chrome can fire `onerror` more than
-			// once per session when `continuous = true` (it retries internally
-			// before giving up). Only fire the analytics event for the first
-			// error in a given session — voiceSourceRef being null means we've
-			// already handled it.
-			const source = voiceSourceRef.current;
-			if (source === null) {
-				return;
-			}
-			voiceStartedAtRef.current = null;
-			voiceSourceRef.current = null;
-			void logEvent(AIAssistantEvents.VoiceInputFailed, {
-				...analyticsCtx,
-				...getBrowserInfo(),
-				source,
-				errorType: error,
-			});
-			if (error === 'network') {
-				markVoiceUnavailable();
-				toast.error('Voice input unavailable in this browser', {
-					description:
-						'This browser cannot reach the speech recognition service. Try Google Chrome or Microsoft Edge.',
-				});
-			} else if (error === 'not-allowed') {
-				markVoiceUnavailable();
-				toast.error('Microphone access denied', {
-					description:
-						'Grant microphone permission in your browser settings to use voice input.',
-				});
-			} else if (error === 'not-supported') {
-				markVoiceUnavailable();
-				toast.error('Voice input is not supported in this browser.');
-			}
-			// `no-speech` is benign (just silence) — don't toast or hide.
-		},
-	});
-
-	const showMic = isSupported && micPermission !== 'denied' && !voiceUnavailable;
-
-	const startVoiceInput = useCallback(
-		(source: VoiceInputSource) => {
-			// Defense in depth: the button is hidden when `voiceUnavailable` is
-			// true, but the PTT shortcut listener can still call us. Bailing here
-			// keeps a single source of truth and prevents repeat `Voice input
-			// failed` events in the same session.
-			if (voiceUnavailable) {
-				return;
-			}
-			voiceStartedAtRef.current = Date.now();
-			voiceSourceRef.current = source;
-			start();
-		},
-		[start, voiceUnavailable],
-	);
-
-	const fireVoiceInputEvent = useCallback(
-		(outcome: 'sent' | 'discarded') => {
-			const startedAt = voiceStartedAtRef.current;
-			const source = voiceSourceRef.current;
-			voiceStartedAtRef.current = null;
-			voiceSourceRef.current = null;
-			if (startedAt === null || source === null) {
-				return;
-			}
-			void logEvent(AIAssistantEvents.VoiceInputUsed, {
-				...analyticsCtx,
-				...getBrowserInfo(),
-				source,
-				outcome,
-				durationMs: Date.now() - startedAt,
-			});
-		},
-		[analyticsCtx],
-	);
-
-	// Stop recording and immediately send whatever is in the textarea.
-	const handleStopAndSend = useCallback(async () => {
-		// Promote the displayed text (interim included) to committed so handleSend sees it.
-		committedTextRef.current = capText(text);
-		// Stop recognition without triggering onTranscript again (would double-append).
-		discard();
-		fireVoiceInputEvent('sent');
-		await handleSend();
-	}, [text, discard, handleSend, capText, fireVoiceInputEvent]);
-
-	// Stop recording and revert the textarea to what it was before voice started.
-	const handleDiscard = useCallback(() => {
-		discard();
-		fireVoiceInputEvent('discarded');
-		setText(committedTextRef.current);
-		textareaRef.current?.focus();
-	}, [discard, fireVoiceInputEvent]);
-
-	// ── Push-to-talk (Cmd/Ctrl + Shift + Space) ────────────────────────────────
-	// Hold the combo to record; release Space to submit. We track which key
-	// triggered PTT in a ref so a late-released modifier (Cmd/Shift) doesn't
-	// accidentally stop the session. Auto-repeat is suppressed via a
-	// "session active" ref so a held key only calls `start()` once.
-	const pttActiveRef = useRef(false);
-	useEffect(() => {
-		if (!isSupported || micPermission === 'denied' || voiceUnavailable) {
-			return undefined;
-		}
-
-		const handleKeyDown = (e: KeyboardEvent): void => {
-			const isComboKey =
-				(e.metaKey || e.ctrlKey) &&
-				e.shiftKey &&
-				(e.code === 'Space' || e.key === ' ');
-			if (!isComboKey || disabled || isStreaming) {
-				return;
-			}
-			e.preventDefault();
-			if (pttActiveRef.current) {
-				return; // ignore auto-repeat
-			}
-			pttActiveRef.current = true;
-			startVoiceInput(VoiceInputSource.Shortcut);
-		};
-
-		const handleKeyUp = (e: KeyboardEvent): void => {
-			if (!pttActiveRef.current) {
-				return;
-			}
-			// End on the *first* released key in the combo. macOS browsers
-			// frequently swallow keyup of regular keys (incl. Space) while
-			// Cmd is held, so we can't rely on Space-up alone — releasing
-			// Cmd/Ctrl/Shift must also stop the session.
-			const isComboKey =
-				e.code === 'Space' ||
-				e.key === ' ' ||
-				e.key === 'Meta' ||
-				e.key === 'Control' ||
-				e.key === 'Shift';
-			if (!isComboKey) {
-				return;
-			}
-			pttActiveRef.current = false;
-			e.preventDefault();
-			void handleStopAndSend();
-		};
-
-		window.addEventListener('keydown', handleKeyDown);
-		window.addEventListener('keyup', handleKeyUp);
-		return (): void => {
-			window.removeEventListener('keydown', handleKeyDown);
-			window.removeEventListener('keyup', handleKeyUp);
-		};
-	}, [
-		isSupported,
-		micPermission,
-		voiceUnavailable,
-		disabled,
-		isStreaming,
-		startVoiceInput,
-		handleStopAndSend,
-	]);
 
 	// Each list hook fetches only when its picker tab is actively shown,
 	// AND treats already-cached data as never stale (`staleTime: Infinity`)
@@ -993,8 +771,6 @@ export default function ChatInput({
 					onChange={(e): void => {
 						const next = capText(e.target.value);
 						setText(next);
-						// Keep committed text in sync when the user edits manually
-						committedTextRef.current = next;
 						syncContextPickerFromText(next, e.target.selectionStart ?? next.length);
 					}}
 					onKeyDown={handleKeyDown}
@@ -1015,68 +791,6 @@ export default function ChatInput({
 
 			<div className={styles.footer}>
 				<div className={styles.actions}>
-					{showMic &&
-						(isListening ? (
-							<div
-								className={styles.micRecording}
-								role="status"
-								aria-live="polite"
-								aria-label="Recording voice input"
-							>
-								<Tooltip title="Discard recording">
-									<Button
-										type="button"
-										variant="ghost"
-										size="sm"
-										icon
-										color="secondary"
-										onClick={handleDiscard}
-										aria-label="Discard recording"
-									>
-										<X size={12} />
-									</Button>
-								</Tooltip>
-								<span className={styles.micWaves} aria-hidden="true">
-									<span />
-									<span />
-									<span />
-									<span />
-									<span />
-									<span />
-									<span />
-									<span />
-								</span>
-								<Tooltip title="Stop and send">
-									<Button
-										type="button"
-										variant="ghost"
-										size="sm"
-										icon
-										color="secondary"
-										onClick={handleStopAndSend}
-										aria-label="Stop and send"
-									>
-										<Square size={9} fill="currentColor" strokeWidth={0} />
-									</Button>
-								</Tooltip>
-							</div>
-						) : (
-							<Tooltip title="Voice input">
-								<Button
-									disabledTooltip={disabledTooltip}
-									color="secondary"
-									variant="ghost"
-									size="sm"
-									icon
-									onClick={(): void => startVoiceInput(VoiceInputSource.Button)}
-									disabled={disabled}
-									aria-label="Start voice input"
-								>
-									<Mic size={14} />
-								</Button>
-							</Tooltip>
-						))}
-
 					<Popover
 						open={isContextPickerOpen}
 						onOpenChange={(open): void => {
@@ -1256,7 +970,7 @@ export default function ChatInput({
 								size="sm"
 								icon
 								color="primary"
-								onClick={isListening ? handleStopAndSend : handleSend}
+								onClick={handleSend}
 								disabled={disabled || (!text.trim() && pendingFiles.length === 0)}
 								aria-label="Send message"
 							>

@@ -29,26 +29,6 @@ jest.mock('hooks/useQueryService', () => ({
 	}),
 }));
 
-// Irrelevant to the prefill flow and otherwise require browser APIs / extra
-// context providers, so stub them out.
-jest.mock('../../../hooks/useSpeechRecognition', () => ({
-	useSpeechRecognition: (): unknown => ({
-		isListening: false,
-		isSupported: false,
-		permission: 'prompt',
-		start: jest.fn(),
-		discard: jest.fn(),
-	}),
-}));
-
-jest.mock('../../../hooks/useAIAssistantAnalyticsContext', () => ({
-	useAIAssistantAnalyticsContext: (): unknown => ({
-		threadId: undefined,
-		page: '/',
-		mode: 'sidepane',
-	}),
-}));
-
 // eslint-disable-next-line import/first
 // eslint-disable-next-line import/first
 import ChatInput from '../ChatInput';
