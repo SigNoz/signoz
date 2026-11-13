@@ -68,6 +68,7 @@ export function createPublicDashboardHost(
 		),
 		queryRunner: {
 			key: `public:${publicDashboardId}`,
+			paginates: false,
 			// The server holds each panel's query; only the window travels.
 			run: ({ panelId, requestPayload, signal }) =>
 				getPublicDashboardPanelQueryRangeV2(

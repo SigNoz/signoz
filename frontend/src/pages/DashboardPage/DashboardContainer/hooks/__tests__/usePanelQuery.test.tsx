@@ -641,6 +641,27 @@ describe('usePanelQuery', () => {
 		});
 	});
 
+	it('fetches a list panel unpaged when the host runner cannot page', () => {
+		useDashboardStore.getState().setEditContext({
+			dashboardId: 'd1',
+			refetch: jest.fn(),
+			queryRunner: { key: 'public:abc', paginates: false, run: jest.fn() },
+		});
+
+		const { result } = renderHook(() =>
+			usePanelQuery({
+				panel: panelWith('signoz/ListPanel', { name: 'A', signal: 'logs' }),
+				panelId: 'p1',
+				queryCapabilities: LIST_PANEL_CAPABILITIES,
+			}),
+		);
+		useDashboardStore
+			.getState()
+			.setEditContext({ dashboardId: '', refetch: jest.fn() });
+
+		expect(result.current.pagination).toBeUndefined();
+	});
+
 	it('runs on query_range when no host runner is set', () => {
 		renderHook(() =>
 			usePanelQuery({

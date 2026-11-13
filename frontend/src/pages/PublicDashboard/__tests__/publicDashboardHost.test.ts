@@ -25,6 +25,12 @@ describe('createPublicDashboardHost', () => {
 		);
 	});
 
+	it('fetches list panels unpaged, since the public endpoint has no paging', () => {
+		const host = createPublicDashboardHost('pub-1', { timeRangeEnabled: true });
+
+		expect(host.queryRunner.paginates).toBe(false);
+	});
+
 	it('mounts nothing for a dashboard that predates the v2 schema', () => {
 		const host = createPublicDashboardHost('pub-1', { timeRangeEnabled: true });
 

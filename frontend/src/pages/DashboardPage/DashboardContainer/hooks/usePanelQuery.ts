@@ -103,7 +103,6 @@ export function usePanelQuery({
 		() => !!getBuilderQueries(queries)[0]?.limit,
 		[queries],
 	);
-	const isPaginated = queryCapabilities.serverPaginated && !hasExplicitLimit;
 
 	const [pageSize, setPageSize] = useState(DEFAULT_LIST_PAGE_SIZE);
 	const [offset, setOffset] = useState(0);
@@ -131,6 +130,10 @@ export function usePanelQuery({
 	// unresolved ones); null before the variable bar initializes it.
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
 	const queryRunner = useDashboardStore((s) => s.queryRunner);
+	const isPaginated =
+		queryCapabilities.serverPaginated &&
+		!hasExplicitLimit &&
+		queryRunner?.paginates !== false;
 	const variables = useDashboardStore(selectResolvedVariables(dashboardId));
 	const fetchContext = useDashboardStore((s) => s.variableFetchContext);
 
