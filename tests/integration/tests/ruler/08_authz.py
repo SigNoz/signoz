@@ -75,7 +75,6 @@ RULE_TEMPLATE = {
     "annotations": {"summary": "s", "description": "d"},
     "evaluation": {"kind": "rolling", "spec": {"evalWindow": "5m0s", "frequency": "1m"}},
     "notificationSettings": {"groupBy": [], "usePolicy": False, "renotify": {"enabled": False, "interval": "30m", "alertStates": []}},
-    "version": "v5",
     "schemaVersion": "v2alpha1",
 }
 
@@ -478,13 +477,12 @@ def test_viewer_allowed_on_rule_reads(
     assert response.status_code == HTTPStatus.OK, response.text
     target_id = {rule["alert"]: rule["id"] for rule in response.json()["data"]["rules"]}[_TARGET_RULE]
 
-    for path in (V2_RULES_URL, f"{V2_RULES_URL}/{target_id}"):
-        response = requests.get(
-            signoz.self.host_configs["8080"].get(path),
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=5,
-        )
-        assert response.status_code == HTTPStatus.OK, f"GET {path}: expected 200, got {response.status_code}: {response.text}"
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{V2_RULES_URL}/{target_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, f"GET rule {target_id}: expected 200, got {response.status_code}: {response.text}"
 
 
 def test_viewer_forbidden_on_rule_writes(

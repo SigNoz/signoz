@@ -14,29 +14,6 @@ import (
 )
 
 func (provider *provider) addRulerRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/rules", handler.New(
-		provider.authzMiddleware.CheckResources(provider.rulerHandler.ListRules, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
-		handler.OpenAPIDef{
-			ID:                  "ListRules",
-			Tags:                []string{"rules"},
-			Summary:             "List alert rules",
-			Description:         "This endpoint lists all alert rules with their current evaluation state. Deprecated: use ListRulesV3, which supports filtering, sorting and pagination.",
-			Response:            make([]*ruletypes.Rule, 0),
-			ResponseContentType: "application/json",
-			SuccessStatusCode:   http.StatusOK,
-			Deprecated:          true,
-			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbList)}),
-		},
-		handler.WithResourceDefs(handler.BasicResourceDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbList,
-			Category: coretypes.ActionCategoryDataAccess,
-			Selector: coretypes.WildcardSelector,
-		}),
-	)).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v3/rules", handler.New(
 		provider.authzMiddleware.CheckResources(provider.rulerHandler.ListRulesV3, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{

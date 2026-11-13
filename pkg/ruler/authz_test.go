@@ -320,30 +320,6 @@ func TestMapFieldResources(t *testing.T) {
 	}
 }
 
-func v1RuleJSON(preferredChannels string) string {
-	return `{
-		"alert": "TestAlert",
-		"version": "v5",
-		"condition": {
-			"compositeQuery": {
-				"queryType": "builder",
-				"queries": [{
-					"type": "builder_query",
-					"spec": {
-						"name": "A",
-						"signal": "metrics",
-						"aggregations": [{"metricName": "cpu", "spaceAggregation": "p50"}],
-						"stepInterval": "5m"
-					}
-				}]
-			},
-			"target": 10.0,
-			"matchType": "1",
-			"op": "1"
-		}` + preferredChannels + `
-	}`
-}
-
 func v2RuleJSON(channels string) string {
 	return `{
 		"alert": "TestAlert",
@@ -386,16 +362,6 @@ func TestParseRuleChannels(t *testing.T) {
 		wantErr      bool
 	}{
 		{
-			name:         "V1PreferredChannels_FoldedIntoThresholds",
-			body:         v1RuleJSON(`, "preferredChannels": ["slack", "pager"]`),
-			wantChannels: []string{"slack", "pager"},
-		},
-		{
-			name:         "V1NoChannels_Empty",
-			body:         v1RuleJSON(""),
-			wantChannels: nil,
-		},
-		{
 			name:         "V2ThresholdChannels_ReadDirectly",
 			body:         v2RuleJSON(`["email"]`),
 			wantChannels: []string{"email"},
@@ -435,6 +401,7 @@ func TestIncomingRuleChannels(t *testing.T) {
 		body            string
 		wantChannels    []string
 		wantStoredAfter []string
+		wantErr         bool
 	}{
 		{
 			name:            "Replaced_IgnoresStored",
@@ -468,6 +435,13 @@ func TestIncomingRuleChannels(t *testing.T) {
 			wantChannels:    nil,
 			wantStoredAfter: []string{"slack"},
 		},
+		{
+			name:     "Patched_UnknownField_Errors",
+			incoming: parsePatchedRuleChannels,
+			stored:   v2RuleJSON(`["slack"]`),
+			body:     `{"preferredChannels": ["pager"]}`,
+			wantErr:  true,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -476,6 +450,11 @@ func TestIncomingRuleChannels(t *testing.T) {
 			require.NoError(t, json.Unmarshal([]byte(testCase.stored), &stored.PostableRule))
 
 			channels, err := testCase.incoming(stored, []byte(testCase.body))
+
+			if testCase.wantErr {
+				require.Error(t, err)
+				return
+			}
 
 			require.NoError(t, err)
 			assert.Equal(t, testCase.wantChannels, channels)
@@ -495,12 +474,6 @@ func TestRuleBodyTelemetryResources(t *testing.T) {
 		{
 			name:     "V5Body_NoFilter_MetricsWildcard",
 			body:     v2RuleJSON(`[]`),
-			wantKind: coretypes.KindMetrics,
-			wantID:   "builder_query/*",
-		},
-		{
-			name:     "V1Body_PreferredChannels_MetricsWildcard",
-			body:     v1RuleJSON(`, "preferredChannels": ["slack"]`),
 			wantKind: coretypes.KindMetrics,
 			wantID:   "builder_query/*",
 		},

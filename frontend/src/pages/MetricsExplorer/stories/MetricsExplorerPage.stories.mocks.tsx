@@ -33,6 +33,7 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { dashboardsForUserResponse } from '@/storybook/msw/__story_mockdata__/dashboards';
 import {
 	fieldKeysResponse,
@@ -552,6 +553,8 @@ export const metricsMocks = defineStoryMocks({
 		);
 	},
 });
+
+export type MetricsArgs = PageStoryArgs<typeof metricsMocks>;
 
 export const saveUnit = async (
 	canvasElement: HTMLElement,

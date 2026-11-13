@@ -36,7 +36,8 @@ func (r *columnResolver) ValueFor(ctx context.Context, q qbtypes.QueryInfo, key 
 	if cands := r.keys[key.Name]; len(cands) > 0 {
 		key = cands[0]
 	}
-	expr, err := querybuilder.ResolveColumn(ctx, q, r.storage, key, dt, r.keys)
+	// aggregate renders return no warnings
+	expr, _, err := querybuilder.ResolveColumn(ctx, q, r.storage, key, dt, r.keys)
 	if err != nil {
 		return "", err
 	}
