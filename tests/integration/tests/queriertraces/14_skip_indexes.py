@@ -8,7 +8,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import RequestType, build_aggregation, build_traces_scalar_query, get_preview_statements, make_preview_query_request
-from fixtures.traces import ATTRIBUTE_JSON_ROLLOUT_TIME, Traces
+from fixtures.traces import Traces
 
 PROMOTED_PATHS = "/api/v1/promoted_paths"
 
@@ -18,10 +18,8 @@ def test_traces_filters_use_skip_indexes(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
     request: pytest.FixtureRequest,
 ) -> None:
-    seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     resp = requests.post(

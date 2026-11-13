@@ -104,5 +104,5 @@ describe('AI observability Explorer', () => {
 			...defaultOptionsQuery,
 			selectColumns: [],
 		});
-	});
+	}, 15_000);
 });

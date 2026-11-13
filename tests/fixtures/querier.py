@@ -1018,20 +1018,38 @@ def assert_distribution_sums_heatmap(
 # we already create the evolution for resource during schema migration
 # since we have to create test data around it, we need to get the evolution time
 def get_resource_evolution_time(signoz: types.SigNoz, signal: str) -> datetime:
+    return get_column_evolution_time(signoz, signal, "resource", "resource")
+
+
+# the migrator also seeds the traces attributes JSON rollout at install
+def get_attribute_evolution_time(signoz: types.SigNoz, signal: str) -> datetime:
+    return get_column_evolution_time(signoz, signal, "attributes", "attribute")
+
+
+def get_attribute_backend_now(signoz: types.SigNoz, attribute_backend: str) -> datetime:
+    """The "now" a test anchors its spans and query window to. "map" sits before the traces
+    attributes JSON rollout, where the querier reads only the legacy maps, the same SQL as with
+    use_trace_attributes_json off; "json" is the wall clock, after the rollout."""
+    if attribute_backend == "map":
+        return get_attribute_evolution_time(signoz, "traces") - timedelta(hours=1)
+    return datetime.now(tz=UTC)
+
+
+def get_column_evolution_time(signoz: types.SigNoz, signal: str, column_name: str, field_context: str) -> datetime:
     result = signoz.telemetrystore.conn.query(
         """
-        SELECT release_time
+        SELECT min(release_time)
         FROM signoz_metadata.distributed_column_evolution_metadata
         WHERE signal = %(signal)s
-          AND field_context = 'resource'
+          AND field_context = %(field_context)s
           AND field_name = '__all__'
-          AND column_name = 'resource'
-        LIMIT 1
+          AND column_name = %(column_name)s
+        HAVING count() > 0
         """,
-        parameters={"signal": signal},
+        parameters={"signal": signal, "column_name": column_name, "field_context": field_context},
     ).result_rows
 
-    assert result, f"Expected {signal} resource evolution metadata to exist"
+    assert result, f"Expected {signal} {column_name} evolution metadata to exist"
 
     release_time_ns = int(result[0][0])
     return datetime.fromtimestamp(release_time_ns / 1e9, tz=UTC)
@@ -1132,7 +1150,7 @@ def generate_logs_with_corrupt_metadata() -> list[Logs]:
     ]
 
 
-def generate_traces_with_corrupt_metadata() -> list[Traces]:
+def generate_traces_with_corrupt_metadata(now: datetime | None = None) -> list[Traces]:
     """
     Specifically, entries with 'id', 'timestamp', 'trace_id' and 'duration_nano' fields in metadata
     """
@@ -1143,7 +1161,7 @@ def generate_traces_with_corrupt_metadata() -> list[Traces]:
     topic_service_trace_id = TraceIdGenerator.trace_id()
     topic_service_span_id = TraceIdGenerator.span_id()
 
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = (now or datetime.now(tz=UTC)).replace(second=0, microsecond=0)
 
     return [
         Traces(
