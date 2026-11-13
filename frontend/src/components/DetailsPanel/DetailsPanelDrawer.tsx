@@ -6,7 +6,6 @@ interface DetailsPanelDrawerProps {
 	onClose: () => void;
 	title: string;
 	children: ReactNode;
-	headerPrefix?: ReactNode;
 	headerSuffix?: ReactNode;
 	loading?: boolean;
 	testId?: string;
@@ -17,7 +16,6 @@ function DetailsPanelDrawer({
 	onClose,
 	title,
 	children,
-	headerPrefix,
 	headerSuffix,
 	loading,
 	testId,
@@ -30,7 +28,7 @@ function DetailsPanelDrawer({
 			onClose={onClose}
 			title={title}
 			width="extra-wide"
-			headerPrefix={headerPrefix}
+			closePosition="start"
 			headerSuffix={headerSuffix}
 			loading={loading}
 			testId={testId}
@@ -41,7 +39,6 @@ function DetailsPanelDrawer({
 }
 
 DetailsPanelDrawer.defaultProps = {
-	headerPrefix: undefined,
 	headerSuffix: undefined,
 	loading: false,
 	testId: undefined,

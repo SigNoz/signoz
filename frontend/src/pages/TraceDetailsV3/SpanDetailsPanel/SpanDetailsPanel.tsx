@@ -511,18 +511,14 @@ function SpanDetailsPanel({
 	}
 
 	if (variant === SpanDetailVariant.DRAWER) {
-		const navAction = headerActions.find((action) => action.key === 'nav');
-		const suffixActions = headerActions.filter((action) => action.key !== 'nav');
-
 		return (
 			<DetailsPanelDrawer
 				isOpen={panelState.isOpen}
 				onClose={panelState.close}
 				title="Span details"
-				headerPrefix={navAction?.component}
 				headerSuffix={
-					suffixActions.length > 0
-						? suffixActions.map((action) => (
+					headerActions.length > 0
+						? headerActions.map((action) => (
 								<Fragment key={action.key}>{action.component}</Fragment>
 							))
 						: undefined
