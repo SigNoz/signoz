@@ -19,7 +19,7 @@ func (r *RequestType) UnmarshalJSON(data []byte) error {
 	}
 	v := RequestType{valuer.NewString(s)}
 	switch v {
-	case RequestTypeScalar, RequestTypeTimeSeries, RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeDistribution, RequestTypeHeatmap:
+	case RequestTypeScalar, RequestTypeTimeSeries, RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeDistribution, RequestTypeHeatmap, RequestTypePattern:
 		*r = v
 		return nil
 	default:
@@ -46,6 +46,9 @@ var (
 	// TimeSeriesData carrying one count per histogram bucket at each timestamp,
 	// with the shared bucket upper bounds on the aggregation's meta.
 	RequestTypeHeatmap = RequestType{valuer.NewString("heatmap")}
+	// PatternsData: the top log patterns of one logs query, counted on a
+	// sample, example: the patterns view of the logs explorer.
+	RequestTypePattern = RequestType{valuer.NewString("pattern")}
 )
 
 // IsAggregation returns true for request types that produce aggregated results
@@ -75,5 +78,6 @@ func (RequestType) Enum() []any {
 		RequestTypeTrace,
 		RequestTypeHeatmap,
 		RequestTypeDistribution,
+		RequestTypePattern,
 	}
 }

@@ -16,6 +16,7 @@ import { ValueListContext } from "./FilterQueryParser.js";
 import { FullTextContext } from "./FilterQueryParser.js";
 import { FunctionCallContext } from "./FilterQueryParser.js";
 import { SearchCallContext } from "./FilterQueryParser.js";
+import { PatternCallContext } from "./FilterQueryParser.js";
 import { FunctionParamListContext } from "./FilterQueryParser.js";
 import { FunctionParamContext } from "./FilterQueryParser.js";
 import { ArrayContext } from "./FilterQueryParser.js";
@@ -109,6 +110,12 @@ export default class FilterQueryVisitor<Result> extends ParseTreeVisitor<Result>
 	 * @return the visitor result
 	 */
 	visitSearchCall?: (ctx: SearchCallContext) => Result;
+	/**
+	 * Visit a parse tree produced by `FilterQueryParser.patternCall`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitPatternCall?: (ctx: PatternCallContext) => Result;
 	/**
 	 * Visit a parse tree produced by `FilterQueryParser.functionParamList`.
 	 * @param ctx the parse tree

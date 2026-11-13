@@ -446,6 +446,8 @@ func emptyResultFor(kind qbtypes.RequestType, queryName string) *qbtypes.Result 
 		value = &qbtypes.TimeSeriesData{QueryName: queryName}
 	case kind == qbtypes.RequestTypeScalar:
 		value = &qbtypes.ScalarData{QueryName: queryName}
+	case kind == qbtypes.RequestTypePattern:
+		value = &qbtypes.PatternsData{QueryName: queryName, SampleRate: 1, Patterns: []*qbtypes.Pattern{}}
 	default:
 		value = &qbtypes.RawData{QueryName: queryName}
 	}

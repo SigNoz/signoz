@@ -111,6 +111,8 @@ func (v *variableReplacementVisitor) Visit(tree antlr.ParseTree) any {
 		return v.VisitFullText(t)
 	case *grammar.SearchCallContext:
 		return v.VisitSearchCall(t)
+	case *grammar.PatternCallContext:
+		return v.VisitPatternCall(t)
 	case *grammar.FunctionCallContext:
 		return v.VisitFunctionCall(t)
 	case *grammar.FunctionParamListContext:
@@ -207,6 +209,8 @@ func (v *variableReplacementVisitor) VisitPrimary(ctx *grammar.PrimaryContext) a
 		return v.Visit(ctx.FunctionCall())
 	} else if ctx.SearchCall() != nil {
 		return v.Visit(ctx.SearchCall())
+	} else if ctx.PatternCall() != nil {
+		return v.Visit(ctx.PatternCall())
 	} else if ctx.FullText() != nil {
 		return v.Visit(ctx.FullText())
 	}
@@ -421,6 +425,18 @@ func (v *variableReplacementVisitor) VisitSearchCall(ctx *grammar.SearchCallCont
 		return specialSkipMarker
 	}
 	return "search" + result
+}
+
+func (v *variableReplacementVisitor) VisitPatternCall(ctx *grammar.PatternCallContext) any {
+	if ctx.ValueList() == nil {
+		return "pattern()"
+	}
+	// VisitValueList already parenthesizes the args and propagates the __all__ marker.
+	result := v.Visit(ctx.ValueList()).(string)
+	if result == specialSkipMarker {
+		return specialSkipMarker
+	}
+	return "pattern" + result
 }
 
 func (v *variableReplacementVisitor) VisitFunctionParamList(ctx *grammar.FunctionParamListContext) any {

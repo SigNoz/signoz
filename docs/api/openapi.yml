@@ -10141,6 +10141,113 @@ components:
       - asc
       - desc
       type: string
+    Querybuildertypesv5Pattern:
+      properties:
+        count:
+          description: 'The estimated number of logs of the pattern in the time range:
+            the sampled count times sampleRate.'
+          minimum: 0
+          type: integer
+        firstSeen:
+          description: The Unix time in milliseconds of the earliest sampled log of
+            the pattern in the time range.
+          format: int64
+          type: integer
+        id:
+          description: The pattern's ID, the decimal cityHash64 of its text.
+          type: string
+        labels:
+          description: 'The group-by field values the pattern was counted for: always
+            service.name first, then the query''s own group by.'
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Label'
+          type: array
+        lastSeen:
+          description: The Unix time in milliseconds of the latest sampled log of
+            the pattern in the time range.
+          format: int64
+          type: integer
+        pattern:
+          description: 'The pattern text: the log message with the values that change
+            replaced by placeholders such as <*>, <IP> or <UUID>. Filter on it with
+            pattern(''<pattern text>'').'
+          type: string
+        percent:
+          description: The pattern's count as a percentage of total.
+          format: double
+          type: number
+        samples:
+          description: Up to three sampled log messages of the pattern.
+          items:
+            type: string
+          nullable: true
+          type: array
+        severities:
+          description: The most common severity texts of the pattern's logs, most
+            common first.
+          items:
+            type: string
+          nullable: true
+          type: array
+        trend:
+          description: The estimated number of logs of the pattern in each step of
+            the time range, oldest first. Steps without a sampled log are left out.
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5PatternTrendPoint'
+          nullable: true
+          type: array
+      required:
+      - id
+      - pattern
+      - count
+      - percent
+      - firstSeen
+      - lastSeen
+      - samples
+      - severities
+      - trend
+      type: object
+    Querybuildertypesv5PatternTrendPoint:
+      properties:
+        count:
+          description: The estimated number of logs of the pattern in the step.
+          minimum: 0
+          type: integer
+        timestamp:
+          description: The Unix time in milliseconds the step starts at.
+          format: int64
+          type: integer
+      required:
+      - timestamp
+      - count
+      type: object
+    Querybuildertypesv5PatternsData:
+      properties:
+        patterns:
+          description: The patterns, most logs first.
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Pattern'
+          nullable: true
+          type: array
+        queryName:
+          description: The name of the query that produced this result.
+          type: string
+        sampleRate:
+          description: One in sampleRate of the matching logs was read and every count
+            is scaled up by it. 1 means every log was read and the counts are exact.
+          minimum: 0
+          type: integer
+        total:
+          description: The number of logs the query matched in the time range, over
+            every pattern.
+          minimum: 0
+          type: integer
+      required:
+      - queryName
+      - sampleRate
+      - total
+      - patterns
+      type: object
     Querybuildertypesv5PreviewStatement:
       properties:
         db.statement.args:
@@ -10702,11 +10809,12 @@ components:
       - $ref: '#/components/schemas/Querybuildertypesv5ScalarData'
       - $ref: '#/components/schemas/Querybuildertypesv5RawData'
       - $ref: '#/components/schemas/Querybuildertypesv5DistributionData'
+      - $ref: '#/components/schemas/Querybuildertypesv5PatternsData'
       properties:
         results:
           description: 'One result per enabled query, typed by the request type: TimeSeriesData
-            for time_series and heatmap, ScalarData for scalar, RawData for raw and
-            DistributionData for distribution requests.'
+            for time_series and heatmap, ScalarData for scalar, RawData for raw, DistributionData
+            for distribution and PatternsData for pattern requests.'
           items: {}
           nullable: true
           type: array
@@ -10897,8 +11005,8 @@ components:
     Querybuildertypesv5QueryRangeResponse:
       description: 'Response from the v5 query range endpoint. The data.results array
         contains typed results depending on the requestType: TimeSeriesData for time_series
-        and heatmap, ScalarData for scalar, RawData for raw, or DistributionData for
-        distribution requests.'
+        and heatmap, ScalarData for scalar, RawData for raw, DistributionData for
+        distribution, or PatternsData for pattern requests.'
       properties:
         data:
           allOf:
@@ -10996,6 +11104,7 @@ components:
       - trace
       - heatmap
       - distribution
+      - pattern
       type: string
     Querybuildertypesv5ScalarData:
       properties:
