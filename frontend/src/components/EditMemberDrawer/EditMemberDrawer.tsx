@@ -534,7 +534,7 @@ function EditMemberDrawer({
 				</label>
 
 				<AuthZTooltip
-					checks={member ? [buildUserUpdatePermission(member.id)] : []}
+					checks={member && !isSelf ? [buildUserUpdatePermission(member.id)] : []}
 					disabledTooltip={isRootUser ? ROOT_USER_TOOLTIP : undefined}
 				>
 					<Input
@@ -742,7 +742,7 @@ function EditMemberDrawer({
 								member
 									? [
 											buildUserReadPermission(member.id),
-											buildUserUpdatePermission(member.id),
+											...(isSelf ? [] : [buildUserUpdatePermission(member.id)]),
 										]
 									: []
 							}
