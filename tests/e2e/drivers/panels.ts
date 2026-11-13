@@ -124,7 +124,7 @@ export interface Panels {
 	nextDownload(): Promise<{ suggestedFilename: () => string }>;
 }
 
-function panelHandle(page: Page, id: string): PanelHandle {
+export function panelHandle(page: Page, id: string): PanelHandle {
 	const root = (): Locator => page.locator(`[data-panel-root="${id}"]`);
 	const byTestId = (testId: string): Locator => root().getByTestId(testId);
 
