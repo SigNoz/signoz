@@ -68,7 +68,13 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceUser,
+		Verb:     coretypes.VerbRead,
+		Category: coretypes.ActionCategoryAccessControl,
+		ID:       myUserIDExtractor(),
+		Selector: coretypes.IDSelector,
+	}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
@@ -128,7 +134,13 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceUser,
+		Verb:     coretypes.VerbUpdate,
+		Category: coretypes.ActionCategoryAccessControl,
+		ID:       myUserIDExtractor(),
+		Selector: coretypes.IDSelector,
+	}))).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
@@ -294,7 +306,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceFactorPassword,
+		Verb:     coretypes.VerbRead,
+		Category: coretypes.ActionCategoryAccessControl,
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -311,7 +328,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceFactorPassword,
+		Verb:     coretypes.VerbUpdate,
+		Category: coretypes.ActionCategoryAccessControl,
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
@@ -328,7 +350,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnprocessableEntity},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceFactorPassword,
+		Verb:     coretypes.VerbCreate,
+		Category: coretypes.ActionCategoryAccessControl,
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -345,7 +372,12 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceFactorPassword,
+		Verb:     coretypes.VerbUpdate,
+		Category: coretypes.ActionCategoryAccessControl,
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -491,6 +523,21 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	}
 
 	return nil
+}
+
+func myUserIDExtractor() coretypes.ResourceIDExtractor {
+	return coretypes.NewResourceIDExtractor(coretypes.PhaseRequest, func(ec coretypes.ExtractorContext) (string, error) {
+		if ec.Request == nil {
+			return "", nil
+		}
+
+		claims, err := authtypes.ClaimsFromContext(ec.Request.Context())
+		if err != nil {
+			return "", err
+		}
+
+		return claims.UserID, nil
+	})
 }
 
 func (provider *provider) userRoleUserIDExtractor() coretypes.ResourceIDExtractor {
