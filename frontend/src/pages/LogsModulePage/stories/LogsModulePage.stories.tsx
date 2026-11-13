@@ -180,17 +180,6 @@ export const QuickFiltersSettingsDirty: Story = {
 };
 
 /**
- * The same panel with a banner above the shell. The banner takes 48px off the
- * layout, so this is the case where the footer used to be pushed off screen:
- * the panel is sized from the filters pane rather than the viewport, which
- * keeps Save changes reachable.
- */
-export const QuickFiltersSettingsWithBanner: Story = {
-	args: { banner: 'trial-expiry' },
-	play: dirtyQuickFiltersSettings,
-};
-
-/**
  * Every tooltip the explorer renders, held open at once: the quick filters'
  * severity, host and service values on the left, and the drawer's move to
  * previous and next log. The drawer steps forward one log first, because the

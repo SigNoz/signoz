@@ -1,17 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
-import { toast } from '@signozhq/ui/sonner';
-import { screen, userEvent } from 'storybook/test';
 
 import type { GlobalMockArgs } from '../globals';
+import {
+	openAddCardModal,
+	raiseToast,
+} from './__story_mockdata__/bottomStrip.play';
 
 /** A page that puts nothing in the strip, so the shell is all there is. */
 function EmptyPage(): JSX.Element {
 	return <div />;
 }
-
-/** The shell renders its entry points after the global config and the license settle. */
-const untilLoaded = { timeout: 10_000 };
 
 /**
  * The strip along the foot of the shell: what the page puts on the left, the
@@ -54,14 +53,7 @@ export const AddCard: Story = {
 /** The Add Credit Card modal, opened from the strip's Support. */
 export const AddCardModal: Story = {
 	args: { noz: true, support: 'add-card' },
-	play: async (): Promise<void> => {
-		await userEvent.click(
-			await screen.findByTestId('bottom-strip-support', undefined, untilLoaded),
-		);
-		await screen.findByRole('dialog', {
-			name: /Add Credit Card for Chat Support/i,
-		});
-	},
+	play: openAddCardModal,
 };
 
 /**
@@ -75,12 +67,6 @@ export const NozAwaitingYou: Story = {
 /** Every tooltip the strip carries, held open. */
 export const Tooltips: Story = {
 	args: { noz: true, support: 'pylon', tooltipsOpen: true },
-};
-
-/** Raises a toast and waits for it, so the shot is taken with it on screen. */
-const raiseToast: NonNullable<Story['play']> = async () => {
-	toast.success('Service account deleted');
-	await screen.findByText('Service account deleted', undefined, untilLoaded);
 };
 
 /**
