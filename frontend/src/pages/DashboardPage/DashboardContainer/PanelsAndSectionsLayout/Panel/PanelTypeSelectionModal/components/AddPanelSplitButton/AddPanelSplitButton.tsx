@@ -81,8 +81,8 @@ function AddPanelSplitButton({
 				contentMaxWidth={320}
 			>
 				<Button
-					variant="link"
-					color="secondary"
+					variant="solid"
+					color="primary"
 					size="md"
 					icon
 					aria-label="Choose section"
