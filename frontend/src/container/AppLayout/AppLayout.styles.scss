@@ -114,30 +114,11 @@
 }
 
 .trial-expiry-banner,
-.slow-api-warning-banner,
 .workspace-restricted-banner {
 	padding: 8px;
 	background-color: #f25733;
 	color: white;
 	text-align: center;
-}
-
-.slow-api-warning-banner {
-	background-color: var(--primary-background);
-
-	.dismiss-banner {
-		color: var(--primary-foreground);
-		float: right;
-		padding: 0 16px;
-
-		display: flex;
-		align-items: center;
-		gap: 4px;
-
-		&:hover {
-			color: var(--primary-foreground);
-		}
-	}
 }
 
 .payment-failed-banner {
