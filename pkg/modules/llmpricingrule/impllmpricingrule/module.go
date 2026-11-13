@@ -4,9 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"maps"
+	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
@@ -22,12 +26,14 @@ import (
 const unmappedModelsLookback = time.Hour
 
 type module struct {
-	store   llmpricingruletypes.Store
-	querier querier.Querier
+	store                  llmpricingruletypes.Store
+	querier                querier.Querier
+	telemetryMetadataStore telemetrytypes.MetadataStore
+	logger                 *slog.Logger
 }
 
-func NewModule(store llmpricingruletypes.Store, querier querier.Querier) llmpricingrule.Module {
-	return &module{store: store, querier: querier}
+func NewModule(store llmpricingruletypes.Store, querier querier.Querier, telemetryMetadataStore telemetrytypes.MetadataStore, providerSettings factory.ProviderSettings) llmpricingrule.Module {
+	return &module{store: store, querier: querier, telemetryMetadataStore: telemetryMetadataStore, logger: providerSettings.Logger}
 }
 
 func (module *module) List(ctx context.Context, orgID valuer.UUID, offset, limit int, search string, isOverride *bool) ([]*llmpricingruletypes.LLMPricingRule, int, error) {
@@ -51,13 +57,47 @@ func (module *module) ListUnmappedModels(ctx context.Context, orgID valuer.UUID)
 		return nil, err
 	}
 
-	unmapped := make([]*llmpricingruletypes.UnmappedModel, 0, len(models))
-	for _, m := range models {
-		if !llmpricingruletypes.ModelMatchesAnyRule(m.ModelName, rules) {
-			unmapped = append(unmapped, m)
+	return llmpricingruletypes.UnmappedModels(models, rules), nil
+}
+
+// Collect keeps the rule counts even when ClickHouse is unreachable: the
+// counts that depend on it are skipped so the reporter retains their last value.
+// Models come from the traces tag table rather than a span scan, so the
+// unmapped count covers the metadata lookback instead of the last hour.
+func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	rules, err := module.listAllRules(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	stats := llmpricingruletypes.NewStatsFromRules(rules)
+
+	selectors := aiobservabilitytypes.StatsFieldValueSelectors(time.Now())
+	results := make([]*telemetrytypes.TelemetryFieldValues, len(selectors))
+	var lookups sync.WaitGroup
+	for i, selector := range selectors {
+		lookups.Go(func() {
+			fieldValues, _, err := module.telemetryMetadataStore.GetAllValues(ctx, orgID, selector)
+			if err != nil {
+				module.logger.DebugContext(ctx, "failed to collect gen_ai attribute stats", slog.String("key", selector.Name), errors.Attr(err))
+				return
+			}
+			results[i] = fieldValues
+		})
+	}
+	lookups.Wait()
+
+	values := make(map[string]*telemetrytypes.TelemetryFieldValues, len(selectors))
+	for i, selector := range selectors {
+		if results[i] != nil {
+			values[selector.Name] = results[i]
 		}
 	}
-	return unmapped, nil
+	maps.Copy(stats, aiobservabilitytypes.NewStatsFromFieldValues(values))
+	if models := values[aiobservabilitytypes.GenAIRequestModel]; models != nil {
+		maps.Copy(stats, llmpricingruletypes.NewStatsFromModels(models.StringValues, rules))
+	}
+
+	return stats, nil
 }
 
 // CreateOrUpdate saves a batch of pricing rules. isOverride decides how a rule

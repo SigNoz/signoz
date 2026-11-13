@@ -1,15 +1,15 @@
 import { useCallback } from 'react';
-import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { useIntegrationModal } from 'hooks/integration/aws/useIntegrationModal';
-import { SquareArrowOutUpRight } from '@signozhq/icons';
 
 import {
 	ActiveViewEnum,
 	IntegrationModalProps,
 	ModalStateEnum,
 } from '../../../HeroSection/types';
+import CloseSetupConfirm from '../../CloseSetupConfirm/CloseSetupConfirm';
+import { useCloseSetupConfirm } from '../../CloseSetupConfirm/useCloseSetupConfirm';
 import { RegionForm } from '../RegionForm/RegionForm';
 
 import './CloudAccountSetupModal.style.scss';
@@ -24,21 +24,23 @@ function CloudAccountSetupModal({
 		activeView,
 		selectedRegions,
 		includeAllRegions,
-		isGeneratingUrl,
+		isGeneratingCommand,
+		connectionCommand,
 		setSelectedRegions,
 		setIncludeAllRegions,
 		handleRegionSelect,
 		handleSubmit,
 		handleClose,
 		setActiveView,
-		accountId,
 		handleRegionChange,
 		connectionParams,
 		isConnectionParamsLoading,
-		handleConnectionSuccess,
-		handleConnectionTimeout,
-		handleConnectionError,
+		checkConnectionAgain,
 	} = useIntegrationModal({ onClose });
+
+	const { isConfirmOpen, setIsConfirmOpen, requestClose } = useCloseSetupConfirm(
+		{ shouldConfirm: Boolean(connectionCommand), onClose: handleClose },
+	);
 
 	const renderContent = useCallback(() => {
 		return (
@@ -50,15 +52,12 @@ function CloudAccountSetupModal({
 					includeAllRegions={includeAllRegions}
 					onRegionSelect={handleRegionSelect}
 					onSubmit={handleSubmit}
-					accountId={accountId}
+					connectionCommand={connectionCommand}
 					handleRegionChange={handleRegionChange}
 					connectionParams={connectionParams}
 					isConnectionParamsLoading={isConnectionParamsLoading}
 					setSelectedRegions={setSelectedRegions}
 					setIncludeAllRegions={setIncludeAllRegions}
-					onConnectionSuccess={handleConnectionSuccess}
-					onConnectionTimeout={handleConnectionTimeout}
-					onConnectionError={handleConnectionError}
 				/>
 			</div>
 		);
@@ -69,37 +68,50 @@ function CloudAccountSetupModal({
 		includeAllRegions,
 		handleRegionSelect,
 		handleSubmit,
-		accountId,
+		connectionCommand,
 		handleRegionChange,
 		connectionParams,
 		isConnectionParamsLoading,
 		setSelectedRegions,
 		setIncludeAllRegions,
-		handleConnectionSuccess,
-		handleConnectionTimeout,
-		handleConnectionError,
 	]);
 
 	const footer = (
 		<div className="cloud-account-setup-modal__footer">
 			<Button
-				disabledTooltip={
-					selectedRegions.length === 0
-						? 'Select at least one region'
-						: 'Waiting for the account to connect'
-				}
 				size="md"
-				variant="solid"
-				color="primary"
-				prefix={<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />}
-				onClick={handleSubmit}
-				disabled={
-					selectedRegions.length === 0 || modalState === ModalStateEnum.WAITING
-				}
-				loading={isLoading || isGeneratingUrl}
+				variant="outlined"
+				color="secondary"
+				onClick={requestClose}
+				testId="aws-cancel-btn"
 			>
-				Launch Cloud Formation Template
+				Cancel
 			</Button>
+			{!connectionCommand && (
+				<Button
+					disabledTooltip="Select at least one region"
+					size="md"
+					variant="solid"
+					color="primary"
+					onClick={handleSubmit}
+					disabled={selectedRegions.length === 0}
+					loading={isLoading || isGeneratingCommand}
+					testId="aws-generate-command-btn"
+				>
+					Generate Command
+				</Button>
+			)}
+			{modalState === ModalStateEnum.ERROR && connectionCommand && (
+				<Button
+					size="md"
+					variant="solid"
+					color="primary"
+					onClick={checkConnectionAgain}
+					testId="aws-check-connection-btn"
+				>
+					Check Again
+				</Button>
+			)}
 		</div>
 	);
 
@@ -112,22 +124,17 @@ function CloudAccountSetupModal({
 		const viewConfigs = {
 			[ActiveViewEnum.FORM]: {
 				title: 'Add AWS Account',
-				okText: (
-					<div className="cloud-account-setup-form__submit-button-content">
-						Launch Cloud Formation Template{' '}
-						<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />
-					</div>
-				),
+				okText: 'Generate Command',
 				onOk: handleSubmit,
 				disabled:
-					isLoading || isGeneratingUrl || modalState === ModalStateEnum.WAITING,
+					isLoading || isGeneratingCommand || modalState === ModalStateEnum.WAITING,
 				cancelButtonProps: { style: { display: 'none' } },
 			},
 			[ActiveViewEnum.SELECT_REGIONS]: {
 				title: 'Which regions do you want to monitor?',
 				okText: `Confirm Selection (${getSelectedRegionsCount()})`,
 				onOk: (): void => setActiveView(ActiveViewEnum.FORM),
-				isLoading: isLoading || isGeneratingUrl,
+				isLoading: isLoading || isGeneratingCommand,
 				cancelButtonProps: { style: { display: 'block' } },
 				disabled: false,
 			},
@@ -139,7 +146,7 @@ function CloudAccountSetupModal({
 		handleSubmit,
 		getSelectedRegionsCount,
 		isLoading,
-		isGeneratingUrl,
+		isGeneratingCommand,
 		activeView,
 		setActiveView,
 	]);
@@ -148,23 +155,32 @@ function CloudAccountSetupModal({
 
 	const handleDrawerOpenChange = (open: boolean): void => {
 		if (!open) {
-			handleClose();
+			requestClose();
 		}
 	};
 
 	return (
-		<DrawerWrapper
-			open={true}
-			className="cloud-account-setup-modal"
-			onOpenChange={handleDrawerOpenChange}
-			direction="right"
-			showCloseButton
-			title={modalConfig.title}
-			width="wide"
-			footer={footer}
-		>
-			{renderContent()}
-		</DrawerWrapper>
+		<>
+			<DrawerWrapper
+				open={true}
+				className="cloud-account-setup-modal"
+				onOpenChange={handleDrawerOpenChange}
+				direction="right"
+				showCloseButton
+				title={modalConfig.title}
+				width="wide"
+				footer={footer}
+			>
+				{renderContent()}
+			</DrawerWrapper>
+			<CloseSetupConfirm
+				providerName="AWS"
+				testIdPrefix="aws"
+				open={isConfirmOpen}
+				onOpenChange={setIsConfirmOpen}
+				onConfirm={handleClose}
+			/>
+		</>
 	);
 }
 

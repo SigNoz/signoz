@@ -43,13 +43,15 @@ func stripKeyAlias(name string) string {
 // unwrapVariant decodes a scan envelope: the chcol.Variant the driver scans a Dynamic column (a JSON
 // path such as body_v2.level) into, and the JSONValue a whole JSON column scans into. The attributes
 // bag decodes flat so its dotted keys merge with the legacy attribute maps and a key stored at both a
-// scalar and an object path stays two keys; every other JSON column decodes nested.
+// scalar and an object path stays two keys; the scope and resource decode flat too, keeping their
+// attributes dotted; every other JSON column decodes nested.
 func unwrapVariant(name string, val any) any {
 	switch v := val.(type) {
 	case chcol.Variant:
 		return v.Any()
 	case telemetrystoretypes.JSONValue:
-		if name == "attributes" {
+		switch name {
+		case "attributes", "scope", "resource":
 			return v.Flatten()
 		}
 		return v.Nest()
@@ -80,7 +82,7 @@ func labelValue(val any) string {
 // * Time-series - *qbtypes.TimeSeriesData
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
-// * Distribution- *qbtypes.DistributionData.
+// * Heatmap and distribution - *qbtypes.TimeSeriesData with one count per bucket at each point.
 func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
 	var (
 		payload any
@@ -92,7 +94,7 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 		payload, err = readAsTimeSeries(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeScalar:
 		payload, err = readAsScalar(rows, queryName)
-	case qbtypes.RequestTypeHeatmap:
+	case qbtypes.RequestTypeHeatmap, qbtypes.RequestTypeDistribution:
 		payload, err = readAsHeatmap(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
 		payload, err = readAsRaw(rows, queryName)
@@ -625,6 +627,9 @@ func mergeSpanAttributeColumns(data map[string]any) {
 	}
 	if raw, ok := data["links"]; ok {
 		data["links"] = spantypes.ParseLinks(raw)
+	}
+	if column, ok := data["scope"].(map[string]any); ok {
+		data["scope"] = spantypes.NewScope(column)
 	}
 }
 

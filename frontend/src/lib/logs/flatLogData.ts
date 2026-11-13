@@ -25,7 +25,7 @@ function getBodyFieldValue(body: ILogBody, key: string): unknown {
 	}, body);
 }
 
-// Resolve one field for the logs table. A JSON body is checked first (use_json_body
+// Resolve one field for a log list format. A JSON body is checked first (use_json_body
 // only), splitting the key on `.`; otherwise fall back to FlatLogData
 // (attributes/resources/scope/top-level).
 export function getLogFieldValue(

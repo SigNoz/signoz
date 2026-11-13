@@ -84,7 +84,7 @@ func TestApplySeriesLimit(t *testing.T) {
 			},
 		}
 
-		result := ApplySeriesLimit(series, orderBy, 2)
+		result := ApplySeriesLimit(series, orderBy, 2, 0)
 
 		// Should return top 2 series by value: service-b (50.0), service-c (30.0)
 		assert.Len(t, result, 2)
@@ -209,7 +209,7 @@ func TestApplySeriesLimit(t *testing.T) {
 			},
 		}
 
-		result := ApplySeriesLimit(series, orderBy, 3)
+		result := ApplySeriesLimit(series, orderBy, 3, 0)
 
 		// Should return 3 series sorted by service (asc), then environment (desc)
 		// Expected order:
@@ -232,6 +232,25 @@ func TestApplySeriesLimit(t *testing.T) {
 		assert.Equal(t, "frontend", result[2].Labels[0].Value)
 		assert.Equal(t, "prod", result[2].Labels[1].Value)
 		assert.Equal(t, 40.0, result[2].Values[0].Value)
+	})
+
+	t.Run("Offset skips the top series before the limit applies", func(t *testing.T) {
+		hostKey := telemetrytypes.TelemetryFieldKey{Name: "host", FieldDataType: telemetrytypes.FieldDataTypeString}
+		series := []*TimeSeries{
+			{Labels: []*Label{{Key: hostKey, Value: "h1"}}, Values: []*TimeSeriesValue{{Timestamp: 1000, Value: 10.0}}},
+			{Labels: []*Label{{Key: hostKey, Value: "h2"}}, Values: []*TimeSeriesValue{{Timestamp: 1000, Value: 50.0}}},
+			{Labels: []*Label{{Key: hostKey, Value: "h3"}}, Values: []*TimeSeriesValue{{Timestamp: 1000, Value: 30.0}}},
+			{Labels: []*Label{{Key: hostKey, Value: "h4"}}, Values: []*TimeSeriesValue{{Timestamp: 1000, Value: 20.0}}},
+		}
+
+		// Default order is value descending: h2, h3, h4, h1. Skipping one leaves h3, h4.
+		result := ApplySeriesLimit(series, nil, 2, 1)
+
+		require.Len(t, result, 2)
+		assert.Equal(t, "h3", result[0].Labels[0].Value)
+		assert.Equal(t, "h4", result[1].Labels[0].Value)
+
+		assert.Empty(t, ApplySeriesLimit(series, nil, 2, 4))
 	})
 }
 
@@ -271,7 +290,7 @@ func TestApplySeriesLimitRanksHeatmapSeriesByBucketTotals(t *testing.T) {
 		},
 	}
 
-	result := ApplySeriesLimit(series, nil, 2)
+	result := ApplySeriesLimit(series, nil, 2, 0)
 
 	require.Len(t, result, 2)
 	assert.Equal(t, "busy", result[0].Labels[0].Value)

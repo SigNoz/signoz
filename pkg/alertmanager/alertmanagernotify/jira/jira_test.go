@@ -27,6 +27,7 @@ import (
 type mockReq struct {
 	method string
 	path   string
+	auth   string
 	body   map[string]any
 }
 
@@ -51,12 +52,12 @@ func (m *mockJira) handle(w http.ResponseWriter, r *http.Request) {
 	var body map[string]any
 	_ = json.NewDecoder(r.Body).Decode(&body)
 	m.mu.Lock()
-	m.reqs = append(m.reqs, mockReq{r.Method, r.URL.Path, body})
+	m.reqs = append(m.reqs, mockReq{r.Method, r.URL.Path, r.Header.Get("Authorization"), body})
 	m.mu.Unlock()
 
 	p := r.URL.Path
 	switch {
-	case strings.HasSuffix(p, "/search/jql"):
+	case strings.HasSuffix(p, "/search/jql"), strings.HasSuffix(p, "/rest/api/2/search"):
 		_ = json.NewEncoder(w).Encode(searchResult{Issues: m.searchIssues})
 	case strings.HasSuffix(p, "/transitions") && r.Method == http.MethodGet:
 		_ = json.NewEncoder(w).Encode(transitionsResponse{Transitions: m.transitions})
@@ -117,6 +118,50 @@ func newNotifier(t *testing.T, m *mockJira) *Notifier {
 	}, tmpl, slog.New(slog.DiscardHandler), alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler)))
 	require.NoError(t, err)
 	return n
+}
+
+func newSelfHostedNotifier(t *testing.T, m *mockJira) *Notifier {
+	t.Helper()
+	tmpl := test.CreateTmpl(t)
+	n, err := New(&alertmanagertypes.JiraReceiverConfig{
+		Deployment:  alertmanagertypes.JiraDeploymentSelfHosted,
+		Site:        m.srv.URL,
+		Project:     "KAN",
+		IssueType:   "Task",
+		Summary:     alertmanagertypes.DefaultJiraSummaryTemplate,
+		Description: alertmanagertypes.DefaultJiraDescriptionTemplate,
+		HTTPConfig: &commoncfg.HTTPClientConfig{
+			Authorization: &commoncfg.Authorization{Type: "Bearer", Credentials: "pat-1"},
+		},
+		ReopenDuration: model.Duration(3 * 24 * time.Hour),
+	}, tmpl, slog.New(slog.DiscardHandler), alertmanagertemplate.New(tmpl, slog.New(slog.DiscardHandler)))
+	require.NoError(t, err)
+	return n
+}
+
+func (m *mockJira) paths() []string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := make([]string, 0, len(m.reqs))
+	for _, r := range m.reqs {
+		out = append(out, r.method+" "+r.path)
+	}
+	return out
+}
+
+func (m *mockJira) lastStringDescription(t *testing.T, suffix string) string {
+	t.Helper()
+	body := m.lastBody(t, suffix)
+	if fields, ok := body["fields"].(map[string]any); ok {
+		body = fields
+	}
+	key := "description"
+	if suffix == "/comment" {
+		key = "body"
+	}
+	desc, ok := body[key].(string)
+	require.True(t, ok, "%s %s is not a string: %T", suffix, key, body[key])
+	return desc
 }
 
 func alert(firing bool) *types.Alert {
@@ -409,6 +454,89 @@ func TestNotifyDescriptionShrunkUnderJiraLimit(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, string(js), "FIRING") // status panel survives the shrink
 	assert.Contains(t, string(js), "…")      // body ends with the shrink marker
+}
+
+func TestNotifySelfHosted(t *testing.T) {
+	linkedAlert := func(firing bool) *types.Alert {
+		a := alert(firing)
+		a.Labels[ruletypes.LabelRuleSource] = "https://app.signoz.io/alerts?ruleId=1"
+		a.Annotations[alertmanagertypes.AnnotationRelatedLogs] = "https://app.signoz.io/logs"
+		return a
+	}
+	testCases := []struct {
+		name         string
+		searchIssues []issue
+		transitions  []jiraTransition
+		alerts       []*types.Alert
+		expectPaths  []string
+		expectBody   func(t *testing.T, m *mockJira)
+	}{
+		{
+			name:        "Create_V2PathsAndBearer_WikiDescription",
+			alerts:      []*types.Alert{linkedAlert(true)},
+			expectPaths: []string{"POST /rest/api/2/search", "POST /rest/api/2/issue"},
+			expectBody: func(t *testing.T, m *mockJira) {
+				desc := m.lastStringDescription(t, "/issue")
+				assert.True(t, strings.HasPrefix(desc, "{panel:bgColor=#ffebe6}*🔴 FIRING*{panel}"), desc)
+				assert.Contains(t, desc, "*Alert:* HighCPU (critical)")
+				assert.Contains(t, desc, "*Summary:* cpu high")
+				assert.Contains(t, desc, "[Open in SigNoz|https://app.signoz.io/alerts?ruleId=1] · [View Related Logs|https://app.signoz.io/logs]")
+				assert.NotContains(t, desc, `"type":"doc"`)
+			},
+		},
+		{
+			name:         "StillFiring_UpdateAndStringComment",
+			searchIssues: []issue{openIssue()},
+			alerts:       []*types.Alert{alert(true)},
+			expectPaths:  []string{"POST /rest/api/2/search", "PUT /rest/api/2/issue/KAN-1", "POST /rest/api/2/issue/KAN-1/comment"},
+			expectBody: func(t *testing.T, m *mockJira) {
+				comment := m.lastStringDescription(t, "/comment")
+				assert.Contains(t, comment, "{panel:bgColor=#ffebe6}*🔴 FIRING*{panel}")
+				assert.Contains(t, comment, "*Summary:* cpu high")
+			},
+		},
+		{
+			name:         "Resolved_TransitionAndGreenPanel",
+			searchIssues: []issue{openIssue()},
+			transitions:  []jiraTransition{transition("41", "Done", "done")},
+			alerts:       []*types.Alert{alert(false)},
+			expectPaths:  []string{"POST /rest/api/2/search", "PUT /rest/api/2/issue/KAN-1", "GET /rest/api/2/issue/KAN-1/transitions", "POST /rest/api/2/issue/KAN-1/transitions", "POST /rest/api/2/issue/KAN-1/comment"},
+			expectBody: func(t *testing.T, m *mockJira) {
+				assert.Contains(t, m.lastStringDescription(t, "/comment"), "{panel:bgColor=#e3fcef}*🟢 RESOLVED*{panel}")
+			},
+		},
+		{
+			name: "OversizedBody_CutToLimit",
+			alerts: func() []*types.Alert {
+				a := alert(true)
+				a.Annotations[ruletypes.AnnotationTitleTemplate] = "overflow probe"
+				a.Annotations[ruletypes.AnnotationBodyTemplate] = model.LabelValue(strings.Repeat("long runbook line. ", 3000))
+				return []*types.Alert{a}
+			}(),
+			expectPaths: []string{"POST /rest/api/2/search", "POST /rest/api/2/issue"},
+			expectBody: func(t *testing.T, m *mockJira) {
+				desc := m.lastStringDescription(t, "/issue")
+				assert.Equal(t, maxDescriptionLenRunes, len([]rune(desc)))
+				assert.True(t, strings.HasPrefix(desc, "{panel:bgColor=#ffebe6}"), "panel survives the cut")
+			},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			m := newMockJira(t)
+			m.searchIssues = testCase.searchIssues
+			m.transitions = testCase.transitions
+
+			_, err := newSelfHostedNotifier(t, m).Notify(ctx(), testCase.alerts...)
+			require.NoError(t, err)
+
+			assert.Equal(t, testCase.expectPaths, m.paths())
+			for _, r := range m.reqs {
+				assert.Equal(t, "Bearer pat-1", r.auth, r.path)
+			}
+			testCase.expectBody(t, m)
+		})
+	}
 }
 
 func TestFiringSearchJQLHasReopenWindow(t *testing.T) {

@@ -8,7 +8,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
 import {
 	alphabet,
@@ -101,7 +101,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 export function QueryBuilderProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const currentPathnameRef = useRef<string | null>(location.pathname);
 
@@ -475,12 +475,17 @@ export function QueryBuilderProvider({
 	const createNewBuilderQuery = useCallback(
 		(queries: IBuilderQuery[]): IBuilderQuery => {
 			const existNames = queries.map((item) => item.queryName);
+			// Hosts without a fixed data source (the panel editor) continue the
+			// previous query's signal rather than resetting to metrics.
+			const previous = queries[queries.length - 1];
 			const initialBuilderQuery =
-				initialQueryBuilderFormValuesMap[initialDataSource || DataSource.METRICS];
+				initialQueryBuilderFormValuesMap[
+					initialDataSource || previous?.dataSource || DataSource.METRICS
+				];
 
 			const newQuery: IBuilderQuery = {
 				...initialBuilderQuery,
-				source: queries?.[0]?.source || '',
+				source: previous?.source || '',
 				builderQueryType: queries?.[0]?.builderQueryType,
 				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
 				expression: createNewBuilderItemName({

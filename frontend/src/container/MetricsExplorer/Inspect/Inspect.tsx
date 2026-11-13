@@ -304,7 +304,10 @@ function Inspect({
 				className="inspect-metrics-modal"
 				destroyOnClose
 			>
-				<div className="inspect-metrics-content">
+				<div
+					className="inspect-metrics-content"
+					data-testid="inspect-metrics-content"
+				>
 					<div className="inspect-metrics-content-first-col">
 						{chartArea}
 						<QueryBuilder

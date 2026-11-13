@@ -14,18 +14,17 @@ import {
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import ErrorState from './ErrorState';
 
 function DomainMetrics({
 	domainName,
 	timeRange,
-	domainListFilters,
+	domainListFilterExpression,
 }: {
 	domainName: string;
 	timeRange: { startTime: number; endTime: number };
-	domainListFilters: IBuilderQuery['filters'];
+	domainListFilterExpression: string;
 }): JSX.Element {
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 
@@ -35,9 +34,9 @@ function DomainMetrics({
 				domainName,
 				minTime,
 				maxTime,
-				domainListFilters,
+				domainListFilterExpression,
 			),
-		[domainName, minTime, maxTime, domainListFilters],
+		[domainName, minTime, maxTime, domainListFilterExpression],
 	);
 
 	// Since only one query here
@@ -86,7 +85,7 @@ function DomainMetrics({
 	}
 
 	return (
-		<div className="domain-detail-drawer__endpoint">
+		<div className="domain-detail-drawer__endpoint" data-testid="domain-metrics">
 			<div className="domain-details-grid">
 				<div className="labels-row">
 					<Typography.Text color="muted" className="domain-details-metadata-label">
@@ -103,7 +102,7 @@ function DomainMetrics({
 					</Typography.Text>
 				</div>
 
-				<div className="values-row">
+				<div className="values-row" data-testid="domain-metrics-values">
 					<Typography.Text className="domain-details-metadata-value">
 						{isLoading || isRefetching ? (
 							<Skeleton.Button active size="small" />

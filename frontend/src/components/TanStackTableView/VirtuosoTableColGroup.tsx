@@ -1,7 +1,7 @@
 import type { Table } from '@tanstack/react-table';
 
 import type { TableColumnDef } from './types';
-import { getColumnWidthStyle } from './utils';
+import { getColumnWidthStyle, getFillColumnIndex } from './utils';
 
 export function VirtuosoTableColGroup<TData>({
 	columns,
@@ -13,6 +13,9 @@ export function VirtuosoTableColGroup<TData>({
 	const visibleTanstackColumns = table.getVisibleFlatColumns();
 	const columnDefsById = new Map(columns.map((c) => [c.id, c]));
 	const columnSizing = table.getState().columnSizing;
+	const fillColumnIndex = getFillColumnIndex(
+		visibleTanstackColumns.map((c) => columnDefsById.get(c.id)),
+	);
 
 	return (
 		<colgroup>
@@ -22,7 +25,7 @@ export function VirtuosoTableColGroup<TData>({
 					return <col key={tanstackCol.id} />;
 				}
 				const persistedWidth = columnSizing[tanstackCol.id];
-				const isLastColumn = index === visibleTanstackColumns.length - 1;
+				const isLastColumn = index === fillColumnIndex;
 				return (
 					<col
 						key={tanstackCol.id}

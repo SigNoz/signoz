@@ -5,7 +5,8 @@ import React, {
 	useMemo,
 	useState,
 } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { navigate } from 'lib/router/navigation';
 import { Plus, Search } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
@@ -15,11 +16,11 @@ import {
 	useDeleteDowntimeScheduleByID,
 	useListDowntimeSchedules,
 } from 'api/generated/services/downtimeschedules';
-import { useListRules } from 'api/generated/services/rules';
 import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
 import { ColumnSelector } from 'components/TanStackTableView';
 import TextToolTip from 'components/TextToolTip';
 import dayjs from 'dayjs';
+import { useListAllRules } from 'hooks/alerts/useListAllRules';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -53,14 +54,13 @@ export function PlannedDowntime(): JSX.Element {
 		data: alertsData,
 		isError,
 		isLoading,
-	} = useListRules({
-		query: { cacheTime: 0 },
-	});
+		isFetching: isFetchingAlerts,
+	} = useListAllRules({ cacheTime: 0 });
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [form] = Form.useForm();
 	const { user } = useAppContext();
 	const { showErrorModal } = useErrorModal();
-	const history = useHistory();
+	const location = useAppLocation();
 	const urlQuery = useUrlQuery();
 
 	const [initialValues, setInitialValues] =
@@ -71,7 +71,7 @@ export function PlannedDowntime(): JSX.Element {
 	const downtimeSchedules = useListDowntimeSchedules();
 	const alertOptions = React.useMemo(
 		() =>
-			alertsData?.data?.map((i) => ({
+			alertsData?.map((i) => ({
 				label: i.alert,
 				value: i.id,
 			})),
@@ -84,21 +84,32 @@ export function PlannedDowntime(): JSX.Element {
 		}
 	}, [form, isOpen]);
 
-	const [searchValue, setSearchValue] = React.useState<string>(
-		urlQuery.get('search') || '',
-	);
+	const [searchValue, setSearchValue] = React.useState<string>(() => {
+		const searchFromUrlQuery = urlQuery.get('search');
+		if (searchFromUrlQuery) {
+			return searchFromUrlQuery;
+		}
+		const search =
+			(typeof window !== 'undefined' && window.location.search) ||
+			location.search ||
+			'';
+		return new URLSearchParams(search).get('search') || '';
+	});
 	const [deleteData, setDeleteData] = useState<{ id: string; name: string }>();
 	const [isEditMode, setEditMode] = useState<boolean>(false);
 
 	const updateUrlWithSearch = useDebouncedFn((value) => {
-		const searchValue = value as string;
-		if (searchValue) {
-			urlQuery.set('search', searchValue);
+		const nextSearch = value as string;
+		const search =
+			(typeof window !== 'undefined' && window.location.search) || location.search;
+		const params = new URLSearchParams(search);
+		if (nextSearch) {
+			params.set('search', nextSearch);
 		} else {
-			urlQuery.delete('search');
+			params.delete('search');
 		}
-		const url = `/alerts?${urlQuery.toString()}`;
-		history.replace(url);
+		const url = `/alerts?${params.toString()}`;
+		navigate(url, { replace: true });
 	}, 300);
 
 	const {
@@ -128,9 +139,11 @@ export function PlannedDowntime(): JSX.Element {
 
 	const canEdit = user?.role !== USER_ROLES.VIEWER;
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const isAlertsLoading = isLoading || (!alertsData && isFetchingAlerts);
 	const columns = React.useMemo(
-		() => getPlannedDowntimeColumns(formatTimezoneAdjustedTimestamp),
-		[formatTimezoneAdjustedTimestamp],
+		() =>
+			getPlannedDowntimeColumns(formatTimezoneAdjustedTimestamp, isAlertsLoading),
+		[formatTimezoneAdjustedTimestamp, isAlertsLoading],
 	);
 
 	const handleCreate = useCallback((): void => {
@@ -166,7 +179,7 @@ export function PlannedDowntime(): JSX.Element {
 	};
 
 	const refetchAllSchedules = (): void => {
-		downtimeSchedules.refetch();
+		void downtimeSchedules.refetch();
 	};
 
 	const {
@@ -205,7 +218,7 @@ export function PlannedDowntime(): JSX.Element {
 				<div className={styles.commandHeader}>
 					<div className={styles.headingBlock}>
 						<Typography.Title className={styles.title}>
-							Planned Downtime
+							All planned downtimes
 						</Typography.Title>
 						<span className={styles.countPill}>{totalDowntimes}</span>
 					</div>
@@ -227,7 +240,7 @@ export function PlannedDowntime(): JSX.Element {
 						disabledTooltip="You need edit permissions to create a planned downtime"
 						testId="planned-downtime-create"
 					>
-						New downtime
+						New Downtime
 					</Button>
 					<TextToolTip
 						text="More details on how to schedule planned downtime"

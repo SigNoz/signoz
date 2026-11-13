@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { useLocation } from 'react-router-dom';
 import { toast } from '@signozhq/ui/sonner';
 import {
 	useCreateSavedView,
@@ -20,13 +19,16 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
-import { DataSource } from 'types/common/queryBuilder';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { usePreferenceSlice } from 'providers/preferences/context/usePreferenceSlice';
+import {
+	hasPreferences,
+	isPreferenceSourcePage,
+} from 'providers/preferences/utils';
 import { toAPIError } from 'utils/errorUtils';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import {
-	SAVED_VIEW_OPTIONS_DATA_SOURCE,
 	SAVED_VIEW_SCHEMA_VERSION,
 	SAVED_VIEW_TOAST_POSITION,
 	SAVED_VIEW_URL_PARAMS,
@@ -51,7 +53,7 @@ export function useSavedViewActions(
 	source: SavedviewtypesSourceDTO,
 ): UseSavedViewActionsResult {
 	const queryClient = useQueryClient();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const { safeNavigate } = useSafeNavigate();
 	const { currentQuery, stagedQuery, panelType, redirectWithQueryBuilderData } =
 		useQueryBuilder();
@@ -60,15 +62,14 @@ export function useSavedViewActions(
 	const { viewKey } = useGetSavedViewParams();
 	const logSavedViewEvent = useSavedViewLogEvent(source);
 
-	const optionsDataSource = SAVED_VIEW_OPTIONS_DATA_SOURCE[source];
+	const viewPanelType = panelType ?? PANEL_TYPES.LIST;
+	const hasOptions = hasPreferences(source, viewPanelType);
 	const { options } = useOptionsMenu({
-		dataSource: optionsDataSource ?? DataSource.LOGS,
+		sourcePage: isPreferenceSourcePage(source)
+			? source
+			: SavedviewtypesSourceDTO.logs,
 	});
-	const preferences = usePreferenceContext();
-	const preferencesSlice =
-		optionsDataSource === DataSource.TRACES
-			? preferences.traces
-			: preferences.logs;
+	const preferenceSlice = usePreferenceSlice(source);
 
 	const { mutateAsync: createSavedView, isLoading: isCreating } =
 		useCreateSavedView();
@@ -84,12 +85,12 @@ export function useSavedViewActions(
 		(displayName: string, color?: string): SavedviewtypesSavedViewSpecDTO =>
 			toSavedViewSpec({
 				query: stagedQuery ?? currentQuery,
-				panelType: panelType ?? PANEL_TYPES.LIST,
+				panelType: viewPanelType,
 				displayName,
-				options: optionsDataSource ? options : undefined,
+				options: hasOptions ? options : undefined,
 				color,
 			}),
-		[stagedQuery, currentQuery, panelType, optionsDataSource, options],
+		[stagedQuery, currentQuery, viewPanelType, hasOptions, options],
 	);
 
 	const selectView = useCallback(
@@ -105,14 +106,14 @@ export function useSavedViewActions(
 
 	const revertView = useCallback(
 		(view: SavedviewtypesSavedViewDTO): void => {
-			if (optionsDataSource) {
-				const { columns, formatting } = getViewColumnsAndFormatting(
+			if (preferenceSlice) {
+				const { columns, formatting, panelType } = getViewColumnsAndFormatting(
 					view.spec,
-					optionsDataSource,
+					source,
 				);
-				preferencesSlice.updateColumns(columns);
+				preferenceSlice.updateColumns(columns, panelType);
 				if (formatting) {
-					preferencesSlice.updateFormatting(formatting);
+					preferenceSlice.updateFormatting(formatting);
 				}
 			}
 			selectView(view);
@@ -120,7 +121,7 @@ export function useSavedViewActions(
 				[SavedViewEventKeys.ViewId]: view.id,
 			});
 		},
-		[optionsDataSource, preferencesSlice, selectView, logSavedViewEvent],
+		[source, preferenceSlice, selectView, logSavedViewEvent],
 	);
 
 	// The query builder redirects only ever add params, so the url is rebuilt

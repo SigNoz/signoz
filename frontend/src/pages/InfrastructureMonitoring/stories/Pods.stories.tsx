@@ -1,20 +1,23 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import {
-	findSuggestion,
-	openKeySuggestions,
-	typeFilter,
-} from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/__story_mockdata__/querySearch.play';
-import { screen, userEvent, within } from 'storybook/test';
 import { VIEWS } from 'container/InfraMonitoringK8sV2/constants';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { podLongNodeName, podsMocks } from './Kubernetes.stories.mocks';
+import {
+	podLongNodeName,
+	podsMocks,
+	type PodsArgs,
+} from './Kubernetes.stories.mocks';
+import {
+	copyPodMetadata,
+	copyPodName,
+	openDrawerLogsTab,
+	openTableOptions,
+	suggestFilterKeys,
+	suggestFilterValues,
+} from './__story_mockdata__/pods.play';
 
 import InfrastructureMonitoringPage from '../InfrastructureMonitoringPage';
-
-type PodsArgs = PageStoryArgs<typeof podsMocks>;
 
 const pageStory = storyMocks(podsMocks, { layout: 'app' });
 
@@ -46,41 +49,30 @@ export const PodDetailsEvents: StoryObj<PodsArgs> = {
 	args: { drawer: true, drawerTab: VIEWS.EVENTS },
 };
 
+/**
+ * The events tab on a `use_json_body` tenant: a warning's event object as JSON
+ * in the Body column, an info line's `message`-only body as its text.
+ */
+export const PodDetailsEventsJsonBody: StoryObj<PodsArgs> = {
+	args: { drawer: true, drawerTab: VIEWS.EVENTS, eventJsonBody: true },
+};
+
 /** The selected pod's details drawer, switched to its logs tab. */
 export const DetailsDrawerLogsTab: StoryObj<PodsArgs> = {
 	args: { drawer: true },
-	play: async () => {
-		const drawer = within(
-			await screen.findByRole('dialog', {}, { timeout: 10000 }),
-		);
-
-		await userEvent.click(
-			await drawer.findByText('Logs', {}, { timeout: 10000 }),
-		);
-		await drawer.findAllByText(/handled request in/, {}, { timeout: 10000 });
-	},
+	play: openDrawerLogsTab,
 };
 
 /** The copy button beside the pod name in the drawer, which toasts the copy. */
 export const PodNameCopiedToast: StoryObj<PodsArgs> = {
 	args: { drawer: true },
-	play: async () => {
-		await userEvent.click(
-			await screen.findByTestId('copy-id-button', {}, { timeout: 10000 }),
-		);
-		await screen.findByText('Pod name copied to clipboard');
-	},
+	play: copyPodName,
 };
 
 /** A metadata value's copy button in the drawer, which toasts the label it copied. */
 export const PodMetadataCopiedToast: StoryObj<PodsArgs> = {
 	args: { drawer: true },
-	play: async () => {
-		await userEvent.click(
-			await screen.findByTestId('copy-metadata-namespace', {}, { timeout: 10000 }),
-		);
-		await screen.findByText('NAMESPACE copied to clipboard');
-	},
+	play: copyPodMetadata,
 };
 
 /**
@@ -114,19 +106,7 @@ export const TooltipsInDetailsDrawer: StoryObj<PodsArgs> = {
  */
 export const TooltipsInOptionsPanel: StoryObj<PodsArgs> = {
 	args: { tooltipsOpen: true },
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-
-		await userEvent.click(
-			await canvas.findByTestId(
-				'k8s-table-options-button',
-				{},
-				{ timeout: 10000 },
-			),
-		);
-
-		await screen.findByText('Columns');
-	},
+	play: openTableOptions,
 };
 
 /**
@@ -139,16 +119,11 @@ const heldViewport = { sbshot: { viewport: { height: 1200 } } };
 /** The pod filter focused: the Kubernetes keys pods can be narrowed by. */
 export const FilterKeySuggestions: StoryObj<PodsArgs> = {
 	parameters: heldViewport,
-	play: async ({ canvasElement }): Promise<void> => {
-		await openKeySuggestions(canvasElement, 'k8s.node.name');
-	},
+	play: suggestFilterKeys,
 };
 
 /** The pod filter on a namespace: the namespaces the pods run in. */
 export const FilterValueSuggestions: StoryObj<PodsArgs> = {
 	parameters: heldViewport,
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilter(canvasElement, 'k8s.namespace.name = ');
-		await findSuggestion(canvasElement, 'kube-system');
-	},
+	play: suggestFilterValues,
 };
