@@ -763,6 +763,47 @@ describe('EditMemberDrawer', () => {
 		});
 	});
 
+	describe('self user roles', () => {
+		it('locks roles and explains why', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDrawer({ member: selfMember });
+
+			const locked = await screen.findByTestId('member-roles-locked');
+			expect(
+				screen.queryByPlaceholderText('Select roles'),
+			).not.toBeInTheDocument();
+
+			await user.hover(locked);
+
+			await expect(
+				screen.findByText('You cannot modify your own role'),
+			).resolves.toBeInTheDocument();
+		});
+	});
+
+	describe('deleted member', () => {
+		const deletedMember = { ...activeMember, status: MemberStatus.Deleted };
+
+		it('is read-only with no footer actions', async () => {
+			renderDrawer({ member: deletedMember });
+
+			const nameInput = await screen.findByDisplayValue('Alice Smith');
+			await waitFor(() =>
+				expect(nameInput).not.toHaveStyle({ cursor: 'not-allowed' }),
+			);
+			expect(nameInput).toBeDisabled();
+			expect(screen.getByTestId('member-roles-locked')).toBeInTheDocument();
+			expect(
+				screen.queryByPlaceholderText('Select roles'),
+			).not.toBeInTheDocument();
+			expect(screen.queryByTestId('member-save-btn')).not.toBeInTheDocument();
+			expect(screen.queryByTestId('member-delete-btn')).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('member-reset-link-btn'),
+			).not.toBeInTheDocument();
+		});
+	});
+
 	describe('self user name update', () => {
 		it('saves through the me API without update:user', async () => {
 			const updateMyUser = jest.fn().mockResolvedValue({});

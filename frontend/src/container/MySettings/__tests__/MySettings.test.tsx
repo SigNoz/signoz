@@ -464,3 +464,33 @@ describe('MySettings Flows', () => {
 		});
 	});
 });
+
+describe('MySettings name update and app context', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		editUserFn.mockResolvedValue({});
+		mockUseActiveLicenseKey.mockReturnValue({
+			licenseKey: 'test-key',
+			isLoading: false,
+		});
+	});
+
+	it('updates the user in the app context with the new name', async () => {
+		const updateUser = jest.fn();
+		render(<MySettingsContainer />, undefined, {
+			appContextOverrides: { updateUser },
+		});
+
+		fireEvent.click(screen.getByText(UPDATE_NAME_BUTTON_TEXT));
+		fireEvent.change(screen.getByPlaceholderText('e.g. John Doe'), {
+			target: { value: 'New Name' },
+		});
+		fireEvent.click(screen.getByTestId(UPDATE_NAME_BUTTON_TEST_ID));
+
+		await waitFor(() =>
+			expect(updateUser).toHaveBeenCalledWith(
+				expect.objectContaining({ displayName: 'New Name' }),
+			),
+		);
+	});
+});

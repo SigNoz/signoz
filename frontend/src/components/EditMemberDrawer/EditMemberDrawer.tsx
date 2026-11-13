@@ -578,7 +578,10 @@ function EditMemberDrawer({
 									: 'You cannot modify your own role'
 						}
 					>
-						<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
+						<div
+							className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled"
+							data-testid="member-roles-locked"
+						>
 							<div className="edit-member-drawer__disabled-roles">
 								{localRoles.length > 0 ? (
 									localRoles.map((roleId) => {
