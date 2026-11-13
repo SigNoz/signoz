@@ -14,10 +14,17 @@ function NoRuleEmptyState({
 }: NoRuleEmptyStateProps): JSX.Element {
 	return (
 		<div className={styles.emptyState} data-testid="volume-control-empty">
-			<Typography.Text size="small" color="muted">
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				No volume control rule. All series are retained. Aggregate away
 				high-cardinality attributes to reduce cost.
-			</Typography.Text>
+			</Typography>
 			{canManage && (
 				<Button
 					size="md"

@@ -76,14 +76,21 @@ function LogSelectedField({
 	fontSize,
 }: LogSelectedFieldProps): JSX.Element {
 	const fieldKeyText = (
-		<Typography.Text>
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
 			<span
 				style={{ color: blue[4] }}
 				className={cx('selected-log-field-key', fontSize)}
 			>
 				{fieldKey}
 			</span>
-		</Typography.Text>
+		</Typography>
 	);
 
 	return (
@@ -100,12 +107,23 @@ function LogSelectedField({
 			) : (
 				fieldKeyText
 			)}
-			<Typography.Text truncate={1} className={cx('selected-log-kv', fontSize)}>
-				<span className={cx('selected-log-field-key', fontSize)}>{': '}</span>
-				<span className={cx('selected-log-value', fontSize)}>
-					{coerceToString(fieldValue) || "''"}
-				</span>
-			</Typography.Text>
+			<div className={cx('selected-log-kv', fontSize)}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="p"
+					display="flex"
+					verticalAlign="center"
+					textOverflow="ellipsis"
+				>
+					<span className={cx('selected-log-field-key', fontSize)}>{': '}</span>
+					<span className={cx('selected-log-value', fontSize)}>
+						{coerceToString(fieldValue) || "''"}
+					</span>
+				</Typography>
+			</div>
 		</div>
 	);
 }

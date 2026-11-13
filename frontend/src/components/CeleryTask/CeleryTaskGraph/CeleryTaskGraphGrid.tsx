@@ -113,9 +113,16 @@ export default function CeleryTaskGraphGrid({
 				<CardContainer className="row-card" isDarkMode={isDarkMode}>
 					<div className="row-panel">
 						<div className="row-panel-section">
-							<Typography.Text className="section-title">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								Flower Metrics
-							</Typography.Text>
+							</Typography>
 							{collapsedSections.metricBasedGraphs ? (
 								<ChevronDown
 									size={14}
@@ -146,14 +153,30 @@ export default function CeleryTaskGraphGrid({
 						/>
 						<Card className="celery-task-graph-worker-count">
 							<div className="worker-count-header">
-								<Typography.Text className="worker-count-header-text">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
 									Worker Online
-								</Typography.Text>
+								</Typography>
 							</div>
 							<div className="worker-count-text-container">
-								<Typography.Text className="celery-task-graph-worker-count-text">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="span"
+									display="inline-block"
+									align="center"
+									textOverflow="wrap"
+								>
 									{options.filter((option) => option.value).length}
-								</Typography.Text>
+								</Typography>
 							</div>
 						</Card>
 					</div>
@@ -164,9 +187,16 @@ export default function CeleryTaskGraphGrid({
 					<CardContainer className="row-card" isDarkMode={isDarkMode}>
 						<div className="row-panel">
 							<div className="row-panel-section">
-								<Typography.Text className="section-title">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									Span Based Stats
-								</Typography.Text>
+								</Typography>
 								{collapsedSections.traceBasedGraphs ? (
 									<ChevronDown
 										size={14}
@@ -185,9 +215,16 @@ export default function CeleryTaskGraphGrid({
 					</CardContainer>
 					<div className="configure-option-Info">
 						{configureOptionComponent}
-						<Typography.Text className="configure-option-Info-text">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							Click on a graph co-ordinate to see more details
-						</Typography.Text>
+						</Typography>
 					</div>
 				</div>
 				{!collapsedSections.traceBasedGraphs && (

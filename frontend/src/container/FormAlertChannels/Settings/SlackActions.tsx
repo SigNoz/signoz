@@ -24,7 +24,11 @@ const COLUMNS = [
 	'confirm.text',
 ] as const satisfies readonly ActionColumn[];
 
-function SlackActions(): JSX.Element {
+interface SlackActionsProps {
+	readOnly: boolean;
+}
+
+function SlackActions({ readOnly }: SlackActionsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		control,
@@ -49,6 +53,7 @@ function SlackActions(): JSX.Element {
 						removeLabel={t('remove_slack_action')}
 						removeTestId={`slack-action-remove-${index}`}
 						onRemove={(): void => remove(index)}
+						readOnly={readOnly}
 					>
 						{COLUMNS.map((column) => (
 							<FormField
@@ -77,6 +82,8 @@ function SlackActions(): JSX.Element {
 					size="sm"
 					prefix={<Plus size={14} />}
 					onClick={(): void => append({ type: 'button', text: '', url: '' })}
+					disabled={readOnly}
+					disabledTooltip={undefined}
 					testId="slack-action-add"
 				>
 					{t('add_slack_action')}

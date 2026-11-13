@@ -127,9 +127,7 @@ function CreateFunnel({
 			<div className="funnel-modal-content" data-testid="create-funnel-modal">
 				<span className="funnel-modal-content__label">Enter funnel name</span>
 				<Input
-					className={`funnel-modal-content__input${
-						inputError ? ' funnel-modal-content__input--error' : ''
-					}`}
+					status={inputError ? 'danger' : undefined}
 					value={funnelName}
 					onChange={handleInputChange}
 					placeholder="Eg. checkout dropoff funnel"

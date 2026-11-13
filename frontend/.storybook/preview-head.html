@@ -1,8 +1,6 @@
 <!--
-	`index.html` links Inter from Google Fonts here. The link is parsed before the
-	msw worker has started, so that one request escapes the iframe while every
-	other font request the app makes is answered with an empty stylesheet; the
-	local faces stand in for both.
+	Every Google Fonts request the app makes is answered with an empty
+	stylesheet; the local faces stand in for them.
 -->
 <link rel="stylesheet" href="storybook-fonts.css" />
 

@@ -1,5 +1,5 @@
 import MEditor from '@monaco-editor/react';
-import { Play, RotateCcw } from '@signozhq/icons';
+import { CircleAlert, Play, RotateCcw } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -150,14 +150,16 @@ function TestTab({ spanTest }: TestTabProps): JSX.Element {
 			</div>
 
 			{validationError && (
-				<Callout
-					type="error"
-					size="small"
-					showIcon
-					title={validationError}
-					testId="test-input-error"
-					className={styles.validationCallout}
-				/>
+				<div className={styles.validationCallout}>
+					<Callout
+						color="danger"
+						size="sm"
+						icon={<CircleAlert />}
+						testId="test-input-error"
+					>
+						{validationError}
+					</Callout>
+				</div>
 			)}
 		</div>
 	);

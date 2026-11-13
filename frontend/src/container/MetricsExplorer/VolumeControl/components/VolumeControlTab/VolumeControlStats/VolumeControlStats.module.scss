@@ -33,15 +33,9 @@
 	gap: 4px;
 }
 
-.statCardLabel {
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-}
-
 .statCardInfo {
 	flex-shrink: 0;
 	color: var(--l2-foreground);
-	line-height: 1;
 	cursor: help;
 }
 
@@ -49,5 +43,5 @@
 	display: flex;
 	align-items: baseline;
 	gap: 6px;
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-base-400-font-family);
 }

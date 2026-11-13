@@ -1,9 +1,9 @@
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowUpRight, Copy, RotateCw } from '@signozhq/icons';
 import { useCopyToClipboard } from 'react-use';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
@@ -65,17 +65,13 @@ function LegacyDashboardDialog({
 	};
 
 	return (
-		<DialogWrapper
+		<Dialog
 			title="This dashboard isn't available in the new experience"
 			open={open}
-			width="narrow"
-			onOpenChange={(next): void => {
-				if (!next) {
-					onClose();
-				}
-			}}
-			footer={
-				<div className={styles.footer}>
+			width="base"
+			onClose={(): void => onClose()}
+			footerSuffix={
+				<>
 					<Button
 						variant="ghost"
 						color="secondary"
@@ -122,28 +118,51 @@ function LegacyDashboardDialog({
 					>
 						Retry migration
 					</AuthZButton>
-				</div>
+				</>
 			}
 		>
 			<div className={styles.body}>
-				<Typography.Text className={styles.description}>
-					<strong>{dashboardName || 'This dashboard'}</strong> hasn&apos;t been
-					migrated to the new dashboard experience yet, so it can&apos;t be opened
-					here.{' '}
-					{canEdit
-						? "Retrying the migration often works once we've handled the case that blocked it. If it still fails, share the dashboard ID below with support."
-						: "Share the dashboard ID below with support and we'll help you move it over."}
-				</Typography.Text>
+				<span className={styles.description}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						<strong>{dashboardName || 'This dashboard'}</strong> hasn&apos;t been
+						migrated to the new dashboard experience yet, so it can&apos;t be opened
+						here.{' '}
+						{canEdit
+							? "Retrying the migration often works once we've handled the case that blocked it. If it still fails, share the dashboard ID below with support."
+							: "Share the dashboard ID below with support and we'll help you move it over."}
+					</Typography>
+				</span>
 
 				<div className={styles.idField}>
-					<Typography.Text className={styles.idLabel}>Dashboard ID</Typography.Text>
+					<Typography
+						variant="uppercase"
+						size="small"
+						weight="medium"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Dashboard ID
+					</Typography>
 					<div className={styles.idRow}>
-						<Typography.Text
-							className={styles.idValue}
+						<Typography
+							variant="code"
+							size="small"
+							weight="regular"
+							color="main"
+							as="span"
+							textOverflow="wrap"
 							data-testid="legacy-dashboard-id"
 						>
 							{dashboardId}
-						</Typography.Text>
+						</Typography>
 						<Button
 							variant="ghost"
 							color="secondary"
@@ -158,7 +177,7 @@ function LegacyDashboardDialog({
 					</div>
 				</div>
 			</div>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

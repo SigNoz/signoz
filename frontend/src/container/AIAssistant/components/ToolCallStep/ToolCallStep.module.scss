@@ -3,7 +3,6 @@
 // same slot so the row alignment doesn't shift when it completes.
 .row {
 	width: 100%;
-	font-size: 12px;
 
 	&.running {
 		opacity: 0.85;
@@ -47,7 +46,6 @@
 }
 
 .label {
-	font-weight: 400;
 	flex: 1;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -76,7 +74,7 @@
 }
 
 .toolName {
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-small-400-font-family);
 	font-size: 10px;
 	color: var(--l2-foreground);
 	overflow: hidden;
@@ -85,7 +83,7 @@
 }
 
 .json {
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-small-400-font-family);
 	font-size: 11px;
 	color: var(--l2-foreground);
 	background: var(--l1-background);

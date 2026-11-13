@@ -165,8 +165,8 @@ export const TooltipsInJsonDrawer: Story = {
 };
 
 /**
- * A panel expanded into view mode, whose header carries the full panel name its
- * title truncates, over the dashboard's own tooltips behind the dialog.
+ * A panel expanded into view mode, whose header carries the full panel name, over
+ * the dashboard's own tooltips behind the dialog.
  *
  * The document is answered by the story, so the Panels, Sections, Variables and
  * Locked controls do not reach it.
@@ -201,7 +201,7 @@ export const PanelSearchExpanded: Story = {
 			{ timeout: 15000 },
 		);
 		await userEvent.click(trigger);
-		const input = await screen.findByTestId('panel-header-search-input');
+		const input = await screen.findByTestId('panel-header-search-input-field');
 
 		await userEvent.type(input, 'error');
 	},
@@ -323,7 +323,10 @@ export const NewPanelPickerTypeSelected: Story = {
 export const NewPanelPickerSearch: Story = {
 	play: async ({ canvasElement }) => {
 		await openNewPanelPicker(canvasElement);
-		await userEvent.type(await screen.findByTestId('panel-type-search'), 'heat');
+		await userEvent.type(
+			await screen.findByTestId('panel-type-search-field'),
+			'heat',
+		);
 	},
 };
 
@@ -357,7 +360,7 @@ export const NewPanelPickerNewSection: Story = {
 		);
 		await userEvent.click(await screen.findByTestId('panel-section-create'));
 		await userEvent.type(
-			await screen.findByTestId('panel-section-name'),
+			await screen.findByTestId('panel-section-name-field'),
 			'Errors',
 		);
 	},
@@ -425,7 +428,7 @@ export const DashboardClonedToast: Story = {
 export const DashboardRenamedToast: Story = {
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await clickAction(canvasElement, 'Rename');
-		const input = await screen.findByTestId('dashboard-title-input');
+		const input = await screen.findByTestId('dashboard-title-input-field');
 		await userEvent.clear(input);
 		await userEvent.type(input, 'Service overview (renamed){enter}');
 		if (args.dashboardPatch === 'success') {

@@ -23,7 +23,7 @@
 
 .keySearchDropdownEmpty {
 	padding: var(--spacing-4) var(--spacing-5);
-	font-size: var(--font-size-xs);
+	font-size: var(--label-small-400-font-size);
 	color: var(--l3-foreground);
 }
 
@@ -36,7 +36,7 @@
 	border-radius: 3px;
 	background: transparent;
 	color: var(--l1-foreground);
-	font-size: var(--font-size-xs);
+	font-size: var(--label-small-400-font-size);
 	text-align: left;
 	white-space: nowrap;
 	overflow: hidden;

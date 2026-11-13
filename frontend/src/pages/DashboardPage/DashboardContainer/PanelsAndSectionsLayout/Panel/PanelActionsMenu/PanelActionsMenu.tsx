@@ -42,29 +42,37 @@ function PanelActionsMenu({
 
 	return (
 		<>
-			<AuthZDropdown
-				items={items}
-				nativeButton
-				align="end"
-				side="bottom"
-				testId={`panel-actions-${panelId}`}
+			{/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+			<span
+				// Stop pointer/mouse down from reaching the RGL drag handle this
+				// button lives inside, so opening the menu never starts a panel drag.
+				onPointerDown={(e): void => e.stopPropagation()}
+				onMouseDown={(e): void => e.stopPropagation()}
+				onClick={(e): void => e.stopPropagation()}
 			>
-				<Button
-					type="button"
-					variant="ghost"
-					color="secondary"
-					size="sm"
-					icon
-					aria-label="Panel actions"
+				<AuthZDropdown
+					items={items}
+					nativeButton
+					align="end"
+					side="bottom"
+					testId={`panel-actions-${panelId}`}
 				>
-					<EllipsisVertical size={14} />
-				</Button>
-			</AuthZDropdown>
+					<Button
+						type="button"
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						icon
+						aria-label="Panel actions"
+					>
+						<EllipsisVertical size={14} />
+					</Button>
+				</AuthZDropdown>
+			</span>
 			<ConfirmDeleteDialog
 				open={deleteConfirm.open}
 				title="Delete panel?"
 				description="This panel will be removed from the dashboard. This action cannot be undone."
-				isLoading={deleteConfirm.isPending}
 				onConfirm={deleteConfirm.confirm}
 				onClose={deleteConfirm.cancel}
 			/>

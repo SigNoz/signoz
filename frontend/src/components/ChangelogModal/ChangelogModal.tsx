@@ -97,6 +97,10 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 		}
 	};
 
+	// TODO: antd stacks at 1000, under `@signozhq/ui` dialogs (1001). It opens on
+	// its own a second after load, so a dialog opened from a deep link
+	// (`?add-key`, `?invite=true`) covers it. Moving to the `@signozhq/ui` Dialog
+	// fixes it.
 	return (
 		<Modal
 			className={cx('changelog-modal')}

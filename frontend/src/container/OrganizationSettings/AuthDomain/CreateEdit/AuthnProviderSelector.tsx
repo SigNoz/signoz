@@ -55,13 +55,28 @@ function AuthnProviderSelector({
 	return (
 		<div className="authn-provider-selector">
 			<section className="header">
-				<Typography.Title level={4}>
+				<Typography
+					variant="label"
+					size="large"
+					weight="bold"
+					color="inherit"
+					as="h4"
+					marginY={4}
+					textOverflow="wrap"
+				>
 					Configure Authentication Method
-				</Typography.Title>
-				<Typography.Text italic>
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					SigNoz supports the following single sign-on services (SSO). Get started
 					with setting your project’s SSO below
-				</Typography.Text>
+				</Typography>
 			</section>
 			<section className="selector">
 				{authnProviders.map((provider) => {
@@ -70,10 +85,26 @@ function AuthnProviderSelector({
 							<section key={provider.key} className="provider">
 								<span className="icon">{provider.icon}</span>
 								<div className="title-description">
-									<Typography.Text className="title">{provider.title}</Typography.Text>
-									<Typography.Text className="description">
+									<Typography
+										variant="paragraph"
+										size="base"
+										weight="bold"
+										color="inherit"
+										as="span"
+										textOverflow="wrap"
+									>
+										{provider.title}
+									</Typography>
+									<Typography
+										variant="paragraph"
+										size="base"
+										weight="regular"
+										color="inherit"
+										as="span"
+										textOverflow="wrap"
+									>
 										{provider.description}
-									</Typography.Text>
+									</Typography>
 								</div>
 								<Button
 									onClick={(): void => setAuthnProvider(provider.key)}

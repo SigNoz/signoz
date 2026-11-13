@@ -39,6 +39,22 @@ export const NothingPriced: Story = {
 	args: { rules: 0 },
 };
 
+/**
+ * The first pricing rule's menu, open over the table: edit the rule or drop it.
+ */
+export const ModelCostActionsMenu: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const [first] = await within(canvasElement).findAllByRole(
+			'button',
+			{ name: 'Model cost actions' },
+			{ timeout: 10000 },
+		);
+
+		await userEvent.click(first);
+		await screen.findByRole('menu');
+	},
+};
+
 /** Models seen in spans that no rule prices yet. */
 export const UnpricedModels: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
@@ -53,7 +69,7 @@ export const UnpricedModels: Story = {
 	},
 };
 
-/** Creating a rule: the blank drawer, with the provider select enabled. */
+/** Creating a rule: the provider select starts empty and enabled. */
 export const ModelCostDrawerCreate: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await userEvent.click(
@@ -63,23 +79,7 @@ export const ModelCostDrawerCreate: Story = {
 				{ timeout: 15000 },
 			),
 		);
-		await screen.findByTestId('drawer-provider-select');
-	},
-};
-
-/**
- * The first pricing rule's menu, open over the table: edit the rule or drop it.
- */
-export const ModelCostActionsMenu: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		const [first] = await within(canvasElement).findAllByRole(
-			'button',
-			{ name: 'Model cost actions' },
-			{ timeout: 10000 },
-		);
-
-		await userEvent.click(first);
-		await screen.findByRole('menu');
+		await screen.findByText('Select a provider');
 	},
 };
 
@@ -113,7 +113,7 @@ export const ModelCostSavedToast: Story = {
 	play: async (context): Promise<void> => {
 		await ModelCostDrawer.play?.(context);
 		await userEvent.type(
-			await screen.findByTestId('drawer-pattern-input'),
+			await screen.findByTestId('drawer-pattern-input-field'),
 			'gpt-4o-2026{Enter}',
 		);
 		await userEvent.click(await screen.findByTestId('drawer-save-btn'));
@@ -133,7 +133,9 @@ export const ModelCostDeletedToast: Story = {
 	play: async (context): Promise<void> => {
 		await ModelCostActionsMenu.play?.(context);
 		await userEvent.click(await screen.findByText('Delete'));
-		await userEvent.click(await screen.findByTestId('drawer-delete-confirm-btn'));
+		await userEvent.click(
+			await screen.findByTestId('drawer-delete-dialog-confirm'),
+		);
 		if (context.args.ruleDelete === 'success') {
 			await waitFor(() =>
 				expect(screen.getByText(/model cost .*deleted/i)).toBeVisible(),

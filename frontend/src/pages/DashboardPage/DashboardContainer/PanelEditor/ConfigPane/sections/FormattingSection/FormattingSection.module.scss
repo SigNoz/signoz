@@ -22,7 +22,7 @@
 }
 
 .previewValue {
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-base-400-font-family);
 	font-size: 15px;
 	color: var(--l1-foreground);
 }
@@ -39,7 +39,6 @@
 }
 
 .columnUnitsHint {
-	font-size: 12px;
 	color: var(--l2-foreground);
 }
 
@@ -50,7 +49,6 @@
 }
 
 .columnLabel {
-	font-size: 13px;
 	color: var(--l1-foreground);
 }
 

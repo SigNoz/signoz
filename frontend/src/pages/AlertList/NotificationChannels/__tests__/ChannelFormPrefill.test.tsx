@@ -28,15 +28,15 @@ const CASES: PrefillCase[] = [
 			footer: 'slack footer',
 		},
 		fields: [
-			['webhook-url-textbox', 'https://hooks.slack.com/services/T/B/X'],
-			['slack-channel-textbox', '#ops'],
+			['webhook-url-textbox-field', 'https://hooks.slack.com/services/T/B/X'],
+			['slack-channel-textbox-field', '#ops'],
 			['title-textarea', 'slack title'],
-			['title-link-textbox', 'https://signoz.io'],
+			['title-link-textbox-field', 'https://signoz.io'],
 			['description-textarea', 'slack body'],
-			['slack-color-textbox', 'danger'],
-			['slack-pretext-textbox', 'slack pretext'],
-			['slack-fallback-textbox', 'slack fallback'],
-			['slack-footer-textbox', 'slack footer'],
+			['slack-color-textbox-field', 'danger'],
+			['slack-pretext-textbox-field', 'slack pretext'],
+			['slack-fallback-textbox-field', 'slack fallback'],
+			['slack-footer-textbox-field', 'slack footer'],
 		],
 	},
 	{
@@ -47,20 +47,20 @@ const CASES: PrefillCase[] = [
 			password: 'hook-pass',
 		},
 		fields: [
-			['webhook-url-textbox', 'https://example.com/hook'],
-			['webhook-username-textbox', 'hook-user'],
-			['webhook-password-textbox', 'hook-pass'],
+			['webhook-url-textbox-field', 'https://example.com/hook'],
+			['webhook-username-textbox-field', 'hook-user'],
+			['webhook-password-textbox-field', 'hook-pass'],
 		],
 	},
 	{
 		kind: 'webhook',
 		spec: { url: 'https://example.com/hook', bearerToken: 'hook-token' },
-		fields: [['webhook-bearer-token-textbox', 'hook-token']],
+		fields: [['webhook-bearer-token-textbox-field', 'hook-token']],
 	},
 	{
 		kind: 'email',
 		spec: { to: 'oncall@signoz.io', html: '<p>alert</p>' },
-		fields: [['email-to-textbox', 'oncall@signoz.io']],
+		fields: [['email-to-textbox-field', 'oncall@signoz.io']],
 	},
 	{
 		kind: 'pagerduty',
@@ -74,13 +74,13 @@ const CASES: PrefillCase[] = [
 			clientUrl: 'https://pd.example.com',
 		},
 		fields: [
-			['pager-routing-key-textbox', 'pd-routing-key'],
+			['pager-routing-key-textbox-field', 'pd-routing-key'],
 			['pager-description-textarea', 'pd description'],
-			['pager-severity-textbox', 'critical'],
-			['pager-group-textarea', 'pd group'],
-			['pager-class-textarea', 'pd class'],
-			['pager-client-textarea', 'pd client'],
-			['pager-client-url-textarea', 'https://pd.example.com'],
+			['pager-severity-textbox-field', 'critical'],
+			['pager-group-textarea-field', 'pd group'],
+			['pager-class-textarea-field', 'pd class'],
+			['pager-client-textarea-field', 'pd client'],
+			['pager-client-url-textarea-field', 'https://pd.example.com'],
 		],
 	},
 	{
@@ -92,7 +92,7 @@ const CASES: PrefillCase[] = [
 			priority: 'P1',
 		},
 		fields: [
-			['opsgenie-api-key-textbox', 'og-api-key'],
+			['opsgenie-api-key-textbox-field', 'og-api-key'],
 			['opsgenie-message-textarea', 'og message'],
 			['opsgenie-description-textarea', 'og description'],
 			['opsgenie-priority-textarea', 'P1'],
@@ -106,7 +106,7 @@ const CASES: PrefillCase[] = [
 			text: 'teams body',
 		},
 		fields: [
-			['webhook-url-textbox', 'https://teams.example.com/hook'],
+			['webhook-url-textbox-field', 'https://teams.example.com/hook'],
 			['title-textarea', 'teams title'],
 			['description-textarea', 'teams body'],
 		],
@@ -119,7 +119,7 @@ const CASES: PrefillCase[] = [
 			text: 'chat body',
 		},
 		fields: [
-			['webhook-url-textbox', 'https://chat.googleapis.com/v1/spaces/A'],
+			['webhook-url-textbox-field', 'https://chat.googleapis.com/v1/spaces/A'],
 			['title-textarea', 'chat title'],
 			['description-textarea', 'chat body'],
 		],
@@ -141,18 +141,18 @@ const CASES: PrefillCase[] = [
 			reopenDuration: '72h',
 		},
 		fields: [
-			['jira-site-textbox', 'https://acme.atlassian.net'],
-			['jira-project-textbox', 'OPS'],
-			['jira-issue-type-textbox', 'Task'],
-			['jira-email-textbox', 'someone@acme.io'],
-			['jira-api-token-textbox', 'jira-token'],
+			['jira-site-textbox-field', 'https://acme.atlassian.net'],
+			['jira-project-textbox-field', 'OPS'],
+			['jira-issue-type-textbox-field', 'Task'],
+			['jira-email-textbox-field', 'someone@acme.io'],
+			['jira-api-token-textbox-field', 'jira-token'],
 			['jira-summary-textarea', 'jira summary'],
 			['jira-description-textarea', 'jira description'],
-			['jira-priority-textbox', 'High'],
-			['jira-resolve-transition-textbox', 'Done'],
-			['jira-reopen-transition-textbox', 'Reopen'],
-			['jira-wont-fix-resolution-textbox', "Won't Fix"],
-			['jira-reopen-duration-textbox', '72h'],
+			['jira-priority-textbox-field', 'High'],
+			['jira-resolve-transition-textbox-field', 'Done'],
+			['jira-reopen-transition-textbox-field', 'Reopen'],
+			['jira-wont-fix-resolution-textbox-field', "Won't Fix"],
+			['jira-reopen-duration-textbox-field', '72h'],
 		],
 	},
 	{
@@ -165,8 +165,8 @@ const CASES: PrefillCase[] = [
 			auth: { pat: 'jira-pat' },
 		},
 		fields: [
-			['jira-site-textbox', 'https://jira.acme.com'],
-			['jira-pat-textbox', 'jira-pat'],
+			['jira-site-textbox-field', 'https://jira.acme.com'],
+			['jira-pat-textbox-field', 'jira-pat'],
 		],
 	},
 	{
@@ -179,7 +179,7 @@ const CASES: PrefillCase[] = [
 			tags: 'prod,db',
 		},
 		fields: [
-			['jsmops-api-key-textbox', 'jsm-api-key'],
+			['jsmops-api-key-textbox-field', 'jsm-api-key'],
 			['jsmops-message-textarea', 'jsm message'],
 			['jsmops-description-textarea', 'jsm description'],
 			['jsmops-priority-textarea', 'P2'],
@@ -195,10 +195,10 @@ const CASES: PrefillCase[] = [
 		},
 		fields: [
 			[
-				'incidentio-url-textbox',
+				'incidentio-url-textbox-field',
 				'https://api.incident.io/v2/alert_events/http/abc',
 			],
-			['incidentio-token-textbox', 'incident-token'],
+			['incidentio-token-textbox-field', 'incident-token'],
 			['incidentio-title-textarea', 'incident title'],
 			['incidentio-description-textarea', 'incident description'],
 		],
@@ -214,12 +214,12 @@ const CASES: PrefillCase[] = [
 			apiUrl: 'https://api.telegram.org',
 		},
 		fields: [
-			['telegram-bot-token-textbox', '123456789:AA-token'],
-			['telegram-chat-id-textbox', -1001234567890],
-			['telegram-message-thread-id-textbox', 42],
+			['telegram-bot-token-textbox-field', '123456789:AA-token'],
+			['telegram-chat-id-textbox-field', -1001234567890],
+			['telegram-message-thread-id-textbox-field', 42],
 			['telegram-title-textarea', 'telegram title'],
 			['telegram-message-textarea', 'telegram message'],
-			['telegram-api-url-textbox', 'https://api.telegram.org'],
+			['telegram-api-url-textbox-field', 'https://api.telegram.org'],
 		],
 	},
 ];
@@ -262,7 +262,7 @@ describe('ChannelForm prefill', () => {
 			render(<ChannelForm channelId="3" onDone={jest.fn()} />);
 
 			await expect(
-				screen.findByTestId('channel-name-textbox', {}, FIND),
+				screen.findByTestId('channel-name-textbox-field', {}, FIND),
 			).resolves.toHaveValue(`${kind} channel`);
 
 			fields.forEach(([testId, expected]) => {

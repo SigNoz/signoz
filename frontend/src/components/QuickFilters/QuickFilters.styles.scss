@@ -13,6 +13,11 @@
 		position: relative;
 		align-self: stretch;
 		clip-path: inset(0 -100vw 0 0);
+
+		// Room for the header, the added filters, one empty row and the footer.
+		&.settings-open {
+			min-height: 340px;
+		}
 	}
 }
 
@@ -49,51 +54,41 @@
 				padding-left: var(--spacing-4);
 				white-space: nowrap;
 				flex-shrink: 0;
-				color: var(--l1-foreground);
-				font-family: Inter;
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 18px;
-				letter-spacing: -0.07px;
 				min-width: 70px;
 			}
 
-			.sync-tag,
-			.select-box {
-				display: flex;
-				padding: 5px 9px;
-				flex-direction: column;
-				justify-content: center;
+			.sync-tag {
+				display: inline-flex;
 				align-items: center;
-				gap: 10px;
-				border-radius: 2px;
+				justify-content: center;
+				min-height: 30px;
+				padding: 0 9px;
+				border-radius: var(--radius-1);
 				border: 1px solid
 					color-mix(in srgb, var(--primary-background) 20%, transparent);
 				background: var(--primary-background);
 				color: var(--primary-foreground);
-				font-family: 'Geist Mono';
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 18px;
 				text-transform: uppercase;
 			}
 
+			// Query selector themed as the primary sync chip; the Combobox has no
+			// primary color variant.
 			.select-box {
 				--combobox-trigger-width: auto;
 
-				display: flex;
-				padding: 2px 5px;
-				flex-direction: row;
-				justify-content: center;
-				align-items: center;
-				gap: 3px;
-				height: 30px;
-			}
-
-			.select-box-item {
 				min-width: 60px;
+				text-transform: uppercase;
+				--combobox-trigger-background: var(--primary-background);
+				--combobox-trigger-border: color-mix(
+					in srgb,
+					var(--primary-background) 20%,
+					transparent
+				);
+				--combobox-trigger-border-hover: var(--primary-background);
+				--combobox-trigger-label: var(--primary-foreground);
+				--combobox-trigger-icon: var(--primary-foreground);
+				--combobox-trigger-icon-hover: var(--primary-foreground);
+				--combobox-trigger-min-block-size: 30px;
 			}
 		}
 

@@ -387,7 +387,6 @@ $custom-border-color: #2c3044;
 
 	.navigation-text {
 		color: var(--l2-foreground);
-		font-size: 12px;
 	}
 
 	.navigation-text-incomplete {
@@ -527,7 +526,6 @@ $custom-border-color: #2c3044;
 		}
 
 		&.all-option {
-			font-weight: 500;
 			border-bottom: 1px solid $custom-border-color;
 			margin-bottom: 8px;
 		}
@@ -833,8 +831,6 @@ $custom-border-color: #2c3044;
 			background-color: #f5f5f5;
 			border: 1px solid #e8e8e8;
 			color: rgba(0, 0, 0, 0.85);
-
-			font-size: 12px !important;
 			height: 20px;
 			line-height: 18px;
 

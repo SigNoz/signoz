@@ -18,6 +18,12 @@ type Props = {
 	open?: boolean;
 };
 
+// Above every `@signozhq/ui` dialog (`--dialog-z-index: 1001`, plus one per
+// nested layer), so the error shows over the dialog whose action failed.
+// TODO: temporary. Drop it once this moves to the `@signozhq/ui` Dialog, which
+// stacks above the layer that opened it.
+const ERROR_MODAL_Z_INDEX = 2000;
+
 const classNames = {
 	body: 'error-modal__body',
 	mask: 'error-modal__mask',
@@ -53,8 +59,13 @@ function ErrorModal({
 					onClick={(): void => setVisible(true)}
 					onKeyDown={undefined}
 				>
-					<Badge variant="solid" color="danger">
-						<CircleAlert size={14} color={Color.BG_CHERRY_500} /> error
+					<Badge
+						variant="solid"
+						color="danger"
+						textTransform="uppercase"
+						prefix={<CircleAlert size={14} />}
+					>
+						error
 					</Badge>
 				</span>
 			) : (
@@ -90,6 +101,7 @@ function ErrorModal({
 				closeIcon={false}
 				classNames={classNames}
 				wrapClassName="error-modal__wrap"
+				zIndex={ERROR_MODAL_Z_INDEX}
 			>
 				<ErrorContent error={error} />
 			</Modal>

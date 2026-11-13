@@ -68,7 +68,6 @@
 
 	.custom-domain-card-org-name {
 		color: var(--l1-foreground);
-		font-size: var(--paragraph-base-500-font-size);
 		font-weight: var(--paragraph-base-500-font-weight);
 		line-height: var(--paragraph-base-500-line-height);
 		letter-spacing: var(--paragraph-base-500-letter-spacing);
@@ -94,12 +93,8 @@
 		font-feature-settings:
 			'dlig' on,
 			'salt' on;
-		font-family: Inter;
 		font-size: var(--paragraph-small-400-font-size);
-		font-style: normal;
-		font-weight: var(--paragraph-small-400-font-weight);
 		line-height: var(--paragraph-small-400-line-height);
-		letter-spacing: var(--paragraph-small-400-letter-spacing);
 		text-transform: uppercase;
 
 		svg {
@@ -110,12 +105,7 @@
 
 	.custom-domain-callout {
 		margin: 0 var(--margin-3) var(--margin-3);
-		font-size: var(--paragraph-base-400-font-size);
 		max-width: 742px;
-		--callout-background: var(--primary);
-		--callout-border-color: var(--callout-primary-border);
-		--callout-icon-color: var(--primary);
-		--callout-title-color: var(--callout-primary-title);
 	}
 
 	.custom-domain-card-divider {
@@ -138,9 +128,6 @@
 
 .workspace-url-dropdown-header {
 	color: var(--l2-foreground);
-	font-size: var(--paragraph-base-400-font-size);
-	line-height: var(--line-height-20);
-	letter-spacing: -0.07px;
 	padding: 0 var(--padding-3) var(--padding-2);
 }
 
@@ -157,15 +144,10 @@
 	gap: var(--spacing-4);
 	padding: 5px var(--padding-3);
 	cursor: pointer;
-	text-decoration: none;
 	transition: background 0.15s ease;
 
 	&:hover {
 		background: var(--l1-background-hover);
-
-		.workspace-url-dropdown-item-label {
-			text-decoration: underline;
-		}
 
 		.workspace-url-dropdown-item-external {
 			opacity: 1;
@@ -185,9 +167,6 @@
 }
 
 .workspace-url-dropdown-item-label {
-	font-size: var(--paragraph-base-400-font-size);
-	line-height: var(--line-height-20);
-	letter-spacing: -0.07px;
 	color: var(--l2-foreground);
 
 	.workspace-url-dropdown-item--active & {
@@ -211,7 +190,7 @@
 	margin: 0;
 	color: var(--l1-foreground);
 	font-size: var(--paragraph-base-400-font-size);
-	line-height: var(--line-height-20);
+	line-height: var(--paragraph-base-400-line-height);
 	letter-spacing: -0.07px;
 }
 
@@ -241,66 +220,14 @@
 	}
 }
 
-.edit-modal-input-wrapper {
-	display: flex;
-	align-items: stretch;
-
-	.edit-modal-input-field {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-3);
-		padding: 6px var(--padding-3);
-		background: var(--l1-background);
-		border: 1px solid var(--l1-border);
-		border-right: none;
-		border-radius: 2px 0 0 2px;
-
-		svg {
-			flex-shrink: 0;
-		}
-
-		input {
-			flex: 1;
-			width: 100%;
-			height: auto;
-			background: transparent;
-			border: none;
-			border-radius: 0;
-			outline: none;
-			box-shadow: none;
-			color: var(--l1-foreground);
-			font-size: var(--paragraph-base-400-font-size);
-			line-height: var(--line-height-20);
-			padding: 0;
-
-			&:focus,
-			&:focus-visible {
-				outline: none;
-				box-shadow: none;
-			}
-		}
-	}
-}
-
 .edit-modal-input-suffix {
-	display: flex;
-	align-items: center;
-	padding: 6px var(--padding-3);
-	background: var(--l2-background);
-	border: 1px solid var(--l1-border);
-	border-left: none;
-	border-radius: 0 2px 2px 0;
-	color: var(--l2-foreground);
-	font-size: var(--paragraph-base-400-font-size);
-	line-height: var(--line-height-20);
 	white-space: nowrap;
 }
 
 .edit-modal-helper {
 	color: var(--l2-foreground);
-	font-size: var(--font-size-xs);
-	line-height: var(--line-height-20);
+	font-size: var(--paragraph-base-400-font-size);
+	line-height: var(--paragraph-base-400-line-height);
 
 	&--error {
 		color: var(--destructive);
@@ -322,7 +249,7 @@
 
 .edit-modal-note-emoji {
 	font-size: 16px;
-	line-height: var(--line-height-20);
+	line-height: var(--label-medium-400-line-height);
 	flex-shrink: 0;
 	margin-top: 2px;
 }
@@ -330,11 +257,13 @@
 .edit-modal-note-text {
 	color: var(--l2-foreground);
 	font-size: var(--paragraph-base-400-font-size);
-	line-height: var(--line-height-20);
+	line-height: var(--paragraph-base-400-line-height);
 	letter-spacing: -0.07px;
 }
 
 .edit-modal-footer {
+	width: 100%;
+
 	.facing-issue-button {
 		width: 100%;
 
@@ -359,35 +288,5 @@
 				color: var(--primary-foreground) !important;
 			}
 		}
-	}
-}
-
-.custom-domain-toast {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 16px;
-	padding: 0 16px;
-	height: 40px;
-	width: min(942px, calc(100vw - 32px));
-	border-radius: 4px;
-	background: var(--primary-background);
-	color: var(--bg-base-white);
-
-	.custom-domain-toast-message {
-		font-size: var(--paragraph-base-400-font-size);
-		line-height: var(--line-height-20);
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		flex: 1;
-	}
-
-	.custom-domain-toast-actions {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-4);
-		flex-shrink: 0;
-		--button-variant-ghost-color: var(--bg-base-white);
 	}
 }

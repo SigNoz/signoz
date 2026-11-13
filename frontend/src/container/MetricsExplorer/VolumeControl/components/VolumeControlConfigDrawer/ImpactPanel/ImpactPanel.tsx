@@ -22,9 +22,16 @@ function ImpactPanel({
 	if (mode === 'all') {
 		return (
 			<div className={styles.impactPanel} data-testid="volume-control-impact">
-				<Typography.Text size="small" color="muted">
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					All attributes remain queryable, no reduction.
-				</Typography.Text>
+				</Typography>
 			</div>
 		);
 	}
@@ -44,9 +51,16 @@ function ImpactPanel({
 				<div className={styles.meterGrid}>
 					<div className={styles.meter}>
 						<div className={styles.meterLabelRow}>
-							<Typography.Text size="xs" color="muted" className={styles.meterLabel}>
+							<Typography
+								variant="uppercase"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								Full series
-							</Typography.Text>
+							</Typography>
 							<Tooltip
 								title="Total number of series for this metric before any reduction."
 								getPopupContainer={popupContainer}
@@ -54,15 +68,30 @@ function ImpactPanel({
 								<Info size={12} className={styles.meterInfo} />
 							</Tooltip>
 						</div>
-						<Typography.Text size="2xl" className={styles.meterValue}>
+						<Typography
+							variant="label"
+							size="large"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+							tabularNumbers
+						>
 							{formatCompact(full)}
-						</Typography.Text>
+						</Typography>
 					</div>
 					<div className={styles.meter}>
 						<div className={styles.meterLabelRow}>
-							<Typography.Text size="xs" color="muted" className={styles.meterLabel}>
+							<Typography
+								variant="uppercase"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								Current retained
-							</Typography.Text>
+							</Typography>
 							<Tooltip
 								title="Series kept today under the metric's existing rule, or all of them if it has no rule yet."
 								getPopupContainer={popupContainer}
@@ -70,15 +99,30 @@ function ImpactPanel({
 								<Info size={12} className={styles.meterInfo} />
 							</Tooltip>
 						</div>
-						<Typography.Text size="2xl" className={styles.meterValue}>
+						<Typography
+							variant="label"
+							size="large"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+							tabularNumbers
+						>
 							{formatCompact(current)}
-						</Typography.Text>
+						</Typography>
 					</div>
 					<div className={styles.meter}>
 						<div className={styles.meterLabelRow}>
-							<Typography.Text size="xs" color="muted" className={styles.meterLabel}>
+							<Typography
+								variant="uppercase"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								Potential retained
-							</Typography.Text>
+							</Typography>
 							<Tooltip
 								title="Series that would be kept if you save this rule, with the reduction vs what's retained today."
 								getPopupContainer={popupContainer}
@@ -86,24 +130,43 @@ function ImpactPanel({
 								<Info size={12} className={styles.meterInfo} />
 							</Tooltip>
 						</div>
-						<Typography.Text size="2xl" className={styles.meterValue}>
+						<Typography
+							variant="label"
+							size="large"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+							tabularNumbers
+						>
 							{formatCompact(proposed)}
 							{deltaPct !== 0 && (
-								<Typography.Text
+								<Typography
+									variant="paragraph"
 									size="small"
-									color={deltaPct >= 0 ? 'success' : undefined}
+									weight="regular"
+									color={deltaPct >= 0 ? 'success' : 'inherit'}
+									as="span"
+									textOverflow="wrap"
 								>
 									{reductionLabel}
-								</Typography.Text>
+								</Typography>
 							)}
-						</Typography.Text>
+						</Typography>
 					</div>
 				</div>
 			)}
 			{!isLoading && !preview && (
-				<Typography.Text size="small" color="muted">
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Select attributes to preview the impact.
-				</Typography.Text>
+				</Typography>
 			)}
 		</div>
 	);

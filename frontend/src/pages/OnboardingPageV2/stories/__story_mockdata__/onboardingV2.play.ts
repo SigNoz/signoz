@@ -151,7 +151,7 @@ export const sendInvite = async ({
 
 	const dialog = await screen.findByRole('dialog', undefined, untilRendered);
 	const [email] = await within(dialog).findAllByTestId(
-		/^invite-email-/,
+		/^invite-email-.+-field$/,
 		undefined,
 		untilRendered,
 	);
@@ -160,12 +160,13 @@ export const sendInvite = async ({
 	const [roles] = await within(dialog).findAllByRole('combobox');
 
 	await userEvent.click(roles);
-	const viewers = await screen.findAllByText('viewer', undefined, untilRendered);
-
 	await userEvent.click(
-		viewers[viewers.length - 1].closest('.ant-select-item-option') as HTMLElement,
+		await screen.findByRole('option', { name: 'viewer' }, untilRendered),
 	);
+
+	// A multi-select keeps its list open after a pick, over the Send Invites button.
 	await userEvent.keyboard('{Escape}');
+	await waitFor(() => expect(roles).toHaveAttribute('aria-expanded', 'false'));
 	await userEvent.click(
 		await within(dialog).findByRole('button', { name: /send invites/i }),
 	);

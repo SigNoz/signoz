@@ -166,7 +166,14 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 							justifyContent: 'center',
 						}}
 					>
-						<Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							No spans found. Please add instrumentation (follow this
 							<a
 								href="https://signoz.io/docs/instrumentation/overview"
@@ -181,7 +188,14 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 					</Space>
 				) : (
 					<Space style={{ display: 'block', marginLeft: 20, width: 200 }}>
-						<Typography>{`Total count is ${totalCount}`}</Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>{`Total count is ${totalCount}`}</Typography>
 					</Space>
 				)}
 			</Space>

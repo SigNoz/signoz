@@ -7,7 +7,7 @@ import {
 	useState,
 } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Form, FormInstance } from 'antd';
 import {
 	CreateAccountMutationResult,
@@ -177,7 +177,8 @@ export function useIntegrationModal({
 						const command = response.data.connectionArtifact.aws?.cliCommand;
 						if (!command) {
 							setModalState(ModalStateEnum.ERROR);
-							toast.error('Failed to generate the AWS setup command', {
+							toast.danger('Failed to generate the AWS setup command', {
+								action: { label: 'Dismiss' },
 								position: 'bottom-right',
 							});
 							return;
@@ -192,7 +193,8 @@ export function useIntegrationModal({
 					},
 					onError: () => {
 						setModalState(ModalStateEnum.ERROR);
-						toast.error('Failed to create account connection', {
+						toast.danger('Failed to create account connection', {
+							action: { label: 'Dismiss' },
 							position: 'bottom-right',
 						});
 					},

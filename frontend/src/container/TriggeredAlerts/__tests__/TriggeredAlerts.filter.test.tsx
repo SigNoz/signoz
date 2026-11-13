@@ -14,10 +14,10 @@ describe('TriggeredAlerts — severity filter', () => {
 
 		await user.click(screen.getByTestId('triggered-alerts-filter-combobox'));
 
-		const criticalOption = await screen.findByText(
-			'Critical (severity:critical)',
+		await user.type(
+			await screen.findByTestId('triggered-alerts-filter-combobox-search'),
+			'severity:critical{Enter}',
 		);
-		await user.click(criticalOption);
 
 		await user.keyboard('{Escape}');
 
@@ -38,11 +38,11 @@ describe('TriggeredAlerts — severity filter', () => {
 		);
 
 		await user.click(screen.getByTestId('triggered-alerts-filter-combobox'));
-		const critical = await screen.findByText('Critical (severity:critical)');
-		await user.click(critical);
-
-		const warning = await screen.findByText('Warning (severity:warning)');
-		await user.click(warning);
+		const search = await screen.findByTestId(
+			'triggered-alerts-filter-combobox-search',
+		);
+		await user.type(search, 'severity:critical{Enter}');
+		await user.type(search, 'severity:warning{Enter}');
 
 		await user.keyboard('{Escape}');
 
@@ -63,18 +63,22 @@ describe('TriggeredAlerts — severity filter', () => {
 		);
 
 		await user.click(screen.getByTestId('triggered-alerts-filter-combobox'));
-		const critical = await screen.findByText('Critical (severity:critical)');
-		await user.click(critical);
+		await user.type(
+			await screen.findByTestId('triggered-alerts-filter-combobox-search'),
+			'severity:critical{Enter}',
+		);
 		await user.keyboard('{Escape}');
 
 		await waitFor(() =>
 			expect(screen.queryByText('Memory Warning')).not.toBeInTheDocument(),
 		);
 
-		// Reopen the filter combobox and deselect Critical (clicking again toggles).
+		// Reopen the filter combobox and deselect Critical (picking again toggles).
 		await user.click(screen.getByTestId('triggered-alerts-filter-combobox'));
-		const criticalAgain = await screen.findByText('Critical (severity:critical)');
-		await user.click(criticalAgain);
+		await user.type(
+			await screen.findByTestId('triggered-alerts-filter-combobox-search'),
+			'severity:critical{Enter}',
+		);
 		await user.keyboard('{Escape}');
 
 		await waitFor(() => {

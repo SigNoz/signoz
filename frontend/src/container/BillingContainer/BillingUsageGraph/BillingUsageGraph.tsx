@@ -123,12 +123,27 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 		<Card bordered={false} className={styles.billingGraphCard}>
 			<Flex justify="space-between">
 				<Flex vertical gap={6}>
-					<Typography.Text className={styles.totalSpentTitle}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="medium"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						TOTAL SPENT
-					</Typography.Text>
-					<Typography.Text className={styles.totalSpent}>
+					</Typography>
+					<Typography
+						variant="label"
+						size="medium"
+						weight="bold"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+						tabularNumbers
+					>
 						${numberFormatter.format(billAmount)}
-					</Typography.Text>
+					</Typography>
 				</Flex>
 			</Flex>
 			<div ref={graphRef} className={styles.graphContainer}>

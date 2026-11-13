@@ -82,7 +82,16 @@ export const getTraceListColumns = (
 
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Typography.Text className={styles.cellText}>{date}</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
+								{date}
+							</Typography>
 						</BlockLink>
 					);
 				}
@@ -90,13 +99,19 @@ export const getTraceListColumns = (
 				if (value === '') {
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Typography
-								data-testid={key}
-								className={styles.cellText}
-								data-novalue="true"
-							>
-								-
-							</Typography>
+							<span className={styles.cellText} data-novalue="true">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+									data-testid={key}
+								>
+									-
+								</Typography>
+							</span>
 						</BlockLink>
 					);
 				}
@@ -107,9 +122,18 @@ export const getTraceListColumns = (
 					if (!httpMethod) {
 						return (
 							<BlockLink to={getTraceLink(itemData)} openInNewTab>
-								<Typography className={styles.cellText} data-novalue="true">
-									-
-								</Typography>
+								<span className={styles.cellText} data-novalue="true">
+									<Typography
+										variant="paragraph"
+										size="base"
+										weight="regular"
+										color="secondary"
+										as="span"
+										textOverflow="wrap"
+									>
+										-
+									</Typography>
+								</span>
 							</BlockLink>
 						);
 					}
@@ -139,7 +163,16 @@ export const getTraceListColumns = (
 								{numericCode === 0 || !statusCode ? (
 									<TextNoData type="typography" className={styles.cellText} />
 								) : (
-									<Typography className={styles.cellText}>{statusCode}</Typography>
+									<Typography
+										variant="paragraph"
+										size="base"
+										weight="regular"
+										color="secondary"
+										as="span"
+										textOverflow="wrap"
+									>
+										{statusCode}
+									</Typography>
 								)}
 							</BlockLink>
 						);
@@ -157,7 +190,15 @@ export const getTraceListColumns = (
 
 					return (
 						<BlockLink to={getTraceLink(itemData)} openInNewTab>
-							<Typography data-testid={key} className={styles.cellText}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+								data-testid={key}
+							>
 								{getMs(durationNano)}ms
 							</Typography>
 						</BlockLink>
@@ -166,7 +207,15 @@ export const getTraceListColumns = (
 
 				return (
 					<BlockLink to={getTraceLink(itemData)} openInNewTab>
-						<Typography data-testid={key} className={styles.cellText}>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+							data-testid={key}
+						>
 							{getValueForKey(itemData, key)}
 						</Typography>
 					</BlockLink>

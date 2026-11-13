@@ -94,7 +94,16 @@ export const getListColumns = (
 							);
 				return (
 					<BlockLink to={getTraceLink(item)} openInNewTab={false}>
-						<Typography.Text>{date}</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{date}
+						</Typography>
 					</BlockLink>
 				);
 			},
@@ -114,7 +123,17 @@ export const getListColumns = (
 					if (value === '') {
 						return (
 							<BlockLink to={getTraceLink(item)} openInNewTab={false}>
-								<Typography data-testid={name}>N/A</Typography>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+									data-testid={name}
+								>
+									N/A
+								</Typography>
 							</BlockLink>
 						);
 					}
@@ -142,14 +161,32 @@ export const getListColumns = (
 					if (name === 'durationNano' || name === 'duration_nano') {
 						return (
 							<BlockLink to={getTraceLink(item)} openInNewTab={false}>
-								<Typography data-testid={name}>{getMs(value)}ms</Typography>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+									data-testid={name}
+								>
+									{getMs(value)}ms
+								</Typography>
 							</BlockLink>
 						);
 					}
 
 					return (
 						<BlockLink to={getTraceLink(item)} openInNewTab={false}>
-							<Typography data-testid={name}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+								data-testid={name}
+							>
 								<LineClampedText text={value} lines={3} />
 							</Typography>
 						</BlockLink>

@@ -190,9 +190,16 @@ function AlertThreshold({
 			{/* Main condition sentence */}
 			<div className="alert-condition-sentences">
 				<div className="alert-condition-sentence">
-					<Typography.Text className="sentence-text">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						textOverflow="wrap"
+					>
 						Send a notification when
-					</Typography.Text>
+					</Typography>
 					<Select
 						value={thresholdState.selectedQuery}
 						onChange={handleSelectedQueryChange}
@@ -200,7 +207,16 @@ function AlertThreshold({
 						options={queryNames}
 						data-testid="alert-threshold-query-select"
 					/>
-					<Typography.Text className="sentence-text">is</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						textOverflow="wrap"
+					>
+						is
+					</Typography>
 					<Select
 						value={
 							(normalizeOperator(thresholdState.operator) ??
@@ -216,9 +232,16 @@ function AlertThreshold({
 						options={THRESHOLD_OPERATOR_OPTIONS}
 						data-testid="alert-threshold-operator-select"
 					/>
-					<Typography.Text className="sentence-text">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						textOverflow="wrap"
+					>
 						the threshold(s)
-					</Typography.Text>
+					</Typography>
 					<Select
 						value={
 							(normalizeMatchType(thresholdState.matchType) ??
@@ -234,9 +257,18 @@ function AlertThreshold({
 						options={matchTypeOptionsWithTooltips}
 						data-testid="alert-threshold-match-type-select"
 					/>
-					<Typography.Text className="sentence-text">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="div"
+						display="flex"
+						gap={4}
+						textOverflow="wrap"
+					>
 						during the <EvaluationSettings />
-					</Typography.Text>
+					</Typography>
 				</div>
 			</div>
 

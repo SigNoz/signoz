@@ -12,8 +12,6 @@
 
 .crossPanelsSyncSectionTitle {
 	color: var(--l1-foreground);
-	font-size: 14px;
-	font-weight: 500;
 }
 
 .crossPanelSyncInfoIcon {
@@ -38,7 +36,6 @@
 
 .crossPanelSyncTooltipDocLink {
 	color: var(--primary-background);
-	font-size: 12px;
 	margin-top: 16px;
 	vertical-align: middle;
 
@@ -71,16 +68,8 @@
 
 .crossPanelSyncTitle {
 	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: 14px;
-	font-weight: 400;
-	line-height: 20px;
 }
 
 .crossPanelSyncDescription {
 	color: var(--l3-foreground);
-	font-family: Inter;
-	font-size: 13px;
-	font-weight: 400;
-	line-height: 20px;
 }

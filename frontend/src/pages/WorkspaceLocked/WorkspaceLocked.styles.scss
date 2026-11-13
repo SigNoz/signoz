@@ -64,15 +64,15 @@ $dark-theme: 'darkMode';
 			border: 1px solid var(--l1-border);
 			background: linear-gradient(
 				139deg,
-				color-mix(in srgb, var(--card) 80%, transparent) 0%,
-				color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+				color-mix(in srgb, var(--surface-2) 80%, transparent) 0%,
+				color-mix(in srgb, var(--surface-2) 90%, transparent) 98.68%
 			);
 			box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 			backdrop-filter: blur(20px);
 
 			.#{$light-theme} & {
 				border: 1px solid var(--l1-border);
-				background: var(--card);
+				background: var(--surface-2);
 			}
 		}
 
@@ -122,8 +122,6 @@ $dark-theme: 'darkMode';
 		color: var(--muted-foreground);
 		text-align: center;
 		font-size: 16px;
-		font-style: normal;
-		font-weight: 400;
 		line-height: 24px; /* 150% */
 
 		.#{$light-theme} & {
@@ -132,7 +130,6 @@ $dark-theme: 'darkMode';
 
 		&__highlight {
 			color: var(--l1-foreground);
-			font-style: normal;
 			font-weight: 700;
 			line-height: 24px;
 

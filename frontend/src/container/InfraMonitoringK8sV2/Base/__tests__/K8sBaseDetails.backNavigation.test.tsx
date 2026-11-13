@@ -1,9 +1,6 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-	NuqsTestingAdapter,
-	type OnUrlUpdateFunction,
-} from 'nuqs/adapters/testing';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import logEvent from 'api/common/logEvent';
 import { act, render, waitFor } from 'tests/test-utils';
 
@@ -12,7 +9,10 @@ import {
 	InfraMonitoringEntity,
 } from '../../constants';
 import K8sBaseDetails from '../K8sBaseDetails';
-import { useDrawerHistoryStore } from '../useDrawerHistoryStore';
+import {
+	DrawerHistoryEntry,
+	useDrawerHistoryStore,
+} from '../useDrawerHistoryStore';
 
 jest.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => ({
 	__esModule: true,
@@ -26,27 +26,67 @@ jest.mock('api/common/logEvent', () => ({
 
 const logEventMock = jest.mocked(logEvent);
 
+// The breadcrumb of the trail reads `maxWidth`, which the fallback style of
+// jest.setup.ts does not carry.
+const baseGetComputedStyle = window.getComputedStyle;
+
+beforeAll(() => {
+	window.getComputedStyle = (
+		element: Element,
+		pseudoElement?: string | null,
+	): CSSStyleDeclaration => {
+		const style = baseGetComputedStyle(element, pseudoElement);
+
+		return style.maxWidth === undefined
+			? ({ ...style, maxWidth: '' } as CSSStyleDeclaration)
+			: style;
+	};
+});
+
+afterAll(() => {
+	window.getComputedStyle = baseGetComputedStyle;
+});
+
 type TestEntity = { name: string };
 
 const mockEntity: TestEntity = { name: 'test-container' };
 
-const NODE_PARAMS = {
-	selectedItem: 'node-1',
-	category: InfraMonitoringEntity.NODES,
-	clusterName: null,
-	namespaceName: null,
-};
+const entryFor = (
+	category: InfraMonitoringEntity,
+	name: string,
+	queryKeyPrefix: string,
+): DrawerHistoryEntry => ({
+	params: {
+		selectedItem: name,
+		category,
+		clusterName: null,
+		namespaceName: null,
+	},
+	category,
+	label: name,
+	entity: { name },
+	queryKeyPrefix,
+});
 
-/** What the drawer records before opening a resource from the node's overview */
-const NODE_ENTRY = {
-	params: NODE_PARAMS,
-	category: InfraMonitoringEntity.NODES,
-	label: 'node-1',
-	entity: { name: 'node-1' },
-	queryKeyPrefix: 'node',
-};
+/** What the drawer records before opening a resource from another's overview */
+const CLUSTER_ENTRY = entryFor(
+	InfraMonitoringEntity.CLUSTERS,
+	'cluster-1',
+	'cluster',
+);
+const NODE_ENTRY = entryFor(InfraMonitoringEntity.NODES, 'node-1', 'node');
 
-function renderDrawer(onUrlUpdate?: OnUrlUpdateFunction): void {
+const trail = (): HTMLElement => screen.getByTestId('drawer-wrapper-trail');
+
+const crumb = (name: string): HTMLElement =>
+	within(trail()).getByRole('button', { name });
+
+const selectedItems = (onUrlUpdate: jest.Mock): (string | null)[] =>
+	onUrlUpdate.mock.calls.map((call) =>
+		call[0].searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM),
+	);
+
+function renderDrawer(onUrlUpdate?: jest.Mock): void {
 	render(
 		<NuqsTestingAdapter
 			searchParams={{
@@ -74,13 +114,13 @@ function renderDrawer(onUrlUpdate?: OnUrlUpdateFunction): void {
 	);
 }
 
-describe('K8sBaseDetails - back navigation', () => {
+describe('K8sBaseDetails - trail', () => {
 	beforeEach(() => {
 		useDrawerHistoryStore.getState().reset();
 		logEventMock.mockClear();
 	});
 
-	it('closes rather than going back when opened from the list', async () => {
+	it('shows no trail when opened from the list', async () => {
 		act(() => {
 			renderDrawer();
 		});
@@ -89,26 +129,46 @@ describe('K8sBaseDetails - back navigation', () => {
 			expect(screen.getAllByText('test-container').length).toBeGreaterThan(0);
 		});
 
+		expect(screen.queryByTestId('drawer-wrapper-trail')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('drawer-back-button')).not.toBeInTheDocument();
-		expect(screen.getByTestId('close-drawer-button')).toBeInTheDocument();
+		expect(screen.getByTestId('drawer-wrapper-close')).toBeInTheDocument();
 	});
 
-	it('replaces the close control while there is somewhere to go back to', async () => {
+	it('puts the close button at the start of the header', async () => {
+		act(() => {
+			renderDrawer();
+		});
+
+		const close = await screen.findByTestId('drawer-wrapper-close');
+
+		expect(close.closest('[data-slot="drawer-header"]')).toHaveAttribute(
+			'data-close-position',
+			'start',
+		);
+	});
+
+	it('lists the resources this one was opened from, root first, ending on itself', async () => {
+		useDrawerHistoryStore.getState().push(CLUSTER_ENTRY);
 		useDrawerHistoryStore.getState().push(NODE_ENTRY);
 
 		act(() => {
 			renderDrawer();
 		});
 
-		const backButton = await screen.findByTestId('drawer-back-button');
+		await screen.findByTestId('drawer-wrapper-trail');
 
-		// The destination is text rather than a tooltip, which a click would dismiss
-		expect(backButton).toHaveTextContent('Back to Node');
-		expect(backButton).toHaveAccessibleName('Back to Node: node-1');
-		expect(screen.queryByTestId('close-drawer-button')).not.toBeInTheDocument();
+		const items = [0, 1, 2].map((index) =>
+			screen.getByTestId(`drawer-wrapper-trail-breadcrumb-item-${index}`),
+		);
+
+		expect(items[0]).toHaveTextContent('cluster-1');
+		expect(items[1]).toHaveTextContent('node-1');
+		await waitFor(() => expect(items[2]).toHaveTextContent('test-container'));
+		expect(within(items[2]).queryByRole('button')).not.toBeInTheDocument();
+		expect(screen.getByTestId('drawer-wrapper-close')).toBeInTheDocument();
 	});
 
-	it('returns to the resource this one was opened from', async () => {
+	it('returns to a resource when its crumb is pressed', async () => {
 		const user = userEvent.setup();
 		const onUrlUpdate = jest.fn();
 
@@ -118,8 +178,8 @@ describe('K8sBaseDetails - back navigation', () => {
 			renderDrawer(onUrlUpdate);
 		});
 
-		const backButton = await screen.findByTestId('drawer-back-button');
-		await user.click(backButton);
+		await screen.findByTestId('drawer-wrapper-trail');
+		await user.click(crumb('node-1'));
 
 		await waitFor(() => {
 			const params = onUrlUpdate.mock.calls.map((call) => call[0].searchParams);
@@ -135,43 +195,101 @@ describe('K8sBaseDetails - back navigation', () => {
 			).toBe(true);
 		});
 
-		// The trail is one step shorter, so a second back closes instead
 		expect(useDrawerHistoryStore.getState().entries).toHaveLength(0);
 	});
 
-	it('drops the trail when the drawer is dismissed', async () => {
+	it('drops the crumbs after the one pressed', async () => {
 		const user = userEvent.setup();
+		const onUrlUpdate = jest.fn();
 
+		useDrawerHistoryStore.getState().push(CLUSTER_ENTRY);
 		useDrawerHistoryStore.getState().push(NODE_ENTRY);
 
 		act(() => {
-			renderDrawer();
+			renderDrawer(onUrlUpdate);
 		});
 
-		await screen.findByTestId('drawer-back-button');
-		// Dismissing from outside the drawer, the way a click on the overlay does
+		await screen.findByTestId('drawer-wrapper-trail');
+		await user.click(crumb('cluster-1'));
+
+		await waitFor(() => {
+			expect(selectedItems(onUrlUpdate)).toContain('cluster-1');
+		});
+
+		expect(useDrawerHistoryStore.getState().entries).toHaveLength(0);
+	});
+
+	it('steps back one resource on Escape and stays open', async () => {
+		const user = userEvent.setup();
+		const onUrlUpdate = jest.fn();
+
+		useDrawerHistoryStore.getState().push(CLUSTER_ENTRY);
+		useDrawerHistoryStore.getState().push(NODE_ENTRY);
+
+		act(() => {
+			renderDrawer(onUrlUpdate);
+		});
+
+		await screen.findByTestId('drawer-wrapper-trail');
 		await user.keyboard('{Escape}');
 
 		await waitFor(() => {
-			expect(useDrawerHistoryStore.getState().entries).toHaveLength(0);
+			expect(selectedItems(onUrlUpdate)).toContain('node-1');
 		});
+
+		expect(useDrawerHistoryStore.getState().entries).toEqual([CLUSTER_ENTRY]);
+		expect(selectedItems(onUrlUpdate)).not.toContain(null);
+	});
+
+	it('closes on Escape once there is no trail left', async () => {
+		const user = userEvent.setup();
+		const onUrlUpdate = jest.fn();
+
+		act(() => {
+			renderDrawer(onUrlUpdate);
+		});
+
+		await waitFor(() => {
+			expect(screen.getAllByText('test-container').length).toBeGreaterThan(0);
+		});
+
+		await user.keyboard('{Escape}');
+
+		await waitFor(() => {
+			expect(selectedItems(onUrlUpdate)).toContain(null);
+		});
+	});
+
+	it('closes the whole drawer from the close button and drops the trail', async () => {
+		const user = userEvent.setup();
+		const onUrlUpdate = jest.fn();
+
+		useDrawerHistoryStore.getState().push(CLUSTER_ENTRY);
+		useDrawerHistoryStore.getState().push(NODE_ENTRY);
+
+		act(() => {
+			renderDrawer(onUrlUpdate);
+		});
+
+		await screen.findByTestId('drawer-wrapper-trail');
+		await user.click(screen.getByTestId('drawer-wrapper-close'));
+
+		await waitFor(() => {
+			expect(selectedItems(onUrlUpdate)).toContain(null);
+		});
+
+		expect(selectedItems(onUrlUpdate)).not.toContain('node-1');
+		expect(useDrawerHistoryStore.getState().entries).toHaveLength(0);
 	});
 
 	it('logs a drawer visit for a resource reached from the cache', async () => {
 		const user = userEvent.setup();
 
-		useDrawerHistoryStore.getState().push({
-			params: {
-				selectedItem: 'container-0',
-				category: InfraMonitoringEntity.CONTAINERS,
-				clusterName: null,
-				namespaceName: null,
-			},
-			category: InfraMonitoringEntity.CONTAINERS,
-			label: 'container-0',
-			entity: { name: 'container-0' },
-			queryKeyPrefix: 'testContainer',
-		});
+		useDrawerHistoryStore
+			.getState()
+			.push(
+				entryFor(InfraMonitoringEntity.CONTAINERS, 'container-0', 'testContainer'),
+			);
 
 		act(() => {
 			renderDrawer();
@@ -184,7 +302,7 @@ describe('K8sBaseDetails - back navigation', () => {
 
 		await waitFor(() => expect(drawerVisits()).toBe(1));
 
-		await user.click(await screen.findByTestId('drawer-back-button'));
+		await user.click(crumb('container-0'));
 
 		await waitFor(() => expect(drawerVisits()).toBe(2));
 	});

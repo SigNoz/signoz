@@ -1,13 +1,8 @@
 .edit-key-modal {
-	[data-slot='dialog-description'] {
-		padding: 0;
-	}
-
 	&__form {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-8);
-		padding: var(--padding-4);
 	}
 
 	&__field {
@@ -17,10 +12,8 @@
 	}
 
 	&__label {
-		font-size: 13px;
-		font-weight: var(--font-weight-normal);
 		color: var(--foreground);
-		line-height: var(--line-height-20);
+		line-height: var(--paragraph-base-400-line-height);
 		letter-spacing: -0.07px;
 	}
 
@@ -50,7 +43,6 @@
 	}
 
 	&__key-text {
-		font-size: 13px;
 		font-family: monospace;
 		color: var(--foreground);
 		white-space: nowrap;
@@ -61,7 +53,6 @@
 	}
 
 	&__id-text {
-		font-size: 13px;
 		font-family: monospace;
 		color: var(--foreground);
 		white-space: nowrap;
@@ -90,7 +81,7 @@
 
 			input {
 				color: var(--l1-foreground);
-				font-size: var(--font-size-xs);
+				font-size: var(--label-small-400-font-size);
 			}
 
 			.ant-picker-suffix {
@@ -113,25 +104,11 @@
 	}
 
 	&__meta-label {
-		font-size: var(--font-size-xs);
-		font-weight: var(--font-weight-medium);
+		font-size: var(--uppercase-small-500-font-size);
+		font-weight: var(--uppercase-small-500-font-weight);
 		color: var(--foreground);
 		letter-spacing: 0.48px;
 		text-transform: uppercase;
-	}
-
-	&__footer {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: var(--padding-4);
-		border-top: 1px solid var(--secondary);
-	}
-
-	&__footer-right {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-4);
 	}
 
 	&__footer-danger {

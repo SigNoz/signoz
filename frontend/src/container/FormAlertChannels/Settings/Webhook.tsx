@@ -13,7 +13,11 @@ import FormField from '../FormField';
 
 import styles from './Webhook.module.scss';
 
-function WebhookSettings(): JSX.Element {
+interface WebhookSettingsProps {
+	readOnly: boolean;
+}
+
+function WebhookSettings({ readOnly }: WebhookSettingsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -35,11 +39,7 @@ function WebhookSettings(): JSX.Element {
 					error={errors.url?.message}
 					required
 				>
-					<Input
-						{...register('url')}
-						aria-required
-						data-testid="webhook-url-textbox"
-					/>
+					<Input {...register('url')} aria-required testId="webhook-url-textbox" />
 				</FormField>
 				<FormField label={t('field_webhook_auth')}>
 					<Controller
@@ -52,6 +52,8 @@ function WebhookSettings(): JSX.Element {
 									aria-label={t('field_webhook_auth')}
 									value={auth}
 									onChange={field.onChange}
+									disabled={readOnly}
+									disabledTooltip={undefined}
 									testId="webhook-auth-radio"
 									items={[
 										{
@@ -78,10 +80,7 @@ function WebhookSettings(): JSX.Element {
 							label={t('field_webhook_username')}
 							error={errors.username?.message}
 						>
-							<Input
-								{...register('username')}
-								data-testid="webhook-username-textbox"
-							/>
+							<Input {...register('username')} testId="webhook-username-textbox" />
 						</FormField>
 						<FormField
 							label={t('field_webhook_password')}
@@ -90,7 +89,7 @@ function WebhookSettings(): JSX.Element {
 							<Input
 								{...register('password')}
 								type="password"
-								data-testid="webhook-password-textbox"
+								testId="webhook-password-textbox"
 							/>
 						</FormField>
 					</>
@@ -106,7 +105,7 @@ function WebhookSettings(): JSX.Element {
 							{...register('bearerToken')}
 							type="password"
 							aria-required
-							data-testid="webhook-bearer-token-textbox"
+							testId="webhook-bearer-token-textbox"
 						/>
 					</FormField>
 				)}

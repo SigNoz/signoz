@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Color } from '@signozhq/design-tokens';
 import { Badge } from '@signozhq/ui/badge';
 import { Button, Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -55,9 +54,16 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 			<div className="error-container">
 				<div className="error-content">
 					<img src={awwSnapIconUrl} alt="error-emoji" className="error-state-svg" />
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						Something went wrong :/ Please retry or contact support.
-					</Typography.Text>
+					</Typography>
 					<div className="error-btns">
 						<Button
 							type="primary"
@@ -67,14 +73,19 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 						>
 							Retry
 						</Button>
-						<div
-							className="contact-support"
+						<Typography.Link
+							variant="paragraph"
+							size="base"
+							weight="medium"
+							display="inline-flex"
+							gap={4}
+							textOverflow="wrap"
 							onClick={(): void => handleContactSupport(isCloudUserVal)}
+							testId="integrations-list-contact-support"
 						>
-							<Typography.Link className="text">Contact Support </Typography.Link>
-
-							<MoveUpRight size={14} color={Color.BG_ROBIN_400} />
-						</div>
+							Contact Support
+							<MoveUpRight size={14} />
+						</Typography.Link>
 					</div>
 				</div>
 			</div>

@@ -172,7 +172,7 @@ describe('GCP AgentSetup form', () => {
 		});
 
 		await user.type(
-			screen.getByTestId('gcp-deployment-project-id-input'),
+			screen.getByTestId('gcp-deployment-project-id-input-field'),
 			'-edited',
 		);
 

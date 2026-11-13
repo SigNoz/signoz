@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from 'antd';
 import { CircleAlert } from '@signozhq/icons';
-import { Typography } from '@signozhq/ui/typography';
 
 import type { PanelThreshold } from '../../../../types/threshold';
 import { resolveActiveThreshold } from '../../../../utils/evaluateThresholds';
@@ -64,13 +63,13 @@ function ValueDisplay({
 						fontSize={fontSize}
 					/>
 				)}
-				<Typography.Text
+				<span
 					className={styles.valueText}
 					data-testid="number-panel-value"
 					style={{ color: textColor, fontSize }}
 				>
 					{numericValue}
-				</Typography.Text>
+				</span>
 				{suffixUnit && (
 					<ValueUnit
 						type="suffix"

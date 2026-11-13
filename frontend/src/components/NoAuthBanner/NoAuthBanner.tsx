@@ -1,26 +1,29 @@
-import { PersistedAnnouncementBanner } from '@signozhq/ui/announcement-banner';
-
-import styles from './NoAuthBanner.module.scss';
+import { createPortal } from 'react-dom';
+import { AlertStrip } from '@signozhq/ui/alert-strip';
+import { useBottomStripStore } from 'container/BottomStrip/store/useBottomStripStore';
 
 export function NoAuthBanner(): JSX.Element {
-	return (
-		<PersistedAnnouncementBanner
-			type="warning"
+	const bottomSlot = useBottomStripStore((s) => s.topSlot);
+
+	const banner = (
+		<AlertStrip.CloseablePersisted
+			color="warning"
+			side={bottomSlot ? 'bottom' : 'top'}
 			storageKey="no-auth-banner-v1"
 			testId="no-auth-banner"
-			className={styles.banner}
 		>
 			Impersonation mode: authentication is disabled. Anyone with access to this
 			instance has admin privileges.{' '}
-			<a
+			<AlertStrip.Link
 				href="https://signoz.io/docs/manage/administrator-guide/configuration/impersonation-mode/"
 				target="_blank"
-				rel="noreferrer"
 			>
 				Learn more
-			</a>
-		</PersistedAnnouncementBanner>
+			</AlertStrip.Link>
+		</AlertStrip.CloseablePersisted>
 	);
+
+	return bottomSlot ? createPortal(banner, bottomSlot) : banner;
 }
 
 export default NoAuthBanner;

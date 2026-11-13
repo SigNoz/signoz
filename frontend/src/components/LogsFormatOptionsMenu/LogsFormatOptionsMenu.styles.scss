@@ -153,6 +153,36 @@
 						cursor: pointer;
 					}
 				}
+
+				// Stepper group: the Input sits seamlessly between the -/+
+				// periscope-btns (26px tall, l1-border).
+				.max-lines-per-row-input {
+					display: flex;
+
+					--input-height: 26px;
+					--input-border-radius: 0;
+					--input-border: var(--l1-border);
+					--input-border-width: 1px 0;
+
+					[data-testid='max-lines-per-row'] {
+						min-width: 36px;
+						width: auto;
+
+						// No Input token for text alignment.
+						input {
+							text-align: center;
+						}
+					}
+
+					.periscope-btn {
+						box-shadow: none;
+						padding: 6px 12px;
+						height: 26px;
+
+						border-radius: 0px 1px 1px 0px;
+						background: var(--l3-background);
+					}
+				}
 			}
 
 			.edit-columns-container {
@@ -178,11 +208,6 @@
 						gap: 4px;
 						align-items: center;
 						color: var(--muted-foreground);
-						text-transform: uppercase;
-						font-size: 11px;
-						font-weight: 500;
-						line-height: 18px;
-						letter-spacing: 0.88px;
 					}
 				}
 
@@ -207,12 +232,6 @@
 							padding: 4px 8px;
 							border-radius: 1px;
 							color: var(--l2-foreground);
-							font-family: Inter;
-							font-size: 13px;
-							font-style: normal;
-							font-weight: 400;
-							line-height: 20px; /* 142.857% */
-							letter-spacing: -0.07px;
 
 							&.selected {
 								background-color: var(--l3-background);
@@ -235,13 +254,6 @@
 
 				.title {
 					color: var(--l1-foreground);
-					font-family: Inter;
-					font-size: 11px;
-					font-style: normal;
-					font-weight: 500;
-					line-height: 18px; /* 163.636% */
-					letter-spacing: 0.88px;
-					text-transform: uppercase;
 
 					margin-bottom: 12px;
 
@@ -276,12 +288,6 @@
 
 						.column-name {
 							color: var(--l2-foreground);
-							font-family: Inter;
-							font-size: 13px;
-							font-style: normal;
-							font-weight: 400;
-							line-height: 20px; /* 142.857% */
-							letter-spacing: -0.07px;
 
 							display: flex;
 							justify-content: space-between;
@@ -297,7 +303,6 @@
 
 							&.no-columns-selected {
 								color: var(--l3-foreground);
-								font-size: 12px;
 								cursor: not-allowed;
 							}
 
@@ -311,7 +316,6 @@
 								overflow: hidden;
 								white-space: nowrap;
 								overflow: hidden;
-								text-overflow: ellipsis;
 
 								cursor: pointer;
 							}
@@ -375,8 +379,8 @@
 					border: 1px solid var(--l1-border);
 					background: linear-gradient(
 						139deg,
-						color-mix(in srgb, var(--card) 80%, transparent) 0%,
-						color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+						color-mix(in srgb, var(--surface-2) 80%, transparent) 0%,
+						color-mix(in srgb, var(--surface-2) 90%, transparent) 98.68%
 					);
 
 					box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);

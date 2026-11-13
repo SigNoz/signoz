@@ -19,6 +19,6 @@ describe('NoAuthBanner', () => {
 		render(<NoAuthBanner />);
 		const link = screen.getByRole('link', { name: /learn more/i });
 		expect(link).toHaveAttribute('target', '_blank');
-		expect(link).toHaveAttribute('rel', 'noreferrer');
+		expect(link).toHaveAttribute('rel', expect.stringContaining('noreferrer'));
 	});
 });

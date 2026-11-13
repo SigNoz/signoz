@@ -1,5 +1,4 @@
 import { Button as ButtonComponent } from 'antd';
-import { Typography as TypographyComponent } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
 export const Button = styled(ButtonComponent)`
@@ -17,13 +16,6 @@ export const ButtonContainer = styled.div`
 export const AppDexThresholdContainer = styled.div`
 	display: flex;
 	align-items: center;
-`;
-
-export const Typography = styled(TypographyComponent)`
-	&&& {
-		width: 24rem;
-		margin: 0.5rem 0;
-	}
 `;
 
 export const SaveAndCancelContainer = styled.div`

@@ -30,7 +30,7 @@
 		var(--l2-background)
 	);
 
-	--input-height: 36px;
+	--input-sm-height: 36px;
 	--input-font-size: 13px;
 	--input-border-radius: var(--radius-1);
 	--input-border-color: var(--query-builder-v2-border-color, var(--l2-border));
@@ -82,9 +82,9 @@
 	gap: var(--spacing-2);
 
 	color: var(--l3-foreground);
-	font-family: 'Geist Mono';
+	font-family: var(--code-small-500-font-family);
 	font-size: 12px;
-	font-weight: var(--font-weight-medium);
+	font-weight: var(--uppercase-small-500-font-weight);
 	line-height: 18px;
 	letter-spacing: 0.48px;
 	text-transform: uppercase;
@@ -96,18 +96,16 @@
  * the query builder's value type itself.
  */
 .toggleLabel {
-	font-family: 'Geist Mono';
+	font-family: var(--code-base-400-font-family);
 	font-size: 13px;
-	font-weight: var(--font-weight-normal);
+	font-weight: var(--code-base-400-font-weight);
 	letter-spacing: -0.07px;
 }
 
-/** Surface and metrics come from the `--input-*` tokens above; only the family has none. */
-.numberInput {
-	width: 104px;
-
-	font-family: 'Geist Mono';
-	letter-spacing: -0.07px;
+/** Surface and metrics come from the `--input-*` tokens; the family and tracking are set here. */
+.numberField {
+	--input-font-family: var(--code-base-400-font-family);
+	--input-letter-spacing: -0.07px;
 }
 
 /** Unfilled: a pill on the same row as the toggles above reads as another control,
@@ -115,7 +113,7 @@
 .bound {
 	padding: var(--spacing-1) 0;
 
-	font-family: 'Geist Mono';
+	font-family: var(--code-base-400-font-family);
 	font-size: 13px;
 	line-height: 20px;
 	letter-spacing: -0.07px;
@@ -128,7 +126,7 @@
 }
 
 .muted {
-	font-family: 'Geist Mono';
+	font-family: var(--code-base-400-font-family);
 	font-size: 13px;
 	line-height: 20px;
 	color: var(--l3-foreground);

@@ -238,9 +238,16 @@ function SpanLogs({
 		<div className={styles.spanLogsEmptyContent}>
 			<section className={styles.description}>
 				<img src={noDataUrl} alt="no-data" className={styles.noDataImg} />
-				<Typography.Text className={styles.noDataDescription}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					No logs found for selected span. View logs for the current trace.
-				</Typography.Text>
+				</Typography>
 			</section>
 			<section className={styles.actionSection}>
 				<Button

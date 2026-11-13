@@ -19,13 +19,18 @@ function GroupHeader({ group }: GroupHeaderProps): JSX.Element {
 			className={styles.groupHeaderLabel}
 			data-testid={`group-expand-${group.localId}`}
 		>
-			<Typography.Text
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="bold"
+				color="main"
 				as="span"
-				className={styles.groupName}
+				display="inline-block"
+				textOverflow="ellipsis"
 				testId={`group-name-${group.localId}`}
 			>
 				{group.name}
-			</Typography.Text>
+			</Typography>
 			<Tooltip
 				title={
 					<ConditionsTooltip

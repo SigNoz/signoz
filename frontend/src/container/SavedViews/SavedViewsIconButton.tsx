@@ -36,6 +36,7 @@ const SavedViewsIconButton = forwardRef<
 		return (
 			<Tooltip title={title}>
 				<AuthZButton
+					ref={ref}
 					checks={checks}
 					{...VARIANT_COLORS[color]}
 					size="sm"
@@ -45,6 +46,7 @@ const SavedViewsIconButton = forwardRef<
 					// AuthZButton skips its checks while a block reason is set.
 					disabledTooltip={disabled ? disabledTooltip : undefined}
 					onClick={onClick}
+					{...triggerProps}
 					testId={testId}
 				>
 					{icon}

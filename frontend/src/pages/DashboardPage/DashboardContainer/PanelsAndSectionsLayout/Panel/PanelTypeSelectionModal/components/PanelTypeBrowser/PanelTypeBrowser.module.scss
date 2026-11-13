@@ -14,16 +14,14 @@
 	margin-top: -16px;
 	padding-block: 16px;
 	border-bottom: 1px dashed var(--l1-border);
-	// Matches the drawer surface, which the app pins to l1 for every drawer.
-	background: var(--l1-background);
+	// Matches the drawer surface.
+	background: var(--drawer-background);
 }
 
 .search {
-	box-sizing: border-box;
-	--input-wrapper-background: var(--l2-background);
-	--input-wrapper-border-color: var(--l2-border);
+	--input-background: var(--l2-background);
+	--input-border-color: var(--l2-border);
 	--input-hover-border-color: var(--l3-border);
-	--input-box-shadow: none;
 }
 
 .categories {

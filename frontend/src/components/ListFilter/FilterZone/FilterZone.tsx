@@ -116,15 +116,31 @@ function FilterZone({
 				{rightSlot}
 			</div>
 			{error && (
-				<Typography.Text
-					className={styles.error}
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="danger"
+					as="span"
+					textOverflow="wrap"
 					testId={`${testIdPrefix}-query-error`}
 				>
 					{error}
-				</Typography.Text>
+				</Typography>
 			)}
 			<div className={styles.filtersRow}>
-				<Typography.Text className={styles.filtersLabel}>Filters</Typography.Text>
+				<Typography
+					variant="uppercase"
+					size="small"
+					weight="medium"
+					color="secondary"
+					as="span"
+					display="inline-block"
+					marginRight={1}
+					textOverflow="wrap"
+				>
+					Filters
+				</Typography>
 				{wrapControl(
 					<div
 						className={styles.filterControls}

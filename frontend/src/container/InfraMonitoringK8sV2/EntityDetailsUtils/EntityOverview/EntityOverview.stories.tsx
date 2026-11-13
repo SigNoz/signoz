@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { screen, userEvent, within } from 'storybook/test';
+import { Drawer } from '@signozhq/ui/drawer';
 import { GlobalTimeProvider } from 'store/globalTime';
 
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -36,17 +37,21 @@ const meta = {
 	...storyMocks(overviewMocks, { route }),
 	decorators: [
 		(Story): JSX.Element => (
-			<DrawerWrapper
+			<Drawer
+				type="task"
+				stack="overlay"
 				open
-				direction="right"
 				title="app-demo-loadgenerator-579fbdd749-q5kgd"
-				onOpenChange={(): void => undefined}
-				className={drawerStyles.entityDetailDrawer}
+				width="entity"
+				testId="drawer-wrapper"
+				onClose={(): void => undefined}
 			>
-				<GlobalTimeProvider>
-					<Story />
-				</GlobalTimeProvider>
-			</DrawerWrapper>
+				<div className={drawerStyles.body}>
+					<GlobalTimeProvider>
+						<Story />
+					</GlobalTimeProvider>
+				</div>
+			</Drawer>
 		),
 	],
 } satisfies Meta<OverviewArgs>;
@@ -62,5 +67,10 @@ export const Default: Story = {
 		entity: { podUID: POD_UID },
 		entityName: POD_ATTRIBUTES['k8s.pod.name'],
 		queryKeyPrefix: 'pod',
+	},
+	play: async () => {
+		const timeSelection = await screen.findByTestId('drawer-time-selection');
+		await userEvent.click(await within(timeSelection).findByRole('textbox'));
+		await screen.findByText('RELATIVE TIMES');
 	},
 };

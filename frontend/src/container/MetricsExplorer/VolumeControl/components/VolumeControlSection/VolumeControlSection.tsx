@@ -46,21 +46,32 @@ function VolumeControlSection({
 		<div className={styles.section} data-testid="volume-control-section">
 			<div className={styles.header}>
 				<Gauge size={14} />
-				<Typography.Text size="sm" weight="semibold" className={styles.title}>
+				<Typography
+					variant="uppercase"
+					size="small"
+					weight="bold"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					Volume control
-				</Typography.Text>
+				</Typography>
 			</div>
 
 			{isLoading && <Skeleton active title={false} paragraph={{ rows: 2 }} />}
 
 			{!isLoading && isError && (
-				<Typography.Text
+				<Typography
+					variant="paragraph"
 					size="small"
+					weight="regular"
 					color="danger"
+					as="span"
+					textOverflow="wrap"
 					data-testid="volume-control-section-error"
 				>
 					Failed to load volume control. Please try again.
-				</Typography.Text>
+				</Typography>
 			)}
 
 			{!isLoading && hasRule && rule && !rule.active && (

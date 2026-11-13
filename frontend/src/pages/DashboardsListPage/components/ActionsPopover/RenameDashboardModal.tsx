@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import {
 	invalidateListDashboardsForUserV2,
@@ -16,7 +16,6 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../../DashboardPage/DashboardContainer/constants';
-import styles from './ActionsPopover.module.scss';
 
 interface Props {
 	open: boolean;
@@ -33,6 +32,7 @@ function RenameDashboardModal({
 	onClose,
 }: Props): JSX.Element {
 	const [name, setName] = useState(currentName);
+	const nameInputRef = useRef<HTMLInputElement>(null);
 	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
 
@@ -72,17 +72,14 @@ function RenameDashboardModal({
 	const canSave = trimmed.length > 0 && trimmed !== currentName && !isLoading;
 
 	return (
-		<DialogWrapper
+		<Dialog
 			title="Rename dashboard"
 			open={open}
 			width="narrow"
-			onOpenChange={(next): void => {
-				if (!next) {
-					onClose();
-				}
-			}}
-			footer={
-				<div className={styles.renameFooter}>
+			initialFocus={nameInputRef}
+			onClose={onClose}
+			footerSuffix={
+				<>
 					<Button
 						variant="ghost"
 						color="secondary"
@@ -108,12 +105,12 @@ function RenameDashboardModal({
 					>
 						Save
 					</Button>
-				</div>
+				</>
 			}
 		>
 			<Input
+				ref={nameInputRef}
 				value={name}
-				autoFocus
 				maxLength={DASHBOARD_NAME_MAX_LENGTH}
 				placeholder="Dashboard name"
 				testId="rename-dashboard-input"
@@ -124,7 +121,7 @@ function RenameDashboardModal({
 					}
 				}}
 			/>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

@@ -60,30 +60,40 @@ export const PermissionRow = memo(function PermissionRow({
 			data-testid={`permission-row-${observed.permission}`}
 		>
 			<div className={styles.permissionInfo}>
-				<Typography.Text
-					as="span"
+				<span className={styles.relation}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="medium"
+						color="primary"
+						as="span"
+						textOverflow="wrap"
+					>
+						{relation}
+					</Typography>
+				</span>
+				<Typography
+					variant="paragraph"
 					size="small"
-					weight="medium"
-					className={styles.relation}
-				>
-					{relation}
-				</Typography.Text>
-				<Typography.Text
+					weight="regular"
+					color="secondary"
 					as="span"
-					size="small"
-					color="muted"
-					className={styles.separator}
+					textOverflow="wrap"
 				>
 					:
-				</Typography.Text>
-				<Typography.Text
-					as="span"
+				</Typography>
+				<Typography
+					variant="paragraph"
 					size="small"
-					truncate={1}
-					className={styles.object}
+					weight="regular"
+					color="inherit"
+					as="span"
+					display="block"
+					minWidth={0}
+					textOverflow="ellipsis"
 				>
 					{objectId}
-				</Typography.Text>
+				</Typography>
 			</div>
 			<div className={styles.permissionMeta}>
 				<Badge variant="outlined" color={apiColor}>

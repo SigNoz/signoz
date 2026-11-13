@@ -17,7 +17,7 @@
 
 		.learn-more {
 			width: fit-content;
-			font-size: var(--font-size-xs);
+			font-size: var(--label-small-400-font-size);
 		}
 	}
 
@@ -32,8 +32,6 @@
 	}
 
 	&__body {
-		font-size: var(--paragraph-base-400-font-size);
-		font-weight: var(--paragraph-base-400-font-weight);
 		color: var(--foreground);
 		line-height: var(--paragraph-base-400-line-height);
 		margin: 0;

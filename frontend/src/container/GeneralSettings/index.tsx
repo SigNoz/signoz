@@ -54,7 +54,14 @@ function GeneralSettings(): JSX.Element {
 	// Error State - When RetentionPeriodMetricsApi or getDiskApi gets errored out.
 	if (getRetentionPeriodMetricsApiResponse.isError || getDisksResponse.isError) {
 		return (
-			<Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				{getRetentionPeriodMetricsApiResponse.data?.error ||
 					getDisksResponse.data?.error ||
 					t('something_went_wrong')}
@@ -65,7 +72,14 @@ function GeneralSettings(): JSX.Element {
 	// Error State - When RetentionPeriodTracesApi or getDiskApi gets errored out.
 	if (getRetentionPeriodTracesApiResponse.isError || getDisksResponse.isError) {
 		return (
-			<Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				{getRetentionPeriodTracesApiResponse.data?.error ||
 					getDisksResponse.data?.error ||
 					t('something_went_wrong')}
@@ -75,7 +89,14 @@ function GeneralSettings(): JSX.Element {
 	// Error State - When RetentionPeriodLogsApi or getDiskApi gets errored out.
 	if (getRetentionPeriodLogsApiResponse.isError || getDisksResponse.isError) {
 		return (
-			<Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				{(getRetentionPeriodLogsApiResponse.error instanceof APIError
 					? getRetentionPeriodLogsApiResponse.error.getErrorMessage()
 					: undefined) ||

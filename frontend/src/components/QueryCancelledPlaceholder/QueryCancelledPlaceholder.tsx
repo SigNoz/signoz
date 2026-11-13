@@ -13,7 +13,15 @@ function QueryCancelledPlaceholder({
 	return (
 		<div className={styles.placeholder}>
 			<img className={styles.emoji} src={eyesEmojiUrl} alt="eyes emoji" />
-			<Typography className={styles.text}>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="p"
+				align="center"
+				textOverflow="wrap"
+			>
 				Query cancelled.
 				<span className={styles.subText}>
 					{' '}

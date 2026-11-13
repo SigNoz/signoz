@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getListRuleViewsQueryKey,
@@ -56,7 +56,9 @@ const toastApiError =
 		const apiError = convertToApiError(
 			error as AxiosError<RenderErrorResponseDTO>,
 		);
-		toast.error(apiError?.getErrorMessage() || fallback);
+		toast.danger(apiError?.getErrorMessage() || fallback, {
+			action: { label: 'Dismiss' },
+		});
 	};
 
 /** Org-shared saved views for the alert rules list, backed by the rule views API. */

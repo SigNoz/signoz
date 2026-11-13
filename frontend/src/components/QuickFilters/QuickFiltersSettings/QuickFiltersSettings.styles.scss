@@ -35,7 +35,7 @@
 			align-items: center;
 			gap: var(--spacing-6);
 			color: var(--l2-foreground);
-			font-size: var(--font-size-sm);
+			font-size: var(--label-base-400-font-size);
 		}
 	}
 
@@ -98,7 +98,6 @@
 		color: var(--muted-foreground);
 		font-family: Inter;
 		font-size: 11px;
-		font-style: normal;
 		font-weight: 500;
 		line-height: 18px;
 		letter-spacing: 0.88px;

@@ -61,36 +61,37 @@ function PanelHeaderSearch({
 	}
 
 	return (
-		<Input
-			autoFocus
-			size={14}
-			value={value}
-			placeholder="Search…"
-			containerClassName={styles.input}
-			testId="panel-header-search-input"
-			prefix={<Search size={14} />}
-			suffix={
-				<Button
-					type="button"
-					variant="ghost"
-					color="secondary"
-					size="sm"
-					icon
-					onClick={clear}
-					testId="panel-header-search-clear"
-					aria-label="Clear search"
-				>
-					<X size={14} />
-				</Button>
-			}
-			onChange={handleSearchChange}
-			onBlur={collapseIfEmpty}
-			onKeyDown={(e: KeyboardEvent<HTMLInputElement>): void => {
-				if (e.key === 'Escape') {
-					clear();
+		<div className={styles.input}>
+			<Input
+				size="sm"
+				autoFocus
+				value={value}
+				placeholder="Search…"
+				testId="panel-header-search-input"
+				prefix={<Search size={14} />}
+				suffix={
+					<Button
+						type="button"
+						variant="link"
+						color="secondary"
+						size="sm"
+						icon
+						onClick={clear}
+						testId="panel-header-search-clear"
+						aria-label="Clear search"
+					>
+						<X size={14} />
+					</Button>
 				}
-			}}
-		/>
+				onChange={handleSearchChange}
+				onBlur={collapseIfEmpty}
+				onKeyDown={(e: KeyboardEvent<HTMLInputElement>): void => {
+					if (e.key === 'Escape') {
+						clear();
+					}
+				}}
+			/>
+		</div>
 	);
 }
 

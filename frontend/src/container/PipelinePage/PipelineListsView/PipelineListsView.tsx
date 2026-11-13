@@ -78,7 +78,14 @@ function PipelinesListEmptyState(): JSX.Element {
 						title={t('learn_more')}
 					/>
 					<div>
-						<Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							{t('learn_more')}&nbsp;
 							<a
 								href="https://signoz.io/docs/logs-pipelines/introduction/?utm_source=product&utm_medium=pipelines-tab"

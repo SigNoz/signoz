@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { Space } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import UnAuthorized from 'assets/UnAuthorized';
 import { Container } from 'components/NotFound/styles';
@@ -32,19 +33,31 @@ function UnAuthorizePage(): JSX.Element {
 		<Container className="unauthorized-page">
 			<Space align="center" direction="vertical">
 				<UnAuthorized width={64} height={64} />
-				<Typography.Title level={3}>Access Restricted</Typography.Title>
+				<Typography
+					variant="label"
+					size="large"
+					weight="bold"
+					color="inherit"
+					as="h3"
+					marginY={4}
+					textOverflow="wrap"
+				>
+					Access Restricted
+				</Typography>
 
 				<p className="unauthorized-page__description">
 					It looks like you don&lsquo;t have permission to view this page. <br />
 					{mistakeMessage}
 					{userIsAnonymous ? (
-						<Typography.Link
-							className="contact-support-link"
+						<Button
+							variant="link"
+							color="primary"
+							size="md"
 							onClick={handleContactSupportClick}
 						>
 							{' '}
 							reach out to us.
-						</Typography.Link>
+						</Button>
 					) : null}
 				</p>
 			</Space>

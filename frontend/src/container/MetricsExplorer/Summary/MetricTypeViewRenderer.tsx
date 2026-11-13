@@ -43,27 +43,28 @@ export function MetricTypeViewRenderer({
 		}
 	}, [type]);
 
-	const { metricTypeViewRendererStyle, metricTypeViewRendererTextStyle } =
-		useMemo(() => {
-			return {
-				metricTypeViewRendererStyle: {
-					backgroundColor: `${color}33`,
-					border: `1px solid ${color}`,
-					color,
-				},
-				metricTypeViewRendererTextStyle: {
-					color,
-					fontSize: 12,
-				},
-			};
-		}, [color]);
+	const metricTypeViewRendererStyle = useMemo(
+		() => ({
+			backgroundColor: `${color}33`,
+			border: `1px solid ${color}`,
+			color,
+		}),
+		[color],
+	);
 
 	return (
 		<div className="metric-type-renderer" style={metricTypeViewRendererStyle}>
 			{icon}
-			<Typography.Text style={metricTypeViewRendererTextStyle}>
+			<Typography
+				variant="uppercase"
+				size="small"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="visible"
+			>
 				{METRIC_TYPE_VIEW_VALUES_MAP[type]}
-			</Typography.Text>
+			</Typography>
 		</div>
 	);
 }

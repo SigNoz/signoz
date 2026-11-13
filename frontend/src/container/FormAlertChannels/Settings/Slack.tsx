@@ -11,7 +11,11 @@ import SlackFields from './SlackFields';
 
 const { TextArea } = AntdInput;
 
-function Slack(): JSX.Element {
+interface SlackProps {
+	readOnly: boolean;
+}
+
+function Slack({ readOnly }: SlackProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -31,7 +35,7 @@ function Slack(): JSX.Element {
 					<Input
 						{...register('apiUrl')}
 						aria-required
-						data-testid="webhook-url-textbox"
+						testId="webhook-url-textbox"
 					/>
 				</FormField>
 
@@ -40,7 +44,7 @@ function Slack(): JSX.Element {
 					label={t('field_slack_recipient')}
 					error={errors.channel?.message}
 				>
-					<Input {...register('channel')} data-testid="slack-channel-textbox" />
+					<Input {...register('channel')} testId="slack-channel-textbox" />
 				</FormField>
 			</FormCard>
 
@@ -55,6 +59,7 @@ function Slack(): JSX.Element {
 								rows={4}
 								value={(field.value as string) ?? ''}
 								onChange={field.onChange}
+								disabled={readOnly}
 							/>
 						)}
 					/>
@@ -64,7 +69,7 @@ function Slack(): JSX.Element {
 					label={t('field_slack_title_link')}
 					error={errors.titleLink?.message}
 				>
-					<Input {...register('titleLink')} data-testid="title-link-textbox" />
+					<Input {...register('titleLink')} testId="title-link-textbox" />
 				</FormField>
 
 				<FormField
@@ -80,6 +85,7 @@ function Slack(): JSX.Element {
 								data-testid="description-textarea"
 								value={(field.value as string) ?? ''}
 								onChange={field.onChange}
+								disabled={readOnly}
 							/>
 						)}
 					/>
@@ -98,7 +104,7 @@ function Slack(): JSX.Element {
 					<Input
 						{...register('color')}
 						placeholder={t('placeholder_slack_color')}
-						data-testid="slack-color-textbox"
+						testId="slack-color-textbox"
 					/>
 				</FormField>
 
@@ -107,7 +113,7 @@ function Slack(): JSX.Element {
 					help={t('help_slack_pretext')}
 					error={errors.pretext?.message}
 				>
-					<Input {...register('pretext')} data-testid="slack-pretext-textbox" />
+					<Input {...register('pretext')} testId="slack-pretext-textbox" />
 				</FormField>
 
 				<FormField
@@ -115,16 +121,16 @@ function Slack(): JSX.Element {
 					help={t('help_slack_fallback')}
 					error={errors.fallback?.message}
 				>
-					<Input {...register('fallback')} data-testid="slack-fallback-textbox" />
+					<Input {...register('fallback')} testId="slack-fallback-textbox" />
 				</FormField>
 
 				<FormField label={t('field_slack_footer')} error={errors.footer?.message}>
-					<Input {...register('footer')} data-testid="slack-footer-textbox" />
+					<Input {...register('footer')} testId="slack-footer-textbox" />
 				</FormField>
 
-				<SlackFields />
+				<SlackFields readOnly={readOnly} />
 
-				<SlackActions />
+				<SlackActions readOnly={readOnly} />
 			</FormCard>
 		</>
 	);

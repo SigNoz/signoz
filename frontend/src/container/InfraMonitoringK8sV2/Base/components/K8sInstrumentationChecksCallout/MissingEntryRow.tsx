@@ -1,5 +1,6 @@
 import styles from './MissingEntryRow.module.scss';
 import { ExternalLink, TriangleAlert } from '@signozhq/icons';
+import { Callout } from '@signozhq/ui/callout';
 import { Typography } from '@signozhq/ui/typography';
 import { Divider } from '@signozhq/ui/divider';
 import type {
@@ -29,38 +30,63 @@ export function MissingEntryRow({
 	return (
 		<div className={styles.entryRow}>
 			<TriangleAlert size={14} className={styles.missingIcon} />
-			<Typography.Text size="base" weight="medium">
-				{typeLabel}
-			</Typography.Text>
-			<Typography.Text size="base" color="muted">
-				-
-			</Typography.Text>
-			<Typography.Text
+			<Typography
+				variant="paragraph"
 				size="base"
-				weight="semibold"
-				className={styles.entryRowMetric}
+				weight="medium"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{typeLabel}
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
+				-
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="bold"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
 			>
 				{items?.join(', ')}
-			</Typography.Text>
-			<Typography.Text size="base" color="muted">
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				-
-			</Typography.Text>
-			<Typography.Text size="base" italic color="muted">
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				{entry.associatedComponent.name}
-			</Typography.Text>
+			</Typography>
 			{entry.documentationLink && (
-				<Typography.Link
-					href={entry.documentationLink}
-					target="_blank"
-					rel="noopener noreferrer"
-					size="base"
-					className={styles.learnMoreLink}
-				>
+				<Callout.Link href={entry.documentationLink} target="_blank">
 					Learn here
 					<ExternalLink size={12} />
-				</Typography.Link>
+				</Callout.Link>
 			)}
-			<Divider className={styles.divider} />
+			<Divider />
 		</div>
 	);
 }

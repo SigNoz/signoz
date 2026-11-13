@@ -1,6 +1,10 @@
+import {
+	LoaderCircle,
+	SolidAlertCircle,
+	SolidInfoCircle,
+} from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import { Spin } from 'antd';
-import { LoaderCircle } from '@signozhq/icons';
 
 import { ModalStateEnum } from '../HeroSection/types';
 
@@ -13,29 +17,33 @@ function AlertMessage({
 		case ModalStateEnum.WAITING:
 			return (
 				<Callout
-					title={
-						<div className="cloud-account-setup-form__alert-message">
-							<Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />
-							Waiting for connection, retrying in{' '}
-							<span className="retry-time">10</span> secs...
-						</div>
-					}
-					type="info"
-					showIcon={false}
+					color="primary"
+					size="sm"
+					icon={<SolidInfoCircle />}
 					testId="cloud-connect-waiting"
-				/>
+				>
+					<div className="cloud-account-setup-form__alert-message">
+						<Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />
+						Waiting for connection, retrying in <span className="retry-time">
+							10
+						</span>{' '}
+						secs...
+					</div>
+				</Callout>
 			);
 		case ModalStateEnum.ERROR:
 			return (
 				<Callout
-					title={
-						<div className="cloud-account-setup-form__alert-message">
-							{`We couldn't establish a connection to your AWS account. Please try again`}
-						</div>
-					}
-					type="error"
+					color="danger"
+					size="sm"
+					icon={<SolidAlertCircle />}
 					testId="cloud-connect-error"
-				/>
+				>
+					<div className="cloud-account-setup-form__alert-message">
+						We couldn&apos;t establish a connection to your AWS account. Please try
+						again
+					</div>
+				</Callout>
 			);
 		default:
 			return null;

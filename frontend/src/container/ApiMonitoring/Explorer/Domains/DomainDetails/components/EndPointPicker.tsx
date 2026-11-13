@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import { Combobox, type ComboboxItemType } from '@signozhq/ui/combobox';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
@@ -54,17 +54,15 @@ function EndPointPicker({
 	});
 
 	const items = useMemo(
-		(): ComboboxSimpleItem[] => [
-			{ value: ALL_ENDPOINTS, label: 'All endpoints' },
+		(): ComboboxItemType[] => [
+			{ type: 'item', value: ALL_ENDPOINTS, label: 'All endpoints' },
 			...getFormattedEndPointDropDownData(
 				data?.payload?.data?.result?.[0]?.table?.rows ?? [],
-			).map(({ value: url }) => ({
+			).map(({ value: url }): ComboboxItemType => ({
+				type: 'item',
 				value: url,
-				label: (
-					<span className={styles.option} title={url}>
-						{url}
-					</span>
-				),
+				label: <span title={url}>{url}</span>,
+				displayValue: url,
 			})),
 		],
 		[data],
@@ -72,17 +70,17 @@ function EndPointPicker({
 
 	return (
 		<div className={styles.picker}>
-			<ComboboxSimple
+			<Combobox
 				items={items}
 				value={value || ALL_ENDPOINTS}
 				onChange={(next): void =>
-					onChange(!next || next === ALL_ENDPOINTS ? '' : (next as string))
+					onChange(!next || next === ALL_ENDPOINTS ? '' : next)
 				}
-				inputPlaceholder="Search endpoints"
-				emptyPlaceholder="No endpoints found"
+				placeholder="All endpoints"
+				searchInputProps={{ placeholder: 'Search endpoints' }}
+				noContent="No endpoints found"
 				loading={isLoading || isFetching}
 				virtualized={items.length > VIRTUALIZE_AFTER}
-				withPortal={false}
 				testId="endpoint-picker"
 			/>
 		</div>

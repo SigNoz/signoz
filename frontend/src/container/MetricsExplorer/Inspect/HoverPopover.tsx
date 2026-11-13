@@ -6,8 +6,8 @@ import {
 	GraphPopoverOptions,
 	InspectionStep,
 	MetricInspectionOptions,
+	TimeSeriesLabelProps,
 } from './types';
-import { TimeSeriesLabelProps } from './types';
 import { formatTimestampToFullDateTime } from './utils';
 
 function TimeSeriesLabel({
@@ -18,9 +18,18 @@ function TimeSeriesLabel({
 		<>
 			{Object.entries(timeSeries?.labels ?? {}).map(([key, value]) => (
 				<span key={key}>
-					<Typography.Text style={{ color: textColor, fontWeight: 600 }}>
-						{key}
-					</Typography.Text>
+					<span style={{ display: 'contents', color: textColor }}>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="bold"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{key}
+						</Typography>
+					</span>
 					: {value}{' '}
 				</span>
 			))}
@@ -90,20 +99,42 @@ function HoverPopover({
 			}}
 		>
 			<div className="hover-popover-row">
-				<Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{formatTimestampToFullDateTime(closestTimestamp ?? 0)}
-				</Typography.Text>
-				<Typography.Text>{Number(closestValue).toFixed(2)}</Typography.Text>
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{Number(closestValue).toFixed(2)}
+				</Typography>
 			</div>
 			{options.timeSeries && (
-				<Typography.Text
-					style={{
-						color: options.timeSeries?.strokeColor,
-						fontWeight: 200,
-					}}
+				<span
+					style={{ display: 'contents', color: options.timeSeries?.strokeColor }}
 				>
-					{title}
-				</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{title}
+					</Typography>
+				</span>
 			)}
 		</Card>
 	);

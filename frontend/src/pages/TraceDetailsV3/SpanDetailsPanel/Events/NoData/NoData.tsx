@@ -14,9 +14,16 @@ function NoData(props: INoDataProps): JSX.Element {
 	return (
 		<div className={styles.noData}>
 			<img src={noDataUrl} alt="no-data" className={styles.noDataImg} />
-			<Typography.Text className={styles.noDataText}>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="medium"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				No {name} found for selected span
-			</Typography.Text>
+			</Typography>
 		</div>
 	);
 }

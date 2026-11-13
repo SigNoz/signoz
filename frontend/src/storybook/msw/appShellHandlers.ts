@@ -61,7 +61,7 @@ export const appShellHandlers = [
 		res(ctx.status(200), ctx.json(changelogResponse)),
 	),
 
-	// The webfonts `index.html` links and `styles.scss` imports. The story
+	// The webfonts `styles.scss` imports. The story
 	// declares the same families over `public/fonts` in
 	// `.storybook/public/storybook-fonts.css`, so answering the CDN with nothing
 	// keeps a request from leaving the browser on every story.

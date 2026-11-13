@@ -30,9 +30,9 @@
 					gap: var(--margin-2);
 					align-items: center;
 					justify-content: center;
-					font-size: var(--font-size-xs);
+					font-size: var(--label-small-400-font-size);
 					font-style: normal;
-					font-weight: var(--font-weight-normal);
+					font-weight: var(--label-small-400-font-weight);
 				}
 
 				.ant-btn {
@@ -126,8 +126,6 @@
 						.order-by-label {
 							color: var(--l2-foreground);
 							font-size: 12px;
-							font-style: normal;
-							font-weight: 400;
 							line-height: 16px; /* 133.333% */
 
 							display: flex;

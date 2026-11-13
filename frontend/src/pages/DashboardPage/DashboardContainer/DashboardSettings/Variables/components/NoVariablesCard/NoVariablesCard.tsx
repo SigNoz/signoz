@@ -16,12 +16,26 @@ const NoVariablesCard = ({
 	return (
 		<div className={styles.noVariablesCard}>
 			<div className={styles.noVariablesCopy}>
-				<Typography.Text className={styles.noVariablesTitle}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
 					No variables yet
-				</Typography.Text>
-				<Typography.Text className={styles.noVariablesInfo}>
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="tertiary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Create a variable to parameterize your panel queries.
-				</Typography.Text>
+				</Typography>
 			</div>
 			<AddVariableButton
 				checks={checks}

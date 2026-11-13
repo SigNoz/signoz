@@ -11,8 +11,12 @@ import FormField from '../FormField';
 import RowEntry from './RowEntry';
 import styles from './RowEditor.module.scss';
 
+interface SlackFieldsProps {
+	readOnly: boolean;
+}
+
 // Slack renders these as the attachment's table of short or full-width entries.
-function SlackFields(): JSX.Element {
+function SlackFields({ readOnly }: SlackFieldsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		control,
@@ -35,6 +39,7 @@ function SlackFields(): JSX.Element {
 						removeLabel={t('remove_slack_field')}
 						removeTestId={`slack-field-remove-${index}`}
 						onRemove={(): void => remove(index)}
+						readOnly={readOnly}
 					>
 						<FormField
 							label={t('label_slack_field_title')}
@@ -68,11 +73,20 @@ function SlackFields(): JSX.Element {
 										color="primary"
 										value={!!field.value}
 										onChange={(checked): void => field.onChange(checked === true)}
+										disabled={readOnly}
+										disabledTooltip={undefined}
 										testId={`slack-field-short-${index}`}
 									>
-										<Typography.Text size="sm">
+										<Typography
+											variant="paragraph"
+											size="small"
+											weight="regular"
+											color="inherit"
+											as="span"
+											textOverflow="wrap"
+										>
 											{t('field_slack_field_short')}
-										</Typography.Text>
+										</Typography>
 									</Checkbox>
 								)}
 							/>
@@ -88,6 +102,8 @@ function SlackFields(): JSX.Element {
 					size="sm"
 					prefix={<Plus size={14} />}
 					onClick={(): void => append({ title: '', value: '', short: false })}
+					disabled={readOnly}
+					disabledTooltip={undefined}
 					testId="slack-field-add"
 				>
 					{t('add_slack_field')}

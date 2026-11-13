@@ -115,21 +115,22 @@ function TagKeyValueInput({
 			<div className={styles.field}>
 				{tags.map((tag, index) =>
 					index === editIndex ? (
-						<Input
-							key={tag}
-							className={styles.editInput}
-							value={editValue}
-							autoFocus
-							testId={`${testId}-edit`}
-							onChange={(e: ChangeEvent<HTMLInputElement>): void => {
-								setEditValue(e.target.value);
-								if (error) {
-									setError('');
-								}
-							}}
-							onKeyDown={handleEditKeyDown}
-							onBlur={(): void => commitEdit(true)}
-						/>
+						<span key={tag} className={styles.editInput}>
+							<Input
+								width={160}
+								value={editValue}
+								autoFocus
+								testId={`${testId}-edit`}
+								onChange={(e: ChangeEvent<HTMLInputElement>): void => {
+									setEditValue(e.target.value);
+									if (error) {
+										setError('');
+									}
+								}}
+								onKeyDown={handleEditKeyDown}
+								onBlur={(): void => commitEdit(true)}
+							/>
+						</span>
 					) : (
 						<Pill.Closeable
 							key={tag}
@@ -142,17 +143,28 @@ function TagKeyValueInput({
 						</Pill.Closeable>
 					),
 				)}
-				<Input
-					className={styles.input}
-					value={inputValue}
-					placeholder={placeholder}
-					testId={testId}
-					onChange={handleChange}
-					onKeyDown={handleKeyDown}
-				/>
+				<div className={styles.input}>
+					<Input
+						variant="unstyled"
+						width="100%"
+						value={inputValue}
+						placeholder={placeholder}
+						testId={testId}
+						onChange={handleChange}
+						onKeyDown={handleKeyDown}
+					/>
+				</div>
 			</div>
 			{error && (
-				<Typography className={styles.error} data-testid={`${testId}-error`}>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="danger"
+					as="span"
+					textOverflow="wrap"
+					data-testid={`${testId}-error`}
+				>
 					{error}
 				</Typography>
 			)}

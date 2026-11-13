@@ -284,7 +284,16 @@ function Inspect({
 				width="100%"
 				title={
 					<div className="inspect-metrics-title">
-						<Typography.Text>Metrics Explorer —</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Metrics Explorer —
+						</Typography>
 						<Button
 							className="inspect-metrics-button"
 							size="small"

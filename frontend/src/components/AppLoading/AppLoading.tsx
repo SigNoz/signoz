@@ -28,15 +28,29 @@ function AppLoading(): JSX.Element {
 				<div className="brand">
 					<img src={signozBrandLogoUrl} alt="SigNoz" className="brand-logo" />
 
-					<Typography.Title level={2} className="brand-title">
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="main"
+						as="h2"
+						textOverflow="wrap"
+					>
 						SigNoz
-					</Typography.Title>
+					</Typography>
 				</div>
 
 				<div className="brand-tagline">
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						OpenTelemetry-Native Logs, Metrics and Traces in a single pane
-					</Typography.Text>
+					</Typography>
 				</div>
 
 				<div className="loader" />

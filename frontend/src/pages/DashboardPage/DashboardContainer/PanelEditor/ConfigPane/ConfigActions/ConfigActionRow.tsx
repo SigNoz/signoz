@@ -36,7 +36,16 @@ function ConfigActionRow({
 			prefix={<span className={styles.icon}>{icon}</span>}
 			suffix={<SquareArrowOutUpRight size={14} />}
 		>
-			<Typography.Text className={styles.label}>{label}</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="visible"
+			>
+				{label}
+			</Typography>
 		</Button>
 	);
 }

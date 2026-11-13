@@ -28,9 +28,16 @@ function HiddenVariablesTooltip({
 			<div className={styles.tooltip} data-testid="hidden-variables-tooltip">
 				{variables.map((variable) => (
 					<div className={styles.row} key={variable.name}>
-						<Typography.Text size="xs" color="muted" className={styles.name}>
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="p"
+							textOverflow="ellipsis"
+						>
 							${variable.name}
-						</Typography.Text>
+						</Typography>
 						<SelectionValue selection={selections[variable.name]} />
 					</div>
 				))}

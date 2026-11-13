@@ -23,17 +23,33 @@ function TraceTooltipRow({
 			className={cx(styles.row, isNested && styles.nestedRow)}
 			data-testid={testId}
 		>
-			<Typography.Text
+			<Typography
+				variant="paragraph"
 				size="small"
-				color={isHeading ? undefined : 'muted'}
-				className={styles.rowLabel}
+				weight="regular"
+				color={isHeading ? 'inherit' : 'secondary'}
+				as="span"
+				display="inline-block"
+				minWidth={0}
+				textOverflow="wrap"
 			>
 				{label}
-			</Typography.Text>
+			</Typography>
 			{value !== undefined && (
-				<Typography.Text size="small" className={styles.rowValue}>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="inherit"
+					as="span"
+					display="inline-block"
+					align="end"
+					minWidth={0}
+					textOverflow="wrap"
+					tabularNumbers
+				>
 					{value}
-				</Typography.Text>
+				</Typography>
 			)}
 		</div>
 	);

@@ -46,8 +46,8 @@
 .title {
 	flex: 1;
 	min-width: 0;
-	font-family: var(--font-mono);
-	font-size: var(--font-size-xs);
+	font-family: var(--code-small-600-font-family);
+	font-size: var(--code-small-600-font-size);
 	font-weight: 600;
 	color: var(--text-vanilla-100);
 	overflow: hidden;
@@ -67,8 +67,8 @@
 	align-items: baseline;
 	justify-content: space-between;
 	gap: var(--spacing-4);
-	font-family: var(--font-mono);
-	font-size: var(--font-size-xs);
+	font-family: var(--code-small-400-font-family);
+	font-size: var(--code-small-400-font-size);
 	font-variant-numeric: tabular-nums;
 	color: var(--text-vanilla-100);
 }

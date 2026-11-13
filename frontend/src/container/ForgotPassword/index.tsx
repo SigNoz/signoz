@@ -147,10 +147,10 @@ function ForgotPassword({
 							<Input
 								type="email"
 								id="forgotPasswordEmail"
-								data-testid="email"
+								testId="email"
 								required
 								disabled
-								className="login-form-input"
+								disabledTooltip={undefined}
 							/>
 						</Form.Item>
 					</div>

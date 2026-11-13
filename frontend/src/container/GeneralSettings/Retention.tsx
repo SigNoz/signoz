@@ -132,8 +132,10 @@ function Retention({
 				<SignozInput
 					type="number"
 					min={0}
+					width={120}
 					value={selectedValue && selectedValue >= 0 ? selectedValue : ''}
 					disabled={isCloudUserVal}
+					disabledTooltip={undefined}
 					onChange={(e): void => onChangeHandler(e, setSelectedValue)}
 				/>
 				<Select

@@ -10,16 +10,3 @@
 	gap: 8px;
 	width: 100%;
 }
-
-.link {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	color: inherit;
-	font-weight: 500;
-	white-space: nowrap;
-
-	&:hover {
-		opacity: 0.85;
-	}
-}

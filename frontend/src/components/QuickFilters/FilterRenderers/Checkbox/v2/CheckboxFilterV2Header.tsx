@@ -31,9 +31,19 @@ export function CheckboxFilterV2Header({
 	};
 
 	const titleText = (
-		<Typography.Text ref={measureTitle} className={styles.title}>
+		<Typography
+			ref={measureTitle}
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="secondary"
+			as="span"
+			display="inline-block"
+			minWidth={0}
+			textOverflow="ellipsis"
+		>
 			{title}
-		</Typography.Text>
+		</Typography>
 	);
 
 	return (

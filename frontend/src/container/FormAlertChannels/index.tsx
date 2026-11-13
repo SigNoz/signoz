@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Controller, FormProvider, UseFormReturn } from 'react-hook-form';
 import { X } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
-import { SelectSimple } from '@signozhq/ui/select';
+import { Select, type SelectItemType } from '@signozhq/ui/select';
 import { Switch } from '@signozhq/ui/switch';
 import {
 	ChannelFormValues,
@@ -29,18 +29,22 @@ import FormCard from './FormCard';
 import FormField from './FormField';
 import styles from './FormAlertChannels.module.scss';
 
-const CHANNEL_TYPE_OPTIONS = [
-	{ value: ChannelKind.slack, label: 'Slack' },
-	{ value: ChannelKind.webhook, label: 'Webhook' },
-	{ value: ChannelKind.pagerduty, label: 'Pagerduty' },
-	{ value: ChannelKind.opsgenie, label: 'Opsgenie' },
-	{ value: ChannelKind.email, label: 'Email' },
-	{ value: ChannelKind.msteams, label: 'Microsoft Teams' },
-	{ value: ChannelKind.googlechat, label: 'Google Chat' },
-	{ value: ChannelKind.jira, label: 'Jira' },
-	{ value: ChannelKind.jsmops, label: 'Jira Service Management Ops' },
-	{ value: ChannelKind.incidentio, label: 'incident.io' },
-	{ value: ChannelKind.telegram, label: 'Telegram' },
+const CHANNEL_TYPE_OPTIONS: SelectItemType[] = [
+	{ type: 'item', value: ChannelKind.slack, label: 'Slack' },
+	{ type: 'item', value: ChannelKind.webhook, label: 'Webhook' },
+	{ type: 'item', value: ChannelKind.pagerduty, label: 'Pagerduty' },
+	{ type: 'item', value: ChannelKind.opsgenie, label: 'Opsgenie' },
+	{ type: 'item', value: ChannelKind.email, label: 'Email' },
+	{ type: 'item', value: ChannelKind.msteams, label: 'Microsoft Teams' },
+	{ type: 'item', value: ChannelKind.googlechat, label: 'Google Chat' },
+	{ type: 'item', value: ChannelKind.jira, label: 'Jira' },
+	{
+		type: 'item',
+		value: ChannelKind.jsmops,
+		label: 'Jira Service Management Ops',
+	},
+	{ type: 'item', value: ChannelKind.incidentio, label: 'incident.io' },
+	{ type: 'item', value: ChannelKind.telegram, label: 'Telegram' },
 ];
 
 function FormAlertChannels({
@@ -68,25 +72,25 @@ function FormAlertChannels({
 	const renderSettings = (): ReactElement | null => {
 		switch (type) {
 			case ChannelKind.slack:
-				return <SlackSettings />;
+				return <SlackSettings readOnly={readOnly} />;
 			case ChannelKind.webhook:
-				return <WebhookSettings />;
+				return <WebhookSettings readOnly={readOnly} />;
 			case ChannelKind.pagerduty:
-				return <PagerSettings />;
+				return <PagerSettings readOnly={readOnly} />;
 			case ChannelKind.msteams:
-				return <MsTeamsSettings />;
+				return <MsTeamsSettings readOnly={readOnly} />;
 			case ChannelKind.googlechat:
-				return <GoogleChatSettings />;
+				return <GoogleChatSettings readOnly={readOnly} />;
 			case ChannelKind.jira:
-				return <JiraSettings />;
+				return <JiraSettings readOnly={readOnly} />;
 			case ChannelKind.jsmops:
-				return <JsmOpsSettings />;
+				return <JsmOpsSettings readOnly={readOnly} />;
 			case ChannelKind.incidentio:
-				return <IncidentIOSettings />;
+				return <IncidentIOSettings readOnly={readOnly} />;
 			case ChannelKind.opsgenie:
-				return <OpsgenieSettings />;
+				return <OpsgenieSettings readOnly={readOnly} />;
 			case ChannelKind.telegram:
-				return <TelegramSettings />;
+				return <TelegramSettings readOnly={readOnly} />;
 			case ChannelKind.email:
 				return <EmailSettings />;
 			default:
@@ -97,9 +101,7 @@ function FormAlertChannels({
 	return (
 		<FormProvider {...form}>
 			<form className={styles.form}>
-				{/* the @signozhq inputs take no disabled context and the settings
-				    still render antd textareas; the fieldset turns off both. */}
-				<fieldset className={styles.fields} disabled={readOnly}>
+				<div className={styles.fields} data-testid="channel-form-fields">
 					<div className={styles.cards}>
 						<FormCard title={t('section_general')}>
 							<FormField
@@ -111,8 +113,9 @@ function FormAlertChannels({
 							>
 								<Input
 									id="channel-name"
-									data-testid="channel-name-textbox"
+									testId="channel-name-textbox"
 									disabled={editing}
+									disabledTooltip={undefined}
 									aria-required
 									{...register('name')}
 								/>
@@ -132,6 +135,8 @@ function FormAlertChannels({
 											testId="field-send-resolved-checkbox"
 											value={!!field.value}
 											onChange={field.onChange}
+											disabled={readOnly}
+											disabledTooltip={undefined}
 										/>
 									)}
 								/>
@@ -142,12 +147,16 @@ function FormAlertChannels({
 								tooltip={t('tooltip_channel_type')}
 								htmlFor="channel-type"
 							>
-								<SelectSimple
+								<Select
 									id="channel-type"
 									items={CHANNEL_TYPE_OPTIONS}
+									placeholder="Select a channel type"
 									value={type}
 									disabled={editing}
-									onChange={(value): void => onTypeChangeHandler(value as ChannelKind)}
+									disabledTooltip={undefined}
+									onChange={(value: string): void =>
+										onTypeChangeHandler(value as ChannelKind)
+									}
 									testId="channel-type-select"
 								/>
 							</FormField>
@@ -155,7 +164,7 @@ function FormAlertChannels({
 
 						{renderSettings()}
 					</div>
-				</fieldset>
+				</div>
 
 				<div className={styles.actions}>
 					<Button

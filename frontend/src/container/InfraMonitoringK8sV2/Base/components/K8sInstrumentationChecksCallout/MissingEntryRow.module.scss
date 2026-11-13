@@ -4,24 +4,11 @@
 	gap: 6px;
 	flex-wrap: wrap;
 	color: var(--l1-foreground);
+
+	--divider-border: var(--callout-warning-border);
 }
 
 .missingIcon {
 	color: var(--warning-background);
 	flex-shrink: 0;
-}
-
-.learnMoreLink {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	margin-left: 4px;
-
-	svg {
-		margin-left: 4px;
-	}
-}
-
-.divider {
-	--divider-color: var(--callout-warning-border);
 }

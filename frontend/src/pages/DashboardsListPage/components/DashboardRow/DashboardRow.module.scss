@@ -23,7 +23,6 @@
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	line-height: 20px;
 	flex: 1 1 auto;
 	min-width: 0;
 }
@@ -36,16 +35,15 @@
 
 .icon {
 	display: inline-block;
-	line-height: 20px;
 	height: 14px;
 	width: 14px;
 }
 
 .title {
 	color: var(--l1-foreground);
-	font-size: var(--font-size-sm);
+	font-size: var(--paragraph-base-500-font-size);
 	font-style: normal;
-	font-weight: var(--font-weight-medium);
+	font-weight: var(--paragraph-base-500-font-weight);
 	line-height: 20px;
 	letter-spacing: -0.07px;
 	display: -webkit-box;
@@ -111,11 +109,6 @@
 	align-items: center;
 	gap: 6px;
 	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-normal);
-	line-height: 18px;
-	letter-spacing: -0.07px;
 }
 
 .createdBy {
@@ -136,17 +129,13 @@
 
 .avatarText {
 	color: var(--l2-foreground);
-	font-size: 8px;
-	font-weight: var(--font-weight-normal);
-	line-height: normal;
-	letter-spacing: -0.05px;
 }
 
 .byLabel {
 	color: var(--l2-foreground);
 	font-family: Inter;
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-normal);
+	font-size: var(--paragraph-small-400-font-size);
+	font-weight: var(--paragraph-small-400-font-weight);
 	line-height: 18px;
 	letter-spacing: -0.07px;
 }

@@ -1,14 +1,5 @@
-.drawer {
-	// for some reason, the scrollbar is overriding this
-	// for now, I will keep forcing but needs to investigate a global level
-	// why all drawers are being override with l1-background
-	background-color: var(--l2-background) !important;
-	border-color: var(--l2-border) !important;
-	--dialog-description-padding: 0px 0px var(--spacing-8) 0px;
-
-	[data-slot='drawer-description'] {
-		overflow-y: auto;
-	}
+:global([data-testid='k8s-options-side-panel']) {
+	--drawer-body-padding: 0 0 var(--spacing-8) 0;
 }
 
 .sectionTitle {
@@ -20,19 +11,11 @@
 	}
 }
 
-.sectionTitleText {
-	text-transform: uppercase;
-}
-
 .fontSizeContainer {
 	display: flex;
 	flex-direction: row;
 	padding: var(--spacing-4);
 	gap: var(--spacing-4);
-}
-
-.fontSizeLabel {
-	text-transform: capitalize;
 }
 
 .checkIcon {
@@ -41,9 +24,6 @@
 
 .lineClampContainer {
 	padding: 12px;
-
-	--input-prefix-padding: var(--spacing-3);
-	--input-suffix-padding: var(--spacing-3);
 }
 
 .columnsList {

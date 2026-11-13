@@ -54,6 +54,9 @@ function AddCreditCardModal({
 		updateCreditCard({ url: getBaseUrl() });
 	};
 
+	// TODO: antd stacks at 1000, under `@signozhq/ui` dialogs (1001). Opened from
+	// CustomDomainEditModal's "Contact Support" it renders behind that dialog.
+	// Moving to the `@signozhq/ui` Dialog fixes it.
 	return (
 		<Modal
 			className="add-credit-card-modal"
@@ -90,10 +93,17 @@ function AddCreditCardModal({
 				</AuthZTooltip>,
 			]}
 		>
-			<Typography.Text className="add-credit-card-text">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				You&apos;re currently on <span className="highlight-text">Trial plan</span>.
 				Add a credit card to access SigNoz chat support to your workspace.
-			</Typography.Text>
+			</Typography>
 		</Modal>
 	);
 }

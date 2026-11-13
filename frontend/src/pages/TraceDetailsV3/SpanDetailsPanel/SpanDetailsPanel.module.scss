@@ -19,7 +19,6 @@
 	overscroll-behavior: contain;
 	scrollbar-width: none;
 	background: var(--l1-background);
-	font-size: 14px;
 	gap: 16px;
 
 	// DataViewer keeps its global `.data-viewer` class — give it a min-height
@@ -121,4 +120,8 @@
 	:global(.pretty-view__search-input) {
 		background: var(--l2-background) !important;
 	}
+}
+
+:global([data-testid='span-details-drawer']) {
+	--drawer-body-padding: 0;
 }

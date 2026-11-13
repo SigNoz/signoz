@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { forwardRef, useMemo } from 'react';
 import { Button, ButtonProps } from '@signozhq/ui/button';
 import { AUTHZ_LOADING_TOOLTIP } from 'lib/authz/components/constants';
 import { deniedTooltip } from 'lib/authz/components/deniedTooltip';
@@ -25,49 +25,56 @@ export type AuthZButtonProps = ButtonProps & {
 	disabledTooltip?: ButtonProps['disabledTooltip'];
 };
 
-function AuthZButton({
-	checks,
-	authZEnabled = true,
-	tooltipMessage,
-	disabled,
-	disabledTooltip,
-	loading,
-	loadingTooltip,
-	...buttonProps
-}: AuthZButtonProps): JSX.Element {
-	const { user } = useAppContext();
+// forwardRef so a Tooltip or menu can anchor to it.
+const AuthZButton = forwardRef<HTMLButtonElement, AuthZButtonProps>(
+	function AuthZButton(
+		{
+			checks,
+			authZEnabled = true,
+			tooltipMessage,
+			disabled,
+			disabledTooltip,
+			loading,
+			loadingTooltip,
+			...buttonProps
+		},
+		ref,
+	): JSX.Element {
+		const { user } = useAppContext();
 
-	const isBlocked = !!disabledTooltip;
-	const shouldCheck = authZEnabled && checks.length > 0 && !isBlocked;
+		const isBlocked = !!disabledTooltip;
+		const shouldCheck = authZEnabled && checks.length > 0 && !isBlocked;
 
-	const { permissions, isLoading } = useAuthZ(checks, { enabled: shouldCheck });
+		const { permissions, isLoading } = useAuthZ(checks, { enabled: shouldCheck });
 
-	const deniedPermissions = useMemo(() => {
-		if (!shouldCheck || !permissions) {
-			return [];
-		}
-		return checks.filter((p) => permissions[p]?.isGranted === false);
-	}, [shouldCheck, checks, permissions]);
-
-	const isPending = shouldCheck && isLoading;
-	const isDenied = deniedPermissions.length > 0;
-
-	return (
-		<Button
-			{...buttonProps}
-			disabled={disabled || isBlocked || isDenied}
-			disabledTooltip={
-				isDenied
-					? deniedTooltip(deniedPermissions, user.id, tooltipMessage)
-					: disabledTooltip
+		const deniedPermissions = useMemo(() => {
+			if (!shouldCheck || !permissions) {
+				return [];
 			}
-			loading={loading || isPending}
-			loadingTooltip={
-				isPending && !loading ? AUTHZ_LOADING_TOOLTIP : loadingTooltip
-			}
-			data-denied-permissions={isDenied ? deniedPermissions.join(',') : undefined}
-		/>
-	);
-}
+			return checks.filter((p) => permissions[p]?.isGranted === false);
+		}, [shouldCheck, checks, permissions]);
+
+		const isPending = shouldCheck && isLoading;
+		const isDenied = deniedPermissions.length > 0;
+
+		return (
+			<Button
+				ref={ref}
+				{...buttonProps}
+				disabled={disabled || isBlocked || isDenied}
+				disabledTooltip={
+					isDenied
+						? deniedTooltip(deniedPermissions, user.id, tooltipMessage)
+						: disabledTooltip
+				}
+				loading={loading || isPending}
+				loadingTooltip={
+					isPending && !loading ? AUTHZ_LOADING_TOOLTIP : loadingTooltip
+				}
+				data-denied-permissions={isDenied ? deniedPermissions.join(',') : undefined}
+			/>
+		);
+	},
+);
 
 export default AuthZButton;

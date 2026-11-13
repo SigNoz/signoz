@@ -31,9 +31,9 @@
 .sectionTitle {
 	padding: var(--spacing-4) var(--spacing-6);
 	color: var(--muted-foreground);
-	font-size: var(--periscope-font-size-small);
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-18);
+	font-size: var(--uppercase-small-500-font-size);
+	font-weight: var(--uppercase-small-500-font-weight);
+	line-height: var(--uppercase-small-500-line-height);
 	letter-spacing: 0.88px;
 	text-transform: uppercase;
 }
@@ -121,11 +121,8 @@
 
 .stateTitle {
 	color: var(--l1-foreground);
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-medium);
 }
 
 .stateText {
 	color: var(--l2-foreground);
-	font-size: var(--periscope-font-size-base);
 }

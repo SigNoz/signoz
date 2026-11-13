@@ -1,3 +1,4 @@
+import { type ReactNode, useLayoutEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -17,14 +18,13 @@ import {
 import type { K8sBaseDetailsProps } from './types';
 import {
 	DrawerHistoryEntry,
-	getDrawerHistoryDepth,
 	useDrawerHistoryStore,
 } from './useDrawerHistoryStore';
 
 type DrawerArgs = PageStoryArgs<typeof drawerMocks> &
-	K8sBaseDetailsProps<unknown> & { earlierSteps?: number };
+	K8sBaseDetailsProps<unknown>;
 
-const TRAIL: DrawerHistoryEntry[] = [
+const EARLIER_STEPS: DrawerHistoryEntry[] = [
 	{
 		category: InfraMonitoringEntity.CLUSTERS,
 		label: 'mgmt',
@@ -53,6 +53,27 @@ const TRAIL: DrawerHistoryEntry[] = [
 	queryKeyPrefix,
 }));
 
+function SeededTrail({
+	earlierSteps,
+	children,
+}: {
+	earlierSteps: number;
+	children: ReactNode;
+}): JSX.Element {
+	const [isSeeded, setIsSeeded] = useState(false);
+
+	useLayoutEffect(() => {
+		useDrawerHistoryStore.setState({
+			entries: EARLIER_STEPS.slice(
+				Math.max(EARLIER_STEPS.length - earlierSteps, 0),
+			),
+		});
+		setIsSeeded(true);
+	}, [earlierSteps]);
+
+	return <>{isSeeded ? children : null}</>;
+}
+
 const route = `/infrastructure-monitoring/kubernetes?${INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY}=pods&${INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM}=${POD_UID}`;
 
 const meta = {
@@ -60,18 +81,11 @@ const meta = {
 	component: K8sBaseDetails as (props: DrawerArgs) => JSX.Element,
 	...storyMocks(drawerMocks, { route }),
 	decorators: [
-		(Story, context): JSX.Element => {
-			// The back control appears only for a resource opened from another
-			const steps =
-				context.args.earlierSteps ?? (context.args.openedFromANode ? 1 : 0);
-			if (getDrawerHistoryDepth() !== steps) {
-				useDrawerHistoryStore.setState({
-					entries: TRAIL.slice(TRAIL.length - steps),
-				});
-			}
-
-			return <Story />;
-		},
+		(Story, context): JSX.Element => (
+			<SeededTrail earlierSteps={context.args.earlierSteps}>
+				<Story />
+			</SeededTrail>
+		),
 	],
 } satisfies Meta<DrawerArgs>;
 
@@ -79,12 +93,12 @@ export default meta;
 
 type Story = StoryObj<DrawerArgs>;
 
-/** A pod opened from a node's overview tab, so the header leads with the way back. */
+/** A pod opened from a node's overview tab, so a trail under the header leads back. */
 export const Default: Story = {
 	args: { ...podEntityConfig.details } as Partial<DrawerArgs> as DrawerArgs,
 };
 
-/** A pod drilled through a cluster, namespace, deployment and node, so the back control names the node. */
+/** A pod several resources deep, so the trail folds its earliest steps into the `...` crumb. */
 export const DeepTrail: Story = {
 	args: {
 		...podEntityConfig.details,
@@ -92,10 +106,10 @@ export const DeepTrail: Story = {
 	} as Partial<DrawerArgs> as DrawerArgs,
 };
 
-/** A pod opened from the list, so the header shows the close control in place of back. */
+/** A pod opened from the list, so there is no trail. */
 export const OpenedFromTheList: Story = {
 	args: {
 		...podEntityConfig.details,
-		openedFromANode: false,
+		earlierSteps: 0,
 	} as Partial<DrawerArgs> as DrawerArgs,
 };

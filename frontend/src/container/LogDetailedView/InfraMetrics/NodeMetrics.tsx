@@ -152,7 +152,16 @@ function NodeMetrics({
 		<div className="infra-metrics-grid">
 			{queries.map((query, idx) => (
 				<div key={widgetInfo[idx].title}>
-					<Typography.Text>{widgetInfo[idx].title}</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{widgetInfo[idx].title}
+					</Typography>
 					<Card bordered className="infra-metrics-card" ref={graphRef}>
 						{renderCardContent(query, idx)}
 					</Card>

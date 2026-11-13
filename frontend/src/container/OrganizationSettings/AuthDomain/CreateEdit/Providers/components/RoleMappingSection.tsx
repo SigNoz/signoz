@@ -124,9 +124,8 @@ function RoleMappingSection({
 									isError={isError}
 									error={error}
 									onRefetch={refetch}
-									className="role-mapping-section__select"
 									allowClear={false}
-									getPopupContainer={(): HTMLElement => document.body}
+									testId="role-mapping-default-role"
 								/>
 							</Form.Item>
 						</div>
@@ -199,7 +198,7 @@ function RoleMappingSection({
 															error={error}
 															onRefetch={refetch}
 															allowClear={false}
-															getPopupContainer={(): HTMLElement => document.body}
+															testId={`role-mapping-group-role-${field.key}`}
 														/>
 													</Form.Item>
 

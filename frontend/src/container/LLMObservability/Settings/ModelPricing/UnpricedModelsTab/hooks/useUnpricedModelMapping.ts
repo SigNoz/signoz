@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { useQueryClient } from 'react-query';
 import logEvent from 'api/common/logEvent';
 import {
@@ -62,7 +62,7 @@ export function useUnpricedModelMapping(): UseUnpricedModelMappingResult {
 				return true;
 			} catch (error) {
 				const message = error instanceof Error ? error.message : 'Mapping failed';
-				toast.error(message);
+				toast.danger(message, { action: { label: 'Dismiss' } });
 				return false;
 			} finally {
 				setIsSaving(false);

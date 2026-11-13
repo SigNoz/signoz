@@ -51,7 +51,7 @@ jest.mock('@signozhq/ui/button', () => ({
 	),
 }));
 
-// These are heavy real-timer integration tests (antd Select dropdown render +
+// These are heavy real-timer integration tests (role Combobox popup render +
 // form.validateFields() + a react-query mutation, all driven through userEvent).
 // Under a CPU-saturated parallel `jest` run the wall-clock roughly triples, which
 // pushes the longest tests past the 5000ms default and makes them flaky. Give the
@@ -62,8 +62,7 @@ const ROLES_ENDPOINT = '*/api/v1/roles';
 
 type User = ReturnType<typeof userEvent.setup>;
 
-// antd renders pointer-events:none on parts of its Select, so disable the
-// userEvent pointer-events guard (mirrors CreateEdit.test.tsx).
+// Disable the userEvent pointer-events guard (mirrors CreateEdit.test.tsx).
 const setupUser = (): User => userEvent.setup({ pointerEventsCheck: 0 });
 
 function getRole(name: string): (typeof managedRoles)[number] {
@@ -105,8 +104,21 @@ function captureUpdatePayload(): { get: () => any } {
 const expandRoleMapping = (user: User): Promise<void> =>
 	user.click(screen.getByText(/role mapping \(advanced\)/i));
 
+const DEFAULT_ROLE_TEST_ID = 'role-mapping-default-role';
+
 const openDefaultRoleSelect = (user: User): Promise<void> =>
-	user.click(screen.getByLabelText(/default role/i));
+	user.click(screen.getByTestId(DEFAULT_ROLE_TEST_ID));
+
+const pickDefaultRole = async (user: User, roleName: string): Promise<void> => {
+	await openDefaultRoleSelect(user);
+	await user.type(
+		await screen.findByTestId(`${DEFAULT_ROLE_TEST_ID}-search`),
+		`${roleName}{Enter}`,
+	);
+};
+
+const getDefaultRoleOption = (roleName: string): HTMLElement =>
+	screen.getByTestId(`${DEFAULT_ROLE_TEST_ID}-item-${roleName}`);
 
 const saveChanges = (user: User): Promise<void> =>
 	user.click(screen.getByRole('button', { name: /save changes/i }));
@@ -134,8 +146,6 @@ describe('CreateEdit — role mapping uses API roles', () => {
 		const user = setupUser();
 		mockRoles();
 
-		// mockSamlAuthDomain has no stored defaultRole, so nothing stale (e.g.
-		// "VIEWER") is rendered as a selected tag to pollute the title lookups.
 		render(
 			<CreateEdit
 				isCreate={false}
@@ -146,22 +156,31 @@ describe('CreateEdit — role mapping uses API roles', () => {
 
 		await expandRoleMapping(user);
 
-		// Open the Select and wait for the async roles fetch to populate it.
+		// Open the Combobox and wait for the async roles fetch to populate it.
 		await openDefaultRoleSelect(user);
-		await screen.findByTitle(allRoles[0].name);
+		await screen.findByTestId(`${DEFAULT_ROLE_TEST_ID}-item-${allRoles[0].name}`);
 
 		// Every role returned by the API is offered as an option, including the
-		// custom (non-managed) roles — the whole point of the refactor. Use
-		// getAllByTitle: the preselected default role also renders its name on
-		// the selection item, so a role may legitimately appear more than once.
+		// custom (non-managed) roles — the whole point of the refactor.
 		allRoles.forEach((role) => {
-			expect(screen.getAllByTitle(role.name).length).toBeGreaterThan(0);
+			expect(getDefaultRoleOption(role.name)).toBeInTheDocument();
 		});
 
+		// Nothing beyond the API roles is offered.
+		expect(
+			screen.getAllByTestId(new RegExp(`^${DEFAULT_ROLE_TEST_ID}-item-`)),
+		).toHaveLength(allRoles.length);
+
 		// The old hardcoded uppercase role values must NOT appear as options.
-		expect(screen.queryByTitle('VIEWER')).not.toBeInTheDocument();
-		expect(screen.queryByTitle('EDITOR')).not.toBeInTheDocument();
-		expect(screen.queryByTitle('ADMIN')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(`${DEFAULT_ROLE_TEST_ID}-item-VIEWER`),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(`${DEFAULT_ROLE_TEST_ID}-item-EDITOR`),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(`${DEFAULT_ROLE_TEST_ID}-item-ADMIN`),
+		).not.toBeInTheDocument();
 	});
 
 	it('submits the selected role name (not the role id) as defaultRole', async () => {
@@ -179,8 +198,7 @@ describe('CreateEdit — role mapping uses API roles', () => {
 
 		await expandRoleMapping(user);
 
-		await openDefaultRoleSelect(user);
-		await user.click(await screen.findByTitle(editorRole.name));
+		await pickDefaultRole(user, editorRole.name);
 
 		await saveChanges(user);
 
@@ -273,8 +291,16 @@ describe('CreateEdit — role mapping uses API roles', () => {
 
 		// The stored default role renders as a real selection, not a raw token.
 		await waitFor(() =>
-			expect(screen.getAllByTitle(editorRole.name).length).toBeGreaterThan(0),
+			expect(screen.getByTestId(DEFAULT_ROLE_TEST_ID)).toHaveTextContent(
+				editorRole.name,
+			),
 		);
+		await openDefaultRoleSelect(user);
+		expect(getDefaultRoleOption(editorRole.name)).toHaveAttribute(
+			'aria-selected',
+			'true',
+		);
+		await user.keyboard('{Escape}');
 
 		await saveChanges(user);
 
@@ -310,7 +336,9 @@ describe('CreateEdit — role mapping uses API roles', () => {
 		// the failed request; the Retry affordance is always present.
 		await openDefaultRoleSelect(user);
 
-		await expect(screen.findByTitle('Retry')).resolves.toBeInTheDocument();
-		expect(screen.getByText('boom')).toBeInTheDocument();
+		await expect(
+			screen.findByTestId('roles-select-retry'),
+		).resolves.toHaveTextContent('Retry');
+		expect(screen.getByTestId('roles-select-error')).toHaveTextContent('boom');
 	});
 });

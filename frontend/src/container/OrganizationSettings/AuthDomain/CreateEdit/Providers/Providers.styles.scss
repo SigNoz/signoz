@@ -23,12 +23,10 @@
 		color: var(--l2-foreground);
 		font-family: 'Inter', sans-serif;
 		font-size: 14px;
-		font-weight: 400;
 		line-height: 20px;
 
 		a {
 			color: var(--accent-primary);
-			text-decoration: none;
 
 			&:hover {
 				text-decoration: underline;
@@ -79,7 +77,6 @@
 		margin-bottom: 12px;
 	}
 
-	input:not(.ant-select-selection-search-input),
 	textarea {
 		height: 32px;
 		background: var(--l2-background) !important;
@@ -117,7 +114,6 @@
 		color: var(--l2-foreground) !important;
 		font-family: 'SF Mono', monospace;
 		font-size: 12px;
-		line-height: 18px;
 
 		&::placeholder {
 			color: var(--l2-foreground) !important;

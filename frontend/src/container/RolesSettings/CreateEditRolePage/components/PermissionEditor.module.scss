@@ -14,8 +14,6 @@
 }
 
 .permissionEditorTitle {
-	letter-spacing: 0.48px;
-	text-transform: uppercase;
 	position: relative;
 }
 
@@ -61,7 +59,6 @@
 	border-radius: 4px;
 	cursor: pointer;
 	transition: background 0.15s ease;
-	text-align: left;
 
 	&:hover {
 		background: var(--l2-background);
@@ -74,22 +71,13 @@
 }
 
 .permissionEditorCollapsedLabel {
-	font-family: Inter;
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-normal);
-	line-height: var(--line-height-20);
 	color: var(--l2-foreground);
 	flex: 1;
 	white-space: nowrap;
 	overflow: hidden;
-	text-overflow: ellipsis;
 }
 
 .permissionEditorCollapsedCount {
-	font-family: Inter;
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-20);
 	color: var(--primary);
 	flex-shrink: 0;
 }

@@ -1,6 +1,6 @@
 import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 
 interface ResetLinkDialogProps {
 	open: boolean;
@@ -22,17 +22,11 @@ function ResetLinkDialog({
 	onCopy,
 }: ResetLinkDialogProps): JSX.Element {
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onClose();
-				}
-			}}
+			onClose={onClose}
 			title={linkType === 'invite' ? 'Invite Link' : 'Password Reset Link'}
-			showCloseButton
 			width="base"
-			className="reset-link-dialog"
 		>
 			<div className="reset-link-dialog__content">
 				<p className="reset-link-dialog__description">
@@ -65,7 +59,7 @@ function ResetLinkDialog({
 					</p>
 				)}
 			</div>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

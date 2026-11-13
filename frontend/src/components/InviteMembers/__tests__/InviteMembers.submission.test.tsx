@@ -3,6 +3,7 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import InviteMembers from '../InviteMembers';
 
+import { pickRole } from './roleSelectUtils';
 import {
 	CREATE_USER_ENDPOINT,
 	createErrorHandler,
@@ -40,8 +41,7 @@ describe('InviteMembers - Submission', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], 'alice@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await pickRole(user, 0, 'role-viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -73,18 +73,13 @@ describe('InviteMembers - Submission', () => {
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 
 			await user.type(emailInputs[0], 'alice@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await pickRole(user, 0, 'role-viewer');
 
 			await user.type(emailInputs[1], 'bob@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			const editorOptions = await screen.findAllByTitle('Editor');
-			await user.click(editorOptions[editorOptions.length - 1]);
+			await pickRole(user, 1, 'role-editor');
 
 			await user.type(emailInputs[2], 'charlie@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			const adminOptions = await screen.findAllByTitle('Admin');
-			await user.click(adminOptions[adminOptions.length - 1]);
+			await pickRole(user, 2, 'role-admin');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -125,8 +120,7 @@ describe('InviteMembers - Submission', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await pickRole(user, 0, 'role-viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -154,8 +148,7 @@ describe('InviteMembers - Submission', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await pickRole(user, 0, 'role-viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -218,13 +211,10 @@ describe('InviteMembers - Submission', () => {
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 
 			await user.type(emailInputs[0], 'alice@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await pickRole(user, 0, 'role-viewer');
 
 			await user.type(emailInputs[1], 'bob@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			const editorOptions = await screen.findAllByTitle('Editor');
-			await user.click(editorOptions[editorOptions.length - 1]);
+			await pickRole(user, 1, 'role-editor');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -276,8 +266,7 @@ describe('InviteMembers - Submission', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await pickRole(user, 0, 'role-viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -303,8 +292,7 @@ describe('InviteMembers - Submission', () => {
 
 			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
 			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await pickRole(user, 0, 'role-viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 

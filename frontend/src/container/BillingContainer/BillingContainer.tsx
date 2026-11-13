@@ -4,7 +4,13 @@ import { Typography } from '@signozhq/ui/typography';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { CircleCheck, Landmark, MonitorDown } from '@signozhq/icons';
+import {
+	CircleCheck,
+	Landmark,
+	MonitorDown,
+	SolidAlertCircle,
+	SolidInfoCircle,
+} from '@signozhq/icons';
 import {
 	Card,
 	Col,
@@ -365,20 +371,29 @@ export default function BillingContainer(): JSX.Element {
 		: [SubscriptionCreatePermission];
 
 	const subscriptionPastDueMessage = (): JSX.Element => (
-		<Typography>
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
 			{`We were not able to process payments for your account. Please update your card details `}
 			<AuthZTooltip checks={billingActionPermissions}>
-				<Typography.Link
-					onClick={handleBilling}
-					style={{ cursor: 'pointer', color: 'var(--bg-cherry-500)' }}
-				>
-					{t('here')}
-				</Typography.Link>
+				<Callout.Link onClick={handleBilling}>{t('here')}</Callout.Link>
 			</AuthZTooltip>
 			{` if your payment information has changed. Email us at `}
-			<Typography.Text as="span" color="muted">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				cloud-support@signoz.io
-			</Typography.Text>
+			</Typography>
 			{` otherwise. Be sure to provide this information immediately to avoid interruption to your service.`}
 		</Typography>
 	);
@@ -423,19 +438,35 @@ export default function BillingContainer(): JSX.Element {
 	return (
 		<div className={styles.billingContainer}>
 			<Flex vertical gap={4} className={styles.pageHeader}>
-				<Typography.Text className={styles.pageHeaderTitle}>
+				<Typography
+					variant="paragraph"
+					size="medium"
+					weight="medium"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
 					{t('billing')}
-				</Typography.Text>
-				<Typography.Text className={styles.pageHeaderSubtitle}>
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					{t('manage_billing_and_costs')}
-				</Typography.Text>
+				</Typography>
 			</Flex>
 
 			<Card bordered={false} className={styles.pageInfo}>
 				<Flex justify="space-between" align="center">
 					<Flex vertical gap={8}>
 						<p className={styles.pageInfoTitle}>
-							{isCloudUserVal ? t('teams_cloud') : t('teams')}{' '}
+							<span className="translate-safe">
+								{isCloudUserVal ? t('teams_cloud') : t('teams')}
+							</span>{' '}
 							{isFreeTrial ? (
 								<Badge variant="solid" color="success">
 									{' '}
@@ -470,22 +501,25 @@ export default function BillingContainer(): JSX.Element {
 				</Flex>
 
 				{trialInfo?.onTrial && trialInfo?.trialConvertedToSubscription && (
-					<Typography.Text
-						truncate={1}
-						style={{ fontWeight: '300', color: 'var(--bg-forest-500)', fontSize: 12 }}
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="success"
+						as="p"
+						textOverflow="ellipsis"
 					>
 						{t('card_details_recieved_and_billing_info')}
-					</Typography.Text>
+					</Typography>
 				)}
 
 				{!isLoading && !isFetchingBillingData && !showGracePeriodMessage
 					? headerText && (
-							<Callout
-								title={headerText}
-								type="info"
-								showIcon
-								style={{ marginTop: 12 }}
-							/>
+							<div style={{ marginTop: 12 }}>
+								<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
+									{headerText}
+								</Callout>
+							</div>
 						)
 					: null}
 
@@ -498,21 +532,22 @@ export default function BillingContainer(): JSX.Element {
 				billingData &&
 				trialInfo?.gracePeriodEnd &&
 				showGracePeriodMessage ? (
-					<Callout
-						title={`Your data is safe with us until ${getFormattedDate(
-							trialInfo?.gracePeriodEnd || Date.now(),
-						)}. Please upgrade plan now to retain your data.`}
-						type="info"
-						showIcon
-						style={{ marginTop: 12 }}
-					/>
+					<div style={{ marginTop: 12 }}>
+						<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
+							{`Your data is safe with us until ${getFormattedDate(
+								trialInfo?.gracePeriodEnd || Date.now(),
+							)}. Please upgrade plan now to retain your data.`}
+						</Callout>
+					</div>
 				) : null}
 
 				{isSubscriptionPastDue &&
 					(!isLoading && !isFetchingBillingData ? (
-						<Callout type="error" showIcon style={{ marginTop: 12 }}>
-							{subscriptionPastDueMessage()}
-						</Callout>
+						<div style={{ marginTop: 12 }}>
+							<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
+								{subscriptionPastDueMessage()}
+							</Callout>
+						</div>
 					) : (
 						<Skeleton.Input active style={{ height: 20, marginTop: 20 }} />
 					))}
@@ -553,9 +588,11 @@ export default function BillingContainer(): JSX.Element {
 						)}
 					</div>
 					{!isLoading && !isFetchingBillingData && (
-						<Callout type="info" size="small" className={styles.billingUpdateNote}>
-							Billing metrics are updated once every 24 hours.
-						</Callout>
+						<div className={styles.billingUpdateNote}>
+							<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
+								Billing metrics are updated once every 24 hours.
+							</Callout>
+						</div>
 					)}
 
 					<div className={styles.billingDetails}>
@@ -605,15 +642,45 @@ export default function BillingContainer(): JSX.Element {
 						gutter={[16, 16]}
 					>
 						<Col span={20} className={styles.planBenefits}>
-							<Typography.Text className={styles.planBenefit}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="p"
+								display="flex"
+								gap={8}
+								marginY={8}
+								textOverflow="wrap"
+							>
 								<CircleCheck size="md" />
 								{t('upgrade_now_text')}
-							</Typography.Text>
-							<Typography.Text className={styles.planBenefit}>
+							</Typography>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="p"
+								display="flex"
+								gap={8}
+								marginY={8}
+								textOverflow="wrap"
+							>
 								<CircleCheck size="md" />
 								{t('Your billing will start only after the trial period')}
-							</Typography.Text>
-							<Typography.Text className={styles.planBenefit}>
+							</Typography>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="p"
+								display="flex"
+								gap={8}
+								marginY={8}
+								textOverflow="wrap"
+							>
 								<CircleCheck size="md" />
 								<span>
 									{t('checkout_plans')} &nbsp;
@@ -628,7 +695,7 @@ export default function BillingContainer(): JSX.Element {
 										{t('here')}
 									</a>
 								</span>
-							</Typography.Text>
+							</Typography>
 						</Col>
 						<Col span={4} style={{ display: 'flex', justifyContent: 'flex-end' }}>
 							<AuthZButton

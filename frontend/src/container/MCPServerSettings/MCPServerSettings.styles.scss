@@ -18,13 +18,11 @@
 		font-weight: var(--label-large-500-font-weight);
 		color: var(--l1-foreground);
 		letter-spacing: -0.09px;
-		line-height: var(--line-height-normal);
+		line-height: var(--label-large-500-line-height);
 		margin: 0;
 	}
 
 	&__header-subtitle {
-		font-size: var(--paragraph-base-400-font-size);
-		font-weight: var(--paragraph-base-400-font-weight);
 		color: var(--foreground);
 		letter-spacing: -0.07px;
 		line-height: var(--paragraph-base-400-line-height);
@@ -52,9 +50,9 @@
 	}
 
 	&-description {
-		font-size: var(--font-size-xs);
+		font-size: var(--paragraph-small-400-font-size);
 		color: var(--foreground);
-		line-height: var(--line-height-18);
+		line-height: var(--paragraph-small-400-line-height);
 		margin: 0;
 	}
 }

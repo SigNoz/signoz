@@ -74,9 +74,16 @@ function WorkspaceSuspended(): JSX.Element {
 							{t('workspaceSuspended')}
 						</span>
 						<span className="workspace-suspended__modal__header__actions">
-							<Typography.Text className="workspace-suspended__modal__title">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								Got Questions?
-							</Typography.Text>
+							</Typography>
 							<Button
 								type="default"
 								shape="round"
@@ -102,12 +109,29 @@ function WorkspaceSuspended(): JSX.Element {
 							<Row justify="center" align="middle">
 								<Col>
 									<Space direction="vertical" align="center">
-										<Typography.Title level={2}>
+										<Typography
+											variant="label"
+											size="large"
+											weight="bold"
+											color="inherit"
+											as="h2"
+											marginY={4}
+											textOverflow="wrap"
+										>
 											<div className="workspace-suspended__title">{t('actionHeader')}</div>
-										</Typography.Title>
-										<Typography.Text className="workspace-suspended__details">
+										</Typography>
+										<Typography
+											variant="paragraph"
+											size="medium"
+											weight="regular"
+											color="secondary"
+											as="span"
+											display="inline-block"
+											align="center"
+											textOverflow="wrap"
+										>
 											{t('actionDescription')}
-										</Typography.Text>
+										</Typography>
 									</Space>
 								</Col>
 							</Row>

@@ -111,9 +111,16 @@ function LabelThresholdRow({
 				onChange={(color): void => setDraft((d) => ({ ...d, color }))}
 			/>
 			<div className={styles.field}>
-				<Typography.Text className={styles.fieldLabel}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Label <span className={styles.optional}>· optional</span>
-				</Typography.Text>
+				</Typography>
 				<Input
 					data-testid={`threshold-label-${index}`}
 					aria-label="Label"

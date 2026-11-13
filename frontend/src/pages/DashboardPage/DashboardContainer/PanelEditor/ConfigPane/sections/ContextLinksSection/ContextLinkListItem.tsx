@@ -24,11 +24,31 @@ function ContextLinkListItem({
 	return (
 		<div className={styles.listItem} data-testid={`context-link-item-${index}`}>
 			<div className={styles.listItemText}>
-				<Typography.Text className={styles.listItemLabel}>{label}</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="main"
+					as="span"
+					display="inline-block"
+					maxWidth="100%"
+					textOverflow="ellipsis"
+				>
+					{label}
+				</Typography>
 				{!!link.url && (
-					<Typography.Text className={styles.listItemUrl}>
+					<Typography
+						variant="code"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						maxWidth="100%"
+						textOverflow="ellipsis"
+					>
 						{link.url}
-					</Typography.Text>
+					</Typography>
 				)}
 			</div>
 			<div className={styles.listItemActions}>

@@ -74,16 +74,34 @@ function VariableRow({
 						<GripVertical size={14} />
 					</span>
 				) : null}
-				<Typography.Text className={styles.varName}>
+				<Typography
+					variant="code"
+					size="base"
+					weight="regular"
+					color="primary"
+					as="span"
+					display="inline-block"
+					minWidth={0}
+					textOverflow="wrap"
+				>
 					{variable.name}
-				</Typography.Text>
+				</Typography>
 			</div>
 
 			<div className={styles.descCell}>
 				{variable.description ? (
-					<Typography.Text className={styles.varDesc}>
-						{variable.description}
-					</Typography.Text>
+					<span className={styles.varDesc}>
+						<Typography
+							variant="code"
+							size="base"
+							weight="regular"
+							color="archive"
+							as="span"
+							textOverflow="wrap"
+						>
+							{variable.description}
+						</Typography>
+					</span>
 				) : (
 					<span className={styles.varDescEmpty}>—</span>
 				)}
@@ -96,9 +114,18 @@ function VariableRow({
 					>
 						{isConfirmingDelete ? (
 							<>
-								<Typography.Text className={styles.confirmText}>
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="secondary"
+									as="span"
+									display="inline-block"
+									marginRight={2}
+									textOverflow="wrap"
+								>
 									Delete?
-								</Typography.Text>
+								</Typography>
 								<Button
 									variant="solid"
 									color="danger"

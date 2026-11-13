@@ -1,16 +1,20 @@
 import { Typography } from '@signozhq/ui/typography';
-import { useAppLocation } from 'lib/router/useAppLocation';
 
 import { TableLabel } from '../types';
 
-function TabLabel({ routeKey, label }: TableLabel): JSX.Element {
-	const { pathname } = useAppLocation();
-
-	if (pathname === routeKey) {
-		return <Typography.Link>{label}</Typography.Link>;
-	}
-
-	return <Typography>{label}</Typography>;
+function TabLabel({ label }: TableLabel): JSX.Element {
+	return (
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
+			{label}
+		</Typography>
+	);
 }
 
 export default TabLabel;

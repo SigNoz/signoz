@@ -38,7 +38,6 @@
 		margin: 0;
 		color: var(--l2-foreground);
 		font-size: 14px;
-		font-weight: 400;
 		line-height: 20px; /* 142.857% */
 		letter-spacing: -0.07px;
 	}
@@ -49,8 +48,6 @@
 		gap: 6px;
 		padding: 9px 12.5px;
 		color: var(--l2-foreground);
-		font-size: 12px;
-		font-weight: 400;
 		line-height: 18px; /* 150% */
 		letter-spacing: 0.12px;
 		border-radius: 2px;
@@ -79,7 +76,6 @@
 				color: var(--l2-foreground);
 				font-size: 12px;
 				font-weight: 500;
-				line-height: 18px; /* 150% */
 				letter-spacing: 0.48px;
 				pointer-events: none;
 			}
@@ -98,7 +94,6 @@
 				color: var(--l1-foreground);
 				font-size: 10px;
 				font-weight: 500;
-				line-height: 18px; /* 180% */
 				letter-spacing: 0.5px;
 			}
 		}
@@ -133,16 +128,12 @@
 		position: relative;
 		margin-bottom: 4px;
 		color: var(--l2-foreground);
-		font-family: Geist Mono;
-		font-size: 12px;
-		font-weight: 400;
-		line-height: 18px;
+		font-family: var(--code-base-400-font-family);
 		padding: 3px 12px;
 		padding-left: 26px;
 	}
 
 	&__message-item::before {
-		font-family: unset;
 		content: '';
 		position: absolute;
 		left: 12px;

@@ -497,7 +497,11 @@
     // Requires final else in if-else-if chains (was disabled)
     "signoz/no-conditional-text-nodes-with-siblings": "warn",
     // Vendored from eslint-plugin-react-google-translate
-    "signoz/no-return-text-nodes": "warn"
+    "signoz/no-return-text-nodes": "warn",
+    "signoz/no-text-css": "warn",
+    // Font and text CSS in style props, CSSProperties objects and styled-components; text style goes through Typography props
+    "signoz/require-disable-reason": "error"
+    // A disable of signoz/no-text-css must say why Typography cannot render the text
   },
   "ignorePatterns": [
     "src/parser/*.ts",

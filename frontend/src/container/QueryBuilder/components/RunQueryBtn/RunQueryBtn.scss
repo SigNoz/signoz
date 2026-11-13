@@ -1,5 +1,6 @@
 [data-run-query-btn] {
 	--button-min-width: 150px;
+	--button-flex-shrink: 0;
 }
 .cmd-hint {
 	display: inline-flex;
@@ -10,6 +11,4 @@
 	//not using var here to support opacity 60%. To be handled at design system level.
 	background: color-mix(in srgb, var(--l1-background) 60%, transparent);
 	color: var(--l1-foreground);
-	line-height: 1;
-	font-size: 10px;
 }

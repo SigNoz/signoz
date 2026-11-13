@@ -53,25 +53,26 @@ const logEventMock = jest.mocked(logEvent);
 const MOCK_NOW = 1700000000000; // Fixed timestamp
 jest.spyOn(Date, 'now').mockReturnValue(MOCK_NOW);
 
-// Mock DrawerWrapper to avoid CSS issues with jsdom
-// SyntaxError: 'div#radix-:rbv,,._dialog__content_qf8bf_22 :focus' is not a valid selector
+// Mock Drawer to avoid CSS issues with jsdom
 jest.mock('@signozhq/ui/drawer', () => {
 	const actual = jest.requireActual('@signozhq/ui/drawer');
 	return {
 		...actual,
-		DrawerWrapper: ({
+		Drawer: ({
 			open,
 			children,
 			title,
+			loading,
 		}: {
 			open: boolean;
 			children: React.ReactNode;
 			title: string;
-			onOpenChange?: (isOpen: boolean) => void;
+			loading?: boolean;
+			onClose?: () => void;
 		}): JSX.Element | null =>
 			open ? (
 				<div data-testid="drawer-wrapper" data-title={title}>
-					{children}
+					{loading ? null : children}
 				</div>
 			) : null,
 	};

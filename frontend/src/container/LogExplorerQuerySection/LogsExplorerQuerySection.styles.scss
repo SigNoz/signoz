@@ -6,13 +6,5 @@
 		border: 1px solid var(--l1-border) !important;
 		background-color: var(--l1-background) !important;
 		color: var(--l2-foreground);
-
-		input {
-			font-size: 12px;
-		}
-
-		[data-slot='badge'] .ant-typography {
-			font-size: 12px;
-		}
 	}
 }

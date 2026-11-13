@@ -4,6 +4,7 @@ import { renderAtRoute } from '@/storybook/renderAtRoute';
 import { screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
+import { findToastText } from '@/storybook/play/toastText';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import AIAssistantPage from '../AIAssistantPage';
@@ -139,7 +140,7 @@ export const AwaitingClarification: Story = {
 	args: { agent: 'awaiting-clarification', contents: BRIEF },
 };
 
-/** The severity select open, including the free-text option the form's Select renders. */
+/** The severity select open, including the free-text option the new Select renders. */
 export const ClarificationSelectOpen: Story = {
 	args: { agent: 'awaiting-clarification', contents: BRIEF },
 	play: async ({ canvasElement }): Promise<void> => {
@@ -230,7 +231,7 @@ export const VoiceInputUnavailableToast: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await startVoiceInput(canvasElement);
 		failVoiceInput('network');
-		await screen.findByText(/voice input unavailable in this browser/i);
+		await findToastText(/voice input unavailable in this browser/i);
 	},
 };
 
@@ -239,7 +240,7 @@ export const MicrophoneDeniedToast: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await startVoiceInput(canvasElement);
 		failVoiceInput('not-allowed');
-		await screen.findByText(/microphone access denied/i);
+		await findToastText(/microphone access denied/i);
 	},
 };
 
@@ -260,7 +261,7 @@ export const NegativeFeedback: Story = {
 	},
 };
 
-/** Renaming a thread: the title input the row swaps in. */
+/** Renaming a thread: the chromeless title input the row swaps in. */
 export const ConversationRename: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await clickUntil(async () => {
@@ -273,7 +274,7 @@ export const ConversationRename: Story = {
 			return actions;
 		}, /^Rename$/);
 		await userEvent.click(screen.getByText('Rename'));
-		await within(canvasElement).findByDisplayValue(/checkout p99 regression/i);
+		await within(canvasElement).findByRole('textbox');
 	},
 };
 

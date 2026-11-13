@@ -477,7 +477,14 @@ export function K8sBaseList<
 
 			<div ref={containerRef} className={styles.tableContainer}>
 				{isError && (
-					<Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{data?.error?.toString() || 'Something went wrong'}
 					</Typography>
 				)}

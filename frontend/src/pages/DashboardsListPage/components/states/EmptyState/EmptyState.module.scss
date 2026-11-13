@@ -15,13 +15,12 @@
 .noDashboard {
 	composes: bodyText from '../states.module.scss';
 	color: var(--l1-foreground);
-	font-weight: var(--font-weight-medium);
 }
 
 .info {
 	composes: bodyText from '../states.module.scss';
 	color: var(--l2-foreground);
-	font-weight: var(--font-weight-normal);
+	font-weight: var(--label-base-400-font-weight);
 }
 
 .actions {

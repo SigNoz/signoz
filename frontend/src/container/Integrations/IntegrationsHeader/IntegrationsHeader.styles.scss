@@ -9,23 +9,7 @@
 	}
 
 	.title {
-		color: var(--l1-foreground);
-		font-size: var(--font-size-lg);
-		font-style: normal;
-		line-height: 28px; /* 155.556% */
-		letter-spacing: -0.09px;
-		font-weight: 500;
 		margin: 0;
-	}
-
-	.subtitle {
-		color: var(--l2-foreground);
-		font-size: var(--font-size-sm);
-		font-style: normal;
-		line-height: 20px; /* 142.857% */
-		letter-spacing: -0.07px;
-		font-weight: 400;
-		display: block;
 	}
 
 	.integrations-search-request-container {
@@ -34,38 +18,27 @@
 		gap: 8px;
 		margin-top: 16px;
 
-		input {
-			color: var(--l1-foreground);
+		> [data-slot='input'] {
 			flex: 1;
-			width: auto;
 		}
 	}
 }
 
-.request-integration-dialog {
-	.request-integration-form {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
+.request-integration-form {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 
-		.request-integration-input {
-			color: var(--l1-foreground);
-		}
-	}
-
-	.request-integration-form-title {
+	.request-integration-input {
 		color: var(--l1-foreground);
-		font-family: Inter;
-		font-size: 13px;
-		font-style: normal;
-		font-weight: 400;
-		line-height: 20px; /* 142.857% */
 	}
+}
 
-	.request-integration-form-footer {
-		margin-top: 16px;
-		display: flex;
-		justify-content: flex-end;
-		gap: 8px;
-	}
+.request-integration-form-title {
+	color: var(--l1-foreground);
+	font-family: Inter;
+	font-size: 13px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px; /* 142.857% */
 }

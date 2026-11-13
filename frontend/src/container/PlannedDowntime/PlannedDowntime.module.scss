@@ -14,42 +14,25 @@
 	flex-direction: column;
 	gap: var(--spacing-6);
 	flex-shrink: 0;
-	padding: 0 var(--spacing-8) var(--spacing-6) var(--spacing-8);
+	padding: var(--spacing-6) var(--spacing-8) var(--spacing-6) var(--spacing-8);
 }
 
 .commandHeader {
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-4);
+	min-height: 34px;
 }
 
 .headingBlock {
+	/* The Badge height, so the count does not jump when it loads. */
+	--skeleton-input-sm-height: var(--spacing-10);
+	--typography-line-height: 30px;
+
 	display: flex;
 	align-items: center;
 	gap: 10px;
 	min-width: 0;
-}
-
-.title {
-	margin: 0;
-	color: var(--l1-foreground);
-	font-size: var(--font-size-lg);
-	font-weight: var(--font-weight-medium);
-	line-height: 28px;
-	letter-spacing: -0.09px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.countPill {
-	padding: 2px 9px;
-	border-radius: 999px;
-	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
-	color: var(--l2-foreground);
-	font-size: var(--font-size-xs);
-	font-variant-numeric: tabular-nums;
 }
 
 .grow {
@@ -117,7 +100,7 @@
 }
 
 .expression {
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-base-400-font-family);
 	font-size: 13px;
 }
 

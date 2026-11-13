@@ -31,14 +31,31 @@ export function useChannelDelete(onDeleted?: () => void): ChannelDeleteState {
 	const request = (channel: Channel): void => {
 		confirmDelete({
 			title: (
-				<Typography.Title level={5}>
+				<Typography
+					variant="paragraph"
+					size="medium"
+					weight="bold"
+					color="inherit"
+					as="h5"
+					marginY={4}
+					textOverflow="wrap"
+				>
 					Are you sure you want to delete the
-					<Typography.Text className={styles.name}>
-						{' '}
-						{channel.displayName}{' '}
-					</Typography.Text>
+					<span className={styles.name}>
+						<Typography
+							variant="paragraph"
+							size="medium"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{' '}
+							{channel.displayName}{' '}
+						</Typography>
+					</span>
 					channel?
-				</Typography.Title>
+				</Typography>
 			),
 			// Returning the promise keeps Delete loading until the request settles.
 			onConfirm: async (): Promise<void> => {

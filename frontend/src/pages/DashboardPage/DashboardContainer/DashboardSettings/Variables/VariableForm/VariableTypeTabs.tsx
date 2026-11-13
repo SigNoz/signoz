@@ -41,7 +41,16 @@ function VariableTypeTabs({
 			noTabContentPadding
 			tabBarStartContent={
 				<div className={styles.typeLabelContainer}>
-					<Typography.Text className={styles.label}>Variable Type</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						textOverflow="visible"
+					>
+						Variable Type
+					</Typography>
 					<TextToolTip
 						text="Learn more about supported variable types"
 						url="https://signoz.io/docs/userguide/manage-variables/#supported-variable-types"

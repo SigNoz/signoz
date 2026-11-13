@@ -36,16 +36,30 @@ function AttributeWithExpandablePopover({
 	return (
 		<div className={styles.attributeContainer} key={attributeKey}>
 			<Tooltip title={attributeKey}>
-				<Typography.Text className={styles.attributeKey} truncate={1}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="p"
+					textOverflow="ellipsis"
+				>
 					{attributeKey}
-				</Typography.Text>
+				</Typography>
 			</Tooltip>
 
 			<div className={styles.wrapper}>
 				<Popover content={popoverContent} trigger="hover" placement="topRight">
-					<Typography.Text className={styles.attributeValue} truncate={1}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="main"
+						as="p"
+						textOverflow="ellipsis"
+					>
 						{attributeValue}
-					</Typography.Text>
+					</Typography>
 				</Popover>
 			</div>
 		</div>

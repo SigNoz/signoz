@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { DialogWrapper } from '@signozhq/ui/dialog';
-import { toast } from '@signozhq/ui/sonner';
+import { Dialog } from '@signozhq/ui/dialog';
+import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccountKeys,
@@ -21,7 +21,7 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
 import KeyCreatedPhase from './KeyCreatedPhase';
-import KeyFormPhase from './KeyFormPhase';
+import KeyFormPhase, { KeyFormFooter } from './KeyFormPhase';
 import type { FormValues } from './types';
 import { DEFAULT_FORM_VALUES, ExpiryMode, Phase, PHASE_TITLES } from './types';
 
@@ -29,7 +29,7 @@ import './AddKeyModal.styles.scss';
 
 function AddKeyModal(): JSX.Element {
 	const queryClient = useQueryClient();
-	const { showErrorModal, isErrorModalVisible } = useErrorModal();
+	const { showErrorModal } = useErrorModal();
 	const [accountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
 	const [isAddKeyOpen, setIsAddKeyOpen] = useQueryState(
 		SA_QUERY_PARAMS.ADD_KEY,
@@ -119,12 +119,12 @@ function AddKeyModal(): JSX.Element {
 
 	useEffect(() => {
 		if (copyState.error) {
-			toast.error('Failed to copy key');
+			toast.danger('Failed to copy key', { action: { label: 'Dismiss' } });
 		}
 	}, [copyState.error]);
 
 	const handleClose = useCallback((): void => {
-		setIsAddKeyOpen(null);
+		void setIsAddKeyOpen(null);
 	}, [setIsAddKeyOpen]);
 
 	function getExpiryLabel(): string {
@@ -139,29 +139,29 @@ function AddKeyModal(): JSX.Element {
 	}
 
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					handleClose();
-				}
-			}}
+			onClose={handleClose}
 			title={PHASE_TITLES[phase]}
 			width="base"
-			className="add-key-modal"
-			showCloseButton
-			disableOutsideClick={isErrorModalVisible}
 			testId="add-key-modal"
+			footerSuffix={
+				phase === Phase.FORM ? (
+					<KeyFormFooter
+						isSubmitting={isSubmitting}
+						isValid={isValid}
+						onClose={handleClose}
+						accountId={accountId ?? undefined}
+					/>
+				) : undefined
+			}
 		>
 			{phase === Phase.FORM && (
 				<KeyFormPhase
 					register={register}
 					control={control}
 					expiryMode={expiryMode}
-					isSubmitting={isSubmitting}
-					isValid={isValid}
 					onSubmit={handleSubmit(handleCreate)}
-					onClose={handleClose}
 					accountId={accountId ?? undefined}
 				/>
 			)}
@@ -174,7 +174,7 @@ function AddKeyModal(): JSX.Element {
 					onCopy={handleCopy}
 				/>
 			)}
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

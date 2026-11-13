@@ -20,11 +20,21 @@ function NotificationSettings(): JSX.Element {
 
 	const repeatNotificationsInput = (
 		<div className="repeat-notifications-input">
-			<Typography.Text>Every</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				Every
+			</Typography>
 			<Input
 				value={notificationSettings.reNotification.value}
 				placeholder="Enter time interval..."
 				disabled={!notificationSettings.reNotification.enabled}
+				disabledTooltip={undefined}
 				type="number"
 				onChange={(e): void => {
 					setNotificationSettings({
@@ -37,7 +47,7 @@ function NotificationSettings(): JSX.Element {
 						},
 					});
 				}}
-				data-testid="repeat-notifications-time-input"
+				testId="repeat-notifications-time-input"
 			/>
 			<Select
 				value={notificationSettings.reNotification.unit || null}
@@ -57,7 +67,16 @@ function NotificationSettings(): JSX.Element {
 				}}
 				data-testid="repeat-notifications-unit-select"
 			/>
-			<Typography.Text>while</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				while
+			</Typography>
 			<Select
 				mode="multiple"
 				value={notificationSettings.reNotification.conditions || null}

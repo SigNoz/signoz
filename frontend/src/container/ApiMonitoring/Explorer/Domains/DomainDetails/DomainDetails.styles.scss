@@ -46,13 +46,8 @@
 	}
 
 	.title {
-		color: var(--l2-foreground);
-		font-family: 'Geist Mono';
-		font-size: 14px;
-		font-style: normal;
-		font-weight: 500;
-		line-height: 20px;
-		letter-spacing: -0.07px;
+		// Typography's only monospace affordance is `code`, which also draws a chip.
+		font-family: var(--code-base-500-font-family);
 	}
 
 	.radio-button {
@@ -93,24 +88,13 @@
 			}
 
 			.domain-details-metadata-label {
-				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 11px;
-				font-style: normal;
-				font-weight: 500;
-				line-height: 18px;
-				letter-spacing: 0.44px;
+				// Typography has no prop for casing.
 				text-transform: uppercase;
 			}
 
 			.domain-details-metadata-value {
-				color: var(--l2-foreground);
-				font-family: 'Geist Mono';
-				font-size: 12px;
-				font-style: normal;
-				font-weight: 500;
-				line-height: 20px;
-				letter-spacing: -0.07px;
+				// Typography's only monospace affordance is `code`, which also draws a chip.
+				font-family: var(--code-base-500-font-family);
 
 				width: 100%;
 				white-space: nowrap;
@@ -213,26 +197,19 @@
 			gap: 10px;
 			padding: 12px;
 			color: var(--l1-foreground);
-			font-family: Inter;
 			font-size: 14px;
-			font-style: normal;
-			font-weight: 400;
 			line-height: 18px; /* 128.571% */
 		}
 
 		.ant-table {
 			.ant-table-thead > tr > th {
 				padding: 12px;
-				font-weight: 500;
 				font-size: 12px;
 				line-height: 18px;
 				border-bottom: none;
 
 				color: var(--l2-foreground);
-				font-family: Inter;
 				font-size: 11px;
-				font-style: normal;
-				font-weight: 600;
 				line-height: 18px;
 				/* 163.636% */
 				letter-spacing: 0.44px;
@@ -250,7 +227,6 @@
 
 			.ant-table-cell {
 				padding: 12px;
-				font-size: 13px;
 				line-height: 20px;
 				color: var(--l1-foreground);
 				border-bottom: none;
@@ -416,16 +392,12 @@
 		.ant-table {
 			.ant-table-thead > tr > th {
 				padding: 12px;
-				font-weight: 500;
 				font-size: 12px;
 				line-height: 18px;
 				border-bottom: none;
 
 				color: var(--l2-foreground);
-				font-family: Inter;
 				font-size: 11px;
-				font-style: normal;
-				font-weight: 600;
 				line-height: 18px;
 				/* 163.636% */
 				letter-spacing: 0.44px;
@@ -443,7 +415,6 @@
 
 			.ant-table-cell {
 				padding: 12px;
-				font-size: 13px;
 				line-height: 20px;
 				color: var(--l1-foreground);
 				border-bottom: none;
@@ -608,10 +579,7 @@
 		height: 100%;
 
 		color: var(--l2-foreground);
-		font-family: Inter;
 		font-size: 14px;
-		font-style: normal;
-		font-weight: 400;
 		line-height: 18px;
 	}
 
@@ -631,7 +599,6 @@
 .top-services-content {
 	display: flex;
 	flex-direction: column;
-	font-family: 'Geist Mono' !important;
 
 	border-radius: 3px;
 	border: 1px solid var(--l1-border);
@@ -644,11 +611,8 @@
 		background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
 
 		color: var(--bg-robin-400);
-		font-family: Inter;
 		font-size: 14px;
-		font-style: normal;
 		font-weight: 400;
-		line-height: 18px;
 		letter-spacing: -0.07px;
 	}
 	.dependent-services-container {
@@ -658,16 +622,12 @@
 		.ant-table {
 			.ant-table-thead > tr > th {
 				padding: 12px;
-				font-weight: 500;
 				font-size: 12px;
 				line-height: 18px;
 				border-bottom: none;
 
 				color: var(--l2-foreground);
-				font-family: Inter;
 				font-size: 11px;
-				font-style: normal;
-				font-weight: 600;
 				line-height: 18px;
 				/* 163.636% */
 				letter-spacing: 0.44px;
@@ -685,7 +645,6 @@
 
 			.ant-table-cell {
 				padding: 0px;
-				font-size: 13px;
 				line-height: 20px;
 				color: var(--l1-foreground);
 				border-bottom: none;
@@ -819,8 +778,6 @@
 			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 14px;
-			font-style: normal;
-			font-weight: 400;
 			line-height: 20px;
 			letter-spacing: -0.07px;
 
@@ -884,13 +841,6 @@
 			align-items: flex-start;
 			justify-content: center;
 			gap: 8px;
-
-			font-family: Inter;
-			font-size: 14px;
-			font-style: normal;
-			font-weight: 400;
-			line-height: 20px;
-			letter-spacing: -0.07px;
 
 			.title {
 				color: var(--l1-foreground);

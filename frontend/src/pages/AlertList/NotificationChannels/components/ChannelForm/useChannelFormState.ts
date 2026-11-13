@@ -49,12 +49,14 @@ interface UseChannelFormStateArgs {
 	draft: ChannelFormState;
 	target: ChannelFormTarget;
 	onDone: () => void;
+	readOnly: boolean;
 }
 
 export function useChannelFormState({
 	draft,
 	target,
 	onDone,
+	readOnly,
 }: UseChannelFormStateArgs): ChannelFormStateResult {
 	const { t } = useTranslation('channels');
 	const { notifications } = useNotifications();
@@ -68,6 +70,8 @@ export function useChannelFormState({
 	const form = useForm<ChannelFormValues>({
 		defaultValues: draft.values,
 		resolver: channelResolver(type, t),
+		// `false` is not a no-op: it re-enables fields disabled by their own prop
+		disabled: readOnly || undefined,
 	});
 
 	const { mutateAsync: createChannel, isLoading: isCreating } =
@@ -201,7 +205,11 @@ export function useChannelFormState({
 		isDirty: form.formState.isDirty,
 		onTypeChange,
 		onSave: form.handleSubmit(submitSave),
-		onTest: form.handleSubmit(submitTest),
+		// handleSubmit drops the values of disabled fields, and a reader with
+		// `create` can still send a test from a read-only form.
+		onTest: readOnly
+			? (): void => void submitTest(form.getValues())
+			: form.handleSubmit(submitTest),
 		isSaving: isCreating || isUpdating,
 		isTesting,
 	};

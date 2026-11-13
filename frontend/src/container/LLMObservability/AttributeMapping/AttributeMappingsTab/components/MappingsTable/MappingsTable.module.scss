@@ -23,8 +23,7 @@
 .headerCell {
 	padding: var(--spacing-4) var(--spacing-6);
 	text-align: left;
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-normal);
+	font-weight: var(--label-base-400-font-weight);
 	color: var(--l2-foreground);
 
 	&:last-child {
@@ -94,7 +93,6 @@
 	padding: var(--spacing-12) var(--spacing-6);
 	text-align: center;
 	color: var(--l3-foreground);
-	font-size: var(--periscope-font-size-base);
 }
 
 .skeletonList {

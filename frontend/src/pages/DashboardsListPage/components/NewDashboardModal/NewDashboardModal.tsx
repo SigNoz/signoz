@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Tabs } from '@signozhq/ui/tabs';
 import logEvent from 'api/common/logEvent';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
@@ -28,15 +28,11 @@ function NewDashboardModal({ open, onClose }: Props): JSX.Element {
 	};
 
 	return (
-		<DialogWrapper
+		<Dialog
 			title="New dashboard"
 			open={open}
 			width="wide"
-			onOpenChange={(next): void => {
-				if (!next) {
-					onClose();
-				}
-			}}
+			onClose={(): void => onClose()}
 		>
 			<Tabs
 				variant="primary"
@@ -62,7 +58,7 @@ function NewDashboardModal({ open, onClose }: Props): JSX.Element {
 					},
 				]}
 			/>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

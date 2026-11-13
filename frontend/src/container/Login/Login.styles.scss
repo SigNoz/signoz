@@ -21,32 +21,18 @@
 .login-form-emoji {
 	width: 32px;
 	height: 32px;
-	font-size: 24px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
 .login-form-title {
-	font-family: Inter, sans-serif;
-	font-size: 18px;
-	font-weight: 600;
-	line-height: 1;
-	letter-spacing: 0;
-	color: var(--l1-foreground);
-	margin: 0 !important;
+	--typography-title-margin-top: 0;
+	--typography-title-margin-bottom: 0;
 }
 
 .login-form-description {
-	font-family: Inter, sans-serif;
-	font-size: 13px;
-	font-weight: 400;
-	line-height: 20px;
-	letter-spacing: -0.065px;
-	color: var(--l2-foreground);
 	max-width: 317px;
-	margin: 0 !important;
-	text-align: center;
 }
 
 .login-form-card {
@@ -100,18 +86,10 @@
 
 		&__error-code {
 			color: #fadadb;
-			font-size: 13px;
-			font-weight: 500;
-			line-height: 1;
-			letter-spacing: -0.065px;
 		}
 
 		&__error-message {
 			color: #f5b6b8;
-			font-size: 13px;
-			font-weight: 400;
-			line-height: 20px;
-			letter-spacing: -0.065px;
 		}
 
 		&__message-badge {
@@ -140,10 +118,6 @@
 
 		&__message-item {
 			color: #f5b6b8;
-			font-size: 13px;
-			font-weight: 400;
-			line-height: 20px;
-			letter-spacing: -0.065px;
 
 			&::before {
 				background: #f5b6b8;
@@ -161,6 +135,12 @@
 }
 
 .password-label-container {
+	--button-height: auto;
+	--button-font-weight: 400;
+	--button-icon-size: 13px;
+	--button-secondary-link-color: var(--text-neutral-dark-200);
+	--button-secondary-link-hover-color: var(--text-neutral-dark-300);
+
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -172,19 +152,6 @@
 	}
 }
 
-.forgot-password-link {
-	font-family: Inter, sans-serif;
-	font-size: 13px;
-	font-weight: 400;
-	line-height: 1;
-	letter-spacing: -0.065px;
-	color: var(--text-neutral-dark-200) !important;
-
-	&:hover {
-		color: var(--text-neutral-dark-300) !important;
-	}
-}
-
 .login-form-input {
 	height: 32px;
 	background: var(--l2-background) !important;
@@ -192,8 +159,6 @@
 	border-radius: 2px;
 	padding: 6px 8px;
 	font-family: Inter, sans-serif;
-	font-size: 13px;
-	font-weight: 400;
 	line-height: 1;
 	letter-spacing: -0.065px;
 	color: var(--l1-foreground);
@@ -223,11 +188,7 @@
 			min-height: 32px !important;
 			padding: 0 8px !important;
 			border-radius: 2px !important;
-			font-family: Inter, sans-serif !important;
 			font-size: 13px !important;
-			font-weight: 400 !important;
-			line-height: 1 !important;
-			letter-spacing: -0.065px !important;
 			background: var(--l2-background) !important;
 			border: 1px solid var(--l2-border) !important;
 			display: flex !important;
@@ -236,17 +197,12 @@
 
 		.ant-select-selection-search {
 			height: 20px;
-			line-height: 20px;
 		}
 
 		.ant-select-selection-item,
 		.ant-select-selection-placeholder {
 			line-height: 20px !important;
 			height: 20px !important;
-			font-family: Inter, sans-serif !important;
-			font-size: 13px !important;
-			font-weight: 400 !important;
-			letter-spacing: -0.065px !important;
 			display: flex !important;
 			align-items: center !important;
 			margin: 0 !important;

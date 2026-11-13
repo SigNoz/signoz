@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -19,7 +20,9 @@ import useActiveQueryIndex from 'components/QuickFilters/hooks/useActiveQueryInd
 import { DEFAULT_VISIBLE_ITEMS_COUNT } from '../constants';
 import useCheckboxDisclosure from '../useCheckboxDisclosure';
 import useCheckboxFilterActions from '../useCheckboxFilterActions';
-import useCheckboxFilterState from '../useCheckboxFilterState';
+import useCheckboxFilterState, {
+	FILTER_DISABLED_REASON,
+} from '../useCheckboxFilterState';
 import { useFieldValues } from './useFieldValues';
 import { useExistingQuery } from './useExistingQuery';
 import { isKeyMatch } from '../utils';
@@ -208,7 +211,8 @@ export default function CheckboxFilterV2(
 								placeholder="Filter values"
 								onChange={(e): void => setSearchTextDebounced(e.target.value)}
 								disabled={isFilterDisabled}
-								data-testid="checkbox-filter-search"
+								disabledTooltip={FILTER_DISABLED_REASON}
+								testId="checkbox-filter-search"
 								suffix={
 									isFetching ? (
 										<LoaderCircle
@@ -250,20 +254,31 @@ export default function CheckboxFilterV2(
 									: 'checkbox-filter-empty'
 							}
 						>
-							<Typography.Text>No values found</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								No values found
+							</Typography>
 						</section>
 					)}
 
 					{visibleItemsCount < totalCount &&
 						!(searchText && (isLoading || isFetching)) && (
 							<section className={styles.showMore}>
-								<Typography.Text
-									className={styles.showMoreText}
+								<Button
+									variant="link"
+									color="primary"
+									size="md"
 									onClick={onShowMore}
-									data-testid="checkbox-filter-show-more"
+									testId="checkbox-filter-show-more"
 								>
 									Show More...
-								</Typography.Text>
+								</Button>
 							</section>
 						)}
 				</>

@@ -241,7 +241,16 @@ function WidgetGraphComponent({
 
 			{queryResponse.error && customErrorMessage && (
 				<div className="error-message-container">
-					<Typography.Text color="warning">{customErrorMessage}</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="warning"
+						as="span"
+						textOverflow="wrap"
+					>
+						{customErrorMessage}
+					</Typography>
 				</div>
 			)}
 

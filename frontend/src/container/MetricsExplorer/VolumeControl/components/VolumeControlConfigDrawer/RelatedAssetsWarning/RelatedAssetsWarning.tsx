@@ -53,15 +53,31 @@ function RelatedAssetsWarning({
 		<div className={styles.warning} data-testid="volume-control-warning">
 			<Info size={14} />
 			<div className={styles.warningBody}>
-				<Typography.Text as="div" size="base" weight="semibold" color="warning">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="bold"
+					color="warning"
+					as="div"
+					display="inline"
+					textOverflow="wrap"
+				>
 					This rule affects {impacted.length} related asset
 					{impacted.length > 1 ? 's' : ''}.
-				</Typography.Text>
+				</Typography>
 				{impactedLabels.length > 0 && (
-					<Typography.Text as="div" size="base" color="muted">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="div"
+						display="inline"
+						textOverflow="wrap"
+					>
 						{impactedLabels.join(', ')} will no longer be queryable; affected panels
 						fall back to aggregated data once the rule applies.
-					</Typography.Text>
+					</Typography>
 				)}
 				<ul className={styles.assetList}>
 					{impacted.map((asset) => {
@@ -73,17 +89,26 @@ function RelatedAssetsWarning({
 							<li key={`${asset.type}-${asset.id}-${asset.widget?.id ?? ''}`}>
 								{href ? (
 									<Typography.Link
+										variant="paragraph"
 										size="base"
+										weight="regular"
+										textOverflow="wrap"
 										href={href}
 										target="_blank"
-										rel="noopener noreferrer"
 									>
 										{label}
 									</Typography.Link>
 								) : (
-									<Typography.Text size="base" color="muted">
+									<Typography
+										variant="paragraph"
+										size="base"
+										weight="regular"
+										color="secondary"
+										as="span"
+										textOverflow="wrap"
+									>
 										{label}
-									</Typography.Text>
+									</Typography>
 								)}
 							</li>
 						);

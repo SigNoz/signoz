@@ -48,7 +48,16 @@ function ThresholdAmountField({
 
 	return (
 		<div className={styles.field}>
-			<Typography.Text className={styles.fieldLabel}>{label}</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
+				{label}
+			</Typography>
 			<div className={styles.amountRow}>
 				<Input
 					data-testid={`${testIdPrefix}-value-${index}`}
@@ -77,10 +86,17 @@ function ThresholdAmountField({
 					data-testid={`${testIdPrefix}-unit-invalid-${index}`}
 				>
 					<TriangleAlert size={13} className={styles.invalidUnitIcon} />
-					<Typography.Text className={styles.invalidUnitText}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{getUniversalNameFromMetricUnit(unit)} can&apos;t be compared with the{' '}
 						{scopeLabel} ({getUniversalNameFromMetricUnit(scopeUnit)}).
-					</Typography.Text>
+					</Typography>
 				</div>
 			)}
 		</div>

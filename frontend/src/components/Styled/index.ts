@@ -9,11 +9,6 @@ import {
 	Space,
 	SpaceProps,
 } from 'antd';
-import {
-	Typography,
-	TypographyTextProps,
-	TypographyTitleProps,
-} from '@signozhq/ui/typography';
 import styled, { FlattenSimpleInterpolation } from 'styled-components';
 
 import { IStyledClass } from './types';
@@ -41,32 +36,9 @@ const StyledButton = styled(Button)<TStyledButton>`
 	${styledClass}
 `;
 
-const { Text } = Typography;
-type TStyledTypographyText = TypographyTextProps & IStyledClass;
-const StyledTypographyText = styled(Text)<TStyledTypographyText>`
-	${styledClass}
-`;
-
-const { Title } = Typography;
-type TStyledTypographyTitle = TypographyTitleProps & IStyledClass;
-const StyledTypographyTitle = styled(Title)<TStyledTypographyTitle>`
-	${styledClass}
-`;
-
 type TStyledDiv = HTMLAttributes<HTMLDivElement> & IStyledClass;
 const StyledDiv = styled.div<TStyledDiv>`
 	${styledClass}
 `;
 
-const StyledTypography = {
-	Text: StyledTypographyText,
-	Title: StyledTypographyTitle,
-};
-export {
-	StyledButton,
-	StyledCol,
-	StyledDiv,
-	StyledRow,
-	StyledSpace,
-	StyledTypography,
-};
+export { StyledButton, StyledCol, StyledDiv, StyledRow, StyledSpace };

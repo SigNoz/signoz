@@ -24,17 +24,17 @@
 .sourceIndex {
 	width: 20px;
 	text-align: center;
-	font-size: var(--font-size-xs);
+	font-size: var(--label-small-400-font-size);
 	color: var(--l3-foreground);
 }
 
 .sourceInput {
 	flex: 1;
 	min-width: 0;
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-base-400-font-family);
 }
 
-.sourceSelect {
+/* The selects size themselves via their `width` prop; keep them from flexing. */
+.source > [data-slot='select'] {
 	flex: 0 0 auto;
-	width: 120px;
 }

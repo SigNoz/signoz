@@ -16,11 +16,11 @@ import ModelCostTabPanel from '../ModelCostTabPanel';
 
 const toastSuccess = jest.fn();
 const toastError = jest.fn();
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: (...args: unknown[]): void => toastSuccess(...args),
-		error: (...args: unknown[]): void => toastError(...args),
+		danger: (...args: unknown[]): void => toastError(...args),
 	},
 }));
 
@@ -187,7 +187,7 @@ describe('ModelCostTabPanel (integration)', () => {
 		const drawerTitle = await screen.findByText('Edit model cost');
 		expect(drawerTitle).toBeInTheDocument();
 		const modelInput = screen.getByTestId(
-			'drawer-model-id-input',
+			'drawer-model-id-input-field',
 		) as HTMLInputElement;
 		expect(modelInput.value).toBe('gpt-4o');
 		expect(modelInput).toBeDisabled();
@@ -209,7 +209,7 @@ describe('ModelCostTabPanel (integration)', () => {
 		await openRowMenu(user, 'rule-openai');
 		await user.click(await screen.findByText('Delete'));
 
-		await user.click(await screen.findByTestId('drawer-delete-confirm-btn'));
+		await user.click(await screen.findByTestId('drawer-delete-dialog-confirm'));
 
 		await waitFor(() => expect(deletedId).toBe('rule-openai'));
 		await waitFor(() =>
@@ -256,11 +256,11 @@ describe('ModelCostTabPanel (integration)', () => {
 
 		// Leading/trailing whitespace should be trimmed off the model id.
 		await user.type(
-			await screen.findByTestId('drawer-model-id-input'),
+			await screen.findByTestId('drawer-model-id-input-field'),
 			'  gpt-4o-mini  ',
 		);
-		await user.type(screen.getByTestId('drawer-input-cost'), '3');
-		await user.type(screen.getByTestId('drawer-output-cost'), '9');
+		await user.type(screen.getByTestId('drawer-input-cost-field'), '3');
+		await user.type(screen.getByTestId('drawer-output-cost-field'), '9');
 		await user.click(screen.getByTestId('drawer-save-btn'));
 
 		await waitFor(() => expect(body).not.toBeNull());
@@ -297,7 +297,7 @@ describe('ModelCostTabPanel (integration)', () => {
 		await user.click(await screen.findByText('Edit'));
 
 		// Model id + provider are locked in edit mode; change the prefilled input cost.
-		const inputCost = await screen.findByTestId('drawer-input-cost');
+		const inputCost = await screen.findByTestId('drawer-input-cost-field');
 		await user.clear(inputCost);
 		await user.type(inputCost, '5');
 		await user.click(screen.getByTestId('drawer-save-btn'));

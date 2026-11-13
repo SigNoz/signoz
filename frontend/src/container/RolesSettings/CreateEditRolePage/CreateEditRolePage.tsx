@@ -4,7 +4,7 @@ import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAppNavigate } from 'lib/router/useAppNavigate';
 import { matchRoute } from 'lib/router/matchRoute';
 import { Button } from '@signozhq/ui/button';
-import { ConfirmDialog } from '@signozhq/ui/dialog';
+import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
@@ -120,9 +120,17 @@ function CreateEditRolePageContent(): JSX.Element {
 						>
 							<ArrowLeft size={16} />
 						</Button>
-						<Typography.Title level={3}>
+						<Typography
+							variant="label"
+							size="large"
+							weight="bold"
+							color="inherit"
+							as="h3"
+							marginY={4}
+							textOverflow="wrap"
+						>
 							{isCreateMode ? 'Create Role' : 'Edit Role'}
-						</Typography.Title>
+						</Typography>
 					</div>
 				</div>
 
@@ -186,14 +194,31 @@ function CreateEditRolePageContent(): JSX.Element {
 					>
 						<ArrowLeft size={16} />
 					</Button>
-					<Typography.Title level={3}>{title}</Typography.Title>
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="inherit"
+						as="h3"
+						marginY={4}
+						textOverflow="wrap"
+					>
+						{title}
+					</Typography>
 				</div>
 
 				<div className={styles.createEditRolePageActions}>
 					{hasUnsavedChanges && (
 						<div className={styles.unsavedIndicator}>
 							<span className={styles.unsavedDot} />
-							<Typography as="span" size="base" className={styles.unsavedText}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="primary"
+								as="span"
+								textOverflow="wrap"
+							>
 								Unsaved changes
 							</Typography>
 						</div>
@@ -264,7 +289,7 @@ function CreateEditRolePageContent(): JSX.Element {
 											value={formData.name}
 											onChange={(e): void => handleFormChange('name', e.target.value)}
 											placeholder="my-custom-role"
-											data-testid="role-name-input"
+											testId="role-name-input"
 										/>
 									</div>
 								) : null}
@@ -279,7 +304,7 @@ function CreateEditRolePageContent(): JSX.Element {
 											handleFormChange('description', e.target.value)
 										}
 										placeholder="Custom role for the support team"
-										data-testid="role-description-input"
+										testId="role-description-input"
 									/>
 								</div>
 							</div>
@@ -300,28 +325,30 @@ function CreateEditRolePageContent(): JSX.Element {
 				</>
 			</AuthZGuardContent>
 
-			<ConfirmDialog
+			<AlertDialog
 				open={isBlocked}
-				onOpenChange={(next): void => {
-					if (!next) {
-						cancelNavigation();
-					}
-				}}
 				title="Discard unsaved changes?"
 				titleIcon={<SolidAlertTriangle size={14} color="#fdd600" />}
 				confirmText="Discard"
-				confirmColor="danger"
+				color="danger"
 				cancelText="Keep editing"
 				onConfirm={confirmNavigation}
 				onCancel={cancelNavigation}
 				testId="discard-changes-dialog"
 			>
-				<Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{isCreateMode
 						? 'This new role will not be created.'
 						: 'Your unsaved changes will be lost.'}
 				</Typography>
-			</ConfirmDialog>
+			</AlertDialog>
 		</div>
 	);
 }

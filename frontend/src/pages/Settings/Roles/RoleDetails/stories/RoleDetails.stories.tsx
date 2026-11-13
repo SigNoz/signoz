@@ -99,7 +99,7 @@ export const DeleteRoleConfirm: Story = {
 		}, untilLoaded);
 
 		await userEvent.click(deleteRole);
-		await screen.findByRole('dialog', { name: 'Delete Role' });
+		await screen.findByRole('alertdialog', { name: 'Delete Role' });
 	},
 };
 
@@ -123,7 +123,9 @@ export const DeleteRoleFailed: Story = {
 		}, untilLoaded);
 
 		await userEvent.click(deleteRole);
-		const dialog = await screen.findByRole('dialog', { name: 'Delete Role' });
+		const dialog = await screen.findByRole('alertdialog', {
+			name: 'Delete Role',
+		});
 
 		await userEvent.click(
 			within(dialog).getByRole('button', { name: 'Delete Role' }),

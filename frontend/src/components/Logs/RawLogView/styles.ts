@@ -80,7 +80,7 @@ export const ExpandIconWrapper = styled(Col)`
 export const RawLogContent = styled.div<RawLogContentProps>`
 	margin-bottom: 0;
 	font-family: 'SF Mono', monospace;
-	font-family: 'Geist Mono';
+	font-family: var(--code-base-400-font-family);
 	letter-spacing: -0.07px;
 	padding: 4px;
 	text-align: left;

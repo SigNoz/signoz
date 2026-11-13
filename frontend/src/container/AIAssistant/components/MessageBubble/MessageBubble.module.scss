@@ -43,8 +43,6 @@
 	border-radius: var(--radius-2);
 	padding: 8px;
 	font-size: 12px;
-	font-style: normal;
-	font-weight: 400;
 	line-height: 20px; /* 153.846% */
 	letter-spacing: -0.065px;
 	max-width: 100%;
@@ -242,7 +240,7 @@
 	}
 
 	code {
-		font-family: 'Geist Mono', 'Fira Code', monospace;
+		font-family: var(--code-small-400-font-family);
 		font-size: 11.5px;
 		border-radius: var(--radius-2);
 		padding: 1px 4px;
@@ -268,7 +266,6 @@
 
 	table {
 		border-collapse: collapse;
-		font-size: 12px;
 		margin: 0 0 0.65em;
 		width: 100%;
 

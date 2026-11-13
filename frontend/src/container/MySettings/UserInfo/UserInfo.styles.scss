@@ -32,9 +32,6 @@
 
 		.user-name {
 			color: var(--l1-foreground);
-			font-family: Inter;
-			font-size: 13px;
-			font-style: normal;
 			font-weight: 500;
 			line-height: 20px; /* 142.857% */
 			letter-spacing: -0.07px;
@@ -51,10 +48,6 @@
 				gap: 8px;
 
 				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 13px;
-				font-style: normal;
-				font-weight: 400;
 				line-height: 20px; /* 142.857% */
 				letter-spacing: -0.07px;
 			}
@@ -67,10 +60,6 @@
 				text-transform: capitalize;
 
 				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 13px;
-				font-style: normal;
-				font-weight: 400;
 				line-height: 20px; /* 142.857% */
 				letter-spacing: -0.07px;
 			}
@@ -129,7 +118,7 @@
 				padding-bottom: 16px;
 
 				.password-error-text {
-					font-size: var(--font-size-xs);
+					font-size: var(--label-small-400-font-size);
 					color: var(--bg-cherry-400);
 					margin-top: 2px;
 				}
@@ -170,9 +159,6 @@
 				border-radius: 2px;
 				background-color: var(--primary-background) !important;
 				color: var(--primary-foreground) !important;
-				font-family: Inter;
-				font-size: 12px;
-				font-style: normal;
 				font-weight: 500;
 				line-height: 24px;
 			}

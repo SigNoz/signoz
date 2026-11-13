@@ -57,9 +57,18 @@ function EvaluationWindowPopover({
 		sectionId: string,
 	): JSX.Element => (
 		<div className="evaluation-window-content-item" data-section-id={sectionId}>
-			<Typography.Text className="evaluation-window-content-item-label">
-				{label}
-			</Typography.Text>
+			<span className="evaluation-window-content-item-label">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{label}
+				</Typography>
+			</span>
 			<div className="evaluation-window-content-list">
 				{contentOptions.map((option, index) => (
 					<div
@@ -81,7 +90,16 @@ function EvaluationWindowPopover({
 						}}
 						ref={index === 0 ? firstItemRef : undefined}
 					>
-						<Typography.Text>{option.label}</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{option.label}
+						</Typography>
 						{currentValue === option.value && <Check size={12} />}
 					</div>
 				))}
@@ -101,9 +119,16 @@ function EvaluationWindowPopover({
 			}
 			return (
 				<div className="selection-content">
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{getRollingWindowDescription(evaluationWindow.timeframe)}
-					</Typography.Text>
+					</Typography>
 					<Button type="link">Read the docs</Button>
 				</div>
 			);
@@ -115,9 +140,16 @@ function EvaluationWindowPopover({
 		) {
 			return (
 				<div className="selection-content">
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{getCumulativeWindowDescription(evaluationWindow.timeframe)}
-					</Typography.Text>
+					</Typography>
 					<Button type="link">Read the docs</Button>
 				</div>
 			);

@@ -18,8 +18,7 @@
 
 	&__label {
 		color: var(--l2-foreground);
-		font-size: var(--paragraph-base-400-font-size);
-		line-height: var(--line-height-20);
+		line-height: var(--paragraph-base-400-line-height);
 		letter-spacing: -0.07px;
 		flex-shrink: 0;
 	}
@@ -37,8 +36,7 @@
 		background: var(--l3-background);
 		color: var(--l2-foreground);
 		font-family: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
-		font-size: var(--paragraph-base-400-font-size);
-		line-height: var(--line-height-20);
+		line-height: var(--paragraph-base-400-line-height);
 		white-space: nowrap;
 		margin-right: -1px;
 		height: 24px;

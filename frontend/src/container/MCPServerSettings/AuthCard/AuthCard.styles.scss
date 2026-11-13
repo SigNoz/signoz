@@ -18,9 +18,9 @@
 	}
 
 	&__description {
-		font-size: var(--font-size-xs);
+		font-size: var(--paragraph-small-400-font-size);
 		color: var(--foreground);
-		line-height: var(--line-height-18);
+		line-height: var(--paragraph-small-400-line-height);
 		margin: 0;
 	}
 
@@ -31,7 +31,7 @@
 	}
 
 	&__field-label {
-		font-size: var(--font-size-xs);
+		font-size: var(--label-small-500-font-size);
 		font-weight: 500;
 		color: var(--foreground);
 		letter-spacing: 0.01em;
@@ -45,8 +45,7 @@
 		border: 1px solid var(--l3-border);
 		border-radius: 6px;
 		background: var(--l3-background);
-		font-family: var(--font-family-sf-mono, monospace);
-		font-size: var(--paragraph-base-400-font-size);
+		font-family: var(--code-base-400-font-family);
 		color: var(--l1-foreground);
 		width: 100%;
 		justify-content: space-between;

@@ -13,7 +13,7 @@ describe('TriggeredAlerts — search', () => {
 		);
 		expect(screen.getByText('Memory Warning')).toBeInTheDocument();
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
+		const input = screen.getByTestId('triggered-alerts-search-input-field');
 		await user.type(input, 'CPU');
 
 		await waitFor(() => {
@@ -30,7 +30,7 @@ describe('TriggeredAlerts — search', () => {
 			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
 		);
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
+		const input = screen.getByTestId('triggered-alerts-search-input-field');
 		await user.type(input, 'CPU');
 
 		await waitFor(() =>
@@ -54,7 +54,7 @@ describe('TriggeredAlerts — search', () => {
 			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
 		);
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
+		const input = screen.getByTestId('triggered-alerts-search-input-field');
 		// "backend" matches `service: backend` labels on Memory Warning and Network Hiccup.
 		await user.type(input, 'backend');
 
@@ -74,7 +74,7 @@ describe('TriggeredAlerts — search', () => {
 			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
 		);
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
+		const input = screen.getByTestId('triggered-alerts-search-input-field');
 		await user.type(input, 'staging');
 
 		await waitFor(() => {
@@ -92,7 +92,7 @@ describe('TriggeredAlerts — search', () => {
 			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
 		);
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
+		const input = screen.getByTestId('triggered-alerts-search-input-field');
 		await user.type(input, 'zzzzznever-matches-anything');
 
 		await waitFor(() =>
@@ -108,7 +108,7 @@ describe('TriggeredAlerts — search', () => {
 			expect(screen.getByText('Disk Slow')).toBeInTheDocument(),
 		);
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
+		const input = screen.getByTestId('triggered-alerts-search-input-field');
 		await user.type(input, 'CPU');
 
 		await waitFor(() =>

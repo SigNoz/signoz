@@ -214,15 +214,20 @@ export default function QueryFunctions({
 					) : (
 						<div style={{ textAlign: 'center' }}>
 							Add new function
-							<Typography.Link
-								style={{ textDecoration: 'underline' }}
-								href="https://signoz.io/docs/querying/functions-extended-analysis/?utm_source=product&utm_medium=query-builder"
-								target="_blank"
-							>
-								{' '}
-								<br />
-								Learn more
-							</Typography.Link>
+							<span style={{ textDecoration: 'underline' }}>
+								<Typography.Link
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									textOverflow="wrap"
+									href="https://signoz.io/docs/querying/functions-extended-analysis/?utm_source=product&utm_medium=query-builder"
+									target="_blank"
+								>
+									{' '}
+									<br />
+									Learn more
+								</Typography.Link>
+							</span>
 						</div>
 					)
 				}

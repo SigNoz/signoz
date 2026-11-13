@@ -1,4 +1,4 @@
-import { SelectSimple } from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
@@ -39,18 +39,28 @@ function PublicDashboardSettingsForm({
 			</div>
 
 			<div className={styles.fieldGroup}>
-				<Typography.Text className={styles.fieldLabel}>
+				<Typography
+					variant="label"
+					size="small"
+					weight="medium"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Default time range
-				</Typography.Text>
-				<SelectSimple
-					className={styles.timeRangeSelect}
+				</Typography>
+				<Select
 					testId="public-dashboard-default-time-range"
 					placeholder="Select default time range"
-					items={RelativeDurationOptions}
+					items={RelativeDurationOptions.map(({ value, label }) => ({
+						type: 'item' as const,
+						value,
+						label,
+					}))}
 					value={defaultTimeRange}
 					disabled={disabled}
-					withPortal={false}
-					onChange={(value): void => onDefaultTimeRangeChange(value as string)}
+					disabledTooltip={disabledTooltip}
+					onChange={onDefaultTimeRangeChange}
 				/>
 			</div>
 		</>

@@ -20,7 +20,10 @@ interface MetadataRow {
 	value: string;
 }
 
-function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
+function IncidentIOSettings({
+	initialMetadata,
+	readOnly,
+}: IncidentIOProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -54,21 +57,28 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 	return (
 		<>
 			<FormCard title={t('section_connection')}>
-				<Typography.Text
-					color="muted"
-					size="sm"
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="p"
+					marginBottom={8}
+					textOverflow="wrap"
 					testId="incidentio-tip"
-					style={{ display: 'block', marginBottom: 16 }}
 				>
 					{t('incidentio_tip')}{' '}
 					<Typography.Link
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						textOverflow="wrap"
 						href="https://signoz.io/docs/alerts-management/notification-channel/incidentio/"
 						target="_blank"
-						rel="noopener noreferrer"
 					>
 						{t('incidentio_tip_link')}
 					</Typography.Link>
-				</Typography.Text>
+				</Typography>
 
 				<FormField
 					label={t('field_incidentio_url')}
@@ -79,7 +89,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 					<Input
 						{...register('url')}
 						aria-required
-						data-testid="incidentio-url-textbox"
+						testId="incidentio-url-textbox"
 					/>
 				</FormField>
 
@@ -93,7 +103,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 						{...register('token')}
 						aria-required
 						type="password"
-						data-testid="incidentio-token-textbox"
+						testId="incidentio-token-textbox"
 					/>
 				</FormField>
 
@@ -107,6 +117,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 						name="title"
 						render={({ field }): JSX.Element => (
 							<TextArea
+								disabled={readOnly}
 								rows={2}
 								data-testid="incidentio-title-textarea"
 								value={(field.value as string) ?? ''}
@@ -126,6 +137,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 						name="description"
 						render={({ field }): JSX.Element => (
 							<TextArea
+								disabled={readOnly}
 								rows={6}
 								data-testid="incidentio-description-textarea"
 								value={(field.value as string) ?? ''}
@@ -145,6 +157,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 							// eslint-disable-next-line react/no-array-index-key
 							key={index}
 							index={index}
+							readOnly={readOnly}
 							noun={t('entry_incidentio_metadata')}
 							removeLabel={t('button_incidentio_remove_metadata')}
 							removeTestId={`incidentio-metadata-remove-${index}`}
@@ -155,6 +168,8 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 							<FormField label={t('label_incidentio_metadata_key')}>
 								<Input
 									placeholder={t('placeholder_incidentio_metadata_key')}
+									disabled={readOnly}
+									disabledTooltip={undefined}
 									value={row.key}
 									onChange={(event): void =>
 										syncMetadata(
@@ -163,13 +178,15 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 											),
 										)
 									}
-									data-testid={`incidentio-metadata-key-${index}`}
+									testId={`incidentio-metadata-key-${index}`}
 								/>
 							</FormField>
 
 							<FormField label={t('label_incidentio_metadata_value')}>
 								<Input
 									placeholder={t('placeholder_incidentio_metadata_value')}
+									disabled={readOnly}
+									disabledTooltip={undefined}
 									value={row.value}
 									onChange={(event): void =>
 										syncMetadata(
@@ -178,7 +195,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 											),
 										)
 									}
-									data-testid={`incidentio-metadata-value-${index}`}
+									testId={`incidentio-metadata-value-${index}`}
 								/>
 							</FormField>
 						</RowEntry>
@@ -190,6 +207,8 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 							color="secondary"
 							size="sm"
 							prefix={<Plus size={14} />}
+							disabled={readOnly}
+							disabledTooltip={undefined}
 							onClick={(): void =>
 								syncMetadata([...metadataRows, { key: '', value: '' }])
 							}
@@ -206,6 +225,7 @@ function IncidentIOSettings({ initialMetadata }: IncidentIOProps): JSX.Element {
 
 interface IncidentIOProps {
 	initialMetadata?: Record<string, string>;
+	readOnly: boolean;
 }
 
 IncidentIOSettings.defaultProps = {

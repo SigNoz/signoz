@@ -92,7 +92,16 @@ function EvaluationCadenceDetails({
 	const EditorView = (
 		<div className="editor-view" data-testid="editor-view">
 			<div className="select-group">
-				<Typography.Text>REPEAT EVERY</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					REPEAT EVERY
+				</Typography>
 				<Select
 					options={EVALUATION_CADENCE_REPEAT_EVERY_OPTIONS}
 					value={evaluationCadence.custom.repeatEvery || null}
@@ -114,7 +123,16 @@ function EvaluationCadenceDetails({
 			</div>
 			{evaluationCadence.custom.repeatEvery !== 'day' && (
 				<div className="select-group">
-					<Typography.Text>ON DAY(S)</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						ON DAY(S)
+					</Typography>
 					<Select
 						options={occurenceOptions}
 						value={evaluationCadence.custom.occurence || null}
@@ -136,7 +154,16 @@ function EvaluationCadenceDetails({
 				</div>
 			)}
 			<div className="select-group">
-				<Typography.Text>AT</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					AT
+				</Typography>
 				<TimeInput
 					value={evaluationCadence.custom.startAt}
 					onChange={(value): void =>
@@ -151,7 +178,16 @@ function EvaluationCadenceDetails({
 				/>
 			</div>
 			<div className="select-group">
-				<Typography.Text>TIMEZONE</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					TIMEZONE
+				</Typography>
 				<Select
 					options={TIMEZONE_DATA}
 					value={evaluationCadence.custom.timezone || null}
@@ -176,7 +212,16 @@ function EvaluationCadenceDetails({
 	const RRuleView = (
 		<div className="rrule-view" data-testid="rrule-view">
 			<div className="select-group">
-				<Typography.Text>STARTING ON</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					STARTING ON
+				</Typography>
 				<DatePicker
 					value={evaluationCadence.rrule.date}
 					onChange={(value): void =>
@@ -192,7 +237,16 @@ function EvaluationCadenceDetails({
 				/>
 			</div>
 			<div className="select-group">
-				<Typography.Text>AT</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					AT
+				</Typography>
 				<TimeInput
 					value={evaluationCadence.rrule.startAt}
 					onChange={(value): void =>
@@ -295,9 +349,19 @@ function EvaluationCadenceDetails({
 
 	return (
 		<div className="evaluation-cadence-details">
-			<Typography.Text className="evaluation-cadence-details-title">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="medium"
+				color="main"
+				as="span"
+				display="inline-block"
+				paddingTop={8}
+				paddingLeft={8}
+				textOverflow="wrap"
+			>
 				Add Custom Schedule
-			</Typography.Text>
+			</Typography>
 			<div className="evaluation-cadence-details-content">
 				<div className="evaluation-cadence-details-content-row">
 					<div className="query-section-tabs">

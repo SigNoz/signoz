@@ -65,15 +65,38 @@ export default function CeleryTaskDetail({
 			width="45%"
 			title={
 				<div>
-					<Typography.Text className="title">{`Details - ${taskData.entity}`}</Typography.Text>
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="main"
+						as="span"
+						textOverflow="wrap"
+					>{`Details - ${taskData.entity}`}</Typography>
 					<div>
-						<Typography.Text className="subtitle">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							{`${formatTimestamp(startTime)} ${
 								endTime ? `- ${formatTimestamp(endTime)}` : ''
 							}`}
-						</Typography.Text>
-						<Divider type="vertical" />
-						<Typography.Text className="subtitle">{taskData.value}</Typography.Text>
+						</Typography>
+						<Divider orientation="vertical" />
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
+							{taskData.value}
+						</Typography>
 					</div>
 				</div>
 			}
@@ -88,7 +111,14 @@ export default function CeleryTaskDetail({
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 			footer={
-				<Typography.Text className="footer-text">{`Total Task: ${totalTask}`}</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>{`Total Task: ${totalTask}`}</Typography>
 			}
 		>
 			<CeleryTaskGraph

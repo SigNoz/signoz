@@ -44,7 +44,7 @@
 .eyebrow {
 	display: block;
 	padding: 18px 20px 12px;
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-small-400-font-family);
 	font-size: 12px;
 	letter-spacing: 0.1em;
 	text-transform: uppercase;

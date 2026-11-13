@@ -29,28 +29,67 @@ function PublicDashboardMessage({
 				<div className="brand">
 					<img src={signozBrandLogoUrl} alt="SigNoz" className="brand-logo" />
 
-					<Typography.Title level={2} className="brand-title">
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="main"
+						as="h2"
+						textOverflow="wrap"
+					>
 						SigNoz
-					</Typography.Title>
+					</Typography>
 				</div>
 
 				<div className="brand-tagline">
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						OpenTelemetry-Native Logs, Metrics and Traces in a single pane
-					</Typography.Text>
+					</Typography>
 				</div>
 			</div>
 
 			<div className="public-dashboard-error-content">
-				<Typography.Title level={4} className="public-dashboard-error-message-icon">
+				<Typography
+					variant="label"
+					size="large"
+					weight="bold"
+					color="secondary"
+					as="h4"
+					marginY={4}
+					textOverflow="wrap"
+				>
 					{icon}
-				</Typography.Title>
-				<Typography.Title level={4} className="public-dashboard-error-message">
+				</Typography>
+				<Typography
+					variant="label"
+					size="large"
+					weight="bold"
+					color="inherit"
+					as="h4"
+					align="center"
+					marginTop={6}
+					marginBottom={4}
+					textOverflow="wrap"
+				>
 					{title}
-				</Typography.Title>
-				<Typography.Text className="public-dashboard-error-message-description">
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{description}
-				</Typography.Text>
+				</Typography>
 			</div>
 		</div>
 	);

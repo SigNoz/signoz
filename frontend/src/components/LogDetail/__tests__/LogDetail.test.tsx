@@ -1,4 +1,4 @@
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { ILog } from 'types/api/logs/log';
@@ -7,8 +7,8 @@ import LogDetail from '..';
 import { VIEW_TYPES } from '../constants';
 import { LogDetailProps } from '../LogDetail.interfaces';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 // DataViewer pulls in react-json-tree (ESM) + Monaco; mock it (as trace's tests
@@ -80,7 +80,7 @@ describe('LogDetail drawer — header', () => {
 		renderDrawer();
 
 		// mockLog date is 2024-01-15T09:45:30Z → DASH_DATETIME in UTC.
-		expect(screen.getByTestId('log-details-header-timestamp')).toHaveTextContent(
+		expect(screen.getByTestId('log-detail-drawer-title')).toHaveTextContent(
 			'Jan 15, 2024 ⎯ 09:45:30',
 		);
 	});
@@ -98,7 +98,7 @@ describe('LogDetail drawer — header', () => {
 			},
 		});
 
-		expect(screen.getByTestId('log-details-header-timestamp')).toHaveTextContent(
+		expect(screen.getByTestId('log-detail-drawer-title')).toHaveTextContent(
 			'Jan 15, 2024 ⎯ 09:45:30',
 		);
 	});
@@ -149,6 +149,73 @@ describe('LogDetail drawer — header', () => {
 		renderDrawer();
 
 		expect(screen.queryByText('Open in Explorer')).not.toBeInTheDocument();
+	});
+
+	it('calls handleOpenInExplorer when "Open in Explorer" is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const handleOpenInExplorer = jest.fn();
+
+		renderDrawer({ handleOpenInExplorer });
+
+		await user.click(screen.getByTestId('log-details-header-open-in-explorer'));
+
+		expect(handleOpenInExplorer).toHaveBeenCalledTimes(1);
+	});
+
+	it('closes from the close button and from Escape', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const onClose = jest.fn();
+
+		renderDrawer({ onClose });
+
+		await user.click(screen.getByTestId('log-detail-drawer-close'));
+		expect(onClose).toHaveBeenCalledTimes(1);
+
+		await user.keyboard('{Escape}');
+		expect(onClose).toHaveBeenCalledTimes(2);
+	});
+
+	it('closes on a mousedown outside the drawer and not on one inside it', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const onClose = jest.fn();
+
+		renderDrawer({ onClose });
+
+		await user.pointer({
+			keys: '[MouseLeft>]',
+			target: screen.getByTestId('log-detail-drawer-body'),
+		});
+		await user.pointer({
+			keys: '[MouseLeft>]',
+			target: screen.getByTestId('log-detail-drawer-title'),
+		});
+		expect(onClose).not.toHaveBeenCalled();
+
+		await user.pointer({ keys: '[MouseLeft>]', target: document.body });
+		expect(onClose).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps the drawer open on a mousedown in a data-log-detail-ignore region', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const onClose = jest.fn();
+
+		render(
+			<>
+				<div data-log-detail-ignore="true" data-testid="ignored-region" />
+				<LogDetail
+					log={mockLog}
+					selectedTab={VIEW_TYPES.OVERVIEW}
+					onClose={onClose}
+				/>
+			</>,
+		);
+
+		await user.pointer({
+			keys: '[MouseLeft>]',
+			target: screen.getByTestId('ignored-region'),
+		});
+
+		expect(onClose).not.toHaveBeenCalled();
 	});
 
 	it('renders Highlights for fields present on the log, omitting absent ones', () => {
@@ -238,5 +305,44 @@ describe('LogDetail drawer — header', () => {
 
 		await user.click(screen.getByTestId('log-details-header-next'));
 		expect(onNavigateLog).toHaveBeenLastCalledWith(logs[1]);
+	});
+});
+
+describe('LogDetail drawer — open and close transitions', () => {
+	const props = { selectedTab: VIEW_TYPES.OVERVIEW, onClose: jest.fn() };
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+		delete (Element.prototype as Partial<Element>).getAnimations;
+	});
+
+	it('starts the enter transition when a log arrives after mount', () => {
+		// Base UI clears data-starting-style on the next frame.
+		jest.spyOn(window, 'requestAnimationFrame').mockReturnValue(0);
+		const { rerender } = render(<LogDetail log={null} {...props} />);
+		expect(screen.queryByTestId('log-detail-drawer')).not.toBeInTheDocument();
+
+		rerender(<LogDetail log={mockLog} {...props} />);
+
+		expect(screen.getByTestId('log-detail-drawer')).toHaveAttribute(
+			'data-starting-style',
+		);
+	});
+
+	it('keeps the last log on screen while the drawer closes', () => {
+		// jsdom has no getAnimations, so Base UI unmounts without waiting for the exit transition.
+		Element.prototype.getAnimations = (): Animation[] => [
+			{ finished: new Promise<Animation>(() => {}) } as Animation,
+		];
+		const { rerender } = render(<LogDetail log={mockLog} {...props} />);
+
+		rerender(<LogDetail log={null} {...props} />);
+
+		expect(screen.getByTestId('log-detail-drawer')).toHaveAttribute(
+			'data-ending-style',
+		);
+		expect(screen.getByTestId('log-detail-body')).toHaveTextContent(
+			'test log body',
+		);
 	});
 });

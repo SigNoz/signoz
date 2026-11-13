@@ -1,6 +1,5 @@
 .alert-header {
 	background-color: var(--l1-background);
-	font-family: inherit;
 	color: var(--l1-foreground);
 	padding: 12px 16px;
 
@@ -16,14 +15,12 @@
 		align-items: center;
 		background-color: var(--l1-background);
 		height: 32px;
-		font-size: 13px;
 		color: var(--l1-foreground);
 	}
 
 	&__tab::before {
 		content: '•';
 		margin-right: 6px;
-		font-size: 13px;
 		color: var(--l3-foreground);
 	}
 
@@ -38,8 +35,6 @@
 	}
 
 	&__input.title {
-		background-color: transparent;
-		color: var(--l1-foreground);
 		width: 100%;
 		min-width: 300px;
 	}
@@ -97,7 +92,7 @@
 		border-radius: 16px;
 		font-size: 12px;
 		border: 1px solid var(--bg-sienna-500);
-		font-family: 'Geist Mono';
+		font-family: var(--code-small-400-font-family);
 	}
 
 	&__remove-button {

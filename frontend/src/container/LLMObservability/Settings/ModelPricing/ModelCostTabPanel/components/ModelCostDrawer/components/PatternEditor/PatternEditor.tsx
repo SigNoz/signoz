@@ -39,9 +39,16 @@ function PatternEditor({
 		<div className={styles.drawerSection}>
 			<span className={styles.fieldLabel}>
 				Model name patterns{' '}
-				<Typography.Text as="span" color="muted">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					(prefix match)
-				</Typography.Text>
+				</Typography>
 			</span>
 			<div className={styles.patternBox}>
 				{patterns.length > 0 && (
@@ -94,10 +101,18 @@ function PatternEditor({
 					</div>
 				)}
 			</div>
-			<Typography.Text as="p" size="small" color="muted">
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="secondary"
+				as="p"
+				display="inline"
+				textOverflow="wrap"
+			>
 				Each pattern uses <strong>prefix matching</strong> against{' '}
 				<code>gen_ai.request.model</code>.
-			</Typography.Text>
+			</Typography>
 		</div>
 	);
 }

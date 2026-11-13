@@ -28,37 +28,12 @@
 	width: 200px;
 }
 
-.sourceLabel {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-}
-
 .label {
 	color: var(--l2-foreground);
 	font-family: Inter;
 	font-size: 14px;
 	font-weight: 400;
 	line-height: 20px;
-}
-
-.column {
-	flex-direction: column;
-	gap: 8px;
-}
-
-.input,
-.textarea,
-.defaultInput {
-	padding: 6px 6px 6px 8px;
-	border: 1px solid var(--l2-border);
-	border-radius: 2px;
-	background: var(--l3-background);
-}
-
-.input,
-.textarea {
-	width: 100%;
 }
 
 .defaultInput {
@@ -78,12 +53,17 @@
 	margin-top: 40px;
 	margin-bottom: 0;
 
-	--badge-height: var(--spacing-7);
-	--badge-font-size: 11px;
-	--badge-line-height: 12px;
-	--badge-padding: 0px var(--spacing-2);
+	/* Compact badges and icons keep the tab triggers at the tab height.
+	   TODO: remove once the badges leave these tabs; tabs are not meant to hold badges. */
 	--tabs-trigger-secondary-icon-width: 14px;
 	--tabs-trigger-secondary-icon-height: 14px;
+
+	[data-slot='tabs-item'] {
+		--badge-height: var(--spacing-7);
+		--badge-font-size: 11px;
+		--badge-line-height: 12px;
+		--badge-padding: 0px var(--spacing-2);
+	}
 }
 
 /* Picker row (label left, tabs right); the bottom divider separates type from
@@ -99,11 +79,6 @@
 	@media (max-width: 1440px) {
 		flex-wrap: wrap;
 	}
-}
-
-/* Active tab panel — reset the Tabs default padding; body rows handle spacing. */
-.typePanel {
-	padding: 0 !important;
 }
 
 .typeContent {
@@ -233,9 +208,6 @@
 	gap: 10px;
 	padding: 4px 8px;
 	color: var(--bg-robin-400);
-	font-family: 'Space Mono';
-	font-size: 14px;
-	line-height: 18px;
 	border-radius: 3px 0 2px;
 	background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
 }
@@ -249,16 +221,6 @@
 	overflow-y: auto;
 }
 
-.previewValues [data-slot='badge'] {
-	height: 30px;
-	align-items: center;
-	color: var(--l1-foreground);
-	font-family: 'Space Mono';
-	font-size: 14px;
-	border: 1px solid var(--l1-border);
-	border-radius: 2px;
-}
-
 .previewError {
 	color: var(--bg-amber-500);
 }
@@ -266,8 +228,7 @@
 /* Sort / multi / all / default rows */
 .sortSection,
 .multiSection,
-.allOptionSection,
-.dynamicSection {
+.allOptionSection {
 	align-items: flex-start;
 	justify-content: space-between;
 	margin-bottom: 0;
@@ -302,10 +263,6 @@
 .defaultValueDesc {
 	display: block;
 	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: 11px;
-	line-height: 18px;
-	letter-spacing: -0.06px;
 }
 
 /* All variable selects (Source / Attribute / Sort / Default Value) share width
@@ -352,9 +309,6 @@
 }
 
 .fromText {
-	font-family: 'Space Mono';
-	font-size: 13px;
-	font-weight: var(--font-weight-medium);
 	white-space: nowrap;
 }
 

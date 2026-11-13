@@ -3,8 +3,8 @@ import { Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { buildSADeletePermission } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
-import { DialogWrapper } from '@signozhq/ui/dialog';
-import { toast } from '@signozhq/ui/sonner';
+import { Dialog } from '@signozhq/ui/dialog';
+import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getGetServiceAccountQueryKey,
@@ -23,7 +23,7 @@ import APIError from 'types/api/error';
 
 function DeleteAccountModal(): JSX.Element {
 	const queryClient = useQueryClient();
-	const { showErrorModal, isErrorModalVisible } = useErrorModal();
+	const { showErrorModal } = useErrorModal();
 	const [accountId, setAccountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
 	const [isDeleteOpen, setIsDeleteOpen] = useQueryState(
 		SA_QUERY_PARAMS.DELETE_SA,
@@ -71,15 +71,15 @@ function DeleteAccountModal(): JSX.Element {
 	}
 
 	const content = (
-		<p className="sa-delete-dialog__body">
+		<div className="sa-delete-dialog__body">
 			Are you sure you want to delete <strong>{accountName}</strong>? This action
 			cannot be undone. All keys associated with this service account will be
 			permanently removed.
-		</p>
+		</div>
 	);
 
 	const footer = (
-		<div className="sa-delete-dialog__footer">
+		<>
 			<Button
 				size="md"
 				variant="solid"
@@ -102,27 +102,20 @@ function DeleteAccountModal(): JSX.Element {
 			>
 				Delete
 			</AuthZButton>
-		</div>
+		</>
 	);
 
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					handleCancel();
-				}
-			}}
+			onClose={handleCancel}
 			title={`Delete service account ${accountName ?? ''}?`}
 			width="narrow"
-			className="alert-dialog sa-delete-dialog"
-			showCloseButton={false}
-			disableOutsideClick={isErrorModalVisible}
 			testId="delete-service-account-modal"
-			footer={footer}
+			footerSuffix={footer}
 		>
 			{content}
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

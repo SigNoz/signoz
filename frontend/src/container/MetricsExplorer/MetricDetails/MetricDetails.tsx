@@ -140,8 +140,17 @@ function MetricDetails({
 			title={
 				<div className="metric-details-header">
 					<div className="metric-details-title" data-testid="metric-details-title">
-						<Divider type="vertical" />
-						<Typography.Text>{metricName}</Typography.Text>
+						<Divider orientation="vertical" />
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{metricName}
+						</Typography>
 					</div>
 					<div className="metric-details-header-buttons">
 						<Button

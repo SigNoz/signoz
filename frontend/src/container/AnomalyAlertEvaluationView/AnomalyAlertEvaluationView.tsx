@@ -301,7 +301,16 @@ function AnomalyAlertEvaluationView({
 					<div className="anomaly-alert-evaluation-view-no-data-container">
 						<ChartLine size={48} strokeWidth={0.5} />
 
-						<Typography>No Data</Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							No Data
+						</Typography>
 					</div>
 				)}
 			</div>
@@ -350,7 +359,16 @@ function AnomalyAlertEvaluationView({
 								))}
 
 								{filteredSeriesKeys.length === 0 && (
-									<Typography>No series found</Typography>
+									<Typography
+										variant="paragraph"
+										size="base"
+										weight="regular"
+										color="inherit"
+										as="span"
+										textOverflow="wrap"
+									>
+										No series found
+									</Typography>
 								)}
 							</div>
 						</div>

@@ -11,8 +11,8 @@ jest.mock('react-use', () => ({
 
 const mockToastSuccess = jest.fn();
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: (...args: unknown[]): unknown => mockToastSuccess(...args),
 	},

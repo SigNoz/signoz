@@ -13,17 +13,31 @@ function Error(props: IErrorProps): JSX.Element {
 
 	return (
 		<div className={styles.root}>
-			<Typography.Text className={styles.text}>
-				Something went wrong!
-			</Typography.Text>
-			<Tooltip title={error?.message}>
-				<Typography.Text
-					className={styles.value}
-					title={error?.message}
-					truncate={1}
+			<span className={styles.text}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
 				>
-					{error?.message}
-				</Typography.Text>
+					Something went wrong!
+				</Typography>
+			</span>
+			<Tooltip title={error?.message}>
+				<div className={styles.value} title={error?.message}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="p"
+						textOverflow="ellipsis"
+					>
+						{error?.message}
+					</Typography>
+				</div>
 			</Tooltip>
 		</div>
 	);

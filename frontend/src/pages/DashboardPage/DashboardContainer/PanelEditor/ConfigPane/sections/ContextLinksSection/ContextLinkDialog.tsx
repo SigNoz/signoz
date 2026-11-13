@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
@@ -91,13 +91,13 @@ function ContextLinkDialog({
 	};
 
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
-			onOpenChange={onOpenChange}
+			onClose={(): void => onOpenChange(false)}
 			title={initialLink ? 'Edit context link' : 'Add a context link'}
 			width="wide"
 			testId="context-link-dialog"
-			footer={
+			footerSuffix={
 				<>
 					<Button
 						size="md"
@@ -126,7 +126,16 @@ function ContextLinkDialog({
 		>
 			<div className={styles.form}>
 				<div className={styles.formField}>
-					<Typography.Text className={styles.formLabel}>Label</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Label
+					</Typography>
 					<Input
 						data-testid="context-link-label"
 						placeholder="View trace details: {{_traceId}}"
@@ -136,9 +145,16 @@ function ContextLinkDialog({
 				</div>
 
 				<div className={styles.formField}>
-					<Typography.Text className={styles.formLabel}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						URL <span className={styles.required}>*</span>
-					</Typography.Text>
+					</Typography>
 					<VariablesPopover
 						variables={variables}
 						onVariableSelect={(token, cursor): void =>
@@ -163,20 +179,32 @@ function ContextLinkDialog({
 						)}
 					</VariablesPopover>
 					{urlInvalid && (
-						<Typography.Text
-							className={styles.urlError}
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="danger"
+							as="span"
+							textOverflow="wrap"
 							data-testid="context-link-url-error"
 						>
 							{URL_ERROR}
-						</Typography.Text>
+						</Typography>
 					)}
 				</div>
 
 				{params.length > 0 && (
 					<div className={styles.formField}>
-						<Typography.Text className={styles.formLabel}>
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							URL parameters
-						</Typography.Text>
+						</Typography>
 						<div className={styles.params}>
 							{params.map((param, index) => (
 								<div
@@ -254,12 +282,19 @@ function ContextLinkDialog({
 						value={targetBlank}
 						onChange={setTargetBlank}
 					/>
-					<Typography.Text className={styles.newTabLabel}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						Open in new tab
-					</Typography.Text>
+					</Typography>
 				</div>
 			</div>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

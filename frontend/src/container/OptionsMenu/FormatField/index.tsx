@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
+import { Typography } from '@signozhq/ui/typography';
 
-import { FieldTitle } from '../styles';
 import { LogViewMode, OptionsMenuConfig } from '../types';
 import { FormatFieldWrapper } from './styles';
 
@@ -26,7 +26,16 @@ function FormatField({ config }: FormatFieldProps): JSX.Element | null {
 
 	return (
 		<FormatFieldWrapper direction="vertical">
-			<FieldTitle>{t('options_menu.format')}</FieldTitle>
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{t('options_menu.format')}
+			</Typography>
 			<ToggleGroup
 				variant="outlined"
 				color="secondary"

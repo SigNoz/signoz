@@ -48,15 +48,18 @@ function MapperRow({
 			}}
 		>
 			<td className={cx(styles.cell, styles.targetCell)}>
-				<Typography.Text
-					weight="semibold"
-					truncate={1}
-					title={mapper.name}
-					className={styles.targetName}
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="bold"
+					color="inherit"
+					as="p"
+					minWidth={0}
+					textOverflow="ellipsis"
 					data-testid={`mapper-target-${mapper.localId}`}
 				>
 					{mapper.name}
-				</Typography.Text>
+				</Typography>
 				<Badge
 					textTransform="none"
 					color={

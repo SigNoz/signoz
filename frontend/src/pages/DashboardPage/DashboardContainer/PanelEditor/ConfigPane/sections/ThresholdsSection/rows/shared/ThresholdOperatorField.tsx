@@ -19,12 +19,19 @@ function ThresholdOperatorField({
 }: ThresholdOperatorFieldProps): JSX.Element {
 	return (
 		<div className={styles.field}>
-			<Typography.Text className={styles.fieldLabel}>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				When the value is{' '}
 				{value && (
 					<strong className={styles.emphasis}>{OPERATOR_PHRASE[value]}</strong>
 				)}
-			</Typography.Text>
+			</Typography>
 			<ConfigTiles
 				compact
 				testId={testId}

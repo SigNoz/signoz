@@ -1,21 +1,10 @@
 /*
- * The five families the app pulls from Google Fonts, served from the files in
+ * The four families the app pulls from Google Fonts, served from the files in
  * `public/fonts` instead. `msw/appShellHandlers.ts` answers the CDN with an
  * empty stylesheet so no request leaves the iframe, which without this left
  * every story on a fallback for the four families `src/styles.scss` imports at
- * runtime, and on whatever the Inter link in `index.html` happened to fetch
- * before the worker had started.
+ * runtime. Inter comes from `src/styles.scss` itself.
  */
-
-@font-face {
-	font-family: 'Inter';
-	/* The comma is part of the filename and the dev server serves it raw, so it
-	   stays literal inside the quoted url rather than percent-encoded. */
-	src: url('fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype');
-	font-weight: 100 900;
-	font-style: normal;
-	font-display: swap;
-}
 
 @font-face {
 	font-family: 'Work Sans';

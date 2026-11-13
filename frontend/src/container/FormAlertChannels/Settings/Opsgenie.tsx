@@ -9,7 +9,11 @@ import FormField from '../FormField';
 
 const { TextArea } = AntdInput;
 
-function OpsgenieForm(): JSX.Element {
+interface OpsgenieFormProps {
+	readOnly: boolean;
+}
+
+function OpsgenieForm({ readOnly }: OpsgenieFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -29,7 +33,7 @@ function OpsgenieForm(): JSX.Element {
 					<Input
 						{...register('apiKey')}
 						aria-required
-						data-testid="opsgenie-api-key-textbox"
+						testId="opsgenie-api-key-textbox"
 					/>
 				</FormField>
 
@@ -48,6 +52,7 @@ function OpsgenieForm(): JSX.Element {
 								data-testid="opsgenie-message-textarea"
 								value={(field.value as string) ?? ''}
 								onChange={field.onChange}
+								disabled={readOnly}
 							/>
 						)}
 					/>
@@ -68,6 +73,7 @@ function OpsgenieForm(): JSX.Element {
 								data-testid="opsgenie-description-textarea"
 								value={(field.value as string) ?? ''}
 								onChange={field.onChange}
+								disabled={readOnly}
 							/>
 						)}
 					/>
@@ -88,6 +94,7 @@ function OpsgenieForm(): JSX.Element {
 								data-testid="opsgenie-priority-textarea"
 								value={(field.value as string) ?? ''}
 								onChange={field.onChange}
+								disabled={readOnly}
 							/>
 						)}
 					/>

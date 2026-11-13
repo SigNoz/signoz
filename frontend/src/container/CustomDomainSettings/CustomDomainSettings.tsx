@@ -6,13 +6,12 @@ import {
 	ExternalLink,
 	FilePenLine,
 	Link2,
-	SolidAlertCircle,
-	X,
+	SolidInfoCircle,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Skeleton } from 'antd';
 import {
 	RenderErrorResponseDTO,
@@ -26,51 +25,6 @@ import { useTimezone } from 'providers/Timezone';
 import CustomDomainEditModal from './CustomDomainEditModal';
 
 import './CustomDomainSettings.styles.scss';
-
-function DomainUpdateToast({
-	toastId,
-	url,
-}: {
-	toastId: string | number;
-	url: string;
-}): JSX.Element {
-	const displayUrl = url?.split('://')[1] ?? url;
-
-	return (
-		<div className="custom-domain-toast">
-			<span className="custom-domain-toast-message">
-				Your workspace URL is being updated to <strong>{displayUrl}</strong>. This
-				may take a few minutes.
-			</span>
-			<div className="custom-domain-toast-actions">
-				<Button
-					color="secondary"
-					variant="ghost"
-					size="sm"
-					suffix={<ExternalLink size={12} />}
-					onClick={(): void => {
-						// oxlint-disable-next-line signoz/no-raw-absolute-path
-						window.open(url, '_blank', 'noopener,noreferrer');
-					}}
-				>
-					Visit new URL
-				</Button>
-				<Button
-					color="secondary"
-					variant="ghost"
-					size="sm"
-					icon
-					onClick={(): void => {
-						toast.dismiss(toastId);
-					}}
-					aria-label="Dismiss"
-				>
-					<X size={14} />
-				</Button>
-			</div>
-		</div>
-	);
-}
 
 export default function CustomDomainSettings(): JSX.Element {
 	const { org } = useAppContext();
@@ -142,10 +96,26 @@ export default function CustomDomainSettings(): JSX.Element {
 					void refetchHosts();
 					setIsEditModalOpen(false);
 					setCustomDomainSubdomain(subdomain);
-					const newUrl = `https://${subdomain}.${dnsSuffix}`;
-					toast.custom(
-						(toastId) => <DomainUpdateToast toastId={toastId} url={newUrl} />,
-						{ duration: 5000, position: 'bottom-right' }, // this 5 sec is as per design
+					const host = `${subdomain}.${dnsSuffix}`;
+					const newUrl = `https://${host}`;
+					const toastId = `domain-update:${newUrl}`;
+					toast.info(
+						<>
+							Your workspace URL is being updated to <strong>{host}</strong>
+						</>,
+						{
+							id: toastId,
+							description: 'This may take a few minutes.',
+							action: {
+								label: 'Visit new URL',
+								onClick: (): void => {
+									// oxlint-disable-next-line signoz/no-raw-absolute-path
+									window.open(newUrl, '_blank', 'noopener,noreferrer');
+								},
+							},
+							timeout: 5000, // this 5 sec is as per design
+							position: 'bottom-right',
+						},
 					);
 				},
 				onError: (error: AxiosError<RenderErrorResponseDTO>) => {
@@ -270,14 +240,11 @@ export default function CustomDomainSettings(): JSX.Element {
 			</div>
 
 			{isPollingEnabled && (
-				<Callout
-					type="info"
-					showIcon
-					className="custom-domain-callout"
-					size="small"
-					icon={<SolidAlertCircle size={13} color="primary" />}
-					title={`Updating your URL to ⎯ ${customDomainSubdomain}.${dnsSuffix}. This may take a few mins.`}
-				/>
+				<div className="custom-domain-callout">
+					<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
+						{`Updating your URL to ⎯ ${customDomainSubdomain}.${dnsSuffix}. This may take a few mins.`}
+					</Callout>
+				</div>
 			)}
 
 			<CustomDomainEditModal

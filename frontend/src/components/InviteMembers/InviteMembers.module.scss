@@ -55,26 +55,12 @@
 	flex: 1 1 0;
 	min-width: 0;
 
+	// Matches the antd RolesSelect in the same row, which is forced to the
+	// same field background below.
 	--input-background: var(
 		--invite-members-field-background,
 		var(--l2-background)
 	);
-	--input-hover-background: var(
-		--invite-members-field-background,
-		var(--l2-background)
-	);
-	--input-focus-background: var(
-		--invite-members-field-background,
-		var(--l2-background)
-	);
-	--input-disabled-background: var(
-		--invite-members-field-background,
-		var(--l2-background)
-	);
-
-	input::placeholder {
-		color: var(--l3-foreground);
-	}
 }
 
 .cellRole {
@@ -83,17 +69,6 @@
 	gap: var(--spacing-2);
 	flex: 0 0 160px;
 	width: 160px;
-
-	:global(.roles-single-select) {
-		width: 100%;
-
-		:global(.ant-select-selector) {
-			background-color: var(
-				--invite-members-field-background,
-				var(--l2-background)
-			) !important;
-		}
-	}
 }
 
 .cellAction {

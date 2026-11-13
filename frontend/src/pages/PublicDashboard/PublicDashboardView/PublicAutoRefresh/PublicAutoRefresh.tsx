@@ -60,9 +60,18 @@ function PublicAutoRefresh({
 								Auto Refresh
 							</Checkbox>
 						</div>
-						<Typography.Text disabled={disabled} className="refresh-interval-text">
-							Refresh Interval
-						</Typography.Text>
+						<span className="refresh-interval-text">
+							<Typography
+								variant="uppercase"
+								size="base"
+								weight="medium"
+								color={disabled ? 'tertiary' : 'inherit'}
+								as="span"
+								textOverflow="wrap"
+							>
+								Refresh Interval
+							</Typography>
+						</span>
 						{refreshIntervalOptions
 							.filter((option) => option.label !== 'off')
 							.map((option) => (

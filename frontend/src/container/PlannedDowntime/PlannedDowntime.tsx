@@ -8,8 +8,10 @@ import React, {
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { navigate } from 'lib/router/navigation';
 import { Plus, Search } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { Skeleton } from '@signozhq/ui/skeleton';
 import { Typography } from '@signozhq/ui/typography';
 import { Form } from 'antd';
 import {
@@ -217,10 +219,23 @@ export function PlannedDowntime(): JSX.Element {
 			<header className={styles.headerBand}>
 				<div className={styles.commandHeader}>
 					<div className={styles.headingBlock}>
-						<Typography.Title className={styles.title}>
+						<Typography
+							variant="label"
+							size="large"
+							weight="medium"
+							color="main"
+							as="h1"
+							textOverflow="ellipsis"
+						>
 							All planned downtimes
-						</Typography.Title>
-						<span className={styles.countPill}>{totalDowntimes}</span>
+						</Typography>
+						{isFetching ? (
+							<Skeleton.Input size="sm" width={24} />
+						) : (
+							<Badge variant="solid" color="secondary">
+								{totalDowntimes}
+							</Badge>
+						)}
 					</div>
 					<div className={styles.grow} />
 					{!isEmpty && (
@@ -250,14 +265,15 @@ export function PlannedDowntime(): JSX.Element {
 				</div>
 
 				<div className={styles.filtersRow}>
-					<Input
-						containerClassName={styles.searchInput}
-						placeholder="Search by name"
-						value={searchValue}
-						onChange={handleSearch}
-						suffix={<Search size={14} className={styles.searchIcon} />}
-						testId="planned-downtime-search"
-					/>
+					<div className={styles.searchInput}>
+						<Input
+							placeholder="Search by name"
+							value={searchValue}
+							onChange={handleSearch}
+							suffix={<Search size={14} className={styles.searchIcon} />}
+							testId="planned-downtime-search"
+						/>
+					</div>
 				</div>
 			</header>
 

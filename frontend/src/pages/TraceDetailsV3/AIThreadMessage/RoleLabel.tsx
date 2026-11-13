@@ -1,16 +1,21 @@
 import { Typography } from '@signozhq/ui/typography';
 
-import styles from './AIThreadMessage.module.scss';
-
 interface RoleLabelProps {
 	label: string;
 }
 
 function RoleLabel({ label }: RoleLabelProps): JSX.Element {
 	return (
-		<Typography.Text size="base" weight="normal" className={styles.roleLabel}>
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
 			{label}
-		</Typography.Text>
+		</Typography>
 	);
 }
 

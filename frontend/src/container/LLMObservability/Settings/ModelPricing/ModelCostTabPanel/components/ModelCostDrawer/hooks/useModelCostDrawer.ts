@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { useQueryClient } from 'react-query';
 import logEvent from 'api/common/logEvent';
 import {

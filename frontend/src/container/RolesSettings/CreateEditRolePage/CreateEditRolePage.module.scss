@@ -75,22 +75,12 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-2);
-
-	--input-background: var(--l2-background);
-	--input-hover-background: var(--l2-background);
-	--input-focus-background: var(--l2-background);
-	--input-disabled-background: var(--l2-background);
-
-	input::placeholder {
-		color: var(--l3-foreground);
-	}
 }
 
 .formLabel {
-	font-family: Inter;
 	font-size: 12px;
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-20);
+	font-weight: var(--uppercase-small-500-font-weight);
+	line-height: var(--uppercase-small-500-line-height);
 	letter-spacing: 0.48px;
 	text-transform: uppercase;
 	color: var(--l2-foreground);

@@ -53,20 +53,6 @@
 		line-height: 20px;
 	}
 
-	&__input {
-		border-radius: 2px;
-		padding: 6px 8px;
-		color: var(--l2-foreground);
-		font-size: 14px;
-		font-weight: 400;
-		line-height: 18px;
-		letter-spacing: -0.07px;
-
-		&--error {
-			border-color: var(--danger-background);
-		}
-	}
-
 	&__error {
 		color: var(--danger-background);
 		font-size: 12px;

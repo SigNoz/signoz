@@ -39,7 +39,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: var(--spacing-2);
-	font-size: var(--periscope-font-size-small);
+	font-size: var(--label-small-400-font-size);
 	color: var(--l3-foreground);
 }
 
@@ -49,8 +49,7 @@
 
 /* Single treatment for every label in the drawer, so field labels and the */
 .fieldLabel {
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-medium);
+	font-weight: var(--paragraph-base-500-font-weight);
 	line-height: var(--spacing-10);
 	color: var(--l2-foreground);
 }

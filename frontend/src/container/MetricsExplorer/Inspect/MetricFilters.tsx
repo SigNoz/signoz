@@ -44,7 +44,18 @@ function MetricFilters({
 			data-testid="metric-filters"
 			className="inspect-metrics-input-group metric-filters"
 		>
-			<Typography.Text>Where</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+				display="inline-block"
+				width="60px"
+			>
+				Where
+			</Typography>
 			<QuerySearch
 				queryData={currentQuery}
 				onChange={handleOnChange}

@@ -193,7 +193,17 @@ function MetricsTreemap({
 		>
 			<div className="metrics-treemap-title">
 				<div className="metrics-treemap-title-left">
-					<Typography.Title level={4}>Proportion View</Typography.Title>
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="inherit"
+						as="h4"
+						marginY={4}
+						textOverflow="wrap"
+					>
+						Proportion View
+					</Typography>
 					<Tooltip
 						title="The treemap displays the proportion of samples/timeseries in the selected time range. Each tile represents a unique metric, and its size indicates the percentage of samples/timeseries it contributes to the total."
 						placement="right"

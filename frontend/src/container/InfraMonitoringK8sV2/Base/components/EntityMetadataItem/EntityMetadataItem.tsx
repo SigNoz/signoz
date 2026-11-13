@@ -1,5 +1,5 @@
 import { ReactNode, useCallback } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
@@ -24,26 +24,31 @@ export function EntityMetadataItem({
 
 	return (
 		<div className={styles.metadataItem}>
-			<Typography.Text
-				color="muted"
+			<Typography
+				variant="uppercase"
 				size="small"
 				weight="medium"
-				className={styles.label}
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
 			>
 				{label}
-			</Typography.Text>
+			</Typography>
 
 			{renderedValue ?? (
 				<div className={styles.valueRow}>
 					<Tooltip title={value} side="bottom" align="start">
 						<span className={styles.value}>
-							<Typography.Text
+							<Typography
+								variant="code"
 								size="small"
 								weight="medium"
-								className={styles.valueText}
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
 							>
 								{value}
-							</Typography.Text>
+							</Typography>
 						</span>
 					</Tooltip>
 					{!!value && (

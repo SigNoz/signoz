@@ -79,9 +79,16 @@ function ThresholdRowShell({
 
 	return (
 		<div className={styles.editRow}>
-			<Typography.Text className={styles.editTitle}>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="medium"
+				color="main"
+				as="span"
+				textOverflow="wrap"
+			>
 				{isNew ? 'New threshold' : 'Edit threshold'}
-			</Typography.Text>
+			</Typography>
 			{children}
 
 			<div className={styles.actions}>

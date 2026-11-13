@@ -41,9 +41,16 @@ function TimePreference({
 			<Button className="time-selection-target">
 				<div className="button-selected-text">
 					<Globe size={14} />
-					<Typography.Text className="selected-value">
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						{selectedTime.name}
-					</Typography.Text>
+					</Typography>
 				</div>
 				<ChevronDown size="md" />
 			</Button>

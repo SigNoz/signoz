@@ -114,8 +114,8 @@
 					border: 1px solid var(--l1-border);
 					background: linear-gradient(
 						139deg,
-						color-mix(in srgb, var(--card) 80%, transparent) 0%,
-						color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+						color-mix(in srgb, var(--surface-2) 80%, transparent) 0%,
+						color-mix(in srgb, var(--surface-2) 90%, transparent) 98.68%
 					) !important;
 					backdrop-filter: blur(20px);
 					box-sizing: border-box;
@@ -296,11 +296,6 @@
 		position: relative;
 		.cm-placeholder {
 			font-size: 12px !important;
-		}
-
-		// Not select search inputs: they would grow the select past 36px.
-		.input-with-label input {
-			min-height: 36px;
 		}
 
 		.input-with-label,

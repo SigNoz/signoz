@@ -28,7 +28,7 @@ function AlertBreadcrumb({
 				items={breadcrumbItems}
 				data-testid={testId}
 			/>
-			{showDivider && <Divider className={styles.divider} />}
+			{showDivider && <Divider spacing="10px 16px" />}
 		</>
 	);
 }

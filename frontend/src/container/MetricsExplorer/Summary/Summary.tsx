@@ -393,13 +393,22 @@ function Summary(): JSX.Element {
 					<div className="no-logs-container">
 						<div className="no-logs-container-content">
 							<img className="eyes-emoji" src={eyesEmojiUrl} alt="eyes emoji" />
-							<Typography className="no-logs-text">
-								Query cancelled.
-								<span className="sub-text">
-									{' '}
-									Click &quot;Run Query&quot; to load metrics.
-								</span>
-							</Typography>
+							<span className="no-logs-text">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="medium"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
+									Query cancelled.
+									<span className="sub-text">
+										{' '}
+										Click &quot;Run Query&quot; to load metrics.
+									</span>
+								</Typography>
+							</span>
 						</div>
 					</div>
 				) : showNoMetrics ? (

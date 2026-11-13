@@ -53,12 +53,19 @@ export const showRootSpansNextPage = async ({
 	}
 
 	await userEvent.click(
-		await screen.findByRole('button', { name: 'Go to next page' }, untilLoaded),
+		await screen.findByTestId(
+			'traces-table-trace-pagination-next',
+			undefined,
+			untilLoaded,
+		),
 	);
-	const pager = screen.getByLabelText('pagination');
 
 	await expect(
-		await within(pager).findByText('3', undefined, untilLoaded),
+		await screen.findByTestId(
+			'traces-table-trace-pagination-page-3',
+			undefined,
+			untilLoaded,
+		),
 	).toBeVisible();
 };
 

@@ -1,4 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
+import type { ProgressColorType } from '@signozhq/ui/progress';
 
 export type EntityProgressBarType =
 	| 'cpu-request'
@@ -251,4 +252,29 @@ export function getStrokeColor(
 	value: number,
 ): string {
 	return getStrokeColorForPercent(type, Number((value * 100).toFixed(1)));
+}
+
+const PROGRESS_COLOR_BY_STROKE: Record<string, ProgressColorType> = {
+	[Color.BG_FOREST_500]: 'success',
+	[Color.BG_AMBER_200]: 'warning',
+	[Color.BG_AMBER_500]: 'warning',
+	[Color.BG_SAKURA_500]: 'highlight-danger',
+	[Color.BG_CHERRY_500]: 'danger',
+	[Color.BG_CHERRY_600]: 'danger',
+};
+
+export function getProgressColorForPercent(
+	type: EntityProgressBarType,
+	percent: number,
+): ProgressColorType {
+	return (
+		PROGRESS_COLOR_BY_STROKE[getStrokeColorForPercent(type, percent)] ?? 'primary'
+	);
+}
+
+export function getProgressColor(
+	type: EntityProgressBarType,
+	value: number,
+): ProgressColorType {
+	return getProgressColorForPercent(type, Number((value * 100).toFixed(1)));
 }

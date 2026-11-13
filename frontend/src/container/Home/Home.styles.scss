@@ -30,10 +30,6 @@
 		gap: 8px;
 
 		color: var(--l1-foreground);
-		font-family: Inter;
-		font-size: 13px;
-		font-style: normal;
-		font-weight: 400;
 		line-height: 24px; /* 142.857% */
 	}
 
@@ -46,11 +42,6 @@
 			color: var(--l1-foreground);
 
 			/* Bifrost (Ancient)/Content/sm */
-			font-family: Inter;
-			font-size: 13px;
-			font-style: normal;
-			line-height: 20px; /* 142.857% */
-			letter-spacing: -0.07px;
 		}
 	}
 
@@ -179,9 +170,7 @@
 
 .welcome-title {
 	color: var(--l1-foreground);
-	font-family: Inter;
 	font-size: 18px;
-	font-style: normal;
 	font-weight: 500;
 	line-height: 28px; /* 155.556% */
 	letter-spacing: -0.09px;
@@ -189,10 +178,6 @@
 
 .welcome-description {
 	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: 13px;
-	font-style: normal;
-	font-weight: 400;
 	line-height: 24px; /* 171.429% */
 }
 
@@ -257,7 +242,6 @@
 				align-items: center;
 				gap: 8px;
 				font-size: var(--paragraph-small-400-font-size);
-				font-weight: var(--paragraph-small-400-font-weight);
 				line-height: var(--paragraph-small-400-line-height);
 				letter-spacing: 0.12px;
 				color: var(--foreground);
@@ -315,7 +299,6 @@
 			align-items: center;
 
 			padding: 8px !important;
-			font-weight: 400;
 
 			gap: 8px;
 		}
@@ -329,7 +312,6 @@
 			padding: 8px 16px !important;
 
 			font-size: 11px;
-			font-weight: 400;
 			line-height: 18px; /* 150% */
 			letter-spacing: 0.12px;
 
@@ -390,10 +372,7 @@
 				gap: 6px;
 
 				color: var(--l2-foreground);
-				font-family: Inter;
 				font-size: 12px;
-				font-style: normal;
-				font-weight: 400;
 				line-height: 20px; /* 166.667% */
 				letter-spacing: -0.06px;
 
@@ -446,9 +425,6 @@
 		height: 32px;
 
 		color: var(--l2-foreground);
-		font-family: Inter;
-		font-size: 13px;
-		font-style: normal;
 		font-weight: 500;
 		line-height: 20px; /* 142.857% */
 		letter-spacing: -0.07px;
@@ -552,9 +528,6 @@
 
 			.home-data-item-name {
 				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 13px;
-				font-style: normal;
 				font-weight: 500;
 				line-height: 20px; /* 142.857% */
 				letter-spacing: -0.07px;
@@ -611,12 +584,6 @@
 
 			.learn-more-link {
 				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 12px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 20px; /* 142.857% */
-				letter-spacing: -0.07px;
 
 				&:hover {
 					color: var(--primary-background-hover);
@@ -726,12 +693,6 @@
 	gap: 4px;
 
 	color: var(--primary-background-hover);
-	font-family: Inter;
-	font-size: 11px;
-	font-style: normal;
-	font-weight: 500;
-	line-height: 18px; /* 128.571% */
-	letter-spacing: -0.07px;
 }
 
 .welcome-checklist-popover {
@@ -761,10 +722,7 @@
 		.ant-table-cell {
 			background-color: transparent !important;
 			color: var(--l2-foreground);
-			font-family: Inter;
 			font-size: 11px;
-			font-style: normal;
-			font-weight: 600;
 			line-height: 18px; /* 150% */
 			letter-spacing: 0.6px;
 			text-transform: uppercase;

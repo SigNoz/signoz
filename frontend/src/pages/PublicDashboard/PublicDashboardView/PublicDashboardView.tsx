@@ -100,11 +100,28 @@ function PublicDashboardView({
 				<div className={styles.headerLeft}>
 					<div className={styles.brand}>
 						<img src={signozBrandLogoUrl} alt="SigNoz" className={styles.brandLogo} />
-						<Typography className={styles.brandName}>SigNoz</Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="bold"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							SigNoz
+						</Typography>
 					</div>
-					<Typography.Text className={styles.title}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						textOverflow="ellipsis"
+					>
 						{dashboard?.spec?.display?.name}
-					</Typography.Text>
+					</Typography>
 				</div>
 
 				{isTimeRangeEnabled && (
@@ -139,9 +156,18 @@ function PublicDashboardView({
 				{sections.map((section) => (
 					<section key={section.id} className={styles.section}>
 						{section.title && (
-							<Typography.Text className={styles.sectionTitle}>
-								{section.title}
-							</Typography.Text>
+							<span className={styles.sectionTitle}>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="bold"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
+									{section.title}
+								</Typography>
+							</span>
 						)}
 						<PublicSectionGrid
 							items={section.items}

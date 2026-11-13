@@ -16,7 +16,6 @@
 	font-family: 'Inter';
 	font-size: 12px;
 	background: var(--l2-background);
-	-webkit-font-smoothing: antialiased;
 	color: var(--l2-foreground);
 	border-radius: 6px;
 	border: 1px solid var(--l2-border);
@@ -48,7 +47,7 @@
 	justify-content: space-between;
 	gap: var(--spacing-6);
 	padding: var(--spacing-8) var(--gutter) 0;
-	font-size: var(--font-size-sm);
+	font-size: var(--label-base-500-font-size);
 	font-weight: 500;
 	font-variant-numeric: tabular-nums;
 }
@@ -74,8 +73,8 @@
 }
 
 .filterLabel {
-	font-family: var(--font-mono);
-	font-size: var(--font-size-xs);
+	font-family: var(--code-small-400-font-family);
+	font-size: var(--code-small-400-font-size);
 	letter-spacing: -0.01em;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -92,8 +91,8 @@
 
 .titleBucket,
 .titleCount {
-	font-family: var(--font-mono);
-	font-size: var(--font-size-xs);
+	font-family: var(--code-small-600-font-family);
+	font-size: var(--code-small-600-font-size);
 	font-weight: 700;
 	letter-spacing: -0.01em;
 	color: var(--popover-foreground);
@@ -123,7 +122,7 @@
 	gap: var(--spacing-2);
 	padding: 0 var(--row-inset) var(--spacing-2);
 
-	font-family: var(--font-mono);
+	font-family: var(--code-small-400-font-family);
 	font-size: 10px;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
@@ -148,8 +147,8 @@
 
 .rowLabel,
 .rowValue {
-	font-family: var(--font-mono);
-	font-size: var(--font-size-xs);
+	font-family: var(--code-small-400-font-family);
+	font-size: var(--code-small-400-font-size);
 	letter-spacing: -0.01em;
 }
 
@@ -172,8 +171,8 @@
 	text-align: right;
 	white-space: nowrap;
 
-	font-family: var(--font-mono);
-	font-size: var(--font-size-xs);
+	font-family: var(--code-small-400-font-family);
+	font-size: var(--code-small-400-font-size);
 	letter-spacing: -0.01em;
 	font-variant-numeric: tabular-nums;
 	color: var(--muted-foreground);

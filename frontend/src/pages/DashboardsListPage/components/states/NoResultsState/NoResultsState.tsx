@@ -13,11 +13,29 @@ function NoResultsState({ title, description }: Props): JSX.Element {
 	return (
 		<div className={styles.wrapper}>
 			<img src={emptyStateUrl} alt="" height={32} width={32} />
-			<Typography.Text className={styles.title}>{title}</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="medium"
+				weight="medium"
+				color="main"
+				as="span"
+				textOverflow="wrap"
+			>
+				{title}
+			</Typography>
 			{description && (
-				<Typography.Text className={styles.description}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="tertiary"
+					as="span"
+					display="inline-block"
+					align="center"
+					textOverflow="wrap"
+				>
 					{description}
-				</Typography.Text>
+				</Typography>
 			)}
 		</div>
 	);

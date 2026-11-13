@@ -19,6 +19,7 @@ import {
 	spanIdAt,
 } from './__story_mockdata__/traceDetails';
 import {
+	hangingTraceExport,
 	openRowMenu,
 	startDownload,
 	traceDetailsMocks,
@@ -281,9 +282,19 @@ export const AnalyticsOpen: Story = {
 
 /** The download progress panel, held open by an export that never answers. */
 export const TraceDownload: Story = {
-	args: { exportState: 'loading' },
+	parameters: {
+		msw: { handlers: [hangingTraceExport] },
+	},
 	play: async ({ canvasElement }): Promise<void> => {
-		await startDownload(canvasElement);
+		await userEvent.click(
+			await within(canvasElement).findByRole(
+				'button',
+				{ name: 'Trace options' },
+				untilLoaded,
+			),
+		);
+		await userEvent.click(await screen.findByTestId('download-trace-submenu'));
+		await userEvent.click(await screen.findByTestId('download-trace-csv'));
 		await screen.findByTestId('trace-download-panel', undefined, untilLoaded);
 	},
 };
@@ -291,13 +302,20 @@ export const TraceDownload: Story = {
 const openAddSpanToFunnel = async (
 	canvasElement: HTMLElement,
 ): Promise<void> => {
-	const [button] = await within(canvasElement).findAllByTestId(
-		'span-add-to-funnel-btn',
-		undefined,
-		untilLoaded,
-	);
+	const actions = await waitFor(() => {
+		const found = canvasElement.querySelector<HTMLElement>(
+			'[class*="rowActions"]',
+		);
 
-	await fireEvent.click(button);
+		if (!found) {
+			throw new Error('Span row actions are not rendered');
+		}
+
+		return found;
+	}, untilLoaded);
+	const buttons = within(actions).getAllByRole('button');
+
+	await fireEvent.click(buttons[buttons.length - 1]);
 	await screen.findByText('Add span to funnel', undefined, untilLoaded);
 };
 
@@ -315,7 +333,7 @@ export const AddSpanToFunnelCreateStep: Story = {
 		await userEvent.click(
 			await screen.findByRole('button', { name: /create new funnel/i }),
 		);
-		await screen.findByTestId('create-funnel-name-input');
+		await screen.findByRole('textbox');
 	},
 };
 

@@ -96,11 +96,31 @@ function SectionHeader({
 					testId={`dashboard-section-toggle-${sectionId}`}
 					prefix={open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
 				>
-					<Typography.Text className={styles.title}>{title}</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="medium"
+						color="main"
+						as="span"
+						display="inline-block"
+						marginLeft={2}
+						textOverflow="ellipsis"
+					>
+						{title}
+					</Typography>
 					{repeatVariable ? (
-						<Typography.Text className={styles.repeatBadge}>
-							(repeats per ${repeatVariable})
-						</Typography.Text>
+						<span className={styles.repeatBadge}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="visible"
+							>
+								(repeats per ${repeatVariable})
+							</Typography>
+						</span>
 					) : null}
 				</Button>
 			</div>

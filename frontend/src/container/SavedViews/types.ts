@@ -1,5 +1,6 @@
 import { ReactElement, ReactNode } from 'react';
 import type { Link } from '@signozhq/icons';
+import type { PopoverHandleType } from '@signozhq/ui/popover';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import {
 	SavedviewtypesSavedViewDTO,
@@ -169,9 +170,8 @@ export interface SavedViewsRowMenuProps {
 }
 
 export interface DeleteSavedViewDialogProps {
-	isDeleting: boolean;
 	onCancel: () => void;
-	onConfirm: () => void;
+	onConfirm: () => Promise<void>;
 }
 
 export interface UseSavedViewRowActionsResult {
@@ -186,15 +186,12 @@ export interface UseSavedViewRowActionsResult {
 	isDeleting: boolean;
 }
 
-export interface SavedViewHoverCardTarget {
-	viewId: string;
-	anchorTop: number;
-	anchorHeight: number;
-}
+/** Carries the id of the view under the pointer. */
+export type SavedViewHoverCardHandle = PopoverHandleType<string>;
 
 export interface UseSavedViewHoverCardResult {
-	target: SavedViewHoverCardTarget | null;
-	onRowEnter: (target: SavedViewHoverCardTarget) => void;
+	handle: SavedViewHoverCardHandle;
+	onRowEnter: (viewId: string, row: HTMLElement) => void;
 	onRowLeave: () => void;
 	onCardEnter: () => void;
 	onCardLeave: () => void;
@@ -202,10 +199,9 @@ export interface UseSavedViewHoverCardResult {
 }
 
 export interface SavedViewHoverCardProps {
-	target: SavedViewHoverCardTarget | null;
+	handle: SavedViewHoverCardHandle;
 	onCardEnter: () => void;
 	onCardLeave: () => void;
-	onClose: () => void;
 }
 
 export interface SavedViewHoverCardDetailsProps {

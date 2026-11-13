@@ -56,22 +56,28 @@ export function EntityCountsSection<T>({
 					className={styles.countCard}
 					data-testid={`count-card-${config.label.toLowerCase().replace(/\s+/g, '-')}`}
 				>
-					<Typography.Text
-						color="muted"
+					<Typography
+						variant="uppercase"
 						size="small"
 						weight="medium"
-						className={styles.countLabel}
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
 					>
 						{config.label}
-					</Typography.Text>
+					</Typography>
 					{config.getValue(entity) ? (
-						<Typography.Text
-							className={styles.countValue}
-							size="xl"
-							weight="semibold"
+						<Typography
+							variant="label"
+							size="large"
+							weight="bold"
+							color="main"
+							as="span"
+							textOverflow="wrap"
+							tabularNumbers
 						>
 							{config.getValue(entity)}
-						</Typography.Text>
+						</Typography>
 					) : (
 						<TextNoData type="typography" className={styles.countValue} />
 					)}

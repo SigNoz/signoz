@@ -35,8 +35,6 @@
 			}
 			.copy-to-clipboard {
 				font-size: 12px;
-				font-style: normal;
-				font-weight: 400;
 				line-height: 18px;
 				letter-spacing: -0.06px;
 				width: 90px;
@@ -75,6 +73,6 @@
 		padding: 16px;
 	}
 	&__divider {
-		--divider-margin: 0px;
+		--divider-vertical-margin-inline: 0;
 	}
 }

@@ -52,10 +52,6 @@
 	font-size: 12px;
 }
 
-.drawerBody {
-	display: flex;
-	flex-direction: column;
-	min-height: 0;
-	overflow-y: auto;
+:global([data-testid='panel-type-switcher-drawer-body']) {
 	@include custom-scrollbar;
 }

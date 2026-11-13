@@ -271,9 +271,9 @@ function ServiceAccountsSettings(): JSX.Element {
 									void setSearchQuery(e.target.value);
 									void setPage(1);
 								}}
-								className="sa-settings-search-input"
 								testId="sa-search-input"
 								disabled={controlsDisabled}
+								disabledTooltip={undefined}
 							/>
 						</AuthZTooltip>
 					</div>

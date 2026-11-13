@@ -20,14 +20,12 @@
 
 .countLabel {
 	color: var(--l2-foreground);
-	letter-spacing: var(--letter-spacing-wide);
-	text-transform: uppercase;
 }
 
 .countValue {
 	color: var(--l1-foreground);
-	font-family: var(--periscope-font-family-mono);
-	font-size: var(--font-size-xl);
+	font-family: var(--code-base-400-font-family);
+	font-size: 20px;
 }
 
 .navigateButton {

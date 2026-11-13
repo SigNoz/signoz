@@ -16,7 +16,7 @@
 	flex-direction: column;
 	gap: var(--spacing-6);
 	flex-shrink: 0;
-	padding: 0 var(--spacing-8) var(--spacing-6) var(--spacing-8);
+	padding: var(--spacing-6) var(--spacing-8) var(--spacing-6) var(--spacing-8);
 }
 
 /* Title and count on the left, the create action at the far end, the way the
@@ -25,9 +25,12 @@
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-4);
+	min-height: 34px;
 }
 
 .headingBlock {
+	/* The Badge height, so the count does not jump when it loads. */
+	--skeleton-input-sm-height: var(--spacing-10);
 	display: flex;
 	align-items: center;
 	gap: 10px;
@@ -37,23 +40,13 @@
 .title {
 	margin: 0;
 	color: var(--l1-foreground);
-	font-size: var(--font-size-lg);
-	font-weight: var(--font-weight-medium);
+	font-size: var(--label-large-500-font-size);
+	font-weight: var(--label-large-500-font-weight);
 	line-height: 28px;
 	letter-spacing: -0.09px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
-
-.countPill {
-	padding: 2px 9px;
-	border-radius: 999px;
-	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
-	color: var(--l2-foreground);
-	font-size: var(--font-size-xs);
-	font-variant-numeric: tabular-nums;
 }
 
 .grow {
@@ -76,20 +69,6 @@
 .searchInput {
 	flex: 1 1 0;
 	min-width: 220px;
-}
-
-.kindSelect {
-	/* the trigger sizes itself to 100%, so the flex item has to be bounded */
-	flex: 0 0 180px;
-	width: 180px;
-	max-width: 180px;
-}
-
-/* The options panel is rendered inline (withPortal={false}) so it can be told to
-   match the trigger; Radix publishes that width at the popper layer. */
-.filtersRow :global([data-slot='select-content']) {
-	width: var(--radix-select-trigger-width);
-	min-width: var(--radix-select-trigger-width);
 }
 
 .commandHeader > button {

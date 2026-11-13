@@ -47,7 +47,7 @@ export const InvalidRequiredFields: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		const canvas = within(canvasElement);
 		const webhookUrl = await canvas.findByTestId(
-			'webhook-url-textbox',
+			'webhook-url-textbox-field',
 			undefined,
 			untilLoaded,
 		);
@@ -98,7 +98,11 @@ export const SaveFailure: Story = {
 		// Save is off until the form is edited, so the failure is reached through
 		// a real change rather than an empty submit.
 		await userEvent.type(
-			await canvas.findByTestId('slack-channel-textbox', undefined, untilLoaded),
+			await canvas.findByTestId(
+				'slack-channel-textbox-field',
+				undefined,
+				untilLoaded,
+			),
 			'-edited',
 		);
 		await userEvent.click(canvas.getByTestId('save-channel-button'));
@@ -180,7 +184,7 @@ export const Jira: Story = {
 		// expanded before they can be read
 		await expect(
 			await within(canvasElement).findByTestId(
-				'jira-reopen-duration-textbox',
+				'jira-reopen-duration-textbox-field',
 				undefined,
 				{ timeout: 15_000 },
 			),
@@ -199,7 +203,7 @@ export const JiraSelfHosted: Story = {
 		await expectEditableForm({ canvasElement, args });
 		const canvas = within(canvasElement);
 		await expect(
-			await canvas.findByTestId('jira-pat-textbox', undefined, {
+			await canvas.findByTestId('jira-pat-textbox-field', undefined, {
 				timeout: 15_000,
 			}),
 		).toHaveValue('story-jira-pat');

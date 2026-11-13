@@ -1,5 +1,4 @@
 import { Col, Input as InputComponent } from 'antd';
-import { Typography as TypographyComponent } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
 export const RetentionContainer = styled(Col)`
@@ -10,13 +9,6 @@ export const Input = styled(InputComponent)`
 	&&& {
 		height: 2rem;
 		max-width: 150px;
-	}
-`;
-
-export const Typography = styled(TypographyComponent)`
-	&&& {
-		display: flex;
-		align-items: center;
 	}
 `;
 
@@ -61,14 +53,20 @@ export const ToolTipContainer = styled.div`
 	}
 `;
 
-export const ErrorText = styled(TypographyComponent)`
-	&&& {
-		color: var(--warning-background);
-		font-style: italic;
-	}
+export const ErrorText = styled.p`
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+	font-weight: 400;
+	color: var(--warning-background);
+	font-style: italic;
 `;
 
-export const RetentionFieldLabel = styled(TypographyComponent)`
+export const RetentionFieldLabel = styled.p`
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+	font-weight: 400;
 	vertical-align: middle;
 	white-space: pre-wrap;
 `;

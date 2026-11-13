@@ -30,9 +30,16 @@ function ColumnUnits({
 }: ColumnUnitsProps): JSX.Element {
 	if (columns.length === 0) {
 		return (
-			<Typography.Text className={styles.columnUnitsHint}>
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				Run the query to set a unit for each value column.
-			</Typography.Text>
+			</Typography>
 		);
 	}
 

@@ -30,7 +30,16 @@ function ThresholdColorField({
 
 	return (
 		<div className={styles.field}>
-			<Typography.Text className={styles.fieldLabel}>Color</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
+				Color
+			</Typography>
 			<ColorSwatches
 				testId={testId}
 				label="Color"

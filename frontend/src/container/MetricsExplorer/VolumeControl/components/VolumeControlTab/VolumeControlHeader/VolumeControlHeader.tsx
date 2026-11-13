@@ -8,14 +8,30 @@ function VolumeControlHeader(): JSX.Element {
 		<div className={styles.header}>
 			<div className={styles.titleRow}>
 				<Gauge size={18} />
-				<Typography.Title level={4} className={styles.title}>
+				<Typography
+					variant="label"
+					size="large"
+					weight="bold"
+					color="inherit"
+					as="h4"
+					textOverflow="wrap"
+				>
 					Volume Control
-				</Typography.Title>
+				</Typography>
 			</div>
-			<Typography.Text size="small" color="muted" className={styles.subtitle}>
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="secondary"
+				as="span"
+				display="inline-block"
+				maxWidth={680}
+				textOverflow="wrap"
+			>
 				Aggregate away high-cardinality attributes to reduce stored metric volume
 				and cost.
-			</Typography.Text>
+			</Typography>
 		</div>
 	);
 }

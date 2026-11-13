@@ -58,23 +58,60 @@ export default function CeleryOverviewDetails({
 			width="60%"
 			title={
 				<div>
-					<Typography.Text className="title">{details.service_name}</Typography.Text>
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="main"
+						as="span"
+						textOverflow="wrap"
+					>
+						{details.service_name}
+					</Typography>
 					<div>
-						<Typography.Text className="subtitle">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							{details.span_name}
-						</Typography.Text>
-						<Divider type="vertical" />
-						<Typography.Text className="subtitle">
+						</Typography>
+						<Divider orientation="vertical" />
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							{details.messaging_system}
-						</Typography.Text>
-						<Divider type="vertical" />
-						<Typography.Text className="subtitle">
+						</Typography>
+						<Divider orientation="vertical" />
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							{details.destination}
-						</Typography.Text>
-						<Divider type="vertical" />
-						<Typography.Text className="subtitle">
+						</Typography>
+						<Divider orientation="vertical" />
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							{details.kind_string}
-						</Typography.Text>
+						</Typography>
 					</div>
 				</div>
 			}

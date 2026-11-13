@@ -9,11 +9,16 @@ interface BottomStripState {
 	ownerId: string | null;
 	setLeft: (ownerId: string, left: StripItem[] | null) => void;
 	clearLeft: (ownerId: string) => void;
+	/** Element above the strip that full-width notices portal into. */
+	topSlot: HTMLElement | null;
+	setTopSlot: (topSlot: HTMLElement | null) => void;
 }
 
 export const useBottomStripStore = create<BottomStripState>()((set, get) => ({
 	left: null,
 	ownerId: null,
+	topSlot: null,
+	setTopSlot: (topSlot): void => set({ topSlot }),
 	setLeft: (ownerId, left): void => set({ left, ownerId }),
 	// Only the current owner may clear. On a plain route swap React runs the old
 	// page's cleanup before the new page's effect, so this is moot, but two

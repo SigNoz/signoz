@@ -1,6 +1,5 @@
 import { Trash2, X } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import { MemberRow } from 'components/MembersTable/MembersTable';
 
 interface DeleteMemberDialogProps {
@@ -9,7 +8,7 @@ interface DeleteMemberDialogProps {
 	member: MemberRow | null;
 	isDeleting: boolean;
 	onClose: () => void;
-	onConfirm: () => void;
+	onConfirm: () => Promise<void>;
 }
 
 function DeleteMemberDialog({
@@ -36,47 +35,20 @@ function DeleteMemberDialog({
 		</>
 	);
 
-	const footer = (
-		<>
-			<Button
-				size="md"
-				variant="solid"
-				color="secondary"
-				onClick={onClose}
-				prefix={<X size={12} />}
-			>
-				Cancel
-			</Button>
-			<Button
-				size="md"
-				variant="solid"
-				color="danger"
-				onClick={onConfirm}
-				testId="member-delete-confirm-btn"
-				loading={isDeleting}
-				prefix={<Trash2 size={12} />}
-			>
-				{isDeleting ? 'Processing...' : title}
-			</Button>
-		</>
-	);
-
 	return (
-		<DialogWrapper
+		<AlertDialog
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onClose();
-				}
-			}}
 			title={title}
-			width="narrow"
-			showCloseButton={false}
-			disableOutsideClick={false}
-			footer={footer}
+			color="danger"
+			confirmText={isDeleting ? 'Processing...' : title}
+			confirmIcon={<Trash2 size={12} />}
+			cancelIcon={<X size={12} />}
+			onConfirm={onConfirm}
+			onCancel={onClose}
+			testId="member-delete"
 		>
 			{body}
-		</DialogWrapper>
+		</AlertDialog>
 	);
 }
 

@@ -2,8 +2,6 @@
 	padding: 0 6px;
 	white-space: nowrap;
 	color: var(--l1-foreground);
-	font-family: 'Geist Mono';
-	font-size: 12px;
 }
 
 .resultNavDivider {
@@ -20,7 +18,7 @@
 	gap: 6px;
 	flex-shrink: 0;
 	color: var(--l2-foreground);
-	font-family: 'Geist Mono';
+	font-family: var(--code-small-400-font-family);
 	font-size: 12px;
 	font-weight: 400;
 	line-height: 18px;

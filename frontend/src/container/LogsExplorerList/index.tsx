@@ -2,7 +2,7 @@ import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
@@ -379,17 +379,15 @@ function LogsExplorerList({
 						{renderContent}
 					</InfinityWrapperStyled>
 
-					{selectedTab && activeLog && (
-						<LogDetail
-							selectedTab={selectedTab}
-							log={activeLog}
-							onClose={handleCloseLogDetail}
-							handleChangeSelectedView={handleChangeSelectedView}
-							logs={logs}
-							onNavigateLog={handleSetActiveLog}
-							onScrollToLog={handleScrollToLog}
-						/>
-					)}
+					<LogDetail
+						selectedTab={selectedTab}
+						log={activeLog}
+						onClose={handleCloseLogDetail}
+						handleChangeSelectedView={handleChangeSelectedView}
+						logs={logs}
+						onNavigateLog={handleSetActiveLog}
+						onScrollToLog={handleScrollToLog}
+					/>
 				</>
 			)}
 		</div>

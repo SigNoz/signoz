@@ -24,9 +24,16 @@ function CeleryTaskConfigOptions(): JSX.Element {
 	return (
 		<div className="celery-task-filters">
 			<div className="celery-filters">
-				<Typography.Text style={{ whiteSpace: 'nowrap' }}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="visible"
+				>
 					Task Name
-				</Typography.Text>
+				</Typography>
 				<Select
 					data-testid="celery-task-name-select"
 					placeholder="Task Name"

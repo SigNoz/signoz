@@ -7,9 +7,6 @@
 .log-field-key,
 .log-field-key-colon {
 	color: var(--l2-foreground);
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 400;
 
 	&.small {
 		font-size: 11px;
@@ -27,8 +24,6 @@
 	}
 }
 .log-field-key {
-	line-height: 18px; /* 128.571% */
-	letter-spacing: -0.07px;
 	white-space: nowrap;
 	display: inline-block;
 	max-width: 20vw;
@@ -42,11 +37,6 @@
 }
 .log-value {
 	color: var(--l2-foreground);
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 18px; /* 128.571% */
-	letter-spacing: -0.07px;
 
 	&.small {
 		font-size: 11px;

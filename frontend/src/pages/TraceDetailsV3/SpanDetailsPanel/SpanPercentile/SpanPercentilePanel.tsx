@@ -89,7 +89,7 @@ function SpanPercentilePanel({
 					<div className={styles.resourceSelectorHeader}>
 						<Input
 							placeholder="Search resource attributes"
-							className={styles.resourceSelectorInput}
+							variant="unstyled"
 							value={resourceAttributesSearchQuery}
 							onChange={(e): void =>
 								setResourceAttributesSearchQuery(e.target.value as string)
@@ -130,7 +130,14 @@ function SpanPercentilePanel({
 			)}
 
 			<div className={styles.content}>
-				<Typography.Text className={styles.contentTitle}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					This span duration is{' '}
 					{!loading && spanPercentileData ? (
 						<span className={styles.contentHighlight}>
@@ -143,7 +150,7 @@ function SpanPercentilePanel({
 					)}{' '}
 					out of the distribution for this resource evaluated for {selectedTimeRange}{' '}
 					hour(s) since the span start time.
-				</Typography.Text>
+				</Typography>
 
 				<div className={styles.timerange}>
 					<Select
@@ -170,12 +177,26 @@ function SpanPercentilePanel({
 
 				<div>
 					<div className={styles.tableHeader}>
-						<Typography.Text className={styles.tableHeaderText}>
+						<Typography
+							variant="uppercase"
+							size="small"
+							weight="medium"
+							color="main"
+							as="span"
+							textOverflow="wrap"
+						>
 							Percentile
-						</Typography.Text>
-						<Typography.Text className={styles.tableHeaderText}>
+						</Typography>
+						<Typography
+							variant="uppercase"
+							size="small"
+							weight="medium"
+							color="main"
+							as="span"
+							textOverflow="wrap"
+						>
 							Duration
-						</Typography.Text>
+						</Typography>
 					</div>
 
 					<div className={styles.tableRows}>
@@ -190,29 +211,65 @@ function SpanPercentilePanel({
 								{Object.entries(spanPercentileData?.percentiles || {}).map(
 									([pKey, pDuration]) => (
 										<div className={styles.tableRow} key={pKey}>
-											<Typography.Text className={styles.tableRowKey}>
-												{pKey}
-											</Typography.Text>
+											<span className={styles.tableRowKey}>
+												<Typography
+													variant="paragraph"
+													size="small"
+													weight="medium"
+													color="inherit"
+													as="span"
+													textOverflow="wrap"
+												>
+													{pKey}
+												</Typography>
+											</span>
 											<div className={styles.tableRowDash} />
-											<Typography.Text className={styles.tableRowValue}>
-												{getYAxisFormattedValue(`${pDuration / 1000000}`, 'ms')}
-											</Typography.Text>
+											<span className={styles.tableRowValue}>
+												<Typography
+													variant="paragraph"
+													size="small"
+													weight="regular"
+													color="inherit"
+													as="span"
+													textOverflow="wrap"
+												>
+													{getYAxisFormattedValue(`${pDuration / 1000000}`, 'ms')}
+												</Typography>
+											</span>
 										</div>
 									),
 								)}
 
 								<div className={cx(styles.tableRow, styles.isCurrent)}>
-									<Typography.Text className={styles.tableRowKey}>
-										p{Math.floor(spanPercentileData?.percentile || 0)}
-									</Typography.Text>
+									<span className={styles.tableRowKey}>
+										<Typography
+											variant="paragraph"
+											size="small"
+											weight="medium"
+											color="inherit"
+											as="span"
+											textOverflow="wrap"
+										>
+											p{Math.floor(spanPercentileData?.percentile || 0)}
+										</Typography>
+									</span>
 									<div className={styles.tableRowDash} />
-									<Typography.Text className={styles.tableRowValue}>
-										(this span){' '}
-										{getYAxisFormattedValue(
-											`${selectedSpan.duration_nano / 1000000}`,
-											'ms',
-										)}
-									</Typography.Text>
+									<span className={styles.tableRowValue}>
+										<Typography
+											variant="paragraph"
+											size="small"
+											weight="regular"
+											color="inherit"
+											as="span"
+											textOverflow="wrap"
+										>
+											(this span){' '}
+											{getYAxisFormattedValue(
+												`${selectedSpan.duration_nano / 1000000}`,
+												'ms',
+											)}
+										</Typography>
+									</span>
 								</div>
 							</>
 						)}

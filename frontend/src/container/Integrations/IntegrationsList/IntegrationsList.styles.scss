@@ -5,13 +5,6 @@
 
 	.integrations-list-title {
 		color: var(--l2-foreground);
-		font-family: Inter;
-		font-size: 12px;
-		font-style: normal;
-		font-weight: 500;
-		line-height: 20px; /* 166.667% */
-		letter-spacing: 0.48px;
-		text-transform: uppercase;
 	}
 
 	.error-container {
@@ -40,18 +33,6 @@
 					display: flex;
 					align-items: center;
 				}
-
-				.contact-support {
-					display: flex;
-					align-items: center;
-					gap: 4px;
-					cursor: pointer;
-
-					.text {
-						color: var(--callout-primary-description);
-						font-weight: 500;
-					}
-				}
 			}
 
 			.error-state-svg {
@@ -69,9 +50,7 @@
 
 		.integrations-list-header-title {
 			color: var(--l1-foreground);
-			font-family: Inter;
 			font-size: 12px;
-			font-style: normal;
 			font-weight: 500;
 			line-height: 20px; /* 166.667% */
 			letter-spacing: 0.48px;
@@ -105,9 +84,7 @@
 				flex: 1;
 
 				color: var(--l2-foreground);
-				font-family: Inter;
 				font-size: 11px;
-				font-style: normal;
 				font-weight: 600;
 				line-height: 18px; /* 163.636% */
 				letter-spacing: 0.44px;

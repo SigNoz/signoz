@@ -30,7 +30,6 @@
 }
 
 .headerLabel {
-	font-size: 12px;
 	font-weight: 600;
 	color: var(--l1-foreground);
 }
@@ -78,7 +77,6 @@
 }
 
 .label {
-	font-size: 12px;
 	font-weight: 500;
 	color: var(--l2-foreground);
 }
@@ -88,13 +86,11 @@
 	margin-left: 2px;
 }
 
-.input,
 .select {
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
 	padding: 5px 8px;
-	font-size: 13px;
 	color: var(--l1-foreground);
 	outline: none;
 	transition: border-color 0.12s;
@@ -106,14 +102,6 @@
 
 .select {
 	cursor: pointer;
-}
-
-// Constrain the Radix-based SelectContent popover so it never grows wider
-// than the trigger button. `--radix-select-trigger-width` is set by Radix
-// at the popper layer when `position: 'popper'` (the default).
-.selectContent {
-	width: var(--radix-select-trigger-width);
-	min-width: var(--radix-select-trigger-width);
 }
 
 .radioGroup,

@@ -32,7 +32,6 @@
 }
 
 .headerLabel {
-	font-size: 12px;
 	font-weight: 600;
 	color: var(--l1-foreground);
 }
@@ -40,7 +39,7 @@
 .resourceBadge {
 	margin-left: auto;
 	font-size: 10px;
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-small-400-font-family);
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
@@ -80,8 +79,8 @@
 	display: flex;
 	gap: 8px;
 
-	// Fixed-height dialog (70vh) — let the diff fill the body and the
-	// JSON panes scroll internally rather than pushing the dialog taller.
+	// Fixed-height modal body — let the diff fill it and the JSON panes
+	// scroll internally rather than pushing the dialog taller.
 	&.expanded {
 		flex: 1;
 		min-height: 0;
@@ -115,7 +114,7 @@
 // + monospace styling but renders an inner stack of `.diffLine` rows
 // instead of a single `<pre>` so individual lines can be colored.
 .diffPane {
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-small-400-font-family);
 	font-size: 12px;
 	background: var(--l2-background);
 	border-radius: var(--radius-2);
@@ -213,7 +212,7 @@
 }
 
 .diffJson {
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-small-400-font-family);
 	font-size: 11px;
 	background: var(--l2-background);
 	border-radius: var(--radius-2);
@@ -238,9 +237,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	flex: 1;
+	height: 60vh;
 	min-height: 0;
-	padding: 16px;
 	overflow: hidden;
 }
 

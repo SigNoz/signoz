@@ -470,7 +470,7 @@ export function settingsDriver(page: Page): Settings {
 			},
 			deleteMember: async () => {
 				await settings.members.deleteButton().click();
-				await page.getByTestId('member-delete-confirm-btn').click();
+				await page.getByTestId('member-delete-confirm').click();
 			},
 			filter: async (label) => {
 				await page.getByTestId('members-filter-trigger').click();

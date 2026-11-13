@@ -1,6 +1,6 @@
 import { ChangeEvent, ReactNode, useCallback, useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
 import { Check, Minus, Plus } from '@signozhq/icons';
@@ -131,9 +131,16 @@ function K8sOptionsSidePanel<TData>({
 	const drawerContent = (
 		<>
 			<div className={styles.sectionTitle}>
-				<Typography.Text size="sm" className={styles.sectionTitleText}>
+				<Typography
+					variant="uppercase"
+					size="small"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					Font Size
-				</Typography.Text>
+				</Typography>
 			</div>
 			<div className={styles.fontSizeContainer}>
 				{FONT_SIZE_OPTIONS.map((option) => (
@@ -159,9 +166,16 @@ function K8sOptionsSidePanel<TData>({
 			<div className={styles.horizontalDivider} />
 
 			<div className={styles.sectionTitle}>
-				<Typography.Text size="sm" className={styles.sectionTitleText}>
+				<Typography
+					variant="uppercase"
+					size="small"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					Max lines per row
-				</Typography.Text>
+				</Typography>
 			</div>
 			<div className={styles.lineClampContainer}>
 				<Input
@@ -169,7 +183,7 @@ function K8sOptionsSidePanel<TData>({
 					max={10}
 					value={lineClamp}
 					onChange={handleLineClampChange}
-					data-testid="line-clamp-input"
+					testId="line-clamp-input"
 					type="number"
 					prefix={
 						<Button
@@ -207,18 +221,35 @@ function K8sOptionsSidePanel<TData>({
 			<div className={styles.horizontalDivider} />
 
 			<div className={styles.sectionTitle}>
-				<Typography.Text size="sm" className={styles.sectionTitleText}>
+				<Typography
+					variant="uppercase"
+					size="small"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					Columns
-				</Typography.Text>
+				</Typography>
 			</div>
 			<div className={styles.columnsList}>
 				{orderedVisibleColumnItems.map((column) => {
 					const isVisible = !hiddenColumnIds.includes(column.id);
 					return (
 						<div className={styles.columnItem} key={column.id}>
-							<Typography.Text as="span" size="sm" className={styles.columnLabel}>
-								{column.label}
-							</Typography.Text>
+							<span className={styles.columnLabel}>
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="inherit"
+									as="span"
+									display="inline-flex"
+									textOverflow="wrap"
+								>
+									{column.label}
+								</Typography>
+							</span>
 							<Switch
 								color="primary"
 								textPlacement="right"
@@ -236,22 +267,18 @@ function K8sOptionsSidePanel<TData>({
 	);
 
 	return (
-		<DrawerWrapper
+		<Drawer
+			type="task"
+			stack="overlay"
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onClose();
-				}
-			}}
+			onClose={onClose}
+			closePosition="start"
 			title="Options"
-			direction="right"
 			width="narrow"
-			showCloseButton
-			showOverlay={false}
-			className={styles.drawer}
+			testId="k8s-options-side-panel"
 		>
 			{drawerContent}
-		</DrawerWrapper>
+		</Drawer>
 	);
 }
 

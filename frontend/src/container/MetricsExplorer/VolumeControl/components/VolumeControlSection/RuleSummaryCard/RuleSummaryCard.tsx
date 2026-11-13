@@ -26,11 +26,18 @@ function RuleSummaryCard({
 						rule.active ? styles.statusActive : styles.statusPending,
 					)}
 				/>
-				<Typography.Text weight="semibold">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="bold"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{rule.active
 						? 'Aggregation rule active'
 						: 'Aggregation rule pending activation'}
-				</Typography.Text>
+				</Typography>
 				{canManage && (
 					<Button
 						size="md"
@@ -43,14 +50,31 @@ function RuleSummaryCard({
 					</Button>
 				)}
 			</div>
-			<Typography.Text as="div" size="small" color="muted">
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="secondary"
+				as="div"
+				display="inline"
+				textOverflow="wrap"
+			>
 				{getMatchTypeLabel(rule.matchType)}
-			</Typography.Text>
+			</Typography>
 			<div className={styles.chips}>
 				{(rule.labels ?? []).map((label) => (
-					<Typography.Text size="sm" className={styles.labelChip} key={label}>
-						{getLabelVerb(rule.matchType)} {label}
-					</Typography.Text>
+					<span className={styles.labelChip} key={label}>
+						<Typography
+							variant="code"
+							size="small"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{getLabelVerb(rule.matchType)} {label}
+						</Typography>
+					</span>
 				))}
 			</div>
 		</div>

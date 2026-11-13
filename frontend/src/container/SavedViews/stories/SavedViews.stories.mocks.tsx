@@ -345,7 +345,7 @@ const searchViews = async (
 	text: string,
 ): Promise<void> => {
 	const search = await within(canvasElement).findByTestId(
-		'saved-views-search',
+		'saved-views-search-field',
 		undefined,
 		UNTIL_LOADED,
 	);

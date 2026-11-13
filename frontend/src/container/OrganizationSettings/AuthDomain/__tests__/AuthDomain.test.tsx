@@ -9,11 +9,11 @@ import {
 	mockErrorResponse,
 } from './mocks';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: jest.fn(),
-		error: jest.fn(),
+		danger: jest.fn(),
 	},
 }));
 

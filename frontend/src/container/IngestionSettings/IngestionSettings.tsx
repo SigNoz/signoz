@@ -2,9 +2,11 @@ import { useQuery } from 'react-query';
 import { Skeleton, Table, TableColumnsType as ColumnsType } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import getIngestionData from 'api/settings/getIngestionData';
+import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { useAppContext } from 'providers/App/App';
 import { IngestionDataType } from 'types/api/settings/ingestion';
 
+import styles from './IngestionSettings.module.scss';
 import './IngestionSettings.styles.scss';
 
 export default function IngestionSettings(): JSX.Element {
@@ -20,20 +22,49 @@ export default function IngestionSettings(): JSX.Element {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
-			render: (text): JSX.Element => <Typography.Text> {text} </Typography.Text>,
+			render: (text): JSX.Element => (
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{' '}
+					{text}{' '}
+				</Typography>
+			),
 		},
 		{
 			title: '',
 			dataIndex: 'value',
 			key: 'value',
-			render: (text): JSX.Element => (
-				<div>
+			render: (text, record): JSX.Element => (
+				<div className={styles.value}>
 					{isFetching ? (
 						<Skeleton.Input active style={{ height: 20 }} />
 					) : (
-						<Typography.Text copyable={!isFetching && text !== ''}>
-							{text}
-						</Typography.Text>
+						<>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								{text}
+							</Typography>
+							{text && (
+								<CopyButton
+									value={text}
+									size={12}
+									ariaLabel={`Copy ${record.name}`}
+									testId={`ingestion-settings-copy-${record.key}`}
+								/>
+							)}
+						</>
 					)}
 				</div>
 			),
@@ -67,9 +98,12 @@ export default function IngestionSettings(): JSX.Element {
 	return (
 		<div className="ingestion-settings-container">
 			<Typography
-				style={{
-					margin: '16px 0px',
-				}}
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
 			>
 				You can use the following ingestion credentials to start sending your
 				telemetry data to SigNoz

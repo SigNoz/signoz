@@ -1,9 +1,9 @@
 import { ChangeEvent, KeyboardEvent, useState } from 'react';
 import { navigate } from 'lib/router/navigation';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -55,14 +55,16 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 				setIsRequestIntegrationDialogOpen(false);
 				setIsSubmittingRequestForIntegration(false);
 			} else {
-				toast.error(response.error || 'Something went wrong', {
+				toast.danger(response.error || 'Something went wrong', {
+					action: { label: 'Dismiss' },
 					position: 'top-right',
 				});
 
 				setIsSubmittingRequestForIntegration(false);
 			}
 		} catch (error) {
-			toast.error('Something went wrong', {
+			toast.danger('Something went wrong', {
+				action: { label: 'Dismiss' },
 				position: 'top-right',
 			});
 			setIsSubmittingRequestForIntegration(false);
@@ -71,15 +73,31 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 
 	return (
 		<div className="integrations-header">
-			<Typography.Title className="title">Integrations</Typography.Title>
+			<Typography
+				variant="label"
+				size="large"
+				weight="medium"
+				color="main"
+				as="h1"
+				textOverflow="wrap"
+			>
+				Integrations
+			</Typography>
 			<Flex
 				justify="space-between"
 				align="center"
 				className="integrations-header__subrow"
 			>
-				<Typography.Text className="subtitle">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="p"
+					textOverflow="wrap"
+				>
 					Manage integrations for this workspace.
-				</Typography.Text>
+				</Typography>
 			</Flex>
 
 			<div className="integrations-search-request-container">
@@ -101,11 +119,27 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 					Request Integration
 				</Button>
 
-				<DialogWrapper
-					className="request-integration-dialog"
+				<Dialog
 					title="Request New Integration"
 					open={isRequestIntegrationDialogOpen}
-					onOpenChange={setIsRequestIntegrationDialogOpen}
+					onClose={(): void => setIsRequestIntegrationDialogOpen(false)}
+					footerSuffix={
+						<Button
+							disabledTooltip="Enter an integration name first"
+							size="md"
+							variant="solid"
+							color="primary"
+							prefix={<Check size={14} />}
+							onClick={handleRequestIntegrationSubmit}
+							loading={isSubmittingRequestForIntegration}
+							disabled={
+								!requestedIntegrationName ||
+								requestedIntegrationName?.trim().length === 0
+							}
+						>
+							Submit
+						</Button>
+					}
 				>
 					<div className="request-integration-form">
 						<div className="request-integration-form-title">
@@ -123,27 +157,10 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 								}
 							}}
 							disabled={isSubmittingRequestForIntegration}
+							disabledTooltip={undefined}
 						/>
 					</div>
-
-					<div className="request-integration-form-footer">
-						<Button
-							disabledTooltip="Enter an integration name first"
-							size="md"
-							variant="solid"
-							color="primary"
-							prefix={<Check size={14} />}
-							onClick={handleRequestIntegrationSubmit}
-							loading={isSubmittingRequestForIntegration}
-							disabled={
-								!requestedIntegrationName ||
-								requestedIntegrationName?.trim().length === 0
-							}
-						>
-							Submit
-						</Button>
-					</div>
-				</DialogWrapper>
+				</Dialog>
 
 				{isGetStartedWithCloudAllowed && (
 					<Button

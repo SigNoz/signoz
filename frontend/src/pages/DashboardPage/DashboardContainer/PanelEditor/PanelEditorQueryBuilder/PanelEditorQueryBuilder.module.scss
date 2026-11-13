@@ -6,7 +6,6 @@
 	min-height: 0;
 	overflow: auto;
 	scrollbar-gutter: stable;
-	background-color: var(--l1-background);
 	@include custom-scrollbar;
 }
 
@@ -29,7 +28,6 @@
 	:global(.ant-tabs-nav) {
 		// `padding-top` owns the nav's top spacing (moved off `.scrollArea`).
 		padding-top: 12px;
-		background-color: var(--l1-background);
 
 		&::before {
 			border-color: var(--l2-border);
@@ -42,6 +40,8 @@
 	position: sticky;
 	top: 0px;
 	z-index: 1100;
+	// Opaque so scrolled queries do not show through the pinned nav.
+	background-color: var(--l1-background);
 }
 .queryTypeTab {
 	display: flex;

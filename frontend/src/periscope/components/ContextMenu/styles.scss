@@ -6,7 +6,7 @@
 	cursor: pointer;
 	color: var(--muted-foreground);
 	font-family: Inter;
-	font-size: var(--font-size-sm);
+	font-size: var(--label-base-600-font-size);
 	font-weight: 600;
 	line-height: 17px;
 	letter-spacing: 0.01em;
@@ -60,7 +60,7 @@
 	.text {
 		flex: 1;
 		font-size: 13px;
-		font-weight: var(--font-weight-normal);
+		font-weight: var(--label-base-400-font-weight);
 		line-height: 17px;
 		letter-spacing: 0.01em;
 		white-space: nowrap;

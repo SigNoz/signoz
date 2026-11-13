@@ -85,7 +85,7 @@ export const Search: Story = {
 		const canvas = within(canvasElement);
 
 		await canvas.findByText('sre-email', undefined, UNTIL_LOADED);
-		await userEvent.type(canvas.getByTestId('channels-search'), 'slack');
+		await userEvent.type(canvas.getByTestId('channels-search-field'), 'slack');
 
 		// the table holds the previous page while the debounced request is in
 		// flight, so the row going away is what says the search landed
@@ -135,7 +135,7 @@ export const NoResults: Story = {
 
 		await canvas.findByText('ops-slack', undefined, UNTIL_LOADED);
 		await userEvent.type(
-			canvas.getByTestId('channels-search'),
+			canvas.getByTestId('channels-search-field'),
 			'no-such-channel',
 		);
 
@@ -150,7 +150,7 @@ export const ClearSearch: Story = {
 
 		await canvas.findByText('ops-slack', undefined, UNTIL_LOADED);
 		await userEvent.type(
-			canvas.getByTestId('channels-search'),
+			canvas.getByTestId('channels-search-field'),
 			'no-such-channel',
 		);
 		await canvas.findByText('No matching channels', undefined, UNTIL_LOADED);

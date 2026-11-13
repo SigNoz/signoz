@@ -1,43 +1,4 @@
 .cloud-account-setup-modal {
-	background: var(--l1-background);
-	color: var(--l1-foreground);
-
-	[data-slot='drawer-title'] {
-		color: var(--l1-foreground);
-	}
-
-	> div {
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-	}
-
-	&__footer {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		width: 100%;
-	}
-
-	&__content {
-		flex: 1;
-		overflow-y: auto;
-		min-height: 0;
-		scrollbar-width: thin;
-		padding-right: 16px;
-
-		&::-webkit-scrollbar-thumb {
-			background: var(--l1-border);
-		}
-
-		&::-webkit-scrollbar-track {
-			background: var(--l1-background);
-		}
-
-		scrollbar-width: thin;
-		scrollbar-color: var(--l3-background) var(--l1-background);
-	}
-
 	.cloud-account-setup-prerequisites {
 		display: flex;
 		flex-direction: column;
@@ -62,7 +23,6 @@
 
 		&__list-item {
 			color: var(--l2-foreground);
-			font-size: 13px;
 			line-height: 18px;
 			letter-spacing: -0.06px;
 
@@ -138,7 +98,6 @@
 				gap: 8px;
 
 				color: var(--l1-foreground);
-				font-size: 13px;
 				line-height: 18px;
 				letter-spacing: -0.06px;
 			}
@@ -171,7 +130,7 @@
 			font-weight: 500;
 		}
 		&__confirm-selection-count {
-			font-family: 'Geist Mono';
+			font-family: var(--code-base-400-font-family);
 		}
 		&__close-button {
 			background: var(--l1-background);
@@ -216,7 +175,7 @@
 				color: var(--l1-foreground);
 
 				.retry-time {
-					font-family: 'Geist Mono';
+					font-family: var(--code-base-600-font-family);
 					font-size: 14px;
 					font-weight: 600;
 					line-height: 22px;
@@ -241,7 +200,6 @@
 		&__description {
 			color: var(--l2-foreground);
 			font-size: 12px;
-			font-weight: 400;
 			line-height: 18px;
 			letter-spacing: -0.06px;
 		}
@@ -261,17 +219,11 @@
 			align-items: center;
 			gap: 10px;
 			color: var(--l2-foreground);
-			font-size: 12px;
-			line-height: 18px;
-			letter-spacing: -0.06px;
 			margin-bottom: 12px;
 			&-label {
 				background-color: transparent;
 				border: none;
 				color: var(--l2-foreground);
-				font-size: 12px;
-				line-height: 18px;
-				letter-spacing: -0.06px;
 				cursor: pointer;
 			}
 		}
@@ -290,9 +242,6 @@
 			border-radius: 2px;
 			background: var(--primary-background);
 			color: var(--primary-foreground);
-			font-size: 14px;
-			font-weight: 500;
-			line-height: 20px;
 			&-content {
 				display: flex;
 				align-items: center;

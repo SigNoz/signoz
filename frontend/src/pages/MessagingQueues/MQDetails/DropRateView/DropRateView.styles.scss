@@ -4,11 +4,6 @@
 	gap: 8px;
 
 	.eval-title {
-		font-family: Inter;
-		font-size: 14px;
-		font-style: normal;
-		font-weight: 500;
-		line-height: 28px;
 		color: var(--l2-foreground);
 	}
 
@@ -21,10 +16,6 @@
 }
 
 .select-dropdown-render {
-	padding: 8px;
-	display: flex;
-	justify-content: center;
-	align-items: center;
 	width: 200px;
 	margin: 6px;
 }

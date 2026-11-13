@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cloneDeep, isEqual } from 'lodash-es';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { useQueryClient } from 'react-query';
 import logEvent from 'api/common/logEvent';
 import {
@@ -294,7 +294,9 @@ export function useAttributeMappingEditor(): AttributeMappingEditor {
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Save failed';
 			setSaveError(message);
-			toast.error(`Failed to save changes: ${message}`);
+			toast.danger(`Failed to save changes: ${message}`, {
+				action: { label: 'Dismiss' },
+			});
 		} finally {
 			setIsSaving(false);
 		}

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Search } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
 import { Input } from '@signozhq/ui/input';
-import { SelectSimple } from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
+import { Skeleton } from '@signozhq/ui/skeleton';
 import { Typography } from '@signozhq/ui/typography';
-import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
@@ -84,8 +85,7 @@ function NotificationChannels(): JSX.Element {
 	);
 
 	const handleKindChange = useCallback(
-		(value: string | string[]): void => {
-			const next = value as string;
+		(next: string): void => {
 			void setKind(next === KIND_FILTER_ALL ? null : next);
 			setPage(1);
 		},
@@ -175,12 +175,26 @@ function NotificationChannels(): JSX.Element {
 			<header className={styles.headerBand}>
 				<div className={styles.commandHeader}>
 					<div className={styles.headingBlock}>
-						<Typography.Title className={styles.title}>
+						<Typography
+							variant="label"
+							size="large"
+							weight="medium"
+							color="main"
+							as="h1"
+							marginY={4}
+							textOverflow="ellipsis"
+						>
 							{filteredKind
 								? `All ${CHANNEL_KIND_LABEL[filteredKind]} channels`
 								: 'All notification channels'}
-						</Typography.Title>
-						<span className={styles.countPill}>{total}</span>
+						</Typography>
+						{isFetching ? (
+							<Skeleton.Input size="sm" width={24} />
+						) : (
+							<Badge variant="solid" color="secondary">
+								{total}
+							</Badge>
+						)}
 					</div>
 					<div className={styles.grow} />
 					{!isEmpty && (
@@ -211,22 +225,25 @@ function NotificationChannels(): JSX.Element {
 				</div>
 
 				<div className={styles.filtersRow}>
-					<Input
-						containerClassName={styles.searchInput}
-						placeholder="Search by channel name"
-						value={searchText}
-						onChange={handleSearchChange}
-						disabled={!canList}
-						suffix={<Search size={14} className={styles.searchIcon} />}
-						testId="channels-search"
-					/>
-					<SelectSimple
-						className={styles.kindSelect}
+					<div className={styles.searchInput}>
+						<Input
+							placeholder="Search by channel name"
+							value={searchText}
+							onChange={handleSearchChange}
+							disabled={!canList}
+							disabledTooltip={undefined}
+							suffix={<Search size={14} className={styles.searchIcon} />}
+							testId="channels-search"
+						/>
+					</div>
+					<Select
+						width={180}
 						items={KIND_FILTER_OPTIONS}
+						placeholder="All types"
 						value={kind}
 						onChange={handleKindChange}
 						disabled={!canList}
-						withPortal={false}
+						disabledTooltip={undefined}
 						testId="channels-kind-filter"
 					/>
 				</div>

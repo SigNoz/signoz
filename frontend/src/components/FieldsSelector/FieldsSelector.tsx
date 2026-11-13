@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -140,10 +140,10 @@ function FieldsSelectorContent({
 					<X className={styles.closeIcon} size={16} onClick={onClose} />
 				</div>
 
-				<section>
+				<section className={styles.searchInput}>
 					<Input
-						className={styles.searchInput}
 						type="text"
+						size="md"
 						value={inputValue}
 						placeholder="Search for a field..."
 						onChange={handleInputChange}

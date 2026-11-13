@@ -124,7 +124,7 @@
 }
 
 .pillPopoverExpression {
-	font-family: 'Geist Mono', 'Fira Code', monospace;
+	font-family: var(--code-small-400-font-family);
 	font-size: 12px;
 	color: var(--l1-foreground);
 	word-break: break-all;

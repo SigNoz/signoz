@@ -1,7 +1,9 @@
 import { ChangeEvent, useCallback, useMemo } from 'react';
 import { Plus, Search } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { Skeleton } from '@signozhq/ui/skeleton';
 import { Typography } from '@signozhq/ui/typography';
 import { ColumnSelector } from 'components/TanStackTableView';
 import TextToolTip from 'components/TextToolTip';
@@ -101,10 +103,23 @@ function RoutingPolicies(): JSX.Element {
 			<header className={styles.headerBand}>
 				<div className={styles.commandHeader}>
 					<div className={styles.headingBlock}>
-						<Typography.Title className={styles.title}>
+						<Typography
+							variant="label"
+							size="large"
+							weight="medium"
+							color="main"
+							as="h1"
+							textOverflow="ellipsis"
+						>
 							All routing policies
-						</Typography.Title>
-						<span className={styles.countPill}>{routingPoliciesData.length}</span>
+						</Typography>
+						{isFetching ? (
+							<Skeleton.Input size="sm" width={24} />
+						) : (
+							<Badge variant="solid" color="secondary">
+								{routingPoliciesData.length}
+							</Badge>
+						)}
 					</div>
 					<div className={styles.grow} />
 					{!isEmpty && (
@@ -134,14 +149,15 @@ function RoutingPolicies(): JSX.Element {
 				</div>
 
 				<div className={styles.filtersRow}>
-					<Input
-						containerClassName={styles.searchInput}
-						placeholder="Search by name or description"
-						value={searchTerm}
-						onChange={handleSearch}
-						suffix={<Search size={14} className={styles.searchIcon} />}
-						testId="routing-policies-search"
-					/>
+					<div className={styles.searchInput}>
+						<Input
+							placeholder="Search by name or description"
+							value={searchTerm}
+							onChange={handleSearch}
+							suffix={<Search size={14} className={styles.searchIcon} />}
+							testId="routing-policies-search"
+						/>
+					</div>
 				</div>
 			</header>
 

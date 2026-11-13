@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { Form, Select } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
@@ -46,44 +46,39 @@ function AccountSettingsModal({
 	);
 
 	return (
-		<DrawerWrapper
-			open={true}
-			className="account-settings-modal"
+		<Drawer
+			type="task"
+			stack="overlay"
+			open
+			onClose={handleClose}
 			title="Account Settings"
-			direction="right"
-			showCloseButton
-			onOpenChange={(open): void => {
-				if (!open) {
-					handleClose();
-				}
-			}}
 			width="wide"
-			footer={
-				<div className="account-settings-modal__footer">
-					<RemoveIntegrationAccount
-						accountId={account?.id}
-						onRemoveIntegrationAccountSuccess={(): void => {
-							void invalidateListAccounts(queryClient, {
-								cloudProvider: INTEGRATION_TYPES.AZURE,
-							});
-							setActiveAccount(null);
-							handleClose();
-						}}
-						cloudProvider={INTEGRATION_TYPES.AZURE}
-					/>
-					<Button
-						disabledTooltip="Change the resource groups first"
-						size="md"
-						variant="solid"
-						color="secondary"
-						disabled={isSaveDisabled}
-						onClick={handleSubmit}
-						loading={isLoading}
-						prefix={<Save size={14} />}
-					>
-						Update Changes
-					</Button>
-				</div>
+			footerPrefix={
+				<RemoveIntegrationAccount
+					accountId={account?.id}
+					onRemoveIntegrationAccountSuccess={(): void => {
+						void invalidateListAccounts(queryClient, {
+							cloudProvider: INTEGRATION_TYPES.AZURE,
+						});
+						setActiveAccount(null);
+						handleClose();
+					}}
+					cloudProvider={INTEGRATION_TYPES.AZURE}
+				/>
+			}
+			footerSuffix={
+				<Button
+					disabledTooltip="Change the resource groups first"
+					size="md"
+					variant="solid"
+					color="secondary"
+					disabled={isSaveDisabled}
+					onClick={handleSubmit}
+					loading={isLoading}
+					prefix={<Save size={14} />}
+				>
+					Update Changes
+				</Button>
 			}
 		>
 			<Form
@@ -150,7 +145,7 @@ function AccountSettingsModal({
 					</div>
 				</div>
 			</Form>
-		</DrawerWrapper>
+		</Drawer>
 	);
 }
 

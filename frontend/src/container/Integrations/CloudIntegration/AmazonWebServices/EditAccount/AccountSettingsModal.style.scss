@@ -1,7 +1,7 @@
 .account-settings-modal {
 	&__title-account-id {
 		color: var(--l1-foreground);
-		font-family: 'Geist Mono';
+		font-family: var(--code-base-600-font-family);
 		font-size: 14px;
 		font-weight: 600;
 		line-height: 20px;
@@ -32,11 +32,8 @@
 					line-height: 18px;
 					letter-spacing: -0.06px;
 					&-account-id {
-						font-family: 'Geist Mono';
-						font-size: 12px;
+						font-family: var(--code-small-600-font-family);
 						font-weight: 700;
-						line-height: 18px;
-						letter-spacing: -0.06px;
 					}
 				}
 			}
@@ -79,61 +76,5 @@
 				}
 			}
 		}
-	}
-
-	&__footer {
-		display: flex;
-		flex-direction: row;
-		gap: 10px;
-		justify-content: space-between;
-		width: 100%;
-
-		&-close-button,
-		&-save-button {
-			font-family: Inter;
-			font-size: 12px;
-			font-weight: 500;
-			padding-left: 16px;
-			padding-right: 16px;
-		}
-		&-close-button {
-			border-radius: 2px;
-			background: var(--l1-background);
-			border: 1px solid var(--l1-border);
-			color: var(--l1-foreground);
-
-			&:hover {
-				border-color: var(--l1-border);
-				color: var(--l1-foreground);
-			}
-		}
-		&-save-button {
-			background: var(--primary-background);
-			color: var(--primary-foreground);
-			border: none;
-			border-radius: 2px;
-			margin: 0 !important;
-
-			&:disabled {
-				background: var(--primary-background);
-				color: var(--primary-foreground);
-				opacity: 0.6;
-			}
-
-			&:not(:disabled):hover {
-				background: var(--primary-background-hover);
-			}
-		}
-	}
-	.ant-modal-body {
-		padding-bottom: 0 !important;
-	}
-	.ant-modal-footer {
-		margin: 0;
-		padding: 24px 24px 12px;
-	}
-
-	.integration-detail-content {
-		margin: 0;
 	}
 }

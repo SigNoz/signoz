@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Trash2, TriangleAlert } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { ConfirmDialog } from '@signozhq/ui/dialog';
-import { toast } from '@signozhq/ui/sonner';
+import { AlertDialog } from '@signozhq/ui/alert-dialog';
+import { toast } from '@signozhq/ui/toast';
 
 import MessageTip from '@/components/MessageTip';
 
@@ -28,8 +28,6 @@ const longMessage =
 
 const pendingSave = new Promise<void>(() => undefined);
 
-const dismissAction = { label: 'Dismiss', onClick: (): void => undefined };
-
 function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 	const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 
@@ -40,57 +38,61 @@ function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 		}
 
 		if (state === 'actionable-error-toast') {
-			toast.error('Failed to save the notification channel', {
+			toast.danger('Failed to save the notification channel', {
 				action: { label: 'Retry', onClick: (): void => undefined },
 			});
 			return;
 		}
 
 		if (state === 'promise-loading-toast') {
-			toast.promise(pendingSave, {
+			void toast.promise(pendingSave, {
+				id: 'feedback-promise-loading',
 				loading: 'Enabling the alert rule',
 				success: 'Alert rule enabled',
 				error: 'Could not enable the alert rule',
+				errorAction: { label: 'Dismiss' },
 			});
 			return;
 		}
 
 		if (state === 'promise-error-toast') {
-			toast.promise(Promise.reject(new Error('failed')), {
-				loading: 'Cloning the panel',
-				success: 'Panel cloned',
-				error: { message: 'Could not clone the panel', action: dismissAction },
-				position: 'top-center',
-				duration: Infinity,
-			});
+			void toast
+				.promise(Promise.reject(new Error('failed')), {
+					id: 'feedback-promise-error',
+					loading: 'Cloning the panel',
+					success: 'Panel cloned',
+					error: 'Could not clone the panel',
+					errorAction: { label: 'Dismiss' },
+					position: 'top-center',
+				})
+				.catch((): void => undefined);
 			return;
 		}
 
 		if (state === 'warning-toast') {
-			toast.warning('Some invites failed', { duration: Infinity });
+			toast.warning('Some invites failed', { timeout: 0 });
 			return;
 		}
 
 		if (state === 'info-toast') {
 			toast.info('Export cancelled', {
 				position: 'bottom-right',
-				duration: Infinity,
+				timeout: 0,
 			});
 			return;
 		}
 
 		if (state === 'danger-description-toast') {
-			toast.error('Failed to update account settings', {
+			toast.danger('Failed to update account settings', {
 				description:
 					'The service account does not have permission to change this connection.',
-				action: dismissAction,
+				action: { label: 'Dismiss' },
 				position: 'bottom-right',
-				duration: Infinity,
 			});
 			return;
 		}
 
-		toast.error(longMessage, { duration: Infinity });
+		toast.danger(longMessage, { action: { label: 'Dismiss' } });
 	};
 
 	const isToastStory =
@@ -139,21 +141,16 @@ function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 					>
 						Delete environment
 					</Button>
-					<ConfirmDialog
+					<AlertDialog
 						cancelText="Cancel"
-						confirmColor="danger"
+						color="danger"
 						confirmIcon={<Trash2 size={14} />}
 						confirmText="Delete environment"
-						disableOutsideClick
 						open={isConfirmationOpen}
 						title={confirmationTitle}
 						titleIcon={<TriangleAlert size={14} />}
 						onCancel={(): void => setIsConfirmationOpen(false)}
-						onConfirm={(): boolean => {
-							setIsConfirmationOpen(false);
-							return true;
-						}}
-						onOpenChange={setIsConfirmationOpen}
+						onConfirm={(): void => setIsConfirmationOpen(false)}
 					>
 						This removes the environment and its saved views. This action cannot be
 						undone.
@@ -167,7 +164,7 @@ function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 								Show error notification
 							</Button>
 						)}
-					</ConfirmDialog>
+					</AlertDialog>
 				</>
 			)}
 		</>

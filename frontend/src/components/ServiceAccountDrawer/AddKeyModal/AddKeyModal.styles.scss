@@ -1,13 +1,8 @@
 .add-key-modal {
-	[data-slot='dialog-description'] {
-		padding: 0;
-	}
-
 	&__form {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-8);
-		padding: var(--padding-4);
 	}
 
 	&__field {
@@ -17,10 +12,9 @@
 	}
 
 	&__label {
-		font-size: var(--font-size-xs);
-		font-weight: var(--font-weight-normal);
+		font-size: var(--paragraph-base-400-font-size);
 		color: var(--foreground);
-		line-height: var(--line-height-20);
+		line-height: var(--paragraph-base-400-line-height);
 		letter-spacing: -0.07px;
 	}
 
@@ -49,7 +43,7 @@
 
 			input {
 				color: var(--l1-foreground);
-				font-size: var(--font-size-xs);
+				font-size: var(--label-small-400-font-size);
 			}
 
 			.ant-picker-suffix {
@@ -69,17 +63,18 @@
 		display: flex;
 		align-items: center;
 		height: 32px;
-		background: var(--l2-background);
-		border: 1px solid var(--l1-border);
+		background: var(--l3-background);
+		border: 1px solid var(--l3-border);
 		border-radius: 2px;
 		overflow: hidden;
+		padding-right: 8px;
 	}
 
 	&__key-text {
 		flex: 1;
 		min-width: 0;
 		padding: 0 var(--padding-2);
-		font-size: var(--font-size-sm);
+		font-size: var(--code-base-400-font-size);
 		color: var(--l1-foreground);
 		white-space: nowrap;
 		overflow: hidden;
@@ -98,26 +93,12 @@
 	}
 
 	&__expiry-label {
-		font-size: var(--font-size-xs);
-		font-weight: var(--font-weight-medium);
+		font-size: var(--uppercase-small-500-font-size);
+		font-weight: var(--uppercase-small-500-font-weight);
 		color: var(--foreground);
 		letter-spacing: 0.48px;
 		text-transform: uppercase;
 		margin-bottom: var(--spacing-4);
-	}
-
-	&__footer {
-		display: flex;
-		align-items: center;
-		justify-content: flex-end;
-		padding: var(--padding-4);
-		border-top: 1px solid var(--secondary);
-	}
-
-	&__footer-right {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-4);
 	}
 
 	&__learn-more {
@@ -125,11 +106,5 @@
 		align-items: center;
 		gap: var(--spacing-1);
 		color: var(--primary);
-		font-size: var(--font-size-sm);
-		text-decoration: none;
-
-		&:hover {
-			text-decoration: underline;
-		}
 	}
 }

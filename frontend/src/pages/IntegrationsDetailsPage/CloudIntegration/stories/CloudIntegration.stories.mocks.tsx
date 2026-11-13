@@ -13,6 +13,7 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { getToastText } from '@/storybook/play/toastText';
 import type { MockResolver } from '@/storybook/msw/types';
 
 import {
@@ -290,7 +291,7 @@ export const cloudIntegrationMocks = defineStoryMocks({
 export const untilLoaded = { timeout: 20_000 };
 
 export const expectToast = async (text: RegExp): Promise<void> => {
-	await waitFor(() => expect(screen.getByText(text)).toBeVisible(), {
+	await waitFor(() => expect(getToastText(text)).toBeVisible(), {
 		timeout: 10_000,
 	});
 };
@@ -343,11 +344,33 @@ export const connectAzureAccount = async (
 	);
 };
 
+/**
+ * The popup mounts, search row included, a few frames before it opens, and its
+ * positioner ignores the pointer until then.
+ */
+const openGcpCombobox = async (testId: string): Promise<void> => {
+	const trigger = screen.getByTestId(testId);
+
+	await userEvent.click(trigger);
+	await waitFor(
+		() => expect(trigger).toHaveAttribute('data-popup-open'),
+		untilLoaded,
+	);
+};
+
+const selectGcpRegion = async (label: string): Promise<void> => {
+	await openGcpCombobox('gcp-deployment-region-select');
+	await userEvent.type(
+		screen.getByTestId('gcp-deployment-region-select-search'),
+		`${label}{Enter}`,
+	);
+};
+
 const addGcpProjectId = async (
 	testId: string,
 	projectId: string,
 ): Promise<void> => {
-	await userEvent.click(screen.getByTestId(testId));
+	await openGcpCombobox(testId);
 	await userEvent.type(
 		await screen.findByPlaceholderText('Type a project ID and press Enter'),
 		`${projectId}{Enter}`,
@@ -359,15 +382,18 @@ export const connectGcpAccount = async (
 ): Promise<void> => {
 	await openConnectFlow(canvasElement);
 	await userEvent.type(
-		await screen.findByTestId('gcp-account-name-input', undefined, untilLoaded),
+		await screen.findByTestId(
+			'gcp-account-name-input-field',
+			undefined,
+			untilLoaded,
+		),
 		'acme-org',
 	);
 	await userEvent.type(
-		screen.getByTestId('gcp-deployment-project-id-input'),
+		screen.getByTestId('gcp-deployment-project-id-input-field'),
 		'acme-deploy-123',
 	);
-	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
-	await userEvent.click(await screen.findByText('Mumbai (asia-south1)'));
+	await selectGcpRegion('Mumbai');
 	await addGcpProjectId('gcp-project-ids-select', 'project-a');
 	await userEvent.click(screen.getByTestId('gcp-connect-account-btn'));
 };
@@ -391,11 +417,10 @@ export const generateGcpAgentCommand = async (
 ): Promise<void> => {
 	await openGcpAgentSetup(canvasElement);
 	await userEvent.type(
-		screen.getByTestId('gcp-deployment-project-id-input'),
+		screen.getByTestId('gcp-deployment-project-id-input-field'),
 		'signoz-prod-4471',
 	);
-	await userEvent.click(screen.getByTestId('gcp-deployment-region-select'));
-	await userEvent.click(await screen.findByText('Council Bluffs (us-central1)'));
+	await selectGcpRegion('Council Bluffs');
 	await userEvent.click(screen.getByTestId('gcp-generate-command-btn'));
 };
 

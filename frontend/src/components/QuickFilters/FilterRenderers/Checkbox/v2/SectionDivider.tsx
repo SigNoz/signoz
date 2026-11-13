@@ -17,7 +17,16 @@ export function SectionDivider({
 	return (
 		<div className={styles.divider} data-testid={`section-divider-${testId}`}>
 			<div className={styles.line} />
-			<Typography.Text className={styles.label}>{label}</Typography.Text>
+			<Typography
+				variant="uppercase"
+				size="small"
+				weight="bold"
+				color="tertiary"
+				as="span"
+				textOverflow="visible"
+			>
+				{label}
+			</Typography>
 			{tooltip && (
 				<Tooltip title={tooltip}>
 					<Info

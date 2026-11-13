@@ -5,7 +5,6 @@
 }
 
 .drawerSection > label {
-	font-size: var(--periscope-font-size-normal);
 	color: var(--l2-foreground);
 }
 
@@ -14,7 +13,7 @@
 }
 
 .fieldError {
-	font-size: var(--periscope-font-size-small);
+	font-size: var(--label-small-400-font-size);
 	color: var(--accent-cherry);
 }
 
@@ -32,5 +31,9 @@
 }
 
 .mono {
-	font-family: var(--font-family-mono);
+	font-family: var(--code-base-400-font-family);
+}
+
+.monoInput {
+	--input-font-family: var(--code-base-400-font-family);
 }

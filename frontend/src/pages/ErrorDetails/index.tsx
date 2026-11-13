@@ -71,7 +71,18 @@ function ErrorDetails(): JSX.Element {
 
 	// if any error occurred while loading
 	if (status === 'error' || IdStatus === 'error') {
-		return <Typography>{data?.error || defaultError}</Typography>;
+		return (
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{data?.error || defaultError}
+			</Typography>
+		);
 	}
 
 	const idPayload = data?.payload || IdData?.payload;
@@ -83,7 +94,18 @@ function ErrorDetails(): JSX.Element {
 		idPayload === null ||
 		idPayload === undefined
 	) {
-		return <Typography>{data?.error || defaultError}</Typography>;
+		return (
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{data?.error || defaultError}
+			</Typography>
+		);
 	}
 
 	return <ErrorDetailsContainer idPayload={idPayload} />;

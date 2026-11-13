@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { SelectSimple } from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 import { Plus, Trash2 } from '@signozhq/icons';
 import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/sigNoz.schemas';
@@ -68,22 +68,39 @@ function ExtraPricingBuckets({
 		<div className={cx(styles.extraBucketsSection, styles.drawerSection)}>
 			<div className={styles.extraBucketsSectionHead}>
 				<span className={styles.fieldLabel}>Extra Pricing Buckets</span>
-				<Typography.Text as="span" size="small" color="muted">
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Optional
-				</Typography.Text>
+				</Typography>
 			</div>
 
 			{addedBuckets.map((bucket) => (
 				<div className={styles.bucketRow} key={bucket.key}>
-					<Typography.Text as="span" className={styles.bucketRowName}>
-						{bucket.label}
-					</Typography.Text>
+					<span className={styles.bucketRowName}>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{bucket.label}
+						</Typography>
+					</span>
 					<Input
 						type="number"
 						min={0}
 						step={0.01}
 						value={pricing[bucket.key] ?? ''}
 						disabled={isReadOnly}
+						disabledTooltip={undefined}
 						onChange={(e): void =>
 							// Clearing the field is allowed — the row stays mounted because
 							// presence is tracked in `addedKeys`, not the value. Removal is
@@ -93,9 +110,16 @@ function ExtraPricingBuckets({
 						testId={`drawer-${bucket.testId}-cost`}
 					/>
 					<Tooltip title="Pricing per 1M tokens" placement="left">
-						<Typography.Text size="xs" color="muted">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="visible"
+						>
 							1M
-						</Typography.Text>
+						</Typography>
 					</Tooltip>
 
 					{!isReadOnly && (
@@ -119,14 +143,14 @@ function ExtraPricingBuckets({
 					<label htmlFor="cache-mode" className={styles.fieldLabel}>
 						Cache mode
 					</label>
-					<SelectSimple
+					<Select
 						id="cache-mode"
 						value={pricing.cacheMode}
 						items={CACHE_MODE_OPTIONS}
-						onChange={(v): void => onChange({ cacheMode: v as CacheModeDTO })}
+						placeholder="Select a cache mode"
+						onChange={(v: string): void => onChange({ cacheMode: v as CacheModeDTO })}
 						disabled={isReadOnly}
-						className={styles.fullWidth}
-						withPortal={false}
+						disabledTooltip={undefined}
 						testId="drawer-cache-mode"
 					/>
 				</div>

@@ -55,9 +55,16 @@ function EditorToolbar({
 		<div className={styles.toolbar} data-testid="markdown-editor-toolbar">
 			<span className={styles.formatChip}>
 				<Type size={14} />
-				<Typography.Text className={styles.formatLabel}>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="medium"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
 					{formatLabel}
-				</Typography.Text>
+				</Typography>
 			</span>
 			<span className={styles.toolbarDivider} />
 			<div className={styles.commands}>

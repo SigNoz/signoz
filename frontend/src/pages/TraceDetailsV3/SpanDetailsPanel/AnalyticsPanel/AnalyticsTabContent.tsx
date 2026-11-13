@@ -38,14 +38,32 @@ function AnalyticsTabContent({
 	if (isError) {
 		return (
 			<div className={styles.state}>
-				<Typography.Text>Couldn&apos;t load analytics</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					Couldn&apos;t load analytics
+				</Typography>
 			</div>
 		);
 	}
 	if (rows.length === 0) {
 		return (
 			<div className={styles.state}>
-				<Typography.Text>No data for {fieldName}</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					No data for {fieldName}
+				</Typography>
 			</div>
 		);
 	}

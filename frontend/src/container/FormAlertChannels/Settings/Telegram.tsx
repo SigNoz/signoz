@@ -30,7 +30,11 @@ const asOptionalNumber = (value: unknown): number | undefined => {
 	return Number.isNaN(parsed) ? undefined : parsed;
 };
 
-function TelegramSettings(): JSX.Element {
+interface TelegramSettingsProps {
+	readOnly: boolean;
+}
+
+function TelegramSettings({ readOnly }: TelegramSettingsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -41,21 +45,28 @@ function TelegramSettings(): JSX.Element {
 	return (
 		<>
 			<FormCard title={t('section_connection')}>
-				<Typography.Text
-					color="muted"
-					size="sm"
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="p"
+					marginBottom={8}
+					textOverflow="wrap"
 					testId="telegram-tip"
-					style={{ display: 'block', marginBottom: 16 }}
 				>
 					{t('telegram_tip')}{' '}
 					<Typography.Link
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						textOverflow="wrap"
 						href="https://core.telegram.org/bots#how-do-i-create-a-bot"
 						target="_blank"
-						rel="noopener noreferrer"
 					>
 						{t('telegram_tip_link')}
 					</Typography.Link>
-				</Typography.Text>
+				</Typography>
 
 				<FormField
 					label={t('field_telegram_bot_token')}
@@ -67,7 +78,7 @@ function TelegramSettings(): JSX.Element {
 						{...register('botToken')}
 						aria-required
 						type="password"
-						data-testid="telegram-bot-token-textbox"
+						testId="telegram-bot-token-textbox"
 					/>
 				</FormField>
 
@@ -82,7 +93,7 @@ function TelegramSettings(): JSX.Element {
 						aria-required
 						type="number"
 						placeholder={t('placeholder_telegram_chat_id')}
-						data-testid="telegram-chat-id-textbox"
+						testId="telegram-chat-id-textbox"
 					/>
 				</FormField>
 
@@ -94,7 +105,7 @@ function TelegramSettings(): JSX.Element {
 					<Input
 						{...register('messageThreadId', { setValueAs: asOptionalNumber })}
 						type="number"
-						data-testid="telegram-message-thread-id-textbox"
+						testId="telegram-message-thread-id-textbox"
 					/>
 				</FormField>
 			</FormCard>
@@ -114,6 +125,7 @@ function TelegramSettings(): JSX.Element {
 								data-testid="telegram-title-textarea"
 								value={(field.value as string) ?? ''}
 								onChange={field.onChange}
+								disabled={readOnly}
 							/>
 						)}
 					/>
@@ -133,6 +145,7 @@ function TelegramSettings(): JSX.Element {
 								data-testid="telegram-message-textarea"
 								value={(field.value as string) ?? ''}
 								onChange={field.onChange}
+								disabled={readOnly}
 							/>
 						)}
 					/>
@@ -145,7 +158,7 @@ function TelegramSettings(): JSX.Element {
 					tooltip={t('tooltip_telegram_api_url')}
 					error={errors.apiUrl?.message}
 				>
-					<Input {...register('apiUrl')} data-testid="telegram-api-url-textbox" />
+					<Input {...register('apiUrl')} testId="telegram-api-url-textbox" />
 				</FormField>
 
 				<FormField
@@ -162,6 +175,8 @@ function TelegramSettings(): JSX.Element {
 								testId="telegram-disable-notifications-switch"
 								value={!!field.value}
 								onChange={field.onChange}
+								disabled={readOnly}
+								disabledTooltip={undefined}
 							/>
 						)}
 					/>

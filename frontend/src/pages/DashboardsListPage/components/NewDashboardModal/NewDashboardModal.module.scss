@@ -27,7 +27,7 @@
 }
 
 .label {
-	font-size: var(--font-size-sm);
+	font-size: var(--label-base-400-font-size);
 	color: var(--l2-foreground);
 }
 
@@ -40,25 +40,24 @@
 	display: flex;
 	gap: 4px;
 	align-items: center;
-
-	// The icon picker renders its dropdown inline (no portal); lift it above the
-	// description/tags fields below it.
-	:global([data-radix-popper-content-wrapper]) {
-		z-index: 1100 !important;
-	}
 }
 
+// Flat right corners on the picker's trigger so it joins flush with the name
+// input; lands on the picker's wrapper and reaches the trigger as a token.
 .imageTrigger {
-	border-radius: 2px 0 0 2px;
+	--select-trigger-border-radius: 2px 0 0 2px;
 }
 
+// Wrapper around the name Input: flat left corners (via the frame's token) so it
+// joins flush with the icon picker.
 .titleInput {
 	flex: 1;
-	border-radius: 0 2px 2px 0;
+	min-width: 0;
+	--input-border-radius: 0 2px 2px 0;
 }
 
 .hint {
-	font-size: var(--font-size-xs);
+	font-size: var(--label-small-400-font-size);
 	color: var(--l3-foreground);
 }
 
@@ -69,7 +68,7 @@
 	justify-content: center;
 	gap: 8px;
 	color: var(--l3-foreground);
-	font-size: var(--font-size-sm);
+	font-size: var(--label-base-400-font-size);
 }
 
 // "From a template" tab: a centered browse-and-request placeholder until the
@@ -108,8 +107,8 @@
 	gap: 6px;
 	margin-top: 4px;
 	color: var(--bg-robin-400);
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-medium);
+	font-size: var(--label-base-500-font-size);
+	font-weight: var(--label-base-500-font-weight);
 
 	&:hover {
 		color: var(--bg-robin-300);
@@ -141,7 +140,6 @@
 }
 
 .importHeader {
-	font-size: var(--font-size-sm);
 	color: var(--l2-foreground);
 }
 
@@ -174,7 +172,7 @@
 
 .errorText {
 	color: var(--danger-background);
-	font-size: var(--font-size-sm);
+	font-size: var(--label-base-400-font-size);
 }
 
 .importFooter {

@@ -18,11 +18,27 @@ function FormCard({
 	return (
 		<section className={styles.card}>
 			<header className={styles.head}>
-				<Typography.Text className={styles.title}>{title}</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{title}
+				</Typography>
 				{!!description && (
-					<Typography.Text size="sm" color="muted">
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						{description}
-					</Typography.Text>
+					</Typography>
 				)}
 			</header>
 			<div className={styles.body}>{children}</div>

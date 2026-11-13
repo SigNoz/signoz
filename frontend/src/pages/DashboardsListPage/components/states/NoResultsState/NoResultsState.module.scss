@@ -6,12 +6,12 @@
 
 .title {
 	color: var(--l1-foreground);
-	font-size: var(--font-size-base);
-	font-weight: var(--font-weight-medium);
+	font-size: var(--label-medium-500-font-size);
+	font-weight: var(--label-medium-500-font-weight);
 }
 
 .description {
 	color: var(--l3-foreground);
-	font-size: var(--font-size-sm);
+	font-size: var(--label-base-400-font-size);
 	text-align: center;
 }

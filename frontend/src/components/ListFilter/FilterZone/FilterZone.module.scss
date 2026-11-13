@@ -25,10 +25,6 @@
 }
 
 .filtersLabel {
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-medium);
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
 	color: var(--l2-foreground);
 	margin-right: 2px;
 }
@@ -107,6 +103,6 @@
 }
 
 .error {
-	font-size: var(--font-size-xs);
+	font-size: var(--label-small-400-font-size);
 	color: var(--danger-foreground);
 }

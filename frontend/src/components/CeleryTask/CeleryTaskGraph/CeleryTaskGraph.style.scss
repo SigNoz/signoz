@@ -48,15 +48,11 @@
 		}
 
 		.worker-count-text-container {
+			--typography-font-size: 2.5vw;
 			height: 100%;
 			display: flex;
 			justify-content: center;
 			align-items: center;
-
-			.celery-task-graph-worker-count-text {
-				font-size: 2.5vw;
-				text-align: center;
-			}
 		}
 
 		.worker-count-header {
@@ -148,14 +144,12 @@
 
 		.configure-option-Info-text {
 			color: var(--l2-foreground);
-			font-size: 12px;
-			font-weight: 400;
 		}
 	}
 
 	.row-panel {
 		border-radius: 4px;
-		background: color-mix(in srgb, var(--card) 40%, transparent);
+		background: color-mix(in srgb, var(--surface-2) 40%, transparent);
 		padding: 8px;
 		display: flex;
 		gap: 6px;
@@ -217,7 +211,6 @@
 	}
 
 	&__label {
-		font-family: 'Inter';
 		font-size: 14px;
 		color: var(--l2-foreground);
 		line-height: 20px;
@@ -225,7 +218,7 @@
 	}
 
 	&__value {
-		font-family: 'Geist Mono';
+		font-family: var(--code-base-400-font-family);
 		font-size: 24px;
 		color: var(--l1-foreground);
 		line-height: 32px;
