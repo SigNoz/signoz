@@ -67,7 +67,7 @@ function AuthnProviderSelector({
 					Configure Authentication Method
 				</Typography>
 				<Typography
-					/* TODO(typography): italic has no equivalent */ variant="paragraph"
+					variant="paragraph"
 					size="base"
 					weight="regular"
 					color="inherit"

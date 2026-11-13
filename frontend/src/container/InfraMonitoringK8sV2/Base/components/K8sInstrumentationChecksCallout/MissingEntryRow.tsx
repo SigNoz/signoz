@@ -71,7 +71,7 @@ export function MissingEntryRow({
 				-
 			</Typography>
 			<Typography
-				/* TODO(typography): italic has no equivalent */ variant="paragraph"
+				variant="paragraph"
 				size="base"
 				weight="regular"
 				color="secondary"

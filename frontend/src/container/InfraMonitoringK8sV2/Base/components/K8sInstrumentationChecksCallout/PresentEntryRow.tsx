@@ -70,7 +70,6 @@ export function PresentEntryRow({
 				-
 			</Typography>
 			<Typography
-				// TODO(typography): italic has no equivalent
 				variant="paragraph"
 				size="base"
 				weight="regular"
