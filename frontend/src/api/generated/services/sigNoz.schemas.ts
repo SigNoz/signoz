@@ -6943,6 +6943,63 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesScatterPlotPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind {
+	'signoz/TopListPanel' = 'signoz/TopListPanel',
+}
+export interface DashboardtypesTopListAppearanceDTO {
+	/**
+	 * @type string
+	 * @description Hex color of every bar; a matching background threshold overrides it.
+	 */
+	barColor: string;
+	/**
+	 * @type boolean
+	 * @description Numbers each row by its position in the list.
+	 */
+	showRank?: boolean;
+	/**
+	 * @type boolean
+	 * @description Shows each row's share of the listed rows' total.
+	 */
+	showShare?: boolean;
+}
+
+export interface DashboardtypesTopListPanelSpecDTO {
+	/**
+	 * @description Rank, share and bar color options.
+	 */
+	appearance?: DashboardtypesTopListAppearanceDTO;
+	/**
+	 * @description Unit and decimal precision of the values.
+	 */
+	formatting?: DashboardtypesPanelFormattingDTO;
+	/**
+	 * @type array,null
+	 * @description Rules that recolor a row when its value compares to a threshold as specified.
+	 */
+	thresholds?: DashboardtypesComparisonThresholdDTO[] | null;
+	/**
+	 * @description The time range the rows are computed over.
+	 */
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTO {
+	/**
+	 * @enum signoz/TopListPanel
+	 * @type string
+	 * @description The panel kind.
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind;
+	/**
+	 * @description The options for this panel kind. {} accepts every default.
+	 */
+	spec: DashboardtypesTopListPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -6954,7 +7011,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -8241,6 +8299,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TextPanel' = 'signoz/TextPanel',
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 	'signoz/ScatterPlotPanel' = 'signoz/ScatterPlotPanel',
+	'signoz/TopListPanel' = 'signoz/TopListPanel',
 }
 /**
  * The RFC 6902 operations, applied in order against the dashboard's postable shape.
