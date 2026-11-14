@@ -406,6 +406,51 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 			wantStart: time.Date(2025, 2, 28, 12, 0, 0, 0, time.UTC), // Feb 28 (last day of Feb)
 			wantEnd:   time.Date(2025, 3, 15, 10, 0, 0, 0, time.UTC),
 		},
+		{
+			name: "monthly - day 31 on the 31st before the scheduled time, previous month is shorter",
+			window: CumulativeWindow{
+				Schedule: CumulativeSchedule{
+					Type:   ScheduleTypeMonthly,
+					Day:    intPtr(31),
+					Hour:   intPtr(12),
+					Minute: intPtr(0),
+				},
+				Timezone: "UTC",
+			},
+			current:   time.Date(2025, 3, 31, 10, 0, 0, 0, time.UTC),
+			wantStart: time.Date(2025, 2, 28, 12, 0, 0, 0, time.UTC),
+			wantEnd:   time.Date(2025, 3, 31, 10, 0, 0, 0, time.UTC),
+		},
+		{
+			name: "monthly - day 31 on October 31st before the scheduled time",
+			window: CumulativeWindow{
+				Schedule: CumulativeSchedule{
+					Type:   ScheduleTypeMonthly,
+					Day:    intPtr(31),
+					Hour:   intPtr(12),
+					Minute: intPtr(0),
+				},
+				Timezone: "UTC",
+			},
+			current:   time.Date(2025, 10, 31, 10, 0, 0, 0, time.UTC),
+			wantStart: time.Date(2025, 9, 30, 12, 0, 0, 0, time.UTC),
+			wantEnd:   time.Date(2025, 10, 31, 10, 0, 0, 0, time.UTC),
+		},
+		{
+			name: "monthly - day 30 on March 30th before the scheduled time",
+			window: CumulativeWindow{
+				Schedule: CumulativeSchedule{
+					Type:   ScheduleTypeMonthly,
+					Day:    intPtr(30),
+					Hour:   intPtr(12),
+					Minute: intPtr(0),
+				},
+				Timezone: "UTC",
+			},
+			current:   time.Date(2025, 3, 30, 10, 0, 0, 0, time.UTC),
+			wantStart: time.Date(2025, 2, 28, 12, 0, 0, 0, time.UTC),
+			wantEnd:   time.Date(2025, 3, 30, 10, 0, 0, 0, time.UTC),
+		},
 
 		// Comprehensive timezone-based test cases
 		{
