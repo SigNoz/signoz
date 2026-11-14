@@ -1,0 +1,136 @@
+@use 'sass:math';
+@use 'sass:string';
+
+$grid-columns: 24;
+// antd 5.11 screen*Min tokens; xs has no media query.
+$breakpoints: (
+	sm: 576px,
+	md: 768px,
+	lg: 992px,
+	xl: 1200px,
+	xxl: 1600px,
+);
+
+@function class-name($prefix, $key) {
+	@if $prefix == '' {
+		@return $key;
+	}
+	@return '#{$prefix}#{string.to-upper-case(string.slice($key, 1, 1))}#{string.slice($key, 2)}';
+}
+
+// Emits `.span12`, `.offset3`… for an empty prefix and `.mdSpan12`,
+// `.mdOffset3`… otherwise. Columns run 24 → 0 in antd's rule order.
+@mixin grid-columns($prefix) {
+	$span: class-name($prefix, 'span');
+	$push: class-name($prefix, 'push');
+	$pull: class-name($prefix, 'pull');
+	$offset: class-name($prefix, 'offset');
+	$order: class-name($prefix, 'order');
+
+	@for $step from 0 through $grid-columns {
+		$i: $grid-columns - $step;
+		$width: math.div($i, $grid-columns) * 100%;
+
+		@if $i == 0 {
+			.#{$span}0 {
+				display: none;
+			}
+
+			.#{$push}0 {
+				inset-inline-start: auto;
+			}
+
+			.#{$pull}0 {
+				inset-inline-end: auto;
+			}
+
+			.#{$offset}0 {
+				margin-inline-start: 0;
+			}
+
+			.#{$order}0 {
+				order: 0;
+			}
+		} @else {
+			// `--ant-display` is antd's override hook: a more specific rule setting
+			// it on the column (antd Form sets `flex`) changes its display.
+			.#{$span}#{$i} {
+				--ant-display: block;
+				display: block;
+				display: var(--ant-display);
+				flex: 0 0 $width;
+				max-width: $width;
+			}
+
+			.#{$push}#{$i} {
+				inset-inline-start: $width;
+			}
+
+			.#{$pull}#{$i} {
+				inset-inline-end: $width;
+			}
+
+			.#{$offset}#{$i} {
+				margin-inline-start: $width;
+			}
+
+			.#{$order}#{$i} {
+				order: $i;
+			}
+		}
+	}
+}
+
+.col {
+	font-family: var(--periscope-font-family-sans);
+	font-size: var(--periscope-font-size-base);
+
+	position: relative;
+	box-sizing: border-box;
+	max-width: 100%;
+	min-height: 1px;
+
+	&::before,
+	&::after {
+		box-sizing: border-box;
+	}
+}
+
+:where(.col) a {
+	color: var(--primary-background);
+	text-decoration: none;
+	background-color: transparent;
+	outline: none;
+	cursor: pointer;
+	transition: color 0.3s;
+	-webkit-text-decoration-skip: objects;
+
+	&:active,
+	&:hover {
+		color: var(--primary-background);
+		outline: 0;
+	}
+
+	&:focus {
+		text-decoration: none;
+		outline: 0;
+	}
+
+	&:hover {
+		text-decoration: underline;
+	}
+
+	&[disabled] {
+		color: var(--l3-foreground);
+		cursor: not-allowed;
+	}
+}
+
+@include grid-columns('');
+@include grid-columns('xs');
+
+@each $prefix, $min-width in $breakpoints {
+	@media (min-width: $min-width) {
+		@include grid-columns($prefix);
+	}
+}

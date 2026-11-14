@@ -1,0 +1,25 @@
+.comparison {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-12);
+	align-items: start;
+}
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	min-width: 0;
+}
+
+.label {
+	font-size: var(--periscope-font-size-small);
+	color: var(--l2-foreground);
+}
+
+.extra {
+	width: var(--spacing-40);
+	height: var(--spacing-24);
+	background: var(--l3-background);
+	border: 1px solid var(--l2-border);
+}
