@@ -5,6 +5,8 @@ import type {
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { resolveSeriesColor } from 'lib/visualization/charts/Distribution/colors';
+import { prepareDistributionData } from '../kinds/DistributionPanel/prepareData';
 import { preparePieData } from '../kinds/PieChartPanel/prepareData';
 import { getColorGroupLabels } from '../kinds/ScatterPlotPanel/utils/prepareData';
 import { getJoinedScalarTable } from './getJoinedScalarTable';
@@ -14,6 +16,7 @@ import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/quer
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import {
 	flattenTimeSeries,
+	getDistributionResults,
 	getScalarResults,
 	getTimeSeriesResults,
 } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
@@ -57,6 +60,21 @@ function buildLegendSeries(
 		label,
 		defaultColor,
 	}));
+}
+
+/** One entry per group, labelled and coloured as the Distribution chart draws it. */
+export function resolveDistributionLegendSeries({
+	data,
+	isDarkMode,
+}: LegendSeriesArgs): LegendSeries[] {
+	const { series } = prepareDistributionData({
+		results: getDistributionResults(data.response),
+		legendMap: data.legendMap ?? {},
+	});
+	return buildLegendSeries(
+		series.map((entry) => entry.label),
+		(label) => resolveSeriesColor(label, isDarkMode),
+	);
 }
 
 /**
