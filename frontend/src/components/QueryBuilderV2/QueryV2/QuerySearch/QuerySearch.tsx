@@ -61,6 +61,7 @@ import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggesti
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import type { SignalType } from 'types/api/v5/queryRange';
 
+import { getCalculatedTraceFieldInfo } from './calculatedTraceFieldInfo';
 import {
 	queryExamples,
 	SUGGESTION_FETCH_DEBOUNCE_MS,
@@ -299,11 +300,12 @@ function QuerySearch({
 		keys: TelemetrytypesGettableFieldKeysDTOKeysAnyOf,
 	): any[] =>
 		Object.values(keys).flatMap((items: TelemetrytypesTelemetryFieldKeyDTO[]) =>
-			items.map(({ name, fieldDataType, fieldContext }) => ({
+			items.map(({ name, fieldDataType, fieldContext, description }) => ({
 				label: name,
 				type: fieldDataType === 'string' ? 'keyword' : fieldDataType,
 				fieldContext,
 				fieldDataType,
+				description,
 				info: '',
 				details: '',
 			})),
@@ -1454,6 +1456,7 @@ function QuerySearch({
 
 		const suggestionOptions = (result?.options || []).map((opt) => ({
 			...opt,
+			info: getCalculatedTraceFieldInfo(opt, dataSource),
 			section: SUGGESTIONS_SECTION,
 		}));
 
