@@ -36,7 +36,7 @@ func toBoolOnOff(value float64) string {
 func (f *boolFormatter) Format(value float64, unit string) string {
 
 	switch unit {
-	case "bool":
+	case "bool", "bool_true_false":
 		return toBool(value)
 	case "bool_yes_no":
 		return toBoolYesNo(value)
