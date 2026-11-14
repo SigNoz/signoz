@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports -- TODO: migrate global time selector off redux
 import { useSelector } from 'react-redux';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelDTO,
+	Querybuildertypesv5QueryRangeRequestDTO,
+	QueryRangeV5200,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	DASHBOARD_CACHE_TIME,
 	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
@@ -126,6 +130,7 @@ export function usePanelQuery({
 	// use it (V1 parity). Names come from the fetch context (all variables, even
 	// unresolved ones); null before the variable bar initializes it.
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
+	const queryRunner = useDashboardStore((s) => s.queryRunner);
 	const variables = useDashboardStore(selectResolvedVariables(dashboardId));
 	const fetchContext = useDashboardStore((s) => s.variableFetchContext);
 
@@ -233,6 +238,7 @@ export function usePanelQuery({
 			// Only the variables this panel references re-key the cache, so an unrelated
 			// variable change doesn't refetch it.
 			scopedVariables,
+			queryRunner?.key ?? null,
 		],
 		[
 			panelId,
@@ -249,10 +255,24 @@ export function usePanelQuery({
 			offset,
 			pageSize,
 			scopedVariables,
+			queryRunner?.key,
 		],
 	);
 
+	const fetch = useMemo(
+		() =>
+			queryRunner
+				? (
+						payload: Querybuildertypesv5QueryRangeRequestDTO,
+						signal?: AbortSignal,
+					): Promise<QueryRangeV5200> =>
+						queryRunner.run({ panelId, requestPayload: payload, signal })
+				: undefined,
+		[queryRunner, panelId],
+	);
+
 	const response = useGetQueryRangeV5({
+		fetch,
 		requestPayload,
 		queryKey,
 		enabled: enabled && runnable && !isWaitingOnVariable,

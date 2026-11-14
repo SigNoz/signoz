@@ -11,6 +11,7 @@ import {
 	buildDashboardUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 
+import { useDashboardStore } from '../../store/useDashboardStore';
 import { useDashboardEditContext } from '../useDashboardEditContext';
 
 const DASHBOARD_ID = 'dash-1';
@@ -44,6 +45,23 @@ describe('useDashboardEditContext - AuthZ', () => {
 	afterEach(() => {
 		jest.restoreAllMocks();
 		server.resetHandlers();
+		useDashboardStore.setState({ readOnly: false });
+	});
+
+	// A host-forced view-only mount outranks every grant.
+	it('is read-only on a read-only mount despite full permissions', async () => {
+		server.use(setupAuthzAdmin());
+		useDashboardStore.setState({ readOnly: true });
+
+		const { result } = renderGuard();
+
+		await waitFor(() =>
+			expect(result.current.editDisabledTooltip).toBe('dashboard_read_only_here'),
+		);
+		expect(result.current.isEditable).toBe(false);
+		expect(result.current.canEditDashboard).toBe(false);
+		expect(result.current.canDeleteDashboard).toBe(false);
+		expect(result.current.deleteDisabledTooltip).toBe('dashboard_read_only_here');
 	});
 
 	describe('permission granted', () => {

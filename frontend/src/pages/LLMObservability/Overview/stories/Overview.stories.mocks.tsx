@@ -3,7 +3,6 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { StatusCodes } from 'http-status-codes';
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
@@ -16,15 +15,12 @@ import {
 	LLM_MODELS,
 	LLM_SERVICES,
 	llmPanelResponse,
+	llmSystemDashboardResponse,
 } from './__story_mockdata__/llmOverview';
 
 const PANELS = 'AI overview · panels';
 
-/**
- * The dashboard itself is bundled with the app rather than fetched, so the only
- * thing left to answer is the panels, the variables and the share state its
- * header reads.
- */
+/** The system dashboard definition, its panels and its variables. */
 export const llmOverviewMocks = defineStoryMocks({
 	controls: {
 		series: countControl('Breakdown series', {
@@ -36,6 +32,10 @@ export const llmOverviewMocks = defineStoryMocks({
 		}),
 	},
 	handlers: (values, response) => [
+		rest.get(
+			'http://localhost/api/v2/dashboards/system/ai-o11y-overview',
+			response.json(() => llmSystemDashboardResponse()),
+		),
 		rest.post(
 			'http://localhost/api/v5/query_range',
 			response.json(async (req) =>
@@ -57,22 +57,6 @@ export const llmOverviewMocks = defineStoryMocks({
 					data: { variableValues: byName[body.name ?? ''] ?? LLM_MODELS },
 				};
 			}),
-		),
-		// The header reads the share state on every load, so it answers even while
-		// the panels are held in the loading or failed state.
-		rest.get('http://localhost/api/v1/dashboards/:id/public', (_req, res, ctx) =>
-			res(
-				ctx.status(StatusCodes.NOT_FOUND),
-				ctx.json({
-					status: 'error',
-					error: {
-						code: 'public_dashboard_not_found',
-						message: "the AI observability overview isn't public",
-						url: '',
-						errors: [],
-					},
-				}),
-			),
 		),
 	],
 	config: () => ({ route: ROUTES.AI_OBSERVABILITY_OVERVIEW }),

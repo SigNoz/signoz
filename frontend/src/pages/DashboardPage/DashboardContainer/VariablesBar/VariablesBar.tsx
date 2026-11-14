@@ -16,6 +16,7 @@ import { resolveDefaultSelection } from './utils/resolveVariableSelection';
 import VariableSelector from './components/VariableSelector/VariableSelector';
 import styles from './VariablesBar.module.scss';
 import { useDashboardEditContext } from '../hooks/useDashboardEditContext';
+import { useDashboardControl } from '../controls/useDashboardControl';
 
 interface VariablesBarProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
@@ -39,6 +40,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 	// Persisted per dashboard so the full/collapsed view survives reloads.
 	const expanded = useDashboardStore(selectVariablesExpanded(dashboardId));
 	const setVariablesExpanded = useDashboardStore((s) => s.setVariablesExpanded);
+	const showAddVariable = useDashboardControl('toolbar.addVariable');
 	const { containerRef, visibleCount, overflowCount } = useInlineOverflowCount({
 		itemCount: variables.length,
 		gap: 8,
@@ -49,7 +51,7 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 
 	// Editors can add a variable even before any exist; viewers with no variables
 	// have nothing to show.
-	if (variables.length === 0 && !isEditable) {
+	if (variables.length === 0 && !(isEditable && showAddVariable)) {
 		return null;
 	}
 
@@ -131,13 +133,15 @@ function VariablesBar({ dashboard }: VariablesBarProps): JSX.Element | null {
 				{/* After the more/less trigger, in every state. Kept inline (not block)
 				    so the row still flows under the floated time selector, and always
 				    mounted so measuring never toggles it. */}
-				<span className={styles.addSlot}>
-					<AddVariableIcon
-						checks={editChecks}
-						disabledTooltip={editDisabledTooltip}
-						isEditable={isEditable}
-					/>
-				</span>
+				{showAddVariable && (
+					<span className={styles.addSlot}>
+						<AddVariableIcon
+							checks={editChecks}
+							disabledTooltip={editDisabledTooltip}
+							isEditable={isEditable}
+						/>
+					</span>
+				)}
 			</div>
 		</div>
 	);

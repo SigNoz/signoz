@@ -8,12 +8,12 @@ import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { useCreatePanel } from '../../../hooks/useCreatePanel';
 import type { DashboardSection } from '../../../utils';
 import PanelTypeSelectionModal from '../../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
-import { useCloneSection } from '../hooks/useCloneSection';
 import { useDeleteSection } from '../hooks/useDeleteSection';
 import { usePanelPickerHighlight } from '../hooks/usePanelPickerHighlight';
 import { usePanelPickerReveal } from '../hooks/usePanelPickerReveal';
 import { useRenameSection } from '../hooks/useRenameSection';
 import { useScrollIntoView } from '../hooks/useScrollIntoView';
+import { useSectionHeaderActions } from '../hooks/useSectionHeaderActions';
 import { useToggleSectionCollapse } from '../hooks/useToggleSectionCollapse';
 import SectionTitleModal from '../SectionTitleModal';
 import SectionGrid from '../SectionGrid/SectionGrid';
@@ -66,7 +66,14 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 		setIsDeleteOpen(false);
 	}, [deleteSection]);
 
-	const cloneSection = useCloneSection();
+	const openRename = useCallback((): void => setIsRenaming(true), []);
+	const openDelete = useCallback((): void => setIsDeleteOpen(true), []);
+	const actions = useSectionHeaderActions({
+		section,
+		openPicker,
+		openRename,
+		openDelete,
+	});
 
 	const sectionRef = useRef<HTMLDivElement>(null);
 	useScrollIntoView(section.id, sectionRef);
@@ -116,35 +123,30 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 				dragHandle={dragHandle}
 				disabledChecks={editChecks}
 				disabledTooltip={editDisabledTooltip}
-				actions={{
-					onRename: (): void => setIsRenaming(true),
-					onAddPanel: (): void => openPicker(section.layoutIndex),
-					onCloneSection: (): void => void cloneSection(section),
-					onDeleteSection: (): void => setIsDeleteOpen(true),
-				}}
+				actions={actions}
 			/>
 			{open &&
-				(section.items.length > 0 || pickerTarget ? (
-					grid
-				) : (
-					<div className={styles.emptySection}>
-						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
-							<Button
-								size="md"
-								type="button"
-								variant="dashed"
-								color="secondary"
-								prefix={<Plus size="md" />}
-								onClick={
-									isEditable ? (): void => openPicker(section.layoutIndex) : undefined
-								}
-								testId={`section-add-panel-${section.id}`}
-							>
-								New Panel
-							</Button>
-						</AuthZTooltip>
-					</div>
-				))}
+				(section.items.length > 0 || pickerTarget
+					? grid
+					: actions.onAddPanel && (
+							<div className={styles.emptySection}>
+								<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
+									<Button
+										size="md"
+										type="button"
+										variant="dashed"
+										color="secondary"
+										prefix={<Plus size="md" />}
+										onClick={
+											isEditable ? (): void => openPicker(section.layoutIndex) : undefined
+										}
+										testId={`section-add-panel-${section.id}`}
+									>
+										New Panel
+									</Button>
+								</AuthZTooltip>
+							</div>
+						))}
 			<SectionTitleModal
 				open={isRenaming}
 				heading="Rename section"

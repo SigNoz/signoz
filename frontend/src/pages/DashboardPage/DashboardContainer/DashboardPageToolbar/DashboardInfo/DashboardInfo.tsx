@@ -24,9 +24,11 @@ import { openInNewTab } from 'utils/navigation';
 import styles from './DashboardInfo.module.scss';
 
 import TagsOverflowTooltip from './TagsOverflowTooltip';
+import { getLockTooltip } from './utils';
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
+import { useDashboardControlGroup } from '../../controls/useDashboardControlGroup';
 
 // The tag cluster keeps a fixed footprint so a long title ellipsizes around it
 // instead of collapsing the tags: show up to two tags, then a `+N` overflow badge.
@@ -75,27 +77,19 @@ function DashboardInfo({
 }: DashboardInfoProps): JSX.Element {
 	const { isEditable: canEdit } = useDashboardEditContext();
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
+	const show = useDashboardControlGroup('title');
 
-	const hasTags = tags.length > 0;
-	const hasDescription = !isEmpty(description);
+	const hasTags = show.tags && tags.length > 0;
+	const hasDescription = show.description && !isEmpty(description);
 
 	const visibleTags = tags.slice(0, MAX_VISIBLE_TAGS);
 	const remainingTags = tags.slice(MAX_VISIBLE_TAGS);
 
-	// Without a toggle, say why it can't be toggled rather than only restating the
-	// lock state.
-	let lockTooltip: string;
-	if (onToggleLock) {
-		lockTooltip = isDashboardLocked
-			? 'Locked — click to unlock'
-			: 'Unlocked — click to lock';
-	} else if (lockDisabledTooltip) {
-		lockTooltip = lockDisabledTooltip;
-	} else {
-		lockTooltip = isDashboardLocked
-			? 'This dashboard is locked'
-			: 'This dashboard is unlocked';
-	}
+	const lockTooltip = getLockTooltip({
+		isLocked: isDashboardLocked,
+		canToggle: !!onToggleLock,
+		disabledReason: lockDisabledTooltip,
+	});
 
 	const onKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
 		if (event.key === 'Enter') {
@@ -128,65 +122,68 @@ function DashboardInfo({
 
 	return (
 		<div className={styles.dashboardInfo}>
-			<img src={image} alt={title} className={styles.dashboardImage} />
-
-			{isEditing ? (
-				<div className={styles.dashboardTitleEditor} onBlur={onEditorBlur}>
-					<Input
-						autoFocus
-						value={draft}
-						testId="dashboard-title-input"
-						maxLength={DASHBOARD_NAME_MAX_LENGTH}
-						className={styles.dashboardTitleInput}
-						onChange={(e): void => onDraftChange(e.target.value)}
-						onKeyDown={onKeyDown}
-					/>
-					<Button
-						type="button"
-						variant="solid"
-						color="primary"
-						size="sm"
-						icon
-						aria-label="Save title"
-						testId="dashboard-title-save"
-						onClick={onCommit}
-					>
-						<Check size={14} />
-					</Button>
-					<Button
-						type="button"
-						variant="outlined"
-						color="secondary"
-						size="sm"
-						icon
-						aria-label="Cancel title edit"
-						testId="dashboard-title-cancel"
-						onClick={onCancel}
-					>
-						<X size={14} />
-					</Button>
-				</div>
-			) : (
-				<>
-					<Tooltip title={title}>
-						<Typography.Text
-							className={cx(styles.dashboardTitle, {
-								[styles.dashboardTitleHover]: canEdit,
-							})}
-							data-testid="dashboard-title"
-							onClick={canEdit ? onStartEdit : undefined}
-						>
-							{title}
-						</Typography.Text>
-					</Tooltip>
-					<CopyButton
-						value={dashboardId}
-						ariaLabel="Copy dashboard ID"
-						testId="dashboard-copy-id"
-						onCopy={handleCopyId}
-					/>
-				</>
+			{show.name && (
+				<img src={image} alt={title} className={styles.dashboardImage} />
 			)}
+
+			{show.name &&
+				(isEditing ? (
+					<div className={styles.dashboardTitleEditor} onBlur={onEditorBlur}>
+						<Input
+							autoFocus
+							value={draft}
+							testId="dashboard-title-input"
+							maxLength={DASHBOARD_NAME_MAX_LENGTH}
+							className={styles.dashboardTitleInput}
+							onChange={(e): void => onDraftChange(e.target.value)}
+							onKeyDown={onKeyDown}
+						/>
+						<Button
+							type="button"
+							variant="solid"
+							color="primary"
+							size="sm"
+							icon
+							aria-label="Save title"
+							testId="dashboard-title-save"
+							onClick={onCommit}
+						>
+							<Check size={14} />
+						</Button>
+						<Button
+							type="button"
+							variant="outlined"
+							color="secondary"
+							size="sm"
+							icon
+							aria-label="Cancel title edit"
+							testId="dashboard-title-cancel"
+							onClick={onCancel}
+						>
+							<X size={14} />
+						</Button>
+					</div>
+				) : (
+					<>
+						<Tooltip title={title}>
+							<Typography.Text
+								className={cx(styles.dashboardTitle, {
+									[styles.dashboardTitleHover]: canEdit,
+								})}
+								data-testid="dashboard-title"
+								onClick={canEdit ? onStartEdit : undefined}
+							>
+								{title}
+							</Typography.Text>
+						</Tooltip>
+						<CopyButton
+							value={dashboardId}
+							ariaLabel="Copy dashboard ID"
+							testId="dashboard-copy-id"
+							onCopy={handleCopyId}
+						/>
+					</>
+				))}
 
 			{hasDescription && (
 				<Tooltip
@@ -205,7 +202,7 @@ function DashboardInfo({
 				</Tooltip>
 			)}
 
-			{isPublicDashboard && (
+			{show.publicBadge && isPublicDashboard && (
 				<Tooltip title="This dashboard is publicly accessible. Click to open the public page.">
 					<Button
 						type="button"
@@ -222,7 +219,7 @@ function DashboardInfo({
 				</Tooltip>
 			)}
 
-			{showLockToggle && (
+			{show.lock && showLockToggle && (
 				<Tooltip title={onToggleLock ? lockTooltip : undefined}>
 					<Button
 						disabledTooltip={lockTooltip}
