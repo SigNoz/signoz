@@ -6,6 +6,7 @@ import { definition as NumberValue } from './kinds/NumberPanel/definition';
 import { definition as PieChart } from './kinds/PieChartPanel/definition';
 import { definition as ScatterPlot } from './kinds/ScatterPlotPanel/definition';
 import { definition as TimeSeries } from './kinds/TimeSeriesPanel/definition';
+import { definition as TopList } from './kinds/TopListPanel/definition';
 import { definition as Table } from './kinds/TablePanel/definition';
 import { definition as List } from './kinds/ListPanel/definition';
 import { definition as Text } from './kinds/TextPanel/definition';
@@ -27,6 +28,7 @@ export const PANELS: PanelRegistry = {
 	[AreaChart.kind]: AreaChart,
 	[PieChart.kind]: PieChart,
 	[ScatterPlot.kind]: ScatterPlot,
+	[TopList.kind]: TopList,
 	[Histogram.kind]: Histogram,
 	[Heatmap.kind]: Heatmap,
 	[List.kind]: List,
