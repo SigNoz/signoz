@@ -127,7 +127,11 @@ func toMinutes(value float64) string {
 		return toFixedScaled(value/60, " hour")
 	} else if absValue < 10080 {
 		return toFixedScaled(value/1440, " day")
-	} else if absValue < 604800 {
+	} else if absValue < 525948 {
+		// 525948 is minutes per year (the year divisor below), not 604800,
+		// which is seconds per week carried over from toSeconds. Using the
+		// seconds-per-week boundary kept a value between one year and ~420
+		// days in weeks (525948 min showed as "52.2 week", not "1 year").
 		return toFixedScaled(value/10080, " week")
 	} else {
 		return toFixedScaled(value/5.25948e5, " year")
