@@ -7,19 +7,19 @@ import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import {
-	Col,
 	Collapse,
 	DatePicker,
 	Form,
 	InputNumber,
 	Modal,
-	Row,
 	Select,
 	Table,
 	TablePaginationConfig,
 	TableProps as AntDTableProps,
 	Tooltip,
 } from 'antd';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { NotificationInstance } from 'antd/es/notification/interface';

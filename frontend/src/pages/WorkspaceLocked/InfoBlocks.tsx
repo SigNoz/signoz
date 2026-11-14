@@ -1,4 +1,6 @@
-import { Col, Row, Space } from 'antd';
+import Space from 'periscope/components/Space/Space';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
 import { Typography } from '@signozhq/ui/typography';
 
 interface InfoItem {

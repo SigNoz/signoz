@@ -3,7 +3,9 @@ import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { FileSearch } from '@signozhq/icons';
-import { Button, Card, Col, Row } from 'antd';
+import { Button, Card } from 'antd';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
 import logEvent from 'api/common/logEvent';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ENTITY_VERSION_V4 } from 'constants/app';

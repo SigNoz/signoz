@@ -8,7 +8,9 @@ import {
 	useState,
 } from 'react';
 import { Input as SignozInput } from '@signozhq/ui/input';
-import { Col, Row, Select } from 'antd';
+import { Select } from 'antd';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { find } from 'lodash-es';
 import { TTTLType } from 'types/api/settings/common';

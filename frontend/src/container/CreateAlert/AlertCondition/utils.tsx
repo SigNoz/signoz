@@ -1,4 +1,5 @@
-import { Button, Flex, SelectProps } from 'antd';
+import { Button, SelectProps } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { BaseOptionType, DefaultOptionType } from 'antd/es/select';

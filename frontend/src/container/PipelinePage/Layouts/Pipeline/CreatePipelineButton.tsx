@@ -7,7 +7,7 @@ import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
 import { ButtonContainer, CustomButton } from '../../styles';
 import { checkDataLength } from '../utils';
 import { PencilLine, Plus } from '@signozhq/icons';
-import { Flex } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 
 function CreatePipelineButton({
 	setActionType,

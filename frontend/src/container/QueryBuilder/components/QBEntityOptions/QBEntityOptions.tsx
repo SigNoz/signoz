@@ -1,5 +1,6 @@
 import { useAppLocation } from 'lib/router/useAppLocation';
-import { Button, Col, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
+import Col from 'periscope/components/Col/Col';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';

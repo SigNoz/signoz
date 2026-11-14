@@ -1,5 +1,8 @@
 import { useEffect } from 'react';
-import { Button, Col, Modal, Row, Skeleton, Space } from 'antd';
+import { Button, Modal, Skeleton } from 'antd';
+import Space from 'periscope/components/Space/Space';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';

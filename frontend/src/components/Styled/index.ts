@@ -1,14 +1,11 @@
 import { HTMLAttributes } from 'react';
-import {
-	Button,
-	ButtonProps,
-	Col,
-	ColProps,
-	Row,
-	RowProps,
-	Space,
-	SpaceProps,
-} from 'antd';
+import { Button, ButtonProps } from 'antd';
+import Space from 'periscope/components/Space/Space';
+import type { SpaceProps } from 'periscope/components/Space/types';
+import Col from 'periscope/components/Col/Col';
+import type { ColProps } from 'periscope/components/Col/types';
+import Row from 'periscope/components/Row/Row';
+import type { RowProps } from 'periscope/components/Row/types';
 import {
 	Typography,
 	TypographyTextProps,

@@ -1,4 +1,4 @@
-import { Space } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import { useAppContext } from 'providers/App/App';
 
 import AuthDomain from './AuthDomain';

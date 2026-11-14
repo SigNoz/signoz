@@ -1,6 +1,8 @@
 import { blue } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
-import { Col, Row, Space } from 'antd';
+import Space from 'periscope/components/Space/Space';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
 import { FontSize } from 'container/OptionsMenu/types';
 import { Info } from '@signozhq/icons';
 import styled from 'styled-components';
