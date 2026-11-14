@@ -7,7 +7,6 @@ import { defineConfig, loadEnv } from 'vite';
 import vitePluginChecker from 'vite-plugin-checker';
 import viteCompression from 'vite-plugin-compression';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
-import tsconfigPaths from 'vite-tsconfig-paths';
 import type {
 	Appcues,
 	Posthog,
@@ -82,15 +81,14 @@ export default defineConfig(({ mode }): UserConfig => {
 	const basePath = env.VITE_BASE_PATH || '/';
 
 	const plugins = [
-		tsconfigPaths(),
 		rawMarkdownPlugin(),
 		devBasePathPlugin(basePath),
 		devBootDataPlugin(env),
 		react(),
 		vitePluginChecker({
 			typescript: true,
-			// this doubles the build tim
-			// disabled to use Biome/tsgo (in the future) as alternative
+			// this doubles the build time
+			// disabled because CI type checks with `pnpm tsc`
 			enableBuild: false,
 		}),
 	];
@@ -142,6 +140,7 @@ export default defineConfig(({ mode }): UserConfig => {
 	return {
 		plugins,
 		resolve: {
+			tsconfigPaths: true,
 			alias: {
 				// @grafana/data imports bare CJS `lodash`, whose UMD footer checks for an
 				// AMD loader before assigning module.exports. Any third-party script that

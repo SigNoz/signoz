@@ -549,11 +549,11 @@ function report(kind, targetDir, flags) {
 						: []),
 					'delete the placeholders you do not need (empty types/utils/constants, unused folders)',
 					'fill in README.md',
-					`verify: pnpm tsgo --noEmit && pnpm oxlint ${rel} && pnpm jest ${rel}`,
+					`verify: pnpm tsc --noEmit && pnpm oxlint ${rel} && pnpm jest ${rel}`,
 				]
 			: [
 					'delete the placeholders you do not need (empty types/utils/constants, unused folders)',
-					`verify: pnpm tsgo --noEmit && pnpm oxlint ${rel} && pnpm jest ${rel}`,
+					`verify: pnpm tsc --noEmit && pnpm oxlint ${rel} && pnpm jest ${rel}`,
 				];
 
 	if (pagePath) {

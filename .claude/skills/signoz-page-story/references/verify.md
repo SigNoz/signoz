@@ -66,7 +66,7 @@ That is one run, for checking the story you just wrote. Comparing two branches i
 ## Then the usual
 
 ```bash
-pnpm tsgo --noEmit
+pnpm tsc --noEmit
 pnpm exec oxlint <changed files>
 pnpm exec oxfmt --check <changed files>
 ```
