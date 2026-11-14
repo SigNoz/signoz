@@ -2,6 +2,7 @@ package units
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/dustin/go-humanize"
 )
@@ -17,7 +18,12 @@ func (*dataFormatter) Name() string {
 	return "data"
 }
 
-func (f *dataFormatter) Format(value float64, unit string) string {
+func (formatter *dataFormatter) Format(value float64, unit string) string {
+	// Humanize accepts unsigned bytes, so format the magnitude before restoring the sign.
+	if value < 0 && !math.IsInf(value, -1) {
+		return "-" + formatter.Format(-value, unit)
+	}
+
 	switch unit {
 	case "bytes", "By":
 		return humanize.IBytes(uint64(value))
