@@ -19,6 +19,7 @@ import APIError from 'types/api/error';
 import { isValidDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
 
 import { normalizeToPostable } from './importUtils';
+import { grafanaToPostable, isGrafanaDashboard } from './grafanaImport';
 import JsonEditor from './JsonEditor';
 
 import styles from './NewDashboardModal.module.scss';
@@ -65,6 +66,25 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 			setIsCreating(true);
 			logEvent('Dashboard List V2: Import and next clicked', {});
 			const parsed = JSON.parse(editorValue) as Record<string, unknown>;
+			// Grafana exports are converted to the SigNoz v2 spec first; the
+			// converter passes PromQL through natively and reports anything
+			// it had to skip so the user knows what didn't carry over.
+			if (isGrafanaDashboard(parsed)) {
+				const { payload: grafanaPayload, warnings } =
+					grafanaToPostable(parsed);
+				if (warnings.length > 0) {
+					warnings.forEach((warning) => toast.warning(warning));
+				}
+				void logEvent(DashboardListEvents.DashboardCreated, {
+					method: 'import-grafana',
+				});
+				const response = await createDashboardV2(grafanaPayload);
+				onClose();
+				safeNavigate(
+					generatePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
+				);
+				return;
+			}
 			const payload = normalizeToPostable(parsed);
 			// Only an icon/logo path or a base64 image is a storable `image`; reject
 			// URLs/markup/other rather than import a value that won't render.
