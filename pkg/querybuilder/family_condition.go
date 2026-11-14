@@ -134,9 +134,9 @@ func OperatorCondition(
 		return sb.NotILike(read, value), nil
 
 	case qbtypes.FilterOperatorContains:
-		return sb.ILike(read, fmt.Sprintf("%%%s%%", value)), nil
+		return sb.ILike(read, ContainsPattern(value)), nil
 	case qbtypes.FilterOperatorNotContains:
-		return sb.NotILike(read, fmt.Sprintf("%%%s%%", value)), nil
+		return sb.NotILike(read, ContainsPattern(value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs

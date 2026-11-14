@@ -1514,6 +1514,22 @@ func TestFilterExprLogs(t *testing.T) {
 			expectedArgs:          []any{"%api%"},
 			expectedErrorContains: "",
 		},
+		{
+			category:              "CONTAINS operator escapes LIKE wildcards",
+			query:                 "message CONTAINS \"100%_done\"",
+			shouldPass:            true,
+			expectedQuery:         "WHERE (LOWER(attributes_string['message']) LIKE LOWER(?) AND mapContains(attributes_string, 'message'))",
+			expectedArgs:          []any{`%100\%\_done%`},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "CONTAINS operator escapes LIKE wildcards in body",
+			query:                 "body CONTAINS 'user_id'",
+			shouldPass:            true,
+			expectedQuery:         "WHERE LOWER(body) LIKE LOWER(?)",
+			expectedArgs:          []any{`%user\_id%`},
+			expectedErrorContains: "",
+		},
 
 		// NOT CONTAINS
 		{
@@ -1538,6 +1554,14 @@ func TestFilterExprLogs(t *testing.T) {
 			shouldPass:            true,
 			expectedQuery:         "WHERE LOWER(attributes_string['path']) NOT LIKE LOWER(?)",
 			expectedArgs:          []any{"%api%"},
+			expectedErrorContains: "",
+		},
+		{
+			category:              "NOT CONTAINS operator escapes LIKE wildcards",
+			query:                 "message NOT CONTAINS \"user_id\"",
+			shouldPass:            true,
+			expectedQuery:         "WHERE LOWER(attributes_string['message']) NOT LIKE LOWER(?)",
+			expectedArgs:          []any{`%user\_id%`},
 			expectedErrorContains: "",
 		},
 

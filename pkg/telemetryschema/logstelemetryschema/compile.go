@@ -351,9 +351,9 @@ func (s *storage) conditionForResolvedKey(
 		return sqlbuilder.Escape(pred), nil
 
 	case qbtypes.FilterOperatorContains:
-		return sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
+		return sb.ILike(fieldExpression, querybuilder.ContainsPattern(value)), nil
 	case qbtypes.FilterOperatorNotContains:
-		return sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
+		return sb.NotILike(fieldExpression, querybuilder.ContainsPattern(value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
