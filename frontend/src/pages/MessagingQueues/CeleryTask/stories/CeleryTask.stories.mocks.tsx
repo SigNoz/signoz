@@ -9,6 +9,8 @@ import type { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
+import { queryRangeV5ScalarTableResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 import {
 	attributeValuesResponse,
@@ -75,30 +77,34 @@ export const celeryTaskMocks = defineStoryMocks({
 		return [
 			rest.post('http://localhost/api/v3/query_range', queryRange),
 			rest.post('http://localhost/api/v4/query_range', queryRange),
+			rest.post(
+				'http://localhost/api/v5/query_range',
+				response.json(() =>
+					queryRangeV5ScalarTableResponse({
+						groupBy: ['worker'],
+						aggregations: ['A'],
+						rows: (
+							attributeValuesResponse('worker', '').data.stringAttributeValues ?? []
+						)
+							.slice(0, values.workers)
+							.map((worker) => [worker, 12]),
+					}),
+				),
+			),
 
 			rest.get(
-				'http://localhost/api/v3/autocomplete/attribute_values',
+				'http://localhost/api/v1/fields/values',
 				response.json((req) => {
-					const attributeKey = req.url.searchParams.get('attributeKey') ?? '';
-					const values_ = attributeValuesResponse(
-						attributeKey,
-						req.url.searchParams.get('searchText') ?? '',
+					const name = req.url.searchParams.get('name') ?? '';
+					const found =
+						attributeValuesResponse(
+							name,
+							req.url.searchParams.get('searchText') ?? '',
+						).data.stringAttributeValues ?? [];
+
+					return fieldValuesResponse(
+						name === 'worker' ? found.slice(0, values.workers) : found,
 					);
-
-					if (attributeKey !== 'worker') {
-						return values_;
-					}
-
-					return {
-						...values_,
-						data: {
-							...values_.data,
-							stringAttributeValues: (values_.data.stringAttributeValues ?? []).slice(
-								0,
-								values.workers,
-							),
-						},
-					};
 				}),
 			),
 		];

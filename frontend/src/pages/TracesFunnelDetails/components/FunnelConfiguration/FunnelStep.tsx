@@ -3,6 +3,7 @@ import { Button, Form, Space, Tooltip } from 'antd';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Divider } from '@signozhq/ui/divider';
 import { Switch } from '@signozhq/ui/switch';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';
 import { QueryParams } from 'constants/query';
@@ -149,7 +150,8 @@ function FunnelStep({
 									<FilterSelect
 										placeholder="Select Service"
 										queryParam={QueryParams.service}
-										filterType="serviceName"
+										filterType="service.name"
+										fieldContext={TelemetrytypesFieldContextDTO.resource}
 										shouldSetQueryParams={false}
 										values={stepData.service_name}
 										isMultiple={false}
@@ -169,6 +171,7 @@ function FunnelStep({
 										placeholder="Select Span name"
 										queryParam={QueryParams.spanName}
 										filterType="name"
+										fieldContext={TelemetrytypesFieldContextDTO.span}
 										shouldSetQueryParams={false}
 										values={stepData.span_name}
 										isMultiple={false}

@@ -1,18 +1,13 @@
 import { useState } from 'react';
 import type { DefaultOptionType } from 'antd/es/select';
+import type { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { useGetAllFilters } from './CeleryTaskConfigOptions/useGetCeleryFilters';
 
 export const useCeleryFilterOptions = (
 	type: string | string[],
-	aggregateOperator?: string,
-	dataSource?: DataSource,
-	aggregateAttribute?: string,
-	filterAttributeKeyDataType?: DataTypes,
-	tagType?: string,
+	fieldContext?: TelemetrytypesFieldContextDTO,
 ): {
 	searchText: string;
 	handleSearch: (value: string) => void;
@@ -23,11 +18,7 @@ export const useCeleryFilterOptions = (
 	const { isFetching, options } = useGetAllFilters({
 		attributeKey: type,
 		searchText,
-		aggregateOperator,
-		dataSource,
-		aggregateAttribute,
-		filterAttributeKeyDataType,
-		tagType,
+		fieldContext,
 	});
 	const handleDebouncedSearch = useDebouncedFn((searchText): void => {
 		setSearchText(searchText as string);
