@@ -1,5 +1,6 @@
 import { defaultStyles } from '@visx/tooltip';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 export const tooltipStyles = {
 	...defaultStyles,
@@ -103,4 +104,38 @@ export const getTimeRangeFromStepInterval = (
 	const startTime = isApmMetric ? xValue - stepInterval : xValue;
 	const endTime = xValue + stepInterval;
 	return { startTime, endTime };
+};
+
+/**
+ * Reads the single number a Value panel renders out of a table-shaped query
+ * result. Value panels request the `scalar` request type, which the V5 → legacy
+ * conversion turns into `result[].table` rather than the `series.values` pairs
+ * `getUPlotChartData` reads.
+ *
+ * Prefers the aggregation column (`isValueColumn`) so a grouped query surfaces
+ * its value instead of a group-by label, falling back to the row's first cell.
+ * Returns `undefined` when no finite value is present.
+ */
+export const getValueFromTableResult = (
+	result?: QueryDataV3[],
+): number | undefined => {
+	for (const queryData of result ?? []) {
+		const row = queryData?.table?.rows?.[0]?.data;
+
+		if (row) {
+			const valueColumn = queryData?.table?.columns?.find(
+				(column) => column.isValueColumn,
+			);
+			const rawValue = valueColumn
+				? row[valueColumn.id || valueColumn.name]
+				: Object.values(row)[0];
+			const value = Number(rawValue);
+
+			if (Number.isFinite(value)) {
+				return value;
+			}
+		}
+	}
+
+	return undefined;
 };
