@@ -14195,8 +14195,9 @@ paths:
   /api/v1/cloud-integrations/{cloud_provider}/agent-check-in:
     post:
       deprecated: true
-      description: '[Deprecated] This endpoint is called by the deployed agent to
-        check in'
+      description: 'This endpoint is called by the deployed agent to check in. Deprecated:
+        use POST /api/v1/cloud_integrations/{cloud_provider}/accounts/check_in instead.
+        Send cloudIntegrationId and providerAccountId instead of account_id and cloud_account_id.'
       operationId: AgentCheckInDeprecated
       parameters:
       - in: path
@@ -18866,7 +18867,7 @@ paths:
   /api/v1/testChannel:
     post:
       deprecated: true
-      description: 'Deprecated: use /api/v1/channels/test instead'
+      description: 'Deprecated: use POST /api/v1/channels/test instead.'
       operationId: TestChannelDeprecated
       requestBody:
         content:
@@ -21353,7 +21354,8 @@ paths:
       x-signoz-stability: alpha
     post:
       deprecated: true
-      description: This endpoint creates an ingestion key limit.
+      description: 'This endpoint creates an ingestion key limit. Deprecated: use
+        POST /api/v2/gateway/ingestion_limits instead. Send keyId in the request body.'
       operationId: CreateIngestionKeyLimit
       parameters:
       - in: path
@@ -21413,7 +21415,8 @@ paths:
   /api/v2/gateway/ingestion_keys/limits/{limitId}:
     delete:
       deprecated: true
-      description: This endpoint deletes an ingestion key limit
+      description: 'This endpoint deletes an ingestion key limit. Deprecated: use
+        DELETE /api/v2/gateway/ingestion_limits/{limitId} instead.'
       operationId: DeleteIngestionKeyLimit
       parameters:
       - in: path
@@ -21455,7 +21458,8 @@ paths:
       x-signoz-stability: alpha
     patch:
       deprecated: true
-      description: This endpoint updates an ingestion key limit.
+      description: 'This endpoint updates an ingestion key limit. Deprecated: use
+        PATCH /api/v2/gateway/ingestion_limits/{limitId} instead.'
       operationId: UpdateIngestionKeyLimit
       parameters:
       - in: path
@@ -31609,8 +31613,9 @@ paths:
   /api/v3/licenses:
     post:
       deprecated: true
-      description: This endpoint validates the license key with the upstream server
-        and activates the license for the organization.
+      description: 'This endpoint validates the license key with the upstream server
+        and activates the license for the organization. Deprecated: use POST /api/v4/licenses
+        instead. The v4 endpoint returns 201 with the license id.'
       operationId: ActivateLicenseDeprecated
       requestBody:
         content:
@@ -31667,8 +31672,9 @@ paths:
       x-signoz-stability: alpha
     put:
       deprecated: true
-      description: This endpoint refreshes the active license of the organization
-        from the upstream server.
+      description: 'This endpoint refreshes the active license of the organization
+        from the upstream server. Deprecated: use PUT /api/v4/licenses/{id} instead.
+        Pass the active license id in the path.'
       operationId: RefreshLicenseDeprecated
       responses:
         "204":
@@ -32207,8 +32213,8 @@ paths:
       x-signoz-stability: alpha
     put:
       deprecated: false
-      description: This endpoint refreshes the active license of the organization
-        from the upstream server.
+      description: This endpoint refreshes the license with the given id from the
+        upstream server. Only the active license can be refreshed.
       operationId: RefreshLicense
       parameters:
       - in: path

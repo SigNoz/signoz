@@ -53,7 +53,7 @@ const withQueryKey = <T extends object, K>(
 };
 
 /**
- * This endpoint validates the license key with the upstream server and activates the license for the organization.
+ * This endpoint validates the license key with the upstream server and activates the license for the organization. Deprecated: use POST /api/v4/licenses instead. The v4 endpoint returns 201 with the license id.
  * @deprecated
  * @summary Activate a license.
  */
@@ -139,7 +139,7 @@ export const useActivateLicenseDeprecated = <
 	return useMutation(getActivateLicenseDeprecatedMutationOptions(options));
 };
 /**
- * This endpoint refreshes the active license of the organization from the upstream server.
+ * This endpoint refreshes the active license of the organization from the upstream server. Deprecated: use PUT /api/v4/licenses/{id} instead. Pass the active license id in the path.
  * @deprecated
  * @summary Refresh a license.
  */
@@ -559,7 +559,7 @@ export const invalidateGetLicense = async (
 };
 
 /**
- * This endpoint refreshes the active license of the organization from the upstream server.
+ * This endpoint refreshes the license with the given id from the upstream server. Only the active license can be refreshed.
  * @summary Refresh a license.
  */
 export const refreshLicense = (
