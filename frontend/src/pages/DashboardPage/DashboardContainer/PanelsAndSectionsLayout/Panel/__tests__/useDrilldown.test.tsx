@@ -163,6 +163,15 @@ describe('useDrilldown', () => {
 			expect(result.current.enableDrillDown).toBe(false);
 		});
 
+		it('is false when every builder query is disabled, leaving only formulas to draw', () => {
+			mockGetBuilderQueries.mockReturnValue([
+				{ name: 'A', disabled: true },
+				{ name: 'B', disabled: true },
+			]);
+			const { result } = renderHook(() => useDrilldown(tsPanel, 'p1'));
+			expect(result.current.enableDrillDown).toBe(false);
+		});
+
 		it.each([EQueryType.PROM, EQueryType.CLICKHOUSE, undefined])(
 			'is false when the query type is %s (not the builder)',
 			(queryType) => {

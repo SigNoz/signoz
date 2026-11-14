@@ -68,6 +68,26 @@ describe('useSeedVariableSelection', () => {
 		});
 	});
 
+	it('keeps URL values a custom list does not offer, as typed values', () => {
+		mockUrlValues = { ops: ['overflow_operation', 'GET /cart'] };
+		const dash = dashboard('d1', [
+			model({
+				name: 'ops',
+				type: 'CUSTOM',
+				multiSelect: true,
+				customValue: 'overflow_operation',
+			}),
+		]);
+
+		renderHook(() => useSeedVariableSelection(dash));
+
+		expect(seededValue('d1', 'ops')).toStrictEqual({
+			value: ['overflow_operation', 'GET /cart'],
+			allSelected: false,
+			customValues: ['GET /cart'],
+		});
+	});
+
 	it('falls back to the stored value when the URL has no entry', () => {
 		useDashboardStore
 			.getState()

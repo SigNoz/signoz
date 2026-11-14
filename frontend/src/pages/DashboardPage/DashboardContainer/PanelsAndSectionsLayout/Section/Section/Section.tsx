@@ -88,6 +88,7 @@ function Section({ section, sections, dragHandle }: SectionProps): JSX.Element {
 			layoutIndex={section.layoutIndex}
 			sections={sections}
 			placeholderKind={pickerTarget?.panelKind}
+			flush={!section.title}
 		/>
 	);
 

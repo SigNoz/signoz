@@ -119,12 +119,29 @@ export function useVariableSelection(
 	// store write + one `enqueueDescendantsBatch` means dependents re-fetch once
 	// with the settled parent values, instead of once per fill.
 	const pendingAutoFillRef = useRef<VariableSelectionMap>({});
+	// The selection each pending fill was computed from.
+	const pendingAutoFillBaseRef = useRef<
+		Record<string, VariableSelection | undefined>
+	>({});
 	const autoFillFrameRef = useRef<number | null>(null);
 
 	const flushAutoFills = useCallback((): void => {
 		autoFillFrameRef.current = null;
 		const fills = pendingAutoFillRef.current;
+		const bases = pendingAutoFillBaseRef.current;
 		pendingAutoFillRef.current = {};
+		pendingAutoFillBaseRef.current = {};
+		// A fill reconciles the selection it saw. If that selection has moved since (the
+		// seed committed a typed value, the user picked one), the fill answers a question
+		// nobody is asking any more and would overwrite the newer value.
+		Object.keys(fills).forEach((name) => {
+			const base = bases[name];
+			const now = selectionRef.current[name];
+			const moved = base && now ? !areSelectionsEqual(base, now) : base !== now;
+			if (moved) {
+				delete fills[name];
+			}
+		});
 		const names = Object.keys(fills);
 		if (names.length === 0 || !dashboardId) {
 			return;
@@ -146,6 +163,9 @@ export function useVariableSelection(
 
 	const autoSelect = useCallback(
 		(name: string, next: VariableSelection): void => {
+			if (!(name in pendingAutoFillBaseRef.current)) {
+				pendingAutoFillBaseRef.current[name] = selectionRef.current[name];
+			}
 			pendingAutoFillRef.current[name] = next;
 			if (autoFillFrameRef.current == null) {
 				autoFillFrameRef.current = requestAnimationFrame(flushAutoFills);

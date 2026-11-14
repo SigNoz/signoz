@@ -1,5 +1,5 @@
 import { Typography } from '@signozhq/ui/typography';
-import Spinner from 'components/Spinner';
+import { Spinner } from '@signozhq/ui/spinner';
 import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
 import { buildDashboardReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 import DashboardContainer from 'pages/DashboardPage/DashboardContainer';
@@ -23,7 +23,11 @@ function SystemDashboard({
 		useSystemDashboard(host);
 
 	if (isLoading) {
-		return <Spinner tip="Loading dashboard..." />;
+		return (
+			<div className={styles.loading}>
+				<Spinner size={24} aria-label="Loading dashboard" />
+			</div>
+		);
 	}
 
 	if (error?.response?.status === 403) {

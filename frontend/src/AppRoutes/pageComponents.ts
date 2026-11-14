@@ -11,7 +11,7 @@ export const ServicesTablePage = Loadable(
 export const ServiceMetricsPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/MetricsApplication/MetricsApplication'
+			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/ServiceDetails/ServiceDetails'
 		),
 );
 
