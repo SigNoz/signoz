@@ -30,7 +30,7 @@ export default {
 		],
 		relations: {
 {{- range .Relations }}
-			{{ .Verb }}: [{{ range $i, $t := .Types }}{{ if $i }}, {{ end }}'{{ $t }}'{{ end }}],
+{{ .FormattedTypes }}
 {{- end }}
 		},
 	},
@@ -38,8 +38,8 @@ export default {
 `))
 
 type permissionsTypeRelation struct {
-	Verb  string
-	Types []string
+	Verb           string
+	FormattedTypes string
 }
 
 type permissionsTypeResource struct {
@@ -77,6 +77,29 @@ func formatAllowedVerbs(verbs []string, indentLevel int, printWidth int) string 
 	return b.String()
 }
 
+// formatRelationTypes returns a prettier-compatible formatted `verb: [...]` line, wrapping
+// one type per line when it exceeds printWidth (tabWidth assumed to be 1).
+func formatRelationTypes(verb string, types []string, indentLevel int, printWidth int) string {
+	quoted := make([]string, len(types))
+	for i, t := range types {
+		quoted[i] = "'" + t + "'"
+	}
+	indent := strings.Repeat("\t", indentLevel)
+
+	oneLine := indent + verb + ": [" + strings.Join(quoted, ", ") + "],"
+	if len(oneLine) <= printWidth {
+		return oneLine
+	}
+
+	var b strings.Builder
+	b.WriteString(indent + verb + ": [\n")
+	for _, q := range quoted {
+		b.WriteString(indent + "\t" + q + ",\n")
+	}
+	b.WriteString(indent + "],")
+	return b.String()
+}
+
 func registerGenerateAuthz(parentCmd *cobra.Command) {
 	authzCmd := &cobra.Command{
 		Use:   "authz",
@@ -106,6 +129,8 @@ func runGenerateAuthz(_ context.Context) error {
 		coretypes.NewResourceRef(coretypes.ResourceMetaResourceQuickFilter).String():         true,
 		coretypes.NewResourceRef(coretypes.ResourceMetaResourceSavedView).String():           true,
 		coretypes.NewResourceRef(coretypes.ResourceMetaResourceNotificationChannel).String(): true,
+		coretypes.NewResourceRef(coretypes.ResourceUser).String():                            true,
+		coretypes.NewResourceRef(coretypes.ResourceMetaResourceFactorPassword).String():      true,
 	}
 
 	allowedTypes := map[string]bool{}
@@ -154,8 +179,8 @@ func runGenerateAuthz(_ context.Context) error {
 			types = append(types, t.StringValue())
 		}
 		relations = append(relations, permissionsTypeRelation{
-			Verb:  verb.StringValue(),
-			Types: types,
+			Verb:           verb.StringValue(),
+			FormattedTypes: formatRelationTypes(verb.StringValue(), types, 3, 80),
 		})
 	}
 

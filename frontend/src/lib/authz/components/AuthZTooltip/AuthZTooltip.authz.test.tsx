@@ -85,6 +85,25 @@ describe('AuthZTooltip — single check', () => {
 		expect(screen.getByRole('button', { name: 'Action' })).toBeDisabled();
 	});
 
+	it('hides the caret and blocks text selection on a denied child', () => {
+		mockUseAuthZ.mockReturnValue(
+			authZResult({
+				permissions: { [createPerm]: { isGranted: false } },
+			}),
+		);
+
+		render(
+			<AuthZTooltip checks={[createPerm]}>
+				<TestButton />
+			</AuthZTooltip>,
+		);
+
+		expect(screen.getByRole('button', { name: 'Action' })).toHaveAttribute(
+			'style',
+			expect.stringContaining('caret-color: transparent; user-select: none'),
+		);
+	});
+
 	it('shows formatted permission message in tooltip when denied', async () => {
 		mockUseAuthZ.mockReturnValue(
 			authZResult({
@@ -119,6 +138,10 @@ describe('AuthZTooltip — single check', () => {
 		);
 
 		expect(screen.getByRole('button', { name: 'Action' })).toBeDisabled();
+		expect(screen.getByRole('button', { name: 'Action' })).toHaveAttribute(
+			'style',
+			expect.stringContaining('caret-color: transparent; user-select: none'),
+		);
 	});
 });
 

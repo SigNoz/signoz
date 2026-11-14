@@ -17,6 +17,16 @@ import {
 	managedRoles,
 } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
+import {
+	buildUserReadPermission,
+	buildUserUpdatePermission,
+	PasswordListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
+import {
+	AUTHZ_CHECK_URL,
+	setupAuthzAdmin,
+	setupAuthzDeny,
+} from 'lib/authz/utils/authz-test-utils';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
@@ -168,12 +178,21 @@ function renderDrawer(
 	return render(
 		<EditMemberDrawer
 			member={activeMember}
-			open
 			onClose={jest.fn()}
 			onComplete={jest.fn()}
 			{...props}
 		/>,
 	);
+}
+
+async function clickDeleteButton(
+	user: ReturnType<typeof userEvent.setup>,
+): Promise<void> {
+	const deleteBtn = await screen.findByTestId('member-delete-btn');
+	await waitFor(() =>
+		expect(deleteBtn).not.toHaveAttribute('aria-disabled', 'true'),
+	);
+	await user.click(deleteBtn);
 }
 
 describe('EditMemberDrawer', () => {
@@ -186,6 +205,7 @@ describe('EditMemberDrawer', () => {
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
 			),
+			setupAuthzAdmin(),
 		);
 		(useGetUser as jest.Mock).mockReturnValue({
 			data: mockFetchedUser,
@@ -243,15 +263,33 @@ describe('EditMemberDrawer', () => {
 		server.resetHandlers();
 	});
 
-	it('renders active member details and disables Save when form is not dirty', () => {
+	it('renders active member details and disables Save when form is not dirty', async () => {
 		renderDrawer();
 
-		expect(screen.getByDisplayValue('Alice Smith')).toBeInTheDocument();
+		await expect(
+			screen.findByDisplayValue('Alice Smith'),
+		).resolves.toBeInTheDocument();
 		expect(screen.getByText('alice@signoz.io')).toBeInTheDocument();
 		expect(screen.getByText('ACTIVE')).toBeInTheDocument();
-		expect(
-			screen.getByRole('button', { name: /save member details/i }),
-		).toHaveAttribute('aria-disabled', 'true');
+		await waitFor(() =>
+			expect(screen.getByTestId('member-save-btn')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
+		);
+	});
+
+	it('still fetches the member when the permission check fails', async () => {
+		server.use(rest.post(AUTHZ_CHECK_URL, (_, res, ctx) => res(ctx.status(500))));
+
+		renderDrawer();
+
+		await waitFor(() =>
+			expect(useGetUser).toHaveBeenLastCalledWith(
+				{ id: 'user-1' },
+				{ query: { enabled: true } },
+			),
+		);
 	});
 
 	it('enables Save after editing name and calls updateUser on confirm', async () => {
@@ -266,7 +304,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onComplete });
 
-		const nameInput = screen.getByDisplayValue('Alice Smith');
+		const nameInput = await screen.findByDisplayValue('Alice Smith');
 		await user.clear(nameInput);
 		await user.type(nameInput, 'Alice Updated');
 
@@ -292,7 +330,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onClose });
 
-		const nameInput = screen.getByDisplayValue('Alice Smith');
+		const nameInput = await screen.findByDisplayValue('Alice Smith');
 		await user.clear(nameInput);
 		await user.type(nameInput, 'Alice Updated');
 
@@ -323,7 +361,7 @@ describe('EditMemberDrawer', () => {
 		renderDrawer({ onComplete });
 
 		// signoz-admin is already selected; add signoz-editor on top
-		await user.click(screen.getByLabelText('Roles'));
+		await user.click(await screen.findByLabelText('Roles'));
 		await user.click(await screen.findByTitle('signoz-editor'));
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
@@ -381,7 +419,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onComplete });
 
-		await user.click(screen.getByRole('button', { name: /delete member/i }));
+		await clickDeleteButton(user);
 
 		await expect(
 			screen.findByText(/are you sure you want to delete/i),
@@ -398,8 +436,10 @@ describe('EditMemberDrawer', () => {
 		});
 	});
 
-	it('shows revoke invite and copy invite link for invited members; hides Last Modified', () => {
+	it('shows revoke invite and copy invite link for invited members; hides Last Modified', async () => {
 		renderDrawer({ member: invitedMember });
+
+		await screen.findByText('Invited On');
 
 		expect(
 			screen.getByRole('button', { name: /revoke invite/i }),
@@ -448,6 +488,67 @@ describe('EditMemberDrawer', () => {
 		).toBeInTheDocument();
 	});
 
+	it('looks up the invite link when factor-password list is granted', async () => {
+		renderDrawer({ member: invitedMember });
+
+		await waitFor(() =>
+			expect(useGetResetPasswordToken).toHaveBeenLastCalledWith(
+				{ id: invitedMember.id },
+				{ query: { enabled: true } },
+			),
+		);
+		expect(screen.getByTestId('member-reset-link-btn')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+	});
+
+	it('skips the invite link lookup and disables the button without factor-password list', async () => {
+		server.use(setupAuthzDeny(PasswordListPermission));
+
+		renderDrawer({ member: invitedMember });
+
+		await waitFor(() =>
+			expect(screen.getByTestId('member-reset-link-btn')).toHaveAttribute(
+				'data-denied-permissions',
+				PasswordListPermission,
+			),
+		);
+		expect(screen.getByTestId('member-reset-link-btn')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+		expect(useGetResetPasswordToken).toHaveBeenLastCalledWith(
+			{ id: invitedMember.id },
+			{ query: { enabled: false } },
+		);
+	});
+
+	it('still looks up the invite link when the permission check fails', async () => {
+		server.use(rest.post(AUTHZ_CHECK_URL, (_, res, ctx) => res(ctx.status(500))));
+
+		renderDrawer({ member: invitedMember });
+
+		await waitFor(() =>
+			expect(useGetResetPasswordToken).toHaveBeenLastCalledWith(
+				{ id: invitedMember.id },
+				{ query: { enabled: true } },
+			),
+		);
+	});
+
+	it('keeps the reset link enabled for an active member without factor-password list', async () => {
+		server.use(setupAuthzDeny(PasswordListPermission));
+
+		renderDrawer();
+
+		await screen.findByDisplayValue('Alice Smith');
+		expect(screen.getByTestId('member-reset-link-btn')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+	});
+
 	it('calls deleteUser after confirming revoke invite for invited members', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
@@ -461,7 +562,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ member: invitedMember, onComplete });
 
-		await user.click(screen.getByRole('button', { name: /revoke invite/i }));
+		await clickDeleteButton(user);
 
 		await expect(
 			screen.findByText(/Are you sure you want to revoke the invite/i),
@@ -508,7 +609,7 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ member: { ...invitedMember, name: 'Bob' }, onComplete });
 
-		const nameInput = screen.getByDisplayValue('Bob');
+		const nameInput = await screen.findByDisplayValue('Bob');
 		await user.clear(nameInput);
 		await user.type(nameInput, 'Bob Updated');
 
@@ -546,7 +647,7 @@ describe('EditMemberDrawer', () => {
 
 			renderDrawer();
 
-			const nameInput = screen.getByDisplayValue('Alice Smith');
+			const nameInput = await screen.findByDisplayValue('Alice Smith');
 			await user.clear(nameInput);
 			await user.type(nameInput, 'Alice Updated');
 
@@ -575,7 +676,7 @@ describe('EditMemberDrawer', () => {
 
 			renderDrawer();
 
-			await user.click(screen.getByRole('button', { name: /delete member/i }));
+			await clickDeleteButton(user);
 			const confirmBtns = screen.getAllByRole('button', {
 				name: /delete member/i,
 			});
@@ -606,7 +707,7 @@ describe('EditMemberDrawer', () => {
 
 			renderDrawer({ member: invitedMember });
 
-			await user.click(screen.getByRole('button', { name: /revoke invite/i }));
+			await clickDeleteButton(user);
 			const confirmBtns = screen.getAllByRole('button', {
 				name: /revoke invite/i,
 			});
@@ -645,16 +746,101 @@ describe('EditMemberDrawer', () => {
 			).not.toBeInTheDocument();
 		});
 
-		it('keeps name input enabled when viewing own profile', () => {
+		it('keeps name input enabled when viewing own profile', async () => {
 			renderDrawer({ member: selfMember });
-			expect(screen.getByDisplayValue('Alice Smith')).not.toBeDisabled();
+			await expect(
+				screen.findByDisplayValue('Alice Smith'),
+			).resolves.not.toBeDisabled();
 		});
 
-		it('keeps Reset Link button enabled when viewing own profile', () => {
+		it('keeps Reset Link button enabled when viewing own profile', async () => {
 			renderDrawer({ member: selfMember });
+
+			const resetBtn = await screen.findByTestId('member-reset-link-btn');
+			await waitFor(() =>
+				expect(resetBtn).not.toHaveAttribute('aria-disabled', 'true'),
+			);
+		});
+	});
+
+	describe('self user roles', () => {
+		it('locks roles and explains why', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDrawer({ member: selfMember });
+
+			const locked = await screen.findByTestId('member-roles-locked');
 			expect(
-				screen.getByRole('button', { name: /generate password reset link/i }),
-			).not.toHaveAttribute('aria-disabled', 'true');
+				screen.queryByPlaceholderText('Select roles'),
+			).not.toBeInTheDocument();
+
+			await user.hover(locked);
+
+			await expect(
+				screen.findByText('You cannot modify your own role'),
+			).resolves.toBeInTheDocument();
+		});
+	});
+
+	describe('deleted member', () => {
+		const deletedMember = { ...activeMember, status: MemberStatus.Deleted };
+
+		it('is read-only with no footer actions', async () => {
+			renderDrawer({ member: deletedMember });
+
+			const nameInput = await screen.findByDisplayValue('Alice Smith');
+			await waitFor(() =>
+				expect(nameInput).not.toHaveStyle({ cursor: 'not-allowed' }),
+			);
+			expect(nameInput).toBeDisabled();
+			expect(screen.getByTestId('member-roles-locked')).toBeInTheDocument();
+			expect(
+				screen.queryByPlaceholderText('Select roles'),
+			).not.toBeInTheDocument();
+			expect(screen.queryByTestId('member-save-btn')).not.toBeInTheDocument();
+			expect(screen.queryByTestId('member-delete-btn')).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('member-reset-link-btn'),
+			).not.toBeInTheDocument();
+		});
+	});
+
+	describe('self user name update', () => {
+		it('saves through the me API without update:user', async () => {
+			const updateMyUser = jest.fn().mockResolvedValue({});
+			(useUpdateMyUserV2 as jest.Mock).mockReturnValue({
+				mutateAsync: updateMyUser,
+				isLoading: false,
+			});
+			server.use(setupAuthzDeny(buildUserUpdatePermission(selfMember.id)));
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDrawer({ member: selfMember });
+
+			const input = await screen.findByDisplayValue('Alice Smith');
+			await user.clear(input);
+			await user.type(input, 'Alice Cooper');
+			await user.click(screen.getByTestId('member-save-btn'));
+
+			await waitFor(() =>
+				expect(updateMyUser).toHaveBeenCalledWith({
+					data: { displayName: 'Alice Cooper' },
+				}),
+			);
+		});
+
+		it('disables Save without read:user', async () => {
+			server.use(setupAuthzDeny(buildUserReadPermission(selfMember.id)));
+			renderDrawer({ member: selfMember });
+
+			await waitFor(() =>
+				expect(screen.getByTestId('member-save-btn')).toHaveAttribute(
+					'data-denied-permissions',
+					buildUserReadPermission(selfMember.id),
+				),
+			);
+			expect(screen.getByTestId('member-save-btn')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 	});
 
@@ -667,9 +853,11 @@ describe('EditMemberDrawer', () => {
 			});
 		});
 
-		it('disables name input for root user', () => {
+		it('disables name input for root user', async () => {
 			renderDrawer();
-			expect(screen.getByDisplayValue('Alice Smith')).toBeDisabled();
+			await expect(
+				screen.findByDisplayValue('Alice Smith'),
+			).resolves.toBeDisabled();
 		});
 
 		it('disables Delete button for root user', () => {
@@ -726,9 +914,11 @@ describe('EditMemberDrawer', () => {
 
 			renderDrawer();
 
-			await user.click(
-				screen.getByRole('button', { name: /generate password reset link/i }),
+			const resetBtn = await screen.findByTestId('member-reset-link-btn');
+			await waitFor(() =>
+				expect(resetBtn).not.toHaveAttribute('aria-disabled', 'true'),
 			);
+			await user.click(resetBtn);
 
 			const dialog = await screen.findByRole('dialog', {
 				name: /password reset link/i,
@@ -747,9 +937,11 @@ describe('EditMemberDrawer', () => {
 
 			renderDrawer();
 
-			await user.click(
-				screen.getByRole('button', { name: /generate password reset link/i }),
+			const resetBtn = await screen.findByTestId('member-reset-link-btn');
+			await waitFor(() =>
+				expect(resetBtn).not.toHaveAttribute('aria-disabled', 'true'),
 			);
+			await user.click(resetBtn);
 
 			const dialog = await screen.findByRole('dialog', {
 				name: /password reset link/i,

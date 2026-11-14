@@ -1,7 +1,11 @@
 import type { TypesUserDTO } from 'api/generated/services/sigNoz.schemas';
 import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
-import { fireEvent, render, screen } from 'tests/test-utils';
+import {
+	AUTHZ_CHECK_URL,
+	setupAuthzAdmin,
+} from 'lib/authz/utils/authz-test-utils';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import MembersSettings from '../MembersSettings';
 
@@ -57,6 +61,7 @@ describe('MembersSettings (integration)', () => {
 			rest.get(USERS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: mockUsers })),
 			),
+			setupAuthzAdmin(),
 		);
 	});
 
@@ -123,10 +128,22 @@ describe('MembersSettings (integration)', () => {
 		expect(screen.queryByText('Member Details')).toBeInTheDocument();
 	});
 
+	it('still lists members when the permission check fails', async () => {
+		server.use(rest.post(AUTHZ_CHECK_URL, (_, res, ctx) => res(ctx.status(500))));
+
+		render(<MembersSettings />);
+
+		await expect(screen.findByText('Alice Smith')).resolves.toBeInTheDocument();
+	});
+
 	it('opens InviteMembersModal when "Invite member" button is clicked', async () => {
 		render(<MembersSettings />);
 
-		fireEvent.click(screen.getByRole('button', { name: /invite member/i }));
+		const inviteBtn = await screen.findByTestId('invite-member-btn');
+		await waitFor(() =>
+			expect(inviteBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
+		await userEvent.click(inviteBtn);
 
 		await expect(
 			screen.findAllByPlaceholderText('e.g. john@signoz.io'),

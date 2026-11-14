@@ -47,6 +47,9 @@ const NAMES = [
 	'Doreah Lysene',
 ];
 
+export const memberName = (index: number): string =>
+	NAMES[index % NAMES.length];
+
 const DAY = 24 * 60 * 60 * 1000;
 
 /** Fixed epoch so the "joined on" column does not move between renders. */

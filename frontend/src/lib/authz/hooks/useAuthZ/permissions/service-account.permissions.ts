@@ -17,12 +17,6 @@ export const buildSAAttachPermission = (id: string): BrandedPermission =>
 export const buildSADetachPermission = (id: string): BrandedPermission =>
 	buildPermission('detach', `serviceaccount:${id}`);
 
-// Wildcard role permissions — used alongside SA-level checks for role assign/revoke guards.
-// Backend requires both serviceaccount:attach AND role:attach to assign a role to a SA,
-// and serviceaccount:detach AND role:detach to remove a role from a SA.
-export const RoleAttachWildcardPermission = buildPermission('attach', 'role:*');
-export const RoleDetachWildcardPermission = buildPermission('detach', 'role:*');
-
 // API key (factor-api-key) permissions.
 // Listing keys: factor-api-key:list.
 // Creating a key: factor-api-key:create (wildcard) + serviceaccount:attach.

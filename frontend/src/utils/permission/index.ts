@@ -3,7 +3,6 @@ import { ROLES } from 'types/roles';
 
 export type ComponentTypes =
 	| 'current_org_settings'
-	| 'invite_members'
 	| 'create_new_dashboards'
 	| 'import_dashboard'
 	| 'export_dashboard'
@@ -30,7 +29,6 @@ export type ComponentTypes =
  */
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
-	invite_members: ['ADMIN'],
 	create_new_dashboards: ['ADMIN', 'EDITOR'],
 	import_dashboard: ['ADMIN', 'EDITOR'],
 	export_dashboard: ['ADMIN', 'EDITOR', 'VIEWER'],

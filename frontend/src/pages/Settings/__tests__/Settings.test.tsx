@@ -1,5 +1,6 @@
 import React from 'react';
 import SettingsPage from 'pages/Settings/Settings';
+import type { IAppContext } from 'providers/App/types';
 import { render, screen, within } from 'tests/test-utils';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { USER_ROLES } from 'types/roles';
@@ -102,6 +103,42 @@ describe('SettingsPage nav sections', () => {
 			'mcp-server',
 		])('renders "%s" element', (id) => {
 			expect(screen.getByTestId(id)).toBeInTheDocument();
+		});
+	});
+
+	describe('Workspace blocked', () => {
+		const blockedOverrides = (): Partial<IAppContext> => ({
+			...getCloudAdminOverrides(),
+			trialInfo: {
+				trialStart: -1,
+				trialEnd: -1,
+				onTrial: false,
+				workSpaceBlock: true,
+				trialConvertedToSubscription: false,
+				gracePeriodEnd: -1,
+			},
+		});
+
+		it('shows Members and Billing but not Roles to a viewer', () => {
+			render(<SettingsPage />, undefined, {
+				role: USER_ROLES.VIEWER,
+				appContextOverrides: blockedOverrides(),
+				initialRoute: '/settings',
+			});
+
+			expect(screen.getByTestId('members')).toBeInTheDocument();
+			expect(screen.getByTestId('billing')).toBeInTheDocument();
+			expect(screen.queryByTestId('roles')).not.toBeInTheDocument();
+		});
+
+		it('keeps Account out of the viewer nav', () => {
+			render(<SettingsPage />, undefined, {
+				role: USER_ROLES.VIEWER,
+				appContextOverrides: blockedOverrides(),
+				initialRoute: '/settings',
+			});
+
+			expect(screen.queryByTestId('account')).not.toBeInTheDocument();
 		});
 	});
 
