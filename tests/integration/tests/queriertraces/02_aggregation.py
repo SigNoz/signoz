@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from http import HTTPStatus
 from typing import Any
 
@@ -20,6 +20,7 @@ from fixtures.querier import (
     build_order_by,
     build_traces_scalar_query,
     get_all_series,
+    get_attribute_backend_now,
     get_scalar_table_data,
     index_series_by_label,
     make_query_request,
@@ -70,7 +71,6 @@ def test_traces_aggregate_order_by_count(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     order_by: dict[str, str],
     aggregation_alias: str,
@@ -86,9 +86,9 @@ def test_traces_aggregate_order_by_count(
     fieldContext. Only the combinations that double-specify the context are a bad
     request; the rest resolve and return the span count.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     spans = [
         Traces(
@@ -109,9 +109,11 @@ def test_traces_aggregate_order_by_count(
     response = make_query_request(
         signoz,
         token,
-        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
-        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
+        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
         request_type=RequestType.TIME_SERIES,
+        # cases share the query, and a "map" window is old enough to be served from the cache
+        no_cache=True,
         queries=[
             BuilderQuery(
                 signal="traces",
@@ -145,7 +147,6 @@ def test_traces_aggregate_functions(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     noise: str,
 ) -> None:
@@ -163,10 +164,10 @@ def test_traces_aggregate_functions(
     the corrupt variant the same-named colliding attributes must not change any of
     these.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
     extra_attrs, extra_resources = trace_noise(noise)
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     # A scalar rate divides by the whole query window, so both sides agree on it.
     # Traces derives this separately from logs (telemetrytraces/statement_builder.go).
     lookback_minutes = 5
@@ -253,7 +254,6 @@ def test_traces_aggregate_calculated_range_countif(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
 ) -> None:
     """
@@ -264,9 +264,9 @@ def test_traces_aggregate_calculated_range_countif(
     countIf(response_status_code >= 400 AND response_status_code < 500) counts the
     single 4XX span (404).
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     spans = [
         Traces(
             timestamp=now - timedelta(seconds=i + 1),
@@ -307,7 +307,6 @@ def test_traces_aggregate_having(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     noise: str,
 ) -> None:
@@ -319,10 +318,10 @@ def test_traces_aggregate_having(
     A grouped scalar query with `having count() > 2` returns only the groups
     whose count qualifies (svc-a), derived from the inserted spans.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
     extra_attrs, extra_resources = trace_noise(noise)
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     counts = {"svc-a": 3, "svc-b": 1}
     spans = [
         Traces(
@@ -379,7 +378,6 @@ def test_traces_aggregate_time_series_limit(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     noise: str,
     limit: int,
@@ -395,10 +393,10 @@ def test_traces_aggregate_time_series_limit(
     summing to that service's span count. Under the corrupt variant the grouping
     (resource.service.name) and count are unaffected by the colliding attributes.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
     extra_attrs, extra_resources = trace_noise(noise)
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     counts = {"svc-a": 5, "svc-b": 3, "svc-c": 7, "svc-d": 1}
     spans = [
         Traces(
@@ -463,7 +461,6 @@ def test_traces_aggregate_unknown_key(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     expression: str,
     expected_value: Any,
@@ -476,9 +473,9 @@ def test_traces_aggregate_unknown_key(
     Aggregating a bare unknown key synthesizes a null column: count() of it is 0
     (no non-null values) and sum()/avg() are null — the query never errors.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     spans = [
         Traces(
             timestamp=now - timedelta(seconds=i + 1),
