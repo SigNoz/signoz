@@ -1,6 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { antdDriver } from './antd';
 import {
 	allowFor,
 	driver,
@@ -11,6 +10,7 @@ import {
 	type Layer,
 	type WorkerLayer,
 } from './kit';
+import { panelHandle, type PanelHandle } from './panels';
 import { celeryTask, kafkaPair, stamp, STATUS } from './spans';
 import { postToSeeder } from './telemetry';
 import { seedTracesViaSeeder } from './traces';
@@ -42,7 +42,24 @@ export const KAFKA_VIEWS: KafkaView[] = [
 ];
 
 export type DetailType = 'producer-details' | 'consumer-details';
-export type CeleryState = 'all' | 'failed' | 'retry' | 'successful';
+
+/** Panel ids in the `celery-tasks` system dashboard definition. */
+export type CeleryPanel =
+	| 'active-tasks'
+	| 'count-all'
+	| 'count-failed'
+	| 'count-retry'
+	| 'count-success'
+	| 'state-all'
+	| 'state-failed'
+	| 'state-retry'
+	| 'state-success'
+	| 'latency-p99'
+	| 'latency-p95'
+	| 'latency-p90'
+	| 'worker-rate'
+	| 'worker-errors'
+	| 'worker-latency';
 
 // ─── Seed ────────────────────────────────────────────────────────────────────
 
@@ -60,8 +77,6 @@ export interface MqSeed {
 	/** The celery overview row's span name. */
 	taskSpan: string;
 	worker: string;
-	/** Celery spans per state tab. */
-	states: Record<CeleryState, number>;
 }
 
 const PAIRS = 3;
@@ -83,7 +98,6 @@ async function seedMessagingQueues(
 		task: `${prefix}.send_email`,
 		taskSpan: `run/${prefix}.send_email`,
 		worker: `${prefix}-worker`,
-		states: { all: 4, successful: 2, failed: 1, retry: 1 },
 	};
 
 	const kafka = Array.from({ length: PAIRS }, (_, i) =>
@@ -99,8 +113,7 @@ async function seedMessagingQueues(
 	).flat();
 
 	const now = Date.now();
-	// The state tabs reduce a 60 s series to its last point, so every task has
-	// to land in one minute bucket: the last complete one.
+	// Every task lands in the last complete minute bucket.
 	const bucketStart = Math.floor(now / 60_000) * 60_000 - 60_000;
 	const celery = (['SUCCESS', 'SUCCESS', 'FAILURE', 'RETRY'] as const).map(
 		(state, i) =>
@@ -176,21 +189,19 @@ export interface MessagingQueues {
 	metricPage(): Locator;
 	metricPageSection(title: string): Locator;
 
-	gotoCelery(): Promise<void>;
-	celeryGrid(): Locator;
-	celeryGridSection(title: string): Locator;
-	/** The first chart the grid draws. */
-	celeryGridChart(): Locator;
-	pickTask(name: string): Promise<void>;
-	/** Deep link the page filtered to `task`, reloading until `state` reads `count`. */
-	gotoCeleryTask(task: string, state: CeleryState, count: number): Promise<void>;
-	celeryStateTab(state: CeleryState): Locator;
-	selectCeleryState(state: CeleryState): Promise<void>;
+	/**
+	 * Opens the celery dashboard filtered to `task`, reloading until the seeded
+	 * runs show up. A first visit auto-selects every task over the link's value,
+	 * so the page is opened once before the link.
+	 */
+	gotoCelery(task: string): Promise<void>;
+	celeryPage(): Locator;
+	celerySection(title: string): Locator;
+	/** A celery dashboard panel, by its id in the definition. */
+	celeryPanel(id: CeleryPanel): PanelHandle;
 }
 
 export function messagingQueuesDriver(page: Page): MessagingQueues {
-	const antd = antdDriver(page);
-
 	/**
 	 * `goto` and wait for `target`, reloading on a miss. Budgeted for ingestion,
 	 * not render: the page fetches once, so a late row needs a new mount.
@@ -329,47 +340,31 @@ export function messagingQueuesDriver(page: Page): MessagingQueues {
 		metricPage: () => page.getByTestId('mq-metric-page'),
 		metricPageSection: (title) => mq.metricPage().getByText(title),
 
-		gotoCelery: async () => {
+		gotoCelery: async (task) => {
 			await page.goto(
 				`/messaging-queues/celery-task?relativeTime=${RELATIVE_TIME}`,
 			);
-			await expect(mq.celeryGrid()).toBeVisible();
-		},
-
-		celeryGrid: () => page.getByTestId('celery-graph-grid'),
-		celeryGridSection: (title) => mq.celeryGrid().getByText(title),
-		celeryGridChart: () => mq.celeryGrid().locator('canvas').first(),
-
-		pickTask: async (name) => {
-			allowFor(SEEDED_TEST_BUDGET);
-			await antd.pickByName(page.getByTestId('celery-task-name-select'), name);
-			await expect(page).toHaveURL(/taskName=/);
-		},
-
-		gotoCeleryTask: async (task, state, count) => {
+			await expect(mq.celeryPage()).toBeVisible();
 			const query = new URLSearchParams({
-				taskName: task,
 				relativeTime: RELATIVE_TIME,
+				variables: JSON.stringify({ task_name: [task] }),
 			});
-			// The tab's text is its label then its value, e.g. "Failed1".
-			const reads = new RegExp(`\\D${count}$`);
 			await reloadUntilVisible(
 				async () => {
 					await page.goto(`/messaging-queues/celery-task?${query.toString()}`);
 				},
-				() => mq.celeryStateTab(state).filter({ hasText: reads }),
+				() =>
+					mq.celeryPanel('count-all').numberValue().filter({ hasText: /[1-9]/ }),
 			);
 		},
 
-		celeryStateTab: (state) => page.getByTestId(`celery-state-tab-${state}`),
-
-		selectCeleryState: async (state) => {
-			await mq.celeryStateTab(state).click();
-			// The tab exposes its selection only through this BEM modifier.
-			await expect(mq.celeryStateTab(state)).toHaveClass(
-				/celery-task-states__tab--selected/,
-			);
-		},
+		celeryPage: () => page.getByTestId('celery-task-page'),
+		celerySection: (title) =>
+			mq
+				.celeryPage()
+				.getByTestId(/^dashboard-section-toggle-/)
+				.getByText(title),
+		celeryPanel: (id) => panelHandle(page, id),
 	};
 
 	return mq;
