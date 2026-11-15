@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { Tooltip } from '@signozhq/ui/tooltip';
-import { Plus, Search } from '@signozhq/icons';
+import { Plus } from '@signozhq/icons';
 
 import logEvent from 'api/common/logEvent';
 
@@ -57,11 +56,11 @@ function groupByDate(
 }
 
 /**
- * Three-dot loading indicator. Sits inside the sidebar header so the
+ * Three-dot loading indicator. Sits beside the search field so the
  * conversation list is never bumped down by a skeleton row when threads
  * load — visible signal of in-flight work without any layout shift.
  */
-function HeaderLoadingDots(): JSX.Element {
+function LoadingDots(): JSX.Element {
 	return (
 		<span className={styles.loadingDots} role="status" aria-label="Loading">
 			<span className={styles.loadingDot} />
@@ -166,36 +165,32 @@ export default function ConversationsList({
 
 	return (
 		<div className={cx(styles.conversationsList, variantClass)}>
-			<div className={styles.header}>
-				<span className={styles.heading}>Conversations</span>
-				{isLoadingThreads && <HeaderLoadingDots />}
-
-				{!isLoadingThreads && showAddNewConversation && (
-					<Tooltip title="New conversation">
-						<Button
-							variant="solid"
-							size="sm"
-							color="secondary"
-							onClick={onNewConversation}
-							aria-label="New conversation"
-							icon
-						>
-							<Plus size={12} />
-						</Button>
-					</Tooltip>
-				)}
-			</div>
-
 			<div className={styles.searchBar}>
 				<Input
 					type="text"
 					value={searchQuery}
 					onChange={(e): void => setSearchQuery(e.target.value)}
-					placeholder="Search conversations…"
-					prefix={<Search size={12} />}
+					placeholder="Search…"
+					aria-label="Search conversations"
 					className={styles.search}
 				/>
+				{isLoadingThreads && <LoadingDots />}
 			</div>
+
+			{!isLoadingThreads && showAddNewConversation && (
+				<div className={styles.newConversation}>
+					<Button
+						variant="outlined"
+						size="md"
+						color="secondary"
+						prefix={<Plus size={16} />}
+						onClick={onNewConversation}
+						testId="ai-assistant-new-conversation"
+					>
+						New conversation
+					</Button>
+				</div>
+			)}
 
 			<div className={styles.list} aria-busy={isLoadingThreads}>
 				{isLoadingThreads && (

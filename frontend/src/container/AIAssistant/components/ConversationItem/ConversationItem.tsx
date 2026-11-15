@@ -13,10 +13,10 @@ import {
 	ArchiveRestore,
 	EllipsisVertical,
 	Link,
-	MessageSquare,
 	Pencil,
 } from '@signozhq/icons';
 
+import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Conversation } from '../../types';
 
 import styles from './ConversationItem.module.scss';
@@ -37,18 +37,18 @@ function formatRelativeTime(ts: number): string {
 	const diff = Date.now() - ts;
 	const mins = Math.floor(diff / 60_000);
 	if (mins < 1) {
-		return 'just now';
+		return 'now';
 	}
 	if (mins < 60) {
-		return `${mins}m ago`;
+		return `${mins}m`;
 	}
 	const hrs = Math.floor(mins / 60);
 	if (hrs < 24) {
-		return `${hrs}h ago`;
+		return `${hrs}h`;
 	}
 	const days = Math.floor(hrs / 24);
 	if (days < 7) {
-		return `${days}d ago`;
+		return `${days}d`;
 	}
 	return new Date(ts).toLocaleDateString(undefined, {
 		month: 'short',
@@ -70,6 +70,9 @@ export default function ConversationItem({
 	const [, copyToClipboard] = useCopyToClipboard();
 
 	const isArchived = Boolean(conversation.archived);
+	const isReplying = useAIAssistantStore((s) =>
+		Boolean(s.streams[conversation.id]?.isStreaming),
+	);
 	const displayTitle = conversation.title ?? 'New conversation';
 	const ts = conversation.updatedAt ?? conversation.createdAt;
 
@@ -172,7 +175,7 @@ export default function ConversationItem({
 				}
 			}}
 		>
-			<MessageSquare size={12} className={styles.icon} />
+			<span className={cx(styles.dot, { [styles.isReplying]: isReplying })} />
 
 			<div className={styles.body}>
 				{isEditing ? (

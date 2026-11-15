@@ -6,11 +6,23 @@
 	height: 100%;
 	overflow: hidden;
 
-	// Page variant: fixed-width left column.
+	// Page variant: fixed-width left column; the thread pane draws the edge beside it.
 	&.variantPage {
+		position: relative;
 		width: 280px;
 		flex-shrink: 0;
-		border-right: 1px solid var(--l1-border);
+
+		// Fades the list's foot into the page.
+		&::after {
+			content: '';
+			position: absolute;
+			right: 0;
+			bottom: 0;
+			left: 0;
+			height: 46px;
+			background: linear-gradient(to bottom, transparent, var(--l1-background));
+			pointer-events: none;
+		}
 	}
 
 	// Panel variant: full-width overlay (replaces conversation view).
@@ -20,41 +32,61 @@
 	}
 }
 
-.header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 8px 12px;
-	flex-shrink: 0;
-}
-
-.heading {
-	font-size: 11px;
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	color: var(--l2-foreground);
-	// Collapse the line-box to the glyph height so the loading dots
-	// (centered against the line-box) line up with the cap-height of the
-	// uppercase text instead of sitting visually low.
-	line-height: 24px;
-}
-
+// A bare search line over a divider.
 .searchBar {
-	padding: 0px 8px 12px;
+	display: flex;
 	flex-shrink: 0;
+	align-items: center;
+	gap: var(--spacing-4);
+	padding: var(--spacing-6);
+	border-bottom: 1px solid var(--l1-border);
+	--input-height: 20px;
+	--input-padding: 0;
+	--input-border-width: 0;
+	--input-background: transparent;
+	--input-hover-background: transparent;
+	--input-focus-background: transparent;
+	--input-focus-outline-width: 0;
+	--input-box-shadow: none;
+	--input-font-size: var(--periscope-font-size-base);
+	--input-line-height: 20px;
+	--input-placeholder-color: color-mix(
+		in srgb,
+		var(--l2-foreground),
+		transparent 40%
+	);
 }
 
 .search {
-	width: 100%;
-	font-size: 12px;
+	flex: 1;
+}
+
+.newConversation {
+	flex-shrink: 0;
+	padding: var(--spacing-6) var(--spacing-6) var(--spacing-4);
+	--button-width: 100%;
+	--button-max-width: 100%;
+	--button-height: 34px;
+	--button-padding: 7px 11px;
+	--button-border-radius: 3px;
+	--button-justify-content: flex-start;
+	--button-gap: var(--spacing-4);
+	--button-font-weight: var(--font-weight-normal);
+	--button-variant-outlined-background-color: var(--l2-background);
+	--button-variant-outlined-border: 1px solid var(--l1-border);
+	--button-variant-outlined-color: var(--l2-foreground);
+
+	// Buttons don't inherit the page font.
+	> [data-slot='button'] {
+		font-family: inherit;
+	}
 }
 
 .list {
 	position: relative;
 	flex: 1;
 	overflow-y: auto;
-	padding: 0 6px 12px;
+	padding: var(--spacing-6) var(--spacing-2);
 	@include scrollbar(0.25rem);
 }
 
@@ -115,8 +147,7 @@
 .group {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
-	margin-bottom: 8px;
+	margin-bottom: var(--spacing-6);
 
 	&.archived {
 		margin-top: 4px;
@@ -127,10 +158,11 @@
 
 .groupLabel {
 	display: block;
-	padding: 8px;
-	font-size: 10px;
-	font-weight: 600;
+	padding: 0 8px 7px;
+	font-size: var(--periscope-font-size-small);
+	font-weight: var(--font-weight-semibold);
+	line-height: 1;
 	text-transform: uppercase;
-	letter-spacing: 0.07em;
+	letter-spacing: 0.04em;
 	color: var(--l3-foreground);
 }

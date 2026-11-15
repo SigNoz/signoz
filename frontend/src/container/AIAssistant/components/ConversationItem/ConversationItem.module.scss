@@ -1,8 +1,8 @@
 .item {
 	display: flex;
 	align-items: center;
-	gap: 7px;
-	padding: 6px 8px;
+	gap: var(--spacing-3);
+	padding: 7px 8px;
 	border-radius: var(--radius-2);
 	cursor: pointer;
 	min-width: 0;
@@ -34,32 +34,45 @@
 	}
 }
 
-.icon {
+// Lights up while Noz is replying in that chat; the slot keeps every title aligned.
+.dot {
 	flex-shrink: 0;
-	color: var(--l3-foreground);
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+
+	&.isReplying {
+		background: var(--accent-amber);
+	}
 }
 
 .body {
 	flex: 1;
 	min-width: 0;
 	display: flex;
-	flex-direction: column;
-	gap: 1px;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-4);
 }
 
 .title {
-	font-size: 12px;
+	font-size: var(--periscope-font-size-base);
+	line-height: 20px;
+	letter-spacing: -0.005em;
 	color: var(--l2-foreground);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	line-height: 1.4;
 }
 
+// Gives way to the action buttons that float over it.
 .time {
-	font-size: 10px;
+	flex-shrink: 0;
+	font-size: var(--periscope-font-size-small);
+	line-height: 18px;
 	color: var(--l3-foreground);
-	opacity: 0.7;
+	opacity: calc(1 - var(--actions-opacity, 0));
+	transition: opacity 0.12s;
 }
 
 .input {
@@ -69,7 +82,7 @@
 	border-bottom: 1px solid var(--accent-primary);
 	outline: none;
 	color: var(--l1-foreground);
-	font-size: 12px;
+	font-size: var(--periscope-font-size-base);
 	font-family: inherit;
 	padding: 1px 0;
 }
