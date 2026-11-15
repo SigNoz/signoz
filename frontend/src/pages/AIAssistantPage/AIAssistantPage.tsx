@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
+import { PictureInPicture2 } from '@signozhq/icons';
 
 import logEvent from 'api/common/logEvent';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAppParams } from 'lib/router/useAppParams';
-import { navigate } from 'lib/router/navigation';
+import { back, navigate } from 'lib/router/navigation';
 import ROUTES from 'constants/routes';
 
 import ConversationView from 'container/AIAssistant/ConversationView';
@@ -52,6 +55,19 @@ export default function AIAssistantPage(): JSX.Element {
 	const startNewConversation = useAIAssistantStore(
 		(s) => s.startNewConversation,
 	);
+	const openDrawer = useAIAssistantStore((s) => s.openDrawer);
+
+	// Router state is dropped once the URL is re-keyed, so remember where the page was opened from.
+	const cameFromAppRef = useRef(fromInApp);
+	// Back to the floating panel, on the page it was expanded from; a deep link has no such page.
+	const handleMinimize = useCallback((): void => {
+		openDrawer();
+		if (cameFromAppRef.current) {
+			back();
+		} else {
+			navigate(ROUTES.HOME);
+		}
+	}, [openDrawer]);
 
 	// Keep refs so the effect can read the latest store state without re-firing
 	// when it mutates the store mid-effect (it only depends on the URL param).
@@ -148,6 +164,21 @@ export default function AIAssistantPage(): JSX.Element {
 
 					<div className={styles.chat}>
 						{activeId && <ConversationView conversationId={activeId} />}
+						<div className={styles.minimize}>
+							<Tooltip title="Minimize">
+								<Button
+									variant="ghost"
+									size="sm"
+									icon
+									color="secondary"
+									onClick={handleMinimize}
+									aria-label="Minimize to panel"
+									testId="ai-assistant-minimize"
+								>
+									<PictureInPicture2 size={14} />
+								</Button>
+							</Tooltip>
+						</div>
 					</div>
 				</div>
 			</div>
