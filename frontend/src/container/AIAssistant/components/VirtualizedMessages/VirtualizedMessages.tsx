@@ -1,18 +1,17 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import Noz from 'components/Noz/Noz';
 
 import logEvent from 'api/common/logEvent';
 
-import { AIAssistantEvents, SuggestedPromptCategory } from '../../events';
+import { AIAssistantEvents } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Message, StreamingEventItem } from '../../types';
 import MessageBubble from '../MessageBubble';
 import StreamingMessage from '../StreamingMessage';
 
+import EmptyState from './EmptyState/EmptyState';
 import styles from './VirtualizedMessages.module.scss';
-import { useEmptyStateChips } from './useEmptyStateChips';
 
 const EMPTY_EVENTS: StreamingEventItem[] = [];
 
@@ -155,38 +154,9 @@ export default function VirtualizedMessages({
 	const showStreamingSlot =
 		isStreaming || Boolean(pendingApproval) || Boolean(pendingClarification);
 	const isEmptyState = messages.length === 0 && !showStreamingSlot;
-	const { chips: emptyStateChips } = useEmptyStateChips(isEmptyState);
 
 	if (isEmptyState) {
-		return (
-			<div className={styles.empty}>
-				<div className={`${styles.emptyIcon} noz-wave`}>
-					<Noz size={48} />
-				</div>
-				<h3 className={styles.emptyTitle}>Noz</h3>
-				<p className={styles.emptySubtitle}>
-					Ask questions about your traces, logs, metrics, and infrastructure.
-				</p>
-				<div className={styles.suggestions}>
-					{emptyStateChips.map((chip) => (
-						<div
-							key={chip.id}
-							className={styles.suggestion}
-							onClick={(): void => {
-								void logEvent(AIAssistantEvents.SuggestedPromptClicked, {
-									promptId: chip.id,
-									category: SuggestedPromptCategory.EmptyState,
-								});
-								onSendSuggestedPrompt(chip.text);
-							}}
-							data-testid={`empty-state-chip-${chip.id}`}
-						>
-							{chip.text}
-						</div>
-					))}
-				</div>
-			</div>
-		);
+		return <EmptyState onSendSuggestedPrompt={onSendSuggestedPrompt} />;
 	}
 
 	const totalCount = messages.length + (showStreamingSlot ? 1 : 0);
