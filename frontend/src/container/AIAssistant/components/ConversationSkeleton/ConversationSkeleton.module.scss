@@ -1,18 +1,25 @@
+// Laid out like the message list, so the thread lands where its placeholder was.
 .thread {
 	flex: 1;
-	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
-	padding: 16px 0;
-	gap: 14px;
+	padding: var(--spacing-8) 0 var(--spacing-32);
+	overflow: hidden;
 }
 
 .message {
 	display: flex;
-	padding: 0 16px;
+	padding: var(--spacing-4) var(--spacing-8);
 
-	&.compact {
-		padding: 0 12px;
+	.compact & {
+		padding: var(--spacing-3);
+	}
+
+	// As wide as the full-page input; the extra 32px is the rows' own gutters.
+	.fullPage & {
+		width: 100%;
+		max-width: calc(var(--noz-page-column) + 32px);
+		margin: 0 auto;
 	}
 }
 
@@ -20,65 +27,46 @@
 	justify-content: flex-end;
 }
 
-.assistant {
-	justify-content: flex-start;
+.userBubble {
+	display: flex;
+	max-width: 80%;
+	padding: var(--spacing-4) var(--spacing-6);
+	border-radius: var(--radius-3);
+	background: var(--l3-background-60);
 }
 
-.bubble {
+// Bare lines of text, inset like a reply.
+.reply {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	// `width: 100%` (capped by per-role max-width below) forces the bubble
-	// to fill its allotted slot rather than collapsing to the longest line —
-	// otherwise the lines' percent widths cascade into a tiny bubble.
-	width: 100%;
-	border-radius: var(--radius-2);
-	padding: 12px 14px;
+	width: 80%;
+	padding: 0 var(--spacing-4);
 
-	&.user {
-		// Narrower than the assistant bubble so the alternating chat-thread
-		// asymmetry is preserved — but wider than the previous 80% so the
-		// shimmer lines have room to read as a real-looking message.
-		max-width: 75%;
-		// Subtle primary tint so the right-side bubble reads as the user's
-		// message without committing to the full saturated brand color.
-		background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
-		border-bottom-right-radius: var(--radius-2);
-		color: var(--l1-foreground);
+	.compact & {
+		width: 90%;
 	}
 
-	&.assistant {
-		max-width: 95%;
-		background: var(--l2-background);
-		border-bottom-left-radius: var(--radius-2);
+	.fullPage & {
+		width: 100%;
+		padding: 0 0 0 var(--spacing-5);
 	}
 }
 
+// A bar in the middle of a 20px line, the height of the text it stands in for.
 .line {
-	height: 9px;
-	border-radius: 3px;
-	position: relative;
-	overflow: hidden;
-	background: color-mix(in srgb, var(--l1-foreground) 10%, transparent);
-
-	// Shimmer sweep — same pattern used by HistorySidebar's skeleton rows.
-	&::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		transform: translateX(-100%);
-		background: linear-gradient(
-			90deg,
-			transparent,
-			color-mix(in srgb, var(--l1-foreground) 10%, transparent),
-			transparent
-		);
-		animation: shimmer 1.15s ease-in-out infinite;
-	}
-}
-
-@keyframes shimmer {
-	100% {
-		transform: translateX(100%);
-	}
+	margin-block: 5px;
+	--skeleton-input-height: 10px;
+	--skeleton-input-width: 100%;
+	--skeleton-input-min-width: 0;
+	--skeleton-input-border-radius: var(--radius-1);
+	--skeleton-background: color-mix(
+		in srgb,
+		var(--l1-foreground),
+		transparent 92%
+	);
+	--skeleton-shimmer-color: color-mix(
+		in srgb,
+		var(--l1-foreground),
+		transparent 92%
+	);
 }
