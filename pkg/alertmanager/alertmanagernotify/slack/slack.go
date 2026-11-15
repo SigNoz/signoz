@@ -60,7 +60,7 @@ func New(c *config.SlackConfig, t *template.Template, l *slog.Logger, templater 
 		tmpl:         t,
 		logger:       l,
 		client:       client,
-		retrier:      &notify.Retrier{},
+		retrier:      &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
 		templater:    templater,
 		postJSONFunc: notify.PostJSON,
 	}, nil
