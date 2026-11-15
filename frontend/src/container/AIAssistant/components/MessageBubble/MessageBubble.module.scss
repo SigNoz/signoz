@@ -74,6 +74,13 @@
 		color: var(--l1-foreground);
 		border-bottom-left-radius: var(--radius-2);
 	}
+
+	// The full page shows replies as plain text on the pane; errors keep their callout.
+	.assistant .fullPage &:not(.error) {
+		padding: 0 0 0 var(--spacing-5);
+		background: transparent;
+		font-size: var(--periscope-font-size-base);
+	}
 }
 
 .text {
