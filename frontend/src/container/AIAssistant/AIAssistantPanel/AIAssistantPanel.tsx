@@ -106,6 +106,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		<VariantContext.Provider value="panel">
 			<FloatingPanel
 				isOpen
+				className={styles.panel}
 				width={PANEL_WIDTH}
 				height={panelHeight}
 				minWidth={PANEL_MIN_WIDTH}
