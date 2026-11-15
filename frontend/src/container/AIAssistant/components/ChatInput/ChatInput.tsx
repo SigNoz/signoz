@@ -7,7 +7,6 @@ import {
 } from 'react';
 import { useQueryClient } from 'react-query';
 import cx from 'classnames';
-import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
@@ -37,23 +36,20 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { MessageAttachment } from '../../types';
 import { useVariant } from '../../VariantContext';
 import { MessageContext } from '../../../../api/ai-assistant/chat';
-import {
-	ArrowUp,
-	AtSign,
-	Search,
-	Square,
-	TriangleAlert,
-	X,
-} from '@signozhq/icons';
+import { ArrowUp, AtSign, Square, TriangleAlert, X } from '@signozhq/icons';
 
 import styles from './ChatInput.module.scss';
 import ComposerCaret from './ComposerCaret/ComposerCaret';
 import ContextPickerEmptyState from './ContextPickerEmptyState';
+import ContextPill from './ContextPill/ContextPill';
 import EdgeSweep from './EdgeSweep/EdgeSweep';
 import NozPeek from './NozPeek/NozPeek';
 import {
+	AUTO_CONTEXT_ICONS,
 	CONTEXT_CATEGORIES,
 	CONTEXT_CATEGORY_ICONS,
+	CONTEXT_CATEGORY_SINGULAR,
+	CONTEXT_TYPE_LABELS,
 	ContextCategory,
 } from './contextPicker';
 
@@ -136,28 +132,6 @@ function autoContextLabel(ctx: MessageContext): string {
 			return 'Trace details';
 		case 'metrics_explorer':
 			return 'Metrics explorer';
-		default:
-			return ctx.type;
-	}
-}
-
-/** Capitalised category badge text — e.g. "Dashboard", "Logs explorer". */
-function autoContextCategory(ctx: MessageContext): string {
-	switch (ctx.type) {
-		case 'dashboard':
-			return 'Dashboard';
-		case 'alert':
-			return 'Alert';
-		case 'service':
-			return 'Service';
-		case 'logs_explorer':
-			return 'Logs';
-		case 'traces_explorer':
-			return 'Traces';
-		case 'metrics_explorer':
-			return 'Metrics';
-		case 'saved_view':
-			return 'Saved view';
 		default:
 			return ctx.type;
 	}
@@ -731,55 +705,30 @@ export default function ChatInput({
 				<div className={styles.contextTags}>
 					{autoContexts?.map((ctx) => {
 						const key = autoContextKey(ctx);
-						const label = resolveAutoContextName(ctx);
-						const category = autoContextCategory(ctx);
 						return (
-							<div key={key} className={cx(styles.contextTag, styles.auto)}>
-								<div className={styles.contextTagContent}>
-									<Badge textTransform="none" color="secondary" variant="outlined">
-										{category}
-									</Badge>
-									<span className={styles.contextTagLabel}>{label}</span>
-								</div>
-								{onDismissAutoContext && (
-									<Button
-										variant="link"
-										size="sm"
-										icon
-										color="secondary"
-										onClick={(): void => onDismissAutoContext(key)}
-										aria-label={`Remove ${category}: ${label} context`}
-									>
-										<X size={10} />
-									</Button>
-								)}
-							</div>
+							<ContextPill
+								key={key}
+								icon={AUTO_CONTEXT_ICONS[ctx.type]}
+								category={CONTEXT_TYPE_LABELS[ctx.type]}
+								label={resolveAutoContextName(ctx)}
+								onRemove={
+									onDismissAutoContext
+										? (): void => onDismissAutoContext(key)
+										: undefined
+								}
+							/>
 						);
 					})}
 					{selectedContexts.map((contextItem) => (
-						<div
+						<ContextPill
 							key={`${contextItem.category}:${contextItem.entityId}`}
-							className={styles.contextTag}
-						>
-							<div className={styles.contextTagContent}>
-								<Badge textTransform="none" color="primary" variant="outlined">
-									{contextItem.category}
-								</Badge>
-								<span className={styles.contextTagLabel}>{contextItem.value}</span>
-							</div>
-							<Button
-								variant="link"
-								size="sm"
-								icon
-								color="secondary"
-								onClick={(): void =>
-									removeContext(contextItem.category, contextItem.entityId)
-								}
-								aria-label={`Remove ${contextItem.category}: ${contextItem.value} context`}
-							>
-								<X size={10} />
-							</Button>
-						</div>
+							icon={CONTEXT_CATEGORY_ICONS[contextItem.category]}
+							category={CONTEXT_CATEGORY_SINGULAR[contextItem.category]}
+							label={contextItem.value}
+							onRemove={(): void =>
+								removeContext(contextItem.category, contextItem.entityId)
+							}
+						/>
 					))}
 				</div>
 			)}
@@ -849,53 +798,54 @@ export default function ChatInput({
 							className={styles.contextPopover}
 							side="top"
 							align="end"
-							sideOffset={8}
+							sideOffset={4}
 						>
 							<div className={styles.contextPopoverContent}>
-								<div
-									className={styles.contextPopoverCategories}
-									role="tablist"
-									aria-orientation="vertical"
-									aria-label="Context categories"
-								>
-									{CONTEXT_CATEGORIES.map((category) => {
-										const CategoryIcon = CONTEXT_CATEGORY_ICONS[category];
-										const isActive = activeContextCategory === category;
-										return (
-											<Button
-												key={category}
-												ref={(el): void => {
-													categoryTabRefs.current.set(category, el);
-												}}
-												type="button"
-												variant="ghost"
-												color="secondary"
-												size="sm"
-												id={`ai-context-tab-${category}`}
-												testId={`ai-context-tab-${category}`}
-												// Single stable panel id shared by every tab: only the
-												// active category's tabpanel is rendered, so per-category
-												// `aria-controls` ids would point at nonexistent nodes
-												// for the two inactive tabs. APG allows a single
-												// dynamic panel whose `aria-labelledby` swaps to the
-												// active tab.
-												aria-controls="ai-context-tabpanel"
-												// Roving tabindex: only the active tab participates in
-												// the Tab sequence; arrow keys move between tabs.
-												tabIndex={isActive ? 0 : -1}
-												aria-selected={isActive}
-												width="100%"
-												onClick={(): void => {
-													setActiveContextCategory(category);
-													setPickerSearchQuery('');
-												}}
-												onKeyDown={(e): void => handleCategoryKeyDown(e, category)}
-												prefix={<CategoryIcon size={13} />}
-											>
-												<span>{category}</span>
-											</Button>
-										);
-									})}
+								<div className={styles.contextPopoverLeft}>
+									<div className={styles.contextPopoverLabel}>Available resources</div>
+									<div
+										className={styles.contextPopoverCategories}
+										role="tablist"
+										aria-orientation="vertical"
+										aria-label="Context categories"
+									>
+										{CONTEXT_CATEGORIES.map((category) => {
+											const isActive = activeContextCategory === category;
+											return (
+												<Button
+													key={category}
+													ref={(el): void => {
+														categoryTabRefs.current.set(category, el);
+													}}
+													type="button"
+													variant="ghost"
+													color="secondary"
+													size="sm"
+													id={`ai-context-tab-${category}`}
+													testId={`ai-context-tab-${category}`}
+													// Single stable panel id shared by every tab: only the
+													// active category's tabpanel is rendered, so per-category
+													// `aria-controls` ids would point at nonexistent nodes
+													// for the two inactive tabs. APG allows a single
+													// dynamic panel whose `aria-labelledby` swaps to the
+													// active tab.
+													aria-controls="ai-context-tabpanel"
+													// Roving tabindex: only the active tab participates in
+													// the Tab sequence; arrow keys move between tabs.
+													tabIndex={isActive ? 0 : -1}
+													aria-selected={isActive}
+													width="100%"
+													onClick={(): void => {
+														setActiveContextCategory(category);
+														setPickerSearchQuery('');
+													}}
+													onKeyDown={(e): void => handleCategoryKeyDown(e, category)}
+												>
+													<span>{category}</span>
+												</Button>
+											);
+										})}
+									</div>
 								</div>
 
 								<div
@@ -912,7 +862,6 @@ export default function ChatInput({
 											className={styles.contextPopoverSearchInput}
 											value={pickerSearchQuery}
 											onChange={(e): void => setPickerSearchQuery(e.target.value)}
-											prefix={<Search size={12} />}
 											// Skip the picker's roving keyboard focus — typing here
 											// shouldn't move category selection.
 											onKeyDown={(e): void => {
