@@ -1,12 +1,22 @@
 .clarification {
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
-	padding: 10px 12px;
+	padding: var(--spacing-6);
 	background: var(--l2-background);
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+	gap: var(--spacing-6);
 	width: 100%;
+
+	// Clear of whatever the reply shows above it.
+	&:not(:first-child) {
+		margin-top: var(--spacing-6);
+	}
+
+	// Below the header, everything lines up with the title, clear of the icon.
+	&:not(.submitted) > :not(.header) {
+		margin-left: calc(16px + var(--spacing-6));
+	}
 
 	&.submitted {
 		border-color: var(--l2-border);
@@ -21,7 +31,7 @@
 .header {
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	gap: var(--spacing-6);
 }
 
 .headerIcon {
@@ -30,16 +40,17 @@
 }
 
 .headerLabel {
-	font-size: 12px;
-	font-weight: 600;
+	font-size: var(--font-size-sm);
+	line-height: var(--line-height-20);
+	letter-spacing: -0.005em;
 	color: var(--l1-foreground);
 }
 
 .message {
-	font-size: 13px;
-	color: var(--l1-foreground);
 	margin: 0;
-	line-height: 1.5;
+	font-size: var(--periscope-font-size-base);
+	line-height: var(--line-height-20);
+	color: var(--l2-foreground);
 }
 
 .icon {
@@ -131,7 +142,9 @@
 }
 
 .actions {
-	display: flex;
-	gap: 6px;
-	margin-top: 16px;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-6);
+	margin-top: var(--spacing-2);
+	--button-width: 100%;
 }

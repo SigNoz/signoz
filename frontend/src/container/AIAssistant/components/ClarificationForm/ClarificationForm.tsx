@@ -121,7 +121,7 @@ export default function ClarificationForm({
 	return (
 		<div className={styles.clarification}>
 			<div className={styles.header}>
-				<CircleHelp size={13} className={styles.headerIcon} />
+				<CircleHelp size={16} className={styles.headerIcon} />
 				<span className={styles.headerLabel}>A few details needed</span>
 			</div>
 
