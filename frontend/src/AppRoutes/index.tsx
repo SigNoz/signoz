@@ -40,6 +40,7 @@ import defaultRoutes, {
 } from './routes';
 import {
 	hasNoAppFrames,
+	isExpectedRequestFailure,
 	isExternalIntegrationError,
 	SENTRY_IGNORE_ERRORS,
 } from './sentryFilters';
@@ -339,6 +340,9 @@ function App(): JSX.Element {
 							return null;
 						}
 						if (error?.name === 'AbortError') {
+							return null;
+						}
+						if (isExpectedRequestFailure(hint?.originalException)) {
 							return null;
 						}
 						// Ignore benign Monaco cancellation errors (name 'Canceled').

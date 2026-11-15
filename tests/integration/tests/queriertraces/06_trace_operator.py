@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from http import HTTPStatus
 from typing import Any
 
@@ -16,6 +16,7 @@ from fixtures.querier import (
     find_named_result,
     format_timestamp,
     generate_traces_with_corrupt_metadata,
+    get_attribute_backend_now,
     get_rows,
     make_query_request,
 )
@@ -237,11 +238,10 @@ def test_trace_operator(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     case: dict,
 ) -> None:
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
     t1_trace_id = TraceIdGenerator.trace_id()
     t1_checkout_span_id = TraceIdGenerator.span_id()  # POST /checkout — structural root of T1
@@ -251,7 +251,7 @@ def test_trace_operator(
     t2_root_span_id = TraceIdGenerator.span_id()
     t2_child_span_id = TraceIdGenerator.span_id()
 
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
 
     insert_traces(
         [
@@ -580,7 +580,6 @@ def test_trace_operator_with_adjusted_keys(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     payload_factory: Callable[[list[Traces]], list[dict[str, Any]]],
     request_type: str,
@@ -592,9 +591,9 @@ def test_trace_operator_with_adjusted_keys(
     queries, otherwise deprecated keys and context-prefixed aliases don't
     resolve.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
-    traces = generate_traces_with_corrupt_metadata()
+    traces = generate_traces_with_corrupt_metadata(now)
     insert_traces(traces)
     payload = payload_factory(traces)
 
@@ -603,8 +602,8 @@ def test_trace_operator_with_adjusted_keys(
     response = make_query_request(
         signoz,
         token,
-        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
-        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
+        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
         request_type=request_type,
         queries=payload,
     )
@@ -642,7 +641,6 @@ def test_trace_operator_select_fields(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
     select_fields: list[dict[str, Any]],
     expansion: str,
@@ -667,9 +665,9 @@ def test_trace_operator_select_fields(
     - pkg/telemetrytraces/trace_operator_cte_builder.go::buildListQuery for
       the per-row SELECT.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
 
     trace_id = TraceIdGenerator.trace_id()
     parent_span_id = TraceIdGenerator.span_id()
@@ -754,8 +752,8 @@ def test_trace_operator_select_fields(
     response = make_query_request(
         signoz,
         token,
-        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
-        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
+        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
         request_type=RequestType.RAW,
         queries=queries,
     )
@@ -792,7 +790,6 @@ def test_trace_operator_scalar_limit(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
 ) -> None:
     """
@@ -803,9 +800,9 @@ def test_trace_operator_scalar_limit(
     1. A scalar trace operator grouped by service.name with limit=2 returns
        only the top two groups by count.
     """
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
-    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    now = now.replace(second=0, microsecond=0)
     span_counts = {"limit-a": 4, "limit-b": 3, "limit-c": 2, "limit-d": 1}
 
     insert_traces(

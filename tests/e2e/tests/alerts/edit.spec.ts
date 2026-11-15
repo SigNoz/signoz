@@ -13,7 +13,7 @@ import {
 // editor reached through `/alerts/edit` has no `CreateAlertProvider` above it.
 //
 // The rule-definition-to-form mapping itself is asserted in jest against
-// `CreateAlertV2/context/utils`; what stays here is the round trip — that a rule
+// `CreateAlert/context/utils`; what stays here is the round trip — that a rule
 // the API created renders back through that mapper, and that a save persists.
 
 /** Every asserted field differs from the create-form default, so a passing
@@ -45,11 +45,9 @@ test.describe('Alert edit', () => {
 		await expect(root).toHaveAttribute('data-schema-version', 'v2alpha1');
 
 		// `CreateAlertHeader` hides the whole tab bar in edit mode, which removes
-		// the "New Alert Rule" chip and the classic-experience escape hatch.
-		// Switching experiences mid-edit would silently drop the loaded rule.
+		// the "New Alert Rule" chip.
 		await expect(alerts.form.name()).toBeVisible();
 		await expect(alerts.form.newRuleChip()).toBeHidden();
-		await expect(alerts.form.switchToClassicButton()).toBeHidden();
 	});
 
 	test('TC-02 a seeded rule prefills every field it set', async ({
@@ -230,9 +228,7 @@ test.describe('Alert edit', () => {
 		await alerts.details.gotoOverview(ruleId);
 		await alerts.form.name().fill(renamed);
 
-		// The details header's RenameModal PATCHes on its own; this is the other
-		// path, where the editable header field is local state until the footer
-		// saves it.
+		// The editable header field is local state until the footer saves it.
 		const [response] = await Promise.all([
 			page.waitForResponse(
 				(res) =>
@@ -289,7 +285,7 @@ test.describe('Alert edit', () => {
 			{ target: SEED.target },
 		);
 
-		// Reading the components suggests this route should crash: `EditAlertV2`
+		// Reading the components suggests this route should crash: `EditAlert`
 		// renders Footer/AlertCondition/NotificationSettings, all of which call
 		// `useCreateAlertState()`, and the only provider lives in `AlertDetails`. It
 		// does not crash, because `/alerts/edit` never renders `pages/EditRules` at

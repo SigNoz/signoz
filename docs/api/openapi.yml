@@ -553,23 +553,23 @@ components:
       - apiKey
       type: object
     AlertmanagertypesChannelJiraAuth:
-      oneOf:
-      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraCloudAuth'
-      - $ref: '#/components/schemas/AlertmanagertypesChannelJiraSelfHostedAuth'
-      type: object
-    AlertmanagertypesChannelJiraCloudAuth:
       properties:
         apiToken:
-          description: The Atlassian API token paired with email. A secret; returned
-            by create, update and fetch by ID, never by list.
+          description: The Atlassian API token paired with email. Required when deployment
+            is cloud. A secret; returned by create, update and fetch by ID, never
+            by list.
           format: password
           type: string
         email:
-          description: The Atlassian account email used for basic auth.
+          description: The Atlassian account email used for basic auth. Required when
+            deployment is cloud.
           type: string
-      required:
-      - email
-      - apiToken
+        pat:
+          description: The Jira personal access token, sent as a Bearer header. Required
+            when deployment is selfhosted. A secret; returned by create, update and
+            fetch by ID, never by list.
+          format: password
+          type: string
       type: object
     AlertmanagertypesChannelJiraConfig:
       properties:
@@ -641,16 +641,6 @@ components:
       - project
       - issueType
       - auth
-      type: object
-    AlertmanagertypesChannelJiraSelfHostedAuth:
-      properties:
-        pat:
-          description: The Jira personal access token, sent as a Bearer header. A
-            secret; returned by create, update and fetch by ID, never by list.
-          format: password
-          type: string
-      required:
-      - pat
       type: object
     AlertmanagertypesChannelKind:
       enum:
@@ -3970,6 +3960,7 @@ components:
       - logs-field
       - traces-field
       - metrics-field
+      - llm-pricing-rule
       type: string
     CoretypesObject:
       properties:
@@ -10231,8 +10222,10 @@ components:
         having:
           allOf:
           - $ref: '#/components/schemas/Querybuildertypesv5Having'
-          description: Accepted but currently ignored; the computed values are returned
-            unfiltered.
+          description: A filter on the formula values, referencing the formula by
+            its name or as __result, for example F1 > 0. A time series keeps only
+            the points that match and drops a series with none left; a scalar result
+            keeps only the rows that match.
         legend:
           description: The display name template for each series; {{field}} placeholders
             are replaced by label values.
@@ -11743,20 +11736,10 @@ components:
           description: Whether the rule is paused. A disabled rule is neither evaluated
             nor notifies. Defaults to false.
           type: boolean
-        evalWindow:
-          description: The lookback window as a Go duration such as 5m. Only read
-            when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec
-            instead.
-          type: string
         evaluation:
           allOf:
           - $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
           description: The evaluation window, as a kind and spec.
-        frequency:
-          description: How often the rule is evaluated, as a Go duration such as 1m.
-            Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set
-            it in evaluation.spec instead.
-          type: string
         labels:
           additionalProperties:
             type: string
@@ -11768,13 +11751,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/RuletypesNotificationSettings'
           description: Grouping, re-notification and routing behaviour.
-        preferredChannels:
-          description: The displayName of each notification channel to notify, for
-            schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries
-            its own channels.
-          items:
-            type: string
-          type: array
         ruleType:
           allOf:
           - $ref: '#/components/schemas/RuletypesRuleType'
@@ -11786,15 +11762,6 @@ components:
           description: The rule payload schema.
           enum:
           - v2alpha1
-          type: string
-        source:
-          deprecated: true
-          description: The URL of the page the rule was created from. Informational;
-            it is not used for evaluation.
-          type: string
-        version:
-          deprecated: true
-          description: The query payload version. Nothing reads it.
           type: string
       required:
       - alert
@@ -11884,20 +11851,10 @@ components:
           description: Whether the rule is paused. A disabled rule is neither evaluated
             nor notifies. Defaults to false.
           type: boolean
-        evalWindow:
-          description: The lookback window as a Go duration such as 5m. Only read
-            when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec
-            instead.
-          type: string
         evaluation:
           allOf:
           - $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
           description: The evaluation window, as a kind and spec.
-        frequency:
-          description: How often the rule is evaluated, as a Go duration such as 1m.
-            Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set
-            it in evaluation.spec instead.
-          type: string
         id:
           description: The unique identifier of the rule.
           type: string
@@ -11912,13 +11869,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/RuletypesNotificationSettings'
           description: Grouping, re-notification and routing behaviour.
-        preferredChannels:
-          description: The displayName of each notification channel to notify, for
-            schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries
-            its own channels.
-          items:
-            type: string
-          type: array
         ruleType:
           allOf:
           - $ref: '#/components/schemas/RuletypesRuleType'
@@ -11931,11 +11881,6 @@ components:
           enum:
           - v2alpha1
           type: string
-        source:
-          deprecated: true
-          description: The URL of the page the rule was created from. Informational;
-            it is not used for evaluation.
-          type: string
         state:
           allOf:
           - $ref: '#/components/schemas/RuletypesAlertState'
@@ -11945,10 +11890,6 @@ components:
           format: date-time
           type: string
         updatedBy:
-          type: string
-        version:
-          deprecated: true
-          description: The query payload version. Nothing reads it.
           type: string
       required:
       - id
@@ -11972,28 +11913,10 @@ components:
           description: Whether to fire a nodata alert when the query returns no data.
             Defaults to false.
           type: boolean
-        algorithm:
-          description: 'anomaly_rule only: the anomaly detection algorithm. The supported
-            value is standard.'
-          type: string
         compositeQuery:
           allOf:
           - $ref: '#/components/schemas/RuletypesAlertCompositeQuery'
           description: The queries whose result is compared against the thresholds.
-        matchType:
-          allOf:
-          - $ref: '#/components/schemas/RuletypesMatchType'
-          description: 'schemaVersion v1 only: which points in the window must satisfy
-            op. Accepted as at_least_once, all_the_times, on_average, in_total or
-            last, their aliases avg and sum, or the legacy codes as strings, ''1''
-            to ''5''. Required for v1; v2alpha1 sets matchType on each threshold.'
-        op:
-          allOf:
-          - $ref: '#/components/schemas/RuletypesCompareOperator'
-          description: 'schemaVersion v1 only: how the value is compared with target.
-            Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal
-            or outside_bounds, their symbols, or the legacy codes as strings, ''1''
-            to ''7''. Required for v1; v2alpha1 sets op on each threshold.'
         requireMinPoints:
           description: Whether a series is skipped until it has at least requiredNumPoints
             points in the window. Defaults to false.
@@ -12010,17 +11933,6 @@ components:
         selectedQueryName:
           description: The name of the query whose result is evaluated, such as A
             or F1. Must match a query in compositeQuery.
-          type: string
-        target:
-          description: 'schemaVersion v1 only: the value compared against, in targetUnit.
-            Required for v1; v2alpha1 sets target on each threshold.'
-          format: double
-          nullable: true
-          type: number
-        targetUnit:
-          description: 'schemaVersion v1 only: the unit of target, such as percent
-            or ms. Converted to compositeQuery.unit before comparison when the two
-            differ.'
           type: string
         thresholds:
           allOf:
@@ -16148,9 +16060,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - llm-pricing-rule:list
       - tokenizer:
-        - VIEWER
+        - llm-pricing-rule:list
       summary: List pricing rules
       tags:
       - llmpricingrules
@@ -16195,9 +16107,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - llm-pricing-rule:update
       - tokenizer:
-        - ADMIN
+        - llm-pricing-rule:update
       summary: Create or update pricing rules
       tags:
       - llmpricingrules
@@ -16243,9 +16155,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - llm-pricing-rule:delete
       - tokenizer:
-        - ADMIN
+        - llm-pricing-rule:delete
       summary: Delete a pricing rule
       tags:
       - llmpricingrules
@@ -16301,9 +16213,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - llm-pricing-rule:read
       - tokenizer:
-        - VIEWER
+        - llm-pricing-rule:read
       summary: Get a pricing rule
       tags:
       - llmpricingrules
@@ -16356,9 +16268,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - llm-pricing-rule:list
+        - traces:read
       - tokenizer:
-        - VIEWER
+        - llm-pricing-rule:list
+        - traces:read
       summary: List unmapped models
       tags:
       - llmpricingrules
@@ -25528,56 +25442,6 @@ paths:
       - rules
       x-signoz-stability: alpha
   /api/v2/rules:
-    get:
-      deprecated: true
-      description: 'This endpoint lists all alert rules with their current evaluation
-        state. Deprecated: use ListRulesV3, which supports filtering, sorting and
-        pagination.'
-      operationId: ListRules
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/RuletypesRule'
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: List alert rules
-      tags:
-      - rules
-      x-signoz-stability: alpha
     post:
       deprecated: false
       description: This endpoint creates a new alert rule
@@ -25667,7 +25531,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               logs_threshold:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
@@ -25734,7 +25597,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_anomaly:
                 description: Wraps a builder query in the `anomaly` function with
                   daily seasonality, so SigNoz compares each point against the forecast
@@ -25751,7 +25613,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -25807,7 +25668,6 @@ paths:
                       interval: 4h
                   ruleType: anomaly_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
@@ -25863,7 +25723,6 @@ paths:
                       interval: 1h
                   ruleType: promql_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_formula:
                 description: Computes disk utilization as (1 - available/capacity)
                   * 100 by combining two disabled base queries with a builder_formula.
@@ -25955,7 +25814,6 @@ paths:
                       interval: 2h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
                   CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
@@ -26024,7 +25882,6 @@ paths:
                       interval: 4h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               notification_settings:
                 description: 'Demonstrates the full notificationSettings surface:
                   `groupBy` merges alerts across labels to cut noise, `newGroupEvalDelay`
@@ -26123,7 +25980,6 @@ paths:
                     usePolicy: false
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
                   with its own target, op, matchType, and channels so warnings and
@@ -26223,7 +26079,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_error_rate_formula:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
@@ -26313,7 +26168,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
@@ -26382,7 +26236,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
             schema:
               $ref: '#/components/schemas/RuletypesPostableRule'
       responses:
@@ -26426,9 +26279,23 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Create alert rule
       tags:
       - rules
@@ -26473,9 +26340,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:delete
       - tokenizer:
-        - EDITOR
+        - rule:delete
       summary: Delete alert rule
       tags:
       - rules
@@ -26531,9 +26398,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:read
       - tokenizer:
-        - VIEWER
+        - rule:read
       summary: Get alert rule by ID
       tags:
       - rules
@@ -26633,7 +26500,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               logs_threshold:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
@@ -26700,7 +26566,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_anomaly:
                 description: Wraps a builder query in the `anomaly` function with
                   daily seasonality, so SigNoz compares each point against the forecast
@@ -26717,7 +26582,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -26773,7 +26637,6 @@ paths:
                       interval: 4h
                   ruleType: anomaly_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
@@ -26829,7 +26692,6 @@ paths:
                       interval: 1h
                   ruleType: promql_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_formula:
                 description: Computes disk utilization as (1 - available/capacity)
                   * 100 by combining two disabled base queries with a builder_formula.
@@ -26921,7 +26783,6 @@ paths:
                       interval: 2h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
                   CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
@@ -26990,7 +26851,6 @@ paths:
                       interval: 4h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               notification_settings:
                 description: 'Demonstrates the full notificationSettings surface:
                   `groupBy` merges alerts across labels to cut noise, `newGroupEvalDelay`
@@ -27089,7 +26949,6 @@ paths:
                     usePolicy: false
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
                   with its own target, op, matchType, and channels so warnings and
@@ -27189,7 +27048,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_error_rate_formula:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
@@ -27279,7 +27137,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
@@ -27348,7 +27205,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
             schema:
               $ref: '#/components/schemas/RuletypesPostableRule'
       responses:
@@ -27398,9 +27254,27 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Patch alert rule
       tags:
       - rules
@@ -27500,7 +27374,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               logs_threshold:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
@@ -27567,7 +27440,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_anomaly:
                 description: Wraps a builder query in the `anomaly` function with
                   daily seasonality, so SigNoz compares each point against the forecast
@@ -27584,7 +27456,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -27640,7 +27511,6 @@ paths:
                       interval: 4h
                   ruleType: anomaly_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
@@ -27696,7 +27566,6 @@ paths:
                       interval: 1h
                   ruleType: promql_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_formula:
                 description: Computes disk utilization as (1 - available/capacity)
                   * 100 by combining two disabled base queries with a builder_formula.
@@ -27788,7 +27657,6 @@ paths:
                       interval: 2h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
                   CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
@@ -27857,7 +27725,6 @@ paths:
                       interval: 4h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               notification_settings:
                 description: 'Demonstrates the full notificationSettings surface:
                   `groupBy` merges alerts across labels to cut noise, `newGroupEvalDelay`
@@ -27956,7 +27823,6 @@ paths:
                     usePolicy: false
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
                   with its own target, op, matchType, and channels so warnings and
@@ -28056,7 +27922,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_error_rate_formula:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
@@ -28146,7 +28011,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
@@ -28215,7 +28079,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
             schema:
               $ref: '#/components/schemas/RuletypesPostableRule'
       responses:
@@ -28253,9 +28116,27 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:update
+        - rule:attach
+        - rule:detach
+        - notification-channel:attach
+        - notification-channel:detach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Update alert rule
       tags:
       - rules
@@ -28322,9 +28203,25 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:read
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:read
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Clone alert rule
       tags:
       - rules
@@ -29129,7 +29026,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               logs_threshold:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
@@ -29196,7 +29092,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_anomaly:
                 description: Wraps a builder query in the `anomaly` function with
                   daily seasonality, so SigNoz compares each point against the forecast
@@ -29213,7 +29108,6 @@ paths:
                       low (z-score {{$value}}).
                     summary: Span ingestion anomaly
                   condition:
-                    algorithm: standard
                     compositeQuery:
                       panelType: graph
                       queries:
@@ -29269,7 +29163,6 @@ paths:
                       interval: 4h
                   ruleType: anomaly_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_promql:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
@@ -29325,7 +29218,6 @@ paths:
                       interval: 1h
                   ruleType: promql_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_formula:
                 description: Computes disk utilization as (1 - available/capacity)
                   * 100 by combining two disabled base queries with a builder_formula.
@@ -29417,7 +29309,6 @@ paths:
                       interval: 2h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
                   CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
@@ -29486,7 +29377,6 @@ paths:
                       interval: 4h
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               notification_settings:
                 description: 'Demonstrates the full notificationSettings surface:
                   `groupBy` merges alerts across labels to cut noise, `newGroupEvalDelay`
@@ -29585,7 +29475,6 @@ paths:
                     usePolicy: false
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
                   with its own target, op, matchType, and channels so warnings and
@@ -29685,7 +29574,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_error_rate_formula:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
@@ -29775,7 +29663,6 @@ paths:
                       interval: 15m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
@@ -29844,7 +29731,6 @@ paths:
                       interval: 30m
                   ruleType: threshold_rule
                   schemaVersion: v2alpha1
-                  version: v5
             schema:
               $ref: '#/components/schemas/RuletypesPostableRule'
       responses:
@@ -29888,9 +29774,23 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - EDITOR
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - EDITOR
+        - rule:create
+        - rule:attach
+        - notification-channel:attach
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Test alert rule
       tags:
       - rules
@@ -31985,9 +31885,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - rule:list
       - tokenizer:
-        - VIEWER
+        - rule:list
       summary: List alert rules (v3)
       tags:
       - rules
@@ -32724,6 +32624,305 @@ paths:
                     - spec:
                         expression: A / B * 100
                         name: error_rate
+                      type: builder_formula
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_anomaly_request_rate:
+                description: 'anomaly is the one function with named arguments. seasonality
+                  says which past periods predict the current value: hourly, daily
+                  or weekly, daily when absent. z_score_threshold is how many standard
+                  deviations from the prediction count as an anomaly. It has no default:
+                  a request without it gets bounds of zero width, so send it. 3 is
+                  the value the UI sends. The response carries, next to the values,
+                  a predicted series, an upper and a lower bound series and an anomaly
+                  score series. The scoring runs in the enterprise build; the community
+                  build returns the series unchanged.'
+                summary: 'anomaly: request rate scored against its daily pattern'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: http.server.duration.count
+                          spaceAggregation: sum
+                          timeAggregation: rate
+                        functions:
+                        - args:
+                          - name: seasonality
+                            value: daily
+                          - name: z_score_threshold
+                            value: 3
+                          name: anomaly
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 300s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_cumulativesum_errors_so_far:
+                description: cumulativeSum replaces each point with the sum of every
+                  point up to and including it, so a per-step count becomes a running
+                  total whose first point is the first count. It takes no arguments.
+                  The total resets with the window, so a longer time range gives a
+                  larger final value; it is a view of the window, not a counter.
+                summary: 'cumulativeSum: 5xx responses since the start of the window'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - alias: server_errors
+                          expression: count()
+                        filter:
+                          expression: http.response.status_code >= 500
+                        functions:
+                        - name: cumulativeSum
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: A
+                        signal: traces
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_cutoffmin_hide_idle_hosts:
+                description: The four threshold functions take one number. cutOffMin
+                  and cutOffMax remove the points below or above the threshold, so
+                  an idle host disappears from the chart instead of drawing a line
+                  along the bottom. clampMin and clampMax keep the points and replace
+                  the value with the threshold, which caps spikes without hiding them.
+                  system.cpu.utilization is a ratio, so 0.05 is 5%.
+                summary: 'cutOffMin: drop hosts below 5% CPU from the chart'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: system.cpu.utilization
+                          spaceAggregation: avg
+                          timeAggregation: avg
+                        functions:
+                        - args:
+                          - value: 0.05
+                          name: cutOffMin
+                        groupBy:
+                        - fieldContext: resource
+                          name: host.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_ewma_smoothed_latency:
+                description: 'ewma3, ewma5 and ewma7 replace each point with an exponentially
+                  weighted average of the point and the points before it. The number
+                  in the name is the window the default weight is derived from: alpha
+                  = 2 / (n + 1), so 0.5, 0.333 and 0.25. One optional argument overrides
+                  alpha; a value close to 1 follows the raw series, a value close
+                  to 0 smooths harder. 0.3 here smooths a little more than ewma5''s
+                  default.'
+                summary: 'ewma5: smoothed p95 latency'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: http.server.duration.bucket
+                          spaceAggregation: p95
+                        functions:
+                        - args:
+                          - value: 0.3
+                          name: ewma5
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_fillzero_sparse_errors:
+                description: A count over sparse events returns a point only for steps
+                  that had a match, so a chart of failed spans has gaps where nothing
+                  failed. fillZero adds a zero at every missing step. With no arguments
+                  the server fills the request window at the query's step, which is
+                  the common case. The three optional arguments are start, end and
+                  step in milliseconds, for callers that want to fill a different
+                  grid.
+                summary: 'fillZero: a zero at every step with no failed spans'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - alias: failed_spans
+                          expression: count()
+                        filter:
+                          expression: has_error = true
+                        functions:
+                        - name: fillZero
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: A
+                        signal: traces
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_log10_network_bytes:
+                description: log2 and log10 replace each value with its logarithm,
+                  so a loopback device moving kilobytes and an uplink moving gigabytes
+                  fit on one chart. They take no arguments. Zero and negative values
+                  have no logarithm and are not drawn. absolute, also without arguments,
+                  is the usual companion for a signed series before a logarithm.
+                summary: 'log10: network throughput across devices that differ by
+                  orders of magnitude'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: system.network.io
+                          spaceAggregation: sum
+                          timeAggregation: rate
+                        filter:
+                          expression: direction = 'transmit'
+                        functions:
+                        - name: log10
+                        groupBy:
+                        - fieldContext: attribute
+                          name: device
+                        name: A
+                        signal: metrics
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_median_despiked_request_rate:
+                description: median3, median5 and median7 replace each point with
+                  the median of the surrounding 3, 5 or 7 points. A spike that lasts
+                  one step vanishes, a shift that lasts longer than half the window
+                  stays. The first and last half window, 2 points each for median5,
+                  have no full window and keep their values, so the newest spike stays
+                  visible; a series shorter than the window is returned unchanged.
+                  They take no arguments. Use them when the raw series is noisy and
+                  the chart is for a trend, not for catching the spike.
+                summary: 'median5: request rate without one-step spikes'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: http.server.duration.count
+                          spaceAggregation: sum
+                          timeAggregation: rate
+                        functions:
+                        - name: median5
+                        groupBy:
+                        - fieldContext: resource
+                          name: service.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_runningdiff_disk_growth:
+                description: 'runningDiff turns a gauge into the change between consecutive
+                  points, so a filesystem usage gauge becomes bytes written per step.
+                  It takes no arguments and drops the first point of the window, since
+                  that point has nothing to difference against; the server reads one
+                  step before the window to keep the first interval. Functions apply
+                  in order: clampMin with 0 runs on the differences and replaces the
+                  negative value a cleanup or a volume reset produces with zero.'
+                summary: 'runningDiff then clampMin: bytes written to disk per step'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - metricName: system.filesystem.usage
+                          spaceAggregation: sum
+                          timeAggregation: latest
+                        filter:
+                          expression: state = 'used'
+                        functions:
+                        - name: runningDiff
+                        - args:
+                          - value: 0
+                          name: clampMin
+                        groupBy:
+                        - fieldContext: resource
+                          name: host.name
+                        name: A
+                        signal: metrics
+                        stepInterval: 60s
+                      type: builder_query
+                  end: 1640998800000
+                  requestType: time_series
+                  schemaVersion: v1
+                  start: 1640995200000
+              function_timeshift_week_over_week:
+                description: timeShift moves every point of its query forward by the
+                  argument, in seconds, so a series read from the past lands on the
+                  current timestamps. B here reads the hour exactly seven days (604800
+                  s) before the requested window and comes back on this week's timestamps,
+                  so it overlays A on a chart and the formula can subtract it point
+                  by point. The argument is positive; it says how far back to read.
+                summary: 'timeShift: this week''s error logs next to last week''s'
+                value:
+                  compositeQuery:
+                    queries:
+                    - spec:
+                        aggregations:
+                        - alias: errors
+                          expression: count()
+                        filter:
+                          expression: severity_text = 'ERROR'
+                        name: A
+                        signal: logs
+                        stepInterval: 60s
+                      type: builder_query
+                    - spec:
+                        aggregations:
+                        - alias: errors
+                          expression: count()
+                        filter:
+                          expression: severity_text = 'ERROR'
+                        functions:
+                        - args:
+                          - value: 604800
+                          name: timeShift
+                        name: B
+                        signal: logs
+                        stepInterval: 60s
+                      type: builder_query
+                    - spec:
+                        expression: A - B
+                        name: F1
                       type: builder_formula
                   end: 1640998800000
                   requestType: time_series

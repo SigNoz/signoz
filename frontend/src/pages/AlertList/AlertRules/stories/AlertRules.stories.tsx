@@ -1,9 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { alertRulesMocks } from './AlertRules.stories.mocks';
+import {
+	alertRulesMocks,
+	type AlertRulesArgs,
+} from './AlertRules.stories.mocks';
 import {
 	cloneAlert,
 	copyLabel,
@@ -15,13 +17,12 @@ import {
 	openRenameViewPopover,
 	openRowActions,
 	openSaveViewPopover,
+	openStatesFilter,
 	toggleAlert,
 } from './__story_mockdata__/alertRules.play';
 
 import AlertList from '../../index';
 import { RULE_MAX } from '../../stories/__story_mockdata__/alerts';
-
-type AlertRulesArgs = PageStoryArgs<typeof alertRulesMocks>;
 
 const pageStory = storyMocks(alertRulesMocks, { layout: 'app' });
 
@@ -177,6 +178,11 @@ export const RowActionsDisabledRule: Story = {
 /** The columns the table can show, including the audit ones it hides by default. */
 export const ColumnPicker: Story = {
 	play: openColumnPicker,
+};
+
+/** The State dropdown, open with a state picked. */
+export const StateFilterOpen: Story = {
+	play: openStatesFilter,
 };
 
 /**

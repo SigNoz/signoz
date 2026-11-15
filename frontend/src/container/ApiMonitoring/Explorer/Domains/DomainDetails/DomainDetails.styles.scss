@@ -195,16 +195,6 @@
 			line-height: 18px;
 			letter-spacing: -0.07px;
 		}
-
-		.group-by-select {
-			width: 100%;
-			.ant-select-selector {
-				font-size: 14px;
-				border-radius: 2px 0px 0px 2px;
-				border: 1px solid var(--l1-border);
-				background: var(--l3-background);
-			}
-		}
 	}
 	// Add border-bottom to table cells when pagination is not present
 	.ant-spin-container:not(:has(.ant-pagination)) .ant-table-cell {
@@ -365,16 +355,9 @@
 .top-errors-dropdown-container {
 	display: flex;
 	flex-direction: row;
+	justify-content: space-between;
 	gap: 10px;
 	align-items: center;
-
-	.endpoint-details-filters-container-dropdown {
-		width: 100%;
-	}
-
-	.endpoint-details-filters-container-search {
-		flex: 1;
-	}
 }
 
 .endpoint-details-container {
@@ -416,29 +399,8 @@
 
 	.endpoint-details-filters-container {
 		display: flex;
-		flex-direction: row;
-		align-items: center;
-		border: 1px solid var(--l1-border);
-		height: 36px;
-		box-sizing: content-box;
-		.ant-select-selector {
-			border: none !important;
-		}
-
-		.endpoint-details-filters-container-dropdown {
-			width: 120px;
-			border-right: 1px solid var(--l1-border);
-			height: 36px;
-			display: flex;
-			align-items: center;
-			.ant-select-single {
-				height: 32px;
-			}
-		}
-
-		.endpoint-details-filters-container-search {
-			flex: 1;
-		}
+		flex-direction: column;
+		gap: 8px;
 	}
 
 	.ant-select-item,

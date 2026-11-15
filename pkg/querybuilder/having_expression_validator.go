@@ -237,7 +237,13 @@ func (v *havingExpressionRewriteVisitor) visitIdentifier(ctx grammar.IIdentifier
 	return name
 }
 
-// rewriteAndValidate is the single-pass implementation used by all RewriteFor* methods.
+func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string, error) {
+	rewritten, _, err := r.parseAndValidate(expression)
+	return rewritten, err
+}
+
+// parseAndValidate is the single-pass implementation used by all RewriteFor* methods.
+// It also returns the parse tree, which CompileFormulaHaving evaluates in Go.
 //
 // Validation layers:
 //  1. The visitor runs on the parse tree, rewriting and collecting invalid references.
@@ -248,7 +254,7 @@ func (v *havingExpressionRewriteVisitor) visitIdentifier(ctx grammar.IIdentifier
 //  2. String literals in comparison-operand position → descriptive error
 //     ("aggregator results are numeric").
 //  3. ANTLR syntax errors → error with messages referencing the original token names.
-func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string, error) {
+func (r *HavingExpressionRewriter) parseAndValidate(expression string) (string, grammar.IQueryContext, error) {
 	original := strings.TrimSpace(expression)
 
 	// Parse the expression once.
@@ -281,7 +287,7 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 	// This is checked before invalid references so that "contains string literals" takes
 	// priority when a bare string literal is also an unresolvable operand.
 	if v.hasStringLiteral {
-		return "", errors.NewInvalidInputf(
+		return "", nil, errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"`Having` expression contains string literals",
 		).WithAdditional("Aggregator results are numeric")
@@ -317,7 +323,7 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 		).WithAdditional(
 			"Valid references are: [" + strings.Join(validKeys, ", ") + "]",
 		).WithSuggestions(suggestions...)
-		return "", havingErr
+		return "", nil, havingErr
 	}
 
 	// Layer 3 – ANTLR syntax errors. We parse the original expression, so error messages
@@ -343,12 +349,12 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 				return havingSuggestion(allSyntaxErrors[0], original)
 			})
 
-			return "", havingErr.WithSuggestiveAdditional(msgs[0], suggestions...)
+			return "", nil, havingErr.WithSuggestiveAdditional(msgs[0], suggestions...)
 		}
-		return "", havingErr.WithAdditional(msgs...)
+		return "", nil, havingErr.WithAdditional(msgs...)
 	}
 
-	return result, nil
+	return result, tree, nil
 }
 
 // havingSuggestion returns a corrected expression string to show as a suggestion when

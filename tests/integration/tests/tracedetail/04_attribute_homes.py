@@ -6,7 +6,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.traces import ATTRIBUTE_JSON_ROLLOUT_TIME, TraceIdGenerator, Traces, TracesKind
+from fixtures.traces import TraceIdGenerator, Traces, TracesKind
 
 
 def test_waterfall_and_flamegraph_read_each_attribute_home(
@@ -14,9 +14,7 @@ def test_waterfall_and_flamegraph_read_each_attribute_home(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
-    seed_attribute_evolution("traces", ATTRIBUTE_JSON_ROLLOUT_TIME)
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     legacy_id, json_id, dual_id = (TraceIdGenerator.span_id() for _ in range(3))

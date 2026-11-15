@@ -1,0 +1,93 @@
+import { FocusEvent, useCallback, useEffect, useMemo, useRef } from 'react';
+import {
+	useInitialExpression,
+	useQuerySearchInitialExpressionProp,
+	useQuerySearchOnRun,
+	useUserExpression,
+} from 'components/QueryBuilderV2';
+import {
+	combineInitialAndUserExpression,
+	getUserExpressionFromCombined,
+} from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
+import { validateQuery } from 'utils/queryValidationUtils';
+
+interface UseFilterExpressionParams {
+	groupBy?: IBuilderQuery['groupBy'];
+}
+
+interface UseFilterExpressionReturn {
+	expression: string;
+	/** The provider's locked scope, for `QuerySearch`'s `initialExpression` */
+	initialExpression: string | undefined;
+	queryData: IBuilderQuery;
+	onDraftChange: (value: string) => void;
+	/** `onUnchanged` runs instead when the filter is already applied. */
+	onRun: (value: string, onUnchanged?: () => void) => void;
+	onBlur: (event: FocusEvent<HTMLDivElement>) => void;
+}
+
+/** Must be used inside a `QuerySearchV2Provider`. */
+export function useFilterExpression({
+	groupBy,
+}: UseFilterExpressionParams = {}): UseFilterExpressionReturn {
+	const expression = useUserExpression();
+	const scope = useInitialExpression();
+	const initialExpression = useQuerySearchInitialExpressionProp();
+	const querySearchOnRun = useQuerySearchOnRun();
+
+	const queryData = useMemo(
+		(): IBuilderQuery => ({
+			...initialQueriesMap[DataSource.TRACES].builder.queryData[0],
+			dataSource: DataSource.TRACES,
+			filter: { expression },
+			...(groupBy ? { groupBy } : {}),
+		}),
+		[expression, groupBy],
+	);
+
+	const onRun = useCallback(
+		(value: string, onUnchanged?: () => void): void => {
+			if (!validateQuery(value).isValid) {
+				return;
+			}
+			if (getUserExpressionFromCombined(scope, value) === expression) {
+				onUnchanged?.();
+				return;
+			}
+			querySearchOnRun(value);
+		},
+		[querySearchOnRun, scope, expression],
+	);
+
+	// A ref, not the provider's draft, so typing does not re-render the page.
+	const draftRef = useRef(expression);
+	useEffect(() => {
+		draftRef.current = expression;
+	}, [expression]);
+
+	const onDraftChange = useCallback((value: string): void => {
+		draftRef.current = value;
+	}, []);
+
+	const onBlur = useCallback(
+		(event: FocusEvent<HTMLDivElement>): void => {
+			if (event.currentTarget.contains(event.relatedTarget as Node | null)) {
+				return;
+			}
+			onRun(combineInitialAndUserExpression(scope, draftRef.current));
+		},
+		[onRun, scope],
+	);
+
+	return {
+		expression,
+		initialExpression,
+		queryData,
+		onDraftChange,
+		onRun,
+		onBlur,
+	};
+}
