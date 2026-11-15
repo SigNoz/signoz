@@ -129,14 +129,14 @@ export default function ConversationItem({
 			type: 'item',
 			value: 'rename',
 			label: 'Rename',
-			prefix: <Pencil size={12} />,
+			prefix: <Pencil size={16} />,
 			onClick: (): void => startEditing(),
 		},
 		{
 			type: 'item',
 			value: 'copy-link',
 			label: 'Copy link',
-			prefix: <Link size={12} />,
+			prefix: <Link size={16} />,
 			onClick: handleCopyLink,
 		},
 		{ type: 'separator', value: 'divider' },
@@ -148,7 +148,7 @@ export default function ConversationItem({
 					type: 'item',
 					value: 'restore',
 					label: 'Restore',
-					prefix: <ArchiveRestore size={12} />,
+					prefix: <ArchiveRestore size={16} />,
 					onClick: (): void => onRestore(conversation.id),
 				},
 			]
@@ -158,7 +158,8 @@ export default function ConversationItem({
 					type: 'item',
 					value: 'archive',
 					label: 'Archive',
-					prefix: <Archive size={12} />,
+					prefix: <Archive size={16} />,
+					danger: true,
 					onClick: (): void => onArchive(conversation.id),
 				},
 			];
@@ -207,7 +208,13 @@ export default function ConversationItem({
 					// own clicks don't bubble, but the trigger button does.
 					onClick={(e): void => e.stopPropagation()}
 				>
-					<Dropdown items={menuItems} nativeButton align="end" side="bottom">
+					<Dropdown
+						items={menuItems}
+						nativeButton
+						align="end"
+						side="bottom"
+						data-conversation-menu
+					>
 						<Button
 							variant="link"
 							size="sm"

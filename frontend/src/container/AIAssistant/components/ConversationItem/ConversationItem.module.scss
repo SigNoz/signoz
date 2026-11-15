@@ -2,34 +2,31 @@
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-3);
-	padding: 7px 8px;
-	border-radius: var(--radius-2);
+	padding: 7px 0;
 	cursor: pointer;
 	min-width: 0;
 	position: relative;
-	// Driven below: hover and active reveal the action buttons.
+	// Driven below: hover, the open chat, keyboard focus and an open menu reveal the action buttons.
 	--actions-opacity: 0;
-
-	&:hover {
-		background: var(--l2-background);
-		--actions-opacity: 1;
-	}
-
-	&.active {
-		background: var(--l2-background);
-		--actions-opacity: 1;
-
-		.title {
-			color: var(--l1-foreground);
-			font-weight: 500;
-		}
-	}
 
 	&.archived {
 		opacity: 0.92;
 
 		.title {
 			color: var(--l3-foreground);
+		}
+	}
+
+	&:hover,
+	&.active,
+	&:focus-visible,
+	&:has(:focus-visible),
+	&:has([data-popup-open]) {
+		--actions-opacity: 1;
+		--actions-pointer: auto;
+
+		.title {
+			color: var(--l1-foreground);
 		}
 	}
 }
@@ -68,6 +65,9 @@
 // Gives way to the action buttons that float over it.
 .time {
 	flex-shrink: 0;
+	// Wide enough to hold the action buttons that replace it.
+	min-width: 16px;
+	text-align: right;
 	font-size: var(--periscope-font-size-small);
 	line-height: 18px;
 	color: var(--l3-foreground);
@@ -96,48 +96,40 @@
 	transition: opacity 0.12s;
 	// Float over the right edge of the item so the title can keep using
 	// the full width while the buttons are hidden — no layout shift +
-	// no premature truncation. The `background` matches the hover/active
-	// state so the buttons visually mask any title text underneath.
+	// no premature truncation. They sit in the time's slot, so they never
+	// cover the title.
 	position: absolute;
 	top: 50%;
-	right: 4px;
+	right: 0;
 	transform: translateY(-50%);
-	background: var(--l2-background);
-	padding: 1px 2px;
-	border-radius: var(--radius-2);
 	pointer-events: var(--actions-pointer, none);
+	--button-width: 16px;
+	--button-max-width: 16px;
+	--button-min-width: 16px;
+	--button-height: 20px;
+	--button-padding: 0;
 }
 
-.item:hover,
-.item.active {
-	--actions-pointer: auto;
-}
+// The row menu is portalled to the body, so it is reached through the attribute it carries.
+:global([data-slot='dropdown-popup'][data-conversation-menu]) {
+	--dropdown-min-inline-size: 207px;
+	--dropdown-padding-block: var(--spacing-4);
+	--dropdown-border-radius: var(--radius-2);
+	--dropdown-background-color: var(--l3-background-60);
+	--dropdown-backdrop-filter: blur(20px);
+	--dropdown-item-gap: var(--spacing-3);
+	--dropdown-item-padding: var(--spacing-2) var(--spacing-7);
+	--dropdown-item-slot-gap: var(--spacing-4);
+	--dropdown-item-icon-size: 16px;
+	--dropdown-item-line-height: 20px;
+	--dropdown-item-border-radius: 0;
+	--dropdown-item-color: var(--l1-foreground);
+	--dropdown-item-icon-color: var(--l1-foreground);
+	--dropdown-item-hover-background-color: var(--l3-background);
+	// Rows sit 20px apart across the divider, 14px elsewhere.
+	--dropdown-separator-margin-block: 0 -1px;
 
-// Compact menu — narrower than the design-system default so the
-// content (Rename / Copy link / Archive) doesn't dwarf the row.
-// Shared sizing for every dropdown item so the menu reads compact —
-// matches the row's own 12px label scale.
-.menuItem {
-	font-size: 12px !important;
-	cursor: pointer !important;
-}
-
-// Amber treatment for the destructive-but-recoverable Archive action —
-// less alarming than red since the conversation can be restored later.
-// Targets both the label text and the leading icon (icons inherit color
-// via `currentColor`).
-.archiveItem {
-	color: var(--accent-amber) !important;
-
-	svg {
-		color: inherit !important;
-	}
-}
-
-.restoreItem {
-	color: var(--primary) !important;
-
-	svg {
-		color: inherit !important;
+	[data-slot='dropdown-item'] {
+		letter-spacing: -0.005em;
 	}
 }
