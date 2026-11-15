@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import cx from 'classnames';
 
 import logEvent from 'api/common/logEvent';
 
@@ -7,6 +8,7 @@ import { AIAssistantEvents } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Message, StreamingEventItem } from '../../types';
+import { useVariant } from '../../VariantContext';
 import MessageBubble from '../MessageBubble';
 import StreamingMessage from '../StreamingMessage';
 
@@ -72,6 +74,7 @@ export default function VirtualizedMessages({
 	// the user was scrolled — sending a message and not seeing it is worse
 	// than the anti-yank guarantee.
 	const lastSeenUserMessageIdRef = useRef<string | null>(null);
+	const isFullPage = useVariant() === 'page';
 
 	const handleRegenerate = useCallback(
 		(messageId: string): void => {
@@ -174,36 +177,41 @@ export default function VirtualizedMessages({
 			atBottomThreshold={64}
 			initialTopMostItemIndex={Math.max(0, totalCount - 1)}
 			itemContent={(index): JSX.Element => {
+				const rowClass = cx(styles.row, { [styles.fullPage]: isFullPage });
 				if (index < messages.length) {
 					const msg = messages[index];
 					const isLastAssistant =
 						msg.role === 'assistant' &&
 						messages.slice(index + 1).every((m) => m.role !== 'assistant');
 					return (
-						<MessageBubble
-							message={msg}
-							onRegenerate={
-								isLastAssistant && !showStreamingSlot
-									? (): void => handleRegenerate(msg.id)
-									: undefined
-							}
-							onRetry={
-								msg.isError && isLastAssistant && !showStreamingSlot
-									? handleRetry
-									: undefined
-							}
-							isLastAssistant={isLastAssistant}
-						/>
+						<div className={rowClass}>
+							<MessageBubble
+								message={msg}
+								onRegenerate={
+									isLastAssistant && !showStreamingSlot
+										? (): void => handleRegenerate(msg.id)
+										: undefined
+								}
+								onRetry={
+									msg.isError && isLastAssistant && !showStreamingSlot
+										? handleRetry
+										: undefined
+								}
+								isLastAssistant={isLastAssistant}
+							/>
+						</div>
 					);
 				}
 				return (
-					<StreamingMessage
-						conversationId={conversationId}
-						events={streamingEvents}
-						status={streamingStatus}
-						pendingApproval={pendingApproval}
-						pendingClarification={pendingClarification}
-					/>
+					<div className={rowClass}>
+						<StreamingMessage
+							conversationId={conversationId}
+							events={streamingEvents}
+							status={streamingStatus}
+							pendingApproval={pendingApproval}
+							pendingClarification={pendingClarification}
+						/>
+					</div>
 				);
 			}}
 		/>

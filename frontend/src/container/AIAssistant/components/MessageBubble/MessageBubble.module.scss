@@ -37,6 +37,11 @@
 	.assistant & {
 		align-items: flex-start;
 	}
+
+	// The full page's column is already narrow, so replies use all of it.
+	.assistant &.fullPage {
+		max-width: 100%;
+	}
 }
 
 .bubble {

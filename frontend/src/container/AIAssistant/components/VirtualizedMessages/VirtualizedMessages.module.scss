@@ -14,3 +14,9 @@
 		padding: 16px 0 64px;
 	}
 }
+
+// As wide as the full-page input; the extra 32px is the rows' own gutters.
+.row.fullPage {
+	max-width: calc(var(--noz-page-column) + 32px);
+	margin: 0 auto;
+}
