@@ -42,7 +42,7 @@ const PANEL_RESIZE_EDGES = {
 const PANEL_AVOID = [supportChatObstacle];
 
 export default function AIAssistantPanel(): JSX.Element | null {
-	const { pathname } = useAppLocation();
+	const { pathname, search } = useAppLocation();
 	const [showHistory, setShowHistory] = useState(false);
 
 	const isOpen = useAIAssistantStore((s) => s.isDrawerOpen);
@@ -66,12 +66,12 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		closeDrawer();
 		// Router state tells AIAssistantPage to skip its mount-time Opened fire:
 		// the assistant was already open in the drawer, so this is a surface
-		// switch, not a new open.
+		// switch, not a new open. `returnTo` is where its minimize button comes back to.
 		navigate(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
-			{ state: { fromInApp: true } },
+			{ state: { fromInApp: true, returnTo: `${pathname}${search}` } },
 		);
-	}, [activeConversationId, closeDrawer]);
+	}, [activeConversationId, closeDrawer, pathname, search]);
 
 	const handleNew = useCallback(() => {
 		void logEvent(AIAssistantEvents.NewChatClicked, {

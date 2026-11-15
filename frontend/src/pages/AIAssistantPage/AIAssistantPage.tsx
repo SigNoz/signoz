@@ -6,7 +6,7 @@ import { PictureInPicture2 } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAppParams } from 'lib/router/useAppParams';
-import { back, navigate } from 'lib/router/navigation';
+import { navigate } from 'lib/router/navigation';
 import ROUTES from 'constants/routes';
 
 import ConversationView from 'container/AIAssistant/ConversationView';
@@ -22,7 +22,9 @@ import styles from './AIAssistantPage.module.scss';
 import ConversationsList from 'container/AIAssistant/components/ConversationsList';
 
 export default function AIAssistantPage(): JSX.Element {
-	const location = useAppLocation<{ fromInApp?: boolean } | undefined>();
+	const location = useAppLocation<
+		{ fromInApp?: boolean; returnTo?: string } | undefined
+	>();
 	const { pathname } = location;
 	const { conversationId } = useAppParams<'conversationId'>();
 
@@ -58,15 +60,12 @@ export default function AIAssistantPage(): JSX.Element {
 	const openDrawer = useAIAssistantStore((s) => s.openDrawer);
 
 	// Router state is dropped once the URL is re-keyed, so remember where the page was opened from.
-	const cameFromAppRef = useRef(fromInApp);
-	// Back to the floating panel, on the page it was expanded from; a deep link has no such page.
+	const returnToRef = useRef(location.state?.returnTo);
+	// Reopens the floating panel on the page it was expanded from, or Home after a deep link.
 	const handleMinimize = useCallback((): void => {
 		openDrawer();
-		if (cameFromAppRef.current) {
-			back();
-		} else {
-			navigate(ROUTES.HOME);
-		}
+		// Replaces the full page in history, so Back doesn't reopen it.
+		navigate(returnToRef.current ?? ROUTES.HOME, { replace: true });
 	}, [openDrawer]);
 
 	// Keep refs so the effect can read the latest store state without re-firing
