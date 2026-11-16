@@ -100,3 +100,31 @@ func TestConfigValidateProfiles(t *testing.T) {
 	config = Config{Clickhouse: ClickhouseConfig{Profiles: map[string]ProfileConfig{ProfileMain: {DSN: "tcp://localhost:9000"}}}}
 	assert.Error(t, config.Validate())
 }
+
+func TestConfigForProfile(t *testing.T) {
+	config := Config{Clickhouse: ClickhouseConfig{DSN: "tcp://main:9000", Cluster: "cluster", Profiles: map[string]ProfileConfig{"clickhouse_query": {DSN: "tcp://clickhouse_query:9000"}}}}
+
+	testCases := []struct {
+		name    string
+		profile string
+		ok      bool
+		dsn     string
+	}{
+		{name: "Configured_ProfileDSN", profile: "clickhouse_query", ok: true, dsn: "tcp://clickhouse_query:9000"},
+		{name: "NotConfigured_MainDSN", profile: "query_range", ok: false, dsn: "tcp://main:9000"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			actual, ok := config.ForProfile(testCase.profile)
+			assert.Equal(t, testCase.ok, ok)
+			assert.Equal(t, testCase.dsn, actual.Clickhouse.DSN)
+			assert.Equal(t, "cluster", actual.Clickhouse.Cluster)
+		})
+	}
+
+	actual, _ := config.ForProfile("clickhouse_query")
+	assert.Equal(t, "clickhouse_query", actual.Clickhouse.Profile)
+	assert.Empty(t, actual.Clickhouse.Profiles)
+	assert.Equal(t, "tcp://main:9000", config.Clickhouse.DSN)
+}

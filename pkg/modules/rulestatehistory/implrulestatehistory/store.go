@@ -55,7 +55,7 @@ func (s *store) AddRuleStateHistory(ctx context.Context, entries []rulestatehist
 	)
 	insertQuery, _ := ib.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	statement, err := s.telemetryStore.WithProfile(telemetrystore.ProfileMain).ClickhouseDB().PrepareBatch(
+	statement, err := s.telemetryStore.ClickhouseDB().PrepareBatch(
 		ctx,
 		insertQuery,
 	)

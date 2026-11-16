@@ -35,11 +35,6 @@ func (p *Provider) ClickhouseDB() clickhouse.Conn {
 	return p.clickhouseDB.(clickhouse.Conn)
 }
 
-// WithProfile returns the same mock, so expectations set on it apply to profile queries.
-func (p *Provider) WithProfile(_ string) telemetrystore.TelemetryStore {
-	return p
-}
-
 // Cluster returns the cluster name.
 func (p *Provider) Cluster() string {
 	return "cluster"

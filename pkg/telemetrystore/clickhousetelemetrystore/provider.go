@@ -2,7 +2,6 @@ package clickhousetelemetrystore
 
 import (
 	"context"
-	"log/slog"
 
 	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -123,9 +122,7 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 
 type provider struct {
 	settings       factory.ScopedProviderSettings
-	mainConn       clickhouse.Conn
 	clickHouseConn clickhouse.Conn
-	profileConns   map[string]clickhouse.Conn
 	cluster        string
 	hooks          []telemetrystore.TelemetryStoreHook
 }
@@ -139,17 +136,21 @@ func NewFactory(hookFactories ...factory.ProviderFactory[telemetrystore.Telemetr
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config, hookFactories ...factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]) (telemetrystore.TelemetryStore, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore")
 
-	chConn, err := open(config.Clickhouse.DSN, config.Connection)
+	options, err := clickhouse.ParseDSN(config.Clickhouse.DSN)
 	if err != nil {
 		return nil, err
 	}
+	options.MaxIdleConns = config.Connection.MaxIdleConns
+	options.MaxOpenConns = config.Connection.MaxOpenConns
+	options.DialTimeout = config.Connection.DialTimeout
+	// Read JSON columns natively: the driver mis-decodes JSON(max_dynamic_paths=0) columns without
+	// the flattened serialization, and reading them as a string collapses a key stored at both a
+	// scalar and an object path.
+	options.Settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
 
-	profileConns := make(map[string]clickhouse.Conn, len(config.Clickhouse.Profiles))
-	for name, profile := range config.Clickhouse.Profiles {
-		profileConns[name], err = open(profile.DSN, config.Connection)
-		if err != nil {
-			return nil, err
-		}
+	chConn, err := clickhouse.Open(options)
+	if err != nil {
+		return nil, err
 	}
 
 	hooks := make([]telemetrystore.TelemetryStoreHook, len(hookFactories))
@@ -166,39 +167,31 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-	p := newProvider(settings, chConn, profileConns, config.Clickhouse.Cluster, hooks)
+	profile := config.Clickhouse.Profile
+	if profile == "" {
+		profile = telemetrystore.ProfileMain
+	}
+	attrs := metric.WithAttributes(attribute.String("telemetrystore.profile", profile))
 
 	_, err = settings.Meter().RegisterCallback(func(_ context.Context, observer metric.Observer) error {
-		observe := func(profile string, conn clickhouse.Conn) {
-			stats := conn.Stats()
-			attrs := metric.WithAttributes(attribute.String("telemetrystore.profile", profile))
-			observer.ObserveInt64(metrics.open, int64(stats.Open), attrs)
-			observer.ObserveInt64(metrics.idle, int64(stats.Idle), attrs)
-			observer.ObserveInt64(metrics.maxOpen, int64(stats.MaxOpenConns), attrs)
-			observer.ObserveInt64(metrics.maxIdle, int64(stats.MaxIdleConns), attrs)
-		}
-
-		observe(telemetrystore.ProfileMain, chConn)
-		for name, conn := range profileConns {
-			observe(name, conn)
-		}
+		stats := chConn.Stats()
+		observer.ObserveInt64(metrics.open, int64(stats.Open), attrs)
+		observer.ObserveInt64(metrics.idle, int64(stats.Idle), attrs)
+		observer.ObserveInt64(metrics.maxOpen, int64(stats.MaxOpenConns), attrs)
+		observer.ObserveInt64(metrics.maxIdle, int64(stats.MaxIdleConns), attrs)
 		return nil
 	}, metrics.open, metrics.idle, metrics.maxOpen, metrics.maxIdle)
 	if err != nil {
 		return nil, err
 	}
 
-	return p, nil
-}
-
-// newProvider runs queries with the default profile, or on mainConn until that profile is configured.
-func newProvider(settings factory.ScopedProviderSettings, mainConn clickhouse.Conn, profileConns map[string]clickhouse.Conn, cluster string, hooks []telemetrystore.TelemetryStoreHook) *provider {
-	conn, ok := profileConns[telemetrystore.ProfileDefault]
-	if !ok {
-		conn = mainConn
+	p := &provider{
+		settings:       settings,
+		clickHouseConn: chConn,
+		cluster:        config.Clickhouse.Cluster,
+		hooks:          hooks,
 	}
-
-	return &provider{settings: settings, mainConn: mainConn, clickHouseConn: conn, profileConns: profileConns, cluster: cluster, hooks: hooks}
+	return p, nil
 }
 
 func (p *provider) ClickhouseDB() clickhouse.Conn {
@@ -217,40 +210,12 @@ func (p *provider) Indexes(ctx context.Context, stmt string, args ...any) (telem
 	return RunExplainIndexes(ctx, p, stmt, args...)
 }
 
-func (p *provider) WithProfile(profile string) telemetrystore.TelemetryStore {
-	conn, ok := p.profileConns[profile]
-	if profile == telemetrystore.ProfileMain {
-		conn, ok = p.mainConn, true
-	}
-	if !ok {
-		if profile != telemetrystore.ProfileDefault {
-			p.settings.Logger().InfoContext(context.Background(), "clickhouse settings profile is not configured, falling back to the default profile", slog.String("profile", profile))
-		}
-		conn = p.profileConns[telemetrystore.ProfileDefault]
-		if conn == nil {
-			conn = p.mainConn
-		}
-	}
-	if conn == p.clickHouseConn {
-		return p
-	}
-
-	profiled := *p
-	profiled.clickHouseConn = conn
-	return &profiled
-}
-
 func (p *provider) Cluster() string {
 	return p.cluster
 }
 
 func (p *provider) Close() error {
-	for _, conn := range p.profileConns {
-		if err := conn.Close(); err != nil {
-			return err
-		}
-	}
-	return p.mainConn.Close()
+	return p.clickHouseConn.Close()
 }
 
 func (p *provider) Ping(ctx context.Context) error {
@@ -354,22 +319,6 @@ func (p *provider) ServerVersion() (*driver.ServerVersion, error) {
 
 func (p *provider) Contributors() []string {
 	return p.clickHouseConn.Contributors()
-}
-
-func open(dsn string, connection telemetrystore.ConnectionConfig) (clickhouse.Conn, error) {
-	options, err := clickhouse.ParseDSN(dsn)
-	if err != nil {
-		return nil, err
-	}
-	options.MaxIdleConns = connection.MaxIdleConns
-	options.MaxOpenConns = connection.MaxOpenConns
-	options.DialTimeout = connection.DialTimeout
-	// Read JSON columns natively: the driver mis-decodes JSON(max_dynamic_paths=0) columns without
-	// the flattened serialization, and reading them as a string collapses a key stored at both a
-	// scalar and an object path.
-	options.Settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
-
-	return clickhouse.Open(options)
 }
 
 func castError(err error) error {

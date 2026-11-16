@@ -7,14 +7,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
-const (
-	// ProfileMain is the main DSN, with no profile of its own. Writes and schema changes run on it.
-	ProfileMain = "main"
-
-	// ProfileDefault runs every query that asks for no other profile, and an unconfigured one. Until it
-	// is configured it runs on ProfileMain.
-	ProfileDefault = "default"
-)
+// ProfileMain names the main DSN, which has no settings profile of its own.
+const ProfileMain = "main"
 
 type Config struct {
 	// Provider is the provider to use
@@ -48,10 +42,13 @@ type ClickhouseConfig struct {
 	// QuerySettings is the query settings for clickhouse.
 	QuerySettings QuerySettings `mapstructure:"settings"`
 
-	// Profiles maps a settings profile name (TelemetryStore.WithProfile) to the connection that runs its
-	// queries. The native protocol sets the profile at login, so each DSN logs in as a user whose
-	// default profile is that one.
+	// Profiles maps a settings profile name to the DSN of a store that runs its queries (ForProfile). The
+	// native protocol sets the profile at login, so each DSN logs in as a user whose default profile is
+	// that one.
 	Profiles map[string]ProfileConfig `mapstructure:"profiles"`
+
+	// Profile is the settings profile the DSN logs in with, set by ForProfile.
+	Profile string `mapstructure:"-"`
 }
 
 type ProfileConfig struct {
@@ -85,6 +82,20 @@ func newConfig() factory.Config {
 		},
 	}
 
+}
+
+// ForProfile returns the config of a store that runs queries with the profile, or false when the profile
+// is not configured.
+func (c Config) ForProfile(name string) (Config, bool) {
+	profile, ok := c.Clickhouse.Profiles[name]
+	if !ok {
+		return c, false
+	}
+
+	c.Clickhouse.DSN = profile.DSN
+	c.Clickhouse.Profile = name
+	c.Clickhouse.Profiles = nil
+	return c, true
 }
 
 func (c Config) Validate() error {
