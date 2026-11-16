@@ -78,7 +78,7 @@ export const nozMocks = defineStoryMocks({
 				state.streams[`${AWAITING_PREFIX}${index}`] = awaitingStream();
 			}
 
-			// Persisted, so a panel one story opened would hide Ask Noz in the next.
+			// Persisted, so a panel one story opened would still be open in the next.
 			state.isDrawerOpen = false;
 		});
 	},
