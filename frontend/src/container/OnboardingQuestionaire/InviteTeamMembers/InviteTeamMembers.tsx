@@ -6,6 +6,8 @@ import InviteMembers from 'components/InviteMembers/InviteMembers';
 import { InviteMemberRow, InviteResult } from 'components/InviteMembers/types';
 import { useRoles } from 'components/RolesSelect/RolesSelect';
 import { useNotifications } from 'hooks/useNotifications';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { UserCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
 import { getBaseUrl } from 'utils/basePath';
 
 import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
@@ -118,20 +120,22 @@ function InviteTeamMembers({
 
 								return (
 									<div className="onboarding-buttons-container">
-										<Button
+										<AuthZButton
 											size="md"
 											variant="solid"
 											color="primary"
 											width="100%"
 											onClick={submit}
 											loading={isButtonDisabled}
-											disabled={!canSubmit}
-											disabledTooltip="Add at least one team member to invite"
+											disabledTooltip={
+												canSubmit ? undefined : 'Add at least one team member to invite'
+											}
+											checks={[UserCreatePermission]}
 											testId="send-invites-button"
 											suffix={<ArrowRight size={12} />}
 										>
 											Send Invites
-										</Button>
+										</AuthZButton>
 										<Button
 											size="md"
 											variant="ghost"
