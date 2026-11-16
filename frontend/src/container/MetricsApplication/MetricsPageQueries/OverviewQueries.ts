@@ -1,3 +1,4 @@
+import { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
 import { OPERATORS } from 'constants/queryBuilder';
 import {
 	BaseAutocompleteData,
@@ -40,11 +41,10 @@ export const latency = ({
 }: LatencyProps): QueryBuilderData => {
 	const signozLatencyBucketMetrics = WidgetKeys.SignozLatencyBucket;
 
-	const signozMetricsServiceName = WidgetKeys.OTelServiceName;
 	const newAutoCompleteData: BaseAutocompleteData = {
 		key: isSpanMetricEnable
 			? signozLatencyBucketMetrics
-			: WidgetKeys.DurationNano,
+			: WidgetKeys.SpanDurationNano,
 		dataType: DataTypes.Float64,
 		type: isSpanMetricEnable ? '' : MetricsType.Tag,
 	};
@@ -55,7 +55,7 @@ export const latency = ({
 		{
 			id: '',
 			key: {
-				key: isSpanMetricEnable ? signozMetricsServiceName : WidgetKeys.ServiceName,
+				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
 				type: isSpanMetricEnable ? MetricsType.Resource : MetricsType.Tag,
 			},
@@ -283,6 +283,30 @@ export const apDexMetricsQueryBuilderQueries = ({
 	delta,
 	metricsBuckets,
 }: ApDexMetricsQueryBuilderQueriesProps): QueryBuilderData => {
+	// the comparison count stops at the largest finite bucket, so a threshold past it
+	// reads the count metric, which is the +Inf bucket
+	const countAtOrBelow = (
+		ms: number,
+	): {
+		key: string;
+		spaceAggregation: MetricAggregateOperator;
+		param?: MetrictypesComparisonSpaceAggregationParamDTO;
+	} => {
+		const bucket = getNearestHighestBucketValue(ms, metricsBuckets);
+		return bucket === '+Inf'
+			? {
+					key: WidgetKeys.SignozLatencyCount,
+					spaceAggregation: MetricAggregateOperator.SUM,
+				}
+			: {
+					key: WidgetKeys.SignozLatencyBucket,
+					spaceAggregation: MetricAggregateOperator.COUNT,
+					param: { operator: '<=', threshold: Number(bucket) },
+				};
+	};
+	const satisfied = countAtOrBelow(threashold * 1000);
+	const tolerating = countAtOrBelow(threashold * 1000 * 4);
+
 	const autoCompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozLatencyCount,
 		dataType: DataTypes.Float64,
@@ -290,13 +314,13 @@ export const apDexMetricsQueryBuilderQueries = ({
 	};
 
 	const autoCompleteDataB: BaseAutocompleteData = {
-		key: WidgetKeys.SignozLatencyBucket,
+		key: satisfied.key,
 		dataType: DataTypes.Float64,
 		type: '',
 	};
 
 	const autoCompleteDataC: BaseAutocompleteData = {
-		key: WidgetKeys.SignozLatencyBucket,
+		key: tolerating.key,
 		dataType: DataTypes.Float64,
 		type: '',
 	};
@@ -339,16 +363,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.Le,
-				dataType: DataTypes.String,
-				type: MetricsType.Tag,
-			},
-			op: OPERATORS['='],
-			value: getNearestHighestBucketValue(threashold * 1000, metricsBuckets),
-		},
-		{
-			id: '',
-			key: {
 				key: WidgetKeys.OTelServiceName,
 				dataType: DataTypes.String,
 				type: MetricsType.Tag,
@@ -370,16 +384,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 	];
 
 	const filterItemC: TagFilterItem[] = [
-		{
-			id: '',
-			key: {
-				key: WidgetKeys.Le,
-				dataType: DataTypes.String,
-				type: MetricsType.Tag,
-			},
-			op: OPERATORS['='],
-			value: getNearestHighestBucketValue(threashold * 1000 * 4, metricsBuckets),
-		},
 		{
 			id: '',
 			key: {
@@ -426,16 +430,23 @@ export const apDexMetricsQueryBuilderQueries = ({
 		? [FORMULA.APDEX_DELTA_SPAN_METRICS]
 		: [FORMULA.APDEX_CUMULATIVE_SPAN_METRICS];
 	const legendFormulas = [GraphTitle.APDEX];
+	// v5 forces increase on histograms, so the total matches it
 	const timeAggregateOperators = [
-		MetricAggregateOperator.RATE,
-		MetricAggregateOperator.RATE,
-		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.INCREASE,
+		MetricAggregateOperator.INCREASE,
+		MetricAggregateOperator.INCREASE,
 	];
 
+	// a plain sum keeps the le label on B and C, and the formula then cannot join them
 	const spaceAggregateOperators = [
 		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
+		satisfied.spaceAggregation,
+		tolerating.spaceAggregation,
+	];
+	const comparisonSpaceAggregationParams = [
+		undefined,
+		satisfied.param,
+		tolerating.param,
 	];
 	const dataSource = DataSource.METRICS;
 
@@ -448,6 +459,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 		legendFormulas,
 		timeAggregateOperators,
 		spaceAggregateOperators,
+		comparisonSpaceAggregationParams,
 		dataSource,
 	});
 };

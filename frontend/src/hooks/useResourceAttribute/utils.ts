@@ -96,22 +96,8 @@ export const convertRawQueriesToTraceSelectedTags = (
 /* Convert resource attributes to tagFilter items for queryBuilder */
 export const resourceAttributesToTagFilterItems = (
 	queries: IResourceAttribute[],
-	isTraceDataSource = false,
-): TagFilterItem[] => {
-	if (isTraceDataSource) {
-		return convertRawQueriesToTraceSelectedTags(queries).map((e) => ({
-			id: e.Key,
-			op: e.Operator,
-			value: e.StringValues,
-			key: {
-				dataType: DataTypes.String,
-				type: MetricsType.Resource,
-				key: e.Key,
-			},
-		}));
-	}
-
-	return queries.map((res) => ({
+): TagFilterItem[] =>
+	queries.map((res) => ({
 		id: `${res.id}`,
 		key: {
 			key: res.tagKey,
@@ -121,7 +107,6 @@ export const resourceAttributesToTagFilterItems = (
 		op: `${res.operator}`,
 		value: `${res.tagValue}`.split(','),
 	}));
-};
 /* Convert resource attributes to trace filters items for queryBuilder */
 export const resourceAttributesToTracesFilterItems = (
 	queries: IResourceAttribute[],
