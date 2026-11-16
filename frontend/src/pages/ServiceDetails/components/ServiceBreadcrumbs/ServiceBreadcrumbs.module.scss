@@ -1,0 +1,9 @@
+// A long service name ellipsizes instead of stretching the header row.
+.service {
+	display: inline-block;
+	max-width: 480px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	vertical-align: middle;
+}

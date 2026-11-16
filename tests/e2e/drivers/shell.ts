@@ -7,7 +7,6 @@ import {
 } from '@playwright/test';
 
 import { alertSeeder } from './alerts/seed';
-import { MISSING_METADATA } from './apm';
 import { stubCloudOnlyApis, type ConsoleWatch } from './console';
 import {
 	createDashboard,
@@ -80,8 +79,6 @@ export const ROUTES: RouteProbe[] = [
 		title: 'TC-03 /services/<service> renders the service overview',
 		path: `/services/${GOLDEN_SERVICE}`,
 		marker: selectedTab('Overview'),
-		// The Apdex panel's metadata request, see `MISSING_METADATA`.
-		allowFailures: [MISSING_METADATA],
 	},
 	{
 		title: 'TC-04 /service-map renders the map container',

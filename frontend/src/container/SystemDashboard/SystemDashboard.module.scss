@@ -5,3 +5,9 @@
 	gap: var(--spacing-2);
 	padding: var(--spacing-8);
 }
+
+.loading {
+	display: flex;
+	justify-content: center;
+	padding: var(--spacing-16);
+}

@@ -1,0 +1,242 @@
+{
+  "version": 1,
+  "definition": {
+    "schemaVersion": "v6",
+    "name": "signoz---services-db-calls",
+    "tags": [],
+    "spec": {
+      "display": {
+        "name": "Service Database Calls",
+        "description": "Database calls the service makes, from span metrics."
+      },
+      "variables": [
+        {
+          "kind": "ListVariable",
+          "spec": {
+            "name": "service_name",
+            "display": {
+              "name": "service_name",
+              "description": "Service"
+            },
+            "allowMultiple": false,
+            "allowAllValue": false,
+            "sort": "alphabetical-asc",
+            "plugin": {
+              "kind": "signoz/DynamicVariable",
+              "spec": {
+                "name": "service.name",
+                "signal": "traces"
+              }
+            }
+          }
+        },
+        {
+          "kind": "ListVariable",
+          "spec": {
+            "name": "environment",
+            "display": {
+              "name": "environment",
+              "description": "Deployment environment"
+            },
+            "allowMultiple": true,
+            "allowAllValue": true,
+            "sort": "alphabetical-asc",
+            "plugin": {
+              "kind": "signoz/DynamicVariable",
+              "spec": {
+                "name": "deployment.environment",
+                "signal": "traces"
+              }
+            }
+          }
+        }
+      ],
+      "layouts": [
+        {
+          "kind": "Grid",
+          "spec": {
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/d717935a-c224-5b50-9918-b75e783eee50"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/ddf33caf-3c4e-52d2-a76b-dc05c598f3cb"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "panels": {
+        "d717935a-c224-5b50-9918-b75e783eee50": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Database Calls RPS"
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "reqps",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 0,
+                            "disabled": false,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "signoz_db_latency_count",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum"
+                              }
+                            ],
+                            "groupBy": [
+                              {
+                                "name": "db.system",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "legend": "{{db.system}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "ddf33caf-3c4e-52d2-a76b-dc05c598f3cb": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Database Calls Avg Duration"
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "ms",
+                  "decimalPrecision": "2"
+                },
+                "legend": {
+                  "position": "bottom"
+                },
+                "chartAppearance": {
+                  "lineStyle": "solid",
+                  "lineInterpolation": "spline",
+                  "fillMode": "none"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "signoz_db_latency_sum",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "metrics",
+                            "stepInterval": 0,
+                            "disabled": true,
+                            "filter": {
+                              "expression": "service.name = $service_name AND deployment.environment IN $environment"
+                            },
+                            "aggregations": [
+                              {
+                                "metricName": "signoz_db_latency_count",
+                                "timeAggregation": "rate",
+                                "spaceAggregation": "sum"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "builder_formula",
+                          "spec": {
+                            "name": "F1",
+                            "expression": "A/B",
+                            "legend": "Average Duration"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,9 +1,4 @@
-import {
-	expect,
-	OVERVIEW_PANELS,
-	test,
-	withoutMissingMetadata,
-} from '../../drivers/apm';
+import { expect, OVERVIEW_PANELS, test } from '../../drivers/apm';
 
 test.describe('Services, list', () => {
 	test('TC-01 services list shows a seeded service with trace-derived stats', async ({
@@ -43,8 +38,7 @@ test.describe('Services, list', () => {
 			// eslint-disable-next-line no-await-in-loop
 			await apm.expectPanelRendered(panel);
 		}
-		const { errors, failedResponses } = withoutMissingMetadata(noise);
-		expect(errors).toEqual([]);
-		expect(failedResponses).toEqual([]);
+		expect(noise.errors).toEqual([]);
+		expect(noise.failedResponses).toEqual([]);
 	});
 });

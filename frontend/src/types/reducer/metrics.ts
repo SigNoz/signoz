@@ -1,4 +1,4 @@
-import { TopOperationList } from 'container/MetricsApplication/TopOperationsTable';
+import { TopOperationList } from 'types/api/metrics/getTopOperations';
 import { DBOverView } from 'types/api/metrics/getDBOverview';
 import { ExternalAverageDuration } from 'types/api/metrics/getExternalAverageDuration';
 import { ExternalError } from 'types/api/metrics/getExternalError';
