@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz/openfgaschema"
 	"github.com/SigNoz/signoz/pkg/authz/openfgaserver"
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/condensedmeter"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -120,6 +121,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		},
 		func(_ context.Context, _ factory.ProviderSettings, _ flagger.Flagger, _ licensing.Licensing, _ telemetrystore.TelemetryStore, _ retention.Getter, _ organization.Getter, _ zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string) {
 			return signoz.NewMeterReporterProviderFactories(), "noop"
+		},
+		func(_ flagger.Flagger, _ licensing.Licensing, _ organization.Getter, _ telemetrystore.TelemetryStore, _ sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[condensedmeter.Reporter, condensedmeter.Config]] {
+			return signoz.NewCondensedMeterProviderFactories()
 		},
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
 			return querier.NewHandler(ps, q, a)

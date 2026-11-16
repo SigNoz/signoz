@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/ee/authz/openfgaauthz"
 	"github.com/SigNoz/signoz/ee/authz/openfgaschema"
 	"github.com/SigNoz/signoz/ee/authz/openfgaserver"
+	"github.com/SigNoz/signoz/ee/condensedmeter/kafkacondensedmeter"
 	"github.com/SigNoz/signoz/ee/gateway/httpgateway"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
@@ -38,6 +39,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/condensedmeter"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	pkgflagger "github.com/SigNoz/signoz/pkg/flagger"
@@ -175,6 +177,13 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			}
 
 			return factories, "http"
+		},
+		func(flagger pkgflagger.Flagger, licensing licensing.Licensing, orgGetter organization.Getter, telemetryStore telemetrystore.TelemetryStore, sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[condensedmeter.Reporter, condensedmeter.Config]] {
+			factories := signoz.NewCondensedMeterProviderFactories()
+			if err := factories.Add(kafkacondensedmeter.NewFactory(flagger, licensing, orgGetter, telemetryStore, sqlstore, version.Info)); err != nil {
+				panic(err)
+			}
+			return factories
 		},
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
 			communityHandler := querier.NewHandler(ps, q, a)

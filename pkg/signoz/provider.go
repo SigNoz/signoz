@@ -16,6 +16,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/cache/rediscache"
+	"github.com/SigNoz/signoz/pkg/condensedmeter"
+	"github.com/SigNoz/signoz/pkg/condensedmeter/noopcondensedmeter"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/emailing/noopemailing"
 	"github.com/SigNoz/signoz/pkg/emailing/smtpemailing"
@@ -275,6 +277,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateRulesV1ToV2Alpha1Factory(sqlstore),
 		sqlmigration.NewAddLLMPricingRuleTuplesFactory(sqlstore),
 		sqlmigration.NewRemoveUnsupportedQuickFiltersFactory(),
+		sqlmigration.NewAddCondensedMeterCheckpointFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -426,6 +429,12 @@ func NewAuditorProviderFactories() factory.NamedMap[factory.ProviderFactory[audi
 func NewMeterReporterProviderFactories() factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]] {
 	return factory.MustNewNamedMap(
 		noopmeterreporter.NewFactory(),
+	)
+}
+
+func NewCondensedMeterProviderFactories() factory.NamedMap[factory.ProviderFactory[condensedmeter.Reporter, condensedmeter.Config]] {
+	return factory.MustNewNamedMap(
+		noopcondensedmeter.NewFactory(),
 	)
 }
 
