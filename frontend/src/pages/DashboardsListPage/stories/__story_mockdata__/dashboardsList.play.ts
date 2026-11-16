@@ -165,6 +165,22 @@ export const openSaveViewPopover = async ({
 	await screen.findByText('Save as view');
 };
 
+export const openRenameViewPopover = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const [rename] = await within(canvasElement).findAllByRole(
+		'button',
+		{ name: 'Rename view' },
+		{ timeout: TOAST_TIMEOUT },
+	);
+
+	// The actions only take pointer events while the row is hovered by CSS.
+	await userEvent.click(rename, { pointerEventsCheck: 0 });
+	await screen.findByTestId('rename-view-name', undefined, {
+		timeout: TOAST_TIMEOUT,
+	});
+};
+
 export const renameDashboard = async ({
 	canvasElement,
 	args,
