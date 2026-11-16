@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 )
 
 func TestCastError_SettingConstraintViolation(t *testing.T) {
@@ -31,5 +32,6 @@ func TestProviderWithProfile(t *testing.T) {
 
 	assert.Same(t, profileConn, p.WithProfile("query_range").(*provider).clickHouseConn)
 	assert.Same(t, defaultConn, p.clickHouseConn)
+	assert.Same(t, p, p.WithProfile(telemetrystore.ProfileDefault))
 	assert.Same(t, p, p.WithProfile("unknown"))
 }

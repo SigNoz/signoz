@@ -96,4 +96,7 @@ func TestConfigValidateProfiles(t *testing.T) {
 
 	config.Clickhouse.Profiles["empty"] = ProfileConfig{}
 	assert.Error(t, config.Validate())
+
+	config = Config{Clickhouse: ClickhouseConfig{Profiles: map[string]ProfileConfig{ProfileDefault: {DSN: "tcp://localhost:9000"}}}}
+	assert.Error(t, config.Validate())
 }

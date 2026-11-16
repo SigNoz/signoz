@@ -202,11 +202,16 @@ func (p *provider) Indexes(ctx context.Context, stmt string, args ...any) (telem
 	return RunExplainIndexes(ctx, p, stmt, args...)
 }
 
-// WithProfile returns p itself when the profile is not configured, so callers keep working until it is.
+// WithProfile returns p itself, the default profile, when the profile is not configured, so callers keep
+// working until it is.
 func (p *provider) WithProfile(profile string) telemetrystore.TelemetryStore {
+	if profile == telemetrystore.ProfileDefault {
+		return p
+	}
+
 	conn, ok := p.profileConns[profile]
 	if !ok {
-		p.settings.Logger().InfoContext(context.Background(), "clickhouse settings profile is not configured, using the default connection", slog.String("profile", profile))
+		p.settings.Logger().InfoContext(context.Background(), "clickhouse settings profile is not configured, falling back to the default profile", slog.String("profile", profile))
 		return p
 	}
 

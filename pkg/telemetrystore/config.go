@@ -45,6 +45,10 @@ type ClickhouseConfig struct {
 	Profiles map[string]ProfileConfig `mapstructure:"profiles"`
 }
 
+// ProfileDefault is the profile of the main DSN user. It has no limits and is the fallback for an
+// unconfigured profile.
+const ProfileDefault = "default"
+
 type ProfileConfig struct {
 	DSN string `mapstructure:"dsn"`
 }
@@ -80,6 +84,9 @@ func newConfig() factory.Config {
 
 func (c Config) Validate() error {
 	for name, profile := range c.Clickhouse.Profiles {
+		if name == ProfileDefault {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetrystore.clickhouse.profiles.%s is the main dsn and cannot be configured", name)
+		}
 		if profile.DSN == "" {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetrystore.clickhouse.profiles.%s.dsn is required", name)
 		}
