@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 )
 
@@ -168,11 +169,19 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	p := newProvider(settings, chConn, profileConns, config.Clickhouse.Cluster, hooks)
 
 	_, err = settings.Meter().RegisterCallback(func(_ context.Context, observer metric.Observer) error {
-		stats := p.clickHouseConn.Stats()
-		observer.ObserveInt64(metrics.open, int64(stats.Open))
-		observer.ObserveInt64(metrics.idle, int64(stats.Idle))
-		observer.ObserveInt64(metrics.maxOpen, int64(stats.MaxOpenConns))
-		observer.ObserveInt64(metrics.maxIdle, int64(stats.MaxIdleConns))
+		observe := func(profile string, conn clickhouse.Conn) {
+			stats := conn.Stats()
+			attrs := metric.WithAttributes(attribute.String("telemetrystore.profile", profile))
+			observer.ObserveInt64(metrics.open, int64(stats.Open), attrs)
+			observer.ObserveInt64(metrics.idle, int64(stats.Idle), attrs)
+			observer.ObserveInt64(metrics.maxOpen, int64(stats.MaxOpenConns), attrs)
+			observer.ObserveInt64(metrics.maxIdle, int64(stats.MaxIdleConns), attrs)
+		}
+
+		observe(telemetrystore.ProfileMain, chConn)
+		for name, conn := range profileConns {
+			observe(name, conn)
+		}
 		return nil
 	}, metrics.open, metrics.idle, metrics.maxOpen, metrics.maxIdle)
 	if err != nil {
