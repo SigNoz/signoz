@@ -29,6 +29,7 @@ import PanelEditorLayout, {
 import PreviewPane from './PreviewPane/PreviewPane';
 import { useLegendSeries } from './hooks/useLegendSeries';
 import type { PanelEditorDraftApi } from './types';
+import { useGeoMapPlacement } from './hooks/useGeoMapPlacement';
 import { useGroupColumns } from './hooks/useGroupColumns';
 import { usePanelEditSession } from './hooks/usePanelEditSession';
 import { usePanelEditorSave } from './hooks/usePanelEditorSave';
@@ -201,6 +202,7 @@ function QueryEditorBody({
 	const legendSeries = useLegendSeries(draft, data);
 	const tableColumns = useTableColumns(draft, data);
 	const groupColumns = useGroupColumns(draft, data);
+	const geoMapPlacement = useGeoMapPlacement(draft, data);
 
 	// Resolves the selected metric's unit and, on a new panel, seeds it into the right
 	// formatting field for the kind (panel-wide `unit`, or per-column `columnUnits` for
@@ -333,6 +335,7 @@ function QueryEditorBody({
 					legendSeries={legendSeries}
 					tableColumns={tableColumns}
 					groupColumns={groupColumns}
+					geoMapPlacement={geoMapPlacement}
 					stepInterval={stepInterval}
 					metricUnit={metricUnit}
 				/>
