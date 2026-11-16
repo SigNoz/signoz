@@ -4,6 +4,22 @@
  */
 
 import type { MessagingQueuesPayloadProps } from 'api/messagingQueues/getConsumerLagDetails';
+import {
+	DashboardtypesSourceDTO,
+	type DashboardtypesGettableSystemDashboardDTO,
+	type GetSystemDashboard200,
+} from 'api/generated/services/sigNoz.schemas';
+import type {
+	MetricRangePayloadV5,
+	QueryRangeRequestV5,
+} from 'types/api/v5/queryRange';
+
+import {
+	queryRangeV5TimeSeriesResponse,
+	timeSeriesPoints,
+} from '@/storybook/msw/__story_mockdata__/queryRange';
+
+import kafkaMetricsDefinition from '../../../../../../../pkg/modules/dashboard/impldashboard/fs/definitions/kafka-metrics.json';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import type { DropRateAPIResponse } from 'pages/MessagingQueues/MQDetails/DropRateView/dropRateViewUtils';
@@ -274,3 +290,72 @@ export const spanEvaluationResponse = (
 		},
 	],
 });
+
+/** The Metric view's system dashboard, as `GET /api/v2/dashboards/system/:name` serves it. */
+export const kafkaMetricsSystemDashboardResponse =
+	(): GetSystemDashboard200 => {
+		const { definition } = kafkaMetricsDefinition;
+
+		return {
+			status: 'success',
+			data: {
+				orgId: 'storybook-org',
+				locked: true,
+				source: DashboardtypesSourceDTO.system,
+				name: definition.name,
+				schemaVersion: definition.schemaVersion,
+				tags: [],
+				spec: definition.spec as DashboardtypesGettableSystemDashboardDTO['spec'],
+			},
+		};
+	};
+
+interface MetricQuerySpecView {
+	name?: string;
+	disabled?: boolean;
+	groupBy?: { name: string }[];
+	aggregations?: { metricName?: string }[];
+}
+
+/** A stable level per metric so each chart draws its own scale. */
+const levelFor = (metric: string): number =>
+	10 +
+	(Array.from({ length: metric.length }, (_unused, index) =>
+		metric.charCodeAt(index),
+	).reduce((sum, code) => sum + code, 0) %
+		90);
+
+/**
+ * Answers a Metric view panel: one series per visible query, split into `series`
+ * lines when the query groups (by group/topic/partition, service), else one line.
+ */
+export const kafkaMetricsQueryRangeResponse = (
+	body: QueryRangeRequestV5,
+	series: number,
+): MetricRangePayloadV5 =>
+	queryRangeV5TimeSeriesResponse(
+		(body.compositeQuery?.queries ?? [])
+			.map((query) => query.spec as unknown as MetricQuerySpecView)
+			.filter((spec) => !spec.disabled)
+			.map((spec, queryIndex) => {
+				const base = levelFor(spec.aggregations?.[0]?.metricName ?? '');
+				const groups = spec.groupBy ?? [];
+				const lines = groups.length ? Math.max(series, 1) : 1;
+				return {
+					queryName: spec.name ?? 'A',
+					series: Array.from({ length: lines }, (_unused, line) => ({
+						labels: groups.map((group) => ({
+							key: { name: group.name },
+							value: `${group.name}-${line}`,
+						})),
+						values: timeSeriesPoints({
+							start: body.start,
+							end: body.end,
+							base: base * (1 - line * 0.12),
+							amplitude: base * 0.15,
+							seed: queryIndex * 3 + line,
+						}),
+					})),
+				};
+			}),
+	);

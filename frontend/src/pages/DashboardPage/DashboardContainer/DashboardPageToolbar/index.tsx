@@ -62,6 +62,8 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	const showToolbar = useDashboardControlGroup('toolbar');
 	const hasTitleRow = Object.values(showTitle).some(Boolean);
 	const hasActions = Object.values(showActions).some(Boolean);
+	const hasChrome =
+		hasTitleRow || hasActions || showToolbar.timeRange || showToolbar.variables;
 	const { showErrorModal } = useErrorModal();
 	const { patchAsync } = useOptimisticPatch();
 	const {
@@ -163,7 +165,11 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 	}, [id, openPicker]);
 
 	return (
-		<section className={styles.dashboardPageToolbarContainer}>
+		<section
+			className={styles.dashboardPageToolbarContainer}
+			data-testid="dashboard-page-toolbar"
+			hidden={!hasChrome}
+		>
 			{(hasTitleRow || hasActions) && (
 				<div className={styles.dashboardInfoWithActions}>
 					{hasTitleRow && (
