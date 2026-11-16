@@ -48,22 +48,59 @@ export function QuerySearchV2Provider({
 	}, [initialExpression, store]);
 
 	const isInitialized = useRef(false);
-	useEffect(() => {
-		if (!isInitialized.current && urlExpression) {
-			const cleanedExpression = getUserExpressionFromCombined(
-				initialExpression,
-				urlExpression,
-			);
-			store.getState().initializeFromUrl(cleanedExpression);
-			isInitialized.current = true;
-		}
-	}, [urlExpression, initialExpression, store]);
-
+	const lastCommittedRef = useRef(committedExpression);
 	useEffect(() => {
 		if (isInitialized.current || !urlExpression) {
-			setUrlExpression(committedExpression || null);
+			return;
 		}
-	}, [committedExpression, setUrlExpression, urlExpression]);
+		isInitialized.current = true;
+		store
+			.getState()
+			.initializeFromUrl(
+				getUserExpressionFromCombined(initialExpression, urlExpression),
+			);
+	}, [urlExpression, initialExpression, store]);
+
+	// Back and Forward. Reads the browser's URL: after a write, nuqs can briefly
+	// report the value it replaced.
+	useEffect(() => {
+		const onPopState = (): void => {
+			isInitialized.current = true;
+			const urlValue = new URLSearchParams(window.location.search).get(
+				queryParamKey,
+			);
+			const expression = urlValue
+				? getUserExpressionFromCombined(initialExpression, urlValue)
+				: '';
+			// Another param changed; keep any text typed but not run.
+			if (expression === store.getState().committedExpression) {
+				return;
+			}
+			// Already in the URL, so the write below must not run for it.
+			lastCommittedRef.current = expression;
+			if (expression) {
+				store.getState().initializeFromUrl(expression);
+			} else {
+				store.getState().resetExpression();
+			}
+		};
+		window.addEventListener('popstate', onPopState);
+		return (): void => window.removeEventListener('popstate', onPopState);
+	}, [queryParamKey, initialExpression, store]);
+
+	// Write only when the committed filter changes, never in reply to a URL change.
+	useEffect(() => {
+		if (committedExpression === lastCommittedRef.current) {
+			return;
+		}
+		lastCommittedRef.current = committedExpression;
+		isInitialized.current = true;
+		const next = committedExpression || null;
+		if (next === urlExpression) {
+			return;
+		}
+		void setUrlExpression(next);
+	}, [committedExpression, urlExpression, setUrlExpression]);
 
 	useEffect(() => {
 		return (): void => {

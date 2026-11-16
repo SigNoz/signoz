@@ -250,6 +250,21 @@ func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	return r.validate()
 }
 
+func NewPatchedPostableRule(stored []byte, patch []byte) (*PostableRule, error) {
+	patched := new(PostableRule)
+	if err := json.Unmarshal(stored, patched); err != nil {
+		return nil, err
+	}
+	// a rule stored before selectedQueryName was required resolves it the way evaluation does
+	patched.RuleCondition.SelectedQuery = patched.RuleCondition.SelectedQueryName()
+
+	if err := patched.DecodeStrict(string(patch)); err != nil {
+		return nil, err
+	}
+
+	return patched, nil
+}
+
 func (r *PostableRule) DecodeStrict(ruleStr string) error {
 	err := json.Unmarshal([]byte(ruleStr), r)
 	if err == nil {
