@@ -16,6 +16,14 @@ packages:
       filename: "maintenance.go"
       structname: 'Mock{{.InterfaceName}}'
       pkgname: '{{.SrcPackageName}}test'
+  github.com/SigNoz/signoz/pkg/types/condensedmetertypes:
+    interfaces:
+      Store:
+    config:
+      dir: '{{.InterfaceDir}}/condensedmetertypestest'
+      filename: "store.go"
+      structname: 'Mock{{.InterfaceName}}'
+      pkgname: '{{.SrcPackageName}}test'
   github.com/SigNoz/signoz/pkg/types/telemetrytypes:
     interfaces:
       SchemaMetadataStore:
