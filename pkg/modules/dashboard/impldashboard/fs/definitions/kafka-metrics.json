@@ -1,0 +1,2298 @@
+{
+  "version": 1,
+  "definition": {
+    "schemaVersion": "v6",
+    "name": "signoz---kafka-metrics",
+    "tags": [],
+    "spec": {
+      "display": {
+        "name": "Kafka Metrics",
+        "description": "Broker, producer, consumer, JVM and partition metrics for the Kafka cluster."
+      },
+      "variables": [],
+      "panels": {
+        "brokerJVMMetrics-0": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "JVM GC Count",
+              "description": "Tracks the total number of garbage collection (GC) events that have occurred in the Java Virtual Machine (JVM)."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "jvm.gc.collections.count",
+                          "temporality": "",
+                          "timeAggregation": "rate",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "JVM GC Count"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "brokerJVMMetrics-1": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "jvm.gc.collections.elapsed",
+              "description": "Measures the total time (usually in milliseconds) spent on garbage collection (GC) events in the Java Virtual Machine (JVM)."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "jvm.gc.collections.elapsed",
+                          "temporality": "",
+                          "timeAggregation": "rate",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "garbagecollector"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "brokerJVMMetrics-2": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "CPU Recent Utilization",
+              "description": "This metric measures the recent CPU usage by the Java Virtual Machine (JVM), typically expressed as a percentage."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "jvm.cpu.recent_utilization",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "CPU utilization"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "brokerJVMMetrics-3": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "JVM memory heap",
+              "description": "The metric represents the maximum amount of heap memory available to the Java Virtual Machine (JVM)"
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "jvm.memory.heap.max",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "JVM memory heap"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "brokerMetrics-0": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Broker Count",
+              "description": "Total number of active brokers in the Kafka cluster."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.brokers",
+                          "temporality": "",
+                          "timeAggregation": "sum",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "Broker count"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "brokerMetrics-1": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Request Times",
+              "description": "This metric is used to measure the average latency experienced by requests across the Kafka broker."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.request.time.avg",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "Request Times"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "brokerMetrics-2": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Producer and Fetch Request Purgatory",
+              "description": "Measures the number of requests that Kafka brokers have received but cannot immediately fulfill"
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.purgatory.size",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "Producer and Fetch Request Purgatory"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "brokerMetrics-3": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Broker Network Throughput",
+              "description": "Helps gauge the data throughput from the Kafka broker to consumer clients, focusing on the network usage associated with serving messages to consumers."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka_server_brokertopicmetrics_total_replicationbytesinpersec_oneminuterate",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "Broker Network Throughput"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "consumerMetrics-0": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Consumer Offset",
+              "description": "Current offset of each consumer group for each topic partition"
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.consumer_group.offset",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "group",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        },
+                        {
+                          "name": "topic",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        },
+                        {
+                          "name": "partition",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": ""
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "consumerMetrics-1": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Consumer Group Members",
+              "description": "Number of active users in each group"
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.consumer_group.members",
+                          "temporality": "",
+                          "timeAggregation": "sum",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "group",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": ""
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "consumerMetrics-2": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Consumer Lag by Group",
+              "description": "Helps Kafka administrators assess whether consumer groups are keeping up with the incoming data stream or falling behind"
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.consumer_group.lag",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "group",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        },
+                        {
+                          "name": "topic",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        },
+                        {
+                          "name": "partition",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": ""
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "consumerMetrics-3": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Consumer Fetch Rate",
+              "description": "Metric measures the rate at which fetch requests are made by a Kafka consumer to the broker, typically in requests per second."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.consumer.fetch_rate",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "service.name",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": ""
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "consumerMetrics-4": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Messages Consumed",
+              "description": "Measures the rate at which a Kafka consumer is consuming records (messages) per second from Kafka brokers."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.consumer.records_consumed_rate",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "Messages Consumed"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "partitionMetrics-0": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Partition Count per Topic",
+              "description": "Number of partitions for each topic"
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.topic.partitions",
+                          "temporality": "",
+                          "timeAggregation": "sum",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "topic",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": ""
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "partitionMetrics-1": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Current Offset ( Partition )",
+              "description": "Current offset of each partition, showing the latest position in each partition"
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.partition.current_offset",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "topic",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        },
+                        {
+                          "name": "partition",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": ""
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "partitionMetrics-2": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Oldest Offset (Partition)",
+              "description": "Oldest offset of each partition to identify log retention and offset range."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.partition.oldest_offset",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "topic",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        },
+                        {
+                          "name": "partition",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": ""
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "partitionMetrics-3": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "In-Sync Replicas (ISR)",
+              "description": "Count of in-sync replicas for each partition to ensure data availability."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.partition.replicas_in_sync",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "topic",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        },
+                        {
+                          "name": "partition",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": ""
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "producerMetrics-0": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "I/O Wait Time",
+              "description": "This metric measures the total time that producers are in an I/O wait state, indicating potential bottlenecks in data transmission from producers to Kafka brokers."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.producer.io_waittime_total",
+                          "temporality": "",
+                          "timeAggregation": "rate",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "I/O Wait Time"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "producerMetrics-1": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Request and Response Rate",
+              "description": "Indicates how many requests the producer is sending per second, reflecting the intensity of the producer's interaction with the Kafka cluster. Also, helps Kafka administrators gauge the responsiveness of brokers to producer requests."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "kafka.producer.request_rate",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "Request Rate"
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "stepInterval": 60,
+                            "signal": "metrics",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "metricName": "kafka.producer.response_rate",
+                                "temporality": "",
+                                "timeAggregation": "avg",
+                                "spaceAggregation": "avg",
+                                "reduceTo": "avg"
+                              }
+                            ],
+                            "disabled": false,
+                            "groupBy": [],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "Response Rate"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "producerMetrics-2": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Average Request Latency",
+              "description": "Helps Kafka administrators and developers understand the average latency experienced by producer requests."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.producer.request_latency_avg",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "Average Request Latency"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "producerMetrics-3": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "kafka.producer.byte_rate",
+              "description": "Helps measure the data output rate from the producer, indicating the load a producer is placing on Kafka brokers."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.producer.byte_rate",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "topic",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": ""
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "producerMetrics-4": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Bytes Consumed",
+              "description": "Helps Kafka administrators monitor the data consumption rate of a consumer group, showing how much data (in bytes) is being read from the Kafka cluster over time."
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "stepInterval": 60,
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "kafka.consumer.bytes_consumed_rate",
+                          "temporality": "",
+                          "timeAggregation": "avg",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "Bytes Consumed"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "brokerMetrics-about": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "About Broker Metrics"
+            },
+            "plugin": {
+              "kind": "signoz/TextPanel",
+              "spec": {
+                "mode": "markdown",
+                "text": "The Kafka Broker metrics here inform you of data loss/delay through unclean leader elections and network throughputs, as well as request fails through request purgatories and timeouts metrics",
+                "presentation": {
+                  "textAlign": "left",
+                  "verticalAlign": "top"
+                },
+                "headerOptions": {
+                  "hide": true
+                }
+              }
+            },
+            "queries": []
+          }
+        },
+        "producerMetrics-about": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "About Producer Metrics"
+            },
+            "plugin": {
+              "kind": "signoz/TextPanel",
+              "spec": {
+                "mode": "markdown",
+                "text": "Kafka Producers send messages to brokers for storage and distribution by topic. These metrics inform you of the volume and rate of data sent, and the success rate of message delivery.",
+                "presentation": {
+                  "textAlign": "left",
+                  "verticalAlign": "top"
+                },
+                "headerOptions": {
+                  "hide": true
+                }
+              }
+            },
+            "queries": []
+          }
+        },
+        "consumerMetrics-about": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "About Consumer Metrics"
+            },
+            "plugin": {
+              "kind": "signoz/TextPanel",
+              "spec": {
+                "mode": "markdown",
+                "text": "Kafka Consumer metrics provide insights into lag between message production and consumption, success rates and latency of message delivery, and the volume of data consumed.",
+                "presentation": {
+                  "textAlign": "left",
+                  "verticalAlign": "top"
+                },
+                "headerOptions": {
+                  "hide": true
+                }
+              }
+            },
+            "queries": []
+          }
+        },
+        "brokerJVMMetrics-about": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "About Broker JVM Metrics"
+            },
+            "plugin": {
+              "kind": "signoz/TextPanel",
+              "spec": {
+                "mode": "markdown",
+                "text": "Kafka brokers are Java applications that expose JVM metrics to inform on the broker's system health. Garbage collection metrics like those below provide key insights into free memory, broker performance, and heap size. You need to enable new_gc_metrics for this section to populate.",
+                "presentation": {
+                  "textAlign": "left",
+                  "verticalAlign": "top"
+                },
+                "headerOptions": {
+                  "hide": true
+                }
+              }
+            },
+            "queries": []
+          }
+        },
+        "partitionMetrics-about": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "About Partition Metrics"
+            },
+            "plugin": {
+              "kind": "signoz/TextPanel",
+              "spec": {
+                "mode": "markdown",
+                "text": "Kafka partitions are the unit of parallelism in Kafka. These metrics inform you of the number of partitions per topic, the current offset of each partition, the oldest offset, and the number of in-sync replicas.",
+                "presentation": {
+                  "textAlign": "left",
+                  "verticalAlign": "top"
+                },
+                "headerOptions": {
+                  "hide": true
+                }
+              }
+            },
+            "queries": []
+          }
+        }
+      },
+      "layouts": [
+        {
+          "kind": "Grid",
+          "spec": {
+            "display": {
+              "title": "Broker Metrics",
+              "collapse": {
+                "open": true
+              }
+            },
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 12,
+                "height": 2,
+                "content": {
+                  "$ref": "#/spec/panels/brokerMetrics-about"
+                }
+              },
+              {
+                "x": 0,
+                "y": 2,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/brokerMetrics-0"
+                }
+              },
+              {
+                "x": 6,
+                "y": 2,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/brokerMetrics-1"
+                }
+              },
+              {
+                "x": 0,
+                "y": 8,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/brokerMetrics-2"
+                }
+              },
+              {
+                "x": 6,
+                "y": 8,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/brokerMetrics-3"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "display": {
+              "title": "Producer Metrics",
+              "collapse": {
+                "open": true
+              }
+            },
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 12,
+                "height": 2,
+                "content": {
+                  "$ref": "#/spec/panels/producerMetrics-about"
+                }
+              },
+              {
+                "x": 0,
+                "y": 2,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/producerMetrics-0"
+                }
+              },
+              {
+                "x": 6,
+                "y": 2,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/producerMetrics-1"
+                }
+              },
+              {
+                "x": 0,
+                "y": 8,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/producerMetrics-2"
+                }
+              },
+              {
+                "x": 6,
+                "y": 8,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/producerMetrics-3"
+                }
+              },
+              {
+                "x": 0,
+                "y": 14,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/producerMetrics-4"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "display": {
+              "title": "Consumer Metrics",
+              "collapse": {
+                "open": true
+              }
+            },
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 12,
+                "height": 2,
+                "content": {
+                  "$ref": "#/spec/panels/consumerMetrics-about"
+                }
+              },
+              {
+                "x": 0,
+                "y": 2,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/consumerMetrics-0"
+                }
+              },
+              {
+                "x": 6,
+                "y": 2,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/consumerMetrics-1"
+                }
+              },
+              {
+                "x": 0,
+                "y": 8,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/consumerMetrics-2"
+                }
+              },
+              {
+                "x": 6,
+                "y": 8,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/consumerMetrics-3"
+                }
+              },
+              {
+                "x": 0,
+                "y": 14,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/consumerMetrics-4"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "display": {
+              "title": "Broker JVM Metrics",
+              "collapse": {
+                "open": true
+              }
+            },
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 12,
+                "height": 2,
+                "content": {
+                  "$ref": "#/spec/panels/brokerJVMMetrics-about"
+                }
+              },
+              {
+                "x": 0,
+                "y": 2,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/brokerJVMMetrics-0"
+                }
+              },
+              {
+                "x": 6,
+                "y": 2,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/brokerJVMMetrics-1"
+                }
+              },
+              {
+                "x": 0,
+                "y": 8,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/brokerJVMMetrics-2"
+                }
+              },
+              {
+                "x": 6,
+                "y": 8,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/brokerJVMMetrics-3"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "display": {
+              "title": "Partition Metrics",
+              "collapse": {
+                "open": true
+              }
+            },
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 12,
+                "height": 2,
+                "content": {
+                  "$ref": "#/spec/panels/partitionMetrics-about"
+                }
+              },
+              {
+                "x": 0,
+                "y": 2,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/partitionMetrics-0"
+                }
+              },
+              {
+                "x": 6,
+                "y": 2,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/partitionMetrics-1"
+                }
+              },
+              {
+                "x": 0,
+                "y": 8,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/partitionMetrics-2"
+                }
+              },
+              {
+                "x": 6,
+                "y": 8,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/partitionMetrics-3"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "duration": "",
+      "refreshInterval": "",
+      "links": []
+    }
+  }
+}

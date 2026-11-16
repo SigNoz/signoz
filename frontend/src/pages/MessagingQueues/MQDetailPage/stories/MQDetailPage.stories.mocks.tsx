@@ -6,6 +6,7 @@
 import { rest } from 'msw';
 import type { MessagingQueuesViewTypeOptions } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import type { QueryRangePayload } from 'types/api/metrics/getQueryRange';
+import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import {
 	choiceControl,
@@ -22,6 +23,8 @@ import {
 import {
 	consumerLagDetails,
 	KAFKA_VIEWS,
+	kafkaMetricsQueryRangeResponse,
+	kafkaMetricsSystemDashboardResponse,
 	kafkaDetailRoute,
 	partitionLatencyDetails,
 	partitionLatencyOverview,
@@ -59,7 +62,7 @@ export const kafkaDetailMocks = defineStoryMocks({
 		series: countControl('Graph series', {
 			group: DATA,
 			description:
-				'Lines each chart draws: the consumer lag graph groups by consumer group, topic and partition, the metric view by broker.',
+				'Lines each chart draws: the consumer lag graph groups by consumer group, topic and partition; a grouped metric view chart by its group-by.',
 			value: 4,
 			max: 8,
 		}),
@@ -110,6 +113,21 @@ export const kafkaDetailMocks = defineStoryMocks({
 			response.json(async (req) =>
 				queryRangeV3ForRequest(
 					(await req.json()) as QueryRangePayload,
+					values.series,
+				),
+			),
+		),
+
+		rest.get(
+			'http://localhost/api/v2/dashboards/system/kafka-metrics',
+			response.json(() => kafkaMetricsSystemDashboardResponse()),
+		),
+
+		rest.post(
+			'http://localhost/api/v5/query_range',
+			response.json(async (req) =>
+				kafkaMetricsQueryRangeResponse(
+					(await req.json()) as QueryRangeRequestV5,
 					values.series,
 				),
 			),
