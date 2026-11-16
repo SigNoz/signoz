@@ -24,6 +24,7 @@ import {
 import {
 	accountsLoadError,
 	keysLoadingForever,
+	queryRejected,
 	serviceAccountsMocks,
 } from './ServiceAccounts.stories.mocks';
 
@@ -118,6 +119,16 @@ export const StatusChipOpen: Story = {
 /** Empty: a search that matches no account keeps the list shell and empty state. */
 export const SearchNoResults: Story = {
 	parameters: at('search=no-such-service-account'),
+};
+
+/** A query the API rejects: the reason sits under the box and the list stays, empty. */
+export const QueryRejected: Story = {
+	// The deliberate 400 is the state under test.
+	parameters: {
+		...at(`search=${encodeURIComponent("owner = 'ci'")}`),
+		msw: { handlers: [queryRejected] },
+		allowConsoleErrors: true,
+	},
 };
 
 /** Error: the list request failed while the rest of the settings shell stays usable. */

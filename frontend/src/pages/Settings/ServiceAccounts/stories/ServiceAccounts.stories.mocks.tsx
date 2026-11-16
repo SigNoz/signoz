@@ -47,6 +47,25 @@ export const accountsLoadError = rest.get(
 	handleInternalServerError,
 );
 
+export const queryRejected = rest.get(
+	'http://localhost/api/v1/service_accounts',
+	(_req, res, ctx) =>
+		res(
+			ctx.status(400),
+			ctx.json({
+				status: 'error',
+				error: {
+					code: 'service_account_list_filter_invalid',
+					type: 'invalid_input',
+					message: 'invalid filter query: unknown key "owner"',
+					url: '',
+					errors: [],
+					suggestions: [],
+				},
+			}),
+		),
+);
+
 export const keysLoadingForever = rest.get(
 	'http://localhost/api/v1/service_accounts/:id/keys',
 	(_req, res, ctx) => res(ctx.delay('infinite')),
