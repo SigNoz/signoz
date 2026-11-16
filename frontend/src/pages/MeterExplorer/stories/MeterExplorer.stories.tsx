@@ -103,6 +103,13 @@ export const BillingNoticeDismissed: Story = {
 	args: { billingNotice: false },
 };
 
+/** A role with meter access but no dashboard read: the breakdown names the missing permission. */
+export const NoDashboardAccess: Story = {
+	args: { dashboardAccess: false },
+	// The deliberate 403 is the state under test.
+	parameters: { allowConsoleErrors: true },
+};
+
 /** Meter usage where only logs are currently ingesting. */
 export const PartialIngestion: Story = {
 	args: { signals: ['logs'] },
