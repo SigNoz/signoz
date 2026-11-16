@@ -41,7 +41,7 @@ You are operating within a constrained context window and strict system prompts.
 - Run `pnpm build`
 - Find if the file has tests for it, or if there's `__test__` folder or the parent folder has tests, and run. Run them before coding the change or after all changes, never in between.
 - For e2e, run only the specs you added or changed: the stack is heavy. Leave the full jest and e2e suites to CI unless the user asks.
-- For every test you added or changed, revert the change it covers and confirm the test fails
+- For every test you added or changed, revert the change it covers and confirm the test fails, and that each test runs under 500 ms (`pnpm jest <file> --verbose`)
 - On a stacked branch (`gh stack`), run `pnpm tsgo --noEmit` on every branch above it before pushing: a renamed prop or moved export breaks them
 - Fixed ALL resulting errors
 
