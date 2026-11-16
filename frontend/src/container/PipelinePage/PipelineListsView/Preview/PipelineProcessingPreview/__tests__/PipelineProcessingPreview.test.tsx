@@ -26,7 +26,6 @@ describe('PipelineProcessingPreview', () => {
 					},
 				],
 				count: 2,
-				requests: [],
 			}),
 			rest.post('*/api/v1/logs/pipelines/preview', async (req, res, ctx) => {
 				const body: PipelineSimulationRequest = await req.json();

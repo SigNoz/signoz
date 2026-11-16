@@ -9,7 +9,7 @@ import {
 import { rest, RestHandler } from 'msw';
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
-export function countResponse(count: number): QueryRangeV5200 {
+function countResponse(count: number): QueryRangeV5200 {
 	const result: Querybuildertypesv5ScalarDataDTO = {
 		columns: [
 			{
@@ -30,9 +30,7 @@ export function countResponse(count: number): QueryRangeV5200 {
 	};
 }
 
-export function rowsResponse(
-	rows: Querybuildertypesv5RawRowDTO[],
-): QueryRangeV5200 {
+function rowsResponse(rows: Querybuildertypesv5RawRowDTO[]): QueryRangeV5200 {
 	const result: Querybuildertypesv5RawDataDTO = { queryName: 'A', rows };
 	return {
 		status: 'success',
@@ -50,11 +48,11 @@ export function queryRangeV5Handler({
 }: {
 	rows: Querybuildertypesv5RawRowDTO[];
 	count: number;
-	requests: QueryRangePayloadV5[];
+	requests?: QueryRangePayloadV5[];
 }): RestHandler {
 	return rest.post('*/api/v5/query_range', async (req, res, ctx) => {
 		const body: QueryRangePayloadV5 = await req.json();
-		requests.push(body);
+		requests?.push(body);
 		return res(
 			ctx.status(200),
 			ctx.json(

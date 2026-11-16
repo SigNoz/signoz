@@ -39,6 +39,31 @@ const v5Filter: TagFilter = {
 };
 
 describe('Pipeline FilterInput', () => {
+	it('saves the filter with the legacy key types the pipeline builders read', () => {
+		const onValuesChange = jest.fn() as jest.MockedFunction<
+			(changedValues: { filter: TagFilter }) => void
+		>;
+
+		render(
+			<Form onValuesChange={onValuesChange}>
+				{filterField && <FilterInput fieldData={filterField} />}
+			</Form>,
+		);
+
+		const { onChange } = jest.mocked(QueryBuilderSearchV2).mock.calls[0][0];
+		act(() => onChange(v5Filter));
+
+		expect(
+			onValuesChange.mock.lastCall?.[0].filter.items.map((item) => [
+				item.key?.key,
+				item.key?.type,
+			]),
+		).toStrictEqual([
+			['http.method', 'tag'],
+			['severity_text', ''],
+		]);
+	});
+
 	it('previews sample logs for the picked filter', async () => {
 		const requests: QueryRangePayloadV5[] = [];
 		server.use(queryRangeV5Handler({ rows: [], count: 0, requests }));
