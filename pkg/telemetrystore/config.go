@@ -7,9 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
-// ProfileMain names the main DSN, which has no settings profile of its own.
-const ProfileMain = "main"
-
 type Config struct {
 	// Provider is the provider to use
 	Provider string `mapstructure:"provider"`
@@ -46,9 +43,6 @@ type ClickhouseConfig struct {
 	// native protocol sets the profile at login, so each DSN logs in as a user whose default profile is
 	// that one.
 	Profiles map[string]ProfileConfig `mapstructure:"profiles"`
-
-	// Profile is the settings profile the DSN logs in with, set by ForProfile.
-	Profile string `mapstructure:"-"`
 }
 
 type ProfileConfig struct {
@@ -93,16 +87,12 @@ func (c Config) ForProfile(name string) (Config, bool) {
 	}
 
 	c.Clickhouse.DSN = profile.DSN
-	c.Clickhouse.Profile = name
 	c.Clickhouse.Profiles = nil
 	return c, true
 }
 
 func (c Config) Validate() error {
 	for name, profile := range c.Clickhouse.Profiles {
-		if name == ProfileMain {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetrystore.clickhouse.profiles.%s is the main dsn and cannot be configured", name)
-		}
 		if profile.DSN == "" {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetrystore.clickhouse.profiles.%s.dsn is required", name)
 		}

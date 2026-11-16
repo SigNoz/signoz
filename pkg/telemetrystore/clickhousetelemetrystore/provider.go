@@ -167,11 +167,12 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-	profile := config.Clickhouse.Profile
-	if profile == "" {
-		profile = telemetrystore.ProfileMain
+	// The driver logs in as "default" when the DSN has no user.
+	user := options.Auth.Username
+	if user == "" {
+		user = "default"
 	}
-	attrs := metric.WithAttributes(attribute.String("telemetrystore.profile", profile))
+	attrs := metric.WithAttributes(attribute.String("telemetrystore.user", user))
 
 	_, err = settings.Meter().RegisterCallback(func(_ context.Context, observer metric.Observer) error {
 		stats := chConn.Stats()

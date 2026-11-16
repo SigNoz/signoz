@@ -96,9 +96,6 @@ func TestConfigValidateProfiles(t *testing.T) {
 
 	config.Clickhouse.Profiles["empty"] = ProfileConfig{}
 	assert.Error(t, config.Validate())
-
-	config = Config{Clickhouse: ClickhouseConfig{Profiles: map[string]ProfileConfig{ProfileMain: {DSN: "tcp://localhost:9000"}}}}
-	assert.Error(t, config.Validate())
 }
 
 func TestConfigForProfile(t *testing.T) {
@@ -124,7 +121,6 @@ func TestConfigForProfile(t *testing.T) {
 	}
 
 	actual, _ := config.ForProfile("clickhouse_query")
-	assert.Equal(t, "clickhouse_query", actual.Clickhouse.Profile)
 	assert.Empty(t, actual.Clickhouse.Profiles)
 	assert.Equal(t, "tcp://main:9000", config.Clickhouse.DSN)
 }
