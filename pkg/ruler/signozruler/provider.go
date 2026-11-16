@@ -165,6 +165,10 @@ func (provider *provider) PatchRule(ctx context.Context, ruleStr string, id valu
 	return provider.manager.PatchRule(ctx, ruleStr, id)
 }
 
+func (provider *provider) DisableRule(ctx context.Context, id valuer.UUID) error {
+	return provider.manager.DisableRule(ctx, id)
+}
+
 func (provider *provider) TestNotification(ctx context.Context, orgID valuer.UUID, ruleStr string) (int, error) {
 	return provider.manager.TestNotification(ctx, orgID, ruleStr)
 }

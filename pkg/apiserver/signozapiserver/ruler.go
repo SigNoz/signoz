@@ -307,6 +307,28 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/rules/{id}/disable", handler.New(
+		provider.authzMiddleware.CheckResources(provider.rulerHandler.DisableRuleByID, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		handler.OpenAPIDef{
+			ID:                "DisableRuleByID",
+			Tags:              []string{"rules"},
+			Summary:           "Disable alert rule",
+			Description:       "This endpoint disables an alert rule by ID without validating its stored definition, so a rule that no longer passes validation can still be stopped. Enabling goes through the patch endpoint, which validates the whole rule.",
+			SuccessStatusCode: http.StatusNoContent,
+			ErrorStatusCodes:  []int{http.StatusBadRequest, http.StatusNotFound},
+			SecuritySchemes:   newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbUpdate)}),
+		},
+		handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			ID:       coretypes.PathParam("id"),
+			Selector: coretypes.IDSelector,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/rules/test", handler.New(
 		provider.authzMiddleware.CheckResources(provider.rulerHandler.TestRule, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
 		handler.OpenAPIDef{

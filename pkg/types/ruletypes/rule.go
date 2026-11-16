@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -55,6 +56,22 @@ func (rule *StorableRule) ToPostableRuleForCloning() (*PostableRule, error) {
 	}
 	postable.AlertName = postable.AlertName.GenerateCloneName()
 	return postable, nil
+}
+
+func (rule *StorableRule) Disable() error {
+	// only the disabled key is touched, so a rule whose data no longer decodes into PostableRule can still be disabled
+	data := map[string]json.RawMessage{}
+	if err := json.Unmarshal([]byte(rule.Data), &data); err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "stored rule data is not a json object")
+	}
+	data["disabled"] = json.RawMessage("true")
+
+	encoded, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	rule.Data = string(encoded)
+	return nil
 }
 
 // RuleAlert represents an alert associated with a rule, used when filtering by metric name.

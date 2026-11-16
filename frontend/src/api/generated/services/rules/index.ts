@@ -24,6 +24,7 @@ import type {
 	CreateRuleView201,
 	DeleteRuleByIDPathParameters,
 	DeleteRuleViewPathParameters,
+	DisableRuleByIDPathParameters,
 	GetRuleByID200,
 	GetRuleByIDPathParameters,
 	GetRuleHistoryFilterKeys200,
@@ -963,6 +964,85 @@ export const useCloneRuleByID = <
 	TContext
 > => {
 	return useMutation(getCloneRuleByIDMutationOptions(options));
+};
+/**
+ * This endpoint disables an alert rule by ID without validating its stored definition, so a rule that no longer passes validation can still be stopped. Enabling goes through the patch endpoint, which validates the whole rule.
+ * @summary Disable alert rule
+ */
+export const disableRuleByID = (
+	{ id }: DisableRuleByIDPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/rules/${id}/disable`,
+		method: 'POST',
+		signal,
+	});
+};
+
+export const getDisableRuleByIDMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof disableRuleByID>>,
+		TError,
+		{ pathParams: DisableRuleByIDPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof disableRuleByID>>,
+	TError,
+	{ pathParams: DisableRuleByIDPathParameters },
+	TContext
+> => {
+	const mutationKey = ['disableRuleByID'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof disableRuleByID>>,
+		{ pathParams: DisableRuleByIDPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return disableRuleByID(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DisableRuleByIDMutationResult = NonNullable<
+	Awaited<ReturnType<typeof disableRuleByID>>
+>;
+
+export type DisableRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Disable alert rule
+ */
+export const useDisableRuleByID = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof disableRuleByID>>,
+		TError,
+		{ pathParams: DisableRuleByIDPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof disableRuleByID>>,
+	TError,
+	{ pathParams: DisableRuleByIDPathParameters },
+	TContext
+> => {
+	return useMutation(getDisableRuleByIDMutationOptions(options));
 };
 /**
  * Returns distinct label keys from rule history entries for the selected range.

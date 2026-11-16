@@ -4,17 +4,15 @@ import { Ellipsis } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { toast } from '@signozhq/ui/sonner';
+import { patchRulePartial } from 'api/alerts/patchRulePartial';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	deleteRuleByID,
+	disableRuleByID,
 	invalidateListRulesV3,
-	patchRuleByID,
 	cloneRuleByID,
 } from 'api/generated/services/rules';
-import type {
-	RenderErrorResponseDTO,
-	RuletypesPostableRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import type { AxiosError } from 'axios';
 
 import type { AlertRule } from '../types';
@@ -31,12 +29,12 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 	const handleToggle = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.TOGGLE, rule);
 		const newDisabled = !rule.disabled;
+		const id = rule.id ?? '';
+		const toggleRequest: Promise<unknown> = newDisabled
+			? disableRuleByID({ id })
+			: patchRulePartial(id, { disabled: false });
 		toast.promise(
-			patchRuleByID({ id: rule.id ?? '' }, {
-				disabled: newDisabled,
-			} as RuletypesPostableRuleDTO).then(() =>
-				invalidateListRulesV3(queryClient),
-			),
+			toggleRequest.then(() => invalidateListRulesV3(queryClient)),
 			{
 				loading: newDisabled ? 'Disabling alert...' : 'Enabling alert...',
 				success: newDisabled ? 'Alert disabled' : 'Alert enabled',

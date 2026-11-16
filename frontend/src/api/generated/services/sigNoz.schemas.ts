@@ -16750,6 +16750,9 @@ export type CloneRuleByID201 = {
 	status: string;
 };
 
+export type DisableRuleByIDPathParameters = {
+	id: string;
+};
 export type GetRuleHistoryFilterKeysPathParameters = {
 	id: string;
 };

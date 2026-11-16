@@ -62,7 +62,31 @@ describe('ListAlertRules — actions menu', () => {
 		expect(labels).not.toContain('Disable');
 	});
 
-	it('toggle action: clicking Disable sends PATCH with disabled:true', async () => {
+	it('toggle action: clicking Disable posts to the disable endpoint', async () => {
+		let disabledId: string | null = null;
+		server.use(
+			rest.post('http://localhost/api/v2/rules/:id/disable', (req, res, ctx) => {
+				disabledId = req.params.id as string;
+				return res(ctx.status(204));
+			}),
+		);
+
+		renderListAlertRules();
+		const row = await findAlertRow('High CPU Alert');
+		await openActionsMenu(row);
+		await clickMenuItem('Disable');
+
+		await waitFor(() => {
+			expect(disabledId).toBe('rule-1');
+		});
+
+		expect(logEventMock).toHaveBeenCalledWith(
+			'Alert: Action',
+			expect.objectContaining({ action: 'Enable/Disable', ruleId: 'rule-1' }),
+		);
+	});
+
+	it('toggle action: clicking Enable sends PATCH with disabled:false', async () => {
 		let capturedBody: unknown = null;
 		let capturedPath: string | null = null;
 		server.use(
@@ -74,21 +98,14 @@ describe('ListAlertRules — actions menu', () => {
 		);
 
 		renderListAlertRules();
-		const row = await findAlertRow('High CPU Alert');
+		const row = await findAlertRow('Disabled Alert');
 		await openActionsMenu(row);
-		await clickMenuItem('Disable');
+		await clickMenuItem('Enable');
 
 		await waitFor(() => {
-			expect(capturedBody).toStrictEqual(
-				expect.objectContaining({ disabled: true }),
-			);
+			expect(capturedBody).toStrictEqual({ disabled: false });
 		});
-		expect(capturedPath).toBe('rule-1');
-
-		expect(logEventMock).toHaveBeenCalledWith(
-			'Alert: Action',
-			expect.objectContaining({ action: 'Enable/Disable', ruleId: 'rule-1' }),
-		);
+		expect(capturedPath).toBe('rule-4');
 	});
 
 	it('edit action: clicking Edit navigates via safeNavigate and logs event', async () => {
@@ -192,11 +209,11 @@ describe('ListAlertRules — actions menu', () => {
 		);
 	});
 
-	it('error path: PATCH is still attempted when server returns 500', async () => {
-		let patchAttempted = false;
+	it('error path: disable is still attempted when server returns 500', async () => {
+		let disableAttempted = false;
 		server.use(
-			rest.patch('http://localhost/api/v2/rules/:id', (_, res, ctx) => {
-				patchAttempted = true;
+			rest.post('http://localhost/api/v2/rules/:id/disable', (_, res, ctx) => {
+				disableAttempted = true;
 				return res(ctx.status(500), ctx.json({ status: 'error' }));
 			}),
 		);
@@ -207,7 +224,7 @@ describe('ListAlertRules — actions menu', () => {
 		await clickMenuItem('Disable');
 
 		await waitFor(() => {
-			expect(patchAttempted).toBe(true);
+			expect(disableAttempted).toBe(true);
 		});
 
 		expect(logEventMock).toHaveBeenCalledWith(

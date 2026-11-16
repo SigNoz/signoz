@@ -44,6 +44,9 @@ type Ruler interface {
 	// TODO: same as CreateRule — accept PostableRule instead of raw string.
 	PatchRule(ctx context.Context, ruleStr string, id valuer.UUID) (*ruletypes.GettableRule, error)
 
+	// DisableRule stops the rule identified by id without decoding or validating its stored definition.
+	DisableRule(ctx context.Context, id valuer.UUID) error
+
 	// TestNotification fires a test alert for the rule defined in ruleStr.
 	// TODO: same as CreateRule — accept PostableRule instead of raw string.
 	TestNotification(ctx context.Context, orgID valuer.UUID, ruleStr string) (int, error)

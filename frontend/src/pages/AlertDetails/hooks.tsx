@@ -7,6 +7,7 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	cloneRuleByID,
 	deleteRuleByID,
+	disableRuleByID,
 	getGetRuleHistoryTimelineQueryOptions,
 	invalidateGetRuleByID,
 	invalidateListRulesV3,
@@ -24,7 +25,6 @@ import {
 	type GetRuleHistoryTimeline200,
 	type GetRuleHistoryTopContributors200,
 	type RenderErrorResponseDTO,
-	type RuletypesPostableRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { QueryParams } from 'constants/query';
@@ -378,11 +378,17 @@ export const useAlertRuleStatusToggle = ({
 
 	const { mutate: toggleAlertState } = useMutation(
 		[REACT_QUERY_KEY.TOGGLE_ALERT_STATE, ruleId],
-		(args: { id: string; data: Partial<RuletypesPostableRuleDTO> }) =>
-			patchRulePartial(args.id, args.data),
+		async (args: { id: string; disabled: boolean }) => {
+			if (args.disabled) {
+				await disableRuleByID({ id: args.id });
+				return RuletypesAlertStateDTO.disabled;
+			}
+			const response = await patchRulePartial(args.id, { disabled: false });
+			return response.data.state;
+		},
 		{
-			onSuccess: (data) => {
-				setAlertRuleState(data.data.state);
+			onSuccess: (state) => {
+				setAlertRuleState(state);
 				void invalidateGetRuleByID(queryClient, { id: ruleId });
 				void queryClient.refetchQueries([
 					REACT_QUERY_KEY.ALERT_RULE_DETAILS,
@@ -390,7 +396,7 @@ export const useAlertRuleStatusToggle = ({
 				]);
 				notifications.success({
 					message: `Alert has been ${
-						data.data.state === 'disabled' ? 'disabled' : 'enabled'
+						state === RuletypesAlertStateDTO.disabled ? 'disabled' : 'enabled'
 					}.`,
 				});
 			},
@@ -408,11 +414,10 @@ export const useAlertRuleStatusToggle = ({
 	);
 
 	const handleAlertStateToggle = (): void => {
-		const args = {
+		toggleAlertState({
 			id: ruleId,
-			data: { disabled: alertRuleState !== 'disabled' },
-		};
-		toggleAlertState(args);
+			disabled: alertRuleState !== RuletypesAlertStateDTO.disabled,
+		});
 	};
 
 	return { handleAlertStateToggle };

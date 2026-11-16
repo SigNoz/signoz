@@ -1107,6 +1107,29 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 	return &response, nil
 }
 
+func (m *Manager) DisableRule(ctx context.Context, id valuer.UUID) error {
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	storedRule, err := m.ruleStore.GetStoredRule(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		return err
+	}
+
+	if err := storedRule.Disable(); err != nil {
+		return err
+	}
+	storedRule.UpdatedBy = claims.Email
+	storedRule.UpdatedAt = time.Now()
+
+	return m.ruleStore.EditRule(ctx, storedRule, func(context.Context) error {
+		m.deleteTask(prepareTaskName(id.StringValue()))
+		return nil
+	})
+}
+
 // TestNotification prepares a dummy rule for given rule parameters and
 // sends a test notification. returns alert count and error (if any)
 func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleStr string) (int, error) {

@@ -177,6 +177,24 @@ func (handler *handler) PatchRuleByID(rw http.ResponseWriter, req *http.Request)
 	render.Success(rw, http.StatusOK, ruletypes.NewRule(rule))
 }
 
+func (handler *handler) DisableRuleByID(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
+	defer cancel()
+
+	id, err := valuer.NewUUID(mux.Vars(req)["id"])
+	if err != nil {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid"))
+		return
+	}
+
+	if err := handler.ruler.DisableRule(ctx, id); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
 func (handler *handler) TestRule(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 1*time.Minute)
 	defer cancel()

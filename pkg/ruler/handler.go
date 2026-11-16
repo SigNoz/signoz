@@ -10,6 +10,7 @@ type Handler interface {
 	UpdateRuleByID(http.ResponseWriter, *http.Request)
 	DeleteRuleByID(http.ResponseWriter, *http.Request)
 	PatchRuleByID(http.ResponseWriter, *http.Request)
+	DisableRuleByID(http.ResponseWriter, *http.Request)
 	TestRule(http.ResponseWriter, *http.Request)
 
 	ListRuleViews(http.ResponseWriter, *http.Request)

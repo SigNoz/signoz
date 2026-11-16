@@ -290,6 +290,9 @@ export const handlers = [
 	rest.patch('http://localhost/api/v2/rules/:id', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json({ status: 'success' })),
 	),
+	rest.post('http://localhost/api/v2/rules/:id/disable', (_, res, ctx) =>
+		res(ctx.status(204)),
+	),
 	rest.delete('http://localhost/api/v2/rules/:id', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json({ status: 'success' })),
 	),

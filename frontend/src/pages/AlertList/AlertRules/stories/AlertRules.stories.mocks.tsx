@@ -246,6 +246,12 @@ export const alertRulesMocks = defineStoryMocks({
 			})),
 		),
 
+		rest.post('http://localhost/api/v2/rules/:id/disable', (_req, res, ctx) =>
+			values.toggleState === 'success'
+				? res(ctx.status(204))
+				: actionResponse(values.toggleState, res, ctx, () => null),
+		),
+
 		rest.post('http://localhost/api/v2/rules/:id/clone', (_req, res, ctx) =>
 			actionResponse(values.cloneState, res, ctx, () => ({
 				status: 'success',

@@ -508,6 +508,7 @@ def test_viewer_forbidden_on_rule_writes(
         ("patch", f"{V2_RULES_URL}/{target_id}", {"description": "viewer patch"}),
         ("delete", f"{V2_RULES_URL}/{target_id}", None),
         ("post", f"{V2_RULES_URL}/{target_id}/clone", None),
+        ("post", f"{V2_RULES_URL}/{target_id}/disable", None),
         ("post", f"{V2_RULES_URL}/test", body),
     ):
         response = getattr(requests, method)(

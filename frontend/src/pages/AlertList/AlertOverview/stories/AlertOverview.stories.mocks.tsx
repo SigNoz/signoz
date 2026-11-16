@@ -98,6 +98,10 @@ export const alertOverviewMocks = defineStoryMocks({
 			res(ctx.status(200), ctx.json({ status: 'success', data: null })),
 		),
 
+		rest.post('http://localhost/api/v2/rules/:id/disable', (_req, res, ctx) =>
+			res(ctx.status(204)),
+		),
+
 		rest.delete('http://localhost/api/v2/rules/:id', (_req, res, ctx) =>
 			res(ctx.status(200), ctx.json({ status: 'success', data: null })),
 		),
