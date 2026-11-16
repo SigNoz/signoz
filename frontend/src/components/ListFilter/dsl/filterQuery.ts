@@ -179,8 +179,9 @@ export const parseReflectedClauses = (query: string): ReflectedClauses => {
 	return { createdBy, updated };
 };
 
-// The unquoted value of the one top-level `key = value` term, or null when the
-// key is absent, repeated, nested or compared with another operator.
+// The unquoted value of the one top-level `key = value` term (or a one-value
+// `key IN [...]`), or null when the key is absent, repeated, nested or compared
+// with another operator.
 export const reflectedEqualityValue = (
 	query: string,
 	key: string,
@@ -202,7 +203,15 @@ export const reflectedEqualityValue = (
 			return;
 		}
 		count += 1;
-		value = scan.operator.canonical === '=' ? unquote(scan.value.text) : null;
+		const op = scan.operator.canonical;
+		if (op === '=') {
+			value = unquote(scan.value.text);
+		} else if (op === 'IN') {
+			const values = parseValueList(scan.value.text);
+			value = values.length === 1 ? values[0] : null;
+		} else {
+			value = null;
+		}
 	});
 
 	return count === 1 ? value : null;
@@ -247,7 +256,15 @@ export const spliceClause = (
 		}
 	});
 
+	// An appended clause must apply to the whole query, so OR-joined terms are
+	// grouped first: `a OR b AND c` would bind `c` to `b` alone.
 	if (clause !== null && matches.length === 0) {
+		if (kept.some((k) => k.joiner === 'OR')) {
+			const grouped = kept
+				.map((k, i) => (i === 0 ? k.text : ` ${k.joiner} ${k.text}`))
+				.join('');
+			return `(${grouped}) AND ${clause}`;
+		}
 		kept.push({ text: clause, joiner: joinerFor('AND') });
 	}
 

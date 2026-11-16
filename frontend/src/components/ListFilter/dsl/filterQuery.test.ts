@@ -71,6 +71,18 @@ describe('reflectedEqualityValue', () => {
 		);
 	});
 
+	it('reads a one-value IN list as the value', () => {
+		expect(reflectedEqualityValue("status IN ['active']", 'status')).toBe(
+			'active',
+		);
+		expect(reflectedEqualityValue('status in (deleted)', 'status')).toBe(
+			'deleted',
+		);
+		expect(
+			reflectedEqualityValue("status IN ['active', 'deleted']", 'status'),
+		).toBeNull();
+	});
+
 	it('is null when the key is absent, nested, repeated or not an equality', () => {
 		expect(reflectedEqualityValue('name = x', 'status')).toBeNull();
 		expect(reflectedEqualityValue("(status = 'active')", 'status')).toBeNull();
@@ -82,6 +94,15 @@ describe('reflectedEqualityValue', () => {
 });
 
 describe('spliceClause', () => {
+	it('groups OR-joined terms before appending a clause', () => {
+		expect(
+			spliceClause("name = 'foo' OR email = 'bar'", 'status', "status = 'x'"),
+		).toBe("(name = 'foo' OR email = 'bar') AND status = 'x'");
+		expect(
+			spliceClause("name = 'foo' AND email = 'bar'", 'status', "status = 'x'"),
+		).toBe("name = 'foo' AND email = 'bar' AND status = 'x'");
+	});
+
 	it('appends a clause when the key is absent', () => {
 		expect(
 			spliceClause("name = 'x'", 'created_by', "created_by = 'a@x.io'"),
