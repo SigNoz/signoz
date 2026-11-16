@@ -18,6 +18,9 @@ type Config struct {
 	// They must match the connector's dimensions, so condensed rows slice like every other meter row.
 	Dimensions []string `mapstructure:"dimensions"`
 
+	// BatchSize is the maximum number of data points per Kafka record.
+	BatchSize int `mapstructure:"batch_size"`
+
 	Kafka KafkaConfig `mapstructure:"kafka"`
 }
 
@@ -40,6 +43,7 @@ func newConfig() factory.Config {
 		Provider:   "noop",
 		Interval:   time.Hour,
 		Dimensions: []string{"service.name", "deployment.environment", "host.name", "signoz.workspace.key.id"},
+		BatchSize:  100,
 		Kafka: KafkaConfig{
 			Brokers:     []string{"localhost:9092"},
 			ClientID:    "signoz",
@@ -55,6 +59,10 @@ func NewConfigFactory() factory.ConfigFactory {
 func (c Config) Validate() error {
 	if c.Interval < 10*time.Minute || c.Interval > time.Hour {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "condensedmeter::interval must be between 10m and 1h")
+	}
+
+	if c.BatchSize <= 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "condensedmeter::batch_size must be greater than 0")
 	}
 
 	if c.Provider == "kafka" {

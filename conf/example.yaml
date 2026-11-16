@@ -537,6 +537,8 @@ condensedmeter:
     - deployment.environment
     - host.name
     - signoz.workspace.key.id
+  # The maximum number of data points per Kafka record.
+  batch_size: 100
   kafka:
     # The seed broker addresses (host:port) used to discover the cluster.
     brokers:

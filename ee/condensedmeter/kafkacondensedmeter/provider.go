@@ -23,9 +23,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/version"
 )
 
-// maxDataPointsPerRecord keeps a record under the 1MB broker and producer limits: a point with four 255-character dimension values is about 1.2KB.
-const maxDataPointsPerRecord = 500
-
 var _ condensedmeter.Reporter = (*provider)(nil)
 
 type provider struct {
@@ -182,9 +179,10 @@ func (provider *provider) nextHour(ctx context.Context, orgID valuer.UUID) (time
 
 // send stamps the points with the send time, not the hour they count, so an hour reported after its day is sealed lands in the next day instead of being missed.
 func (provider *provider) send(ctx context.Context, rows []condensedmetertypes.Row, timestamp time.Time) error {
-	records := make([]*kgo.Record, 0, (len(rows)+maxDataPointsPerRecord-1)/maxDataPointsPerRecord)
-	for start := 0; start < len(rows); start += maxDataPointsPerRecord {
-		metrics := condensedmetertypes.NewPMetrics(rows[start:min(start+maxDataPointsPerRecord, len(rows))], provider.config.Dimensions, timestamp, "signoz", provider.build.Version())
+	batchSize := provider.config.BatchSize
+	records := make([]*kgo.Record, 0, (len(rows)+batchSize-1)/batchSize)
+	for start := 0; start < len(rows); start += batchSize {
+		metrics := condensedmetertypes.NewPMetrics(rows[start:min(start+batchSize, len(rows))], provider.config.Dimensions, timestamp, "signoz", provider.build.Version())
 
 		value, err := provider.marshaler.MarshalMetrics(metrics)
 		if err != nil {

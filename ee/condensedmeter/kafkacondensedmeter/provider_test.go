@@ -2,7 +2,6 @@ package kafkacondensedmeter
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 	"testing"
 	"time"
@@ -62,12 +61,6 @@ func TestReportOrg(t *testing.T) {
 	reportedHour := time.Date(2026, 11, 12, 11, 0, 0, 0, time.UTC)
 	notFound := errors.New(errors.TypeNotFound, condensedmetertypes.ErrCodeCheckpointNotFound, "no checkpoint")
 	condensedColumns := []cmock.ColumnType{{Name: "dimension_0", Type: "String"}, {Name: "dimension_1", Type: "String"}, {Name: "count", Type: "UInt64"}}
-	manyRows := make([][]any, maxDataPointsPerRecord+1)
-	manyDataPoints := make([]int64, maxDataPointsPerRecord+1)
-	for i := range manyRows {
-		manyRows[i] = []any{fmt.Sprintf("service-%d", i), "host-1", uint64(i + 1)}
-		manyDataPoints[i] = int64(i + 1)
-	}
 
 	testCases := []struct {
 		name              string
@@ -95,10 +88,10 @@ func TestReportOrg(t *testing.T) {
 		{
 			name:              "Checkpoint_LargeHourSplitAcrossRecords",
 			checkpoint:        condensedmetertypes.NewCheckpoint(orgID, checkpointHour),
-			condensedRows:     manyRows,
+			condensedRows:     [][]any{{"frontend", "host-1", uint64(31)}, {"checkout", "", uint64(4)}, {"cart", "host-2", uint64(9)}},
 			expectedUpsert:    &reportedHour,
 			expectedRecords:   2,
-			expectedDataPoint: manyDataPoints,
+			expectedDataPoint: []int64{31, 4, 9},
 		},
 		{
 			name:           "Checkpoint_EmptyHourNotSentCheckpointAdvanced",
@@ -150,6 +143,7 @@ func TestReportOrg(t *testing.T) {
 				Provider:   "kafka",
 				Interval:   time.Hour,
 				Dimensions: []string{"service.name", "host.name"},
+				BatchSize:  2,
 				Kafka:      condensedmeter.KafkaConfig{Brokers: cluster.ListenAddrs(), Topic: "tenant_meter", ClientID: "signoz-test", Compression: "none"},
 			}
 			provider, err := newProvider(context.Background(), instrumentationtest.New().ToProviderSettings(), config, nil, nil, nil, telemetryStore, store, version.Info)
