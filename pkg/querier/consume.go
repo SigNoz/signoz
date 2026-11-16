@@ -521,13 +521,26 @@ func derefValue(v any) any {
 }
 
 func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
+	data, _, err := readAsRawSkipping(rows, queryName, 0)
+	return data, err
+}
+
+// readAsRawSkipping advances past the first skip rows without scanning them, so
+// rows dropped for an offset are never decoded. It returns how many were skipped.
+func readAsRawSkipping(rows driver.Rows, queryName string, skip int) (*qbtypes.RawData, int, error) {
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 	colCnt := len(colNames)
 
 	var outRows []*qbtypes.RawRow
+	skipped := 0
 
 	for rows.Next() {
+		if skipped < skip {
+			skipped++
+			continue
+		}
+
 		// fresh copy of the scan slice (otherwise the driver reuses pointers)
 		scan := make([]any, colCnt)
 		for i := range colTypes {
@@ -535,7 +548,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 		}
 
 		if err := rows.Scan(scan...); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		rr := qbtypes.RawRow{
@@ -567,13 +580,13 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 		outRows = append(outRows, &rr)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	return &qbtypes.RawData{
 		QueryName: queryName,
 		Rows:      outRows,
-	}, nil
+	}, skipped, nil
 }
 
 // mergeSpanAttributeColumns merges (attributes_string, attributes_number, attributes_bool, resources_string) into

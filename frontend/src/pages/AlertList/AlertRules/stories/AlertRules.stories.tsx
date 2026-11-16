@@ -1,9 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { alertRulesMocks } from './AlertRules.stories.mocks';
+import {
+	alertRulesMocks,
+	type AlertRulesArgs,
+} from './AlertRules.stories.mocks';
 import {
 	cloneAlert,
 	copyLabel,
@@ -21,8 +23,6 @@ import {
 
 import AlertList from '../../index';
 import { RULE_MAX } from '../../stories/__story_mockdata__/alerts';
-
-type AlertRulesArgs = PageStoryArgs<typeof alertRulesMocks>;
 
 const pageStory = storyMocks(alertRulesMocks, { layout: 'app' });
 
