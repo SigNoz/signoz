@@ -24,7 +24,6 @@ import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/widgets/widget';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import ErrorState from './ErrorState';
 import {
@@ -37,7 +36,7 @@ function StatusCodeBarCharts({
 	endPointStatusCodeBarChartsDataQuery,
 	endPointStatusCodeLatencyBarChartsDataQuery,
 	domainName,
-	filters,
+	filterExpression,
 	timeRange,
 	onDragSelect,
 }: {
@@ -50,7 +49,7 @@ function StatusCodeBarCharts({
 		unknown
 	>;
 	domainName: string;
-	filters: IBuilderQuery['filters'];
+	filterExpression: string;
 	timeRange: {
 		startTime: number;
 		endTime: number;
@@ -130,12 +129,8 @@ function StatusCodeBarCharts({
 	);
 
 	const widget = useMemo<Widgets>(
-		() =>
-			getStatusCodeBarChartWidgetData(domainName, {
-				items: [...(filters?.items || [])],
-				op: filters?.op || 'AND',
-			}),
-		[domainName, filters],
+		() => getStatusCodeBarChartWidgetData(domainName, filterExpression),
+		[domainName, filterExpression],
 	);
 
 	const activeApiResponse = useMemo(
