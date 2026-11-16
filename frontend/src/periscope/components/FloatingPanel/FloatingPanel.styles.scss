@@ -6,6 +6,11 @@
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 	overflow: hidden;
 
+	// Set only while `moveTo` runs, so drags stay instant.
+	&--sliding {
+		transition: transform 0.2s ease;
+	}
+
 	// Inner div fills the Rnd-controlled size
 	&__inner {
 		width: 100%;
