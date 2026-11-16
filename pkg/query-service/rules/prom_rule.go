@@ -201,9 +201,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		lb := ruletypes.NewBuilder(result.Metric...).Del(ruletypes.MetricNameLabel)
 		resultLabels := ruletypes.NewBuilder(result.Metric...).Del(ruletypes.MetricNameLabel).Labels()
 
-		for name, value := range r.labels.Map() {
-			lb.Set(name, expand(value))
-		}
+		lb.SetRuleLabels(r.labels.Map(), expand)
 
 		lb.Set(ruletypes.AlertNameLabel, r.Name())
 		lb.Set(ruletypes.AlertRuleIDLabel, r.ID())
