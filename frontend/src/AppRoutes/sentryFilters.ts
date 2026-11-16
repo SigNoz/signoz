@@ -44,6 +44,15 @@ export function hasNoAppFrames(event: ErrorEvent): boolean {
 	);
 }
 
+// The throwing frame is the last one. Sentry's own timer wrapper is bundled
+// with the app, so only the top frame shows the code came from an eval.
+export function isInjectedScriptError(event: ErrorEvent): boolean {
+	return (event.exception?.values ?? []).some((exception) => {
+		const frames = exception.stacktrace?.frames ?? [];
+		return frames[frames.length - 1]?.filename === '<anonymous>';
+	});
+}
+
 // PostHog's lazy recorder, the Pylon widget and Appcues.
 const EXTERNAL_SCRIPT_URLS = [
 	/^https?:\/\/[^/]+\.posthog\.com\//,

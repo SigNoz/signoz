@@ -42,6 +42,7 @@ import {
 	hasNoAppFrames,
 	isExpectedRequestFailure,
 	isExternalIntegrationError,
+	isInjectedScriptError,
 	SENTRY_IGNORE_ERRORS,
 } from './sentryFilters';
 
@@ -355,7 +356,7 @@ function App(): JSX.Element {
 							return null;
 						}
 
-						if (isExternalIntegrationError(event)) {
+						if (isExternalIntegrationError(event) || isInjectedScriptError(event)) {
 							return null;
 						}
 

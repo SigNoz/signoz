@@ -3,6 +3,7 @@ import { AxiosError, AxiosHeaders } from 'axios';
 
 import {
 	hasNoAppFrames,
+	isInjectedScriptError,
 	isExpectedRequestFailure,
 	isExternalIntegrationError,
 	SENTRY_IGNORE_ERRORS,
@@ -126,6 +127,24 @@ describe('hasNoAppFrames', () => {
 				eventWithStackFrames([{ filename: '[native code]', function: 'eval' }]),
 			),
 		).toBe(false);
+	});
+});
+
+describe('isInjectedScriptError', () => {
+	it('drops an error thrown from eval code behind the Sentry wrapper', () => {
+		expect(
+			isInjectedScriptError(eventWithFrames(APP_BUNDLE, '<anonymous>')),
+		).toBe(true);
+	});
+
+	it('keeps an error thrown from our bundle', () => {
+		expect(
+			isInjectedScriptError(eventWithFrames('<anonymous>', APP_BUNDLE)),
+		).toBe(false);
+	});
+
+	it('keeps an error without a stack trace', () => {
+		expect(isInjectedScriptError({ type: undefined })).toBe(false);
 	});
 });
 
