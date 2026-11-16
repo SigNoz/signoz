@@ -1,6 +1,7 @@
 import getSessionStorageApi from 'api/browser/sessionstorage/get';
 import setSessionStorageApi from 'api/browser/sessionstorage/set';
 import { SESSIONSTORAGE } from 'constants/sessionStorage';
+import { markAppReload } from 'utils/appReload';
 
 type ComponentImport = () => Promise<any>;
 
@@ -24,7 +25,11 @@ export const lazyRetry = (componentImport: ComponentImport): Promise<any> =>
 					!hasRefreshed &&
 					setSessionStorageApi(SESSIONSTORAGE.RETRY_LAZY_REFRESHED, 'true')
 				) {
+					markAppReload({ reason: 'chunk-load-failed', detail: error.message });
 					window.location.reload();
+					// Left pending, so Suspense keeps its loader up until the reload lands
+					// instead of the error boundary flashing its fallback.
+					return;
 				}
 
 				reject(error);

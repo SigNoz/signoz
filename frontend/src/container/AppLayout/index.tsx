@@ -28,6 +28,7 @@ import getUserLatestVersion from 'api/v1/version/getLatestVersion';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
 import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
+import NewVersionPrompt from 'components/NewVersionPrompt/NewVersionPrompt';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -846,6 +847,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				<Toaster
 					offset={{ bottom: 'calc(var(--bottom-strip-height, 0px) + 24px)' }}
 				/>
+				<NewVersionPrompt />
 			</Layout>
 		</TooltipProvider>
 	);

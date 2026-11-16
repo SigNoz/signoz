@@ -241,6 +241,39 @@ func TestServeInvalidTemplateIndex(t *testing.T) {
 	}
 }
 
+func TestServeMissingPath(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name       string
+		path       string
+		statusCode int
+	}{
+		{
+			name:       "Asset_NotFound",
+			path:       "/assets/DashboardPage-DdQ20L2t.js",
+			statusCode: http.StatusNotFound,
+		},
+		{
+			name:       "AppRoute_ServesIndex",
+			path:       "/dashboard/0198a2c4",
+			statusCode: http.StatusOK,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, global.Config{})
+
+			res, err := http.DefaultClient.Get(base + testCase.path)
+			require.NoError(t, err)
+			defer func() { _ = res.Body.Close() }()
+
+			assert.Equal(t, testCase.statusCode, res.StatusCode)
+		})
+	}
+}
+
 func TestServeStaticFilesUnchanged(t *testing.T) {
 	t.Parallel()
 

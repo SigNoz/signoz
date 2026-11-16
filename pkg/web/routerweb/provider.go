@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -15,6 +16,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/gorilla/mux"
 )
+
+// Vite's build.assetsDir.
+const assetsPathPrefix = "/assets/"
 
 type provider struct {
 	config        web.Config
@@ -83,6 +87,11 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// check whether a file exists or is a directory at the given path
 	fi, err := os.Stat(path)
 	if err != nil {
+		if os.IsNotExist(err) && strings.HasPrefix(req.URL.Path, assetsPathPrefix) {
+			http.NotFound(rw, req)
+			return
+		}
+
 		// if the file doesn't exist, serve index.html
 		if os.IsNotExist(err) {
 			provider.serveIndex(rw)

@@ -46,6 +46,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/gorilla/mux"
@@ -322,6 +323,7 @@ func newProvider(
 	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
 
 	router.Use(middleware.NewRecovery(settings.Logger()).Wrap)
+	router.Use(middleware.NewVersion(version.Info.Version()).Wrap)
 	router.Use(middleware.NewOtel("apiserver", providerSettings.MeterProvider, providerSettings.TracerProvider).Wrap)
 	router.Use(middleware.NewIdentN(identNResolver, sharder, settings.Logger()).Wrap)
 	router.Use(middleware.NewTimeout(settings.Logger(),
