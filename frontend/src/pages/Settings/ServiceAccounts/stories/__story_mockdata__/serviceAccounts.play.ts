@@ -26,31 +26,28 @@ const enabledButton = (locate: () => HTMLElement): Promise<HTMLElement> =>
 		return button;
 	}, untilLoaded);
 
-export const openFilterMenu = async (): Promise<void> => {
-	// The trigger is disabled until the list and its permission check answer, so
-	// waiting on the text alone lands on a button that drops the click.
-	const trigger = await waitFor(() => {
-		const button = screen.getByTestId('sa-filter-trigger');
-
-		if (
-			button.getAttribute('aria-busy') === 'true' ||
-			button.getAttribute('aria-disabled') === 'true'
-		) {
-			throw new Error('the filter trigger is still disabled');
+// The box and chips are read-only until the list and its permission check answer.
+const editableSearch = (): Promise<HTMLElement> =>
+	waitFor(() => {
+		const content = screen
+			.getByTestId('sa-list-search')
+			.querySelector<HTMLElement>('.cm-content');
+		if (!content || content.getAttribute('contenteditable') !== 'true') {
+			throw new Error('the search box is still read-only');
 		}
-
-		return button;
+		return content;
 	}, untilLoaded);
 
-	await userEvent.click(trigger);
-	await screen.findByRole('menuitem', { name: 'All accounts' }, untilLoaded);
+export const openStatusChip = async (): Promise<void> => {
+	await editableSearch();
+	await userEvent.click(
+		within(screen.getByTestId('sa-filter-status')).getByRole('combobox'),
+	);
+	await screen.findByTitle('Deleted', undefined, untilLoaded);
 };
 
 export const openSearchSuggestions = async (): Promise<void> => {
-	// The box is read-only until the list and its permission check answer.
-	await screen.findByText('ci-pipeline', undefined, untilLoaded);
-	const search = screen.getByTestId('sa-list-search');
-	await userEvent.click(search.querySelector('.cm-content') ?? search);
+	await userEvent.click(await editableSearch());
 	await screen.findByText('status', undefined, untilLoaded);
 };
 

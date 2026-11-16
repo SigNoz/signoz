@@ -1,4 +1,4 @@
-import { render, screen } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 
 import type { DslGrammar } from '../../dsl/types';
 import FilterZone from '../FilterZone';
@@ -29,6 +29,44 @@ describe('FilterZone', () => {
 
 		expect(screen.getByTestId('things-filter-created-by')).toBeInTheDocument();
 		expect(screen.getByTestId('things-filter-updated')).toBeInTheDocument();
+	});
+
+	it('reflects an enum chip from the draft and runs the spliced clause on change', async () => {
+		const onQueryChange = jest.fn() as jest.MockedFunction<
+			(value: string) => void
+		>;
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		render(
+			<FilterZone
+				query="status = 'deleted' AND name = 'ci'"
+				grammar={grammar}
+				testIdPrefix="things"
+				source={source}
+				enumChips={[
+					{
+						key: 'status',
+						placeholder: 'Status',
+						options: [
+							{ value: null, label: 'All' },
+							{ value: 'active', label: 'Active' },
+							{ value: 'deleted', label: 'Deleted' },
+						],
+					},
+				]}
+				onQueryChange={onQueryChange}
+			/>,
+		);
+
+		const chip = screen.getByTestId('things-filter-status');
+		expect(within(chip).getByText('Deleted')).toBeInTheDocument();
+
+		await user.click(within(chip).getByRole('combobox'));
+		await user.click(await screen.findByTitle('Active'));
+
+		expect(onQueryChange).toHaveBeenCalledWith(
+			"status = 'active' AND name = 'ci'",
+		);
 	});
 
 	it('drops the Created-by chip for an entity without a creator', () => {

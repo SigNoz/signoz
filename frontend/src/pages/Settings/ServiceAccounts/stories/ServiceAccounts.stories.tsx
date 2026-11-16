@@ -17,8 +17,8 @@ import {
 	keyRevokedToast,
 	keysSecondPage,
 	keyUpdatedToast,
-	openFilterMenu,
 	openSearchSuggestions,
+	openStatusChip,
 	saveFailed,
 } from './__story_mockdata__/serviceAccounts.play';
 import {
@@ -104,9 +104,15 @@ export const SearchSuggestions: Story = {
 	play: openSearchSuggestions,
 };
 
-/** Interaction: the status menu is open with its three modes. */
-export const FilterMenuOpen: Story = {
-	play: openFilterMenu,
+/** The suggestions still open on a workspace with no accounts to list. */
+export const SearchSuggestionsNoAccounts: Story = {
+	args: { accounts: 0, deleted: 0 },
+	play: openSearchSuggestions,
+};
+
+/** Interaction: the status chip is open with its three choices. */
+export const StatusChipOpen: Story = {
+	play: openStatusChip,
 };
 
 /** Empty: a search that matches no account keeps the list shell and empty state. */

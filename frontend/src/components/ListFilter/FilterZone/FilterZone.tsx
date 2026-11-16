@@ -7,6 +7,7 @@ import type { DslGrammar, SuggestionSource } from '../dsl/types';
 import SearchBar from '../SearchBar/SearchBar';
 import type {
 	CreatorOption,
+	EnumChip,
 	FilterAppliedPayload,
 	FilterAppliedType,
 } from '../types';
@@ -24,6 +25,8 @@ interface Props {
 	testIdPrefix: string;
 	// Omitted when the entity has no creator, which drops the Created-by chip.
 	creatorOptions?: CreatorOption[];
+	// Single-select chips over reserved enum keys; each splices its clause and runs.
+	enumChips?: EnumChip[];
 	source: SuggestionSource;
 	// Commit (run) the draft — the only path that triggers a fetch.
 	onQueryChange: (value: string) => void;
@@ -59,6 +62,7 @@ function FilterZone({
 	grammar,
 	testIdPrefix,
 	creatorOptions,
+	enumChips,
 	source,
 	onQueryChange,
 	placeholder,
@@ -82,6 +86,8 @@ function FilterZone({
 		run,
 		handleCreatedByChange,
 		handleUpdatedChange,
+		reflectedEnum,
+		handleEnumChange,
 		handleClearCreatedBy,
 		handleClear,
 	} = useFilterZoneDraft({
@@ -138,6 +144,11 @@ function FilterZone({
 							testIdPrefix={testIdPrefix}
 							onCreatedByChange={handleCreatedByChange}
 							onUpdatedChange={handleUpdatedChange}
+							enumChips={enumChips}
+							enumValues={Object.fromEntries(
+								(enumChips ?? []).map((chip) => [chip.key, reflectedEnum(chip.key)]),
+							)}
+							onEnumChange={handleEnumChange}
 							onApply={run}
 							onClearCreatedBy={handleClearCreatedBy}
 							disabled={disabled}

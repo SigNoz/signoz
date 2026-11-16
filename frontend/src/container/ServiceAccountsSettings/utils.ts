@@ -1,11 +1,6 @@
 import type { ServiceaccounttypesServiceAccountDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	reflectedEqualityValue,
-	spliceClause,
-} from 'components/ListFilter/dsl/filterQuery';
+import { spliceClause } from 'components/ListFilter/dsl/filterQuery';
 import { toISOString } from 'utils/app';
-
-import { where } from './list.config';
 
 export function toServiceAccountRow(
 	sa: ServiceaccounttypesServiceAccountDTO,
@@ -20,30 +15,7 @@ export function toServiceAccountRow(
 	};
 }
 
-export enum FilterMode {
-	All = 'all',
-	Active = 'active',
-	Deleted = 'deleted',
-}
-
-// The mode the dropdown shows for a query: its one top-level `status = x` clause, else All.
-export function filterModeFromQuery(query: string): FilterMode {
-	const status = reflectedEqualityValue(query, 'status')?.toLowerCase();
-	if (status === FilterMode.Active || status === FilterMode.Deleted) {
-		return status;
-	}
-	return FilterMode.All;
-}
-
-export function withFilterMode(query: string, mode: FilterMode): string {
-	return spliceClause(
-		query,
-		'status',
-		mode === FilterMode.All ? null : where('status', '=', mode),
-	);
-}
-
-// What the user typed besides the status the dropdown owns.
+// What the user typed besides the status the chip owns.
 export function freeTextOfQuery(query: string): string {
 	return spliceClause(query, 'status', null);
 }

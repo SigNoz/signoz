@@ -1,8 +1,6 @@
 import { type ReactElement, useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
-import { Check, ChevronDown, Plus } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
+import { Plus } from '@signozhq/icons';
 import { invalidateListServiceAccounts } from 'api/generated/services/serviceaccount';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
@@ -30,22 +28,14 @@ import { SA_PAGE_SIZE, SA_QUERY_PARAMS } from './constants';
 import {
 	SERVICE_ACCOUNTS_DEFAULT_QUERY,
 	SERVICE_ACCOUNTS_DSL_GRAMMAR,
+	SERVICE_ACCOUNTS_STATUS_CHIP,
 } from './list.config';
 import { useServiceAccountsData } from './useServiceAccountsData';
-import {
-	FilterMode,
-	filterModeFromQuery,
-	ServiceAccountRow,
-	withFilterMode,
-} from './utils';
+import { ServiceAccountRow } from './utils';
 
 import './ServiceAccountsSettings.styles.scss';
 
-const FILTER_LABELS: Record<FilterMode, string> = {
-	[FilterMode.All]: 'All accounts',
-	[FilterMode.Active]: 'Active',
-	[FilterMode.Deleted]: 'Deleted',
-};
+const STATUS_CHIPS = [SERVICE_ACCOUNTS_STATUS_CHIP];
 
 function ServiceAccountsSettings(): JSX.Element {
 	const queryClient = useQueryClient();
@@ -65,7 +55,6 @@ function ServiceAccountsSettings(): JSX.Element {
 			.withDefault(SERVICE_ACCOUNTS_DEFAULT_QUERY)
 			.withOptions({ history: 'push' }),
 	);
-	const filterMode = filterModeFromQuery(searchQuery);
 	const [, setIsCreateModalOpen] = useQueryState(
 		SA_QUERY_PARAMS.CREATE_SA,
 		parseAsBoolean.withDefault(false),
@@ -125,20 +114,6 @@ function ServiceAccountsSettings(): JSX.Element {
 		[],
 	);
 
-	const filterMenuItems: DropdownItemType[] = Object.values(FilterMode).map(
-		(mode) => ({
-			type: 'item',
-			value: mode,
-			label: (
-				<div className="sa-settings-filter-option">
-					<span>{FILTER_LABELS[mode]}</span>
-					{filterMode === mode && <Check size={14} />}
-				</div>
-			),
-			onClick: (): void => handleQueryChange(withFilterMode(searchQuery, mode)),
-		}),
-	);
-
 	const handleRowClick = useCallback(
 		(row: ServiceAccountRow): void => {
 			void setSelectedAccountId(row.id);
@@ -182,6 +157,7 @@ function ServiceAccountsSettings(): JSX.Element {
 					testIdPrefix="sa"
 					placeholder="DSL Filter — e.g. name CONTAINS 'ci' AND status = 'active'"
 					source={source}
+					enumChips={STATUS_CHIPS}
 					disabled={controlsDisabled}
 					wrapControl={wrapControl}
 					onQueryChange={handleQueryChange}
@@ -200,27 +176,6 @@ function ServiceAccountsSettings(): JSX.Element {
 						>
 							New Service Account
 						</AuthZButton>
-					}
-					extraFilters={
-						<Dropdown items={filterMenuItems} nativeButton align="end" side="bottom">
-							<Button
-								size="md"
-								variant="solid"
-								color="secondary"
-								loading={isAuthZLoading}
-								disabled={!canListServiceAccounts}
-								disabledTooltip={undefined}
-								testId="sa-filter-trigger"
-								suffix={
-									<ChevronDown
-										size={12}
-										className="sa-settings-filter-trigger__chevron"
-									/>
-								}
-							>
-								<span>{FILTER_LABELS[filterMode]}</span>
-							</Button>
-						</Dropdown>
 					}
 				/>
 

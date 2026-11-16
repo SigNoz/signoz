@@ -665,8 +665,11 @@ export function settingsDriver(page: Page): Settings {
 				await expect(settings.toast('Service account deleted')).toBeVisible();
 			},
 			filter: async (label) => {
-				await page.getByTestId('sa-filter-trigger').click();
-				await page.getByRole('menuitem', { name: new RegExp(`^${label}`) }).click();
+				await page
+					.getByTestId('sa-filter-status')
+					.locator('.ant-select-selector')
+					.click();
+				await page.getByTitle(label, { exact: true }).click();
 			},
 			callWithKey: async (key, path) =>
 				(
