@@ -2,6 +2,7 @@ package contextlinks
 
 import (
 	"testing"
+	"time"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -219,6 +220,33 @@ func TestPrepareRuleFilterExpression(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, testCase.expectedExpression, expression)
 			assert.Equal(t, testCase.expectedFound, found)
+		})
+	}
+}
+
+func TestPrepareParamsForExceptions(t *testing.T) {
+	start := time.UnixMilli(1705468620000)
+	end := time.UnixMilli(1705468920000)
+
+	testCases := []struct {
+		name          string
+		labels        map[string]string
+		serviceName   string
+		exceptionType string
+	}{
+		{name: "SQLColumns_SetsServiceAndExceptionType", labels: map[string]string{"serviceName": "checkout", "exceptionType": "TimeoutError"}, serviceName: "checkout", exceptionType: "TimeoutError"},
+		{name: "BuilderKeys_SetsServiceAndExceptionType", labels: map[string]string{"service.name": "payments", "exception.type": "ValueError"}, serviceName: "payments", exceptionType: "ValueError"},
+		{name: "NoMatchingLabels_SetsTimeOnly", labels: map[string]string{"host": "web-1"}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			params := PrepareParamsForExceptions(start, end, testCase.labels)
+
+			assert.Equal(t, "1705468620000", params.Get("startTime"))
+			assert.Equal(t, "1705468920000", params.Get("endTime"))
+			assert.Equal(t, testCase.serviceName, params.Get("serviceName"))
+			assert.Equal(t, testCase.exceptionType, params.Get("exceptionType"))
 		})
 	}
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/units"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -252,6 +253,37 @@ func (r *BaseRule) ExpandAnnotations(expand func(string) string) ruletypes.Label
 		}
 
 		annotations = append(annotations, ruletypes.Label{Name: name, Value: expand(value)})
+	}
+
+	return annotations
+}
+
+// AlertAnnotations returns the expanded rule annotations plus the private ones
+// the notifier reads into template fields. value and threshold are smpl.V and
+// smpl.Target formatted for display.
+func (r *BaseRule) AlertAnnotations(expand func(string) string, smpl ruletypes.Sample, value, threshold string) ruletypes.Labels {
+	annotations := r.ExpandAnnotations(expand)
+	if !smpl.IsMissing {
+		annotations = append(annotations,
+			ruletypes.Label{Name: ruletypes.AnnotationValue, Value: value},
+			ruletypes.Label{Name: ruletypes.AnnotationThresholdValue, Value: threshold},
+		)
+		if op := smpl.CompareOperator.Literal(); op != "" {
+			annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationCompareOp, Value: op})
+		}
+		if matchType := smpl.MatchType.Literal(); matchType != "" {
+			annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationMatchType, Value: matchType})
+		}
+		if smpl.RecoveryTarget != nil {
+			recovery := units.FormatterFromUnit(r.Unit()).Format(*smpl.RecoveryTarget, smpl.TargetUnit)
+			annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRecoveryThreshold, Value: recovery})
+		}
+	}
+	if smpl.IsRecovering {
+		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationIsRecovering, Value: "true"})
+	}
+	if signal := r.typ.Signal(); signal != "" {
+		annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRuleType, Value: signal})
 	}
 
 	return annotations

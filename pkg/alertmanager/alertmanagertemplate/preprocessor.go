@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/go-viper/mapstructure/v2"
 )
 
 // fieldPath is a dotted mapstructure path into the templating data map,
@@ -131,16 +131,51 @@ func structRootSet(data any) map[string]bool {
 	return roots
 }
 
+// toTemplateMap converts a tagged struct into nested maps keyed by its
+// mapstructure tag names, the names templates reference. Unlike
+// mapstructure.Decode it keeps time.Time values as is, so date, tz and since
+// work on them. Fields that are untagged or tagged "-" are skipped.
+func toTemplateMap(val reflect.Value) map[string]any {
+	typ := val.Type()
+	result := make(map[string]any, typ.NumField())
+	for i := 0; i < typ.NumField(); i++ {
+		field := typ.Field(i)
+		if !field.IsExported() {
+			continue
+		}
+		name := strings.Split(field.Tag.Get("mapstructure"), ",")[0]
+		if name == "" || name == "-" {
+			continue
+		}
+
+		fv := val.Field(i)
+		if fv.Kind() == reflect.Pointer {
+			if fv.IsNil() {
+				result[name] = nil
+				continue
+			}
+			fv = fv.Elem()
+		}
+		if fv.Kind() == reflect.Struct && fv.Type() != reflect.TypeOf(time.Time{}) {
+			result[name] = toTemplateMap(fv)
+			continue
+		}
+		result[name] = fv.Interface()
+	}
+	return result
+}
+
 // buildDataMap converts the typed data struct to the map[string]any that the
 // template engine indexes into. Each label and annotation is additionally
 // exposed at the root under its raw key, so $service.name resolves a flat
 // OTel-style label as a single-key index on the root. Struct-path keys
 // already present at the root take precedence on collisions.
 func buildDataMap(data any) (map[string]any, error) {
-	var result map[string]any
-	if err := mapstructure.Decode(data, &result); err != nil {
-		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to build template data map")
+	val := reflect.Indirect(reflect.ValueOf(data))
+	if val.Kind() != reflect.Struct {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to build template data map: expected a struct, got %T", data)
 	}
+	result := toTemplateMap(val)
 
 	flatten := func(labels, annotations map[string]string) {
 		for k, v := range labels {

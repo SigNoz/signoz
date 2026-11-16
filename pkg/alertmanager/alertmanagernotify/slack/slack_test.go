@@ -389,7 +389,7 @@ func TestPrepareContent(t *testing.T) {
 | Metric | Value |
 |--------|-------|
 | **Current** | *$value* |
-| **Threshold** | *$threshold.value* |
+| **Threshold** | *$threshold* |
 
 **Status:** $alert.status | **Severity:** $labels.severity`
 		titleTemplate := "[$alert.status] $rule.name — $labels.service"
@@ -401,10 +401,10 @@ func TestPrepareContent(t *testing.T) {
 				StartsAt: time.Now(),
 				EndsAt:   time.Now().Add(time.Hour),
 				Annotations: model.LabelSet{
-					ruletypes.AnnotationTitleTemplate: model.LabelValue(titleTemplate),
-					ruletypes.AnnotationBodyTemplate:  model.LabelValue(bodyTemplate),
-					"value":                           "100",
-					"threshold.value":                 "200",
+					ruletypes.AnnotationTitleTemplate:  model.LabelValue(titleTemplate),
+					ruletypes.AnnotationBodyTemplate:   model.LabelValue(bodyTemplate),
+					ruletypes.AnnotationValue:          "100",
+					ruletypes.AnnotationThresholdValue: "200",
 				},
 			},
 		}
@@ -414,10 +414,10 @@ func TestPrepareContent(t *testing.T) {
 				StartsAt: time.Now().Add(-2 * time.Hour),
 				EndsAt:   time.Now().Add(-time.Hour),
 				Annotations: model.LabelSet{
-					ruletypes.AnnotationTitleTemplate: model.LabelValue(titleTemplate),
-					ruletypes.AnnotationBodyTemplate:  model.LabelValue(bodyTemplate),
-					"value":                           "50",
-					"threshold.value":                 "200",
+					ruletypes.AnnotationTitleTemplate:  model.LabelValue(titleTemplate),
+					ruletypes.AnnotationBodyTemplate:   model.LabelValue(bodyTemplate),
+					ruletypes.AnnotationValue:          "50",
+					ruletypes.AnnotationThresholdValue: "200",
 				},
 			},
 		}

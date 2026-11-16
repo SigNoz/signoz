@@ -129,7 +129,94 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 			alertsFound, err := rule.Eval(context.Background(), evalTime)
 			require.NoError(t, err)
 			assert.Equal(t, c.expectAlerts, alertsFound)
+			for _, item := range rule.Active {
+				assert.Empty(t, item.Annotations.Get(ruletypes.AnnotationValue))
+				assert.Empty(t, item.Annotations.Get(ruletypes.AnnotationThresholdValue))
+			}
 		})
+	}
+}
+
+func TestAnomalyRule_ValueAndThresholdAnnotations(t *testing.T) {
+	baseTime := time.Unix(1700000000, 0)
+	evalTime := baseTime.Add(5 * time.Minute)
+
+	target := 2.0
+
+	postableRule := ruletypes.PostableRule{
+		AlertName: valuer.NewDisplayName("Test anomaly value"),
+		AlertType: ruletypes.AlertTypeMetric,
+		RuleType:  ruletypes.RuleTypeAnomaly,
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+			EvalWindow: valuer.MustParseTextDuration("5m"),
+			Frequency:  valuer.MustParseTextDuration("1m"),
+		}},
+		RuleCondition: &ruletypes.RuleCondition{
+			CompareOperator: ruletypes.ValueIsAbove,
+			MatchType:       ruletypes.AtleastOnce,
+			Target:          &target,
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
+				Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+						Name:   "A",
+						Signal: telemetrytypes.SignalMetrics,
+					},
+				}},
+			},
+			SelectedQuery: "A",
+			Seasonality:   ruletypes.SeasonalityDaily,
+			Thresholds: &ruletypes.RuleThresholdData{
+				Kind: ruletypes.BasicThresholdKind,
+				Spec: ruletypes.BasicRuleThresholds{{
+					Name:            "Test anomaly value",
+					TargetValue:     &target,
+					MatchType:       ruletypes.AtleastOnce,
+					CompareOperator: ruletypes.ValueIsAbove,
+				}},
+			},
+		},
+		Annotations: map[string]string{
+			"summary":     "{{$value}}",
+			"description": "{{$threshold}}",
+		},
+	}
+
+	response := &anomaly.AnomaliesResponse{
+		Results: []*qbtypes.TimeSeriesData{
+			{
+				QueryName: "A",
+				Aggregations: []*qbtypes.AggregationBucket{{
+					AnomalyScores: []*qbtypes.TimeSeries{{
+						Labels: []*qbtypes.Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "service.name"}, Value: "checkout"}},
+						Values: []*qbtypes.TimeSeriesValue{
+							{Timestamp: baseTime.Add(1 * time.Minute).UnixMilli(), Value: 1.5},
+							{Timestamp: baseTime.Add(2 * time.Minute).UnixMilli(), Value: 3.5},
+						},
+					}},
+				}},
+			},
+		},
+	}
+
+	rule, err := NewAnomalyRule("test-anomaly-rule", valuer.GenerateUUID(), &postableRule, nil, instrumentationtest.New().Logger(), mustParseURL(t, "http://localhost:8000"))
+	require.NoError(t, err)
+
+	rule.provider = &mockAnomalyProvider{responses: []*anomaly.AnomaliesResponse{response}}
+
+	alertsFound, err := rule.Eval(context.Background(), evalTime)
+	require.NoError(t, err)
+	require.Equal(t, 1, alertsFound)
+
+	for _, item := range rule.Active {
+		value := item.Annotations.Get(ruletypes.AnnotationValue)
+		assert.NotEmpty(t, value)
+		assert.Equal(t, item.Annotations.Get("summary"), value)
+
+		threshold := item.Annotations.Get(ruletypes.AnnotationThresholdValue)
+		assert.NotEmpty(t, threshold)
+		assert.Equal(t, item.Annotations.Get("description"), threshold)
 	}
 }
 

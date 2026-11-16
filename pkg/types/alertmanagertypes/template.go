@@ -3,6 +3,7 @@ package alertmanagertypes
 import (
 	"bytes"
 	"net/url"
+	"time"
 
 	tmplhtml "html/template"
 	tmpltext "text/template"
@@ -19,6 +20,7 @@ func AdditionalFuncMap() tmpltext.FuncMap {
 		"urlescape": func(value string) tmplhtml.HTML {
 			return tmplhtml.HTML(url.QueryEscape(value))
 		},
+		"now": time.Now,
 	}
 }
 

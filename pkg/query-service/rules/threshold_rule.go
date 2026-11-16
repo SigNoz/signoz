@@ -125,6 +125,17 @@ func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time
 	return contextlinks.PrepareParamsForTracesV5(start, end, whereClause, r.typ.BuilderQueryType())
 }
 
+func (r *ThresholdRule) prepareParamsForExceptions(ctx context.Context, ts time.Time, resultLabels ruletypes.Labels) url.Values {
+	qr, err := r.prepareQueryRange(ctx, ts)
+	if err != nil {
+		return nil
+	}
+	start := time.UnixMilli(int64(qr.Start))
+	end := time.UnixMilli(int64(qr.End))
+
+	return contextlinks.PrepareParamsForExceptions(start, end, resultLabels.Map())
+}
+
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
 	params, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
@@ -285,7 +296,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		lb.Set(ruletypes.AlertRuleIDLabel, r.ID())
 		lb.Set(ruletypes.RuleSourceLabel, r.GeneratorURL())
 
-		annotations := r.ExpandAnnotations(expand)
+		annotations := r.AlertAnnotations(expand, smpl, value, threshold)
 		if smpl.IsMissing {
 			lb.Set(ruletypes.AlertNameLabel, "[No data] "+r.Name())
 			lb.Set(ruletypes.NoDataLabel, "true")
@@ -312,6 +323,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 				link := r.ExternalURL("logs/logs-explorer", params)
 				r.logger.InfoContext(ctx, "adding logs link to annotations", slog.String("annotation.link", link))
 				annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRelatedLogs, Value: link})
+			}
+		case ruletypes.AlertTypeExceptions:
+			params := r.prepareParamsForExceptions(ctx, ts, smpl.Metric)
+			if len(params) > 0 {
+				link := r.ExternalURL("exceptions", params)
+				r.logger.InfoContext(ctx, "adding exceptions link to annotations", slog.String("annotation.link", link))
+				annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRelatedExceptions, Value: link})
 			}
 		}
 
