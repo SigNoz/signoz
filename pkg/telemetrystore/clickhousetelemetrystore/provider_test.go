@@ -27,11 +27,30 @@ type fakeConn struct {
 }
 
 func TestProviderWithProfile(t *testing.T) {
-	defaultConn, profileConn := &fakeConn{}, &fakeConn{}
-	p := &provider{settings: factory.NewScopedProviderSettings(factorytest.NewSettings(), "test"), clickHouseConn: defaultConn, profileConns: map[string]clickhouse.Conn{"query_range": profileConn}}
+	mainConn, defaultConn, queryRangeConn := &fakeConn{}, &fakeConn{}, &fakeConn{}
+	settings := factory.NewScopedProviderSettings(factorytest.NewSettings(), "test")
 
-	assert.Same(t, profileConn, p.WithProfile("query_range").(*provider).clickHouseConn)
-	assert.Same(t, defaultConn, p.clickHouseConn)
-	assert.Same(t, p, p.WithProfile(telemetrystore.ProfileDefault))
-	assert.Same(t, p, p.WithProfile("unknown"))
+	testCases := []struct {
+		name         string
+		profileConns map[string]clickhouse.Conn
+		profile      string
+		wantStore    clickhouse.Conn
+		wantProfile  clickhouse.Conn
+	}{
+		{name: "NoProfiles_MainConn", profileConns: map[string]clickhouse.Conn{}, profile: "query_range", wantStore: mainConn, wantProfile: mainConn},
+		{name: "Configured_ProfileConn", profileConns: map[string]clickhouse.Conn{"query_range": queryRangeConn}, profile: "query_range", wantStore: mainConn, wantProfile: queryRangeConn},
+		{name: "DefaultConfigured_DefaultConn", profileConns: map[string]clickhouse.Conn{telemetrystore.ProfileDefault: defaultConn}, profile: telemetrystore.ProfileDefault, wantStore: defaultConn, wantProfile: defaultConn},
+		{name: "Unconfigured_DefaultConfigured_DefaultConn", profileConns: map[string]clickhouse.Conn{telemetrystore.ProfileDefault: defaultConn}, profile: "query_range", wantStore: defaultConn, wantProfile: defaultConn},
+		{name: "Main_DefaultConfigured_MainConn", profileConns: map[string]clickhouse.Conn{telemetrystore.ProfileDefault: defaultConn}, profile: telemetrystore.ProfileMain, wantStore: defaultConn, wantProfile: mainConn},
+		{name: "Main_NoProfiles_MainConn", profileConns: map[string]clickhouse.Conn{}, profile: telemetrystore.ProfileMain, wantStore: mainConn, wantProfile: mainConn},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			p := newProvider(settings, mainConn, testCase.profileConns, "cluster", nil)
+
+			assert.Same(t, testCase.wantStore, p.clickHouseConn)
+			assert.Same(t, testCase.wantProfile, p.WithProfile(testCase.profile).(*provider).clickHouseConn)
+		})
+	}
 }

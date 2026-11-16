@@ -7,6 +7,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
+const (
+	// ProfileMain is the main DSN, with no profile of its own. Writes and schema changes run on it.
+	ProfileMain = "main"
+
+	// ProfileDefault runs every query that asks for no other profile, and an unconfigured one. Until it
+	// is configured it runs on ProfileMain.
+	ProfileDefault = "default"
+)
+
 type Config struct {
 	// Provider is the provider to use
 	Provider string `mapstructure:"provider"`
@@ -45,10 +54,6 @@ type ClickhouseConfig struct {
 	Profiles map[string]ProfileConfig `mapstructure:"profiles"`
 }
 
-// ProfileDefault is the profile of the main DSN user. It has no limits and is the fallback for an
-// unconfigured profile.
-const ProfileDefault = "default"
-
 type ProfileConfig struct {
 	DSN string `mapstructure:"dsn"`
 }
@@ -84,7 +89,7 @@ func newConfig() factory.Config {
 
 func (c Config) Validate() error {
 	for name, profile := range c.Clickhouse.Profiles {
-		if name == ProfileDefault {
+		if name == ProfileMain {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetrystore.clickhouse.profiles.%s is the main dsn and cannot be configured", name)
 		}
 		if profile.DSN == "" {

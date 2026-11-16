@@ -123,6 +123,7 @@ var (
 // SpanWriter for reading spans from ClickHouse
 type ClickHouseReader struct {
 	db                      clickhouse.Conn
+	mainDB                  clickhouse.Conn
 	prometheus              prometheus.Prometheus
 	sqlDB                   sqlstore.SQLStore
 	TraceDB                 string
@@ -189,6 +190,7 @@ func NewReader(
 
 	return &ClickHouseReader{
 		db:                       telemetryStore.ClickhouseDB(),
+		mainDB:                   telemetryStore.WithProfile(telemetrystore.ProfileMain).ClickhouseDB(),
 		logger:                   logger,
 		prometheus:               prometheus,
 		sqlDB:                    sqlDB,
@@ -1049,7 +1051,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 			}
 			r.logger.Info("Executing TTL request: ", "request", query)
 			statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
-			if err := r.db.Exec(ctx, query); err != nil {
+			if err := r.mainDB.Exec(ctx, query); err != nil {
 				r.logger.Error("error while setting ttl", errorsV2.Attr(err))
 				_, dbErr := r.
 					sqlDB.
@@ -1200,7 +1202,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 			req += " SETTINGS materialize_ttl_after_modify=0;"
 			r.logger.Error(" ExecutingTTL request: ", "request", req)
 			statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
-			if err := r.db.Exec(ctx, req); err != nil {
+			if err := r.mainDB.Exec(ctx, req); err != nil {
 				r.logger.Error("Error in executing set TTL query", errorsV2.Attr(err))
 				_, dbErr := r.
 					sqlDB.
@@ -1448,7 +1450,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *r
 
 		for i, query := range queries {
 			r.logger.Debug("Executing custom retention TTL request: ", "request", query, "step", i+1)
-			if err := r.db.Exec(ctx, query); err != nil {
+			if err := r.mainDB.Exec(ctx, query); err != nil {
 				r.logger.Error("error while setting custom retention ttl", errorsV2.Attr(err))
 				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, retentiontypes.TTLSettingStatusFailed)
 				return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting custom retention TTL for table %s, query: %s", tableName, query)
@@ -1872,7 +1874,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 		req += " SETTINGS materialize_ttl_after_modify=0"
 		r.logger.Info("Executing TTL request: ", "request", req)
 		statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
-		if err := r.db.Exec(ctx, req); err != nil {
+		if err := r.mainDB.Exec(ctx, req); err != nil {
 			r.logger.Error("error while setting ttl.", errorsV2.Attr(err))
 			_, dbErr := r.
 				sqlDB.
@@ -2000,7 +2002,7 @@ func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string,
 		policyReq := fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY SETTING storage_policy='tiered'", tableName, r.cluster)
 
 		r.logger.Info("Executing Storage policy request: ", "request", policyReq)
-		if err := r.db.Exec(ctx, policyReq); err != nil {
+		if err := r.mainDB.Exec(ctx, policyReq); err != nil {
 			r.logger.Error("error while setting storage policy", errorsV2.Attr(err))
 			return &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting storage policy. Err=%v", err)}
 		}
@@ -2705,7 +2707,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			attrColName,
 			field.Name,
 		)
-		err := r.db.Exec(ctx, query)
+		err := r.mainDB.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
@@ -2717,7 +2719,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			attrColName,
 			field.Name,
 		)
-		err = r.db.Exec(ctx, query)
+		err = r.mainDB.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
@@ -2743,7 +2745,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		field.IndexType,
 		field.IndexGranularity,
 	)
-	err := r.db.Exec(ctx, query)
+	err := r.mainDB.Exec(ctx, query)
 	if err != nil {
 		return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
@@ -2846,7 +2848,7 @@ func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.Up
 			attrColName,
 			field.Name,
 		)
-		err := r.db.Exec(ctx, query)
+		err := r.mainDB.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
@@ -2858,7 +2860,7 @@ func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.Up
 			attrColName,
 			field.Name,
 		)
-		err = r.db.Exec(ctx, query)
+		err = r.mainDB.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
@@ -2884,7 +2886,7 @@ func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.Up
 		field.IndexType,
 		field.IndexGranularity,
 	)
-	err := r.db.Exec(ctx, query)
+	err := r.mainDB.Exec(ctx, query)
 	if err != nil {
 		return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
@@ -2897,7 +2899,7 @@ func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.Up
 			colname,
 			colname,
 		)
-		err = r.db.Exec(ctx, query)
+		err = r.mainDB.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
@@ -4550,7 +4552,7 @@ func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, orgID valu
 	insertQuery := fmt.Sprintf(`INSERT INTO %s.%s (metric_name, temporality, is_monotonic, type, description, unit, created_at)
 VALUES ( ?, ?, ?, ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadataTable)
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
-	err := r.db.Exec(valueCtx, insertQuery, req.MetricName, req.Temporality, req.IsMonotonic, req.MetricType, req.Description, req.Unit, req.CreatedAt.UnixMilli())
+	err := r.mainDB.Exec(valueCtx, insertQuery, req.MetricName, req.Temporality, req.IsMonotonic, req.MetricType, req.Description, req.Unit, req.CreatedAt.UnixMilli())
 	if err != nil {
 		return &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}

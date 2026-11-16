@@ -213,7 +213,7 @@ func (m *module) createIndexes(ctx context.Context, target promotetypes.Target, 
 			Index:    index,
 		}
 		op := alterStmt.OnCluster(m.telemetryStore.Cluster())
-		if err := m.telemetryStore.ClickhouseDB().Exec(ctx, op.ToSQL()); err != nil {
+		if err := m.telemetryStore.WithProfile(telemetrystore.ProfileMain).ClickhouseDB().Exec(ctx, op.ToSQL()); err != nil {
 			return errors.WrapInternalf(err, CodeFailedToCreateIndex, "failed to create index")
 		}
 	}

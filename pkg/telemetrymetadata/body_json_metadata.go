@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetryschema/logstelemetryschema"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
@@ -467,7 +468,7 @@ func CleanPathPrefixes(path string) string {
 
 func (t *telemetryMetaStore) PromotePaths(ctx context.Context, entry telemetrytypes.EvolutionEntry, paths ...string) error {
 	ctx = withTelemetryContext(ctx, entry.Signal, "PromotePaths")
-	batch, err := t.telemetrystore.ClickhouseDB().PrepareBatch(ctx,
+	batch, err := t.telemetrystore.WithProfile(telemetrystore.ProfileMain).ClickhouseDB().PrepareBatch(ctx,
 		fmt.Sprintf("INSERT INTO %s.%s (signal, column_name, column_type, field_context, field_name, version, release_time) VALUES", DBName,
 			PromotedPathsTableName))
 	if err != nil {

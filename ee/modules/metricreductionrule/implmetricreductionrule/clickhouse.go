@@ -72,7 +72,7 @@ func (c *clickhouse) Sync(ctx context.Context, metricName string, labels []strin
 	ib.Values(metricName, labels, matchType, effectiveFromMs, deleted, updatedAt)
 
 	query, args := ib.BuildWithFlavor(sqlbuilder.ClickHouse)
-	if err := c.telemetryStore.ClickhouseDB().Exec(ctx, query, args...); err != nil {
+	if err := c.telemetryStore.WithProfile(telemetrystore.ProfileMain).ClickhouseDB().Exec(ctx, query, args...); err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to sync reduction rule to clickhouse")
 	}
 	return nil

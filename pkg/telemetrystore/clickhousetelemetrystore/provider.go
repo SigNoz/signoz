@@ -122,6 +122,7 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 
 type provider struct {
 	settings       factory.ScopedProviderSettings
+	mainConn       clickhouse.Conn
 	clickHouseConn clickhouse.Conn
 	profileConns   map[string]clickhouse.Conn
 	cluster        string
@@ -164,8 +165,10 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
+	p := newProvider(settings, chConn, profileConns, config.Clickhouse.Cluster, hooks)
+
 	_, err = settings.Meter().RegisterCallback(func(_ context.Context, observer metric.Observer) error {
-		stats := chConn.Stats()
+		stats := p.clickHouseConn.Stats()
 		observer.ObserveInt64(metrics.open, int64(stats.Open))
 		observer.ObserveInt64(metrics.idle, int64(stats.Idle))
 		observer.ObserveInt64(metrics.maxOpen, int64(stats.MaxOpenConns))
@@ -176,14 +179,17 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		return nil, err
 	}
 
-	p := &provider{
-		settings:       settings,
-		clickHouseConn: chConn,
-		profileConns:   profileConns,
-		cluster:        config.Clickhouse.Cluster,
-		hooks:          hooks,
-	}
 	return p, nil
+}
+
+// newProvider runs queries with the default profile, or on mainConn until that profile is configured.
+func newProvider(settings factory.ScopedProviderSettings, mainConn clickhouse.Conn, profileConns map[string]clickhouse.Conn, cluster string, hooks []telemetrystore.TelemetryStoreHook) *provider {
+	conn, ok := profileConns[telemetrystore.ProfileDefault]
+	if !ok {
+		conn = mainConn
+	}
+
+	return &provider{settings: settings, mainConn: mainConn, clickHouseConn: conn, profileConns: profileConns, cluster: cluster, hooks: hooks}
 }
 
 func (p *provider) ClickhouseDB() clickhouse.Conn {
@@ -202,22 +208,26 @@ func (p *provider) Indexes(ctx context.Context, stmt string, args ...any) (telem
 	return RunExplainIndexes(ctx, p, stmt, args...)
 }
 
-// WithProfile returns p itself, the default profile, when the profile is not configured, so callers keep
-// working until it is.
 func (p *provider) WithProfile(profile string) telemetrystore.TelemetryStore {
-	if profile == telemetrystore.ProfileDefault {
-		return p
-	}
-
 	conn, ok := p.profileConns[profile]
+	if profile == telemetrystore.ProfileMain {
+		conn, ok = p.mainConn, true
+	}
 	if !ok {
-		p.settings.Logger().InfoContext(context.Background(), "clickhouse settings profile is not configured, falling back to the default profile", slog.String("profile", profile))
+		if profile != telemetrystore.ProfileDefault {
+			p.settings.Logger().InfoContext(context.Background(), "clickhouse settings profile is not configured, falling back to the default profile", slog.String("profile", profile))
+		}
+		conn = p.profileConns[telemetrystore.ProfileDefault]
+		if conn == nil {
+			conn = p.mainConn
+		}
+	}
+	if conn == p.clickHouseConn {
 		return p
 	}
 
 	profiled := *p
 	profiled.clickHouseConn = conn
-	profiled.profileConns = nil
 	return &profiled
 }
 
@@ -231,7 +241,7 @@ func (p *provider) Close() error {
 			return err
 		}
 	}
-	return p.clickHouseConn.Close()
+	return p.mainConn.Close()
 }
 
 func (p *provider) Ping(ctx context.Context) error {
