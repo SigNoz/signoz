@@ -91,6 +91,7 @@ export const expectPasswordListDenied = async ({
 		untilLoaded,
 	);
 	await expectDenied(button);
+	expect(button).toHaveTextContent('Invite Link Unavailable');
 };
 
 export const expectInviteOpen = async ({

@@ -26,6 +26,7 @@ import {
 	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
 	setupAuthzDeny,
+	setupAuthzDenyAll,
 } from 'lib/authz/utils/authz-test-utils';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
@@ -454,7 +455,7 @@ describe('EditMemberDrawer', () => {
 		expect(screen.queryByText('Last Modified')).not.toBeInTheDocument();
 	});
 
-	it('shows "Regenerate Invite Link" when token is expired', () => {
+	it('shows "Regenerate Invite Link" when token is expired', async () => {
 		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
 			data: {
 				data: {
@@ -469,12 +470,12 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ member: invitedMember });
 
-		expect(
-			screen.getByRole('button', { name: /regenerate invite link/i }),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByRole('button', { name: /regenerate invite link/i }),
+		).resolves.toBeInTheDocument();
 	});
 
-	it('shows "Generate Invite Link" when no token exists', () => {
+	it('shows "Generate Invite Link" when no token exists', async () => {
 		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
 			data: undefined,
 			isLoading: false,
@@ -483,9 +484,9 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ member: invitedMember });
 
-		expect(
-			screen.getByRole('button', { name: /generate invite link/i }),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByRole('button', { name: /generate invite link/i }),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('looks up the invite link when factor-password list is granted', async () => {
@@ -497,9 +498,11 @@ describe('EditMemberDrawer', () => {
 				{ query: { enabled: true } },
 			),
 		);
-		expect(screen.getByTestId('member-reset-link-btn')).not.toHaveAttribute(
-			'aria-disabled',
-			'true',
+		await waitFor(() =>
+			expect(screen.getByTestId('member-reset-link-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
 		);
 	});
 
@@ -518,9 +521,25 @@ describe('EditMemberDrawer', () => {
 			'aria-disabled',
 			'true',
 		);
+		expect(screen.getByTestId('member-reset-link-btn')).toHaveTextContent(
+			'Invite Link Unavailable',
+		);
 		expect(useGetResetPasswordToken).toHaveBeenLastCalledWith(
 			{ id: invitedMember.id },
 			{ query: { enabled: false } },
+		);
+	});
+
+	it('reports only factor-password list for an invited member who lacks every permission', async () => {
+		server.use(setupAuthzDenyAll());
+
+		renderDrawer({ member: invitedMember });
+
+		await waitFor(() =>
+			expect(screen.getByTestId('member-reset-link-btn')).toHaveAttribute(
+				'data-denied-permissions',
+				PasswordListPermission,
+			),
 		);
 	});
 

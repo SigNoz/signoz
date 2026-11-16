@@ -70,12 +70,16 @@ function getDeleteTooltip(
 
 function getInviteButtonLabel(
 	isLoading: boolean,
+	canListPassword: boolean,
 	existingToken: { expiresAt?: string } | undefined,
 	isExpired: boolean,
 	notFound: boolean,
 ): string {
 	if (isLoading) {
 		return 'Checking invite...';
+	}
+	if (!canListPassword) {
+		return 'Invite Link Unavailable';
 	}
 	if (existingToken && !isExpired) {
 		return 'Copy Invite Link';
@@ -137,8 +141,11 @@ function EditMemberDrawer({
 		return [];
 	}, [member, isInvited]);
 
-	const { permissions: authZPermission, error: authZError } =
-		useAuthZ(requestPermission);
+	const {
+		permissions: authZPermission,
+		error: authZError,
+		isLoading: isLoadingAuthZ,
+	} = useAuthZ(requestPermission);
 
 	const canReadUser = member
 		? !!authZError ||
@@ -153,9 +160,11 @@ function EditMemberDrawer({
 		if (!member) {
 			return [];
 		}
-		const checks = buildResetPasswordPermission(member.id);
-		return isInvited ? [...checks, PasswordListPermission] : checks;
-	}, [member, isInvited]);
+		if (isInvited && !canListPassword) {
+			return [PasswordListPermission];
+		}
+		return buildResetPasswordPermission(member.id);
+	}, [member, isInvited, canListPassword]);
 
 	const { showErrorModal } = useErrorModal();
 
@@ -508,7 +517,8 @@ function EditMemberDrawer({
 		}
 		if (isInvited) {
 			return getInviteButtonLabel(
-				isLoadingTokenStatus,
+				isLoadingTokenStatus || isLoadingAuthZ,
+				canListPassword,
 				existingToken,
 				isTokenExpired,
 				tokenNotFound,
@@ -519,6 +529,8 @@ function EditMemberDrawer({
 		isGeneratingLink,
 		isInvited,
 		isLoadingTokenStatus,
+		isLoadingAuthZ,
+		canListPassword,
 		existingToken,
 		isTokenExpired,
 		tokenNotFound,
