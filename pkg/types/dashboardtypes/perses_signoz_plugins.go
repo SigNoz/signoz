@@ -189,21 +189,22 @@ func (AIBuilderQuerySpec) PrepareJSONSchema(s *jsonschema.Schema) error {
 type PanelPluginKind string
 
 const (
-	PanelKindTimeSeries  PanelPluginKind = "signoz/TimeSeriesPanel"
-	PanelKindBarChart    PanelPluginKind = "signoz/BarChartPanel"
-	PanelKindAreaChart   PanelPluginKind = "signoz/AreaChartPanel"
-	PanelKindNumber      PanelPluginKind = "signoz/NumberPanel"
-	PanelKindPieChart    PanelPluginKind = "signoz/PieChartPanel"
-	PanelKindTable       PanelPluginKind = "signoz/TablePanel"
-	PanelKindHistogram   PanelPluginKind = "signoz/HistogramPanel"
-	PanelKindList        PanelPluginKind = "signoz/ListPanel"
-	PanelKindText        PanelPluginKind = "signoz/TextPanel"
-	PanelKindHeatmap     PanelPluginKind = "signoz/HeatmapPanel"
-	PanelKindScatterPlot PanelPluginKind = "signoz/ScatterPlotPanel"
+	PanelKindTimeSeries   PanelPluginKind = "signoz/TimeSeriesPanel"
+	PanelKindBarChart     PanelPluginKind = "signoz/BarChartPanel"
+	PanelKindAreaChart    PanelPluginKind = "signoz/AreaChartPanel"
+	PanelKindNumber       PanelPluginKind = "signoz/NumberPanel"
+	PanelKindPieChart     PanelPluginKind = "signoz/PieChartPanel"
+	PanelKindTable        PanelPluginKind = "signoz/TablePanel"
+	PanelKindHistogram    PanelPluginKind = "signoz/HistogramPanel"
+	PanelKindList         PanelPluginKind = "signoz/ListPanel"
+	PanelKindText         PanelPluginKind = "signoz/TextPanel"
+	PanelKindHeatmap      PanelPluginKind = "signoz/HeatmapPanel"
+	PanelKindScatterPlot  PanelPluginKind = "signoz/ScatterPlotPanel"
+	PanelKindDistribution PanelPluginKind = "signoz/DistributionPanel"
 )
 
 func (PanelPluginKind) Enum() []any {
-	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindHeatmap, PanelKindScatterPlot}
+	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindHeatmap, PanelKindScatterPlot, PanelKindDistribution}
 }
 
 func (k PanelPluginKind) rendersWithoutQuery() bool {
@@ -342,6 +343,89 @@ func (c HeatmapColors) validate() error {
 	if c.MinCount != nil && c.MaxCount != nil && *c.MinCount > *c.MaxCount {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
 			"heatmap colors.minCount %v is greater than colors.maxCount %v", *c.MinCount, *c.MaxCount)
+	}
+	return nil
+}
+
+type DistributionPanelSpec struct {
+	Visualization   BasicVisualization          `json:"visualization" description:"The time range the bucket counts are summed over."`
+	Formatting      PanelFormatting             `json:"formatting" description:"Unit and decimal precision of the bucket bounds; counts take no unit."`
+	Axes            DistributionAxes            `json:"axes" description:"The X (bucket) axis range and Y (count) axis scale."`
+	Legend          Legend                      `json:"legend" description:"Legend placement and series colors."`
+	ChartAppearance DistributionChartAppearance `json:"chartAppearance" description:"Stacking and percentile markers."`
+}
+
+// UnmarshalJSON decodes over the defaults, since the stack default (normal)
+// differs from StackMode's own and percentile markers default to on.
+func (spec *DistributionPanelSpec) UnmarshalJSON(data []byte) error {
+	type alias DistributionPanelSpec
+	tmp := alias{ChartAppearance: DistributionChartAppearance{
+		Stack:       StackModeNormal,
+		Percentiles: DistributionPercentiles{Enabled: true, Values: []float64{50, 90, 99}},
+	}}
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&tmp); err != nil {
+		return err
+	}
+	*spec = DistributionPanelSpec(tmp)
+	return nil
+}
+
+func (spec *DistributionPanelSpec) validate() error {
+	if err := spec.Axes.X.validate(); err != nil {
+		return err
+	}
+	return spec.ChartAppearance.Percentiles.validate()
+}
+
+type DistributionAxes struct {
+	X DistributionXAxis `json:"x" description:"The bucket axis."`
+	Y DistributionYAxis `json:"y" description:"The count axis."`
+}
+
+// DistributionXAxis draws every bucket equally wide, whatever its bounds.
+type DistributionXAxis struct {
+	Min *float64 `json:"min" description:"Buckets wholly below this value are hidden. Null shows them all."`
+	Max *float64 `json:"max" description:"Buckets wholly above this value are hidden. Null shows them all."`
+}
+
+func (axis DistributionXAxis) validate() error {
+	if axis.Min != nil && axis.Max != nil && *axis.Min > *axis.Max {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "axes.x.min %v is greater than axes.x.max %v", *axis.Min, *axis.Max)
+	}
+	return nil
+}
+
+type DistributionYAxis struct {
+	Scale DistributionYScale `json:"scale" required:"true" description:"How counts are spaced: linear (default) or log."`
+}
+
+type DistributionChartAppearance struct {
+	Stack       StackMode               `json:"stack" required:"true" description:"How groups combine in a bucket: normal (default) stacks them, none draws them side by side, percent stacks them as shares of the bucket."`
+	Percentiles DistributionPercentiles `json:"percentiles" description:"Percentile markers drawn across the bucket axis."`
+}
+
+const maxDistributionPercentiles = 5
+
+type DistributionPercentiles struct {
+	Enabled bool      `json:"enabled" required:"true" description:"Whether percentile markers are drawn. Defaults to true."`
+	Values  []float64 `json:"values" required:"true" description:"The percentiles to mark, each in (0, 100), at most 5, no duplicates. Defaults to [50, 90, 99]."`
+}
+
+func (percentiles DistributionPercentiles) validate() error {
+	if len(percentiles.Values) > maxDistributionPercentiles {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "chartAppearance.percentiles.values: at most %d percentiles, got %d", maxDistributionPercentiles, len(percentiles.Values))
+	}
+	seen := make(map[float64]struct{}, len(percentiles.Values))
+	for _, value := range percentiles.Values {
+		if value <= 0 || value >= 100 {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "chartAppearance.percentiles.values: %v is not in (0, 100)", value)
+		}
+		if _, ok := seen[value]; ok {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "chartAppearance.percentiles.values: %v is listed more than once", value)
+		}
+		seen[value] = struct{}{}
 	}
 	return nil
 }
@@ -1459,6 +1543,43 @@ func (s *HeatmapYScale) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid heatmap y scale %q: must be `auto`, `linear`, `log`, or `symlog`", v)
+	}
+}
+
+type DistributionYScale struct{ valuer.String }
+
+var (
+	DistributionYScaleLinear = DistributionYScale{valuer.NewString("linear")} // default
+	DistributionYScaleLog    = DistributionYScale{valuer.NewString("log")}
+)
+
+func (DistributionYScale) Enum() []any {
+	return []any{DistributionYScaleLinear, DistributionYScaleLog}
+}
+
+func (scale DistributionYScale) ValueOrDefault() string {
+	if scale.IsZero() {
+		return DistributionYScaleLinear.StringValue()
+	}
+	return scale.StringValue()
+}
+
+func (scale DistributionYScale) MarshalJSON() ([]byte, error) {
+	return json.Marshal(scale.ValueOrDefault())
+}
+
+func (scale *DistributionYScale) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid distribution y scale: must be a string, one of `linear` or `log`")
+	}
+	parsed := DistributionYScale{valuer.NewString(v)}
+	switch parsed {
+	case DistributionYScaleLinear, DistributionYScaleLog:
+		*scale = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid distribution y scale %q: must be `linear` or `log`", v)
 	}
 }
 
