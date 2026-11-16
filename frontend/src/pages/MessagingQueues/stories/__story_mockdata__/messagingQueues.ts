@@ -72,14 +72,14 @@ export const KAFKA_SERVICES = [
 	'notification-worker',
 ];
 
-const CELERY_TASKS = [
+export const CELERY_TASKS = [
 	'billing.tasks.charge_customer',
 	'emails.tasks.send_welcome',
 	'reports.tasks.rebuild_daily',
 	'media.tasks.transcode',
 ];
 
-const CELERY_WORKERS = ['worker-a', 'worker-b', 'worker-c'];
+export const CELERY_WORKERS = ['worker-a', 'worker-b', 'worker-c'];
 
 /**
  * Values per autocomplete attribute key. The kafka config selects and both

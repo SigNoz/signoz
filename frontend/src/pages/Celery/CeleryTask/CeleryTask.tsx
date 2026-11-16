@@ -1,60 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import logEvent from 'api/common/logEvent';
-import CeleryTaskConfigOptions from 'components/CeleryTask/CeleryTaskConfigOptions/CeleryTaskConfigOptions';
-import CeleryTaskDetail, {
-	CaptureDataProps,
-} from 'components/CeleryTask/CeleryTaskDetail/CeleryTaskDetail';
-import CeleryTaskGraphGrid from 'components/CeleryTask/CeleryTaskGraph/CeleryTaskGraphGrid';
-import { QueryParams } from 'constants/query';
-import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import useUrlQuery from 'hooks/useUrlQuery';
+import SystemDashboard from 'container/SystemDashboard/SystemDashboard';
+import { createSystemDashboardHost } from 'container/SystemDashboard/systemDashboardHost';
+import { EMBEDDED } from 'pages/DashboardPage/DashboardContainer/controls/presets';
 
-import './CeleryTask.styles.scss';
+const CELERY_TASKS = createSystemDashboardHost('celery-tasks', 'celery-tasks');
 
 export default function CeleryTask(): JSX.Element {
-	const [task, setTask] = useState<CaptureDataProps | null>(null);
-	const loggedRef = useRef(false);
-
-	const taskName = useUrlQuery().get(QueryParams.taskName);
-
 	useEffect(() => {
-		if (taskName && !loggedRef.current) {
-			logEvent('MQ Celery: Task name filter', {
-				taskName,
-			});
-			loggedRef.current = true;
-		}
-	}, [taskName]);
-
-	const onTaskClick = (captureData: CaptureDataProps): void => {
-		setTask(captureData);
-	};
+		void logEvent('MQ Celery: Task view', {});
+	}, []);
 
 	return (
-		<div className="celery-task-container">
-			<div className="celery-content">
-				<div className="celery-content-header">
-					<p className="celery-content-header-title">Celery</p>
-					<div className="celery-content-header-right">
-						<DateTimeSelectionV2 showAutoRefresh hideShareModal={false} />
-					</div>
-				</div>
-				<CeleryTaskGraphGrid
-					onClick={onTaskClick}
-					queryEnabled={!task}
-					configureOptionComponent={<CeleryTaskConfigOptions />}
-				/>
-			</div>
-			{!!task && (
-				<CeleryTaskDetail
-					onClose={(): void => {
-						setTask(null);
-					}}
-					widgetData={task.widgetData}
-					taskData={task}
-					drawerOpen={!!task}
-				/>
-			)}
+		<div data-testid="celery-task-page">
+			<SystemDashboard host={CELERY_TASKS} controls={EMBEDDED} />
 		</div>
 	);
 }

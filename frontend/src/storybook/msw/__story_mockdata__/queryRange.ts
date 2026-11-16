@@ -224,8 +224,8 @@ export const queryRangeV5TimeSeriesResponse = (
 
 /**
  * The v3 shapes, which the legacy dashboard path still answers on: `GridCard`
- * without a `version` prop and `useGetValueFromWidget` both go to
- * `/api/v3/query_range` or `/api/v4/query_range` rather than v5.
+ * without a `version` prop goes to `/api/v3/query_range` or
+ * `/api/v4/query_range` rather than v5.
  */
 export interface QueryRangeV3Body extends MetricRangePayloadV3 {
 	status: string;
@@ -466,7 +466,7 @@ export const builderTableResponse = (
 };
 
 /** Derived from the index rather than random, so a refetch redraws the same values. */
-export const seededMetricValue = (
+const seededMetricValue = (
 	index: number,
 	base: number,
 	spread: number,

@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -13,14 +12,14 @@ type CeleryTaskArgs = PageStoryArgs<typeof celeryTaskMocks>;
 const pageStory = storyMocks(celeryTaskMocks, { layout: 'app' });
 
 /**
- * Celery tasks over the period: state per task, the workers running them, and the
- * slowest and failing ones.
+ * Celery tasks over the period as a read-only system dashboard: Flower's active
+ * tasks per worker, then task states, latency and errors from task spans,
+ * filtered by the Task variable.
  *
  * Route: `/messaging-queues/celery-task`.
  */
 const meta = {
 	title: 'Pages/Messaging Queues/Celery',
-	tags: ['play'],
 	component: MessagingQueuesMainPage,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -30,12 +29,9 @@ export default meta;
 
 type Story = StoryObj<CeleryTaskArgs>;
 
-/** The counters fetch before the tabs settle, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
-
 /**
- * The celery tab: flower's per-worker metrics up top, then the span-based view
- * of every task run, split by state and broken down per worker.
+ * The celery tab: Flower's active tasks per worker up top, then every task run
+ * by state, latency per task and per-worker rate, errors and latency.
  */
 export const Default: Story = {};
 
@@ -44,24 +40,7 @@ export const FailingTasks: Story = {
 	args: { health: 'failing' },
 };
 
-/** The state graph narrowed to the runs that failed, over the same range. */
-export const FailedTasksOnly: Story = {
-	args: { health: 'failing' },
-	play: async ({ canvasElement }): Promise<void> => {
-		const canvas = within(canvasElement);
-
-		await userEvent.click(
-			await canvas.findByText('Failed', undefined, untilLoaded),
-		);
-		// The panel the tab opens carries the same label as the tab itself.
-		await waitFor(
-			() => expect(canvas.getAllByText('Failed')).toHaveLength(2),
-			untilLoaded,
-		);
-	},
-};
-
-/** Flower not scraped: the worker card counts nothing and its charts are empty. */
+/** Flower not scraped: the active tasks chart is empty, the span charts still draw. */
 export const NoFlowerMetrics: Story = {
-	args: { workers: 0 },
+	args: { flower: false },
 };

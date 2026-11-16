@@ -1,0 +1,1367 @@
+{
+  "version": 1,
+  "definition": {
+    "schemaVersion": "v6",
+    "name": "signoz---celery-tasks",
+    "tags": [],
+    "spec": {
+      "display": {
+        "name": "Celery",
+        "description": "Celery task throughput, states, latency and errors from task spans, with worker activity from Flower."
+      },
+      "variables": [
+        {
+          "kind": "ListVariable",
+          "spec": {
+            "name": "task_name",
+            "display": {
+              "name": "Task",
+              "description": "Celery task name"
+            },
+            "allowMultiple": true,
+            "allowAllValue": true,
+            "sort": "alphabetical-asc",
+            "plugin": {
+              "kind": "signoz/DynamicVariable",
+              "spec": {
+                "name": "celery.task_name",
+                "signal": "traces"
+              }
+            }
+          }
+        }
+      ],
+      "panels": {
+        "active-tasks": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Active tasks by worker",
+              "description": ""
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "metrics",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "metricName": "flower_worker_number_of_currently_executing_tasks",
+                          "temporality": "",
+                          "timeAggregation": "latest",
+                          "spaceAggregation": "avg",
+                          "reduceTo": "avg"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "worker",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "{{worker}}"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "latency-p90": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Task latency (P90)",
+              "description": ""
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "ns",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "traces",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "expression": "p90(duration_nano)"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "celery.task_name",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [
+                        {
+                          "key": {
+                            "name": "p90(duration_nano)",
+                            "signal": "",
+                            "fieldContext": "",
+                            "fieldDataType": ""
+                          },
+                          "direction": "asc"
+                        }
+                      ],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "{{celery.task_name}}",
+                      "filter": {
+                        "expression": "celery.task_name EXISTS AND celery.task_name IN $task_name"
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "latency-p95": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Task latency (P95)",
+              "description": ""
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "ns",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "traces",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "expression": "p95(duration_nano)"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "celery.task_name",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [
+                        {
+                          "key": {
+                            "name": "p95(duration_nano)",
+                            "signal": "",
+                            "fieldContext": "",
+                            "fieldDataType": ""
+                          },
+                          "direction": "asc"
+                        }
+                      ],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "{{celery.task_name}}",
+                      "filter": {
+                        "expression": "celery.task_name EXISTS AND celery.task_name IN $task_name"
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "latency-p99": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Task latency (P99)",
+              "description": ""
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "ns",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "traces",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "expression": "p99(duration_nano)"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "celery.task_name",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [
+                        {
+                          "key": {
+                            "name": "p99(duration_nano)",
+                            "signal": "",
+                            "fieldContext": "",
+                            "fieldDataType": ""
+                          },
+                          "direction": "asc"
+                        }
+                      ],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "{{celery.task_name}}",
+                      "filter": {
+                        "expression": "celery.task_name EXISTS AND celery.task_name IN $task_name"
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "state-all": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Tasks by state",
+              "description": ""
+            },
+            "plugin": {
+              "kind": "signoz/BarChartPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false,
+                  "stackedBarChart": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "traces",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "expression": "count()"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "celery.state",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "{{celery.state}}",
+                      "filter": {
+                        "expression": "celery.task_name EXISTS AND celery.task_name IN $task_name"
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "state-failed": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Failed tasks by worker",
+              "description": ""
+            },
+            "plugin": {
+              "kind": "signoz/BarChartPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false,
+                  "stackedBarChart": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "traces",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "expression": "count()"
+                        }
+                      ],
+                      "disabled": false,
+                      "filter": {
+                        "expression": "celery.state = 'FAILURE' AND celery.hostname EXISTS AND celery.task_name EXISTS AND celery.task_name IN $task_name"
+                      },
+                      "groupBy": [
+                        {
+                          "name": "celery.hostname",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "{{celery.hostname}}"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "state-retry": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Retried tasks by worker",
+              "description": ""
+            },
+            "plugin": {
+              "kind": "signoz/BarChartPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false,
+                  "stackedBarChart": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "traces",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "expression": "count()"
+                        }
+                      ],
+                      "disabled": false,
+                      "filter": {
+                        "expression": "celery.state = 'RETRY' AND celery.hostname EXISTS AND celery.task_name EXISTS AND celery.task_name IN $task_name"
+                      },
+                      "groupBy": [
+                        {
+                          "name": "celery.hostname",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "{{celery.hostname}}"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "state-success": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Successful tasks by worker",
+              "description": ""
+            },
+            "plugin": {
+              "kind": "signoz/BarChartPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false,
+                  "stackedBarChart": false
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "2"
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "traces",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "expression": "count()"
+                        }
+                      ],
+                      "disabled": false,
+                      "filter": {
+                        "expression": "celery.state = 'SUCCESS' AND celery.hostname EXISTS AND celery.task_name EXISTS AND celery.task_name IN $task_name"
+                      },
+                      "groupBy": [
+                        {
+                          "name": "celery.hostname",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "{{celery.hostname}}"
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "worker-errors": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Error % by worker",
+              "description": ""
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "percent",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "expression": "count_distinct(span_id)"
+                              }
+                            ],
+                            "disabled": true,
+                            "filter": {
+                              "expression": "has_error = true AND celery.hostname EXISTS AND celery.task_name EXISTS AND celery.task_name IN $task_name"
+                            },
+                            "groupBy": [
+                              {
+                                "name": "celery.hostname",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": ""
+                          }
+                        },
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "B",
+                            "signal": "traces",
+                            "source": "",
+                            "aggregations": [
+                              {
+                                "expression": "count_distinct(span_id)"
+                              }
+                            ],
+                            "disabled": true,
+                            "groupBy": [
+                              {
+                                "name": "celery.hostname",
+                                "signal": "",
+                                "fieldContext": "attribute",
+                                "fieldDataType": "string"
+                              }
+                            ],
+                            "order": [],
+                            "having": {
+                              "expression": ""
+                            },
+                            "functions": [],
+                            "legend": "",
+                            "filter": {
+                              "expression": "celery.task_name EXISTS AND celery.task_name IN $task_name"
+                            }
+                          }
+                        },
+                        {
+                          "type": "builder_formula",
+                          "spec": {
+                            "name": "F1",
+                            "expression": "(A/B)*100",
+                            "disabled": false,
+                            "having": {
+                              "expression": ""
+                            },
+                            "legend": "{{celery.hostname}}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "worker-latency": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Latency by worker",
+              "description": ""
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "ns",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "traces",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "expression": "p99(duration_nano)"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "celery.hostname",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "limit": 10,
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "{{celery.hostname}}",
+                      "filter": {
+                        "expression": "celery.task_name EXISTS AND celery.task_name IN $task_name"
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "worker-rate": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Tasks/s by worker",
+              "description": ""
+            },
+            "plugin": {
+              "kind": "signoz/TimeSeriesPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time",
+                  "fillSpans": false
+                },
+                "formatting": {
+                  "unit": "cps",
+                  "decimalPrecision": "2"
+                },
+                "chartAppearance": {
+                  "lineInterpolation": "spline",
+                  "showPoints": false,
+                  "lineStyle": "solid",
+                  "fillMode": "none",
+                  "spanGaps": {
+                    "fillOnlyBelow": false,
+                    "fillLessThan": ""
+                  }
+                },
+                "axes": {
+                  "softMin": null,
+                  "softMax": null,
+                  "isLogScale": false
+                },
+                "legend": {
+                  "position": "bottom",
+                  "mode": "list",
+                  "customColors": null
+                },
+                "thresholds": null
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "name": "A",
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "traces",
+                      "source": "",
+                      "aggregations": [
+                        {
+                          "expression": "rate()"
+                        }
+                      ],
+                      "disabled": false,
+                      "groupBy": [
+                        {
+                          "name": "celery.hostname",
+                          "signal": "",
+                          "fieldContext": "attribute",
+                          "fieldDataType": "string"
+                        }
+                      ],
+                      "order": [],
+                      "limit": 10,
+                      "having": {
+                        "expression": ""
+                      },
+                      "functions": [],
+                      "legend": "{{celery.hostname}}",
+                      "filter": {
+                        "expression": "celery.task_name EXISTS AND celery.task_name IN $task_name"
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "links": []
+          }
+        },
+        "count-all": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Tasks",
+              "description": "Task runs in the selected range."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "0"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "disabled": false,
+                            "filter": {
+                              "expression": "celery.task_name EXISTS AND celery.task_name IN $task_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "count-failed": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Failed",
+              "description": "Task runs that ended in FAILURE."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "0"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "disabled": false,
+                            "filter": {
+                              "expression": "celery.state = 'FAILURE' AND celery.task_name EXISTS AND celery.task_name IN $task_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "count-retry": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Retried",
+              "description": "Task runs that ended in RETRY."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "0"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "disabled": false,
+                            "filter": {
+                              "expression": "celery.state = 'RETRY' AND celery.task_name EXISTS AND celery.task_name IN $task_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "count-success": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Successful",
+              "description": "Task runs that ended in SUCCESS."
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "none",
+                  "decimalPrecision": "0"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/CompositeQuery",
+                    "spec": {
+                      "queries": [
+                        {
+                          "type": "builder_query",
+                          "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "disabled": false,
+                            "filter": {
+                              "expression": "celery.state = 'SUCCESS' AND celery.task_name EXISTS AND celery.task_name IN $task_name"
+                            },
+                            "aggregations": [
+                              {
+                                "expression": "count()"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "layouts": [
+        {
+          "kind": "Grid",
+          "spec": {
+            "display": {
+              "title": "Flower Metrics",
+              "collapse": {
+                "open": true
+              }
+            },
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 12,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/active-tasks"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "display": {
+              "title": "Span Based Stats",
+              "collapse": {
+                "open": true
+              }
+            },
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 3,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/count-all"
+                }
+              },
+              {
+                "x": 3,
+                "y": 0,
+                "width": 3,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/count-failed"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 3,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/count-retry"
+                }
+              },
+              {
+                "x": 9,
+                "y": 0,
+                "width": 3,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/count-success"
+                }
+              },
+              {
+                "x": 0,
+                "y": 3,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/state-all"
+                }
+              },
+              {
+                "x": 6,
+                "y": 3,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/state-failed"
+                }
+              },
+              {
+                "x": 0,
+                "y": 9,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/state-retry"
+                }
+              },
+              {
+                "x": 6,
+                "y": 9,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/state-success"
+                }
+              },
+              {
+                "x": 0,
+                "y": 15,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/latency-p99"
+                }
+              },
+              {
+                "x": 4,
+                "y": 15,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/latency-p95"
+                }
+              },
+              {
+                "x": 8,
+                "y": 15,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/latency-p90"
+                }
+              },
+              {
+                "x": 0,
+                "y": 21,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/worker-rate"
+                }
+              },
+              {
+                "x": 4,
+                "y": 21,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/worker-errors"
+                }
+              },
+              {
+                "x": 8,
+                "y": 21,
+                "width": 4,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/worker-latency"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "duration": "",
+      "refreshInterval": "",
+      "links": []
+    }
+  }
+}
