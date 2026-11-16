@@ -681,6 +681,8 @@ func (q *querier) run(
 			return slices.ContainsFunc(val.Aggregations, func(aggregation *qbtypes.DistributionAggregation) bool {
 				return len(aggregation.Distributions) != 0
 			})
+		case *qbtypes.PatternsData:
+			return len(val.Patterns) != 0
 		}
 		return false
 	}
@@ -728,6 +730,8 @@ func (q *querier) run(
 			case *qbtypes.RawData:
 				v.QueryName = name
 			case *qbtypes.DistributionData:
+				v.QueryName = name
+			case *qbtypes.PatternsData:
 				v.QueryName = name
 			}
 			queryResults[i] = result

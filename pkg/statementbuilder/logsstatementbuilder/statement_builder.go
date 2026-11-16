@@ -125,6 +125,9 @@ func (b *logQueryStatementBuilder) Build(
 	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID))
 
 	keySelectors, warnings := getKeySelectors(query, bodyJSONEnabled)
+	if requestType == qbtypes.RequestTypePattern {
+		keySelectors = patternsKeySelectors(keySelectors)
+	}
 	keySelectors = querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, b.fl, keySelectors)
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, orgID, keySelectors)
 	if err != nil {
@@ -146,6 +149,8 @@ func (b *logQueryStatementBuilder) Build(
 		stmt, err = b.buildHeatmapTimeSeriesQuery(ctx, orgID, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
 		stmt, err = b.buildScalarQuery(ctx, orgID, q, query, start, end, keys, false, variables)
+	case qbtypes.RequestTypePattern:
+		stmt, err = b.buildPatternsQuery(ctx, orgID, q, query, start, end, keys, variables)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 	}

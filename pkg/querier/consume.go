@@ -98,6 +98,8 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 		payload, err = readAsHeatmap(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
 		payload, err = readAsRaw(rows, queryName)
+	case qbtypes.RequestTypePattern:
+		payload, err = readAsPatterns(rows, queryName)
 		// TODO: add support for other request types
 	}
 
@@ -501,6 +503,90 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 		Columns:   cd,
 		Data:      data,
 	}, nil
+}
+
+// readAsPatterns reads a patterns statement: one row per pattern, its columns
+// named by the qbtypes.PatternsColumn constants, and any other column a
+// group-by key. The sampled counts scale up by the sample rate.
+func readAsPatterns(rows driver.Rows, queryName string) (*qbtypes.PatternsData, error) {
+	colNames := rows.Columns()
+	colTypes := rows.ColumnTypes()
+	scan := make([]any, len(colTypes))
+	for i := range scan {
+		scan[i] = reflect.New(colTypes[i].ScanType()).Interface()
+	}
+
+	data := &qbtypes.PatternsData{QueryName: queryName, SampleRate: 1, Patterns: []*qbtypes.Pattern{}}
+	for rows.Next() {
+		if err := rows.Scan(scan...); err != nil {
+			return nil, err
+		}
+
+		pattern := &qbtypes.Pattern{Samples: []string{}, Severities: []string{}, Trend: []*qbtypes.PatternTrendPoint{}}
+		var sampledCount uint64
+		var trendTs, trendCounts []int64
+		for i, name := range colNames {
+			value := derefValue(scan[i])
+			switch name {
+			case qbtypes.PatternsColumnPattern:
+				pattern.Pattern, _ = value.(string)
+			case qbtypes.PatternsColumnID:
+				pattern.ID, _ = value.(string)
+			case qbtypes.PatternsColumnSampledCount:
+				sampledCount, _ = value.(uint64)
+			case qbtypes.PatternsColumnSampleRate:
+				if rate, ok := value.(uint64); ok && rate > 0 {
+					data.SampleRate = rate
+				}
+			case qbtypes.PatternsColumnTotal:
+				data.Total, _ = value.(uint64)
+			case qbtypes.PatternsColumnFirstSeen:
+				if ns, ok := value.(uint64); ok {
+					pattern.FirstSeen = int64(ns / 1_000_000)
+				}
+			case qbtypes.PatternsColumnLastSeen:
+				if ns, ok := value.(uint64); ok {
+					pattern.LastSeen = int64(ns / 1_000_000)
+				}
+			case qbtypes.PatternsColumnSamples:
+				if samples, ok := value.([]string); ok {
+					pattern.Samples = samples
+				}
+			case qbtypes.PatternsColumnSeverities:
+				if severities, ok := value.([]string); ok {
+					pattern.Severities = severities
+				}
+			case qbtypes.PatternsColumnTrendTs:
+				trendTs, _ = value.([]int64)
+			case qbtypes.PatternsColumnTrendCounts:
+				trendCounts, _ = value.([]int64)
+			default:
+				pattern.Labels = append(pattern.Labels, &qbtypes.Label{
+					Key:   telemetrytypes.TelemetryFieldKey{Name: stripKeyAlias(name)},
+					Value: value,
+				})
+			}
+		}
+
+		pattern.Count = sampledCount * data.SampleRate
+		for i := 0; i < len(trendTs) && i < len(trendCounts); i++ {
+			pattern.Trend = append(pattern.Trend, &qbtypes.PatternTrendPoint{
+				Timestamp: trendTs[i] / 1_000_000,
+				Count:     uint64(trendCounts[i]) * data.SampleRate,
+			})
+		}
+		data.Patterns = append(data.Patterns, pattern)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for _, pattern := range data.Patterns {
+		if data.Total > 0 {
+			pattern.Percent = 100 * float64(pattern.Count) / float64(data.Total)
+		}
+	}
+	return data, nil
 }
 
 func derefValue(v any) any {
