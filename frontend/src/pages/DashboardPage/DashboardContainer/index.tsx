@@ -9,30 +9,40 @@ import PanelsAndSectionsLayout from './PanelsAndSectionsLayout';
 import { useResolvedVariables } from './hooks/useResolvedVariables';
 import { useSyncVariablesForSuggestions } from './hooks/useSyncVariablesForSuggestions';
 import { useDashboardStore } from './store/useDashboardStore';
+import type {
+	DashboardQuerySource,
+	QueryRunner,
+} from './store/slices/editContextSlice';
+import type { DashboardControlsInput } from './controls/types';
+import { useDashboardControlGroup } from './controls/useDashboardControlGroup';
 import styles from './DashboardContainer.module.scss';
 import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageHeader';
 import LockedIndicator from './components/LockedIndicator/LockedIndicator';
 import DashboardChangedDialog from './components/DashboardChangedDialog/DashboardChangedDialog';
+import DashboardSettingsDrawer from './components/DashboardSettingsDrawer/DashboardSettingsDrawer';
 import { useDashboardStaleCheck } from './hooks/useDashboardStaleCheck';
 import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
 
 interface DashboardContainerProps {
 	dashboard: DashboardtypesGettableDashboardV2DTO;
 	refetch: () => void;
-	/**
-	 * @deprecated
-	 * `canEditDashboardOverride` is a temporary solution to allow the dashboard to be view only.
-	 * This is only used for LLM Observability.
-	 * It will be removed in the future.
-	 *  TODO: @Ashwin / @Abhi — remove when the final solution is implemented.
-	 */
-	canEditDashboardOverride?: boolean;
+	/** Where the host cached `dashboard`; defaults to the dashboards API entry. */
+	source?: DashboardQuerySource;
+	/** View-only mount: no edit affordance, no write, no server freshness probe. */
+	readOnly?: boolean;
+	/** What renders; omitted controls are shown. Writing controls are off when read-only. */
+	controls?: DashboardControlsInput;
+	/** Runs panel queries; omitted runs them on `query_range`. */
+	queryRunner?: QueryRunner;
 }
 
 function DashboardContainer({
 	dashboard,
 	refetch,
-	canEditDashboardOverride,
+	source,
+	readOnly = false,
+	controls,
+	queryRunner,
 }: DashboardContainerProps): JSX.Element {
 	const spec = dashboard.spec;
 	const image = resolveDashboardImage(dashboard.image);
@@ -55,7 +65,10 @@ function DashboardContainer({
 	setEditContext({
 		dashboardId: dashboard.id,
 		refetch,
-		canEditDashboardOverride,
+		source,
+		readOnly,
+		controls,
+		queryRunner,
 	});
 
 	// Resolve the variable selection into the V5 query payload and publish it to
@@ -66,7 +79,10 @@ function DashboardContainer({
 	// suggests them ($variable) in the panel editor and dashboards-page builder.
 	useSyncVariablesForSuggestions(dashboard);
 
-	const staleCheck = useDashboardStaleCheck(dashboard, refetch);
+	const staleCheck = useDashboardStaleCheck(dashboard, refetch, !readOnly);
+	const showHeader = Object.values(useDashboardControlGroup('header')).some(
+		Boolean,
+	);
 
 	// In full screen show only the sections and panels — the header/toolbar chrome
 	// is hidden for a clean presentation view (exit with Esc).
@@ -78,12 +94,13 @@ function DashboardContainer({
 					<AutoRefreshTicker />
 				) : (
 					<>
-						<DashboardPageHeader title={name} image={image} />
+						{showHeader && <DashboardPageHeader title={name} image={image} />}
 						<DashboardPageToolbar dashboard={dashboard} handle={fullScreenHandle} />
 					</>
 				)}
 				<PanelsAndSectionsLayout layouts={spec.layouts} panels={spec.panels} />
-				{!!dashboard.locked && <LockedIndicator />}
+				{!!dashboard.locked && !readOnly && <LockedIndicator />}
+				{!readOnly && <DashboardSettingsDrawer dashboard={dashboard} />}
 				<DashboardChangedDialog
 					open={staleCheck.showPrompt}
 					onReload={staleCheck.reload}

@@ -14,6 +14,7 @@ import { EQueryType } from 'types/common/dashboard';
 import styles from './ViewPanelModal.module.scss';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
+import { useDashboardControl } from '../../../controls/useDashboardControl';
 
 interface ViewPanelModalHeaderBaseProps {
 	onSwitchToEdit: () => void;
@@ -70,6 +71,7 @@ function ViewPanelModalHeader(props: ViewPanelModalHeaderProps): JSX.Element {
 		editChecks,
 		editDisabledTooltip,
 	} = useDashboardEditContext();
+	const showSwitchToEdit = useDashboardControl('viewModal.switchToEdit');
 	// Same capabilities-guarded options as the editor's PanelTypeSwitcher, so the two
 	// selectors disable the same kinds (e.g. List under PromQL, metrics-only kinds).
 	const panelTypeItems = usePanelTypeSelectItems({
@@ -87,20 +89,22 @@ function ViewPanelModalHeader(props: ViewPanelModalHeaderProps): JSX.Element {
 					onChange={onChangePanelKind}
 				/>
 			</div>
-			<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
-				<Button
-					disabledTooltip={undefined}
-					size="md"
-					variant="outlined"
-					color="secondary"
-					prefix={<PenLine />}
-					disabled={!canSwitchToEdit}
-					onClick={onSwitchToEdit}
-					testId="view-panel-switch-to-edit"
-				>
-					Switch to Edit Mode
-				</Button>
-			</AuthZTooltip>
+			{showSwitchToEdit && (
+				<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
+					<Button
+						disabledTooltip={undefined}
+						size="md"
+						variant="outlined"
+						color="secondary"
+						prefix={<PenLine />}
+						disabled={!canSwitchToEdit}
+						onClick={onSwitchToEdit}
+						testId="view-panel-switch-to-edit"
+					>
+						Switch to Edit Mode
+					</Button>
+				</AuthZTooltip>
+			)}
 			{query && (
 				<Button
 					size="md"

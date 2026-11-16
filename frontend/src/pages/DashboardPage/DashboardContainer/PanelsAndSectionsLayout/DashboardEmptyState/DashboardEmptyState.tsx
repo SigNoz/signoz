@@ -11,6 +11,7 @@ import { useDashboardStore } from '../../store/useDashboardStore';
 import PanelTypeSelectionModal from '../Panel/PanelTypeSelectionModal/PanelTypeSelectionModal';
 import styles from './DashboardEmptyState.module.scss';
 import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
+import { useDashboardControl } from '../../controls/useDashboardControl';
 
 interface DashboardEmptyStateProps {
 	canAddPanel: boolean;
@@ -24,9 +25,11 @@ function DashboardEmptyState({
 	const { isPickerOpen, openPicker, closePicker, createPanel } =
 		useCreatePanel();
 	const requestSettings = useDashboardStore((s) => s.requestSettings);
+	const showConfigure = useDashboardControl('dashboardActions.configure');
+	const showNewPanel = useDashboardControl('dashboardActions.newPanel');
 
 	return (
-		<section className={styles.emptyState}>
+		<section className={styles.emptyState} data-testid="dashboard-empty-state">
 			<div className={styles.content}>
 				<div className={styles.heading}>
 					<img src={dashboardEmojiUrl} alt="" className={styles.emoji} />
@@ -39,62 +42,66 @@ function DashboardEmptyState({
 				</div>
 
 				<div className={styles.steps}>
-					<div className={styles.step}>
-						<div className={styles.stepText}>
-							<Configure size={14} className={styles.stepIcon} />
-							<div className={styles.stepCopy}>
-								<Typography.Text className={styles.stepTitle}>
-									Configure your new dashboard
-								</Typography.Text>
-								<Typography.Text className={styles.stepInfo}>
-									Give it a name, add description, tags and variables
-								</Typography.Text>
+					{showConfigure && (
+						<div className={styles.step}>
+							<div className={styles.stepText}>
+								<Configure size={14} className={styles.stepIcon} />
+								<div className={styles.stepCopy}>
+									<Typography.Text className={styles.stepTitle}>
+										Configure your new dashboard
+									</Typography.Text>
+									<Typography.Text className={styles.stepInfo}>
+										Give it a name, add description, tags and variables
+									</Typography.Text>
+								</div>
 							</div>
+							<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
+								<Button
+									disabledTooltip={undefined}
+									size="md"
+									variant="solid"
+									color="secondary"
+									width="140px"
+									prefix={<Configure size="md" />}
+									disabled={!isEditable}
+									onClick={(): void => requestSettings({ tab: 'Overview' })}
+									testId="empty-configure"
+								>
+									Configure
+								</Button>
+							</AuthZTooltip>
 						</div>
-						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
-							<Button
-								disabledTooltip={undefined}
-								size="md"
-								variant="solid"
-								color="secondary"
-								width="140px"
-								prefix={<Configure size="md" />}
-								disabled={!isEditable}
-								onClick={(): void => requestSettings({ tab: 'Overview' })}
-								testId="empty-configure"
-							>
-								Configure
-							</Button>
-						</AuthZTooltip>
-					</div>
+					)}
 
-					<div className={styles.step}>
-						<div className={styles.stepText}>
-							<img src={landscapeUrl} alt="" className={styles.stepIcon} />
-							<div className={styles.stepCopy}>
-								<Typography.Text className={styles.stepTitle}>
-									Add panels
-								</Typography.Text>
-								<Typography.Text className={styles.stepInfo}>
-									Add panels to visualize your data
-								</Typography.Text>
+					{showNewPanel && (
+						<div className={styles.step}>
+							<div className={styles.stepText}>
+								<img src={landscapeUrl} alt="" className={styles.stepIcon} />
+								<div className={styles.stepCopy}>
+									<Typography.Text className={styles.stepTitle}>
+										Add panels
+									</Typography.Text>
+									<Typography.Text className={styles.stepInfo}>
+										Add panels to visualize your data
+									</Typography.Text>
+								</div>
 							</div>
+							<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
+								<Button
+									disabledTooltip={undefined}
+									size="md"
+									variant="solid"
+									color="primary"
+									prefix={<Plus size="md" />}
+									disabled={!canAddPanel}
+									onClick={(): void => openPicker()}
+									testId="add-panel"
+								>
+									New Panel
+								</Button>
+							</AuthZTooltip>
 						</div>
-						<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
-							<Button
-								disabledTooltip={undefined}
-								size="md"
-								variant="solid"
-								color="primary"
-								prefix={<Plus size="md" />}
-								disabled={!canAddPanel}
-								onClick={(): void => openPicker()}
-								testId="add-panel"
-							>
-								New Panel
-							</Button>
-						</AuthZTooltip>
-					</div>
+					)}
 				</div>
 			</div>
 			<PanelTypeSelectionModal

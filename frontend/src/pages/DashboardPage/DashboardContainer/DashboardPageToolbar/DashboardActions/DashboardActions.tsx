@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import {
@@ -26,19 +26,21 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
 import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
-import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
+import type {
+	AuthZDropdownItemType,
+	AuthZGroupChildType,
+} from 'lib/authz/components/AuthZDropdown/types';
 import { blockedBy } from 'lib/authz/components/AuthZDropdown/utils';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { DashboardCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
-import DashboardSettings from '../../DashboardSettings';
 import { useAddSection } from '../../PanelsAndSectionsLayout/Section/hooks/useAddSection';
 import SectionTitleModal from '../../PanelsAndSectionsLayout/Section/SectionTitleModal';
 import JsonEditorDrawer from '../JsonEditorDrawer/JsonEditorDrawer';
-import SettingsDrawer from '../SettingsDrawer';
 import styles from './DashboardActions.module.scss';
 import { useDeleteDashboardAction } from './useDeleteDashboardAction';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
+import { useDashboardControlGroup } from '../../controls/useDashboardControlGroup';
 
 interface DashboardActionsProps {
 	title: string;
@@ -66,13 +68,14 @@ function DashboardActions({
 		deleteChecks,
 		deleteDisabledTooltip,
 	} = useDashboardEditContext();
-	const settingsRequest = useDashboardStore((s) => s.settingsRequest);
-	const clearSettingsRequest = useDashboardStore((s) => s.clearSettingsRequest);
+	const show = useDashboardControlGroup('dashboardActions');
+	const requestSettings = useDashboardStore((s) => s.requestSettings);
 	const { safeNavigate } = useSafeNavigate();
 	const { showErrorModal } = useErrorModal();
 	const { disabledTooltip: lockDisabledTooltip } = useDashboardLockPermission({
 		dashboardId: dashboard.id,
 		source: dashboard.source,
+		enabled: show.lock,
 	});
 
 	// Cloning creates a new dashboard, so it needs `create` too, and no lock gate.
@@ -81,8 +84,6 @@ function DashboardActions({
 		[editChecks],
 	);
 
-	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] =
-		useState<boolean>(false);
 	const [isJsonEditorOpen, setIsJsonEditorOpen] = useState<boolean>(false);
 	const [isCloning, setIsCloning] = useState<boolean>(false);
 	const [isNewSectionOpen, setIsNewSectionOpen] = useState<boolean>(false);
@@ -93,14 +94,6 @@ function DashboardActions({
 			dashboardName: title,
 			panelCount: Object.keys(dashboard.spec.panels).length,
 		});
-
-	// Open the settings drawer when something in the tree requests it (e.g. the
-	// variables bar's "Add variable" button).
-	useEffect(() => {
-		if (settingsRequest) {
-			setIsSettingsDrawerOpen(true);
-		}
-	}, [settingsRequest]);
 
 	const { addSection, isSaving: isAddingSection } = useAddSection({
 		layouts: dashboard.spec.layouts,
@@ -143,8 +136,8 @@ function DashboardActions({
 		void logEvent(DashboardDetailEvents.SettingsOpened, {
 			dashboardId: dashboard.id,
 		});
-		setIsSettingsDrawerOpen(true);
-	}, [dashboard.id]);
+		requestSettings({ tab: 'Overview' });
+	}, [dashboard.id, requestSettings]);
 
 	const handleOpenJsonEditor = useCallback((): void => {
 		void logEvent(DashboardDetailEvents.JsonEditorOpened, {
@@ -162,61 +155,68 @@ function DashboardActions({
 		void handle.enter();
 	}, [dashboard.id, handle]);
 
-	// Unavailable items stay in the menu, carrying the reason.
-	const menuItems = useMemo<AuthZDropdownItemType[]>(
-		() => [
-			{
-				type: 'group',
-				value: 'group-dashboard',
-				label: 'Dashboard',
-				items: [
-					{
-						type: 'item',
-						value: 'rename',
-						testId: 'dashboard-action-rename',
-						label: 'Rename',
-						prefix: <PenLine size={14} />,
-						checks: editChecks,
-						...blockedBy(editDisabledTooltip),
-						onClick: onOpenRename,
-					},
-					// Clone creates a new dashboard, so it's not lock-gated.
-					{
-						type: 'item',
-						value: 'clone',
-						testId: 'dashboard-action-clone',
-						label: 'Clone dashboard',
-						prefix: <Copy size={14} />,
-						checks: cloneChecks,
-						loading: isCloning,
-						loadingTooltip: 'Cloning dashboard',
-						onClick: (): void => void handleClone(),
-					},
-					{
-						type: 'item',
-						value: 'lock',
-						testId: 'dashboard-action-lock',
-						label: isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard',
-						prefix: <LockKeyhole size={14} />,
-						checks: editChecks,
-						...blockedBy(lockDisabledTooltip),
-						onClick: onLockToggle,
-					},
-					{
-						type: 'item',
-						value: 'fullscreen',
-						testId: 'dashboard-action-fullscreen',
-						label: 'Full screen',
-						prefix: <Fullscreen size={14} />,
-						onClick: handleEnterFullScreen,
-					},
-				],
-			},
-			{
-				type: 'group',
-				value: 'group-layout',
-				label: 'Layout',
-				items: [
+	// Unavailable items stay in the menu, carrying the reason; hidden ones are dropped.
+	const menuItems = useMemo<AuthZDropdownItemType[]>(() => {
+		const dashboardItems: AuthZGroupChildType[] = [
+			...(show.rename
+				? [
+						{
+							type: 'item' as const,
+							value: 'rename',
+							testId: 'dashboard-action-rename',
+							label: 'Rename',
+							prefix: <PenLine size={14} />,
+							checks: editChecks,
+							...blockedBy(editDisabledTooltip),
+							onClick: onOpenRename,
+						},
+					]
+				: []),
+			// Clone creates a new dashboard, so it's not lock-gated.
+			...(show.clone
+				? [
+						{
+							type: 'item' as const,
+							value: 'clone',
+							testId: 'dashboard-action-clone',
+							label: 'Clone dashboard',
+							prefix: <Copy size={14} />,
+							checks: cloneChecks,
+							loading: isCloning,
+							loadingTooltip: 'Cloning dashboard',
+							onClick: (): void => void handleClone(),
+						},
+					]
+				: []),
+			...(show.lock
+				? [
+						{
+							type: 'item' as const,
+							value: 'lock',
+							testId: 'dashboard-action-lock',
+							label: isDashboardLocked ? 'Unlock dashboard' : 'Lock dashboard',
+							prefix: <LockKeyhole size={14} />,
+							checks: editChecks,
+							...blockedBy(lockDisabledTooltip),
+							onClick: onLockToggle,
+						},
+					]
+				: []),
+			...(show.fullscreen
+				? [
+						{
+							type: 'item' as const,
+							value: 'fullscreen',
+							testId: 'dashboard-action-fullscreen',
+							label: 'Full screen',
+							prefix: <Fullscreen size={14} />,
+							onClick: handleEnterFullScreen,
+						},
+					]
+				: []),
+		];
+		const layoutItems: AuthZGroupChildType[] = show.newSection
+			? [
 					{
 						type: 'item',
 						value: 'new-section',
@@ -227,101 +227,124 @@ function DashboardActions({
 						...blockedBy(editDisabledTooltip),
 						onClick: (): void => setIsNewSectionOpen(true),
 					},
-				],
-			},
-			{ type: 'separator', value: 'divider-danger' },
-			{
-				type: 'item',
-				value: 'delete',
-				testId: 'dashboard-action-delete',
-				label: 'Delete dashboard',
-				prefix: <Trash2 size={14} />,
-				danger: true,
-				checks: deleteChecks,
-				// Independent of read/update, but a locked dashboard can't be removed.
-				...blockedBy(deleteDisabledTooltip),
-				onClick: confirmDeleteDashboard,
-			},
-		],
-		[
-			editChecks,
-			editDisabledTooltip,
-			deleteChecks,
-			deleteDisabledTooltip,
-			cloneChecks,
-			isCloning,
-			lockDisabledTooltip,
-			isDashboardLocked,
-			onOpenRename,
-			handleClone,
-			onLockToggle,
-			handleEnterFullScreen,
-			confirmDeleteDashboard,
-		],
-	);
+				]
+			: [];
+
+		return [
+			...(dashboardItems.length
+				? [
+						{
+							type: 'group' as const,
+							value: 'group-dashboard',
+							label: 'Dashboard',
+							items: dashboardItems,
+						},
+					]
+				: []),
+			...(layoutItems.length
+				? [
+						{
+							type: 'group' as const,
+							value: 'group-layout',
+							label: 'Layout',
+							items: layoutItems,
+						},
+					]
+				: []),
+			...(show.delete
+				? [
+						{ type: 'separator' as const, value: 'divider-danger' },
+						{
+							type: 'item' as const,
+							value: 'delete',
+							testId: 'dashboard-action-delete',
+							label: 'Delete dashboard',
+							prefix: <Trash2 size={14} />,
+							danger: true,
+							checks: deleteChecks,
+							// Independent of read/update, but a locked dashboard can't be removed.
+							...blockedBy(deleteDisabledTooltip),
+							onClick: confirmDeleteDashboard,
+						},
+					]
+				: []),
+		];
+	}, [
+		show,
+		editChecks,
+		editDisabledTooltip,
+		deleteChecks,
+		deleteDisabledTooltip,
+		cloneChecks,
+		isCloning,
+		lockDisabledTooltip,
+		isDashboardLocked,
+		onOpenRename,
+		handleClone,
+		onLockToggle,
+		handleEnterFullScreen,
+		confirmDeleteDashboard,
+	]);
 
 	return (
 		<div className={styles.dashboardActionsContainer}>
-			<AuthZDropdown items={menuItems} nativeButton align="end" side="bottom">
+			{menuItems.length > 0 && (
+				<AuthZDropdown items={menuItems} nativeButton align="end" side="bottom">
+					<Button
+						variant="solid"
+						color="secondary"
+						size="md"
+						prefix={<Grid3X3 size="md" />}
+						testId="options"
+					>
+						Actions
+					</Button>
+				</AuthZDropdown>
+			)}
+			{show.configure && (
+				<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
+					<Button
+						disabledTooltip={undefined}
+						variant="solid"
+						color="secondary"
+						prefix={<Configure size="md" />}
+						testId="show-drawer"
+						disabled={!isEditable}
+						onClick={handleOpenSettings}
+						size="md"
+					>
+						Configure
+					</Button>
+				</AuthZTooltip>
+			)}
+			{show.json && (
 				<Button
 					variant="solid"
 					color="secondary"
-					size="md"
-					prefix={<Grid3X3 size="md" />}
-					testId="options"
-				>
-					Actions
-				</Button>
-			</AuthZDropdown>
-			<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
-				<Button
-					disabledTooltip={undefined}
-					variant="solid"
-					color="secondary"
-					prefix={<Configure size="md" />}
-					testId="show-drawer"
-					disabled={!isEditable}
-					onClick={handleOpenSettings}
+					prefix={<Braces size="md" />}
+					testId="edit-json"
+					onClick={handleOpenJsonEditor}
 					size="md"
 				>
-					Configure
+					JSON
 				</Button>
-			</AuthZTooltip>
-			<SettingsDrawer
-				drawerTitle="Dashboard Configuration"
-				isOpen={isSettingsDrawerOpen}
-				destroyOnClose
-				onClose={(): void => {
-					setIsSettingsDrawerOpen(false);
-					clearSettingsRequest();
-				}}
-			>
-				<DashboardSettings dashboard={dashboard} />
-			</SettingsDrawer>
-			<Button
-				variant="solid"
-				color="secondary"
-				prefix={<Braces size="md" />}
-				testId="edit-json"
-				onClick={handleOpenJsonEditor}
-				size="md"
-			>
-				JSON
-			</Button>
-			<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
-				<Button
-					disabledTooltip={undefined}
-					variant="solid"
-					color="primary"
-					onClick={onAddPanel}
-					prefix={<Plus size="md" />}
-					testId="add-panel-header"
-					disabled={!isEditable}
-					size="md"
-				>
-					New Panel
-				</Button>
-			</AuthZTooltip>
+			)}
+			{show.newPanel && (
+				<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
+					<Button
+						disabledTooltip={undefined}
+						variant="solid"
+						color="primary"
+						onClick={onAddPanel}
+						prefix={<Plus size="md" />}
+						testId="add-panel-header"
+						disabled={!isEditable}
+						size="md"
+					>
+						New Panel
+					</Button>
+				</AuthZTooltip>
+			)}
 			<JsonEditorDrawer
 				dashboard={dashboard}
 				isOpen={isJsonEditorOpen}

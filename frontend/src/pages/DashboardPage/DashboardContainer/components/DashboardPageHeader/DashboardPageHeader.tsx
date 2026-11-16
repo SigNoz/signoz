@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 
+import { useDashboardControlGroup } from '../../controls/useDashboardControlGroup';
 import DashboardPageBreadcrumbs from './DashboardPageBreadcrumbs';
 import { useShareVariablesOption } from './useShareVariablesOption';
 
@@ -16,13 +17,16 @@ function DashboardPageHeader({
 	image,
 }: DashboardPageHeaderProps): JSX.Element {
 	const shareVariablesOption = useShareVariablesOption();
+	const show = useDashboardControlGroup('header');
 	return (
 		<div className={styles.dashboardPageHeader}>
-			<DashboardPageBreadcrumbs title={title} image={image} />
+			{show.breadcrumbs && (
+				<DashboardPageBreadcrumbs title={title} image={image} />
+			)}
 			<HeaderRightSection
 				enableAnnouncements={false}
-				enableShare
-				enableFeedback
+				enableShare={show.share}
+				enableFeedback={show.feedback}
 				shareModalExtraOption={shareVariablesOption}
 			/>
 		</div>

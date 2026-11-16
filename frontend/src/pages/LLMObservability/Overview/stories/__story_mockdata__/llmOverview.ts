@@ -3,6 +3,13 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import {
+	DashboardtypesSourceDTO,
+	type DashboardtypesGettableSystemDashboardDTO,
+	type GetSystemDashboard200,
+} from 'api/generated/services/sigNoz.schemas';
+// The backend's own definition, so the story renders what the server serves.
+import aiOverviewDefinition from '../../../../../../../pkg/modules/dashboard/impldashboard/fs/definitions/ai-o11y-overview.json';
 import type {
 	MetricRangePayloadV5,
 	QueryRangeRequestV5,
@@ -161,3 +168,19 @@ export const llmPanelResponse = (
 		},
 	]);
 };
+
+export function llmSystemDashboardResponse(): GetSystemDashboard200 {
+	const { definition } = aiOverviewDefinition;
+	return {
+		status: 'success',
+		data: {
+			orgId: 'storybook-org',
+			locked: true,
+			source: DashboardtypesSourceDTO.system,
+			name: definition.name,
+			schemaVersion: definition.schemaVersion,
+			tags: [],
+			spec: definition.spec as DashboardtypesGettableSystemDashboardDTO['spec'],
+		},
+	};
+}
