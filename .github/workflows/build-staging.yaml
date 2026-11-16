@@ -5,7 +5,7 @@ on:
     branches:
       - main
   pull_request:
-    types: [labeled]
+    types: [labeled, unlabeled]
 
 defaults:
   run:
@@ -20,11 +20,13 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'push' || startsWith(github.event.label.name, 'staging:') }}
     outputs:
+      action: ${{ steps.build-info.outputs.action }}
       version: ${{ steps.build-info.outputs.version }}
       hash: ${{ steps.build-info.outputs.hash }}
       time: ${{ steps.build-info.outputs.time }}
       branch: ${{ steps.build-info.outputs.branch }}
       path: ${{ steps.build-info.outputs.path }}
+      tag: ${{ steps.build-info.outputs.tag }}
     steps:
       - name: self-checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -46,8 +48,17 @@ jobs:
         id: build-info
         env:
           LABEL: ${{ github.event.label.name }}
+          GITHUB_EVENT_ACTION: ${{ github.event.action }}
         run: |
           # merges to main release the base every overlay inherits, a staging:<deployment> label releases that overlay
+          # and removing the label unpins it, so it inherits the base again
+          action="set"
+          tag=$($MAKE info-version)
+          if [[ "${GITHUB_EVENT_ACTION}" == unlabeled ]]; then
+            action="unset"
+            tag=
+          fi
+
           if [[ "${GITHUB_EVENT_NAME}" == push ]]; then
             path="overlays/staging/*/signoz/base"
           else
@@ -61,13 +72,16 @@ jobs:
           fi
 
           {
+            echo "action=${action}"
             echo "version=$($MAKE info-version)"
             echo "hash=$($MAKE info-commit-short)"
             echo "time=$($MAKE info-timestamp)"
             echo "branch=$($MAKE info-branch)"
             echo "path=${path}"
+            echo "tag=${tag}"
           } >> "${GITHUB_OUTPUT}"
       - name: create-dotenv
+        if: ${{ steps.build-info.outputs.action == 'set' }}
         run: |
           mkdir -p frontend
           echo 'CI=1' > frontend/.env
@@ -78,11 +92,13 @@ jobs:
           echo 'VITE_ENVIRONMENT="staging"' >> frontend/.env
           echo 'VITE_VERSION="${{ steps.build-info.outputs.version }}"' >> frontend/.env
       - name: cache-dotenv
+        if: ${{ steps.build-info.outputs.action == 'set' }}
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: frontend/.env
           key: staging-dotenv-${{ github.sha }}
   js-build:
+    if: ${{ needs.prepare.outputs.action == 'set' }}
     uses: signoz/primus.workflows/.github/workflows/js-build.yaml@main
     needs: prepare
     secrets: inherit
@@ -122,6 +138,8 @@ jobs:
       DOCKER_MANIFEST: true
       DOCKER_PROVIDERS: gcp
   staging:
+    # an unset builds nothing, so it runs with the builds skipped
+    if: ${{ !cancelled() && needs.prepare.result == 'success' && (needs.prepare.outputs.action == 'unset' || needs.go-build.result == 'success') }}
     uses: signoz/primus.workflows/.github/workflows/github-trigger.yaml@main
     secrets: inherit
     needs: [prepare, go-build]
@@ -131,4 +149,4 @@ jobs:
       GITHUB_SILENT: true
       GITHUB_REPOSITORY_NAME: signoz.staging.cl.gcp.deployments
       GITHUB_EVENT_NAME: release
-      GITHUB_EVENT_PAYLOAD: '{"path": "${{ needs.prepare.outputs.path }}", "image": "us-central1-docker.pkg.dev/signoz-registry/signoz/signoz", "tag": "${{ needs.prepare.outputs.version }}"}'
+      GITHUB_EVENT_PAYLOAD: '{"action": "${{ needs.prepare.outputs.action }}", "path": "${{ needs.prepare.outputs.path }}", "image": "us-central1-docker.pkg.dev/signoz-registry/signoz/signoz", "tag": "${{ needs.prepare.outputs.tag }}"}'
