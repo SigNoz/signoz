@@ -67,7 +67,68 @@ func TestPrepareQuery(t *testing.T) {
 				Query: "ALTER TABLE signoz_table DELETE where true",
 			},
 			expectedErr: true,
-			errMsg:      "operation alter table is not allowed",
+			errMsg:      "only SELECT statements are allowed",
+		},
+		{
+			name: "query contains insert",
+			postData: &model.DashboardVars{
+				Query: "INSERT INTO signoz_table VALUES (1)",
+			},
+			expectedErr: true,
+			errMsg:      "only SELECT statements are allowed",
+		},
+		{
+			name: "query contains create",
+			postData: &model.DashboardVars{
+				Query: "CREATE TABLE signoz_table (id Int) ENGINE = Memory",
+			},
+			expectedErr: true,
+			errMsg:      "only SELECT statements are allowed",
+		},
+		{
+			name: "query contains rename",
+			postData: &model.DashboardVars{
+				Query: "RENAME TABLE signoz_table TO other",
+			},
+			expectedErr: true,
+			errMsg:      "only SELECT statements are allowed",
+		},
+		{
+			name: "denylist evaded by double space",
+			postData: &model.DashboardVars{
+				Query: "drop  table signoz_table",
+			},
+			expectedErr: true,
+			errMsg:      "only SELECT statements are allowed",
+		},
+		{
+			name: "stacked statements",
+			postData: &model.DashboardVars{
+				Query: "SELECT 1; DROP TABLE signoz_table",
+			},
+			expectedErr: true,
+			errMsg:      "exactly one statement",
+		},
+		{
+			name: "comment hides a second statement",
+			postData: &model.DashboardVars{
+				Query: "SELECT 1; /* keep */ INSERT INTO t VALUES (1)",
+			},
+			expectedErr: true,
+			errMsg:      "exactly one statement",
+		},
+		{
+			name: "variable expansion of a non-select is still rejected",
+			postData: &model.DashboardVars{
+				Query: "{{.q}}",
+				Variables: map[string]interface{}{
+					"q": "DROP TABLE signoz_table",
+				},
+			},
+			// FormattedValue quotes the string, so this is not valid SELECT SQL
+			// either; the allowlist must still fail closed after expansion.
+			expectedErr: true,
+			errMsg:      "statement",
 		},
 		{
 			name: "query text produces template exec error",
