@@ -1,6 +1,7 @@
 import {
 	DashboardtypesGeoMapCountryFormatDTO,
 	DashboardtypesGeoMapLayerDTO,
+	DashboardtypesGeoMapViewDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import { LocationKind } from '../../types';
@@ -30,6 +31,15 @@ describe('prepareGeoMapData', () => {
 			{ code: 'FR', value: 40, raw: 'France' },
 		]);
 		expect(data.rowIndexById.get('DE')).toBe(1);
+	});
+
+	it('counts countries outside a continent view apart', () => {
+		const data = prepare(countryTable, {
+			map: mapOf({ view: DashboardtypesGeoMapViewDTO.europe }),
+		});
+
+		expect(data.regions.map((datum) => datum.code)).toStrictEqual(['DE', 'FR']);
+		expect(data.otherCountryRows).toBe(1);
 	});
 
 	it('sizes by a second column and keeps a missing size as null', () => {

@@ -144,7 +144,7 @@ export function getGeoMapWarning(
 			`The query stops at ${formatCount(MAX_ROWS)} rows. Add a filter to see the rest.`,
 		data.unmappedRows > 0 && unmappedNote(data),
 		data.otherCountryRows > 0 &&
-			`${rows(data.otherCountryRows)} from other countries, outside this view.`,
+			`${rows(data.otherCountryRows)} outside this view.`,
 		data.duplicateRows > 0 &&
 			`${rows(data.duplicateRows)} repeat a location; the first row of each is shown.`,
 		data.missingValueRows > 0 &&

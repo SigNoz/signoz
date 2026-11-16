@@ -1,8 +1,13 @@
 import { DashboardtypesGeoMapCountryFormatDTO } from 'api/generated/services/sigNoz.schemas';
+import { COUNTRY_BY_ISO2 } from 'lib/visualization/charts/GeoMap/geo/countries';
 import { normalizeCountry } from 'lib/visualization/charts/GeoMap/geo/normalizeCountry';
 import { normalizeSubdivision } from 'lib/visualization/charts/GeoMap/geo/normalizeSubdivision';
 import type { SubdivisionSet } from 'lib/visualization/charts/GeoMap/geo/subdivisions';
-import type { GeoMapPoint } from 'lib/visualization/charts/GeoMap/types';
+import { isMember } from 'lib/visualization/charts/GeoMap/geo/views';
+import type {
+	GeoMapPoint,
+	GeoMapView,
+} from 'lib/visualization/charts/GeoMap/types';
 import type {
 	PanelTableColumn,
 	PanelTableRow,
@@ -66,12 +71,13 @@ export interface PlacementContext {
 	countryFormat: DashboardtypesGeoMapCountryFormatDTO | undefined;
 	subdivisions: SubdivisionSet | null;
 	labelColumns: PanelTableColumn[];
+	view?: GeoMapView;
 }
 
 export function placeRow(
 	row: PanelTableRow,
 	location: ResolvedLocation,
-	{ countryFormat, subdivisions, labelColumns }: PlacementContext,
+	{ countryFormat, subdivisions, labelColumns, view }: PlacementContext,
 ): Placement {
 	const cell = (column: PanelTableColumn): string => toText(row.data[column.id]);
 	switch (location.kind) {
@@ -104,7 +110,15 @@ export function placeRow(
 		default: {
 			const raw = cell(location.country);
 			const code = toCountryCode(raw, countryFormat);
-			return code ? { kind: 'region', code, raw } : { kind: 'unmapped', raw };
+			if (!code) {
+				return { kind: 'unmapped', raw };
+			}
+			const shape = COUNTRY_BY_ISO2.get(code);
+			// A country view with no states shows the world.
+			if (shape && view && view !== 'country' && !isMember(shape, view)) {
+				return { kind: 'otherCountry' };
+			}
+			return { kind: 'region', code, raw };
 		}
 	}
 }

@@ -247,7 +247,7 @@ describe('getGeoMapDataWarning', () => {
 		});
 
 		expect(getGeoMapDataWarning(panel, data)?.messages).toStrictEqual([
-			'1 row from other countries, outside this view.',
+			'1 row outside this view.',
 		]);
 	});
 });

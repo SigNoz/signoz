@@ -38,7 +38,7 @@ export function describeUnplaced(
 	if (data.otherCountryRows > 0) {
 		rows.push({
 			value: 'Other countries',
-			why: `${rowsLabel(data.otherCountryRows)} outside this country`,
+			why: `${rowsLabel(data.otherCountryRows)} outside this view`,
 		});
 	}
 	if (data.duplicateRows > 0) {

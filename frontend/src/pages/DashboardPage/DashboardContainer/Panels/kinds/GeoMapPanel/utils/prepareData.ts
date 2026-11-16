@@ -128,6 +128,7 @@ export function prepareGeoMapData({
 			countryFormat: location?.countryFormat,
 			subdivisions,
 			labelColumns,
+			view: map?.view,
 		});
 		const size = sizeColumn ? toFiniteNumber(row.data[sizeColumn.id]) : undefined;
 		const sized = sizeColumn ? { size } : {};
