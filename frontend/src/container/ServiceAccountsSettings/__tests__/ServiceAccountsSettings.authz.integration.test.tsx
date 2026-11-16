@@ -270,7 +270,14 @@ describe('ServiceAccountsSettings (integration)', () => {
 		expect(
 			screen.queryByText(/An unexpected error occurred while fetching/i),
 		).not.toBeInTheDocument();
-		expect(screen.getByText(/No results for/i)).toBeInTheDocument();
+		expect(
+			screen.getByText('The filter query is invalid. Fix it or clear the search.'),
+		).toBeInTheDocument();
+
+		await user.click(screen.getByTestId('no-results-clear-button'));
+
+		await expect(screen.findByText('CI Bot')).resolves.toBeInTheDocument();
+		expect(screen.queryByTestId('sa-query-error')).not.toBeInTheDocument();
 	});
 
 	it('pages on the server: the footer shows the total and page 2 asks for an offset', async () => {

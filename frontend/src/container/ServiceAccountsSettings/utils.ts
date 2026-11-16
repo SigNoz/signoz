@@ -35,11 +35,6 @@ export function withStatuses(query: string, statuses: string[]): string {
 	return spliceClause(query, 'status', valuesClause('status', statuses));
 }
 
-// What the user typed besides the status the filter owns.
-export function freeTextOfQuery(query: string): string {
-	return spliceClause(query, 'status', null);
-}
-
 export enum ServiceAccountStatus {
 	Active = 'ACTIVE',
 	Deleted = 'DELETED',

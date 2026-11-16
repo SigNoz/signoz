@@ -1,14 +1,12 @@
 import React from 'react';
 import { Table } from 'antd';
+import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState/NoResultsEmptyState';
 import {
 	SA_PAGE_SIZE,
 	SA_QUERY_PARAMS,
 } from 'container/ServiceAccountsSettings/constants';
 import { SERVICE_ACCOUNTS_DEFAULT_QUERY } from 'container/ServiceAccountsSettings/list.config';
-import {
-	freeTextOfQuery,
-	ServiceAccountRow,
-} from 'container/ServiceAccountsSettings/utils';
+import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
 
 import {
@@ -23,6 +21,8 @@ interface ServiceAccountsTableProps {
 	data: ServiceAccountRow[];
 	total: number;
 	loading: boolean;
+	queryError?: string | null;
+	onClearSearch: () => void;
 	onRowClick?: (row: ServiceAccountRow) => void;
 }
 
@@ -30,6 +30,8 @@ function ServiceAccountsTable({
 	data,
 	total,
 	loading,
+	queryError,
+	onClearSearch,
 	onRowClick,
 }: ServiceAccountsTableProps): JSX.Element {
 	const [currentPage, setPage] = useQueryState(
@@ -67,9 +69,21 @@ function ServiceAccountsTable({
 				}
 				showSorterTooltip={false}
 				locale={{
-					emptyText: (
-						<ServiceAccountsEmptyState searchQuery={freeTextOfQuery(searchQuery)} />
-					),
+					emptyText:
+						queryError || searchQuery !== SERVICE_ACCOUNTS_DEFAULT_QUERY ? (
+							<NoResultsEmptyState
+								title="No matching service accounts"
+								subtitle={
+									queryError
+										? 'The filter query is invalid. Fix it or clear the search.'
+										: 'No service accounts match your search. Try adjusting your search criteria.'
+								}
+								onClear={onClearSearch}
+								clearButtonText="Clear Search"
+							/>
+						) : (
+							<ServiceAccountsEmptyState />
+						),
 				}}
 				className="sa-table"
 				onRow={(

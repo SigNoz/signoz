@@ -105,6 +105,10 @@ function ServiceAccountsSettings(): JSX.Element {
 		[setSearchQuery, setPage],
 	);
 
+	const handleClearSearch = useCallback((): void => {
+		handleQueryChange(SERVICE_ACCOUNTS_DEFAULT_QUERY);
+	}, [handleQueryChange]);
+
 	const wrapControl = useCallback(
 		(node: ReactElement): ReactElement => (
 			<AuthZTooltip checks={[SAListPermission]}>{node}</AuthZTooltip>
@@ -196,6 +200,8 @@ function ServiceAccountsSettings(): JSX.Element {
 							data={accounts}
 							total={total}
 							loading={isFetching}
+							queryError={queryError}
+							onClearSearch={handleClearSearch}
 							onRowClick={handleRowClick}
 						/>
 					)}

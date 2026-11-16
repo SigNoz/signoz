@@ -25,6 +25,7 @@ const mockDisabledAccount: ServiceAccountRow = {
 const defaultProps = {
 	total: 1,
 	loading: false,
+	onClearSearch: jest.fn(),
 	onRowClick: jest.fn(),
 };
 
@@ -106,14 +107,40 @@ describe('ServiceAccountsTable', () => {
 		expect(screen.getByText(/No service accounts/i)).toBeInTheDocument();
 	});
 
-	it('shows "No results for {query}" empty state when search is active', () => {
+	it('offers to clear a search that matches nothing', async () => {
+		const user = userEvent.setup();
 		render(
 			<NuqsTestingAdapter searchParams={{ search: 'ghost' }}>
 				<ServiceAccountsTable {...defaultProps} data={[]} />
 			</NuqsTestingAdapter>,
 		);
 
-		expect(screen.getByText(/No results for/i)).toBeInTheDocument();
-		expect(screen.getByText('ghost')).toBeInTheDocument();
+		expect(screen.getByText('No matching service accounts')).toBeInTheDocument();
+		expect(
+			screen.getByText(/No service accounts match your search/i),
+		).toBeInTheDocument();
+
+		await user.click(screen.getByTestId('no-results-clear-button'));
+
+		expect(defaultProps.onClearSearch).toHaveBeenCalledTimes(1);
+	});
+
+	it('says the filter is invalid when the API rejected the query', () => {
+		render(
+			<NuqsTestingAdapter searchParams={{ search: "owner = 'ci'" }}>
+				<ServiceAccountsTable
+					{...defaultProps}
+					data={[]}
+					queryError='unknown key "owner"'
+				/>
+			</NuqsTestingAdapter>,
+		);
+
+		expect(
+			screen.getByText('The filter query is invalid. Fix it or clear the search.'),
+		).toBeInTheDocument();
+		expect(screen.getByTestId('no-results-clear-button')).toHaveTextContent(
+			'Clear Search',
+		);
 	});
 });

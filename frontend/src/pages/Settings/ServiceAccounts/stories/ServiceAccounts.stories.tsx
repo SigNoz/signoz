@@ -121,7 +121,7 @@ export const SearchNoResults: Story = {
 	parameters: at('search=no-such-service-account'),
 };
 
-/** A query the API rejects: the reason sits under the box and the list stays, empty. */
+/** A query the API rejects: the reason sits under the box and the empty state offers to clear it. */
 export const QueryRejected: Story = {
 	// The deliberate 400 is the state under test.
 	parameters: {

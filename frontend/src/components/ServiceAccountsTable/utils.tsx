@@ -47,23 +47,13 @@ export function StatusBadge({ status }: { status: string }): JSX.Element {
 	);
 }
 
-export function ServiceAccountsEmptyState({
-	searchQuery,
-}: {
-	searchQuery: string;
-}): JSX.Element {
+export function ServiceAccountsEmptyState(): JSX.Element {
 	return (
 		<div className="sa-empty-state">
 			<ScanSearch size={24} className="sa-empty-state__icon" />
-			{searchQuery ? (
-				<p className="sa-empty-state__text">
-					No results for <strong>{searchQuery}</strong>
-				</p>
-			) : (
-				<p className="sa-empty-state__text">
-					No service accounts. Start by creating one to manage keys.
-				</p>
-			)}
+			<p className="sa-empty-state__text">
+				No service accounts. Start by creating one to manage keys.
+			</p>
 		</div>
 	);
 }
