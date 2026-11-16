@@ -48,7 +48,6 @@ SOURCE_RULE = {
         "usePolicy": False,
         "renotify": {"enabled": False, "interval": "30m", "alertStates": []},
     },
-    "version": "v5",
     "schemaVersion": "v2alpha1",
 }
 

@@ -28,7 +28,6 @@ func TestParseIntoRule(t *testing.T) {
 				"description": "Test description",
 				"ruleType": "threshold_rule",
 				"schemaVersion": "v2alpha1",
-				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -68,7 +67,6 @@ func TestParseIntoRule(t *testing.T) {
 			content: []byte(`{
 				"alert": "PromQLRule",
 				"schemaVersion": "v2alpha1",
-				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "promql",
@@ -138,7 +136,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			content: []byte(`{
 				"alert": "V2Alpha1Test",
 				"schemaVersion": "v2alpha1",
-				"version": "v5",
 				"ruleType": "threshold_rule",
 				"condition": {
 					"compositeQuery": {
@@ -205,7 +202,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			content: []byte(`{
 				"alert": "MixedFieldsTest",
 				"schemaVersion": "v2alpha1",
-				"version": "v5",
 				"ruleType": "threshold_rule",
 				"preferredChannels": ["slack"],
 				"condition": {
@@ -235,7 +231,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			content: []byte(`{
 				"alert": "MissingEvalTest",
 				"schemaVersion": "v2alpha1",
-				"version": "v5",
 				"ruleType": "threshold_rule",
 				"condition": {
 					"compositeQuery": {
@@ -277,7 +272,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			content: []byte(`{
 				"alert": "MissingNotifTest",
 				"schemaVersion": "v2alpha1",
-				"version": "v5",
 				"ruleType": "threshold_rule",
 				"condition": {
 					"compositeQuery": {
@@ -319,7 +313,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			content: []byte(`{
 				"alert": "MissingThresholdsTest",
 				"schemaVersion": "v2alpha1",
-				"version": "v5",
 				"ruleType": "threshold_rule",
 				"condition": {
 					"compositeQuery": {
@@ -359,7 +352,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			content: []byte(`{
 				"alert": "BadSchemaTest",
 				"schemaVersion": "v3",
-				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -386,7 +378,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			initRule: PostableRule{},
 			content: []byte(`{
 				"alert": "MissingSchemaTest",
-				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -440,7 +431,6 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 	content := []byte(`{
 		"alert": "TestThresholds",
-		"version": "v5",
 		"condition": {
 			"compositeQuery": {
 				"queryType": "builder",
@@ -514,7 +504,6 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 		"schemaVersion": "v2alpha1",
 		"alert": "MultiThresholdAlert",
 		"ruleType": "threshold_rule",
-		"version": "v5",
 		"condition": {
 			"compositeQuery": {
 				"queryType": "builder",

@@ -40,7 +40,6 @@ const make = (
 	state: RuletypesAlertStateDTO.inactive,
 	labels: { severity: 'info' },
 	annotations: {},
-	source: '',
 	ruleType: RuletypesRuleTypeDTO.threshold_rule,
 	schemaVersion: RuletypesRuleDTOSchemaVersion.v2alpha1,
 	evaluation: {

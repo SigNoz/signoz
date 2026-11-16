@@ -56,7 +56,6 @@
 	}
 
 	.alert-rules-container {
-		margin-top: 10px;
 		flex: 1;
 		min-height: 0;
 		display: flex;
@@ -133,10 +132,6 @@
 			display: flex;
 			flex-direction: column;
 			overflow: hidden;
-
-			> .alert-rules-container {
-				margin-top: 0;
-			}
 		}
 	}
 }

@@ -46,6 +46,7 @@ type PrincipalAttributes struct {
 	PrincipalID    valuer.UUID
 	PrincipalEmail valuer.Email
 	PrincipalOrgID valuer.UUID
+	IdentNProvider authtypes.IdentNProvider
 }
 
 func NewPrincipalAttributesFromClaims(claims authtypes.Claims) PrincipalAttributes {
@@ -61,6 +62,7 @@ func NewPrincipalAttributesFromClaims(claims authtypes.Claims) PrincipalAttribut
 		PrincipalID:    principalID,
 		PrincipalEmail: principalEmail,
 		PrincipalOrgID: principalOrgID,
+		IdentNProvider: claims.IdentNProvider,
 	}
 }
 
@@ -71,6 +73,7 @@ func (attributes PrincipalAttributes) Put(dest pcommon.Map) {
 	}
 	putStrIfNotEmpty(dest, string(sigsemconv.SigNozPrincipalEmailKey), attributes.PrincipalEmail.String())
 	dest.PutStr(string(sigsemconv.SigNozOrganizationIDKey), attributes.PrincipalOrgID.StringValue())
+	putStrIfNotEmpty(dest, string(sigsemconv.SigNozPrincipalIdentnProviderKey), attributes.IdentNProvider.StringValue())
 }
 
 // Audit attributes — Resource (On What).
@@ -178,7 +181,7 @@ func NewTransportAttributesFromHTTP(req *http.Request, route string, statusCode 
 		scheme = "https"
 	}
 
-	clientAddress, clientPort := splitHostPort(req.RemoteAddr)
+	clientAddress, clientPort := clientAddressFromHTTP(req)
 
 	return TransportAttributes{
 		NetworkProtocolName:    "http",
@@ -218,6 +221,16 @@ func networkProtocolVersion(req *http.Request) string {
 	}
 
 	return strconv.Itoa(req.ProtoMajor) + "." + strconv.Itoa(req.ProtoMinor)
+}
+
+// clientAddressFromHTTP prefers the first X-Forwarded-For entry, which carries no port, over the peer address.
+func clientAddressFromHTTP(req *http.Request) (string, int) {
+	forwardedFor, _, _ := strings.Cut(req.Header.Get("X-Forwarded-For"), ",")
+	if forwardedFor = strings.TrimSpace(forwardedFor); forwardedFor != "" {
+		return forwardedFor, 0
+	}
+
+	return splitHostPort(req.RemoteAddr)
 }
 
 // splitHostPort returns addr unchanged with port 0 when it has no valid port.

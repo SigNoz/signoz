@@ -49,7 +49,6 @@ func ThresholdRuleAtLeastOnceValueAbove(target float64, recovery *float64) rulet
 		Annotations: map[string]string{
 			"value": "{{$value}}",
 		},
-		Version:       "v5",
 		SchemaVersion: ruletypes.SchemaVersionV2Alpha1,
 		RuleCondition: &ruletypes.RuleCondition{
 			SelectedQuery: "A",
@@ -108,7 +107,6 @@ func BuildPromAtLeastOnceValueAbove(target float64, recovery *float64) ruletypes
 		Annotations: map[string]string{
 			"value": "{{$value}}",
 		},
-		Version:       "v5",
 		SchemaVersion: ruletypes.SchemaVersionV2Alpha1,
 		RuleCondition: &ruletypes.RuleCondition{
 			SelectedQuery: "A",

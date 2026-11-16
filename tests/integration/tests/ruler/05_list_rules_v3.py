@@ -87,7 +87,6 @@ SEED_RULES = [
         "annotations": {"summary": "s", "description": "d"},
         "evaluation": EVALUATION,
         "notificationSettings": NOTIFICATION_SETTINGS,
-        "version": "v5",
         "schemaVersion": "v2alpha1",
     },
     {
@@ -100,7 +99,6 @@ SEED_RULES = [
         "annotations": {"summary": "s", "description": "d"},
         "evaluation": EVALUATION,
         "notificationSettings": NOTIFICATION_SETTINGS,
-        "version": "v5",
         "schemaVersion": "v2alpha1",
     },
     {
@@ -114,7 +112,6 @@ SEED_RULES = [
         "disabled": True,
         "evaluation": EVALUATION,
         "notificationSettings": NOTIFICATION_SETTINGS,
-        "version": "v5",
         "schemaVersion": "v2alpha1",
     },
     {
@@ -127,7 +124,6 @@ SEED_RULES = [
         "annotations": {"summary": "s", "description": "d"},
         "evaluation": EVALUATION,
         "notificationSettings": NOTIFICATION_SETTINGS,
-        "version": "v5",
         "schemaVersion": "v2alpha1",
     },
     {
@@ -140,7 +136,6 @@ SEED_RULES = [
         "annotations": {"summary": "s", "description": "d"},
         "evaluation": EVALUATION,
         "notificationSettings": NOTIFICATION_SETTINGS,
-        "version": "v5",
         "schemaVersion": "v2alpha1",
     },
 ]
@@ -156,7 +151,6 @@ COLLIDER_RULE = {
     "annotations": {"summary": "s", "description": "d"},
     "evaluation": EVALUATION,
     "notificationSettings": NOTIFICATION_SETTINGS,
-    "version": "v5",
     "schemaVersion": "v2alpha1",
 }
 

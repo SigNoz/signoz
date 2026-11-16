@@ -240,7 +240,6 @@ func TestPrepareParamsForLogsFilterExpression(t *testing.T) {
 			},
 			SelectedQuery: "A",
 		},
-		Version: "v5",
 	}
 
 	logger := instrumentationtest.New().Logger()
@@ -303,7 +302,6 @@ func TestPrepareParamsForTracesFilterExpression(t *testing.T) {
 			},
 			SelectedQuery: "A",
 		},
-		Version: "v5",
 	}
 
 	logger := instrumentationtest.New().Logger()
