@@ -1,0 +1,77 @@
+// `--strip-tab-min-width` lets a container tune how far tabs shrink.
+.stripTab {
+	position: relative;
+	display: flex;
+	align-items: center;
+	flex: 0 1 auto;
+	min-width: var(--strip-tab-min-width, var(--spacing-32));
+	height: 24px;
+
+	&:hover,
+	&:focus-within,
+	&.active {
+		background: var(--l3-background-hover);
+
+		.open {
+			--button-variant-ghost-color: var(--l1-foreground-hover);
+		}
+
+		.close {
+			visibility: visible;
+		}
+	}
+}
+
+.open {
+	display: flex;
+	flex: 1 1 auto;
+	min-width: 0;
+
+	--button-padding: 0 5.5px 0 6px;
+	--button-gap: 4px;
+	--button-font-size: var(--periscope-font-size-base);
+	--button-font-weight: var(--font-weight-normal);
+	--button-size-line-height: 1;
+	--button-variant-ghost-color: var(--l2-foreground);
+	--button-variant-ghost-hover-color: var(--l1-foreground-hover);
+	--button-variant-ghost-hover-background-color: transparent;
+	--button-focus-visible-outline: none;
+
+	// The strip's mono font doesn't reach buttons; tabs use the design's Inter.
+	> button {
+		font-family: var(--font-family-inter);
+		font-feature-settings:
+			'zero' on,
+			'ss01' on,
+			'lnum' on,
+			'tnum' on;
+	}
+
+	[data-slot='button-label'] {
+		max-width: 139px;
+	}
+}
+
+// Over the label's end on a fade, hidden rather than removed so the label never reflows.
+.close {
+	position: absolute;
+	top: 0;
+	right: 0;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	width: 37px;
+	height: 100%;
+	background: linear-gradient(
+		to left,
+		var(--l3-background-hover) 66%,
+		transparent
+	);
+	visibility: hidden;
+
+	--button-border-radius: 0;
+	--button-variant-ghost-color: var(--l1-foreground-hover);
+	--button-variant-ghost-hover-color: var(--l1-foreground-hover);
+	--button-variant-ghost-hover-background-color: transparent;
+	--button-focus-visible-outline-offset: -2px;
+}
