@@ -1,7 +1,6 @@
 package clickhousetelemetrystore
 
 import (
-	"context"
 	"testing"
 
 	chproto "github.com/ClickHouse/ch-go/proto"
@@ -12,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 )
 
 func TestCastError_SettingConstraintViolation(t *testing.T) {
@@ -27,23 +25,11 @@ type fakeConn struct {
 	clickhouse.Conn
 }
 
-func TestProviderConnFor(t *testing.T) {
+func TestProviderWithProfile(t *testing.T) {
 	defaultConn, profileConn := &fakeConn{}, &fakeConn{}
 	p := &provider{settings: factory.NewScopedProviderSettings(factorytest.NewSettings(), "test"), clickHouseConn: defaultConn, profileConns: map[string]clickhouse.Conn{"query_range": profileConn}}
 
-	testCases := []struct {
-		name string
-		ctx  context.Context
-		want clickhouse.Conn
-	}{
-		{name: "NoProfile_DefaultConn", ctx: context.Background(), want: defaultConn},
-		{name: "Profile_ProfileConn", ctx: telemetrystore.NewContextWithProfile(context.Background(), "query_range"), want: profileConn},
-		{name: "UnknownProfile_DefaultConn", ctx: telemetrystore.NewContextWithProfile(context.Background(), "unknown"), want: defaultConn},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			assert.Same(t, testCase.want, p.connFor(testCase.ctx))
-		})
-	}
+	assert.Same(t, profileConn, p.WithProfile("query_range").(*provider).clickHouseConn)
+	assert.Same(t, defaultConn, p.clickHouseConn)
+	assert.Same(t, p, p.WithProfile("unknown"))
 }

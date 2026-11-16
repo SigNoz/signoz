@@ -39,7 +39,7 @@ type ClickhouseConfig struct {
 	// QuerySettings is the query settings for clickhouse.
 	QuerySettings QuerySettings `mapstructure:"settings"`
 
-	// Profiles maps a settings profile name (NewContextWithProfile) to the connection that runs its
+	// Profiles maps a settings profile name (TelemetryStore.WithProfile) to the connection that runs its
 	// queries. The native protocol sets the profile at login, so each DSN logs in as a user whose
 	// default profile is that one.
 	Profiles map[string]ProfileConfig `mapstructure:"profiles"`

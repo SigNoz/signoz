@@ -202,6 +202,20 @@ func (p *provider) Indexes(ctx context.Context, stmt string, args ...any) (telem
 	return RunExplainIndexes(ctx, p, stmt, args...)
 }
 
+// WithProfile returns p itself when the profile is not configured, so callers keep working until it is.
+func (p *provider) WithProfile(profile string) telemetrystore.TelemetryStore {
+	conn, ok := p.profileConns[profile]
+	if !ok {
+		p.settings.Logger().InfoContext(context.Background(), "clickhouse settings profile is not configured, using the default connection", slog.String("profile", profile))
+		return p
+	}
+
+	profiled := *p
+	profiled.clickHouseConn = conn
+	profiled.profileConns = nil
+	return &profiled
+}
+
 func (p *provider) Cluster() string {
 	return p.cluster
 }
@@ -224,12 +238,10 @@ func (p *provider) Stats() driver.Stats {
 }
 
 func (p *provider) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
-	conn := p.connFor(ctx)
-
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	rows, err := conn.Query(ctx, query, args...)
+	rows, err := p.clickHouseConn.Query(ctx, query, args...)
 	if err != nil {
 		event.Err = err
 		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -245,12 +257,10 @@ func (p *provider) Query(ctx context.Context, query string, args ...interface{})
 }
 
 func (p *provider) QueryRow(ctx context.Context, query string, args ...interface{}) driver.Row {
-	conn := p.connFor(ctx)
-
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	row := conn.QueryRow(ctx, query, args...)
+	row := p.clickHouseConn.QueryRow(ctx, query, args...)
 
 	if row == nil {
 		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -264,12 +274,10 @@ func (p *provider) QueryRow(ctx context.Context, query string, args ...interface
 }
 
 func (p *provider) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
-	conn := p.connFor(ctx)
-
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err := conn.Select(ctx, dest, query, args...)
+	err := p.clickHouseConn.Select(ctx, dest, query, args...)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -278,12 +286,10 @@ func (p *provider) Select(ctx context.Context, dest interface{}, query string, a
 }
 
 func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) error {
-	conn := p.connFor(ctx)
-
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err := conn.Exec(ctx, query, args...)
+	err := p.clickHouseConn.Exec(ctx, query, args...)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -292,12 +298,10 @@ func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) 
 }
 
 func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
-	conn := p.connFor(ctx)
-
 	event := telemetrystore.NewQueryEvent(query, args)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err := conn.Exec(clickhouse.Context(ctx, clickhouse.WithAsync(wait)), query, args...)
+	err := p.clickHouseConn.Exec(clickhouse.Context(ctx, clickhouse.WithAsync(wait)), query, args...)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -306,12 +310,10 @@ func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, arg
 }
 
 func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
-	conn := p.connFor(ctx)
-
 	event := telemetrystore.NewQueryEvent(query, nil)
 
 	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	batch, err := conn.PrepareBatch(ctx, query, opts...)
+	batch, err := p.clickHouseConn.PrepareBatch(ctx, query, opts...)
 
 	event.Err = err
 	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
@@ -344,19 +346,6 @@ func open(dsn string, connection telemetrystore.ConnectionConfig) (clickhouse.Co
 	options.Settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
 
 	return clickhouse.Open(options)
-}
-
-// connFor falls back to the default connection, which has no profile, when the profile of ctx is not configured.
-func (p *provider) connFor(ctx context.Context) clickhouse.Conn {
-	profile := telemetrystore.ProfileFromContext(ctx)
-	if profile == "" {
-		return p.clickHouseConn
-	}
-	if conn, ok := p.profileConns[profile]; ok {
-		return conn
-	}
-	p.settings.Logger().WarnContext(ctx, "clickhouse settings profile is not configured, running the query without it", slog.String("profile", profile))
-	return p.clickHouseConn
 }
 
 func castError(err error) error {
