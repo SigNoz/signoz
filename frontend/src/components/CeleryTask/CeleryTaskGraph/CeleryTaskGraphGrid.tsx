@@ -8,12 +8,9 @@ import { CardContainer } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
-import { useCeleryFilterOptions } from '../useCeleryFilterOptions';
 import CeleryTaskBar from './CeleryTaskBar';
 import CeleryTaskGraph from './CeleryTaskGraph';
 import {
@@ -23,6 +20,7 @@ import {
 	celeryTasksByWorkerWidgetData,
 } from './CeleryTaskGraphUtils';
 import CeleryTaskLatencyGraph from './CeleryTaskLatencyGraph';
+import { useCeleryWorkerCount } from './useCeleryWorkerCount';
 
 import './CeleryTaskGraph.style.scss';
 
@@ -71,14 +69,7 @@ export default function CeleryTaskGraphGrid({
 		'Latency by worker',
 	];
 
-	const { options } = useCeleryFilterOptions(
-		'worker',
-		'rate',
-		DataSource.METRICS,
-		'flower_task_runtime_seconds_sum',
-		DataTypes.String,
-		'tag',
-	);
+	const { data: workerCount } = useCeleryWorkerCount();
 	const isDarkMode = useIsDarkMode();
 
 	const [collapsedSections, setCollapsedSections] = useState<{
@@ -151,8 +142,11 @@ export default function CeleryTaskGraphGrid({
 								</Typography.Text>
 							</div>
 							<div className="worker-count-text-container">
-								<Typography.Text className="celery-task-graph-worker-count-text">
-									{options.filter((option) => option.value).length}
+								<Typography.Text
+									className="celery-task-graph-worker-count-text"
+									data-testid="celery-worker-count"
+								>
+									{workerCount ?? '-'}
 								</Typography.Text>
 							</div>
 						</Card>
