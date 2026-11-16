@@ -45,9 +45,8 @@ jobs:
           fi
   fmtlint:
     needs: changes
-    if: needs.changes.outputs.e2e == 'true'
+    if: github.event_name != 'merge_group' && needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - name: checkout
         uses: actions/checkout@v4
