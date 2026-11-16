@@ -55,8 +55,51 @@
 	}
 }
 
+.disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+
+	.input {
+		cursor: not-allowed;
+	}
+
+	&:hover {
+		border-color: var(--l1-border);
+	}
+}
+
+.badge {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	padding: 0 5px;
+	border-radius: 2px;
+	background: var(--bg-robin-500);
+	color: var(--bg-vanilla-100);
+	font-family: 'Geist Mono', monospace;
+	font-size: 10px;
+	line-height: 14px;
+}
+
 .label {
 	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.text {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 2px;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.description {
+	overflow: hidden;
+	color: var(--l2-foreground);
+	font-size: 11px;
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
@@ -70,6 +113,10 @@
 		gap: 10px;
 		height: 88px;
 		padding: 0 4px;
+	}
+
+	.text {
+		align-items: center;
 	}
 }
 
