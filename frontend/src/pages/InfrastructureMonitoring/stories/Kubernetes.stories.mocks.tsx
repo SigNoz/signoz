@@ -9,6 +9,8 @@ import {
 	InfraMonitoringEntity,
 } from 'container/InfraMonitoringK8sV2/constants';
 
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
+
 import { infraStoryMocks } from './InfrastructureMonitoring.stories.mocks';
 import { infraListResponse } from './__story_mockdata__/infraMonitoring';
 
@@ -56,6 +58,7 @@ export const podLongNodeName = rest.post(
  * what puts `?category=` on the route the story starts on.
  */
 export const podsMocks = infraStoryMocks(InfraMonitoringEntity.PODS);
+export type PodsArgs = PageStoryArgs<typeof podsMocks>;
 export const nodesMocks = infraStoryMocks(InfraMonitoringEntity.NODES);
 export const namespacesMocks = infraStoryMocks(
 	InfraMonitoringEntity.NAMESPACES,
