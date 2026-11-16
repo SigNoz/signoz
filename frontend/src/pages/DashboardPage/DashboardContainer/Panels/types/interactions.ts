@@ -42,6 +42,7 @@ export type PanelInteractionMap = Record<PanelKind, object> & {
 	'signoz/ScatterPlotPanel': {
 		onClick?: (event: DrilldownClickPayload) => void;
 	};
+	'signoz/GeoMapPanel': { onClick?: (event: DrilldownClickPayload) => void };
 };
 
 /**

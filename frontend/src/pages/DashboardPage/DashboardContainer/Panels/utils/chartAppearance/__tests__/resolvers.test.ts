@@ -9,12 +9,12 @@ import {
 	Querybuildertypesv5BucketOptionsLogDTOKind,
 } from 'api/generated/services/sigNoz.schemas';
 import { FillMode, StackMode } from 'lib/uPlotV2/config/types';
+import { HeatmapAxisScale } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import {
-	HeatmapAxisScale,
-	HeatmapColorMode,
-	HeatmapColorPalette,
-	HeatmapColorScale,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+	ColorRampMode,
+	ColorRampPalette,
+	ColorRampScale,
+} from 'lib/visualization/colorRamp/types';
 
 import {
 	resolveAreaFillMode,
@@ -162,9 +162,9 @@ describe('resolveHeatmapColors', () => {
 				fill: '#ff0000',
 			}),
 		).toStrictEqual({
-			mode: HeatmapColorMode.Opacity,
-			scale: HeatmapColorScale.Sqrt,
-			palette: HeatmapColorPalette.Verdant,
+			mode: ColorRampMode.Opacity,
+			scale: ColorRampScale.Sqrt,
+			palette: ColorRampPalette.Verdant,
 			fill: '#ff0000',
 		});
 	});
@@ -176,7 +176,7 @@ describe('resolveHeatmapColors', () => {
 
 	it("keeps a null count bound — the spec's way of asking for a derived one", () => {
 		expect(resolveHeatmapColors({ minCount: null, maxCount: 500 })).toStrictEqual(
-			{ minCount: null, maxCount: 500 },
+			{ min: null, max: 500 },
 		);
 	});
 

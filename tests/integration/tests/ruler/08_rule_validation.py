@@ -422,8 +422,8 @@ def test_update_rejects_malformed_id(
         "status": "error",
         "error": {
             "type": "invalid-input",
-            "code": "invalid_input",
-            "message": "id is not a valid uuid",
+            "code": "invalid_selector",
+            "message": "invalid selector for type metaresource: not-a-uuid",
             "errors": [],
             "suggestions": [],
         },
