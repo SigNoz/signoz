@@ -21,6 +21,7 @@ type ListableRule struct {
 	RuleType    RuleType          `json:"ruleType" required:"true" description:"The evaluation strategy: threshold_rule, promql_rule or anomaly_rule."`
 	Disabled    bool              `json:"disabled" description:"Whether the rule is paused."`
 	Labels      map[string]string `json:"labels,omitempty" description:"The labels attached to alerts the rule fires."`
+	Severities  []string          `json:"severities" required:"true" nullable:"false" description:"The severities the rule's alerts carry: the severity label when set, else each distinct threshold name in lowercase, ordered critical, error, warning, info, then other names. Read-only."`
 	types.TimeAuditable
 	types.UserAuditable
 }
@@ -37,7 +38,30 @@ type storedRuleData struct {
 		CompositeQuery struct {
 			QueryType QueryType `json:"queryType"`
 		} `json:"compositeQuery"`
+		Thresholds *RuleThresholdData `json:"thresholds"`
 	} `json:"condition"`
+}
+
+func (data storedRuleData) extractSeverities() []string {
+	if severity, ok := data.Labels[LabelSeverityName]; ok {
+		return []string{severity}
+	}
+
+	severities := make([]string, 0)
+	if data.Condition.Thresholds != nil {
+		if basic, ok := data.Condition.Thresholds.Spec.(BasicRuleThresholds); ok {
+			for _, threshold := range basic {
+				severity := strings.ToLower(threshold.Name)
+				if !slices.Contains(severities, severity) {
+					severities = append(severities, severity)
+				}
+			}
+		}
+	}
+	slices.SortFunc(severities, func(a, b string) int {
+		return cmp.Or(cmp.Compare(severityDisplayRank[b], severityDisplayRank[a]), strings.Compare(a, b))
+	})
+	return severities
 }
 
 // ToListableRule leaves State zero; the caller overlays evaluation state.
@@ -64,6 +88,7 @@ func (rule *StorableRule) ToListableRule() (*ListableRule, error) {
 		RuleType:      data.RuleType,
 		Disabled:      data.Disabled,
 		Labels:        data.Labels,
+		Severities:    data.extractSeverities(),
 		TimeAuditable: rule.TimeAuditable,
 		UserAuditable: rule.UserAuditable,
 	}, nil
@@ -156,8 +181,14 @@ func compareListableRules(a, b *ListableRule, sortBy ListSort) int {
 	case ListSortState:
 		return cmp.Compare(a.State.DisplayRank(), b.State.DisplayRank())
 	case ListSortSeverity:
-		severityA := a.Labels["severity"]
-		severityB := b.Labels["severity"]
+		// a rule sorts by its highest severity, the first one listed
+		severityA, severityB := "", ""
+		if len(a.Severities) > 0 {
+			severityA = a.Severities[0]
+		}
+		if len(b.Severities) > 0 {
+			severityB = b.Severities[0]
+		}
 		rankA := severityDisplayRank[strings.ToLower(severityA)]
 		rankB := severityDisplayRank[strings.ToLower(severityB)]
 		if rankA != rankB {
