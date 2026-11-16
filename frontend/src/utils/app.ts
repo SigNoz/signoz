@@ -1,4 +1,5 @@
 import getLocalStorage from 'api/browser/localstorage/get';
+import { SIGNOZ_ADMIN_EMAIL } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import dayjs from 'dayjs';
@@ -15,6 +16,9 @@ export function extractDomain(email: string): string {
 	}
 	return emailParts[1];
 }
+
+export const isSignozAdminEmail = (email?: string): boolean =>
+	email === SIGNOZ_ADMIN_EMAIL;
 
 const stripVersionPrefix = (version: string): string =>
 	version?.replace(/^v/i, '') ?? '';
