@@ -141,4 +141,27 @@ describe('DashboardPageToolbar - controls', () => {
 		expect(screen.queryByTestId('time-selection')).not.toBeInTheDocument();
 		expect(screen.getByTestId('variables-bar')).not.toBeVisible();
 	});
+
+	it('hides the whole toolbar when the host turns every row off', () => {
+		renderToolbar({
+			readOnly: true,
+			controls: { title: false, dashboardActions: false, toolbar: false },
+		});
+
+		expect(screen.getByTestId('dashboard-page-toolbar')).not.toBeVisible();
+		expect(screen.getByTestId('variables-bar')).toBeInTheDocument();
+	});
+
+	it('keeps the toolbar when only the variables bar is on', () => {
+		renderToolbar({
+			readOnly: true,
+			controls: {
+				title: false,
+				dashboardActions: false,
+				toolbar: { timeRange: false, autoRefresh: false, variables: true },
+			},
+		});
+
+		expect(screen.getByTestId('dashboard-page-toolbar')).toBeVisible();
+	});
 });
