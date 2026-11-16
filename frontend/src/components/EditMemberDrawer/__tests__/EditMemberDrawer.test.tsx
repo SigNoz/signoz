@@ -18,7 +18,6 @@ import {
 } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import {
-	buildUserReadPermission,
 	buildUserUpdatePermission,
 	PasswordListPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
@@ -306,6 +305,7 @@ describe('EditMemberDrawer', () => {
 		renderDrawer({ onComplete });
 
 		const nameInput = await screen.findByDisplayValue('Alice Smith');
+		await waitFor(() => expect(nameInput).toBeEnabled());
 		await user.clear(nameInput);
 		await user.type(nameInput, 'Alice Updated');
 
@@ -332,6 +332,7 @@ describe('EditMemberDrawer', () => {
 		renderDrawer({ onClose });
 
 		const nameInput = await screen.findByDisplayValue('Alice Smith');
+		await waitFor(() => expect(nameInput).toBeEnabled());
 		await user.clear(nameInput);
 		await user.type(nameInput, 'Alice Updated');
 
@@ -629,6 +630,7 @@ describe('EditMemberDrawer', () => {
 		renderDrawer({ member: { ...invitedMember, name: 'Bob' }, onComplete });
 
 		const nameInput = await screen.findByDisplayValue('Bob');
+		await waitFor(() => expect(nameInput).toBeEnabled());
 		await user.clear(nameInput);
 		await user.type(nameInput, 'Bob Updated');
 
@@ -667,6 +669,7 @@ describe('EditMemberDrawer', () => {
 			renderDrawer();
 
 			const nameInput = await screen.findByDisplayValue('Alice Smith');
+			await waitFor(() => expect(nameInput).toBeEnabled());
 			await user.clear(nameInput);
 			await user.type(nameInput, 'Alice Updated');
 
@@ -783,20 +786,11 @@ describe('EditMemberDrawer', () => {
 	});
 
 	describe('self user roles', () => {
-		it('locks roles and explains why', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+		it('keeps roles editable', async () => {
 			renderDrawer({ member: selfMember });
 
-			const locked = await screen.findByTestId('member-roles-locked');
-			expect(
-				screen.queryByPlaceholderText('Select roles'),
-			).not.toBeInTheDocument();
-
-			await user.hover(locked);
-
-			await expect(
-				screen.findByText('You cannot modify your own role'),
-			).resolves.toBeInTheDocument();
+			await expect(screen.findByText('Select roles')).resolves.toBeInTheDocument();
+			expect(screen.queryByTestId('member-roles-locked')).not.toBeInTheDocument();
 		});
 	});
 
@@ -846,19 +840,13 @@ describe('EditMemberDrawer', () => {
 			);
 		});
 
-		it('disables Save without read:user', async () => {
-			server.use(setupAuthzDeny(buildUserReadPermission(selfMember.id)));
+		it('does not gate Save on permissions', async () => {
+			server.use(setupAuthzDenyAll());
 			renderDrawer({ member: selfMember });
 
-			await waitFor(() =>
-				expect(screen.getByTestId('member-save-btn')).toHaveAttribute(
-					'data-denied-permissions',
-					buildUserReadPermission(selfMember.id),
-				),
-			);
-			expect(screen.getByTestId('member-save-btn')).toHaveAttribute(
-				'aria-disabled',
-				'true',
+			await screen.findByText(/is not authorized/);
+			expect(screen.getByTestId('member-save-btn')).not.toHaveAttribute(
+				'data-denied-permissions',
 			);
 		});
 	});

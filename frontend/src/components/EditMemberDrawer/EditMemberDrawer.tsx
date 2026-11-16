@@ -580,16 +580,8 @@ function EditMemberDrawer({
 				<label className="edit-member-drawer__label" htmlFor="member-role">
 					Roles
 				</label>
-				{isSelf || isRootUser || isDeleted ? (
-					<Tooltip
-						title={
-							isRootUser
-								? ROOT_USER_TOOLTIP
-								: isDeleted
-									? undefined
-									: 'You cannot modify your own role'
-						}
-					>
+				{isRootUser || isDeleted ? (
+					<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
 						<div
 							className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled"
 							data-testid="member-roles-locked"
@@ -753,14 +745,7 @@ function EditMemberDrawer({
 							color="primary"
 							disabled={!isDirty || isRootUser}
 							onClick={handleSave}
-							checks={
-								member
-									? [
-											buildUserReadPermission(member.id),
-											...(isSelf ? [] : [buildUserUpdatePermission(member.id)]),
-										]
-									: []
-							}
+							checks={[]}
 							testId="member-save-btn"
 							loading={isSaving}
 						>
