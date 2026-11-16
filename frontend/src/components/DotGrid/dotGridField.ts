@@ -1,5 +1,3 @@
-// Tunables and the drifting aurora field from the design's dot-grid prototype.
-
 export const DOT_SPACING = 12;
 export const DOT_RADIUS = 1.15;
 
