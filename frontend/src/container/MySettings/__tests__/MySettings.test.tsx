@@ -168,6 +168,13 @@ describe('MySettings Flows', () => {
 			expect(modalUpdateNameButton).toBeInTheDocument();
 		});
 
+		it('Should show the email and not the role', () => {
+			expect(screen.getByTestId('user-info-email')).toHaveTextContent(
+				'does-not-matter@signoz.io',
+			);
+			expect(screen.queryByText('admin')).not.toBeInTheDocument();
+		});
+
 		it('Should update the name on clicking Update button', async () => {
 			// Open the Update name modal first
 			const updateNameButton = screen.getByText(UPDATE_NAME_BUTTON_TEXT);
