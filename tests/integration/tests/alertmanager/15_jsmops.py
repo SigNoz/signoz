@@ -73,7 +73,7 @@ JSMOPS_CASES = [
                         "count": 1,
                         "json_body": jsmops_alert_subset(
                             "threshold_below_at_least_once",
-                            [("View in SigNoz", r"/alerts/overview\?ruleId="), ("View related logs", r"/logs/logs-explorer\?")],
+                            [("View in SigNoz", r"/alerts/overview\?ruleId="), ("View Related Logs", r"/logs/logs-explorer\?")],
                         ),
                     },
                 ),

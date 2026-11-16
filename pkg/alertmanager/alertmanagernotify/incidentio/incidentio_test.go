@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
+	test "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/notify/test"
 	"github.com/prometheus/alertmanager/types"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
@@ -111,7 +111,7 @@ func TestNotifyFiringEvent(t *testing.T) {
 	assert.Contains(t, ev.Description, "**Alert:** HighCPU (critical)")
 	assert.Contains(t, ev.Description, "**Summary:** cpu high")
 	assert.Contains(t, ev.Description, "[View in SigNoz](https://signoz.example/alerts/edit?ruleId=1)")
-	assert.Contains(t, ev.Description, "[View related logs](https://signoz.example/logs?q=1)")
+	assert.Contains(t, ev.Description, "[View Related Logs](https://signoz.example/logs?q=1)")
 	assert.Equal(t, map[string]string{
 		"alertname":  "HighCPU",
 		"severity":   "critical",
