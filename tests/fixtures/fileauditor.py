@@ -16,7 +16,7 @@ def list_audit_events(signoz: types.SigNoz) -> list[dict]:
     events = []
     for line in output.decode().splitlines():
         for resource_logs in json.loads(line)["resourceLogs"]:
-            resource = _attributes(resource_logs["resource"]["attributes"])
+            resource = {attribute["key"]: attribute["value"]["stringValue"] for attribute in resource_logs["resource"]["attributes"]}
             for scope_logs in resource_logs["scopeLogs"]:
                 for log_record in scope_logs["logRecords"]:
                     events.append(
@@ -26,7 +26,7 @@ def list_audit_events(signoz: types.SigNoz) -> list[dict]:
                             "body": log_record["body"]["stringValue"],
                             "scope_name": scope_logs["scope"]["name"],
                             "resource": resource,
-                            "attributes": _attributes(log_record["attributes"]),
+                            "attributes": {attribute["key"]: int(attribute["value"]["intValue"]) if "intValue" in attribute["value"] else attribute["value"]["stringValue"] for attribute in log_record["attributes"]},
                         }
                     )
 
@@ -44,8 +44,3 @@ def wait_for_audit_event(signoz: types.SigNoz, event_name: str, resource_id: str
         time.sleep(0.5)
 
     raise AssertionError(f"No {event_name} audit event for resource {resource_id} (target {target_id}) within {wait_seconds}s, events: {events}")
-
-
-def _attributes(otlp_attributes: list[dict]) -> dict:
-    # OTLP JSON encodes int64 values as decimal strings.
-    return {attribute["key"]: int(attribute["value"]["intValue"]) if "intValue" in attribute["value"] else attribute["value"]["stringValue"] for attribute in otlp_attributes}
