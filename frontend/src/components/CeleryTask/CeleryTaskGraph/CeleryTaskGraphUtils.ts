@@ -1,3 +1,12 @@
+import {
+	MetrictypesSpaceAggregationDTO,
+	MetrictypesTimeAggregationDTO,
+	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricSignal,
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	type Querybuildertypesv5QueryRangeRequestDTO,
+	Querybuildertypesv5ReduceToDTO,
+	Querybuildertypesv5RequestTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
@@ -1042,3 +1051,34 @@ export const celeryRetryStateCountWidgetData = getWidgetQueryBuilder(
 		],
 	}),
 );
+
+// One row per worker that reported in the range; the card counts the rows.
+export const getCeleryWorkerCountRequest = (
+	startTime: number,
+	endTime: number,
+): Querybuildertypesv5QueryRangeRequestDTO => ({
+	schemaVersion: 'v1',
+	start: Math.floor(startTime / 1e6),
+	end: Math.floor(endTime / 1e6),
+	requestType: Querybuildertypesv5RequestTypeDTO.scalar,
+	compositeQuery: {
+		queries: [
+			{
+				type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+				spec: {
+					name: 'A',
+					signal: MetricSignal.metrics,
+					aggregations: [
+						{
+							metricName: 'flower_task_runtime_seconds_sum',
+							timeAggregation: MetrictypesTimeAggregationDTO.count,
+							spaceAggregation: MetrictypesSpaceAggregationDTO.sum,
+							reduceTo: Querybuildertypesv5ReduceToDTO.sum,
+						},
+					],
+					groupBy: [{ name: 'worker' }],
+				},
+			},
+		],
+	},
+});
