@@ -217,6 +217,21 @@ export const reflectedEqualityValue = (
 	return count === 1 ? value : null;
 };
 
+// Whether any top-level simple term filters on `key`, whatever its operator.
+export const hasTopLevelClause = (query: string, key: string): boolean => {
+	const target = key.toLowerCase();
+	return splitTopLevelTerms(query).some((term) => {
+		const trimmed = term.text.trim();
+		if (!trimmed || trimmed.startsWith('(')) {
+			return false;
+		}
+		const scan = scanTerm(term.text);
+		return (
+			!!scan.key && !!scan.operator && scan.key.text.toLowerCase() === target
+		);
+	});
+};
+
 // Add / replace / remove a top-level simple clause for `key`, leaving every other
 // (incl. nested/OR) term intact. Never corrupts hand-typed structure.
 export const spliceClause = (

@@ -69,6 +69,42 @@ describe('FilterZone', () => {
 		);
 	});
 
+	it('shows the placeholder for a clause it cannot represent, so All still clears it', async () => {
+		const onQueryChange = jest.fn() as jest.MockedFunction<
+			(value: string) => void
+		>;
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		render(
+			<FilterZone
+				query="status != 'active'"
+				grammar={grammar}
+				testIdPrefix="things"
+				source={source}
+				enumChips={[
+					{
+						key: 'status',
+						placeholder: 'Status',
+						options: [
+							{ value: null, label: 'All' },
+							{ value: 'active', label: 'Active' },
+						],
+					},
+				]}
+				onQueryChange={onQueryChange}
+			/>,
+		);
+
+		const chip = screen.getByTestId('things-filter-status');
+		expect(within(chip).queryByText('All')).not.toBeInTheDocument();
+		expect(within(chip).getByText('Status')).toBeInTheDocument();
+
+		await user.click(within(chip).getByRole('combobox'));
+		await user.click(await screen.findByTitle('All'));
+
+		expect(onQueryChange).toHaveBeenCalledWith('');
+	});
+
 	it('drops the Created-by chip for an entity without a creator', () => {
 		render(
 			<FilterZone

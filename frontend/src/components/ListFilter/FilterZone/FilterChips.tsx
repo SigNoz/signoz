@@ -19,8 +19,9 @@ interface Props {
 	onCreatedByChange: (emails: string[]) => void;
 	onUpdatedChange: (window: UpdatedWindow) => void;
 	enumChips?: EnumChip[];
-	// The reflected value per enum chip key; null when its clause is absent.
-	enumValues?: Record<string, string | null>;
+	// The reflected value per enum chip key: null when its clause is absent,
+	// undefined when a clause on the key cannot be shown, so the placeholder shows.
+	enumValues?: Record<string, string | null | undefined>;
 	onEnumChange?: (key: string, value: string | null) => void;
 	// Run the staged draft — fired when a dropdown closes.
 	onApply: () => void;
@@ -87,7 +88,11 @@ function FilterChips({
 					showSearch
 					className={cx(styles.select, styles.selectNarrow)}
 					placeholder={chip.placeholder}
-					value={enumValues[chip.key] ?? NO_CLAUSE}
+					value={
+						enumValues[chip.key] === undefined
+							? undefined
+							: (enumValues[chip.key] ?? NO_CLAUSE)
+					}
 					options={chip.options.map((option) => ({
 						value: option.value ?? NO_CLAUSE,
 						label: option.label,

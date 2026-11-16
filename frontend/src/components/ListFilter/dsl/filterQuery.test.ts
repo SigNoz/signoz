@@ -4,6 +4,7 @@ import {
 	areQueriesEqual,
 	createdByClause,
 	isQueryEmpty,
+	hasTopLevelClause,
 	parseReflectedClauses,
 	reflectedEqualityValue,
 	spliceClause,
@@ -90,6 +91,17 @@ describe('reflectedEqualityValue', () => {
 			reflectedEqualityValue('status = active OR status = deleted', 'status'),
 		).toBeNull();
 		expect(reflectedEqualityValue('status != active', 'status')).toBeNull();
+	});
+});
+
+describe('hasTopLevelClause', () => {
+	it('is true for any top-level operator on the key and false otherwise', () => {
+		expect(hasTopLevelClause("status != 'active'", 'status')).toBe(true);
+		expect(hasTopLevelClause("name = 'x' AND status IN [a, b]", 'status')).toBe(
+			true,
+		);
+		expect(hasTopLevelClause("(status = 'active')", 'status')).toBe(false);
+		expect(hasTopLevelClause("name = 'x'", 'status')).toBe(false);
 	});
 });
 

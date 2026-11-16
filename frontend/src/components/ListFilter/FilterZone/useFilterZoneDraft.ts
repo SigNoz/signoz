@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	clause,
 	createdByClause,
+	hasTopLevelClause,
 	parseReflectedClauses,
 	reflectedEqualityValue,
 	type ReflectedClauses,
@@ -32,7 +33,9 @@ interface FilterZoneDraft {
 	run: () => void;
 	handleCreatedByChange: (emails: string[]) => void;
 	handleUpdatedChange: (window: UpdatedWindow) => void;
-	reflectedEnum: (key: string) => string | null;
+	// The chip's value: a string when one `key = value` term reflects, null when
+	// the key is absent, undefined when a term on the key cannot be represented.
+	reflectedEnum: (key: string) => string | null | undefined;
 	handleEnumChange: (key: string, value: string | null) => void;
 	handleClearCreatedBy: () => void;
 	handleClear: () => void;
@@ -94,7 +97,9 @@ export function useFilterZoneDraft({
 	);
 
 	const reflectedEnum = useCallback(
-		(key: string): string | null => reflectedEqualityValue(draft, key),
+		(key: string): string | null | undefined =>
+			reflectedEqualityValue(draft, key) ??
+			(hasTopLevelClause(draft, key) ? undefined : null),
 		[draft],
 	);
 
