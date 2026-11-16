@@ -164,7 +164,7 @@ describe('TopList', () => {
 			/>,
 		);
 
-		await hover(screen.getByText('sum(signoz_calls_total)'));
+		await hover(screen.getByTestId('top-list-header-value'));
 
 		const tooltip = await screen.findAllByTestId(
 			'top-list-header-tooltip',
@@ -260,7 +260,9 @@ describe('TopList', () => {
 
 		renderList(1, { clickable: true });
 
-		expect(screen.getByText('serv…e-0')).toBeInTheDocument();
+		expect(screen.getByTestId('top-list-row-label')).toHaveTextContent(
+			'serv…e-0',
+		);
 		expect(renderedRows()[0]).toHaveAttribute('aria-label', 'service-0: 1');
 	});
 
@@ -335,7 +337,11 @@ describe('TopList', () => {
 	it('renders rows that are not clickable as plain list items', () => {
 		renderList(3);
 
-		expect(screen.queryAllByRole('button')).toHaveLength(0);
+		expect(renderedRows().map((row) => row.tagName)).toStrictEqual([
+			'DIV',
+			'DIV',
+			'DIV',
+		]);
 		expect(renderedRows()[0].closest('li')).toHaveAttribute(
 			'aria-label',
 			'service-0: 3',

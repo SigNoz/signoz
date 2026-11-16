@@ -124,6 +124,7 @@ function TopListRow({
 					}
 				/>
 				<span
+					data-testid="top-list-row-label"
 					className={cx(styles.label, { [styles.isEmptyLabel]: row.isEmptyLabel })}
 				>
 					{displayLabel}

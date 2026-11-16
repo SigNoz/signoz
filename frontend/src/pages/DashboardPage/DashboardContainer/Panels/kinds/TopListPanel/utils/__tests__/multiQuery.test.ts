@@ -1,92 +1,73 @@
-import type {
-	Querybuildertypesv5QueryRangeRequestDTO,
-	QueryRangeV5200,
+import {
+	MetrictypesSpaceAggregationDTO,
+	Querybuildertypesv5OrderDirectionDTO,
+	type Querybuildertypesv5MetricAggregationDTO,
+	type Querybuildertypesv5QueryEnvelopeDTO,
+	type Querybuildertypesv5TraceAggregationDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
-import type { PanelOfKind } from '../../../../types/rendererProps';
+import {
+	appearance,
+	builderQuery,
+	formulaQuery as formula,
+	groupColumn,
+	metricQuery,
+	requestWith,
+	scalarResponse,
+	topListPanel,
+	traceQuery,
+	valueColumn,
+} from '../../__tests__/fixtures';
 import { prepareTopListData } from '../prepareData';
 import { getTopListDataWarning } from '../warnings';
 
-const panelWith = (
-	appearance: { showShare?: boolean } = {},
-): PanelOfKind<'signoz/TopListPanel'> =>
-	({
-		spec: { plugin: { spec: { appearance } } },
-	}) as unknown as PanelOfKind<'signoz/TopListPanel'>;
-const panel = panelWith();
+const panel = topListPanel();
 
 interface Result {
 	queryName: string;
 	rows: [string, number][];
 }
 
-interface Envelope {
-	type: 'builder_query' | 'builder_formula';
-	spec: {
-		name: string;
-		signal?: string;
-		limit?: number;
-		expression?: string;
-		disabled?: boolean;
-		order?: { key: { name: string }; direction: 'asc' | 'desc' }[];
-		groupBy?: { name: string }[];
-		aggregations?: Partial<Record<string, string>>[];
-	};
-}
-
-function dataWith(results: Result[], queries: Envelope[]): PanelQueryData {
+function dataWith(
+	results: Result[],
+	queries: Querybuildertypesv5QueryEnvelopeDTO[],
+): PanelQueryData {
 	return {
-		response: {
-			status: 'success',
-			data: {
-				type: 'scalar',
-				data: {
-					results: results.map(({ queryName, rows }) => ({
-						queryName,
-						columns: [
-							{ name: 'service.name', queryName, columnType: 'group' },
-							{
-								name: '__result',
-								queryName,
-								columnType: 'aggregation',
-								aggregationIndex: 0,
-							},
-						],
-						data: rows,
-					})),
-				},
-			},
-		} as unknown as QueryRangeV5200,
-		requestPayload: {
-			compositeQuery: { queries },
-		} as unknown as Querybuildertypesv5QueryRangeRequestDTO,
+		response: scalarResponse(
+			results.map(({ queryName, rows }) => ({
+				queryName,
+				columns: [
+					groupColumn('service.name', queryName),
+					valueColumn('__result', 0, queryName),
+				],
+				data: rows,
+			})),
+		),
+		requestPayload: requestWith(queries),
 		legendMap: {},
 	};
 }
 
-const query = (name: string, limit?: number): Envelope => ({
-	type: 'builder_query',
-	spec: { name, limit },
-});
-/** The aggregation's signal: metrics aggregate a metric, traces and logs an expression. */
-const signalOf = (aggregation: Partial<Record<string, string>>): string =>
-	aggregation.metricName ? 'metrics' : 'traces';
+const query = (
+	name: string,
+	limit?: number,
+): Querybuildertypesv5QueryEnvelopeDTO => builderQuery({ name, limit });
+
+type Aggregation =
+	| Querybuildertypesv5TraceAggregationDTO
+	| Querybuildertypesv5MetricAggregationDTO;
+
+/** Metrics aggregate a metric, traces and logs an expression. */
+const isMetric = (
+	aggregation: Aggregation,
+): aggregation is Querybuildertypesv5MetricAggregationDTO =>
+	'metricName' in aggregation;
 
 const aggregated = (
-	aggregation: Partial<Record<string, string>>,
-): Envelope => ({
-	type: 'builder_query',
-	spec: {
-		name: 'A',
-		signal: signalOf(aggregation),
-		aggregations: [aggregation],
-	},
-});
-const formula = (name: string, expression: string): Envelope => ({
-	type: 'builder_formula',
-	spec: { name, expression },
-});
+	aggregation: Aggregation,
+): Querybuildertypesv5QueryEnvelopeDTO =>
+	isMetric(aggregation) ? metricQuery(aggregation) : traceQuery(aggregation);
 
 const A: Result = { queryName: 'A', rows: [['checkout', 10]] };
 const B: Result = { queryName: 'B', rows: [['checkout', 2]] };
@@ -157,13 +138,15 @@ describe('top list with several queries', () => {
 				},
 			],
 			[
-				{
-					type: 'builder_query',
-					spec: {
-						name: 'A',
-						order: [{ key: { name: 'count()' }, direction: 'asc' }],
-					},
-				},
+				builderQuery({
+					name: 'A',
+					order: [
+						{
+							key: { name: 'count()' },
+							direction: Querybuildertypesv5OrderDirectionDTO.asc,
+						},
+					],
+				}),
 			],
 		);
 
@@ -184,14 +167,16 @@ describe('top list with several queries', () => {
 				},
 			],
 			[
-				{
-					type: 'builder_query',
-					spec: {
-						name: 'A',
-						groupBy: [{ name: 'service.name' }],
-						order: [{ key: { name: 'service.name' }, direction: 'asc' }],
-					},
-				},
+				builderQuery({
+					name: 'A',
+					groupBy: [{ name: 'service.name' }],
+					order: [
+						{
+							key: { name: 'service.name' },
+							direction: Querybuildertypesv5OrderDirectionDTO.asc,
+						},
+					],
+				}),
 			],
 		);
 
@@ -217,7 +202,10 @@ describe('top list value name', () => {
 		},
 		{
 			scenario: 'a metric',
-			aggregation: { metricName: 'signoz_calls_total', spaceAggregation: 'sum' },
+			aggregation: {
+				metricName: 'signoz_calls_total',
+				spaceAggregation: MetrictypesSpaceAggregationDTO.sum,
+			},
 			expected: 'sum(signoz_calls_total)',
 		},
 	])('names the value after $scenario', ({ aggregation, expected }) => {
@@ -238,7 +226,9 @@ describe('top list value name', () => {
 });
 
 describe('share of total warning', () => {
-	const sharePanel = panelWith({ showShare: true });
+	const sharePanel = topListPanel({
+		appearance: appearance({ showShare: true }),
+	});
 	const shareMessage = (data: PanelQueryData): string | undefined =>
 		getTopListDataWarning(sharePanel, data)?.messages?.find((message) =>
 			message.startsWith('Share of total'),
@@ -253,7 +243,10 @@ describe('share of total warning', () => {
 		{ scenario: 'a maximum', aggregation: { expression: 'max(duration_nano)' } },
 		{
 			scenario: 'a metric averaged across series',
-			aggregation: { metricName: 'cpu', spaceAggregation: 'avg' },
+			aggregation: {
+				metricName: 'cpu',
+				spaceAggregation: MetrictypesSpaceAggregationDTO.avg,
+			},
 		},
 	])('warns when ranking $scenario', ({ aggregation }) => {
 		expect(shareMessage(dataWith([A], [aggregated(aggregation)]))).toBeDefined();
@@ -264,7 +257,10 @@ describe('share of total warning', () => {
 		{ scenario: 'a sum', aggregation: { expression: 'sum(bytes)' } },
 		{
 			scenario: 'a metric summed across series',
-			aggregation: { metricName: 'signoz_calls_total', spaceAggregation: 'sum' },
+			aggregation: {
+				metricName: 'signoz_calls_total',
+				spaceAggregation: MetrictypesSpaceAggregationDTO.sum,
+			},
 		},
 	])('stays quiet when ranking $scenario', ({ aggregation }) => {
 		expect(

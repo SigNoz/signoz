@@ -1,54 +1,30 @@
 import {
 	DashboardtypesComparisonOperatorDTO,
 	DashboardtypesThresholdFormatDTO,
-	type DashboardtypesTopListPanelSpecDTO,
-	type QueryRangeV5200,
 } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'lib/visualization/panels/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { render, screen, userEvent } from 'tests/test-utils';
 
-import type {
-	PanelOfKind,
-	PanelRendererProps,
-} from '../../../types/rendererProps';
+import type { PanelRendererProps } from '../../../types/rendererProps';
 import TopListPanelRenderer from '../Renderer';
+import {
+	groupColumn,
+	scalarResponse,
+	topListPanel as panelWith,
+	valueColumn,
+} from './fixtures';
 import { mockListLayout } from './mockListLayout';
-
-function panelWith(
-	spec: DashboardtypesTopListPanelSpecDTO,
-): PanelOfKind<'signoz/TopListPanel'> {
-	return {
-		kind: 'Panel',
-		spec: { plugin: { kind: 'signoz/TopListPanel', spec }, queries: [] },
-	} as unknown as PanelOfKind<'signoz/TopListPanel'>;
-}
 
 function dataWith(rows: [string, number][]): PanelQueryData {
 	return {
-		response: {
-			status: 'success',
-			data: {
-				type: 'scalar',
-				data: {
-					results: [
-						{
-							queryName: 'A',
-							columns: [
-								{ name: 'service.name', queryName: 'A', columnType: 'group' },
-								{
-									name: '__result',
-									queryName: 'A',
-									columnType: 'aggregation',
-									aggregationIndex: 0,
-								},
-							],
-							data: rows,
-						},
-					],
-				},
+		response: scalarResponse([
+			{
+				queryName: 'A',
+				columns: [groupColumn('service.name'), valueColumn()],
+				data: rows,
 			},
-		} as unknown as QueryRangeV5200,
+		]),
 		requestPayload: undefined,
 		legendMap: {},
 	};

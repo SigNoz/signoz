@@ -1,49 +1,24 @@
-import type {
-	DashboardtypesTopListPanelSpecDTO,
-	QueryRangeV5200,
-	Querybuildertypesv5QueryRangeRequestDTO,
-} from 'api/generated/services/sigNoz.schemas';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
-import type { PanelOfKind } from '../../../../types/rendererProps';
+import {
+	groupColumn,
+	requestWith,
+	scalarResponse,
+	topListPanel as panelWith,
+	traceQuery,
+	valueColumn,
+} from '../../__tests__/fixtures';
 import { getTopListCsvRows } from '../csv';
-
-const panelWith = (
-	spec: DashboardtypesTopListPanelSpecDTO,
-): PanelOfKind<'signoz/TopListPanel'> =>
-	({
-		spec: { plugin: { kind: 'signoz/TopListPanel', spec } },
-	}) as unknown as PanelOfKind<'signoz/TopListPanel'>;
 
 function dataWith(groupColumns: string[], rows: unknown[][]): PanelQueryData {
 	return {
-		response: {
-			status: 'success',
-			data: {
-				type: 'scalar',
-				data: {
-					results: [
-						{
-							queryName: 'A',
-							columns: [
-								...groupColumns.map((name) => ({
-									name,
-									queryName: 'A',
-									columnType: 'group',
-								})),
-								{
-									name: '__result',
-									queryName: 'A',
-									columnType: 'aggregation',
-									aggregationIndex: 0,
-								},
-							],
-							data: rows,
-						},
-					],
-				},
+		response: scalarResponse([
+			{
+				queryName: 'A',
+				columns: [...groupColumns.map((name) => groupColumn(name)), valueColumn()],
+				data: rows,
 			},
-		} as unknown as QueryRangeV5200,
+		]),
 		requestPayload: undefined,
 		legendMap: {},
 	};
@@ -116,20 +91,9 @@ describe('getTopListCsvRows', () => {
 	it('suffixes a header that repeats another instead of overwriting its column', () => {
 		const data = {
 			...dataWith(['Rank'], [['auth', 25]]),
-			requestPayload: {
-				compositeQuery: {
-					queries: [
-						{
-							type: 'builder_query',
-							spec: {
-								name: 'A',
-								signal: 'traces',
-								aggregations: [{ expression: 'count()', alias: 'Share' }],
-							},
-						},
-					],
-				},
-			} as unknown as Querybuildertypesv5QueryRangeRequestDTO,
+			requestPayload: requestWith([
+				traceQuery({ expression: 'count()', alias: 'Share' }),
+			]),
 		};
 		const panel = panelWith({
 			appearance: { showRank: true, showShare: true, barColor: '#4E74F8' },

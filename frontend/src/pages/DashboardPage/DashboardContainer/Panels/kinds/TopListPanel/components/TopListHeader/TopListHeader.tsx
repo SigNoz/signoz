@@ -63,7 +63,9 @@ function TopListHeader({
 				}
 				align="end"
 			>
-				<span className={styles.cell}>{valueName}</span>
+				<span data-testid="top-list-header-value" className={styles.cell}>
+					{valueName}
+				</span>
 			</Tooltip>
 		</li>
 	);

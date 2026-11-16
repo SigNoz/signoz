@@ -1,55 +1,29 @@
-import type {
-	Querybuildertypesv5QueryRangeRequestDTO,
-	QueryRangeV5200,
+import {
+	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
+	type Querybuildertypesv5ColumnDescriptorDTO,
+	type Querybuildertypesv5QueryRangeRequestDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
-import type { PanelOfKind } from '../../../../types/rendererProps';
+import {
+	groupColumn as group,
+	requestWith,
+	scalarResponse,
+	topListPanel,
+	valueColumn as aggregation,
+} from '../../__tests__/fixtures';
 import { getTopListDataWarning } from '../warnings';
 
-const panelWith = (
-	appearance: { showShare?: boolean } = {},
-): PanelOfKind<'signoz/TopListPanel'> =>
-	({
-		spec: { plugin: { spec: { appearance } } },
-	}) as unknown as PanelOfKind<'signoz/TopListPanel'>;
-const panel = panelWith();
-
-interface Column {
-	name: string;
-	columnType: 'group' | 'aggregation';
-	aggregationIndex?: number;
-}
-
-const group = (name: string): Column => ({ name, columnType: 'group' });
-const aggregation = (name: string, aggregationIndex = 0): Column => ({
-	name,
-	columnType: 'aggregation',
-	aggregationIndex,
-});
+const panel = topListPanel();
 
 function dataWith(
-	columns: Column[],
+	columns: Querybuildertypesv5ColumnDescriptorDTO[],
 	rows: unknown[][],
 	legend = '',
 	requestPayload?: Querybuildertypesv5QueryRangeRequestDTO,
 ): PanelQueryData {
 	return {
-		response: {
-			status: 'success',
-			data: {
-				type: 'scalar',
-				data: {
-					results: [
-						{
-							queryName: 'A',
-							columns: columns.map((column) => ({ ...column, queryName: 'A' })),
-							data: rows,
-						},
-					],
-				},
-			},
-		} as unknown as QueryRangeV5200,
+		response: scalarResponse([{ queryName: 'A', columns, data: rows }]),
 		requestPayload,
 		legendMap: legend ? { A: legend } : {},
 	};
@@ -91,13 +65,12 @@ describe('getTopListDataWarning', () => {
 			[['a', 1, 2, 3]],
 			'',
 			// ClickHouse value columns keep their SQL alias as their name.
-			{
-				compositeQuery: {
-					queries: [
-						{ type: 'clickhouse_sql', spec: { name: 'A', query: 'SELECT 1' } },
-					],
+			requestWith([
+				{
+					type: Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType.clickhouse_sql,
+					spec: { name: 'A', query: 'SELECT 1' },
 				},
-			} as unknown as Querybuildertypesv5QueryRangeRequestDTO,
+			]),
 		);
 
 		expect(getTopListDataWarning(panel, data)?.messages).toStrictEqual([
