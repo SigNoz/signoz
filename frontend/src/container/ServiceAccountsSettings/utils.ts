@@ -25,6 +25,12 @@ export function statusesOfQuery(query: string): string[] {
 	return reflectedValues(query, 'status');
 }
 
+export function sameStatuses(a: string[], b: string[]): boolean {
+	return (
+		a.length === b.length && a.every((status, index) => status === b[index])
+	);
+}
+
 export function withStatuses(query: string, statuses: string[]): string {
 	return spliceClause(query, 'status', valuesClause('status', statuses));
 }
