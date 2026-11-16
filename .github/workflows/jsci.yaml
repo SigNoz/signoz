@@ -50,8 +50,13 @@ jobs:
           cache-dependency-path: frontend/pnpm-lock.yaml
       - name: install-frontend
         run: cd frontend && pnpm install
+      - name: jest-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/jest-cache
+          key: jest-${{ matrix.shard }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/jest.config.ts', 'frontend/babel.config.cjs', 'frontend/tsconfig.json', 'frontend/tsconfig.jest.json') }}
       - name: test
-        run: cd frontend && pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }} --reporters=default --reporters=./scripts/slow-test-reporter.js
+        run: cd frontend && pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }} --cacheDirectory=${{ runner.temp }}/jest-cache --reporters=default --reporters=./scripts/slow-test-reporter.js
   # Branch protection requires a check named "test / js"; this job keeps that name stable across shard changes.
   test:
     name: test / js
