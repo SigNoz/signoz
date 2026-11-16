@@ -1,0 +1,27 @@
+name: flakyci
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+jobs:
+  jest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - name: node-install
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          POST_ISSUE: "true"
+        run: node frontend/scripts/flaky-jest-report.mjs >> "$GITHUB_STEP_SUMMARY"
