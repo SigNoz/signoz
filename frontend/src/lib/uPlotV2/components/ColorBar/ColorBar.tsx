@@ -14,6 +14,8 @@ export interface ColorBarProps {
 	label?: string;
 	/** Keys the one state a ramp cannot express: a hatched data gap. */
 	showNoDataKey?: boolean;
+	/** Vertical runs low to high from the bottom, with labels to the right. */
+	orientation?: 'horizontal' | 'vertical';
 	'data-testid'?: string;
 }
 
@@ -25,8 +27,10 @@ export default function ColorBar({
 	markerPosition = null,
 	label,
 	showNoDataKey = false,
+	orientation = 'horizontal',
 	'data-testid': testId = 'color-bar',
 }: ColorBarProps): JSX.Element | null {
+	const isVertical = orientation === 'vertical';
 	const gradient = useMemo(() => {
 		if (ramp.length === 0) {
 			return undefined;
@@ -39,8 +43,8 @@ export default function ColorBar({
 			const to = ((index + 1) / ramp.length) * 100;
 			return [`${color} ${from}%`, `${color} ${to}%`];
 		});
-		return `linear-gradient(to right, ${stops.join(', ')})`;
-	}, [ramp]);
+		return `linear-gradient(to ${isVertical ? 'top' : 'right'}, ${stops.join(', ')})`;
+	}, [ramp, isVertical]);
 
 	if (gradient === undefined) {
 		return null;
@@ -48,6 +52,26 @@ export default function ColorBar({
 
 	const clampedMarker =
 		markerPosition === null ? null : Math.min(Math.max(markerPosition, 0), 1);
+
+	if (isVertical) {
+		return (
+			<div className={Styles.vertical} data-testid={testId}>
+				<div className={Styles.track} style={{ background: gradient }}>
+					{clampedMarker !== null && (
+						<span
+							className={Styles.marker}
+							style={{ bottom: `${clampedMarker * 100}%` }}
+							data-testid={`${testId}-marker`}
+						/>
+					)}
+				</div>
+				<div className={Styles.scale}>
+					<span className={Styles.label}>{maxLabel}</span>
+					<span className={Styles.label}>{minLabel}</span>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className={Styles.container} data-testid={testId}>

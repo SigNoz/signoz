@@ -200,14 +200,19 @@ const (
 	PanelKindText        PanelPluginKind = "signoz/TextPanel"
 	PanelKindHeatmap     PanelPluginKind = "signoz/HeatmapPanel"
 	PanelKindScatterPlot PanelPluginKind = "signoz/ScatterPlotPanel"
+	PanelKindGeoMap      PanelPluginKind = "signoz/GeoMapPanel"
 )
 
 func (PanelPluginKind) Enum() []any {
-	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindHeatmap, PanelKindScatterPlot}
+	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindHeatmap, PanelKindScatterPlot, PanelKindGeoMap}
 }
 
 func (k PanelPluginKind) rendersWithoutQuery() bool {
 	return k == PanelKindText
+}
+
+func (k PanelPluginKind) joinsQueryRowsIntoOneTable() bool {
+	return k == PanelKindTable || k == PanelKindScatterPlot || k == PanelKindGeoMap
 }
 
 type TimeSeriesPanelSpec struct {
@@ -372,31 +377,14 @@ func (s *ScatterPlotPanelSpec) validateAgainstQuery(query Query, path string) er
 	if !known {
 		return nil
 	}
-	if err := s.validateQueriesShareGroupBy(composite, path); err != nil {
-		return err
+	if err := composite.ValidateQueriesShareGroupBy(); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
 	}
 	if err := s.validateValueDimensions(keys, path); err != nil {
 		return err
 	}
 	if err := s.validateColorDimensions(keys, path); err != nil {
 		return err
-	}
-	return nil
-}
-
-// Order is ignored since rows join on sorted labels; disabled queries count, as formulas carry their keys.
-func (*ScatterPlotPanelSpec) validateQueriesShareGroupBy(composite qb.CompositeQuery, path string) error {
-	var queries []qb.QueryEnvelope
-	for _, envelope := range composite.Queries {
-		if envelope.GetType() != qb.QueryTypeFormula {
-			queries = append(queries, envelope)
-		}
-	}
-	for i := 1; i < len(queries); i++ {
-		first, other := groupByKeyNames(queries[0]), groupByKeyNames(queries[i])
-		if !slices.Equal(first, other) {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: queries must group by the same keys so their rows join into dots; %q groups by [%s], %q groups by [%s]", path, queries[0].GetQueryName(), allowedValuesForKind(first), queries[i].GetQueryName(), allowedValuesForKind(other))
-		}
 	}
 	return nil
 }
@@ -421,15 +409,6 @@ func (s *ScatterPlotPanelSpec) validateColorDimensions(keys qb.ResultColumnKeys,
 		}
 	}
 	return nil
-}
-
-func groupByKeyNames(envelope qb.QueryEnvelope) []string {
-	names := make([]string, 0, len(envelope.GetGroupBy()))
-	for _, key := range envelope.GetGroupBy() {
-		names = append(names, key.Name)
-	}
-	slices.Sort(names)
-	return names
 }
 
 // ScatterPlotDimensions binds result columns to what a dot encodes. Value columns
@@ -491,6 +470,162 @@ func (p ScatterPlotPoints) validate() error {
 	}
 	if minSize > maxSize {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid points: minSize %d must not exceed maxSize %d", minSize, maxSize)
+	}
+	return nil
+}
+
+type GeoMapPanelSpec struct {
+	Visualization   BasicVisualization    `json:"visualization" description:"The time range the values are computed over."`
+	Formatting      TableFormatting       `json:"formatting" description:"Per-column units and decimal precision."`
+	Location        GeoMapLocation        `json:"location" description:"The group-by columns that place each row on the map."`
+	Map             GeoMapSettings        `json:"map" description:"Layer, view, projection and the value columns drawn."`
+	ChartAppearance GeoMapChartAppearance `json:"chartAppearance" description:"Color scale, bubble size and labels."`
+	Legend          Legend                `json:"legend" description:"Legend placement."`
+	Thresholds      []GeoMapThreshold     `json:"thresholds" validate:"dive" description:"Rules that recolor a shape, bubble or point when its value compares to a threshold as specified."`
+}
+
+// A null radius bound is compared at the layer's renderer default, so a one-sided setting can't invert the range.
+func (s GeoMapPanelSpec) validate() error {
+	minRadius, maxRadius := defaultBubbleMinRadius, defaultBubbleMaxRadius
+	if s.Map.Layer == GeoMapLayerPoints {
+		minRadius, maxRadius = defaultPointMinRadius, defaultPointMaxRadius
+	}
+	if s.ChartAppearance.Bubbles.MinRadius != nil {
+		minRadius = *s.ChartAppearance.Bubbles.MinRadius
+	}
+	if s.ChartAppearance.Bubbles.MaxRadius != nil {
+		maxRadius = *s.ChartAppearance.Bubbles.MaxRadius
+	}
+	if minRadius > maxRadius {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid bubbles: minRadius %d must not exceed maxRadius %d", minRadius, maxRadius)
+	}
+	return nil
+}
+
+func (s *GeoMapPanelSpec) validateAgainstQuery(query Query, path string) error {
+	composite, err := query.Spec.Plugin.buildV5CompositeQueryFromPlugin()
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
+	}
+	keys, known := composite.CollectResultColumnKeys()
+	if !known {
+		return nil
+	}
+	if err := composite.ValidateQueriesShareGroupBy(); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
+	}
+	for _, binding := range []struct{ field, key string }{{"location.country", s.Location.Country}, {"location.region", s.Location.Region}, {"location.lat", s.Location.Lat}, {"location.lon", s.Location.Lon}} {
+		// Empty is unset: the renderer detects the column by name.
+		if binding.key == "" {
+			continue
+		}
+		if _, ok := keys.Groups[binding.key]; !ok {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.%s: %q is not a group-by key of the panel's query; group-by keys: %s", path, binding.field, binding.key, allowedValuesForKind(slices.Sorted(maps.Keys(keys.Groups))))
+		}
+	}
+	for _, binding := range []struct{ field, key string }{{"map.colorBy", s.Map.ColorBy}, {"map.sizeBy", s.Map.SizeBy}} {
+		if binding.key == "" {
+			continue
+		}
+		if _, ok := keys.Aggregations[binding.key]; !ok {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.%s: %q is not a value column of the panel's query; value columns: %s", path, binding.field, binding.key, allowedValuesForKind(slices.Sorted(maps.Keys(keys.Aggregations))))
+		}
+	}
+	return nil
+}
+
+type GeoMapLocation struct {
+	Mode          GeoMapLocationMode  `json:"mode" required:"true" description:"How rows are placed: auto (default) detects it from the group-by keys, country, subdivision or coordinates."`
+	Country       string              `json:"country" description:"Group-by key holding the country, for the country and subdivision modes. Empty detects it by name, such as geo.country.iso_code."`
+	CountryFormat GeoMapCountryFormat `json:"countryFormat" required:"true" description:"How country values are written: auto (default) detects it, alpha2, alpha3 or name."`
+	Region        string              `json:"region" description:"Group-by key holding the ISO 3166-2 region code (e.g. geo.region.iso_code), for the subdivision mode. Empty detects it by name."`
+	Lat           string              `json:"lat" description:"Group-by key holding the latitude, for the coordinates mode. Empty detects it by name."`
+	Lon           string              `json:"lon" description:"Group-by key holding the longitude, for the coordinates mode. Empty detects it by name."`
+}
+
+type GeoMapSettings struct {
+	Layer       GeoMapLayer      `json:"layer" required:"true" description:"What is drawn: regions (default) fills each shape, bubbles draws a circle per region, points a circle per coordinate."`
+	View        GeoMapView       `json:"view" required:"true" description:"The area shown: world (default), fit to the data, a continent, or country with viewCountry."`
+	ViewCountry string           `json:"viewCountry" validate:"omitempty,iso3166_1_alpha2" description:"Uppercase ISO 3166-1 alpha-2 code of the country the country view shows."`
+	Projection  GeoMapProjection `json:"projection" required:"true" description:"The map projection: mercator (default), equal_earth or natural_earth."`
+	ColorBy     string           `json:"colorBy" description:"Value column key, as in a Table panel, that sets the color. Empty uses the first value column."`
+	SizeBy      string           `json:"sizeBy" description:"Value column key, as in a Table panel, that sets the bubble or point size. Empty uses colorBy."`
+}
+
+func (m *GeoMapSettings) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	type alias GeoMapSettings
+	var tmp alias
+	if err := dec.Decode(&tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid map")
+	}
+	*m = GeoMapSettings(tmp)
+	return m.validate()
+}
+
+func (m GeoMapSettings) validate() error {
+	if m.View == GeoMapViewCountry && m.ViewCountry == "" {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid map: viewCountry is required when view is `country`")
+	}
+	return nil
+}
+
+type GeoMapChartAppearance struct {
+	Colors  GeoMapColors  `json:"colors" description:"The color scale applied to the colorBy values."`
+	Bubbles GeoMapBubbles `json:"bubbles" description:"The circle radius range of the bubbles and points layers."`
+	Labels  *bool         `json:"labels" description:"Shows country and state names once each fits inside its shape. Null shows them."`
+}
+
+type GeoMapColors struct {
+	Mode    HeatmapColorMode  `json:"mode" description:"How values are colored: palette (default) picks a hue from palette, opacity varies the opacity of fill."`
+	Palette HeatmapPalette    `json:"palette" description:"The named color ramp used in palette mode, such as lava (default), ice or ember."`
+	Scale   HeatmapColorScale `json:"scale" description:"How values map onto the color range: log (default), sqrt or linear."`
+	Steps   int               `json:"steps" validate:"omitempty,min=2,max=128" description:"The number of distinct color steps, 2 to 128. 0 uses the chart default."`
+	Min     *float64          `json:"min" description:"The value mapped to the lowest color. Null uses the lowest value in the data. Must not exceed max."`
+	Max     *float64          `json:"max" description:"The value mapped to the highest color. Null uses the highest value in the data."`
+	Fill    string            `json:"fill" validate:"omitempty,hexcolor" description:"The hex color varied in opacity mode. Empty uses the default fill."`
+}
+
+func (c *GeoMapColors) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	type alias GeoMapColors
+	var tmp alias
+	if err := dec.Decode(&tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid geo map colors")
+	}
+	*c = GeoMapColors(tmp)
+	return c.validate()
+}
+
+func (c GeoMapColors) validate() error {
+	if c.Min != nil && c.Max != nil && *c.Min > *c.Max {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "geo map colors.min %v is greater than colors.max %v", *c.Min, *c.Max)
+	}
+	return nil
+}
+
+type GeoMapBubbles struct {
+	MinRadius *BubbleRadius `json:"minRadius" description:"Radius of the smallest circle, in CSS pixels from 1 to 64. Null means 2 on the points layer, 3 otherwise."`
+	MaxRadius *BubbleRadius `json:"maxRadius" description:"Radius of the largest circle, in CSS pixels from 1 to 64. Null means 8 on the points layer, 28 otherwise."`
+}
+
+func (b *GeoMapBubbles) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	type alias GeoMapBubbles
+	var tmp alias
+	if err := dec.Decode(&tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid bubbles")
+	}
+	*b = GeoMapBubbles(tmp)
+	return b.validate()
+}
+
+func (b GeoMapBubbles) validate() error {
+	if b.MinRadius != nil && b.MaxRadius != nil && *b.MinRadius > *b.MaxRadius {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid bubbles: minRadius %d must not exceed maxRadius %d", *b.MinRadius, *b.MaxRadius)
 	}
 	return nil
 }
@@ -584,6 +719,17 @@ type ScatterPlotThreshold struct {
 type TableThreshold struct {
 	ComparisonThreshold
 	ColumnName string `json:"columnName" validate:"required" required:"true" description:"The key of the value column the rule applies to: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), or the SQL alias for a ClickHouse SQL column. Group-by columns are never colored, and aggregation aliases are display labels, not keys."`
+}
+
+// GeoMapThreshold is ComparisonThreshold without format.
+type GeoMapThreshold struct {
+	// Value is always present in the schema (required:"true"), but 0 is a legitimate
+	// threshold, so it drops validate:"required" — go-playground's required treats a
+	// zero float as unset and would wrongly reject value: 0.
+	Value    float64            `json:"value" required:"true" description:"The value compared against, in unit."`
+	Operator ComparisonOperator `json:"operator" description:"The comparison that activates the threshold: above (default), below, above_or_equal, below_or_equal, equal or not_equal."`
+	Unit     string             `json:"unit" description:"The unit id of value, such as ms or percent. Empty means the colorBy column's unit."`
+	Color    string             `json:"color" validate:"required" required:"true" description:"The CSS color of the shape, bubble or point while the threshold is active, for example #F1575F; CSS named colors such as red also work."`
 }
 
 // ══════════════════════════════════════════════
@@ -1112,6 +1258,36 @@ func (d *PointDiameter) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+const (
+	minBubbleRadius = 1
+	maxBubbleRadius = 64
+
+	defaultBubbleMinRadius BubbleRadius = 3
+	defaultBubbleMaxRadius BubbleRadius = 28
+	defaultPointMinRadius  BubbleRadius = 2
+	defaultPointMaxRadius  BubbleRadius = 8
+)
+
+// BubbleRadius is a geo map circle's radius in whole CSS pixels.
+type BubbleRadius int
+
+func (BubbleRadius) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.WithMinimum(minBubbleRadius).WithMaximum(maxBubbleRadius)
+	return nil
+}
+
+func (r *BubbleRadius) UnmarshalJSON(data []byte) error {
+	var v int
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid bubble radius: must be a whole number between %d and %d", minBubbleRadius, maxBubbleRadius)
+	}
+	if v < minBubbleRadius || v > maxBubbleRadius {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid bubble radius %d: must be a whole number between %d and %d", v, minBubbleRadius, maxBubbleRadius)
+	}
+	*r = BubbleRadius(v)
+	return nil
+}
+
 const minPointOpacity = 0.1
 
 // PointOpacity is a scatter dot's fill alpha. The floor keeps a dot visible.
@@ -1497,5 +1673,203 @@ func (s *HeatmapColorScale) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid heatmap color scale %q: must be `log`, `sqrt`, or `linear`", v)
+	}
+}
+
+type GeoMapLocationMode struct{ valuer.String }
+
+var (
+	GeoMapLocationModeAuto        = GeoMapLocationMode{valuer.NewString("auto")} // default
+	GeoMapLocationModeCountry     = GeoMapLocationMode{valuer.NewString("country")}
+	GeoMapLocationModeSubdivision = GeoMapLocationMode{valuer.NewString("subdivision")}
+	GeoMapLocationModeCoordinates = GeoMapLocationMode{valuer.NewString("coordinates")}
+)
+
+func (GeoMapLocationMode) Enum() []any {
+	return []any{GeoMapLocationModeAuto, GeoMapLocationModeCountry, GeoMapLocationModeSubdivision, GeoMapLocationModeCoordinates}
+}
+
+func (v GeoMapLocationMode) ValueOrDefault() string {
+	if v.IsZero() {
+		return GeoMapLocationModeAuto.StringValue()
+	}
+	return v.StringValue()
+}
+
+func (v GeoMapLocationMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.ValueOrDefault())
+}
+
+func (v *GeoMapLocationMode) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid geo map location mode: must be a string, one of `auto`, `country`, `subdivision`, or `coordinates`")
+	}
+	parsed := GeoMapLocationMode{valuer.NewString(s)}
+	switch parsed {
+	case GeoMapLocationModeAuto, GeoMapLocationModeCountry, GeoMapLocationModeSubdivision, GeoMapLocationModeCoordinates:
+		*v = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid geo map location mode %q: must be `auto`, `country`, `subdivision`, or `coordinates`", s)
+	}
+}
+
+type GeoMapCountryFormat struct{ valuer.String }
+
+var (
+	GeoMapCountryFormatAuto   = GeoMapCountryFormat{valuer.NewString("auto")} // default
+	GeoMapCountryFormatAlpha2 = GeoMapCountryFormat{valuer.NewString("alpha2")}
+	GeoMapCountryFormatAlpha3 = GeoMapCountryFormat{valuer.NewString("alpha3")}
+	GeoMapCountryFormatName   = GeoMapCountryFormat{valuer.NewString("name")}
+)
+
+func (GeoMapCountryFormat) Enum() []any {
+	return []any{GeoMapCountryFormatAuto, GeoMapCountryFormatAlpha2, GeoMapCountryFormatAlpha3, GeoMapCountryFormatName}
+}
+
+func (v GeoMapCountryFormat) ValueOrDefault() string {
+	if v.IsZero() {
+		return GeoMapCountryFormatAuto.StringValue()
+	}
+	return v.StringValue()
+}
+
+func (v GeoMapCountryFormat) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.ValueOrDefault())
+}
+
+func (v *GeoMapCountryFormat) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid geo map country format: must be a string, one of `auto`, `alpha2`, `alpha3`, or `name`")
+	}
+	parsed := GeoMapCountryFormat{valuer.NewString(s)}
+	switch parsed {
+	case GeoMapCountryFormatAuto, GeoMapCountryFormatAlpha2, GeoMapCountryFormatAlpha3, GeoMapCountryFormatName:
+		*v = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid geo map country format %q: must be `auto`, `alpha2`, `alpha3`, or `name`", s)
+	}
+}
+
+type GeoMapLayer struct{ valuer.String }
+
+var (
+	GeoMapLayerRegions = GeoMapLayer{valuer.NewString("regions")} // default
+	GeoMapLayerBubbles = GeoMapLayer{valuer.NewString("bubbles")}
+	GeoMapLayerPoints  = GeoMapLayer{valuer.NewString("points")}
+)
+
+func (GeoMapLayer) Enum() []any {
+	return []any{GeoMapLayerRegions, GeoMapLayerBubbles, GeoMapLayerPoints}
+}
+
+func (v GeoMapLayer) ValueOrDefault() string {
+	if v.IsZero() {
+		return GeoMapLayerRegions.StringValue()
+	}
+	return v.StringValue()
+}
+
+func (v GeoMapLayer) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.ValueOrDefault())
+}
+
+func (v *GeoMapLayer) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid geo map layer: must be a string, one of `regions`, `bubbles`, or `points`")
+	}
+	parsed := GeoMapLayer{valuer.NewString(s)}
+	switch parsed {
+	case GeoMapLayerRegions, GeoMapLayerBubbles, GeoMapLayerPoints:
+		*v = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid geo map layer %q: must be `regions`, `bubbles`, or `points`", s)
+	}
+}
+
+type GeoMapView struct{ valuer.String }
+
+var (
+	GeoMapViewWorld        = GeoMapView{valuer.NewString("world")} // default
+	GeoMapViewFit          = GeoMapView{valuer.NewString("fit")}
+	GeoMapViewAfrica       = GeoMapView{valuer.NewString("africa")}
+	GeoMapViewAsia         = GeoMapView{valuer.NewString("asia")}
+	GeoMapViewEurope       = GeoMapView{valuer.NewString("europe")}
+	GeoMapViewNorthAmerica = GeoMapView{valuer.NewString("north_america")}
+	GeoMapViewSouthAmerica = GeoMapView{valuer.NewString("south_america")}
+	GeoMapViewOceania      = GeoMapView{valuer.NewString("oceania")}
+	GeoMapViewCountry      = GeoMapView{valuer.NewString("country")}
+)
+
+func (GeoMapView) Enum() []any {
+	return []any{GeoMapViewWorld, GeoMapViewFit, GeoMapViewAfrica, GeoMapViewAsia, GeoMapViewEurope, GeoMapViewNorthAmerica, GeoMapViewSouthAmerica, GeoMapViewOceania, GeoMapViewCountry}
+}
+
+func (v GeoMapView) ValueOrDefault() string {
+	if v.IsZero() {
+		return GeoMapViewWorld.StringValue()
+	}
+	return v.StringValue()
+}
+
+func (v GeoMapView) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.ValueOrDefault())
+}
+
+func (v *GeoMapView) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid geo map view: must be a string, one of `world`, `fit`, `africa`, `asia`, `europe`, `north_america`, `south_america`, `oceania`, or `country`")
+	}
+	parsed := GeoMapView{valuer.NewString(s)}
+	switch parsed {
+	case GeoMapViewWorld, GeoMapViewFit, GeoMapViewAfrica, GeoMapViewAsia, GeoMapViewEurope, GeoMapViewNorthAmerica, GeoMapViewSouthAmerica, GeoMapViewOceania, GeoMapViewCountry:
+		*v = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid geo map view %q: must be `world`, `fit`, `africa`, `asia`, `europe`, `north_america`, `south_america`, `oceania`, or `country`", s)
+	}
+}
+
+type GeoMapProjection struct{ valuer.String }
+
+var (
+	GeoMapProjectionMercator     = GeoMapProjection{valuer.NewString("mercator")} // default
+	GeoMapProjectionEqualEarth   = GeoMapProjection{valuer.NewString("equal_earth")}
+	GeoMapProjectionNaturalEarth = GeoMapProjection{valuer.NewString("natural_earth")}
+)
+
+func (GeoMapProjection) Enum() []any {
+	return []any{GeoMapProjectionMercator, GeoMapProjectionEqualEarth, GeoMapProjectionNaturalEarth}
+}
+
+func (p GeoMapProjection) ValueOrDefault() string {
+	if p.IsZero() {
+		return GeoMapProjectionMercator.StringValue()
+	}
+	return p.StringValue()
+}
+
+func (p GeoMapProjection) MarshalJSON() ([]byte, error) {
+	return json.Marshal(p.ValueOrDefault())
+}
+
+func (p *GeoMapProjection) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid geo map projection: must be a string, one of `mercator`, `equal_earth`, or `natural_earth`")
+	}
+	parsed := GeoMapProjection{valuer.NewString(s)}
+	switch parsed {
+	case GeoMapProjectionMercator, GeoMapProjectionEqualEarth, GeoMapProjectionNaturalEarth:
+		*p = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid geo map projection %q: must be `mercator`, `equal_earth`, or `natural_earth`", s)
 	}
 }
