@@ -3,6 +3,7 @@ import { matchPath, Redirect, useLocation } from 'react-router-dom';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { useListUsers } from 'api/generated/services/users';
+import { SIGNOZ_ADMIN_EMAIL } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
@@ -75,7 +76,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		const users = usersData?.data || [];
 
 		const remainingUsers = (Array.isArray(users) ? users : []).filter(
-			(user) => user.email !== 'admin@signoz.cloud',
+			(u) => u.email !== SIGNOZ_ADMIN_EMAIL,
 		);
 
 		return remainingUsers.length === 1;
@@ -203,6 +204,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			const isFirstUser = checkFirstTimeUser();
 			if (
 				isFirstUser &&
+				user.email !== SIGNOZ_ADMIN_EMAIL &&
 				!isOnboardingComplete &&
 				!ROUTES_NOT_TO_BE_OVERRIDEN.includes(pathname) &&
 				pathname !== ROUTES.ONBOARDING
