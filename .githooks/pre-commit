@@ -1,0 +1,33 @@
+#!/bin/sh
+
+set -e
+
+IFS='
+'
+
+go_files=$(git diff --cached --name-only --diff-filter=ACM -- '*.go')
+if [ -n "$go_files" ] && command -v gofmt >/dev/null 2>&1; then
+	partially_staged=""
+	for f in $go_files; do
+		[ -n "$(git show ":$f" | gofmt -l)" ] || continue
+		if git diff --quiet -- "$f"; then
+			gofmt -w "$f"
+			git add -- "$f"
+		else
+			partially_staged="$partially_staged
+  $f"
+		fi
+	done
+	if [ -n "$partially_staged" ]; then
+		echo "pre-commit: unformatted and partially staged, run gofmt -w and restage:$partially_staged" >&2
+		exit 1
+	fi
+fi
+
+if [ -n "$(git diff --cached --name-only --diff-filter=ACM -- frontend/)" ]; then
+	if [ ! -d frontend/node_modules ] || ! command -v pnpm >/dev/null 2>&1; then
+		echo "pre-commit: frontend changes need dependencies, run: cd frontend && pnpm install" >&2
+		exit 1
+	fi
+	(cd frontend && pnpm exec lint-staged)
+fi

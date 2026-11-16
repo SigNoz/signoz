@@ -36,6 +36,10 @@ Before diving in, make sure you have these tools installed:
    ```bash
    cd signoz
    ```
+4. Install the git hooks (formatting, linting and commit message checks), once per clone:
+   ```bash
+   make hooks
+   ```
 
 ## How do I run it locally?
 
