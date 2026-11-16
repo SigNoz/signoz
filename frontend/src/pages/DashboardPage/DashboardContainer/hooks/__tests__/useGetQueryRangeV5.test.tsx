@@ -111,3 +111,32 @@ describe('useGetQueryRangeV5 enabled gating', () => {
 		expect(mockQueryRangeV5).toHaveBeenCalledTimes(2);
 	});
 });
+
+describe('useGetQueryRangeV5 host fetch', () => {
+	it('fetches through the host fetch instead of query_range', async () => {
+		mockQueryRangeV5.mockReset();
+		const fetch = jest
+			.fn()
+			.mockResolvedValue({ status: 'success', data: {} } as QueryRangeV5200);
+		const wrapper = ({ children }: PropsWithChildren): JSX.Element => (
+			<QueryClientProvider client={new QueryClient()}>
+				{children}
+			</QueryClientProvider>
+		);
+
+		renderHook(
+			() =>
+				useGetQueryRangeV5({
+					requestPayload: REQUEST,
+					queryKey: KEY_A,
+					enabled: true,
+					fetch,
+				}),
+			{ wrapper },
+		);
+
+		await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+		expect(fetch.mock.calls[0][0]).toBe(REQUEST);
+		expect(mockQueryRangeV5).not.toHaveBeenCalled();
+	});
+});

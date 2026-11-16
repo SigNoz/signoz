@@ -39,6 +39,7 @@ export function useOptimisticPatch(
 	const storeDashboardId = useDashboardStore((s) => s.dashboardId);
 	const dashboardId = dashboardIdOverride ?? storeDashboardId;
 	const { t } = useTranslation('dashboard');
+	const readOnly = useDashboardStore((s) => s.readOnly);
 	const queryClient = useQueryClient();
 	const queryKey = getGetDashboardV2QueryKey({ id: dashboardId });
 
@@ -78,6 +79,10 @@ export function useOptimisticPatch(
 	const { mutateAsync } = mutation;
 	const patchAsync = useCallback(
 		(ops: DashboardtypesJSONPatchOperationDTO[]): Promise<unknown> => {
+			// The UI renders no edit affordance on a read-only mount, so reaching here is a bug.
+			if (readOnly) {
+				return Promise.reject(new Error(t('dashboard_read_only_here')));
+			}
 			// Defense-in-depth against a lock, read straight from the cache this hook
 			// already owns. Permission is enforced by the UI and, definitively, by the
 			// backend — checking it here would drag authz into every mutation.
@@ -87,7 +92,7 @@ export function useOptimisticPatch(
 			}
 			return mutateAsync(ops);
 		},
-		[queryClient, queryKey, mutateAsync],
+		[readOnly, queryClient, queryKey, mutateAsync, t],
 	);
 
 	return {

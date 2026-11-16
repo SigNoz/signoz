@@ -24,11 +24,16 @@ const mockPatchAsync = jest.fn().mockResolvedValue(undefined);
 const DYNAMIC_KIND = 'signoz/DynamicVariable';
 const QUERY_KIND = 'signoz/QueryVariable';
 
-jest.mock('api/generated/services/dashboard', () => ({
-	useGetDashboardV2: (): unknown => ({
-		data: { data: { spec: { variables: mockVariables } } },
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/hooks/useDashboardFetchRequired',
+	() => ({
+		useDashboardFetchRequired: (): unknown => ({
+			dashboard: { spec: { variables: mockVariables } },
+			variables: mockVariables,
+			refetch: jest.fn(),
+		}),
 	}),
-}));
+);
 jest.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useOptimisticPatch',
 	() => ({
