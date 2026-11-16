@@ -159,16 +159,8 @@ func (b *traceOperatorCTEBuilder) buildTimeConstantsCTE() string {
 	return fmt.Sprintf(`toDateTime64(%d, 9) AS t_from, toDateTime64(%d, 9) AS t_to, %d AS bucket_from, %d AS bucket_to`, b.start, b.end, startBucket, endBucket)
 }
 
-func (b *traceOperatorCTEBuilder) buildResourceFilterCTE(ctx context.Context, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]) (*qbtypes.Statement, error) {
-	return b.stmtBuilder.resourceFilterStmtBuilder.Build(
-		ctx,
-		b.orgID,
-		b.start,
-		b.end,
-		qbtypes.RequestTypeRaw,
-		query,
-		nil,
-	)
+func (b *traceOperatorCTEBuilder) buildResourceFilterCTE(ctx context.Context, query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], keys map[string][]*telemetrytypes.TelemetryFieldKey) (*qbtypes.Statement, error) {
+	return b.stmtBuilder.resourceFilterStmtBuilder.BuildWithKeys(ctx, b.orgID, b.start, b.end, query, nil, keys)
 }
 
 func (b *traceOperatorCTEBuilder) buildExpressionCTEs(ctx context.Context, expr *qbtypes.TraceOperand) (string, error) {
@@ -229,7 +221,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 
 	// Build resource filter CTE for this specific query
 	resourceFilterCTEName := fmt.Sprintf("__resource_filter_%s", cteName)
-	resourceStmt, err := b.buildResourceFilterCTE(ctx, *query)
+	resourceStmt, err := b.buildResourceFilterCTE(ctx, *query, keys)
 	if err != nil {
 		return "", err
 	}

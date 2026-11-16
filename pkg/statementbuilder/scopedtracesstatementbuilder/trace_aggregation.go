@@ -569,7 +569,7 @@ func (b *scopedTraceStatementBuilder) buildTraceAggregationQuery(
 		return nil, err
 	}
 
-	resourceFrag, resourceArgs, resourcePred, err := b.maybeAttachResourceFilter(ctx, orgID, query, start, end, variables)
+	resourceFrag, resourceArgs, resourcePred, err := b.maybeAttachResourceFilter(ctx, orgID, query, start, end, keys, variables)
 	if err != nil {
 		return nil, err
 	}
