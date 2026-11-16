@@ -2,7 +2,7 @@ import { BarChart } from '@signozhq/icons';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
 import { QueryModeKind } from '../../types/panelCapabilities';
-import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
+import HistogramEditorPane from './HistogramEditorPane';
 import Renderer from './Renderer';
 import { sections } from './sections';
 import {
@@ -17,7 +17,7 @@ export const definition: PanelDefinition<'signoz/HistogramPanel'> = {
 	mode: 'query',
 	icon: BarChart,
 	Renderer,
-	EditorPane: QueryBuilderEditorPane,
+	EditorPane: HistogramEditorPane,
 	sections,
 	supportedQueryModesKindMap: {
 		[QueryMode.QUERY_BUILDER]: {

@@ -55,6 +55,23 @@ const HEATMAP_CELLS = [
 	[0.4, 0.85, 0.7, 0.2],
 	[0.3, 0.65, 0.9, 0.45],
 ];
+// `[lower, upper]` heights (0–44) of two stacked groups per bucket, skewed right.
+const DISTRIBUTION_STACKS = [
+	[6, 3],
+	[14, 6],
+	[26, 10],
+	[20, 12],
+	[12, 9],
+	[7, 6],
+	[4, 3],
+	[2, 2],
+];
+const DISTRIBUTION_UPPER = { fill: 'var(--bg-robin-400)', fillOpacity: 0.55 };
+const PERCENTILE_MARKER = {
+	stroke: 'var(--l1-foreground)',
+	strokeOpacity: 0.6,
+};
+
 const TEXT_ROWS = [45, 100, 92, 64].map((width, i) => [
 	{ ...(i === 0 ? HEAD : CELL), width },
 ]);
@@ -111,6 +128,39 @@ export const PANEL_TYPE_PREVIEWS: Record<PanelKind, JSX.Element> = {
 					/>
 				)),
 			)}
+		</svg>
+	),
+	'signoz/DistributionPanel': (
+		<svg viewBox="0 0 120 44" preserveAspectRatio="none" className={styles.svg}>
+			{DISTRIBUTION_STACKS.map(([lower, upper], i) => (
+				// eslint-disable-next-line react/no-array-index-key
+				<g key={i}>
+					<rect
+						x={i * 15 + 1}
+						y={44 - lower}
+						width={13}
+						height={lower}
+						style={AREA_FILL}
+					/>
+					<rect
+						x={i * 15 + 1}
+						y={44 - lower - upper}
+						width={13}
+						height={upper}
+						style={DISTRIBUTION_UPPER}
+					/>
+				</g>
+			))}
+			<line
+				x1={88}
+				x2={88}
+				y1={2}
+				y2={44}
+				strokeWidth={1}
+				strokeDasharray="3 2"
+				vectorEffect="non-scaling-stroke"
+				style={PERCENTILE_MARKER}
+			/>
 		</svg>
 	),
 	'signoz/ScatterPlotPanel': (

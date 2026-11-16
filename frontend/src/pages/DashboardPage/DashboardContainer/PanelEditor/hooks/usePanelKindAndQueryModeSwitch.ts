@@ -7,6 +7,7 @@ import type {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
+import { isBucketCountingPanelType } from 'lib/query/bucketCountingPanelTypes';
 import { handleQueryChange } from 'lib/query/panelQuery';
 import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -183,7 +184,7 @@ export function usePanelKindAndQueryModeSwitch({
 					newKind === 'signoz/ListPanel'
 						? withDefaultListOrder(transformed)
 						: transformed;
-				return newKind === 'signoz/HeatmapPanel'
+				return isBucketCountingPanelType(newPanelType)
 					? withSingleHeatmapQuery(ordered)
 					: withPercentileHistogramAggregation(ordered);
 			};

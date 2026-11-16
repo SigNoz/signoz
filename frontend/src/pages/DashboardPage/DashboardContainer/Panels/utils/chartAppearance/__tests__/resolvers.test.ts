@@ -1,5 +1,6 @@
 import {
 	DashboardtypesAreaFillModeDTO,
+	DashboardtypesDistributionYScaleDTO,
 	DashboardtypesHeatmapColorModeDTO,
 	DashboardtypesHeatmapColorScaleDTO,
 	DashboardtypesHeatmapPaletteDTO,
@@ -15,9 +16,13 @@ import {
 	HeatmapColorPalette,
 	HeatmapColorScale,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import { DistributionYScale } from 'lib/visualization/charts/Distribution/types';
 
 import {
 	resolveAreaFillMode,
+	resolveDistributionPercentiles,
+	resolveDistributionStackMode,
+	resolveDistributionYScale,
 	resolveHeatmapAxisScale,
 	resolveHeatmapColors,
 	resolveSpanGaps,
@@ -188,5 +193,48 @@ describe('resolveHeatmapColors', () => {
 
 	it('reads a zero step count as unset, which is how the wire sends none', () => {
 		expect(resolveHeatmapColors({ steps: 0 })).toStrictEqual({});
+	});
+});
+
+describe('resolveDistributionStackMode', () => {
+	it('defaults to normal, unlike the shared stack default', () => {
+		expect(resolveDistributionStackMode(undefined)).toBe(StackMode.Normal);
+		expect(resolveStackMode(undefined)).toBe(StackMode.None);
+	});
+
+	it('keeps an explicit mode', () => {
+		expect(resolveDistributionStackMode(DashboardtypesStackModeDTO.none)).toBe(
+			StackMode.None,
+		);
+		expect(resolveDistributionStackMode(DashboardtypesStackModeDTO.percent)).toBe(
+			StackMode.Percent,
+		);
+	});
+});
+
+describe('resolveDistributionYScale', () => {
+	it('defaults to linear', () => {
+		expect(resolveDistributionYScale(undefined)).toBe(DistributionYScale.Linear);
+		expect(
+			resolveDistributionYScale(DashboardtypesDistributionYScaleDTO.log),
+		).toBe(DistributionYScale.Log);
+	});
+});
+
+describe('resolveDistributionPercentiles', () => {
+	it('marks p50/p90/p99 unless the spec says otherwise', () => {
+		expect(resolveDistributionPercentiles(undefined)).toStrictEqual([50, 90, 99]);
+		expect(
+			resolveDistributionPercentiles({ enabled: true, values: null }),
+		).toStrictEqual([50, 90, 99]);
+	});
+
+	it('marks the configured percentiles, or none when turned off', () => {
+		expect(
+			resolveDistributionPercentiles({ enabled: true, values: [75, 99.9] }),
+		).toStrictEqual([75, 99.9]);
+		expect(
+			resolveDistributionPercentiles({ enabled: false, values: [75] }),
+		).toStrictEqual([]);
 	});
 });

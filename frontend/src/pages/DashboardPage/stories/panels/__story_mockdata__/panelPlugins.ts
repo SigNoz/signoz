@@ -6,6 +6,8 @@
 import {
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpecDTOKind as AreaChartKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTOKind as BarChartKind,
+	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpecDTOKind as DistributionKind,
+	DashboardtypesDistributionYScaleDTO as DistributionYScale,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind as HeatmapKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTOKind as HistogramKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTOKind as ListKind,
@@ -22,6 +24,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 
 import {
+	DISTRIBUTION_CLAMP,
 	HEATMAP_FIXED_COUNTS,
 	TABLE_SECOND_COLUMN,
 	TABLE_VALUE_COLUMN,
@@ -129,6 +132,35 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 				},
 				queries: [
 					metricQuery(RequestType.heatmap, { grouped: true, heatmap: true }),
+				],
+			};
+		case 'Distribution':
+			return {
+				plugin: {
+					kind: DistributionKind['signoz/DistributionPanel'],
+					spec: {
+						formatting,
+						legend,
+						axes: {
+							x: args.distributionXRange === 'clamped' ? DISTRIBUTION_CLAMP : {},
+							y: {
+								scale:
+									args.yScale === 'log'
+										? DistributionYScale.log
+										: DistributionYScale.linear,
+							},
+						},
+						chartAppearance: {
+							stack: args.stack,
+							percentiles: { enabled: args.percentiles, values: [50, 90, 99] },
+						},
+					},
+				},
+				queries: [
+					metricQuery(RequestType.distribution, {
+						grouped: true,
+						histogram: true,
+					}),
 				],
 			};
 		case 'Pie':

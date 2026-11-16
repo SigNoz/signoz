@@ -11,6 +11,7 @@ import { buildAggregateData } from '../buildAggregateData';
 import { stepClickTimeRange } from '../chartClickTimeRange';
 import { enrichChartClick } from '../enrichChartClick';
 import { enrichNumberClick } from '../enrichNumberClick';
+import { enrichDistributionClick } from '../enrichDistributionClick';
 import { enrichPieClick } from '../enrichPieClick';
 import { enrichTableClick } from '../enrichTableClick';
 import { getDataLinks } from '../getDataLinks';
@@ -386,6 +387,53 @@ describe('enrichPieClick', () => {
 				builderQueries: [],
 				coordinates: { x: 0, y: 0 },
 			}),
+		).toBeNull();
+	});
+});
+
+describe('enrichDistributionClick', () => {
+	const click = {
+		series: {
+			label: 'cart',
+			groupLabels: { 'service.name': 'cart' },
+			counts: [1, 2],
+		},
+		color: '#abc',
+		coordinates: { x: 7, y: 8 },
+	};
+
+	it("filters to the clicked group over the panel's whole window", () => {
+		const payload = enrichDistributionClick({
+			click,
+			queryName: 'A',
+			builderQueries: [
+				builderQuery({
+					name: 'A',
+					signal: 'metrics',
+					groupBy: [{ name: 'service.name' }],
+				}),
+			],
+			timeRange: { startTime: 1, endTime: 2 },
+		});
+
+		expect(payload).toStrictEqual({
+			coordinates: { x: 7, y: 8 },
+			context: {
+				queryName: 'A',
+				signal: 'metrics',
+				filters: [
+					{ filterKey: 'service.name', filterValue: 'cart', operator: '=' },
+				],
+				timeRange: { startTime: 1, endTime: 2 },
+				label: 'cart',
+				seriesColor: '#abc',
+			},
+		});
+	});
+
+	it('returns null without a drillable query', () => {
+		expect(
+			enrichDistributionClick({ click, queryName: '', builderQueries: [] }),
 		).toBeNull();
 	});
 });

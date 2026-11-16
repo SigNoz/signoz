@@ -16,6 +16,7 @@ import DashboardPage from '../../DashboardPage';
 
 import { panelsMocks } from './Panels.stories.mocks';
 import {
+	playDistributionTooltip,
 	playLegendRight,
 	playListJsonBody,
 	playListPaginated,
@@ -115,6 +116,71 @@ export const HeatmapLog: Story = {
 /** The heatmap's colour bar pinned to a fixed 5–250 count range. */
 export const HeatmapCountRange: Story = {
 	args: { kind: 'Heatmap', heatmapCounts: 'fixed' },
+	play: playPanel,
+};
+
+/**
+ * Latency bucket counts over the whole range, one stacked bar per bucket on a log
+ * bucket axis, with p50, p90 and p99 marked and the overflow bucket hatched.
+ */
+export const Distribution: Story = {
+	args: { kind: 'Distribution', stack: StackMode.normal },
+	play: playPanel,
+};
+
+/** Each bucket split between the services, their bars side by side. */
+export const DistributionSideBySide: Story = {
+	args: { kind: 'Distribution', stack: StackMode.none },
+	play: playPanel,
+};
+
+/** Each bucket stacked to 100%, every band its service's share of that bucket. */
+export const DistributionPercent: Story = {
+	args: { kind: 'Distribution', stack: StackMode.percent },
+	play: playPanel,
+};
+
+/** Buckets outside 10–1000 hidden, counts on a log axis. */
+export const DistributionClampedLog: Story = {
+	args: {
+		kind: 'Distribution',
+		stack: StackMode.normal,
+		distributionXRange: 'clamped',
+		yScale: 'log',
+	},
+	play: playPanel,
+};
+
+/**
+ * The tooltip over a bucket: its total, then each service's count, share of its
+ * own total, and running share up to the bucket's upper bound.
+ */
+export const DistributionTooltip: Story = {
+	args: { kind: 'Distribution', stack: StackMode.normal },
+	play: playDistributionTooltip,
+};
+
+/** Fourteen services: the top nine drawn, the other five summed into Other. */
+export const DistributionOther: Story = {
+	args: { kind: 'Distribution', stack: StackMode.normal, series: 14 },
+	play: playPanel,
+};
+
+/**
+ * Fourteen services side by side: as many as keep every bar 3 px wide in the
+ * narrowest bucket are drawn, and the rest summed into Other.
+ */
+export const DistributionSideBySideOther: Story = {
+	args: { kind: 'Distribution', stack: StackMode.none, series: 14 },
+	play: playPanel,
+};
+
+/**
+ * A quarter of observations past the last bound: the overflow bar dominates, p99
+ * reads `> 5 s`, and the header warns that the bounds may be too low.
+ */
+export const DistributionOverflow: Story = {
+	args: { kind: 'Distribution', stack: StackMode.normal, overflow: 'high' },
 	play: playPanel,
 };
 

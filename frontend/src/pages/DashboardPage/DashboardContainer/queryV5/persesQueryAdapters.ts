@@ -112,6 +112,8 @@ export function panelTypeToRequestType(
 			return Querybuildertypesv5RequestTypeDTO.raw;
 		case PANEL_TYPES.HEATMAP:
 			return Querybuildertypesv5RequestTypeDTO.heatmap;
+		case PANEL_TYPES.DISTRIBUTION:
+			return Querybuildertypesv5RequestTypeDTO.distribution;
 		case PANEL_TYPES.TRACE:
 			return Querybuildertypesv5RequestTypeDTO.trace;
 		default:

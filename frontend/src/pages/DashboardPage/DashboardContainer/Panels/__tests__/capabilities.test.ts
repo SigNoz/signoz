@@ -24,7 +24,8 @@ import type { PanelKind } from '../types/panelKind';
 
 const { QUERY_BUILDER, CLICKHOUSE, PROM } = EQueryType;
 const { logs, traces, metrics } = TelemetrytypesSignalDTO;
-const { time_series, scalar, raw, heatmap } = Querybuildertypesv5RequestTypeDTO;
+const { time_series, scalar, raw, heatmap, distribution } =
+	Querybuildertypesv5RequestTypeDTO;
 
 const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/TimeSeriesPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
@@ -33,6 +34,7 @@ const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/NumberPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/HistogramPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/HeatmapPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
+	'signoz/DistributionPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/PieChartPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/ListPanel': [QUERY_BUILDER],
@@ -73,6 +75,7 @@ const EXPECTED_QUERY_MODES: Record<PanelKind, QueryMode[]> = {
 		QueryMode.AI_QUERY_BUILDER,
 	],
 	'signoz/HeatmapPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
+	'signoz/DistributionPanel': [QUERY_BUILDER, CLICKHOUSE, PROM],
 	'signoz/PieChartPanel': [
 		QUERY_BUILDER,
 		CLICKHOUSE,
@@ -92,6 +95,7 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	'signoz/HistogramPanel': [metrics, logs, traces],
 	// A heatmap needs a bucket axis, which only a metric carries.
 	'signoz/HeatmapPanel': [metrics],
+	'signoz/DistributionPanel': [metrics],
 	'signoz/PieChartPanel': [metrics, logs, traces],
 	'signoz/TablePanel': [metrics, logs, traces],
 	// List renders raw rows; metrics produce no row data.
@@ -142,6 +146,13 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		requestType: heatmap,
 		formatTableResultForUI: false,
 		bucketedStepInterval: true,
+		orderTiebreaker: false,
+		serverPaginated: false,
+	},
+	'signoz/DistributionPanel': {
+		requestType: distribution,
+		formatTableResultForUI: false,
+		bucketedStepInterval: false,
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},

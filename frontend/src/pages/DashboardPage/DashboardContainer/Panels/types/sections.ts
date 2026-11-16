@@ -2,6 +2,8 @@ import type {
 	DashboardtypesLinkDTO,
 	DashboardtypesAxesDTO,
 	DashboardtypesComparisonThresholdDTO,
+	DashboardtypesDistributionAxesDTO,
+	DashboardtypesDistributionPercentilesDTO,
 	DashboardtypesFillModeDTO,
 	DashboardtypesFillOpacityDTO,
 	DashboardtypesHeatmapAxesDTO,
@@ -72,6 +74,8 @@ export enum SectionKind {
 	Dimensions = 'dimensions',
 	/** Scatter Plot's per-axis `axes` shape; `Axes` is the single y-axis shape. */
 	ScatterAxes = 'scatterAxes',
+	/** Distribution's `axes` shape: the bucket-axis range and count-axis scale. */
+	DistributionAxes = 'distributionAxes',
 }
 
 /**
@@ -116,6 +120,10 @@ export interface PanelChartAppearanceSlice {
 	colors?: DashboardtypesHeatmapColorsDTO;
 	/** Scatter Plot's dot size and opacity. */
 	points?: DashboardtypesScatterPlotPointsDTO;
+	/** Distribution stacking, which lives here rather than under `visualization`. */
+	stack?: DashboardtypesStackModeDTO;
+	/** Distribution's percentile markers. */
+	percentiles?: DashboardtypesDistributionPercentilesDTO;
 }
 
 /** Superset spanning every kind's visualization DTO. */
@@ -148,6 +156,7 @@ export interface SectionSpecMap {
 	[SectionKind.PanelHeader]: DashboardtypesHeaderOptionsDTO; // spec.plugin.spec.headerOptions (Text)
 	[SectionKind.Dimensions]: DashboardtypesScatterPlotDimensionsDTO; // spec.plugin.spec.dimensions (Scatter Plot)
 	[SectionKind.ScatterAxes]: DashboardtypesScatterPlotAxesDTO; // spec.plugin.spec.axes (Scatter Plot)
+	[SectionKind.DistributionAxes]: DashboardtypesDistributionAxesDTO; // spec.plugin.spec.axes (Distribution)
 }
 
 /**
@@ -188,6 +197,10 @@ export interface SectionControls {
 		colors?: boolean;
 		/** Scatter Plot's dots: one size, or a min/max range when a size column is bound. */
 		points?: boolean;
+		/** Distribution's group layout in a bucket: stacked, side by side or 100%. */
+		stack?: boolean;
+		/** Distribution's percentile markers: on/off and which ones. */
+		percentiles?: boolean;
 	};
 	[SectionKind.Buckets]: {
 		count?: boolean;
@@ -218,7 +231,8 @@ export type AtomicSectionKind =
 	| SectionKind.TextLayout
 	| SectionKind.PanelHeader
 	| SectionKind.Dimensions
-	| SectionKind.ScatterAxes;
+	| SectionKind.ScatterAxes
+	| SectionKind.DistributionAxes;
 
 /** Predicate to hide a section from the current spec; returning true removes it. */
 export type SectionVisibilityPredicate = (
@@ -255,6 +269,7 @@ export const SECTION_METADATA = {
 	[SectionKind.PanelHeader]: { title: 'Panel header', icon: PanelTop },
 	[SectionKind.Dimensions]: { title: 'Dimensions', icon: Crosshair },
 	[SectionKind.ScatterAxes]: { title: 'Axes', icon: Scale3D },
+	[SectionKind.DistributionAxes]: { title: 'Axes', icon: Scale3D },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
 /**

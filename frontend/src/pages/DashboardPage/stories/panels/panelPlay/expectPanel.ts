@@ -3,7 +3,11 @@ import { expect, within } from 'storybook/test';
 import { PANEL_NAME } from '../__story_mockdata__/constants';
 
 import { hasData, PANEL_LOAD, type PanelPlayArgs } from './args';
-import { expectHeatmap, expectHistogram } from './distributions';
+import {
+	expectDistribution,
+	expectHeatmap,
+	expectHistogram,
+} from './distributions';
 import { expectLineChart } from './lineChart';
 import { expectListPage } from './list';
 import { findPlot } from './plot';
@@ -31,6 +35,7 @@ const KIND_EXPECTATIONS: Record<
 	Area: expectLineChart,
 	Histogram: expectHistogram,
 	Heatmap: expectHeatmap,
+	Distribution: expectDistribution,
 	Pie: expectPie,
 	Number: expectNumber,
 	Table: expectTable,
@@ -72,5 +77,13 @@ export const expectPanel = async (
 		await expect(
 			within(root).queryByTestId('panel-status-warning'),
 		).not.toBeInTheDocument();
+	}
+
+	// The panel's own read of the data, apart from the response's warning.
+	const dataWarning = within(root).queryByTestId('panel-status-data-warning');
+	if (args.kind === 'Distribution' && args.overflow === 'high') {
+		await expect(dataWarning).toBeInTheDocument();
+	} else if (args.kind === 'Distribution') {
+		await expect(dataWarning).not.toBeInTheDocument();
 	}
 };

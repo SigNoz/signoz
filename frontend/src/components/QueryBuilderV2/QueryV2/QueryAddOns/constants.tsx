@@ -107,8 +107,8 @@ export const BASE_ADD_ONS = (
 
 export const REDUCE_TO = toAddOn(QueryBuilderField.ReduceTo);
 
-// Offered only by a heatmap over metrics: the bucket axis is what a heatmap plots
-// against, and no other panel type sends one. A histogram brings its own buckets.
+// Offered only by a heatmap or distribution over metrics: the bucket axis is what they
+// plot against, and no other panel type sends one. A histogram brings its own buckets.
 export const HISTOGRAM_ATTRIBUTE_TYPES = new Set<string>([
 	ATTRIBUTE_TYPES.HISTOGRAM,
 	ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM,

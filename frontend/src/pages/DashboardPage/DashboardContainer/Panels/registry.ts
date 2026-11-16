@@ -1,5 +1,6 @@
 import { definition as AreaChart } from './kinds/AreaChartPanel/definition';
 import { definition as BarChart } from './kinds/BarChartPanel/definition';
+import { definition as Distribution } from './kinds/DistributionPanel/definition';
 import { definition as Heatmap } from './kinds/HeatmapPanel/definition';
 import { definition as Histogram } from './kinds/HistogramPanel/definition';
 import { definition as NumberValue } from './kinds/NumberPanel/definition';
@@ -29,6 +30,7 @@ export const PANELS: PanelRegistry = {
 	[ScatterPlot.kind]: ScatterPlot,
 	[Histogram.kind]: Histogram,
 	[Heatmap.kind]: Heatmap,
+	[Distribution.kind]: Distribution,
 	[List.kind]: List,
 	[Text.kind]: Text,
 };

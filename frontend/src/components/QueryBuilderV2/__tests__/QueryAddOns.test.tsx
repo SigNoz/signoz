@@ -438,6 +438,24 @@ describe('QueryAddOns', () => {
 			).toBeInTheDocument();
 		});
 
+		it('is offered on a metrics distribution too', () => {
+			render(
+				<QueryAddOns
+					query={baseQuery({ dataSource: DataSource.METRICS })}
+					version="v5"
+					isRawQuery={false}
+					showReduceTo={false}
+					panelType={PANEL_TYPES.DISTRIBUTION}
+					index={0}
+					isForTraceOperator={false}
+				/>,
+			);
+
+			expect(
+				screen.getByTestId('query-add-on-bucket_options'),
+			).toBeInTheDocument();
+		});
+
 		it('is not offered on other panel types', () => {
 			render(
 				<QueryAddOns

@@ -89,6 +89,8 @@ export const TEXT_BODIES: Record<TextSample, string> = {
 interface MetricQueryOptions {
 	grouped: boolean;
 	heatmap?: boolean;
+	/** A histogram metric, whose `le` bounds are the bucket axis: no bucket options. */
+	histogram?: boolean;
 	name?: string;
 	metricName?: string;
 }
@@ -98,6 +100,7 @@ export const metricQuery = (
 	{
 		grouped,
 		heatmap,
+		histogram,
 		name = QUERY_NAME,
 		metricName = 'signoz_latency',
 	}: MetricQueryOptions,
@@ -107,9 +110,10 @@ export const metricQuery = (
 		signal: MetricSignal.metrics,
 		aggregations: [
 			{
-				metricName: heatmap ? `${metricName}_bucket` : metricName,
-				spaceAggregation: heatmap ? undefined : SpaceAggregation.p99,
-				timeAggregation: heatmap ? TimeAggregation.increase : TimeAggregation.avg,
+				metricName: heatmap || histogram ? `${metricName}_bucket` : metricName,
+				spaceAggregation: heatmap || histogram ? undefined : SpaceAggregation.p99,
+				timeAggregation:
+					heatmap || histogram ? TimeAggregation.increase : TimeAggregation.avg,
 			},
 		],
 		groupBy: grouped ? [{ name: 'service.name' }] : undefined,
