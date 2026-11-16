@@ -9,6 +9,7 @@ import type {
 	MessageContext,
 	SSEEvent,
 	ThreadDetailResponse,
+	ThreadSummary,
 } from 'api/ai-assistant/chat';
 
 import {
@@ -381,6 +382,104 @@ describe('useAIAssistantStore — message contexts', () => {
 		await useAIAssistantStore.getState().loadThread('thread-1');
 
 		expect(lastMessage('thread-1').contexts).toStrictEqual([pickedDashboard]);
+	});
+});
+
+describe('useAIAssistantStore — unread replies', () => {
+	const summary = (threadId: string, archived: boolean): ThreadSummary => ({
+		threadId,
+		title: threadId,
+		archived,
+		createdAt: '2026-11-16T09:00:00Z',
+		updatedAt: '2026-11-16T09:00:00Z',
+	});
+
+	beforeEach(() => {
+		jest.clearAllMocks();
+		useAIAssistantStore.setState((s) => {
+			s.conversations = {};
+			s.streams = {};
+			s.activeConversationId = null;
+			s.unreadReplyIds = [];
+			s.hasLoadedThreads = false;
+		});
+	});
+
+	it('marks a finished reply unread under its thread id and saves it', async () => {
+		chat.createThread.mockResolvedValue('thread-reply');
+		chat.sendMessage.mockResolvedValue('exec');
+		chat.streamEvents.mockReturnValueOnce(
+			eventStream([
+				{
+					type: 'message',
+					executionId: 'exec',
+					messageId: 'm1',
+					delta: 'Done',
+					done: true,
+				},
+			]),
+		);
+
+		useAIAssistantStore.getState().startNewConversation();
+		await useAIAssistantStore.getState().sendMessage('hi');
+
+		expect(useAIAssistantStore.getState().unreadReplyIds).toStrictEqual([
+			'thread-reply',
+		]);
+		expect(
+			JSON.parse(localStorage.getItem('ai-assistant-store') ?? '{}').state
+				.unreadReplyIds,
+		).toStrictEqual(['thread-reply']);
+	});
+
+	it('drops the mark when the reply is read, or its chat archived or cleared', () => {
+		chat.updateThread.mockResolvedValue(summary('b', true));
+		useAIAssistantStore.setState((s) => {
+			['a', 'b', 'c'].forEach((id) => {
+				s.conversations[id] = { id, threadId: id, messages: [], createdAt: 0 };
+			});
+			s.unreadReplyIds = ['a', 'b', 'c'];
+		});
+		const { markReplyRead, archiveConversation, clearConversation } =
+			useAIAssistantStore.getState();
+
+		markReplyRead('a');
+		archiveConversation('b');
+		clearConversation('c');
+
+		expect(useAIAssistantStore.getState().unreadReplyIds).toStrictEqual([]);
+	});
+
+	it('keeps only loaded, unarchived threads once the list loads', async () => {
+		chat.listThreads.mockImplementation(({ archived }) =>
+			Promise.resolve({
+				threads:
+					archived === 'true'
+						? [summary('archived', true)]
+						: [summary('live', false)],
+				hasMore: false,
+			}),
+		);
+		useAIAssistantStore.setState((s) => {
+			s.unreadReplyIds = ['live', 'archived', 'gone'];
+		});
+
+		await useAIAssistantStore.getState().fetchThreads();
+
+		expect(useAIAssistantStore.getState().unreadReplyIds).toStrictEqual(['live']);
+		expect(useAIAssistantStore.getState().hasLoadedThreads).toBe(true);
+	});
+
+	it('keeps every mark when the list fails to load', async () => {
+		chat.listThreads.mockRejectedValue(new Error('down'));
+		useAIAssistantStore.setState((s) => {
+			s.unreadReplyIds = ['live'];
+		});
+
+		await useAIAssistantStore.getState().fetchThreads();
+
+		expect(useAIAssistantStore.getState().unreadReplyIds).toStrictEqual(['live']);
+		expect(useAIAssistantStore.getState().hasLoadedThreads).toBe(false);
 	});
 });
 
