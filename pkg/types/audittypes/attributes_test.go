@@ -1,6 +1,8 @@
 package audittypes
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -232,6 +234,51 @@ func TestNewBody(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			body := newBody(testCase.auditAttributes, testCase.principalAttributes, testCase.resourceAttributes, testCase.targetAttributes, testCase.errorAttributes)
 			assert.Equal(t, testCase.expectedBody, body)
+		})
+	}
+}
+
+func TestNewTransportAttributesFromHTTP_ClientAddress(t *testing.T) {
+	testCases := []struct {
+		name            string
+		forwardedFor    string
+		expectedAddress string
+		expectedPort    int
+	}{
+		{
+			name:            "NoHeader_RemoteAddr",
+			expectedAddress: "10.0.0.1",
+			expectedPort:    52341,
+		},
+		{
+			name:            "SingleEntry",
+			forwardedFor:    "203.0.113.7",
+			expectedAddress: "203.0.113.7",
+		},
+		{
+			name:            "MultipleEntries_FirstWins",
+			forwardedFor:    " 203.0.113.7 , 10.0.0.5",
+			expectedAddress: "203.0.113.7",
+		},
+		{
+			name:            "BlankFirstEntry_RemoteAddr",
+			forwardedFor:    " , 10.0.0.5",
+			expectedAddress: "10.0.0.1",
+			expectedPort:    52341,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/resource", nil)
+			req.RemoteAddr = "10.0.0.1:52341"
+			if testCase.forwardedFor != "" {
+				req.Header.Set("X-Forwarded-For", testCase.forwardedFor)
+			}
+
+			attrs := NewTransportAttributesFromHTTP(req, "/api/v1/resource", http.StatusOK)
+			assert.Equal(t, testCase.expectedAddress, attrs.ClientAddress)
+			assert.Equal(t, testCase.expectedPort, attrs.ClientPort)
 		})
 	}
 }

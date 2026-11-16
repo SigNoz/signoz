@@ -324,7 +324,6 @@ export function buildCreateAnomalyAlertRulePayload(
 		condition: {
 			...payload.condition,
 			thresholds: { kind: 'basic', spec: thresholds },
-			algorithm: thresholdState.algorithm,
 			seasonality: thresholdState.seasonality,
 		},
 	};
