@@ -11,6 +11,8 @@
 .title {
 	display: flex;
 	align-items: center;
+	flex: 1 1 auto;
+	min-width: 0;
 	gap: 6px;
 	font-size: 13px;
 	font-weight: 600;
@@ -19,6 +21,7 @@
 
 .actions {
 	display: flex;
+	flex-shrink: 0;
 	align-items: center;
 	gap: 2px;
 }

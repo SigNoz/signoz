@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
+import { TextEllipsis } from '@signozhq/ui/text-ellipsis';
 import { matchRoute } from 'lib/router/matchRoute';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
@@ -16,6 +17,7 @@ import ConversationsList from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
 import { AIAssistantEvents } from '../events';
 import { useAIAssistantAnalyticsContext } from '../hooks/useAIAssistantAnalyticsContext';
+import { useActiveChatTitle } from '../hooks/useActiveChatTitle';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
 
@@ -53,6 +55,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		(s) => s.startNewConversation,
 	);
 	const analyticsCtx = useAIAssistantAnalyticsContext();
+	const chatTitle = useActiveChatTitle();
 
 	const handleExpand = useCallback(() => {
 		if (!activeConversationId) {
@@ -115,7 +118,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 				<div className={`${styles.header} floating-panel__drag-handle`}>
 					<div className={`${styles.title} noz-wave`}>
 						<Noz size={18} />
-						<span>Noz</span>
+						{chatTitle && <TextEllipsis position="end">{chatTitle}</TextEllipsis>}
 					</div>
 
 					<div className={styles.actions}>
