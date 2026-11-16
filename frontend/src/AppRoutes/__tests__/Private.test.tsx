@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter, Route, Switch, useLocation } from 'react-router-dom';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { useListUsers } from 'api/generated/services/users';
+import { SIGNOZ_ADMIN_EMAIL } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
@@ -1095,6 +1096,33 @@ describe('PrivateRoute', () => {
 			});
 
 			await assertRedirectsTo(ROUTES.ONBOARDING);
+		});
+
+		it('should not redirect the signoz admin to onboarding while the first user has not completed it', async () => {
+			mockUsersData = [
+				{ email: 'test@example.com' },
+				{ email: SIGNOZ_ADMIN_EMAIL },
+			];
+
+			renderPrivateRoute({
+				initialRoute: ROUTES.HOME,
+				appContext: {
+					isLoggedIn: true,
+					isFetchingOrgPreferences: false,
+					orgPreferences: createMockOrgPreferences(false),
+					user: createMockUser({
+						role: USER_ROLES.ADMIN as ROLES,
+						email: SIGNOZ_ADMIN_EMAIL,
+					}),
+				},
+				isCloudUser: true,
+			});
+
+			await act(async () => {
+				await Promise.resolve();
+			});
+
+			assertStaysOnRoute(ROUTES.HOME);
 		});
 
 		it('fetches the user list for a non-admin role that has list:user', async () => {

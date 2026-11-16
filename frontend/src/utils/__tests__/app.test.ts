@@ -1,4 +1,6 @@
-import { buildAbsolutePath } from '../app';
+import { SIGNOZ_ADMIN_EMAIL } from 'constants/app';
+
+import { buildAbsolutePath, isSignozAdminEmail } from '../app';
 
 // buildAbsolutePath reads getCurrentLocation().pathname (basename-relative) rather than
 // window.location.pathname, so we mock lib/router/navigation instead of utils/getLocation.
@@ -120,5 +122,15 @@ describe('buildAbsolutePath', () => {
 			});
 			expect(result).toBe(`${BASE_PATH}/users`);
 		});
+	});
+});
+
+describe('isSignozAdminEmail', () => {
+	it('matches the SigNoz admin email', () => {
+		expect(isSignozAdminEmail(SIGNOZ_ADMIN_EMAIL)).toBe(true);
+	});
+
+	it.each(['jon@winterfell.dev', '', undefined])('rejects %p', (email) => {
+		expect(isSignozAdminEmail(email)).toBe(false);
 	});
 });

@@ -13,6 +13,7 @@ import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { OrgPreference } from 'types/api/preferences/preference';
 import { USER_ROLES } from 'types/roles';
+import { isSignozAdminEmail } from 'utils/app';
 import {
 	routePermission,
 	routeWithInitialAuthZSupport,
@@ -84,7 +85,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		const users = usersData?.data || [];
 
 		const remainingUsers = (Array.isArray(users) ? users : []).filter(
-			(user) => user.email !== 'admin@signoz.cloud',
+			(u) => !isSignozAdminEmail(u.email),
 		);
 
 		return remainingUsers.length === 1;
@@ -211,6 +212,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			const isFirstUser = checkFirstTimeUser();
 			if (
 				isFirstUser &&
+				!isSignozAdminEmail(user.email) &&
 				!isOnboardingComplete &&
 				!ROUTES_NOT_TO_BE_OVERRIDEN.includes(pathname) &&
 				pathname !== ROUTES.ONBOARDING
