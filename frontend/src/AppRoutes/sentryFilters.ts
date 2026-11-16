@@ -28,10 +28,13 @@ export function isExpectedRequestFailure(error: unknown): boolean {
 }
 
 const APP_ASSETS_PATH = '/assets/';
+const ANONYMOUS_FILENAME = '<anonymous>';
 
 // Frames without a position are `[native code]`, which says nothing about the
-// script that threw.
-export function hasNoAppFrames(event: ErrorEvent): boolean {
+// script that threw. An `<anonymous>` throwing (last) frame is eval'd or
+// injected code; Sentry's own timer wrapper is bundled with the app, so
+// checking for any app frame alone misses it.
+export function isOutsideAppError(event: ErrorEvent): boolean {
 	const frames = (event.exception?.values ?? [])
 		.flatMap((exception) => exception.stacktrace?.frames ?? [])
 		.filter(
@@ -40,17 +43,9 @@ export function hasNoAppFrames(event: ErrorEvent): boolean {
 
 	return (
 		frames.length > 0 &&
-		!frames.some((frame) => frame.filename?.includes(APP_ASSETS_PATH))
+		(frames[frames.length - 1].filename === ANONYMOUS_FILENAME ||
+			!frames.some((frame) => frame.filename?.includes(APP_ASSETS_PATH)))
 	);
-}
-
-// The throwing frame is the last one. Sentry's own timer wrapper is bundled
-// with the app, so only the top frame shows the code came from an eval.
-export function isInjectedScriptError(event: ErrorEvent): boolean {
-	return (event.exception?.values ?? []).some((exception) => {
-		const frames = exception.stacktrace?.frames ?? [];
-		return frames[frames.length - 1]?.filename === '<anonymous>';
-	});
 }
 
 // PostHog's lazy recorder, the Pylon widget and Appcues.

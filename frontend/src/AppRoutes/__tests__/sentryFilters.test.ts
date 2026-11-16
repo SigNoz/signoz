@@ -2,8 +2,7 @@ import type { ErrorEvent, StackFrame } from '@sentry/react';
 import { AxiosError, AxiosHeaders } from 'axios';
 
 import {
-	hasNoAppFrames,
-	isInjectedScriptError,
+	isOutsideAppError,
 	isExpectedRequestFailure,
 	isExternalIntegrationError,
 	SENTRY_IGNORE_ERRORS,
@@ -79,7 +78,7 @@ describe('isExternalIntegrationError', () => {
 	});
 });
 
-describe('hasNoAppFrames', () => {
+describe('isOutsideAppError', () => {
 	const PAGE_URL = 'https://example.us.signoz.cloud/dashboard/01a081e1';
 
 	function eventWithStackFrames(frames: StackFrame[]): ErrorEvent {
@@ -93,7 +92,7 @@ describe('hasNoAppFrames', () => {
 
 	it('drops a script appended to the page', () => {
 		expect(
-			hasNoAppFrames(
+			isOutsideAppError(
 				eventWithStackFrames([
 					{ filename: PAGE_URL, lineno: 1, colno: 30, function: 'global code' },
 					{ filename: '[native code]', function: 'eval' },
@@ -105,7 +104,7 @@ describe('hasNoAppFrames', () => {
 
 	it('drops a browser extension error', () => {
 		expect(
-			hasNoAppFrames(
+			isOutsideAppError(
 				eventWithStackFrames([
 					{ filename: 'chrome-extension://abc/content.js', lineno: 4, colno: 12 },
 				]),
@@ -113,38 +112,32 @@ describe('hasNoAppFrames', () => {
 		).toBe(true);
 	});
 
+	it('drops an error thrown from eval code behind the Sentry wrapper', () => {
+		expect(isOutsideAppError(eventWithFrames(APP_BUNDLE, '<anonymous>'))).toBe(
+			true,
+		);
+	});
+
+	it('keeps an error thrown from our bundle after an anonymous frame', () => {
+		expect(isOutsideAppError(eventWithFrames('<anonymous>', APP_BUNDLE))).toBe(
+			false,
+		);
+	});
+
 	it('keeps an error with a frame from our bundle', () => {
-		expect(hasNoAppFrames(eventWithFrames(PAGE_URL, APP_BUNDLE))).toBe(false);
+		expect(isOutsideAppError(eventWithFrames(PAGE_URL, APP_BUNDLE))).toBe(false);
 	});
 
 	it('keeps an error without a stack trace', () => {
-		expect(hasNoAppFrames({ type: undefined })).toBe(false);
+		expect(isOutsideAppError({ type: undefined })).toBe(false);
 	});
 
 	it('keeps an error whose frames have no position', () => {
 		expect(
-			hasNoAppFrames(
+			isOutsideAppError(
 				eventWithStackFrames([{ filename: '[native code]', function: 'eval' }]),
 			),
 		).toBe(false);
-	});
-});
-
-describe('isInjectedScriptError', () => {
-	it('drops an error thrown from eval code behind the Sentry wrapper', () => {
-		expect(
-			isInjectedScriptError(eventWithFrames(APP_BUNDLE, '<anonymous>')),
-		).toBe(true);
-	});
-
-	it('keeps an error thrown from our bundle', () => {
-		expect(
-			isInjectedScriptError(eventWithFrames('<anonymous>', APP_BUNDLE)),
-		).toBe(false);
-	});
-
-	it('keeps an error without a stack trace', () => {
-		expect(isInjectedScriptError({ type: undefined })).toBe(false);
 	});
 });
 

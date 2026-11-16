@@ -39,10 +39,9 @@ import defaultRoutes, {
 	SUPPORT_ROUTE,
 } from './routes';
 import {
-	hasNoAppFrames,
+	isOutsideAppError,
 	isExpectedRequestFailure,
 	isExternalIntegrationError,
-	isInjectedScriptError,
 	SENTRY_IGNORE_ERRORS,
 } from './sentryFilters';
 
@@ -356,12 +355,12 @@ function App(): JSX.Element {
 							return null;
 						}
 
-						if (isExternalIntegrationError(event) || isInjectedScriptError(event)) {
+						if (isExternalIntegrationError(event)) {
 							return null;
 						}
 
 						// Dev serves source from /src/, so every frame would look foreign there.
-						if (IS_PROD && hasNoAppFrames(event)) {
+						if (IS_PROD && isOutsideAppError(event)) {
 							return null;
 						}
 
