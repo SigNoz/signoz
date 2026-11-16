@@ -1,0 +1,15 @@
+.content {
+	width: 320px;
+}
+
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--spacing-4);
+}

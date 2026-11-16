@@ -2,9 +2,9 @@ import {
 	DB_PANELS,
 	expect,
 	EXTERNAL_PANELS,
+	OVERVIEW_PANELS,
 	SEEDED_DATA_TIMEOUT,
 	test,
-	withoutMissingMetadata,
 } from '../../drivers/apm';
 
 test.describe('Services, detail', () => {
@@ -14,45 +14,39 @@ test.describe('Services, detail', () => {
 	}) => {
 		const { checkout, cart } = apmSeed.ops;
 		await apm.gotoService(apmSeed.service);
+		await apm.keyOps.reveal();
 
-		await expect(apm.keyOps.title()).toHaveText('Key Operations');
 		await expect(apm.keyOps.row(checkout.name)).toBeVisible({
 			timeout: SEEDED_DATA_TIMEOUT,
 		});
-		expect(await apm.keyOps.cell(checkout.name, 'Number of Calls')).toBe(
+		expect(await apm.keyOps.cell(checkout.name, 'Calls')).toBe(
 			String(checkout.calls),
 		);
-		expect(await apm.keyOps.cell(checkout.name, 'Error Rate')).toBe(
-			`${((checkout.errors * 100) / checkout.calls).toFixed(2)} %`,
+		expect(await apm.keyOps.cell(checkout.name, 'Errors')).toBe(
+			String(checkout.errors),
 		);
-		expect(await apm.keyOps.cell(cart.name, 'Number of Calls')).toBe(
-			String(cart.calls),
-		);
+		expect(await apm.keyOps.cell(cart.name, 'Calls')).toBe(String(cart.calls));
+		await expect(apm.keyOps.rows()).toHaveCount(2);
 	});
 
-	test('TC-02 the entrypoint toggle switches to entry-point operations from the backend', async ({
-		apm,
-		apmSeed,
-	}) => {
+	test('TC-02 the overview panels render', async ({ apm, apmSeed, noise }) => {
 		await apm.gotoService(apmSeed.service);
-		await expect(apm.keyOps.row(apmSeed.ops.checkout.name)).toBeVisible({
-			timeout: SEEDED_DATA_TIMEOUT,
-		});
 
-		const operations = await apm.keyOps.toggleEntrypoint();
-
-		await expect(apm.keyOps.title()).toHaveText('Key Entrypoint Operations');
-		await expect(apm.keyOps.row(apmSeed.ops.checkout.name)).toBeVisible();
-		await expect(apm.keyOps.row(apmSeed.ops.cart.name)).toBeVisible();
-		await expect(apm.keyOps.rows()).toHaveCount(operations.length);
+		for (const panel of OVERVIEW_PANELS) {
+			// eslint-disable-next-line no-await-in-loop
+			await apm.expectPanelRendered(panel);
+		}
+		expect(noise.failedResponses).toEqual([]);
+		expect(noise.errors).toEqual([]);
 	});
 
-	test('TC-03 a key operation opens the traces explorer filtered to it', async ({
+	test('TC-03 a key operation drills into the traces explorer filtered to it', async ({
 		apm,
 		apmSeed,
 	}) => {
 		const { checkout } = apmSeed.ops;
 		await apm.gotoService(apmSeed.service);
+		await apm.keyOps.reveal();
 		await expect(apm.keyOps.row(checkout.name)).toBeVisible({
 			timeout: SEEDED_DATA_TIMEOUT,
 		});
@@ -86,9 +80,8 @@ test.describe('Services, detail', () => {
 			await apm.expectPanelRendered(panel);
 		}
 
-		const { errors, failedResponses } = withoutMissingMetadata(noise);
-		expect(failedResponses).toEqual([]);
-		expect(errors).toEqual([]);
+		expect(noise.failedResponses).toEqual([]);
+		expect(noise.errors).toEqual([]);
 	});
 
 	// Needs the migrator's `top_level_operations` materialized view to fill from

@@ -84,14 +84,15 @@ export function useDrilldown(
 	const queries = panel.spec.queries;
 
 	// Drilldown only for builder-authored panels with a query to drill into (PromQL /
-	// ClickHouse have no builder context to refine).
+	// ClickHouse have no builder context to refine). A panel whose builder queries
+	// are all disabled draws only formulas, which have no series to drill into.
 	const showDrilldown = useDashboardControl('panelActions.drilldown');
 	const enableDrillDown = useMemo(
 		() =>
 			showDrilldown &&
 			getPanelDefinition(kind).actions.drilldown &&
 			getPanelQueryType(panel) === EQueryType.QUERY_BUILDER &&
-			getBuilderQueries(queries).length > 0,
+			getBuilderQueries(queries).some((query) => !query.disabled),
 		[showDrilldown, kind, panel, queries],
 	);
 

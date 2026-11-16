@@ -1,0 +1,29 @@
+// The dashboard below insets its toolbar and grid by 16px; the header and tabs share that edge.
+.page {
+	display: flex;
+	flex-direction: column;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-8);
+	height: 48px;
+	padding: 0 16px;
+	border-bottom: 1px solid var(--l2-border);
+}
+
+.tabs {
+	margin-top: 8px;
+	// Plus the trigger's own 6px, the labels land on the 16px edge.
+	--tabs-list-wrapper-primary-padding-inline: 10px;
+	--tabs-content-margin: 0;
+	--tabs-content-padding: 0;
+}
+
+.loading {
+	display: flex;
+	justify-content: center;
+	padding: var(--spacing-16);
+}

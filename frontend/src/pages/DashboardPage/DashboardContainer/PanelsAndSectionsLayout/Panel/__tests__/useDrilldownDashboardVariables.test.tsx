@@ -18,6 +18,7 @@ let mockVariables: Array<{
 let mockSelectionMap: Record<string, { value: unknown; allSelected: boolean }> =
 	{};
 
+let mockIsEditable = true;
 const mockSetVariableValue = jest.fn();
 const mockPatchAsync = jest.fn().mockResolvedValue(undefined);
 
@@ -32,6 +33,12 @@ jest.mock(
 			variables: mockVariables,
 			refetch: jest.fn(),
 		}),
+	}),
+);
+jest.mock(
+	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEditContext',
+	() => ({
+		useDashboardEditContext: (): unknown => ({ isEditable: mockIsEditable }),
 	}),
 );
 jest.mock(
@@ -102,6 +109,7 @@ function renderItems(): void {
 
 describe('useDrilldownDashboardVariables', () => {
 	beforeEach(() => {
+		mockIsEditable = true;
 		jest.clearAllMocks();
 		mockVariables = [];
 		mockSelectionMap = {};
@@ -174,6 +182,17 @@ describe('useDrilldownDashboardVariables', () => {
 			value: [],
 			allSelected: false,
 		});
+	});
+
+	it('offers nothing to create on a dashboard the viewer cannot edit', () => {
+		mockVariables = [];
+		mockIsEditable = false;
+		const { result } = renderHook(() =>
+			useDrilldownDashboardVariables({ filters, onClose: jest.fn() }),
+		);
+
+		expect(result.current.actions).toStrictEqual([]);
+		expect(result.current.hasFieldVariables).toBe(false);
 	});
 
 	it('offers Create and persists a new dynamic variable when none matches', async () => {

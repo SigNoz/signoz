@@ -23,6 +23,8 @@ interface SectionGridProps {
 	sections?: DashboardSection[];
 	/** Shows where a new panel of this kind will land. */
 	placeholderKind?: PanelKind;
+	/** No side padding: panels share the toolbar's edges. For a grid without section chrome. */
+	flush?: boolean;
 }
 
 function SectionGrid({
@@ -30,6 +32,7 @@ function SectionGrid({
 	layoutIndex,
 	sections,
 	placeholderKind,
+	flush = false,
 }: SectionGridProps): JSX.Element {
 	const { isEditable } = useDashboardEditContext();
 
@@ -65,6 +68,7 @@ function SectionGrid({
 			onDragStop={handleLayoutChange}
 			onResizeStop={handleLayoutChange}
 			margin={[GRID_MARGIN, GRID_MARGIN]}
+			containerPadding={flush ? [0, GRID_MARGIN] : [GRID_MARGIN, GRID_MARGIN]}
 		>
 			{items.map((item) => (
 				// A layout item can reference a panel id that no longer exists in the

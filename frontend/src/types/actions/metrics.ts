@@ -1,4 +1,4 @@
-import { TopOperationList } from 'container/MetricsApplication/TopOperationsTable';
+import { TopOperationList } from 'types/api/metrics/getTopOperations';
 import { ServicesList } from 'types/api/metrics/getService';
 import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
 
