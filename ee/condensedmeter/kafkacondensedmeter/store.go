@@ -16,22 +16,22 @@ func newStore(sqlstore sqlstore.SQLStore) condensedmetertypes.Store {
 	return &store{sqlstore: sqlstore}
 }
 
-func (s *store) Get(ctx context.Context, orgID valuer.UUID) (*condensedmetertypes.Checkpoint, error) {
+func (store *store) Get(ctx context.Context, orgID valuer.UUID) (*condensedmetertypes.Checkpoint, error) {
 	checkpoint := new(condensedmetertypes.Checkpoint)
-	err := s.sqlstore.
+	err := store.sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(checkpoint).
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
-		return nil, s.sqlstore.WrapNotFoundErrf(err, condensedmetertypes.ErrCodeCheckpointNotFound, "no condensed meter checkpoint found for org %q", orgID.StringValue())
+		return nil, store.sqlstore.WrapNotFoundErrf(err, condensedmetertypes.ErrCodeCheckpointNotFound, "no condensed meter checkpoint found for org %q", orgID.StringValue())
 	}
 	return checkpoint, nil
 }
 
-func (s *store) Upsert(ctx context.Context, checkpoint *condensedmetertypes.Checkpoint) error {
-	_, err := s.sqlstore.
+func (store *store) Upsert(ctx context.Context, checkpoint *condensedmetertypes.Checkpoint) error {
+	_, err := store.sqlstore.
 		BunDBCtx(ctx).
 		NewInsert().
 		Model(checkpoint).

@@ -10,10 +10,8 @@ import (
 var _ factory.Config = (*Config)(nil)
 
 type Config struct {
-	// Provider specifies the implementation that reports condensed rows.
 	Provider string `mapstructure:"provider"`
 
-	// Interval is how often the reporter looks for closed hours to report.
 	Interval time.Duration `mapstructure:"interval"`
 
 	// Dimensions are the resource attributes the meter connector records as meter labels.

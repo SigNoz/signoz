@@ -23,17 +23,17 @@ func New(_ context.Context, _ factory.ProviderSettings, _ condensedmeter.Config)
 	}, nil
 }
 
-func (p *provider) Start(_ context.Context) error {
-	close(p.healthyC)
-	<-p.stopC
+func (provider *provider) Start(_ context.Context) error {
+	close(provider.healthyC)
+	<-provider.stopC
 	return nil
 }
 
-func (p *provider) Stop(_ context.Context) error {
-	close(p.stopC)
+func (provider *provider) Stop(_ context.Context) error {
+	close(provider.stopC)
 	return nil
 }
 
-func (p *provider) Healthy() <-chan struct{} {
-	return p.healthyC
+func (provider *provider) Healthy() <-chan struct{} {
+	return provider.healthyC
 }
