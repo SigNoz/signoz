@@ -51,7 +51,7 @@ jobs:
       - name: install-frontend
         run: cd frontend && pnpm install
       - name: test
-        run: cd frontend && pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+        run: cd frontend && pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }} --reporters=default --reporters=./scripts/slow-test-reporter.js
   # Branch protection requires a check named "test / js"; this job keeps that name stable across shard changes.
   test:
     name: test / js
