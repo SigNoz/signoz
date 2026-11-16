@@ -1,6 +1,12 @@
 import { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter, Route, Switch, useLocation } from 'react-router-dom';
+import {
+	MemoryRouter,
+	Route,
+	Routes,
+	useLocation,
+	useNavigationType,
+} from 'react-router';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { useListUsers } from 'api/generated/services/users';
 import { SIGNOZ_ADMIN_EMAIL } from 'constants/app';
@@ -82,11 +88,13 @@ const queryClient = new QueryClient({
 // Component to capture current location for assertions
 function LocationDisplay(): ReactElement {
 	const location = useLocation();
+	const navigationType = useNavigationType();
 	return (
 		<>
 			<div data-testid="location-display">{location.pathname}</div>
 			<div data-testid="location-search">{location.search}</div>
 			<div data-testid="location-hash">{location.hash}</div>
+			<div data-testid="navigation-type">{navigationType}</div>
 		</>
 	);
 }
@@ -246,12 +254,17 @@ function buildPrivateRouteTree(
 			<MemoryRouter initialEntries={[initialRoute]}>
 				<AppContext.Provider value={contextValue}>
 					<PrivateRoute>
-						<Switch>
-							<Route path="*">
-								<div data-testid="children-rendered">Content</div>
-								<LocationDisplay />
-							</Route>
-						</Switch>
+						<Routes>
+							<Route
+								path="*"
+								element={
+									<>
+										<div data-testid="children-rendered">Content</div>
+										<LocationDisplay />
+									</>
+								}
+							/>
+						</Routes>
 					</PrivateRoute>
 				</AppContext.Provider>
 			</MemoryRouter>
@@ -514,6 +527,19 @@ describe('PrivateRoute', () => {
 			await assertRedirectsTo(ROUTES.ALL_DASHBOARD);
 		});
 
+		it('should replace the login entry when redirecting to the saved route', async () => {
+			mockLocalStorage[LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT] =
+				ROUTES.ALL_DASHBOARD;
+
+			renderPrivateRoute({
+				initialRoute: ROUTES.LOGIN,
+				appContext: { isLoggedIn: true },
+			});
+
+			await assertRedirectsTo(ROUTES.ALL_DASHBOARD);
+			expect(screen.getByTestId('navigation-type')).toHaveTextContent('REPLACE');
+		});
+
 		it('should clear localStorage after redirecting to saved route', async () => {
 			mockLocalStorage[LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT] = ROUTES.HOME;
 
@@ -637,6 +663,19 @@ describe('PrivateRoute', () => {
 			await waitFor(() => {
 				expect(mockLocalStorage[LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT]).toBe('');
 			});
+		});
+
+		it('should replace the unknown route entry when redirecting to the saved route', async () => {
+			mockLocalStorage[LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT] =
+				ROUTES.ALL_DASHBOARD;
+
+			renderPrivateRoute({
+				initialRoute: '/unknown-route-that-does-not-exist',
+				appContext: { isLoggedIn: true },
+			});
+
+			await assertRedirectsTo(ROUTES.ALL_DASHBOARD);
+			expect(screen.getByTestId('navigation-type')).toHaveTextContent('REPLACE');
 		});
 	});
 
