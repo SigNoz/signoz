@@ -213,28 +213,28 @@ func TestJSONArrayElements(t *testing.T) {
 			column:   "data",
 			path:     "$",
 			alias:    "elem",
-			expected: `jsonb_array_elements("data") AS "elem"`,
+			expected: `jsonb_array_elements("data"::jsonb) AS "elem"`,
 		},
 		{
 			name:     "root path empty",
 			column:   "data",
 			path:     "",
 			alias:    "elem",
-			expected: `jsonb_array_elements("data") AS "elem"`,
+			expected: `jsonb_array_elements("data"::jsonb) AS "elem"`,
 		},
 		{
 			name:     "nested path",
 			column:   "metadata",
 			path:     "$.items",
 			alias:    "item",
-			expected: `jsonb_array_elements("metadata"->'items') AS "item"`,
+			expected: `jsonb_array_elements("metadata"::jsonb->'items') AS "item"`,
 		},
 		{
 			name:     "deeply nested path",
 			column:   "json_col",
 			path:     "$.user.tags",
 			alias:    "tag",
-			expected: `jsonb_array_elements("json_col"->'user'->'tags') AS "tag"`,
+			expected: `jsonb_array_elements("json_col"::jsonb->'user'->'tags') AS "tag"`,
 		},
 	}
 

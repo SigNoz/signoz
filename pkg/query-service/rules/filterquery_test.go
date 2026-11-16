@@ -122,32 +122,54 @@ func TestCompileName(t *testing.T) {
 func TestCompileSeverityAndLabels(t *testing.T) {
 	runCompileCases(t, []compileCase{
 		{
-			subtestName:       "SeverityEquals_TargetsLabelsMap",
+			subtestName:       "SeverityEquals_LabelElseThresholdNames",
 			dslQueryToCompile: "severity = 'critical'",
-			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') = ?`,
-			expectedArgs:      []any{"critical"},
+			expectedSQL: `CASE WHEN json_extract("rule"."data", '$.labels."severity"') IS NOT NULL THEN json_extract("rule"."data", '$.labels."severity"') = ? ` +
+				`ELSE EXISTS (SELECT 1 FROM json_each("rule"."data", '$.condition.thresholds.spec') AS "threshold" WHERE lower(json_extract("threshold"."value", '$.name')) = ?) END`,
+			expectedArgs: []any{"critical", "critical"},
 		},
 		{
-			subtestName:       "SeverityNotEquals_MissingLabelAsEmptyString",
+			subtestName:       "SeverityNotEquals_NoThresholdNameMatches",
 			dslQueryToCompile: "severity != 'critical'",
-			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') <> ?`,
-			expectedArgs:      []any{"critical"},
+			expectedSQL: `CASE WHEN json_extract("rule"."data", '$.labels."severity"') IS NOT NULL THEN json_extract("rule"."data", '$.labels."severity"') <> ? ` +
+				`ELSE NOT EXISTS (SELECT 1 FROM json_each("rule"."data", '$.condition.thresholds.spec') AS "threshold" WHERE lower(json_extract("threshold"."value", '$.name')) = ?) END`,
+			expectedArgs: []any{"critical", "critical"},
 		},
 		{
-			subtestName:       "SeverityNotEqualsEmpty_ExcludesRulesWithoutSeverity",
-			dslQueryToCompile: "severity != ''",
-			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') <> ?`,
-			expectedArgs:      []any{""},
+			subtestName:       "SeverityIn_AnyThresholdNameMatches",
+			dslQueryToCompile: "severity IN ['critical', 'error']",
+			expectedSQL: `CASE WHEN json_extract("rule"."data", '$.labels."severity"') IS NOT NULL THEN json_extract("rule"."data", '$.labels."severity"') IN (?, ?) ` +
+				`ELSE EXISTS (SELECT 1 FROM json_each("rule"."data", '$.condition.thresholds.spec') AS "threshold" WHERE lower(json_extract("threshold"."value", '$.name')) IN (?, ?)) END`,
+			expectedArgs: []any{"critical", "error", "critical", "error"},
 		},
 		{
-			subtestName:       "SeverityExists_ThroughAlias",
-			dslQueryToCompile: "severity EXISTS",
+			subtestName:       "SeverityNotIn_NoThresholdNameMatches",
+			dslQueryToCompile: "severity NOT IN ['critical', 'error']",
+			expectedSQL: `CASE WHEN json_extract("rule"."data", '$.labels."severity"') IS NOT NULL THEN json_extract("rule"."data", '$.labels."severity"') NOT IN (?, ?) ` +
+				`ELSE NOT EXISTS (SELECT 1 FROM json_each("rule"."data", '$.condition.thresholds.spec') AS "threshold" WHERE lower(json_extract("threshold"."value", '$.name')) IN (?, ?)) END`,
+			expectedArgs: []any{"critical", "error", "critical", "error"},
+		},
+		{
+			subtestName:       "SeverityContains_EscapesWildcardsInEveryBranch",
+			dslQueryToCompile: "severity CONTAINS 'p_'",
+			expectedSQL: `CASE WHEN json_extract("rule"."data", '$.labels."severity"') IS NOT NULL THEN json_extract("rule"."data", '$.labels."severity"') LIKE ? ESCAPE '\' ` +
+				`ELSE EXISTS (SELECT 1 FROM json_each("rule"."data", '$.condition.thresholds.spec') AS "threshold" WHERE lower(json_extract("threshold"."value", '$.name')) LIKE ? ESCAPE '\') END`,
+			expectedArgs: []any{`%p\_%`, `%p\_%`},
+		},
+		{
+			subtestName:              "SeverityExists_Rejected",
+			dslQueryToCompile:        "severity EXISTS",
+			expectedErrShouldContain: `operator EXISTS is not allowed for key "severity"`,
+		},
+		{
+			subtestName:              "SeverityNotExists_Rejected",
+			dslQueryToCompile:        "severity NOT EXISTS",
+			expectedErrShouldContain: `operator NOT EXISTS is not allowed for key "severity"`,
+		},
+		{
+			subtestName:       "LabelsSeverityExists_LabelOnly",
+			dslQueryToCompile: "labels.severity EXISTS",
 			expectedSQL:       `json_extract("rule"."data", '$.labels."severity"') IS NOT NULL`,
-		},
-		{
-			subtestName:       "SeverityNotExists_ThroughAlias",
-			dslQueryToCompile: "severity NOT EXISTS",
-			expectedSQL:       `json_extract("rule"."data", '$.labels."severity"') IS NULL`,
 		},
 		{
 			subtestName:       "LabelEquals",
@@ -287,8 +309,9 @@ func TestCompileComposition(t *testing.T) {
 			subtestName:       "OrOfNameAndSeverity",
 			dslQueryToCompile: "name CONTAINS 'pay' OR severity = 'critical'",
 			expectedSQL: `((json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' OR COALESCE(json_extract("rule"."data", '$.labels."name"'), '') LIKE ? ESCAPE '\') ` +
-				`OR COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') = ?)`,
-			expectedArgs: []any{"%pay%", "%pay%", "critical"},
+				`OR CASE WHEN json_extract("rule"."data", '$.labels."severity"') IS NOT NULL THEN json_extract("rule"."data", '$.labels."severity"') = ? ` +
+				`ELSE EXISTS (SELECT 1 FROM json_each("rule"."data", '$.condition.thresholds.spec') AS "threshold" WHERE lower(json_extract("threshold"."value", '$.name')) = ?) END)`,
+			expectedArgs: []any{"%pay%", "%pay%", "critical", "critical"},
 		},
 	})
 }
@@ -301,9 +324,10 @@ func TestCompileComplexExamples(t *testing.T) {
 				`AND severity IN ['critical', 'error'] AND created_by != 'ops@signoz.io'`,
 			expectedSQL: `((json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' OR COALESCE(json_extract("rule"."data", '$.labels."name"'), '') LIKE ? ESCAPE '\') ` +
 				`AND COALESCE(json_extract("rule"."data", '$.labels."team"'), '') = ? ` +
-				`AND COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') IN (?, ?) ` +
+				`AND CASE WHEN json_extract("rule"."data", '$.labels."severity"') IS NOT NULL THEN json_extract("rule"."data", '$.labels."severity"') IN (?, ?) ` +
+				`ELSE EXISTS (SELECT 1 FROM json_each("rule"."data", '$.condition.thresholds.spec') AS "threshold" WHERE lower(json_extract("threshold"."value", '$.name')) IN (?, ?)) END ` +
 				`AND (rule.created_by <> ? AND COALESCE(json_extract("rule"."data", '$.labels."created_by"'), '') <> ?))`,
-			expectedArgs: []any{"%latency%", "%latency%", "payments", "critical", "error", "ops@signoz.io", "ops@signoz.io"},
+			expectedArgs: []any{"%latency%", "%latency%", "payments", "critical", "error", "critical", "error", "ops@signoz.io", "ops@signoz.io"},
 		},
 		{
 			subtestName: "NestedOrAnd_WithParens",
@@ -311,9 +335,10 @@ func TestCompileComplexExamples(t *testing.T) {
 				`AND (severity = 'critical' OR labels.team EXISTS)`,
 			expectedSQL: `((COALESCE(json_extract("rule"."data", '$.labels."env"'), '') IN (?, ?) ` +
 				`OR (json_extract("rule"."data", '$.alert') LIKE ? ESCAPE '\' OR COALESCE(json_extract("rule"."data", '$.labels."name"'), '') LIKE ? ESCAPE '\')) ` +
-				`AND (COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') = ? ` +
+				`AND (CASE WHEN json_extract("rule"."data", '$.labels."severity"') IS NOT NULL THEN json_extract("rule"."data", '$.labels."severity"') = ? ` +
+				`ELSE EXISTS (SELECT 1 FROM json_each("rule"."data", '$.condition.thresholds.spec') AS "threshold" WHERE lower(json_extract("threshold"."value", '$.name')) = ?) END ` +
 				`OR json_extract("rule"."data", '$.labels."team"') IS NOT NULL))`,
-			expectedArgs: []any{"prod", "staging", "%prod%", "%prod%", "critical"},
+			expectedArgs: []any{"prod", "staging", "%prod%", "%prod%", "critical", "critical"},
 		},
 		{
 			subtestName:       "NotOverGroup_AndedWithEnum",
@@ -376,17 +401,19 @@ func TestCompileReservedLabelCollisions(t *testing.T) {
 			expectedArgs:      []any{"x", "x"},
 		},
 		{
-			subtestName:       "SeverityExactSpelling_SinglePredicate",
+			subtestName:       "SeverityExactSpelling_NoLabelPredicateAdded",
 			dslQueryToCompile: "severity = 'critical'",
-			expectedSQL:       `COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') = ?`,
-			expectedArgs:      []any{"critical"},
+			expectedSQL: `CASE WHEN json_extract("rule"."data", '$.labels."severity"') IS NOT NULL THEN json_extract("rule"."data", '$.labels."severity"') = ? ` +
+				`ELSE EXISTS (SELECT 1 FROM json_each("rule"."data", '$.condition.thresholds.spec') AS "threshold" WHERE lower(json_extract("threshold"."value", '$.name')) = ?) END`,
+			expectedArgs: []any{"critical", "critical"},
 		},
 		{
-			subtestName:       "SeverityDifferentCase_MatchesBothLabelSpellings",
+			subtestName:       "SeverityDifferentCase_MatchesReservedOrExactCaseLabel",
 			dslQueryToCompile: "Severity = 'critical'",
-			expectedSQL: `(COALESCE(json_extract("rule"."data", '$.labels."severity"'), '') = ? ` +
+			expectedSQL: `(CASE WHEN json_extract("rule"."data", '$.labels."severity"') IS NOT NULL THEN json_extract("rule"."data", '$.labels."severity"') = ? ` +
+				`ELSE EXISTS (SELECT 1 FROM json_each("rule"."data", '$.condition.thresholds.spec') AS "threshold" WHERE lower(json_extract("threshold"."value", '$.name')) = ?) END ` +
 				`OR COALESCE(json_extract("rule"."data", '$.labels."Severity"'), '') = ?)`,
-			expectedArgs: []any{"critical", "critical"},
+			expectedArgs: []any{"critical", "critical", "critical"},
 		},
 		{
 			subtestName:       "RangeOperator_ReservedOnly",

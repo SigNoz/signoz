@@ -19,7 +19,7 @@ func listableRule(name string, state AlertState, severity string, updatedAt time
 		},
 	}
 	if severity != "" {
-		rule.Labels = map[string]string{"severity": severity}
+		rule.Severities = []string{severity}
 	}
 	return rule
 }
@@ -53,6 +53,7 @@ func TestToListableRule(t *testing.T) {
 	assert.Equal(t, RuleTypeThreshold, listable.RuleType)
 	assert.True(t, listable.Disabled)
 	assert.Equal(t, map[string]string{"severity": "critical"}, listable.Labels)
+	assert.Equal(t, []string{"critical"}, listable.Severities)
 	assert.Equal(t, created, listable.CreatedAt)
 	assert.Equal(t, "creator@signoz.io", listable.CreatedBy)
 	assert.Equal(t, updated, listable.UpdatedAt)

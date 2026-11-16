@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from http import HTTPStatus
 
+import pytest
 import requests
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -154,6 +155,86 @@ COLLIDER_RULE = {
     "schemaVersion": "v2alpha1",
 }
 
+SEVERITY_RULES = [
+    # this rule defines a severity label, so every notification it sends carries
+    # that severity whichever threshold fired; the list ignores the threshold
+    # names for it too
+    {
+        "alert": "api latency",
+        "alertType": "METRIC_BASED_ALERT",
+        "ruleType": "threshold_rule",
+        "condition": {
+            **METRIC_CONDITION,
+            "thresholds": {
+                "kind": "basic",
+                "spec": [
+                    {"name": "critical", "target": 90, "matchType": "at_least_once", "op": "above", "channels": [SEED_CHANNEL_NAME]},
+                    {"name": "info", "target": 50, "matchType": "at_least_once", "op": "above", "channels": [SEED_CHANNEL_NAME]},
+                ],
+            },
+        },
+        "labels": {"severity": "warning"},
+        "annotations": {"summary": "s", "description": "d"},
+        "evaluation": EVALUATION,
+        "notificationSettings": NOTIFICATION_SETTINGS,
+        "version": "v5",
+        "schemaVersion": "v2alpha1",
+    },
+    # this rule has no severity label, so a notification carries the lowercased
+    # name of the threshold that fired as its severity; the list reports each
+    # distinct one, critical, error, warning and info first, then the rest
+    {
+        "alert": "queue depth",
+        "alertType": "METRIC_BASED_ALERT",
+        "ruleType": "threshold_rule",
+        "condition": {
+            **METRIC_CONDITION,
+            "thresholds": {
+                "kind": "basic",
+                "spec": [
+                    {"name": "Warning", "target": 80, "matchType": "at_least_once", "op": "above", "channels": [SEED_CHANNEL_NAME]},
+                    {"name": "critical", "target": 95, "matchType": "at_least_once", "op": "above", "channels": [SEED_CHANNEL_NAME]},
+                    {"name": "warning", "target": 70, "matchType": "at_least_once", "op": "above", "channels": [SEED_CHANNEL_NAME]},
+                    {"name": "p3", "target": 60, "matchType": "at_least_once", "op": "above", "channels": [SEED_CHANNEL_NAME]},
+                ],
+            },
+        },
+        "labels": {"team": "messaging"},
+        "annotations": {"summary": "s", "description": "d"},
+        "evaluation": EVALUATION,
+        "notificationSettings": NOTIFICATION_SETTINGS,
+        "version": "v5",
+        "schemaVersion": "v2alpha1",
+    },
+    # this rule has no severity label and a single threshold, so its only
+    # severity is error, which ranks between the other two rules' highest
+    # severities and is the one both negative filters leave standing
+    {
+        "alert": "cache miss ratio",
+        "alertType": "METRIC_BASED_ALERT",
+        "ruleType": "threshold_rule",
+        "condition": {
+            **METRIC_CONDITION,
+            "thresholds": {
+                "kind": "basic",
+                "spec": [{"name": "Error", "target": 5, "matchType": "at_least_once", "op": "above", "channels": [SEED_CHANNEL_NAME]}],
+            },
+        },
+        "labels": {"team": "storage"},
+        "annotations": {"summary": "s", "description": "d"},
+        "evaluation": EVALUATION,
+        "notificationSettings": NOTIFICATION_SETTINGS,
+        "version": "v5",
+        "schemaVersion": "v2alpha1",
+    },
+]
+
+SEVERITIES_BY_NAME = {
+    "api latency": ["warning"],
+    "queue depth": ["critical", "warning", "p3"],
+    "cache miss ratio": ["error"],
+}
+
 RESERVED_KEYWORDS = [
     "alert_type",
     "created_at",
@@ -208,10 +289,19 @@ def test_envelope_and_slim_rows(
     for rule in data["rules"]:
         for forbidden_field in ("condition", "annotations", "notificationSettings", "evaluation", "source", "version", "schemaVersion"):
             assert forbidden_field not in rule, f"slim row leaked {forbidden_field}"
-        for required_field in ("id", "state", "alert", "alertType", "ruleType", "createdAt", "updatedAt"):
+        for required_field in ("id", "state", "alert", "alertType", "ruleType", "severities", "createdAt", "updatedAt"):
             assert required_field in rule, f"slim row missing {required_field}"
         assert rule["createdBy"] == USER_ADMIN_EMAIL
         assert rule["updatedBy"] == USER_ADMIN_EMAIL
+
+    # rules without a severity label take their threshold names
+    assert {name: rule["severities"] for name, rule in by_name.items()} == {
+        "payment latency high": ["critical"],
+        "payment gateway errors": ["warning"],
+        "checkout conversion drop": ["important"],
+        "infra cpu saturation": ["critical"],
+        "prom uptime probe": ["critical"],
+    }
 
     assert by_name["checkout conversion drop"]["state"] == "disabled"
     assert by_name["checkout conversion drop"]["disabled"] is True
@@ -318,15 +408,8 @@ def test_label_missing_semantics(
     seed_alert_rules(SEED_CHANNEL_NAME, SEED_RULES)
 
     # A missing label uniformly evaluates as the empty string for value
-    # operators; presence is expressed with EXISTS / NOT EXISTS.
+    # operators, so a negative term matches the rules without the label.
     cases = [
-        ("severity = ''", {"infra cpu saturation", "prom uptime probe"}),
-        ("severity != ''", {"payment latency high", "payment gateway errors", "checkout conversion drop"}),
-        ("severity != 'critical'", {"payment gateway errors", "checkout conversion drop", "infra cpu saturation", "prom uptime probe"}),
-        ("severity EXISTS", {"payment latency high", "payment gateway errors", "checkout conversion drop"}),
-        ("severity NOT EXISTS", {"infra cpu saturation", "prom uptime probe"}),
-        ("severity = 'critical'", {"payment latency high"}),
-        ("severity IN ['critical', 'warning']", {"payment latency high", "payment gateway errors"}),
         ("labels.team != 'payments'", {"checkout conversion drop", "infra cpu saturation", "prom uptime probe"}),
         ("labels.team NOT IN ['payments']", {"checkout conversion drop", "infra cpu saturation", "prom uptime probe"}),
         ("labels.team NOT CONTAINS 'pay'", {"checkout conversion drop", "infra cpu saturation", "prom uptime probe"}),
@@ -435,8 +518,9 @@ def test_sorting(
         "prom uptime probe",
     ]
 
-    # severity: known ranks first (critical > warning), then custom values
-    # lexically, then rules without severity tie and break on name asc
+    # severity: known ranks first (critical > warning), then custom values;
+    # the two unlabelled rules are critical by threshold name, so the three
+    # critical rules tie and break on name asc
     response = requests.get(
         signoz.self.host_configs["8080"].get(BASE_URL),
         params={"sort": "severity", "order": "desc"},
@@ -445,11 +529,11 @@ def test_sorting(
     )
     assert response.status_code == HTTPStatus.OK
     assert [rule["alert"] for rule in response.json()["data"]["rules"]] == [
+        "infra cpu saturation",
         "payment latency high",
+        "prom uptime probe",
         "payment gateway errors",
         "checkout conversion drop",
-        "infra cpu saturation",
-        "prom uptime probe",
     ]
 
     for order in ("asc", "desc"):
@@ -547,6 +631,7 @@ def test_error_contract(
         ({"query": "team > 'infra'"}, "rule_list_filter_invalid", 'operator > is not allowed on the label filter "team"'),
         ({"query": "alert_type = 'bogus'"}, "rule_list_filter_invalid", "METRIC_BASED_ALERT"),
         ({"query": "name REGEXP 'x.*'"}, "rule_list_filter_invalid", "operator REGEXP is not allowed"),
+        ({"query": "severity EXISTS"}, "rule_list_filter_invalid", 'operator EXISTS is not allowed for key "severity"'),
         ({"query": "created_at >= 'yesterday'"}, "rule_list_filter_invalid", "invalid RFC3339 timestamp"),
         ({"query": "name LIKE 'prod\\\\'"}, "rule_list_filter_invalid", "must not end with an unescaped backslash"),
         ({"states": ["bogus"]}, "rule_list_invalid", 'invalid state "bogus"'),
@@ -567,3 +652,122 @@ def test_error_contract(
         error = response.json()["error"]
         assert error["code"] == expected_code, f"params {params!r}"
         assert expected_message_part in error["message"], f"params {params!r}: {error['message']}"
+
+
+def test_severities(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    seed_alert_rules: Callable[[str, list[dict]], None],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    seed_alert_rules(SEED_CHANNEL_NAME, SEVERITY_RULES)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert {rule["alert"]: rule["severities"] for rule in response.json()["data"]["rules"]} == SEVERITIES_BY_NAME
+
+
+# a positive term matches any of the rule's severities, a negative term none of them
+@pytest.mark.parametrize(
+    ("query", "expected_names"),
+    [
+        ("severity = 'warning'", {"api latency", "queue depth"}),
+        ("severity != 'warning'", {"cache miss ratio"}),
+        ("severity = 'critical'", {"queue depth"}),
+        ("severity IN ['p3', 'error']", {"queue depth", "cache miss ratio"}),
+        ("severity NOT IN ['critical', 'warning']", {"cache miss ratio"}),
+        ("severity CONTAINS 'warn'", {"api latency", "queue depth"}),
+        ("severity ILIKE 'P3'", {"queue depth"}),
+        # the labels. prefix reads the label alone
+        ("labels.severity EXISTS", {"api latency"}),
+        ("labels.severity = 'warning'", {"api latency"}),
+    ],
+    ids=[
+        "equals_matches_any_severity",
+        "not_equals_matches_no_severity",
+        "equals_threshold_name",
+        "in_matches_any_severity",
+        "not_in_matches_no_severity",
+        "contains",
+        "ilike",
+        "labels_prefix_exists_reads_label_alone",
+        "labels_prefix_equals_reads_label_alone",
+    ],
+)
+def test_severity_filter(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    seed_alert_rules: Callable[[str, list[dict]], None],
+    query: str,
+    expected_names: set[str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    seed_alert_rules(SEED_CHANNEL_NAME, SEVERITY_RULES)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        params={"query": query},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert {rule["alert"] for rule in data["rules"]} == expected_names
+    assert data["total"] == len(expected_names)
+
+
+# a rule sorts by its highest severity
+@pytest.mark.parametrize(
+    ("order", "expected_names"),
+    [
+        ("desc", ["queue depth", "cache miss ratio", "api latency"]),
+        ("asc", ["api latency", "cache miss ratio", "queue depth"]),
+    ],
+    ids=["desc", "asc"],
+)
+def test_severity_sort(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    seed_alert_rules: Callable[[str, list[dict]], None],
+    order: str,
+    expected_names: list[str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    seed_alert_rules(SEED_CHANNEL_NAME, SEVERITY_RULES)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        params={"sort": "severity", "order": order},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert [rule["alert"] for rule in response.json()["data"]["rules"]] == expected_names
+
+
+def test_v2_list_still_serves_bare_array(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    seed_alert_rules: Callable[[str, list[dict]], None],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    seed_alert_rules(SEED_CHANNEL_NAME, SEED_RULES)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/rules"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+    assert isinstance(data, list), "deprecated v2 must keep returning a bare array"
+    assert {rule["alert"] for rule in data} == {r["alert"] for r in SEED_RULES}

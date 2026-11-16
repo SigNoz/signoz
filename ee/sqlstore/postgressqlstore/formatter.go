@@ -52,7 +52,7 @@ func (f *formatter) JSONIsArray(column, path string) []byte {
 func (f *formatter) JSONArrayElements(column, path, alias string) ([]byte, []byte) {
 	var sql []byte
 	sql = append(sql, "jsonb_array_elements("...)
-	sql = f.bunf.AppendIdent(sql, column)
+	sql = append(sql, f.TextToJsonColumn(column)...)
 	sql = append(sql, f.convertJSONPathToPostgresWithMode(path, false)...)
 	sql = append(sql, ") AS "...)
 	sql = f.bunf.AppendIdent(sql, alias)
