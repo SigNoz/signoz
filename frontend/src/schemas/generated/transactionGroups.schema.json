@@ -75,7 +75,9 @@
         "logs-field",
         "traces-field",
         "metrics-field",
-        "llm-pricing-rule"
+        "llm-pricing-rule",
+        "span-mapper-group",
+        "span-mapper"
       ],
       "type": "string"
     },
