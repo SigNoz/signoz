@@ -1,0 +1,483 @@
+{
+  "version": 1,
+  "definition": {
+    "schemaVersion": "v6",
+    "name": "signoz---cost-meter-breakdown",
+    "tags": [],
+    "spec": {
+      "display": {
+        "name": "Cost Meter Breakdown",
+        "description": "Logs, spans and metric datapoints ingested, from the signoz.meter.* metrics. Aggregated hourly; billing is calculated in UTC."
+      },
+      "variables": [],
+      "layouts": [
+        {
+          "kind": "Grid",
+          "spec": {
+            "display": {
+              "title": "Total"
+            },
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 4,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/f320363c-f077-5a13-ab53-cbf5c50c58c9"
+                }
+              },
+              {
+                "x": 4,
+                "y": 0,
+                "width": 4,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/28703c9e-3405-52b8-96bb-c390a2aa07bf"
+                }
+              },
+              {
+                "x": 8,
+                "y": 0,
+                "width": 4,
+                "height": 3,
+                "content": {
+                  "$ref": "#/spec/panels/59ea13f9-5e13-54f8-843f-128dcf160c99"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "display": {
+              "title": "Logs"
+            },
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/b32fdbcb-e0c0-55c8-83c8-5f80e6a111ac"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/2f60d067-db2e-57a9-a6d0-b956795f59cb"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "display": {
+              "title": "Traces"
+            },
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/f27dfc76-f87c-5b04-91a3-358b36f6e043"
+                }
+              },
+              {
+                "x": 6,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/99d6f751-fcd0-51d1-a156-c797c48ab65f"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": "Grid",
+          "spec": {
+            "display": {
+              "title": "Metrics"
+            },
+            "items": [
+              {
+                "x": 0,
+                "y": 0,
+                "width": 6,
+                "height": 6,
+                "content": {
+                  "$ref": "#/spec/panels/686fb25a-5b45-5956-9b37-45cb8ff90f78"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "panels": {
+        "f320363c-f077-5a13-ab53-cbf5c50c58c9": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Total size of log records ingested"
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "bytes"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "metrics",
+                      "source": "meter",
+                      "disabled": false,
+                      "aggregations": [
+                        {
+                          "metricName": "signoz.meter.log.size",
+                          "timeAggregation": "increase",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "sum"
+                        }
+                      ],
+                      "legend": "count"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "28703c9e-3405-52b8-96bb-c390a2aa07bf": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Total size of spans ingested"
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "bytes"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "metrics",
+                      "source": "meter",
+                      "disabled": false,
+                      "aggregations": [
+                        {
+                          "metricName": "signoz.meter.span.size",
+                          "timeAggregation": "increase",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "sum"
+                        }
+                      ],
+                      "legend": "count"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "59ea13f9-5e13-54f8-843f-128dcf160c99": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Total metric datapoints ingested"
+            },
+            "plugin": {
+              "kind": "signoz/NumberPanel",
+              "spec": {
+                "visualization": {
+                  "timePreference": "global_time"
+                },
+                "formatting": {
+                  "unit": "short"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "scalar",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "metrics",
+                      "source": "meter",
+                      "disabled": false,
+                      "aggregations": [
+                        {
+                          "metricName": "signoz.meter.metric.datapoint.count",
+                          "timeAggregation": "increase",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "sum"
+                        }
+                      ],
+                      "legend": "count"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "b32fdbcb-e0c0-55c8-83c8-5f80e6a111ac": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Count of log records ingested"
+            },
+            "plugin": {
+              "kind": "signoz/BarChartPanel",
+              "spec": {
+                "visualization": {
+                  "stackedBarChart": false
+                },
+                "formatting": {
+                  "unit": "short"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "metrics",
+                      "source": "meter",
+                      "disabled": false,
+                      "aggregations": [
+                        {
+                          "metricName": "signoz.meter.log.count",
+                          "timeAggregation": "increase",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "sum"
+                        }
+                      ],
+                      "legend": "count"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "2f60d067-db2e-57a9-a6d0-b956795f59cb": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Size of log records ingested"
+            },
+            "plugin": {
+              "kind": "signoz/BarChartPanel",
+              "spec": {
+                "visualization": {
+                  "stackedBarChart": false
+                },
+                "formatting": {
+                  "unit": "bytes"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "metrics",
+                      "source": "meter",
+                      "disabled": false,
+                      "aggregations": [
+                        {
+                          "metricName": "signoz.meter.log.size",
+                          "timeAggregation": "increase",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "sum"
+                        }
+                      ],
+                      "legend": "size"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "f27dfc76-f87c-5b04-91a3-358b36f6e043": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Count of spans ingested"
+            },
+            "plugin": {
+              "kind": "signoz/BarChartPanel",
+              "spec": {
+                "visualization": {
+                  "stackedBarChart": false
+                },
+                "formatting": {
+                  "unit": "short"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "metrics",
+                      "source": "meter",
+                      "disabled": false,
+                      "aggregations": [
+                        {
+                          "metricName": "signoz.meter.span.count",
+                          "timeAggregation": "increase",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "sum"
+                        }
+                      ],
+                      "legend": "count"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "99d6f751-fcd0-51d1-a156-c797c48ab65f": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Size of spans ingested"
+            },
+            "plugin": {
+              "kind": "signoz/BarChartPanel",
+              "spec": {
+                "visualization": {
+                  "stackedBarChart": false
+                },
+                "formatting": {
+                  "unit": "bytes"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "metrics",
+                      "source": "meter",
+                      "disabled": false,
+                      "aggregations": [
+                        {
+                          "metricName": "signoz.meter.span.size",
+                          "timeAggregation": "increase",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "sum"
+                        }
+                      ],
+                      "legend": "size"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "686fb25a-5b45-5956-9b37-45cb8ff90f78": {
+          "kind": "Panel",
+          "spec": {
+            "display": {
+              "name": "Count of metric datapoints ingested"
+            },
+            "plugin": {
+              "kind": "signoz/BarChartPanel",
+              "spec": {
+                "visualization": {
+                  "stackedBarChart": false
+                },
+                "formatting": {
+                  "unit": "short"
+                }
+              }
+            },
+            "queries": [
+              {
+                "kind": "time_series",
+                "spec": {
+                  "plugin": {
+                    "kind": "signoz/BuilderQuery",
+                    "spec": {
+                      "name": "A",
+                      "signal": "metrics",
+                      "source": "meter",
+                      "disabled": false,
+                      "aggregations": [
+                        {
+                          "metricName": "signoz.meter.metric.datapoint.count",
+                          "timeAggregation": "increase",
+                          "spaceAggregation": "sum",
+                          "reduceTo": "sum"
+                        }
+                      ],
+                      "legend": "count"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
