@@ -43,7 +43,11 @@ export const alertRulesPage = (
 	return {
 		status: 'success',
 		data: {
-			rules: rules.slice(offset, offset + limit),
+			// every mock rule carries a severity label, so the threshold-name fallback is not mirrored
+			rules: rules.slice(offset, offset + limit).map((rule) => ({
+				...rule,
+				severities: rule.labels?.severity ? [rule.labels.severity] : [],
+			})),
 			total: rules.length,
 			labels: [...labels.values()],
 			reservedKeywords: [...RESERVED_RULE_KEYWORDS],

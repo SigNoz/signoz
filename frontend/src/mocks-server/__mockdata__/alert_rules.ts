@@ -131,7 +131,11 @@ export const listRulesV3Response = (
 	return {
 		status: 'success',
 		data: {
-			rules: matching.slice(offset, offset + limit),
+			// every mock rule carries a severity label, so the threshold-name fallback is not mirrored
+			rules: matching.slice(offset, offset + limit).map((rule) => ({
+				...rule,
+				severities: rule.labels?.severity ? [rule.labels.severity] : [],
+			})),
 			total: matching.length,
 			labels: uniqueLabelPairs(rules),
 			reservedKeywords: RULES_RESERVED_KEYWORDS,
