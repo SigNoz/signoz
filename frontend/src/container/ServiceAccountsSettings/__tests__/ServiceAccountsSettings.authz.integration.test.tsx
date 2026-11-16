@@ -7,7 +7,14 @@ import {
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import ServiceAccountsSettings from '../ServiceAccountsSettings';
@@ -131,16 +138,20 @@ describe('ServiceAccountsSettings (integration)', () => {
 			</NuqsTestingAdapter>,
 		);
 
-		await screen.findByText('CI Bot');
-		expect(screen.getByText('Monitoring Agent')).toBeInTheDocument();
-		expect(screen.queryByText('Legacy Bot')).not.toBeInTheDocument();
+		await expect(screen.findByTestId('sa-row-sa-1')).resolves.toHaveTextContent(
+			'CI Bot',
+		);
+		expect(screen.getByTestId('sa-row-sa-2')).toHaveTextContent(
+			'Monitoring Agent',
+		);
+		expect(screen.queryByTestId('sa-row-sa-3')).not.toBeInTheDocument();
 		expect(screen.getAllByText('ACTIVE')).toHaveLength(2);
 		expect(onRequest).toHaveBeenCalledWith(
 			listParams({ limit: '20', offset: '0', query: ACTIVE_QUERY }),
 		);
 	});
 
-	it('filter dropdown to "All accounts" lists the deleted ones too', async () => {
+	it('the status chip set to "All accounts" lists the deleted ones too', async () => {
 		const onRequest = jest.fn() as ListRequestSpy;
 		server.use(listServiceAccountsHandler(onRequest));
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
@@ -150,14 +161,16 @@ describe('ServiceAccountsSettings (integration)', () => {
 			</NuqsTestingAdapter>,
 		);
 
-		await screen.findByText('CI Bot');
+		await screen.findByTestId('sa-row-sa-1');
 
-		await user.click(screen.getByTestId('sa-filter-trigger'));
 		await user.click(
-			await screen.findByRole('menuitem', { name: 'All accounts' }),
+			within(screen.getByTestId('sa-filter-status')).getByRole('combobox'),
 		);
+		await user.click(await screen.findByTitle('All accounts'));
 
-		await screen.findByText('Legacy Bot');
+		await expect(screen.findByTestId('sa-row-sa-3')).resolves.toHaveTextContent(
+			'Legacy Bot',
+		);
 		expect(screen.getByText('DELETED')).toBeInTheDocument();
 		expect(onRequest).toHaveBeenLastCalledWith(
 			listParams({ limit: '20', offset: '0' }),
@@ -174,7 +187,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 			</NuqsTestingAdapter>,
 		);
 
-		await screen.findByText('CI Bot');
+		await screen.findByTestId('sa-row-sa-1');
 
 		setSearchDraft('monitor');
 
@@ -185,9 +198,11 @@ describe('ServiceAccountsSettings (integration)', () => {
 
 		await user.click(screen.getByTestId('sa-list-search-submit'));
 
-		await screen.findByText('Monitoring Agent');
+		await expect(screen.findByTestId('sa-row-sa-2')).resolves.toHaveTextContent(
+			'Monitoring Agent',
+		);
 		await waitFor(() =>
-			expect(screen.queryByText('CI Bot')).not.toBeInTheDocument(),
+			expect(screen.queryByTestId('sa-row-sa-1')).not.toBeInTheDocument(),
 		);
 		expect(onRequest).toHaveBeenLastCalledWith(
 			listParams({ limit: '20', offset: '0', query: 'monitor' }),
@@ -280,12 +295,16 @@ describe('ServiceAccountsSettings (integration)', () => {
 			</NuqsTestingAdapter>,
 		);
 
-		await screen.findByText('Bot 0');
+		await expect(screen.findByTestId('sa-row-sa-0')).resolves.toHaveTextContent(
+			'Bot 0',
+		);
 		expect(screen.getByText('of 45')).toBeInTheDocument();
 
 		await user.click(screen.getByTitle('2'));
 
-		await screen.findByText('Bot 20');
+		await expect(screen.findByTestId('sa-row-sa-20')).resolves.toHaveTextContent(
+			'Bot 20',
+		);
 		expect(onRequest).toHaveBeenLastCalledWith(
 			listParams({ limit: '20', offset: '20', query: ACTIVE_QUERY }),
 		);

@@ -75,6 +75,7 @@ function ServiceAccountsTable({
 				onRow={(
 					record,
 				): {
+					'data-testid': string;
 					onClick?: () => void;
 					onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
 					style?: React.CSSProperties;
@@ -83,10 +84,11 @@ function ServiceAccountsTable({
 					'aria-label'?: string;
 				} => {
 					if (!onRowClick) {
-						return {};
+						return { 'data-testid': `sa-row-${record.id}` };
 					}
 
 					return {
+						'data-testid': `sa-row-${record.id}`,
 						onClick: (): void => onRowClick(record),
 						onKeyDown: (e: React.KeyboardEvent<HTMLElement>): void => {
 							if (e.key === 'Enter' || e.key === ' ') {
