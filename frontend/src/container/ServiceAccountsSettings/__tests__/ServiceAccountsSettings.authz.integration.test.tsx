@@ -1,7 +1,7 @@
 import userEvent from '@testing-library/user-event';
 import { EditorView } from '@uiw/react-codemirror';
 import {
-	reflectedEqualityValue,
+	reflectedValues,
 	spliceClause,
 } from 'components/ListFilter/dsl/filterQuery';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
@@ -67,11 +67,11 @@ const listServiceAccountsHandler = (
 	rest.get(SA_LIST_ENDPOINT, (req, res, ctx) => {
 		onRequest?.(req.url.searchParams.toString());
 		const query = req.url.searchParams.get('query') ?? '';
-		const status = reflectedEqualityValue(query, 'status');
+		const statuses = reflectedValues(query, 'status');
 		const text = spliceClause(query, 'status', null).toLowerCase();
 		const matched = mockServiceAccountsAPI.filter(
 			(account) =>
-				(!status || account.status === status) &&
+				(statuses.length === 0 || statuses.includes(account.status)) &&
 				(!text ||
 					account.name.toLowerCase().includes(text) ||
 					account.email.toLowerCase().includes(text)),
@@ -151,7 +151,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 		);
 	});
 
-	it('the status chip set to "All accounts" lists the deleted ones too', async () => {
+	it('unchecking Active on the status chip lists the deleted ones too', async () => {
 		const onRequest = jest.fn() as ListRequestSpy;
 		server.use(listServiceAccountsHandler(onRequest));
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
@@ -166,7 +166,18 @@ describe('ServiceAccountsSettings (integration)', () => {
 		await user.click(
 			within(screen.getByTestId('sa-filter-status')).getByRole('combobox'),
 		);
-		await user.click(await screen.findByTitle('All accounts'));
+		await user.click(
+			await waitFor(() => {
+				const option = screen
+					.getAllByTitle('Active')
+					.find((el) => el.classList.contains('ant-select-item-option'));
+				if (!option) {
+					throw new Error('the Active option has not rendered yet');
+				}
+				return option;
+			}),
+		);
+		await user.click(document.body);
 
 		await expect(screen.findByTestId('sa-row-sa-3')).resolves.toHaveTextContent(
 			'Legacy Bot',

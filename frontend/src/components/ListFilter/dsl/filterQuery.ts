@@ -47,16 +47,19 @@ export const clause = (key: string, op: string, value: ClauseValue): string => {
 	return `${key} ${op} [${value.map(literal).join(', ')}]`;
 };
 
-// The `created_by` clause for a set of emails (single `=`, multiple `IN [...]`).
-export const createdByClause = (emails: string[]): string | null => {
-	if (emails.length === 0) {
+// The clause for a set of values on `key`: none, a single `=`, or `IN [...]`.
+export const valuesClause = (key: string, values: string[]): string | null => {
+	if (values.length === 0) {
 		return null;
 	}
-	if (emails.length === 1) {
-		return `created_by = ${literal(emails[0])}`;
+	if (values.length === 1) {
+		return `${key} = ${literal(values[0])}`;
 	}
-	return `created_by IN [${emails.map(literal).join(', ')}]`;
+	return `${key} IN [${values.map(literal).join(', ')}]`;
 };
+
+export const createdByClause = (emails: string[]): string | null =>
+	valuesClause('created_by', emails);
 
 // Strip matching surrounding quotes and unescape a DSL string value.
 const unquote = (raw: string): string => {
@@ -133,61 +136,11 @@ export interface ReflectedClauses {
 	updated: UpdatedWindow;
 }
 
-// Best-effort extraction of the two dropdown-reflected clauses from the query.
-// Only top-level, AND-joined, simple `key OP value` terms reflect; OR/nested/
-// duplicate/other-operator clauses fall back to the dropdown default.
-export const parseReflectedClauses = (query: string): ReflectedClauses => {
-	const terms = splitTopLevelTerms(query);
-	let createdBy: string[] = [];
-	let updated: UpdatedWindow = 'any';
-	let createdByCount = 0;
-	let updatedCount = 0;
-
-	terms.forEach((term) => {
-		const trimmed = term.text.trim();
-		if (!trimmed || trimmed.startsWith('(')) {
-			return;
-		}
-		const scan = scanTerm(term.text);
-		if (!scan.key || !scan.operator || !scan.value) {
-			return;
-		}
-		const key = scan.key.text.toLowerCase();
-		const op = scan.operator.canonical;
-		const value = scan.value.text.trim();
-		if (key === 'created_by') {
-			createdByCount += 1;
-			if (op === '=') {
-				createdBy = [unquote(value)];
-			} else if (op === 'IN') {
-				createdBy = parseValueList(value);
-			} else {
-				createdBy = [];
-			}
-		} else if (key === 'updated_at') {
-			updatedCount += 1;
-			updated = op === '>=' ? (updatedWindowFromTimestamp(value) ?? 'any') : 'any';
-		}
-	});
-
-	if (createdByCount > 1) {
-		createdBy = [];
-	}
-	if (updatedCount > 1) {
-		updated = 'any';
-	}
-	return { createdBy, updated };
-};
-
-// The unquoted value of the one top-level `key = value` term (or a one-value
-// `key IN [...]`), or null when the key is absent, repeated, nested or compared
-// with another operator.
-export const reflectedEqualityValue = (
-	query: string,
-	key: string,
-): string | null => {
+// The values of the one top-level `key = value` or `key IN [...]` term, else an
+// empty list: absent, repeated, nested or other-operator terms do not reflect.
+export const reflectedValues = (query: string, key: string): string[] => {
 	const target = key.toLowerCase();
-	let value: string | null = null;
+	let values: string[] = [];
 	let count = 0;
 
 	splitTopLevelTerms(query).forEach((term) => {
@@ -205,31 +158,47 @@ export const reflectedEqualityValue = (
 		count += 1;
 		const op = scan.operator.canonical;
 		if (op === '=') {
-			value = unquote(scan.value.text);
+			values = [unquote(scan.value.text)];
 		} else if (op === 'IN') {
-			const values = parseValueList(scan.value.text);
-			value = values.length === 1 ? values[0] : null;
+			values = parseValueList(scan.value.text);
 		} else {
-			value = null;
+			values = [];
 		}
 	});
 
-	return count === 1 ? value : null;
+	return count === 1 ? values : [];
 };
 
-// Whether any top-level simple term filters on `key`, whatever its operator.
-export const hasTopLevelClause = (query: string, key: string): boolean => {
-	const target = key.toLowerCase();
-	return splitTopLevelTerms(query).some((term) => {
+// Best-effort extraction of the two dropdown-reflected clauses from the query.
+// Only top-level, AND-joined, simple `key OP value` terms reflect; OR/nested/
+// duplicate/other-operator clauses fall back to the dropdown default.
+export const parseReflectedClauses = (query: string): ReflectedClauses => {
+	let updated: UpdatedWindow = 'any';
+	let updatedCount = 0;
+
+	splitTopLevelTerms(query).forEach((term) => {
 		const trimmed = term.text.trim();
 		if (!trimmed || trimmed.startsWith('(')) {
-			return false;
+			return;
 		}
 		const scan = scanTerm(term.text);
-		return (
-			!!scan.key && !!scan.operator && scan.key.text.toLowerCase() === target
-		);
+		if (!scan.key || !scan.operator || !scan.value) {
+			return;
+		}
+		if (scan.key.text.toLowerCase() !== 'updated_at') {
+			return;
+		}
+		updatedCount += 1;
+		updated =
+			scan.operator.canonical === '>='
+				? (updatedWindowFromTimestamp(scan.value.text.trim()) ?? 'any')
+				: 'any';
 	});
+
+	if (updatedCount > 1) {
+		updated = 'any';
+	}
+	return { createdBy: reflectedValues(query, 'created_by'), updated };
 };
 
 // Add / replace / remove a top-level simple clause for `key`, leaving every other

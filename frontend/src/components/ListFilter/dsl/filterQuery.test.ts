@@ -4,9 +4,8 @@ import {
 	areQueriesEqual,
 	createdByClause,
 	isQueryEmpty,
-	hasTopLevelClause,
 	parseReflectedClauses,
-	reflectedEqualityValue,
+	reflectedValues,
 	spliceClause,
 	updatedWindowFromTimestamp,
 } from './filterQuery';
@@ -64,44 +63,26 @@ describe('parseReflectedClauses', () => {
 	});
 });
 
-describe('reflectedEqualityValue', () => {
-	it('reads the unquoted value of a top-level equality', () => {
-		expect(reflectedEqualityValue("status = 'active'", 'status')).toBe('active');
-		expect(reflectedEqualityValue('status = deleted AND x', 'status')).toBe(
-			'deleted',
-		);
-	});
-
-	it('reads a one-value IN list as the value', () => {
-		expect(reflectedEqualityValue("status IN ['active']", 'status')).toBe(
+describe('reflectedValues', () => {
+	it('reads an equality as one value and an IN list as all of them', () => {
+		expect(reflectedValues("status = 'active'", 'status')).toStrictEqual([
 			'active',
-		);
-		expect(reflectedEqualityValue('status in (deleted)', 'status')).toBe(
-			'deleted',
-		);
+		]);
+		expect(reflectedValues("status IN ['active']", 'status')).toStrictEqual([
+			'active',
+		]);
 		expect(
-			reflectedEqualityValue("status IN ['active', 'deleted']", 'status'),
-		).toBeNull();
+			reflectedValues('status in (active, deleted)', 'status'),
+		).toStrictEqual(['active', 'deleted']);
 	});
 
-	it('is null when the key is absent, nested, repeated or not an equality', () => {
-		expect(reflectedEqualityValue('name = x', 'status')).toBeNull();
-		expect(reflectedEqualityValue("(status = 'active')", 'status')).toBeNull();
+	it('is empty when the key is absent, nested, repeated or not = / IN', () => {
+		expect(reflectedValues('name = x', 'status')).toStrictEqual([]);
+		expect(reflectedValues("(status = 'active')", 'status')).toStrictEqual([]);
 		expect(
-			reflectedEqualityValue('status = active OR status = deleted', 'status'),
-		).toBeNull();
-		expect(reflectedEqualityValue('status != active', 'status')).toBeNull();
-	});
-});
-
-describe('hasTopLevelClause', () => {
-	it('is true for any top-level operator on the key and false otherwise', () => {
-		expect(hasTopLevelClause("status != 'active'", 'status')).toBe(true);
-		expect(hasTopLevelClause("name = 'x' AND status IN [a, b]", 'status')).toBe(
-			true,
-		);
-		expect(hasTopLevelClause("(status = 'active')", 'status')).toBe(false);
-		expect(hasTopLevelClause("name = 'x'", 'status')).toBe(false);
+			reflectedValues('status = active OR status = deleted', 'status'),
+		).toStrictEqual([]);
+		expect(reflectedValues('status != active', 'status')).toStrictEqual([]);
 	});
 });
 

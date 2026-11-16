@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
-	clause,
 	createdByClause,
-	hasTopLevelClause,
 	parseReflectedClauses,
-	reflectedEqualityValue,
 	type ReflectedClauses,
 	spliceClause,
 	updatedClause,
@@ -33,10 +30,6 @@ interface FilterZoneDraft {
 	run: () => void;
 	handleCreatedByChange: (emails: string[]) => void;
 	handleUpdatedChange: (window: UpdatedWindow) => void;
-	// The chip's value: a string when one `key = value` term reflects, null when
-	// the key is absent, undefined when a term on the key cannot be represented.
-	reflectedEnum: (key: string) => string | null | undefined;
-	handleEnumChange: (key: string, value: string | null) => void;
 	handleClearCreatedBy: () => void;
 	handleClear: () => void;
 }
@@ -96,27 +89,6 @@ export function useFilterZoneDraft({
 		[draft, commit, onFilterApplied],
 	);
 
-	const reflectedEnum = useCallback(
-		(key: string): string | null | undefined =>
-			reflectedEqualityValue(draft, key) ??
-			(hasTopLevelClause(draft, key) ? undefined : null),
-		[draft],
-	);
-
-	// An enum chip is a single definitive choice like Updated: splice and run.
-	const handleEnumChange = useCallback(
-		(key: string, value: string | null): void => {
-			const next = spliceClause(
-				draft,
-				key,
-				value === null ? null : clause(key, '=', value),
-			);
-			setDraft(next);
-			commit(next);
-		},
-		[draft, commit],
-	);
-
 	// Clear-all on the Created-by select removes its clause and runs immediately.
 	const handleClearCreatedBy = useCallback((): void => {
 		const next = spliceClause(draft, 'created_by', null);
@@ -143,8 +115,6 @@ export function useFilterZoneDraft({
 		run,
 		handleCreatedByChange,
 		handleUpdatedChange,
-		reflectedEnum,
-		handleEnumChange,
 		handleClearCreatedBy,
 		handleClear,
 	};

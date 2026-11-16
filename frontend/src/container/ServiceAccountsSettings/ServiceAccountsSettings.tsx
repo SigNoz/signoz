@@ -28,14 +28,12 @@ import { SA_PAGE_SIZE, SA_QUERY_PARAMS } from './constants';
 import {
 	SERVICE_ACCOUNTS_DEFAULT_QUERY,
 	SERVICE_ACCOUNTS_DSL_GRAMMAR,
-	SERVICE_ACCOUNTS_STATUS_CHIP,
 } from './list.config';
+import ServiceAccountStatusFilter from './ServiceAccountStatusFilter';
 import { useServiceAccountsData } from './useServiceAccountsData';
 import { ServiceAccountRow } from './utils';
 
 import './ServiceAccountsSettings.styles.scss';
-
-const STATUS_CHIPS = [SERVICE_ACCOUNTS_STATUS_CHIP];
 
 function ServiceAccountsSettings(): JSX.Element {
 	const queryClient = useQueryClient();
@@ -157,11 +155,17 @@ function ServiceAccountsSettings(): JSX.Element {
 					testIdPrefix="sa"
 					placeholder="DSL Filter — e.g. name CONTAINS 'ci' AND status = 'active'"
 					source={source}
-					enumChips={STATUS_CHIPS}
 					disabled={controlsDisabled}
 					wrapControl={wrapControl}
 					onQueryChange={handleQueryChange}
 					error={queryError ?? undefined}
+					extraFilters={
+						<ServiceAccountStatusFilter
+							query={searchQuery}
+							disabled={controlsDisabled}
+							onQueryChange={handleQueryChange}
+						/>
+					}
 					rightSlot={
 						<AuthZButton
 							size="md"

@@ -669,7 +669,8 @@ export function settingsDriver(page: Page): Settings {
 					.getByTestId('sa-filter-status')
 					.locator('.ant-select-selector')
 					.click();
-				await page.getByTitle(label, { exact: true }).click();
+				await page.locator('.ant-select-item-option', { hasText: label }).click();
+				await page.keyboard.press('Escape');
 			},
 			callWithKey: async (key, path) =>
 				(

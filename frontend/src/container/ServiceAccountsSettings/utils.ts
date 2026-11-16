@@ -1,5 +1,9 @@
 import type { ServiceaccounttypesServiceAccountDTO } from 'api/generated/services/sigNoz.schemas';
-import { spliceClause } from 'components/ListFilter/dsl/filterQuery';
+import {
+	reflectedValues,
+	spliceClause,
+	valuesClause,
+} from 'components/ListFilter/dsl/filterQuery';
 import { toISOString } from 'utils/app';
 
 export function toServiceAccountRow(
@@ -15,7 +19,17 @@ export function toServiceAccountRow(
 	};
 }
 
-// What the user typed besides the status the chip owns.
+// The statuses the filter shows for a query: its one top-level `status = x` or
+// `status IN [...]` term, else none. Other operators are left to the box.
+export function statusesOfQuery(query: string): string[] {
+	return reflectedValues(query, 'status');
+}
+
+export function withStatuses(query: string, statuses: string[]): string {
+	return spliceClause(query, 'status', valuesClause('status', statuses));
+}
+
+// What the user typed besides the status the filter owns.
 export function freeTextOfQuery(query: string): string {
 	return spliceClause(query, 'status', null);
 }

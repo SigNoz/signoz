@@ -18,7 +18,7 @@ import {
 	ServiceaccounttypesServiceAccountStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
-	reflectedEqualityValue,
+	reflectedValues,
 	spliceClause,
 } from 'components/ListFilter/dsl/filterQuery';
 import { SA_PAGE_SIZE } from 'container/ServiceAccountsSettings/constants';
@@ -96,8 +96,8 @@ const SORTABLE: Record<
 /**
  * The list as the API answers it: the filter, sort and paging are applied on
  * the server, so the story has to narrow the rows rather than hand back all of
- * them. Of the DSL only a top-level `status = x` clause and free text are
- * honoured, which is what the page's dropdown and search box produce.
+ * them. Of the DSL only a top-level status `=` / `IN` term and free text are
+ * honoured, which is what the page's chip and search box produce.
  */
 export const serviceAccountsPage = (
 	active: number,
@@ -105,7 +105,7 @@ export const serviceAccountsPage = (
 	params: URLSearchParams,
 ): ListServiceAccounts200 => {
 	const dsl = params.get('query') ?? '';
-	const status = reflectedEqualityValue(dsl, 'status') ?? '';
+	const statuses = reflectedValues(dsl, 'status');
 	const query = spliceClause(dsl, 'status', null)
 		.replace(/^'(.*)'$/, '$1')
 		.trim()
@@ -126,7 +126,7 @@ export const serviceAccountsPage = (
 	]
 		.filter(
 			(row) =>
-				(!status || row.status === status) &&
+				(statuses.length === 0 || statuses.includes(row.status)) &&
 				(!query ||
 					row.name.toLowerCase().includes(query) ||
 					row.email.toLowerCase().includes(query)),
