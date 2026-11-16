@@ -13,7 +13,7 @@ import {
 // real browser: type selection and its URL contract, the save round-trip, and
 // the error paths. The builder's own validation, threshold tiers, option lists
 // and payload shaping are asserted against the components in jest — see
-// `frontend/src/container/CreateAlertV2/**/__tests__/`.
+// `frontend/src/container/CreateAlert/**/__tests__/`.
 
 test.describe('Alert create', () => {
 	test('TC-01 the type cards render and picking one mounts the builder', async ({
@@ -122,30 +122,7 @@ test.describe('Alert create', () => {
 		expect(params.get('search')).toBeNull();
 	});
 
-	test('TC-06 the classic experience replaces history rather than stacking it', async ({
-		authedPage: page,
-		alerts,
-	}) => {
-		await alerts.form.gotoV1({ alertType: AlertType.METRICS });
-		await expect(alerts.form.v1SaveButton()).toBeVisible();
-		// The clearest v1/v2 discriminator: the v2 header input is not there.
-		await expect(alerts.form.name()).toBeHidden();
-
-		await alerts.form.gotoV2({ alertType: AlertType.METRICS });
-		await alerts.form.switchToClassicButton().click();
-
-		await expect(alerts.form.v1SaveButton()).toBeVisible();
-		expect(
-			new URL(page.url()).searchParams.get('showClassicCreateAlertsPage'),
-		).toBe('true');
-
-		// `safeNavigate(url, { replace: true })` — going back must skip the v2 entry
-		// rather than bouncing between the two experiences.
-		await page.goBack();
-		await expect(alerts.form.name()).toBeHidden();
-	});
-
-	test('TC-07 a save posts the v2 shape, keeps its labels and lands on the list', async ({
+	test('TC-06 a save posts the v2 shape, keeps its labels and lands on the list', async ({
 		authedPage: page,
 		alerts,
 		alertChannel,
@@ -182,7 +159,6 @@ test.describe('Alert create', () => {
 
 		const body = response.request().postDataJSON();
 		expect(body.schemaVersion).toBe('v2alpha1');
-		expect(body.version).toBe('v5');
 		expect(body.alert).toBe(name);
 		// The label is asserted on the request rather than on the pill: the pill
 		// only proves local state, and the defect worth guarding is a label that
@@ -213,7 +189,7 @@ test.describe('Alert create', () => {
 		expect(new URL(page.url()).pathname).toBe('/alerts');
 	});
 
-	test('TC-08 the evaluation window and cadence reach the payload', async ({
+	test('TC-07 the evaluation window and cadence reach the payload', async ({
 		authedPage: page,
 		alerts,
 		alertChannel,
@@ -247,7 +223,7 @@ test.describe('Alert create', () => {
 		expect(evaluation.spec.frequency).toBe('5m');
 	});
 
-	test('TC-09 a test notification reports that a non-firing rule matched nothing', async ({
+	test('TC-08 a test notification reports that a non-firing rule matched nothing', async ({
 		authedPage: page,
 		alerts,
 		alertChannel,
@@ -276,7 +252,7 @@ test.describe('Alert create', () => {
 		).toBeVisible();
 	});
 
-	test('TC-10 with no channels, routing policies are the only way to save', async ({
+	test('TC-09 with no channels, routing policies are the only way to save', async ({
 		authedPage: page,
 		alerts,
 	}) => {
@@ -309,7 +285,7 @@ test.describe('Alert create', () => {
 		expect(url.searchParams.get('subTab')).toBe('routing-policies');
 	});
 
-	test('TC-11 Discard leaves without posting and resets the form', async ({
+	test('TC-10 Discard leaves without posting and resets the form', async ({
 		authedPage: page,
 		alerts,
 		alertChannel,
@@ -334,7 +310,7 @@ test.describe('Alert create', () => {
 		await expect(alerts.form.thresholdRows()).toHaveCount(1);
 	});
 
-	test('TC-12 a rejected save opens the error modal and keeps the draft', async ({
+	test('TC-11 a rejected save opens the error modal and keeps the draft', async ({
 		authedPage: page,
 		alerts,
 	}) => {
@@ -359,7 +335,7 @@ test.describe('Alert create', () => {
 		]);
 		expect(response.status()).toBe(400);
 
-		// Both forms funnel every save error into the shared error modal.
+		// Every save error goes to the shared error modal.
 		await expect(alerts.form.errorModal()).toBeVisible();
 		await expect(alerts.shell.message(/do not exist/)).toBeVisible();
 
@@ -370,29 +346,16 @@ test.describe('Alert create', () => {
 		await expect(alerts.form.name()).toHaveValue(name);
 	});
 
-	test('TC-13 none of the four builder mounts logs a console error', async ({
+	test('TC-12 neither the create nor the edit builder logs a console error', async ({
 		alerts,
 		noise,
 		ownedRules,
 	}) => {
 		await alerts.form.gotoV2({ alertType: AlertType.LOGS });
-		// Metrics-based v1 on purpose: the only alert type whose classic form
-		// renders the detection-method step and the PromQL tab, i.e. the most code.
-		await alerts.form.gotoV1({ alertType: AlertType.METRICS });
 
 		await alerts.details.gotoOverview(
 			await ownedRules.threshold(`e2e-create-mount-v2-${Date.now()}`),
 		);
-
-		// The v1 edit form renders no `threshold-value-input`, so the shell-level
-		// wait is used and the classic form is asserted directly.
-		await alerts.details.goto(
-			await ownedRules.logs({
-				name: `e2e-create-mount-v1-${Date.now()}`,
-				schema: 'v1',
-			}),
-		);
-		await expect(alerts.form.v1SaveButton()).toBeVisible();
 
 		expect(noise.errors).toEqual([]);
 	});
@@ -410,7 +373,7 @@ test.describe('Alert create', () => {
 	// `.nav-item-data`, and a real click fails with "intercepts pointer events".
 	// `{ force: true }` does not help. Only `dispatchEvent` gets through, which
 	// proves the handler is fine and the defect is pointer delivery.
-	test.skip('TC-14 the v2 Discard button is clickable', async ({
+	test.skip('TC-13 the v2 Discard button is clickable', async ({
 		authedPage: page,
 		alerts,
 	}) => {

@@ -129,6 +129,15 @@ request_types = pytest.mark.parametrize(
             id="having_on_the_query",
         ),
         pytest.param(
+            [
+                build_builder_query("A", METRIC_NAME, "max", "max", disabled=True),
+                build_formula_query("F1", "A", having_expression="F1 > 1"),
+            ],
+            {},
+            "having is not supported for {request_type} requests",
+            id="having_on_the_formula",
+        ),
+        pytest.param(
             [build_builder_query("A", METRIC_NAME, "max", "max", bucket_options={"kind": "quadratic", "spec": {}})],
             {},
             "invalid bucketOptions kind",

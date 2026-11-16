@@ -150,7 +150,7 @@ test.describe('Alert history — filters', () => {
 		await expect(alerts.history.runQueryButton()).toBeVisible();
 	});
 
-	test('TC-06 threshold.name and severity filter per the rule schema', async ({
+	test('TC-06 threshold.name and severity filter the timeline', async ({
 		alerts,
 		alertHistory,
 	}) => {
@@ -176,22 +176,10 @@ test.describe('Alert history — filters', () => {
 			`of ${alertHistory.total}`,
 		);
 
-		// The v1 rule's threshold is named `warning`, so the same keys select the
-		// opposite way round.
-		await alerts.history.goto(alertHistory.ruleIdV1);
 		response = alerts.history.waitForResponse('timeline', {
 			filterExpression: `threshold.name = 'warning'`,
 		});
 		await alerts.history.runFilter(`threshold.name = 'warning'`);
-		await response;
-		await expect(alerts.history.footerRange()).toContainText(
-			`of ${alertHistory.totalV1}`,
-		);
-
-		response = alerts.history.waitForResponse('timeline', {
-			filterExpression: `threshold.name = 'critical'`,
-		});
-		await alerts.history.runFilter(`threshold.name = 'critical'`);
 		await response;
 		await expect(alerts.history.rows()).toHaveCount(0);
 	});

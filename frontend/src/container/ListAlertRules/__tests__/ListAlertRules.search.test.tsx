@@ -129,15 +129,29 @@ describe('ListAlertRules — search', () => {
 		});
 	});
 
-	it('sends each selected state as a repeated states= param', async () => {
+	it('sends the selected states once, as repeated states= params, when the dropdown closes', async () => {
 		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
 
-		await user.click(screen.getByTestId('alert-rules-filter-states'));
-		await user.click(await screen.findByRole('option', { name: 'Firing' }));
-		await user.click(await screen.findByRole('option', { name: 'Disabled' }));
+		await user.click(
+			within(screen.getByTestId('alert-rules-filter-states')).getByRole(
+				'combobox',
+			),
+		);
+		const dropdown = await waitFor(() => {
+			const element = document.querySelector<HTMLElement>('.ant-select-dropdown');
+			expect(element).not.toBeNull();
+			return element as HTMLElement;
+		});
+		await user.click(within(dropdown).getByText('Firing'));
+		await user.click(within(dropdown).getByText('Disabled'));
+
+		expect(requests.some((r) => r.has('states'))).toBe(false);
+		expect(getCurrentNuqsSearchParams().has('states')).toBe(false);
+
+		await user.click(document.body);
 
 		await waitFor(() => {
 			expect(lastRequest(requests).getAll('states')).toStrictEqual([
@@ -145,11 +159,12 @@ describe('ListAlertRules — search', () => {
 				'disabled',
 			]);
 		});
+		expect(requests.filter((r) => r.has('states'))).toHaveLength(1);
 		expect(lastRequest(requests).has('states[]')).toBe(false);
 		await waitFor(() => {
 			expect(getCurrentNuqsSearchParams().get('states')).toBe('firing,disabled');
 		});
-	});
+	}, 15_000);
 
 	it('Clear empties the query and the states', async () => {
 		const user = userEvent.setup({ delay: null });

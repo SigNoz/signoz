@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/cmd"
 	"github.com/SigNoz/signoz/ee/auditor/fileauditor"
+	"github.com/SigNoz/signoz/ee/auditor/kafkaauditor"
 	"github.com/SigNoz/signoz/ee/auditor/otlphttpauditor"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/samlcallbackauthn"
@@ -154,6 +155,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 				panic(err)
 			}
 			if err := factories.Add(fileauditor.NewFactory(licensing, version.Info)); err != nil {
+				panic(err)
+			}
+			if err := factories.Add(kafkaauditor.NewFactory(licensing, version.Info)); err != nil {
 				panic(err)
 			}
 			return factories

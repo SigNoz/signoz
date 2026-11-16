@@ -252,7 +252,7 @@ has arrived, the same way `drawer.open` retries a swallowed click.
 
 ## The evaluation window popover ignores Escape
 
-`alerts/create` TC-08 timed out in one full pass and in two of five repeats. The
+`alerts/create` TC-07 timed out in one full pass and in two of five repeats. The
 evaluation settings popover is an antd `Popover` with `trigger="click"`, and
 neither antd 5.11 nor `@rc-component/trigger` closes it on Escape, so
 `selectEvaluationTimeframe` left it open. The next click outside usually closed

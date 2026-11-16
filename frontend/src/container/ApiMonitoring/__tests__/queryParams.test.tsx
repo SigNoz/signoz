@@ -2,6 +2,7 @@ import {
 	ApiMonitoringParams,
 	DEFAULT_PARAMS,
 	getApiMonitoringParams,
+	getLegacyFilterExpressions,
 	setApiMonitoringParams,
 } from 'container/ApiMonitoring/queryParams';
 import { mockNavigate } from 'tests/router-mocks';
@@ -51,6 +52,50 @@ describe('API Monitoring Query Params', () => {
 			const search = `?${urlParams.toString()}`;
 
 			expect(getApiMonitoringParams(search)).toStrictEqual(DEFAULT_PARAMS);
+		});
+
+		it('converts filter items saved by older links into an expression', () => {
+			const legacyParams = {
+				selectedDomain: 'test-domain',
+				allEndpointsLocalFilters: {
+					op: 'AND',
+					items: [
+						{
+							id: 'a',
+							key: { key: 'service.name', dataType: 'string', type: 'resource' },
+							op: '=',
+							value: 'frontend',
+						},
+					],
+				},
+				endPointDetailsLocalFilters: {
+					op: 'AND',
+					items: [
+						{
+							id: 'b',
+							key: { key: 'http.status_code', dataType: 'string', type: '' },
+							op: '=',
+							value: '500',
+						},
+					],
+				},
+			};
+			const urlParams = new URLSearchParams();
+			urlParams.set(
+				'apiMonitoringParams',
+				encodeURIComponent(JSON.stringify(legacyParams)),
+			);
+
+			const search = `?${urlParams.toString()}`;
+
+			expect(getLegacyFilterExpressions(search)).toStrictEqual({
+				allEndpoints: "service.name = 'frontend'",
+				endPointDetails: "http.status_code = '500'",
+			});
+			const result = getApiMonitoringParams(search);
+			expect(result.selectedDomain).toBe('test-domain');
+			expect(result).not.toHaveProperty('allEndpointsLocalFilters');
+			expect(result).not.toHaveProperty('endPointDetailsLocalFilters');
 		});
 	});
 

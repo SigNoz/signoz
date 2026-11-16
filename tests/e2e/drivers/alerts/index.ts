@@ -45,4 +45,3 @@ export { nameContains } from '../dashboard-list';
 export type { AlertRuleViews, Alerts, HistoryEndpoint } from './driver';
 export * from './constants';
 export type { TimelineItem, TimelineResponse } from './types';
-export { V1_RULE_TEAM_LABEL } from './seeds';
