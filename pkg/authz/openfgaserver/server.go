@@ -2,6 +2,7 @@ package openfgaserver
 
 import (
 	"context"
+	"slices"
 	"strconv"
 	"sync"
 
@@ -50,6 +51,7 @@ func NewOpenfgaServer(ctx context.Context, settings factory.ProviderSettings, co
 		openfgapkgserver.WithDatastore(openfgaDataStore),
 		openfgapkgserver.WithLogger(NewLogger(scopedProviderSettings.Logger())),
 		openfgapkgserver.WithContextPropagationToDatastore(true),
+		openfgapkgserver.WithMaxChecksPerBatchCheck(uint32(config.OpenFGA.MaxChecksPerBatchCheck)),
 	}
 	openfgaServer, err := openfgapkgserver.NewServerWithOpts(opts...)
 	if err != nil {
@@ -115,31 +117,43 @@ func (server *Server) BatchCheck(ctx context.Context, tupleReq map[string]*openf
 		})
 	}
 
+	response := make(map[string]*authtypes.TupleKeyAuthorization, len(tupleReq))
+	for chunk := range slices.Chunk(batchCheckItems, server.config.OpenFGA.MaxChecksPerBatchCheck) {
+		results, err := server.batchCheck(ctx, storeID, modelID, chunk)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, item := range chunk {
+			id := item.GetCorrelationId()
+			// required because upstream doesn't set the error on the related spans: https://github.com/openfga/openfga/issues/3024
+			if checkErr := results[id].GetError(); checkErr != nil {
+				server.settings.Logger().ErrorContext(ctx, batchCheckItemErrorMessage, errors.Attr(server.getCheckError(checkErr)))
+			}
+
+			response[id] = &authtypes.TupleKeyAuthorization{
+				Tuple:      tupleReq[id],
+				Authorized: results[id].GetAllowed(),
+			}
+		}
+	}
+
+	return response, nil
+}
+
+func (server *Server) batchCheck(ctx context.Context, storeID string, modelID string, checks []*openfgav1.BatchCheckItem) (map[string]*openfgav1.BatchCheckSingleResult, error) {
 	checkResponse, err := server.openfgaServer.BatchCheck(
 		ctx,
 		&openfgav1.BatchCheckRequest{
 			StoreId:              storeID,
 			AuthorizationModelId: modelID,
-			Checks:               batchCheckItems,
+			Checks:               checks,
 		})
 	if err != nil {
 		return nil, errors.Newf(errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "authorization server is unavailable").WithAdditional(err.Error())
 	}
 
-	response := make(map[string]*authtypes.TupleKeyAuthorization, len(tupleReq))
-	for id, tuple := range tupleReq {
-		// required because upstream doesn't set the error on the related spans: https://github.com/openfga/openfga/issues/3024
-		if checkErr := checkResponse.Result[id].GetError(); checkErr != nil {
-			server.settings.Logger().ErrorContext(ctx, batchCheckItemErrorMessage, errors.Attr(server.getCheckError(checkErr)))
-		}
-
-		response[id] = &authtypes.TupleKeyAuthorization{
-			Tuple:      tuple,
-			Authorized: checkResponse.Result[id].GetAllowed(),
-		}
-	}
-
-	return response, nil
+	return checkResponse.GetResult(), nil
 }
 
 func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, _ authtypes.Relation, _ coretypes.Resource, _ []coretypes.Selector, roleSelectors []coretypes.Selector) error {

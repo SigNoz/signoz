@@ -510,6 +510,8 @@ authz:
   openfga:
     # maximum tuples allowed per openfga write operation.
     max_tuples_per_write: 300
+    # maximum checks allowed per openfga batch check operation.
+    max_checks_per_batch_check: 50
 
 ##################### Meter Reporter #####################
 meterreporter:

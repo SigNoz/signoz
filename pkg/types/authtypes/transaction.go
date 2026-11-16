@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 )
 
 type rawTransactionGroup struct {
@@ -20,6 +21,10 @@ type rawTransactionGroup struct {
 		Selectors []string `json:"selectors"`
 	} `json:"objectGroup"`
 }
+
+const MaxTransactionsPerCheck = 100
+
+type PostableTransactions []*Transaction
 
 type Transaction struct {
 	ID       valuer.UUID      `json:"-"`
@@ -92,6 +97,19 @@ func NewTransactionGroupsFromTransactions(transactions []coretypes.Transaction) 
 	}
 
 	return groups
+}
+
+func (PostableTransactions) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	schema.WithMaxItems(MaxTransactionsPerCheck)
+	return nil
+}
+
+func (transactions PostableTransactions) Validate() error {
+	if len(transactions) > MaxTransactionsPerCheck {
+		return errors.NewInvalidInputf(ErrCodeAuthZTooManyTransactions, "at most %d transactions can be checked in one request, got %d", MaxTransactionsPerCheck, len(transactions))
+	}
+
+	return nil
 }
 
 func NewGettableTransaction(results []*TransactionWithAuthorization) []*GettableTransaction {

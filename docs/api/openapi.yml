@@ -2004,6 +2004,11 @@ components:
         refreshToken:
           type: string
       type: object
+    AuthtypesPostableTransactions:
+      items:
+        $ref: '#/components/schemas/AuthtypesTransaction'
+      maxItems: 100
+      type: array
     AuthtypesPostableUser:
       properties:
         displayName:
@@ -14096,9 +14101,7 @@ paths:
         content:
           application/json:
             schema:
-              items:
-                $ref: '#/components/schemas/AuthtypesTransaction'
-              type: array
+              $ref: '#/components/schemas/AuthtypesPostableTransactions'
       responses:
         "200":
           content:
@@ -14116,6 +14119,12 @@ paths:
                 - data
                 type: object
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "500":
           content:
             application/json:
