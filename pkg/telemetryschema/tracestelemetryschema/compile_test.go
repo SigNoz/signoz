@@ -782,7 +782,7 @@ func TestIntrinsicColumnFirst(t *testing.T) {
 
 	t.Run("declared scope path selects without a literal spelling", func(t *testing.T) {
 		key := telemetrytypes.TelemetryFieldKey{Name: "scope.version", FieldContext: telemetrytypes.FieldContextScope}
-		expr, err := querybuilder.ResolveColumn(ctx, q, storage, &key, telemetrytypes.FieldDataTypeUnspecified, map[string][]*telemetrytypes.TelemetryFieldKey{})
+		expr, _, err := querybuilder.ResolveColumn(ctx, q, storage, &key, telemetrytypes.FieldDataTypeUnspecified, map[string][]*telemetrytypes.TelemetryFieldKey{})
 		require.NoError(t, err)
 		assert.Equal(t, "multiIf(scope.version::String <> '', scope.version::String, NULL)", expr)
 	})

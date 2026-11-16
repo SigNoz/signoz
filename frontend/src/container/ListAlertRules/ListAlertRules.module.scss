@@ -1,46 +1,30 @@
-.container {
+.layout {
 	display: flex;
-	flex-direction: column;
-	gap: 1rem;
+	align-items: stretch;
 	flex: 1;
 	min-height: 400px;
+	width: 100%;
 }
 
-.header {
-	position: relative;
-	z-index: 10;
-	display: flex;
-	justify-content: flex-end;
-	gap: 1rem;
-	flex-shrink: 0;
-	padding: 0 var(--spacing-8);
-}
-
-.refreshRow {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
-.filtersRow {
-	position: relative;
-	z-index: 10;
-	display: flex;
-	align-items: center;
-	gap: 1rem;
-	flex-shrink: 0;
-	padding: 0 var(--spacing-8);
-
-	--combobox-trigger-height: 2rem;
-}
-
-.searchInput {
-	min-width: 250px;
-}
-
-.filterSelect {
-	min-width: 300px;
+.main {
 	flex: 1;
+	min-width: 0;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	background: var(--l1-background);
+}
+
+.headerZone {
+	position: relative;
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	flex-shrink: 0;
+	gap: 14px;
+	padding: 20px 24px;
+	background: var(--l2-background);
+	border-bottom: 1px solid var(--l2-border);
 }
 
 .tableContainer {
@@ -51,11 +35,11 @@
 
 	--tanstack-table-header-cell-bg: var(--l2-background);
 	--tanstack-table-header-cell-color: var(--l2-foreground);
-	--tanstack-table-cell-bg: var(--l2-background);
+	--tanstack-table-cell-bg: var(--l1-background);
 	--tanstack-table-cell-color: var(--l2-foreground);
-	--tanstack-table-row-hover-bg: var(--l2-background-hover);
-	--tanstack-table-row-active-bg: var(--l2-background-active);
-	--tanstack-table-resize-handle-bg: var(--l2-background);
+	--tanstack-table-row-hover-bg: var(--l1-background-hover);
+	--tanstack-table-row-active-bg: var(--l1-background-active);
+	--tanstack-table-resize-handle-bg: transparent;
 	--tanstack-table-resize-handle-hover-bg: var(--l2-border);
 	--tanstack-table-row-height: 42px;
 
@@ -64,21 +48,7 @@
 	--tanstack-cell-padding-left-override: 16px;
 	--tanstack-cell-padding-right-override: 16px;
 
-	--tanstack-table-row-odd-bg: color-mix(
-		in srgb,
-		var(--l1-foreground) 2%,
-		transparent
-	);
-	--tanstack-table-row-even-bg: color-mix(
-		in srgb,
-		var(--l1-foreground) 1%,
-		transparent
-	);
 	--badge-cursor: pointer;
-}
-
-.searchIcon {
-	color: var(--l2-foreground);
 }
 
 .actionsColumn {

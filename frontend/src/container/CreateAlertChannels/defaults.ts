@@ -10,7 +10,7 @@ import {
 	AlertmanagertypesChannelTelegramConfigDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { ChannelKind, ChannelSpecFormValues } from './types';
+import { ChannelKind, ChannelSpecFormValues, JiraDeployment } from './types';
 
 // shared by slack and ms teams, both render the same title / description boxes
 export const SlackInitialConfig: Partial<AlertmanagertypesChannelSlackConfigDTO> =
@@ -58,6 +58,7 @@ export const GoogleChatInitialConfig: Partial<AlertmanagertypesChannelGoogleChat
 // wrapped in the ADF status panel + deep-links server-side.
 export const JiraInitialConfig: Partial<AlertmanagertypesChannelJiraConfigDTO> =
 	{
+		deployment: JiraDeployment.cloud,
 		issueType: 'Task',
 		summary: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
 		description: `{{ range .Alerts -}}

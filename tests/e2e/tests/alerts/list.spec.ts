@@ -1,4 +1,9 @@
-import { ALERT_LIST_PAGE_SIZE, expect, test } from '../../drivers/alerts';
+import {
+	ALERT_LIST_PAGE_SIZE,
+	expect,
+	nameContains,
+	test,
+} from '../../drivers/alerts';
 
 // What stays here is what needs a real backend behind a real table: the seeded
 // rules rendering, the server-side filter semantics, and the write paths that
@@ -13,7 +18,7 @@ test.describe('Alert rules list', () => {
 		alerts,
 		alertList,
 	}) => {
-		await alerts.list.goto({ search: alertList.namePrefix });
+		await alerts.list.goto({ query: nameContains(alertList.namePrefix) });
 
 		for (const header of ['Status', 'Alert Name', 'Severity', 'Labels']) {
 			await expect(alerts.list.columnHeader(header)).toBeVisible();
@@ -39,32 +44,20 @@ test.describe('Alert rules list', () => {
 		alertList,
 	}) => {
 		const perSeverity = alertList.count / 3;
-		const scoped = { search: alertList.namePrefix };
+		const query = `${nameContains(alertList.namePrefix)} AND severity = 'warning'`;
 
 		// One filter kind: a third of the batch.
-		await alerts.list.goto({
-			...scoped,
-			alertRulesFilters: JSON.stringify(['severity:warning']),
-		});
+		await alerts.list.goto({ query });
 		await expect(alerts.list.rows()).toHaveCount(perSeverity);
 
 		// Both kinds, both satisfied — seeded rules never fire, so they sit in
 		// `inactive` and the intersection is unchanged.
-		await alerts.list.goto({
-			...scoped,
-			alertRulesFilters: JSON.stringify(['severity:warning', 'state:inactive']),
-		});
+		await alerts.list.goto({ query, states: 'inactive' });
 		await expect(alerts.list.rows()).toHaveCount(perSeverity);
 
 		// Both kinds, only one satisfied. Under AND this is empty; under OR the
 		// severity match alone would still surface all `perSeverity` rules.
-		await alerts.list.goto(
-			{
-				...scoped,
-				alertRulesFilters: JSON.stringify(['severity:warning', 'state:firing']),
-			},
-			{ expectRows: false },
-		);
+		await alerts.list.goto({ query, states: 'firing' }, { expectRows: false });
 		await expect(alerts.list.rows()).toHaveCount(0);
 	});
 
@@ -76,7 +69,7 @@ test.describe('Alert rules list', () => {
 		const name = `e2e-alert-row-${Date.now()}`;
 		const ruleId = await ownedRules.threshold(name);
 
-		await alerts.list.goto({ search: name });
+		await alerts.list.goto({ query: nameContains(name) });
 		await expect(alerts.list.stateCell(ruleId)).toHaveText('OK');
 
 		const patched = (): Promise<unknown> =>
@@ -110,7 +103,7 @@ test.describe('Alert rules list', () => {
 		await ownedRules.register(cloned);
 		await expect(alerts.shell.message('Alert cloned successfully')).toBeVisible();
 
-		await alerts.list.goto({ search: name });
+		await alerts.list.goto({ query: nameContains(name) });
 		await expect(alerts.list.ruleName(`${name} - Copy`)).toBeVisible();
 
 		await alerts.list.openRowActions(`${name} - Copy`);
@@ -133,7 +126,7 @@ test.describe('Alert rules list', () => {
 		alerts,
 		alertList,
 	}) => {
-		await alerts.list.goto({ search: alertList.namePrefix });
+		await alerts.list.goto({ query: nameContains(alertList.namePrefix) });
 		const firstAscending = await alerts.list.rows().first().textContent();
 
 		await alerts.list.sortButton('Alert Name').click();
@@ -141,7 +134,7 @@ test.describe('Alert rules list', () => {
 		await alerts.list.sortButton('Alert Name').click();
 		await expect(alerts.list.rows().first()).not.toHaveText(firstAscending ?? '');
 
-		await alerts.list.goto({ search: alertList.namePrefix });
+		await alerts.list.goto({ query: nameContains(alertList.namePrefix) });
 		await alerts.list.pageSizeSelect().click();
 		await alerts.list.pageSizeOption(20).click();
 
@@ -154,7 +147,7 @@ test.describe('Alert rules list', () => {
 		alerts,
 		alertList,
 	}) => {
-		await alerts.list.goto({ search: alertList.namePrefix });
+		await alerts.list.goto({ query: nameContains(alertList.namePrefix) });
 
 		await alerts.list.openFirstRowActions();
 		await alerts.list.menuItem('Edit in New Tab').first().waitFor();

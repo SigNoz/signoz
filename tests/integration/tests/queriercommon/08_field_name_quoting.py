@@ -137,6 +137,46 @@ def test_logs_filter_expression_with_dollar_in_key(
         assert {row["data"]["body"] for row in get_rows(response)} == expected_bodies, f"{expression}: {response.text}"
 
 
+def test_logs_aggregation_with_dollar_in_key(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+) -> None:
+    now = datetime.now(tz=UTC)
+    insert_logs(
+        [
+            Logs(timestamp=now - timedelta(seconds=3), resources={"service.name": SERVICE}, attributes={"at$0dollar": "alpha-dollar", "at${x}": "a$0b", "n$0um": 5}, body="alpha body"),
+            Logs(timestamp=now - timedelta(seconds=2), resources={"service.name": SERVICE}, attributes={"at$0dollar": "beta-dollar", "at${x}": "it's", "n$0um": 7}, body="beta body"),
+            Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": SERVICE}, attributes={"plain": "gamma"}, body="gamma body"),
+        ]
+    )
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    start_ms = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    end_ms = int((now + timedelta(seconds=1)).timestamp() * 1000)
+
+    for expression, expected in [
+        ("count_distinct(at$0dollar)", 2),
+        ("count(DISTINCT at$0dollar)", 2),
+        ("sum(n$0um)", 12),
+        ("countIf(at$0dollar EXISTS)", 2),
+        ("count_distinct(at${x})", 2),
+        ("countIf(at${x} = 'a$0b')", 1),
+        ("countIf(at${x} = 'it\\'s')", 1),
+        ("sumIf(n$0um, at$0dollar = 'beta-dollar')", 7),
+    ]:
+        response = make_query_request(
+            signoz,
+            token,
+            start_ms,
+            end_ms,
+            [build_scalar_query("A", "logs", [build_aggregation(expression)], filter_expression=f"service.name = '{SERVICE}'")],
+            request_type="scalar",
+        )
+        assert response.status_code == HTTPStatus.OK, f"{expression}: {response.text}"
+        assert get_scalar_table_data(response.json()) == [[expected]], f"{expression}: {response.text}"
+
+
 @pytest.mark.parametrize("key_id", list(RESOURCE_KEYS), ids=list(RESOURCE_KEYS))
 def test_logs_group_by_hostile_resource_attribute(
     signoz: types.SigNoz,

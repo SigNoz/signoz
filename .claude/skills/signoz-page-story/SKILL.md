@@ -106,6 +106,27 @@ await expect(toggle.getAttribute('aria-checked')).toBe(before);
 
 **Delete a story once its difference disappears.** Say a story checks that a button reads "View" rather than "Edit" when a permission is missing. If the label later becomes the same either way, that story passes no matter which permissions are held, including all of them, and it is testing nothing. When a behaviour stops depending on a permission, delete the story or rewrite it to lock in the new behaviour, and say which one you did in the PR.
 
+## Plays
+
+CI runs each play once, with its story's own args. Anyone can flip a control in the panel, and nothing runs the play against that value, so a play that breaks on it goes unnoticed. Write each play so it cannot.
+
+Before writing the clicks, list what has to be on screen for the play's target to exist, and return early when the args take it away. These are the cases plays have missed:
+
+- The controls every story has. `State` on loading or error renders no rows and no filter suggestions. `Access`, `Permissions` and `Revoked` remove rows, row actions and gated buttons, and the `editor` and `viewer` presets grant telemetry reads only, so a page gated on its own resource shows them nothing. `Check state` on loading disables every gated control, and on error an `AuthZButton` stays enabled while an `AuthZGuardContent` set to fail closed hides what it wraps. `License` and `Banner` decide the plan, so a cloud-only form is gone on the others. `Hold tooltips open` shows a label a second time, inside its tooltip.
+- A count at 0. The page can swap its whole list for an empty state, and the header, filters and column picker go with it.
+- A view, filter or invalid query that leaves no rows, even when the count is above 0.
+- A tab without the widget. A filter box that one tab has is not on the next.
+- A second list beside the main one, such as saved views. At 0, loading or failed, its actions are gone.
+- Text that depends on an arg. A disabled rule offers Enable, not Disable. A write that fails raises a different toast from one that lands, and one left loading raises none. Pick the expected text from the args.
+- Rows that move. A view, a sort or pinning changes which row is locked, pinned or legacy, so find the row by what it is, not by its index.
+
+Make those checks with the page's own code instead of restating a condition. Build the rows with the builder the handler uses and the view's own filter, and check a permission with the page's own check through `accessFor(...).allows(...)`, or the role against the constant the page gates on, such as `componentPermission.action`. Export the checks from the mocks module, next to the handlers, so a handler change moves them too. The alert rules page has `listedRules`, `hasRowMenu`, `showsNoRulesPage` and `listsSavedViews`; the dashboards list has `listedDashboards`, `canList`, `canCreate` and `canUpdate`.
+
+Two habits cover the rest:
+
+- Use `findAllBy*` and take the first whenever the text can appear twice, such as in a tooltip or a popover title.
+- Wrap `toBeVisible` in `waitFor` for anything that fades in. A tooltip or toast found the moment it mounts is not visible yet.
+
 ## Rules
 
 - **Default is the loaded page.** `export const Default: Story = {}` with no args, every widget carrying data. Empty, loading and failed are variants or control values, never the default.
@@ -116,7 +137,7 @@ await expect(toggle.getAttribute('aria-checked')).toBe(before);
 - **Endpoints the page owns go through `response.json`**, so the Data control covers loaded, loading and failed in one declaration. Endpoints the page cannot render without (ingestion detection, preferences, feature payloads) take a plain resolver so the shell survives the loading and error states.
 - **Query-param state starts from `route`** (`/logs?tab=explorer`). In-page param navigation works inside a story; a different pathname is blocked and reported by the overlay. A control for a param is worth it only when the param is a page mode someone would want to flip.
 - **File layout**: every story file for a page lives under `src/pages/<Page>/stories/`: `<Page>.stories.tsx`, `<Page>.stories.mocks.tsx`, payload builders in `stories/__story_mockdata__/<page>.ts`, play functions in `stories/__story_mockdata__/<page>.play.ts`. Nothing page-specific in `src/storybook/controls/`. A page that is a tab strip over several routes gets one story file per tab, in its own folder under the module page (`LogsModulePage/Pipelines/stories/Pipelines.stories.tsx`), each with its own mocks and `__story_mockdata__/`; the builders more than one tab needs stay in the module page's own `stories/__story_mockdata__/` (`AlertList/stories/__story_mockdata__/alerts.ts`), which a tab reaches as `../../stories/__story_mockdata__/alerts`. Every one of them renders the module page, so the tab strip is there, and the `route` its mocks return decides which tab is open. A page's permission stories go one level further down, in `stories/authz/<Page>.authz.stories.tsx`, on the page's own mocks: see **Permission stories**.
-- **A state only a click reaches is a story with a `play` function**, not a control: a drawer, a modal, an edit mode the page holds in component state. Drive it with `userEvent` and the queries from `storybook/test`, take the first of a repeated row action, and wait on the state's own text. The page fetches before it renders a row, so the finder needs a timeout past the 1s default. The play is a named function exported from `__story_mockdata__/<page>.play.ts` and the story file only names it (`play: openEditDrawer`), so the reviewer reads states, not clicks; a story file that still holds play bodies moves them there the first time you edit it. It branches every check on the args it depends on: a control value the page supports never fails it. A state the app drops again on its own, such as one keyed on an array identity that a refetch replaces, does not get a story: it would not survive being looked at. A _sequence_ of such states, a wizard's steps or a questionnaire's pages, is still a control: declare the steps in the mocks module and walk them from a `play` on the meta that destructures `mount`, which is what makes Storybook replay it on an arg change. See [references/controls.md](references/controls.md).
+- **A state only a click reaches is a story with a `play` function**, not a control: a drawer, a modal, an edit mode the page holds in component state. Drive it with `userEvent` and the queries from `storybook/test`, take the first of a repeated row action, and wait on the state's own text. The page fetches before it renders a row, so the finder needs a timeout past the 1s default. The play is a named function exported from `__story_mockdata__/<page>.play.ts` and the story file only names it (`play: openEditDrawer`), so the reviewer reads states, not clicks; a story file that still holds play bodies moves them there the first time you edit it. It branches every check on the args it depends on: a control value the page supports never fails it. See **Plays**. A state the app drops again on its own, such as one keyed on an array identity that a refetch replaces, does not get a story: it would not survive being looked at. A _sequence_ of such states, a wizard's steps or a questionnaire's pages, is still a control: declare the steps in the mocks module and walk them from a `play` on the meta that destructures `mount`, which is what makes Storybook replay it on an arg change. See [references/controls.md](references/controls.md).
 - **The mocks are AI-owned and say so.** `<Page>.stories.mocks.tsx` and every file under a `__story_mockdata__/` open with this banner, above the imports:
 
   ```ts
@@ -143,7 +164,7 @@ await expect(toggle.getAttribute('aria-checked')).toBe(before);
 - [ ] a page tagged `authz` has its `Authz` folder: one story per permission it reads, each reached by `revoked`, none of them a role preset, and each one checked by the `disabled` state of what the permission gates
 - [ ] the mocks module and every `__story_mockdata__` file carry the AI-owned banner
 - [ ] every control flipped once, its effect seen on screen
-- [ ] every play passes with each control value its story exposes, and the story file holds no play body
+- [ ] every play passes with each control value its story exposes, checked against the cases in **Plays**, and the story file holds no play body
 - [ ] every request a reachable state makes (a selected row, an opened view, a switched tab) has a handler
 - [ ] console clean: no `[storybook] no msw handler`, no 501, no msw unhandled request, no React warning
 - [ ] no navigation overlay on mount

@@ -1,5 +1,5 @@
 import { rest, server } from 'mocks-server/server';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import ListView from './index';
 
@@ -60,7 +60,7 @@ const verifyControlsVisibility = (): void => {
 	expect(screen.getByText(/Order by/i)).toBeInTheDocument();
 
 	// Options menu (settings button) - check for translation key or actual text
-	expect(screen.getByText(/options_menu.options|options/i)).toBeInTheDocument();
+	expect(screen.getByTestId('periscope-btn-options-traces')).toBeInTheDocument();
 };
 
 describe('Traces ListView - Error and Empty States', () => {
@@ -148,8 +148,8 @@ describe('Traces ListView - Error and Empty States', () => {
 			expect(screen.getAllByRole('combobox').length).toBeGreaterThanOrEqual(1);
 
 			// Options menu should be clickable
-			const optionsButton = screen.getByText(/options_menu.options|options/i);
-			expect(optionsButton).toBeInTheDocument();
+			await userEvent.click(screen.getByTestId('periscope-btn-options-traces'));
+			await expect(screen.findByText('Edit columns')).resolves.toBeInTheDocument();
 		});
 
 		it('allows interaction with controls in empty state', async () => {
@@ -164,8 +164,8 @@ describe('Traces ListView - Error and Empty States', () => {
 			expect(screen.getAllByRole('combobox').length).toBeGreaterThanOrEqual(1);
 
 			// Options menu should be clickable
-			const optionsButton = screen.getByText(/options_menu.options|options/i);
-			expect(optionsButton).toBeInTheDocument();
+			await userEvent.click(screen.getByTestId('periscope-btn-options-traces'));
+			await expect(screen.findByText('Edit columns')).resolves.toBeInTheDocument();
 		});
 	});
 });

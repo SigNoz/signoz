@@ -158,7 +158,7 @@ function TracesView({
 					</Typography.Link>
 				</Typography>
 
-				<div className="trace-explorer-controls">
+				<div className={styles.controls}>
 					{headerActions}
 					<DownloadOptionsMenu
 						dataSource={DataSource.TRACES}

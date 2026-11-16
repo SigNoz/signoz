@@ -1,4 +1,5 @@
 import { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
+import { cloneDeep, get, set } from 'lodash-es';
 
 export const SECRET_PLACEHOLDER = '••••••••';
 
@@ -13,7 +14,7 @@ const SECRET_FIELDS_BY_KIND: Record<string, readonly string[]> = {
 	opsgenie: ['apiKey'],
 	msteams: ['webhookUrl'],
 	googlechat: ['webhookUrl'],
-	jira: ['apiToken'],
+	jira: ['auth.apiToken', 'auth.pat'],
 	jsmops: ['apiKey'],
 	incidentio: ['token'],
 	telegram: ['botToken'],
@@ -26,14 +27,14 @@ export function channelToJson(
 	const { kind, spec } = channel.config;
 	const secrets = SECRET_FIELDS_BY_KIND[kind] ?? [];
 
-	const safeSpec = showSecrets
-		? spec
-		: Object.fromEntries(
-				Object.entries(spec).map(([key, value]) => [
-					key,
-					secrets.includes(key) && value ? SECRET_PLACEHOLDER : value,
-				]),
-			);
+	const safeSpec = cloneDeep(spec);
+	if (!showSecrets) {
+		secrets.forEach((path) => {
+			if (get(safeSpec, path)) {
+				set(safeSpec, path, SECRET_PLACEHOLDER);
+			}
+		});
+	}
 
 	return JSON.stringify(
 		{

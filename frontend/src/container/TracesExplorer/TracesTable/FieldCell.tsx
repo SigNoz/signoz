@@ -4,7 +4,12 @@ import { Minus } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import {
+	logOpenTraceClicked,
+	OpenTraceSource,
+} from 'container/TracesExplorer/events';
 import { getMs } from 'utils/timeUtils';
 import { useTimezone } from 'providers/Timezone';
 
@@ -21,9 +26,10 @@ import styles from './FieldCell.module.scss';
 type FieldCellProps = {
 	name: string;
 	value: unknown;
+	panelType: PANEL_TYPES;
 };
 
-function FieldCell({ name, value }: FieldCellProps): JSX.Element {
+function FieldCell({ name, value, panelType }: FieldCellProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	if (TIMESTAMP_FIELD_NAMES.has(name)) {
@@ -54,7 +60,15 @@ function FieldCell({ name, value }: FieldCellProps): JSX.Element {
 			<AppLink
 				to={buildRoutePath(ROUTES.TRACE_DETAIL, { id: text })}
 				data-testid="trace-id"
-				onClick={(e): void => e.stopPropagation()}
+				onClick={(e): void => {
+					e.stopPropagation();
+					logOpenTraceClicked(panelType, OpenTraceSource.TraceId);
+				}}
+				onAuxClick={(e): void => {
+					if (e.button === 1) {
+						logOpenTraceClicked(panelType, OpenTraceSource.TraceId);
+					}
+				}}
 			>
 				{text}
 			</AppLink>

@@ -127,11 +127,11 @@ const CASES: PrefillCase[] = [
 	{
 		kind: 'jira',
 		spec: {
+			deployment: 'cloud',
 			site: 'https://acme.atlassian.net',
 			project: 'OPS',
 			issueType: 'Task',
-			email: 'someone@acme.io',
-			apiToken: 'jira-token',
+			auth: { email: 'someone@acme.io', apiToken: 'jira-token' },
 			summary: 'jira summary',
 			description: 'jira description',
 			priority: 'High',
@@ -153,6 +153,20 @@ const CASES: PrefillCase[] = [
 			['jira-reopen-transition-textbox', 'Reopen'],
 			['jira-wont-fix-resolution-textbox', "Won't Fix"],
 			['jira-reopen-duration-textbox', '72h'],
+		],
+	},
+	{
+		kind: 'jira',
+		spec: {
+			deployment: 'selfhosted',
+			site: 'https://jira.acme.com',
+			project: 'OPS',
+			issueType: 'Task',
+			auth: { pat: 'jira-pat' },
+		},
+		fields: [
+			['jira-site-textbox', 'https://jira.acme.com'],
+			['jira-pat-textbox', 'jira-pat'],
 		],
 	},
 	{

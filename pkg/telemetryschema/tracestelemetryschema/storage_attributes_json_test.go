@@ -288,14 +288,14 @@ func TestColumnExpressionForAttributeJSON(t *testing.T) {
 
 	t.Run("group by string", func(t *testing.T) {
 		key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
-		got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &key, telemetrytypes.FieldDataTypeString, nil)
+		got, _, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &key, telemetrytypes.FieldDataTypeString, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "multiIf(attributes.`user.id` IS NOT NULL, attributes.`user.id`::String, mapContains(attributes_string, 'attribute.user.id'), attributes_string['attribute.user.id'], NULL)", got)
 	})
 
 	t.Run("aggregation numeric", func(t *testing.T) {
 		key := attrKey("latency", telemetrytypes.FieldDataTypeNumber, evo)
-		got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &key, telemetrytypes.FieldDataTypeFloat64, nil)
+		got, _, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &key, telemetrytypes.FieldDataTypeFloat64, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "multiIf(toFloat64OrNull(attributes.`latency`::String) IS NOT NULL, toFloat64OrNull(attributes.`latency`::String), mapContains(attributes_number, 'attribute.latency'), toFloat64(attributes_number['attribute.latency']), NULL)", got)
 	})
@@ -362,7 +362,7 @@ func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 	}
 
 	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
-	got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &ref, telemetrytypes.FieldDataTypeString, fieldKeys)
+	got, _, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &ref, telemetrytypes.FieldDataTypeString, fieldKeys)
 	require.NoError(t, err)
 	assert.Equal(t,
 		"multiIf(attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::String, toFloat64OrNull(attributes.`http.status_code`::String) IS NOT NULL, toString(toFloat64OrNull(attributes.`http.status_code`::String)), NULL)",
@@ -386,7 +386,7 @@ func TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg(t *testing.T) {
 	}
 
 	ref := attrKey("http.status_code", telemetrytypes.FieldDataTypeUnspecified, nil)
-	got, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &ref, telemetrytypes.FieldDataTypeFloat64, fieldKeys)
+	got, _, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &ref, telemetrytypes.FieldDataTypeFloat64, fieldKeys)
 	require.NoError(t, err)
 	assert.Equal(t,
 		"multiIf(toFloat64OrNull(attributes.`http.status_code`::String) IS NOT NULL, toFloat64OrNull(attributes.`http.status_code`::String), attributes.`http.status_code` IS NOT NULL, toFloat64OrNull(attributes.`http.status_code`::String), NULL)",

@@ -6,6 +6,7 @@
 }
 
 .tracesTable {
+	--tanstack-table-row-height: 30px;
 	--tanstack-table-row-hover-bg: var(--l2-background-hover);
 	--tanstack-table-row-active-bg: var(--l3-background-60);
 }

@@ -228,7 +228,7 @@ func TestColumnExpressionForFamilyGroupBy(t *testing.T) {
 	fl := familyFlagOn(t)
 	storage := NewStorage(nil)
 
-	expr, err := querybuilder.ResolveColumn(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, telemetrytypes.FieldDataTypeString, fieldKeys)
+	expr, _, err := querybuilder.ResolveColumn(context.Background(), querybuilder.NewQueryInfo(context.Background(), valuer.UUID{}, fl, telemetrytypes.SignalTraces, nil, startNs, endNs), storage, &telemetrytypes.TelemetryFieldKey{Name: "deployment.environment.name"}, telemetrytypes.FieldDataTypeString, fieldKeys)
 	require.NoError(t, err)
 	require.Equal(t, "multiIf((multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL) IS NOT NULL OR multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL) IS NOT NULL), COALESCE(NULLIF(multiIf(resource.`deployment.environment.name` IS NOT NULL, resource.`deployment.environment.name`::String, mapContains(resources_string, 'deployment.environment.name'), resources_string['deployment.environment.name'], NULL), ''), NULLIF(multiIf(resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, mapContains(resources_string, 'deployment.environment'), resources_string['deployment.environment'], NULL), ''), ''), NULL)", expr)
 }

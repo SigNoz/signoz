@@ -3,6 +3,7 @@ import { useQueryClient } from 'react-query';
 import { useAppSearchParams } from 'lib/router/useAppSearchParams';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
@@ -10,6 +11,10 @@ import { QuickFiltersSource } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueryAIWithType } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
+import {
+	defaultOptionsQuery,
+	URL_OPTIONS,
+} from 'container/OptionsMenu/constants';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
@@ -85,8 +90,9 @@ function Explorer(): JSX.Element {
 		setIsLoadingQueries(false);
 	}, [queryClient]);
 
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
-		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
+	const selectedView = useMemo(
+		() => getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
+		[searchParams, panelTypesFromUrl],
 	);
 
 	const [warning, setWarning] = useState<Warning | undefined>();
@@ -113,13 +119,16 @@ function Explorer(): JSX.Element {
 
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
-			handleSetConfig(explorerViewToPanelType[view], DataSource.TRACES);
+			const panelType = explorerViewToPanelType[view];
+			handleSetConfig(panelType, DataSource.TRACES);
 
-			setSelectedView(view);
-
+			// Drop the left panel's url columns; each panel loads its own.
 			handleExplorerTabChange(
-				explorerViewToPanelType[view],
+				panelType,
 				querySearchParameters,
+				undefined,
+				undefined,
+				{ [URL_OPTIONS]: defaultOptionsQuery },
 			);
 		},
 		[handleExplorerTabChange, handleSetConfig],
@@ -190,6 +199,7 @@ function Explorer(): JSX.Element {
 				testId="llm-observability-explorer"
 				showFilters={isOpen}
 				onToggleFilters={(): void => setOpen(!isOpen)}
+				savedViewProps={{ source: SavedviewtypesSourceDTO.ai_observability }}
 				quickFilterProps={{
 					className: 'qf-traces-explorer',
 					quickFilterSource: QuickFiltersSource.AI_OBSERVABILITY,

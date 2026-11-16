@@ -59,11 +59,7 @@ func (m *module) relatedLinkBuilderForRule(ctx context.Context, orgID valuer.UUI
 		}
 	}
 	if builder.evaluation == nil {
-		evalWindow := rule.EvalWindow
-		if evalWindow.IsZero() {
-			evalWindow = valuer.MustParseTextDuration("5m")
-		}
-		builder.evaluation = ruletypes.RollingWindow{EvalWindow: evalWindow}
+		return nil
 	}
 
 	return builder

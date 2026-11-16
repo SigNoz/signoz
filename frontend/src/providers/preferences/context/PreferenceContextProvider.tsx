@@ -12,6 +12,7 @@ import {
 	PreferenceMode,
 } from 'providers/preferences/types';
 
+import { useAiObservabilityPreferenceSync } from '../sync/useAiObservabilityPreferenceSync';
 import { usePreferenceSync } from '../sync/usePreferenceSync';
 
 const PreferenceContext = createContext<PreferenceContextValue | undefined>(
@@ -47,12 +48,18 @@ export function PreferenceContextProvider({
 		sourcePage: SavedviewtypesSourceDTO.traces,
 	});
 
+	const aiObservabilitySlice = useAiObservabilityPreferenceSync({
+		mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
+		savedViewId: savedViewId || undefined,
+	});
+
 	const value = useMemo<PreferenceContextValue>(
 		() => ({
 			[SavedviewtypesSourceDTO.logs]: logsSlice,
 			[SavedviewtypesSourceDTO.traces]: tracesSlice,
+			[SavedviewtypesSourceDTO.ai_observability]: aiObservabilitySlice,
 		}),
-		[logsSlice, tracesSlice],
+		[logsSlice, tracesSlice, aiObservabilitySlice],
 	);
 
 	return (

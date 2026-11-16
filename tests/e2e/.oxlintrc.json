@@ -24,7 +24,18 @@
 		"playwright/no-conditional-in-test": "error",
 		"playwright/no-page-pause": "error",
 		"playwright/no-wait-for-timeout": "warn",
-		"playwright/prefer-web-first-assertions": "error"
+		"playwright/prefer-web-first-assertions": "error",
+		"no-restricted-properties": [
+			"error",
+			{
+				"property": "scrollIntoViewIfNeeded",
+				"message": "Scroll with wheelTo (drivers/scroll.ts), as a user would."
+			},
+			{
+				"property": "scrollIntoView",
+				"message": "Scroll with wheelTo (drivers/scroll.ts), as a user would."
+			}
+		]
 	},
 	"overrides": [
 		{

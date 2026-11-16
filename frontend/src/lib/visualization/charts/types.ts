@@ -1,5 +1,4 @@
 import uPlot from 'uplot';
-import type { MouseEvent as ReactMouseEvent } from 'react';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PrecisionOption } from 'components/Graph/types';
 import {
@@ -180,6 +179,8 @@ export interface PieSlice {
 	queryName?: string;
 	/** Group-by key→value of the slice's source row, used to build drill-down filters. */
 	labels?: Record<string, string>;
+	/** Slices folded into this one, largest first. Present only on the "Other" slice. */
+	groupedMembers?: PieSlice[];
 }
 
 /**
@@ -200,8 +201,11 @@ export interface PieChartProps {
 	 * (shared GRAPH_VISIBILITY_STATES, keyed by label). Omit to disable persistence.
 	 */
 	id?: string;
-	/** Fired when a slice's arc is clicked; carries the DOM event for popover positioning. */
-	onSliceClick?: (slice: PieSlice, event: ReactMouseEvent) => void;
+	/**
+	 * Fired when a slice is clicked, with the viewport point to anchor the drill-down popover:
+	 * the cursor for an arc, the pinned tooltip's corner for a grouped slice's member.
+	 */
+	onSliceClick?: (slice: PieSlice, anchor: { x: number; y: number }) => void;
 	'data-testid'?: string;
 }
 

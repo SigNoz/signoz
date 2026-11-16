@@ -299,6 +299,32 @@ export const JiraProxySite: Story = {
 	},
 };
 
+/**
+ * The Jira form switched to a self-hosted Jira: the site URL and a personal
+ * access token replace the Atlassian email and API token, and the test send
+ * goes through.
+ */
+export const JiraSelfHosted: Story = {
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+
+		await selectChannelType(canvasElement, /^Jira$/);
+		await fillName(canvasElement, 'alerts-jira-dc');
+		await userEvent.click(
+			canvas.getByTestId('jira-deployment-radio-item-selfhosted'),
+		);
+		await userEvent.type(
+			canvas.getByTestId('jira-site-textbox'),
+			'https://jira.acme.internal',
+		);
+		await userEvent.type(canvas.getByTestId('jira-pat-textbox'), 'pat');
+		await userEvent.type(canvas.getByTestId('jira-project-textbox'), 'OPS');
+		await userEvent.type(canvas.getByTestId('jira-issue-type-textbox'), 'Task');
+
+		await sendTest(canvasElement);
+	},
+};
+
 /** The Jira Service Management Ops form: the API key, priority and tags. */
 export const JiraServiceManagementOps: Story = {
 	play: async ({ canvasElement }): Promise<void> => {

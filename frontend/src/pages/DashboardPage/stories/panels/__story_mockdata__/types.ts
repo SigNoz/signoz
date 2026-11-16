@@ -20,6 +20,7 @@ import type {
 	HEATMAP_COUNT_RANGES,
 	PANEL_KINDS,
 	PANEL_RESULTS,
+	PIE_SLICES,
 	SPAN_GAPS,
 	TEXT_SAMPLES,
 	UNITS,
@@ -43,6 +44,8 @@ export type YScale = (typeof Y_SCALES)[number];
 export type Gaps = (typeof GAPS)[number];
 
 export type SpanGaps = (typeof SPAN_GAPS)[number];
+
+export type PieSlices = (typeof PIE_SLICES)[number];
 
 /** The controls that shape the dashboard document. */
 export interface PanelArgs {
@@ -79,4 +82,5 @@ export interface PanelResponseArgs extends PanelRequest {
 	listRows: number;
 	listJsonBody: boolean;
 	gaps: Gaps;
+	pieSlices: PieSlices;
 }

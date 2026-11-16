@@ -87,7 +87,7 @@ test.describe('Dashboards — panel zoom', () => {
 		const ids = Object.values(COMPACT_PANELS);
 		for (const id of ids) {
 			const target = panels.panel(id);
-			await target.scrollIntoView();
+			await target.wheelIntoView();
 			await expect(target.visibility()).toHaveAttribute(
 				'data-panel-visible',
 				'true',

@@ -134,9 +134,7 @@ func newPromqlQuery(
 }
 
 func (q *promqlQuery) Fingerprint() string {
-	switch q.requestType {
-	case qbv5.RequestTypeTimeSeries, qbv5.RequestTypeHeatmap:
-	default:
+	if !q.requestType.IsBuiltFromTimeSeries() {
 		return ""
 	}
 
@@ -358,7 +356,7 @@ func collectExecStats(began time.Time, statsMu *sync.Mutex, rowsScanned, bytesSc
 }
 
 func (q *promqlQuery) toResult(matrix promql.Matrix, warnings []string, began time.Time, statsMu *sync.Mutex, rowsScanned, bytesScanned *uint64) (*qbv5.Result, error) {
-	if q.requestType == qbv5.RequestTypeHeatmap {
+	if q.requestType.CountsIntoBuckets() {
 		return q.toResultForHeatmap(matrix, warnings, began, statsMu, rowsScanned, bytesScanned)
 	}
 	return q.toResultForTimeSeriesAndScalar(matrix, warnings, began, statsMu, rowsScanned, bytesScanned), nil

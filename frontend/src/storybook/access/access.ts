@@ -6,11 +6,15 @@ import {
 	IsViewerPermission,
 } from 'lib/authz/hooks/useAuthZ/legacy';
 import permissionsType from 'lib/authz/hooks/useAuthZ/permissions.type';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import {
 	formatPermission,
 	gettableTransactionToPermission,
+	permissionToTransactionDto,
 } from 'lib/authz/hooks/useAuthZ/utils';
 import { ROLES, USER_ROLES } from 'types/roles';
+
+import type { ResponseState } from '../runtime/responseState';
 
 /**
  * `relation:kind` for every verb the backend allows on a resource, from the
@@ -158,4 +162,24 @@ export const accessFor = (
 			),
 		legacyRole: deriveLegacyRole(permissions),
 	};
+};
+
+export interface AccessArgs {
+	access: AccessPreset;
+	permissions: readonly string[];
+	revoked: readonly string[];
+	authzState: ResponseState;
+}
+
+/** Whether `authz/check`, answered from a story's access controls, passes every one of `checks`. */
+export const grantsAll = (
+	args: AccessArgs,
+	...checks: BrandedPermission[]
+): boolean => {
+	const grant = accessFor(args.access, args.permissions, args.revoked);
+
+	return (
+		args.authzState === 'loaded' &&
+		checks.every((check) => grant.allows(permissionToTransactionDto(check)))
+	);
 };

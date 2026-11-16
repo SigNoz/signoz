@@ -11,6 +11,7 @@ import { columnStorageKey } from '../storage';
 import { tanstackDriver, type Tanstack } from '../tanstack';
 
 import { K8S_PATH, type EntityDef, type K8sCategory } from './entities';
+import { wheelTo } from '../scroll';
 
 /**
  * Driving infra monitoring: the list, the drawer, and the state they share.
@@ -347,9 +348,7 @@ export function infraDriver(page: Page): Infra {
 					// Playwright's auto-scroll aligns to the nearest edge, which parks a
 					// low row under the sticky pagination bar; centring clears both
 					// sticky edges, as a user's own scroll would.
-					await button.evaluate((element) =>
-						element.scrollIntoView({ block: 'center', inline: 'nearest' }),
-					);
+					await wheelTo(button);
 					await button.click({ timeout: 5_000 });
 				}
 				await expect(container).toBeVisible({ timeout: 3_000 });
@@ -361,9 +360,7 @@ export function infraDriver(page: Page): Infra {
 		collapseGroup: async (groupLabel) => {
 			const button = list.groupRow(groupLabel).getByTestId('expand-row-button');
 			if ((await button.getAttribute('aria-expanded')) === 'true') {
-				await button.evaluate((element) =>
-					element.scrollIntoView({ block: 'center', inline: 'nearest' }),
-				);
+				await wheelTo(button);
 				await button.click({ timeout: 5_000 });
 			}
 			await expect(button).toHaveAttribute('aria-expanded', 'false');
@@ -448,9 +445,7 @@ export function infraDriver(page: Page): Infra {
 				if (!(await drawerPanel().isVisible())) {
 					// The header row is `position: sticky`, so a row scrolled "just into
 					// view" lands under it and the click is swallowed by a header cell.
-					await row.evaluate((element) =>
-						element.scrollIntoView({ block: 'center' }),
-					);
+					await wheelTo(row);
 					await row.click({ timeout: 5_000 });
 				}
 				await expect(page.getByTestId(DRAWER.close)).toBeVisible({

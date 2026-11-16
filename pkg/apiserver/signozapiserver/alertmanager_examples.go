@@ -118,18 +118,34 @@ func createNotificationChannelExamples() []handler.OpenAPIExample {
 		{
 			Name:        "jira",
 			Summary:     "Jira Cloud issues",
-			Description: "Creates one Jira Cloud issue per alert group and reopens it if the alert fires again within `reopenDuration`. Authenticates with an Atlassian account email and API token.",
+			Description: "Creates one Jira Cloud issue per alert group and reopens it if the alert fires again within `reopenDuration`. Authenticates with an Atlassian account email and API token under `auth`.",
 			Value: map[string]any{
 				"name":        "jira-platform",
 				"displayName": "Jira platform",
 				"config": channelConfig("jira", map[string]any{
+					"deployment":     "cloud",
 					"site":           "https://example.atlassian.net",
 					"project":        "OPS",
 					"issueType":      "Bug",
-					"email":          "oncall@example.com",
-					"apiToken":       "XXXXXXXXXXXXXXXXXXXXXXXX",
+					"auth":           map[string]any{"email": "oncall@example.com", "apiToken": "XXXXXXXXXXXXXXXXXXXXXXXX"},
 					"labels":         []any{"signoz", "alert"},
 					"reopenDuration": "3d",
+				}),
+			},
+		},
+		{
+			Name:        "jira-selfhosted",
+			Summary:     "Self-hosted Jira issues",
+			Description: "Creates issues on a Jira Data Center or Server site. Authenticates with a personal access token under `auth`, sent as a Bearer header.",
+			Value: map[string]any{
+				"name":        "jira-datacenter",
+				"displayName": "Jira Data Center",
+				"config": channelConfig("jira", map[string]any{
+					"deployment": "selfhosted",
+					"site":       "https://jira.example.com",
+					"project":    "OPS",
+					"issueType":  "Bug",
+					"auth":       map[string]any{"pat": "XXXXXXXXXXXXXXXXXXXXXXXX"},
 				}),
 			},
 		},

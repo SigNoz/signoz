@@ -1,4 +1,5 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import {
 	getFieldColumn,
@@ -15,7 +16,7 @@ const TRACE_FIELDS = [
 
 export const columns: TableColumnDef<TracesTableRow>[] = TRACE_FIELDS.map(
 	(field) => ({
-		...getFieldColumn(field),
+		...getFieldColumn(field, PANEL_TYPES.TRACE),
 		enableRemove: false,
 		canBeHidden: false,
 	}),

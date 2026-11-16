@@ -1,4 +1,10 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import {
+	useCallback,
+	useMemo,
+	useRef,
+	useState,
+	type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -22,11 +28,14 @@ const LIST_VERTICAL_PADDING = 16;
 interface TooltipListProps {
 	id: string;
 	content: TooltipContentItem[];
+	/** Makes each row a button. */
+	onItemClick?: (index: number, event: ReactMouseEvent) => void;
 }
 
 export default function TooltipList({
 	id,
 	content,
+	onItemClick,
 }: TooltipListProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const isScrollEventTriggered = useRef(false);
@@ -62,9 +71,23 @@ export default function TooltipList({
 				onScroll={handleScroll}
 				style={{ height }}
 				totalListHeightChanged={setTotalListHeight}
-				itemContent={(_, item): JSX.Element => (
-					<TooltipItem item={item} isItemActive={item.isHighlighted === true} />
-				)}
+				itemContent={(index, item): JSX.Element => {
+					const row = (
+						<TooltipItem item={item} isItemActive={item.isHighlighted === true} />
+					);
+					return onItemClick ? (
+						<button
+							type="button"
+							className={Styles.itemButton}
+							data-testid="uplot-tooltip-item-button"
+							onClick={(event): void => onItemClick(index, event)}
+						>
+							{row}
+						</button>
+					) : (
+						row
+					);
+				}}
 			/>
 		</div>
 	);

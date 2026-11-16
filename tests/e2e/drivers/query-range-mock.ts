@@ -272,7 +272,9 @@ export async function holdQueryRange(
 	});
 	await page.route(QUERY_RANGE_GLOB, async (route) => {
 		await gate;
-		await fulfill(route, body);
+		// A cancelled run aborts its request while it is held; there is
+		// nothing left to answer.
+		await fulfill(route, body).catch(() => undefined);
 	});
 	return { release: () => release() };
 }

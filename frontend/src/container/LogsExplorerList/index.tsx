@@ -48,6 +48,7 @@ import {
 	isTraceToLogsQuery,
 } from './utils';
 
+import styles from './LogsExplorerList.module.scss';
 import './LogsExplorerList.style.scss';
 
 function Footer(): JSX.Element {
@@ -202,6 +203,7 @@ function LogsExplorerList({
 			return (
 				<TanStackTable<ILog>
 					ref={ref as React.Ref<TanStackTableHandle>}
+					className={styles.logsTable}
 					columns={logsColumns}
 					columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
 					respectColumnOrder={false}
