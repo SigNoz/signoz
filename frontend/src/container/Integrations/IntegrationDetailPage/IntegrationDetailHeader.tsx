@@ -143,6 +143,7 @@ function IntegrationDetailHeader(
 					</div>
 				</div>
 				<Button
+					data-testid="integration-connect-btn"
 					className={cx(
 						'configure-btn',
 						!isConnectionStateNotInstalled && 'test-connection',
@@ -191,6 +192,7 @@ function IntegrationDetailHeader(
 						)}
 					>
 						<Button
+							data-testid="integration-modal-secondary-btn"
 							type="text"
 							icon={
 								isConnectionStateNotInstalled ? <ConfigureIcon /> : <Check size={14} />
@@ -211,6 +213,7 @@ function IntegrationDetailHeader(
 						</Button>
 						{isConnectionStatePending && (
 							<Button
+								data-testid="integration-modal-primary-btn"
 								type="primary"
 								icon={
 									isConnectionStateNotInstalled ? <Check size={14} /> : <ConfigureIcon />

@@ -52,6 +52,7 @@ function DeleteMemberDialog({
 				variant="solid"
 				color="danger"
 				onClick={onConfirm}
+				testId="member-delete-confirm-btn"
 				loading={isDeleting}
 				prefix={<Trash2 size={12} />}
 			>

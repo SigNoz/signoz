@@ -309,7 +309,7 @@ describe('Explorer', () => {
 		renderExplorer();
 
 		const oneChartPerQueryToggle = screen.getByRole('switch');
-		expect(oneChartPerQueryToggle).toBeEnabled();
+		expect(oneChartPerQueryToggle).not.toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('one chart per query toggle should be enabled when multiple metrics have no unit', () => {
@@ -352,7 +352,7 @@ describe('Explorer', () => {
 		const oneChartPerQueryToggle = screen.getByRole('switch');
 		// Toggle should be enabled (not forced/disabled) since both metrics
 		// have the same unit (no unit) and should be viewable on the same graph
-		expect(oneChartPerQueryToggle).toBeEnabled();
+		expect(oneChartPerQueryToggle).not.toHaveAttribute('aria-disabled', 'true');
 		expect(oneChartPerQueryToggle).not.toBeChecked();
 	});
 

@@ -124,7 +124,9 @@ function UserInfo(): JSX.Element {
 	return (
 		<div className="user-info-card">
 			<div className="user-info">
-				<div className="user-name">{user.displayName}</div>
+				<div className="user-name" data-testid="user-info-name">
+					{user.displayName}
+				</div>
 
 				<div className="user-info-subsection">
 					<div className="user-email">
@@ -143,6 +145,7 @@ function UserInfo(): JSX.Element {
 					className="periscope-btn secondary"
 					icon={<FileTerminal size={16} />}
 					onClick={(): void => setIsUpdateNameModalOpen(true)}
+					data-testid="update-name-open-btn"
 				>
 					Update name
 				</Button>
@@ -152,6 +155,7 @@ function UserInfo(): JSX.Element {
 					className="periscope-btn secondary"
 					icon={<FileTerminal size={16} />}
 					onClick={(): void => setIsResetPasswordModalOpen(true)}
+					data-testid="reset-password-open-btn"
 				>
 					Reset password
 				</Button>
@@ -180,6 +184,7 @@ function UserInfo(): JSX.Element {
 				<div className="update-name-input">
 					<Input
 						placeholder="e.g. John Doe"
+						data-testid="update-name-input"
 						value={changedName}
 						disabled={isLoading}
 						onChange={(e): void => setChangedName(e.target.value)}

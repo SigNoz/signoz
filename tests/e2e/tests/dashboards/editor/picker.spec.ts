@@ -86,8 +86,7 @@ test.describe('Dashboards — panel picker', () => {
 		});
 		await dashboards.seedAndOpen(dashboard);
 
-		await newPanel.sectionAddPanel().scrollIntoViewIfNeeded();
-		await newPanel.sectionAddPanel().click();
+		await newPanel.openFromSection();
 
 		await expect(newPanel.root()).toBeVisible();
 		await expect(newPanel.confirmButton()).toHaveText('Add to Empty');

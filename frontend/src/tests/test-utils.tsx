@@ -190,7 +190,7 @@ const customRender = (
 	} = providerProps;
 
 	return render(ui, {
-		wrapper: () => (
+		wrapper: ({ children }) => (
 			<AllTheProviders
 				role={role}
 				appContextOverrides={appContextOverrides}
@@ -198,7 +198,7 @@ const customRender = (
 				initialRoute={initialRoute}
 				routePath={routePath}
 			>
-				{ui}
+				{children}
 			</AllTheProviders>
 		),
 		...options,

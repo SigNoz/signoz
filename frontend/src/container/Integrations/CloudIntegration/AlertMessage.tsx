@@ -15,20 +15,14 @@ function AlertMessage({
 				<Callout
 					title={
 						<div className="cloud-account-setup-form__alert-message">
-							<Spin
-								indicator={
-									<LoaderCircle
-										size={14}
-										className="anticon anticon-loading anticon-spin ant-spin-dot"
-									/>
-								}
-							/>
+							<Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />
 							Waiting for connection, retrying in{' '}
 							<span className="retry-time">10</span> secs...
 						</div>
 					}
 					type="info"
 					showIcon={false}
+					testId="cloud-connect-waiting"
 				/>
 			);
 		case ModalStateEnum.ERROR:
@@ -40,6 +34,7 @@ function AlertMessage({
 						</div>
 					}
 					type="error"
+					testId="cloud-connect-error"
 				/>
 			);
 		default:

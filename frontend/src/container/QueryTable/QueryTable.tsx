@@ -160,7 +160,7 @@ export function QueryTable({
 
 	return (
 		<>
-			<div className="query-table">
+			<div className="query-table" data-testid="query-table">
 				{isDownloadEnabled && (
 					<div className="query-table--download">
 						<Download

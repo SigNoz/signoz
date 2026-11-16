@@ -184,6 +184,7 @@ function MembersSettings(): JSX.Element {
 							suffix={
 								<ChevronDown size={12} className="members-filter-trigger__chevron" />
 							}
+							testId="members-filter-trigger"
 						>
 							<span>{filterLabel}</span>
 						</Button>
@@ -200,6 +201,7 @@ function MembersSettings(): JSX.Element {
 							}}
 							className="members-search-input"
 							name="members-search"
+							testId="members-search-input"
 						/>
 					</div>
 
@@ -209,6 +211,7 @@ function MembersSettings(): JSX.Element {
 						color="primary"
 						onClick={(): void => void setIsInviteModalOpen(true)}
 						prefix={<Plus size={12} />}
+						testId="invite-member-btn"
 					>
 						Invite member
 					</Button>

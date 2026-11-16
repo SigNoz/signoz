@@ -4,8 +4,9 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { PanelKind } from '../../helpers/dashboard-spec';
+import { PanelKind } from '../dashboard-spec';
 import { PATH } from '../dashboards';
+import { wheelTo } from '../scroll';
 
 const NEW_PANEL_DRAWER = 'panel-type-drawer';
 
@@ -29,6 +30,7 @@ export interface NewPanelPicker {
 	newSection(title: string): Promise<void>;
 	/** An empty section's own New Panel CTA. Should move to drivers/dashboards.ts. */
 	sectionAddPanel(): Locator;
+	openFromSection(): Promise<void>;
 }
 
 export function newPanelDriver(page: Page): NewPanelPicker {
@@ -61,6 +63,10 @@ export function newPanelDriver(page: Page): NewPanelPicker {
 		},
 		sectionAddPanel: () =>
 			page.locator('[data-testid^="section-add-panel-"]').first(),
+		async openFromSection() {
+			await wheelTo(picker.sectionAddPanel());
+			await picker.sectionAddPanel().click();
+		},
 	};
 	return picker;
 }

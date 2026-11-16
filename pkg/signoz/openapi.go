@@ -105,6 +105,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ llmpricingrule.Handler }{},
 		struct{ tracedetail.Handler }{},
 		struct{ ruler.Handler }{},
+		struct{ ruler.Ruler }{},
 		struct{ statsreporter.Handler }{},
 		struct{ savedview.Handler }{},
 		global.Config{},

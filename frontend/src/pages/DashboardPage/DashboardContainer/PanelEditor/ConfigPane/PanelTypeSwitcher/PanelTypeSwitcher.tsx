@@ -5,7 +5,7 @@ import { DrawerWrapper } from '@signozhq/ui/drawer';
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import type { EQueryType } from 'types/common/dashboard';
 
-import PanelTypeBrowser from '../../../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/PanelTypeBrowser';
+import PanelTypeBrowser from '../../../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/components/PanelTypeBrowser/PanelTypeBrowser';
 import { getPanelDefinition } from '../../../Panels/registry';
 import type { PanelKind } from '../../../Panels/types/panelKind';
 import { JS_DRIVEN_SLIDE } from '../../../utils/drawerSlide';

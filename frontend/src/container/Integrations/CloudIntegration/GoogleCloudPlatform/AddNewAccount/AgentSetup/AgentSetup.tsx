@@ -6,6 +6,7 @@ import { ModalStateEnum } from 'container/Integrations/HeroSection/types';
 import { useAgentAccountSetup } from 'hooks/integration/gcp/useAgentAccountSetup';
 import { useForm } from 'react-hook-form';
 
+import AgentSetupCommand from 'container/Integrations/CloudIntegration/AgentSetupCommand/AgentSetupCommand';
 import ConnectionMethodSelector from '../ConnectionMethodSelector';
 import ConnectionSecretsFields from '../ConnectionSecretsFields';
 import { AGENT_SETUP_GUIDE, DEFAULT_SETUP_FORM_VALUES } from '../constants';
@@ -15,7 +16,6 @@ import SetupDrawerFooter from '../SetupDrawerFooter';
 import SetupGuideCallout from '../SetupGuideCallout';
 import { GcpSetupFormValues } from '../types';
 import { usePrefillCredentials } from '../usePrefillCredentials';
-import AgentSetupCommand from './AgentSetupCommand';
 
 import styles from './AgentSetup.module.scss';
 
@@ -67,8 +67,15 @@ function AgentSetup({
 			{connectionCommand ? (
 				<>
 					<AgentSetupCommand
-						deploymentProjectId={commandProjectId}
+						description={
+							<>
+								Run this command in Google Cloud Shell, or in a terminal where gcloud is
+								signed in to <span className={styles.mono}>{commandProjectId}</span>. It
+								contains your SigNoz keys, so do not share it.
+							</>
+						}
 						command={connectionCommand}
+						testId="gcp-agent-command"
 					/>
 					{modalState === ModalStateEnum.WAITING && (
 						<Callout

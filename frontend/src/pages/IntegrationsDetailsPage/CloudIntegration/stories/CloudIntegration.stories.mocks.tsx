@@ -144,7 +144,7 @@ export const cloudIntegrationMocks = defineStoryMocks({
 		newAccountCheckIn: choiceControl<NewAccountCheckIn>('New account check-in', {
 			group: MUTATIONS,
 			description:
-				'How the poll for the account the connect flow just created answers. `checked-in` connects it on the first poll and the drawer closes with the success toast, `pending` keeps the drawer waiting on the agent (the GCP agent setup command stays up), `error` fails the poll so the drawer reports it could not connect.',
+				'How the poll for the account the connect flow just created answers. `checked-in` connects it on the first poll and the drawer closes with the success toast, `pending` keeps the drawer waiting on the agent with the AWS, Azure or GCP agent setup command up, `error` fails the poll so the drawer reports it could not connect.',
 			options: NEW_ACCOUNT_CHECK_INS,
 			value: 'checked-in',
 		}),
@@ -319,7 +319,7 @@ export const connectAwsAccount = async (
 		await screen.findByRole('checkbox', { name: /us-east-1/i }),
 	);
 	await userEvent.click(
-		await screen.findByRole('button', { name: /launch cloud formation/i }),
+		await screen.findByRole('button', { name: /generate command/i }),
 	);
 };
 
@@ -339,7 +339,7 @@ export const connectAzureAccount = async (
 	);
 	await userEvent.type(resourceGroups, 'prod-platform-rg{Enter}');
 	await userEvent.click(
-		await screen.findByRole('button', { name: /generate azure setup commands/i }),
+		await screen.findByRole('button', { name: /generate command/i }),
 	);
 };
 

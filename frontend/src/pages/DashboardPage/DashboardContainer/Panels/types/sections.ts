@@ -13,6 +13,10 @@ import type {
 	DashboardtypesLineStyleDTO,
 	DashboardtypesPanelFormattingDTO,
 	DashboardtypesPanelSpecDTO,
+	DashboardtypesScatterPlotAxesDTO,
+	DashboardtypesScatterPlotDimensionsDTO,
+	DashboardtypesScatterPlotPointsDTO,
+	DashboardtypesScatterPlotThresholdDTO,
 	DashboardtypesSpanGapsDTO,
 	DashboardtypesStackModeDTO,
 	DashboardtypesTableFormattingDTO,
@@ -27,6 +31,7 @@ import {
 	Antenna,
 	BarChart,
 	Columns3,
+	Crosshair,
 	Hash,
 	Link2,
 	Palette,
@@ -64,6 +69,9 @@ export enum SectionKind {
 	Columns = 'columns',
 	TextLayout = 'presentation',
 	PanelHeader = 'headerOptions',
+	Dimensions = 'dimensions',
+	/** Scatter Plot's per-axis `axes` shape; `Axes` is the single y-axis shape. */
+	ScatterAxes = 'scatterAxes',
 }
 
 /**
@@ -82,6 +90,7 @@ export enum ThresholdVariant {
 /** Union of every threshold element shape stored under `plugin.spec.thresholds`. */
 export type AnyThreshold =
 	| DashboardtypesThresholdWithLabelDTO
+	| DashboardtypesScatterPlotThresholdDTO
 	| DashboardtypesComparisonThresholdDTO
 	| DashboardtypesTableThresholdDTO;
 
@@ -105,6 +114,8 @@ export interface PanelChartAppearanceSlice {
 	spanGaps?: DashboardtypesSpanGapsDTO;
 	/** The heatmap's cell colour ramp. */
 	colors?: DashboardtypesHeatmapColorsDTO;
+	/** Scatter Plot's dot size and opacity. */
+	points?: DashboardtypesScatterPlotPointsDTO;
 }
 
 /** Superset spanning every kind's visualization DTO. */
@@ -135,6 +146,8 @@ export interface SectionSpecMap {
 	[SectionKind.Columns]: TelemetrytypesTelemetryFieldKeyDTO[]; // spec.plugin.spec.selectFields (List)
 	[SectionKind.TextLayout]: DashboardtypesTextPresentationDTO; // spec.plugin.spec.presentation (Text)
 	[SectionKind.PanelHeader]: DashboardtypesHeaderOptionsDTO; // spec.plugin.spec.headerOptions (Text)
+	[SectionKind.Dimensions]: DashboardtypesScatterPlotDimensionsDTO; // spec.plugin.spec.dimensions (Scatter Plot)
+	[SectionKind.ScatterAxes]: DashboardtypesScatterPlotAxesDTO; // spec.plugin.spec.axes (Scatter Plot)
 }
 
 /**
@@ -173,6 +186,8 @@ export interface SectionControls {
 		spanGaps?: boolean;
 		// colors → the heatmap's cell colour ramp; nothing else here applies to a grid.
 		colors?: boolean;
+		/** Scatter Plot's dots: one size, or a min/max range when a size column is bound. */
+		points?: boolean;
 	};
 	[SectionKind.Buckets]: {
 		count?: boolean;
@@ -190,7 +205,8 @@ export interface SectionControls {
 		fillSpans?: boolean;
 	};
 	// Editor discriminator (not a spec field): which threshold variant a kind edits.
-	[SectionKind.Thresholds]: { variant?: ThresholdVariant };
+	// axis → a `label` threshold picks the axis it marks (Scatter Plot).
+	[SectionKind.Thresholds]: { variant?: ThresholdVariant; axis?: boolean };
 }
 
 export type ControlledSectionKind = keyof SectionControls;
@@ -200,7 +216,9 @@ export type AtomicSectionKind =
 	| SectionKind.ContextLinks
 	| SectionKind.Columns
 	| SectionKind.TextLayout
-	| SectionKind.PanelHeader;
+	| SectionKind.PanelHeader
+	| SectionKind.Dimensions
+	| SectionKind.ScatterAxes;
 
 /** Predicate to hide a section from the current spec; returning true removes it. */
 export type SectionVisibilityPredicate = (
@@ -235,6 +253,8 @@ export const SECTION_METADATA = {
 	[SectionKind.Columns]: { title: 'Columns', icon: Columns3 },
 	[SectionKind.TextLayout]: { title: 'Panel appearance', icon: AlignLeft },
 	[SectionKind.PanelHeader]: { title: 'Panel header', icon: PanelTop },
+	[SectionKind.Dimensions]: { title: 'Dimensions', icon: Crosshair },
+	[SectionKind.ScatterAxes]: { title: 'Axes', icon: Scale3D },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
 /**

@@ -177,6 +177,26 @@ export const Jira: Story = {
 };
 
 /**
+ * A Jira channel saved against a self-hosted Jira: the form opens on the
+ * Self-hosted option and shows the personal access token instead of the
+ * Atlassian email and API token.
+ */
+export const JiraSelfHosted: Story = {
+	args: { channelType: 'jira', jiraDeployment: 'selfhosted' },
+	play: async ({ canvasElement }): Promise<void> => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByTestId('jira-pat-textbox', undefined, {
+				timeout: 15_000,
+			}),
+		).toHaveValue('story-jira-pat');
+		await expect(
+			canvas.queryByTestId('jira-email-textbox'),
+		).not.toBeInTheDocument();
+	},
+};
+
+/**
  * The Jira Service Management Ops channel, whose tags are stored as one
  * comma-separated string and come back as chips.
  */

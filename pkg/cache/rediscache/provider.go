@@ -66,6 +66,49 @@ func (c *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey string, 
 	return nil
 }
 
+func (c *provider) GetMany(ctx context.Context, orgID valuer.UUID, cacheKeys []string, dests []cachetypes.Cacheable) error {
+	if len(dests) != len(cacheKeys) {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "got %d destinations for %d keys", len(dests), len(cacheKeys))
+	}
+	if len(cacheKeys) == 0 {
+		return nil
+	}
+
+	updatedCacheKeys := make([]string, len(cacheKeys))
+	for i, cacheKey := range cacheKeys {
+		updatedCacheKeys[i] = strings.Join([]string{orgID.StringValue(), cacheKey}, "::")
+	}
+
+	values, err := c.client.MGet(ctx, updatedCacheKeys...).Result()
+	if err != nil {
+		for i := range dests {
+			dests[i] = nil
+		}
+		return err
+	}
+
+	var errs []error
+	for i, value := range values {
+		// MGET answers a missing key with nil and a present one with its string
+		switch stored := value.(type) {
+		case nil:
+			dests[i] = nil
+		case string:
+			if err := dests[i].UnmarshalBinary([]byte(stored)); err != nil {
+				dests[i] = nil
+				errs = append(errs, err)
+			}
+		default:
+			dests[i] = nil
+			errs = append(errs, errors.NewInternalf(errors.CodeInternal, "unexpected value of type %T for key %s", value, cacheKeys[i]))
+		}
+	}
+	if len(errs) == 0 {
+		return nil
+	}
+	return errors.Join(errs...)
+}
+
 func (c *provider) Delete(ctx context.Context, orgID valuer.UUID, cacheKey string) {
 	c.DeleteMany(ctx, orgID, []string{cacheKey})
 }

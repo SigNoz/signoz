@@ -106,6 +106,7 @@ export function panelTypeToRequestType(
 		case PANEL_TYPES.TABLE:
 		case PANEL_TYPES.PIE:
 		case PANEL_TYPES.VALUE:
+		case PANEL_TYPES.SCATTER:
 			return Querybuildertypesv5RequestTypeDTO.scalar;
 		case PANEL_TYPES.LIST:
 			return Querybuildertypesv5RequestTypeDTO.raw;

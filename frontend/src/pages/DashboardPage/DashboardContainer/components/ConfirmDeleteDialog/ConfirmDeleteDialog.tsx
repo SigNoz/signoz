@@ -37,6 +37,7 @@ function ConfirmDeleteDialog({
 				color="secondary"
 				onClick={onClose}
 				prefix={<X size={12} />}
+				testId="confirm-delete-cancel"
 			>
 				Cancel
 			</Button>

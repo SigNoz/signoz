@@ -475,12 +475,17 @@ export function QueryBuilderProvider({
 	const createNewBuilderQuery = useCallback(
 		(queries: IBuilderQuery[]): IBuilderQuery => {
 			const existNames = queries.map((item) => item.queryName);
+			// Hosts without a fixed data source (the panel editor) continue the
+			// previous query's signal rather than resetting to metrics.
+			const previous = queries[queries.length - 1];
 			const initialBuilderQuery =
-				initialQueryBuilderFormValuesMap[initialDataSource || DataSource.METRICS];
+				initialQueryBuilderFormValuesMap[
+					initialDataSource || previous?.dataSource || DataSource.METRICS
+				];
 
 			const newQuery: IBuilderQuery = {
 				...initialBuilderQuery,
-				source: queries?.[0]?.source || '',
+				source: previous?.source || '',
 				builderQueryType: queries?.[0]?.builderQueryType,
 				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
 				expression: createNewBuilderItemName({
@@ -944,7 +949,7 @@ export function QueryBuilderProvider({
 			searchParams?: Record<string, unknown>,
 			redirectingUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 			shouldNotStringify?: boolean,
-			newTab?: boolean,
+			navigateOptions?: { newTab?: boolean; replace?: boolean },
 		) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
@@ -996,14 +1001,18 @@ export function QueryBuilderProvider({
 			);
 
 			if (searchParams) {
-				Object.keys(searchParams).forEach((param) =>
+				Object.keys(searchParams).forEach((param) => {
+					if (searchParams[param] === null) {
+						urlQuery.delete(param);
+						return;
+					}
 					urlQuery.set(
 						param,
 						shouldNotStringify
 							? (searchParams[param] as string)
 							: JSON.stringify(searchParams[param]),
-					),
-				);
+					);
+				});
 			}
 			// Remove Hidden Filters from URL query parameters on query change
 			urlQuery.delete(QueryParams.activeLogId);
@@ -1012,7 +1021,7 @@ export function QueryBuilderProvider({
 				? `${redirectingUrl}?${urlQuery}`
 				: `${location.pathname}?${urlQuery}`;
 
-			safeNavigate(generatedUrl, { newTab });
+			safeNavigate(generatedUrl, navigateOptions);
 		},
 		[location.pathname, safeNavigate],
 	);

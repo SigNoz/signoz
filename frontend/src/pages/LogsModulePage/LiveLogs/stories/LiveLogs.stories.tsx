@@ -85,6 +85,14 @@ export const Waiting: Story = {
 	args: { liveLogs: 0 },
 };
 
+/**
+ * A JSON-logging service tailed live: object bodies as JSON, and a body holding
+ * only `message` as its text, the same as the explorer shows it.
+ */
+export const JsonBody: Story = {
+	args: { jsonBody: true },
+};
+
 /** Row actions render on hover, so a streamed line is hovered before its copy link is pressed. */
 export const LogLinkCopiedToast: Story = {
 	play: async ({ mount, canvasElement }): Promise<void> => {

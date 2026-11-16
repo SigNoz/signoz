@@ -5,13 +5,14 @@ import React, {
 	useContext,
 	useMemo,
 } from 'react';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import useUrlQuery from 'hooks/useUrlQuery';
 import {
 	PreferenceContextValue,
 	PreferenceMode,
 } from 'providers/preferences/types';
-import { DataSource } from 'types/common/queryBuilder';
 
+import { useAiObservabilityPreferenceSync } from '../sync/useAiObservabilityPreferenceSync';
 import { usePreferenceSync } from '../sync/usePreferenceSync';
 
 const PreferenceContext = createContext<PreferenceContextValue | undefined>(
@@ -38,21 +39,27 @@ export function PreferenceContextProvider({
 	const logsSlice = usePreferenceSync({
 		mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
 		savedViewId: savedViewId || undefined,
-		dataSource: DataSource.LOGS,
+		sourcePage: SavedviewtypesSourceDTO.logs,
 	});
 
 	const tracesSlice = usePreferenceSync({
 		mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
 		savedViewId: savedViewId || undefined,
-		dataSource: DataSource.TRACES,
+		sourcePage: SavedviewtypesSourceDTO.traces,
+	});
+
+	const aiObservabilitySlice = useAiObservabilityPreferenceSync({
+		mode: savedViewId ? PreferenceMode.SAVED_VIEW : PreferenceMode.DIRECT,
+		savedViewId: savedViewId || undefined,
 	});
 
 	const value = useMemo<PreferenceContextValue>(
 		() => ({
-			logs: logsSlice,
-			traces: tracesSlice,
+			[SavedviewtypesSourceDTO.logs]: logsSlice,
+			[SavedviewtypesSourceDTO.traces]: tracesSlice,
+			[SavedviewtypesSourceDTO.ai_observability]: aiObservabilitySlice,
 		}),
-		[logsSlice, tracesSlice],
+		[logsSlice, tracesSlice, aiObservabilitySlice],
 	);
 
 	return (

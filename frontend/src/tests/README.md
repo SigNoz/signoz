@@ -10,7 +10,7 @@
 #### Unit Testing: What, Why, How
 - What: Small, isolated tests for components, hooks, and utilities to verify behavior and edge cases.
 - Why: Confidence to refactor, faster feedback than E2E, catches regressions early, documents intended behavior.
-- How: Use our test harness with providers, mock external boundaries (APIs, router), assert on visible behavior and accessible roles, not implementation details.
+- How: Use our test harness with providers, mock external boundaries (APIs), find elements by test ID, and assert on visible behavior, not implementation details.
 
 #### Basic Template
 ```ts
@@ -29,18 +29,20 @@ describe('MyComponent', () => {
     render(<MyComponent />, undefined, { initialRoute: '/foo' });
 
     expect(await screen.findByText(/value: 42/i)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /refresh/i }));
+    await user.click(screen.getByTestId('refresh-button'));
     await waitFor(() => expect(screen.getByText(/loading/i)).toBeInTheDocument());
   });
 });
 ```
 
-#### .cursorrules (Highlights)
+#### Rules (highlights)
+The full list is [`.claude/rules/frontend-tests.md`](../../../.claude/rules/frontend-tests.md).
+
 - Import from `tests/test-utils` only.
 - Prefer `userEvent` for real interactions; use `fireEvent` only for low-level events (scroll/resize/setting `scrollTop`).
 - Use MSW to mock network calls; large JSON goes in `mocks-server/__mockdata__`.
 - Keep tests type-safe (`jest.MockedFunction<T>`, avoid `any`).
-- Prefer accessible queries (`getByRole`, `findByRole`) before text and `data-testid`.
+- Find elements by test ID (`getByTestId`, `findByTestId`); role or text only for markup the app doesn't own.
 - Pin time only when asserting relative dates; avoid global fake timers otherwise.
 
 Repo-specific reasons:
@@ -69,10 +71,10 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 }));
 ```
 
-Interact via accessible roles:
+Interact via test IDs:
 ```ts
 const user = userEvent.setup({ pointerEventsCheck: 0 });
-await user.click(screen.getByRole('button', { name: /save changes/i }));
+await user.click(screen.getByTestId('save-changes'));
 expect(screen.getByText(/ADDED FILTERS/i)).toBeInTheDocument();
 ```
 

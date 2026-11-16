@@ -176,6 +176,67 @@ describe('ChannelForm save', () => {
 	);
 
 	it(
+		'sends only the credentials of the picked jira deployment',
+		async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				rest.post(
+					'http://localhost/api/v2/notification_channels',
+					async (req, res, ctx) => {
+						body = await req.json();
+						return res(ctx.status(201), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
+			await user.click(await screen.findByRole('option', { name: /^Jira$/ }));
+			expect(
+				screen.getByTestId('jira-deployment-radio-item-cloud'),
+			).toHaveAttribute('aria-checked', 'true');
+
+			await user.type(screen.getByTestId('channel-name-textbox'), 'jira alerts');
+			await user.type(screen.getByTestId('jira-email-textbox'), 'ops@acme.io');
+
+			await user.click(
+				screen.getByTestId('jira-deployment-radio-item-selfhosted'),
+			);
+			expect(screen.queryByTestId('jira-email-textbox')).not.toBeInTheDocument();
+			await user.type(
+				screen.getByTestId('jira-site-textbox'),
+				'https://jira.acme.com',
+			);
+			await user.type(screen.getByTestId('jira-pat-textbox'), 'pat-1');
+			await user.type(screen.getByTestId('jira-project-textbox'), 'OPS');
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await waitFor(() => expect(body).toBeDefined(), FIND);
+			expect(
+				(body as { config: { spec: Record<string, unknown> } }).config.spec,
+			).toMatchObject({
+				deployment: 'selfhosted',
+				site: 'https://jira.acme.com',
+				auth: { pat: 'pat-1' },
+				project: 'OPS',
+				issueType: 'Task',
+			});
+			expect(
+				(body as { config: { spec: Record<string, unknown> } }).config.spec,
+			).not.toHaveProperty('auth.email');
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
 		'flags a slack field without a value instead of sending it',
 		async () => {
 			const onCreate = jest.fn();
@@ -483,6 +544,68 @@ describe('ChannelForm save', () => {
 				screen.findByTestId('channel-load-error', {}, FIND),
 			).resolves.toBeInTheDocument();
 			expect(screen.queryByTestId('channel-name-textbox')).not.toBeInTheDocument();
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
+		"drops the previous type's templates when switching type",
+		async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				rest.post(
+					'http://localhost/api/v2/notification_channels',
+					async (req, res, ctx) => {
+						body = await req.json();
+						return res(ctx.status(201), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
+			await user.click(await screen.findByRole('option', { name: /^Telegram$/ }));
+
+			expect(screen.getByTestId('telegram-title-textarea')).toHaveValue('');
+
+			await user.type(
+				screen.getByTestId('channel-name-textbox'),
+				'telegram alerts',
+			);
+			await user.type(screen.getByTestId('telegram-bot-token-textbox'), '123:abc');
+			await user.type(screen.getByTestId('telegram-chat-id-textbox'), '-100123');
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await waitFor(() => expect(body).toBeDefined(), FIND);
+			expect(
+				(body as { config: { spec: Record<string, unknown> } }).config.spec,
+			).toStrictEqual({
+				botToken: '123:abc',
+				chatId: -100123,
+				sendResolved: true,
+			});
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
+		'leaves the pagerduty client url empty so the backend links to this instance',
+		async () => {
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
+			await user.click(await screen.findByRole('option', { name: /^Pagerduty$/ }));
+
+			expect(screen.getByTestId('pager-client-url-textarea')).toHaveValue('');
 		},
 		TEST_TIMEOUT,
 	);

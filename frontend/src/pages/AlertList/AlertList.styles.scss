@@ -56,7 +56,6 @@
 	}
 
 	.alert-rules-container {
-		margin-top: 10px;
 		flex: 1;
 		min-height: 0;
 		display: flex;
@@ -110,7 +109,6 @@
 				&.active {
 					background: var(--l1-background-hover);
 					color: var(--l1-foreground);
-					font-weight: var(--font-weight-medium, 500);
 				}
 
 				&:focus-visible {
@@ -134,10 +132,6 @@
 			display: flex;
 			flex-direction: column;
 			overflow: hidden;
-
-			> .alert-rules-container {
-				margin-top: 0;
-			}
 		}
 	}
 }

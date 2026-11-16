@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"maps"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 )
 
@@ -31,6 +32,15 @@ func (c *CachedBucket) Clone() *CachedBucket {
 			StepIntervals: maps.Clone(c.Stats.StepIntervals),
 		},
 	}
+}
+
+func (c *CachedBucket) Contains(other *CachedBucket) bool {
+	return c.StartMs <= other.StartMs && other.EndMs <= c.EndMs
+}
+
+// true if c and other overlap or sit edge to edge, false otherwise.
+func (c *CachedBucket) Touches(other *CachedBucket) bool {
+	return c.StartMs <= other.EndMs && other.StartMs <= c.EndMs
 }
 
 // CachedData represents the full cached data for a query.
@@ -76,4 +86,54 @@ func (c *CachedData) Cost() int64 {
 		size += int64(len(w))
 	}
 	return size
+}
+
+func (r *Result) SplitIntoCacheCellBuckets(startMs, endMs, cellWidthMs uint64) ([]*CachedBucket, error) {
+	tsData, ok := r.Value.(*TimeSeriesData)
+	if !ok || tsData == nil {
+		return nil, errors.NewInternalf(errors.CodeInternal, "result of type %s cannot be bucketed", r.Type.StringValue())
+	}
+
+	cellBuckets := make([]*CachedBucket, 0, 1)
+	for from := startMs; from < endMs; {
+		to := endMs
+		if cellWidthMs > 0 {
+			to = min(endMs, (from/cellWidthMs+1)*cellWidthMs)
+		}
+		// A promql value stamped exactly at the window end is an instant inside
+		// the window, so the last slice keeps it. A builder value never sits
+		// there, since the end is step-aligned and partial steps are dropped.
+		sliceEndMs := to
+		if to == endMs {
+			sliceEndMs = endMs + 1
+		}
+		value, err := json.Marshal(tsData.FilterToTimeRange(from, sliceEndMs))
+		if err != nil {
+			return nil, err
+		}
+		cellBuckets = append(cellBuckets, &CachedBucket{
+			StartMs: from,
+			EndMs:   to,
+			Type:    r.Type,
+			Value:   value,
+			Stats:   r.Stats.prorate(to-from, endMs-startMs),
+		})
+		from = to
+	}
+	return cellBuckets, nil
+}
+
+// prorate returns the share of the stats that partMs out of wholeMs of the
+// scanned window accounts for.
+func (e ExecStats) prorate(partMs, wholeMs uint64) ExecStats {
+	ratio := 1.0
+	if partMs < wholeMs {
+		ratio = float64(partMs) / float64(wholeMs)
+	}
+	return ExecStats{
+		RowsScanned:   uint64(float64(e.RowsScanned) * ratio),
+		BytesScanned:  uint64(float64(e.BytesScanned) * ratio),
+		DurationMS:    uint64(float64(e.DurationMS) * ratio),
+		StepIntervals: maps.Clone(e.StepIntervals),
+	}
 }

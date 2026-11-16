@@ -4,8 +4,8 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { PanelKind } from '../helpers/dashboard-spec';
-import { logDetailsDrawer } from '../helpers/logs-explorer';
+import { PanelKind } from './dashboard-spec';
+import { logDetailDriver } from './logs/detail';
 
 import { test as dashboardsTest } from './dashboards';
 import { driver } from './kit';
@@ -18,6 +18,7 @@ import { type Legend, legendAt } from './panels/legend';
 import { type Markdown, markdownAt } from './panels/markdown';
 import { type PiePanel, pieAt } from './panels/pie';
 import { type TableRows, tableAt } from './panels/table';
+import { wheelTo } from './scroll';
 
 // Rendered panels, on the dashboard grid and in the View modal. Each surface
 // lives in its own part under ./panels, and so does a kind with UI of its own.
@@ -47,7 +48,7 @@ export const RENDERER_TESTID: Record<PanelKind, string> = {
 export interface PanelHandle {
 	root(): Locator;
 	/** Panels fetch lazily behind an IntersectionObserver. */
-	scrollIntoView(): Promise<void>;
+	wheelIntoView(): Promise<void>;
 	/** Scrolls in, then waits for the kind's own renderer. */
 	waitRendered(kind: PanelKind): Promise<void>;
 	renderer(kind: PanelKind): Locator;
@@ -85,6 +86,8 @@ export interface Panels {
 		statusContent(): Locator;
 		/** Free text inside any open tooltip. */
 		text(text: string): Locator;
+		/** Hovers `target` and returns the newest tooltip, since an earlier one may still be fading out. */
+		reasonFor(target: Locator): Promise<Locator>;
 		heatmap: HeatmapTooltip;
 	};
 	/** The log detail drawer a List row of logs opens. */
@@ -127,11 +130,11 @@ function panelHandle(page: Page, id: string): PanelHandle {
 
 	return {
 		root,
-		async scrollIntoView() {
-			await root().scrollIntoViewIfNeeded();
+		async wheelIntoView() {
+			await wheelTo(root());
 		},
 		async waitRendered(kind) {
-			await root().scrollIntoViewIfNeeded();
+			await wheelTo(root());
 			await expect(root()).toHaveAttribute('data-panel-visible', 'true');
 			await expect(byTestId(RENDERER_TESTID[kind])).toBeVisible();
 		},
@@ -173,9 +176,13 @@ function panelsDriver(page: Page): Panels {
 			statusContent: () =>
 				page.getByRole('tooltip').getByTestId('panel-status-content'),
 			text: (text) => page.getByText(text),
+			async reasonFor(target) {
+				await target.hover();
+				return page.getByRole('tooltip').last();
+			},
 			heatmap: heatmapTooltipAt(page),
 		},
-		logDetail: () => logDetailsDrawer(page),
+		logDetail: () => logDetailDriver(page).drawer(),
 		drilldown: {
 			menu,
 			item: (testId) =>

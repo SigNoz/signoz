@@ -69,7 +69,6 @@ describe('EntityEvents', () => {
 					searchParams={`${K8S_ENTITY_EVENTS_EXPRESSION_KEY}=k8s.pod.name+%3D+%22x%22`}
 				>
 					<EntityEvents
-						eventEntity="test"
 						queryKey="test"
 						category={InfraMonitoringEntity.PODS}
 						initialExpression='k8s.pod.name = "x"'

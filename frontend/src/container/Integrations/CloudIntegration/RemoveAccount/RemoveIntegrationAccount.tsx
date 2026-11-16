@@ -124,6 +124,7 @@ function RemoveIntegrationAccount({
 				prefix={<Unlink size={14} />}
 				onClick={handleDisconnect}
 				loading={isRemoveIntegrationLoading}
+				testId="cloud-disconnect-account-btn"
 			>
 				Disconnect
 			</Button>
@@ -138,6 +139,7 @@ function RemoveIntegrationAccount({
 				okButtonProps={{
 					danger: true,
 					loading: isRemoveIntegrationLoading,
+					'data-testid': 'cloud-remove-account-confirm',
 				}}
 			>
 				{modalDescription}

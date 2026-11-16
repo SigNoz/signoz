@@ -505,7 +505,7 @@ func (m *storage) Fallback(_ context.Context, _ qbtypes.QueryInfo, key *telemetr
 	var keys []*telemetrytypes.TelemetryFieldKey
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextBody:
-		keys = []*telemetrytypes.TelemetryFieldKey{telemetrytypes.NewTelemetryFieldKey(key.Name, key.FieldContext, key.FieldDataType)}
+		keys = []*telemetrytypes.TelemetryFieldKey{bodyPath(key.Name, key.FieldDataType, value)}
 	case telemetrytypes.FieldContextUnspecified:
 		if column, ok := logsV2Columns[key.Name]; ok {
 			keys = []*telemetrytypes.TelemetryFieldKey{{Name: key.Name, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: querybuilder.ColumnDataType(column)}}

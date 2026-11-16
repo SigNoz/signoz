@@ -624,6 +624,7 @@ function EditMemberDrawer({
 							disabledTooltip={getDeleteTooltip(isRootUser, isSelf)}
 							size="md"
 							onClick={(): void => setShowDeleteConfirm(true)}
+							testId="member-delete-btn"
 							disabled={isRootUser || isSelf}
 							variant="link"
 							color="danger"
@@ -637,6 +638,7 @@ function EditMemberDrawer({
 							disabledTooltip={ROOT_USER_TOOLTIP}
 							size="md"
 							onClick={handleGenerateResetLink}
+							testId="member-reset-link-btn"
 							disabled={isRootUser}
 							loading={isGeneratingLink || isLoadingTokenStatus}
 							variant="link"
@@ -674,6 +676,7 @@ function EditMemberDrawer({
 							color="primary"
 							disabled={!isDirty || isRootUser}
 							onClick={handleSave}
+							testId="member-save-btn"
 							loading={isSaving}
 						>
 							{isSaving ? 'Saving...' : 'Save Member Details'}

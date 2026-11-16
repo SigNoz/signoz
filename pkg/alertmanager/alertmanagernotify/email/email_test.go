@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"os"
 	"strconv"
@@ -706,7 +707,9 @@ func TestEmailRejected(t *testing.T) {
 
 	// Send the alert to mock SMTP server.
 	retry, err := e.Notify(context.Background(), firingAlert)
-	require.ErrorContains(t, err, "501 5.5.4 Rejected!")
+	var smtpErr *textproto.Error
+	require.ErrorAs(t, err, &smtpErr)
+	assert.Equal(t, 501, smtpErr.Code)
 	assert.True(t, retry)
 	require.NoError(t, srv.Shutdown(ctx))
 

@@ -4,12 +4,12 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { buildDashboard, panel, PanelKind } from '../helpers/dashboard-spec';
+import { buildDashboard, panel, PanelKind } from './dashboard-spec';
 import type {
 	PostableDashboard,
 	Signal,
 	Variable,
-} from '../helpers/dashboard-spec.types';
+} from './dashboard-spec.types';
 
 import { toolbarAt } from './dashboard-page';
 import { boxOf, dragBy, openSelectOption } from './panels/dom';

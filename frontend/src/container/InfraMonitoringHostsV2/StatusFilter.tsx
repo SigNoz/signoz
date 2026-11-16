@@ -53,6 +53,7 @@ function StatusFilter(): JSX.Element {
 				items={statusOptions.map((option) => ({
 					value: option.value,
 					label: option.label,
+					testId: `status-filter-${option.value}`,
 					prefix: (
 						<span
 							className={`${styles.statusDot} ${

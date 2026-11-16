@@ -24,7 +24,11 @@ interface TestConnectionProps {
 function TestConnection(props: TestConnectionProps): JSX.Element {
 	const { connectionState } = props;
 	return (
-		<div className={cx('connection-container', connectionState)}>
+		<div
+			className={cx('connection-container', connectionState)}
+			data-testid="integration-connection-status"
+			data-state={connectionState}
+		>
 			<ul className="connection-text">
 				<li>{ConnectionStatesLabelMap[connectionState]}</li>
 			</ul>

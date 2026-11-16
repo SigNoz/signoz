@@ -29,12 +29,41 @@ export function thresholdsDrawHook(
 
 			const scaleVal = u.valToPos(Number(yValue), scaleKey, true);
 
+			ctx.strokeStyle = color;
+
+			// A horizontal scale (e.g. a scatter plot's x) takes a vertical line.
+			if (u.scales[scaleKey]?.ori === 0) {
+				const x = Math.round(scaleVal);
+				const top = Math.round(u.bbox.top);
+
+				ctx.beginPath();
+				ctx.moveTo(x, top);
+				ctx.lineTo(x, Math.round(u.bbox.top + u.bbox.height));
+				ctx.stroke();
+
+				if (threshold.thresholdLabel) {
+					const gap = 6 * uPlot.pxRatio;
+					const textWidth = ctx.measureText(threshold.thresholdLabel).width;
+					const fitsRight = x + gap + textWidth <= u.bbox.left + u.bbox.width;
+					// uPlot leaves the last axis's text alignment on the context.
+					ctx.save();
+					ctx.fillStyle = color;
+					ctx.textAlign = 'left';
+					ctx.textBaseline = 'top';
+					ctx.fillText(
+						threshold.thresholdLabel,
+						fitsRight ? x + gap : x - gap - textWidth,
+						top + gap,
+					);
+					ctx.restore();
+				}
+				continue;
+			}
+
 			const x0 = Math.round(u.bbox.left);
 			const y0 = Math.round(scaleVal);
 			const x1 = Math.round(u.bbox.left + u.bbox.width);
 			const y1 = Math.round(scaleVal);
-
-			ctx.strokeStyle = color;
 
 			ctx.beginPath();
 			ctx.moveTo(x0, y0);

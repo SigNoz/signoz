@@ -1,0 +1,17 @@
+.drawer {
+	overflow: hidden;
+	border-color: var(--l2-border);
+	background: var(--l2-background);
+	box-shadow: -4px 10px 16px 2px var(--l1-shadow);
+
+	&:focus,
+	&:focus-visible {
+		outline: none;
+	}
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}

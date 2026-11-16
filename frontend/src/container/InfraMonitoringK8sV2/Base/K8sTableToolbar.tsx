@@ -3,8 +3,6 @@ import { Button } from '@signozhq/ui/button';
 import { Select } from 'antd';
 import { Download, SlidersVertical } from '@signozhq/icons';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import logEvent from 'api/common/logEvent';
-import { InfraMonitoringEvents } from 'constants/events';
 
 import {
 	INFRA_MONITORING_ATTR_KEYS,
@@ -35,7 +33,6 @@ const NAME_COLUMN_KEYS: Set<string> = new Set([
 
 interface K8sTableToolbarProps {
 	entity: InfraMonitoringEntity;
-	eventCategory: InfraMonitoringEvents;
 	leftFilters?: React.ReactNode;
 	onOpenOptionsDrawer: () => void;
 	onDownload?: () => void;
@@ -43,7 +40,6 @@ interface K8sTableToolbarProps {
 
 function K8sTableToolbar({
 	entity,
-	eventCategory,
 	leftFilters,
 	onOpenOptionsDrawer,
 	onDownload,
@@ -65,15 +61,9 @@ function K8sTableToolbar({
 
 			void setGroupBy(value);
 
-			void logEvent(InfraMonitoringEvents.GroupByChanged, {
-				entity: InfraMonitoringEvents.K8sEntity,
-				page: InfraMonitoringEvents.ListPage,
-				category: eventCategory,
-			});
-
 			logInfraGroupByCustomizedEvent(entity, value);
 		},
-		[entity, eventCategory, orderBy, setCurrentPage, setOrderBy, setGroupBy],
+		[entity, orderBy, setCurrentPage, setOrderBy, setGroupBy],
 	);
 
 	return (

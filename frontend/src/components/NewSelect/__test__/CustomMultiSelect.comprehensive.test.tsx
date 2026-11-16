@@ -1,5 +1,5 @@
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import CustomMultiSelect from '../CustomMultiSelect';
@@ -676,6 +676,64 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			expect(mockOnChange).toHaveBeenCalledTimes(1);
 			expect(mockOnChange.mock.calls[0][0]).toStrictEqual(['backend']);
+		});
+
+		it('UI-03c: clicking an option checkbox toggles it exactly once', async () => {
+			renderWithVirtuoso(
+				<CustomMultiSelect
+					options={mockOptions}
+					onChange={mockOnChange}
+					value={['frontend']}
+				/>,
+			);
+
+			await user.click(screen.getByRole('combobox'));
+			const backendRow = (await screen.findByText('Backend')).closest(
+				'[role="option"]',
+			) as HTMLElement;
+			mockOnChange.mockClear();
+			await user.click(within(backendRow).getByRole('checkbox'));
+
+			expect(mockOnChange).toHaveBeenCalledTimes(1);
+			expect(mockOnChange.mock.calls[0][0]).toStrictEqual(['frontend', 'backend']);
+		});
+
+		it('UI-03d: clicking an option label toggles it exactly once', async () => {
+			renderWithVirtuoso(
+				<CustomMultiSelect
+					options={mockOptions}
+					onChange={mockOnChange}
+					value={['frontend']}
+				/>,
+			);
+
+			await user.click(screen.getByRole('combobox'));
+			const backendLabel = await screen.findByText('Backend');
+			mockOnChange.mockClear();
+			await user.click(backendLabel);
+
+			expect(mockOnChange).toHaveBeenCalledTimes(1);
+			expect(mockOnChange.mock.calls[0][0]).toStrictEqual(['frontend', 'backend']);
+		});
+
+		it('UI-03e: clicking "Toggle" does not also toggle the wrapping checkbox', async () => {
+			renderWithVirtuoso(
+				<CustomMultiSelect
+					options={mockOptions}
+					onChange={mockOnChange}
+					value={['frontend', 'backend']}
+				/>,
+			);
+
+			await user.click(screen.getByRole('combobox'));
+			const backendRow = (await screen.findByText('Backend')).closest(
+				'[role="option"]',
+			) as HTMLElement;
+			mockOnChange.mockClear();
+			await user.click(within(backendRow).getByText('Toggle'));
+
+			expect(mockOnChange).toHaveBeenCalledTimes(1);
+			expect(mockOnChange.mock.calls[0][0]).toStrictEqual(['frontend']);
 		});
 
 		it('UI-04: Should display values with loading info at bottom', async () => {

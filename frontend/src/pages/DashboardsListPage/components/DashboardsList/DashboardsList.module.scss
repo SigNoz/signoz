@@ -81,53 +81,6 @@
 	}
 }
 
-.commandHeader {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-}
-
-.headingBlock {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	min-width: 0;
-}
-
-.grow {
-	flex: 1;
-}
-
-.dirtyDot {
-	width: 7px;
-	height: 7px;
-	border-radius: 50%;
-	background: var(--warning-background);
-	flex: none;
-}
-
-.countPill {
-	padding: 2px 9px;
-	border-radius: 999px;
-	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
-	color: var(--l2-foreground);
-	font-size: var(--font-size-xs);
-	font-variant-numeric: tabular-nums;
-}
-
-.title {
-	color: var(--l1-foreground);
-	font-size: var(--font-size-lg);
-	font-style: normal;
-	font-weight: var(--font-weight-medium);
-	line-height: 28px;
-	letter-spacing: -0.09px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
 .subtitle {
 	color: var(--l2-foreground);
 	font-size: var(--font-size-sm);

@@ -9,12 +9,13 @@ import {
 	type Request,
 } from '@playwright/test';
 
-import { BASE_PATH } from '../helpers/base-path';
-import { authToken } from '../helpers/common';
+import { BASE_PATH } from './base-path';
+import { authToken } from './api';
+import { buildDashboard } from './dashboard-spec';
 import type {
 	GettableDashboard,
 	PostableDashboard,
-} from '../helpers/dashboard-spec.types';
+} from './dashboard-spec.types';
 import {
 	holdQueryRange,
 	isQueryRange,
@@ -24,9 +25,9 @@ import {
 	type QueryWindow,
 	recordQueryWindows,
 	unmockQueryRange,
-} from '../helpers/query-range-mock';
+} from './query-range-mock';
 
-import { driver, kit } from './kit';
+import { asAdmin, driver, kit } from './kit';
 
 // `POST /api/v2/dashboards` takes the full perses spec in one call.
 
@@ -54,6 +55,8 @@ export const EDITOR_ROOT = '[data-testid="panel-editor-v2"]:not([data-group])';
 export interface Dashboards {
 	/** Created for this test and deleted when it ends. */
 	seed(dashboard: PostableDashboard): Promise<string>;
+	/** For a test running as a lesser identity: created and deleted as admin. */
+	seedAsAdmin(dashboard: PostableDashboard): Promise<string>;
 	seedAndOpen(dashboard: PostableDashboard): Promise<string>;
 	seedAndEdit(dashboard: PostableDashboard, panelId: string): Promise<string>;
 	/** The open dashboard's heading. */
@@ -164,7 +167,22 @@ async function setLockedViaApi(
 	}
 }
 
+export interface DashboardSeed {
+	id: string;
+	title: string;
+}
+
+/** A bare dashboard for features that only need one to exist. */
+export async function createDashboard(
+	page: Page,
+	title: string,
+): Promise<DashboardSeed> {
+	const id = await createViaApi(page, buildDashboard({ title, sections: [] }));
+	return { id, title };
+}
+
 const trackedByPage = new WeakMap<Page, string[]>();
+const trackedAsAdminByPage = new WeakMap<Page, string[]>();
 
 /** Registers a dashboard for deletion when the test owning `page` ends. */
 export function trackDashboard(page: Page, id: string): void {
@@ -192,22 +210,47 @@ export async function deleteViaApi(page: Page, id: string): Promise<void> {
 export async function removeTrackedDashboards(page: Page): Promise<void> {
 	const ids = trackedByPage.get(page) ?? [];
 	trackedByPage.delete(page);
+	const adminIds = trackedAsAdminByPage.get(page) ?? [];
+	trackedAsAdminByPage.delete(page);
 	try {
 		for (const id of ids) {
 			await deleteViaApi(page, id);
+		}
+		if (adminIds.length > 0) {
+			await asAdmin(
+				page,
+				(admin) => admin,
+				async (admin) => {
+					for (const id of adminIds) {
+						await deleteViaApi(admin, id);
+					}
+				},
+			);
 		}
 	} catch {
 		/* the dashboards outlive the run rather than hiding why it failed */
 	}
 }
 
-function dashboardsDriver(page: Page): Dashboards {
+export function dashboardsDriver(page: Page): Dashboards {
 	const editorRoot = (): Locator => page.locator(EDITOR_ROOT);
 
 	const dashboards: Dashboards = {
 		async seed(dashboard) {
 			const id = await createViaApi(page, dashboard);
 			trackDashboard(page, id);
+			return id;
+		},
+		async seedAsAdmin(dashboard) {
+			const id = await asAdmin(
+				page,
+				(admin) => admin,
+				(admin) => createViaApi(admin, dashboard),
+			);
+			trackedAsAdminByPage.set(page, [
+				...(trackedAsAdminByPage.get(page) ?? []),
+				id,
+			]);
 			return id;
 		},
 		title: () => page.getByTestId('dashboard-title'),
@@ -298,7 +341,7 @@ const withQueryRange = driver('queryRange', ({ page }) =>
 export const test = withQueryRange(withDashboards(kit));
 
 export { expect } from './kit';
-export * from '../helpers/dashboard-spec';
-export type * from '../helpers/dashboard-spec.types';
-export { heatmapPoints, QueryRange, ramp } from '../helpers/query-range-mock';
+export * from './dashboard-spec';
+export type * from './dashboard-spec.types';
+export { heatmapPoints, QueryRange, ramp } from './query-range-mock';
 export * from '../testdata/dashboards/panels';

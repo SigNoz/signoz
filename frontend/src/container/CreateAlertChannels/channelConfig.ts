@@ -22,6 +22,8 @@ import {
 	ChannelFormValues,
 	ChannelKind,
 	ChannelSpecFormValues,
+	JiraDeployment,
+	KeysOfUnion,
 	WebhookAuth,
 } from './types';
 import {
@@ -95,11 +97,11 @@ const SPEC_FIELDS = {
 		'sendResolved',
 	] as const satisfies readonly (keyof AlertmanagertypesChannelGoogleChatConfigDTO)[],
 	[ChannelKind.jira]: [
+		'deployment',
 		'site',
 		'project',
 		'issueType',
-		'email',
-		'apiToken',
+		'auth',
 		'summary',
 		'description',
 		'priority',
@@ -145,7 +147,7 @@ const SPEC_FIELDS = {
  * instead, and the error names the missing field.
  */
 type MissingFrom<D, T extends readonly PropertyKey[]> = Exclude<
-	keyof D,
+	KeysOfUnion<D>,
 	T[number]
 >;
 
@@ -228,6 +230,15 @@ export function toChannelConfig(
 		if (auth !== WebhookAuth.bearer) {
 			delete picked.bearerToken;
 		}
+	}
+
+	if (kind === ChannelKind.jira) {
+		const auth = values.auth ?? {};
+		picked.auth = omitBlank(
+			values.deployment === JiraDeployment.selfhosted
+				? pick(auth, ['pat'])
+				: pick(auth, ['email', 'apiToken']),
+		);
 	}
 
 	const spec: Record<string, unknown> = omitBlank(picked);

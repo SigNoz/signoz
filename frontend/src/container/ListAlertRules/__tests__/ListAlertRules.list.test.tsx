@@ -101,17 +101,18 @@ describe('ListAlertRules — list rendering', () => {
 		);
 	});
 
-	it('renders header controls (search, columns, new alert)', async () => {
+	it('renders header controls (search, states, columns, new alert)', async () => {
 		renderListAlertRules();
 
 		await waitFor(() =>
 			expect(screen.getByTestId('alert-row-rule-1-name')).toBeInTheDocument(),
 		);
 
-		expect(screen.getByTestId('list-alerts-search-input')).toBeInTheDocument();
+		expect(screen.getByTestId('alert-rules-list-search')).toBeInTheDocument();
 		expect(
-			screen.getByPlaceholderText('Search by Alert Name, Severity and Labels'),
+			screen.getByTestId('alert-rules-list-search-submit'),
 		).toBeInTheDocument();
+		expect(screen.getByTestId('alert-rules-filter-states')).toBeInTheDocument();
 		expect(screen.getByTestId('alert-columns-button')).toBeInTheDocument();
 		expect(
 			screen.getByTestId('list-alerts-new-alert-button'),

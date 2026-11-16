@@ -45,7 +45,6 @@ import type {
 	GetRuleHistoryTopContributorsParams,
 	GetRuleHistoryTopContributorsPathParameters,
 	ListRuleViews200,
-	ListRules200,
 	ListRulesV3200,
 	ListRulesV3Params,
 	PatchRuleByID200,
@@ -427,85 +426,6 @@ export const useUpdateRuleView = <
 > => {
 	return useMutation(getUpdateRuleViewMutationOptions(options));
 };
-/**
- * This endpoint lists all alert rules with their current evaluation state. Deprecated: use ListRulesV3, which supports filtering, sorting and pagination.
- * @deprecated
- * @summary List alert rules
- */
-export const listRules = (signal?: AbortSignal) => {
-	return GeneratedAPIInstance<ListRules200>({
-		url: `/api/v2/rules`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getListRulesQueryKey = () => {
-	return [`/api/v2/rules`] as const;
-};
-
-export const getListRulesQueryOptions = <
-	TData = Awaited<ReturnType<typeof listRules>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<Awaited<ReturnType<typeof listRules>>, TError, TData>;
-}) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey = queryOptions?.queryKey ?? getListRulesQueryKey();
-
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof listRules>>> = ({
-		signal,
-	}) => listRules(signal);
-
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof listRules>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type ListRulesQueryResult = NonNullable<
-	Awaited<ReturnType<typeof listRules>>
->;
-export type ListRulesQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @deprecated
- * @summary List alert rules
- */
-
-export function useListRules<
-	TData = Awaited<ReturnType<typeof listRules>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<Awaited<ReturnType<typeof listRules>>, TError, TData>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListRulesQueryOptions(options);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	return withQueryKey(query, queryOptions.queryKey);
-}
-
-/**
- * @deprecated
- * @summary List alert rules
- */
-export const invalidateListRules = async (
-	queryClient: QueryClient,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getListRulesQueryKey() },
-		options,
-	);
-
-	return queryClient;
-};
-
 /**
  * This endpoint creates a new alert rule
  * @summary Create alert rule

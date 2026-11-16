@@ -297,6 +297,103 @@ describe('AppProvider user and org data from v2 APIs', () => {
 	});
 });
 
+describe('AppProvider user preferences loading state', () => {
+	beforeEach(() => {
+		queryClient.clear();
+		setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+	});
+
+	it('keeps isFetchingUserPreferences true until the preferences are in context', async () => {
+		server.use(
+			rest.get(MY_USER_URL, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: { id: 'u-1', email: 'a@b.com' } })),
+			),
+			rest.get(MY_ORG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({ data: { id: 'org-1', displayName: 'Org' } }),
+				),
+			),
+			rest.get('http://localhost/api/v1/user/preferences', (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: [
+							{
+								name: 'nav_shortcuts',
+								description: '',
+								valueType: 'array',
+								defaultValue: [],
+								allowedValues: [],
+								allowedScopes: ['user'],
+								value: ['alerts'],
+							},
+						],
+					}),
+				),
+			),
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(authzMockResponse(payload, [false, false, false])),
+				);
+			}),
+		);
+
+		const snapshots: { fetching: boolean; loaded: boolean }[] = [];
+		const { result } = renderHook(
+			() => {
+				const ctx = useAppContext();
+				snapshots.push({
+					fetching: ctx.isFetchingUserPreferences,
+					loaded: ctx.userPreferences !== null,
+				});
+				return ctx;
+			},
+			{ wrapper: createWrapper() },
+		);
+
+		await waitFor(
+			() => {
+				expect(result.current.isFetchingUserPreferences).toBe(false);
+			},
+			{ timeout: 3000 },
+		);
+
+		expect(result.current.userPreferences).toHaveLength(1);
+		expect(snapshots.filter((s) => !s.fetching && !s.loaded)).toHaveLength(0);
+	});
+
+	it('stops waiting for user preferences when /users/me fails', async () => {
+		server.use(
+			rest.get(MY_USER_URL, (_, res, ctx) =>
+				res(ctx.status(500), ctx.json({ error: 'Internal Server Error' })),
+			),
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(authzMockResponse(payload, [false, false, false])),
+				);
+			}),
+		);
+
+		const { result } = renderHook(() => useAppContext(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(
+			() => {
+				expect(result.current.userFetchError).toBeTruthy();
+			},
+			{ timeout: 3000 },
+		);
+		expect(result.current.isFetchingUserPreferences).toBe(false);
+		expect(result.current.userPreferences).toBeNull();
+	});
+});
+
 describe('AppProvider when authz/check fails', () => {
 	beforeEach(() => {
 		queryClient.clear();

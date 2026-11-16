@@ -202,7 +202,12 @@ export default function Dashboards({
 		<Card className="dashboards-list-card home-data-card">
 			{dashboardsExist && (
 				<Card.Header>
-					<div className="dashboards-header home-data-card-header">Dashboards</div>
+					<div
+						className="dashboards-header home-data-card-header"
+						data-testid="home-section-dashboards"
+					>
+						Dashboards
+					</div>
 				</Card.Header>
 			)}
 			<Card.Content>

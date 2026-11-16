@@ -4,7 +4,7 @@
  */
 import { expect, type Page } from '@playwright/test';
 
-import { ownDropdown } from '../../helpers/alert-forms/shared';
+import { antdDriver } from '../antd';
 
 export interface EditorSelects {
 	/** Picks the panel's own time window, by its exact label. */
@@ -18,7 +18,7 @@ async function select(
 ): Promise<void> {
 	const trigger = page.getByTestId(triggerTestId);
 	await trigger.click();
-	const dropdown = await ownDropdown(page, trigger);
+	const dropdown = await antdDriver(page).ownDropdown(trigger);
 	await expect(dropdown).toBeVisible();
 	await dropdown
 		.locator('.ant-select-item-option')

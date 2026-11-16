@@ -28,7 +28,7 @@ const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$
 // JSON holds the attributes.
 var storableSpanColumns = []string{
 	"DISTINCT ON (span_id) timestamp", "duration_nano", "span_id", "has_error", "kind",
-	colServiceName, "name", "attributes", "resources_string",
+	colServiceName, "name", "attributes", "resources_string", "scope",
 	"if(notEmpty(attributes), map(), attributes_string) AS attributes_string",
 	"if(notEmpty(attributes), map(), attributes_number) AS attributes_number",
 	"if(notEmpty(attributes), map(), attributes_bool) AS attributes_bool",
@@ -64,11 +64,11 @@ type traceStore struct {
 	flagger        flagger.Flagger
 }
 
-func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, fl flagger.Flagger) *traceStore {
+func NewTraceStore(ts telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, schemaMetadataStore telemetrytypes.SchemaMetadataStore, fl flagger.Flagger) *traceStore {
 	return &traceStore{
 		telemetryStore: ts,
 		metadataStore:  metadataStore,
-		storage:        tracestelemetryschema.NewStorage(),
+		storage:        tracestelemetryschema.NewStorage(schemaMetadataStore),
 		flagger:        fl,
 	}
 }
@@ -199,7 +199,8 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 
 	for _, value := range values {
 		// lookup by number, the type metadata stores numeric attributes under; float64 is only the output cast
-		expr, err := querybuilder.ResolveColumn(ctx, q, s.storage, attributeKey(value.key, telemetrytypes.FieldDataTypeNumber), telemetrytypes.FieldDataTypeFloat64, keys)
+		// fixed gen_ai keys that many traces lack, so a not-found warning means nothing here
+		expr, _, err := querybuilder.ResolveColumn(ctx, q, s.storage, attributeKey(value.key, telemetrytypes.FieldDataTypeNumber), telemetrytypes.FieldDataTypeFloat64, keys)
 		if err != nil {
 			return nil, err
 		}
@@ -382,6 +383,7 @@ func (s *traceStore) GetFlamegraphSpans(ctx context.Context, traceID string, sta
 		"if(notEmpty(attributes), map(), any(attributes_number)) AS attributes_number",
 		"if(notEmpty(attributes), map(), any(attributes_bool)) AS attributes_bool",
 		"any(resources_string) AS resources_string",
+		"any(scope) AS scope",
 	)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
 	conditions := []string{

@@ -204,6 +204,7 @@ function MetricNameSearch({
 					ref={inputRef}
 					onKeyDown={handleKeyDown}
 					placeholder="Search..."
+					data-testid="metric-name-search-input"
 					value={searchString}
 					onChange={handleInputChange}
 					bordered
@@ -233,6 +234,8 @@ function MetricNameSearch({
 			<Button
 				type="text"
 				shape="circle"
+				data-testid="metric-name-search-button"
+				aria-label="Search metric name"
 				onClick={(e): void => {
 					e.stopPropagation();
 				}}

@@ -12,9 +12,11 @@ import K8sGroupCell from '../Base/K8sGroupCell';
 import ClickableStatusBadge from '../Base/components/StatusFilterCells/ClickableStatusBadge';
 import ClickableStatusCounts from '../Base/components/StatusFilterCells/ClickableStatusCounts';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
-import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
+import {
+	INFRA_MONITORING_ATTR_KEYS,
+	InfraMonitoringEntity,
+} from '../constants';
 import { TextNoData, ValidateColumnValueWrapper } from '../components';
-import { InfraMonitoringEntity } from '../constants';
 import { NODE_CONDITION_COLORS, NODE_CONDITION_LABELS } from './utils';
 import { Workflow } from '@signozhq/icons';
 

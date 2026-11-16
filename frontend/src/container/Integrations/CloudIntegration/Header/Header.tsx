@@ -12,6 +12,7 @@ function Header({ type }: { type: IntegrationType }): JSX.Element {
 		<div className="cloud-header">
 			<div className="cloud-header__navigation">
 				<Breadcrumb
+					data-testid="cloud-header-breadcrumb"
 					className="cloud-header__breadcrumb"
 					items={[
 						{

@@ -7,14 +7,14 @@ import {
 	panel,
 	promqlQuery,
 	rawQuery,
-} from '../../helpers/dashboard-spec';
+} from '../../drivers/dashboard-spec';
 import type {
 	ContextLink,
 	PanelPluginSpec,
 	PostableDashboard,
 	Query,
 	Variable,
-} from '../../helpers/dashboard-spec.types';
+} from '../../drivers/dashboard-spec.types';
 
 // Dashboard fixtures for the dashboard suites. TypeScript rather than frozen JSON so
 // a contract change is a compile error, and panel ids stay visible to the specs

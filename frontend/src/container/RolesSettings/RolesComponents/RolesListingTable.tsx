@@ -179,6 +179,7 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 	const renderRow = (role: AuthtypesGettableRoleDTO): JSX.Element => (
 		<div
 			key={role.id}
+			data-testid={`role-row-${role.name}`}
 			className={cx(styles.tableRow, {
 				[styles.tableRowClickable]: isRolesEnabled,
 			})}

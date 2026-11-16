@@ -25,6 +25,7 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import {
 	RESPONSE_STATES,
 	type ResponseState,
@@ -151,6 +152,12 @@ export const logsMocks = defineStoryMocks({
 			group: LIST,
 			description:
 				'`use_json_body`: the service logs JSON and the backend hands the body over parsed, so the body is a tree and its keys are queryable as `body.x`.',
+			value: false,
+		}),
+		bodyColumns: toggleControl('Body field columns', {
+			group: LIST,
+			description:
+				'Keys of the JSON body (`order`, `order.coupons`, `http.status_code`) selected as columns beside body and timestamp. Only shows something with the JSON body on.',
 			value: false,
 		}),
 		filtersPanel: toggleControl('Filters panel', {
@@ -291,6 +298,7 @@ export const logsMocks = defineStoryMocks({
 		format,
 		maxLines,
 		fontSize,
+		bodyColumns,
 		recentFilters,
 	}) => {
 		setLocalStorage(LOCALSTORAGE.SHOW_FREQUENCY_CHART, String(frequencyChart));
@@ -301,7 +309,9 @@ export const logsMocks = defineStoryMocks({
 		// what the options menu opens on.
 		setLocalStorage(
 			LOCALSTORAGE.LOGS_LIST_OPTIONS,
-			JSON.stringify(logsListOptions({ format, maxLines, fontSize })),
+			JSON.stringify(logsListOptions({ format, maxLines, fontSize, bodyColumns })),
 		);
 	},
 });
+
+export type LogsArgs = PageStoryArgs<typeof logsMocks>;

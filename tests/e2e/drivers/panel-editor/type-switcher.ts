@@ -4,7 +4,7 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { PanelKind } from '../../helpers/dashboard-spec';
+import { PanelKind } from '../dashboard-spec';
 
 const TYPE_SWITCHER_DRAWER = 'panel-type-switcher-drawer';
 

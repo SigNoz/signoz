@@ -10,6 +10,7 @@ import {
 	useGetConnectionCredentials,
 } from 'api/generated/services/cloudintegration';
 import {
+	CloudintegrationtypesAccountDTO,
 	CloudintegrationtypesCredentialsDTO,
 	CloudintegrationtypesPostableAccountDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -18,6 +19,7 @@ import { ModalStateEnum } from 'container/Integrations/HeroSection/types';
 import useAxiosError from 'hooks/useAxiosError';
 
 import logEvent from '../../../api/common/logEvent';
+import { useAgentConnectionPolling } from '../useAgentConnectionPolling';
 
 interface UseIntegrationModalProps {
 	onClose: () => void;
@@ -27,22 +29,13 @@ interface UseAzureIntegrationModal {
 	form: FormInstance;
 	modalState: ModalStateEnum;
 	isLoading: boolean;
-	accountId?: string;
-	connectionCommands: {
-		cliCommand: string;
-		cloudPowerShellCommand: string;
-	} | null;
+	connectionCommand: string | null;
 	setModalState: Dispatch<SetStateAction<ModalStateEnum>>;
 	handleSubmit: () => Promise<void>;
 	handleClose: () => void;
 	connectionParams?: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
-	handleConnectionSuccess: (payload: {
-		cloudAccountId: string;
-		status?: unknown;
-	}) => void;
-	handleConnectionTimeout: (payload: { id?: string }) => void;
-	handleConnectionError: () => void;
+	checkConnectionAgain: () => void;
 }
 
 export function useIntegrationModal({
@@ -55,22 +48,21 @@ export function useIntegrationModal({
 	);
 	const [isLoading, setIsLoading] = useState(false);
 	const [accountId, setAccountId] = useState<string | undefined>(undefined);
-	const [connectionCommands, setConnectionCommands] = useState<{
-		cliCommand: string;
-		cloudPowerShellCommand: string;
-	} | null>(null);
+	const [connectionCommand, setConnectionCommand] = useState<string | null>(
+		null,
+	);
 
 	const handleClose = useCallback((): void => {
 		setModalState(ModalStateEnum.FORM);
-		setConnectionCommands(null);
+		setConnectionCommand(null);
 		onClose();
 	}, [onClose]);
 
 	const handleConnectionSuccess = useCallback(
-		(payload: { cloudAccountId: string; status?: unknown }): void => {
-			logEvent('Azure Integration: Account connected', {
-				cloudAccountId: payload.cloudAccountId,
-				status: payload.status,
+		(account: CloudintegrationtypesAccountDTO): void => {
+			void logEvent('Azure Integration: Account connected', {
+				cloudAccountId: account.providerAccountId ?? account.id,
+				status: account.agentReport,
 			});
 			toast.success('Azure account connected successfully', {
 				position: 'bottom-right',
@@ -83,19 +75,29 @@ export function useIntegrationModal({
 		[handleClose, queryClient],
 	);
 
-	const handleConnectionTimeout = useCallback(
-		(payload: { id?: string }): void => {
-			setModalState(ModalStateEnum.ERROR);
-			logEvent('Azure Integration: Account connection attempt timed out', {
-				id: payload.id,
-			});
-		},
-		[],
-	);
+	const handleConnectionTimeout = useCallback((): void => {
+		setModalState(ModalStateEnum.ERROR);
+		void logEvent('Azure Integration: Account connection attempt timed out', {
+			id: accountId,
+		});
+	}, [accountId]);
 
 	const handleConnectionError = useCallback((): void => {
 		setModalState(ModalStateEnum.ERROR);
 	}, []);
+
+	const checkConnectionAgain = useCallback((): void => {
+		setModalState(ModalStateEnum.WAITING);
+	}, []);
+
+	useAgentConnectionPolling({
+		cloudProvider: INTEGRATION_TYPES.AZURE,
+		accountId: accountId ?? '',
+		enabled: modalState === ModalStateEnum.WAITING && accountId !== undefined,
+		onConnected: handleConnectionSuccess,
+		onTimeout: handleConnectionTimeout,
+		onError: handleConnectionError,
+	});
 
 	const { mutate: createAccount } = useCreateAccount();
 	const handleError = useAxiosError();
@@ -140,16 +142,20 @@ export function useIntegrationModal({
 				{
 					onSuccess: (response: CreateAccountMutationResult) => {
 						const nextAccountId = response.data.id;
-						const artifact = response.data.connectionArtifact.azure;
+						const command = response.data.connectionArtifact.azure?.cliCommand;
+						if (!command) {
+							setModalState(ModalStateEnum.ERROR);
+							toast.error('Failed to generate the Azure setup command', {
+								position: 'bottom-right',
+							});
+							return;
+						}
 
-						logEvent('Azure Integration: Account connection commands generated', {
+						void logEvent('Azure Integration: Account connection command generated', {
 							id: nextAccountId,
 						});
 
-						setConnectionCommands({
-							cliCommand: artifact?.cliCommand || '',
-							cloudPowerShellCommand: artifact?.cloudPowerShellCommand || '',
-						});
+						setConnectionCommand(command);
 						setModalState(ModalStateEnum.WAITING);
 						setAccountId(nextAccountId);
 					},
@@ -172,8 +178,7 @@ export function useIntegrationModal({
 		form,
 		modalState,
 		isLoading,
-		accountId,
-		connectionCommands,
+		connectionCommand,
 		setModalState,
 		handleSubmit,
 		handleClose,
@@ -181,8 +186,6 @@ export function useIntegrationModal({
 			| CloudintegrationtypesCredentialsDTO
 			| undefined,
 		isConnectionParamsLoading,
-		handleConnectionSuccess,
-		handleConnectionTimeout,
-		handleConnectionError,
+		checkConnectionAgain,
 	};
 }

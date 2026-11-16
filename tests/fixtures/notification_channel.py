@@ -385,7 +385,11 @@ def telegram_message_subset(alertname: str, links: list[tuple[str, str]]) -> dic
 JIRA_TEST_EMAIL = "user@acme.io"
 JIRA_SA_EMAIL = "svc@serviceaccount.atlassian.com"
 JIRA_TEST_TOKEN = "jira-test-token"  # noqa: S105
+JIRA_TEST_PAT = "jira-test-pat"  # noqa: S105
 JIRA_API_BASE = "/rest/api/3"
+JIRA_SELFHOSTED_API_BASE = "/rest/api/2"
+JIRA_SEARCH_PATH = "/search/jql"
+JIRA_SELFHOSTED_SEARCH_PATH = "/search"
 
 
 def jira_config(**overrides) -> dict:
@@ -406,6 +410,24 @@ def jira_config(**overrides) -> dict:
     }
 
 
+def jira_selfhosted_config(**overrides) -> dict:
+    """Self-hosted Jira channel config: a personal access token as a Bearer
+    header against the v2 API. The site is injected at runtime by
+    update_raw_channel_config."""
+    return {
+        "jira_configs": [
+            {
+                "deployment": "selfhosted",
+                "site": "",  # set on runtime
+                "project": "OPS",
+                "issue_type": "Task",
+                "http_config": {"authorization": {"type": "Bearer", "credentials": JIRA_TEST_PAT}},
+                **overrides,
+            }
+        ],
+    }
+
+
 def jira_search_issue(key: str, done: bool, labels: list[str]) -> dict:
     """One issue as returned by the /search/jql stub, with the fields the
     notifier requests (status category + labels)."""
@@ -417,9 +439,9 @@ def jira_search_issue(key: str, done: bool, labels: list[str]) -> dict:
 
 # Jira flows span several endpoints; each mapping helper stubs one, on any base
 # (site host for personal tokens, /ex/jira/<cloud_id> gateway for service accounts).
-def jira_search_mapping(issues: list[dict], base: str = JIRA_API_BASE) -> Mapping:
+def jira_search_mapping(issues: list[dict], base: str = JIRA_API_BASE, search_path: str = JIRA_SEARCH_PATH) -> Mapping:
     return Mapping(
-        request=MappingRequest(method=HttpMethods.POST, url_path=f"{base}/search/jql"),
+        request=MappingRequest(method=HttpMethods.POST, url_path=f"{base}{search_path}"),
         response=MappingResponse(status=200, json_body={"issues": issues}),
     )
 

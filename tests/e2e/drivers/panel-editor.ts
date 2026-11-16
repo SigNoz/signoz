@@ -4,7 +4,7 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { PanelKind } from '../helpers/dashboard-spec';
+import { PanelKind } from './dashboard-spec';
 
 import { EDITOR_ROOT } from './dashboards';
 import { driver } from './kit';
@@ -56,7 +56,9 @@ export type EditorControl =
 	| 'soft-min'
 	| 'soft-max'
 	| 'decimals'
-	| 'legend-position';
+	| 'legend-position'
+	| 'stack-mode'
+	| 'stacked-bar-chart';
 
 export interface PatchOperation {
 	op: string;
@@ -124,7 +126,7 @@ function isDashboardPatch(method: string, url: string): boolean {
 	return method === 'PATCH' && /\/api\/v2\/dashboards\//.test(url);
 }
 
-function editorDriver(page: Page): PanelEditor {
+export function editorDriver(page: Page): PanelEditor {
 	const byTestId = (suffix: string): Locator =>
 		page.getByTestId(`panel-editor-v2-${suffix}`);
 	const preview = (): Locator => page.getByTestId('preview-pane');

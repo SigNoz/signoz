@@ -3,3 +3,7 @@
 	align-items: center;
 	gap: var(--spacing-4);
 }
+
+.mono {
+	composes: mono from '../shared.module.scss';
+}

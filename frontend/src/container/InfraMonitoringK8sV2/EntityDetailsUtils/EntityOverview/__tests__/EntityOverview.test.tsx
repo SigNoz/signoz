@@ -88,7 +88,6 @@ function overviewTree(
 					>
 						<EntityOverview
 							category={InfraMonitoringEntity.NODES}
-							eventEntity="node"
 							attributes={attributes}
 							entity={{ nodeName: attributes['k8s.node.name'] }}
 							entityName={attributes['k8s.node.name']}

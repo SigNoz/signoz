@@ -23,7 +23,10 @@ function ErrorBoundaryFallback(): JSX.Element {
 	}, [isCloudUserVal]);
 
 	return (
-		<div className="error-boundary-fallback-container">
+		<div
+			className="error-boundary-fallback-container"
+			data-testid="error-boundary-fallback"
+		>
 			<div className="error-boundary-fallback-content">
 				<div className="error-icon">
 					<img src={cloudUrl} alt="error-cloud-icon" />

@@ -169,8 +169,15 @@ describe('QueryAddOns', () => {
 		expect(screen.getByTestId('limit-content')).toBeInTheDocument();
 		expect(input.value).toBe('5');
 
-		fireEvent.change(input, { target: { value: '10' } });
-		expect(mockHandleChangeQueryData).toHaveBeenCalledWith('limit', 10);
+		const user = userEvent.setup();
+		await user.clear(input);
+		await user.type(input, '10');
+		expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith('limit', 10);
+
+		await user.clear(input);
+		await user.type(input, '-5');
+		expect(input.value).toBe('5');
+		expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith('limit', 5);
 	});
 
 	it.each([

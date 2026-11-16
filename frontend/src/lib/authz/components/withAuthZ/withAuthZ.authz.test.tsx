@@ -262,17 +262,21 @@ describe('withAuthZ router context stability', () => {
 		server.use(setupAuthzGrantByPrefix('read||__||role'));
 	});
 
-	it('does not re-render when useParams returns new object with same values', async () => {
+	it('keeps the router context when useParams returns new object with same values', async () => {
 		mockAppParams({ roleId: 'r-1' });
 		mockAppLocation({ pathname: '/', search: '' });
+		const seen: RouterContext[] = [];
 
 		const Guarded = withAuthZ(RenderCounter, {
-			checks: (_props, router: RouterContext) => [
-				buildPermission(
-					'read',
-					buildObjectString<'read'>('role', router.params.roleId ?? '*'),
-				),
-			],
+			checks: (_props, router: RouterContext) => {
+				seen.push(router);
+				return [
+					buildPermission(
+						'read',
+						buildObjectString<'read'>('role', router.params.roleId ?? '*'),
+					),
+				];
+			},
 		});
 
 		const { rerender } = render(<Guarded />);
@@ -281,24 +285,24 @@ describe('withAuthZ router context stability', () => {
 			expect(screen.getByTestId('render-count')).toBeInTheDocument();
 		});
 
-		const initialCount = renderCount;
+		const checksBefore = seen.length;
 
-		// Return NEW object with SAME values — should not cause re-render
+		// Return NEW object with SAME values: the router context stays the same
 		mockAppParams({ roleId: 'r-1' });
 		rerender(<Guarded />);
 
-		// Allow any pending effects to flush
-		await waitFor(() => {
-			expect(renderCount).toBe(initialCount);
-		});
+		expect(seen.length).toBeGreaterThan(checksBefore);
+		expect(seen[seen.length - 1]).toBe(seen[0]);
 	});
 
-	it('does not re-render when useLocation returns new object with same pathname', async () => {
+	it('keeps the router context when useLocation returns new object with same pathname', async () => {
 		mockAppParams({});
 		mockAppLocation({ pathname: '/roles', search: '' });
+		const seen: RouterContext[] = [];
 
 		const Guarded = withAuthZ(RenderCounter, {
 			checks: (_props, router: RouterContext) => {
+				seen.push(router);
 				const match = router.matchPath<{ id: string }>('/roles/:id');
 				return match
 					? [buildPermission('read', buildObjectString<'read'>('role', match.id))]
@@ -312,23 +316,24 @@ describe('withAuthZ router context stability', () => {
 			expect(screen.getByTestId('render-count')).toBeInTheDocument();
 		});
 
-		const initialCount = renderCount;
+		const checksBefore = seen.length;
 
-		// Return NEW object with SAME pathname — should not cause re-render
+		// Return NEW object with SAME pathname: the router context stays the same
 		mockAppLocation({ pathname: '/roles', search: '' });
 		rerender(<Guarded />);
 
-		await waitFor(() => {
-			expect(renderCount).toBe(initialCount);
-		});
+		expect(seen.length).toBeGreaterThan(checksBefore);
+		expect(seen[seen.length - 1]).toBe(seen[0]);
 	});
 
-	it('does not re-render when useLocation returns new object with same search params', async () => {
+	it('keeps the router context when useLocation returns new object with same search params', async () => {
 		mockAppParams({});
 		mockAppLocation({ pathname: '/', search: '?tab=keys' });
+		const seen: RouterContext[] = [];
 
 		const Guarded = withAuthZ(RenderCounter, {
 			checks: (_props, router: RouterContext) => {
+				seen.push(router);
 				// Access searchParams to ensure it's part of the dependency chain
 				void router.searchParams.get('tab');
 				return [readPerm];
@@ -341,15 +346,14 @@ describe('withAuthZ router context stability', () => {
 			expect(screen.getByTestId('render-count')).toBeInTheDocument();
 		});
 
-		const initialCount = renderCount;
+		const checksBefore = seen.length;
 
-		// Return NEW object with SAME search — should not cause re-render
+		// Return NEW object with SAME search: the router context stays the same
 		mockAppLocation({ pathname: '/', search: '?tab=keys' });
 		rerender(<Guarded />);
 
-		await waitFor(() => {
-			expect(renderCount).toBe(initialCount);
-		});
+		expect(seen.length).toBeGreaterThan(checksBefore);
+		expect(seen[seen.length - 1]).toBe(seen[0]);
 	});
 
 	it('re-renders when params values actually change', async () => {

@@ -10,6 +10,16 @@
 
 .actionsContainer {
 	display: flex;
+	min-height: 40px;
+	padding: 4px 8px;
+	border-bottom: 1px solid var(--l1-border);
 	justify-content: space-between;
 	align-items: center;
+}
+
+.controls {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 4px;
 }

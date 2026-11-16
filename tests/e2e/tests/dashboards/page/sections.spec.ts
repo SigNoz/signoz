@@ -102,4 +102,45 @@ test.describe('Dashboards — sections', () => {
 			.poll(async () => (await dashboards.get(id)).spec.layouts.length)
 			.toBe(2);
 	});
+
+	test('TC-06 cloning a section adds a copy with its own panels', async ({
+		dashboards,
+		dashboardPage,
+	}) => {
+		const id = await dashboards.seedAndOpen(compactDashboard());
+		const charts = dashboardPage.section('Charts');
+
+		await charts.openMenu();
+		await charts.menuItem(SectionAction.clone).click();
+
+		await expect(dashboardPage.section('Charts (Copy)').toggle()).toBeVisible();
+		await expect
+			.poll(async () => {
+				const { spec } = await dashboards.get(id);
+				return {
+					titles: spec.layouts.map((layout) => layout.spec.display.title).sort(),
+					panels: Object.keys(spec.panels).length,
+				};
+			})
+			.toEqual({ titles: ['Charts', 'Charts (Copy)', 'Tabular'], panels: 4 });
+	});
+
+	test('TC-07 deleting a section removes its panels from the spec', async ({
+		dashboards,
+		dashboardPage,
+	}) => {
+		const id = await dashboards.seedAndOpen(compactDashboard());
+
+		await dashboardPage.section('Tabular').delete();
+
+		await expect
+			.poll(async () => {
+				const { spec } = await dashboards.get(id);
+				return {
+					titles: spec.layouts.map((layout) => layout.spec.display.title),
+					panels: Object.keys(spec.panels),
+				};
+			})
+			.toEqual({ titles: ['Charts'], panels: [COMPACT_PANELS.timeseries] });
+	});
 });

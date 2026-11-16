@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
-import { Typography } from '@signozhq/ui/typography';
 import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import { IntegrationModalProps } from 'container/Integrations/HeroSection/types';
 
+import CloseSetupConfirm from '../../CloseSetupConfirm/CloseSetupConfirm';
+import { useCloseSetupConfirm } from '../../CloseSetupConfirm/useCloseSetupConfirm';
 import AgentSetup from './AgentSetup/AgentSetup';
 import ManualSetup from './ManualSetup/ManualSetup';
 import SetupDrawerLayout from './SetupDrawerLayout';
@@ -18,15 +17,9 @@ function CloudAccountSetupDrawer({
 		);
 	// Set once the agent command exists; closing after that loses the pending setup.
 	const [hasGeneratedCommand, setHasGeneratedCommand] = useState(false);
-	const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false);
-
-	const requestClose = (): void => {
-		if (hasGeneratedCommand) {
-			setIsCloseConfirmOpen(true);
-			return;
-		}
-		onClose();
-	};
+	const { isConfirmOpen, setIsConfirmOpen, requestClose } = useCloseSetupConfirm(
+		{ shouldConfirm: hasGeneratedCommand, onClose },
+	);
 
 	return (
 		<>
@@ -49,39 +42,13 @@ function CloudAccountSetupDrawer({
 					)
 				}
 			</SetupDrawerLayout>
-			<DialogWrapper
-				open={isCloseConfirmOpen}
-				onOpenChange={setIsCloseConfirmOpen}
-				title="Close GCP agent setup?"
-				testId="gcp-close-setup-confirm"
-				footer={
-					<>
-						<Button
-							size="md"
-							variant="solid"
-							color="highlight-danger"
-							onClick={onClose}
-							testId="gcp-close-setup-btn"
-						>
-							Close Setup
-						</Button>
-						<Button
-							size="md"
-							variant="solid"
-							color="primary"
-							onClick={(): void => setIsCloseConfirmOpen(false)}
-							testId="gcp-continue-setup-btn"
-						>
-							Continue Setup
-						</Button>
-					</>
-				}
-			>
-				<Typography>
-					The agent has not connected yet. If you close now, you will have to start
-					the installation process again with a new setup command.
-				</Typography>
-			</DialogWrapper>
+			<CloseSetupConfirm
+				providerName="GCP"
+				testIdPrefix="gcp"
+				open={isConfirmOpen}
+				onOpenChange={setIsConfirmOpen}
+				onConfirm={onClose}
+			/>
 		</>
 	);
 }

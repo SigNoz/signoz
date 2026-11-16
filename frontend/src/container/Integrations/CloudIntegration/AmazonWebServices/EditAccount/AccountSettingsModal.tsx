@@ -146,6 +146,7 @@ function AccountSettingsModal({
 				onClick={handleSubmit}
 				loading={isLoading}
 				prefix={<Save size={14} />}
+				testId="aws-update-account-btn"
 			>
 				Update Changes
 			</Button>

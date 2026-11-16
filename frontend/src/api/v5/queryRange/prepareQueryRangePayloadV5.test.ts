@@ -21,6 +21,7 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import {
 	convertBuilderQueriesToV5,
+	mapPanelTypeToRequestType,
 	prepareQueryRangePayloadV5,
 } from './prepareQueryRangePayloadV5';
 
@@ -901,6 +902,12 @@ describe('prepareQueryRangePayloadV5', () => {
 		) as QueryEnvelope;
 		const logSpec = builderQuery.spec as LogBuilderQuery;
 		expect(logSpec.filter).toStrictEqual({ expression: '' });
+	});
+});
+
+describe('mapPanelTypeToRequestType', () => {
+	it('sends a scatter plot as scalar, like a table', () => {
+		expect(mapPanelTypeToRequestType(PANEL_TYPES.SCATTER)).toBe('scalar');
 	});
 });
 

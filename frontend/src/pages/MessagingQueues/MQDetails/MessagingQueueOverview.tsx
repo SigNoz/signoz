@@ -35,6 +35,7 @@ function ProducerLatencyTabs({
 
 	return (
 		<ToggleGroup
+			testId="mq-producer-latency-toggle"
 			variant="outlined"
 			color="secondary"
 			size="sm"

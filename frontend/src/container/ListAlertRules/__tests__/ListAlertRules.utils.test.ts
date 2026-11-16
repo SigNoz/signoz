@@ -1,14 +1,19 @@
 import { logEventMock } from '__tests__/logEventMock';
-import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	RuletypesListOrderDTO,
+	RuletypesListSortDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import type { SortState } from 'components/TanStackTableView/types';
 
-import type { AlertRule } from '../types';
+import type { AlertRule, RuleListFilter } from '../types';
 import {
 	ALERT_ACTIONS,
 	alertActionLogEvent,
-	filterRulesByFilters,
-	getAlertSortValue,
-	sortRules,
+	DEFAULT_RULE_LIST_FILTER,
+	isDefaultRuleListFilter,
+	isSameRuleListFilter,
+	toListSort,
+	toOrderBy,
 } from '../utils';
 
 const baseRule = {
@@ -27,159 +32,116 @@ const makeRule = (overrides: Partial<AlertRule>): AlertRule => ({
 	...overrides,
 });
 
-describe('getAlertSortValue', () => {
-	it('returns state for "state"', () => {
-		expect(
-			getAlertSortValue(
-				makeRule({ state: RuletypesAlertStateDTO.firing }),
-				'state',
-			),
-		).toBe('firing');
+describe('toListSort', () => {
+	it('returns the default sort when orderBy is null', () => {
+		expect(toListSort(null)).toStrictEqual({
+			sort: RuletypesListSortDTO.updated_at,
+			order: RuletypesListOrderDTO.desc,
+		});
 	});
 
-	it('returns alert name for "name"', () => {
-		expect(getAlertSortValue(makeRule({ alert: 'My Rule' }), 'name')).toBe(
-			'My Rule',
-		);
+	it('returns the default sort for an unknown column', () => {
+		expect(toListSort({ columnName: 'labels', order: 'asc' })).toStrictEqual({
+			sort: RuletypesListSortDTO.updated_at,
+			order: RuletypesListOrderDTO.desc,
+		});
 	});
 
-	it('returns severity label for "severity"', () => {
-		expect(
-			getAlertSortValue(
-				makeRule({ labels: { severity: 'critical' } }),
-				'severity',
-			),
-		).toBe('critical');
+	it.each([
+		['state', RuletypesListSortDTO.state],
+		['name', RuletypesListSortDTO.name],
+		['severity', RuletypesListSortDTO.severity],
+		['createdAt', RuletypesListSortDTO.created_at],
+		['updatedAt', RuletypesListSortDTO.updated_at],
+	])('maps column "%s" to sort "%s"', (columnName, sort) => {
+		expect(toListSort({ columnName, order: 'asc' })).toStrictEqual({
+			sort,
+			order: RuletypesListOrderDTO.asc,
+		});
 	});
 
-	it('returns createdAt as ms', () => {
-		const rule = makeRule({ createdAt: '2023-10-15T10:00:00Z' });
-		const result = getAlertSortValue(rule, 'createdAt');
-		expect(result).toBe(new Date('2023-10-15T10:00:00Z').getTime());
-	});
-
-	it('returns updatedAt as ms', () => {
-		const rule = makeRule({ updatedAt: '2023-10-19T10:00:00Z' });
-		const result = getAlertSortValue(rule, 'updatedAt');
-		expect(result).toBe(new Date('2023-10-19T10:00:00Z').getTime());
-	});
-
-	it('returns 0 when createdAt missing', () => {
-		expect(
-			getAlertSortValue(makeRule({ createdAt: undefined }), 'createdAt'),
-		).toBe(0);
-	});
-
-	it('returns empty for unknown column', () => {
-		expect(getAlertSortValue(baseRule, 'xxx')).toBe('');
-	});
-
-	it('returns empty for missing fields', () => {
-		expect(
-			getAlertSortValue(
-				makeRule({ state: undefined, labels: undefined }),
-				'state',
-			),
-		).toBe('');
-		expect(
-			getAlertSortValue(
-				makeRule({ state: undefined, labels: undefined }),
-				'severity',
-			),
-		).toBe('');
+	it('maps desc order', () => {
+		expect(toListSort({ columnName: 'name', order: 'desc' })).toStrictEqual({
+			sort: RuletypesListSortDTO.name,
+			order: RuletypesListOrderDTO.desc,
+		});
 	});
 });
 
-describe('sortRules', () => {
-	const r1 = makeRule({ id: '1', alert: 'A' });
-	const r2 = makeRule({ id: '2', alert: 'B' });
-	const r3 = makeRule({ id: '3', alert: 'C' });
-
-	it('sorts ascending by name', () => {
-		const order: SortState = { columnName: 'name', order: 'asc' };
-		const result = sortRules([r3, r1, r2], order);
-		expect(result.map((r) => r.alert)).toStrictEqual(['A', 'B', 'C']);
+describe('toOrderBy', () => {
+	it('returns null for the default sort', () => {
+		expect(
+			toOrderBy(RuletypesListSortDTO.updated_at, RuletypesListOrderDTO.desc),
+		).toBeNull();
 	});
 
-	it('sorts descending by name', () => {
-		const order: SortState = { columnName: 'name', order: 'desc' };
-		const result = sortRules([r1, r2, r3], order);
-		expect(result.map((r) => r.alert)).toStrictEqual(['C', 'B', 'A']);
+	it('returns the column for a non-default sort', () => {
+		expect(
+			toOrderBy(RuletypesListSortDTO.created_at, RuletypesListOrderDTO.asc),
+		).toStrictEqual<SortState>({ columnName: 'createdAt', order: 'asc' });
+		expect(
+			toOrderBy(RuletypesListSortDTO.updated_at, RuletypesListOrderDTO.asc),
+		).toStrictEqual<SortState>({ columnName: 'updatedAt', order: 'asc' });
 	});
 
-	it('returns unsorted when orderBy is null', () => {
-		const result = sortRules([r3, r1, r2], null);
-		expect(result.map((r) => r.alert)).toStrictEqual(['C', 'A', 'B']);
+	it('round-trips with toListSort', () => {
+		const orderBy: SortState = { columnName: 'severity', order: 'desc' };
+		const { sort, order } = toListSort(orderBy);
+		expect(toOrderBy(sort, order)).toStrictEqual(orderBy);
 	});
 });
 
-describe('filterRulesByFilters', () => {
-	const r1 = makeRule({
-		id: '1',
-		alert: 'R1',
-		state: RuletypesAlertStateDTO.firing,
-		labels: { severity: 'critical' },
-	});
-	const r2 = makeRule({
-		id: '2',
-		alert: 'R2',
-		state: RuletypesAlertStateDTO.inactive,
-		labels: { severity: 'warning' },
-	});
-	const r3 = makeRule({
-		id: '3',
-		alert: 'R3',
-		state: RuletypesAlertStateDTO.firing,
-		labels: { severity: 'warning' },
-	});
-	const rules = [r1, r2, r3];
+describe('isSameRuleListFilter', () => {
+	const filter: RuleListFilter = {
+		query: "severity = 'critical'",
+		states: ['firing', 'pending'],
+		sort: RuletypesListSortDTO.name,
+		order: RuletypesListOrderDTO.asc,
+	};
 
-	it('returns input when filters empty', () => {
-		expect(filterRulesByFilters(rules, [])).toStrictEqual(rules);
+	it('ignores surrounding whitespace in the query', () => {
+		expect(
+			isSameRuleListFilter(filter, { ...filter, query: `  ${filter.query} ` }),
+		).toBe(true);
 	});
 
-	it('filters by state', () => {
-		const result = filterRulesByFilters(rules, ['state:firing']);
-		expect(result.map((r) => r.id)).toStrictEqual(['1', '3']);
+	it('ignores states order', () => {
+		expect(
+			isSameRuleListFilter(filter, { ...filter, states: ['pending', 'firing'] }),
+		).toBe(true);
 	});
 
-	it('filters by severity', () => {
-		const result = filterRulesByFilters(rules, ['severity:warning']);
-		expect(result.map((r) => r.id)).toStrictEqual(['2', '3']);
+	it.each<[string, Partial<RuleListFilter>]>([
+		['query', { query: "severity = 'warning'" }],
+		['states', { states: ['firing'] }],
+		['sort', { sort: RuletypesListSortDTO.state }],
+		['order', { order: RuletypesListOrderDTO.desc }],
+	])('detects a different %s', (_, change) => {
+		expect(isSameRuleListFilter(filter, { ...filter, ...change })).toBe(false);
+	});
+});
+
+describe('isDefaultRuleListFilter', () => {
+	it('is true for DEFAULT_RULE_LIST_FILTER', () => {
+		expect(isDefaultRuleListFilter(DEFAULT_RULE_LIST_FILTER)).toBe(true);
 	});
 
-	it('combines state AND severity', () => {
-		const result = filterRulesByFilters(rules, [
-			'state:firing',
-			'severity:warning',
-		]);
-		expect(result.map((r) => r.id)).toStrictEqual(['3']);
+	it('is true for a whitespace-only query', () => {
+		expect(
+			isDefaultRuleListFilter({ ...DEFAULT_RULE_LIST_FILTER, query: '  ' }),
+		).toBe(true);
 	});
 
-	it('OR within same key (state)', () => {
-		const result = filterRulesByFilters(rules, [
-			'state:firing',
-			'state:inactive',
-		]);
-		expect(result.map((r) => r.id)).toStrictEqual(['1', '2', '3']);
-	});
-
-	it('matches values case-insensitively', () => {
-		const result = filterRulesByFilters(rules, ['state:FIRING']);
-		expect(result.map((r) => r.id)).toStrictEqual(['1', '3']);
-	});
-
-	it('ignores prefixes with wrong case (state: is required lowercase)', () => {
-		const result = filterRulesByFilters(rules, ['STATE:FIRING']);
-		expect(result).toStrictEqual(rules);
-	});
-
-	it('returns empty when no rule matches', () => {
-		expect(filterRulesByFilters(rules, ['state:nonexistent'])).toStrictEqual([]);
-	});
-
-	it('ignores unknown prefix', () => {
-		expect(filterRulesByFilters(rules, ['foo:bar'])).toStrictEqual(rules);
+	it('is false once any field differs', () => {
+		expect(
+			isDefaultRuleListFilter({ ...DEFAULT_RULE_LIST_FILTER, states: ['firing'] }),
+		).toBe(false);
+		expect(
+			isDefaultRuleListFilter({
+				...DEFAULT_RULE_LIST_FILTER,
+				sort: RuletypesListSortDTO.name,
+			}),
+		).toBe(false);
 	});
 });
 

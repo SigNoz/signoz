@@ -17,7 +17,6 @@ import {
 	focusSpanIndex,
 	scenarioSpanCount,
 	spanIdAt,
-	STORY_TRACE_ID,
 } from './__story_mockdata__/traceDetails';
 import {
 	openRowMenu,
@@ -249,18 +248,35 @@ export const SpanPercentileOpen: Story = {
 	},
 };
 
-/** The span's trace id clicked in the panel, which copies it. */
-export const TraceIdCopiedToast: Story = {
+/** The span has no logs of its own but its trace does, so the Logs tab points to the trace's. */
+export const SpanPanelTraceOnlyLogs: Story = {
+	args: { traceOnlyLogs: true },
+	play: async ({ canvasElement }): Promise<void> => {
+		await userEvent.click(
+			await within(canvasElement).findByRole('tab', { name: /Logs/ }, untilLoaded),
+		);
+		await expect(
+			await within(canvasElement).findByText(
+				'No logs found for selected span. View logs for the current trace.',
+				undefined,
+				untilLoaded,
+			),
+		).toBeVisible();
+	},
+};
+
+/** The span panel's trace id copied with its copy button, which turns into a check. */
+export const TraceIdCopied: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		await userEvent.click(
 			await within(canvasElement).findByRole(
 				'button',
-				{ name: STORY_TRACE_ID },
+				{ name: 'Copy trace ID' },
 				untilLoaded,
 			),
 		);
 		await expect(
-			await screen.findByText('Trace ID copied to clipboard'),
+			await within(canvasElement).findByRole('button', { name: 'Copied' }),
 		).toBeVisible();
 	},
 };

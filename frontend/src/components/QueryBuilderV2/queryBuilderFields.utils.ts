@@ -65,13 +65,13 @@ export function resolveQueryBuilderFields(
 
 /**
  * The surface a raw-row builder starts from, layered under a caller's own config.
- * `AdditionalQueries` is deliberately absent — a raw trace builder still takes several
- * queries when trace matching is on. Omit rather than Partial, so a field added to the
- * enum has to be placed on one side.
+ * `AdditionalQueries` and `TraceOperator` are deliberately absent — a raw trace builder
+ * still takes several queries, and their trace operator, when trace matching is on.
+ * Omit rather than Partial, so a field added to the enum has to be placed on one side.
  */
 export const RAW_QUERY_FIELDS: Omit<
 	Record<QueryBuilderField, QueryBuilderFieldRule>,
-	QueryBuilderField.AdditionalQueries
+	QueryBuilderField.AdditionalQueries | QueryBuilderField.TraceOperator
 > = {
 	[QueryBuilderField.Aggregation]: { state: 'hidden' },
 	[QueryBuilderField.StepInterval]: { state: 'hidden' },

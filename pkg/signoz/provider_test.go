@@ -107,6 +107,7 @@ func TestNewProviderFactories(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			nil,
 		)
 	})
 }

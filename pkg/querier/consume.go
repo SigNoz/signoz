@@ -43,13 +43,15 @@ func stripKeyAlias(name string) string {
 // unwrapVariant decodes a scan envelope: the chcol.Variant the driver scans a Dynamic column (a JSON
 // path such as body_v2.level) into, and the JSONValue a whole JSON column scans into. The attributes
 // bag decodes flat so its dotted keys merge with the legacy attribute maps and a key stored at both a
-// scalar and an object path stays two keys; every other JSON column decodes nested.
+// scalar and an object path stays two keys; the scope and resource decode flat too, keeping their
+// attributes dotted; every other JSON column decodes nested.
 func unwrapVariant(name string, val any) any {
 	switch v := val.(type) {
 	case chcol.Variant:
 		return v.Any()
 	case telemetrystoretypes.JSONValue:
-		if name == "attributes" {
+		switch name {
+		case "attributes", "scope", "resource":
 			return v.Flatten()
 		}
 		return v.Nest()
@@ -80,7 +82,7 @@ func labelValue(val any) string {
 // * Time-series - *qbtypes.TimeSeriesData
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
-// * Distribution- *qbtypes.DistributionData.
+// * Heatmap and distribution - *qbtypes.TimeSeriesData with one count per bucket at each point.
 func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
 	var (
 		payload any
@@ -92,7 +94,7 @@ func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.Ti
 		payload, err = readAsTimeSeries(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeScalar:
 		payload, err = readAsScalar(rows, queryName)
-	case qbtypes.RequestTypeHeatmap:
+	case qbtypes.RequestTypeHeatmap, qbtypes.RequestTypeDistribution:
 		payload, err = readAsHeatmap(rows, queryWindow, step, queryName)
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeTrace, qbtypes.RequestTypeRawStream:
 		payload, err = readAsRaw(rows, queryName)
@@ -519,13 +521,26 @@ func derefValue(v any) any {
 }
 
 func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
+	data, _, err := readAsRawSkipping(rows, queryName, 0)
+	return data, err
+}
+
+// readAsRawSkipping advances past the first skip rows without scanning them, so
+// rows dropped for an offset are never decoded. It returns how many were skipped.
+func readAsRawSkipping(rows driver.Rows, queryName string, skip int) (*qbtypes.RawData, int, error) {
 	colNames := rows.Columns()
 	colTypes := rows.ColumnTypes()
 	colCnt := len(colNames)
 
 	var outRows []*qbtypes.RawRow
+	skipped := 0
 
 	for rows.Next() {
+		if skipped < skip {
+			skipped++
+			continue
+		}
+
 		// fresh copy of the scan slice (otherwise the driver reuses pointers)
 		scan := make([]any, colCnt)
 		for i := range colTypes {
@@ -533,7 +548,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 		}
 
 		if err := rows.Scan(scan...); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		rr := qbtypes.RawRow{
@@ -565,13 +580,13 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 		outRows = append(outRows, &rr)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	return &qbtypes.RawData{
 		QueryName: queryName,
 		Rows:      outRows,
-	}, nil
+	}, skipped, nil
 }
 
 // mergeSpanAttributeColumns merges (attributes_string, attributes_number, attributes_bool, resources_string) into
@@ -625,6 +640,9 @@ func mergeSpanAttributeColumns(data map[string]any) {
 	}
 	if raw, ok := data["links"]; ok {
 		data["links"] = spantypes.ParseLinks(raw)
+	}
+	if column, ok := data["scope"].(map[string]any); ok {
+		data["scope"] = spantypes.NewScope(column)
 	}
 }
 

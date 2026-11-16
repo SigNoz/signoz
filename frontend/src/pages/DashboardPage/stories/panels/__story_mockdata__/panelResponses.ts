@@ -26,13 +26,14 @@ import {
 	HEATMAP_BUCKETS,
 	HEATMAP_COLUMNS,
 	HOLE,
+	LONG_TAIL_SLICES,
 	MAX_SERIES,
 	NUMBER_VALUE,
 	QUERY_NAME,
 	SERVICES,
 	TABLE_SECOND_COLUMN,
 } from './constants';
-import type { Gaps, PanelRequest, PanelResponseArgs } from './types';
+import type { Gaps, PanelRequest, PanelResponseArgs, PieSlices } from './types';
 
 export const serviceAt = (index: number): string =>
 	index < SERVICES.length
@@ -41,6 +42,14 @@ export const serviceAt = (index: number): string =>
 
 export const TABLE_VALUES = (count: number): number[] =>
 	Array.from({ length: count }, (_unused, index) => 3800 - index * 480);
+
+/** The pie's slice values: `even` steps down per series, `long-tail` falls off like a power law. */
+export const PIE_VALUES = (slices: PieSlices, count: number): number[] =>
+	slices === 'even'
+		? TABLE_VALUES(count)
+		: Array.from({ length: LONG_TAIL_SLICES }, (_unused, index) =>
+				Math.round(42000 / (index + 1) ** 1.35),
+			);
 
 const TABLE_SECOND_VALUES = (count: number): number[] =>
 	Array.from({ length: count }, (_unused, index) => 2000 + index * 600);
@@ -144,18 +153,31 @@ const heatmapResponse = (
 	});
 };
 
+/**
+ * On a `use_json_body` tenant every body is an object: a plain line arrives as
+ * `{ message }` alone, a structured one with its own keys beside it.
+ */
+const logBodyAt = (index: number, line: string): Record<string, unknown> =>
+	index % 3 === 2
+		? { message: line, service: serviceAt(index % MAX_SERIES), attempt: 1 }
+		: { message: line };
+
 /** Spaced by the window, newest first, as the `timestamp desc` order asks for. */
 const logRows = (
 	{ start, end }: PanelWindow,
 	total: number,
 	offset: number,
 	limit: number,
+	jsonBody: boolean,
 ): RawRow[] =>
 	Array.from(
 		{ length: Math.max(0, Math.min(limit, total - offset)) },
 		(_unused, position) => {
 			const index = offset + position;
 			const service = serviceAt(index % MAX_SERIES);
+			const line = `log line ${index + 1}: ${service} served the request in ${
+				8 + (index % 9) * 3
+			}ms`;
 
 			return {
 				timestamp: new Date(
@@ -163,9 +185,7 @@ const logRows = (
 				).toISOString(),
 				data: {
 					id: `storybook-log-${index + 1}`,
-					body: `log line ${index + 1}: ${service} served the request in ${
-						8 + (index % 9) * 3
-					}ms`,
+					body: jsonBody ? logBodyAt(index, line) : line,
 					severity_text: index % 5 === 0 ? 'ERROR' : 'INFO',
 					resources_string: { 'service.name': service },
 				},
@@ -179,7 +199,9 @@ export const panelQueryResponse = ({
 	result,
 	series,
 	listRows,
+	listJsonBody,
 	gaps,
+	pieSlices,
 	window,
 	offset,
 	limit,
@@ -197,7 +219,10 @@ export const panelQueryResponse = ({
 			return queryRangeV5ScalarTableResponse({
 				groupBy: ['service.name'],
 				aggregations: [QUERY_NAME],
-				rows: TABLE_VALUES(series).map((value, index) => [serviceAt(index), value]),
+				rows: PIE_VALUES(pieSlices, series).map((value, index) => [
+					serviceAt(index),
+					value,
+				]),
 				warning,
 			});
 		case 'Table': {
@@ -217,9 +242,12 @@ export const panelQueryResponse = ({
 		case 'Number':
 			return queryRangeV5ScalarResponse(NUMBER_VALUE, QUERY_NAME, { warning });
 		case 'List':
-			return queryRangeV5RawResponse(logRows(window, listRows, offset, limit), {
-				warning,
-			});
+			return queryRangeV5RawResponse(
+				logRows(window, listRows, offset, limit, listJsonBody),
+				{
+					warning,
+				},
+			);
 		default:
 			return latencySeries(window, series, gaps, warning);
 	}

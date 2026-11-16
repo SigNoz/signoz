@@ -110,3 +110,15 @@
 		scrollbar-width: none;
 	}
 }
+
+.drawerPanel {
+	.panelBody,
+	.logsFooter,
+	:global(.pretty-view__search-wrapper) {
+		background: var(--l2-background);
+	}
+
+	:global(.pretty-view__search-input) {
+		background: var(--l2-background) !important;
+	}
+}

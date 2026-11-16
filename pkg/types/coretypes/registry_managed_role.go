@@ -134,12 +134,16 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPlannedMaintenance}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPlannedMaintenance}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPlannedMaintenance}, WildCardSelectorString)},
+		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPlannedMaintenance}, WildCardSelectorString)},
+		{Verb: VerbDetach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPlannedMaintenance}, WildCardSelectorString)},
 		// rule — full CRUD
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
+		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
+		{Verb: VerbDetach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
 		// saved-view — full CRUD
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSavedView}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSavedView}, WildCardSelectorString)},
@@ -222,6 +226,11 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		// llm-pricing-rule — admin writes, viewer reads
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
 	},
 	SigNozEditorRoleName: {
 		// cloud-integration — editor can read accounts
@@ -245,12 +254,16 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPlannedMaintenance}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPlannedMaintenance}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPlannedMaintenance}, WildCardSelectorString)},
+		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPlannedMaintenance}, WildCardSelectorString)},
+		{Verb: VerbDetach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPlannedMaintenance}, WildCardSelectorString)},
 		// rule — full CRUD
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
+		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
+		{Verb: VerbDetach, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRule}, WildCardSelectorString)},
 		// saved-view — full CRUD
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSavedView}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSavedView}, WildCardSelectorString)},
@@ -323,6 +336,9 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		// llm-pricing-rule — read only (admin writes)
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
 	},
 	SigNozViewerRoleName: {
 		// cloud-integration — viewer can read accounts
@@ -387,6 +403,9 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		// metrics-field — viewer reads
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindMetricsField}, WildCardSelectorString)},
+		// llm-pricing-rule — read only
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLLMPricingRule}, WildCardSelectorString)},
 	},
 	SigNozAnonymousRoleName: {
 		// public-dashboard — anonymous read

@@ -1,27 +1,39 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGetSavedView } from 'api/generated/services/saved-view';
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getViewColumnsAndFormatting } from 'container/SavedViews/utils/getViewColumnsAndFormatting';
-import { DataSource } from 'types/common/queryBuilder';
 
+import { getPanelDefaults } from '../loader/getPanelDefaults';
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
-import { FormattingOptions, PreferenceMode, Preferences } from '../types';
+import {
+	FormattingOptions,
+	PreferenceMode,
+	Preferences,
+	PreferenceSourcePage,
+} from '../types';
 import { usePreferenceUpdater } from '../updater/usePreferenceUpdater';
 
 export function usePreferenceSync({
 	mode,
-	dataSource,
+	sourcePage,
+	panelType,
 	savedViewId,
 }: {
 	mode: PreferenceMode;
-	dataSource: DataSource;
+	sourcePage: PreferenceSourcePage;
+	// The open panel, for source pages whose panels each keep their own columns.
+	panelType?: PANEL_TYPES;
 	savedViewId: string | undefined;
 }): {
 	preferences: Preferences | null;
 	loading: boolean;
 	error: Error | null;
-	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
+	updateColumns: (
+		newColumns: TelemetryFieldKey[],
+		panelType?: PANEL_TYPES,
+	) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
 	const isSavedViewMode = mode === PreferenceMode.SAVED_VIEW && !!savedViewId;
@@ -41,35 +53,49 @@ export function usePreferenceSync({
 		if (view && view.id === savedViewId) {
 			if (seededViewId.current !== savedViewId) {
 				seededViewId.current = savedViewId;
-				setSavedViewPreferences(getViewColumnsAndFormatting(view.spec, dataSource));
+				setSavedViewPreferences(getViewColumnsAndFormatting(view.spec, sourcePage));
 			}
 			return;
 		}
 		seededViewId.current = undefined;
-		setSavedViewPreferences(getViewColumnsAndFormatting(undefined, dataSource));
-	}, [viewData, dataSource, savedViewId]);
+		setSavedViewPreferences(getViewColumnsAndFormatting(undefined, sourcePage));
+	}, [viewData, sourcePage, savedViewId]);
 
 	// We are using a reSync state because we have URL updates as well as local storage updates
 	// and we want to make sure we are always using the latest preferences
 	const [reSync, setReSync] = useState(false);
 	const { preferences, loading, error } = usePreferenceLoader({
-		dataSource,
+		sourcePage,
+		panelType,
 		reSync,
 		setReSync,
 	});
 
 	const { updateColumns, updateFormatting } = usePreferenceUpdater({
-		dataSource,
+		sourcePage,
+		panelType,
 		mode,
 		preferences,
 		setReSync,
 		setSavedViewPreferences,
 	});
 
+	// A view saved on another panel has no columns for the open one, so that
+	// panel starts from its defaults.
+	const viewPreferences = useMemo(
+		() =>
+			savedViewPreferences?.panelType &&
+			panelType &&
+			savedViewPreferences.panelType !== panelType
+				? (getPanelDefaults(sourcePage, panelType) ?? savedViewPreferences)
+				: savedViewPreferences,
+		[savedViewPreferences, panelType, sourcePage],
+	);
+
 	return {
 		preferences:
 			mode === PreferenceMode.SAVED_VIEW && savedViewId
-				? savedViewPreferences
+				? viewPreferences
 				: preferences,
 		loading,
 		error,

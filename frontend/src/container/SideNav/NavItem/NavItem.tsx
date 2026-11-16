@@ -91,6 +91,8 @@ export default function NavItem({
 							className="nav-item-pin-icon"
 							onClick={handleTogglePinClick}
 							color="var(--Vanilla-400, #c0c1c3)"
+							data-testid={`nav-item-pin-${item.itemKey}`}
+							aria-label="Add to shortcuts"
 						/>
 					</Tooltip>
 				)}
@@ -102,6 +104,8 @@ export default function NavItem({
 							className="nav-item-pin-icon"
 							onClick={handleTogglePinClick}
 							color="var(--Vanilla-400, #c0c1c3)"
+							data-testid={`nav-item-pin-${item.itemKey}`}
+							aria-label="Remove from shortcuts"
 						/>
 					</Tooltip>
 				)}

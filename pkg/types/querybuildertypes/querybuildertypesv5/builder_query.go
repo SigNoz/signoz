@@ -34,13 +34,13 @@ type QueryBuilderQuery[T any] struct {
 
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" description:"The fields to return for each row in raw requests, in addition to the columns always present: timestamp and id for logs, timestamp, trace_id and span_id for traces. Ignored by aggregating requests."`
 
-	Limit int `json:"limit,omitempty" description:"The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest."`
+	Limit int `json:"limit,omitempty" description:"The maximum number of rows for raw and trace requests, or of series or rows for grouped scalar and time_series requests, keeping the top entries by order. When 0, scalar and time_series requests are unlimited, raw requests ordered by timestamp return a page of 10000 rows to continue with nextCursor, and other raw and trace requests return 100 rows."`
 
 	LimitBy *LimitBy `json:"limitBy,omitempty" description:"Reserved for applying limit within each combination of the given group-by keys. Accepted but currently ignored."`
 
-	Offset int `json:"offset,omitempty" description:"The number of rows to skip before returning results. Prefer cursor for raw requests."`
+	Offset int `json:"offset,omitempty" description:"The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging."`
 
-	Cursor string `json:"cursor,omitempty" description:"The opaque nextCursor value from a previous raw result, used to fetch the next page."`
+	Cursor string `json:"cursor,omitempty" description:"The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it."`
 
 	Having *Having `json:"having,omitempty" description:"A filter applied to aggregation results, referencing aliases or expressions, for example count() > 100."`
 

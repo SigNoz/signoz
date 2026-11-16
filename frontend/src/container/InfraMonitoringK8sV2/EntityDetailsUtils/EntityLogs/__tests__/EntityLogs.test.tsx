@@ -94,7 +94,6 @@ describe('EntityLogs', () => {
 				>
 					<VirtuosoMockContext.Provider value={{ viewportHeight: 500, itemHeight }}>
 						<EntityLogs
-							eventEntity="test"
 							queryKey="test"
 							category={InfraMonitoringEntity.PODS}
 							initialExpression='k8s.pod.name = "x"'

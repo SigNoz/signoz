@@ -691,6 +691,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, orgID valuer.UUID,
 	return keys, complete, nil
 }
 
+//nolint:unused // not called until audit keys are recorded in signoz_metadata
 func (t *telemetryMetaStore) auditTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
@@ -717,6 +718,7 @@ func (t *telemetryMetaStore) auditTblStatementToFieldKeys(ctx context.Context) (
 	return materialisedKeys, nil
 }
 
+//nolint:unused // not called until audit keys are recorded in signoz_metadata
 func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
@@ -884,18 +886,25 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 
 	complete := rowCount <= limit
 
-	// Add the matching intrinsic audit fields (same as logs intrinsics: body, severity_text, etc.)
-	for _, field := range maps.Values(audittelemetryschema.IntrinsicFields) {
-		if !staticFieldMatchesAny(field, fieldKeySelectors) {
-			continue
+	return appendStaticAuditKeys(keys, mapOfKeys, fieldKeySelectors), complete, nil
+}
+
+// appendStaticAuditKeys adds the matching intrinsic audit fields (same as logs intrinsics: body, severity_text, etc.)
+// and the known resource fields.
+func appendStaticAuditKeys(keys []*telemetrytypes.TelemetryFieldKey, mapOfKeys map[string]*telemetrytypes.TelemetryFieldKey, fieldKeySelectors []*telemetrytypes.FieldKeySelector) []*telemetrytypes.TelemetryFieldKey {
+	for _, fields := range []map[string]telemetrytypes.TelemetryFieldKey{audittelemetryschema.IntrinsicFields, audittelemetryschema.ResourceFields} {
+		for _, field := range fields {
+			if !staticFieldMatchesAny(field, fieldKeySelectors) {
+				continue
+			}
+			if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; added {
+				continue
+			}
+			keys = append(keys, &field)
 		}
-		if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; added {
-			continue
-		}
-		keys = append(keys, &field)
 	}
 
-	return keys, complete, nil
+	return keys
 }
 
 func getPriorityForContext(ctx telemetrytypes.FieldContext) int {
@@ -1209,7 +1218,7 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, orgID valuer.UUID, fie
 		keys, complete, err = t.getTracesKeys(ctx, selectors)
 	case telemetrytypes.SignalLogs:
 		if fieldKeySelector.Source == telemetrytypes.SourceAudit {
-			keys, complete, err = t.getAuditKeys(ctx, selectors)
+			keys = appendStaticAuditKeys(nil, map[string]*telemetrytypes.TelemetryFieldKey{}, selectors)
 		} else {
 			keys, complete, err = t.getLogsKeys(ctx, orgID, selectors)
 		}
@@ -1293,10 +1302,7 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 	if err != nil {
 		return nil, false, err
 	}
-	auditKeys, auditComplete, err := t.getAuditKeys(ctx, auditSelectors)
-	if err != nil {
-		return nil, false, err
-	}
+	auditKeys := appendStaticAuditKeys(nil, map[string]*telemetrytypes.TelemetryFieldKey{}, auditSelectors)
 	tracesKeys, tracesComplete, err := t.getTracesKeys(ctx, tracesSelectors)
 	if err != nil {
 		return nil, false, err
@@ -1311,7 +1317,7 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, orgID valuer.UUID
 		return nil, false, err
 	}
 	// Complete only if all queries are complete
-	complete := logsComplete && auditComplete && tracesComplete && metricsComplete
+	complete := logsComplete && tracesComplete && metricsComplete
 
 	mapOfKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 	for _, key := range logsKeys {
@@ -1693,6 +1699,7 @@ func (t *telemetryMetaStore) getTagTableValues(ctx context.Context, table string
 	return values, complete, nil
 }
 
+//nolint:unused // not called until audit values are recorded in signoz_metadata
 func (t *telemetryMetaStore) getAuditFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
@@ -2163,7 +2170,7 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, orgID valuer.UUID
 		values, complete, err = t.getSpanFieldValues(ctx, orgID, fieldValueSelector)
 	case telemetrytypes.SignalLogs:
 		if fieldValueSelector.Source == telemetrytypes.SourceAudit {
-			values, complete, err = t.getAuditFieldValues(ctx, fieldValueSelector)
+			values = &telemetrytypes.TelemetryFieldValues{}
 		} else {
 			values, complete, err = t.getLogFieldValues(ctx, orgID, fieldValueSelector)
 		}
@@ -2442,10 +2449,10 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 	return temporalities, types, nil
 }
 
-func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
+func fetchEvolutionEntryFromClickHouse(ctx context.Context, telemetryStore telemetrystore.TelemetryStore, table string, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("signal", "column_name", "column_type", "field_context", "field_name", "version", "release_time")
-	sb.From(fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName))
+	sb.From(table)
 	sb.OrderBy("release_time ASC")
 
 	var clauses []string
@@ -2467,7 +2474,7 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	var entries []*telemetrytypes.EvolutionEntry
-	rows, err := k.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	rows, err := telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -2517,7 +2524,7 @@ func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Co
 		metadataKeySelectors = append(metadataKeySelectors, selector)
 	}
 
-	evolutions, err := k.fetchEvolutionEntryFromClickHouse(ctx, metadataKeySelectors)
+	evolutions, err := fetchEvolutionEntryFromClickHouse(ctx, k.telemetrystore, fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName), metadataKeySelectors)
 	if err != nil {
 		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to fetch evolution from clickhouse %s", err.Error())
 	}

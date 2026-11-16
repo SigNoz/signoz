@@ -62,7 +62,10 @@ import './styles.scss';
 function PipelinesListEmptyState(): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 	return (
-		<div className="logs-pipelines-empty-state-centered-container">
+		<div
+			className="logs-pipelines-empty-state-centered-container"
+			data-testid="pipelines-empty-state"
+		>
 			<Card size="small">
 				<div className="logs-pipelines-empty-state-centered-container">
 					<iframe

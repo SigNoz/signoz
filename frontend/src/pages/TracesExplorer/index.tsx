@@ -55,6 +55,8 @@ import {
 } from './aiActions';
 import TimeSeriesView from './TimeSeriesView';
 
+import styles from './TracesExplorer.module.scss';
+
 import './TracesExplorer.styles.scss';
 
 function TracesExplorer(): JSX.Element {
@@ -73,7 +75,7 @@ function TracesExplorer(): JSX.Element {
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
-		dataSource: DataSource.TRACES,
+		sourcePage: SavedviewtypesSourceDTO.traces,
 		aggregateOperator: 'noop',
 		initialOptions: {
 			selectColumns: defaultSelectedColumns,
@@ -272,13 +274,13 @@ function TracesExplorer(): JSX.Element {
 						<QuerySection />
 					</div>
 
-					<div className="traces-explorer-views">
+					<div className={styles.views}>
 						{isCancelled && (
 							<QueryCancelledPlaceholder subText='Click "Run Query" to load traces.' />
 						)}
 
 						{!isCancelled && selectedView === ExplorerViews.LIST && (
-							<div className="trace-explorer-list-view">
+							<div className={styles.tableView}>
 								<ListView
 									isFilterApplied={isFilterApplied}
 									setWarning={setWarning}
@@ -290,7 +292,7 @@ function TracesExplorer(): JSX.Element {
 						)}
 
 						{!isCancelled && selectedView === ExplorerViews.TRACE && (
-							<div className="trace-explorer-traces-view">
+							<div className={styles.tableView}>
 								<TracesView
 									isFilterApplied={isFilterApplied}
 									setWarning={setWarning}
@@ -302,7 +304,7 @@ function TracesExplorer(): JSX.Element {
 						)}
 
 						{!isCancelled && selectedView === ExplorerViews.TIMESERIES && (
-							<div className="trace-explorer-time-series-view">
+							<div className={styles.insetView}>
 								<TimeSeriesView
 									dataSource={DataSource.TRACES}
 									isFilterApplied={isFilterApplied}
@@ -315,7 +317,7 @@ function TracesExplorer(): JSX.Element {
 						)}
 
 						{!isCancelled && selectedView === ExplorerViews.TABLE && (
-							<div className="trace-explorer-table-view">
+							<div className={styles.insetView}>
 								<TableView
 									setWarning={setWarning}
 									setIsLoadingQueries={setIsLoadingQueries}

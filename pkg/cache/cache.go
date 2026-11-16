@@ -16,6 +16,11 @@ type Cache interface {
 	// Get gets the cacheble entity in the dest entity passed.
 	Get(ctx context.Context, orgID valuer.UUID, cacheKey string, dest cachetypes.Cacheable) error
 
+	// GetMany gets the cacheable entities of cacheKeys into dests, one per key in
+	// the same order. A key that is not found or could not be read sets its dest
+	// to nil. The returned error joins the read failures; a miss alone is not one.
+	GetMany(ctx context.Context, orgID valuer.UUID, cacheKeys []string, dests []cachetypes.Cacheable) error
+
 	// Delete deletes the cacheable entity from cache
 	Delete(ctx context.Context, orgID valuer.UUID, cacheKey string)
 

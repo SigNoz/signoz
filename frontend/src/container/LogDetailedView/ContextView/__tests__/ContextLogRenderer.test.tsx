@@ -33,6 +33,10 @@ import {
 // Mock the useContextLogData hook
 const mockHandleRunQuery = jest.fn();
 
+jest.mock('hooks/logs/useIsBodyJsonEnabled', () => ({
+	useIsBodyJsonEnabled: (): boolean => false,
+}));
+
 jest.mock('container/OptionsMenu', () => ({
 	useOptionsMenu: (): any => ({
 		options: {

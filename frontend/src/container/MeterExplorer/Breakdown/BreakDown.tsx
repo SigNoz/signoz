@@ -94,7 +94,10 @@ function Section(section: MetricSection): JSX.Element {
 	);
 
 	return (
-		<div className="meter-column-graph">
+		<div
+			className="meter-column-graph"
+			data-testid={`meter-breakdown-section-${title.toLowerCase()}`}
+		>
 			<CardContainer className="row-card" isDarkMode={isDarkMode}>
 				<Typography.Text className="section-title">{title}</Typography.Text>
 			</CardContainer>

@@ -13,9 +13,8 @@ const (
 	DefaultOrderByKey = "__result"
 )
 
-// ApplyLimit applies limit and ordering to a list of time series
-// This function sorts the series based on the provided order criteria and applies the limit.
-func ApplySeriesLimit(series []*TimeSeries, orderBy []OrderBy, limit int) []*TimeSeries {
+// ApplySeriesLimit sorts the series by the order criteria, skips the first offset of them and keeps at most limit.
+func ApplySeriesLimit(series []*TimeSeries, orderBy []OrderBy, limit, offset int) []*TimeSeries {
 	if len(series) == 0 {
 		return series
 	}
@@ -64,6 +63,10 @@ func ApplySeriesLimit(series []*TimeSeries, orderBy []OrderBy, limit int) []*Tim
 		}
 		return 0
 	})
+
+	if offset > 0 {
+		series = series[min(offset, len(series)):]
+	}
 
 	// Apply limit if specified
 	if limit > 0 && len(series) > limit {

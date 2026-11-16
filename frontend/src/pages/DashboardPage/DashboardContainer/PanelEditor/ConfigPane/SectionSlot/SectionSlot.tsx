@@ -12,6 +12,11 @@ import type { SectionEditorContext } from '../sectionContext';
 import { getSectionDefault, resolveSectionEditor } from '../sectionRegistry';
 import SettingsSection from '../SettingsSection/SettingsSection';
 import { isDifferent } from '../utils/changes';
+import {
+	getScatterAxisColumnNames,
+	getScatterAxisColumnUnits,
+} from '../utils/scatterAxisColumns';
+import { getSizeColumnLabel } from '../utils/sizeColumnLabel';
 import SectionHeaderQuickAdd from './SectionHeaderQuickAdd';
 
 type SectionSlotProps = {
@@ -63,6 +68,7 @@ function SectionSlot({
 	bare,
 	legendSeries,
 	tableColumns,
+	groupColumns,
 	signal,
 	panelKind,
 	onChangePanelKind,
@@ -74,7 +80,10 @@ function SectionSlot({
 	const editor = resolveSectionEditor(config.kind);
 	// Controlled so the header slot can expand on click; list sections open when populated.
 	const [open, setOpen] = useState(() => {
-		if (config.kind === SectionKind.Visualization) {
+		if (
+			config.kind === SectionKind.Visualization ||
+			config.kind === SectionKind.Dimensions
+		) {
 			return true;
 		}
 		const value = editor?.get(spec);
@@ -129,6 +138,10 @@ function SectionSlot({
 		legendSeries,
 		yAxisUnit,
 		tableColumns,
+		groupColumns,
+		sizeColumnLabel: getSizeColumnLabel(spec, tableColumns),
+		axisColumnNames: getScatterAxisColumnNames(spec, tableColumns),
+		axisColumnUnits: getScatterAxisColumnUnits(spec, tableColumns),
 		signal,
 		panelKind,
 		onChangePanelKind,

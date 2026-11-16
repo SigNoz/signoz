@@ -10,10 +10,11 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
 from fixtures.querier import (
     RequestType,
+    assert_distribution_sums_heatmap,
     assert_identical_query_response,
     build_builder_query,
     build_linear_bucket_options,
-    get_heatmap_buckets,
+    get_buckets,
     get_heatmap_columns,
     make_query_request,
 )
@@ -65,7 +66,7 @@ def test_builder_narrowing_to_half_the_range(
     # the whole range first, which is what puts its axis in the cache
     whole_range = make_query_request(signoz, token, start_time_ms, end_time_ms, query, request_type=RequestType.HEATMAP, no_cache=False)
     assert whole_range.status_code == HTTPStatus.OK, whole_range.text
-    assert get_heatmap_buckets(whole_range.json(), "A") == pytest.approx([100, 200, 300, 400, 500, 600, 700, 800, 900])
+    assert get_buckets(whole_range.json(), "A") == pytest.approx([100, 200, 300, 400, 500, 600, 700, 800, 900])
     assert [column["values"] for column in get_heatmap_columns(whole_range.json(), "A")] == [
         [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -78,6 +79,7 @@ def test_builder_narrowing_to_half_the_range(
         [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
     ]
+    assert_distribution_sums_heatmap(signoz, token, start_time_ms, end_time_ms, query, whole_range, no_cache=False)
 
     half_start_ms = start_time_ms + first_minute * MINUTE_MS
     half_end_ms = half_start_ms + 5 * MINUTE_MS
@@ -88,7 +90,7 @@ def test_builder_narrowing_to_half_the_range(
     assert uncached.status_code == HTTPStatus.OK, uncached.text
 
     for source, response in (("uncached", uncached), ("from cache", from_cache)):
-        assert get_heatmap_buckets(response.json(), "A") == pytest.approx(expected_buckets), source
+        assert get_buckets(response.json(), "A") == pytest.approx(expected_buckets), source
         assert [column["values"] for column in get_heatmap_columns(response.json(), "A")] == [
             [0, 1, 0],
             [0, 1, 0],
@@ -98,6 +100,7 @@ def test_builder_narrowing_to_half_the_range(
         ], source
 
     assert_identical_query_response(from_cache, uncached)
+    assert_distribution_sums_heatmap(signoz, token, half_start_ms, half_end_ms, query, uncached, no_cache=False)
 
 
 def test_builder_narrowing_a_histogram(
@@ -145,7 +148,7 @@ def test_builder_narrowing_a_histogram(
     # the whole range first, which is what puts its axis in the cache
     whole_range = make_query_request(signoz, token, start_time_ms, end_time_ms, query, request_type=RequestType.HEATMAP, no_cache=False)
     assert whole_range.status_code == HTTPStatus.OK, whole_range.text
-    assert get_heatmap_buckets(whole_range.json(), "A") == [1, 2, 4, 8]
+    assert get_buckets(whole_range.json(), "A") == [1, 2, 4, 8]
     assert [column["values"] for column in get_heatmap_columns(whole_range.json(), "A")] == [
         [10, 0, 0, 0, 0],
         [10, 0, 0, 0, 0],
@@ -158,6 +161,7 @@ def test_builder_narrowing_a_histogram(
         [0, 0, 0, 10, 0],
         [0, 0, 0, 10, 0],
     ]
+    assert_distribution_sums_heatmap(signoz, token, start_time_ms, end_time_ms, query, whole_range, no_cache=False)
 
     # even though this shortened time range has no data below 4, all histogram
     # buckets are still returned back
@@ -169,7 +173,7 @@ def test_builder_narrowing_a_histogram(
     assert uncached.status_code == HTTPStatus.OK, uncached.text
 
     for source, response in (("uncached", uncached), ("from cache", from_cache)):
-        assert get_heatmap_buckets(response.json(), "A") == [1, 2, 4, 8], source
+        assert get_buckets(response.json(), "A") == [1, 2, 4, 8], source
         assert [column["values"] for column in get_heatmap_columns(response.json(), "A")] == [
             [0, 0, 0, 10, 0],
             [0, 0, 0, 10, 0],
@@ -179,6 +183,7 @@ def test_builder_narrowing_a_histogram(
         ], source
 
     assert_identical_query_response(from_cache, uncached)
+    assert_distribution_sums_heatmap(signoz, token, half_start_ms, end_time_ms, query, uncached, no_cache=False)
 
 
 def test_builder_shortening_the_time_range_at_the_end(
@@ -222,13 +227,14 @@ def test_builder_shortening_the_time_range_at_the_end(
 
     # 100 wide buckets, and the two maxes are 150 and 850, so the axis runs from
     # the bottom of (100, 200] to the top of (800, 900]
-    assert get_heatmap_buckets(base_query.json(), "A") == pytest.approx([100, 200, 300, 400, 500, 600, 700, 800, 900])
+    assert get_buckets(base_query.json(), "A") == pytest.approx([100, 200, 300, 400, 500, 600, 700, 800, 900])
     base_columns = get_heatmap_columns(base_query.json(), "A")
     assert [column["values"] for column in base_columns] == [
         [0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
     ]
     assert [column.get("partial", False) for column in base_columns] == [False, False]
+    assert_distribution_sums_heatmap(signoz, token, start_time_ms, end_time_ms_base_query, query, base_query, no_cache=False)
 
     from_cache = make_query_request(signoz, token, start_time_ms, end_time_ms_shortened_query, query, request_type=RequestType.HEATMAP, no_cache=False)
     assert from_cache.status_code == HTTPStatus.OK, from_cache.text
@@ -240,7 +246,7 @@ def test_builder_shortening_the_time_range_at_the_end(
     # is 250 and which comes back partial. Nothing in this window passes 300, so
     # the axis stops there rather than carrying the buckets above it
     for label, response in (("uncached", uncached), ("from cache", from_cache)):
-        assert get_heatmap_buckets(response.json(), "A") == pytest.approx([100, 200, 300]), label
+        assert get_buckets(response.json(), "A") == pytest.approx([100, 200, 300]), label
         columns = get_heatmap_columns(response.json(), "A")
         assert [column["values"] for column in columns] == [
             [0, 1, 0, 0],
@@ -249,6 +255,7 @@ def test_builder_shortening_the_time_range_at_the_end(
         assert [column.get("partial", False) for column in columns] == [False, True], label
 
     assert_identical_query_response(from_cache, uncached)
+    assert_distribution_sums_heatmap(signoz, token, start_time_ms, end_time_ms_shortened_query, query, uncached, no_cache=False)
 
 
 def test_builder_shortening_the_time_range_at_the_start(
@@ -294,13 +301,14 @@ def test_builder_shortening_the_time_range_at_the_start(
 
     # 100 wide buckets, and the two maxes are 950 and 350, so the axis runs from
     # the bottom of (300, 400] to the top of (900, 1000]
-    assert get_heatmap_buckets(base_query.json(), "A") == pytest.approx([300, 400, 500, 600, 700, 800, 900, 1000])
+    assert get_buckets(base_query.json(), "A") == pytest.approx([300, 400, 500, 600, 700, 800, 900, 1000])
     base_columns = get_heatmap_columns(base_query.json(), "A")
     assert [column["values"] for column in base_columns] == [
         [0, 0, 0, 0, 0, 0, 0, 1, 0],
         [0, 1, 0, 0, 0, 0, 0, 0, 0],
     ]
     assert [column.get("partial", False) for column in base_columns] == [False, False]
+    assert_distribution_sums_heatmap(signoz, token, start_time_ms_base_query, end_time_ms, query, base_query, no_cache=False)
 
     from_cache = make_query_request(signoz, token, start_time_ms_shortened_query, end_time_ms, query, request_type=RequestType.HEATMAP, no_cache=False)
     assert from_cache.status_code == HTTPStatus.OK, from_cache.text
@@ -312,7 +320,7 @@ def test_builder_shortening_the_time_range_at_the_start(
     # clipping its counts, which still cover the whole step and so reach the 950
     # at minute 0, leaving the axis where the base query drew it
     for label, response in (("uncached", uncached), ("from cache", from_cache)):
-        assert get_heatmap_buckets(response.json(), "A") == pytest.approx([300, 400, 500, 600, 700, 800, 900, 1000]), label
+        assert get_buckets(response.json(), "A") == pytest.approx([300, 400, 500, 600, 700, 800, 900, 1000]), label
         columns = get_heatmap_columns(response.json(), "A")
         assert [column["values"] for column in columns] == [
             [0, 0, 0, 0, 0, 0, 0, 1, 0],
@@ -321,6 +329,7 @@ def test_builder_shortening_the_time_range_at_the_start(
         assert [column.get("partial", False) for column in columns] == [True, False], label
 
     assert_identical_query_response(from_cache, uncached)
+    assert_distribution_sums_heatmap(signoz, token, start_time_ms_shortened_query, end_time_ms, query, uncached, no_cache=False)
 
 
 def test_builder_refreshing_a_sliding_time_range(
@@ -382,7 +391,7 @@ def test_builder_refreshing_a_sliding_time_range(
         from_cache = make_query_request(signoz, token, refresh_start_ms, refresh_start_ms + 4 * MINUTE_MS, query, request_type=RequestType.HEATMAP, no_cache=False)
         assert from_cache.status_code == HTTPStatus.OK, from_cache.text
 
-        assert get_heatmap_buckets(from_cache.json(), "A") == pytest.approx(expected_buckets), f"refresh {refresh}"
+        assert get_buckets(from_cache.json(), "A") == pytest.approx(expected_buckets), f"refresh {refresh}"
 
         # a column served twice, dropped, or carried over from an earlier refresh
         # breaks the diagonal or the run of timestamps
@@ -394,6 +403,7 @@ def test_builder_refreshing_a_sliding_time_range(
             refresh_start_ms + 3 * MINUTE_MS,
         ], f"refresh {refresh}"
         assert [column["values"] for column in columns] == expected_columns, f"refresh {refresh}"
+        assert_distribution_sums_heatmap(signoz, token, refresh_start_ms, refresh_start_ms + 4 * MINUTE_MS, query, from_cache, no_cache=False)
 
     uncached = make_query_request(signoz, token, refresh_start_ms, refresh_start_ms + 4 * MINUTE_MS, query, request_type=RequestType.HEATMAP, no_cache=True)
     assert uncached.status_code == HTTPStatus.OK, uncached.text
@@ -453,7 +463,7 @@ def test_promql_running_the_same_query_twice(
     # promql reports a column at the instant the range closes, and the second
     # run, answered out of what the first one cached, has to keep it
     for run, response in (("first", first), ("second", second)):
-        assert get_heatmap_buckets(response.json(), "A") == [1, 2, 4], run
+        assert get_buckets(response.json(), "A") == [1, 2, 4], run
         ## what the query returns per `le` is cumulative across `le`, so each
         ## count is its own minus the one below it, and `le=+Inf` has no finite
         ## bound to sit on and lands in the trailing slot. increase over a 2m
@@ -465,6 +475,10 @@ def test_promql_running_the_same_query_twice(
         ], f"{run} run"
 
     assert_identical_query_response(first, second)
+    # a distribution answered out of what its own first run cached keeps that
+    # closing column too
+    for _ in ("first", "second"):
+        assert_distribution_sums_heatmap(signoz, token, start_time_ms, end_time_ms, query, second, no_cache=False)
 
 
 def test_promql_shifting_the_time_range(
@@ -510,7 +524,7 @@ def test_promql_shifting_the_time_range(
     aligned_and_cached = make_query_request(signoz, token, aligned_start_time_ms, aligned_end_time_ms, query, request_type=RequestType.HEATMAP, no_cache=False)
     assert aligned_and_cached.status_code == HTTPStatus.OK, aligned_and_cached.text
 
-    assert get_heatmap_buckets(aligned_and_cached.json(), "A") == [1, 2, 4]
+    assert get_buckets(aligned_and_cached.json(), "A") == [1, 2, 4]
     ## each column reads the counters at their latest sample at or before its
     ## timestamp, and a bucket holds its own `le`'s count less the one below it.
     aligned_columns = [
@@ -520,14 +534,16 @@ def test_promql_shifting_the_time_range(
         (aligned_end_time_ms, [1000, 2000, 3000, 4000]),  # t = 3m, the tenth
     ]
     assert [(column["timestamp"], column["values"]) for column in get_heatmap_columns(aligned_and_cached.json(), "A")] == aligned_columns
+    assert_distribution_sums_heatmap(signoz, token, aligned_start_time_ms, aligned_end_time_ms, query, aligned_and_cached, no_cache=False)
 
     # an unaligned range is rounded down to the step, so this asks for the same
     # instants as the aligned query and gets the same answer
     unaligned_and_cached = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, request_type=RequestType.HEATMAP, no_cache=False)
     assert unaligned_and_cached.status_code == HTTPStatus.OK, unaligned_and_cached.text
-    assert get_heatmap_buckets(unaligned_and_cached.json(), "A") == [1, 2, 4], "unaligned query, rounded to the step"
+    assert get_buckets(unaligned_and_cached.json(), "A") == [1, 2, 4], "unaligned query, rounded to the step"
     assert [(column["timestamp"], column["values"]) for column in get_heatmap_columns(unaligned_and_cached.json(), "A")] == aligned_columns, "unaligned query, rounded to the step"
     assert_identical_query_response(unaligned_and_cached, aligned_and_cached)
+    assert_distribution_sums_heatmap(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, query, unaligned_and_cached, no_cache=False)
 
     # skipping the alignment keeps the range as asked, so every column sits 30s
     # off the cached ones, on samples the aligned query never saw. Such a query
@@ -542,5 +558,6 @@ def test_promql_shifting_the_time_range(
     for run in ("first", "second"):
         unaligned_as_asked = make_query_request(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, unaligned_query, request_type=RequestType.HEATMAP, no_cache=False)
         assert unaligned_as_asked.status_code == HTTPStatus.OK, unaligned_as_asked.text
-        assert get_heatmap_buckets(unaligned_as_asked.json(), "A") == [1, 2, 4], f"unaligned query as asked, {run} run"
+        assert get_buckets(unaligned_as_asked.json(), "A") == [1, 2, 4], f"unaligned query as asked, {run} run"
         assert [(column["timestamp"], column["values"]) for column in get_heatmap_columns(unaligned_as_asked.json(), "A")] == unaligned_columns, f"unaligned query as asked, {run} run"
+        assert_distribution_sums_heatmap(signoz, token, unaligned_start_time_ms, unaligned_end_time_ms, unaligned_query, unaligned_as_asked, no_cache=False)

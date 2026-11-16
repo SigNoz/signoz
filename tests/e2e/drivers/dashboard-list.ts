@@ -6,9 +6,9 @@ import { randomBytes } from 'crypto';
 
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { BASE_PATH } from '../helpers/base-path';
-import { buildDashboard } from '../helpers/dashboard-spec';
-import type { PostableDashboard, Tag } from '../helpers/dashboard-spec.types';
+import { BASE_PATH } from './base-path';
+import { buildDashboard } from './dashboard-spec';
+import type { PostableDashboard, Tag } from './dashboard-spec.types';
 
 import {
 	DASHBOARDS_API,
@@ -136,6 +136,12 @@ export interface DashboardList {
 	/** Opens the delete confirmation without answering it. */
 	requestDelete(name: string): Promise<Locator>;
 	cancelDelete(): Promise<void>;
+	/** Through the row menu's Rename dialog. */
+	renameRow(name: string, to: string): Promise<void>;
+	/** Replaces the row's tags through its Edit tags dialog; `key:value` each. */
+	editRowTags(name: string, tags: string[]): Promise<void>;
+	/** Duplicates through the row menu and returns the copy's id. */
+	duplicateRow(name: string): Promise<string>;
 
 	newDashboardDialog(): Locator;
 	openNewDashboard(tab?: NewDashboardTab): Promise<void>;
@@ -152,7 +158,7 @@ export interface DashboardList {
 	back(): Promise<void>;
 }
 
-function dashboardListDriver(page: Page): DashboardList {
+export function dashboardListDriver(page: Page): DashboardList {
 	const rowTitle = (name: string): Locator =>
 		page
 			.locator('[data-testid^="dashboard-title-"]')
@@ -341,6 +347,50 @@ function dashboardListDriver(page: Page): DashboardList {
 			await list.rowAction('delete').click();
 			await expect(deleteConfirm()).toContainText(name);
 			return deleteConfirm();
+		},
+		async renameRow(name, to) {
+			await list.openRowMenu(name);
+			await list.rowAction('rename').click();
+			const input = page.getByTestId('rename-dashboard-input');
+			await input.fill(to);
+			await page.getByTestId('rename-dashboard-submit').click();
+			await expect(input).toBeHidden();
+		},
+		async editRowTags(name, tags) {
+			await list.openRowMenu(name);
+			await list.rowAction('edit-tags').click();
+			const input = page.getByTestId('edit-dashboard-tags');
+			// Closing a chip removes the tag, and the dialog opens with the current ones.
+			const chips = page.locator(
+				'[data-testid^="edit-dashboard-tags-chip"] button',
+			);
+			while ((await chips.count()) > 0) {
+				await chips.first().click();
+			}
+			for (const tag of tags) {
+				await input.fill(tag);
+				await input.press('Enter');
+			}
+			await page.getByTestId('edit-tags-submit').click();
+			await expect(input).toBeHidden();
+		},
+		async duplicateRow(name) {
+			await list.openRowMenu(name);
+			const [response] = await Promise.all([
+				page.waitForResponse((r) => {
+					const { pathname } = new URL(r.url());
+					return (
+						r.request().method() === 'POST' &&
+						pathname.startsWith(`${BASE_PATH}${DASHBOARDS_API}/`) &&
+						pathname.endsWith('/clone')
+					);
+				}),
+				list.rowAction('duplicate').click(),
+			]);
+			expect(response.ok(), `POST ${DASHBOARDS_API}/:id/clone failed`).toBe(true);
+			const id = ((await response.json()) as { data: { id: string } }).data.id;
+			trackDashboard(page, id);
+			return id;
 		},
 		async cancelDelete() {
 			await deleteConfirm().getByRole('button', { name: 'Cancel' }).click();

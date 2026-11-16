@@ -1,6 +1,8 @@
 import { Badge } from '@signozhq/ui/badge';
+import { Skeleton } from '@signozhq/ui/skeleton';
 import { AlertmanagertypesMaintenanceStatusDTO } from 'api/generated/services/sigNoz.schemas';
 import type { TableColumnDef } from 'components/TanStackTableView';
+import OverflowBadges from 'components/OverflowBadges/OverflowBadges';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { toRelativeTime } from 'pages/AlertList/NotificationChannels/utils/relativeTime';
@@ -31,8 +33,11 @@ const STATUS_BADGE: Record<
 	},
 };
 
+const COLUMN_WIDTH = { default: 'auto', min: '120px' };
+
 export function getPlannedDowntimeColumns(
 	formatTimezoneAdjustedTimestamp: (date: string, format: string) => string,
+	isAlertsLoading?: boolean,
 ): TableColumnDef<DowntimeSchedulesTableData>[] {
 	const textCell = (value: string | undefined): JSX.Element => (
 		<TanStackTable.Text title={value || undefined}>
@@ -66,7 +71,7 @@ export function getPlannedDowntimeColumns(
 			id: 'name',
 			header: 'Downtime',
 			accessorKey: 'name',
-			width: { default: '100%', min: '200px' },
+			width: COLUMN_WIDTH,
 			enableSort: true,
 			enableResize: true,
 			enableRemove: false,
@@ -84,7 +89,7 @@ export function getPlannedDowntimeColumns(
 			id: 'status',
 			header: 'Status',
 			accessorKey: 'status',
-			width: { default: '110px', min: '100px' },
+			width: COLUMN_WIDTH,
 			enableSort: true,
 			enableResize: true,
 			enableMove: false,
@@ -103,7 +108,7 @@ export function getPlannedDowntimeColumns(
 			id: 'window',
 			header: 'Schedule',
 			accessorFn: (row) => row.schedule?.startTime,
-			width: { default: '340px', min: '220px' },
+			width: COLUMN_WIDTH,
 			enableSort: true,
 			enableResize: true,
 			enableMove: false,
@@ -113,8 +118,7 @@ export function getPlannedDowntimeColumns(
 			id: 'timezone',
 			header: 'Timezone',
 			accessorFn: (row) => row.schedule?.timezone,
-			width: { default: '130px', min: '110px' },
-			defaultVisibility: false,
+			width: COLUMN_WIDTH,
 			enableSort: false,
 			enableResize: true,
 			enableMove: false,
@@ -124,7 +128,7 @@ export function getPlannedDowntimeColumns(
 			id: 'repeats',
 			header: 'Repeats',
 			accessorFn: (row) => row.schedule?.recurrence?.repeatType,
-			width: { default: '180px', min: '120px' },
+			width: COLUMN_WIDTH,
 			enableSort: false,
 			enableResize: true,
 			enableMove: false,
@@ -134,8 +138,7 @@ export function getPlannedDowntimeColumns(
 			id: 'duration',
 			header: 'Duration',
 			accessorFn: (row) => row.schedule?.recurrence?.duration,
-			width: { default: '110px', min: '90px' },
-			defaultVisibility: false,
+			width: COLUMN_WIDTH,
 			enableSort: false,
 			enableResize: true,
 			enableMove: false,
@@ -146,42 +149,46 @@ export function getPlannedDowntimeColumns(
 			id: 'alertsSilenced',
 			header: 'Alerts Silenced',
 			accessorKey: 'alertIds',
-			width: { default: '200px', min: '140px' },
+			width: COLUMN_WIDTH,
 			enableSort: false,
 			enableResize: true,
 			enableMove: false,
-			cell: ({ row }): JSX.Element =>
-				row.alertOptions.length ? (
-					<div
-						className={styles.badges}
-						title={row.alertOptions
-							.flatMap((alert) =>
-								typeof alert.label === 'string' ? [alert.label] : [],
-							)
-							.join(', ')}
-					>
-						{row.alertOptions.map((alert) => (
-							<Badge
-								key={alert.value}
-								textTransform="none"
-								variant="solid"
-								color="secondary"
-							>
-								{alert.label}
-							</Badge>
-						))}
-					</div>
-				) : (
-					<Badge textTransform="none" variant="solid" color="secondary">
-						All alert rules
-					</Badge>
-				),
+			cell: ({ row }): JSX.Element => {
+				const hasScopedAlerts = Boolean(row.alertIds && row.alertIds.length > 0);
+				if (!hasScopedAlerts) {
+					return (
+						<Badge textTransform="none" variant="solid" color="secondary">
+							All alert rules
+						</Badge>
+					);
+				}
+
+				if (isAlertsLoading) {
+					return (
+						<Skeleton.Input
+							testId="alerts-silenced-skeleton"
+							active
+							size="small"
+							style={{ width: 100, height: 22 }}
+						/>
+					);
+				}
+
+				return (
+					<OverflowBadges
+						items={row.alertOptions.map((alert) => ({
+							key: String(alert.value),
+							label: alert.label,
+						}))}
+					/>
+				);
+			},
 		},
 		{
 			id: 'description',
 			header: 'Description',
 			accessorKey: 'description',
-			width: { default: '200px', min: '120px' },
+			width: COLUMN_WIDTH,
 			defaultVisibility: false,
 			enableSort: false,
 			enableResize: true,
@@ -192,7 +199,7 @@ export function getPlannedDowntimeColumns(
 			id: 'createdBy',
 			header: 'Created By',
 			accessorKey: 'createdBy',
-			width: { default: '180px', min: '120px' },
+			width: COLUMN_WIDTH,
 			defaultVisibility: false,
 			enableSort: false,
 			enableResize: true,
@@ -203,7 +210,7 @@ export function getPlannedDowntimeColumns(
 			id: 'createdAt',
 			header: 'Created At',
 			accessorKey: 'createdAt',
-			width: { default: '150px', min: '120px' },
+			width: COLUMN_WIDTH,
 			defaultVisibility: false,
 			enableSort: true,
 			enableResize: true,
@@ -214,7 +221,7 @@ export function getPlannedDowntimeColumns(
 			id: 'updatedBy',
 			header: 'Updated By',
 			accessorKey: 'updatedBy',
-			width: { default: '180px', min: '120px' },
+			width: COLUMN_WIDTH,
 			defaultVisibility: false,
 			enableSort: false,
 			enableResize: true,
@@ -225,7 +232,7 @@ export function getPlannedDowntimeColumns(
 			id: 'updatedAt',
 			header: 'Updated At',
 			accessorKey: 'updatedAt',
-			width: { default: '150px', min: '120px' },
+			width: COLUMN_WIDTH,
 			defaultVisibility: false,
 			enableSort: true,
 			enableResize: true,

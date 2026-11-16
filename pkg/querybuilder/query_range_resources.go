@@ -3,6 +3,7 @@ package querybuilder
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -14,7 +15,10 @@ import (
 )
 
 func TelemetrySelector(_ context.Context, resource coretypes.Resource, id string, _ valuer.UUID) ([]coretypes.Selector, error) {
-	values := telemetrytypes.NewTelemetryGrantSelectors(id)
+	values, err := telemetrySelectorValues(id)
+	if err != nil {
+		return nil, err
+	}
 
 	selectors := make([]coretypes.Selector, 0, len(values))
 	for _, value := range values {
@@ -182,27 +186,103 @@ func builderQuerySelectors(queryType, expression string, variables map[string]qb
 		return nil, err
 	}
 
-	ids := make([]string, 0)
+	atoms := make([]WhereClauseCondition, 0)
+	for _, condition := range normalized.Conditions {
+		if !condition.TopLevel || len(condition.Values) == 0 {
+			continue
+		}
+		if condition.Operator != "=" && condition.Operator != "IN" {
+			continue
+		}
+		if _, ok := telemetrytypes.NewTelemetryGrantKey(condition.Key); !ok {
+			continue
+		}
+		atoms = append(atoms, condition)
+	}
+	if len(atoms) == 0 {
+		return []string{typeWildcard}, nil
+	}
+
+	listIndex := -1
+	for index, atom := range atoms {
+		if atom.Operator != "IN" || len(atom.Values) < 2 {
+			continue
+		}
+		if listIndex >= 0 {
+			return []string{queryType + "/" + telemetryAtomsFilter(atoms)}, nil
+		}
+		listIndex = index
+	}
+	if listIndex < 0 {
+		return []string{queryType + "/" + telemetryAtomsFilter(atoms)}, nil
+	}
+
+	list := atoms[listIndex]
+	ids := make([]string, 0, len(list.Values))
+	for _, value := range list.Values {
+		atoms[listIndex] = WhereClauseCondition{Key: list.Key, Operator: "=", Values: []string{value}}
+		ids = append(ids, queryType+"/"+telemetryAtomsFilter(atoms))
+	}
+
+	return ids, nil
+}
+
+func telemetryAtomsFilter(atoms []WhereClauseCondition) string {
+	parts := make([]string, 0, len(atoms))
+	for _, atom := range atoms {
+		literals := make([]string, 0, len(atom.Values))
+		for _, value := range atom.Values {
+			literals = append(literals, FilterStringLiteral(value))
+		}
+		if len(literals) == 1 {
+			parts = append(parts, atom.Key+" = "+literals[0])
+			continue
+		}
+		parts = append(parts, atom.Key+" IN ("+strings.Join(literals, ", ")+")")
+	}
+	slices.Sort(parts)
+
+	return strings.Join(slices.Compact(parts), " AND ")
+}
+
+func telemetrySelectorValues(id string) ([]string, error) {
+	queryType, filter, found := strings.Cut(id, "/")
+	if !found || filter == coretypes.WildCardSelectorString {
+		return telemetrytypes.NewTelemetryGrantSelectors(id), nil
+	}
+
+	normalized, err := NormalizeWhereClause(filter, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	values := make([]string, 0)
 	for _, condition := range normalized.Conditions {
 		if !condition.TopLevel {
 			continue
 		}
-
 		key, ok := telemetrytypes.NewTelemetryGrantKey(condition.Key)
 		if !ok {
 			continue
 		}
-
-		if condition.Operator == "=" || condition.Operator == "IN" {
-			for _, value := range condition.Values {
-				ids = append(ids, queryType+"/"+key+"/"+value)
-			}
+		switch {
+		case condition.Operator == "=", condition.Operator == "IN" && len(condition.Values) == 1:
+			values = append(values, queryType+"/"+key+"/"+condition.Values[0], queryType+"/"+key+"/"+coretypes.WildCardSelectorString)
+		case condition.Operator == "IN":
+			values = append(values, queryType+"/"+key+"/"+coretypes.WildCardSelectorString)
 		}
 	}
+	values = append(values, queryType+"/"+coretypes.WildCardSelectorString, coretypes.WildCardSelectorString)
 
-	if len(ids) == 0 {
-		return []string{typeWildcard}, nil
+	seen := make(map[string]struct{}, len(values))
+	unique := make([]string, 0, len(values))
+	for _, value := range values {
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		unique = append(unique, value)
 	}
 
-	return ids, nil
+	return unique, nil
 }

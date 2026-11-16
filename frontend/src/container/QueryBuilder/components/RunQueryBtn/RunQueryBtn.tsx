@@ -15,6 +15,7 @@ type RunQueryBtnProps = {
 	label?: string;
 	disabled?: boolean;
 	disabledTooltip?: ReactNode;
+	testId?: string;
 } & (
 	| {
 			onStageRunQuery: () => void;
@@ -35,6 +36,7 @@ function RunQueryBtn({
 	onStageRunQuery,
 	disabled,
 	disabledTooltip,
+	testId,
 }: RunQueryBtnProps): JSX.Element {
 	const isMac = getUserOperatingSystem() === UserOperatingSystem.MACOS;
 	const isLoading = isLoadingQueries ?? false;
@@ -48,6 +50,7 @@ function RunQueryBtn({
 			data-run-query-btn
 			prefix={<LoaderCircle size={14} className="loading-icon animate-spin" />}
 			onClick={handleCancelQuery}
+			testId={testId ? `${testId}-cancel` : undefined}
 		>
 			Cancel
 		</Button>
@@ -58,6 +61,7 @@ function RunQueryBtn({
 			color="primary"
 			type="button"
 			data-run-query-btn
+			testId={testId}
 			disabled={disabled}
 			disabledTooltip={disabledTooltip}
 			onClick={onStageRunQuery}

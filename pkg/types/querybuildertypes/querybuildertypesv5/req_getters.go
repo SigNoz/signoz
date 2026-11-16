@@ -180,6 +180,8 @@ func (q *QueryEnvelope) GetOffset() int {
 		return spec.Offset
 	case QueryBuilderQuery[MetricAggregation]:
 		return spec.Offset
+	case QueryBuilderFormula:
+		return spec.Offset
 	}
 	return 0
 }
@@ -221,6 +223,34 @@ func (q *QueryEnvelope) GetGroupBy() []GroupByKey {
 		return spec.GroupBy
 	case QueryBuilderJoin:
 		return spec.GroupBy
+	}
+	return nil
+}
+
+// GetAggregationExpressions returns one entry per aggregation. A metric
+// aggregation has no expression, so it contributes an empty entry.
+func (q *QueryEnvelope) GetAggregationExpressions() []string {
+	switch spec := q.Spec.(type) {
+	case QueryBuilderTraceOperator:
+		expressions := make([]string, len(spec.Aggregations))
+		for i, aggregation := range spec.Aggregations {
+			expressions[i] = aggregation.Expression
+		}
+		return expressions
+	case QueryBuilderQuery[TraceAggregation]:
+		expressions := make([]string, len(spec.Aggregations))
+		for i, aggregation := range spec.Aggregations {
+			expressions[i] = aggregation.Expression
+		}
+		return expressions
+	case QueryBuilderQuery[LogAggregation]:
+		expressions := make([]string, len(spec.Aggregations))
+		for i, aggregation := range spec.Aggregations {
+			expressions[i] = aggregation.Expression
+		}
+		return expressions
+	case QueryBuilderQuery[MetricAggregation]:
+		return make([]string, len(spec.Aggregations))
 	}
 	return nil
 }

@@ -183,7 +183,11 @@ export default function CheckboxFilterV2(
 	wasSearchShown.current = isSearchShown;
 
 	return (
-		<div className={styles.checkboxFilter} data-testid="checkbox-filter-v2">
+		<div
+			className={styles.checkboxFilter}
+			data-testid="checkbox-filter-v2"
+			data-filter-key={filter.attributeKey.key}
+		>
 			<CheckboxFilterV2Header
 				title={filter.title}
 				isOpen={isOpen}

@@ -17,7 +17,6 @@ import {
 	QuickFilterChangeEventData,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
-import { InfraMonitoringEvents } from 'constants/events';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import K8sBaseDetails, {
 	K8sDetailsFilters,
@@ -213,6 +212,7 @@ function Hosts(): JSX.Element {
 				className="periscope-btn ghost"
 				type="text"
 				size="small"
+				data-testid="quick-filters-toggle"
 				onClick={handleFilterVisibilityChange}
 			>
 				<Filter size={14} />
@@ -239,6 +239,7 @@ function Hosts(): JSX.Element {
 												style={{ rotate: '270deg', cursor: 'pointer' }}
 												onClick={handleFilterVisibilityChange}
 												size="md"
+												data-testid="quick-filters-toggle"
 											/>
 										</Tooltip>
 									</div>
@@ -271,7 +272,6 @@ function Hosts(): JSX.Element {
 							fetchListData={fetchListData}
 							getRowKey={getHostRowKey}
 							getItemKey={getHostItemKey}
-							eventCategory={InfraMonitoringEvents.HostEntity}
 							detailsQueryKeyPrefix="hosts"
 						/>
 					</div>
@@ -279,7 +279,6 @@ function Hosts(): JSX.Element {
 			</div>
 			<K8sBaseDetails
 				category={InfraMonitoringEntity.HOSTS}
-				eventCategory={InfraMonitoringEvents.HostEntity}
 				getSelectedItemExpression={hostGetSelectedItemExpression}
 				fetchEntityData={fetchEntityData}
 				getEntityName={hostGetEntityName}
