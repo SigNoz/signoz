@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authn/authnstore/sqlauthnstore"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/condensedmeter"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -99,6 +100,7 @@ type SigNoz struct {
 	Gateway                gateway.Gateway
 	Auditor                auditor.Auditor
 	MeterReporter          meterreporter.Reporter
+	CondensedMeter         condensedmeter.Reporter
 }
 
 // newQueryStack assembles the query stack once and returns, in order: the shared
@@ -184,6 +186,7 @@ func New(
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 	auditorProviderFactories func(licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]],
 	meterReporterProviderFactories func(context.Context, factory.ProviderSettings, flagger.Flagger, licensing.Licensing, telemetrystore.TelemetryStore, retention.Getter, organization.Getter, zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string),
+	condensedMeterProviderFactories func(flagger.Flagger, licensing.Licensing, organization.Getter, telemetrystore.TelemetryStore, sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[condensedmeter.Reporter, condensedmeter.Config]],
 	querierHandlerCallback func(factory.ProviderSettings, querier.Querier, analytics.Analytics) querier.Handler,
 	cloudIntegrationCallback func(sqlstore.SQLStore, dashboard.Module, global.Global, zeus.Zeus, gateway.Gateway, licensing.Licensing, serviceaccount.Module, cloudintegration.Config) (cloudintegration.Module, error),
 	metricReductionRuleModuleCallback func(sqlstore.SQLStore, telemetrystore.TelemetryStore, dashboard.Module, queryparser.QueryParser, licensing.Licensing, flagger.Flagger, telemetrytypes.MetadataStore, factory.ProviderSettings, int) metricreductionrule.Module,
@@ -501,6 +504,12 @@ func New(
 		return nil, err
 	}
 
+	// Initialize condensed meter from the variant-specific provider factories
+	condensedMeter, err := factory.NewProviderFromNamedMap(ctx, providerSettings, config.CondensedMeter, condensedMeterProviderFactories(flagger, licensing, orgGetter, telemetrystore, sqlstore), config.CondensedMeter.Provider)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize authns
 	store := sqlauthnstore.NewStore(sqlstore)
 	authNs, err := authNsCallback(ctx, providerSettings, store, licensing)
@@ -606,6 +615,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("user"), userService, factory.MustNewName("authz")),
 		factory.NewNamedService(factory.MustNewName("auditor"), auditor),
 		factory.NewNamedService(factory.MustNewName("meterreporter"), meterReporter, factory.MustNewName("licensing")),
+		factory.NewNamedService(factory.MustNewName("condensedmeter"), condensedMeter, factory.MustNewName("licensing")),
 		factory.NewNamedService(factory.MustNewName("ruler"), rulerInstance),
 		factory.NewNamedService(factory.MustNewName("systemdashboard"), impldashboard.NewService(providerSettings, dashboard, orgGetter)),
 		factory.NewNamedService(factory.MustNewName("spanmappergroup"), implspanmapper.NewService(providerSettings, spanMapperModule, orgGetter)),
@@ -667,5 +677,6 @@ func New(
 		Gateway:                gateway,
 		Auditor:                auditor,
 		MeterReporter:          meterReporter,
+		CondensedMeter:         condensedMeter,
 	}, nil
 }

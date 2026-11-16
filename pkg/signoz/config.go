@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/condensedmeter"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -139,6 +140,9 @@ type Config struct {
 	// MeterReporter config
 	MeterReporter meterreporter.Config `mapstructure:"meterreporter"`
 
+	// CondensedMeter config
+	CondensedMeter condensedmeter.Config `mapstructure:"condensedmeter"`
+
 	// CloudIntegration config
 	CloudIntegration cloudintegration.Config `mapstructure:"cloudintegration"`
 
@@ -180,6 +184,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		serviceaccount.NewConfigFactory(),
 		auditor.NewConfigFactory(),
 		meterreporter.NewConfigFactory(),
+		condensedmeter.NewConfigFactory(),
 		cloudintegration.NewConfigFactory(),
 		tracedetail.NewConfigFactory(),
 		authz.NewConfigFactory(),

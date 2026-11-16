@@ -522,3 +522,28 @@ meterreporter:
   # interval - random(0, jitter). Must be between 10m and interval. Defaults to
   # min(interval, 2h) when unset.
   jitter: 2h
+
+##################### Condensed Meter #####################
+condensedmeter:
+  # Specifies the condensed meter provider to use.
+  # noop: reports nothing (community default).
+  # kafka: sends the hourly count of condensed metric rows to a Kafka topic as OTLP protobuf (enterprise).
+  provider: noop
+  # How often closed hours are looked for. Minimum 10m, maximum 1h.
+  interval: 1h
+  # The meter connector's dimensions. Condensed rows are split by them like every other meter row.
+  dimensions:
+    - service.name
+    - deployment.environment
+    - host.name
+    - signoz.workspace.key.id
+  kafka:
+    # The seed broker addresses (host:port) used to discover the cluster.
+    brokers:
+      - localhost:9092
+    # The topic condensed rows are written to. It must already exist.
+    topic: ""
+    # The client id the producer reports to the brokers.
+    client_id: signoz
+    # The compression codec for produced batches: none, gzip, snappy, lz4 or zstd.
+    compression: lz4
