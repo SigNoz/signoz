@@ -80,17 +80,18 @@ export function stepSnake(
 ): SnakeGame | null {
 	const dir = game.nextDir;
 	const head = { c: game.body[0].c + dir.c, r: game.body[0].r + dir.r };
+	const ate = head.c === game.food.c && head.r === game.food.r;
+	const kept = ate ? game.body : game.body.slice(0, -1);
 	if (
 		head.c < 0 ||
 		head.c >= cols ||
 		head.r < 0 ||
 		head.r >= rows ||
-		isOn(game.body, head)
+		isOn(kept, head)
 	) {
 		return null;
 	}
-	const ate = head.c === game.food.c && head.r === game.food.r;
-	const body = [head, ...(ate ? game.body : game.body.slice(0, -1))];
+	const body = [head, ...kept];
 	const food = ate ? placeFood(body, cols, rows) : game.food;
 	if (!food) {
 		return null;

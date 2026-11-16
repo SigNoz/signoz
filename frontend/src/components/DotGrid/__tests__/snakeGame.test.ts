@@ -88,4 +88,25 @@ describe('snakeGame', () => {
 
 		expect(stepSnake(coiled, COLS, ROWS)).toBeNull();
 	});
+
+	it('moves into the cell its tail is leaving', () => {
+		const up = { c: 0, r: -1 };
+		const turnedDownThenLeft: SnakeGame = {
+			...newGame(),
+			body: [
+				{ c: 4, r: 4 },
+				{ c: 5, r: 4 },
+				{ c: 5, r: 3 },
+				{ c: 4, r: 3 },
+			],
+			nextDir: up,
+		};
+
+		expect(stepSnake(turnedDownThenLeft, COLS, ROWS)?.body).toStrictEqual([
+			{ c: 4, r: 3 },
+			{ c: 4, r: 4 },
+			{ c: 5, r: 4 },
+			{ c: 5, r: 3 },
+		]);
+	});
 });
