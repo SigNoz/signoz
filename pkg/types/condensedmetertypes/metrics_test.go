@@ -10,14 +10,14 @@ import (
 )
 
 func TestNewPMetrics(t *testing.T) {
-	hour := time.Date(2026, 11, 12, 10, 0, 0, 0, time.UTC)
+	timestamp := time.Date(2026, 11, 12, 13, 5, 0, 0, time.UTC)
 	dimensions := []string{"service.name", "host.name"}
 	rows := []Row{
 		{Values: []string{"frontend", "host-1"}, Count: 31},
 		{Values: []string{"checkout", ""}, Count: 4},
 	}
 
-	metrics := NewPMetrics(rows, dimensions, hour, "signoz", "v0.0.1")
+	metrics := NewPMetrics(rows, dimensions, timestamp, "signoz", "v0.0.1")
 
 	require.Equal(t, 1, metrics.ResourceMetrics().Len())
 	resourceMetrics := metrics.ResourceMetrics().At(0)
@@ -50,7 +50,7 @@ func TestNewPMetrics(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			dataPoint := dataPoints.At(testCase.index)
 			assert.Equal(t, testCase.value, dataPoint.IntValue())
-			assert.Equal(t, hour, dataPoint.Timestamp().AsTime())
+			assert.Equal(t, timestamp, dataPoint.Timestamp().AsTime())
 			assert.Equal(t, testCase.attributes, dataPoint.Attributes().AsRaw())
 		})
 	}

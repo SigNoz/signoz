@@ -20,7 +20,7 @@ type Row struct {
 }
 
 // NewPMetrics shapes rows like the meter connector's output (dimensions as data point attributes, delta monotonic sum), so they land in the same meter table and slice the same way.
-func NewPMetrics(rows []Row, dimensions []string, hour time.Time, scopeName string, scopeVersion string) pmetric.Metrics {
+func NewPMetrics(rows []Row, dimensions []string, timestamp time.Time, scopeName string, scopeVersion string) pmetric.Metrics {
 	metrics := pmetric.NewMetrics()
 	scopeMetrics := metrics.ResourceMetrics().AppendEmpty().ScopeMetrics().AppendEmpty()
 	scopeMetrics.Scope().SetName(scopeName)
@@ -36,7 +36,7 @@ func NewPMetrics(rows []Row, dimensions []string, hour time.Time, scopeName stri
 
 	for _, row := range rows {
 		dataPoint := sum.DataPoints().AppendEmpty()
-		dataPoint.SetTimestamp(pcommon.NewTimestampFromTime(hour))
+		dataPoint.SetTimestamp(pcommon.NewTimestampFromTime(timestamp))
 		dataPoint.SetIntValue(int64(row.Count))
 		for i, dimension := range dimensions {
 			if row.Values[i] != "" {

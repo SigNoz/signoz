@@ -2,6 +2,7 @@ package kafkacondensedmeter
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"testing"
 	"time"
@@ -61,6 +62,12 @@ func TestReportOrg(t *testing.T) {
 	reportedHour := time.Date(2026, 11, 12, 11, 0, 0, 0, time.UTC)
 	notFound := errors.New(errors.TypeNotFound, condensedmetertypes.ErrCodeCheckpointNotFound, "no checkpoint")
 	condensedColumns := []cmock.ColumnType{{Name: "dimension_0", Type: "String"}, {Name: "dimension_1", Type: "String"}, {Name: "count", Type: "UInt64"}}
+	manyRows := make([][]any, maxDataPointsPerRecord+1)
+	manyDataPoints := make([]int64, maxDataPointsPerRecord+1)
+	for i := range manyRows {
+		manyRows[i] = []any{fmt.Sprintf("service-%d", i), "host-1", uint64(i + 1)}
+		manyDataPoints[i] = int64(i + 1)
+	}
 
 	testCases := []struct {
 		name              string
@@ -69,6 +76,7 @@ func TestReportOrg(t *testing.T) {
 		condensedRows     [][]any
 		condensedErr      error
 		expectedUpsert    *time.Time
+		expectedRecords   int
 		expectedDataPoint []int64
 		expectedErr       bool
 	}{
@@ -81,7 +89,16 @@ func TestReportOrg(t *testing.T) {
 			checkpoint:        condensedmetertypes.NewCheckpoint(orgID, checkpointHour),
 			condensedRows:     [][]any{{"frontend", "host-1", uint64(31)}, {"checkout", "", uint64(4)}},
 			expectedUpsert:    &reportedHour,
+			expectedRecords:   1,
 			expectedDataPoint: []int64{31, 4},
+		},
+		{
+			name:              "Checkpoint_LargeHourSplitAcrossRecords",
+			checkpoint:        condensedmetertypes.NewCheckpoint(orgID, checkpointHour),
+			condensedRows:     manyRows,
+			expectedUpsert:    &reportedHour,
+			expectedRecords:   2,
+			expectedDataPoint: manyDataPoints,
 		},
 		{
 			name:           "Checkpoint_EmptyHourNotSentCheckpointAdvanced",
@@ -148,19 +165,18 @@ func TestReportOrg(t *testing.T) {
 
 			assert.NoError(t, telemetryStore.Mock().ExpectationsWereMet())
 
-			metrics := consumeMetrics(t, cluster.ListenAddrs(), "tenant_meter", 1, 500*time.Millisecond)
-			if len(testCase.expectedDataPoint) == 0 {
-				assert.Empty(t, metrics)
-				return
-			}
+			metrics := consumeMetrics(t, cluster.ListenAddrs(), "tenant_meter", testCase.expectedRecords+1, 500*time.Millisecond)
+			require.Len(t, metrics, testCase.expectedRecords)
 
-			require.Len(t, metrics, 1)
-			dataPoints := metrics[0].ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Sum().DataPoints()
-			require.Equal(t, len(testCase.expectedDataPoint), dataPoints.Len())
-			for i, expected := range testCase.expectedDataPoint {
-				assert.Equal(t, expected, dataPoints.At(i).IntValue())
-				assert.Equal(t, reportedHour, dataPoints.At(i).Timestamp().AsTime())
+			dataPoints := []int64{}
+			for _, recordMetrics := range metrics {
+				points := recordMetrics.ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).Sum().DataPoints()
+				for i := 0; i < points.Len(); i++ {
+					dataPoints = append(dataPoints, points.At(i).IntValue())
+					assert.Equal(t, now, points.At(i).Timestamp().AsTime())
+				}
 			}
+			assert.ElementsMatch(t, testCase.expectedDataPoint, dataPoints)
 		})
 	}
 }
