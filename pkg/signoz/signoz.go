@@ -309,6 +309,14 @@ func New(
 		return nil, err
 	}
 
+	clickhouseSQLStore := telemetrystore
+	if clickhouseSQLConfig, ok := config.TelemetryStore.ForProfile(querier.ClickHouseSQLProfile); ok {
+		clickhouseSQLStore, err = factory.NewProviderFromNamedMap(ctx, providerSettings, clickhouseSQLConfig, telemetrystoreProviderFactories, clickhouseSQLConfig.Provider)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	retentionGetter := implretention.NewGetter(implretention.NewStore(sqlstore))
 
 	// Initialize prometheus from the available prometheus provider factories
@@ -335,7 +343,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Querier,
-		NewQuerierProviderFactories(telemetrystore, prometheus, telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
+		NewQuerierProviderFactories(telemetrystore, clickhouseSQLStore, prometheus, telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
 		config.Querier.Provider(),
 	)
 	if err != nil {
