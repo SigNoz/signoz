@@ -9,7 +9,7 @@ import type {
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import { resolveQueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.utils';
-import { handleQueryChange } from 'lib/query/panelQuery';
+import { rebuildBuilderForPanelType } from 'lib/query/panelQuery';
 import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
@@ -35,22 +35,19 @@ import {
 	withSingleHeatmapQuery,
 } from '../utils/heatmapQuery';
 
-// V1's handleQueryChange clears orderBy for lists; re-seed the fresh-list default (timestamp desc).
+// V1's panel-type rebuild clears orderBy for lists; re-seed the fresh-list default (timestamp desc).
 const DEFAULT_LIST_ORDER_BY: OrderByPayload[] = [
 	{ columnName: 'timestamp', order: 'desc' },
 ];
 
-function withDefaultListOrder(query: Query): Query {
+function withDefaultListOrder(builder: Query['builder']): Query['builder'] {
 	return {
-		...query,
-		builder: {
-			...query.builder,
-			queryData: query.builder.queryData.map((qd) =>
-				qd.orderBy && qd.orderBy.length > 0
-					? qd
-					: { ...qd, orderBy: DEFAULT_LIST_ORDER_BY },
-			),
-		},
+		...builder,
+		queryData: builder.queryData.map((qd) =>
+			qd.orderBy && qd.orderBy.length > 0
+				? qd
+				: { ...qd, orderBy: DEFAULT_LIST_ORDER_BY },
+		),
 	};
 }
 
@@ -58,7 +55,10 @@ function withDefaultListOrder(query: Query): Query {
  * Fields the new kind hides could not be seen or cleared, yet would still apply: a limit
  * would cut rows, and a trace operator would be saved and rejected by the backend.
  */
-function withoutHiddenFields(query: Query, kind: PanelKind): Query {
+function withoutHiddenFields(
+	builder: Query['builder'],
+	kind: PanelKind,
+): Query['builder'] {
 	const fields = getQueryPanelDefinition(kind)?.queryBuilderFields;
 	const limitHidden = resolveQueryBuilderField(
 		QueryBuilderField.Limit,
@@ -69,25 +69,17 @@ function withoutHiddenFields(query: Query, kind: PanelKind): Query {
 		fields,
 	).hidden;
 	if (!limitHidden && !traceOperatorHidden) {
-		return query;
+		return builder;
 	}
 	return {
-		...query,
-		builder: {
-			...query.builder,
-			queryData: limitHidden
-				? query.builder.queryData.map((qd) => ({ ...qd, limit: null }))
-				: query.builder.queryData,
-			queryFormulas: limitHidden
-				? query.builder.queryFormulas.map((formula) => ({
-						...formula,
-						limit: null,
-					}))
-				: query.builder.queryFormulas,
-			queryTraceOperator: traceOperatorHidden
-				? []
-				: query.builder.queryTraceOperator,
-		},
+		...builder,
+		queryData: limitHidden
+			? builder.queryData.map((qd) => ({ ...qd, limit: null }))
+			: builder.queryData,
+		queryFormulas: limitHidden
+			? builder.queryFormulas.map((formula) => ({ ...formula, limit: null }))
+			: builder.queryFormulas,
+		queryTraceOperator: traceOperatorHidden ? [] : builder.queryTraceOperator,
 	};
 }
 
@@ -114,7 +106,7 @@ interface UsePanelKindChangeApi {
  * renderer, config sections, query-builder tabs and request type for free; this hook adds
  * the two things that don't: a per-kind session cache that makes switching reversible
  * (`Table → List → Table` restores the original query + spec), and, on first visit to a
- * kind, a query rebuild (`handleQueryChange`) + spec reset (`getSwitchedPluginSpec`).
+ * kind, a query rebuild (`rebuildBuilderForPanelType`) + spec reset (`getSwitchedPluginSpec`).
  */
 export function usePanelKindChange({
 	spec,
@@ -172,10 +164,10 @@ export function usePanelKindChange({
 
 			const queryType = resolveQueryType(newKind, query.queryType);
 			const rebuildForNewKind = (builder: Query['builder']): Query['builder'] => {
-				// The shared transforms read only `builder`, so either slot is passed through it.
-				const transformed = handleQueryChange(
+				// Builder-only, so either slot goes through it and the query type can't leak in.
+				const transformed = rebuildBuilderForPanelType(
 					newPanelType as keyof PartialPanelTypes,
-					{ ...query, builder },
+					builder,
 					panelTypeRef.current,
 				);
 				// Match a fresh list panel's default order so the builder's Order By isn't empty.
@@ -185,11 +177,9 @@ export function usePanelKindChange({
 						: transformed,
 					newKind,
 				);
-				return (
-					newKind === 'signoz/HeatmapPanel'
-						? withSingleHeatmapQuery(ordered)
-						: withPercentileHistogramAggregation(ordered)
-				).builder;
+				return newKind === 'signoz/HeatmapPanel'
+					? withSingleHeatmapQuery(ordered)
+					: withPercentileHistogramAggregation(ordered);
 			};
 
 			// Revisit → restore the stash (the reversibility path) on the tab in use, an AI

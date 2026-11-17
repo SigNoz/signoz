@@ -5,7 +5,7 @@ import {
 	initialQueryAIWithType,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { handleQueryChange } from 'lib/query/panelQuery';
+import { rebuildBuilderForPanelType } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -21,7 +21,7 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
 jest.mock('lib/query/panelQuery', () => ({
-	handleQueryChange: jest.fn(),
+	rebuildBuilderForPanelType: jest.fn(),
 }));
 jest.mock('../../../Panels/capabilities', () => ({
 	resolveQueryType: jest.fn(),
@@ -44,7 +44,7 @@ jest.mock('../../../Panels/utils/getBuilderQueries', () => ({
 }));
 
 const mockUseQueryBuilder = useQueryBuilder as unknown as jest.Mock;
-const mockHandleQueryChange = handleQueryChange as unknown as jest.Mock;
+const mockRebuildBuilder = rebuildBuilderForPanelType as unknown as jest.Mock;
 const mockResolveQueryType = resolveQueryType as unknown as jest.Mock;
 const mockToPerses = toPerses as unknown as jest.Mock;
 const mockGetSwitchedPluginSpec = getSwitchedPluginSpec as unknown as jest.Mock;
@@ -60,10 +60,8 @@ const LIST_QUERIES = [{ id: 'list-q' }] as unknown as NonNullable<
 	DashboardtypesPanelSpecDTO['queries']
 >;
 const TRANSFORMED = {
-	id: 'transformed',
-	queryType: 'builder',
-	builder: { queryData: [{ orderBy: [] }] },
-} as unknown as Query;
+	queryData: [{ orderBy: [] }],
+} as unknown as Query['builder'];
 const CONVERTED = [{ id: 'converted' }] as unknown as NonNullable<
 	DashboardtypesPanelSpecDTO['queries']
 >;
@@ -113,12 +111,12 @@ type SetSpec = Parameters<typeof usePanelKindChange>[0]['setSpec'];
 describe('usePanelKindChange', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		mockHandleQueryChange.mockReturnValue(TRANSFORMED);
+		mockRebuildBuilder.mockReturnValue(TRANSFORMED);
 		mockToPerses.mockReturnValue(CONVERTED);
 		mockGetSwitchedPluginSpec.mockReturnValue(SWITCHED_SPEC);
 		mockGetBuilderQueries.mockReturnValue([{ signal: 'logs' }]);
 		// The guard owns coercion (tested in capabilities.test.ts); here it always
-		// resolves to Query Builder so the coerced type flows into handleQueryChange.
+		// resolves to Query Builder so the coerced type lands on the rebuilt query.
 		mockResolveQueryType.mockReturnValue('builder');
 	});
 
@@ -172,11 +170,9 @@ describe('usePanelKindChange', () => {
 		mockUseQueryBuilder.mockReturnValue(
 			builderState(fakeQuery('ts-current', 'builder')),
 		);
-		mockHandleQueryChange.mockReturnValue({
-			id: 'transformed',
-			queryType: 'builder',
-			builder: { queryData: [{ orderBy: [] }, { orderBy: undefined }] },
-		} as unknown as Query);
+		mockRebuildBuilder.mockReturnValue({
+			queryData: [{ orderBy: [] }, { orderBy: undefined }],
+		} as unknown as Query['builder']);
 
 		const { result } = renderHook(() =>
 			usePanelKindChange({
@@ -200,14 +196,10 @@ describe('usePanelKindChange', () => {
 		mockUseQueryBuilder.mockReturnValue(
 			builderState(fakeQuery('table-current', 'builder')),
 		);
-		mockHandleQueryChange.mockReturnValue({
-			id: 'transformed',
-			queryType: 'builder',
-			builder: {
-				queryData: [{ queryName: 'A', limit: 10 }],
-				queryFormulas: [{ queryName: 'F1', limit: 5 }],
-			},
-		} as unknown as Query);
+		mockRebuildBuilder.mockReturnValue({
+			queryData: [{ queryName: 'A', limit: 10 }],
+			queryFormulas: [{ queryName: 'F1', limit: 5 }],
+		} as unknown as Query['builder']);
 
 		const { result } = renderHook(() =>
 			usePanelKindChange({
@@ -228,14 +220,10 @@ describe('usePanelKindChange', () => {
 		mockUseQueryBuilder.mockReturnValue(
 			builderState(fakeQuery('geo-current', 'builder')),
 		);
-		mockHandleQueryChange.mockReturnValue({
-			id: 'transformed',
-			queryType: 'builder',
-			builder: {
-				queryData: [{ queryName: 'A', limit: 10 }],
-				queryFormulas: [{ queryName: 'F1', limit: 5 }],
-			},
-		} as unknown as Query);
+		mockRebuildBuilder.mockReturnValue({
+			queryData: [{ queryName: 'A', limit: 10 }],
+			queryFormulas: [{ queryName: 'F1', limit: 5 }],
+		} as unknown as Query['builder']);
 
 		const { result } = renderHook(() =>
 			usePanelKindChange({
@@ -256,15 +244,11 @@ describe('usePanelKindChange', () => {
 		mockUseQueryBuilder.mockReturnValue(
 			builderState(fakeQuery('table-current', 'builder')),
 		);
-		mockHandleQueryChange.mockReturnValue({
-			id: 'transformed',
-			queryType: 'builder',
-			builder: {
-				queryData: [{ queryName: 'A' }],
-				queryFormulas: [],
-				queryTraceOperator: [{ queryName: 'T1', expression: 'A => B' }],
-			},
-		} as unknown as Query);
+		mockRebuildBuilder.mockReturnValue({
+			queryData: [{ queryName: 'A' }],
+			queryFormulas: [],
+			queryTraceOperator: [{ queryName: 'T1', expression: 'A => B' }],
+		} as unknown as Query['builder']);
 
 		const { result } = renderHook(() =>
 			usePanelKindChange({
@@ -284,14 +268,10 @@ describe('usePanelKindChange', () => {
 		mockUseQueryBuilder.mockReturnValue(
 			builderState(fakeQuery('ts-current', 'builder')),
 		);
-		mockHandleQueryChange.mockReturnValue({
-			id: 'transformed',
-			queryType: 'builder',
-			builder: {
-				queryData: [{ queryName: 'A' }, { queryName: 'B' }],
-				queryFormulas: [{ queryName: 'F1' }],
-			},
-		} as unknown as Query);
+		mockRebuildBuilder.mockReturnValue({
+			queryData: [{ queryName: 'A' }, { queryName: 'B' }],
+			queryFormulas: [{ queryName: 'F1' }],
+		} as unknown as Query['builder']);
 
 		const { result } = renderHook(() =>
 			usePanelKindChange({
@@ -314,20 +294,16 @@ describe('usePanelKindChange', () => {
 		mockUseQueryBuilder.mockReturnValue(
 			builderState(fakeQuery('ts-current', 'builder')),
 		);
-		mockHandleQueryChange.mockReturnValue({
-			id: 'transformed',
-			queryType: 'builder',
-			builder: {
-				queryData: [
-					{
-						queryName: 'A',
-						spaceAggregation: 'p90',
-						aggregations: [{ metricName: 'signoz_latency', spaceAggregation: 'p90' }],
-					},
-				],
-				queryFormulas: [],
-			},
-		} as unknown as Query);
+		mockRebuildBuilder.mockReturnValue({
+			queryData: [
+				{
+					queryName: 'A',
+					spaceAggregation: 'p90',
+					aggregations: [{ metricName: 'signoz_latency', spaceAggregation: 'p90' }],
+				},
+			],
+			queryFormulas: [],
+		} as unknown as Query['builder']);
 
 		const { result } = renderHook(() =>
 			usePanelKindChange({
@@ -352,23 +328,19 @@ describe('usePanelKindChange', () => {
 		mockUseQueryBuilder.mockReturnValue(
 			builderState(fakeQuery('heatmap-current', 'builder')),
 		);
-		mockHandleQueryChange.mockReturnValue({
-			id: 'transformed',
-			queryType: 'builder',
-			builder: {
-				queryData: [
-					{
-						queryName: 'A',
-						aggregateAttribute: { key: 'signoz_latency', type: 'Histogram' },
-						spaceAggregation: 'count',
-						aggregations: [
-							{ metricName: 'signoz_latency', spaceAggregation: 'count' },
-						],
-					},
-				],
-				queryFormulas: [],
-			},
-		} as unknown as Query);
+		mockRebuildBuilder.mockReturnValue({
+			queryData: [
+				{
+					queryName: 'A',
+					aggregateAttribute: { key: 'signoz_latency', type: 'Histogram' },
+					spaceAggregation: 'count',
+					aggregations: [
+						{ metricName: 'signoz_latency', spaceAggregation: 'count' },
+					],
+				},
+			],
+			queryFormulas: [],
+		} as unknown as Query['builder']);
 
 		const { result } = renderHook(() =>
 			usePanelKindChange({
@@ -393,23 +365,19 @@ describe('usePanelKindChange', () => {
 		mockUseQueryBuilder.mockReturnValue(
 			builderState(fakeQuery('heatmap-current', 'builder')),
 		);
-		mockHandleQueryChange.mockReturnValue({
-			id: 'transformed',
-			queryType: 'builder',
-			builder: {
-				queryData: [
-					{
-						queryName: 'A',
-						aggregateAttribute: { key: 'signoz_calls_total', type: 'Sum' },
-						spaceAggregation: 'sum',
-						aggregations: [
-							{ metricName: 'signoz_calls_total', spaceAggregation: 'sum' },
-						],
-					},
-				],
-				queryFormulas: [],
-			},
-		} as unknown as Query);
+		mockRebuildBuilder.mockReturnValue({
+			queryData: [
+				{
+					queryName: 'A',
+					aggregateAttribute: { key: 'signoz_calls_total', type: 'Sum' },
+					spaceAggregation: 'sum',
+					aggregations: [
+						{ metricName: 'signoz_calls_total', spaceAggregation: 'sum' },
+					],
+				},
+			],
+			queryFormulas: [],
+		} as unknown as Query['builder']);
 
 		const { result } = renderHook(() =>
 			usePanelKindChange({
@@ -467,7 +435,7 @@ describe('usePanelKindChange', () => {
 			setSpec.mock.calls[setSpec.mock.calls.length - 1][0];
 
 		beforeEach(() => {
-			mockHandleQueryChange.mockImplementation((_type, query) => query);
+			mockRebuildBuilder.mockImplementation((_type, builder) => builder);
 		});
 
 		it('rebuilds both builder slots for the new kind on a first visit', () => {
@@ -485,9 +453,7 @@ describe('usePanelKindChange', () => {
 			);
 			act(() => result.current.onChangePanelKind('signoz/ListPanel'));
 
-			const rebuilt = mockHandleQueryChange.mock.calls.map(
-				([, query]) => (query as Query).builder,
-			);
+			const rebuilt = mockRebuildBuilder.mock.calls.map(([, builder]) => builder);
 			expect(rebuilt).toStrictEqual([QB_BUILDER, AI_BUILDER]);
 			const redirected = lastRedirect(state);
 			expect(redirected.queryType).toBe('builder_ai_query');
@@ -605,6 +571,6 @@ describe('usePanelKindChange', () => {
 		expect(restored.queries).toBe(TABLE_QUERIES);
 		expect(state.redirectWithQueryBuilderData).toHaveBeenCalledWith(tableQuery);
 		// The restore path must not run the query transform again.
-		expect(mockHandleQueryChange).toHaveBeenCalledTimes(1);
+		expect(mockRebuildBuilder).toHaveBeenCalledTimes(1);
 	});
 });
