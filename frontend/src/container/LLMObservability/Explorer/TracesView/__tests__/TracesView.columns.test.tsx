@@ -14,14 +14,15 @@ jest.mock('../../TracesTable/TracesTable', () => ({
 	__esModule: true,
 	default: ({
 		columns,
+		columnStorageKey,
 		onColumnOrderChange,
 		onColumnRemove,
-		onColumnSizingChange,
 	}: TracesTableProps): JSX.Element => (
 		<div>
 			<div data-testid="table-columns">
 				{columns.map((column) => String(column.header)).join(',')}
 			</div>
+			<div data-testid="column-storage-key">{columnStorageKey}</div>
 			<button
 				data-testid="reverse-columns"
 				type="button"
@@ -35,13 +36,6 @@ jest.mock('../../TracesTable/TracesTable', () => ({
 				onClick={(): void => onColumnRemove?.('trace:total_tokens:float64')}
 			>
 				remove
-			</button>
-			<button
-				data-testid="resize-trace-id"
-				type="button"
-				onClick={(): void => onColumnSizingChange?.({ trace_id: 240 })}
-			>
-				resize
 			</button>
 		</div>
 	),
@@ -168,15 +162,11 @@ describe('TracesView columns', () => {
 		expect(shownColumns()).toStrictEqual(['trace_id']);
 	});
 
-	it('keeps column widths in the column store', async () => {
-		const user = userEvent.setup();
+	it('keeps column widths under the trace view key', () => {
 		renderTracesView();
 
-		await user.click(screen.getByTestId('resize-trace-id'));
-
-		expect(
-			useColumnStore.getState().tables[SIZING_KEY].columnSizing,
-		).toStrictEqual({ trace_id: 240 });
-		expect(localStorage.getItem(PANEL_COLUMNS_KEY)).toBeNull();
+		expect(screen.getByTestId('column-storage-key')).toHaveTextContent(
+			SIZING_KEY,
+		);
 	});
 });

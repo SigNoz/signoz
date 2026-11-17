@@ -1,5 +1,7 @@
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 
+import type { GeoMapPlacement } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/types';
+
 import type { PanelKind } from '../../Panels/types/panelKind';
 import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
@@ -21,6 +23,8 @@ export interface SectionEditorContext {
 	axisColumnNames?: { x?: string; y?: string };
 	/** Unit of the column each Scatter Plot axis plots. */
 	axisColumnUnits?: { x?: string; y?: string };
+	/** Geo Map's rows as the preview places them, for the location status and circle size. */
+	geoMapPlacement?: GeoMapPlacement;
 	signal?: TelemetrytypesSignalDTO;
 	panelKind?: PanelKind;
 	onChangePanelKind?: (kind: PanelKind) => void;

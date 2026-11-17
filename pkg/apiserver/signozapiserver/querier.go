@@ -30,7 +30,7 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		Description:        "Execute a composite query over a time range. Supports builder queries (traces, logs, metrics), formulas, trace operators, PromQL, and ClickHouse SQL.",
 		Request:            new(qbtypes.QueryRangeRequest),
 		RequestContentType: "application/json",
-		RequestExamples: []handler.OpenAPIExample{
+		RequestExamples: append([]handler.OpenAPIExample{
 			{
 				Name:    "traces_time_series",
 				Summary: "Time series: count spans grouped by service",
@@ -598,7 +598,7 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 					},
 				},
 			},
-		},
+		}, queryRangeFunctionExamples()...),
 		Response:            new(qbtypes.QueryRangeResponse),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,

@@ -101,7 +101,7 @@ slack_default_config = {
         {
             "api_url": "services/TEAM_ID/BOT_ID/TOKEN_ID",  # base_url configured on runtime
             "title": '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n {{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n {{" "}}(\n {{- with .CommonLabels.Remove .GroupLabels.Names }}\n {{- range $index, $label := .SortedPairs -}}\n {{ if $index }}, {{ end }}\n {{- $label.Name }}="{{ $label.Value -}}"\n {{- end }}\n {{- end -}}\n )\n {{- end }}',
-            "text": '{{ range .Alerts -}}\r\n *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\r\n\r\n *Summary:* {{ .Annotations.summary }}\r\n *Description:* {{ .Annotations.description }}\r\n *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}\r\n *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}\r\n\r\n *Details:*\r\n {{ range .Labels.SortedPairs -}}\r\n   {{- if ne .Name "ruleId" -}}\r\n \u2022 *{{ .Name }}:* {{ .Value }}\r\n   {{ end -}}\r\n {{ end -}}\r\n{{ end }}',
+            "text": '{{ range .Alerts -}}\r\n *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\r\n\r\n *Summary:* {{ .Annotations.summary }}\r\n *Description:* {{ .Annotations.description }}\r\n {{ template "signoz.relatedLinks.slack" . }}\r\n\r\n *Details:*\r\n {{ range .Labels.SortedPairs -}}\r\n   {{- if ne .Name "ruleId" -}}\r\n \u2022 *{{ .Name }}:* {{ .Value }}\r\n   {{ end -}}\r\n {{ end -}}\r\n{{ end }}',
         }
     ],
 }
@@ -111,7 +111,7 @@ msteams_default_config = {
         {
             "webhook_url": "msteams/webhook_url",  # base_url configured on runtime
             "title": '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n {{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n {{" "}}(\n {{- with .CommonLabels.Remove .GroupLabels.Names }}\n {{- range $index, $label := .SortedPairs -}}\n {{ if $index }}, {{ end }}\n {{- $label.Name }}="{{ $label.Value -}}"\n {{- end }}\n {{- end -}}\n )\n {{- end }}',
-            "text": '{{ range .Alerts -}}\r\n *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\r\n\r\n *Summary:* {{ .Annotations.summary }}\r\n *Description:* {{ .Annotations.description }}\r\n *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}\r\n *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}\r\n\r\n *Details:*\r\n {{ range .Labels.SortedPairs -}}\r\n   {{- if ne .Name "ruleId" -}}\r\n \u2022 *{{ .Name }}:* {{ .Value }}\r\n   {{ end -}}\r\n {{ end -}}\r\n{{ end }}',
+            "text": '{{ range .Alerts -}}\r\n *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\r\n\r\n *Summary:* {{ .Annotations.summary }}\r\n *Description:* {{ .Annotations.description }}\r\n {{ template "signoz.relatedLinks.slack" . }}\r\n\r\n *Details:*\r\n {{ range .Labels.SortedPairs -}}\r\n   {{- if ne .Name "ruleId" -}}\r\n \u2022 *{{ .Name }}:* {{ .Value }}\r\n   {{ end -}}\r\n {{ end -}}\r\n{{ end }}',
         }
     ],
 }
@@ -161,7 +161,7 @@ email_default_config = {
     "email_configs": [
         {
             "to": "test@example.com",
-            "html": '<html><body>{{ range .Alerts -}}\r\n *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\r\n\r\n *Summary:* {{ .Annotations.summary }}\r\n *Description:* {{ .Annotations.description }}\r\n *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}\r\n *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}\r\n\r\n *Details:*\r\n {{ range .Labels.SortedPairs -}}\r\n   {{- if ne .Name "ruleId" -}}\r\n \u2022 *{{ .Name }}:* {{ .Value }}\r\n   {{ end -}}\r\n {{ end -}}\r\n{{ end }}</body></html>',
+            "html": '<html><body>{{ range .Alerts -}}\r\n *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\r\n\r\n *Summary:* {{ .Annotations.summary }}\r\n *Description:* {{ .Annotations.description }}\r\n {{ template "signoz.relatedLinks.slack" . }}\r\n\r\n *Details:*\r\n {{ range .Labels.SortedPairs -}}\r\n   {{- if ne .Name "ruleId" -}}\r\n \u2022 *{{ .Name }}:* {{ .Value }}\r\n   {{ end -}}\r\n {{ end -}}\r\n{{ end }}</body></html>',
             "headers": {
                 "Subject": '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n {{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n {{" "}}(\n {{- with .CommonLabels.Remove .GroupLabels.Names }}\n {{- range $index, $label := .SortedPairs -}}\n {{ if $index }}, {{ end }}\n {{- $label.Name }}="{{ $label.Value -}}"\n {{- end }}\n {{- end -}}\n )\n {{- end }}'
             },
@@ -385,7 +385,11 @@ def telegram_message_subset(alertname: str, links: list[tuple[str, str]]) -> dic
 JIRA_TEST_EMAIL = "user@acme.io"
 JIRA_SA_EMAIL = "svc@serviceaccount.atlassian.com"
 JIRA_TEST_TOKEN = "jira-test-token"  # noqa: S105
+JIRA_TEST_PAT = "jira-test-pat"  # noqa: S105
 JIRA_API_BASE = "/rest/api/3"
+JIRA_SELFHOSTED_API_BASE = "/rest/api/2"
+JIRA_SEARCH_PATH = "/search/jql"
+JIRA_SELFHOSTED_SEARCH_PATH = "/search"
 
 
 def jira_config(**overrides) -> dict:
@@ -406,6 +410,24 @@ def jira_config(**overrides) -> dict:
     }
 
 
+def jira_selfhosted_config(**overrides) -> dict:
+    """Self-hosted Jira channel config: a personal access token as a Bearer
+    header against the v2 API. The site is injected at runtime by
+    update_raw_channel_config."""
+    return {
+        "jira_configs": [
+            {
+                "deployment": "selfhosted",
+                "site": "",  # set on runtime
+                "project": "OPS",
+                "issue_type": "Task",
+                "http_config": {"authorization": {"type": "Bearer", "credentials": JIRA_TEST_PAT}},
+                **overrides,
+            }
+        ],
+    }
+
+
 def jira_search_issue(key: str, done: bool, labels: list[str]) -> dict:
     """One issue as returned by the /search/jql stub, with the fields the
     notifier requests (status category + labels)."""
@@ -417,9 +439,9 @@ def jira_search_issue(key: str, done: bool, labels: list[str]) -> dict:
 
 # Jira flows span several endpoints; each mapping helper stubs one, on any base
 # (site host for personal tokens, /ex/jira/<cloud_id> gateway for service accounts).
-def jira_search_mapping(issues: list[dict], base: str = JIRA_API_BASE) -> Mapping:
+def jira_search_mapping(issues: list[dict], base: str = JIRA_API_BASE, search_path: str = JIRA_SEARCH_PATH) -> Mapping:
     return Mapping(
-        request=MappingRequest(method=HttpMethods.POST, url_path=f"{base}/search/jql"),
+        request=MappingRequest(method=HttpMethods.POST, url_path=f"{base}{search_path}"),
         response=MappingResponse(status=200, json_body={"issues": issues}),
     )
 

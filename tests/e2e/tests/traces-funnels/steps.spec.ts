@@ -114,6 +114,7 @@ test.describe('Trace funnels, steps', () => {
 		await expect(funnels.stepDeleteAction()).toBeDisabled();
 		// The trigger toggles the popover closed again.
 		await funnels.stepActionsTrigger(0).click();
+		await expect(funnels.stepDeleteAction()).toBeHidden();
 
 		await funnels.addStep();
 		await expect(funnels.stepsCount()).toHaveText('3 steps');

@@ -6,6 +6,7 @@ import { Button, Drawer } from 'antd';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
+import { QuerySearchV2Provider } from 'components/QueryBuilderV2';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
@@ -17,7 +18,12 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import {
+	ALL_ENDPOINTS_EXPRESSION_KEY,
+	ENDPOINT_STATS_EXPRESSION_KEY,
+} from '../../../filterParamKeys';
 import { useApiMonitoringParams } from '../../../queryParams';
+import { getDomainScopeExpression } from '../../../utils';
 import AllEndPoints from './AllEndPoints';
 import DomainMetrics from './components/DomainMetrics';
 import { VIEW_TYPES, VIEWS } from './constants';
@@ -34,14 +40,14 @@ function DomainDetails({
 	selectedDomainIndex,
 	setSelectedDomainIndex,
 	domainListLength,
-	domainListFilters,
+	domainListFilterExpression,
 }: {
 	domainData: any;
 	handleClose: () => void;
 	selectedDomainIndex: number;
 	setSelectedDomainIndex: (index: number) => void;
 	domainListLength: number;
-	domainListFilters: IBuilderQuery['filters'];
+	domainListFilterExpression: string;
 }): JSX.Element {
 	const [params, setParams] = useApiMonitoringParams();
 	const [selectedView, setSelectedView] = useState<VIEWS>(
@@ -53,8 +59,16 @@ function DomainDetails({
 	const [endPointsGroupBy, setEndPointsGroupBy] = useState<
 		IBuilderQuery['groupBy']
 	>([]);
-	const [initialFiltersEndPointStats, setInitialFiltersEndPointStats] =
-		useState<IBuilderQuery['filters']>(domainListFilters);
+
+	const domainName = domainData?.domainName ?? '';
+	const allEndpointsScope = useMemo(
+		() => getDomainScopeExpression(domainName),
+		[domainName],
+	);
+	const endPointStatsScope = useMemo(
+		() => getDomainScopeExpression(domainName, selectedEndPointName),
+		[domainName, selectedEndPointName],
+	);
 
 	const handleTabChange = (value: string): void => {
 		setSelectedView(value as VIEWS);
@@ -222,7 +236,7 @@ function DomainDetails({
 				<>
 					<DomainMetrics
 						domainName={domainData.domainName}
-						domainListFilters={domainListFilters}
+						domainListFilterExpression={domainListFilterExpression}
 						timeRange={modalTimeRange}
 					/>
 					<div className="views-tabs-container">
@@ -253,34 +267,43 @@ function DomainDetails({
 						/>
 					</div>
 					{selectedView === VIEW_TYPES.ALL_ENDPOINTS && (
-						<AllEndPoints
-							domainName={domainData.domainName}
-							setSelectedEndPointName={handleEndPointChange}
-							setSelectedView={setSelectedView}
-							groupBy={endPointsGroupBy}
-							setGroupBy={setEndPointsGroupBy}
-							timeRange={modalTimeRange}
-							initialFilters={domainListFilters}
-							setInitialFiltersEndPointStats={setInitialFiltersEndPointStats}
-						/>
+						<QuerySearchV2Provider
+							queryParamKey={ALL_ENDPOINTS_EXPRESSION_KEY}
+							initialExpression={allEndpointsScope}
+							persistOnUnmount
+						>
+							<AllEndPoints
+								domainName={domainData.domainName}
+								setSelectedEndPointName={handleEndPointChange}
+								setSelectedView={setSelectedView}
+								groupBy={endPointsGroupBy}
+								setGroupBy={setEndPointsGroupBy}
+								timeRange={modalTimeRange}
+							/>
+						</QuerySearchV2Provider>
 					)}
 
 					{selectedView === VIEW_TYPES.ENDPOINT_STATS && (
-						<EndPointDetails
-							domainName={domainData.domainName}
-							endPointName={selectedEndPointName}
-							setSelectedEndPointName={handleEndPointChange}
-							initialFilters={initialFiltersEndPointStats}
-							timeRange={modalTimeRange}
-							handleTimeChange={handleTimeChange}
-						/>
+						<QuerySearchV2Provider
+							queryParamKey={ENDPOINT_STATS_EXPRESSION_KEY}
+							initialExpression={endPointStatsScope}
+							persistOnUnmount
+						>
+							<EndPointDetails
+								domainName={domainData.domainName}
+								endPointName={selectedEndPointName}
+								setSelectedEndPointName={handleEndPointChange}
+								timeRange={modalTimeRange}
+								handleTimeChange={handleTimeChange}
+							/>
+						</QuerySearchV2Provider>
 					)}
 
 					{selectedView === VIEW_TYPES.TOP_ERRORS && (
 						<TopErrors
 							domainName={domainData.domainName}
 							timeRange={modalTimeRange}
-							initialFilters={domainListFilters}
+							initialFilterExpression={domainListFilterExpression}
 						/>
 					)}
 				</>

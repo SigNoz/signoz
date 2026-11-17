@@ -332,17 +332,28 @@ func (m *Manager) validateChannels(ctx context.Context, orgID string, rule *rule
 	}
 
 	known := make(map[string]struct{}, len(orgChannels))
+	displayNameByName := make(map[string]string, len(orgChannels))
 	for _, ch := range orgChannels {
 		known[ch.DisplayName] = struct{}{}
+		displayNameByName[ch.Name] = ch.DisplayName
 	}
 
-	var unknown []string
+	var unknown, byName []string
 	for _, name := range channels {
-		if _, ok := known[name]; !ok {
-			unknown = append(unknown, name)
+		if _, ok := known[name]; ok {
+			continue
 		}
+		if displayName, ok := displayNameByName[name]; ok {
+			byName = append(byName, fmt.Sprintf("%s (display name %q)", name, displayName))
+			continue
+		}
+		unknown = append(unknown, name)
 	}
 
+	if len(byName) > 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"channels: rules reference channels by display name, not name: %v", byName)
+	}
 	if len(unknown) > 0 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput,
 			"channels: the following channels do not exist: %v", unknown)
@@ -359,7 +370,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	}
 	orgID := valuer.MustNewUUID(claims.OrgID)
 	parsedRule := ruletypes.PostableRule{}
-	err = json.Unmarshal([]byte(ruleStr), &parsedRule)
+	err = parsedRule.DecodeStrict(ruleStr)
 	if err != nil {
 		return err
 	}
@@ -438,7 +449,7 @@ func (m *Manager) editTask(_ context.Context, orgID valuer.UUID, rule *ruletypes
 	})
 	if err != nil {
 		m.logger.Error("loading tasks failed", errors.Attr(err))
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "error preparing rule with given parameters, previous rule set restored")
+		return err
 	}
 
 	for _, r := range newTask.Rules() {
@@ -547,7 +558,7 @@ func (m *Manager) deleteTask(taskName string) {
 // starts an executor for the rule, unless the rule is disabled
 func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.GettableRule, error) {
 	parsedRule := ruletypes.PostableRule{}
-	if err := json.Unmarshal([]byte(ruleStr), &parsedRule); err != nil {
+	if err := parsedRule.DecodeStrict(ruleStr); err != nil {
 		return nil, err
 	}
 
@@ -659,7 +670,7 @@ func (m *Manager) addTask(_ context.Context, orgID valuer.UUID, rule *ruletypes.
 	})
 	if err != nil {
 		m.logger.Error("creating rule task failed", "name", taskName, errors.Attr(err))
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "error loading rules, previous rule set restored")
+		return err
 	}
 
 	for _, r := range newTask.Rules() {
@@ -1043,29 +1054,24 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 		return nil, err
 	}
 
-	storedRule := ruletypes.PostableRule{}
-	if err := json.Unmarshal([]byte(storedJSON.Data), &storedRule); err != nil {
-		m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", slog.String("rule.id", id.StringValue()), errors.Attr(err))
-		return nil, err
-	}
-
-	if err := json.Unmarshal([]byte(ruleStr), &storedRule); err != nil {
+	storedRule, err := ruletypes.NewPatchedPostableRule([]byte(storedJSON.Data), []byte(ruleStr))
+	if err != nil {
 		m.logger.ErrorContext(ctx, "failed to unmarshal patched rule with given id", slog.String("rule.id", id.StringValue()), errors.Attr(err))
 		return nil, err
 	}
 	if err := storedRule.Validate(); err != nil {
 		return nil, err
 	}
-	if err := m.validateChannels(ctx, claims.OrgID, &storedRule); err != nil {
+	if err := m.validateChannels(ctx, claims.OrgID, storedRule); err != nil {
 		return nil, err
 	}
 	// deploy or un-deploy task according to patched (new) rule state
-	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
+	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, storedRule); err != nil {
 		m.logger.ErrorContext(ctx, "failed to sync stored rule state with the task", slog.String("task.name", taskName), errors.Attr(err))
 		return nil, err
 	}
 
-	newStoredJson, err := json.Marshal(&storedRule)
+	newStoredJson, err := json.Marshal(storedRule)
 	if err != nil {
 		m.logger.ErrorContext(ctx, "failed to marshal new stored rule with given id", slog.String("rule.id", id.StringValue()), errors.Attr(err))
 		return nil, err
@@ -1078,7 +1084,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 
 	err = m.ruleStore.EditRule(ctx, storedJSON, func(ctx context.Context) error { return nil })
 	if err != nil {
-		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
+		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, storedRule); err != nil {
 			m.logger.ErrorContext(ctx, "failed to restore rule after patch failure", "task_name", taskName, errors.Attr(err))
 		}
 		return nil, err
@@ -1087,7 +1093,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 	// prepare http response
 	response := ruletypes.GettableRule{
 		Id:           id.StringValue(),
-		PostableRule: storedRule,
+		PostableRule: *storedRule,
 	}
 
 	// fetch state of rule from memory
@@ -1105,9 +1111,9 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 // sends a test notification. returns alert count and error (if any)
 func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleStr string) (int, error) {
 	parsedRule := ruletypes.PostableRule{}
-	err := json.Unmarshal([]byte(ruleStr), &parsedRule)
+	err := parsedRule.DecodeStrict(ruleStr)
 	if err != nil {
-		return 0, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to unmarshal rule")
+		return 0, err
 	}
 	if err := parsedRule.Validate(); err != nil {
 		return 0, err

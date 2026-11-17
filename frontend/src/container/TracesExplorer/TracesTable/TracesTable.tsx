@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react';
 import { useAppNavigate } from 'lib/router/useAppNavigate';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import TanStackTable from 'components/TanStackTableView';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import type {
 	CellTypographySize,
 	TableColumnDef,
@@ -10,6 +11,10 @@ import { useRecoverFromEmptyPage } from 'components/TanStackTableView/useRecover
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
+import {
+	logOpenTraceClicked,
+	OpenTraceSource,
+} from 'container/TracesExplorer/events';
 import APIError from 'types/api/error';
 import { DataSource, PanelTypeKeys } from 'types/common/queryBuilder';
 import { noop } from 'lodash-es';
@@ -101,16 +106,18 @@ function TracesTable({
 				onRowClick(row);
 				return;
 			}
+			logOpenTraceClicked(PANEL_TYPES[panelType], OpenTraceSource.Row);
 			navigate(getRowHref(row));
 		},
-		[onRowClick, navigate, getRowHref],
+		[onRowClick, navigate, getRowHref, panelType],
 	);
 
 	const handleRowClickNewTab = useCallback(
 		(row: TracesTableRow): void => {
+			logOpenTraceClicked(PANEL_TYPES[panelType], OpenTraceSource.Row);
 			window.open(getAbsoluteUrl(getRowHref(row)), '_blank', 'noopener');
 		},
-		[getRowHref],
+		[getRowHref, panelType],
 	);
 
 	return (

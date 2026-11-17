@@ -1,17 +1,16 @@
 package audittypes
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewAuditAttributesFromHTTP_OutcomeBoundary(t *testing.T) {
-	claims := authtypes.Claims{IdentNProvider: authtypes.IdentNProviderTokenizer}
-
 	testCases := []struct {
 		name            string
 		statusCode      int
@@ -36,7 +35,7 @@ func TestNewAuditAttributesFromHTTP_OutcomeBoundary(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			attrs := NewAuditAttributesFromHTTP(testCase.statusCode, coretypes.VerbUpdate, coretypes.ActionCategoryConfigurationChange, claims)
+			attrs := NewAuditAttributesFromHTTP(testCase.statusCode, coretypes.VerbUpdate, coretypes.ActionCategoryConfigurationChange)
 			assert.Equal(t, testCase.expectedOutcome, attrs.Outcome)
 		})
 	}
@@ -48,6 +47,7 @@ func TestNewBody(t *testing.T) {
 		auditAttributes     AuditAttributes
 		principalAttributes PrincipalAttributes
 		resourceAttributes  ResourceAttributes
+		targetAttributes    TargetAttributes
 		errorAttributes     ErrorAttributes
 		expectedBody        string
 	}{
@@ -154,9 +154,8 @@ func TestNewBody(t *testing.T) {
 			},
 			errorAttributes: ErrorAttributes{
 				ErrorType: "forbidden",
-				ErrorCode: "authz_forbidden",
 			},
-			expectedBody: "viewer@acme.com (019aaaaa-bbbb-7000-8000-cccc00000002) failed to update dashboard (019b-5678): forbidden (authz_forbidden)",
+			expectedBody: "viewer@acme.com (019aaaaa-bbbb-7000-8000-cccc00000002) failed to update dashboard (019b-5678): forbidden",
 		},
 		{
 			name: "Failure_ErrorTypeOnly",
@@ -193,12 +192,93 @@ func TestNewBody(t *testing.T) {
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "test@acme.com (019a1234-abcd-7000-8000-567800000001) failed to create dashboard (019b-5678)",
 		},
+		{
+			name: "Success_Attach",
+			auditAttributes: AuditAttributes{
+				Action:  coretypes.VerbAttach,
+				Outcome: OutcomeSuccess,
+			},
+			principalAttributes: PrincipalAttributes{},
+			resourceAttributes:  NewResourceAttributes(coretypes.ResourceRole, "role-1"),
+			targetAttributes:    NewTargetAttributes(coretypes.ResourceServiceAccount, "sa-1"),
+			errorAttributes:     ErrorAttributes{},
+			expectedBody:        "attached role (role-1) to serviceaccount (sa-1)",
+		},
+		{
+			name: "Success_Detach",
+			auditAttributes: AuditAttributes{
+				Action:  coretypes.VerbDetach,
+				Outcome: OutcomeSuccess,
+			},
+			principalAttributes: PrincipalAttributes{},
+			resourceAttributes:  NewResourceAttributes(coretypes.ResourceRole, "role-1"),
+			targetAttributes:    NewTargetAttributes(coretypes.ResourceServiceAccount, "sa-1"),
+			errorAttributes:     ErrorAttributes{},
+			expectedBody:        "detached role (role-1) from serviceaccount (sa-1)",
+		},
+		{
+			name: "Failure_Detach",
+			auditAttributes: AuditAttributes{
+				Action:  coretypes.VerbDetach,
+				Outcome: OutcomeFailure,
+			},
+			principalAttributes: PrincipalAttributes{},
+			resourceAttributes:  NewResourceAttributes(coretypes.ResourceRole, "role-1"),
+			targetAttributes:    NewTargetAttributes(coretypes.ResourceServiceAccount, "sa-1"),
+			errorAttributes:     ErrorAttributes{},
+			expectedBody:        "failed to detach role (role-1) from serviceaccount (sa-1)",
+		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			body := newBody(testCase.auditAttributes, testCase.principalAttributes, testCase.resourceAttributes, testCase.errorAttributes)
+			body := newBody(testCase.auditAttributes, testCase.principalAttributes, testCase.resourceAttributes, testCase.targetAttributes, testCase.errorAttributes)
 			assert.Equal(t, testCase.expectedBody, body)
+		})
+	}
+}
+
+func TestNewTransportAttributesFromHTTP_ClientAddress(t *testing.T) {
+	testCases := []struct {
+		name            string
+		forwardedFor    string
+		expectedAddress string
+		expectedPort    int
+	}{
+		{
+			name:            "NoHeader_RemoteAddr",
+			expectedAddress: "10.0.0.1",
+			expectedPort:    52341,
+		},
+		{
+			name:            "SingleEntry",
+			forwardedFor:    "203.0.113.7",
+			expectedAddress: "203.0.113.7",
+		},
+		{
+			name:            "MultipleEntries_FirstWins",
+			forwardedFor:    " 203.0.113.7 , 10.0.0.5",
+			expectedAddress: "203.0.113.7",
+		},
+		{
+			name:            "BlankFirstEntry_RemoteAddr",
+			forwardedFor:    " , 10.0.0.5",
+			expectedAddress: "10.0.0.1",
+			expectedPort:    52341,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/resource", nil)
+			req.RemoteAddr = "10.0.0.1:52341"
+			if testCase.forwardedFor != "" {
+				req.Header.Set("X-Forwarded-For", testCase.forwardedFor)
+			}
+
+			attrs := NewTransportAttributesFromHTTP(req, "/api/v1/resource", http.StatusOK)
+			assert.Equal(t, testCase.expectedAddress, attrs.ClientAddress)
+			assert.Equal(t, testCase.expectedPort, attrs.ClientPort)
 		})
 	}
 }

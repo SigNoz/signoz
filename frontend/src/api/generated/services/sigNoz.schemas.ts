@@ -829,6 +829,30 @@ export interface AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTy
 export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAlertmanagertypesChannelJiraConfigDTOKind {
 	jira = 'jira',
 }
+export interface AlertmanagertypesChannelJiraAuthDTO {
+	/**
+	 * @type string
+	 * @format password
+	 * @description The Atlassian API token paired with email. Required when deployment is cloud. A secret; returned by create, update and fetch by ID, never by list.
+	 */
+	apiToken?: string;
+	/**
+	 * @type string
+	 * @description The Atlassian account email used for basic auth. Required when deployment is cloud.
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 * @format password
+	 * @description The Jira personal access token, sent as a Bearer header. Required when deployment is selfhosted. A secret; returned by create, update and fetch by ID, never by list.
+	 */
+	pat?: string;
+}
+
+export enum AlertmanagertypesJiraDeploymentDTO {
+	cloud = 'cloud',
+	selfhosted = 'selfhosted',
+}
 /**
  * Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
  */
@@ -844,26 +868,23 @@ export type AlertmanagertypesChannelJiraConfigDTOCustomFields = Alertmanagertype
 
 export interface AlertmanagertypesChannelJiraConfigDTO {
 	/**
-	 * @type string
-	 * @format password
-	 * @description The Atlassian API token paired with email. A secret; returned by create, update and fetch by ID, never by list.
+	 * @description The credentials: email and apiToken when deployment is cloud, pat when deployment is selfhosted.
 	 */
-	apiToken: string;
+	auth: AlertmanagertypesChannelJiraAuthDTO;
 	/**
 	 * @type object,null
 	 * @description Extra issue fields keyed by Jira field ID. Stored, but not currently included in the issue Jira receives.
 	 */
 	customFields?: AlertmanagertypesChannelJiraConfigDTOCustomFields;
 	/**
+	 * @description The Jira edition: cloud for an Atlassian-hosted site, selfhosted for Jira Server or Data Center.
+	 */
+	deployment: AlertmanagertypesJiraDeploymentDTO;
+	/**
 	 * @type string
 	 * @description Alertmanager template for the issue description, rendered as markdown; defaults to the SigNoz Jira default.
 	 */
 	description?: string;
-	/**
-	 * @type string
-	 * @description The Atlassian account email used for basic auth.
-	 */
-	email: string;
 	/**
 	 * @type string
 	 * @description The issue type name, such as Bug.
@@ -906,7 +927,7 @@ export interface AlertmanagertypesChannelJiraConfigDTO {
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
-	 * @description The base URL of the Jira Cloud site, for example https://example.atlassian.net. Only Jira Cloud is supported.
+	 * @description The base URL of the Jira site, for example https://example.atlassian.net or https://jira.example.com.
 	 */
 	site: string;
 	/**
@@ -1717,12 +1738,16 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	 */
 	custom_fields?: AlertmanagertypesJiraReceiverConfigDTOCustomFields;
 	/**
+	 * @description The Jira edition, cloud or selfhosted; defaults to cloud.
+	 */
+	deployment?: AlertmanagertypesJiraDeploymentDTO;
+	/**
 	 * @type string
 	 * @description Alertmanager template for the issue description.
 	 */
 	description?: string;
 	/**
-	 * @description HTTP client settings; basic auth carries the account email and API token.
+	 * @description HTTP client settings; basic auth carries the account email and API token on cloud, authorization carries the Bearer personal access token on self-hosted.
 	 */
 	http_config?: ConfigHTTPClientConfigDTO;
 	/**
@@ -1765,7 +1790,7 @@ export interface AlertmanagertypesJiraReceiverConfigDTO {
 	send_resolved?: boolean;
 	/**
 	 * @type string
-	 * @description The Jira Cloud base URL.
+	 * @description The Jira base URL.
 	 */
 	site?: string;
 	/**
@@ -3579,6 +3604,7 @@ export enum CoretypesKindDTO {
 	'logs-field' = 'logs-field',
 	'traces-field' = 'traces-field',
 	'metrics-field' = 'metrics-field',
+	'llm-pricing-rule' = 'llm-pricing-rule',
 }
 export enum CoretypesTypeDTO {
 	user = 'user',
@@ -5273,7 +5299,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
 	 */
 	cursor?: string;
 	/**
@@ -5306,7 +5332,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw and trace requests, or of series or rows for grouped scalar and time_series requests, keeping the top entries by order. When 0, scalar and time_series requests are unlimited, raw requests ordered by timestamp return a page of 10000 rows to continue with nextCursor, and other raw and trace requests return 100 rows.
 	 */
 	limit?: number;
 	/**
@@ -5320,7 +5346,7 @@ export interface DashboardtypesAIBuilderQuerySpecDTO {
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5634,6 +5660,13 @@ export interface DashboardtypesBasicVisualizationDTO {
 	timePreference?: DashboardtypesTimePreferenceDTO;
 }
 
+/**
+ * @minimum 1
+ * @maximum 64
+ * @nullable
+ */
+export type DashboardtypesBubbleRadiusDTO = number | null;
+
 export interface Querybuildertypesv5LogAggregationDTO {
 	/**
 	 * @type string
@@ -5665,7 +5698,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
 	 */
 	cursor?: string;
 	/**
@@ -5698,7 +5731,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw and trace requests, or of series or rows for grouped scalar and time_series requests, keeping the top entries by order. When 0, scalar and time_series requests are unlimited, raw requests ordered by timestamp return a page of 10000 rows to continue with nextCursor, and other raw and trace requests return 100 rows.
 	 */
 	limit?: number;
 	/**
@@ -5712,7 +5745,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5845,7 +5878,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
 	 */
 	cursor?: string;
 	/**
@@ -5878,7 +5911,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw and trace requests, or of series or rows for grouped scalar and time_series requests, keeping the top entries by order. When 0, scalar and time_series requests are unlimited, raw requests ordered by timestamp return a page of 10000 rows to continue with nextCursor, and other raw and trace requests return 100 rows.
 	 */
 	limit?: number;
 	/**
@@ -5892,7 +5925,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -5944,7 +5977,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 	/**
 	 * @type string
-	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page.
+	 * @description The opaque nextCursor value from a previous raw result, used to fetch the next page. Honored only by raw requests whose order starts with timestamp, for logs followed by id in the same direction; every other request ignores it.
 	 */
 	cursor?: string;
 	/**
@@ -5977,7 +6010,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	legend?: string;
 	/**
 	 * @type integer
-	 * @description The maximum number of rows for raw requests, or of series or rows for grouped aggregations, keeping the top entries by order. When 0, aggregations are unlimited while raw requests ordered by timestamp return a page of 10000 rows; follow nextCursor for the rest.
+	 * @description The maximum number of rows for raw and trace requests, or of series or rows for grouped scalar and time_series requests, keeping the top entries by order. When 0, scalar and time_series requests are unlimited, raw requests ordered by timestamp return a page of 10000 rows to continue with nextCursor, and other raw and trace requests return 100 rows.
 	 */
 	limit?: number;
 	/**
@@ -5991,7 +6024,7 @@ export interface Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTyp
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of rows to skip before returning results. Prefer cursor for raw requests.
+	 * @description The number of rows for raw and trace requests, or of ordered series or rows for scalar and time_series requests, to skip before the page starts. Requires limit. On raw requests the skip counts from where a cursor resumes, and the skipped rows are still read, so prefer cursor for paging.
 	 */
 	offset?: number;
 	/**
@@ -6917,6 +6950,246 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesScatterPlotPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTOKind {
+	'signoz/GeoMapPanel' = 'signoz/GeoMapPanel',
+}
+/**
+ * Radius of the largest circle, in CSS pixels from 1 to 64. Null means 8 on the points layer, 28 otherwise.
+ */
+export type DashboardtypesGeoMapBubblesDTOMaxRadius = DashboardtypesBubbleRadiusDTO | null;
+
+/**
+ * Radius of the smallest circle, in CSS pixels from 1 to 64. Null means 2 on the points layer, 3 otherwise.
+ */
+export type DashboardtypesGeoMapBubblesDTOMinRadius = DashboardtypesBubbleRadiusDTO | null;
+
+export interface DashboardtypesGeoMapBubblesDTO {
+	/**
+	 * @description Radius of the largest circle, in CSS pixels from 1 to 64. Null means 8 on the points layer, 28 otherwise.
+	 */
+	maxRadius?: DashboardtypesGeoMapBubblesDTOMaxRadius;
+	/**
+	 * @description Radius of the smallest circle, in CSS pixels from 1 to 64. Null means 2 on the points layer, 3 otherwise.
+	 */
+	minRadius?: DashboardtypesGeoMapBubblesDTOMinRadius;
+}
+
+export interface DashboardtypesGeoMapColorsDTO {
+	/**
+	 * @type string
+	 * @description The hex color varied in opacity mode. Empty uses the default fill.
+	 */
+	fill?: string;
+	/**
+	 * @type number,null
+	 * @description The value mapped to the highest color. Null uses the highest value in the data.
+	 */
+	max?: number | null;
+	/**
+	 * @type number,null
+	 * @description The value mapped to the lowest color. Null uses the lowest value in the data. Must not exceed max.
+	 */
+	min?: number | null;
+	/**
+	 * @description How values are colored: palette (default) picks a hue from palette, opacity varies the opacity of fill.
+	 */
+	mode?: DashboardtypesHeatmapColorModeDTO;
+	/**
+	 * @description The named color ramp used in palette mode, such as lava (default), ice or ember.
+	 */
+	palette?: DashboardtypesHeatmapPaletteDTO;
+	/**
+	 * @description How values map onto the color range: log (default), sqrt or linear.
+	 */
+	scale?: DashboardtypesHeatmapColorScaleDTO;
+	/**
+	 * @type integer
+	 * @description The number of distinct color steps, 2 to 128. 0 uses the chart default.
+	 */
+	steps?: number;
+}
+
+export interface DashboardtypesGeoMapChartAppearanceDTO {
+	/**
+	 * @description The circle radius range of the bubbles and points layers.
+	 */
+	bubbles?: DashboardtypesGeoMapBubblesDTO;
+	/**
+	 * @description The color scale applied to the colorBy values.
+	 */
+	colors?: DashboardtypesGeoMapColorsDTO;
+	/**
+	 * @type boolean,null
+	 * @description Shows country and state names once each fits inside its shape. Null shows them.
+	 */
+	labels?: boolean | null;
+}
+
+export enum DashboardtypesGeoMapCountryFormatDTO {
+	auto = 'auto',
+	alpha2 = 'alpha2',
+	alpha3 = 'alpha3',
+	name = 'name',
+}
+export enum DashboardtypesGeoMapLocationModeDTO {
+	auto = 'auto',
+	country = 'country',
+	subdivision = 'subdivision',
+	coordinates = 'coordinates',
+}
+export interface DashboardtypesGeoMapLocationDTO {
+	/**
+	 * @type string
+	 * @description Group-by key holding the country, for the country and subdivision modes. Empty detects it by name, such as geo.country.iso_code.
+	 */
+	country?: string;
+	/**
+	 * @description How country values are written: auto (default) detects it, alpha2, alpha3 or name.
+	 */
+	countryFormat: DashboardtypesGeoMapCountryFormatDTO;
+	/**
+	 * @type string
+	 * @description Group-by key holding the latitude, for the coordinates mode. Empty detects it by name.
+	 */
+	lat?: string;
+	/**
+	 * @type string
+	 * @description Group-by key holding the longitude, for the coordinates mode. Empty detects it by name.
+	 */
+	lon?: string;
+	/**
+	 * @description How rows are placed: auto (default) detects it from the group-by keys, country, subdivision or coordinates.
+	 */
+	mode: DashboardtypesGeoMapLocationModeDTO;
+	/**
+	 * @type string
+	 * @description Group-by key holding the ISO 3166-2 region code (e.g. geo.region.iso_code), for the subdivision mode. Empty detects it by name.
+	 */
+	region?: string;
+}
+
+export enum DashboardtypesGeoMapLayerDTO {
+	regions = 'regions',
+	bubbles = 'bubbles',
+	points = 'points',
+}
+export enum DashboardtypesGeoMapProjectionDTO {
+	mercator = 'mercator',
+	equal_earth = 'equal_earth',
+	natural_earth = 'natural_earth',
+}
+export enum DashboardtypesGeoMapViewDTO {
+	world = 'world',
+	fit = 'fit',
+	africa = 'africa',
+	asia = 'asia',
+	europe = 'europe',
+	north_america = 'north_america',
+	south_america = 'south_america',
+	oceania = 'oceania',
+	country = 'country',
+}
+export interface DashboardtypesGeoMapSettingsDTO {
+	/**
+	 * @type string
+	 * @description Value column key, as in a Table panel, that sets the color. Empty uses the first value column.
+	 */
+	colorBy?: string;
+	/**
+	 * @description What is drawn: regions (default) fills each shape, bubbles draws a circle per region, points a circle per coordinate.
+	 */
+	layer: DashboardtypesGeoMapLayerDTO;
+	/**
+	 * @description The map projection: mercator (default), equal_earth or natural_earth.
+	 */
+	projection: DashboardtypesGeoMapProjectionDTO;
+	/**
+	 * @type string
+	 * @description Value column key, as in a Table panel, that sets the bubble or point size. Empty uses colorBy.
+	 */
+	sizeBy?: string;
+	/**
+	 * @description The area shown: world (default), fit to the data, a continent, or country with viewCountry.
+	 */
+	view: DashboardtypesGeoMapViewDTO;
+	/**
+	 * @type string
+	 * @description Uppercase ISO 3166-1 alpha-2 code of the country the country view shows.
+	 */
+	viewCountry?: string;
+}
+
+export interface DashboardtypesGeoMapThresholdDTO {
+	/**
+	 * @type string
+	 * @description The CSS color of the shape, bubble or point while the threshold is active, for example #F1575F; CSS named colors such as red also work.
+	 */
+	color: string;
+	/**
+	 * @description The comparison that activates the threshold: above (default), below, above_or_equal, below_or_equal, equal or not_equal.
+	 */
+	operator?: DashboardtypesComparisonOperatorDTO;
+	/**
+	 * @type string
+	 * @description The unit id of value, such as ms or percent. Empty means the colorBy column's unit.
+	 */
+	unit?: string;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The value compared against, in unit.
+	 */
+	value: number;
+}
+
+export interface DashboardtypesGeoMapPanelSpecDTO {
+	/**
+	 * @description Color scale, bubble size and labels.
+	 */
+	chartAppearance?: DashboardtypesGeoMapChartAppearanceDTO;
+	/**
+	 * @description Per-column units and decimal precision.
+	 */
+	formatting?: DashboardtypesTableFormattingDTO;
+	/**
+	 * @description Legend placement.
+	 */
+	legend?: DashboardtypesLegendDTO;
+	/**
+	 * @description The group-by columns that place each row on the map.
+	 */
+	location?: DashboardtypesGeoMapLocationDTO;
+	/**
+	 * @description Layer, view, projection and the value columns drawn.
+	 */
+	map?: DashboardtypesGeoMapSettingsDTO;
+	/**
+	 * @type array,null
+	 * @description Rules that recolor a shape, bubble or point when its value compares to a threshold as specified.
+	 */
+	thresholds?: DashboardtypesGeoMapThresholdDTO[] | null;
+	/**
+	 * @description The time range the values are computed over.
+	 */
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTO {
+	/**
+	 * @enum signoz/GeoMapPanel
+	 * @type string
+	 * @description The panel kind.
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTOKind;
+	/**
+	 * @description The options for this panel kind. {} accepts every default.
+	 */
+	spec: DashboardtypesGeoMapPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -6928,7 +7201,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -6937,6 +7211,7 @@ export enum Querybuildertypesv5RequestTypeDTO {
 	raw_stream = 'raw_stream',
 	trace = 'trace',
 	heatmap = 'heatmap',
+	distribution = 'distribution',
 }
 /**
  * The query kind.
@@ -7046,7 +7321,7 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	 */
 	functions?: Querybuildertypesv5FunctionDTO[] | null;
 	/**
-	 * @description Accepted but currently ignored; the computed values are returned unfiltered.
+	 * @description A filter on the formula values, referencing the formula by its name or as __result, for example F1 > 0. A time series keeps only the points that match and drops a series with none left; a scalar result keeps only the rows that match.
 	 */
 	having?: Querybuildertypesv5HavingDTO;
 	/**
@@ -7064,6 +7339,11 @@ export interface Querybuildertypesv5QueryBuilderFormulaDTO {
 	 * @description The unique name of the formula, such as F1, used by selectedQueryName and by panels. Referencing a formula from another formula is not reliable.
 	 */
 	name?: string;
+	/**
+	 * @type integer
+	 * @description The number of ordered series or rows to skip before the page starts. Requires limit.
+	 */
+	offset?: number;
 	/**
 	 * @type array,null
 	 * @description The sort order of the formula result.
@@ -7146,7 +7426,7 @@ export interface Querybuildertypesv5QueryBuilderTraceOperatorDTO {
 	name?: string;
 	/**
 	 * @type integer
-	 * @description The number of raw results to skip before returning. Aggregation requests ignore it.
+	 * @description The number of raw or trace rows, or of ordered series or rows for time_series and scalar requests, to skip before the page starts. Requires limit.
 	 */
 	offset?: number;
 	/**
@@ -8209,6 +8489,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TextPanel' = 'signoz/TextPanel',
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 	'signoz/ScatterPlotPanel' = 'signoz/ScatterPlotPanel',
+	'signoz/GeoMapPanel' = 'signoz/GeoMapPanel',
 }
 /**
  * The RFC 6902 operations, applied in order against the dashboard's postable shape.
@@ -10973,7 +11254,7 @@ export interface Querybuildertypesv5TimeSeriesValueDTO {
 	value?: number;
 	/**
 	 * @type array
-	 * @description The per-band counts for heatmap results, in the order of meta.buckets plus a trailing overflow count.
+	 * @description The per-bucket counts for heatmap results, in the order of meta.buckets plus a trailing overflow count.
 	 */
 	values?: number[];
 }
@@ -11594,7 +11875,7 @@ export interface PromotetypesPostableIndexMaterializedPathsDTO {
 export interface Querybuildertypesv5AggregationMetaDTO {
 	/**
 	 * @type array
-	 * @description The ascending upper bounds of the value bands, set only for heatmap results; each point then carries one count per bound plus a trailing overflow count in values.
+	 * @description The ascending upper bounds of the value buckets, set for heatmap and distribution results; each point then carries one count per bound plus a trailing overflow count in values. The first bucket starts at -Inf when its bound is at or under zero, else at zero.
 	 */
 	buckets?: number[];
 	/**
@@ -11713,6 +11994,91 @@ export interface Querybuildertypesv5ColumnDescriptorDTO {
 	 * @description Unit of the field values, present only for well-known fields.
 	 */
 	unit?: string;
+}
+
+export interface Querybuildertypesv5DistributionDTO {
+	/**
+	 * @type array,null
+	 * @description One count per bound in meta.buckets plus a trailing overflow count, summed over every step of the requested time range.
+	 */
+	counts: number[] | null;
+	/**
+	 * @type array
+	 * @description The group-by field values that identify this distribution.
+	 */
+	labels?: Querybuildertypesv5LabelDTO[];
+}
+
+export interface Querybuildertypesv5DistributionPercentilesDTO {
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 50th percentile.
+	 */
+	p50: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 75th percentile.
+	 */
+	p75: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 90th percentile.
+	 */
+	p90: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 95th percentile.
+	 */
+	p95: number;
+	/**
+	 * @type number
+	 * @format double
+	 * @description The 99th percentile.
+	 */
+	p99: number;
+}
+
+export interface Querybuildertypesv5DistributionAggregationDTO {
+	/**
+	 * @type string
+	 * @description The alias of the aggregation, or the internal name __result_N, with N its index, when no alias was given.
+	 */
+	alias: string;
+	/**
+	 * @type array,null
+	 * @description One distribution per group-by combination.
+	 */
+	distributions: Querybuildertypesv5DistributionDTO[] | null;
+	/**
+	 * @type integer
+	 * @description The zero-based position of the aggregation in the query.
+	 */
+	index: number;
+	/**
+	 * @description Display metadata for the aggregation, including the bucket upper bounds the counts are positional against.
+	 */
+	meta?: Querybuildertypesv5AggregationMetaDTO;
+	/**
+	 * @description Percentiles over the counts of every distribution added together, estimated the way histogram_quantile does by interpolating linearly within the bucket each rank falls in. Omitted when nothing was counted or meta.buckets is empty.
+	 */
+	percentiles?: Querybuildertypesv5DistributionPercentilesDTO;
+}
+
+export interface Querybuildertypesv5DistributionDataDTO {
+	/**
+	 * @type array,null
+	 * @description One entry per aggregation of the query. The order is not guaranteed; match entries to aggregations by index.
+	 */
+	aggregations: Querybuildertypesv5DistributionAggregationDTO[] | null;
+	/**
+	 * @type string
+	 * @description The name of the query that produced this result.
+	 */
+	queryName: string;
 }
 
 /**
@@ -11970,21 +12336,28 @@ export type Querybuildertypesv5QueryDataDTO =
 	| (Querybuildertypesv5TimeSeriesDataDTO & {
 			/**
 			 * @type array,null
-			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests.
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
 			 */
 			results?: unknown[] | null;
 	  })
 	| (Querybuildertypesv5ScalarDataDTO & {
 			/**
 			 * @type array,null
-			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests.
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
 			 */
 			results?: unknown[] | null;
 	  })
 	| (Querybuildertypesv5RawDataDTO & {
 			/**
 			 * @type array,null
-			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series, ScalarData for scalar and RawData for raw requests.
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
+			 */
+			results?: unknown[] | null;
+	  })
+	| (Querybuildertypesv5DistributionDataDTO & {
+			/**
+			 * @type array,null
+			 * @description One result per enabled query, typed by the request type: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw and DistributionData for distribution requests.
 			 */
 			results?: unknown[] | null;
 	  });
@@ -12118,7 +12491,7 @@ export interface Querybuildertypesv5QueryRangeRequestDTO {
 }
 
 /**
- * Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series, ScalarData for scalar, or RawData for raw requests.
+ * Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, or DistributionData for distribution requests.
  */
 export interface Querybuildertypesv5QueryRangeResponseDTO {
 	/**
@@ -12837,22 +13210,9 @@ export interface RuletypesRuleConditionDTO {
 	 */
 	alertOnAbsent?: boolean;
 	/**
-	 * @type string
-	 * @description anomaly_rule only: the anomaly detection algorithm. The supported value is standard.
-	 */
-	algorithm?: string;
-	/**
 	 * @description The queries whose result is compared against the thresholds.
 	 */
 	compositeQuery: RuletypesAlertCompositeQueryDTO;
-	/**
-	 * @description schemaVersion v1 only: which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the legacy codes as strings, '1' to '5'. Required for v1; v2alpha1 sets matchType on each threshold.
-	 */
-	matchType?: RuletypesMatchTypeDTO;
-	/**
-	 * @description schemaVersion v1 only: how the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the legacy codes as strings, '1' to '7'. Required for v1; v2alpha1 sets op on each threshold.
-	 */
-	op?: RuletypesCompareOperatorDTO;
 	/**
 	 * @type boolean
 	 * @description Whether a series is skipped until it has at least requiredNumPoints points in the window. Defaults to false.
@@ -12872,17 +13232,6 @@ export interface RuletypesRuleConditionDTO {
 	 * @description The name of the query whose result is evaluated, such as A or F1. Must match a query in compositeQuery.
 	 */
 	selectedQueryName: string;
-	/**
-	 * @type number,null
-	 * @format double
-	 * @description schemaVersion v1 only: the value compared against, in targetUnit. Required for v1; v2alpha1 sets target on each threshold.
-	 */
-	target?: number | null;
-	/**
-	 * @type string
-	 * @description schemaVersion v1 only: the unit of target, such as percent or ms. Converted to compositeQuery.unit before comparison when the two differ.
-	 */
-	targetUnit?: string;
 	/**
 	 * @description The thresholds to evaluate, as a kind and spec.
 	 */
@@ -12919,19 +13268,9 @@ export interface RuletypesPostableRuleDTO {
 	 */
 	disabled?: boolean;
 	/**
-	 * @type string
-	 * @description The lookback window as a Go duration such as 5m. Only read when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	evalWindow?: string;
-	/**
 	 * @description The evaluation window, as a kind and spec.
 	 */
 	evaluation: RuletypesEvaluationEnvelopeDTO;
-	/**
-	 * @type string
-	 * @description How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	frequency?: string;
 	/**
 	 * @type object
 	 * @description Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
@@ -12942,11 +13281,6 @@ export interface RuletypesPostableRuleDTO {
 	 */
 	notificationSettings: RuletypesNotificationSettingsDTO;
 	/**
-	 * @type array
-	 * @description The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
-	 */
-	preferredChannels?: string[];
-	/**
 	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries.
 	 */
 	ruleType: RuletypesRuleTypeDTO;
@@ -12956,16 +13290,6 @@ export interface RuletypesPostableRuleDTO {
 	 * @description The rule payload schema.
 	 */
 	schemaVersion: RuletypesPostableRuleDTOSchemaVersion;
-	/**
-	 * @type string
-	 * @description The URL of the page the rule was created from. Informational; it is not used for evaluation.
-	 */
-	source?: string;
-	/**
-	 * @type string
-	 * @description The query payload version. Nothing reads it.
-	 */
-	version?: string;
 }
 
 export interface RuletypesPostableRuleViewDTO {
@@ -13031,19 +13355,9 @@ export interface RuletypesRuleDTO {
 	 */
 	disabled?: boolean;
 	/**
-	 * @type string
-	 * @description The lookback window as a Go duration such as 5m. Only read when schemaVersion is v1, defaulting to 5m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	evalWindow?: string;
-	/**
 	 * @description The evaluation window, as a kind and spec.
 	 */
 	evaluation: RuletypesEvaluationEnvelopeDTO;
-	/**
-	 * @type string
-	 * @description How often the rule is evaluated, as a Go duration such as 1m. Only read when schemaVersion is v1, defaulting to 1m; v2alpha1 rules set it in evaluation.spec instead.
-	 */
-	frequency?: string;
 	/**
 	 * @type string
 	 * @description The unique identifier of the rule.
@@ -13059,11 +13373,6 @@ export interface RuletypesRuleDTO {
 	 */
 	notificationSettings: RuletypesNotificationSettingsDTO;
 	/**
-	 * @type array
-	 * @description The displayName of each notification channel to notify, for schemaVersion v1 rules. Ignored for v2alpha1, where each threshold carries its own channels.
-	 */
-	preferredChannels?: string[];
-	/**
 	 * @description The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries.
 	 */
 	ruleType: RuletypesRuleTypeDTO;
@@ -13073,11 +13382,6 @@ export interface RuletypesRuleDTO {
 	 * @description The rule payload schema.
 	 */
 	schemaVersion: RuletypesRuleDTOSchemaVersion;
-	/**
-	 * @type string
-	 * @description The URL of the page the rule was created from. Informational; it is not used for evaluation.
-	 */
-	source?: string;
 	/**
 	 * @description The current evaluation state: inactive, pending, recovering, firing, nodata or disabled.
 	 */
@@ -13091,11 +13395,6 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 */
 	updatedBy?: string;
-	/**
-	 * @type string
-	 * @description The query payload version. Nothing reads it.
-	 */
-	version?: string;
 }
 
 export enum RuletypesThresholdKindDTO {
@@ -16647,17 +16946,6 @@ export type UpdateRuleViewPathParameters = {
 };
 export type UpdateRuleView200 = {
 	data: RuletypesRuleViewDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type ListRules200 = {
-	/**
-	 * @type array
-	 */
-	data: RuletypesRuleDTO[];
 	/**
 	 * @type string
 	 */

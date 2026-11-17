@@ -240,12 +240,14 @@ def test_json_body_unknown_key_aggregation_over_body(
     assert tuple(data[0]) == (6, 4), data[0]
 
 
+@pytest.mark.parametrize("prefix", ["", "body."], ids=["bare", "body_prefix"])
 def test_json_body_unknown_key_body_path_parity(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[list[Logs]], None],
     export_json_types: Callable[[list[JSONPathType]], None],
+    prefix: str,
 ) -> None:
     """
     Setup:
@@ -254,10 +256,11 @@ def test_json_body_unknown_key_body_path_parity(
     (distributed_field_keys); unknown_field is left unregistered.
 
     Tests:
-    Grouping/filtering by the registered body path (known_field, metadata-driven) and
-    by the unregistered one (unknown_field, synthesized body branch) return identical
-    results — the synthesize fallback reproduces exported-metadata resolution for body
-    paths, the body counterpart of the attribute parity in 13_unknown_key_collisions.py.
+    Grouping, counting distinct values, and selecting by the registered body path
+    (known_field, metadata-driven) and by the unregistered one (unknown_field,
+    fallback body path) return identical results, for the bare key and the
+    body.-prefixed key — the body counterpart of the attribute parity in
+    13_unknown_key_collisions.py.
     """
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     logs = []
@@ -279,7 +282,10 @@ def test_json_body_unknown_key_body_path_parity(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     counts: dict[str, dict[str, int]] = {}
+    distinct: dict[str, int] = {}
+    selected: dict[str, list[str]] = {}
     for key in ("known_field", "unknown_field"):
+        field = f"{prefix}{key}"
         response = make_scalar_query_request(
             signoz,
             token,
@@ -289,13 +295,42 @@ def test_json_body_unknown_key_body_path_parity(
                     "A",
                     "logs",
                     [build_aggregation("count()")],
-                    group_by=[build_group_by_field(key, field_data_type="", field_context="")],
+                    group_by=[build_group_by_field(field, field_data_type="", field_context="")],
                     filter_expression=f'service.name = "{SERVICE}"',
                 )
             ],
         )
-        assert response.status_code == HTTPStatus.OK, f"{key}: {response.text}"
+        assert response.status_code == HTTPStatus.OK, f"{field}: {response.text}"
         counts[key] = {row[0]: row[-1] for row in get_scalar_table_data(response.json())}
+
+        response = make_scalar_query_request(
+            signoz,
+            token,
+            now,
+            [
+                build_scalar_query(
+                    "A",
+                    "logs",
+                    [build_aggregation(f"count_distinct({field})")],
+                    filter_expression=f'service.name = "{SERVICE}"',
+                )
+            ],
+        )
+        assert response.status_code == HTTPStatus.OK, f"{field}: {response.text}"
+        distinct[key] = get_scalar_table_data(response.json())[0][-1]
+
+        response = make_query_request(
+            signoz,
+            token,
+            start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+            end_ms=int(now.timestamp() * 1000),
+            request_type=RequestType.RAW,
+            queries=[build_raw_query("A", "logs", limit=100, filter_expression=f'service.name = "{SERVICE}"', select_fields=[{"name": field}])],
+        )
+        assert response.status_code == HTTPStatus.OK, f"{field}: {response.text}"
+        selected[key] = sorted(row["data"][key] for row in get_rows(response))
 
     assert counts["known_field"] == counts["unknown_field"], f"registered {counts['known_field']} != synthesized {counts['unknown_field']}"
     assert counts["known_field"] == {"alpha": 2, "beta": 1}, counts["known_field"]
+    assert distinct == {"known_field": 2, "unknown_field": 2}, distinct
+    assert selected == {"known_field": ["alpha", "alpha", "beta"], "unknown_field": ["alpha", "alpha", "beta"]}, selected

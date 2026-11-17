@@ -2,6 +2,8 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 
+import pytest
+
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
@@ -12,6 +14,9 @@ from fixtures.querier import (
     build_order_by,
     build_scalar_query,
     find_named_result,
+    get_all_series,
+    get_error_message,
+    index_series_by_label,
     make_query_request,
 )
 
@@ -191,3 +196,138 @@ def test_logs_formula_orderby_and_limit(
     assert len(f3_services) == 3, f"F3: expected 3 rows after limit, got {len(f3_services)}"
     assert f3_values == f4_values[:3], f"F3 values {f3_values} do not match F4[:3] values {f4_values[:3]}"
     assert set(f3_services) == set(f4_services[:3]), f"F3 services {f3_services} do not match F4[:3] services {f4_services[:3]}"
+
+
+# Logs per service at 5, 4, 3, 2, and 1 minutes before now. Totals: a 15, b 17, c 5, d 15.
+FORMULA_HAVING_COUNTS = {
+    "service-a": [1, 4, 2, 5, 3],
+    "service-b": [6, 1, 1, 2, 7],
+    "service-c": [1, 1, 1, 1, 1],
+    "service-d": [3, 3, 3, 3, 3],
+}
+
+
+@pytest.mark.parametrize(
+    "query_having,formula_having,expected_services",
+    [
+        pytest.param("count() > 4 AND count() < 16", "F1 > 4 AND F1 < 16", {"service-a", "service-b"}, id="and_range"),
+        pytest.param("count() IN (1, 5, 17) OR count() > 15", "__result IN (1, 5, 17) OR __result > 15", {"service-a", "service-b", "service-c"}, id="in_or"),
+        pytest.param("NOT (count() * 2 - 1 > 9)", "NOT (F1 * 2 - 1 > 9)", {"service-a", "service-b", "service-c", "service-d"}, id="not_arithmetic"),
+    ],
+)
+def test_logs_formula_having_time_series_matches_query_having(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    query_having: str,
+    formula_having: str,
+    expected_services: set[str],
+) -> None:
+    """
+    The querier computes formulas in Go, so a formula having runs in Go. For the
+    formula `A`, it must keep the same points that SQL HAVING keeps on query A.
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    insert_logs([Logs(timestamp=now - timedelta(minutes=5 - minute), resources={"service.name": service}, body=f"{service} log {minute}-{i}") for service, counts in FORMULA_HAVING_COUNTS.items() for minute, count in enumerate(counts) for i in range(count)])
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    group_by = [build_group_by_field("service.name", "string", "resource")]
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(minutes=15)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type="time_series",
+        queries=[
+            build_scalar_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], group_by=group_by, disabled=True),
+            build_scalar_query(name="B", signal="logs", aggregations=[build_aggregation("count()")], group_by=group_by, having_expression=query_having),
+            build_formula_query("F1", "A", having_expression=formula_having),
+        ],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    query_series = index_series_by_label(get_all_series(response.json(), "B"), "service.name")
+    formula_series = index_series_by_label(get_all_series(response.json(), "F1"), "service.name")
+    assert set(formula_series) == expected_services
+    assert set(query_series) == expected_services
+    for service in expected_services:
+        query_points = sorted((value["timestamp"], value["value"]) for value in query_series[service]["values"])
+        formula_points = sorted((value["timestamp"], value["value"]) for value in formula_series[service]["values"])
+        assert formula_points == query_points, service
+
+
+@pytest.mark.parametrize(
+    "query_having,formula_having,expected_services",
+    [
+        pytest.param("count() > 4 AND count() < 16", "F1 > 4 AND F1 < 16", {"service-a", "service-c", "service-d"}, id="and_range"),
+        pytest.param("count() IN (1, 5, 17) OR count() > 15", "__result IN (1, 5, 17) OR __result > 15", {"service-b", "service-c"}, id="in_or"),
+        pytest.param("NOT (count() * 2 - 1 > 9)", "NOT (F1 * 2 - 1 > 9)", {"service-c"}, id="not_arithmetic"),
+    ],
+)
+def test_logs_formula_having_scalar_matches_query_having(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    query_having: str,
+    formula_having: str,
+    expected_services: set[str],
+) -> None:
+    """
+    For the formula `A` in a scalar request, the formula having must keep the
+    same rows that SQL HAVING keeps on query A.
+    """
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    insert_logs([Logs(timestamp=now - timedelta(minutes=5 - minute), resources={"service.name": service}, body=f"{service} log {minute}-{i}") for service, counts in FORMULA_HAVING_COUNTS.items() for minute, count in enumerate(counts) for i in range(count)])
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    group_by = [build_group_by_field("service.name", "string", "resource")]
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(minutes=15)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type="scalar",
+        queries=[
+            build_scalar_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], group_by=group_by, disabled=True),
+            build_scalar_query(name="B", signal="logs", aggregations=[build_aggregation("count()")], group_by=group_by, having_expression=query_having),
+            build_formula_query("F1", "A", having_expression=formula_having),
+        ],
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+
+    results = response.json()["data"]["data"]["results"]
+    values_by_query = {}
+    for name in ("B", "F1"):
+        result = find_named_result(results, name)
+        assert result is not None, name
+        service_column = next(i for i, column in enumerate(result["columns"]) if column["name"] == "service.name")
+        value_column = next(i for i, column in enumerate(result["columns"]) if column["columnType"] == "aggregation")
+        values_by_query[name] = {row[service_column]: row[value_column] for row in result["data"]}
+    assert set(values_by_query["F1"]) == expected_services
+    assert values_by_query["F1"] == values_by_query["B"]
+
+
+def test_logs_formula_having_invalid_reference(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    """A formula having can reference only the formula value, so `count()` is a bad request."""
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(minutes=15)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type="time_series",
+        queries=[
+            build_scalar_query(name="A", signal="logs", aggregations=[build_aggregation("count()")], disabled=True),
+            build_formula_query("F1", "A", having_expression="count() > 0"),
+        ],
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert get_error_message(response.json()) == "Invalid references in `Having` expression: [count]"

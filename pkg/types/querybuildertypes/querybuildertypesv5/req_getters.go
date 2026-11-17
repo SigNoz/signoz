@@ -180,6 +180,8 @@ func (q *QueryEnvelope) GetOffset() int {
 		return spec.Offset
 	case QueryBuilderQuery[MetricAggregation]:
 		return spec.Offset
+	case QueryBuilderFormula:
+		return spec.Offset
 	}
 	return 0
 }
@@ -223,6 +225,14 @@ func (q *QueryEnvelope) GetGroupBy() []GroupByKey {
 		return spec.GroupBy
 	}
 	return nil
+}
+
+func (q *QueryEnvelope) GetGroupByKeyNames() []string {
+	names := make([]string, 0, len(q.GetGroupBy()))
+	for _, key := range q.GetGroupBy() {
+		names = append(names, key.Name)
+	}
+	return names
 }
 
 // GetAggregationExpressions returns one entry per aggregation. A metric

@@ -23,7 +23,7 @@ func newTestSettings() factory.ScopedProviderSettings {
 func newTestEvent(resource coretypes.Resource, action coretypes.Verb) audittypes.AuditEvent {
 	return audittypes.AuditEvent{
 		Timestamp: time.Now(),
-		EventName: audittypes.NewEventName(resource.Kind(), action),
+		EventName: audittypes.NewEventName(action),
 		AuditAttributes: audittypes.AuditAttributes{
 			Action:  action,
 			Outcome: audittypes.OutcomeSuccess,

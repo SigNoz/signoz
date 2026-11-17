@@ -531,7 +531,7 @@ describe('PreferencesProvider integration', () => {
 			});
 
 			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent(
-				AI_DEFAULT_COUNT,
+				String(URL_COLUMNS.length),
 			);
 		});
 

@@ -7,7 +7,7 @@ import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	deleteRuleByID,
-	invalidateListRules,
+	invalidateListRulesV3,
 	patchRuleByID,
 	cloneRuleByID,
 } from 'api/generated/services/rules';
@@ -22,7 +22,7 @@ import { ALERT_ACTIONS, alertActionLogEvent } from '../utils';
 
 interface ActionsMenuProps {
 	rule: AlertRule;
-	onEdit: (rule: AlertRule, options?: { newTab?: boolean }) => void;
+	onEdit: (rule: Pick<AlertRule, 'id'>, options?: { newTab?: boolean }) => void;
 }
 
 function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
@@ -34,7 +34,9 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 		toast.promise(
 			patchRuleByID({ id: rule.id ?? '' }, {
 				disabled: newDisabled,
-			} as RuletypesPostableRuleDTO).then(() => invalidateListRules(queryClient)),
+			} as RuletypesPostableRuleDTO).then(() =>
+				invalidateListRulesV3(queryClient),
+			),
 			{
 				loading: newDisabled ? 'Disabling alert...' : 'Enabling alert...',
 				success: newDisabled ? 'Alert disabled' : 'Alert enabled',
@@ -65,10 +67,10 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 			cloneRuleByID({
 				id: rule.id,
 			}).then(async (response) => {
-				await invalidateListRules(queryClient);
+				await invalidateListRulesV3(queryClient);
 				const newRule = response.data;
 				if (newRule) {
-					onEdit(newRule as AlertRule);
+					onEdit(newRule);
 				}
 				return newRule;
 			}),
@@ -90,7 +92,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 		alertActionLogEvent(ALERT_ACTIONS.DELETE, rule);
 		toast.promise(
 			deleteRuleByID({ id: rule.id ?? '' }).then(() =>
-				invalidateListRules(queryClient),
+				invalidateListRulesV3(queryClient),
 			),
 			{
 				loading: 'Deleting alert...',

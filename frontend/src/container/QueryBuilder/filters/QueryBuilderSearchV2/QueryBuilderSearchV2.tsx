@@ -10,9 +10,9 @@ import {
 } from 'react';
 import { type RefSelectProps, Select, Spin } from 'antd';
 import { Pill } from '@signozhq/ui/pill';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import {
-	DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY,
 	OperatorConfigKeys,
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
@@ -22,23 +22,14 @@ import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { useDynamicVariableSuggestions } from 'hooks/dashboard/useDynamicVariableSuggestions';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
-import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
-import { useGetAggregateValues } from 'hooks/queryBuilder/useGetAggregateValues';
-import { useGetAttributeSuggestions } from 'hooks/queryBuilder/useGetAttributeSuggestions';
 import { validationMapper } from 'hooks/queryBuilder/useIsValidTag';
 import { operatorTypeMapper } from 'hooks/queryBuilder/useOperatorType';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useRunQueryWithFilterItems } from 'hooks/queryBuilder/useRunQueryWithFilterItems';
+import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
+import { useFieldValuesSuggestion } from 'hooks/querySuggestions/useFieldValuesSuggestion';
 import useDebounceValue from 'hooks/useDebounce';
-import {
-	cloneDeep,
-	isArray,
-	isEmpty,
-	isEqual,
-	isObject,
-	isUndefined,
-	unset,
-} from 'lodash-es';
+import { isArray, isEmpty, isEqual, isObject, isUndefined } from 'lodash-es';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import {
 	BaseAutocompleteData,
@@ -48,7 +39,13 @@ import {
 	IBuilderQuery,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import {
+	DATA_SOURCE_TO_SIGNAL,
+	DataSource,
+	QUERY_SOURCE_TO_FIELD_SOURCE,
+} from 'types/common/queryBuilder';
+import { attributeTypeToFieldContext } from 'utils/fieldContext';
+import { getValuesForDataType } from 'utils/fieldValues';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
@@ -61,7 +58,8 @@ import {
 	getTagToken,
 	isInNInOperator,
 } from './utils';
-import { filterByOperatorConfig } from '../utils';
+import { toAttributeKey } from '../GroupByFilter/utils';
+import { filterByOperatorConfig, getMetricNameForQuery } from '../utils';
 import QueryBuilderSearchDropdown from './QueryBuilderSearchDropdown';
 import SpanScopeSelector from './SpanScopeSelector';
 import Suggestions from './Suggestions';
@@ -74,6 +72,8 @@ export interface ITag {
 	op: string;
 	value: (string | number | boolean)[] | string | number | boolean;
 }
+
+const SPAN_SEARCH_SCOPE_KEYS = ['isRoot', 'isEntryPoint'];
 
 interface CustomTagProps {
 	label: React.ReactNode;
@@ -186,69 +186,14 @@ function QueryBuilderSearchV2(
 		[query.dataSource],
 	);
 
-	const memoizedSearchParams = useMemo(
-		() => [
-			searchValue,
-			query.dataSource,
-			query.aggregateOperator,
-			query.aggregateAttribute?.key,
-		],
-		[
-			searchValue,
-			query.dataSource,
-			query.aggregateOperator,
-			query.aggregateAttribute?.key,
-		],
-	);
-
-	const queryFiltersWithoutId = useMemo(
-		() => ({
-			...query.filters,
-			items: query.filters?.items.map((item) => {
-				const filterWithoutId = cloneDeep(item);
-				unset(filterWithoutId, 'id');
-				return filterWithoutId;
-			}),
-		}),
-		[query.filters],
-	);
-
-	const memoizedSuggestionsParams = useMemo(
-		() => [searchValue, query.dataSource, queryFiltersWithoutId],
-		[query.dataSource, queryFiltersWithoutId, searchValue],
-	);
-
-	const memoizedValueParams = useMemo(
-		() => [
-			query.aggregateOperator,
-			query.dataSource,
-			query.aggregateAttribute?.key,
-			currentFilterItem?.key?.key || '',
-			currentFilterItem?.key?.dataType,
-			currentFilterItem?.key?.type ?? '',
-			isArray(currentFilterItem?.value)
-				? currentFilterItem?.value?.[currentFilterItem.value.length - 1]
-				: currentFilterItem?.value,
-		],
-		[
-			query.aggregateOperator,
-			query.dataSource,
-			query.aggregateAttribute?.key,
-			currentFilterItem?.key?.key,
-			currentFilterItem?.key?.dataType,
-			currentFilterItem?.key?.type,
-			currentFilterItem?.value,
-		],
-	);
-
-	const searchParams = useDebounceValue(memoizedSearchParams, DEBOUNCE_DELAY);
-
-	const valueParams = useDebounceValue(memoizedValueParams, DEBOUNCE_DELAY);
-
-	const suggestionsParams = useDebounceValue(
-		memoizedSuggestionsParams,
+	const debouncedKeySearchText = useDebounceValue(
+		searchValue?.split(' ')[0] ?? '',
 		DEBOUNCE_DELAY,
 	);
+
+	const valueSearchText = isArray(currentFilterItem?.value)
+		? String(currentFilterItem?.value?.[currentFilterItem.value.length - 1] ?? '')
+		: currentFilterItem?.value?.toString() || '';
 
 	const isQueryEnabled = useMemo(() => {
 		if (currentState === DropdownState.ATTRIBUTE_KEY) {
@@ -262,53 +207,76 @@ function QueryBuilderSearchV2(
 
 	const dashboardDynamicVariables = useDynamicVariableSuggestions();
 
-	const { data, isFetching } = useGetAggregateKeys(
+	const signal = DATA_SOURCE_TO_SIGNAL[query.dataSource];
+	const source = QUERY_SOURCE_TO_FIELD_SOURCE[query.source ?? ''];
+	const metricName = getMetricNameForQuery(query);
+
+	const { data: fieldKeys, isFetching } = useFieldKeysSuggestion(
 		{
-			searchText: searchValue?.split(' ')[0],
-			dataSource: query.dataSource,
-			aggregateOperator: query.aggregateOperator || '',
-			aggregateAttribute: query.aggregateAttribute?.key || '',
-			tagType: query.aggregateAttribute?.type ?? null,
+			signal,
+			source,
+			metricName,
+			fieldContext: attributeTypeToFieldContext(query.aggregateAttribute?.type),
+			searchText: debouncedKeySearchText,
 		},
+		query.builderQueryType,
 		{
-			queryKey: [searchParams],
-			enabled: isQueryEnabled && !isLogsDataSource && !hardcodedAttributeKeys,
+			enabled: isQueryEnabled && !hardcodedAttributeKeys,
+			keepPreviousData: true,
 		},
 	);
 
-	const { data: suggestionsData, isFetching: isFetchingSuggestions } =
-		useGetAttributeSuggestions(
-			{
-				searchText: searchValue?.split(' ')[0],
-				dataSource: query.dataSource,
-				filters: query.filters || { items: [], op: 'AND' },
-			},
-			{
-				queryKey: [suggestionsParams],
-				enabled: isQueryEnabled && isLogsDataSource,
-			},
-		);
+	// The legacy traces builder checks `exists` on the column only for keys marked as columns.
+	// Body JSON keys come back as bare paths, which the legacy builders read as top-level fields,
+	// and the span search scope selectors are not columns the legacy filter builder can read.
+	const attributeKeys = useMemo(
+		() =>
+			(fieldKeys ?? [])
+				.filter(
+					(fieldKey) =>
+						fieldKey.fieldContext !== TelemetrytypesFieldContextDTO.body &&
+						!(
+							fieldKey.fieldContext === TelemetrytypesFieldContextDTO.span &&
+							SPAN_SEARCH_SCOPE_KEYS.includes(fieldKey.name)
+						),
+				)
+				.map((fieldKey) => ({
+					...toAttributeKey(fieldKey),
+					isColumn:
+						fieldKey.fieldContext === TelemetrytypesFieldContextDTO.span ||
+						fieldKey.fieldContext === TelemetrytypesFieldContextDTO.log,
+				})),
+		[fieldKeys],
+	);
 
-	const { data: attributeValues, isFetching: isFetchingAttributeValues } =
-		useGetAggregateValues(
-			{
-				aggregateOperator: query.aggregateOperator || '',
-				dataSource: query.dataSource,
-				aggregateAttribute: query.aggregateAttribute?.key || '',
-				attributeKey: currentFilterItem?.key?.key || '',
-				filterAttributeKeyDataType:
-					currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
-				tagType: currentFilterItem?.key?.type ?? '',
-				searchText: isArray(currentFilterItem?.value)
-					? String(currentFilterItem?.value?.[currentFilterItem.value.length - 1]) ||
-						''
-					: currentFilterItem?.value?.toString() || '',
-			},
-			{
-				enabled: currentState === DropdownState.ATTRIBUTE_VALUE,
-				queryKey: [valueParams],
-			},
-		);
+	const fieldValuesConfig = useMemo(
+		() => ({
+			signal,
+			source,
+			metricName,
+			name: currentFilterItem?.key?.key || '',
+			fieldContext: attributeTypeToFieldContext(currentFilterItem?.key?.type),
+			searchText: valueSearchText,
+		}),
+		[
+			signal,
+			source,
+			metricName,
+			currentFilterItem?.key?.key,
+			currentFilterItem?.key?.type,
+			valueSearchText,
+		],
+	);
+
+	const debouncedFieldValuesConfig = useDebounceValue(
+		fieldValuesConfig,
+		DEBOUNCE_DELAY,
+	);
+
+	const { data: fieldValues, isFetching: isFetchingAttributeValues } =
+		useFieldValuesSuggestion(debouncedFieldValuesConfig, query.builderQueryType, {
+			enabled: currentState === DropdownState.ATTRIBUTE_VALUE,
+		});
 
 	const handleDropdownSelect = useCallback(
 		(value: string) => {
@@ -533,15 +501,13 @@ function QueryBuilderSearchV2(
 		if (tagKey && isUndefined(currentFilterItem?.key)) {
 			let currentRunningAttributeKey;
 			const isSuggestedKeyInAutocomplete =
-				suggestionsData?.payload?.attributes?.some(
-					(value) => value.key === tagKey.split(' ')[0],
-				);
+				isLogsDataSource &&
+				attributeKeys.some((value) => value.key === tagKey.split(' ')[0]);
 
 			if (isSuggestedKeyInAutocomplete) {
-				const allAttributesMatchingTheKey =
-					suggestionsData?.payload?.attributes?.filter(
-						(value) => value.key === tagKey.split(' ')[0],
-					) || [];
+				const allAttributesMatchingTheKey = attributeKeys.filter(
+					(value) => value.key === tagKey.split(' ')[0],
+				);
 
 				if (allAttributesMatchingTheKey?.length === 1) {
 					[currentRunningAttributeKey] = allAttributesMatchingTheKey;
@@ -648,9 +614,10 @@ function QueryBuilderSearchV2(
 		currentFilterItem,
 		currentFilterItem?.key,
 		currentFilterItem?.op,
-		suggestionsData?.payload?.attributes,
+		attributeKeys,
+		isLogsDataSource,
 		searchValue,
-		isFetchingSuggestions,
+		isFetching,
 		currentState,
 	]);
 
@@ -662,9 +629,7 @@ function QueryBuilderSearchV2(
 				// add the user typed option in the dropdown to select that and move ahead irrespective of the matches and all
 				setDropdownOptions([
 					...(!isEmpty(tagKey) &&
-					!suggestionsData?.payload?.attributes?.some((val) =>
-						isEqual(val.key, tagKey),
-					)
+					!attributeKeys.some((val) => isEqual(val.key, tagKey))
 						? [
 								{
 									label: tagKey,
@@ -676,10 +641,10 @@ function QueryBuilderSearchV2(
 								},
 							]
 						: []),
-					...(suggestionsData?.payload?.attributes?.map((key) => ({
+					...attributeKeys.map((key) => ({
 						label: key.key,
 						value: key,
-					})) || []),
+					})),
 				]);
 			} else if (hardcodedAttributeKeys) {
 				const filteredKeys = hardcodedAttributeKeys.filter((key) =>
@@ -697,7 +662,7 @@ function QueryBuilderSearchV2(
 				setDropdownOptions([
 					// Add user typed option if it doesn't exist in the payload
 					...(tagKey.trim().length > 0 &&
-					!data?.payload?.attributeKeys?.some((val) => val.key === tagKey)
+					!attributeKeys.some((val) => val.key === tagKey)
 						? [
 								{
 									label: tagKey,
@@ -710,10 +675,10 @@ function QueryBuilderSearchV2(
 							]
 						: []),
 					// Map existing attribute keys from payload
-					...(data?.payload?.attributeKeys?.map((key) => ({
+					...attributeKeys.map((key) => ({
 						label: key.key,
 						value: key,
-					})) || []),
+					})),
 				]);
 			}
 		}
@@ -778,10 +743,10 @@ function QueryBuilderSearchV2(
 				values.push(tagValue);
 			}
 
-			if (attributeValues?.payload) {
-				const dataType = currentFilterItem?.key?.dataType || DataTypes.String;
-				const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
-				values.push(...(attributeValues?.payload?.[key] || []));
+			if (fieldValues) {
+				values.push(
+					...getValuesForDataType(fieldValues, currentFilterItem?.key?.dataType),
+				);
 
 				// here we want to suggest the variable name matching with the key here, we will go over the dynamic variables for the keys
 				const variableName = dashboardDynamicVariables.find(
@@ -805,13 +770,12 @@ function QueryBuilderSearchV2(
 		}
 	}, [
 		hardcodedAttributeKeys,
-		attributeValues?.payload,
+		fieldValues,
 		currentFilterItem?.key?.dataType,
 		currentState,
-		data?.payload?.attributeKeys,
+		attributeKeys,
 		isLogsDataSource,
 		searchValue,
-		suggestionsData?.payload?.attributes,
 		operatorConfigKey,
 		currentFilterItem?.key?.key,
 		dashboardDynamicVariables,
@@ -880,8 +844,8 @@ function QueryBuilderSearchV2(
 	}, [deregisterShortcut, isLastQuery, registerShortcut]);
 
 	const loading = useMemo(
-		() => isFetching || isFetchingAttributeValues || isFetchingSuggestions,
-		[isFetching, isFetchingAttributeValues, isFetchingSuggestions],
+		() => isFetching || isFetchingAttributeValues,
+		[isFetching, isFetchingAttributeValues],
 	);
 
 	const isMetricsDataSource = useMemo(
@@ -991,7 +955,7 @@ function QueryBuilderSearchV2(
 							setTags((prev) => [...prev, ...(val.items as ITag[])]);
 						}}
 						searchValue={searchValue}
-						exampleQueries={suggestionsData?.payload?.example_queries || []}
+						exampleQueries={[]}
 						tags={tags}
 						currentFilterItem={currentFilterItem}
 						isLogsDataSource={isLogsDataSource}

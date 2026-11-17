@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
 
@@ -22,7 +23,12 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceSession,
+		Verb:     coretypes.VerbCreate,
+		Category: coretypes.ActionCategoryAccessControl,
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -39,7 +45,12 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceSession,
+		Verb:     coretypes.VerbRead,
+		Category: coretypes.ActionCategoryAccessControl,
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
@@ -56,7 +67,12 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceSession,
+		Verb:     coretypes.VerbUpdate,
+		Category: coretypes.ActionCategoryAccessControl,
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -73,7 +89,12 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceSession,
+		Verb:     coretypes.VerbDelete,
+		Category: coretypes.ActionCategoryAccessControl,
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
@@ -90,7 +111,12 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceSession,
+		Verb:     coretypes.VerbCreate,
+		Category: coretypes.ActionCategoryAccessControl,
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
@@ -110,7 +136,12 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceSession,
+		Verb:     coretypes.VerbCreate,
+		Category: coretypes.ActionCategoryAccessControl,
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -127,7 +158,12 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusUnavailableForLegalReasons},
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodGet).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceMetaResourceSession,
+		Verb:     coretypes.VerbCreate,
+		Category: coretypes.ActionCategoryAccessControl,
+		Selector: coretypes.WildcardSelector,
+	}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 

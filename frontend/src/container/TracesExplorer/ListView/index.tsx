@@ -146,7 +146,9 @@ function ListView({
 				(field) => field.name !== TIMESTAMP_FIELD.name,
 			),
 		];
-		const fieldColumns = fields.map((field) => getFieldColumn(field));
+		const fieldColumns = fields.map((field) =>
+			getFieldColumn(field, PANEL_TYPES.LIST),
+		);
 		return [openTraceColumn, ...fieldColumns];
 	}, [options?.selectColumns, openTraceColumn]);
 
