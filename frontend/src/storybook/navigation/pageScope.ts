@@ -1,9 +1,5 @@
-import {
-	createMemoryHistory,
-	LocationDescriptor,
-	MemoryHistory,
-	parsePath,
-} from 'history';
+import { createPath, type DataRouter, parsePath } from 'react-router';
+import type { To } from 'lib/router/types';
 
 /**
  * Query keys the Storybook preview owns. They live in the iframe's URL, which
@@ -19,16 +15,18 @@ const PREVIEW_PARAMS = [
 ];
 
 /**
- * The story's own history. A story renders one page, so this never leaves it:
- * `pageScope` decides what counts as staying, and `containment.ts` is what the
- * app sees in place of `lib/history`.
+ * The story's own router. A story renders one page, so this never leaves it:
+ * `pageScope` decides what counts as staying, and `containment.ts` creates the
+ * router and guards its `navigate`. `navigateStoryRouter` is the unguarded one.
  */
-export const storyHistory: MemoryHistory = createMemoryHistory({
-	initialEntries: ['/'],
-});
+let storyRouter: DataRouter | undefined;
+let navigateStoryRouter: DataRouter['navigate'] | undefined;
 
-export const toHref = (to: LocationDescriptor): string =>
-	typeof to === 'string' ? to : storyHistory.createHref(to);
+const currentPathname = (): string =>
+	storyRouter?.state.location.pathname ?? '/';
+
+export const toHref = (to: To): string =>
+	typeof to === 'string' ? to : createPath(to);
 
 const withoutPreviewParams = (search: string): URLSearchParams => {
 	const params = new URLSearchParams(search);
@@ -56,9 +54,11 @@ const mirrorSearchToBrowser = (): void => {
 		}
 	});
 
-	withoutPreviewParams(storyHistory.location.search).forEach((value, key) => {
-		mirrored.set(key, value);
-	});
+	withoutPreviewParams(storyRouter?.state.location.search ?? '').forEach(
+		(value, key) => {
+			mirrored.set(key, value);
+		},
+	);
 
 	window.history.replaceState(
 		window.history.state,
@@ -67,7 +67,23 @@ const mirrorSearchToBrowser = (): void => {
 	);
 };
 
-storyHistory.listen(mirrorSearchToBrowser);
+/**
+ * Makes `router` the story's router. `navigate` is captured before
+ * `containment.ts` replaces it, so in-page moves skip the guard.
+ */
+export const setStoryRouter = (router: DataRouter): void => {
+	storyRouter = router;
+	navigateStoryRouter = router.navigate;
+
+	let { location } = router.state;
+	router.subscribe((state) => {
+		if (state.location !== location) {
+			({ location } = state);
+			mirrorSearchToBrowser();
+		}
+	});
+	mirrorSearchToBrowser();
+};
 
 /** `/home/` and `/home` are the same page as far as a story is concerned. */
 const normalizePathname = (pathname: string): string =>
@@ -77,8 +93,7 @@ const normalizePathname = (pathname: string): string =>
 
 export const isSamePagePathname = (pathname: string | undefined): boolean =>
 	!pathname ||
-	normalizePathname(pathname) ===
-		normalizePathname(storyHistory.location.pathname);
+	normalizePathname(pathname) === normalizePathname(currentPathname());
 
 /**
  * Applies a navigation that stays on the story's page: a query-param or hash
@@ -86,8 +101,8 @@ export const isSamePagePathname = (pathname: string | undefined): boolean =>
  * when the target is another page, leaving the caller to report it as blocked.
  */
 export const navigateWithinPage = (
-	to: LocationDescriptor,
-	{ replace = false }: { replace?: boolean } = {},
+	to: To,
+	{ replace = false, state }: { replace?: boolean; state?: unknown } = {},
 ): boolean => {
 	const target = typeof to === 'string' ? parsePath(to) : to;
 
@@ -98,19 +113,21 @@ export const navigateWithinPage = (
 	// The preview's params ride along in whatever the app read out of
 	// `window.location.search`, so they are dropped on the way back in and the
 	// story's history stays the page's own URL.
-	storyHistory[replace ? 'replace' : 'push']({
-		...target,
-		search: `?${withoutPreviewParams(target.search ?? '')}`,
-		pathname: storyHistory.location.pathname,
-	});
+	void navigateStoryRouter?.(
+		{
+			...target,
+			search: `?${withoutPreviewParams(target.search ?? '')}`,
+			pathname: currentPathname(),
+		},
+		{ replace, state },
+	);
 
 	return true;
 };
 
-/** Places the story at a route without going through the block. */
-export const setStoryLocation = (to: LocationDescriptor): void => {
-	storyHistory.replace(to);
-	mirrorSearchToBrowser();
+/** Moves the story to another route without going through the block. */
+export const setStoryLocation = (route: string, state?: unknown): void => {
+	void navigateStoryRouter?.(route, { replace: true, state });
 };
 
 /**
@@ -121,7 +138,7 @@ export const isBlockableHref = (href: string): boolean =>
 	href.length > 0 && !href.startsWith('#') && !href.startsWith('javascript:');
 
 /**
- * An anchor href as a location the story's history understands, or `undefined`
+ * An anchor href as a location the story's router understands, or `undefined`
  * when it leads off the page. Relative hrefs (`?tab=logs`) carry no pathname and
  * stay on the page; app links do, and are resolved against the iframe so an
  * off-site href fails the host check before its path is compared.

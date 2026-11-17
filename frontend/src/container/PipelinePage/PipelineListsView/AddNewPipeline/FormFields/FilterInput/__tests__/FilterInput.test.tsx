@@ -1,15 +1,16 @@
 import { Form } from 'antd';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
-import { rest, server } from 'mocks-server/server';
+import { server } from 'mocks-server/server';
 import { act, render, waitFor } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import type { QueryRangePayload } from 'types/api/metrics/getQueryRange';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import type {
-	IBuilderQuery,
-	TagFilter,
-} from 'types/api/queryBuilder/queryBuilderData';
+	BaseBuilderQuery,
+	QueryRangePayloadV5,
+} from 'types/api/v5/queryRange';
 
 import { pipelineFields } from '../../../../config';
+import { queryRangeV5Handler } from '../../../../Preview/__tests__/fixtures';
 import FilterInput from '..';
 
 jest.mock(
@@ -38,27 +39,22 @@ const v5Filter: TagFilter = {
 };
 
 describe('Pipeline FilterInput', () => {
-	it('previews sample logs with the legacy key types the v3 logs builder reads', async () => {
-		const previewFilters: TagFilter[] = [];
-		server.use(
-			rest.post('*/api/v3/query_range', async (req, res, ctx) => {
-				const body: QueryRangePayload = await req.json();
-				const query = body.compositeQuery.builderQueries?.A as IBuilderQuery;
-				if (query.filters) {
-					previewFilters.push(query.filters);
-				}
-				return res(ctx.status(200), ctx.json({ data: { result: [] } }));
-			}),
-		);
+	it('saves the filter with the legacy key types the pipeline builders read', () => {
+		const onValuesChange = jest.fn() as jest.MockedFunction<
+			(changedValues: { filter: TagFilter }) => void
+		>;
 
-		render(<Form>{filterField && <FilterInput fieldData={filterField} />}</Form>);
+		render(
+			<Form onValuesChange={onValuesChange}>
+				{filterField && <FilterInput fieldData={filterField} />}
+			</Form>,
+		);
 
 		const { onChange } = jest.mocked(QueryBuilderSearchV2).mock.calls[0][0];
 		act(() => onChange(v5Filter));
 
-		await waitFor(() => expect(previewFilters).not.toHaveLength(0));
 		expect(
-			previewFilters[previewFilters.length - 1].items.map((item) => [
+			onValuesChange.mock.lastCall?.[0].filter.items.map((item) => [
 				item.key?.key,
 				item.key?.type,
 			]),
@@ -66,5 +62,27 @@ describe('Pipeline FilterInput', () => {
 			['http.method', 'tag'],
 			['severity_text', ''],
 		]);
+	});
+
+	it('previews sample logs for the picked filter', async () => {
+		const requests: QueryRangePayloadV5[] = [];
+		server.use(queryRangeV5Handler({ rows: [], count: 0, requests }));
+
+		render(<Form>{filterField && <FilterInput fieldData={filterField} />}</Form>);
+
+		const { onChange } = jest.mocked(QueryBuilderSearchV2).mock.calls[0][0];
+		act(() => onChange(v5Filter));
+
+		await waitFor(() =>
+			expect(
+				requests
+					.filter((request) => request.requestType === 'raw')
+					.map(
+						(request) =>
+							(request.compositeQuery.queries[0].spec as BaseBuilderQuery).filter
+								?.expression,
+					),
+			).toContain("http.method = 'GET' AND severity_text = 'ERROR'"),
+		);
 	});
 });

@@ -16,8 +16,8 @@ interface UseDownloadPanelCsvArgs {
 	/**
 	 * Whether the kind's definition declares CSV as a downloadable format
 	 * (`actions.download.csv`). Only kinds drawn from a joined scalar table
-	 * (Table, Scatter Plot) carry tabular data, so this is the same gate the menu
-	 * uses — kept here so the callback stays a no-op when invoked for a kind that
+	 * (Table, Scatter Plot, Geo Map) carry tabular data, so this is the same gate the
+	 * menu uses — kept here so the callback stays a no-op when invoked for a kind that
 	 * can't produce CSV.
 	 */
 	canDownloadCsv: boolean;
@@ -39,7 +39,9 @@ export function useDownloadPanelCsv({
 			return;
 		}
 		const rows = getTableCsvRows(
-			panel as PanelOfKind<'signoz/TablePanel' | 'signoz/ScatterPlotPanel'>,
+			panel as PanelOfKind<
+				'signoz/TablePanel' | 'signoz/ScatterPlotPanel' | 'signoz/GeoMapPanel'
+			>,
 			data,
 		);
 		if (rows.length === 0) {
