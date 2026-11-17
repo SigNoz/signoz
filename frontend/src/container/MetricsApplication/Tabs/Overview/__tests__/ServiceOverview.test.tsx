@@ -1,10 +1,11 @@
 import { prepareQueryRangePayloadV5 } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
+import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import Graph from 'container/WidgetCard/Card';
 import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import { encode } from 'js-base64';
-import { render } from 'tests/test-utils';
+import { defaultFeatureFlags, render } from 'tests/test-utils';
 
 import ServiceOverview from '../ServiceOverview';
 
@@ -57,4 +58,38 @@ describe('ServiceOverview', () => {
 			},
 		});
 	});
+
+	it.each([
+		{ spanMetrics: false, unit: 'ns' },
+		{ spanMetrics: true, unit: 'ms' },
+	])(
+		'reads the latency in $unit when span metrics is $spanMetrics',
+		({ spanMetrics, unit }) => {
+			render(
+				<ServiceOverview
+					stepInterval={60}
+					selectedTimeStamp={0}
+					selectedTraceTags="[]"
+					onDragSelect={jest.fn()}
+					handleGraphClick={jest.fn()}
+					topLevelOperationsRoute={['GET /']}
+					topLevelOperationsIsLoading={false}
+				/>,
+				undefined,
+				{
+					initialRoute: '/services/frontend',
+					routePath: ROUTES.SERVICE_METRICS,
+					appContextOverrides: {
+						featureFlags: defaultFeatureFlags.map((flag) =>
+							flag.name === FeatureKeys.USE_SPAN_METRICS
+								? { ...flag, active: spanMetrics }
+								: flag,
+						),
+					},
+				},
+			);
+
+			expect(jest.mocked(Graph).mock.calls[0][0].widget.yAxisUnit).toBe(unit);
+		},
+	);
 });
