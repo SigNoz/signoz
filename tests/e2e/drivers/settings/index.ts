@@ -1,13 +1,19 @@
 import { withAuthFlows } from '../auth-flows';
-import { kit } from '../kit';
+import { guestDriver, kit, type Layer } from '../kit';
 
-import { withSettings } from './driver';
+import { settingsDriver, withSettings, type Settings } from './driver';
 import {
 	withActiveEditor,
 	withCustomRoleSeed,
 	withPendingMember,
 	withServiceAccountSeed,
 } from './seeds';
+
+/** The settings pages bound to the logged-out `guestPage`, for a signed-in member. */
+const withGuestSettings: Layer<{ guestSettings: Settings }> = guestDriver(
+	'guestSettings',
+	({ page }) => settingsDriver(page),
+);
 
 /**
  * The settings `test`. Seeds are test-scoped and lazy: a spec pays only for the
@@ -16,8 +22,10 @@ import {
  */
 export const test = withAuthFlows(
 	withSettings(
-		withActiveEditor(
-			withPendingMember(withServiceAccountSeed(withCustomRoleSeed(kit))),
+		withGuestSettings(
+			withActiveEditor(
+				withPendingMember(withServiceAccountSeed(withCustomRoleSeed(kit))),
+			),
 		),
 	),
 );
