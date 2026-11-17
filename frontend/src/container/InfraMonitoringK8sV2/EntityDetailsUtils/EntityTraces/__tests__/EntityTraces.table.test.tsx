@@ -1,6 +1,6 @@
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
-import { act, screen, userEvent, within } from 'tests/test-utils';
+import { act, screen, userEvent } from 'tests/test-utils';
 
 import { renderEntityTraces } from './testUtils';
 import { mockQueryRangeV5WithTracesResponse } from '__tests__/query_range_v5.util';
@@ -31,15 +31,13 @@ describe('EntityTraces - Table Rendering', () => {
 	it('should render table with all column headers', async () => {
 		mockQueryRangeV5WithTracesResponse({ pageSize: 3 });
 
-		act(() => {
-			renderEntityTraces();
-		});
+		const { container } = renderEntityTraces();
 
 		await expect(screen.findByText('Service Name')).resolves.toBeInTheDocument();
 
-		const headerTexts = within(screen.getByRole('table'))
-			.getAllByRole('columnheader')
-			.map((header) => header.textContent);
+		const headerTexts = Array.from(
+			container.querySelectorAll('table thead th'),
+		).map((header) => header.textContent);
 
 		expect(headerTexts).toStrictEqual(
 			expect.arrayContaining([
@@ -152,13 +150,11 @@ describe('EntityTraces - Table Rendering', () => {
 			customTraces: [{ serviceName: 'frontend' }],
 		});
 
-		act(() => {
-			renderEntityTraces();
-		});
+		const { container } = renderEntityTraces();
 
 		await expect(screen.findByTestId('serviceName')).resolves.toBeInTheDocument();
 
-		const links = within(screen.getByRole('table')).getAllByRole('link');
+		const links = container.querySelectorAll('table a[href]');
 
 		expect(links.length).toBeGreaterThan(0);
 		links.forEach((link) => {
