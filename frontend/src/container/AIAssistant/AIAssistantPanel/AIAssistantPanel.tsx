@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { TextEllipsis } from '@signozhq/ui/text-ellipsis';
 import { matchRoute } from 'lib/router/matchRoute';
@@ -9,8 +9,8 @@ import ROUTES from 'constants/routes';
 import { History, Maximize2, Plus, X } from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
 import { BOTTOM_STRIP_HEIGHT } from 'container/BottomStrip';
+import { supportChatObstacle } from 'container/BottomStrip/SupportButton/supportChatObstacle';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
-import type { FloatingPanelHandle } from 'periscope/components/FloatingPanel/FloatingPanel';
 
 import logEvent from 'api/common/logEvent';
 
@@ -23,7 +23,6 @@ import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
 
 import styles from './AIAssistantPanel.module.scss';
-import { useMakeRoomForSupportChat } from './useMakeRoomForSupportChat';
 
 const PANEL_WIDTH = 420;
 const PANEL_HEIGHT = 601;
@@ -40,6 +39,7 @@ const PANEL_RESIZE_EDGES = {
 	bottomLeft: false,
 	topLeft: false,
 };
+const PANEL_AVOID = [supportChatObstacle];
 
 export default function AIAssistantPanel(): JSX.Element | null {
 	const { pathname } = useAppLocation();
@@ -92,9 +92,6 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		setShowHistory(false);
 	}, []);
 
-	const panelRef = useRef<FloatingPanelHandle>(null);
-	useMakeRoomForSupportChat(panelRef, isOpen && !isFullScreenPage);
-
 	if (!isOpen || isFullScreenPage) {
 		return null;
 	}
@@ -108,7 +105,6 @@ export default function AIAssistantPanel(): JSX.Element | null {
 	return (
 		<VariantContext.Provider value="panel">
 			<FloatingPanel
-				ref={panelRef}
 				isOpen
 				width={PANEL_WIDTH}
 				height={panelHeight}
@@ -116,6 +112,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 				minHeight={Math.min(PANEL_MIN_HEIGHT, availableHeight)}
 				enableResizing={PANEL_RESIZE_EDGES}
 				keepInViewport
+				avoid={PANEL_AVOID}
 				defaultPosition={{
 					x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN,
 					y: PANEL_MARGIN + availableHeight - panelHeight,

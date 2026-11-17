@@ -1,6 +1,7 @@
-import { act, render, screen } from 'tests/test-utils';
+import { act, render, screen, userEvent } from 'tests/test-utils';
 
 import FloatingPanel from '../FloatingPanel';
+import type { FloatingObstacle, FloatingRect } from '../types';
 
 const PANEL_WIDTH = 420;
 const PANEL_HEIGHT = 601;
@@ -92,5 +93,135 @@ describe('FloatingPanel', () => {
 		});
 		expect(screen.getByTestId('panel-close')).toBeInTheDocument();
 		expect(screen.getByTestId('panel-composer')).toBeInTheDocument();
+	});
+
+	describe('avoid', () => {
+		const HOME = { x: 852, y: 167 };
+		const SUPPORT_CHAT: FloatingRect = {
+			x: 882,
+			y: 286,
+			width: 384,
+			height: 478,
+		};
+		// 8px gap left of the support chat: 882 - 8 - 420.
+		const CLEAR_OF_SUPPORT_CHAT = { x: 454, y: 167 };
+
+		function createObstacle(rect: FloatingRect): {
+			obstacle: FloatingObstacle;
+			show: () => void;
+			hide: () => void;
+		} {
+			let isShown = false;
+			const listeners = new Set<() => void>();
+			const setShown = (shown: boolean): void => {
+				isShown = shown;
+				act(() => listeners.forEach((listener) => listener()));
+			};
+			return {
+				obstacle: {
+					getRect: (): FloatingRect | null => (isShown ? rect : null),
+					subscribe: (onChange): (() => void) => {
+						listeners.add(onChange);
+						return (): void => {
+							listeners.delete(onChange);
+						};
+					},
+				},
+				show: (): void => setShown(true),
+				hide: (): void => setShown(false),
+			};
+		}
+
+		function renderPanel(avoid: FloatingObstacle[]): void {
+			render(
+				<FloatingPanel
+					isOpen
+					width={PANEL_WIDTH}
+					height={PANEL_HEIGHT}
+					defaultPosition={HOME}
+					avoid={avoid}
+				>
+					<div className="floating-panel__drag-handle" data-testid="panel-handle" />
+				</FloatingPanel>,
+			);
+		}
+
+		function getPanelPosition(): { x: number; y: number } {
+			const { x, y } = getPanelBox();
+			return { x, y };
+		}
+
+		beforeEach(() => {
+			setViewport(1280, 800);
+			// react-rnd offsets its position by this box on mount; jsdom's all-zero box doubles it.
+			jest
+				.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+				.mockImplementation(function getBoundingClientRect(this: HTMLElement) {
+					const [, x = '0', y = '0'] =
+						/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(this.style.transform) ??
+						[];
+					return new DOMRect(
+						Number(x),
+						Number(y),
+						this.offsetWidth,
+						this.offsetHeight,
+					);
+				});
+		});
+
+		it('slides left of an obstacle while it shows, and back once it hides', () => {
+			const supportChat = createObstacle(SUPPORT_CHAT);
+			renderPanel([supportChat.obstacle]);
+
+			supportChat.show();
+
+			expect(getPanelPosition()).toStrictEqual(CLEAR_OF_SUPPORT_CHAT);
+
+			supportChat.hide();
+
+			expect(getPanelPosition()).toStrictEqual(HOME);
+		});
+
+		it('stays where the user dragged it while the obstacle showed', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const supportChat = createObstacle(SUPPORT_CHAT);
+			renderPanel([supportChat.obstacle]);
+			supportChat.show();
+
+			// user-event only sees a move when `x`/`y` change, so they're set alongside `clientX`/`clientY`.
+			await user.pointer([
+				{
+					keys: '[MouseLeft>]',
+					target: screen.getByTestId('panel-handle'),
+					coords: { x: 500, y: 200, clientX: 500, clientY: 200 },
+				},
+				{ coords: { x: 346, y: 153, clientX: 346, clientY: 153 } },
+				{ keys: '[/MouseLeft]' },
+			]);
+			supportChat.hide();
+
+			expect(getPanelPosition()).toStrictEqual({ x: 300, y: 120 });
+		});
+
+		it('slides past every obstacle in the way', () => {
+			const supportChat = createObstacle(SUPPORT_CHAT);
+			const widget = createObstacle({ x: 500, y: 200, width: 300, height: 200 });
+			renderPanel([supportChat.obstacle, widget.obstacle]);
+			widget.show();
+
+			supportChat.show();
+
+			// 882 - 8 - 420 = 454 still hits the widget, so 500 - 8 - 420.
+			expect(getPanelPosition()).toStrictEqual({ x: 72, y: 167 });
+		});
+
+		it('slides clear of an obstacle already showing when it opens', () => {
+			const supportChat = createObstacle(SUPPORT_CHAT);
+			supportChat.show();
+
+			renderPanel([supportChat.obstacle]);
+
+			expect(getPanelPosition()).toStrictEqual(CLEAR_OF_SUPPORT_CHAT);
+		});
 	});
 });
