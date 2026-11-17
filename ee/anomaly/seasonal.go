@@ -13,6 +13,11 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
+const (
+	minSeasonPoints  = 2
+	flatSeasonSpread = 0.05
+)
+
 var (
 	// TODO(srikanthccv): make this configurable?
 	movingAvgWindowSize = 7
@@ -285,6 +290,8 @@ func (p *BaseSeasonalProvider) getExpectedValue(
 // getScore gets the anomaly score for the given series
 // for the given index
 // (value - expectedValue) / std dev of the series.
+// A season with fewer than minSeasonPoints points is not scored (NaN).
+// A season without spread is scored against flatSeasonSpread of the level.
 func (p *BaseSeasonalProvider) getScore(
 	series, prevSeries, weekSeries, weekPrevSeries, past2SeasonSeries, past3SeasonSeries *qbtypes.TimeSeries, value float64, idx int,
 ) float64 {
@@ -292,7 +299,22 @@ func (p *BaseSeasonalProvider) getScore(
 	if expectedValue < 0 {
 		expectedValue = p.getMovingAvg(prevSeries, movingAvgWindowSize, idx)
 	}
-	return (value - expectedValue) / p.getStdDev(weekSeries)
+	if weekSeries == nil || len(weekSeries.Values) < minSeasonPoints {
+		return math.NaN()
+	}
+	stdDev := p.getStdDev(weekSeries)
+	if stdDev == 0 {
+		return scoreFlatSeason(value, expectedValue)
+	}
+	return (value - expectedValue) / stdDev
+}
+
+func scoreFlatSeason(value, expected float64) float64 {
+	scale := math.Max(math.Abs(value), math.Abs(expected))
+	if scale == 0 {
+		return 0
+	}
+	return (value - expected) / (flatSeasonSpread * scale)
 }
 
 // getAnomalyScores gets the anomaly scores for the given series
@@ -311,6 +333,7 @@ func (p *BaseSeasonalProvider) getAnomalyScores(
 		anomalyScoreSeries.Values = append(anomalyScoreSeries.Values, &qbtypes.TimeSeriesValue{
 			Timestamp: curr.Timestamp,
 			Value:     anomalyScore,
+			Partial:   curr.Partial,
 		})
 	}
 
