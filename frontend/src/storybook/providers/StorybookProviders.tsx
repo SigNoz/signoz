@@ -1,6 +1,4 @@
 import { ReactNode, useEffect, useMemo } from 'react';
-import { Router } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
 import AppPageProviders from '@/app/AppPageProviders';
 import AppProviders from '@/app/AppProviders';
 import AppShell from '@/app/AppShell';
@@ -8,7 +6,7 @@ import type { AppLayer } from '@/app/types';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
 import { Toaster } from '@signozhq/ui/sonner';
 import AppLayout from 'container/AppLayout';
-import history from 'lib/history';
+import { HostRouter } from 'lib/router/HostRouter';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { AppContext, useAppContext } from 'providers/App/App';
 
@@ -41,12 +39,6 @@ function StoryContextProbe(): null {
 	return null;
 }
 
-const storyRouter: AppLayer = (children) => (
-	<Router history={history}>
-		<CompatRouter>{children}</CompatRouter>
-	</Router>
-);
-
 const appLayout: AppLayer = (children) => <AppLayout>{children}</AppLayout>;
 
 const bareLayout: AppLayer = (children) => (
@@ -66,7 +58,7 @@ function StorybookProviders({
 	routeState,
 	reduxState,
 }: StorybookProvidersProps): JSX.Element {
-	const searchParams = useStoryRoute(route, routeState);
+	const { router, searchParams } = useStoryRoute(route, routeState);
 	const queryClient = useMemo(createStorybookQueryClient, []);
 	const store = useMemo(() => {
 		const created = createStorybookStore(reduxState);
@@ -83,36 +75,37 @@ function StorybookProviders({
 	useEffect(interceptExternalNavigation, []);
 
 	return (
-		<AppProviders
-			store={store}
-			queryClient={queryClient}
-			appContext={(scoped): ReactNode => (
-				<AppContext.Provider value={appContextValue}>{scoped}</AppContext.Provider>
-			)}
-			searchParams={(scoped): ReactNode => (
-				<NuqsTestingAdapter searchParams={searchParams} hasMemory>
-					{scoped}
-				</NuqsTestingAdapter>
-			)}
-		>
-			<AppShell
-				router={storyRouter}
-				overlays={
-					<>
-						<StoryContextProbe />
-						<CmdKPalette userRole={role} />
-						<NavigationBlockedOverlay />
-					</>
-				}
+		<HostRouter router={router}>
+			<AppProviders
+				store={store}
+				queryClient={queryClient}
+				appContext={(scoped): ReactNode => (
+					<AppContext.Provider value={appContextValue}>{scoped}</AppContext.Provider>
+				)}
+				searchParams={(scoped): ReactNode => (
+					<NuqsTestingAdapter searchParams={searchParams} hasMemory>
+						{scoped}
+					</NuqsTestingAdapter>
+				)}
 			>
-				<AppPageProviders
-					layout={layout === 'app' ? appLayout : bareLayout}
-					queryBuilder={queryBuilder}
+				<AppShell
+					overlays={
+						<>
+							<StoryContextProbe />
+							<CmdKPalette userRole={role} />
+							<NavigationBlockedOverlay />
+						</>
+					}
 				>
-					{children}
-				</AppPageProviders>
-			</AppShell>
-		</AppProviders>
+					<AppPageProviders
+						layout={layout === 'app' ? appLayout : bareLayout}
+						queryBuilder={queryBuilder}
+					>
+						{children}
+					</AppPageProviders>
+				</AppShell>
+			</AppProviders>
+		</HostRouter>
 	);
 }
 

@@ -93,11 +93,7 @@ const (
 
 {{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})
 
-{{ end }}{{ if .Annotations.related_logs }}[View related logs]({{ .Annotations.related_logs }})
-
-{{ end }}{{ if .Annotations.related_traces }}[View related traces]({{ .Annotations.related_traces }})
-
-{{ end }}{{ end }}`
+{{ end }}{{ template "signoz.relatedLinks.markdown" . }}{{ end }}`
 )
 
 // JSMOpsReceiverConfig is the SigNoz Jira Service Management Ops receiver. It is

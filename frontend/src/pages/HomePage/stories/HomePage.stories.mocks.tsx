@@ -3,6 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { listRulesV3Response } from 'mocks-server/__mockdata__/alert_rules';
 import { rest } from 'msw';
 
 import {
@@ -156,11 +157,13 @@ export const homeMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v2/rules',
-			response.json(() => ({
-				status: 'success',
-				data: buildAlertRules(values.alertRules),
-			})),
+			'http://localhost/api/v3/rules',
+			response.json((req) =>
+				listRulesV3Response(
+					buildAlertRules(values.alertRules),
+					req.url.searchParams,
+				),
+			),
 		),
 
 		rest.get(

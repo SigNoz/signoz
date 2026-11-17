@@ -24,7 +24,7 @@ import { dynamicSignalFromQuerySignal } from 'pages/DashboardPage/DashboardConta
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import {
 	isBuilderQueryType,
-	toRequestQuery,
+	foldAISlot,
 	toSlotQuery,
 } from 'lib/query/builderSlot';
 
@@ -102,7 +102,7 @@ export function useDrilldown(
 		() => fromPerses(queries, panelType),
 		[queries, panelType],
 	);
-	const v1Query = useMemo(() => toRequestQuery(slotQuery), [slotQuery]);
+	const v1Query = useMemo(() => foldAISlot(slotQuery), [slotQuery]);
 
 	const {
 		coordinates,

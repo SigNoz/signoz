@@ -1,4 +1,5 @@
 import type { ErrorEvent } from '@sentry/react';
+import { AxiosError, isAxiosError } from 'axios';
 
 export const SENTRY_IGNORE_ERRORS = [
 	// A tab that outlived a deploy requests hashed assets the new build no longer
@@ -14,11 +15,28 @@ export const SENTRY_IGNORE_ERRORS = [
 	/Called on script loaded before session recording is available/,
 ];
 
-const APP_ASSETS_PATH = '/assets/';
+// Not UI bugs: 401/403 come from the session or role, ERR_NETWORK from a
+// dropped connection.
+export function isExpectedRequestFailure(error: unknown): boolean {
+	if (!isAxiosError(error)) {
+		return false;
+	}
+	const status = error.response?.status;
+	return (
+		error.code === AxiosError.ERR_NETWORK || status === 401 || status === 403
+	);
+}
 
-// Frames without a position are `[native code]`, which says nothing about the
-// script that threw.
-export function hasNoAppFrames(event: ErrorEvent): boolean {
+const APP_ASSETS_PATH = '/assets/';
+const ANONYMOUS_FILENAME = '<anonymous>';
+
+// Frames without a position are `[native code]` or a browser builtin such as
+// `JSON.parse (<anonymous>)`, which say nothing about the script that threw.
+// A positioned `<anonymous>` throwing (last) frame is code loaded without a
+// URL: the DevTools console, CDP, or an extension's `executeScript`. Sentry's
+// own timer wrapper is bundled with the app, so checking for any app frame
+// alone misses it.
+export function isInjectedScriptError(event: ErrorEvent): boolean {
 	const frames = (event.exception?.values ?? [])
 		.flatMap((exception) => exception.stacktrace?.frames ?? [])
 		.filter(
@@ -27,12 +45,13 @@ export function hasNoAppFrames(event: ErrorEvent): boolean {
 
 	return (
 		frames.length > 0 &&
-		!frames.some((frame) => frame.filename?.includes(APP_ASSETS_PATH))
+		(frames[frames.length - 1].filename === ANONYMOUS_FILENAME ||
+			!frames.some((frame) => frame.filename?.includes(APP_ASSETS_PATH)))
 	);
 }
 
 // PostHog's lazy recorder, the Pylon widget and Appcues.
-const EXTERNAL_SCRIPT_URLS = [
+const THIRD_PARTY_SCRIPT_URLS = [
 	/^https?:\/\/[^/]+\.posthog\.com\//,
 	/^https?:\/\/(?:[^/]+\.)?usepylon\.com\//,
 	/^https?:\/\/(?:[^/]+\.)?appcues\.(?:com|net)\//,
@@ -40,10 +59,10 @@ const EXTERNAL_SCRIPT_URLS = [
 
 // Checks every frame, not only the top one: a failed fetch from the recorder
 // tops out in Sentry's own fetch wrapper, which is bundled with the app.
-export function isExternalIntegrationError(event: ErrorEvent): boolean {
+export function isThirdPartyScriptError(event: ErrorEvent): boolean {
 	return (event.exception?.values ?? []).some((exception) =>
 		(exception.stacktrace?.frames ?? []).some((frame) =>
-			EXTERNAL_SCRIPT_URLS.some((url) => url.test(frame.filename ?? '')),
+			THIRD_PARTY_SCRIPT_URLS.some((url) => url.test(frame.filename ?? '')),
 		),
 	);
 }

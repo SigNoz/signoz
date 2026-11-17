@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from http import HTTPStatus
 
 import pytest
@@ -12,6 +12,7 @@ from fixtures.querier import (
     build_group_by_field,
     build_raw_query,
     build_traces_scalar_query,
+    get_attribute_backend_now,
     get_rows,
     get_scalar_table_data,
     make_query_request,
@@ -28,14 +29,12 @@ def test_traces_filter_unknown_key_synthesizes(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
 ) -> None:
     """An unknown attribute key runs against synthesized columns and returns 200 with a
     "not found" warning so typos still surface."""
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
-    now = datetime.now(tz=UTC)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = make_query_request(
         signoz,
@@ -63,15 +62,13 @@ def test_traces_filter_unknown_resource_key_filters(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
 ) -> None:
     """A resource-qualified unknown key must FILTER (0 rows), not be dropped: the
     resource-fingerprint sub-query skips keys absent from metadata, so the synthesized
     condition stays in the main query. A regression here returns every span."""
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
-    now = datetime.now(tz=UTC)
     insert_traces(
         [
             Traces(
@@ -117,14 +114,12 @@ def test_traces_group_by_unknown_key_null_bucket(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    use_attribute_backend: Callable[[str], None],
     attribute_backend: str,
 ) -> None:
     """Grouping by an unknown key runs against synthesized columns: every span lands in
     the NULL bucket instead of the query failing."""
-    use_attribute_backend(attribute_backend)
+    now = get_attribute_backend_now(signoz, attribute_backend)
 
-    now = datetime.now(tz=UTC)
     insert_traces(
         [
             Traces(

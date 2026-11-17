@@ -112,14 +112,11 @@ export const withAlertList: WorkerLayer<{ alertList: AlertListSeed }> = seeded(
 export interface AlertHistorySeed extends Owned {
 	/** v2 (`schemaVersion: v2alpha1`) rule — the default history subject. */
 	ruleId: string;
-	/** Legacy v1 rule over the same logs. Its `threshold.name` is `warning`. */
-	ruleIdV1: string;
 	channelName: string;
-	/** The `body CONTAINS` marker both rules match. */
+	/** The `body CONTAINS` marker the rule matches. */
 	marker: string;
 	services: string[];
 	total: number;
-	totalV1: number;
 }
 
 /** 25 services yields a multi-page timeline, which is what pagination needs. */
@@ -129,9 +126,6 @@ const RESOLVED_HISTORY_SERVICES = 3;
 /** 2 hosts fit one page and carry no related-logs links. */
 const METRICS_HISTORY_HOSTS = ['host-0', 'host-1'];
 const TRACES_HISTORY_SERVICES = 3;
-
-/** Team label for the v1 rule, so its header labels row is non-empty. */
-export const V1_RULE_TEAM_LABEL = 'e2e-platform';
 
 export const withAlertHistory: WorkerLayer<{ alertHistory: AlertHistorySeed }> =
 	seeded(
@@ -152,20 +146,10 @@ export const withAlertHistory: WorkerLayer<{ alertHistory: AlertHistorySeed }> =
 				name: `e2e-ah-rule-v2-${stamp}`,
 				marker,
 				channels: [channel.name],
-				schema: 'v2',
-			});
-			const ruleIdV1 = await seed.logsRule({
-				name: `e2e-ah-rule-v1-${stamp}`,
-				marker,
-				channels: [channel.name],
-				schema: 'v1',
-				extraLabels: { team: V1_RULE_TEAM_LABEL },
 			});
 
 			await history.waitForEntries(ruleId, { min: LOGS_HISTORY_SERVICES });
-			await history.waitForEntries(ruleIdV1, { min: LOGS_HISTORY_SERVICES });
 			await seed.setDisabled(ruleId, true);
-			await seed.setDisabled(ruleIdV1, true);
 
 			const total = await history.readTotal(ruleId);
 			if (total !== LOGS_HISTORY_SERVICES) {
@@ -176,13 +160,11 @@ export const withAlertHistory: WorkerLayer<{ alertHistory: AlertHistorySeed }> =
 
 			return {
 				ruleId,
-				ruleIdV1,
 				channelName: channel.name,
 				marker,
 				services,
 				total,
-				totalV1: await history.readTotal(ruleIdV1),
-				ruleIds: [ruleId, ruleIdV1],
+				ruleIds: [ruleId],
 				channelId: channel.id,
 			};
 		},
@@ -413,14 +395,10 @@ export interface OwnedRules {
 	 */
 	logs(options: {
 		name: string;
-		schema?: 'v1' | 'v2';
 		marker?: string;
 		severity?: string;
 		extraLabels?: Record<string, string>;
 		evalWindow?: string;
-		target?: number;
-		op?: string;
-		matchType?: string;
 	}): Promise<string>;
 	/**
 	 * Track a rule the *app* created (Clone) so teardown removes it
@@ -466,13 +444,12 @@ export const withOwnedRules: Layer<{ ownedRules: OwnedRules }> = ((
 						}),
 					),
 
-				logs: ({ name, schema = 'v2', marker, ...overrides }) =>
+				logs: ({ name, marker, ...overrides }) =>
 					create((page) =>
 						alertsDriver(page).seed.logsRule({
 							name,
 							marker: marker ?? `e2e alert never seeded ${name}`,
 							channels: [alertChannel.name],
-							schema,
 							...overrides,
 						}),
 					),

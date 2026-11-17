@@ -212,6 +212,14 @@ func (q *querier) buildQueries(
 		}
 
 		switch query.Type {
+		case qbtypes.QueryTypeFormula:
+			// the querier evaluates a formula after its queries run, so a bad
+			// having must fail here, before they run
+			if formula, ok := query.Spec.(qbtypes.QueryBuilderFormula); ok && formula.Having != nil && strings.TrimSpace(formula.Having.Expression) != "" {
+				if _, err := querybuilder.CompileFormulaHaving(formula.Name, formula.Having.Expression); err != nil {
+					return nil, nil, err
+				}
+			}
 		case qbtypes.QueryTypePromQL:
 			promQuery, ok := query.Spec.(qbtypes.PromQuery)
 			if !ok {
@@ -249,27 +257,30 @@ func (q *querier) buildQueries(
 			if !ok {
 				return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid AI builder query spec %T", query.Spec)
 			}
+			requestType := requestTypeForQuery(req.RequestType, spec.Disabled)
 			spec.ShiftBy = extractShiftFromBuilderQuery(spec)
-			timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
-			bq := newBuilderQuery(q.logger, q.telemetryStore, orgID, q.aiTraceStmtBuilder, query.Type, spec, timeRange, req.RequestType, tmplVars, builderConfig{})
+			timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, requestType)
+			bq := newBuilderQuery(q.logger, q.telemetryStore, orgID, q.aiTraceStmtBuilder, query.Type, spec, timeRange, requestType, tmplVars, builderConfig{})
 			queries[spec.Name] = bq
 			steps[spec.Name] = spec.StepInterval
 		case qbtypes.QueryTypeBuilder:
 			switch spec := query.Spec.(type) {
 			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				requestType := requestTypeForQuery(req.RequestType, spec.Disabled)
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
-				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
-				bq := newBuilderQuery(q.logger, q.telemetryStore, orgID, q.traceStmtBuilder, query.Type, spec, timeRange, req.RequestType, tmplVars, builderConfig{})
+				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, requestType)
+				bq := newBuilderQuery(q.logger, q.telemetryStore, orgID, q.traceStmtBuilder, query.Type, spec, timeRange, requestType, tmplVars, builderConfig{})
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				requestType := requestTypeForQuery(req.RequestType, spec.Disabled)
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
-				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
+				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, requestType)
 				stmtBuilder := q.logStmtBuilder
 				if spec.Source == telemetrytypes.SourceAudit {
 					stmtBuilder = q.auditStmtBuilder
 				}
-				bq := newBuilderQuery(q.logger, q.telemetryStore, orgID, stmtBuilder, query.Type, spec, timeRange, req.RequestType, tmplVars, q.builderConfig)
+				bq := newBuilderQuery(q.logger, q.telemetryStore, orgID, stmtBuilder, query.Type, spec, timeRange, requestType, tmplVars, q.builderConfig)
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
@@ -280,13 +291,7 @@ func (q *querier) buildQueries(
 				if missingMetricQuerySet[spec.Name] {
 					continue
 				}
-				requestType := req.RequestType
-				if requestType.CountsIntoBuckets() && spec.Disabled {
-					// A disabled query in a heatmap request feeds a formula, and the
-					// formula converts time series into heatmap data, so its inputs
-					// run as time series queries.
-					requestType = qbtypes.RequestTypeTimeSeries
-				}
+				requestType := requestTypeForQuery(req.RequestType, spec.Disabled)
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, requestType)
 				var bq *builderQuery[qbtypes.MetricAggregation]
@@ -922,32 +927,25 @@ func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, 
 		copy(argsCopy, qt.args)
 		return newchSQLQuery(q.logger, q.telemetryStore, queryCopy, argsCopy, timeRange, qt.kind, qt.vars)
 
+	// A builder query's window was moved into the shifted clock when it was
+	// built, so a range taken from that window must not be shifted again.
 	case *builderQuery[qbtypes.TraceAggregation]:
-		specCopy := qt.spec.Copy()
-		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
-		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
 		// reuse the original query's statement builder and type so an AI query
 		// keeps its AI builder and cache key
-		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, qt.builderConfig)
+		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, qt.stmtBuilder, qt.queryType, qt.spec.Copy(), timeRange, qt.kind, qt.variables, qt.builderConfig)
 
 	case *builderQuery[qbtypes.LogAggregation]:
-		specCopy := qt.spec.Copy()
-		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
-		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
 		shiftStmtBuilder := q.logStmtBuilder
 		if qt.spec.Source == telemetrytypes.SourceAudit {
 			shiftStmtBuilder = q.auditStmtBuilder
 		}
-		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, shiftStmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, q.builderConfig)
+		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, shiftStmtBuilder, qt.queryType, qt.spec.Copy(), timeRange, qt.kind, qt.variables, q.builderConfig)
 
 	case *builderQuery[qbtypes.MetricAggregation]:
-		specCopy := qt.spec.Copy()
-		specCopy.ShiftBy = extractShiftFromBuilderQuery(specCopy)
-		adjustedTimeRange := adjustTimeRangeForShift(specCopy, timeRange, qt.kind)
 		if qt.spec.Source == telemetrytypes.SourceMeter {
-			return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, q.meterStmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, builderConfig{})
+			return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, q.meterStmtBuilder, qt.queryType, qt.spec.Copy(), timeRange, qt.kind, qt.variables, builderConfig{})
 		}
-		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, q.metricStmtBuilder, qt.queryType, specCopy, adjustedTimeRange, qt.kind, qt.variables, builderConfig{})
+		return newBuilderQuery(q.logger, q.telemetryStore, qt.orgID, q.metricStmtBuilder, qt.queryType, qt.spec.Copy(), timeRange, qt.kind, qt.variables, builderConfig{})
 	case *traceOperatorQuery:
 		specCopy := qt.spec.Copy()
 		return &traceOperatorQuery{
@@ -1193,6 +1191,17 @@ func clampStep(qe *qbtypes.QueryEnvelope, recommended, min uint64, warnings *[]s
 		*warnings = append(*warnings, fmt.Sprintf(intervalWarn, qe.GetQueryName(), step.Seconds(), newStep.Seconds()))
 		qe.SetStepInterval(newStep)
 	}
+}
+
+// requestTypeForQuery downgrades a disabled query in a heatmap request to a
+// time series one. A disabled query feeds a formula rather than the chart, and
+// the formula is what turns time series into cells, so its inputs state no
+// bucket axis of their own.
+func requestTypeForQuery(requestType qbtypes.RequestType, disabled bool) qbtypes.RequestType {
+	if requestType.CountsIntoBuckets() && disabled {
+		return qbtypes.RequestTypeTimeSeries
+	}
+	return requestType
 }
 
 // extractShiftFromBuilderQuery extracts the shift value from timeShift function if present.

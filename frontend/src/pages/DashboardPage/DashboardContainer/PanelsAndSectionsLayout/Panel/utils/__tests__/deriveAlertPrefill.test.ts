@@ -2,7 +2,7 @@ import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schem
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
-} from 'container/CreateAlertV2/context/types';
+} from 'container/CreateAlert/context/types';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ReduceOperators } from 'types/common/queryBuilder';
 

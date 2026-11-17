@@ -19,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1270,4 +1271,120 @@ func newSkipResourceFingerprintLogsBuilder(
 		telemetryStore,
 		statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: skipEnable, Threshold: threshold}},
 	)
+}
+
+func TestStatementBuilderHeatmap(t *testing.T) {
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	startTs := uint64(releaseTime.UnixNano()) + uint64(24*time.Hour.Nanoseconds())
+	endTs := uint64(releaseTime.UnixNano()) + uint64(48*time.Hour.Nanoseconds())
+
+	testCases := []struct {
+		name        string
+		requestType qbtypes.RequestType
+		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		expected    qbtypes.Statement
+	}{
+		{
+			name:        "AttributeField_LogAxis_RequiresField",
+			requestType: qbtypes.RequestTypeHeatmap,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{{Expression: "duration"}},
+				Filter:       &qbtypes.Filter{Expression: "service.name = 'cartservice'"},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), ifNull(multiIf(mapContains(attributes_number, 'duration'), toFloat64(attributes_number['duration']), NULL), 0) AS __bucket_value SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value <= 2.3283064365386963e-10, toFloat64(0), __bucket_value > 1.8446744073709552e+19, toFloat64(1.8446744073709552e+19), pow(2, (ceil(log2(__bucket_value) * 16) - 1) / 16)) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value <= 2.3283064365386963e-10, 2.3283064365386963e-10, __bucket_value > 1.8446744073709552e+19, toFloat64('+Inf'), pow(2, ceil(log2(__bucket_value) * 16) / 16)) AS __bucket_max, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND mapContains(attributes_number, 'duration') AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, __bucket_min, __bucket_max",
+				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1705397400), uint64(1705485600), "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600)},
+			},
+		},
+		{
+			name:        "AttributeField_GroupByWithLimit_LinearAxis_RequiresFieldInLimit",
+			requestType: qbtypes.RequestTypeHeatmap,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:        telemetrytypes.SignalLogs,
+				StepInterval:  qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations:  []qbtypes.LogAggregation{{Expression: "http.status_code"}},
+				GroupBy:       []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}}},
+				Limit:         5,
+				BucketOptions: &qbtypes.BucketOptions{Kind: qbtypes.BucketsKindLinear, Spec: qbtypes.LinearBucketsSpec{MaxValue: 600, NumBuckets: 6}},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH ifNull(multiIf(mapContains(attributes_number, 'http.status_code'), toFloat64(attributes_number['http.status_code']), NULL), 0) AS __bucket_value, __limit_cte AS (SELECT toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE mapContains(attributes_number, 'http.status_code') AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL)) AS `__GROUP_BY_KEY_0_service.name`, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value > 600, toFloat64(600), (least(greatest(ceil(__bucket_value * 6 / 600), 1), 6) - 1) * 600 / 6) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value > 600, toFloat64('+Inf'), least(greatest(ceil(__bucket_value * 6 / 600), 1), 6) * 600 / 6) AS __bucket_max, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE mapContains(attributes_number, 'http.status_code') AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, __bucket_min, __bucket_max",
+				Args:  []any{"1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600), 5, "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600)},
+			},
+		},
+		{
+			name:        "QualifiedField_OrderedByAggregation_OrdersByCount",
+			requestType: qbtypes.RequestTypeHeatmap,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{{Expression: "attribute.amount"}},
+				GroupBy:      []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}}},
+				Limit:        3,
+				Order: []qbtypes.OrderBy{{
+					Key:       qbtypes.OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "amount", FieldContext: telemetrytypes.FieldContextAttribute}},
+					Direction: qbtypes.OrderDirectionAsc,
+				}},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH ifNull(multiIf(mapContains(attributes_number, 'amount'), toFloat64(attributes_number['amount']), NULL), 0) AS __bucket_value, __limit_cte AS (SELECT toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL)) AS `__GROUP_BY_KEY_0_service.name`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE mapContains(attributes_number, 'amount') AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `__GROUP_BY_KEY_0_service.name` ORDER BY __result_0 asc LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL)) AS `__GROUP_BY_KEY_0_service.name`, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value <= 2.3283064365386963e-10, toFloat64(0), __bucket_value > 1.8446744073709552e+19, toFloat64(1.8446744073709552e+19), pow(2, (ceil(log2(__bucket_value) * 16) - 1) / 16)) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value <= 2.3283064365386963e-10, 2.3283064365386963e-10, __bucket_value > 1.8446744073709552e+19, toFloat64('+Inf'), pow(2, ceil(log2(__bucket_value) * 16) / 16)) AS __bucket_max, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE mapContains(attributes_number, 'amount') AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`__GROUP_BY_KEY_0_service.name`) GLOBAL IN (SELECT `__GROUP_BY_KEY_0_service.name` FROM __limit_cte) GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, __bucket_min, __bucket_max ORDER BY ts desc",
+				Args:  []any{"1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600), 3, "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600)},
+			},
+		},
+		{
+			name:        "IntrinsicColumn_NoExists",
+			requestType: qbtypes.RequestTypeHeatmap,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{{Expression: "log.severity_number"}},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH ifNull(toFloat64(severity_number), 0) AS __bucket_value SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value <= 2.3283064365386963e-10, toFloat64(0), __bucket_value > 1.8446744073709552e+19, toFloat64(1.8446744073709552e+19), pow(2, (ceil(log2(__bucket_value) * 16) - 1) / 16)) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value <= 2.3283064365386963e-10, 2.3283064365386963e-10, __bucket_value > 1.8446744073709552e+19, toFloat64('+Inf'), pow(2, ceil(log2(__bucket_value) * 16) / 16)) AS __bucket_max, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, __bucket_min, __bucket_max",
+				Args:  []any{"1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600)},
+			},
+		},
+		{
+			name:        "Distribution_AttributeField_SameStatementAsHeatmap",
+			requestType: qbtypes.RequestTypeDistribution,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{{Expression: "duration"}},
+				Filter:       &qbtypes.Filter{Expression: "service.name = 'cartservice'"},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ? GROUP BY fingerprint), ifNull(multiIf(mapContains(attributes_number, 'duration'), toFloat64(attributes_number['duration']), NULL), 0) AS __bucket_value SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, multiIf(__bucket_value <= 0, toFloat64('-Inf'), __bucket_value <= 2.3283064365386963e-10, toFloat64(0), __bucket_value > 1.8446744073709552e+19, toFloat64(1.8446744073709552e+19), pow(2, (ceil(log2(__bucket_value) * 16) - 1) / 16)) AS __bucket_min, multiIf(__bucket_value <= 0, toFloat64(0), __bucket_value <= 2.3283064365386963e-10, 2.3283064365386963e-10, __bucket_value > 1.8446744073709552e+19, toFloat64('+Inf'), pow(2, ceil(log2(__bucket_value) * 16) / 16)) AS __bucket_max, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND mapContains(attributes_number, 'duration') AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, __bucket_min, __bucket_max",
+				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1705397400), uint64(1705485600), "1705399200000000000", uint64(1705397400), "1705485600000000000", uint64(1705485600)},
+			},
+		},
+	}
+
+	fl := flaggertest.New(t)
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.KeysMap = logstelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
+	storage := logstelemetryschema.NewStorage()
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalLogs)
+	statementBuilder := NewLogQueryStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		mockMetadataStore,
+		storage,
+		aggExprRewriter,
+		logstelemetryschema.DefaultFullTextColumn,
+		fl,
+		nil,
+		statementbuilder.Config{SkipResourceFingerprint: statementbuilder.SkipResourceFingerprint{Enabled: false, Threshold: 100000}},
+	)
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			statement, err := statementBuilder.Build(context.Background(), valuer.UUID{}, startTs, endTs, testCase.requestType, testCase.query, nil)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected.Query, statement.Query)
+			assert.Equal(t, testCase.expected.Args, statement.Args)
+			assert.Equal(t, testCase.expected.Warnings, statement.Warnings)
+		})
+	}
 }
