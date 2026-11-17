@@ -7,7 +7,7 @@ from fixtures import types
 from fixtures.signoz import create_signoz
 
 
-@pytest.fixture(name="signoz", scope="package")
+@pytest.fixture(name="signoz_clickhouse_query_profile", scope="package")
 def signoz_clickhouse_query_profile(
     network: Network,
     migrator: types.Operation,  # pylint: disable=unused-argument

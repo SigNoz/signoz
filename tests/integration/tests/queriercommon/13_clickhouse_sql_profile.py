@@ -9,14 +9,14 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 
 
 def test_clickhouse_sql_runs_with_profile(
-    signoz: types.SigNoz,
+    signoz_clickhouse_query_profile: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     response = querier.make_query_request(
-        signoz,
+        signoz_clickhouse_query_profile,
         get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD),
         int((now - timedelta(hours=1)).timestamp() * 1000),
         int(now.timestamp() * 1000),
@@ -38,7 +38,7 @@ def test_clickhouse_sql_runs_with_profile(
     ids=["above_max", "zero_is_unlimited", "switch_profile_then_raise"],
 )
 def test_clickhouse_sql_settings_cannot_escape_profile(
-    signoz: types.SigNoz,
+    signoz_clickhouse_query_profile: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     settings: str,
@@ -46,7 +46,7 @@ def test_clickhouse_sql_settings_cannot_escape_profile(
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     response = querier.make_query_request(
-        signoz,
+        signoz_clickhouse_query_profile,
         get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD),
         int((now - timedelta(hours=1)).timestamp() * 1000),
         int(now.timestamp() * 1000),
