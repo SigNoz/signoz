@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/ClickHouse/clickhouse-go/v2"
 )
 
 type QueryEvent struct {
@@ -12,6 +14,9 @@ type QueryEvent struct {
 	StartTime time.Time
 	Operation string
 	Err       error
+
+	// Settings are sent with the query. Hooks add to them; the store sends them once the hooks have run.
+	Settings clickhouse.Settings
 }
 
 func NewQueryEvent(query string, args []any) *QueryEvent {
@@ -20,6 +25,7 @@ func NewQueryEvent(query string, args []any) *QueryEvent {
 		QueryArgs: args,
 		StartTime: time.Now(),
 		Operation: queryOperation(query),
+		Settings:  clickhouse.Settings{},
 	}
 }
 

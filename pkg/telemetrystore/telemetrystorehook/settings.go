@@ -3,7 +3,6 @@ package telemetrystorehook
 import (
 	"context"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -25,16 +24,10 @@ func NewSettings(ctx context.Context, providerSettings factory.ProviderSettings,
 	}, nil
 }
 
-func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent) context.Context {
-	settings := clickhouse.Settings{}
+func (h *provider) BeforeQuery(ctx context.Context, event *telemetrystore.QueryEvent) context.Context {
+	settings := event.Settings
 
 	settings["log_comment"] = ctxtypes.CommentFromContext(ctx).String()
-
-	if profile := telemetrystore.ProfileFromContext(ctx); profile != "" {
-		// The server rejects profile as a plain setting over the native protocol but applies it as a custom
-		// one. Every query sends it, so a SETTINGS clause in the query cannot escape its constraints.
-		settings["profile"] = clickhouse.CustomSetting{Value: profile}
-	}
 
 	if ctx.Value("enforce_max_result_rows") != nil {
 		settings["max_result_rows"] = h.settings.MaxResultRows
@@ -78,7 +71,6 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
-	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
 	return ctx
 }
 
