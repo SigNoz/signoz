@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"maps"
+	"regexp"
 	"slices"
 	"strconv"
 
@@ -11,7 +12,6 @@ import (
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/go-playground/validator/v10"
 	"github.com/prometheus/common/model"
 	"github.com/swaggest/jsonschema-go"
 )
@@ -295,6 +295,9 @@ type TopListBarColor string
 
 const DefaultTopListBarColor TopListBarColor = "#4E74F8"
 
+// Same forms as go-playground/validator's hexcolor: #RGB, #RGBA, #RRGGBB, #RRGGBBAA.
+var hexColorRegex = regexp.MustCompile(`^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$`)
+
 func (c TopListBarColor) ValueOrDefault() string {
 	if c == "" {
 		return string(DefaultTopListBarColor)
@@ -311,7 +314,7 @@ func (c *TopListBarColor) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid barColor: must be a hex color string")
 	}
-	if err := validator.New().Var(v, "hexcolor"); err != nil {
+	if !hexColorRegex.MatchString(v) {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid barColor %q: must be a hex color such as #4E74F8", v)
 	}
 	*c = TopListBarColor(v)
