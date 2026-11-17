@@ -9,6 +9,7 @@ import { expectListPage } from './list';
 import { findPlot } from './plot';
 import { expectNumber, expectPie, expectTable } from './scalars';
 import { expectText } from './text';
+import { expectsTopListWarning, expectTopList } from './topList';
 
 const expectNoData = async (
 	root: HTMLElement,
@@ -35,6 +36,7 @@ const KIND_EXPECTATIONS: Record<
 	Number: expectNumber,
 	Table: expectTable,
 	List: (root, args) => expectListPage(root, args.listRows, 0),
+	TopList: expectTopList,
 };
 
 /**
@@ -73,4 +75,7 @@ export const expectPanel = async (
 			within(root).queryByTestId('panel-status-warning'),
 		).not.toBeInTheDocument();
 	}
+	await expect(
+		Boolean(within(root).queryByTestId('panel-status-data-warning')),
+	).toBe(expectsTopListWarning(args));
 };

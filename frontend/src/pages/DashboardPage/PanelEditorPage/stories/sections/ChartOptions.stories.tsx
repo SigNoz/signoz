@@ -171,3 +171,13 @@ export const TextAppearance: Story = {
 		await screen.findByTestId('text-layout-align');
 	},
 };
+
+/** A top list's appearance: rank, share of total and bar colour. */
+export const TopListAppearance: Story = {
+	args: { panel: 'new', newPanelKind: 'top-list' },
+	play: async () => {
+		await expandSection('Appearance');
+		await screen.findByTestId('panel-editor-v2-show-rank');
+		await screen.findByTestId('panel-editor-v2-bar-color');
+	},
+};
