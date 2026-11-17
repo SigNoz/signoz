@@ -8,7 +8,7 @@ import {
 	useUpdateMyUserV2,
 } from 'api/generated/services/users';
 import { toast } from '@signozhq/ui/sonner';
-import { Check, FileTerminal, Mail, User } from '@signozhq/icons';
+import { Check, FileTerminal, Mail } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -129,12 +129,8 @@ function UserInfo(): JSX.Element {
 				</div>
 
 				<div className="user-info-subsection">
-					<div className="user-email">
+					<div className="user-email" data-testid="user-info-email">
 						<Mail size={16} /> {user.email}
-					</div>
-
-					<div className="user-role">
-						<User size={16} /> {user.role.toLowerCase()}
 					</div>
 				</div>
 			</div>
