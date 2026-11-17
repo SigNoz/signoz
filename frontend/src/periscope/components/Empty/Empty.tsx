@@ -2,7 +2,12 @@ import DefaultEmptyImage from './DefaultEmptyImage';
 import SimpleEmptyImage from './SimpleEmptyImage';
 import styles from './Empty.module.scss';
 import type { EmptyProps } from './types';
-import { getEmptyClassName, getImageAlt, resolveDescription } from './utils';
+import {
+	getEmptyClassName,
+	getImageAlt,
+	isSimpleImage,
+	resolveDescription,
+} from './utils';
 
 const PRESENTED_IMAGE_DEFAULT = <DefaultEmptyImage />;
 const PRESENTED_IMAGE_SIMPLE = <SimpleEmptyImage />;
@@ -21,7 +26,7 @@ function Empty({
 
 	return (
 		<div
-			className={getEmptyClassName(className, image === PRESENTED_IMAGE_SIMPLE)}
+			className={getEmptyClassName(className, isSimpleImage(image))}
 			style={style}
 			{...rest}
 		>

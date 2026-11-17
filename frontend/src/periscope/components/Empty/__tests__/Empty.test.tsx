@@ -1,3 +1,4 @@
+import { Empty as AntdEmpty } from 'antd';
 import { render, screen } from 'tests/test-utils';
 
 import Empty from '../Empty';
@@ -53,6 +54,14 @@ describe('Empty', () => {
 		expect(
 			el.querySelectorAll('svg [stroke], ellipse[fill], path[fill]'),
 		).toHaveLength(0);
+	});
+
+	it("switches to the normal variant for antd's simple image", () => {
+		render(
+			<Empty data-testid={TEST_ID} image={AntdEmpty.PRESENTED_IMAGE_SIMPLE} />,
+		);
+
+		expect(screen.getByTestId(TEST_ID).className).toBe('empty normal');
 	});
 
 	it('keeps the default variant for a custom image node', () => {

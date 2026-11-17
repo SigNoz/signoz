@@ -27,6 +27,8 @@ export interface SpaceItemProps {
 }
 
 export interface SpaceCompactProps extends HTMLAttributes<HTMLDivElement> {
+	/** Passed to antd children, which size themselves from it. */
+	size?: SpaceSizePreset;
 	direction?: SpaceDirection;
 	/** Fills the parent's width. */
 	block?: boolean;
