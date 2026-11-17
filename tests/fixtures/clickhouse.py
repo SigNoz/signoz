@@ -600,7 +600,7 @@ def check_query_log(
     return _check
 
 
-@pytest.fixture(name="clickhouse_settings_profile", scope="module")
+@pytest.fixture(name="clickhouse_settings_profile", scope="package")
 def clickhouse_settings_profile(
     clickhouse: types.TestContainerClickhouse,
 ) -> Generator[Callable[[str, str], None], Any]:
