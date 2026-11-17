@@ -1,9 +1,8 @@
 import { ReactElement } from 'react';
-import { renderHook, waitFor, act } from '@testing-library/react';
 import { useQueryClient } from 'react-query';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { AllTheProviders } from 'tests/test-utils';
+import { act, AllTheProviders, renderHook, waitFor } from 'tests/test-utils';
 import {
 	AUTHZ_CHECK_URL,
 	authzMockResponse,
@@ -357,14 +356,11 @@ describe('useAuthZ', () => {
 			wrapper,
 		});
 
-		await waitFor(
-			() => {
-				expect(result1.current.isLoading).toBe(false);
-				expect(result2.current.isLoading).toBe(false);
-				expect(result3.current.isLoading).toBe(false);
-			},
-			{ timeout: 200 },
-		);
+		await waitFor(() => {
+			expect(result1.current.isLoading).toBe(false);
+			expect(result2.current.isLoading).toBe(false);
+			expect(result3.current.isLoading).toBe(false);
+		});
 
 		expect(requestCount).toBe(1);
 		expect(receivedPayloads).toHaveLength(1);
@@ -421,17 +417,12 @@ describe('useAuthZ', () => {
 			wrapper,
 		});
 
-		await waitFor(
-			() => {
-				expect(result1.current.isLoading).toBe(false);
-			},
-			{ timeout: 200 },
-		);
+		await waitFor(() => {
+			expect(result1.current.isLoading).toBe(false);
+		});
 
 		expect(requestCount).toBe(1);
 		expect(receivedPayloads[0]).toHaveLength(1);
-
-		await new Promise((resolve) => setTimeout(resolve, 100));
 
 		const { result: result2 } = renderHook(() => useAuthZ([permission2]), {
 			wrapper,
@@ -441,13 +432,10 @@ describe('useAuthZ', () => {
 			wrapper,
 		});
 
-		await waitFor(
-			() => {
-				expect(result2.current.isLoading).toBe(false);
-				expect(result3.current.isLoading).toBe(false);
-			},
-			{ timeout: 200 },
-		);
+		await waitFor(() => {
+			expect(result2.current.isLoading).toBe(false);
+			expect(result3.current.isLoading).toBe(false);
+		});
 
 		expect(requestCount).toBe(2);
 		expect(receivedPayloads).toHaveLength(2);
@@ -526,30 +514,22 @@ describe('useAuthZ', () => {
 			wrapper,
 		});
 
-		await waitFor(
-			() => {
-				expect(result1.current.isLoading).toBe(false);
-			},
-			{ timeout: 200 },
-		);
+		await waitFor(() => {
+			expect(result1.current.isLoading).toBe(false);
+		});
 
 		expect(requestCount).toBe(1);
 		expect(result1.current.permissions).toStrictEqual({
 			[permission1]: { isGranted: true },
 		});
 
-		await new Promise((resolve) => setTimeout(resolve, 100));
-
 		const { result: result2 } = renderHook(() => useAuthZ([permission2]), {
 			wrapper,
 		});
 
-		await waitFor(
-			() => {
-				expect(result2.current.isLoading).toBe(false);
-			},
-			{ timeout: 200 },
-		);
+		await waitFor(() => {
+			expect(result2.current.isLoading).toBe(false);
+		});
 
 		expect(requestCount).toBe(2);
 		expect(result1.current.permissions).toStrictEqual({
