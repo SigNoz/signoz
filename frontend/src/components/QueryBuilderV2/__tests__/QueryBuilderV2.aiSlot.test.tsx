@@ -3,7 +3,6 @@ import {
 	initialQueryAIWithType,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { render, screen } from 'tests/test-utils';
 import type {
 	IBuilderQuery,
@@ -13,7 +12,6 @@ import { EQueryType } from 'types/common/dashboard';
 
 import { QueryBuilderV2 } from '../QueryBuilderV2';
 
-jest.mock('hooks/queryBuilder/useQueryBuilder');
 jest.mock('../QueryV2/QueryV2', () => ({
 	QueryV2: ({ query }: { query: IBuilderQuery }): JSX.Element => (
 		<div data-testid="query-v2">{query.queryName}</div>
@@ -21,21 +19,23 @@ jest.mock('../QueryV2/QueryV2', () => ({
 }));
 jest.mock('../QueryV2/QueryFooter/QueryFooter', () => (): null => null);
 
-const mockedUseQueryBuilder = jest.mocked(useQueryBuilder);
-
 function renderWith(currentQuery: Query): void {
-	mockedUseQueryBuilder.mockReturnValue({
-		currentQuery,
-		panelType: PANEL_TYPES.TIME_SERIES,
-		initialDataSource: null,
-		handleSetConfig: jest.fn(),
-		addNewBuilderQuery: jest.fn(),
-		addNewFormula: jest.fn(),
-		addTraceOperator: jest.fn(),
-		handleRunQuery: jest.fn(),
-	} as unknown as ReturnType<typeof useQueryBuilder>);
-
-	render(<QueryBuilderV2 panelType={PANEL_TYPES.TIME_SERIES} version="v3" />);
+	render(
+		<QueryBuilderV2 panelType={PANEL_TYPES.TIME_SERIES} version="v3" />,
+		undefined,
+		{
+			queryBuilderOverrides: {
+				currentQuery,
+				panelType: PANEL_TYPES.TIME_SERIES,
+				initialDataSource: null,
+				handleSetConfig: jest.fn(),
+				addNewBuilderQuery: jest.fn(),
+				addNewFormula: jest.fn(),
+				addTraceOperator: jest.fn(),
+				handleRunQuery: jest.fn(),
+			},
+		},
+	);
 }
 
 const builderWithQuery = (

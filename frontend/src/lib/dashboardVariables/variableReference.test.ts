@@ -1,3 +1,4 @@
+import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -168,8 +169,9 @@ describe('extractQueryTextStrings', () => {
 			builder: {
 				queryData: [
 					{
+						...initialQueryBuilderFormValues,
 						filter: { expression: 'env = $ignored' },
-					} as unknown as IBuilderQuery,
+					},
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
@@ -177,8 +179,9 @@ describe('extractQueryTextStrings', () => {
 			builder_ai_query: {
 				queryData: [
 					{
+						...initialQueryBuilderFormValues,
 						filter: { expression: 'service.name = $service' },
-					} as unknown as IBuilderQuery,
+					},
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
