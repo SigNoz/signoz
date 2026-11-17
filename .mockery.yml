@@ -24,14 +24,6 @@ packages:
       filename: "schema_metadata_store.go"
       structname: 'Mock{{.InterfaceName}}'
       pkgname: '{{.SrcPackageName}}test'
-  github.com/SigNoz/signoz/pkg/telemetrystore:
-    interfaces:
-      TelemetryStoreHook:
-    config:
-      dir: '{{.InterfaceDir}}/telemetrystorehooktest'
-      filename: "hook.go"
-      structname: 'Mock{{.InterfaceName}}'
-      pkgname: 'telemetrystorehooktest'
   github.com/SigNoz/signoz/pkg/tokenizer:
     config:
       all: true

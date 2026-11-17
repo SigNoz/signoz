@@ -10,11 +10,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 )
 
-var _ telemetrystore.TelemetryStoreProfileHook = (*provider)(nil)
-
 type provider struct {
 	settings telemetrystore.QuerySettings
-	profile  string
 }
 
 func NewSettingsFactory() factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
@@ -76,20 +73,8 @@ func (hook *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEv
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
-	if hook.profile != "" {
-		// The server rejects profile as a plain setting over the native protocol but applies it as a custom
-		// one. Every query sends it, so a SETTINGS clause in the query cannot escape its constraints.
-		settings["profile"] = clickhouse.CustomSetting{Value: hook.profile}
-	}
-
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
 	return ctx
-}
-
-func (hook *provider) WithProfile(profile string) telemetrystore.TelemetryStoreHook {
-	profiled := *hook
-	profiled.profile = profile
-	return &profiled
 }
 
 func (hook *provider) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {}

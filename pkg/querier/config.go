@@ -10,8 +10,8 @@ import (
 
 const DefaultMaxConcurrentQueries = 8
 
-// ClickHouseSQLProfile is the ClickHouse settings profile that user-written ClickHouse SQL queries run with,
-// once it is listed in telemetrystore.clickhouse.profiles.
+// ClickHouseSQLProfile is the telemetrystore.clickhouse.profiles entry that user-written ClickHouse SQL
+// queries run with, once it is in the config.
 const ClickHouseSQLProfile = "clickhouse_query"
 
 // Config represents the configuration for the querier.

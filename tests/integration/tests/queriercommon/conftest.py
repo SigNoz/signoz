@@ -16,12 +16,13 @@ def signoz_clickhouse_query_profile(
     sqlstore: types.TestContainerSQL,
     clickhouse: types.TestContainerClickhouse,
     clickhouse_settings_profile: Callable[[str, str], None],
+    clickhouse_user: Callable[[str, str, list[str]], str],
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.SigNoz:
     """
-    SigNoz whose clickhouse_sql queries run with the clickhouse_query profile, which must exist in
-    ClickHouse before any query runs.
+    SigNoz whose clickhouse_sql queries run as signoz_query, a user with the clickhouse_query
+    profile that can only read the default database.
     """
     clickhouse_settings_profile(
         "clickhouse_query",
@@ -39,6 +40,7 @@ def signoz_clickhouse_query_profile(
         "<max_partitions_to_read><min>1</min><max>2</max></max_partitions_to_read>"
         "</constraints>",
     )
+    dsn = clickhouse_user("signoz_query", "clickhouse_query", ["GRANT SELECT ON default.*"])
     return create_signoz(
         network=network,
         zeus=zeus,
@@ -49,6 +51,6 @@ def signoz_clickhouse_query_profile(
         pytestconfig=pytestconfig,
         cache_key="signoz-clickhouse-query-profile",
         env_overrides={
-            "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PROFILES": "clickhouse_query",
+            "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PROFILES_CLICKHOUSE__QUERY_DSN": dsn,
         },
     )
