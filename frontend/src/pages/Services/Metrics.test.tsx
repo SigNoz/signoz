@@ -11,25 +11,18 @@ describe('Services', () => {
 
 		expect(screen.getByTestId('resource-environment-filter')).toBeInTheDocument();
 
-		const application = screen.getByRole('columnheader', {
-			name: /application/i,
-		});
-		expect(application).toBeInTheDocument();
-
-		const p99 = screen.getByRole('columnheader', {
-			name: /p99 latency \(in ms\)/i,
-		});
-		expect(p99).toBeInTheDocument();
-
-		const errorRate = screen.getByRole('columnheader', {
-			name: /error rate \(% of total\)/i,
-		});
-		expect(errorRate).toBeInTheDocument();
-
-		const operationPerSecond = screen.getByRole('columnheader', {
-			name: /operations per second/i,
-		});
-		expect(operationPerSecond).toBeInTheDocument();
+		const columnHeaders = Array.from(
+			document.querySelectorAll('th'),
+			(header) => header.textContent,
+		);
+		expect(columnHeaders).toStrictEqual(
+			expect.arrayContaining([
+				expect.stringMatching(/application/i),
+				expect.stringMatching(/p99 latency \(in ms\)/i),
+				expect.stringMatching(/error rate \(% of total\)/i),
+				expect.stringMatching(/operations per second/i),
+			]),
+		);
 	});
 
 	// TODO: Fix this test
