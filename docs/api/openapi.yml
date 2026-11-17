@@ -11918,9 +11918,9 @@ components:
           - $ref: '#/components/schemas/RuletypesRuleType'
           description: 'The evaluation strategy: threshold_rule, promql_rule or anomaly_rule.'
         severities:
-          description: 'The severities the rule''s alerts carry: the severity label
-            when set, else each distinct threshold name in lowercase, ordered critical,
-            error, warning, info, then other names. Read-only.'
+          description: 'The severities the rule''s alerts carry: each distinct threshold
+            name in lowercase, ordered critical, error, warning, info, then other
+            names. Read-only.'
           items:
             type: string
           type: array

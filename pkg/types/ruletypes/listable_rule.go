@@ -21,7 +21,7 @@ type ListableRule struct {
 	RuleType    RuleType          `json:"ruleType" required:"true" description:"The evaluation strategy: threshold_rule, promql_rule or anomaly_rule."`
 	Disabled    bool              `json:"disabled" description:"Whether the rule is paused."`
 	Labels      map[string]string `json:"labels,omitempty" description:"The labels attached to alerts the rule fires."`
-	Severities  []string          `json:"severities" required:"true" nullable:"false" description:"The severities the rule's alerts carry: the severity label when set, else each distinct threshold name in lowercase, ordered critical, error, warning, info, then other names. Read-only."`
+	Severities  []string          `json:"severities" required:"true" nullable:"false" description:"The severities the rule's alerts carry: each distinct threshold name in lowercase, ordered critical, error, warning, info, then other names. Read-only."`
 	types.TimeAuditable
 	types.UserAuditable
 }
@@ -43,10 +43,6 @@ type storedRuleData struct {
 }
 
 func (data storedRuleData) extractSeverities() []string {
-	if severity, ok := data.Labels[LabelSeverityName]; ok {
-		return []string{severity}
-	}
-
 	severities := make([]string, 0)
 	if data.Condition.Thresholds != nil {
 		if basic, ok := data.Condition.Thresholds.Spec.(BasicRuleThresholds); ok {
