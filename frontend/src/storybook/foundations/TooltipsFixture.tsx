@@ -7,11 +7,13 @@ import type { ClientExportData } from '@/hooks/useExportData/useClientExport';
 import AuthZTooltip from '@/lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {
 	APIKeyCreatePermission,
-	RoleAttachWildcardPermission,
-	RoleDetachWildcardPermission,
 	SACreatePermission,
 	SAListPermission,
 } from '@/lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
+import {
+	RoleAttachWildcardPermission,
+	RoleDetachWildcardPermission,
+} from '@/lib/authz/hooks/useAuthZ/permissions/role.permissions';
 import Legend from '@/lib/uPlotV2/components/Legend/Legend';
 import { LegendPosition } from '@/lib/uPlotV2/components/types';
 import type { LegendItem } from '@/lib/uPlotV2/config/types';

@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useStore } from 'zustand';
 
@@ -61,34 +61,37 @@ export function QuerySearchV2Provider({
 			);
 	}, [urlExpression, initialExpression, store]);
 
-	// Back and Forward. Reads the browser's URL: after a write, nuqs can briefly
-	// report the value it replaced.
-	useEffect(() => {
-		const onPopState = (): void => {
-			isInitialized.current = true;
-			const urlValue = new URLSearchParams(window.location.search).get(
-				queryParamKey,
-			);
-			const expression = urlValue
-				? getUserExpressionFromCombined(initialExpression, urlValue)
-				: '';
-			// Another param changed; keep any text typed but not run.
-			if (expression === store.getState().committedExpression) {
-				return;
-			}
-			// Already in the URL, so the write below must not run for it.
-			lastCommittedRef.current = expression;
-			if (expression) {
-				store.getState().initializeFromUrl(expression);
-			} else {
-				store.getState().resetExpression();
-			}
-		};
-		window.addEventListener('popstate', onPopState);
-		return (): void => window.removeEventListener('popstate', onPopState);
+	// The URL owns the expression. Reads the browser's URL: after a write, nuqs
+	// can briefly report the value it replaced.
+	const followBrowserUrl = useCallback((): void => {
+		isInitialized.current = true;
+		const urlValue = new URLSearchParams(window.location.search).get(
+			queryParamKey,
+		);
+		const expression = urlValue
+			? getUserExpressionFromCombined(initialExpression, urlValue)
+			: '';
+		// Another param changed; keep any text typed but not run.
+		if (expression === store.getState().committedExpression) {
+			return;
+		}
+		// Already in the URL, so the write below must not run for it.
+		lastCommittedRef.current = expression;
+		if (expression) {
+			store.getState().initializeFromUrl(expression);
+		} else {
+			store.getState().resetExpression();
+		}
 	}, [queryParamKey, initialExpression, store]);
 
+	// Back and Forward.
+	useEffect(() => {
+		window.addEventListener('popstate', followBrowserUrl);
+		return (): void => window.removeEventListener('popstate', followBrowserUrl);
+	}, [followBrowserUrl]);
+
 	// Write only when the committed filter changes, never in reply to a URL change.
+	// Declared before the effect below, which can reset the filter this render holds.
 	useEffect(() => {
 		if (committedExpression === lastCommittedRef.current) {
 			return;
@@ -101,6 +104,24 @@ export function QuerySearchV2Provider({
 		}
 		void setUrlExpression(next);
 	}, [committedExpression, urlExpression, setUrlExpression]);
+
+	// Any other navigation. A provider can outlive the navigation away from its
+	// page (a route-driven tab keeps the leaving pane mounted until its animation
+	// ends), so a param that disappeared is followed, not restored.
+	const previousUrlExpression = useRef(urlExpression);
+	useEffect(() => {
+		if (urlExpression === previousUrlExpression.current) {
+			return;
+		}
+		previousUrlExpression.current = urlExpression;
+		const browserValue = new URLSearchParams(window.location.search).get(
+			queryParamKey,
+		);
+		if (urlExpression !== browserValue) {
+			return;
+		}
+		followBrowserUrl();
+	}, [urlExpression, queryParamKey, followBrowserUrl]);
 
 	useEffect(() => {
 		return (): void => {

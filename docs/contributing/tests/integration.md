@@ -124,11 +124,11 @@ tests/
 │       ├── alerts/
 │       │   ├── 01_*.py      # numbered suite files
 │       │   └── conftest.py  # optional suite-local fixtures
-│       ├── auditquerier/
 │       ├── cloudintegrations/
 │       ├── dashboard/
 │       ├── passwordauthn/
 │       ├── querier/
+│       ├── querieraudit/
 │       └── ...
 └── e2e/                     # Playwright suite (see docs/contributing/tests/e2e.md)
 ```
