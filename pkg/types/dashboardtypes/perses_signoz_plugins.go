@@ -377,13 +377,6 @@ func (spec *DistributionPanelSpec) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (spec *DistributionPanelSpec) validate() error {
-	if err := spec.Axes.X.validate(); err != nil {
-		return err
-	}
-	return spec.ChartAppearance.Percentiles.validate()
-}
-
 type DistributionAxes struct {
 	X DistributionXAxis `json:"x" description:"The bucket axis."`
 	Y DistributionYAxis `json:"y" description:"The count axis."`
@@ -393,6 +386,18 @@ type DistributionAxes struct {
 type DistributionXAxis struct {
 	Min *float64 `json:"min" description:"Buckets wholly below this value are hidden. Null shows them all."`
 	Max *float64 `json:"max" description:"Buckets wholly above this value are hidden. Null shows them all."`
+}
+
+func (axis *DistributionXAxis) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	type alias DistributionXAxis
+	var tmp alias
+	if err := dec.Decode(&tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid axes.x")
+	}
+	*axis = DistributionXAxis(tmp)
+	return axis.validate()
 }
 
 func (axis DistributionXAxis) validate() error {
@@ -418,7 +423,24 @@ type DistributionPercentiles struct {
 	Values  []float64 `json:"values" required:"true" description:"The percentiles to mark, each in (0, 100), at most 5, no duplicates. Defaults to [50, 90, 99]."`
 }
 
+// Decodes over the receiver to keep the defaults DistributionPanelSpec pre-fills.
+func (percentiles *DistributionPercentiles) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	type alias DistributionPercentiles
+	tmp := alias(*percentiles)
+	if err := dec.Decode(&tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid chartAppearance.percentiles")
+	}
+	*percentiles = DistributionPercentiles(tmp)
+	return percentiles.validate()
+}
+
 func (percentiles DistributionPercentiles) validate() error {
+	// Values starts at the defaults, so nil can only come from an explicit null.
+	if percentiles.Values == nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "chartAppearance.percentiles.values: must be a list, not null")
+	}
 	if len(percentiles.Values) > maxDistributionPercentiles {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "chartAppearance.percentiles.values: at most %d percentiles, got %d", maxDistributionPercentiles, len(percentiles.Values))
 	}

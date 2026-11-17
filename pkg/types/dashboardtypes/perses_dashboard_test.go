@@ -800,6 +800,21 @@ func TestDistributionPanelSpecRejections(t *testing.T) {
 			expectedMessage: "90 is listed more than once",
 		},
 		{
+			name:            "Percentiles_NullValues",
+			spec:            `{"chartAppearance": {"percentiles": {"values": null}}}`,
+			expectedMessage: "must be a list, not null",
+		},
+		{
+			name:            "Percentiles_UnknownField",
+			spec:            `{"chartAppearance": {"percentiles": {"show": true}}}`,
+			expectedMessage: "unknown field \"show\"",
+		},
+		{
+			name:            "XAxis_UnknownField",
+			spec:            `{"axes": {"x": {"softMin": 0}}}`,
+			expectedMessage: "unknown field \"softMin\"",
+		},
+		{
 			name:            "Percentiles_MoreThanFive",
 			spec:            `{"chartAppearance": {"percentiles": {"values": [10, 25, 50, 75, 90, 99]}}}`,
 			expectedMessage: "at most 5 percentiles",
