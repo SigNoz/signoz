@@ -30,6 +30,7 @@ var (
 	ErrCodeSettingsProfileNotFound   = errors.MustNewCode("settings_profile_not_found")
 	ErrCodeResultTooLarge            = errors.MustNewCode("result_too_large")
 	ErrCodeReadTooLarge              = errors.MustNewCode("read_too_large")
+	ErrCodeReadonlyMode              = errors.MustNewCode("readonly_mode")
 
 	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
 	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
@@ -130,6 +131,11 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 	chproto.ErrTooManyBytes: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
 			WithSuggestions("narrow the time range or add filters so the query reads less data")
+	},
+	// A write, or a change to the readonly setting, under a read-only settings profile.
+	chproto.ErrReadonly: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeReadonlyMode, "query not allowed in read-only mode: %s", ex.Message).
+			WithSuggestions("run only SELECT queries and remove readonly from the SETTINGS clause")
 	},
 	chproto.ErrThereIsNoProfile: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapNotFoundf(cause, ErrCodeSettingsProfileNotFound, "settings profile not found: %s", ex.Message)
