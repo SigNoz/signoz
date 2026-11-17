@@ -23,16 +23,12 @@ import { quickFiltersListResponse } from 'mocks-server/__mockdata__/customQuickF
 import type { AppState } from 'store/reducers';
 import type { Warning } from 'types/api';
 import type { ILogBody } from 'types/api/logs/log';
-import type { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
-import type { IGetAttributeSuggestionsSuccessResponse } from 'types/api/queryBuilder/getAttributeSuggestions';
 import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type {
 	MetricRangePayloadV5,
 	TelemetryFieldKey,
 	TimeSeries,
 } from 'types/api/v5/queryRange';
-import type { ListItem } from 'types/api/widgets/getQuery';
 
 import { dashboardsForUserResponse } from '@/storybook/msw/__story_mockdata__/dashboards';
 import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
@@ -220,53 +216,6 @@ export const logRowsResponse = (
 		{ warning },
 	);
 
-/**
- * The pipeline preview queries on `DEFAULT_ENTITY_VERSION`, so it reads its
- * sample logs off v3, where rows arrive as `list` and a count as a series.
- */
-export const logRowsV3Response = (
-	count: number,
-	severities: readonly LogSeverity[],
-	endMilli: number,
-): { status: string } & MetricRangePayloadV3 => ({
-	status: 'success',
-	data: {
-		resultType: '',
-		result: [
-			{
-				queryName: 'A',
-				series: null,
-				// `ListItem['data']` is the frontend's `ILog`, which carries fields the
-				// backend never sends.
-				list: logRows(count, severities, endMilli, false) as unknown as ListItem[],
-			},
-		],
-	},
-});
-
-export const logCountV3Response = (
-	value: number,
-	endMilli: number,
-): { status: string } & MetricRangePayloadV3 => ({
-	status: 'success',
-	data: {
-		resultType: '',
-		result: [
-			{
-				queryName: 'A',
-				list: null,
-				series: [
-					{
-						labels: {},
-						labelsArray: [],
-						values: [{ timestamp: endMilli, value: String(value) }],
-					},
-				],
-			},
-		],
-	},
-});
-
 /** Counts per severity, which the frequency chart stacks and the legend names. */
 export const logHistogramResponse = (
 	severities: readonly LogSeverity[],
@@ -445,26 +394,6 @@ export const attributeValuesResponse = (
 			searchText,
 		).map(String),
 		boolAttributeValues: null,
-	},
-});
-
-/**
- * What the query builder's search box offers while a filter is being typed. The
- * types are the v3 spelling of the same fields the v5 endpoints answer with.
- */
-export const filterSuggestionsResponse = (
-	searchText: string,
-): { status: string; data: IGetAttributeSuggestionsSuccessResponse } => ({
-	status: 'success',
-	data: {
-		attributes: LOG_FIELDS.filter((field) =>
-			field.name.includes(searchText.toLowerCase()),
-		).map((field) => ({
-			key: field.name,
-			dataType: field.fieldDataType === int64 ? DataTypes.Int64 : DataTypes.String,
-			type: field.fieldContext === resource ? 'resource' : 'tag',
-		})),
-		example_queries: [],
 	},
 });
 

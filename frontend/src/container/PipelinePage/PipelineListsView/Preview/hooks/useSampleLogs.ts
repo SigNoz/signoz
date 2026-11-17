@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import {
 	initialFilters,
 	initialQueriesMap,
@@ -50,7 +50,7 @@ const useSampleLogs = ({
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: timeInterval,
 		},
-		DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 	);
 
 	const { isFetching: isLoading, data } = response;
