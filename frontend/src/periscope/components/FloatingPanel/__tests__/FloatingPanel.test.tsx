@@ -52,6 +52,20 @@ describe('FloatingPanel', () => {
 			.mockImplementation(function offsetHeight(this: HTMLElement) {
 				return parseFloat(this.style.height) || 0;
 			});
+		// react-rnd offsets its position by this box on mount; jsdom's all-zero box doubles it.
+		jest
+			.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+			.mockImplementation(function getBoundingClientRect(this: HTMLElement) {
+				const [, x = '0', y = '0'] =
+					/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(this.style.transform) ??
+					[];
+				return new DOMRect(
+					Number(x),
+					Number(y),
+					this.offsetWidth,
+					this.offsetHeight,
+				);
+			});
 	});
 
 	afterEach(() => {
@@ -93,6 +107,41 @@ describe('FloatingPanel', () => {
 		});
 		expect(screen.getByTestId('panel-close')).toBeInTheDocument();
 		expect(screen.getByTestId('panel-composer')).toBeInTheDocument();
+	});
+
+	it('keeps the grabbed point under the pointer after pushing past an edge', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		setViewport(1280, 800);
+		render(
+			<FloatingPanel
+				isOpen
+				width={PANEL_WIDTH}
+				height={PANEL_HEIGHT}
+				defaultPosition={{ x: 400, y: 100 }}
+			>
+				<div className="floating-panel__drag-handle" data-testid="panel-handle" />
+			</FloatingPanel>,
+		);
+
+		// user-event only sees a move when `x`/`y` change, so they're set alongside `clientX`/`clientY`.
+		await user.pointer([
+			{
+				keys: '[MouseLeft>]',
+				target: screen.getByTestId('panel-handle'),
+				coords: { x: 450, y: 110, clientX: 450, clientY: 110 },
+			},
+			// 60px past the top edge, then back below where the grab started.
+			{ coords: { x: 450, y: -50, clientX: 450, clientY: -50 } },
+			{ coords: { x: 450, y: 160, clientX: 450, clientY: 160 } },
+			{ keys: '[/MouseLeft]' },
+		]);
+
+		expect(getPanelBox()).toStrictEqual({
+			x: 400,
+			y: 150,
+			width: PANEL_WIDTH,
+			height: PANEL_HEIGHT,
+		});
 	});
 
 	describe('avoid', () => {
@@ -151,23 +200,7 @@ describe('FloatingPanel', () => {
 			return { x, y };
 		}
 
-		beforeEach(() => {
-			setViewport(1280, 800);
-			// react-rnd offsets its position by this box on mount; jsdom's all-zero box doubles it.
-			jest
-				.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
-				.mockImplementation(function getBoundingClientRect(this: HTMLElement) {
-					const [, x = '0', y = '0'] =
-						/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(this.style.transform) ??
-						[];
-					return new DOMRect(
-						Number(x),
-						Number(y),
-						this.offsetWidth,
-						this.offsetHeight,
-					);
-				});
-		});
+		beforeEach(() => setViewport(1280, 800));
 
 		it('slides left of an obstacle while it shows, and back once it hides', () => {
 			const supportChat = createObstacle(SUPPORT_CHAT);

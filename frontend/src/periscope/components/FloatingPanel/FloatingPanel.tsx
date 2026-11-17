@@ -61,27 +61,9 @@ function FloatingPanel({
 				height,
 			}}
 			dragHandleClassName="floating-panel__drag-handle"
+			bounds="window"
 			minWidth={keepInViewport ? Math.min(minWidth, viewport.width) : minWidth}
 			minHeight={keepInViewport ? Math.min(minHeight, viewport.height) : minHeight}
-			onDrag={(_e, d): void | false => {
-				const HEADER_HEIGHT = 40;
-				// Top: don't allow header to go above viewport
-				if (d.y < 0) {
-					return false;
-				}
-				// Left: don't allow panel to go off-screen left
-				if (d.x < 0) {
-					return false;
-				}
-				// Bottom: only header needs to be visible
-				if (d.y > window.innerHeight - HEADER_HEIGHT) {
-					return false;
-				}
-				// Right: at least the close button (~40px) stays visible
-				if (d.x > window.innerWidth - 40) {
-					return false;
-				}
-			}}
 			className={`floating-panel ${className || ''}`}
 			enableResizing={enableResizing}
 		>
