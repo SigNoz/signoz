@@ -1069,7 +1069,7 @@ export function QueryBuilderProvider({
 		if (isExplorer) {
 			setCalledFromHandleRunQuery(true);
 		}
-		saveRecentQuery(currentQuery);
+		saveRecentQuery({ ...currentQuery, queryType });
 
 		const builder = getBuilderBySlotKey(currentQuery, builderSlotKey);
 		const currentQueryData = replaceBuilderBySlotKey(
