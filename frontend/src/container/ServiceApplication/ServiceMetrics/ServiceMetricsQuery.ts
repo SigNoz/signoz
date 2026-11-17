@@ -6,8 +6,6 @@ import {
 	WidgetKeys,
 } from 'container/MetricsApplication/constant';
 import { getQueryBuilderQuerieswithFormula } from 'container/MetricsApplication/MetricsPageQueries/MetricsPageQueriesFactory';
-import getStep from 'lib/getStep';
-import store from 'store';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -201,11 +199,6 @@ export const serviceMetricsQuery = (
 		expressions,
 		legendFormulas,
 		groupBy,
-		stepInterval: getStep({
-			end: store.getState().globalTime.maxTime,
-			inputFormat: 'ns',
-			start: store.getState().globalTime.minTime,
-		}),
 		dataSource,
 	});
 };
