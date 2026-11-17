@@ -644,6 +644,53 @@ def clickhouse_settings_profile(
         wait_for_profile(name, exists=False)
 
 
+@pytest.fixture(name="clickhouse_user", scope="package")
+def clickhouse_user(
+    clickhouse: types.TestContainerClickhouse,
+) -> Generator[Callable[[str, str, list[str]], str], Any]:
+    """
+    Yields create(name, profile, grants) that defines a user whose default settings profile is
+    profile, and returns its DSN on the docker network. Users are users.d files, like settings
+    profiles. They are removed on teardown.
+    """
+    container = docker.from_env().containers.get(clickhouse.container.id)
+    password = "password"
+    names: list[str] = []
+
+    def wait_for_user(name: str, exists: bool) -> None:
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            count = clickhouse.conn.query(
+                "SELECT count() FROM system.users WHERE name = {name:String}",
+                parameters={"name": name},
+            ).result_rows[0][0]
+            if (count == 1) == exists:
+                return
+            time.sleep(0.5)
+        raise TimeoutError(f"user {name} did not {'appear' if exists else 'disappear'}")
+
+    def create(name: str, profile: str, grants: list[str]) -> str:
+        queries = "".join(f"<query>{grant}</query>" for grant in grants)
+        body = (f"<clickhouse><users><{name}><password>{password}</password><profile>{profile}</profile><networks><ip>::/0</ip></networks><grants>{queries}</grants></{name}></users></clickhouse>").encode()
+        archive = io.BytesIO()
+        with tarfile.open(fileobj=archive, mode="w") as tar:
+            info = tarfile.TarInfo(f"user-{name}.xml")
+            info.size = len(body)
+            info.mode = 0o644
+            tar.addfile(info, io.BytesIO(body))
+        container.put_archive("/etc/clickhouse-server/users.d", archive.getvalue())
+        names.append(name)
+        wait_for_user(name, exists=True)
+        return f"tcp://{name}:{password}@{clickhouse.container.container_configs['9000'].address}:9000"
+
+    yield create
+
+    for name in names:
+        container.exec_run(["rm", "-f", f"/etc/clickhouse-server/users.d/user-{name}.xml"])
+    for name in names:
+        wait_for_user(name, exists=False)
+
+
 @pytest.fixture(name="clickhouse_partitioned_table", scope="package")
 def clickhouse_partitioned_table(
     clickhouse: types.TestContainerClickhouse,

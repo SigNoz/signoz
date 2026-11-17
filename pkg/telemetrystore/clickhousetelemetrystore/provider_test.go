@@ -1,7 +1,6 @@
 package clickhousetelemetrystore
 
 import (
-	"context"
 	"testing"
 
 	chproto "github.com/ClickHouse/ch-go/proto"
@@ -12,18 +11,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory/factorytest"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
-	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehooktest"
 )
 
 func TestCastError_ProfileErrors(t *testing.T) {
 	testCases := []struct {
-		name     string
-		code     chproto.Error
-		want     errors.Code
-		notFound bool
+		name      string
+		code      chproto.Error
+		want      errors.Code
+		notFound  bool
+		forbidden bool
 	}{
 		{name: "SettingConstraintViolation_SettingNotAllowed", code: chproto.ErrSettingConstraintViolation, want: ErrCodeSettingNotAllowed},
 		{name: "TooManyRowsOrBytes_ResultTooLarge", code: chproto.ErrTooManyRowsOrBytes, want: ErrCodeResultTooLarge},
@@ -31,6 +27,7 @@ func TestCastError_ProfileErrors(t *testing.T) {
 		{name: "TooManyBytes_ReadTooLarge", code: chproto.ErrTooManyBytes, want: ErrCodeReadTooLarge},
 		{name: "TooManyPartitions_ReadTooLarge", code: chproto.ErrTooManyPartitions, want: ErrCodeReadTooLarge},
 		{name: "Readonly_ReadonlyMode", code: chproto.ErrReadonly, want: ErrCodeReadonlyMode},
+		{name: "AccessDenied_AccessDenied", code: chproto.ErrAccessDenied, want: ErrCodeAccessDenied, forbidden: true},
 		{name: "ThereIsNoProfile_SettingsProfileNotFound", code: chproto.ErrThereIsNoProfile, want: ErrCodeSettingsProfileNotFound, notFound: true},
 	}
 
@@ -41,7 +38,8 @@ func TestCastError_ProfileErrors(t *testing.T) {
 			require.Error(t, err)
 			assert.True(t, errors.Asc(err, testCase.want), "got %v", err)
 			assert.Equal(t, testCase.notFound, errors.Ast(err, errors.TypeNotFound), "got %v", err)
-			assert.Equal(t, !testCase.notFound, errors.Ast(err, errors.TypeInvalidInput), "got %v", err)
+			assert.Equal(t, testCase.forbidden, errors.Ast(err, errors.TypeForbidden), "got %v", err)
+			assert.Equal(t, !testCase.notFound && !testCase.forbidden, errors.Ast(err, errors.TypeInvalidInput), "got %v", err)
 		})
 	}
 }
@@ -50,25 +48,21 @@ func TestProviderWithProfile(t *testing.T) {
 	conn, err := cmock.NewClickHouseWithQueryMatcher(&clickhouse.Options{}, sqlmock.QueryMatcherEqual)
 	require.NoError(t, err)
 	conn.ExpectClose()
-
-	settingsHook, err := telemetrystorehook.NewSettings(context.Background(), factorytest.NewSettings(), telemetrystore.Config{})
+	profileConn, err := cmock.NewClickHouseWithQueryMatcher(&clickhouse.Options{}, sqlmock.QueryMatcherEqual)
 	require.NoError(t, err)
-	otherHook := telemetrystorehooktest.NewMockTelemetryStoreHook(t)
+	profileConn.ExpectClose()
 
-	p := &provider{clickHouseConn: conn, cluster: "cluster", hooks: []telemetrystore.TelemetryStoreHook{settingsHook, otherHook}}
-	p.withProfiles([]string{"clickhouse_query"})
+	p := &provider{clickHouseConn: conn, cluster: "cluster"}
+	withProfiles(p, map[string]clickhouse.Conn{"clickhouse_query": profileConn})
 
 	profiled, ok := p.WithProfile("clickhouse_query").(*provider)
 	require.True(t, ok)
 	assert.NotSame(t, p, profiled)
 	assert.Equal(t, "clickhouse_query", profiled.profile)
-	assert.Same(t, p.clickHouseConn, profiled.clickHouseConn)
+	assert.Same(t, profileConn, profiled.clickHouseConn)
+	assert.Same(t, conn, p.clickHouseConn)
 	assert.Equal(t, "cluster", profiled.Cluster())
 	assert.Empty(t, p.profile)
-	require.Len(t, profiled.hooks, 2)
-	assert.Equal(t, settingsHook.(telemetrystore.TelemetryStoreProfileHook).WithProfile("clickhouse_query"), profiled.hooks[0])
-	assert.Same(t, otherHook, profiled.hooks[1])
-	assert.Same(t, settingsHook, p.hooks[0])
 
 	assert.Same(t, p, p.WithProfile("query_range"))
 	assert.Same(t, profiled, profiled.WithProfile("clickhouse_query"))
@@ -76,4 +70,5 @@ func TestProviderWithProfile(t *testing.T) {
 	require.NoError(t, profiled.Close())
 	require.NoError(t, p.Close())
 	assert.NoError(t, conn.ExpectationsWereMet())
+	assert.NoError(t, profileConn.ExpectationsWereMet())
 }

@@ -31,6 +31,7 @@ var (
 	ErrCodeResultTooLarge            = errors.MustNewCode("result_too_large")
 	ErrCodeReadTooLarge              = errors.MustNewCode("read_too_large")
 	ErrCodeReadonlyMode              = errors.MustNewCode("readonly_mode")
+	ErrCodeAccessDenied              = errors.MustNewCode("access_denied")
 
 	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
 	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
@@ -137,6 +138,11 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 		return errors.WrapInvalidInputf(cause, ErrCodeReadonlyMode, "query not allowed in read-only mode: %s", ex.Message).
 			WithSuggestions("run only SELECT queries and remove readonly from the SETTINGS clause")
 	},
+	// A query on a table outside the grants of the ClickHouse user it runs as.
+	chproto.ErrAccessDenied: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapForbiddenf(cause, ErrCodeAccessDenied, "query not allowed: %s", ex.Message).
+			WithSuggestions("query only the telemetry tables")
+	},
 	chproto.ErrThereIsNoProfile: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapNotFoundf(cause, ErrCodeSettingsProfileNotFound, "settings profile not found: %s", ex.Message)
 	},
@@ -151,7 +157,7 @@ type provider struct {
 	settings       factory.ScopedProviderSettings
 	clickHouseConn clickhouse.Conn
 	profile        string
-	profiles       map[string]telemetrystore.TelemetryStore
+	profiles       map[string]*provider
 	cluster        string
 	hooks          []telemetrystore.TelemetryStoreHook
 }
@@ -165,21 +171,17 @@ func NewFactory(hookFactories ...factory.ProviderFactory[telemetrystore.Telemetr
 func New(ctx context.Context, providerSettings factory.ProviderSettings, config telemetrystore.Config, hookFactories ...factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config]) (telemetrystore.TelemetryStore, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore")
 
-	options, err := clickhouse.ParseDSN(config.Clickhouse.DSN)
+	chConn, err := open(config.Clickhouse.DSN, config.Connection)
 	if err != nil {
 		return nil, err
 	}
-	options.MaxIdleConns = config.Connection.MaxIdleConns
-	options.MaxOpenConns = config.Connection.MaxOpenConns
-	options.DialTimeout = config.Connection.DialTimeout
-	// Read JSON columns natively: the driver mis-decodes JSON(max_dynamic_paths=0) columns without
-	// the flattened serialization, and reading them as a string collapses a key stored at both a
-	// scalar and an object path.
-	options.Settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
 
-	chConn, err := clickhouse.Open(options)
-	if err != nil {
-		return nil, err
+	profileConns := make(map[string]clickhouse.Conn, len(config.Clickhouse.Profiles))
+	for profile, profileConfig := range config.Clickhouse.Profiles {
+		profileConns[profile], err = open(profileConfig.DSN, config.Connection)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	hooks := make([]telemetrystore.TelemetryStoreHook, len(hookFactories))
@@ -215,26 +217,35 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		hooks:          hooks,
 	}
 
-	p.withProfiles(config.Clickhouse.Profiles)
+	withProfiles(p, profileConns)
 
 	return p, nil
 }
 
-// withProfiles gives every profile a copy of the provider that runs its queries with that profile over the
-// provider's pool.
-func (provider *provider) withProfiles(profiles []string) {
-	provider.profiles = make(map[string]telemetrystore.TelemetryStore, len(profiles))
-	for _, profile := range profiles {
-		profiled := *provider
+func open(dsn string, connection telemetrystore.ConnectionConfig) (clickhouse.Conn, error) {
+	options, err := clickhouse.ParseDSN(dsn)
+	if err != nil {
+		return nil, err
+	}
+	options.MaxIdleConns = connection.MaxIdleConns
+	options.MaxOpenConns = connection.MaxOpenConns
+	options.DialTimeout = connection.DialTimeout
+	// Read JSON columns natively: the driver mis-decodes JSON(max_dynamic_paths=0) columns without
+	// the flattened serialization, and reading them as a string collapses a key stored at both a
+	// scalar and an object path.
+	options.Settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
+
+	return clickhouse.Open(options)
+}
+
+// withProfiles gives every profile a copy of main that runs its queries over the profile's pool.
+func withProfiles(main *provider, conns map[string]clickhouse.Conn) {
+	main.profiles = make(map[string]*provider, len(conns))
+	for profile, conn := range conns {
+		profiled := *main
 		profiled.profile = profile
-		profiled.hooks = make([]telemetrystore.TelemetryStoreHook, len(provider.hooks))
-		for i, hook := range provider.hooks {
-			if profileHook, ok := hook.(telemetrystore.TelemetryStoreProfileHook); ok {
-				hook = profileHook.WithProfile(profile)
-			}
-			profiled.hooks[i] = hook
-		}
-		provider.profiles[profile] = &profiled
+		profiled.clickHouseConn = conn
+		main.profiles[profile] = &profiled
 	}
 }
 
@@ -265,12 +276,18 @@ func (provider *provider) Cluster() string {
 	return provider.cluster
 }
 
-// Close leaves the pool open for a profile store, which shares it with the store it was made from.
+// Close closes the profile pools with the main one. A profile store leaves its pool to the main store.
 func (provider *provider) Close() error {
 	if provider.profile != "" {
 		return nil
 	}
-	return provider.clickHouseConn.Close()
+
+	errs := make([]error, 0, len(provider.profiles)+1)
+	for _, profiled := range provider.profiles {
+		errs = append(errs, profiled.clickHouseConn.Close())
+	}
+	errs = append(errs, provider.clickHouseConn.Close())
+	return errors.Join(errs...)
 }
 
 func (provider *provider) Ping(ctx context.Context) error {

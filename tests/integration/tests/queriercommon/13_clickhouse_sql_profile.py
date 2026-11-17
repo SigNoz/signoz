@@ -20,12 +20,12 @@ def test_clickhouse_sql_runs_with_profile(
         get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD),
         int((now - timedelta(hours=1)).timestamp() * 1000),
         int(now.timestamp() * 1000),
-        [{"type": "clickhouse_sql", "spec": {"name": "A", "query": "SELECT toFloat64(getSetting('readonly')) AS readonly, toFloat64(getSetting('max_result_rows')) AS max_result_rows", "disabled": False}}],
+        [{"type": "clickhouse_sql", "spec": {"name": "A", "query": "SELECT toFloat64(currentUser() = 'signoz_query') AS user, toFloat64(getSetting('readonly')) AS readonly, toFloat64(getSetting('max_result_rows')) AS max_result_rows", "disabled": False}}],
         request_type=querier.RequestType.SCALAR,
     )
 
     assert response.status_code == HTTPStatus.OK, response.text
-    assert response.json()["data"]["data"]["results"][0]["data"][0] == [2, 100]
+    assert response.json()["data"]["data"]["results"][0]["data"][0] == [1, 2, 100]
 
 
 @pytest.mark.parametrize(
@@ -73,6 +73,26 @@ def test_clickhouse_sql_settings_cannot_escape_profile(
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     error = response.json()["error"]
     assert (error["code"], error["suggestions"]) == ("setting_not_allowed", ["remove the setting from the SETTINGS clause of the query"]), error
+
+
+def test_clickhouse_sql_switching_profile_keeps_limits(
+    signoz_clickhouse_query_profile: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+
+    response = querier.make_query_request(
+        signoz_clickhouse_query_profile,
+        get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD),
+        int((now - timedelta(hours=1)).timestamp() * 1000),
+        int(now.timestamp() * 1000),
+        [{"type": "clickhouse_sql", "spec": {"name": "A", "query": "SELECT toFloat64(getSetting('readonly')) AS readonly, toFloat64(getSetting('max_result_rows')) AS max_result_rows SETTINGS profile = 'default'", "disabled": False}}],
+        request_type=querier.RequestType.SCALAR,
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["data"]["results"][0]["data"][0] == [2, 100]
 
 
 RESULT_TOO_LARGE = "add a LIMIT, narrow the time range or select fewer columns"
@@ -171,9 +191,8 @@ def test_clickhouse_sql_lower_limit_in_settings_is_enforced(
     [
         "SELECT toFloat64(1) AS value SETTINGS readonly = 1",
         "SELECT toFloat64(1) AS value SETTINGS readonly = 0",
-        "CREATE TABLE default.integration_readonly_probe (x UInt8) ENGINE = Memory",
     ],
-    ids=["readonly_stricter", "readonly_lifted", "write"],
+    ids=["readonly_stricter", "readonly_lifted"],
 )
 def test_clickhouse_sql_readonly_profile_rejects(
     signoz_clickhouse_query_profile: types.SigNoz,
@@ -195,3 +214,33 @@ def test_clickhouse_sql_readonly_profile_rejects(
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
     error = response.json()["error"]
     assert (error["code"], error["suggestions"]) == ("readonly_mode", ["run only SELECT queries and remove readonly from the SETTINGS clause"]), error
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "SELECT toFloat64(count()) AS value FROM system.query_log",
+        "CREATE TABLE default.integration_readonly_probe (x UInt8) ENGINE = Memory",
+    ],
+    ids=["read_outside_grants", "write"],
+)
+def test_clickhouse_sql_outside_grants_is_denied(
+    signoz_clickhouse_query_profile: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    query: str,
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+
+    response = querier.make_query_request(
+        signoz_clickhouse_query_profile,
+        get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD),
+        int((now - timedelta(hours=1)).timestamp() * 1000),
+        int(now.timestamp() * 1000),
+        [{"type": "clickhouse_sql", "spec": {"name": "A", "query": query, "disabled": False}}],
+        request_type=querier.RequestType.SCALAR,
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.text
+    error = response.json()["error"]
+    assert (error["code"], error["suggestions"]) == ("access_denied", ["query only the telemetry tables"]), error
