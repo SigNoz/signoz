@@ -140,6 +140,7 @@ export interface Settings {
 		invite(rows: { email: string; role: string }[]): Promise<void>;
 		openMember(email: string): Promise<void>;
 		drawer(): Locator;
+		nameInput(): Locator;
 		roleSelect(): Locator;
 		deleteButton(): Locator;
 		setRoles(roles: string[]): Promise<void>;
@@ -460,6 +461,7 @@ export function settingsDriver(page: Page): Settings {
 				await expect(settings.members.drawer().getByText(email)).toBeVisible();
 			},
 			drawer: () => page.getByRole('dialog', { name: 'Member Details' }),
+			nameInput: () => page.getByPlaceholder('Enter name'),
 			roleSelect: () => selectById('member-role'),
 			deleteButton: () => page.getByTestId('member-delete-btn'),
 			setRoles: async (roles) => {
