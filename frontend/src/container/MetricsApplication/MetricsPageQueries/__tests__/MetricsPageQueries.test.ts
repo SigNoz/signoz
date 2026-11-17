@@ -163,4 +163,42 @@ describe('service details queries on v5', () => {
 			},
 		]);
 	});
+
+	it('leaves the metrics step to v5 on single and formula queries', () => {
+		const queries = [
+			...toV5Queries(
+				latency({
+					servicename: 'frontend',
+					tagFilterItems: [],
+					isSpanMetricEnable: true,
+					topLevelOperationsRoute: ['GET /'],
+				}),
+			),
+			...toV5Queries(
+				errorPercentage({
+					servicename: 'frontend',
+					tagFilterItems: [],
+					topLevelOperations: ['GET /'],
+				}),
+			),
+		].filter((query) => query.type === 'builder_query');
+
+		expect(
+			queries.map(
+				(query) => (query.spec as { stepInterval?: unknown }).stepInterval,
+			),
+		).toStrictEqual(Array(queries.length).fill(null));
+	});
+
+	it('keeps the card step on the traces latency', () => {
+		const [p50] = toV5Queries(
+			latency({
+				servicename: 'frontend',
+				tagFilterItems: [],
+				topLevelOperationsRoute: ['GET /'],
+			}),
+		);
+
+		expect((p50.spec as { stepInterval?: unknown }).stepInterval).toBe(60);
+	});
 });

@@ -48,6 +48,8 @@ export interface BuilderQuerieswithFormulaProps {
 		| MetrictypesComparisonSpaceAggregationParamDTO
 		| undefined
 	)[];
+	// v5 picks its own step when none is sent; v4 needs one
+	stepInterval?: number;
 	dataSource: DataSource;
 }
 

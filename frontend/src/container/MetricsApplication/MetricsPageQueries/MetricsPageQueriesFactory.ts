@@ -83,11 +83,16 @@ export const getQueryBuilderQueries = ({
 			groupBy,
 			aggregateAttribute: item,
 			legend: legends[index],
-			stepInterval: getStep({
-				end: store.getState().globalTime.maxTime,
-				inputFormat: 'ns',
-				start: store.getState().globalTime.minTime,
-			}),
+			// v5 sets the metrics step (multiples of 300s from 1 day up); its traces
+			// default is ~300 points, far denser than these cards
+			stepInterval:
+				dataSource === DataSource.METRICS
+					? null
+					: getStep({
+							end: store.getState().globalTime.maxTime,
+							inputFormat: 'ns',
+							start: store.getState().globalTime.minTime,
+						}),
 			filters: {
 				items: filterItems[index],
 				op: 'AND',
@@ -119,6 +124,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 	timeAggregateOperators,
 	spaceAggregateOperators,
 	comparisonSpaceAggregationParams = [],
+	stepInterval,
 	dataSource,
 }: BuilderQuerieswithFormulaProps): QueryBuilderData => ({
 	queryFormulas: expressions.map((expression, index) => ({
@@ -150,11 +156,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 			items: additionalItems[index],
 			op: 'AND',
 		},
-		stepInterval: getStep({
-			end: store.getState().globalTime.maxTime,
-			inputFormat: 'ns',
-			start: store.getState().globalTime.minTime,
-		}),
+		stepInterval: stepInterval ?? null,
 		dataSource,
 	})),
 	queryTraceOperator: [],
