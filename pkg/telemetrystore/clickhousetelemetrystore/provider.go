@@ -27,6 +27,7 @@ var (
 	ErrCodeIllegalAggregation        = errors.MustNewCode("illegal_aggregation")
 	ErrCodeInvalidRegexp             = errors.MustNewCode("invalid_regexp")
 	ErrCodeSettingNotAllowed         = errors.MustNewCode("setting_not_allowed")
+	ErrCodeSettingsProfileNotFound   = errors.MustNewCode("settings_profile_not_found")
 
 	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
 	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
@@ -111,6 +112,9 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 	chproto.ErrCannotCompileRegexp: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeInvalidRegexp, "regular expression does not compile: %s", ex.Message).
 			WithSuggestions("write the pattern in RE2 syntax, which has no lookaround or backreferences, and escape a backslash that is meant literally")
+	},
+	chproto.ErrThereIsNoProfile: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapNotFoundf(cause, ErrCodeSettingsProfileNotFound, "settings profile not found: %s", ex.Message)
 	},
 	// A SETTINGS clause went past a constraint of the query's settings profile.
 	chproto.ErrSettingConstraintViolation: func(cause error, ex *clickhouse.Exception) error {
