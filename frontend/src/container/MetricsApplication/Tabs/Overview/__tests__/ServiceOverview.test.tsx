@@ -1,6 +1,9 @@
 import { prepareQueryRangePayloadV5 } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import Graph from 'container/WidgetCard/Card';
-import { mockAppParams } from 'tests/router-mocks';
+import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
+import { encode } from 'js-base64';
 import { render } from 'tests/test-utils';
 
 import ServiceOverview from '../ServiceOverview';
@@ -10,22 +13,14 @@ jest.mock('container/WidgetCard/Card', () => ({
 	default: jest.fn(() => null),
 }));
 
-jest.mock('hooks/useResourceAttribute', () => ({
-	...jest.requireActual('hooks/useResourceAttribute'),
-	__esModule: true,
-	default: (): unknown => ({
-		queries: [
-			{
-				id: 'env',
-				tagKey: 'resource_deployment.environment',
-				operator: 'Not IN',
-				tagValue: ['prod'],
-			},
-		],
-	}),
-}));
-
-mockAppParams({ servicename: 'frontend' });
+const resourceAttributes: IResourceAttribute[] = [
+	{
+		id: 'env',
+		tagKey: 'resource_deployment.environment',
+		operator: 'Not IN',
+		tagValue: ['prod'],
+	},
+];
 
 describe('ServiceOverview', () => {
 	it('filters the traces latency on the resource attribute with its operator', () => {
@@ -39,6 +34,13 @@ describe('ServiceOverview', () => {
 				topLevelOperationsRoute={['GET /']}
 				topLevelOperationsIsLoading={false}
 			/>,
+			undefined,
+			{
+				initialRoute: `/services/frontend?${QueryParams.resourceAttributes}=${encodeURIComponent(
+					encode(JSON.stringify(resourceAttributes)),
+				)}`,
+				routePath: ROUTES.SERVICE_METRICS,
+			},
 		);
 
 		const { widget } = jest.mocked(Graph).mock.calls[0][0];
