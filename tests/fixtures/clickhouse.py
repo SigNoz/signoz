@@ -1,4 +1,7 @@
+import io
 import os
+import tarfile
+import time
 from collections.abc import Callable, Generator
 from datetime import datetime
 from typing import Any
@@ -595,3 +598,47 @@ def check_query_log(
         assert all(check_fn(q) for q in queries), f"query_log check failed for case '{case_name}'.\n" + "Queries:\n" + "\n---\n".join(queries)
 
     return _check
+
+
+@pytest.fixture(name="clickhouse_settings_profile", scope="module")
+def clickhouse_settings_profile(
+    clickhouse: types.TestContainerClickhouse,
+) -> Generator[Callable[[str, str], None], Any]:
+    """
+    Yields create(name, settings) that defines a settings profile from the XML body of its
+    <profiles> entry. Profiles are users.d files, since the integration user has no access
+    management; ClickHouse reloads them without a restart. They are removed on teardown.
+    """
+    container = docker.from_env().containers.get(clickhouse.container.id)
+    names: list[str] = []
+
+    def wait_for_profile(name: str, exists: bool) -> None:
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            count = clickhouse.conn.query(
+                "SELECT count() FROM system.settings_profiles WHERE name = {name:String}",
+                parameters={"name": name},
+            ).result_rows[0][0]
+            if (count == 1) == exists:
+                return
+            time.sleep(0.5)
+        raise TimeoutError(f"settings profile {name} did not {'appear' if exists else 'disappear'}")
+
+    def create(name: str, settings: str) -> None:
+        body = f"<clickhouse><profiles><{name}>{settings}</{name}></profiles></clickhouse>".encode()
+        archive = io.BytesIO()
+        with tarfile.open(fileobj=archive, mode="w") as tar:
+            info = tarfile.TarInfo(f"{name}.xml")
+            info.size = len(body)
+            info.mode = 0o644
+            tar.addfile(info, io.BytesIO(body))
+        container.put_archive("/etc/clickhouse-server/users.d", archive.getvalue())
+        names.append(name)
+        wait_for_profile(name, exists=True)
+
+    yield create
+
+    for name in names:
+        container.exec_run(["rm", "-f", f"/etc/clickhouse-server/users.d/{name}.xml"])
+    for name in names:
+        wait_for_profile(name, exists=False)
