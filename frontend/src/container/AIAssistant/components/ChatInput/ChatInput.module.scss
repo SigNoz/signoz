@@ -102,11 +102,6 @@
 		opacity: 0.6;
 	}
 
-	&::selection {
-		background: var(--accent-primary);
-		color: var(--l1-background);
-	}
-
 	&:disabled {
 		opacity: 0.2;
 		cursor: not-allowed;
