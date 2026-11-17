@@ -355,9 +355,9 @@ describe('usePanelKindChange', () => {
 			'signoz/ListPanel',
 			'promql',
 		);
-		// …and the resolved type ('builder') flows into the query rebuild.
-		const [, queryArg] = mockHandleQueryChange.mock.calls[0];
-		expect((queryArg as Query).queryType).toBe('builder');
+		// …and the resolved type ('builder') lands on the rebuilt query.
+		const [persisted] = mockToPerses.mock.calls[0] as [Query];
+		expect(persisted.queryType).toBe('builder');
 	});
 
 	describe('AI query slot', () => {

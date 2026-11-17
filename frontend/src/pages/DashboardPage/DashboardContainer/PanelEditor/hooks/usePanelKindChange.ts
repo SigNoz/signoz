@@ -15,7 +15,6 @@ import type {
 	OrderByPayload,
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { EQueryType } from 'types/common/dashboard';
 
 import {
 	isStaticPanelKind,
@@ -136,7 +135,7 @@ export function usePanelKindChange({
 				// The shared transforms read only `builder`, so either slot is passed through it.
 				const transformed = handleQueryChange(
 					newPanelType as keyof PartialPanelTypes,
-					{ ...query, queryType: EQueryType.QUERY_BUILDER, builder },
+					{ ...query, builder },
 					panelTypeRef.current,
 				);
 				// Match a fresh list panel's default order so the builder's Order By isn't empty.
