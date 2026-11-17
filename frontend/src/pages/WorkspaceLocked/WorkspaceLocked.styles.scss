@@ -169,7 +169,7 @@ $dark-theme: 'darkMode';
 		}
 	}
 
-	&__customer-stories {
+	&__modal &__customer-stories {
 		&__left-container,
 		&__right-container {
 			display: flex;
