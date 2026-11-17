@@ -1,38 +1,41 @@
-import { renderHook } from '@testing-library/react';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { AllTheProviders, renderHook } from 'tests/test-utils';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { BuilderQueryType } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 
 import { useBuilderQueryType } from '../useBuilderQueryType';
-import { useQueryBuilder } from '../useQueryBuilder';
 
-jest.mock('../useQueryBuilder', () => ({
-	useQueryBuilder: jest.fn(),
-}));
-
-const withQueryType = (queryType: EQueryType): void => {
-	(useQueryBuilder as jest.Mock).mockReturnValue({
-		currentQuery: { queryType },
-	});
-};
+function renderBuilderQueryType(
+	queryType: EQueryType,
+	query: Pick<IBuilderQuery, 'builderQueryType'>,
+): BuilderQueryType | undefined {
+	return renderHook(() => useBuilderQueryType(query), {
+		wrapper: ({ children }) => (
+			<AllTheProviders
+				queryBuilderOverrides={{
+					currentQuery: { ...initialQueriesMap.traces, queryType },
+				}}
+			>
+				{children}
+			</AllTheProviders>
+		),
+	}).result.current;
+}
 
 describe('useBuilderQueryType', () => {
 	it('is AI for every query while AI is the query type', () => {
-		withQueryType(EQueryType.AI_QUERY_BUILDER);
-
-		expect(renderHook(() => useBuilderQueryType({})).result.current).toBe(
+		expect(renderBuilderQueryType(EQueryType.AI_QUERY_BUILDER, {})).toBe(
 			'builder_ai_query',
 		);
 	});
 
 	it("follows the query's own tag otherwise", () => {
-		withQueryType(EQueryType.QUERY_BUILDER);
-
 		expect(
-			renderHook(() =>
-				useBuilderQueryType({ builderQueryType: 'builder_ai_query' }),
-			).result.current,
+			renderBuilderQueryType(EQueryType.QUERY_BUILDER, {
+				builderQueryType: 'builder_ai_query',
+			}),
 		).toBe('builder_ai_query');
-		expect(
-			renderHook(() => useBuilderQueryType({})).result.current,
-		).toBeUndefined();
+		expect(renderBuilderQueryType(EQueryType.QUERY_BUILDER, {})).toBeUndefined();
 	});
 });

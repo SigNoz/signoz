@@ -3,6 +3,7 @@ import {
 	convertFiltersToExpressionWithExistingQuery,
 } from 'components/QueryBuilderV2/utils';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 import {
 	Query,
@@ -560,14 +561,15 @@ describe('clearFilterFromQuery', () => {
 
 describe('quick filters on an AI query', () => {
 	const builderQuery = buildQuery([], '').builder;
-	const aiQuery = {
+	const aiQuery: Query = {
+		...initialQueriesMap.traces,
 		queryType: EQueryType.AI_QUERY_BUILDER,
 		builder: builderQuery,
 		builder_ai_query: buildQuery(
 			[{ key: KEY, op: 'in', value: ['a'] }],
 			`${KEY} IN ['a']`,
 		).builder,
-	} as unknown as Query;
+	};
 
 	it('a checkbox toggle writes into the AI slot and leaves builder alone', () => {
 		const result = applyCheckboxToggle({
