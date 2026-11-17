@@ -2,17 +2,27 @@ import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
 import { renderAtRoute } from '@/storybook/renderAtRoute';
-import { expect, screen, userEvent, waitFor } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import { panelEditorMocks } from '../PanelEditorPage.stories.mocks';
 import {
-	expandSection,
-	openConfigSelect,
-	panelEditorMocks,
-	pickSegment,
-} from '../PanelEditorPage.stories.mocks';
+	moveLegendRight,
+	openAreaChartAppearance,
+	openAxes,
+	openChartAppearance,
+	openFormatting,
+	openHistogramBuckets,
+	openLegend,
+	openTextAppearance,
+	openTimePreference,
+	openTopListAppearance,
+	openUnitPicker,
+	pickDashedGradientWithPoints,
+	pickLogScale,
+	stackBars,
+} from '../__story_mockdata__/chartOptions.play';
 
 import PanelEditorPage from '../../PanelEditorPage';
 
@@ -42,142 +52,87 @@ type Story = StoryObj<PanelEditorArgs>;
 
 /** The time range the panel reads, open on its choices. */
 export const TimePreferenceOpen: Story = {
-	play: async () => {
-		await openConfigSelect('panel-editor-v2-time-preference');
-		await screen.findByRole('listbox');
-	},
+	play: openTimePreference,
 };
 
 /** Formatting & Units: the unit and decimals the values are shown with. */
 export const Formatting: Story = {
-	play: async () => {
-		await expandSection('Formatting & Units');
-		await screen.findByTestId('panel-editor-v2-decimals');
-	},
+	play: openFormatting,
 };
 
 /** The unit picker, open on its categories. */
 export const UnitPickerOpen: Story = {
-	play: async (context) => {
-		await Formatting.play?.(context);
-		await openConfigSelect('panel-editor-v2-unit');
-		await screen.findByRole('listbox');
-	},
+	play: openUnitPicker,
 };
 
 /** Axes: soft bounds for the y axis and its scale. */
 export const Axes: Story = {
-	play: async () => {
-		await expandSection('Axes');
-		await screen.findByTestId('panel-editor-v2-log-scale');
-	},
+	play: openAxes,
 };
 
 /** The y axis on a log scale, which the preview redraws with. */
 export const AxesLogScale: Story = {
-	play: async (context) => {
-		await Axes.play?.(context);
-		await pickSegment('panel-editor-v2-log-scale', 'log');
-	},
+	play: pickLogScale,
 };
 
 /** Legend: its position, and a color per series the query returned. */
 export const Legend: Story = {
-	play: async () => {
-		await expandSection('Legend');
-		await screen.findByTestId('panel-editor-v2-legend-position');
-	},
+	play: openLegend,
 };
 
 /** The legend moved to the right of the preview. */
 export const LegendRight: Story = {
-	play: async (context) => {
-		await Legend.play?.(context);
-		await pickSegment('panel-editor-v2-legend-position', 'right');
-	},
+	play: moveLegendRight,
 };
 
 /** Chart appearance: line style, interpolation, fill and points. */
 export const ChartAppearance: Story = {
-	play: async () => {
-		await expandSection('Chart appearance');
-		await screen.findByTestId('panel-editor-v2-line-style');
-	},
+	play: openChartAppearance,
 };
 
 /** Dashed lines under a gradient fill, with the points drawn. */
 export const ChartAppearanceDashedGradient: Story = {
-	play: async (context) => {
-		await ChartAppearance.play?.(context);
-		await pickSegment('panel-editor-v2-line-style', 'dashed');
-		await pickSegment('panel-editor-v2-fill-mode', 'gradient');
-		const points = screen.getByTestId('panel-editor-v2-show-points');
-
-		await userEvent.click(points);
-		await waitFor(() => expect(points).toHaveAttribute('aria-checked', 'true'));
-	},
+	play: pickDashedGradientWithPoints,
 };
 
 /** An area chart's appearance, which adds the fill opacity. */
 export const AreaChartAppearance: Story = {
 	args: { panel: 'new', newPanelKind: 'area-chart' },
-	play: async () => {
-		await expandSection('Chart appearance');
-		await screen.findByTestId('panel-editor-v2-fill-opacity');
-	},
+	play: openAreaChartAppearance,
 };
 
 /** A bar chart with its series stacked on each other. */
 export const BarStacked: Story = {
 	args: { panel: 'errors-by-status' },
-	play: async () => {
-		await expandSection('Visualization');
-		await pickSegment('panel-editor-v2-stacked-bar-chart', 'stacked');
-	},
+	play: stackBars,
 };
 
 /** A table's formatting: a unit per value column. */
 export const TableColumnUnits: Story = {
 	args: { panel: 'top-endpoints' },
-	play: async () => {
-		await expandSection('Formatting & Units');
-		await screen.findByTestId('panel-editor-v2-decimals');
-	},
+	play: openFormatting,
 };
 
 /** A pie chart's legend, colored per slice. */
 export const PieLegend: Story = {
 	args: { panel: 'traffic-share' },
-	play: async () => {
-		await expandSection('Legend');
-		await screen.findByTestId('panel-editor-v2-legend-position');
-	},
+	play: openLegend,
 };
 
 /** A histogram's buckets: how many, how wide, and whether queries merge. */
 export const HistogramBuckets: Story = {
 	args: { panel: 'new', newPanelKind: 'histogram' },
-	play: async () => {
-		await expandSection('Buckets');
-		await screen.findByTestId('panel-editor-v2-bucket-count');
-	},
+	play: openHistogramBuckets,
 };
 
 /** A text panel's appearance: alignment and background. */
 export const TextAppearance: Story = {
 	args: { panel: 'new', newPanelKind: 'text' },
-	play: async () => {
-		await expandSection('Panel appearance');
-		await screen.findByTestId('text-layout-align');
-	},
+	play: openTextAppearance,
 };
 
 /** A top list's appearance: rank, share of total and bar colour. */
 export const TopListAppearance: Story = {
 	args: { panel: 'new', newPanelKind: 'top-list' },
-	play: async () => {
-		await expandSection('Appearance');
-		await screen.findByTestId('panel-editor-v2-show-rank');
-		await screen.findByTestId('panel-editor-v2-bar-color');
-	},
+	play: openTopListAppearance,
 };
