@@ -683,7 +683,8 @@ func TestValidateDistributionDashboard(t *testing.T) {
 	assert.Nil(t, panelSpec.Axes.X.Max)
 	assert.Equal(t, "log", panelSpec.Axes.Y.Scale.ValueOrDefault())
 	assert.Equal(t, "none", panelSpec.ChartAppearance.Stack.ValueOrDefault())
-	assert.True(t, panelSpec.ChartAppearance.Percentiles.Enabled)
+	require.NotNil(t, panelSpec.ChartAppearance.Percentiles.Enabled)
+	assert.True(t, *panelSpec.ChartAppearance.Percentiles.Enabled)
 	assert.Equal(t, []float64{75, 99.9}, panelSpec.ChartAppearance.Percentiles.Values)
 
 	dashboard := &DashboardV2{Spec: *spec}
@@ -719,25 +720,25 @@ func TestDistributionPanelSpecDefaults(t *testing.T) {
 			assert.Nil(t, spec.Axes.X.Max)
 			assert.Equal(t, "linear", spec.Axes.Y.Scale.ValueOrDefault())
 			assert.Equal(t, "normal", spec.ChartAppearance.Stack.ValueOrDefault())
-			assert.True(t, spec.ChartAppearance.Percentiles.Enabled)
-			assert.Equal(t, []float64{50, 90, 99}, spec.ChartAppearance.Percentiles.Values)
+			assert.Nil(t, spec.ChartAppearance.Percentiles.Enabled)
+			assert.Nil(t, spec.ChartAppearance.Percentiles.Values)
 
-			stored, err := json.Marshal(spec)
+			stored, err := json.Marshal(spec.ChartAppearance)
 			require.NoError(t, err)
-			assert.Contains(t, string(stored), `"stack":"normal"`)
+			assert.Equal(t, `{"stack":"normal","percentiles":{"enabled":null,"values":null}}`, string(stored))
 		})
 	}
 }
 
 func TestDistributionPanelSpecPercentileValues(t *testing.T) {
 	testCases := []struct {
-		name            string
-		spec            string
-		expectedEnabled bool
-		expectedValues  []float64
+		name                    string
+		spec                    string
+		expectedPercentilesJSON string
 	}{
-		{name: "Disabled_KeepsDefaultValues", spec: `{"chartAppearance": {"percentiles": {"enabled": false}}}`, expectedEnabled: false, expectedValues: []float64{50, 90, 99}},
-		{name: "EmptyValues_MarksNone", spec: `{"chartAppearance": {"percentiles": {"values": []}}}`, expectedEnabled: true, expectedValues: []float64{}},
+		{name: "Disabled_ValuesStayNull", spec: `{"chartAppearance": {"percentiles": {"enabled": false}}}`, expectedPercentilesJSON: `{"enabled":false,"values":null}`},
+		{name: "EmptyValues_MarksNone", spec: `{"chartAppearance": {"percentiles": {"values": []}}}`, expectedPercentilesJSON: `{"enabled":null,"values":[]}`},
+		{name: "NullValues_Accepted", spec: `{"chartAppearance": {"percentiles": {"enabled": null, "values": null}}}`, expectedPercentilesJSON: `{"enabled":null,"values":null}`},
 	}
 
 	for _, testCase := range testCases {
@@ -746,8 +747,9 @@ func TestDistributionPanelSpecPercentileValues(t *testing.T) {
 			require.NoError(t, json.Unmarshal([]byte(`{"kind": "signoz/DistributionPanel", "spec": `+testCase.spec+`}`), &plugin))
 
 			spec := plugin.Spec.(*DistributionPanelSpec)
-			assert.Equal(t, testCase.expectedEnabled, spec.ChartAppearance.Percentiles.Enabled)
-			assert.Equal(t, testCase.expectedValues, spec.ChartAppearance.Percentiles.Values)
+			stored, err := json.Marshal(spec.ChartAppearance.Percentiles)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expectedPercentilesJSON, string(stored))
 		})
 	}
 }
@@ -800,9 +802,9 @@ func TestDistributionPanelSpecRejections(t *testing.T) {
 			expectedMessage: "90 is listed more than once",
 		},
 		{
-			name:            "Percentiles_NullValues",
-			spec:            `{"chartAppearance": {"percentiles": {"values": null}}}`,
-			expectedMessage: "must be a list, not null",
+			name:            "Stack_Empty",
+			spec:            `{"chartAppearance": {"stack": ""}}`,
+			expectedMessage: "invalid distribution stack mode",
 		},
 		{
 			name:            "Percentiles_UnknownField",
