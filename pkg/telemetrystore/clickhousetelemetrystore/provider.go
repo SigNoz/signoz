@@ -120,18 +120,9 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 		return errors.WrapInvalidInputf(cause, ErrCodeResultTooLarge, "query result too large: %s", ex.Message).
 			WithSuggestions("add a LIMIT, narrow the time range or select fewer columns")
 	},
-	chproto.ErrTooManyRows: func(cause error, ex *clickhouse.Exception) error {
-		return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
-			WithSuggestions("narrow the time range or add filters so the query reads less data")
-	},
-	chproto.ErrTooManyPartitions: func(cause error, ex *clickhouse.Exception) error {
-		return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
-			WithSuggestions("narrow the time range or add filters so the query reads less data")
-	},
-	chproto.ErrTooManyBytes: func(cause error, ex *clickhouse.Exception) error {
-		return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
-			WithSuggestions("narrow the time range or add filters so the query reads less data")
-	},
+	chproto.ErrTooManyRows:       wrapReadTooLarge,
+	chproto.ErrTooManyBytes:      wrapReadTooLarge,
+	chproto.ErrTooManyPartitions: wrapReadTooLarge,
 	// A write, or a change to the readonly setting, under a read-only settings profile.
 	chproto.ErrReadonly: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeReadonlyMode, "query not allowed in read-only mode: %s", ex.Message).
@@ -215,14 +206,19 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		hooks:          hooks,
 	}
 
-	p.profiles = make(map[string]telemetrystore.TelemetryStore, len(config.Clickhouse.Profiles))
-	for _, profile := range config.Clickhouse.Profiles {
+	p.withProfiles(config.Clickhouse.Profiles)
+
+	return p, nil
+}
+
+// withProfiles gives every profile a copy of p that runs its queries with that profile over p's pool.
+func (p *provider) withProfiles(profiles []string) {
+	p.profiles = make(map[string]telemetrystore.TelemetryStore, len(profiles))
+	for _, profile := range profiles {
 		profiled := *p
 		profiled.profile = profile
 		p.profiles[profile] = &profiled
 	}
-
-	return p, nil
 }
 
 func (p *provider) WithProfile(profile string) telemetrystore.TelemetryStore {
@@ -373,6 +369,11 @@ func (p *provider) beforeQuery(ctx context.Context, event *telemetrystore.QueryE
 		event.Settings["profile"] = clickhouse.CustomSetting{Value: p.profile}
 	}
 	return clickhouse.Context(ctx, clickhouse.WithSettings(event.Settings))
+}
+
+func wrapReadTooLarge(cause error, ex *clickhouse.Exception) error {
+	return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
+		WithSuggestions("narrow the time range or add filters so the query reads less data")
 }
 
 func castError(err error) error {
