@@ -50,7 +50,7 @@ The full list is [`.claude/rules/frontend-tests.md`](../../../.claude/rules/fron
 Repo-specific reasons:
 - The harness wires Redux, React Query, i18n, timezone, preferences, so importing from RTL directly bypasses critical providers.
 - Some infra deps are globally mocked (e.g., `uplot`) to keep tests fast and stable.
-- `jest.setup.ts` turns off user-event's pointer-events check and Floating UI positioning for every test. Both walk `getComputedStyle` up the DOM, which jsdom computes slowly.
+- `jest.setup.ts` turns off user-event's pointer-events check, Floating UI positioning and antd's scroll-container lookup for every test. Each walks `getComputedStyle` up the DOM, which jsdom computes slowly.
 - For virtualization (react-virtuoso), there is no `userEvent` scroll helper; use `fireEvent.scroll` after setting `element.scrollTop`.
 
 #### Example patterns (from `components/QuickFilters/tests/QuickFilters.test.tsx`)
@@ -116,5 +116,5 @@ const navigateSpy = mockNavigate(); // module-level navigate()
 ```
 
 #### Notes
-- Global mocks configured in Jest: `uplot` → `__mocks__/uplotMock.ts`; `@floating-ui/dom` and `@testing-library/user-event` in `jest.setup.ts`.
+- Global mocks configured in Jest: `uplot` → `__mocks__/uplotMock.ts`; `@floating-ui/dom`, `@testing-library/user-event` and antd's `collectScroller` in `jest.setup.ts`.
 - If a test needs custom behavior (e.g., different API response), override with `server.use(...)` locally.

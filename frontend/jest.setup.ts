@@ -161,6 +161,22 @@ jest.mock('@testing-library/user-event', () =>
 	jest.requireActual('tests/userEventWithDefaults'),
 );
 
+// antd popups walk getComputedStyle up every ancestor to find scroll
+// containers on each open. pnpm keeps the package under antd, not at the root.
+jest.mock(
+	require.resolve('@rc-component/trigger/lib/util', {
+		paths: [require.resolve('antd')],
+	}),
+	() => ({
+		...jest.requireActual(
+			require.resolve('@rc-component/trigger/lib/util', {
+				paths: [require.resolve('antd')],
+			}),
+		),
+		collectScroller: (): HTMLElement[] => [],
+	}),
+);
+
 beforeAll(() => server.listen());
 
 afterEach(() => server.resetHandlers());
