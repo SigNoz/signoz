@@ -2,9 +2,9 @@ import type { ErrorEvent, StackFrame } from '@sentry/react';
 import { AxiosError, AxiosHeaders } from 'axios';
 
 import {
-	isOutsideAppError,
+	isInjectedScriptError,
 	isExpectedRequestFailure,
-	isExternalIntegrationError,
+	isThirdPartyScriptError,
 	SENTRY_IGNORE_ERRORS,
 } from '../sentryFilters';
 
@@ -27,7 +27,7 @@ function eventWithFrames(...filenames: string[]): ErrorEvent {
 	};
 }
 
-describe('isExternalIntegrationError', () => {
+describe('isThirdPartyScriptError', () => {
 	it.each([
 		[
 			'PostHog recorder',
@@ -39,14 +39,12 @@ describe('isExternalIntegrationError', () => {
 		],
 		['Appcues', 'https://fast.appcues.com/123456.js'],
 	])('drops an error with a %s frame', (_, url) => {
-		expect(isExternalIntegrationError(eventWithFrames(APP_BUNDLE, url))).toBe(
-			true,
-		);
+		expect(isThirdPartyScriptError(eventWithFrames(APP_BUNDLE, url))).toBe(true);
 	});
 
 	it('drops it when the top frame is our bundle', () => {
 		expect(
-			isExternalIntegrationError(
+			isThirdPartyScriptError(
 				eventWithFrames(
 					'https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.298.0',
 					'<anonymous>',
@@ -58,13 +56,13 @@ describe('isExternalIntegrationError', () => {
 
 	it('keeps an error from our bundle only', () => {
 		expect(
-			isExternalIntegrationError(eventWithFrames(APP_BUNDLE, '<anonymous>')),
+			isThirdPartyScriptError(eventWithFrames(APP_BUNDLE, '<anonymous>')),
 		).toBe(false);
 	});
 
 	it('keeps an error from a host that only contains an integration name', () => {
 		expect(
-			isExternalIntegrationError(
+			isThirdPartyScriptError(
 				eventWithFrames(
 					'https://posthog.example.com/app.js',
 					'https://notusepylon.com/widget.js',
@@ -74,11 +72,11 @@ describe('isExternalIntegrationError', () => {
 	});
 
 	it('keeps an error without a stack trace', () => {
-		expect(isExternalIntegrationError({ type: undefined })).toBe(false);
+		expect(isThirdPartyScriptError({ type: undefined })).toBe(false);
 	});
 });
 
-describe('isOutsideAppError', () => {
+describe('isInjectedScriptError', () => {
 	const PAGE_URL = 'https://example.us.signoz.cloud/dashboard/01a081e1';
 
 	function eventWithStackFrames(frames: StackFrame[]): ErrorEvent {
@@ -92,7 +90,7 @@ describe('isOutsideAppError', () => {
 
 	it('drops a script appended to the page', () => {
 		expect(
-			isOutsideAppError(
+			isInjectedScriptError(
 				eventWithStackFrames([
 					{ filename: PAGE_URL, lineno: 1, colno: 30, function: 'global code' },
 					{ filename: '[native code]', function: 'eval' },
@@ -104,7 +102,7 @@ describe('isOutsideAppError', () => {
 
 	it('drops a browser extension error', () => {
 		expect(
-			isOutsideAppError(
+			isInjectedScriptError(
 				eventWithStackFrames([
 					{ filename: 'chrome-extension://abc/content.js', lineno: 4, colno: 12 },
 				]),
@@ -112,30 +110,43 @@ describe('isOutsideAppError', () => {
 		).toBe(true);
 	});
 
-	it('drops an error thrown from eval code behind the Sentry wrapper', () => {
-		expect(isOutsideAppError(eventWithFrames(APP_BUNDLE, '<anonymous>'))).toBe(
-			true,
-		);
+	it('drops an error thrown from injected code behind the Sentry wrapper', () => {
+		expect(
+			isInjectedScriptError(eventWithFrames(APP_BUNDLE, '<anonymous>')),
+		).toBe(true);
 	});
 
 	it('keeps an error thrown from our bundle after an anonymous frame', () => {
-		expect(isOutsideAppError(eventWithFrames('<anonymous>', APP_BUNDLE))).toBe(
+		expect(
+			isInjectedScriptError(eventWithFrames('<anonymous>', APP_BUNDLE)),
+		).toBe(false);
+	});
+
+	it('keeps an error with a frame from our bundle', () => {
+		expect(isInjectedScriptError(eventWithFrames(PAGE_URL, APP_BUNDLE))).toBe(
 			false,
 		);
 	});
 
-	it('keeps an error with a frame from our bundle', () => {
-		expect(isOutsideAppError(eventWithFrames(PAGE_URL, APP_BUNDLE))).toBe(false);
-	});
-
 	it('keeps an error without a stack trace', () => {
-		expect(isOutsideAppError({ type: undefined })).toBe(false);
+		expect(isInjectedScriptError({ type: undefined })).toBe(false);
 	});
 
 	it('keeps an error whose frames have no position', () => {
 		expect(
-			isOutsideAppError(
+			isInjectedScriptError(
 				eventWithStackFrames([{ filename: '[native code]', function: 'eval' }]),
+			),
+		).toBe(false);
+	});
+
+	it('keeps an error a builtin threw for our bundle', () => {
+		expect(
+			isInjectedScriptError(
+				eventWithStackFrames([
+					{ filename: APP_BUNDLE, lineno: 1, colno: 1 },
+					{ filename: '<anonymous>', function: 'JSON.parse' },
+				]),
 			),
 		).toBe(false);
 	});
