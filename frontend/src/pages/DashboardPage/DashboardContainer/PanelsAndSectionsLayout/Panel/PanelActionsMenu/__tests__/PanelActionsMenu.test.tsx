@@ -106,9 +106,13 @@ function renderMenu(): void {
 	);
 }
 
-async function openSubmenu(name: string): Promise<void> {
-	await userEvent.click(screen.getByRole('button', { name: 'Panel actions' }));
-	await userEvent.click(await screen.findByRole('menuitem', { name }));
+const MENU_TEST_ID = 'panel-actions-panel-1';
+
+async function openSubmenu(value: string): Promise<void> {
+	await userEvent.click(screen.getByTestId(MENU_TEST_ID));
+	await userEvent.click(
+		await screen.findByTestId(`${MENU_TEST_ID}-item-${value}`),
+	);
 }
 
 describe('PanelActionsMenu submenus', () => {
@@ -121,8 +125,12 @@ describe('PanelActionsMenu submenus', () => {
 		['Download as SVG', 'svg'],
 	])('"%s" downloads the panel image as %s', async (label, format) => {
 		renderMenu();
-		await openSubmenu('Download');
-		await userEvent.click(await screen.findByRole('menuitem', { name: label }));
+		await openSubmenu('download');
+		const row = await screen.findByTestId(
+			`${MENU_TEST_ID}-item-download-${format}`,
+		);
+		expect(row).toHaveTextContent(label);
+		await userEvent.click(row);
 
 		expect(mockDownloadImage).toHaveBeenCalledTimes(1);
 		expect(mockDownloadImage).toHaveBeenCalledWith('panel-1', 'Requests', format);
@@ -131,33 +139,38 @@ describe('PanelActionsMenu submenus', () => {
 
 	it('"Download as CSV" exports the table data, not an image', async () => {
 		renderMenu();
-		await openSubmenu('Download');
-		await userEvent.click(
-			await screen.findByRole('menuitem', { name: 'Download as CSV' }),
-		);
+		await openSubmenu('download');
+		const row = await screen.findByTestId(`${MENU_TEST_ID}-item-download-csv`);
+		expect(row).toHaveTextContent('Download as CSV');
+		await userEvent.click(row);
 
 		expect(mockDownloadCsv).toHaveBeenCalledTimes(1);
 		expect(mockDownloadImage).not.toHaveBeenCalled();
 	});
 
 	it.each([
-		['Dashboard (root)', 0],
-		['B', 2],
-	])('Move to "%s" moves the panel to layout %s', async (label, target) => {
-		renderMenu();
-		await openSubmenu('Move to section');
+		['Dashboard (root)', 0, 'move-to-root'],
+		['B', 2, 'move-2'],
+	])(
+		'Move to "%s" moves the panel to layout %s',
+		async (label, target, value) => {
+			renderMenu();
+			await openSubmenu('move');
 
-		const row = await screen.findByRole('menuitem', { name: label });
-		// The panel already sits in "A".
-		expect(screen.queryByRole('menuitem', { name: 'A' })).not.toBeInTheDocument();
+			const row = await screen.findByTestId(`${MENU_TEST_ID}-item-${value}`);
+			expect(row).toHaveTextContent(label);
+			expect(
+				screen.queryByTestId(`${MENU_TEST_ID}-item-move-1`),
+			).not.toBeInTheDocument();
 
-		await userEvent.click(row);
+			await userEvent.click(row);
 
-		expect(mockMovePanel).toHaveBeenCalledTimes(1);
-		expect(mockMovePanel).toHaveBeenCalledWith({
-			panelId: 'panel-1',
-			fromLayoutIndex: 1,
-			toLayoutIndex: target,
-		});
-	});
+			expect(mockMovePanel).toHaveBeenCalledTimes(1);
+			expect(mockMovePanel).toHaveBeenCalledWith({
+				panelId: 'panel-1',
+				fromLayoutIndex: 1,
+				toLayoutIndex: target,
+			});
+		},
+	);
 });
