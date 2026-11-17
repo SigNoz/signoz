@@ -19,12 +19,26 @@ import {
 
 const QUERY = "name CONTAINS 'CPU'";
 
+function getSearchContent(): HTMLElement {
+	const content = screen
+		.getByTestId('alert-rules-list-search')
+		.querySelector<HTMLElement>('.cm-content');
+	if (!content) {
+		throw new Error('Search editor content not found');
+	}
+	return content;
+}
+
 function lastRequest(requests: URLSearchParams[]): URLSearchParams {
 	return requests[requests.length - 1];
 }
 
 describe('ListAlertRules — search', () => {
 	let requests: URLSearchParams[];
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
 
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
@@ -129,42 +143,53 @@ describe('ListAlertRules — search', () => {
 		});
 	});
 
-	it('sends the selected states once, as repeated states= params, when the dropdown closes', async () => {
-		const user = userEvent.setup({ delay: null });
+	it('runs the draft when the search box loses focus', async () => {
+		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		// jsdom reports no focus once it lands on <body>; a focused browser window does.
+		jest.spyOn(document, 'hasFocus').mockReturnValue(true);
 		renderListAlertRules();
 
 		await screen.findByText('High CPU Alert');
 
-		await user.click(
-			within(screen.getByTestId('alert-rules-filter-states')).getByRole(
-				'combobox',
-			),
-		);
-		const dropdown = await waitFor(() => {
-			const element = document.querySelector<HTMLElement>('.ant-select-dropdown');
-			expect(element).not.toBeNull();
-			return element as HTMLElement;
-		});
-		await user.click(within(dropdown).getByText('Firing'));
-		await user.click(within(dropdown).getByText('Disabled'));
-
-		expect(requests.some((r) => r.has('states'))).toBe(false);
-		expect(getCurrentNuqsSearchParams().has('states')).toBe(false);
-
+		await user.click(getSearchContent());
+		setSearchDraft(QUERY);
 		await user.click(document.body);
 
 		await waitFor(() => {
-			expect(lastRequest(requests).getAll('states')).toStrictEqual([
-				'firing',
-				'disabled',
-			]);
+			expect(lastRequest(requests).get('query')).toBe(QUERY);
 		});
-		expect(requests.filter((r) => r.has('states'))).toHaveLength(1);
-		expect(lastRequest(requests).has('states[]')).toBe(false);
 		await waitFor(() => {
-			expect(getCurrentNuqsSearchParams().get('states')).toBe('firing,disabled');
+			expect(getCurrentNuqsSearchParams().get('query')).toBe(QUERY);
 		});
-	}, 15_000);
+	});
+
+	it('keeps the draft unrun when focus leaves the window', async () => {
+		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		renderListAlertRules();
+
+		await screen.findByText('High CPU Alert');
+
+		await user.click(getSearchContent());
+		setSearchDraft(QUERY);
+		jest.spyOn(document, 'hasFocus').mockReturnValue(false);
+		await user.click(document.body);
+
+		expect(requests.some((r) => r.has('query'))).toBe(false);
+		expect(
+			screen.getByTestId('alert-rules-list-search-dirty'),
+		).toBeInTheDocument();
+	});
+
+	it('still sends states= from a link, without a state filter in the UI', async () => {
+		renderListAlertRules({ initialRoute: '/?states=firing' });
+
+		await screen.findByText('High CPU Alert');
+
+		expect(lastRequest(requests).getAll('states')).toStrictEqual(['firing']);
+		expect(
+			screen.queryByTestId('alert-rules-filter-states'),
+		).not.toBeInTheDocument();
+	});
 
 	it('Clear empties the query and the states', async () => {
 		const user = userEvent.setup({ delay: null });

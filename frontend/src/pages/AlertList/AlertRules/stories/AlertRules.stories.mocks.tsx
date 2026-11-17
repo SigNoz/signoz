@@ -20,6 +20,7 @@ import { componentPermission } from 'utils/permission';
 import { DEFAULT_RULE_LIST_FILTER } from 'container/ListAlertRules/utils';
 import {
 	DEFAULT_RULE_VIEW,
+	findRuleBuiltinView,
 	RULE_BUILTIN_VIEWS,
 	type RuleViewId,
 } from 'container/ListAlertRules/list.config';
@@ -57,10 +58,20 @@ type ActionState = (typeof ACTION_STATES)[number];
 const VIEW_CHOICES = [
 	'all',
 	'mine',
+	'recent',
 	'firing',
+	'enabled',
 	'disabled',
 	'saved',
 ] as const satisfies readonly (RuleViewId | 'saved')[];
+
+/** Rules the browser remembers opening, most recent first. */
+const STORY_RECENT_RULE_IDS = ['rule-3', 'rule-1', 'rule-6'];
+
+const STORY_VIEW_CTX = {
+	userEmail: STORY_USER_EMAIL,
+	recent: STORY_RECENT_RULE_IDS,
+};
 type ViewChoice = (typeof VIEW_CHOICES)[number];
 
 /**
@@ -79,7 +90,7 @@ const listRoute = (view: ViewChoice): string => {
 			? { query: saved.data.query ?? '', states: saved.data.states ?? [] }
 			: RULE_BUILTIN_VIEWS.find((v) => v.id === view)?.filter(
 					DEFAULT_RULE_LIST_FILTER,
-					{ userEmail: STORY_USER_EMAIL },
+					STORY_VIEW_CTX,
 				);
 
 	params.set('view', view === 'saved' ? saved.id : view);
@@ -146,7 +157,7 @@ export const alertRulesMocks = defineStoryMocks({
 		view: choiceControl<ViewChoice>('Active view', {
 			group: VIEWS,
 			description:
-				'The rail entry the page opens on. `saved` is the first saved view; the built-ins apply a query or a state set.',
+				'The rail entry the page opens on. `saved` is the first saved view; the built-ins apply a query or a state set, and `recent` narrows one large page to the rules the browser remembers opening.',
 			options: VIEW_CHOICES,
 			value: DEFAULT_RULE_VIEW,
 		}),
@@ -265,7 +276,10 @@ export const alertRulesMocks = defineStoryMocks({
 	],
 	config: (values) => ({ route: listRoute(values.view) }),
 	effect: (values) => {
-		useAlertRuleViewsStore.setState({ railCollapsed: values.railCollapsed });
+		useAlertRuleViewsStore.setState({
+			railCollapsed: values.railCollapsed,
+			recent: STORY_RECENT_RULE_IDS,
+		});
 	},
 });
 
@@ -299,11 +313,13 @@ export const listedRules = (
 		return [];
 	}
 
-	return alertRulesPage(
+	const { rules } = alertRulesPage(
 		args.rules,
 		{ severity: args.ruleSeverity, state: args.ruleState },
 		params,
-	).data.rules;
+	).data;
+	const clientFilter = findRuleBuiltinView(args.view)?.clientFilter;
+	return clientFilter ? clientFilter(rules, STORY_VIEW_CTX) : rules;
 };
 
 export const hasRowMenu = (args: AlertRulesArgs): boolean =>

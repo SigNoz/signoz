@@ -45,7 +45,8 @@ const COLUMN_TO_SORT: Record<string, RuletypesListSortDTO> = {
 	updatedAt: RuletypesListSortDTO.updated_at,
 };
 
-export const DEFAULT_RULE_LIST_SORT = RuletypesListSortDTO.updated_at;
+// Status, highest rank first: firing, nodata, pending, recovering, inactive, disabled.
+export const DEFAULT_RULE_LIST_SORT = RuletypesListSortDTO.state;
 export const DEFAULT_RULE_LIST_ORDER = RuletypesListOrderDTO.desc;
 
 // `rule_list_filter_invalid`: DSL syntax / key / operator; `rule_list_invalid`: other list params.

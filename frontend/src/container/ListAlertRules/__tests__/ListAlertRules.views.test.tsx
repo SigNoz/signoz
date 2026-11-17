@@ -131,7 +131,7 @@ describe('ListAlertRules — saved views rail', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 		localStorage.removeItem(LOCALSTORAGE.ALERT_RULES_LIST_VIEWS);
-		useAlertRuleViewsStore.setState({ railCollapsed: false });
+		useAlertRuleViewsStore.setState({ railCollapsed: false, recent: [] });
 	});
 
 	describe('builtin views', () => {
@@ -141,7 +141,9 @@ describe('ListAlertRules — saved views rail', () => {
 			await screen.findByText('High CPU Alert');
 			expect(viewItem('mine')).toHaveTextContent('My alert rules');
 			expect(viewItem('all')).toHaveTextContent('All alert rules');
+			expect(viewItem('recent')).toHaveTextContent('Recently viewed');
 			expect(viewItem('firing')).toHaveTextContent('Firing');
+			expect(viewItem('enabled')).toHaveTextContent('Enabled');
 			expect(viewItem('disabled')).toHaveTextContent('Disabled');
 			expect(activeHeading()).toHaveTextContent('All alert rules');
 			expect(
@@ -172,6 +174,45 @@ describe('ListAlertRules — saved views rail', () => {
 			expect(
 				screen.queryByTestId('alert-rules-view-save-as-new'),
 			).not.toBeInTheDocument();
+		});
+
+		it('Enabled sends every state except disabled', async () => {
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const requests = captureRulesRequests();
+			renderListAlertRules();
+			await screen.findByText('High CPU Alert');
+
+			await selectView(user, 'enabled');
+
+			const enabled = ['inactive', 'pending', 'recovering', 'firing', 'nodata'];
+			await waitFor(() => {
+				expect(lastRequest(requests).getAll('states')).toStrictEqual(enabled);
+			});
+			expect(lastRequest(requests).has('query')).toBe(false);
+			expect(activeHeading()).toHaveTextContent('Enabled');
+		});
+
+		it('Recently viewed lists the opened rules in visit order from one large page', async () => {
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const requests = captureRulesRequests();
+			useAlertRuleViewsStore.setState({ recent: ['rule-3', 'rule-1'] });
+			renderListAlertRules();
+			await screen.findByText('Memory Pending Alert');
+
+			await selectView(user, 'recent');
+
+			await waitFor(() => {
+				expect(lastRequest(requests).get('limit')).toBe('200');
+			});
+			expect(lastRequest(requests).get('offset')).toBe('0');
+			await waitFor(() => {
+				expect(screen.queryByText('Memory Pending Alert')).not.toBeInTheDocument();
+			});
+			const names = screen
+				.getAllByTestId(/^alert-row-.+-name$/)
+				.map((cell) => cell.textContent);
+			expect(names).toStrictEqual(['Healthy Alert', 'High CPU Alert']);
+			expect(activeHeading()).toHaveTextContent('Recently viewed');
 		});
 
 		it('My alert rules filters by the current user as creator', async () => {
@@ -217,7 +258,7 @@ describe('ListAlertRules — saved views rail', () => {
 					version: 'v1',
 					query: 'foo',
 					states: [],
-					sort: 'updated_at',
+					sort: 'state',
 					order: 'desc',
 				},
 			});

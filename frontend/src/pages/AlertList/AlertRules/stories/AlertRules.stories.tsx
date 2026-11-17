@@ -17,7 +17,6 @@ import {
 	openRenameViewPopover,
 	openRowActions,
 	openSaveViewPopover,
-	openStatesFilter,
 	toggleAlert,
 } from './__story_mockdata__/alertRules.play';
 
@@ -48,7 +47,7 @@ type Story = StoryObj<AlertRulesArgs>;
 
 /**
  * Every alert rule the org has configured, with the state each one evaluated to
- * on its last run and the severity it fires at.
+ * on its last run and the severity it fires at, firing rules first.
  */
 export const Default: Story = {};
 
@@ -81,6 +80,19 @@ export const InvalidQuery: Story = {
  */
 export const QuerySuggestions: Story = {
 	play: openQuerySuggestions,
+};
+
+/** The Enabled view: every rule that is not disabled, whatever it evaluated to. */
+export const EnabledView: Story = {
+	args: { view: 'enabled' },
+};
+
+/**
+ * Recently viewed: the rules this browser opened from the list, in the order they
+ * were opened, whatever the sort.
+ */
+export const RecentlyViewed: Story = {
+	args: { view: 'recent' },
 };
 
 /** A workspace with no saved view yet, where the rail says how to make one. */
@@ -178,11 +190,6 @@ export const RowActionsDisabledRule: Story = {
 /** The columns the table can show, including the audit ones it hides by default. */
 export const ColumnPicker: Story = {
 	play: openColumnPicker,
-};
-
-/** The State dropdown, open with a state picked. */
-export const StateFilterOpen: Story = {
-	play: openStatesFilter,
 };
 
 /**

@@ -3,7 +3,6 @@ import type { SuggestionSource } from 'components/ListFilter/dsl/types';
 import type { CreatorOption } from 'components/ListFilter/types';
 
 import { RULES_DSL_GRAMMAR } from '../list.config';
-import RuleStatesFilter from './RuleStatesFilter';
 
 interface Props {
 	query: string;
@@ -33,7 +32,6 @@ function AlertRulesFilterZone({
 			creatorOptions={creatorOptions}
 			source={source}
 			onQueryChange={onQueryChange}
-			extraFilters={<RuleStatesFilter states={states} onChange={onStatesChange} />}
 			hasExtraFilters={states.length > 0}
 			onClearAll={(): void => onStatesChange([])}
 			error={error ?? undefined}

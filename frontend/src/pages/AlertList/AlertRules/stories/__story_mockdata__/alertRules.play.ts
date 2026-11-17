@@ -148,30 +148,6 @@ export const openColumnPicker = async ({
 	await screen.findByText(/toggle columns/i);
 };
 
-export const openStatesFilter = async ({
-	canvasElement,
-	args,
-}: PlayContext): Promise<void> => {
-	if (showsNoRulesPage(args)) {
-		return;
-	}
-
-	const filter = await within(canvasElement).findByTestId(
-		'alert-rules-filter-states',
-		undefined,
-		untilLoaded,
-	);
-
-	await userEvent.click(filter.querySelector('.ant-select-selector') ?? filter);
-	const option = (await screen.findAllByText('Firing')).find((node) =>
-		node.closest('.ant-select-dropdown'),
-	);
-	if (screen.queryAllByRole('checkbox', { checked: true }).length === 0) {
-		await userEvent.click(option ?? filter);
-	}
-	await screen.findAllByRole('checkbox', { checked: true });
-};
-
 export const toggleAlert = async ({
 	canvasElement,
 	args,

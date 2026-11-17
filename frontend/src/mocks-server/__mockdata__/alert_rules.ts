@@ -164,7 +164,7 @@ export const ruleViewsFixture: RuletypesRuleViewDTO[] = [
 			version: 'v1',
 			query: "team = 'infra'",
 			states: [],
-			sort: RuletypesListSortDTO.updated_at,
+			sort: RuletypesListSortDTO.state,
 			order: RuletypesListOrderDTO.desc,
 		},
 	},

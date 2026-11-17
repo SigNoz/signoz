@@ -1,3 +1,9 @@
+import {
+	alertRulesFixture,
+	listRulesV3Response,
+} from 'mocks-server/__mockdata__/alert_rules';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import { screen, waitFor } from 'tests/test-utils';
 
 import { renderListAlertRules } from './_helpers';
@@ -5,6 +11,25 @@ import { renderListAlertRules } from './_helpers';
 describe('ListAlertRules — list rendering', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+	});
+
+	it('asks for rules sorted by status, firing first, by default', async () => {
+		const requests: URLSearchParams[] = [];
+		server.use(
+			rest.get('http://localhost/api/v3/rules', (req, res, ctx) => {
+				requests.push(req.url.searchParams);
+				return res(
+					ctx.status(200),
+					ctx.json(listRulesV3Response(alertRulesFixture, req.url.searchParams)),
+				);
+			}),
+		);
+		renderListAlertRules();
+
+		await screen.findByText('High CPU Alert');
+
+		expect(requests[0].get('sort')).toBe('state');
+		expect(requests[0].get('order')).toBe('desc');
 	});
 
 	it('renders alert rules from API', async () => {
@@ -101,7 +126,7 @@ describe('ListAlertRules — list rendering', () => {
 		);
 	});
 
-	it('renders header controls (search, states, columns, new alert)', async () => {
+	it('renders header controls (search, columns, new alert) and no state filter', async () => {
 		renderListAlertRules();
 
 		await waitFor(() =>
@@ -112,7 +137,9 @@ describe('ListAlertRules — list rendering', () => {
 		expect(
 			screen.getByTestId('alert-rules-list-search-submit'),
 		).toBeInTheDocument();
-		expect(screen.getByTestId('alert-rules-filter-states')).toBeInTheDocument();
+		expect(
+			screen.queryByTestId('alert-rules-filter-states'),
+		).not.toBeInTheDocument();
 		expect(screen.getByTestId('alert-columns-button')).toBeInTheDocument();
 		expect(
 			screen.getByTestId('list-alerts-new-alert-button'),
