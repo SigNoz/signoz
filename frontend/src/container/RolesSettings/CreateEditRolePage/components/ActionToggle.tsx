@@ -158,6 +158,7 @@ function ActionToggle({
 					}
 				}}
 				title="Change permission scope?"
+				testId={`action-toggle-scope-dialog-${resource}-${action}`}
 				confirmText="Change scope"
 				cancelText="Cancel"
 				onConfirm={handleConfirmScopeChange}
