@@ -96,6 +96,7 @@ function ProcessorFieldInput({
 							<Switch
 								color="primary"
 								textPlacement="right"
+								testId="enable-flattening-switch"
 								value={form.getFieldValue('enable_flattening')}
 								onChange={(checked: boolean): void => {
 									form.setFieldValue('enable_flattening', checked);
