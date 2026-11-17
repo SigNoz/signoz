@@ -146,6 +146,11 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	// the flattened serialization, and reading them as a string collapses a key stored at both a
 	// scalar and an object path.
 	options.Settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
+	if config.Clickhouse.Profile != "" {
+		// The server rejects profile as a plain setting over the native protocol but applies it as a custom
+		// one. Every query sends it, so a SETTINGS clause in the query cannot escape its constraints.
+		options.Settings["profile"] = clickhouse.CustomSetting{Value: config.Clickhouse.Profile}
+	}
 
 	chConn, err := clickhouse.Open(options)
 	if err != nil {

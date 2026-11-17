@@ -1,9 +1,9 @@
 package telemetrystore
 
 import (
+	"slices"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
@@ -39,14 +39,12 @@ type ClickhouseConfig struct {
 	// QuerySettings is the query settings for clickhouse.
 	QuerySettings QuerySettings `mapstructure:"settings"`
 
-	// Profiles maps a settings profile name to the DSN of a store that runs its queries (ForProfile). The
-	// native protocol sets the profile at login, so each DSN logs in as a user whose default profile is
-	// that one.
-	Profiles map[string]ProfileConfig `mapstructure:"profiles"`
-}
+	// Profile is the ClickHouse settings profile every query of the store runs with. Empty runs with the
+	// user's own profile.
+	Profile string `mapstructure:"profile"`
 
-type ProfileConfig struct {
-	DSN string `mapstructure:"dsn"`
+	// Profiles are the settings profiles a store can be built with (ForProfile). Each must exist in ClickHouse.
+	Profiles []string `mapstructure:"profiles"`
 }
 
 type QuerySettings struct {
@@ -81,21 +79,15 @@ func newConfig() factory.Config {
 // ForProfile returns the config of a store that runs queries with the profile, or false when the profile
 // is not configured.
 func (c Config) ForProfile(name string) (Config, bool) {
-	profile, ok := c.Clickhouse.Profiles[name]
-	if !ok {
+	if !slices.Contains(c.Clickhouse.Profiles, name) {
 		return c, false
 	}
 
-	c.Clickhouse.DSN = profile.DSN
+	c.Clickhouse.Profile = name
 	c.Clickhouse.Profiles = nil
 	return c, true
 }
 
 func (c Config) Validate() error {
-	for name, profile := range c.Clickhouse.Profiles {
-		if profile.DSN == "" {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "telemetrystore.clickhouse.profiles.%s.dsn is required", name)
-		}
-	}
 	return nil
 }

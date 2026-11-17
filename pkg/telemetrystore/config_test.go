@@ -90,37 +90,28 @@ func TestNewWithEnvProviderWithQuerySettings(t *testing.T) {
 	assert.Equal(t, expected.Clickhouse.QuerySettings, actual.Clickhouse.QuerySettings)
 }
 
-func TestConfigValidateProfiles(t *testing.T) {
-	config := Config{Clickhouse: ClickhouseConfig{Profiles: map[string]ProfileConfig{"query_range": {DSN: "tcp://localhost:9000"}}}}
-	assert.NoError(t, config.Validate())
-
-	config.Clickhouse.Profiles["empty"] = ProfileConfig{}
-	assert.Error(t, config.Validate())
-}
-
 func TestConfigForProfile(t *testing.T) {
-	config := Config{Clickhouse: ClickhouseConfig{DSN: "tcp://main:9000", Cluster: "cluster", Profiles: map[string]ProfileConfig{"clickhouse_query": {DSN: "tcp://clickhouse_query:9000"}}}}
+	config := Config{Clickhouse: ClickhouseConfig{DSN: "tcp://main:9000", Cluster: "cluster", Profiles: []string{"clickhouse_query"}}}
 
 	testCases := []struct {
 		name    string
 		profile string
 		ok      bool
-		dsn     string
+		want    string
 	}{
-		{name: "Configured_ProfileDSN", profile: "clickhouse_query", ok: true, dsn: "tcp://clickhouse_query:9000"},
-		{name: "NotConfigured_MainDSN", profile: "query_range", ok: false, dsn: "tcp://main:9000"},
+		{name: "Configured_Profile", profile: "clickhouse_query", ok: true, want: "clickhouse_query"},
+		{name: "NotConfigured_NoProfile", profile: "query_range", ok: false, want: ""},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			actual, ok := config.ForProfile(testCase.profile)
 			assert.Equal(t, testCase.ok, ok)
-			assert.Equal(t, testCase.dsn, actual.Clickhouse.DSN)
+			assert.Equal(t, testCase.want, actual.Clickhouse.Profile)
+			assert.Equal(t, "tcp://main:9000", actual.Clickhouse.DSN)
 			assert.Equal(t, "cluster", actual.Clickhouse.Cluster)
 		})
 	}
 
-	actual, _ := config.ForProfile("clickhouse_query")
-	assert.Empty(t, actual.Clickhouse.Profiles)
-	assert.Equal(t, "tcp://main:9000", config.Clickhouse.DSN)
+	assert.Empty(t, config.Clickhouse.Profile)
 }
