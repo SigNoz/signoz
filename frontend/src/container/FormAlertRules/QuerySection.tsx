@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -7,7 +6,7 @@ import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
@@ -16,13 +15,12 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isEmpty } from 'lodash-es';
 import { Atom, Terminal } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 
 import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
-import { FormContainer, StepHeading } from './styles';
 
+import styles from './QuerySection.module.scss';
 import './QuerySection.styles.scss';
 
 const ANOMALY_QUERY_SUPPORT_CLICKHOUSE_ISSUE =
@@ -38,14 +36,10 @@ function QuerySection({
 	runQuery,
 	isLoadingQueries,
 	handleCancelQuery,
-	alertDef,
 	panelType,
 	ruleId,
-	hideTitle,
 	isAnomalyDetection,
 }: QuerySectionProps): JSX.Element {
-	// init namespace for translations
-	const { t } = useTranslation('alerts');
 	const [currentTab, setCurrentTab] = useState(queryCategory);
 	const [signalSource, setSignalSource] = useState<string>('metrics');
 
@@ -75,12 +69,8 @@ function QuerySection({
 				signalSource: signalSource === 'meter' ? 'meter' : '',
 			}}
 			showTraceOperator={alertType === AlertTypes.TRACES_BASED_ALERT}
-			showFunctions={
-				(alertType === AlertTypes.METRICS_BASED_ALERT &&
-					alertDef.version === ENTITY_VERSION_V4) ||
-				alertType === AlertTypes.LOGS_BASED_ALERT
-			}
-			version={alertDef.version || 'v3'}
+			showFunctions={alertType === AlertTypes.LOGS_BASED_ALERT}
+			version={ENTITY_VERSION_V5}
 			onSignalSourceChange={handleSignalSourceChange}
 			signalSourceChangeEnabled
 		/>
@@ -290,18 +280,11 @@ function QuerySection({
 		return null;
 	};
 
-	const step2Label = alertDef.alertType === 'METRIC_BASED_ALERT' ? '2' : '1';
-
 	return (
-		<>
-			{!hideTitle && (
-				<StepHeading> {t('alert_form_step2', { step: step2Label })}</StepHeading>
-			)}
-			<FormContainer className="alert-query-section-container">
-				<div>{renderTabs(alertType)}</div>
-				{renderQuerySection(currentTab)}
-			</FormContainer>
-		</>
+		<div className={styles.container}>
+			<div>{renderTabs(alertType)}</div>
+			{renderQuerySection(currentTab)}
+		</div>
 	);
 }
 
@@ -312,15 +295,12 @@ interface QuerySectionProps {
 	runQuery: VoidFunction;
 	isLoadingQueries: boolean;
 	handleCancelQuery: () => void;
-	alertDef: AlertDef;
 	panelType: PANEL_TYPES;
 	ruleId: string;
-	hideTitle?: boolean;
 	isAnomalyDetection?: boolean;
 }
 
 QuerySection.defaultProps = {
-	hideTitle: false,
 	isAnomalyDetection: false,
 };
 

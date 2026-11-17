@@ -5,17 +5,13 @@
  * upgrade is a change to one directory instead of ~300 call sites. This rule
  * keeps new call sites, and test mocks, from reaching past it.
  *
- * `history` (the package) is deliberately not flagged: it is a transitive concern of
- * the version bump, not something the facade replaces.
+ * `react-router-dom` is still flagged even though the package is gone: on v7 it is a
+ * re-export shim over `react-router`, so reinstalling it would split the tree again.
  *
- * The allowlist (the facade itself, the route table, `useSafeNavigate`, the history
- * singleton and the test and story router mounts) is applied via overrides in
- * .oxlintrc.json, not here, so the file list stays visible next to the severity.
+ * The allowlist (the facade itself, the route table, the router mount,
+ * `useSafeNavigate` and the test and story router mounts) is applied via overrides
+ * in .oxlintrc.json, not here, so the file list stays visible next to the severity.
  */
-
-import path from 'node:path';
-
-const HISTORY_MODULE_SUFFIX = path.join('src', 'lib', 'history');
 
 const JEST_MODULE_METHODS = new Set([
 	'mock',
@@ -29,30 +25,12 @@ const JEST_MODULE_METHODS = new Set([
 ]);
 
 const MESSAGE_IDS = {
-	'react-router': 'v5Router',
-	'react-router-dom': 'v5Router',
-	'react-router-dom-v5-compat': 'v6Compat',
-	'lib/history': 'historySingleton',
-	'@/lib/history': 'historySingleton',
+	'react-router': 'router',
+	'react-router-dom': 'routerDom',
 };
 
-/** Resolves `./history` / `../history` so files inside src/lib count too. */
-function isHistoryModule(specifier, filename) {
-	if (!specifier.startsWith('.') || !filename) {
-		return false;
-	}
-	const resolved = path.resolve(path.dirname(filename), specifier);
-	return (
-		resolved.endsWith(HISTORY_MODULE_SUFFIX) ||
-		resolved.endsWith(`${HISTORY_MODULE_SUFFIX}.ts`)
-	);
-}
-
-function messageIdFor(specifier, filename) {
-	if (MESSAGE_IDS[specifier] !== undefined) {
-		return MESSAGE_IDS[specifier];
-	}
-	return isHistoryModule(specifier, filename) ? 'historySingleton' : null;
+function messageIdFor(specifier) {
+	return MESSAGE_IDS[specifier] ?? null;
 }
 
 export default {
@@ -60,17 +38,15 @@ export default {
 		type: 'suggestion',
 		docs: {
 			description:
-				'Disallow direct react-router / lib/history imports; import from src/lib/router instead',
+				'Disallow direct react-router imports; import from src/lib/router instead',
 			category: 'React Router migration',
 		},
 		schema: [],
 		messages: {
-			v5Router:
-				'Do not import react-router-dom directly. Use the src/lib/router facade (useAppNavigate, useAppLocation, useAppParams, AppLink, Redirect, matchRoute) so a router upgrade stays contained.',
-			v6Compat:
-				'Do not import react-router-dom-v5-compat directly. Use the src/lib/router facade instead; the compat package is an implementation detail of the migration and disappears with it.',
-			historySingleton:
-				'Do not import the lib/history singleton. Use the helpers in src/lib/router/navigation.ts, or useAppNavigate() to follow the nearest router. history loses basename handling once the router owns it.',
+			router:
+				'Do not import react-router directly. Use the src/lib/router facade (useAppNavigate, useAppLocation, useAppParams, AppLink, Redirect, matchRoute) so a router upgrade stays contained.',
+			routerDom:
+				'Do not import react-router-dom. The app is on react-router; on v7 react-router-dom is only a re-export shim, and installing it puts two copies of the router in the tree. Use the src/lib/router facade.',
 			mock:
 				'Do not mock the router directly. Render at a route with tests/test-utils, or spy on the facade with the tests/router-mocks helpers.',
 		},
@@ -85,7 +61,7 @@ export default {
 			) {
 				return;
 			}
-			const messageId = messageIdFor(sourceNode.value, context.filename);
+			const messageId = messageIdFor(sourceNode.value);
 			if (messageId !== null) {
 				context.report({
 					node: sourceNode,

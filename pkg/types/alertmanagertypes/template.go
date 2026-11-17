@@ -19,6 +19,7 @@ func AdditionalFuncMap() tmpltext.FuncMap {
 		"urlescape": func(value string) tmplhtml.HTML {
 			return tmplhtml.HTML(url.QueryEscape(value))
 		},
+		"relatedLinks": resolveRelatedLinksForTemplate,
 	}
 }
 
@@ -45,6 +46,12 @@ func FromGlobs(paths []string) (*alertmanagertemplate.Template, error) {
 	{{ define "__ruleIdPath" }}{{- $isTestAlert := "" -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "testalert" -}}{{- if eq .Value "true" -}}{{- $isTestAlert = "true" -}}{{- end -}}{{- end -}}{{- end -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}{{- if ne .Value "" -}}/edit?ruleId={{ .Value | urlescape }}{{- if $isTestAlert -}}&isTestAlert=true{{- end -}}{{- end -}}{{- end -}}{{- end -}}{{- end }}
 	{{ define "__alertmanagerURL" }}{{ .ExternalURL }}/alerts{{ template "__ruleIdPath" . }}{{ end }}
 	{{ define "msteamsv2.default.titleLink" }}{{ template "__alertmanagerURL" . }}{{ end }}
+	{{ define "signoz.relatedLinks.slack" }}{{ range $i, $link := relatedLinks . }}{{ if $i }} · {{ end }}<{{ $link.URL }}|{{ $link.Label }}>{{ end }}{{ end }}
+	{{ define "signoz.relatedLinks.markdown" }}{{ range relatedLinks . }}[{{ .Label }}]({{ .URL }})
+
+{{ end }}{{ end }}
+	{{ define "signoz.relatedLinks.html" }}{{ range relatedLinks . }}<a href="{{ .URL | html }}">{{ .Label | html }}</a>
+{{ end }}{{ end }}
 	`))); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error parsing alertmanager templates")
 	}

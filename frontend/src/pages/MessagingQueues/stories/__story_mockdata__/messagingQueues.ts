@@ -82,15 +82,15 @@ const CELERY_TASKS = [
 const CELERY_WORKERS = ['worker-a', 'worker-b', 'worker-c'];
 
 /**
- * Values per autocomplete attribute key. The kafka config selects and both
- * celery filter rows read the same v3 endpoint, so one map answers for all of
+ * Values per attribute key. The kafka config selects read the v3 endpoint and
+ * the celery filter rows read `/fields/values`, so one map answers for all of
  * them; a key nobody seeded answers empty rather than 501.
  */
 const ATTRIBUTE_VALUES: Record<string, string[]> = {
 	group: CONSUMER_GROUPS,
 	topic: TOPICS,
 	partition: PARTITIONS,
-	serviceName: KAFKA_SERVICES,
+	'service.name': KAFKA_SERVICES,
 	name: [
 		'order-events send',
 		'order-events process',

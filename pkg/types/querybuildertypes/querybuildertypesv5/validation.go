@@ -499,6 +499,18 @@ func (q *QueryBuilderQuery[T]) validateOrderBy(cfg validationConfig) error {
 		return q.validateOrderByForAggregation()
 	}
 
+	// a raw order key resolves like a select field, so only an empty one is
+	// invalid before resolution
+	for i, order := range q.Order {
+		if order.Key.Name == "" {
+			orderID := fmt.Sprintf("order by clause #%d", i+1)
+			if q.Name != "" {
+				orderID = fmt.Sprintf("order by clause #%d in query '%s'", i+1, q.Name)
+			}
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid empty key name for %s", orderID)
+		}
+	}
+
 	return nil
 }
 
@@ -586,19 +598,10 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 		return err
 	}
 
-	// Validate request type
-	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap, RequestTypeDistribution:
-		opts = append(opts, GetValidationOptions(r.RequestType)...)
-	default:
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"invalid request type: %s",
-			r.RequestType,
-		).WithAdditional(
-			"Valid request types are: raw, timeseries, scalar, heatmap, distribution",
-		)
+	if err := r.validateRequestType(); err != nil {
+		return err
 	}
+	opts = append(opts, GetValidationOptions(r.RequestType)...)
 
 	if err := r.validateBucketCounting(); err != nil {
 		return err
@@ -639,14 +642,10 @@ func (r *QueryRangeRequest) ValidateRequestScope() ([]ValidationOption, error) {
 		return nil, err
 	}
 
-	var opts []ValidationOption
-	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeHeatmap, RequestTypeDistribution:
-		opts = GetValidationOptions(r.RequestType)
-	default:
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request type: %s", r.RequestType).
-			WithAdditional("Valid request types are: raw, timeseries, scalar, heatmap, distribution")
+	if err := r.validateRequestType(); err != nil {
+		return nil, err
 	}
+	opts := GetValidationOptions(r.RequestType)
 
 	if err := r.validateBucketCounting(); err != nil {
 		return nil, err
@@ -701,6 +700,20 @@ func (p *QueryRangePreviewParams) Validate() (QueryRangePreviewOptions, error) {
 // to ValidateRequestScope, letting the dry-run report errors independently.
 func (e QueryEnvelope) Validate(opts ...ValidationOption) error {
 	return validateQueryEnvelope(e, opts...)
+}
+
+// Enum is the one list of request types a query can use, so the spec and the
+// suggestions agree with what is accepted.
+func (r *QueryRangeRequest) validateRequestType() error {
+	if slices.Contains(RequestType{}.Enum(), any(r.RequestType)) {
+		return nil
+	}
+	if r.RequestType == RequestTypeUnknown {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "requestType is required").
+			WithSuggestions(errors.NewValidReferences(errors.NounRequestTypes, RequestType{}.Enum()...))
+	}
+	return errors.NewInvalidInputf(errors.CodeInvalidInput, "request type %q is not supported", r.RequestType.StringValue()).
+		WithSuggestions(errors.NewValidReferences(errors.NounRequestTypes, RequestType{}.Enum()...))
 }
 
 func (r *QueryRangeRequest) validateTimeRange() error {
@@ -921,15 +934,26 @@ func (r *QueryRangeRequest) validateBucketCounting() error {
 				continue
 			}
 			enabled++
-		// An AI query decodes to the traces spec, so it lands here too. Admitting
-		// either signal means capping Aggregations at one: each carries its own
-		// Meta.Buckets, and a heatmap renders against a single bucket axis.
-		case QueryBuilderQuery[LogAggregation], QueryBuilderQuery[TraceAggregation]:
-			return errors.New(errors.TypeUnsupported, errors.CodeUnsupported,
-				"heatmaps are not supported for the logs and traces signals yet")
+		// An AI query decodes to the traces spec, so it lands here too.
+		case QueryBuilderQuery[LogAggregation]:
+			if err := validateEventHeatmapQuery(r.RequestType, spec.Functions, spec.Having, aggregationExpressions(spec.Aggregations), spec.Disabled); err != nil {
+				return err
+			}
+			if spec.Disabled {
+				continue
+			}
+			enabled++
+		case QueryBuilderQuery[TraceAggregation]:
+			if err := validateEventHeatmapQuery(r.RequestType, spec.Functions, spec.Having, aggregationExpressions(spec.Aggregations), spec.Disabled); err != nil {
+				return err
+			}
+			if spec.Disabled {
+				continue
+			}
+			enabled++
 		default:
 			return errors.NewInvalidInputf(errors.CodeInvalidInput,
-				"%s requests support one metrics builder query, one formula over them, one clickhouse query, or one promql query, got %q", r.RequestType.StringValue(), envelope.Type.StringValue())
+				"%s requests support one builder query, one formula over them, one clickhouse query, or one promql query, got %q", r.RequestType.StringValue(), envelope.Type.StringValue())
 		}
 	}
 
@@ -1031,6 +1055,48 @@ func validateBucketCountingQuery(requestType RequestType, functions []Function, 
 	}
 
 	return nil
+}
+
+// validateEventHeatmapQuery holds a logs or traces query to what a per-event
+// heatmap can draw. A disabled query feeds a formula rather than the chart, so
+// it aggregates as a time series.
+func validateEventHeatmapQuery(requestType RequestType, functions []Function, having *Having, expressions []string, disabled bool) error {
+	if err := validateBucketCountingQuery(requestType, functions, having); err != nil {
+		return err
+	}
+
+	if disabled {
+		return nil
+	}
+
+	// Every aggregation carries its own Meta.Buckets, and a heatmap renders
+	// against a single bucket axis.
+	if len(expressions) != 1 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a heatmap renders one bucket axis, but the query has %d aggregations", len(expressions)).
+			WithAdditional("Keep the one aggregation whose distribution you want to plot")
+	}
+
+	if _, ok := HeatmapAggregationField(expressions[0]); !ok {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a logs or traces heatmap counts events by the field named as its aggregation, got %q", expressions[0]).
+			WithAdditional("Use an aggregation such as duration_nano")
+	}
+
+	return nil
+}
+
+func aggregationExpressions[T LogAggregation | TraceAggregation](aggregations []T) []string {
+	expressions := make([]string, len(aggregations))
+	for i, aggregation := range aggregations {
+		switch a := any(aggregation).(type) {
+		case LogAggregation:
+			expressions[i] = a.Expression
+		case TraceAggregation:
+			expressions[i] = a.Expression
+		}
+	}
+	return expressions
 }
 
 func GetValidationOptions(requestType RequestType) []ValidationOption {

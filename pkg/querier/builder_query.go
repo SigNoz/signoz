@@ -77,7 +77,7 @@ func newBuilderQuery[T any](
 func (q *builderQuery[T]) Fingerprint() string {
 
 	if (q.spec.Signal == telemetrytypes.SignalTraces ||
-		q.spec.Signal == telemetrytypes.SignalLogs) && q.kind != qbtypes.RequestTypeTimeSeries {
+		q.spec.Signal == telemetrytypes.SignalLogs) && !q.kind.IsBuiltFromTimeSeries() {
 		// No caching for non-timeseries queries
 		return ""
 	}
@@ -85,6 +85,13 @@ func (q *builderQuery[T]) Fingerprint() string {
 	// AI trace aggregations qualify and rank traces on whole-window per-trace
 	// values, which do not decompose into cacheable time buckets.
 	if q.queryType == qbtypes.QueryTypeBuilderAI {
+		return ""
+	}
+
+	// A limit ranks the groups over the statement window, so the pieces of a
+	// window rank differently from the window. Such a query is never served
+	// from the cache.
+	if (q.spec.Signal == telemetrytypes.SignalLogs || q.spec.Signal == telemetrytypes.SignalTraces) && len(q.spec.GroupBy) > 0 && q.spec.Limit > 0 {
 		return ""
 	}
 
@@ -141,6 +148,12 @@ func (q *builderQuery[T]) Fingerprint() string {
 			}
 		}
 		parts = append(parts, fmt.Sprintf("aggs=[%s]", strings.Join(aggParts, ",")))
+	}
+
+	// A metrics heatmap carries its axis on the aggregation, which the loop above
+	// already fingerprinted. Logs and traces carry it on the spec.
+	if q.kind.CountsIntoBuckets() && q.spec.Signal != telemetrytypes.SignalMetrics {
+		parts = append(parts, "buckets="+fingerprintHeatmapBucketing(q.spec.BucketOptions.ToHeatmapBucketing()))
 	}
 
 	// Add filter if present
@@ -444,6 +457,13 @@ func emptyResultFor(kind qbtypes.RequestType, queryName string) *qbtypes.Result 
 
 // executeWithContext executes the query with query window and step context for partial value detection.
 func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
+	result, _, err := q.executeSkippingRaw(ctx, query, args, 0)
+	return result, err
+}
+
+// executeSkippingRaw is executeWithContext for a raw query that drops its first
+// skip rows undecoded. It returns how many rows were skipped.
+func (q *builderQuery[T]) executeSkippingRaw(ctx context.Context, query string, args []any, skip int) (*qbtypes.Result, int, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal: q.spec.Signal.StringValue(),
 		instrumentationtypes.QueryDuration:   instrumentationtypes.DurationBucket(q.fromMS, q.toMS),
@@ -462,19 +482,19 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
-			return nil, errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "Query timed out").
+			return nil, 0, errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "Query timed out").
 				WithAdditional("Try refining your search by adding relevant resource attributes filtering")
 		}
 
 		if !errors.Is(err, context.Canceled) {
-			return nil, errors.Newf(
+			return nil, 0, errors.Newf(
 				errors.TypeInternal,
 				errors.CodeInternal,
 				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
 			)
 		}
 
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -488,9 +508,15 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		kind = qbtypes.RequestTypeTimeSeries
 	}
 
-	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
+	var payload any
+	skipped := 0
+	if skip > 0 {
+		payload, skipped, err = readAsRawSkipping(rows, q.spec.Name, skip)
+	} else {
+		payload, err = consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
+	}
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	// TODO: This should move to readAsRaw function in consume.go but for now we are keeping it here since it's only relevant for traces
@@ -510,7 +536,7 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 			BytesScanned: totalBytes,
 			DurationMS:   uint64(elapsed.Milliseconds()),
 		},
-	}, nil
+	}, skipped, nil
 }
 
 func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Result, error) {
@@ -610,7 +636,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 			}
 		}
 		// Execute with proper context for partial value detection
-		res, err := q.executeWithContext(ctx, stmt.Query, stmt.Args)
+		res, skipped, err := q.executeSkippingRaw(ctx, stmt.Query, stmt.Args, offsetLeft)
 		if err != nil {
 			return nil, err
 		}
@@ -618,13 +644,10 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		totalBytes += res.Stats.BytesScanned
 
 		rawRows := res.Value.(*qbtypes.RawData).Rows
-		need -= len(rawRows)
+		need -= skipped + len(rawRows)
+		offsetLeft -= skipped
 
 		for _, rr := range rawRows {
-			if offsetLeft > 0 { // client-requested initial offset
-				offsetLeft--
-				continue
-			}
 			rows = append(rows, rr)
 			if len(rows) >= reqLimit { // page filled
 				break

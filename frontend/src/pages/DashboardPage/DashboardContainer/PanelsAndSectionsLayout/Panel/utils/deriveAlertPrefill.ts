@@ -5,12 +5,12 @@ import type {
 	DashboardtypesPanelDTO,
 	DashboardtypesPanelPluginDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { normalizeOperator } from 'container/CreateAlertV2/context/conditionNormalizers';
+import { normalizeOperator } from 'container/CreateAlert/context/conditionNormalizers';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 	Threshold,
-} from 'container/CreateAlertV2/context/types';
+} from 'container/CreateAlert/context/types';
 import {
 	SectionKind,
 	ThresholdVariant,

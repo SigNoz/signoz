@@ -1,7 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import uPlot from 'uplot';
 
-import { HeatmapColorResolver } from './colorScale';
+import { ColorRampResolver } from 'lib/visualization/colorRamp/colorScale';
 import { HeatmapYAxis } from './types';
 
 /** Cells at least this wide/tall keep a hairline separator. */
@@ -54,7 +54,7 @@ export function drawCells({
 	u: uPlot;
 	yAxis: HeatmapYAxis;
 	step: number;
-	resolver: HeatmapColorResolver;
+	resolver: ColorRampResolver;
 	hatchPattern: CanvasPattern | null;
 }): void {
 	const { ctx } = u;

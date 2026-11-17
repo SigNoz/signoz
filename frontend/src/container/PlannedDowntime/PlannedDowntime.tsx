@@ -16,11 +16,11 @@ import {
 	useDeleteDowntimeScheduleByID,
 	useListDowntimeSchedules,
 } from 'api/generated/services/downtimeschedules';
-import { useListRules } from 'api/generated/services/rules';
 import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
 import { ColumnSelector } from 'components/TanStackTableView';
 import TextToolTip from 'components/TextToolTip';
 import dayjs from 'dayjs';
+import { useListAllRules } from 'hooks/alerts/useListAllRules';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -55,9 +55,7 @@ export function PlannedDowntime(): JSX.Element {
 		isError,
 		isLoading,
 		isFetching: isFetchingAlerts,
-	} = useListRules({
-		query: { cacheTime: 0 },
-	});
+	} = useListAllRules({ cacheTime: 0 });
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [form] = Form.useForm();
 	const { user } = useAppContext();
@@ -73,7 +71,7 @@ export function PlannedDowntime(): JSX.Element {
 	const downtimeSchedules = useListDowntimeSchedules();
 	const alertOptions = React.useMemo(
 		() =>
-			alertsData?.data?.map((i) => ({
+			alertsData?.map((i) => ({
 				label: i.alert,
 				value: i.id,
 			})),
@@ -181,7 +179,7 @@ export function PlannedDowntime(): JSX.Element {
 	};
 
 	const refetchAllSchedules = (): void => {
-		downtimeSchedules.refetch();
+		void downtimeSchedules.refetch();
 	};
 
 	const {
