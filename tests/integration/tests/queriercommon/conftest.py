@@ -20,8 +20,8 @@ def signoz_clickhouse_query_profile(
     pytestconfig: pytest.Config,
 ) -> types.SigNoz:
     """
-    SigNoz whose clickhouse_sql queries run with the clickhouse_query profile. The profile is created
-    first: SigNoz checks it once at startup and runs without it when it is missing.
+    SigNoz whose clickhouse_sql queries run with the clickhouse_query profile, which must exist in
+    ClickHouse before any query runs.
     """
     clickhouse_settings_profile(
         "clickhouse_query",

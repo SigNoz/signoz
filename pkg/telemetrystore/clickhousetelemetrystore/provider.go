@@ -2,7 +2,6 @@ package clickhousetelemetrystore
 
 import (
 	"context"
-	"log/slog"
 
 	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -217,13 +216,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 	p.profiles = make(map[string]telemetrystore.TelemetryStore, len(config.Clickhouse.Profiles))
 	for _, profile := range config.Clickhouse.Profiles {
-		store := telemetrystore.NewProfileStore(p, profile)
-		// A listed profile missing in ClickHouse would fail every query, so those run without it instead.
-		if err := store.ClickhouseDB().Exec(ctx, "SELECT 1"); err != nil && errors.Asc(err, ErrCodeSettingsProfileNotFound) {
-			settings.Logger().WarnContext(ctx, "clickhouse settings profile is not in clickhouse, running its queries without it", slog.String("profile", profile))
-			continue
-		}
-		p.profiles[profile] = store
+		p.profiles[profile] = telemetrystore.NewProfileStore(p, profile)
 	}
 
 	return p, nil
